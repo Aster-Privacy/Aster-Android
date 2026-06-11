@@ -1,0 +1,41 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: compose_and_send_to_self
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    id: "compose"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "Subject"
+    commands:
+      - tapOn:
+          text: "compose"
+          optional: true
+- extendedWaitUntil:
+    visible: "Subject"
+    timeout: 10000
+- tapOn:
+    text: "To"
+    optional: true
+- inputText: ${TEST_USERNAME}@${TEST_DOMAIN}
+- hideKeyboard
+- tapOn: "Subject"
+- inputText: "Maestro send-to-self test"
+- hideKeyboard
+- tapOn:
+    text: "Body"
+    optional: true
+- inputText: "This is an automated send-to-self from the Maestro test kit."
+- hideKeyboard
+- takeScreenshot: compose_filled
+- tapOn: "Send"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Inbox"
+    timeout: 30000
+- takeScreenshot: inbox_after_send

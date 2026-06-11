@@ -1,0 +1,27 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: open_draft_resumes_compose
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn: "Inbox"
+- tapOn:
+    text: "Drafts"
+    optional: true
+- extendedWaitUntil:
+    visible: "Drafts"
+    timeout: 10000
+- tapOn:
+    point: "50%,30%"
+- extendedWaitUntil:
+    visible: "Subject"
+    timeout: 10000
+- takeScreenshot: draft_resumed
+- back
+- runFlow:
+    when:
+      visible: "Discard"
+    commands:
+      - tapOn: "Keep"

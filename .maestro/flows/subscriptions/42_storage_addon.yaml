@@ -1,0 +1,19 @@
+appId: ${APP_ID}
+tags:
+  - subscriptions
+name: storage_addon_picker_opens
+---
+- runFlow: ../../setup/sign_in.yaml
+- runFlow: ../../setup/open_settings.yaml
+- tapOn:
+    text: "Storage"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: storage_screen
+- tapOn:
+    text: "Upgrade"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: storage_upgrade_sheet
+- back
+- back

@@ -1,0 +1,31 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: snooze_sheet_each_option_visible
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- tapOn:
+    id: "more"
+    optional: true
+- tapOn:
+    text: "Snooze"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: snooze_sheet_options
+- assertVisible:
+    text: "hour"
+    optional: true
+- assertVisible:
+    text: "Tomorrow"
+    optional: true
+- assertVisible:
+    text: "week"
+    optional: true
+- back
+- back
+- back

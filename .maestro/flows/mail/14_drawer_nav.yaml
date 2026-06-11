@@ -1,0 +1,25 @@
+appId: ${APP_ID}
+tags:
+  - mail
+name: drawer_opens_and_navigates_folders
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- swipe:
+    start: 5%,50%
+    end: 80%,50%
+- waitForAnimationToEnd
+- takeScreenshot: drawer_open
+- assertVisible: "Sent"
+- assertVisible: "Trash"
+- tapOn: "Sent"
+- waitForAnimationToEnd
+- takeScreenshot: folder_sent
+- assertVisible: "Sent"
+- swipe:
+    start: 5%,50%
+    end: 80%,50%
+- tapOn: "Inbox"
+- waitForAnimationToEnd
+- assertVisible: "Inbox"
+- takeScreenshot: back_to_inbox_via_drawer

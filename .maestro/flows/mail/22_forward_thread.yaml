@@ -1,0 +1,20 @@
+appId: ${APP_ID}
+tags:
+  - mail
+name: forward_thread_opens_compose
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    point: "50%,40%"
+- extendedWaitUntil:
+    visible: "Forward"
+    timeout: 15000
+- tapOn: "Forward"
+- extendedWaitUntil:
+    visible: "Subject"
+    timeout: 10000
+- takeScreenshot: forward_compose_open
+- back
+- waitForAnimationToEnd
+- back

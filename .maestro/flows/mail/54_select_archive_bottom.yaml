@@ -1,0 +1,18 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: select_mode_archive_bottom_bar
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- longPressOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- takeScreenshot: bottom_bar_select_mode
+- tapOn:
+    text: "Archive"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: after_archive
+- back

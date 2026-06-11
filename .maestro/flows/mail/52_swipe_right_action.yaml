@@ -1,0 +1,13 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: swipe_right_secondary_action
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- swipe:
+    start: 10%,30%
+    end: 90%,30%
+- waitForAnimationToEnd
+- takeScreenshot: inbox_after_swipe_right

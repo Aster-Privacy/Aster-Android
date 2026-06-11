@@ -1,0 +1,20 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: mark_message_unread_from_thread
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- tapOn:
+    id: "more"
+    optional: true
+- tapOn:
+    text: "Mark as unread"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: after_mark_unread
+- back

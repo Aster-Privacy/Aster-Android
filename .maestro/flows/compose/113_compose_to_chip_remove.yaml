@@ -1,0 +1,31 @@
+appId: ${APP_ID}
+tags:
+  - compose
+  - manual
+name: compose_recipient_chip_backspace_removes
+---
+- runFlow: ../../setup/sign_in.yaml
+- tapOn:
+    id: "compose"
+    optional: true
+- extendedWaitUntil:
+    visible: "Subject"
+    timeout: 10000
+- tapOn:
+    text: "To"
+    optional: true
+- inputText: ${TEST_USERNAME}@${TEST_DOMAIN}
+- pressKey: "Enter"
+- waitForAnimationToEnd
+- takeScreenshot: recipient_chip_added
+- pressKey: "Backspace"
+- pressKey: "Backspace"
+- waitForAnimationToEnd
+- takeScreenshot: recipient_chip_removed
+- hideKeyboard
+- back
+- runFlow:
+    when:
+      visible: "Discard"
+    commands:
+      - tapOn: "Discard"

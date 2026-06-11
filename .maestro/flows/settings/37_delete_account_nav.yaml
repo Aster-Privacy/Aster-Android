@@ -1,0 +1,14 @@
+appId: ${APP_ID}
+tags:
+  - settings
+name: delete_account_screen_opens_but_does_not_submit
+---
+- runFlow: ../../setup/sign_in.yaml
+- runFlow: ../../setup/open_settings.yaml
+- scrollUntilVisible:
+    element: "Delete account"
+    direction: DOWN
+- tapOn: "Delete account"
+- waitForAnimationToEnd
+- takeScreenshot: delete_account_screen
+- back

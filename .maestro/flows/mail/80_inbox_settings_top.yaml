@@ -1,0 +1,23 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: inbox_settings_button_in_top_bar
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    id: "settings"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "Settings"
+    commands:
+      - tapOn:
+          text: "Settings"
+          optional: true
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 10000
+- takeScreenshot: settings_via_top_bar
+- back

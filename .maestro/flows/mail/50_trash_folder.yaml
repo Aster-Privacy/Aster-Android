@@ -1,0 +1,18 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: trash_folder_opens
+---
+- runFlow: ../../setup/sign_in.yaml
+- swipe:
+    start: 5%,50%
+    end: 80%,50%
+- waitForAnimationToEnd
+- tapOn:
+    text: "Trash"
+    optional: true
+- extendedWaitUntil:
+    visible: "Trash"
+    timeout: 10000
+- takeScreenshot: trash_folder

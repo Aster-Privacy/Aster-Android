@@ -1,0 +1,29 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: external_link_confirmation_dialog
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- scrollUntilVisible:
+    element:
+      text: ".*http.*"
+    direction: DOWN
+    timeout: 10000
+    optional: true
+- tapOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*https?://.*"
+    optional: true
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - takeScreenshot: external_link_dialog
+      - tapOn:
+          text: "Cancel"
+          optional: true
+- back

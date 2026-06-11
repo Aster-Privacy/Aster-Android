@@ -1,0 +1,26 @@
+appId: ${APP_ID}
+tags:
+  - search
+  - manual
+name: search_date_operator_tips
+---
+- runFlow: ../../setup/sign_in.yaml
+- tapOn:
+    id: "search"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "before:"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: search_before_operator
+- back
+- tapOn:
+    id: "search"
+    optional: true
+- tapOn:
+    text: "after:"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: search_after_operator
+- back

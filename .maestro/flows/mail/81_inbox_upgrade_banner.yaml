@@ -1,0 +1,18 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: inbox_upgrade_banner_tap
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    text: "Upgrade"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "Plus"
+    commands:
+      - back
+- takeScreenshot: upgrade_screen_or_inbox
+- back

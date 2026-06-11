@@ -1,0 +1,17 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: scheduled_folder_opens
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn: "Inbox"
+- tapOn:
+    text: "Scheduled"
+    optional: true
+- extendedWaitUntil:
+    visible: "Scheduled"
+    timeout: 10000
+- takeScreenshot: scheduled_folder
+- back

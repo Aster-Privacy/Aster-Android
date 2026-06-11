@@ -1,0 +1,23 @@
+appId: ${APP_ID}
+tags:
+  - settings
+name: appearance_screen_toggles_theme
+---
+- runFlow: ../../setup/sign_in.yaml
+- runFlow: ../../setup/open_settings.yaml
+- tapOn:
+    text: "Appearance"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: appearance_screen
+- tapOn:
+    text: "Dark"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: dark_applied
+- tapOn:
+    text: "Light"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: light_applied
+- back

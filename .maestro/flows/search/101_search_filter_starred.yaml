@@ -1,0 +1,24 @@
+appId: ${APP_ID}
+tags:
+  - search
+  - manual
+name: search_starred_filter_chip
+---
+- runFlow: ../../setup/sign_in.yaml
+- tapOn:
+    id: "search"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "Search"
+    commands:
+      - tapOn:
+          text: "Search"
+          optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Starred"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: search_starred_filter
+- back

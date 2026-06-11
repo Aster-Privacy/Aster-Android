@@ -1,0 +1,18 @@
+appId: ${APP_ID}
+tags:
+  - mail
+name: star_and_unstar_message
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- longPressOn:
+    point: "50%,40%"
+- waitForAnimationToEnd
+- takeScreenshot: long_press_selection
+- tapOn:
+    text: "Star"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: after_star
+- back
+- waitForAnimationToEnd

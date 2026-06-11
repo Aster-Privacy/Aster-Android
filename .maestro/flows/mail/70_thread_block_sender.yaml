@@ -1,0 +1,27 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+  - destructive
+name: thread_block_sender
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- tapOn:
+    id: "more"
+    optional: true
+- tapOn:
+    text: "Block"
+    optional: true
+- runFlow:
+    when:
+      visible: "Block sender"
+    commands:
+      - tapOn:
+          text: "Block"
+          optional: true
+- waitForAnimationToEnd
+- takeScreenshot: after_block_sender

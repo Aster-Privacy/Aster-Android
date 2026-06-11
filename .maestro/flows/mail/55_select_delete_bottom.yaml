@@ -1,0 +1,24 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: select_mode_delete_bottom_bar
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- longPressOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- tapOn:
+    text: "Delete"
+    optional: true
+- runFlow:
+    when:
+      visible: "Delete"
+    commands:
+      - tapOn:
+          text: "Delete"
+          optional: true
+- waitForAnimationToEnd
+- takeScreenshot: after_bulk_delete
+- back

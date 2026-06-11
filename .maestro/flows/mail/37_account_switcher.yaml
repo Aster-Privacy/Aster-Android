@@ -1,0 +1,26 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: account_switcher_opens
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- swipe:
+    start: 5%,50%
+    end: 80%,50%
+- waitForAnimationToEnd
+- tapOn:
+    id: "account_avatar"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "Add account"
+    commands:
+      - tapOn:
+          point: "85%,15%"
+          optional: true
+- waitForAnimationToEnd
+- takeScreenshot: account_switcher
+- back
+- back

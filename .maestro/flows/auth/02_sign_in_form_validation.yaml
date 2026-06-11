@@ -1,0 +1,24 @@
+appId: ${APP_ID}
+tags:
+  - auth
+name: sign_in_validates_empty_submit
+---
+- launchApp:
+    clearState: true
+- assertVisible: "Log in"
+- tapOn: "Log in"
+- extendedWaitUntil:
+    visible: "Sign in to Aster"
+    timeout: 10000
+- assertVisible: "Username"
+- assertVisible: "Password"
+- assertVisible: "Forgot password?"
+- takeScreenshot: sign_in_empty
+- scrollUntilVisible:
+    element: "Sign In"
+    direction: DOWN
+- tapOn: "Sign In"
+- waitForAnimationToEnd
+- assertVisible: "Sign In"
+- assertVisible: "Forgot password?"
+- takeScreenshot: sign_in_after_empty_submit

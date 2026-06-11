@@ -1,0 +1,24 @@
+appId: ${APP_ID}
+tags:
+  - mail
+name: search_query_clears_and_returns_to_inbox
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    id: "search"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "Search"
+    commands:
+      - tapOn:
+          text: "Search"
+          optional: true
+- waitForAnimationToEnd
+- inputText: "asdf nonexistent query 12345"
+- hideKeyboard
+- takeScreenshot: search_with_no_results
+- back
+- waitForAnimationToEnd
+- assertVisible: "Inbox"

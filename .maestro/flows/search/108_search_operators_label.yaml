@@ -1,0 +1,17 @@
+appId: ${APP_ID}
+tags:
+  - search
+  - manual
+name: search_label_operator_tip
+---
+- runFlow: ../../setup/sign_in.yaml
+- tapOn:
+    id: "search"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "label:"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: search_label_operator
+- back

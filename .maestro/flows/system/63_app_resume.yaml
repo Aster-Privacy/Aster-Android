@@ -1,0 +1,16 @@
+appId: ${APP_ID}
+tags:
+  - system
+  - manual
+name: app_resume_after_background
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- pressKey: "Home"
+- waitForAnimationToEnd
+- launchApp:
+    clearState: false
+- extendedWaitUntil:
+    visible: "Inbox"
+    timeout: 10000
+- takeScreenshot: inbox_after_resume

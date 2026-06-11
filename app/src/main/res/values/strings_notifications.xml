@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notif_channel_new_mail_name">New mail</string>
+    <string name="notif_channel_new_mail_description">Notifications for new incoming emails</string>
+    <string name="notif_new_message">New message</string>
+    <string name="notif_action_reply">Reply</string>
+    <string name="notif_action_mark_read">Mark as read</string>
+    <string name="notif_action_archive">Archive</string>
+    <string name="notif_group_summary_new_mail">New mail</string>
+</resources>

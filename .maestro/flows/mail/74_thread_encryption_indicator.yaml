@@ -1,0 +1,19 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: encryption_indicator_visible
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- takeScreenshot: thread_encryption_badge
+- tapOn:
+    id: "encryption_badge"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: encryption_details
+- back
+- back

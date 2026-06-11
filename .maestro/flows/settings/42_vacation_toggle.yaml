@@ -1,0 +1,23 @@
+appId: ${APP_ID}
+tags:
+  - settings
+  - manual
+name: vacation_responder_toggle
+---
+- runFlow: ../../setup/sign_in.yaml
+- runFlow: ../../setup/open_settings.yaml
+- tapOn:
+    text: "Vacation"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: vacation_before
+- tapOn:
+    id: "vacation_toggle"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: vacation_after_toggle
+- tapOn:
+    id: "vacation_toggle"
+    optional: true
+- back
+- back

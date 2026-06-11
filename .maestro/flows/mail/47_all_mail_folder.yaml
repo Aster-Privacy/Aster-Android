@@ -1,0 +1,18 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: all_mail_filter_opens
+---
+- runFlow: ../../setup/sign_in.yaml
+- swipe:
+    start: 5%,50%
+    end: 80%,50%
+- waitForAnimationToEnd
+- tapOn:
+    text: "All Mail"
+    optional: true
+- extendedWaitUntil:
+    visible: "All Mail"
+    timeout: 10000
+- takeScreenshot: all_mail_filter

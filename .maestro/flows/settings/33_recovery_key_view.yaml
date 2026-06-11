@@ -1,0 +1,18 @@
+appId: ${APP_ID}
+tags:
+  - settings
+name: recovery_key_view_opens
+---
+- runFlow: ../../setup/sign_in.yaml
+- runFlow: ../../setup/open_settings.yaml
+- tapOn:
+    text: "Security"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Recovery key"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: recovery_key_view
+- back
+- back

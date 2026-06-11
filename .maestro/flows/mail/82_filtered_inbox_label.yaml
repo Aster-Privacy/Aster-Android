@@ -1,0 +1,21 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: filtered_inbox_by_label
+---
+- runFlow: ../../setup/sign_in.yaml
+- swipe:
+    start: 5%,50%
+    end: 80%,50%
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element:
+      text: "Labels"
+    direction: DOWN
+    timeout: 5000
+- tapOn:
+    point: "50%,70%"
+- waitForAnimationToEnd
+- takeScreenshot: filtered_inbox_label
+- back

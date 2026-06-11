@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="rules_section_sender">Sender</string>
+    <string name="rules_section_recipients">Recipients</string>
+    <string name="rules_section_content">Content</string>
+    <string name="rules_section_attachments_flags">Attachments and flags</string>
+    <string name="rules_section_numeric_date_auth">Numeric, date and auth</string>
+
+    <string name="rules_op_is">is</string>
+    <string name="rules_op_is_not">is not</string>
+    <string name="rules_op_contains">contains</string>
+    <string name="rules_op_does_not_contain">does not contain</string>
+    <string name="rules_op_starts_with">starts with</string>
+    <string name="rules_op_ends_with">ends with</string>
+    <string name="rules_op_is_empty">is empty</string>
+    <string name="rules_op_matches_domain">matches domain</string>
+    <string name="rules_op_matches_regex">matches regex</string>
+    <string name="rules_op_greater_than">greater than</string>
+    <string name="rules_op_less_than">less than</string>
+    <string name="rules_op_equals">equals</string>
+    <string name="rules_op_older_than">older than</string>
+    <string name="rules_op_newer_than">newer than</string>
+
+    <string name="rules_value_yes">yes</string>
+    <string name="rules_value_no">no</string>
+    <string name="rules_value_read">read</string>
+    <string name="rules_value_unread">unread</string>
+    <string name="rules_value_on">on</string>
+    <string name="rules_value_off">off</string>
+    <string name="rules_value_days">%1$d days</string>
+    <string name="rules_value_label_count">%1$d labels</string>
+    <string name="rules_value_placeholder_ellipsis">...</string>
+
+    <string name="rules_unit_kb">KB</string>
+    <string name="rules_unit_mb">MB</string>
+    <string name="rules_unit_gb">GB</string>
+
+    <string name="rules_category_primary">Primary</string>
+    <string name="rules_category_important">Important</string>
+    <string name="rules_category_promotions">Promotions</string>
+    <string name="rules_category_social">Social</string>
+    <string name="rules_category_updates">Updates</string>
+    <string name="rules_category_forums">Forums</string>
+
+    <string name="rules_no_labels">No labels yet</string>
+    <string name="rules_remove">Remove</string>
+    <string name="rules_delete_title">Delete rule?</string>
+    <string name="rules_delete_message">This rule will stop running on new mail. Existing changes are not reverted.</string>
+    <string name="rules_save_failed">Could not save rule</string>
+    <string name="rules_emails_count">%1$d emails</string>
+</resources>

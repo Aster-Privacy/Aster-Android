@@ -1,0 +1,22 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: thread_move_to_folder_sheet
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- tapOn:
+    id: "more"
+    optional: true
+- tapOn:
+    text: "Move"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: thread_move_sheet
+- back
+- back
+- back

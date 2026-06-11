@@ -1,0 +1,12 @@
+appId: ${APP_ID}
+tags:
+  - settings
+name: profile_screen_opens
+---
+- runFlow: ../../setup/sign_in.yaml
+- runFlow: ../../setup/open_settings.yaml
+- tapOn:
+    text: "Profile"
+- waitForAnimationToEnd
+- takeScreenshot: profile_screen
+- back

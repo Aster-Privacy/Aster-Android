@@ -1,0 +1,17 @@
+appId: ${APP_ID}
+tags:
+  - drawer
+  - manual
+name: drawer_inbox_navigates
+---
+- runFlow: ../../setup/sign_in.yaml
+- swipe:
+    start: 5%,50%
+    end: 80%,50%
+- waitForAnimationToEnd
+- takeScreenshot: drawer_open
+- tapOn:
+    text: "Inbox"
+- extendedWaitUntil:
+    visible: "Inbox"
+    timeout: 10000

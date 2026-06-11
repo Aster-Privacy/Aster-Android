@@ -1,0 +1,27 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: bulk_select_mode_archive
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- longPressOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- takeScreenshot: select_mode_active
+- tapOn:
+    point: "50%,40%"
+- tapOn:
+    id: "archive_selected"
+    optional: true
+- runFlow:
+    when:
+      visible: "Archive"
+    commands:
+      - tapOn:
+          text: "Archive"
+          optional: true
+- waitForAnimationToEnd
+- takeScreenshot: after_bulk_archive
+- back

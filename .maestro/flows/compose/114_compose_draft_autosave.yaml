@@ -1,0 +1,35 @@
+appId: ${APP_ID}
+tags:
+  - compose
+  - manual
+name: compose_draft_autosaves_then_drafts_folder
+---
+- runFlow: ../../setup/sign_in.yaml
+- tapOn:
+    id: "compose"
+    optional: true
+- extendedWaitUntil:
+    visible: "Subject"
+    timeout: 10000
+- tapOn: "Subject"
+- inputText: "Autosave draft test"
+- hideKeyboard
+- extendedWaitUntil:
+    visible: "Draft"
+    timeout: 8000
+    optional: true
+- takeScreenshot: draft_saved_indicator
+- back
+- runFlow:
+    when:
+      visible: "Keep"
+    commands:
+      - tapOn: "Keep"
+- tapOn: "Inbox"
+- tapOn:
+    text: "Drafts"
+    optional: true
+- extendedWaitUntil:
+    visible: "Autosave draft test"
+    timeout: 10000
+- takeScreenshot: draft_visible_in_drafts

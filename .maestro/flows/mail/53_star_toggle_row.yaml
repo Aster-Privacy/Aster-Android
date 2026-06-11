@@ -1,0 +1,24 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: star_button_toggles_on_row
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    id: "star_0"
+    optional: true
+- runFlow:
+    when:
+      notVisible:
+        id: "star_0"
+    commands:
+      - tapOn:
+          point: "92%,30%"
+- waitForAnimationToEnd
+- takeScreenshot: row_star_toggled
+- tapOn:
+    id: "star_0"
+    optional: true
+- waitForAnimationToEnd

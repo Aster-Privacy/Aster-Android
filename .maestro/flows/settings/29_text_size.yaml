@@ -1,0 +1,18 @@
+appId: ${APP_ID}
+tags:
+  - settings
+name: text_size_screen_opens
+---
+- runFlow: ../../setup/sign_in.yaml
+- runFlow: ../../setup/open_settings.yaml
+- tapOn:
+    text: "Appearance"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Text size"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: text_size_picker
+- back
+- back

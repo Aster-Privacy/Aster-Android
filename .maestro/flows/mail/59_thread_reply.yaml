@@ -1,0 +1,23 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: thread_reply_button_opens_compose
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- tapOn: "Reply"
+- extendedWaitUntil:
+    visible: "Subject"
+    timeout: 10000
+- takeScreenshot: reply_compose
+- back
+- runFlow:
+    when:
+      visible: "Discard"
+    commands:
+      - tapOn: "Discard"
+- back

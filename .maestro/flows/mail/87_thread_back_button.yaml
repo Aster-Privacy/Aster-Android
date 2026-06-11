@@ -1,0 +1,22 @@
+appId: ${APP_ID}
+tags:
+  - mail
+name: thread_back_button_returns_to_inbox
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- tapOn:
+    id: "back"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "Inbox"
+    commands:
+      - back
+- extendedWaitUntil:
+    visible: "Inbox"
+    timeout: 5000
+- takeScreenshot: returned_to_inbox

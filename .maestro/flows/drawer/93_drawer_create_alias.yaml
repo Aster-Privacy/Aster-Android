@@ -1,0 +1,31 @@
+appId: ${APP_ID}
+tags:
+  - drawer
+  - manual
+name: drawer_create_alias_dialog
+---
+- runFlow: ../../setup/sign_in.yaml
+- swipe:
+    start: 5%,50%
+    end: 80%,50%
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element:
+      text: "Aliases"
+    direction: DOWN
+    timeout: 5000
+- tapOn:
+    id: "create_alias"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "alias"
+    commands:
+      - tapOn:
+          text: "New Alias"
+          optional: true
+- waitForAnimationToEnd
+- takeScreenshot: create_alias_dialog
+- tapOn:
+    text: "Cancel"
+    optional: true

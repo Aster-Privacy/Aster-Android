@@ -1,0 +1,13 @@
+appId: ${APP_ID}
+tags:
+  - mail
+name: pull_to_refresh_inbox
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- swipe:
+    start: 50%,25%
+    end: 50%,80%
+- waitForAnimationToEnd
+- assertVisible: "Inbox"
+- takeScreenshot: after_pull_to_refresh

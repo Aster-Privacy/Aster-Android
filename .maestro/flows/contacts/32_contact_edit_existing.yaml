@@ -1,0 +1,27 @@
+appId: ${APP_ID}
+tags:
+  - contacts
+name: edit_existing_contact_navigation
+---
+- runFlow: ../../setup/sign_in.yaml
+- swipe:
+    start: 5%,50%
+    end: 80%,50%
+- waitForAnimationToEnd
+- tapOn: "Contacts"
+- extendedWaitUntil:
+    visible: "Contacts"
+    timeout: 10000
+- takeScreenshot: contacts_list_before_edit
+- tapOn:
+    point: "50%,40%"
+- waitForAnimationToEnd
+- takeScreenshot: contact_detail
+- tapOn:
+    text: "Edit"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: contact_edit
+- back
+- back
+- back

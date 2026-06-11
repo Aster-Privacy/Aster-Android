@@ -1,0 +1,21 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: thread_print_dialog
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- tapOn:
+    id: "more"
+    optional: true
+- tapOn:
+    text: "Print"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: print_dialog
+- back
+- back

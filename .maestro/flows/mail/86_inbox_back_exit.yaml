@@ -1,0 +1,10 @@
+appId: ${APP_ID}
+tags:
+  - mail
+name: inbox_back_minimizes_app
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- back
+- waitForAnimationToEnd
+- takeScreenshot: after_back_on_inbox

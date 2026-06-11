@@ -1,0 +1,53 @@
+appId: ${APP_ID}
+tags:
+  - contacts
+name: contact_create_and_delete_roundtrip
+---
+- runFlow: ../../setup/sign_in.yaml
+- swipe:
+    start: 5%,50%
+    end: 80%,50%
+- waitForAnimationToEnd
+- tapOn: "Contacts"
+- extendedWaitUntil:
+    visible: "Contacts"
+    timeout: 10000
+- tapOn:
+    text: "Add"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "Email"
+    commands:
+      - tapOn:
+          id: "fab_add_contact"
+          optional: true
+- waitForAnimationToEnd
+- takeScreenshot: contact_edit
+- tapOn:
+    text: "Name"
+    optional: true
+- inputText: "Maestro Bot"
+- hideKeyboard
+- tapOn:
+    text: "Email"
+    optional: true
+- inputText: "maestro_bot_contact@example.org"
+- hideKeyboard
+- tapOn:
+    text: "Save"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: contact_after_save
+- tapOn:
+    text: "Maestro Bot"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Delete"
+    optional: true
+- tapOn:
+    text: "Delete"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: contact_deleted

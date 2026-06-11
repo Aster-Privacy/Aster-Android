@@ -1,0 +1,12 @@
+appId: ${APP_ID}
+tags:
+  - system
+  - manual
+name: offline_inbox_shows_cached
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- takeScreenshot: inbox_online_baseline
+- extendedWaitUntil:
+    visible: "Inbox"
+    timeout: 15000

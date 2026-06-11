@@ -1,0 +1,26 @@
+appId: ${APP_ID}
+tags:
+  - search
+  - manual
+name: search_field_clear_x_button
+---
+- runFlow: ../../setup/sign_in.yaml
+- tapOn:
+    id: "search"
+    optional: true
+- waitForAnimationToEnd
+- inputText: "test"
+- takeScreenshot: search_with_text
+- tapOn:
+    id: "search_clear"
+    optional: true
+- runFlow:
+    when:
+      notVisible:
+        id: "search_clear"
+    commands:
+      - tapOn:
+          point: "92%,8%"
+          optional: true
+- takeScreenshot: search_after_clear
+- back

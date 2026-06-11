@@ -1,0 +1,29 @@
+appId: ${APP_ID}
+tags:
+  - compose
+  - manual
+name: compose_attachment_chip_remove
+---
+- runFlow: ../../setup/sign_in.yaml
+- tapOn:
+    id: "compose"
+    optional: true
+- extendedWaitUntil:
+    visible: "Subject"
+    timeout: 10000
+- tapOn:
+    id: "attach"
+    optional: true
+- waitForAnimationToEnd
+- back
+- tapOn:
+    id: "remove_attachment_0"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: after_attachment_remove
+- back
+- runFlow:
+    when:
+      visible: "Discard"
+    commands:
+      - tapOn: "Discard"

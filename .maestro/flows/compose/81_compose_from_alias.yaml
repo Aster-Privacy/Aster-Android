@@ -1,0 +1,32 @@
+appId: ${APP_ID}
+tags:
+  - compose
+  - manual
+name: compose_from_alias_sheet
+---
+- runFlow: ../../setup/sign_in.yaml
+- tapOn:
+    id: "compose"
+    optional: true
+- extendedWaitUntil:
+    visible: "Subject"
+    timeout: 10000
+- tapOn:
+    id: "from_field"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "alias"
+    commands:
+      - tapOn:
+          text: "From"
+          optional: true
+- waitForAnimationToEnd
+- takeScreenshot: from_alias_sheet
+- back
+- back
+- runFlow:
+    when:
+      visible: "Discard"
+    commands:
+      - tapOn: "Discard"

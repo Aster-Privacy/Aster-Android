@@ -1,0 +1,19 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: tracker_protection_indicator
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- takeScreenshot: thread_tracker_badge
+- tapOn:
+    id: "tracker_badge"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: tracker_details
+- back
+- back

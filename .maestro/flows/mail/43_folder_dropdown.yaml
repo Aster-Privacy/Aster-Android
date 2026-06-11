@@ -1,0 +1,33 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: folder_dropdown_cycle_each
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn: "Inbox"
+- waitForAnimationToEnd
+- takeScreenshot: folder_dropdown
+- tapOn:
+    text: "Sent"
+    optional: true
+- extendedWaitUntil:
+    visible: "Sent"
+    timeout: 10000
+- takeScreenshot: sent_folder
+- tapOn: "Sent"
+- tapOn:
+    text: "Drafts"
+    optional: true
+- extendedWaitUntil:
+    visible: "Drafts"
+    timeout: 10000
+- takeScreenshot: drafts_folder
+- tapOn: "Drafts"
+- tapOn:
+    text: "Inbox"
+    optional: true
+- extendedWaitUntil:
+    visible: "Inbox"
+    timeout: 10000

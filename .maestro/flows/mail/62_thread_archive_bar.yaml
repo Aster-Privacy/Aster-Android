@@ -1,0 +1,24 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: thread_archive_from_action_bar
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- takeScreenshot: thread_open
+- tapOn:
+    id: "archive"
+    optional: true
+- runFlow:
+    when:
+      visible: "Archive"
+    commands:
+      - tapOn:
+          text: "Archive"
+          optional: true
+- waitForAnimationToEnd
+- takeScreenshot: after_archive_thread

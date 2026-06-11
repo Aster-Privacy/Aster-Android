@@ -1,0 +1,32 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: inbox_sort_menu_options
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    id: "sort"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "Newest"
+    commands:
+      - tapOn:
+          text: "Sort"
+          optional: true
+- waitForAnimationToEnd
+- takeScreenshot: sort_menu
+- tapOn:
+    text: "Oldest"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: sorted_oldest
+- tapOn:
+    id: "sort"
+    optional: true
+- tapOn:
+    text: "Newest"
+    optional: true
+- waitForAnimationToEnd

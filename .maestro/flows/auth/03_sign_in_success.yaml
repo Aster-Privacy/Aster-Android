@@ -1,0 +1,33 @@
+appId: ${APP_ID}
+tags:
+  - smoke
+  - auth
+name: sign_in_success_reaches_inbox
+---
+- launchApp:
+    clearState: true
+- assertVisible: "Log in"
+- tapOn: "Log in"
+- extendedWaitUntil:
+    visible: "Sign in to Aster"
+    timeout: 10000
+- tapOn:
+    text: "yourname"
+- inputText: ${TEST_USERNAME}
+- hideKeyboard
+- runFlow:
+    when:
+      visible:
+        text: "@${TEST_DOMAIN}"
+    commands:
+      - tapOn: "@${TEST_DOMAIN}"
+- tapOn:
+    text: "Enter your password"
+- inputText: ${TEST_PASSWORD}
+- hideKeyboard
+- takeScreenshot: sign_in_filled
+- tapOn: "Sign In"
+- extendedWaitUntil:
+    visible: "Inbox"
+    timeout: 60000
+- takeScreenshot: inbox_after_sign_in

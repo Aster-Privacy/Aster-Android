@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    <domain-config>
+        <domain includeSubdomains="true">astermail.org</domain>
+        <pin-set expiration="2027-05-16">
+            <pin digest="SHA-256">xzW4Lh0h5AJczrSG3fvSOGZYUsDrxYyt0AlhLpZFUls=</pin>
+            <pin digest="SHA-256">DDf/bfpXnW80wMM5Y2b9zNCdohxBo5lX7rUMiw+DYO4=</pin>
+        </pin-set>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>

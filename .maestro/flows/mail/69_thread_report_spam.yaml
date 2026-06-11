@@ -1,0 +1,27 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+  - destructive
+name: thread_report_spam
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- tapOn:
+    id: "more"
+    optional: true
+- tapOn:
+    text: "Report Spam"
+    optional: true
+- runFlow:
+    when:
+      visible: "Spam"
+    commands:
+      - tapOn:
+          text: "Report"
+          optional: true
+- waitForAnimationToEnd
+- takeScreenshot: after_report_spam

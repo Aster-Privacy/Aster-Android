@@ -1,0 +1,14 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: swipe_email_archives_from_inbox
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- takeScreenshot: inbox_before_swipe
+- swipe:
+    start: 90%,30%
+    end: 10%,30%
+- waitForAnimationToEnd
+- takeScreenshot: inbox_after_swipe_archive

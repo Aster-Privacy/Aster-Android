@@ -1,0 +1,13 @@
+appId: ${APP_ID}
+tags:
+  - settings
+name: security_screen_opens
+---
+- runFlow: ../../setup/sign_in.yaml
+- runFlow: ../../setup/open_settings.yaml
+- tapOn:
+    text: "Security"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: security_screen
+- back

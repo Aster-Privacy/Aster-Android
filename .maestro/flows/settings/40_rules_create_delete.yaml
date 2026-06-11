@@ -1,0 +1,45 @@
+appId: ${APP_ID}
+tags:
+  - settings
+  - manual
+name: rules_create_then_delete
+---
+- runFlow: ../../setup/sign_in.yaml
+- runFlow: ../../setup/open_settings.yaml
+- tapOn:
+    text: "Rules"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: rules_list
+- tapOn:
+    id: "add_rule"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "Name"
+    commands:
+      - tapOn:
+          text: "Add"
+          optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Name"
+    optional: true
+- inputText: "Maestro rule"
+- hideKeyboard
+- takeScreenshot: rule_editor
+- tapOn:
+    text: "Save"
+    optional: true
+- waitForAnimationToEnd
+- longPressOn:
+    text: "Maestro rule"
+    optional: true
+- tapOn:
+    text: "Delete"
+    optional: true
+- tapOn:
+    text: "Delete"
+    optional: true
+- back
+- back

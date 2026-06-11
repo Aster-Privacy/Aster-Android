@@ -1,0 +1,12 @@
+appId: ${APP_ID}
+tags:
+  - mail
+name: pending_send_preview_opens_if_present
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    text: "Pending"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: pending_send_or_inbox

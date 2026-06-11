@@ -1,0 +1,17 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: thread_mark_read_action_bar
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- tapOn:
+    id: "mark_read"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: after_mark_read
+- back

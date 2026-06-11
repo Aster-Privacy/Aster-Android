@@ -1,0 +1,18 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: select_mode_add_label
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- longPressOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- tapOn:
+    text: "Label"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: label_picker_sheet
+- back
+- back

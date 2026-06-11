@@ -1,0 +1,17 @@
+appId: ${APP_ID}
+tags:
+  - drawer
+name: drawer_close_via_swipe
+---
+- runFlow: ../../setup/sign_in.yaml
+- swipe:
+    start: 5%,50%
+    end: 80%,50%
+- waitForAnimationToEnd
+- assertVisible: "Inbox"
+- swipe:
+    start: 80%,50%
+    end: 5%,50%
+- waitForAnimationToEnd
+- takeScreenshot: drawer_closed
+- assertVisible: "Inbox"

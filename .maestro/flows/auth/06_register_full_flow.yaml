@@ -1,0 +1,32 @@
+appId: ${APP_ID}
+tags:
+  - auth
+  - manual
+name: register_full_flow_navigation
+---
+- launchApp:
+    clearState: true
+- tapOn: "Create Account"
+- waitForAnimationToEnd
+- takeScreenshot: register_step_username
+- assertVisible:
+    text: "Username"
+    optional: true
+- tapOn:
+    text: "yourname"
+    optional: true
+- inputText: "maestro_dummy_account"
+- hideKeyboard
+- takeScreenshot: register_username_filled
+- tapOn:
+    text: "Continue"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "Continue"
+    commands:
+      - tapOn:
+          text: "Next"
+          optional: true
+- waitForAnimationToEnd
+- takeScreenshot: register_after_username

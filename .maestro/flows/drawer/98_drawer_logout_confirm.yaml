@@ -1,0 +1,29 @@
+appId: ${APP_ID}
+tags:
+  - drawer
+  - manual
+  - destructive
+name: drawer_logout_confirmation_dialog
+---
+- runFlow: ../../setup/sign_in.yaml
+- swipe:
+    start: 5%,50%
+    end: 80%,50%
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element:
+      text: "Logout"
+    direction: DOWN
+    timeout: 5000
+    optional: true
+- tapOn:
+    text: "Logout"
+    optional: true
+- extendedWaitUntil:
+    visible: "Logout"
+    timeout: 5000
+- takeScreenshot: logout_dialog
+- tapOn:
+    text: "Cancel"
+    optional: true
+- waitForAnimationToEnd

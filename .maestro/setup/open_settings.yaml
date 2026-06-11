@@ -1,0 +1,16 @@
+appId: ${APP_ID}
+---
+- runFlow:
+    when:
+      notVisible: "Profile"
+    commands:
+      - swipe:
+          start: 5%,50%
+          end: 80%,50%
+      - waitForAnimationToEnd
+      - tapOn:
+          text: "Settings"
+          optional: true
+      - extendedWaitUntil:
+          visible: "Profile"
+          timeout: 10000

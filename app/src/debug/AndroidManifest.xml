@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application
+        android:networkSecurityConfig="@xml/network_security_config"
+        tools:replace="android:networkSecurityConfig">
+        <activity
+            android:name=".DebugClipboardActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.NoDisplay" />
+        <receiver
+            android:name="org.astermail.android.debugtools.DebugNotificationReceiver"
+            android:exported="true"
+            tools:ignore="ExportedReceiver">
+            <intent-filter>
+                <action android:name="org.astermail.android.debug.SHOW_TEST_NOTIFICATION" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

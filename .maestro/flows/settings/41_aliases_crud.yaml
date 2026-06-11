@@ -1,0 +1,28 @@
+appId: ${APP_ID}
+tags:
+  - settings
+  - manual
+name: aliases_screen_open_and_add
+---
+- runFlow: ../../setup/sign_in.yaml
+- runFlow: ../../setup/open_settings.yaml
+- tapOn:
+    text: "Aliases"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: aliases_list
+- tapOn:
+    id: "add_alias"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "Alias"
+    commands:
+      - tapOn:
+          text: "Add"
+          optional: true
+- waitForAnimationToEnd
+- takeScreenshot: alias_editor
+- back
+- back
+- back

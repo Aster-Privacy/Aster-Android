@@ -1,0 +1,16 @@
+appId: ${APP_ID}
+tags:
+  - mail
+name: open_first_thread_and_back
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    point: "50%,50%"
+- waitForAnimationToEnd
+- takeScreenshot: thread_opened
+- assertNotVisible: "Inbox"
+- back
+- waitForAnimationToEnd
+- assertVisible: "Inbox"
+- takeScreenshot: back_to_inbox

@@ -1,0 +1,17 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: thread_collapse_and_expand_messages
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- takeScreenshot: thread_open
+- tapOn:
+    point: "50%,40%"
+- waitForAnimationToEnd
+- takeScreenshot: thread_message_toggled
+- back

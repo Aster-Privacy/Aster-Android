@@ -1,0 +1,28 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: snooze_message_from_thread
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- tapOn:
+    id: "more"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "Snooze"
+    commands:
+      - tapOn:
+          text: "More"
+          optional: true
+- tapOn:
+    text: "Snooze"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: snooze_sheet
+- back
+- back

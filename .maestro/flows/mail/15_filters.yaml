@@ -1,0 +1,18 @@
+appId: ${APP_ID}
+tags:
+  - mail
+name: inbox_filters_toggle_without_crash
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- takeScreenshot: inbox_default
+- tapOn:
+    text: "Starred"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: filter_starred
+- tapOn:
+    text: "Inbox"
+    optional: true
+- waitForAnimationToEnd
+- assertVisible: "Inbox"

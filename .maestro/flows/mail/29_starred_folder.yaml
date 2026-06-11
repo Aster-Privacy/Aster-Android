@@ -1,0 +1,20 @@
+appId: ${APP_ID}
+tags:
+  - mail
+name: starred_folder_opens
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- swipe:
+    start: 5%,50%
+    end: 80%,50%
+- waitForAnimationToEnd
+- tapOn:
+    text: "Starred"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: starred_folder
+- swipe:
+    start: 5%,50%
+    end: 80%,50%
+- tapOn: "Inbox"

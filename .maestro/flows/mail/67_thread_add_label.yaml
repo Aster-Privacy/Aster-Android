@@ -1,0 +1,22 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: thread_add_label_sheet
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- tapOn:
+    id: "more"
+    optional: true
+- tapOn:
+    text: "Add Label"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: thread_label_sheet
+- back
+- back
+- back

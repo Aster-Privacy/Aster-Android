@@ -1,0 +1,35 @@
+appId: ${APP_ID}
+tags:
+  - compose
+  - manual
+name: compose_rich_text_formatting_bar
+---
+- runFlow: ../../setup/sign_in.yaml
+- tapOn:
+    id: "compose"
+    optional: true
+- extendedWaitUntil:
+    visible: "Subject"
+    timeout: 10000
+- tapOn:
+    text: "Body"
+    optional: true
+- inputText: "Format test"
+- takeScreenshot: format_bar_visible
+- tapOn:
+    id: "format_bold"
+    optional: true
+- tapOn:
+    id: "format_italic"
+    optional: true
+- tapOn:
+    id: "format_underline"
+    optional: true
+- takeScreenshot: after_format_toggles
+- hideKeyboard
+- back
+- runFlow:
+    when:
+      visible: "Discard"
+    commands:
+      - tapOn: "Discard"

@@ -1,0 +1,34 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: undo_send_snackbar_appears
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    id: "compose"
+    optional: true
+- extendedWaitUntil:
+    visible: "Subject"
+    timeout: 10000
+- tapOn:
+    text: "To"
+    optional: true
+- inputText: ${TEST_USERNAME}@${TEST_DOMAIN}
+- hideKeyboard
+- tapOn: "Subject"
+- inputText: "Undo send test"
+- hideKeyboard
+- tapOn:
+    text: "Body"
+    optional: true
+- inputText: "Undo send body"
+- hideKeyboard
+- tapOn: "Send"
+- takeScreenshot: undo_snackbar
+- tapOn:
+    text: "Undo"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: after_undo

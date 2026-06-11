@@ -1,0 +1,18 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: select_mode_move_to_folder
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- longPressOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- tapOn:
+    text: "Move"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: move_folder_picker
+- back
+- back

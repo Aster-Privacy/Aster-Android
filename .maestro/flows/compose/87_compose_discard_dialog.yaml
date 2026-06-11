@@ -1,0 +1,25 @@
+appId: ${APP_ID}
+tags:
+  - compose
+  - manual
+name: compose_discard_confirmation
+---
+- runFlow: ../../setup/sign_in.yaml
+- tapOn:
+    id: "compose"
+    optional: true
+- extendedWaitUntil:
+    visible: "Subject"
+    timeout: 10000
+- tapOn: "Subject"
+- inputText: "Discard test"
+- hideKeyboard
+- back
+- extendedWaitUntil:
+    visible: "Discard"
+    timeout: 5000
+- takeScreenshot: discard_dialog
+- tapOn: "Keep"
+- waitForAnimationToEnd
+- back
+- tapOn: "Discard"

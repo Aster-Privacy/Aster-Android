@@ -1,0 +1,13 @@
+appId: ${APP_ID}
+tags:
+  - settings
+name: encryption_screen_opens
+---
+- runFlow: ../../setup/sign_in.yaml
+- runFlow: ../../setup/open_settings.yaml
+- tapOn:
+    text: "Encryption"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: encryption_screen
+- back

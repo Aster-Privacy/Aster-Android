@@ -1,0 +1,13 @@
+appId: ${APP_ID}
+---
+- runFlow:
+    when:
+      notVisible: "Inbox"
+    commands:
+      - launchApp:
+          clearState: false
+      - extendedWaitUntil:
+          visible: "Inbox"
+          timeout: 8000
+- assertVisible:
+    text: "Inbox"

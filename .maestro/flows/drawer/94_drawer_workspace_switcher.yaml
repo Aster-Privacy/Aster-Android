@@ -1,0 +1,25 @@
+appId: ${APP_ID}
+tags:
+  - drawer
+  - manual
+name: drawer_workspace_switcher_sheet
+---
+- runFlow: ../../setup/sign_in.yaml
+- swipe:
+    start: 5%,50%
+    end: 80%,50%
+- waitForAnimationToEnd
+- tapOn:
+    id: "workspace_switcher"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "Add Account"
+    commands:
+      - tapOn:
+          point: "85%,15%"
+          optional: true
+- waitForAnimationToEnd
+- takeScreenshot: workspace_switcher_sheet
+- back
+- back

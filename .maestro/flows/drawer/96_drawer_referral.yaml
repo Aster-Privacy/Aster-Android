@@ -1,0 +1,23 @@
+appId: ${APP_ID}
+tags:
+  - drawer
+  - manual
+name: drawer_referral_button
+---
+- runFlow: ../../setup/sign_in.yaml
+- swipe:
+    start: 5%,50%
+    end: 80%,50%
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element:
+      text: "Refer"
+    direction: DOWN
+    timeout: 5000
+    optional: true
+- tapOn:
+    text: "Refer"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: referral_screen
+- back

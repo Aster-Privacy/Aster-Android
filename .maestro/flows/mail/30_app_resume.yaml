@@ -1,0 +1,16 @@
+appId: ${APP_ID}
+tags:
+  - mail
+name: app_survives_backgrounding
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- pressKey: HOME
+- waitForAnimationToEnd
+- takeScreenshot: home_screen
+- launchApp:
+    clearState: false
+- extendedWaitUntil:
+    visible: "Inbox"
+    timeout: 10000
+- takeScreenshot: inbox_after_resume

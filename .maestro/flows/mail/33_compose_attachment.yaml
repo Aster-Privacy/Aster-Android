@@ -1,0 +1,35 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: compose_with_attachment_picker
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    id: "compose"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "Subject"
+    commands:
+      - tapOn:
+          text: "compose"
+          optional: true
+- extendedWaitUntil:
+    visible: "Subject"
+    timeout: 10000
+- tapOn:
+    id: "attach"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "Recent"
+    commands:
+      - tapOn:
+          text: "Attach"
+          optional: true
+- waitForAnimationToEnd
+- takeScreenshot: attachment_picker
+- back
+- back

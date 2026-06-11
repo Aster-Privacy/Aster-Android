@@ -1,0 +1,29 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: mailing_lists_reactivate_button
+---
+- runFlow: ../../setup/sign_in.yaml
+- swipe:
+    start: 5%,50%
+    end: 80%,50%
+- waitForAnimationToEnd
+- tapOn:
+    text: "Subscriptions"
+    optional: true
+- extendedWaitUntil:
+    visible: "Subscriptions"
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: "UNSUBSCRIBED"
+    direction: DOWN
+    timeout: 5000
+    optional: true
+- tapOn:
+    text: "Reactivate"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: after_reactivate
+- back

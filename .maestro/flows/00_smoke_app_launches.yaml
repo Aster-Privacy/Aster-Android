@@ -1,0 +1,12 @@
+appId: ${APP_ID}
+tags:
+  - smoke
+name: app_launches_without_crash
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- waitForAnimationToEnd
+- takeScreenshot: app_launched
+- assertNotVisible: "Application not responding"
+- assertNotVisible: "has stopped"

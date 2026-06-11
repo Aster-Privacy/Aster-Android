@@ -1,0 +1,28 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: thread_view_raw_source
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- tapOn:
+    id: "more"
+    optional: true
+- tapOn:
+    text: "View Raw"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "From:"
+    commands:
+      - tapOn:
+          text: "Raw"
+          optional: true
+- waitForAnimationToEnd
+- takeScreenshot: raw_source_dialog
+- back
+- back

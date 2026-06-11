@@ -1,0 +1,25 @@
+appId: ${APP_ID}
+tags:
+  - compose
+  - manual
+name: compose_send_disabled_without_recipient
+---
+- runFlow: ../../setup/sign_in.yaml
+- tapOn:
+    id: "compose"
+    optional: true
+- extendedWaitUntil:
+    visible: "Subject"
+    timeout: 10000
+- tapOn: "Subject"
+- inputText: "No recipient yet"
+- hideKeyboard
+- takeScreenshot: compose_send_disabled
+- tapOn: "Send"
+- assertVisible: "Subject"
+- back
+- runFlow:
+    when:
+      visible: "Discard"
+    commands:
+      - tapOn: "Discard"

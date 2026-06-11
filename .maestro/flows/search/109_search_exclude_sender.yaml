@@ -1,0 +1,17 @@
+appId: ${APP_ID}
+tags:
+  - search
+  - manual
+name: search_exclude_sender_operator
+---
+- runFlow: ../../setup/sign_in.yaml
+- tapOn:
+    id: "search"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "-from:"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: search_exclude_from
+- back

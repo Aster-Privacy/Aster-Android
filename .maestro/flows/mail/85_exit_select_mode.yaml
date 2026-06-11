@@ -1,0 +1,24 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: exit_select_mode_via_x
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- longPressOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- takeScreenshot: select_mode_active
+- tapOn:
+    id: "exit_select"
+    optional: true
+- runFlow:
+    when:
+      notVisible:
+        id: "exit_select"
+    commands:
+      - back
+- waitForAnimationToEnd
+- takeScreenshot: select_mode_exited
+- assertVisible: "Inbox"

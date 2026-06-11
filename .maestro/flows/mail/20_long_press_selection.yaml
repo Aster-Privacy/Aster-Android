@@ -1,0 +1,15 @@
+appId: ${APP_ID}
+tags:
+  - mail
+name: long_press_selection_mode_toggles
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- longPressOn:
+    point: "50%,40%"
+- waitForAnimationToEnd
+- takeScreenshot: selection_mode_active
+- back
+- waitForAnimationToEnd
+- assertVisible: "Inbox"
+- takeScreenshot: selection_mode_cleared

@@ -1,0 +1,121 @@
+//
+// Aster Communications Inc.
+//
+// Copyright (c) 2026 Aster Communications Inc.
+//
+// This file is part of this project.
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
+//
+
+package org.astermail.android.api.ghost
+
+import io.ktor.client.call.body
+import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import kotlinx.serialization.Serializable
+import org.astermail.android.api.ApiClient
+import org.astermail.android.api.ApiError
+
+@Serializable
+data class GhostAlias(
+    val id: String = "",
+    val address: String = "",
+    val note: String = "",
+    val enabled: Boolean = true,
+    val expires_at: String? = null,
+    val created_at: String? = null,
+    val forward_count: Int = 0,
+)
+
+@Serializable
+data class GhostAliasListResponse(
+    val aliases: List<GhostAlias> = emptyList(),
+)
+
+@Serializable
+data class CreateGhostAliasRequest(
+    val note: String = "",
+)
+
+@Serializable
+data class CreateGhostAliasResponse(
+    val id: String = "",
+    val address: String = "",
+    val success: Boolean = false,
+)
+
+interface GhostAliasApi {
+    suspend fun list_ghost_aliases(): GhostAliasListResponse
+    suspend fun create_ghost_alias(request: CreateGhostAliasRequest): CreateGhostAliasResponse
+    suspend fun expire_ghost_alias(alias_id: String)
+    suspend fun extend_ghost_alias(alias_id: String)
+}
+
+class GhostAliasApiImpl(private val client: ApiClient) : GhostAliasApi {
+    private val base = "/api/addresses/v1/aliases/ghost"
+
+    override suspend fun list_ghost_aliases(): GhostAliasListResponse {
+        val response = client.http.get("${client.base_url}$base")
+        return decode_or_throw(response)
+    }
+
+    override suspend fun create_ghost_alias(request: CreateGhostAliasRequest): CreateGhostAliasResponse {
+        val response = client.http.post("${client.base_url}$base") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun expire_ghost_alias(alias_id: String) {
+        val response = client.http.post("${client.base_url}$base/$alias_id/expire") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody("{}")
+        }
+        if (response.status.value !in 200..299) {
+            throw client.map_http_status(response.status.value, "")
+        }
+    }
+
+    override suspend fun extend_ghost_alias(alias_id: String) {
+        val response = client.http.post("${client.base_url}$base/$alias_id/extend") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody("{}")
+        }
+        if (response.status.value !in 200..299) {
+            throw client.map_http_status(response.status.value, "")
+        }
+    }
+
+    private suspend inline fun <reified T> decode_or_throw(response: HttpResponse): T {
+        if (response.status.value !in 200..299) {
+            val body = try { response.body<String>() } catch (_: Throwable) { "" }
+            throw client.map_http_status(response.status.value, body)
+        }
+        return try {
+            response.body()
+        } catch (t: Throwable) {
+            throw ApiError.UnknownError(t.message ?: "decode failed")
+        }
+    }
+}

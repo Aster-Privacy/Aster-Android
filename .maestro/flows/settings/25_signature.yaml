@@ -1,0 +1,13 @@
+appId: ${APP_ID}
+tags:
+  - settings
+name: signature_screen_opens
+---
+- runFlow: ../../setup/sign_in.yaml
+- runFlow: ../../setup/open_settings.yaml
+- tapOn:
+    text: "Signature"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: signature_screen
+- back

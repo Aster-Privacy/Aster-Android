@@ -1,0 +1,18 @@
+appId: ${APP_ID}
+tags:
+  - mail
+name: swipe_left_right_on_email_row
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- swipe:
+    start: 90%,40%
+    end: 10%,40%
+- waitForAnimationToEnd
+- takeScreenshot: swipe_left
+- swipe:
+    start: 10%,40%
+    end: 90%,40%
+- waitForAnimationToEnd
+- takeScreenshot: swipe_right
+- assertVisible: "Inbox"

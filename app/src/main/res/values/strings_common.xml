@@ -1,0 +1,7 @@
+<resources>
+    <string name="common_back">Back</string>
+    <string name="common_storage_used_of_total">%1$s of %2$s</string>
+    <string name="common_storage_used_only">%1$s used</string>
+    <string name="common_snackbar_dismiss">Dismiss</string>
+    <string name="common_snackbar_undo">Undo</string>
+</resources>

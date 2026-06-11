@@ -1,0 +1,11 @@
+appId: ${APP_ID}
+tags:
+  - smoke
+  - mail
+name: inbox_loads_and_renders
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- takeScreenshot: inbox_loaded
+- waitForAnimationToEnd
+- takeScreenshot: inbox_after_settle

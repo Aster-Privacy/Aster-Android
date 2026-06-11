@@ -1,0 +1,24 @@
+appId: ${APP_ID}
+tags:
+  - mail
+name: search_screen_opens_and_accepts_query
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    text: "Search"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "Search"
+    commands:
+      - tapOn:
+          id: "search"
+          optional: true
+- waitForAnimationToEnd
+- takeScreenshot: search_open
+- inputText: "test"
+- hideKeyboard
+- takeScreenshot: search_with_query
+- back
+- assertVisible: "Inbox"

@@ -1,0 +1,13 @@
+appId: ${APP_ID}
+tags:
+  - settings
+name: blocked_senders_screen_opens
+---
+- runFlow: ../../setup/sign_in.yaml
+- runFlow: ../../setup/open_settings.yaml
+- tapOn:
+    text: "Blocked"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: blocked_screen
+- back

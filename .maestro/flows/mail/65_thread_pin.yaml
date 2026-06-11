@@ -1,0 +1,26 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: thread_pin_via_more_menu
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- tapOn:
+    id: "more"
+    optional: true
+- tapOn:
+    text: "Pin"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: after_pin
+- tapOn:
+    id: "more"
+    optional: true
+- tapOn:
+    text: "Unpin"
+    optional: true
+- back

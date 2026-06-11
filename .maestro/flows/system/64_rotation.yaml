@@ -1,0 +1,15 @@
+appId: ${APP_ID}
+tags:
+  - system
+  - manual
+name: rotation_preserves_state
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- setOrientation: LANDSCAPE
+- waitForAnimationToEnd
+- takeScreenshot: inbox_landscape
+- setOrientation: PORTRAIT
+- waitForAnimationToEnd
+- assertVisible: "Inbox"
+- takeScreenshot: inbox_portrait

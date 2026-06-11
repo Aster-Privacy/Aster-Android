@@ -1,0 +1,13 @@
+<resources>
+    <string name="compose_footer_secured_by_plain">Secured by Aster Mail</string>
+    <string name="compose_footer_secured_by_label">Secured by</string>
+    <string name="compose_footer_brand">Aster Mail</string>
+    <string name="compose_quote_forwarded_message">Forwarded message</string>
+    <string name="compose_quote_original_message">Original message</string>
+    <string name="compose_quote_show_label">Show %1$s</string>
+    <string name="compose_quote_header_from">From:</string>
+    <string name="compose_quote_header_date">Date:</string>
+    <string name="compose_quote_header_subject">Subject:</string>
+    <string name="compose_attachment_remove">Remove attachment</string>
+    <string name="compose_attachment_uploading">Uploading attachment %1$s</string>
+</resources>

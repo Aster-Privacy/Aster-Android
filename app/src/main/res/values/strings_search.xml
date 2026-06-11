@@ -1,0 +1,33 @@
+<resources>
+    <string name="search_placeholder">Search mail</string>
+    <string name="search_clear_cd">Clear search</string>
+    <string name="search_back_cd">Back</string>
+    <string name="search_remove_filter_cd">Remove filter</string>
+    <string name="search_empty_initial_title">Search your mail</string>
+    <string name="search_empty_initial_subtitle">Find messages by sender, subject, or content. All searches happen on this device.</string>
+    <string name="search_empty_no_results_title">No results</string>
+    <string name="search_empty_no_results_subtitle">Try a different keyword or remove filters.</string>
+    <string name="search_recent_header">Recent</string>
+    <string name="search_recent_clear">Clear</string>
+    <string name="search_quick_all">All</string>
+    <string name="search_quick_unread">Unread</string>
+    <string name="search_quick_attachments">Attachments</string>
+    <string name="search_quick_flagged">Flagged</string>
+    <string name="search_filter_has_attachment">Has attachment</string>
+    <string name="search_filter_unread">Unread</string>
+    <string name="search_filter_starred">Starred</string>
+    <string name="search_filter_encrypted">Encrypted</string>
+    <string name="search_chip_from">From</string>
+    <string name="search_chip_to">To</string>
+    <string name="search_chip_subject">Subject</string>
+    <string name="search_chip_has">Has</string>
+    <string name="search_chip_is">Is</string>
+    <string name="search_chip_in">In</string>
+    <string name="search_chip_before">Before</string>
+    <string name="search_chip_after">After</string>
+    <string name="search_chip_date">Date</string>
+    <string name="search_chip_label">Label</string>
+    <string name="search_chip_not_prefix">Not</string>
+    <string name="search_chip_format">%1$s: %2$s</string>
+    <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>
+</resources>

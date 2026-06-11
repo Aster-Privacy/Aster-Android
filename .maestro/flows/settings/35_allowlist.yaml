@@ -1,0 +1,13 @@
+appId: ${APP_ID}
+tags:
+  - settings
+name: allowlist_screen_opens
+---
+- runFlow: ../../setup/sign_in.yaml
+- runFlow: ../../setup/open_settings.yaml
+- tapOn:
+    text: "Allowlist"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: allowlist_screen
+- back

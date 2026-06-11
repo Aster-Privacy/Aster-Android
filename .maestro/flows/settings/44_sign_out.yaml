@@ -1,0 +1,28 @@
+appId: ${APP_ID}
+tags:
+  - settings
+  - manual
+  - destructive
+name: sign_out_returns_to_welcome
+---
+- runFlow: ../../setup/sign_in.yaml
+- runFlow: ../../setup/open_settings.yaml
+- scrollUntilVisible:
+    element:
+      text: "Sign Out"
+    direction: DOWN
+    timeout: 10000
+    speed: 40
+- tapOn: "Sign Out"
+- runFlow:
+    when:
+      visible: "Sign out"
+    commands:
+      - tapOn:
+          text: "Sign Out"
+          index: 1
+          optional: true
+- extendedWaitUntil:
+    visible: "Log in"
+    timeout: 15000
+- takeScreenshot: after_sign_out

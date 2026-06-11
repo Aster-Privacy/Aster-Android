@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="detail_show_details">Show details</string>
+    <string name="detail_hide_details">Hide details</string>
+    <string name="detail_show_quoted_text">Show quoted text</string>
+    <string name="detail_hide_quoted_text">Hide quoted text</string>
+    <string name="detail_external_images_blocked">This message contains remote content. Loading it can reveal your activity to the sender.</string>
+    <string name="detail_external_allow_once">Load once</string>
+    <string name="detail_external_always_allow">Always allow</string>
+    <string name="detail_external_dismiss">Not now</string>
+    <string name="detail_unsubscribe_title">This sender supports one-click unsubscribe.</string>
+    <string name="detail_unsubscribe_subtitle">You will stop receiving messages from this address.</string>
+    <string name="detail_view_raw_source">View raw source</string>
+    <string name="detail_raw_source_title">Raw message source</string>
+    <string name="detail_raw_source_headers">Headers</string>
+    <string name="detail_raw_source_body">Body</string>
+    <string name="detail_raw_source_copy">Copy</string>
+    <string name="detail_raw_source_copied">Copied to clipboard</string>
+    <string name="detail_raw_source_close">Close</string>
+    <string name="detail_raw_source_unavailable">Raw source is unavailable for this message.</string>
+    <string name="detail_star_action">Star message</string>
+    <string name="detail_unstar_action">Unstar message</string>
+</resources>

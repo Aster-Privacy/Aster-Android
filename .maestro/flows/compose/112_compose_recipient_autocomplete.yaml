@@ -1,0 +1,26 @@
+appId: ${APP_ID}
+tags:
+  - compose
+  - manual
+name: compose_recipient_autocomplete_suggestion
+---
+- runFlow: ../../setup/sign_in.yaml
+- tapOn:
+    id: "compose"
+    optional: true
+- extendedWaitUntil:
+    visible: "Subject"
+    timeout: 10000
+- tapOn:
+    text: "To"
+    optional: true
+- inputText: "a"
+- waitForAnimationToEnd
+- takeScreenshot: autocomplete_suggestions
+- hideKeyboard
+- back
+- runFlow:
+    when:
+      visible: "Discard"
+    commands:
+      - tapOn: "Discard"

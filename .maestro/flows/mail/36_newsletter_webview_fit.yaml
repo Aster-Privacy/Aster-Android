@@ -1,0 +1,26 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+  - regression
+name: newsletter_html_fits_width
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- scrollUntilVisible:
+    element:
+      text: ".*[Nn]ewsletter.*"
+    direction: DOWN
+    timeout: 15000
+    speed: 40
+    visibilityPercentage: 50
+- tapOn:
+    text: ".*[Nn]ewsletter.*"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "message_body"
+    timeout: 15000
+    optional: true
+- takeScreenshot: newsletter_render
+- back

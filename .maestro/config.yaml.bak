@@ -1,0 +1,10 @@
+appId: ${APP_ID}
+name: aster_mail_android_e2e
+
+env:
+  TEST_USERNAME: ${TEST_USERNAME}
+  TEST_DOMAIN: ${TEST_DOMAIN}
+  TEST_PASSWORD: ${TEST_PASSWORD}
+
+executionOrder:
+  continueOnFailure: true

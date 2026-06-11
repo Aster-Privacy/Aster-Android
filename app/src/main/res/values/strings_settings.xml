@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_compare_plans">Compare plans</string>
+
+    <string name="settings_cat_storage_limits">Storage &amp; limits</string>
+    <string name="settings_cat_email_features">Email features</string>
+    <string name="settings_cat_organization">Organization</string>
+    <string name="settings_cat_security">Security</string>
+    <string name="settings_cat_privacy">Privacy</string>
+    <string name="settings_cat_import_export">Import &amp; export</string>
+    <string name="settings_cat_support">Support</string>
+    <string name="settings_cat_apps_integrations">Apps &amp; integrations</string>
+
+    <string name="settings_feat_secure_storage">Secure storage</string>
+    <string name="settings_feat_max_attachment">Max attachment size</string>
+    <string name="settings_feat_daily_send">Daily send limit</string>
+    <string name="settings_feat_email_retention">Email retention</string>
+    <string name="settings_feat_e2ee">End-to-end encryption</string>
+    <string name="settings_feat_zero_knowledge">Zero-knowledge architecture</string>
+    <string name="settings_feat_aliases">Email aliases</string>
+    <string name="settings_feat_custom_domains">Custom domains</string>
+    <string name="settings_feat_scheduled_send">Scheduled sending</string>
+    <string name="settings_feat_undo_send">Undo send</string>
+    <string name="settings_feat_read_receipts">Read receipts</string>
+    <string name="settings_feat_email_templates">Email templates</string>
+    <string name="settings_feat_auto_responder">Auto-responder</string>
+    <string name="settings_feat_alias_avatars">Alias avatars</string>
+    <string name="settings_feat_folders">Folders</string>
+    <string name="settings_feat_labels">Labels</string>
+    <string name="settings_feat_smart_folders">Smart folders</string>
+    <string name="settings_feat_advanced_search">Advanced search</string>
+    <string name="settings_feat_search_history">Search history</string>
+    <string name="settings_feat_contacts">Contacts</string>
+    <string name="settings_feat_contact_groups">Contact groups</string>
+    <string name="settings_feat_two_factor">Two-factor authentication</string>
+    <string name="settings_feat_recovery_codes">Recovery codes</string>
+    <string name="settings_feat_password_folders">Password-protected folders</string>
+    <string name="settings_feat_session_mgmt">Session management</string>
+    <string name="settings_feat_login_notifs">Login notifications</string>
+    <string name="settings_feat_encrypted_exports">Encrypted exports</string>
+    <string name="settings_feat_hardware_keys">Hardware security keys</string>
+    <string name="settings_feat_no_ads">No ads</string>
+    <string name="settings_feat_no_tracking">No tracking</string>
+    <string name="settings_feat_anonymous_signup">Anonymous signup</string>
+    <string name="settings_feat_tor_support">Tor support</string>
+    <string name="settings_feat_link_tracking">Link tracking protection</string>
+    <string name="settings_feat_tracker_protection">Tracker protection</string>
+    <string name="settings_feat_remote_image_blocking">Remote image blocking</string>
+    <string name="settings_feat_import_gmail">Import from Gmail</string>
+    <string name="settings_feat_import_outlook">Import from Outlook</string>
+    <string name="settings_feat_mbox_import">MBOX import</string>
+    <string name="settings_feat_export_emails">Export emails</string>
+    <string name="settings_feat_export_contacts">Export contacts</string>
+    <string name="settings_feat_help_center">Help center</string>
+    <string name="settings_feat_community_forum">Community forum</string>
+    <string name="settings_feat_email_support">Email support</string>
+    <string name="settings_feat_priority_support">Priority support</string>
+    <string name="settings_feat_response_time">Response time</string>
+    <string name="settings_feat_web_app">Web app</string>
+    <string name="settings_feat_ios_app">iOS app</string>
+    <string name="settings_feat_android_app">Android app</string>
+    <string name="settings_feat_desktop_app">Desktop app</string>
+    <string name="settings_feat_browser_ext">Browser extension</string>
+    <string name="settings_feat_imap_smtp">IMAP / SMTP</string>
+
+    <string name="settings_val_unlimited">Unlimited</string>
+    <string name="settings_val_dash">-</string>
+    <string name="settings_val_gb">%1$d GB</string>
+    <string name="settings_val_tb">%1$d TB</string>
+    <string name="settings_val_mb">%1$d MB</string>
+    <string name="settings_val_emails_per_day">%1$d emails</string>
+    <string name="settings_val_days">%1$d days</string>
+    <string name="settings_val_one_year">1 year</string>
+    <string name="settings_val_hours">%1$d hours</string>
+    <string name="settings_val_count">%1$d</string>
+
+    <string name="settings_plan_free_tagline">End-to-end encrypted email, on us.</string>
+    <string name="settings_plan_plus_tagline">More space, more aliases, no ads.</string>
+    <string name="settings_plan_pro_tagline">For power users and small teams.</string>
+    <string name="settings_plan_nova_tagline">For power users who need more storage, custom domains, and aliases.</string>
+    <string name="settings_plan_supernova_tagline">Maximum storage, unlimited everything, and dedicated support.</string>
+    <string name="settings_plan_price_free">$0</string>
+    <string name="settings_plan_price_plus">$4 / mo</string>
+    <string name="settings_plan_price_pro">$9 / mo</string>
+    <string name="settings_plan_price_nova">$8.99 / mo</string>
+    <string name="settings_plan_price_supernova">$17.99 / mo</string>
+
+    <string name="settings_plan_bullet_free_storage">1 GB encrypted storage</string>
+    <string name="settings_plan_bullet_one_address">1 Aster address</string>
+    <string name="settings_plan_bullet_basic_mailbox">Basic mailbox</string>
+    <string name="settings_plan_bullet_plus_storage">20 GB encrypted storage</string>
+    <string name="settings_plan_bullet_ten_aliases">10 aliases</string>
+    <string name="settings_plan_bullet_custom_signature">Custom signature</string>
+    <string name="settings_plan_bullet_priority_support">Priority support</string>
+    <string name="settings_plan_bullet_pro_storage">100 GB encrypted storage</string>
+    <string name="settings_plan_bullet_unlimited_aliases">Unlimited aliases</string>
+    <string name="settings_plan_bullet_custom_domains">Custom domains</string>
+    <string name="settings_plan_bullet_filters_rules">Filters &amp; rules</string>
+    <string name="settings_plan_bullet_vacation_reply">Vacation reply</string>
+    <string name="settings_plan_bullet_star_storage">50 GB encrypted storage</string>
+    <string name="settings_plan_bullet_advanced_filters">Advanced filters</string>
+    <string name="settings_plan_bullet_nova_storage">100 GB encrypted storage</string>
+    <string name="settings_plan_bullet_ghost_aliases">Ghost aliases</string>
+    <string name="settings_plan_bullet_catch_all">Catch-all addresses</string>
+    <string name="settings_plan_bullet_one_alias">1 alias</string>
+    <string name="settings_plan_bullet_e2ee">End-to-end encryption</string>
+    <string name="settings_plan_bullet_zero_knowledge">Zero-knowledge architecture</string>
+    <string name="settings_plan_bullet_pro_basic_storage">25 GB encrypted storage</string>
+
+    <string name="settings_price_per_month">$%1$.2f / mo</string>
+    <string name="settings_price_per_interval">$%1$.2f / %2$s</string>
+    <string name="settings_interval_default">mo</string>
+
+    <string name="settings_diagnostics_clip_label">Diagnostics</string>
+
+    <string name="log_out_confirm_title">Sign out?</string>
+    <string name="log_out_confirm_message">Sign out of %1$s on this device?</string>
+    <string name="revoke_session_confirm_message">Sign this device out of your account?</string>
+    <string name="sign_out_all_other_confirm_message">Sign out every device except this one?</string>
+</resources>

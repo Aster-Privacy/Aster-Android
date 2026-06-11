@@ -1,0 +1,12 @@
+appId: ${APP_ID}
+tags:
+  - subscriptions
+name: upgrade_sheet_opens
+---
+- runFlow: ../../setup/sign_in.yaml
+- tapOn:
+    text: "Upgrade"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: upgrade_sheet
+- back

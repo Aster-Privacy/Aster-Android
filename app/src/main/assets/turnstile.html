@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  html, body { margin:0; padding:0; background:transparent; display:flex;
+    align-items:center; justify-content:center; min-height:65px; overflow:hidden;
+    color-scheme:dark; }
+  .cf-wrap { overflow:hidden; border-radius:4px; line-height:0; }
+  #cf { margin:-3px; line-height:0; }
+</style>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=_onLoad" async defer></script>
+<script>
+var _wid;
+function _onLoad() {
+  var params = new URLSearchParams(window.location.search);
+  var sitekey = params.get('sitekey') || '';
+  _wid = turnstile.render('#cf', {
+    sitekey: sitekey,
+    theme: 'dark',
+    callback: function(token) { AsterBridge.onToken(token); },
+    'error-callback': function() { AsterBridge.onError('captcha_failed'); },
+    'expired-callback': function() { AsterBridge.onExpired(); }
+  });
+}
+function _reset() { if (_wid !== undefined) turnstile.reset(_wid); }
+</script>
+</head>
+<body><div class="cf-wrap"><div id="cf"></div></div></body>
+</html>

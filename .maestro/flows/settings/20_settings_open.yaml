@@ -1,0 +1,27 @@
+appId: ${APP_ID}
+tags:
+  - smoke
+  - settings
+name: settings_screen_opens
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- swipe:
+    start: 5%,50%
+    end: 80%,50%
+- waitForAnimationToEnd
+- tapOn:
+    text: "Settings"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "Profile"
+    commands:
+      - tapOn:
+          id: "settings"
+          optional: true
+- waitForAnimationToEnd
+- takeScreenshot: settings_open
+- assertVisible:
+    text: "Profile"
+    optional: true

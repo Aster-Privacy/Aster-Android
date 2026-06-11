@@ -1,0 +1,20 @@
+appId: ${APP_ID}
+tags:
+  - system
+  - manual
+name: notification_permission_prompt
+---
+- launchApp:
+    clearState: true
+    permissions:
+      notifications: deny
+- waitForAnimationToEnd
+- takeScreenshot: launch_with_notifications_denied
+- runFlow:
+    when:
+      visible: "Allow"
+    commands:
+      - takeScreenshot: notification_prompt_visible
+      - tapOn:
+          text: "Allow"
+          optional: true

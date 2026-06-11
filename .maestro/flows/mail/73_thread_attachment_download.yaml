@@ -1,0 +1,31 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: attachment_download_tap
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- scrollUntilVisible:
+    element:
+      id: "attachment_icon"
+    direction: DOWN
+    timeout: 10000
+    optional: true
+- tapOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- tapOn:
+    id: "attachment_chip"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "Download"
+    commands:
+      - tapOn:
+          text: "attachment"
+          optional: true
+- waitForAnimationToEnd
+- takeScreenshot: attachment_action_sheet
+- back
+- back

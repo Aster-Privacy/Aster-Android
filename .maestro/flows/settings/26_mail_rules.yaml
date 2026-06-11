@@ -1,0 +1,20 @@
+appId: ${APP_ID}
+tags:
+  - settings
+name: mail_rules_screen_opens
+---
+- runFlow: ../../setup/sign_in.yaml
+- runFlow: ../../setup/open_settings.yaml
+- tapOn:
+    text: "Filters"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "rule"
+    commands:
+      - tapOn:
+          text: "Mail rules"
+          optional: true
+- waitForAnimationToEnd
+- takeScreenshot: mail_rules_screen
+- back

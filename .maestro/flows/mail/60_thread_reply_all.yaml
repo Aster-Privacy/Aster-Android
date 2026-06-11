@@ -1,0 +1,23 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: thread_reply_all_button
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- tapOn: "Reply All"
+- extendedWaitUntil:
+    visible: "Subject"
+    timeout: 10000
+- takeScreenshot: reply_all_compose
+- back
+- runFlow:
+    when:
+      visible: "Discard"
+    commands:
+      - tapOn: "Discard"
+- back

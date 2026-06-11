@@ -1,0 +1,13 @@
+appId: ${APP_ID}
+tags:
+  - smoke
+  - auth
+name: welcome_screen_renders
+---
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+- assertVisible: "Privacy you can feel"
+- assertVisible: "Log in"
+- assertVisible: "Create Account"
+- takeScreenshot: welcome_screen

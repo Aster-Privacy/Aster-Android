@@ -1,0 +1,28 @@
+appId: ${APP_ID}
+tags:
+  - settings
+  - manual
+name: two_factor_setup_navigation
+---
+- runFlow: ../../setup/sign_in.yaml
+- runFlow: ../../setup/open_settings.yaml
+- tapOn:
+    text: "Two"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "Two"
+    commands:
+      - tapOn:
+          text: "2FA"
+          optional: true
+- waitForAnimationToEnd
+- takeScreenshot: two_factor_screen
+- tapOn:
+    text: "Enable"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: two_factor_setup
+- back
+- back
+- back

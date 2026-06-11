@@ -1,0 +1,15 @@
+appId: ${APP_ID}
+tags:
+  - auth
+name: register_navigation_smoke
+---
+- launchApp:
+    clearState: true
+- tapOn: "Create Account"
+- waitForAnimationToEnd
+- takeScreenshot: register_step_1
+- assertNotVisible: "Privacy you can feel"
+- back
+- waitForAnimationToEnd
+- assertVisible: "Privacy you can feel"
+- takeScreenshot: back_to_welcome

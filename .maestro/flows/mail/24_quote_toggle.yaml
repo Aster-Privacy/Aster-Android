@@ -1,0 +1,17 @@
+appId: ${APP_ID}
+tags:
+  - mail
+name: thread_quote_toggle_does_not_blank_screen
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- tapOn:
+    point: "50%,40%"
+- waitForAnimationToEnd
+- takeScreenshot: thread_initial
+- tapOn:
+    text: "..."
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: thread_after_quote_toggle
+- back

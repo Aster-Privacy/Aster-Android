@@ -1,0 +1,323 @@
+//
+// Aster Communications Inc.
+//
+// Copyright (c) 2026 Aster Communications Inc.
+//
+// This file is part of this project.
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
+//
+
+package org.astermail.android.api.mail
+
+import io.ktor.client.call.body
+import io.ktor.client.request.delete
+import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.request.parameter
+import io.ktor.client.request.post
+import io.ktor.client.request.put
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import java.net.URLEncoder
+import org.astermail.android.api.ApiClient
+import org.astermail.android.api.ApiError
+
+private fun url_encode_path(value: String): String =
+    URLEncoder.encode(value, "UTF-8").replace("+", "%20")
+
+interface MailApi {
+    suspend fun list_messages(
+        limit: Int? = null,
+        cursor: String? = null,
+        item_type: String? = null,
+        is_starred: Boolean? = null,
+        is_trashed: Boolean? = null,
+        is_archived: Boolean? = null,
+        is_spam: Boolean? = null,
+        label_token: String? = null,
+        group_by_thread: Boolean? = null,
+        is_snoozed: Boolean? = null,
+    ): MailItemsListResponse
+
+    suspend fun get_message(item_id: String): MailItem
+
+    suspend fun list_drafts(limit: Int? = null, cursor: String? = null): DraftsListResponse
+
+    suspend fun get_stats(): MailUserStatsResponse
+
+    suspend fun get_thread_messages(thread_token: String): ThreadWithMessages
+
+    suspend fun mark_thread_read(thread_token: String)
+
+    suspend fun trash_thread(thread_token: String, is_trashed: Boolean)
+
+    suspend fun patch_metadata(item_id: String, request: PatchMetadataRequest): PatchMetadataResponse
+
+    suspend fun bulk_action(request: BulkScopeRequest): BulkScopeResponse
+
+    suspend fun delete_message(item_id: String): DeleteResponse
+
+    suspend fun delete_permanent(item_id: String): DeleteResponse
+
+    suspend fun empty_trash(): DeleteResponse
+
+    suspend fun create_message(request: CreateMailItemRequest): CreateMailItemResponse
+
+    suspend fun sync_messages(
+        since: String? = null,
+        limit: Int? = null,
+        cursor: String? = null,
+    ): SyncMailItemsResponse
+
+    suspend fun list_attachments(mail_item_id: String): AttachmentListResponse
+
+    suspend fun get_attachment(attachment_id: String): AttachmentResponse
+
+    suspend fun batch_attachment_meta(mail_item_ids: List<String>): BatchAttachmentMetaResponse
+
+    suspend fun add_label_to_item(item_id: String, label_token: String)
+
+    suspend fun remove_label_from_item(item_id: String, label_token: String)
+
+    suspend fun add_tag_to_item(item_id: String, tag_token: String)
+
+    suspend fun remove_tag_from_item(item_id: String, tag_token: String)
+}
+
+@kotlinx.serialization.Serializable
+data class AddLabelRequestBody(val folder_token: String)
+
+@kotlinx.serialization.Serializable
+data class AddTagRequestBody(val tag_token: String)
+
+class MailApiImpl(private val client: ApiClient) : MailApi {
+    private val base = "/api/mail/v1"
+
+    override suspend fun list_messages(
+        limit: Int?,
+        cursor: String?,
+        item_type: String?,
+        is_starred: Boolean?,
+        is_trashed: Boolean?,
+        is_archived: Boolean?,
+        is_spam: Boolean?,
+        label_token: String?,
+        group_by_thread: Boolean?,
+        is_snoozed: Boolean?,
+    ): MailItemsListResponse {
+        val response = client.http.get("${client.base_url}$base/messages") {
+            limit?.let { parameter("limit", it) }
+            cursor?.let { parameter("cursor", it) }
+            item_type?.let { parameter("item_type", it) }
+            is_starred?.let { parameter("is_starred", it) }
+            is_trashed?.let { parameter("is_trashed", it) }
+            is_archived?.let { parameter("is_archived", it) }
+            is_spam?.let { parameter("is_spam", it) }
+            label_token?.let { parameter("label_token", it) }
+            group_by_thread?.let { parameter("group_by_thread", it) }
+            is_snoozed?.let { parameter("is_snoozed", it) }
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun get_message(item_id: String): MailItem {
+        val response = client.http.get("${client.base_url}$base/messages/$item_id")
+        return decode_or_throw(response)
+    }
+
+    override suspend fun list_drafts(limit: Int?, cursor: String?): DraftsListResponse {
+        val response = client.http.get("${client.base_url}$base/drafts") {
+            limit?.let { parameter("limit", it) }
+            cursor?.let { parameter("cursor", it) }
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun get_stats(): MailUserStatsResponse {
+        val response = client.http.get("${client.base_url}$base/messages/stats")
+        return decode_or_throw(response)
+    }
+
+    override suspend fun get_thread_messages(thread_token: String): ThreadWithMessages {
+        val response = client.http.get(
+            "${client.base_url}$base/messages/threads/${url_encode_path(thread_token)}/messages",
+        )
+        return decode_or_throw(response)
+    }
+
+    override suspend fun mark_thread_read(thread_token: String) {
+        val response = client.http.put(
+            "${client.base_url}$base/messages/threads/${url_encode_path(thread_token)}/read",
+        ) {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody("{}")
+        }
+        throw_if_error(response)
+    }
+
+    override suspend fun trash_thread(thread_token: String, is_trashed: Boolean) {
+        val response = client.http.put(
+            "${client.base_url}$base/messages/threads/${url_encode_path(thread_token)}/trash",
+        ) {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(mapOf("is_trashed" to is_trashed))
+        }
+        throw_if_error(response)
+    }
+
+    override suspend fun patch_metadata(
+        item_id: String,
+        request: PatchMetadataRequest,
+    ): PatchMetadataResponse {
+        val response = client.http.put("${client.base_url}$base/messages/$item_id/metadata") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun bulk_action(request: BulkScopeRequest): BulkScopeResponse {
+        val response = client.http.post("${client.base_url}$base/messages/bulk/scope") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun delete_message(item_id: String): DeleteResponse {
+        val response = client.http.delete("${client.base_url}$base/messages/$item_id") {
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun delete_permanent(item_id: String): DeleteResponse {
+        val response = client.http.delete("${client.base_url}$base/messages/$item_id/permanent") {
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun empty_trash(): DeleteResponse {
+        val response = client.http.delete("${client.base_url}$base/messages/trash") {
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun create_message(request: CreateMailItemRequest): CreateMailItemResponse {
+        val response = client.http.post("${client.base_url}$base/messages") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun sync_messages(
+        since: String?,
+        limit: Int?,
+        cursor: String?,
+    ): SyncMailItemsResponse {
+        val response = client.http.get("${client.base_url}$base/messages/sync") {
+            since?.let { parameter("since", it) }
+            limit?.let { parameter("limit", it) }
+            cursor?.let { parameter("cursor", it) }
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun list_attachments(mail_item_id: String): AttachmentListResponse {
+        val response = client.http.get("${client.base_url}$base/attachments/by-mail/$mail_item_id")
+        return decode_or_throw(response)
+    }
+
+    override suspend fun get_attachment(attachment_id: String): AttachmentResponse {
+        val response = client.http.get("${client.base_url}$base/attachments/$attachment_id")
+        return decode_or_throw(response)
+    }
+
+    override suspend fun batch_attachment_meta(
+        mail_item_ids: List<String>,
+    ): BatchAttachmentMetaResponse {
+        val response = client.http.post("${client.base_url}$base/attachments/meta/batch") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(BatchAttachmentMetaRequest(mail_item_ids))
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun add_label_to_item(item_id: String, label_token: String) {
+        val response = client.http.post("${client.base_url}$base/messages/$item_id/labels") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(AddLabelRequestBody(folder_token = label_token))
+        }
+        throw_if_error(response)
+    }
+
+    override suspend fun remove_label_from_item(item_id: String, label_token: String) {
+        val response = client.http.delete(
+            "${client.base_url}$base/messages/$item_id/labels/${url_encode_path(label_token)}",
+        ) {
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+        }
+        throw_if_error(response)
+    }
+
+    override suspend fun add_tag_to_item(item_id: String, tag_token: String) {
+        val response = client.http.post("${client.base_url}$base/messages/$item_id/tags") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(AddTagRequestBody(tag_token = tag_token))
+        }
+        throw_if_error(response)
+    }
+
+    override suspend fun remove_tag_from_item(item_id: String, tag_token: String) {
+        val response = client.http.delete(
+            "${client.base_url}$base/messages/$item_id/tags/${url_encode_path(tag_token)}",
+        ) {
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+        }
+        throw_if_error(response)
+    }
+
+    private suspend inline fun <reified T> decode_or_throw(response: HttpResponse): T {
+        if (response.status.value !in 200..299) {
+            val body = try { response.body<String>() } catch (_: Throwable) { "" }
+            throw client.map_http_status(response.status.value, body)
+        }
+        return try {
+            response.body()
+        } catch (t: Throwable) {
+            throw ApiError.UnknownError(t.message ?: "decode failed")
+        }
+    }
+
+    private suspend fun throw_if_error(response: HttpResponse) {
+        if (response.status.value !in 200..299) {
+            val body = try { response.body<String>() } catch (_: Throwable) { "" }
+            throw client.map_http_status(response.status.value, body)
+        }
+    }
+}

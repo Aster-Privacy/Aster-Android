@@ -1,0 +1,9 @@
+appId: ${APP_ID}
+tags:
+  - system
+  - manual
+name: deep_link_opens_app
+---
+- openLink: "https://astermail.org/m/inbox"
+- waitForAnimationToEnd
+- takeScreenshot: after_deep_link

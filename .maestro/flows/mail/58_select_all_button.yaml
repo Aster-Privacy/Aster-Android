@@ -1,0 +1,17 @@
+appId: ${APP_ID}
+tags:
+  - mail
+  - manual
+name: select_all_button_in_select_mode
+---
+- runFlow: ../../setup/sign_in.yaml
+- assertVisible: "Inbox"
+- longPressOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- tapOn:
+    text: "Select All"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: all_selected
+- back
