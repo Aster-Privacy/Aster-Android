@@ -64,10 +64,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -245,7 +242,6 @@ private fun AsterRoot() {
     val text_spacing by theme_vm.text_spacing.collectAsStateWithLifecycle()
     val underline_links by theme_vm.underline_links.collectAsStateWithLifecycle()
     val dyslexia_font by theme_vm.dyslexia_font.collectAsStateWithLifecycle()
-    val color_vision by theme_vm.color_vision.collectAsStateWithLifecycle()
     val resolved_mode = when (mode_state) {
         ThemeMode.system -> AsterThemeMode.system
         ThemeMode.light -> AsterThemeMode.light
@@ -259,7 +255,6 @@ private fun AsterRoot() {
         text_spacing = text_spacing,
         underline_links = underline_links,
         dyslexia_font = dyslexia_font,
-        color_vision = color_vision,
     )
     val dyslexia_family = if (dyslexia_font) {
         FontFamily(Font(R.font.opendyslexic_regular, FontWeight.Normal))
@@ -284,58 +279,13 @@ private fun AsterRoot() {
             local_accessibility provides a11y,
         ) {
             val colors = AsterMaterial.colors
-            val vision_modifier = color_vision_modifier(color_vision)
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(colors.bg_primary)
-                    .then(vision_modifier),
+                    .background(colors.bg_primary),
             ) {
                 AsterNavHost()
             }
-        }
-    }
-}
-
-private fun color_vision_modifier(mode: String): Modifier {
-    if (mode == "none") return Modifier
-    val values = when (mode) {
-        "protanopia" -> floatArrayOf(
-            0.567f, 0.433f, 0f, 0f, 0f,
-            0.558f, 0.442f, 0f, 0f, 0f,
-            0f, 0.242f, 0.758f, 0f, 0f,
-            0f, 0f, 0f, 1f, 0f,
-        )
-        "deuteranopia" -> floatArrayOf(
-            0.625f, 0.375f, 0f, 0f, 0f,
-            0.7f, 0.3f, 0f, 0f, 0f,
-            0f, 0.3f, 0.7f, 0f, 0f,
-            0f, 0f, 0f, 1f, 0f,
-        )
-        "tritanopia" -> floatArrayOf(
-            0.95f, 0.05f, 0f, 0f, 0f,
-            0f, 0.433f, 0.567f, 0f, 0f,
-            0f, 0.475f, 0.525f, 0f, 0f,
-            0f, 0f, 0f, 1f, 0f,
-        )
-        "achromatopsia" -> floatArrayOf(
-            0.299f, 0.587f, 0.114f, 0f, 0f,
-            0.299f, 0.587f, 0.114f, 0f, 0f,
-            0.299f, 0.587f, 0.114f, 0f, 0f,
-            0f, 0f, 0f, 1f, 0f,
-        )
-        else -> return Modifier
-    }
-    val paint = android.graphics.Paint().apply {
-        colorFilter = android.graphics.ColorMatrixColorFilter(android.graphics.ColorMatrix(values))
-    }
-    return Modifier.drawWithContent {
-        drawIntoCanvas { canvas ->
-            canvas.nativeCanvas.saveLayer(null, paint)
-        }
-        drawContent()
-        drawIntoCanvas { canvas ->
-            canvas.nativeCanvas.restore()
         }
     }
 }
@@ -1118,7 +1068,6 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         theme_vm_inbox.set_text_spacing(prefs.text_spacing)
         theme_vm_inbox.set_underline_links(prefs.underline_links)
         theme_vm_inbox.set_dyslexia_font(prefs.dyslexia_font)
-        theme_vm_inbox.set_color_vision(prefs.color_vision)
         theme_vm_inbox.set_text_size_from_key(prefs.font_size_scale)
     }
 

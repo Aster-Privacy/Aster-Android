@@ -38,7 +38,6 @@ data class AccessibilityState(
     val text_spacing: Boolean = false,
     val underline_links: Boolean = false,
     val dyslexia_font: Boolean = false,
-    val color_vision: String = "none",
 )
 
 @HiltViewModel
@@ -55,7 +54,6 @@ class ThemeViewModel @Inject constructor(
     val text_spacing: StateFlow<Boolean> = theme_store.text_spacing
     val underline_links: StateFlow<Boolean> = theme_store.underline_links
     val dyslexia_font: StateFlow<Boolean> = theme_store.dyslexia_font
-    val color_vision: StateFlow<String> = theme_store.color_vision
     val onboarding_seen: StateFlow<Boolean> = theme_store.onboarding_seen
 
     fun set_mode(mode: ThemeMode) = theme_store.set_theme_mode(mode)
@@ -69,7 +67,6 @@ class ThemeViewModel @Inject constructor(
     fun set_text_spacing(v: Boolean) = theme_store.set_text_spacing(v)
     fun set_underline_links(v: Boolean) = theme_store.set_underline_links(v)
     fun set_dyslexia_font(v: Boolean) = theme_store.set_dyslexia_font(v)
-    fun set_color_vision(v: String) = theme_store.set_color_vision(v)
     fun mark_onboarding_seen() = theme_store.set_onboarding_seen(true)
 }
 

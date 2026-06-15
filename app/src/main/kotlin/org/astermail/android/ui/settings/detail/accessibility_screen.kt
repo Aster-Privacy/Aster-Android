@@ -138,7 +138,6 @@ fun AccessibilityScreen(
     LaunchedEffect(Unit) { vm.load_preferences() }
 
     var font_size by remember { mutableStateOf("default") }
-    var color_vision by remember { mutableStateOf("none") }
     var high_contrast by remember { mutableStateOf(false) }
     var reduce_transparency by remember { mutableStateOf(false) }
     var underline_links by remember { mutableStateOf(false) }
@@ -154,7 +153,6 @@ fun AccessibilityScreen(
         if (prefs != null && !prefs_loaded) {
             prefs_loaded = true
             font_size = prefs.font_size_scale
-            color_vision = prefs.color_vision
             high_contrast = prefs.high_contrast
             reduce_transparency = prefs.reduce_transparency
             underline_links = prefs.underline_links
@@ -171,7 +169,6 @@ fun AccessibilityScreen(
             theme_vm.set_text_spacing(prefs.text_spacing)
             theme_vm.set_underline_links(prefs.underline_links)
             theme_vm.set_dyslexia_font(prefs.dyslexia_font)
-            theme_vm.set_color_vision(prefs.color_vision)
         }
     }
 
@@ -180,7 +177,6 @@ fun AccessibilityScreen(
         vm.save_preferences(
             base.copy(
                 font_size_scale = font_size,
-                color_vision = color_vision,
                 high_contrast = high_contrast,
                 reduce_transparency = reduce_transparency,
                 underline_links = underline_links,
@@ -257,27 +253,6 @@ fun AccessibilityScreen(
                     info_title = stringResource(R.string.underline_links_info_title),
                     info_description = stringResource(R.string.underline_links_info_desc),
                 ) { underline_links = it; theme_vm.set_underline_links(it); save_trigger++ }
-            }
-
-            v_gap(AsterSpacing.lg)
-
-            // ── Color Vision ───────────────────────────────────────────────────
-            section_label(stringResource(R.string.color_vision))
-            AsterCard(modifier = Modifier.fillMaxWidth()) {
-                listOf(
-                    "none" to stringResource(R.string.color_vision_none),
-                    "protanopia" to stringResource(R.string.color_vision_protanopia),
-                    "deuteranopia" to stringResource(R.string.color_vision_deuteranopia),
-                    "tritanopia" to stringResource(R.string.color_vision_tritanopia),
-                    "achromatopsia" to stringResource(R.string.color_vision_achromatopsia),
-                ).forEachIndexed { i, (id, label) ->
-                    access_option_row(label, color_vision == id) {
-                        color_vision = id
-                        theme_vm.set_color_vision(id)
-                        save_trigger++
-                    }
-                    if (i < 4) AsterDivider(modifier = Modifier)
-                }
             }
 
             v_gap(AsterSpacing.lg)

@@ -64,7 +64,6 @@ class ThemeStore(context: Context) {
     private val key_text_spacing = booleanPreferencesKey("text_spacing")
     private val key_underline_links = booleanPreferencesKey("underline_links")
     private val key_dyslexia_font = booleanPreferencesKey("dyslexia_font")
-    private val key_color_vision = stringPreferencesKey("color_vision")
     private val key_onboarding_seen = booleanPreferencesKey("onboarding_seen")
 
     val theme_mode: StateFlow<ThemeMode> = app_context.theme_data_store.data
@@ -106,10 +105,6 @@ class ThemeStore(context: Context) {
     val dyslexia_font: StateFlow<Boolean> = app_context.theme_data_store.data
         .map { prefs -> prefs[key_dyslexia_font] ?: false }
         .stateIn(scope, SharingStarted.Eagerly, false)
-
-    val color_vision: StateFlow<String> = app_context.theme_data_store.data
-        .map { prefs -> prefs[key_color_vision] ?: "none" }
-        .stateIn(scope, SharingStarted.Eagerly, "none")
 
     val onboarding_seen: StateFlow<Boolean> = app_context.theme_data_store.data
         .map { prefs -> prefs[key_onboarding_seen] ?: false }
@@ -159,10 +154,6 @@ class ThemeStore(context: Context) {
 
     fun set_dyslexia_font(enabled: Boolean) {
         scope.launch { app_context.theme_data_store.edit { it[key_dyslexia_font] = enabled } }
-    }
-
-    fun set_color_vision(mode: String) {
-        scope.launch { app_context.theme_data_store.edit { it[key_color_vision] = mode } }
     }
 
     fun set_onboarding_seen(seen: Boolean) {
