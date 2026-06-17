@@ -2865,6 +2865,8 @@ $dark_css
     var loaded_html by remember { mutableStateOf("") }
     var loaded_external by remember { mutableStateOf(false) }
     val scale_ref = remember { floatArrayOf(1f) }
+    val nl_scale_ref = remember { floatArrayOf(1f) }
+    val is_nl_ref = remember { booleanArrayOf(false) }
 
     val height_sink = remember {
         height_channel { h, exact ->
@@ -2972,7 +2974,7 @@ $dark_css
             }
 
             override fun onScaleChanged(view: android.webkit.WebView?, oldScale: Float, newScale: Float) {
-                scale_ref[0] = newScale
+                scale_ref[0] = if (is_nl_ref[0]) nl_scale_ref[0] else newScale
             }
 
             override fun onPageFinished(view: android.webkit.WebView?, url: String?) {
@@ -3140,6 +3142,14 @@ $dark_css
                     web_view.setBackgroundColor(if (is_newsletter) android.graphics.Color.WHITE else bg_color)
                     loaded_html = html
                     loaded_external = allow_external
+                    is_nl_ref[0] = is_newsletter
+                    nl_scale_ref[0] = if (is_newsletter) {
+                        Regex("initial-scale=([0-9.]+)").find(built)
+                            ?.groupValues?.get(1)?.toFloatOrNull()?.coerceIn(0.1f, 1.0f) ?: 1f
+                    } else {
+                        1f
+                    }
+                    scale_ref[0] = nl_scale_ref[0]
                     web_view.loadDataWithBaseURL("https://mail-content.invalid/", built, "text/html", "UTF-8", null)
                     if (!has_measured) web_view.evaluateJavascript(measure_js, null)
                     web_view.postDelayed({
