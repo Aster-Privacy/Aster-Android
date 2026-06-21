@@ -1889,7 +1889,11 @@ private fun raw_source_dialog(
                     label = stringResource(R.string.detail_raw_source_copy),
                     onClick = {
                         val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
-                        clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("raw_source", headers + "\n" + body_text))
+                        val clip = android.content.ClipData.newPlainText("raw_source", headers + "\n" + body_text)
+                        clip.description.extras = android.os.PersistableBundle().apply {
+                            putBoolean("android.content.extra.IS_SENSITIVE", true)
+                        }
+                        clipboard?.setPrimaryClip(clip)
                         Toast.makeText(context, context.getString(R.string.detail_raw_source_copied), Toast.LENGTH_SHORT).show()
                     },
                 )
@@ -3465,6 +3469,24 @@ private fun sanitize_filename(raw: String): String {
     return cleaned.ifBlank { "attachment" }.take(200)
 }
 
+private fun safe_view_mime(filename: String, declared: String): String {
+    val ext = filename.substringAfterLast('.', "").lowercase()
+    val resolved = if (ext.isNotBlank()) {
+        android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext)
+    } else {
+        null
+    }
+    val mime = resolved ?: declared.ifBlank { "application/octet-stream" }
+    val blocked = setOf(
+        "application/vnd.android.package-archive",
+        "application/x-msdownload",
+        "application/x-executable",
+        "application/x-elf",
+        "application/x-sh",
+    )
+    return if (mime.lowercase() in blocked) "application/octet-stream" else mime
+}
+
 private fun save_attachment_to_storage(
     context: android.content.Context,
     attachment: MessageAttachment,
@@ -3609,7 +3631,7 @@ private fun attachment_preview_dialog(
                     content_description = stringResource(R.string.open_with),
                     onClick = {
                         try {
-                            val mime = attachment.content_type.ifBlank { "application/octet-stream" }
+                            val mime = safe_view_mime(attachment.filename, attachment.content_type)
                             val values = ContentValues().apply {
                                 put(MediaStore.Downloads.DISPLAY_NAME, sanitize_filename(attachment.filename))
                                 put(MediaStore.Downloads.MIME_TYPE, mime)

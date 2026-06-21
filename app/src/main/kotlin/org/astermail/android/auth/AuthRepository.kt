@@ -530,6 +530,7 @@ class AuthRepository @Inject constructor(
 
         mail_repository.clear_caches()
         database.decrypted_mail_dao().clear_all()
+        session_key_store.get_user_email()?.let { trusted_device_store.clear(it) }
 
         current_password_hash.fill(0)
         new_password_hash.fill(0)
@@ -692,6 +693,7 @@ class AuthRepository @Inject constructor(
             ),
         )
         val current_id = session_key_store.get_user_id()
+        val current_email = session_key_store.get_user_email()
         token_store.clear()
         api_client.invalidate_bearer_cache()
         session_key_store.clear()
@@ -707,6 +709,7 @@ class AuthRepository @Inject constructor(
             org.astermail.android.mail.AsterProfileResolverHolder.shared?.clear()
         }
         database.decrypted_mail_dao().clear_all()
+        current_email?.let { trusted_device_store.clear(it) }
         if (current_id != null) {
             account_store.remove(current_id)
             runCatching { session_snapshot_store.remove(current_id) }
