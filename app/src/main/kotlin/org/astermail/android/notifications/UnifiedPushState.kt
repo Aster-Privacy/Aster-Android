@@ -72,6 +72,13 @@ object UnifiedPushState {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .getString(KEY_ENDPOINT, null)
 
+    fun has_pending_registration(context: Context): Boolean {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val endpoint = prefs.getString(KEY_ENDPOINT, null)
+        val registered = prefs.getString(KEY_REGISTERED_ENDPOINT, null)
+        return endpoint == null || endpoint != registered
+    }
+
     fun save_endpoint(context: Context, url: String) {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()

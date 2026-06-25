@@ -81,6 +81,10 @@ class MailPollingWorker(
         val token_store = TokenStore(context)
         if (token_store.access_token == null) return Result.success()
 
+        if (UnifiedPushState.has_pending_registration(context)) {
+            UnifiedPushState.try_register(context)
+        }
+
         if (inputData.getBoolean(KEY_FORCE_NOTIFY, false)) {
             notify_for_new_mail(1)
             return Result.success()
