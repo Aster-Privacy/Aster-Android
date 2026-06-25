@@ -1188,6 +1188,31 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `load_preferences keeps prefs when encrypted blob present but identity key missing`() = runTest {
+        coEvery { preferences_api.get_encrypted_preferences() } returns
+            org.astermail.android.api.preferences.EncryptedPreferencesResponse()
+        coEvery { preferences_api.get_preferences() } returns
+            UserPreferences(conversation_grouping = false, swipe_right_action = "star")
+        vm.load_preferences()
+        advanceUntilIdle()
+        assertEquals(false, vm.state.value.preferences?.conversation_grouping)
+        assertEquals("star", vm.state.value.preferences?.swipe_right_action)
+
+        coEvery { preferences_api.get_encrypted_preferences() } returns
+            org.astermail.android.api.preferences.EncryptedPreferencesResponse(
+                encrypted_preferences = "blob", preferences_nonce = "nonce",
+            )
+        every { session_key_store.get_identity_key() } returns null
+        coEvery { preferences_api.get_preferences() } returns UserPreferences()
+
+        vm.load_preferences()
+        advanceUntilIdle()
+
+        assertEquals(false, vm.state.value.preferences?.conversation_grouping)
+        assertEquals("star", vm.state.value.preferences?.swipe_right_action)
+    }
+
+    @Test
     fun `load_preferences error sets error message`() = runTest {
         coEvery { preferences_api.get_encrypted_preferences() } throws RuntimeException("prefs error")
 

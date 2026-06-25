@@ -1474,25 +1474,47 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    private suspend fun await_identity_key(max_attempts: Int = 12, delay_ms: Long = 200): String? {
+        var key = session_key_store.get_identity_key()
+        var attempts = 0
+        while (key.isNullOrBlank() && attempts < max_attempts) {
+            kotlinx.coroutines.delay(delay_ms)
+            key = session_key_store.get_identity_key()
+            attempts++
+        }
+        return key
+    }
+
     fun load_preferences() {
         load_preferences_job?.cancel()
         load_preferences_job = viewModelScope.launch {
             _state.value = _state.value.copy(is_loading = true, error = null)
             try {
                 val response = preferences_api.get_encrypted_preferences()
-                val identity_key = session_key_store.get_identity_key()
                 val enc = response.encrypted_preferences
                 val nonce = response.preferences_nonce
-                val prefs = if (!enc.isNullOrBlank() && !nonce.isNullOrBlank() && !identity_key.isNullOrBlank()) {
-                    try {
+                val has_encrypted = !enc.isNullOrBlank() && !nonce.isNullOrBlank()
+
+                if (has_encrypted) {
+                    val identity_key = await_identity_key()
+                    if (identity_key.isNullOrBlank()) {
+                        _state.value = _state.value.copy(is_loading = false)
+                        return@launch
+                    }
+                    val decrypted = try {
                         decrypt_preferences(enc, nonce, identity_key)
                     } catch (_: Throwable) {
-                        try { preferences_api.get_preferences() } catch (_: Throwable) { UserPreferences() }
+                        null
+                    }
+                    if (decrypted != null) {
+                        _state.value = _state.value.copy(preferences = decrypted, is_loading = false)
+                    } else {
+                        _state.value = _state.value.copy(is_loading = false)
                     }
                 } else {
-                    try { preferences_api.get_preferences() } catch (_: Throwable) { UserPreferences() }
+                    val prefs = try { preferences_api.get_preferences() } catch (_: Throwable) { UserPreferences() }
+                    _state.value = _state.value.copy(preferences = prefs, is_loading = false)
                 }
-                _state.value = _state.value.copy(preferences = prefs, is_loading = false)
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_loading = false,
@@ -1734,7 +1756,7 @@ class SettingsViewModel @Inject constructor(
         _state.value = _state.value.copy(preferences = prefs, save_status = SaveStatus.SAVING)
         save_preferences_job = viewModelScope.launch {
             try {
-                val identity_key = session_key_store.get_identity_key()
+                val identity_key = await_identity_key()
                 if (!identity_key.isNullOrBlank()) {
                     val request = encrypt_preferences(prefs, identity_key)
                     preferences_api.save_encrypted_preferences(request)
@@ -1767,7 +1789,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun update_sidebar_state(key: String, value: Boolean) {
-        val current = _state.value.preferences ?: UserPreferences()
+        val current = _state.value.preferences ?: return
         val updated = when (key) {
             "sidebar_more_collapsed" -> current.copy(sidebar_more_collapsed = value)
             "sidebar_folders_collapsed" -> current.copy(sidebar_folders_collapsed = value)
