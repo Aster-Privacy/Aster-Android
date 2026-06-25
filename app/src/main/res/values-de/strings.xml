@@ -1210,7 +1210,7 @@
     <string name="settings_plan_lead_star">Alles in Star, plus:</string>
     <string name="settings_plan_lead_nova">Alles in Nova, plus:</string>
     <string name="settings_plan_bullet_e2ee">Ende-zu-Ende-Verschlüsselung</string>
-    <string name="settings_plan_bullet_zero_knowledge">Zero-Knowledge-Architektur</string>
+    <string name="settings_plan_bullet_zero_knowledge">Zero-Access-Architektur</string>
     <string name="settings_plan_bullet_star_storage">50 GB verschlüsselter Speicher</string>
     <string name="settings_plan_bullet_star_attachments">Anhänge bis zu 50 MB</string>
     <string name="settings_plan_bullet_star_aliases">15 E-Mail-Aliase</string>

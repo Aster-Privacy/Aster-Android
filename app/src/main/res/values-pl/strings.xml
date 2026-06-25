@@ -1213,7 +1213,7 @@
     <string name="settings_plan_lead_star">Everything in Star, plus:</string>
     <string name="settings_plan_lead_nova">Everything in Nova, plus:</string>
     <string name="settings_plan_bullet_e2ee">End-to-end encryption</string>
-    <string name="settings_plan_bullet_zero_knowledge">Zero-knowledge architecture</string>
+    <string name="settings_plan_bullet_zero_knowledge">Zero-access architecture</string>
     <string name="settings_plan_bullet_star_storage">50 GB encrypted storage</string>
     <string name="settings_plan_bullet_star_attachments">Up to 50 MB attachments</string>
     <string name="settings_plan_bullet_star_aliases">15 email aliases</string>

@@ -4,7 +4,7 @@ Your messages are encrypted client-side before leaving your device. The server n
 
 Features:
 - End-to-end encrypted mail between Aster users using a post-quantum ratchet protocol
-- Zero-knowledge architecture: server stores only encrypted ciphertext
+- Zero-access architecture: server stores only encrypted ciphertext
 - Custom domain support with automatic DKIM signing
 - Push notifications via UnifiedPush (no Google services required) with polling fallback
 - Offline-capable with local encrypted storage

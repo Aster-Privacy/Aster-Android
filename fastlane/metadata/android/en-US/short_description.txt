@@ -1,1 +1,1 @@
-Private, encrypted email with zero-knowledge architecture
+Private, encrypted email with zero-access architecture

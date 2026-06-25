@@ -144,7 +144,7 @@
     <string name="popular">Popular</string>
     <string name="feature_storage">%1$s of encrypted storage</string>
     <string name="feature_e2e_encryption">End-to-end encryption</string>
-    <string name="feature_zero_knowledge">Zero-knowledge architecture</string>
+    <string name="feature_zero_knowledge">Zero-access architecture</string>
     <string name="feature_priority_support">Priority support</string>
     <string name="feature_custom_domain_signing">Custom domain DKIM signing</string>
     <string name="message_info">Message info</string>
@@ -1652,7 +1652,7 @@
     <string name="copy_public_key_action">Copy public key</string>
     <string name="encryption_feature_client_side">Client-side encryption</string>
     <string name="encryption_feature_client_side_sub">Only you can read your messages</string>
-    <string name="encryption_feature_zero_knowledge">Zero-knowledge storage</string>
+    <string name="encryption_feature_zero_knowledge">Zero-access storage</string>
     <string name="encryption_feature_zero_knowledge_sub">Servers never see your plaintext</string>
     <string name="encryption_feature_openpgp">OpenPGP compatible</string>
     <string name="encryption_feature_openpgp_sub">Works with standard PGP clients</string>

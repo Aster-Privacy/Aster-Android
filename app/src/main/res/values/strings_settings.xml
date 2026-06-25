@@ -16,7 +16,7 @@
     <string name="settings_feat_daily_send">Daily send limit</string>
     <string name="settings_feat_email_retention">Email retention</string>
     <string name="settings_feat_e2ee">End-to-end encryption</string>
-    <string name="settings_feat_zero_knowledge">Zero-knowledge architecture</string>
+    <string name="settings_feat_zero_knowledge">Zero-access architecture</string>
     <string name="settings_feat_aliases">Email aliases</string>
     <string name="settings_feat_custom_domains">Custom domains</string>
     <string name="settings_feat_scheduled_send">Scheduled sending</string>
@@ -83,7 +83,7 @@
     <string name="settings_plan_lead_nova">Everything in Nova, plus:</string>
 
     <string name="settings_plan_bullet_e2ee">End-to-end encryption</string>
-    <string name="settings_plan_bullet_zero_knowledge">Zero-knowledge architecture</string>
+    <string name="settings_plan_bullet_zero_knowledge">Zero-access architecture</string>
 
     <string name="settings_plan_bullet_star_storage">50 GB encrypted storage</string>
     <string name="settings_plan_bullet_star_attachments">Up to 50 MB attachments</string>
