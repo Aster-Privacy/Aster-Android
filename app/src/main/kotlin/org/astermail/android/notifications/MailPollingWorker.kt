@@ -138,18 +138,20 @@ class MailPollingWorker(
         val cached_inbox = prefs.getInt(KEY_CACHED_INBOX, new_inbox)
         val last_notified_inbox = prefs.getInt(KEY_LAST_NOTIFIED_INBOX, -1)
 
-        if (has_baseline && new_inbox > cached_inbox && new_unread > 0 && new_inbox != last_notified_inbox) {
-            if (!is_quiet_hours_now(context)) {
-                val arrived = (new_inbox - cached_inbox).coerceAtMost(new_unread)
-                notify_for_new_mail(arrived)
-                prefs.edit().putInt(KEY_LAST_NOTIFIED_INBOX, new_inbox).apply()
-            }
+        val has_pending_new_mail = has_baseline && new_inbox > cached_inbox &&
+            new_unread > 0 && new_inbox != last_notified_inbox
+        val suppressed_by_quiet_hours = has_pending_new_mail && is_quiet_hours_now(context)
+        if (has_pending_new_mail && !suppressed_by_quiet_hours) {
+            val arrived = (new_inbox - cached_inbox).coerceAtMost(new_unread)
+            notify_for_new_mail(arrived)
+            prefs.edit().putInt(KEY_LAST_NOTIFIED_INBOX, new_inbox).apply()
         }
 
-        prefs.edit()
-            .putInt(KEY_CACHED_UNREAD, new_unread)
-            .putInt(KEY_CACHED_INBOX, new_inbox)
-            .apply()
+        val editor = prefs.edit().putInt(KEY_CACHED_UNREAD, new_unread)
+        if (!suppressed_by_quiet_hours) {
+            editor.putInt(KEY_CACHED_INBOX, new_inbox)
+        }
+        editor.apply()
         schedule_next(context)
         return Result.success()
     }
