@@ -606,7 +606,7 @@ class MailRepository @Inject constructor(
             subject = envelope?.subject ?: "",
             preview = envelope?.let { clean_preview(it.body_text, it.body_html) } ?: "",
             timestamp = item.message_ts ?: item.created_at ?: "",
-            is_read = meta?.is_read ?: item.is_read ?: ((meta?.is_trashed ?: item.is_trashed) == true),
+            is_read = (item.is_read == true) || (meta?.is_read == true) || ((meta?.is_trashed ?: item.is_trashed) == true),
             is_starred = meta?.is_starred ?: false,
             is_encrypted = item.encrypted_envelope != null,
             has_attachments = meta?.has_attachments ?: false,

@@ -760,6 +760,86 @@ class MailRepositoryTest {
     }
 
     @Test
+    fun `server is_read true overrides stale metadata is_read false`() = runTest {
+        val item = MailItem(
+            id = "stuck_unread",
+            item_type = "received",
+            encrypted_envelope = null,
+            envelope_nonce = null,
+            message_ts = "2026-04-26T10:00:00Z",
+            created_at = "2026-04-26T10:00:00Z",
+            is_read = true,
+            metadata = MailItemMetadata(is_read = false),
+        )
+        coEvery { mail_api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = listOf(item), has_more = false, next_cursor = null, total = 1)
+
+        val inbox_item = repo.fetch_inbox().getOrThrow().items[0]
+
+        assertTrue(inbox_item.is_read)
+    }
+
+    @Test
+    fun `unread when both server and metadata are unread`() = runTest {
+        val item = MailItem(
+            id = "genuinely_unread",
+            item_type = "received",
+            encrypted_envelope = null,
+            envelope_nonce = null,
+            message_ts = "2026-04-26T10:00:00Z",
+            created_at = "2026-04-26T10:00:00Z",
+            is_read = false,
+            metadata = MailItemMetadata(is_read = false),
+        )
+        coEvery { mail_api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = listOf(item), has_more = false, next_cursor = null, total = 1)
+
+        val inbox_item = repo.fetch_inbox().getOrThrow().items[0]
+
+        assertFalse(inbox_item.is_read)
+    }
+
+    @Test
+    fun `read when metadata is read but server has not caught up`() = runTest {
+        val item = MailItem(
+            id = "meta_read",
+            item_type = "received",
+            encrypted_envelope = null,
+            envelope_nonce = null,
+            message_ts = "2026-04-26T10:00:00Z",
+            created_at = "2026-04-26T10:00:00Z",
+            is_read = false,
+            metadata = MailItemMetadata(is_read = true),
+        )
+        coEvery { mail_api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = listOf(item), has_more = false, next_cursor = null, total = 1)
+
+        val inbox_item = repo.fetch_inbox().getOrThrow().items[0]
+
+        assertTrue(inbox_item.is_read)
+    }
+
+    @Test
+    fun `fresh delivered item with no metadata uses server unread flag`() = runTest {
+        val item = MailItem(
+            id = "fresh",
+            item_type = "received",
+            encrypted_envelope = null,
+            envelope_nonce = null,
+            message_ts = "2026-04-26T10:00:00Z",
+            created_at = "2026-04-26T10:00:00Z",
+            is_read = false,
+            metadata = null,
+        )
+        coEvery { mail_api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = listOf(item), has_more = false, next_cursor = null, total = 1)
+
+        val inbox_item = repo.fetch_inbox().getOrThrow().items[0]
+
+        assertFalse(inbox_item.is_read)
+    }
+
+    @Test
     fun `fetch_single_message with metadata preserves flags`() = runTest {
         val item = MailItem(
             id = "flagged_single",
