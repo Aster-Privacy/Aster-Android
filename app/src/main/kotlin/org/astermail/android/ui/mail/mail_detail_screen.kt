@@ -2667,7 +2667,7 @@ private fun email_html_view(
             is_html_body && !has_newsletter_layout ->
                 "background-color:transparent;color:${if (simple_dark) "#e5e5e5" else "#111827"};margin:0;padding:6px 10px;font-family:$sys_font;font-size:14px;line-height:1.6;word-wrap:break-word"
             is_html_body ->
-                "background-color:transparent;margin:0;padding:0"
+                "background-color:transparent;margin:0;padding:0 8px"
             else ->
                 "background-color:transparent;color:$fg_hex;margin:0;padding:6px 10px;font-family:$sys_font;font-size:14px;line-height:1.6;word-wrap:break-word"
         }
