@@ -182,7 +182,6 @@ class MailRepository @Inject constructor(
     )
     private val _pending_undo_send = kotlinx.coroutines.flow.MutableStateFlow<PendingUndoSend?>(null)
     val pending_undo_send: kotlinx.coroutines.flow.StateFlow<PendingUndoSend?> = _pending_undo_send
-    private val pending_send_job_ref = java.util.concurrent.atomic.AtomicReference<kotlinx.coroutines.Job?>(null)
     private val _send_result_events = kotlinx.coroutines.flow.MutableSharedFlow<Result<Unit>>(extraBufferCapacity = 8)
     val send_result_events: kotlinx.coroutines.flow.SharedFlow<Result<Unit>> = _send_result_events
 
@@ -204,13 +203,12 @@ class MailRepository @Inject constructor(
         draft_id: String? = null,
         on_completed: ((Result<Unit>) -> Unit)? = null,
     ) {
-        pending_send_job_ref.getAndSet(null)?.cancel()
         val delay_ms = undo_seconds.coerceAtLeast(1) * 1000L
         val canceled_flag = java.util.concurrent.atomic.AtomicBoolean(false)
-        val self_ref = java.util.concurrent.atomic.AtomicReference<kotlinx.coroutines.Job?>(null)
+        val pending_ref = java.util.concurrent.atomic.AtomicReference<PendingUndoSend?>(null)
         val job = app_scope.launch {
             kotlinx.coroutines.delay(delay_ms)
-            _pending_undo_send.value = null
+            pending_ref.get()?.let { _pending_undo_send.compareAndSet(it, null) }
             if (!canceled_flag.get()) {
                 val result = send_email(
                     to = to,
@@ -234,11 +232,8 @@ class MailRepository @Inject constructor(
                 _send_result_events.tryEmit(unit_result)
                 on_completed?.invoke(unit_result)
             }
-            self_ref.get()?.let { pending_send_job_ref.compareAndSet(it, null) }
         }
-        self_ref.set(job)
-        pending_send_job_ref.set(job)
-        _pending_undo_send.value = PendingUndoSend(
+        val pending = PendingUndoSend(
             started_at_ms = System.currentTimeMillis(),
             duration_ms = delay_ms,
             draft_id = draft_id?.takeIf { it.isNotBlank() },
@@ -253,10 +248,11 @@ class MailRepository @Inject constructor(
             undo = {
                 canceled_flag.set(true)
                 job.cancel()
-                pending_send_job_ref.compareAndSet(job, null)
-                _pending_undo_send.value = null
+                pending_ref.get()?.let { _pending_undo_send.compareAndSet(it, null) }
             },
         )
+        pending_ref.set(pending)
+        _pending_undo_send.value = pending
     }
 
     fun clear_caches() {
@@ -1540,6 +1536,7 @@ class MailRepository @Inject constructor(
         cc: List<String> = emptyList(),
         bcc: List<String> = emptyList(),
         scheduled_at: String,
+        sender_alias_hash: String? = null,
     ): Result<String> = runCatching {
         val is_external = to.any { !it.endsWith("@astermail.org") && !it.endsWith("@aster.cx") } ||
             cc.any { !it.endsWith("@astermail.org") && !it.endsWith("@aster.cx") } ||
@@ -1571,23 +1568,16 @@ class MailRepository @Inject constructor(
         val recipients_nonce_bytes = derive_nonce(base_nonce, 0x02)
 
         val envelope_obj = org.json.JSONObject().apply {
+            put("to_recipients", org.json.JSONArray(to))
+            put("cc_recipients", org.json.JSONArray(cc))
+            put("bcc_recipients", org.json.JSONArray(bcc))
             put("subject", subject)
-            put("body_text", "")
-            put("body_html", body_html)
+            put("body", body_html)
+            put("scheduled_at", scheduled_at)
             put("from", org.json.JSONObject().apply {
                 put("name", sender_display_name.orEmpty())
                 put("email", sender_email.orEmpty())
             })
-            put("to", org.json.JSONArray().apply {
-                to.forEach { put(org.json.JSONObject().apply { put("name", ""); put("email", it) }) }
-            })
-            put("cc", org.json.JSONArray().apply {
-                cc.forEach { put(org.json.JSONObject().apply { put("name", ""); put("email", it) }) }
-            })
-            put("bcc", org.json.JSONArray().apply {
-                bcc.forEach { put(org.json.JSONObject().apply { put("name", ""); put("email", it) }) }
-            })
-            put("sent_at", scheduled_at)
         }
 
         val encrypted_envelope = encrypt_field(envelope_obj.toString(), envelope_nonce_bytes)
@@ -1618,6 +1608,7 @@ class MailRepository @Inject constructor(
                 is_external = is_external,
                 ephemeral_key = ephemeral_key_b64,
                 base_nonce = android.util.Base64.encodeToString(base_nonce, android.util.Base64.NO_WRAP),
+                sender_alias_hash = sender_alias_hash,
             ),
         )
         response.id ?: throw IllegalStateException("no scheduled item id returned")
