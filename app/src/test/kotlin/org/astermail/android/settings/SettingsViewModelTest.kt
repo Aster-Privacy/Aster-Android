@@ -1250,6 +1250,47 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `save_preferences refuses and never writes when an encrypted load did not succeed`() = runTest {
+        coEvery { preferences_api.get_encrypted_preferences() } returns
+            org.astermail.android.api.preferences.EncryptedPreferencesResponse(
+                encrypted_preferences = "blob",
+                preferences_nonce = "nonce",
+            )
+        every { session_key_store.get_identity_key() } returns "badkey"
+
+        val fresh_vm = SettingsViewModel(
+            auth_api = auth_api,
+            user_api = user_api,
+            settings_api = settings_api,
+            labels_api = labels_api,
+            family_api = family_api,
+            tags_api = tags_api,
+            preferences_api = preferences_api,
+            signatures_api = signatures_api,
+            ghost_alias_api = ghost_alias_api,
+            auto_forward_api = auto_forward_api,
+            developer_api = developer_api,
+            subscriptions_api = subscriptions_api,
+            recovery_email_api = recovery_email_api,
+            security_api = security_api,
+            encryption_api = encryption_api,
+            auth_repository = auth_repository,
+            session_key_store = session_key_store,
+            token_store = token_store,
+            account_store = account_store,
+            context = context,
+        )
+        advanceUntilIdle()
+
+        fresh_vm.save_preferences(UserPreferences(load_remote_images = true))
+        advanceUntilIdle()
+
+        assertEquals(SaveStatus.ERROR, fresh_vm.state.value.save_status)
+        coVerify(exactly = 0) { preferences_api.save_encrypted_preferences(any()) }
+        coVerify(exactly = 0) { preferences_api.save_preferences(any()) }
+    }
+
+    @Test
     fun `load_preferences error sets error message`() = runTest {
         coEvery { preferences_api.get_encrypted_preferences() } throws RuntimeException("prefs error")
 
