@@ -539,7 +539,7 @@ class AuthRepository @Inject constructor(
         )
 
         response.csrf_token?.let { api_client.set_csrf(it) }
-        response.access_token?.let { token_store.save(it, it) }
+        response.access_token?.let { token_store.save(it, token_store.refresh_token ?: it) }
 
         mail_repository.clear_caches()
         database.decrypted_mail_dao().clear_all()
