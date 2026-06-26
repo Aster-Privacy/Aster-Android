@@ -2680,29 +2680,12 @@ a,a *{color:#60a5fa!important}
 """ else ""
 
         val table_css = if (has_newsletter_layout) {
-            "table{border-collapse:collapse}td,th{min-width:0!important;box-sizing:border-box!important}#m td,#m th,#m p,#m h1,#m h2,#m h3,#m h4,#m h5,#m h6,#m div,#m span{white-space:normal!important;overflow-wrap:break-word!important;word-wrap:break-word!important}"
+            "#m{max-width:100%!important;overflow-x:hidden!important}#m table{max-width:100%!important;width:100%!important;border-collapse:collapse}#m img{max-width:100%!important;height:auto!important}td,th{min-width:0!important;box-sizing:border-box!important;max-width:100%!important}#m td,#m th,#m p,#m h1,#m h2,#m h3,#m h4,#m h5,#m h6,#m div,#m span,#m a{white-space:normal!important;overflow-wrap:break-word!important;word-wrap:break-word!important}"
         } else {
             "table{max-width:100%!important;border-collapse:collapse;width:100%!important}td,th{overflow-wrap:break-word}"
         }
-        val email_natural_w = if (has_newsletter_layout && screen_width_dp > 0) {
-            val body_no_styles = body.replace(
-                Regex("""<style[^>]*>.*?</style>""", setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)), ""
-            )
-            val found = mutableListOf<Int>()
-            Regex("""(?:min-width|width)\s*:\s*(\d{3,4})px""", RegexOption.IGNORE_CASE)
-                .findAll(body_no_styles).mapNotNull { it.groupValues[1].toIntOrNull() }
-                .filter { it in 400..900 }.forEach { found += it }
-            Regex("""<(?:table|td|th|center|div)[^>]+\bwidth=["']?(\d{3,4})["']?""", RegexOption.IGNORE_CASE)
-                .findAll(body_no_styles).mapNotNull { it.groupValues[1].toIntOrNull() }
-                .filter { it in 400..900 }.forEach { found += it }
-            found.maxOrNull() ?: 600
-        } else 0
-        val viewport_meta = if (has_newsletter_layout && email_natural_w > 0) {
-            val initial_scale = (screen_width_dp.toFloat() / email_natural_w).coerceAtMost(1.0f)
-            "<meta name=\"viewport\" content=\"width=$email_natural_w,initial-scale=$initial_scale,maximum-scale=5,user-scalable=yes\">"
-        } else {
-            "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,maximum-scale=5\">"
-        }
+        val viewport_meta =
+            "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,maximum-scale=5,user-scalable=yes\">"
         val color_scheme_meta = if (force_light) "<meta name=\"color-scheme\" content=\"light only\">" else ""
 
         val bq_border = if (simple_dark) "#4b5563" else "#dadce0"
