@@ -1277,7 +1277,7 @@ private fun drawer_row(
                 fontFamily = inter_family,
                 modifier = Modifier.weight(1f),
             )
-            if (count > 0) {
+            if (count > 0 && is_unread_count) {
                 count_badge(
                     value = count,
                     emphasized = is_unread_count,
