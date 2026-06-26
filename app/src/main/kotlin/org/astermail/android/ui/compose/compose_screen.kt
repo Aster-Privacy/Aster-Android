@@ -889,6 +889,12 @@ fun ComposeScreen(
         val (body_html, attachment_payloads, suppress_branding) = prepare_send_data()
 
         if (scheduled_send) {
+            if (attachment_payloads.isNotEmpty()) {
+                is_sending = false
+                send_lock.set(false)
+                send_error = context.getString(R.string.scheduled_send_no_attachments)
+                return
+            }
             scope.launch {
                 val scheduled_at = scheduled_at_iso ?: java.time.Instant.now().plus(java.time.Duration.ofHours(1)).toString()
                 val result = mail_vm.schedule_email(
@@ -900,6 +906,7 @@ fun ComposeScreen(
                     sender_email = from_alias,
                     sender_display_name = settings_state.user?.display_name,
                     scheduled_at = scheduled_at,
+                    sender_alias_hash = if (from_alias != user_email) alias_hash_map[from_alias]?.takeIf { it.isNotBlank() } else null,
                 )
                 result.fold(
                     onSuccess = {
