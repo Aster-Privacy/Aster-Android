@@ -132,6 +132,7 @@ class MailViewModel @Inject constructor(
     private var inbox_load_job: Job? = null
     private var silent_revalidate_job: Job? = null
     private var refresh_job: Job? = null
+    private var account_generation = 0
     private val star_overrides = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
     private val pin_overrides = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
     private val read_overrides = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
@@ -189,8 +190,10 @@ class MailViewModel @Inject constructor(
     }
 
     fun reset_for_account_switch() {
+        account_generation++
         inbox_load_job?.cancel()
         silent_revalidate_job?.cancel()
+        refresh_job?.cancel()
         folder_cache.clear()
         folder_cache_time.clear()
         star_overrides.clear()
@@ -1365,6 +1368,7 @@ class MailViewModel @Inject constructor(
     fun refresh() {
         val folder = _inbox_state.value.current_folder
         if (_inbox_state.value.is_refreshing) return
+        val gen = account_generation
         folder_cache.remove(folder)
         folder_cache_time.remove(folder)
         _inbox_state.update { it.copy(is_refreshing = true) }
@@ -1378,6 +1382,7 @@ class MailViewModel @Inject constructor(
                     fetch_for_folder(folder).getOrThrow()
                 }
             }
+            if (account_generation != gen) return@launch
             if (_inbox_state.value.current_folder != folder) {
                 _inbox_state.update { it.copy(is_refreshing = false) }
                 return@launch
@@ -1561,6 +1566,7 @@ class MailViewModel @Inject constructor(
         sender_email: String? = null,
         sender_display_name: String? = null,
         scheduled_at: String,
+        sender_alias_hash: String? = null,
     ): Result<String> {
         return repository.schedule_email(
             subject = subject,
@@ -1571,6 +1577,7 @@ class MailViewModel @Inject constructor(
             cc = cc,
             bcc = bcc,
             scheduled_at = scheduled_at,
+            sender_alias_hash = sender_alias_hash,
         )
     }
 
