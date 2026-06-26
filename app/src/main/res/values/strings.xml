@@ -1430,6 +1430,8 @@
     <string name="totp_code_optional">Two-factor code (if enabled)</string>
     <string name="enter_account_password">Enter your account password</string>
     <string name="something_went_wrong">Something went wrong</string>
+    <string name="preferences_locked_retry">Couldn\'t unlock your settings just now. Showing defaults, pull back and reopen to retry.</string>
+    <string name="preferences_decrypt_failed">Your saved settings couldn\'t be read on this device. Showing defaults, changes you make here will be saved.</string>
     <string name="name_cannot_be_empty">Name cannot be empty</string>
     <string name="session_revoked">Session revoked</string>
     <string name="failed_revoke_session">Failed to revoke session</string>

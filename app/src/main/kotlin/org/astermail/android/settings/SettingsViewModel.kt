@@ -1498,7 +1498,11 @@ class SettingsViewModel @Inject constructor(
                 if (has_encrypted) {
                     val identity_key = await_identity_key()
                     if (identity_key.isNullOrBlank()) {
-                        _state.value = _state.value.copy(is_loading = false)
+                        _state.value = _state.value.copy(
+                            preferences = _state.value.preferences ?: UserPreferences(),
+                            is_loading = false,
+                            error = context.getString(R.string.preferences_locked_retry),
+                        )
                         return@launch
                     }
                     val decrypted = try {
@@ -1509,7 +1513,11 @@ class SettingsViewModel @Inject constructor(
                     if (decrypted != null) {
                         _state.value = _state.value.copy(preferences = decrypted, is_loading = false)
                     } else {
-                        _state.value = _state.value.copy(is_loading = false)
+                        _state.value = _state.value.copy(
+                            preferences = _state.value.preferences ?: UserPreferences(),
+                            is_loading = false,
+                            error = context.getString(R.string.preferences_decrypt_failed),
+                        )
                     }
                 } else {
                     val prefs = try { preferences_api.get_preferences() } catch (_: Throwable) { UserPreferences() }
@@ -1517,6 +1525,7 @@ class SettingsViewModel @Inject constructor(
                 }
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
+                    preferences = _state.value.preferences ?: UserPreferences(),
                     is_loading = false,
                     error = t.message ?: context.getString(R.string.something_went_wrong),
                 )

@@ -1213,6 +1213,43 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `first load with encrypted blob and no identity key still populates prefs so screen is not stuck loading`() = runTest {
+        coEvery { preferences_api.get_encrypted_preferences() } returns
+            org.astermail.android.api.preferences.EncryptedPreferencesResponse(
+                encrypted_preferences = "blob",
+                preferences_nonce = "nonce",
+            )
+        every { session_key_store.get_identity_key() } returns null
+
+        val fresh_vm = SettingsViewModel(
+            auth_api = auth_api,
+            user_api = user_api,
+            settings_api = settings_api,
+            labels_api = labels_api,
+            family_api = family_api,
+            tags_api = tags_api,
+            preferences_api = preferences_api,
+            signatures_api = signatures_api,
+            ghost_alias_api = ghost_alias_api,
+            auto_forward_api = auto_forward_api,
+            developer_api = developer_api,
+            subscriptions_api = subscriptions_api,
+            recovery_email_api = recovery_email_api,
+            security_api = security_api,
+            encryption_api = encryption_api,
+            auth_repository = auth_repository,
+            session_key_store = session_key_store,
+            token_store = token_store,
+            account_store = account_store,
+            context = context,
+        )
+        advanceUntilIdle()
+
+        assertNotNull(fresh_vm.state.value.preferences)
+        assertFalse(fresh_vm.state.value.is_loading)
+    }
+
+    @Test
     fun `load_preferences error sets error message`() = runTest {
         coEvery { preferences_api.get_encrypted_preferences() } throws RuntimeException("prefs error")
 
