@@ -210,6 +210,8 @@ class SettingsViewModel @Inject constructor(
     @Volatile private var default_signature_is_html: Boolean = false
     private var load_preferences_job: kotlinx.coroutines.Job? = null
     private var save_preferences_job: kotlinx.coroutines.Job? = null
+    private var prefs_load_succeeded = false
+    private var account_uses_encrypted_prefs = false
 
     fun load_profile() {
         viewModelScope.launch {
@@ -1494,6 +1496,7 @@ class SettingsViewModel @Inject constructor(
                 val enc = response.encrypted_preferences
                 val nonce = response.preferences_nonce
                 val has_encrypted = !enc.isNullOrBlank() && !nonce.isNullOrBlank()
+                account_uses_encrypted_prefs = has_encrypted
 
                 if (has_encrypted) {
                     val identity_key = await_identity_key()
@@ -1511,6 +1514,7 @@ class SettingsViewModel @Inject constructor(
                         null
                     }
                     if (decrypted != null) {
+                        prefs_load_succeeded = true
                         _state.value = _state.value.copy(preferences = decrypted, is_loading = false)
                     } else {
                         _state.value = _state.value.copy(
@@ -1520,7 +1524,8 @@ class SettingsViewModel @Inject constructor(
                         )
                     }
                 } else {
-                    val prefs = try { preferences_api.get_preferences() } catch (_: Throwable) { UserPreferences() }
+                    val prefs = preferences_api.get_preferences()
+                    prefs_load_succeeded = true
                     _state.value = _state.value.copy(preferences = prefs, is_loading = false)
                 }
             } catch (t: Throwable) {
@@ -1760,6 +1765,13 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun save_preferences(prefs: UserPreferences) {
+        if (!prefs_load_succeeded) {
+            _state.value = _state.value.copy(
+                save_status = SaveStatus.ERROR,
+                error = context.getString(R.string.preferences_locked_retry),
+            )
+            return
+        }
         load_preferences_job?.cancel()
         save_preferences_job?.cancel()
         _state.value = _state.value.copy(preferences = prefs, save_status = SaveStatus.SAVING)
@@ -1769,6 +1781,12 @@ class SettingsViewModel @Inject constructor(
                 if (!identity_key.isNullOrBlank()) {
                     val request = encrypt_preferences(prefs, identity_key)
                     preferences_api.save_encrypted_preferences(request)
+                } else if (account_uses_encrypted_prefs) {
+                    _state.value = _state.value.copy(
+                        save_status = SaveStatus.ERROR,
+                        error = context.getString(R.string.preferences_locked_retry),
+                    )
+                    return@launch
                 } else {
                     preferences_api.save_preferences(prefs)
                 }
