@@ -49,6 +49,7 @@ data class CreateScheduledRequest(
     val has_attachments: Boolean? = null,
     val attachment_count: Int? = null,
     val size_bytes: Long? = null,
+    val sender_alias_hash: String? = null,
 )
 
 @Serializable
