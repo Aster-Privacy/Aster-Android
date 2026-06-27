@@ -2800,7 +2800,7 @@ private fun email_html_view(
             is_html_body && !has_newsletter_layout ->
                 "background-color:transparent;color:${if (simple_dark) "#e5e5e5" else "#111827"};margin:0;padding:6px 10px;font-family:$sys_font;font-size:14px;line-height:1.6;word-wrap:break-word"
             is_html_body ->
-                "background-color:#f3f4f6;margin:0;padding:10px 12px"
+                "background-color:transparent;margin:0;padding:6px 0 0 0"
             else ->
                 "background-color:transparent;color:$fg_hex;margin:0;padding:6px 10px;font-family:$sys_font;font-size:14px;line-height:1.6;word-wrap:break-word"
         }
@@ -3418,7 +3418,10 @@ $dark_css
                     animationSpec = androidx.compose.animation.core.tween(durationMillis = 140),
                     label = "web_reveal",
                 )
-                Modifier.height(animated_h).alpha(reveal)
+                Modifier
+                    .then(if (is_nl_ref[0]) Modifier.padding(horizontal = 12.dp) else Modifier)
+                    .height(animated_h)
+                    .alpha(reveal)
             },
             onRelease = { web_view ->
                 runCatching {
