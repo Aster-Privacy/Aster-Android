@@ -166,6 +166,8 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.compose.bom))
+    "androidTestFullImplementation"("com.google.android.play:review:2.0.2")
+    "androidTestFullImplementation"("androidx.test:core-ktx:1.6.1")
 }
 
 if (!is_fdroid_build) {
