@@ -28,9 +28,12 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import org.astermail.android.R
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -78,6 +81,17 @@ class BillingViewModel @Inject constructor(
     private val _state = MutableStateFlow(BillingUiState())
     val state: StateFlow<BillingUiState> = _state.asStateFlow()
 
+    private val _review_request = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val review_request: SharedFlow<Unit> = _review_request.asSharedFlow()
+
+    private var paid_before_checkout = false
+
+    private fun is_active_paid(sub: SubscriptionResponse?): Boolean {
+        if (sub == null) return false
+        val active = sub.status == "active" || sub.status == "trialing"
+        return active && sub.plan.price_cents > 0
+    }
+
     fun load_all() {
         load_subscription()
         load_plans()
@@ -86,20 +100,22 @@ class BillingViewModel @Inject constructor(
     }
 
     fun load_subscription() {
-        viewModelScope.launch {
-            _state.update { it.copy(is_loading = true, error = null) }
-            try {
-                val sub = billing_api.get_subscription()
-                _state.update { it.copy(subscription = sub, is_loading = false, error = null) }
-            } catch (t: Throwable) {
-                if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_subscription failed", t)
-                _state.update {
-                    it.copy(
-                        is_loading = false,
-                        subscription = null,
-                        error = null,
-                    )
-                }
+        viewModelScope.launch { reload_subscription() }
+    }
+
+    private suspend fun reload_subscription() {
+        _state.update { it.copy(is_loading = true, error = null) }
+        try {
+            val sub = billing_api.get_subscription()
+            _state.update { it.copy(subscription = sub, is_loading = false, error = null) }
+        } catch (t: Throwable) {
+            if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_subscription failed", t)
+            _state.update {
+                it.copy(
+                    is_loading = false,
+                    subscription = null,
+                    error = null,
+                )
             }
         }
     }
@@ -317,6 +333,7 @@ class BillingViewModel @Inject constructor(
     }
 
     fun consume_checkout_url() {
+        paid_before_checkout = is_active_paid(_state.value.subscription)
         _state.value = _state.value.copy(checkout_url = null, awaiting_checkout = true)
     }
 
@@ -327,9 +344,15 @@ class BillingViewModel @Inject constructor(
     fun on_resume() {
         val s = _state.value
         if (s.awaiting_checkout || s.awaiting_portal) {
+            val was_checkout = s.awaiting_checkout
             _state.value = s.copy(awaiting_checkout = false, awaiting_portal = false)
-            load_subscription()
-            load_payment_methods()
+            viewModelScope.launch {
+                reload_subscription()
+                load_payment_methods()
+                if (was_checkout && !paid_before_checkout && is_active_paid(_state.value.subscription)) {
+                    _review_request.emit(Unit)
+                }
+            }
         }
     }
 

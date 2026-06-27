@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.settings.detail
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.net.Uri
 import androidx.annotation.StringRes
@@ -74,6 +77,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import org.astermail.android.R
 import org.astermail.android.billing.BillingViewModel
+import org.astermail.android.billing.PlayReview
 import java.util.Locale
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
@@ -253,6 +257,15 @@ private fun plan_code_of(plan_name: String?): String {
     }
 }
 
+private fun Context.findActivity(): Activity? {
+    var ctx: Context? = this
+    while (ctx is ContextWrapper) {
+        if (ctx is Activity) return ctx
+        ctx = ctx.baseContext
+    }
+    return null
+}
+
 @Composable
 fun SubscriptionsScreen(
     on_back: () -> Unit,
@@ -287,6 +300,12 @@ fun SubscriptionsScreen(
         val url = billing_state.portal_url ?: return@LaunchedEffect
         runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
         billing_vm.consume_portal_url()
+    }
+
+    LaunchedEffect(Unit) {
+        billing_vm.review_request.collect {
+            context.findActivity()?.let { PlayReview.request(it) }
+        }
     }
 
     val lifecycle_owner = LocalLifecycleOwner.current

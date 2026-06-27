@@ -29,8 +29,8 @@ android {
         applicationId = "org.astermail.android"
         minSdk = 26
         targetSdk = 35
-        versionCode = 101
-        versionName = "0.6.92"
+        versionCode = 102
+        versionName = "0.6.93"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -152,6 +152,7 @@ dependencies {
     "fullImplementation"(libs.firebase.messaging)
     "fullImplementation"(libs.kotlinx.coroutines.play.services)
     "fullImplementation"(libs.unifiedpush.efcmd)
+    "fullImplementation"("com.google.android.play:review-ktx:2.0.2")
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.lifecycle.process)
