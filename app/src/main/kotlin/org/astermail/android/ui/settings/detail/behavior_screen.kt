@@ -154,7 +154,7 @@ fun BehaviorScreen(
 
     LaunchedEffect(Unit) { vm.load_preferences() }
 
-    val prefs_loaded = prefs != null
+    val prefs_loaded = prefs != null && state.preferences_authoritative
     var mark_read by remember(prefs_loaded) { mutableStateOf(prefs?.mark_as_read ?: "1_second") }
     var conversation_grouping by remember(prefs_loaded) { mutableStateOf(prefs?.conversation_grouping ?: true) }
     var inbox_categories by remember(prefs_loaded) { mutableStateOf(prefs?.inbox_categories_enabled ?: true) }
@@ -245,7 +245,7 @@ fun BehaviorScreen(
     }
 
     detail_scaffold(title = stringResource(R.string.settings_behavior), on_back = on_back) {
-        if (prefs == null) {
+        if (!prefs_loaded) {
             Box(modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
             }

@@ -1250,13 +1250,53 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `save_preferences refuses and never writes when an encrypted load did not succeed`() = runTest {
+    fun `save_preferences recovers and re-encrypts under current key when server blob is undecryptable`() = runTest {
         coEvery { preferences_api.get_encrypted_preferences() } returns
             org.astermail.android.api.preferences.EncryptedPreferencesResponse(
                 encrypted_preferences = "blob",
                 preferences_nonce = "nonce",
             )
-        every { session_key_store.get_identity_key() } returns "badkey"
+        every { session_key_store.get_identity_key() } returns "current_key_after_password_reset"
+
+        val fresh_vm = SettingsViewModel(
+            auth_api = auth_api,
+            user_api = user_api,
+            settings_api = settings_api,
+            labels_api = labels_api,
+            family_api = family_api,
+            tags_api = tags_api,
+            preferences_api = preferences_api,
+            signatures_api = signatures_api,
+            ghost_alias_api = ghost_alias_api,
+            auto_forward_api = auto_forward_api,
+            developer_api = developer_api,
+            subscriptions_api = subscriptions_api,
+            recovery_email_api = recovery_email_api,
+            security_api = security_api,
+            encryption_api = encryption_api,
+            auth_repository = auth_repository,
+            session_key_store = session_key_store,
+            token_store = token_store,
+            account_store = account_store,
+            context = context,
+        )
+        advanceUntilIdle()
+
+        fresh_vm.save_preferences(UserPreferences(load_remote_images = true))
+        advanceUntilIdle()
+
+        assertEquals(SaveStatus.SAVED, fresh_vm.state.value.save_status)
+        coVerify(exactly = 1) { preferences_api.save_encrypted_preferences(any()) }
+    }
+
+    @Test
+    fun `save_preferences refuses and never writes when encrypted account has no identity key`() = runTest {
+        coEvery { preferences_api.get_encrypted_preferences() } returns
+            org.astermail.android.api.preferences.EncryptedPreferencesResponse(
+                encrypted_preferences = "blob",
+                preferences_nonce = "nonce",
+            )
+        every { session_key_store.get_identity_key() } returns null
 
         val fresh_vm = SettingsViewModel(
             auth_api = auth_api,
@@ -1288,6 +1328,71 @@ class SettingsViewModelTest {
         assertEquals(SaveStatus.ERROR, fresh_vm.state.value.save_status)
         coVerify(exactly = 0) { preferences_api.save_encrypted_preferences(any()) }
         coVerify(exactly = 0) { preferences_api.save_preferences(any()) }
+    }
+
+    @Test
+    fun `load_preferences marks authoritative after a successful plaintext load`() = runTest {
+        coEvery { preferences_api.get_encrypted_preferences() } returns
+            org.astermail.android.api.preferences.EncryptedPreferencesResponse()
+        coEvery { preferences_api.get_preferences() } returns
+            UserPreferences(conversation_grouping = false)
+
+        vm.load_preferences()
+        advanceUntilIdle()
+
+        assertTrue(vm.state.value.preferences_authoritative)
+    }
+
+    @Test
+    fun `load_preferences stays non-authoritative when encrypted blob present but identity key missing`() = runTest {
+        coEvery { preferences_api.get_encrypted_preferences() } returns
+            org.astermail.android.api.preferences.EncryptedPreferencesResponse(
+                encrypted_preferences = "blob",
+                preferences_nonce = "nonce",
+            )
+        every { session_key_store.get_identity_key() } returns null
+
+        val fresh_vm = SettingsViewModel(
+            auth_api = auth_api,
+            user_api = user_api,
+            settings_api = settings_api,
+            labels_api = labels_api,
+            family_api = family_api,
+            tags_api = tags_api,
+            preferences_api = preferences_api,
+            signatures_api = signatures_api,
+            ghost_alias_api = ghost_alias_api,
+            auto_forward_api = auto_forward_api,
+            developer_api = developer_api,
+            subscriptions_api = subscriptions_api,
+            recovery_email_api = recovery_email_api,
+            security_api = security_api,
+            encryption_api = encryption_api,
+            auth_repository = auth_repository,
+            session_key_store = session_key_store,
+            token_store = token_store,
+            account_store = account_store,
+            context = context,
+        )
+        advanceUntilIdle()
+
+        assertNotNull(fresh_vm.state.value.preferences)
+        assertFalse(fresh_vm.state.value.preferences_authoritative)
+    }
+
+    @Test
+    fun `load_preferences marks authoritative after decrypt-failure recovery`() = runTest {
+        coEvery { preferences_api.get_encrypted_preferences() } returns
+            org.astermail.android.api.preferences.EncryptedPreferencesResponse(
+                encrypted_preferences = "blob",
+                preferences_nonce = "nonce",
+            )
+        every { session_key_store.get_identity_key() } returns "current_key_after_password_reset"
+
+        vm.load_preferences()
+        advanceUntilIdle()
+
+        assertTrue(vm.state.value.preferences_authoritative)
     }
 
     @Test

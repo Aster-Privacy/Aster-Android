@@ -137,7 +137,7 @@ fun AccessibilityScreen(
 
     LaunchedEffect(Unit) { vm.load_preferences() }
 
-    val prefs_seeded = prefs != null
+    val prefs_seeded = prefs != null && state.preferences_authoritative
     var font_size by remember(prefs_seeded) { mutableStateOf(prefs?.font_size_scale ?: "default") }
     var high_contrast by remember(prefs_seeded) { mutableStateOf(prefs?.high_contrast ?: false) }
     var reduce_transparency by remember(prefs_seeded) { mutableStateOf(prefs?.reduce_transparency ?: false) }
@@ -150,8 +150,8 @@ fun AccessibilityScreen(
     var save_trigger by remember { mutableIntStateOf(0) }
     var prefs_loaded by remember { mutableStateOf(false) }
 
-    LaunchedEffect(prefs) {
-        if (prefs != null && !prefs_loaded) {
+    LaunchedEffect(prefs, state.preferences_authoritative) {
+        if (prefs != null && state.preferences_authoritative && !prefs_loaded) {
             prefs_loaded = true
             font_size = prefs.font_size_scale
             high_contrast = prefs.high_contrast
@@ -202,7 +202,7 @@ fun AccessibilityScreen(
     }
 
     detail_scaffold(title = stringResource(R.string.settings_accessibility), on_back = on_back) {
-        if (prefs == null) {
+        if (prefs == null || !state.preferences_authoritative) {
             Box(modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
             }

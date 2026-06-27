@@ -119,6 +119,7 @@ data class SettingsUiState(
     val tags: List<TagItem> = emptyList(),
     val referral: ReferralInfoResponse? = null,
     val preferences: UserPreferences? = null,
+    val preferences_authoritative: Boolean = false,
     val reserved_addresses: List<ReservedAddress> = emptyList(),
     val family_seats_used: Int = 0,
     val family_max_members: Int = 0,
@@ -1515,18 +1516,28 @@ class SettingsViewModel @Inject constructor(
                     }
                     if (decrypted != null) {
                         prefs_load_succeeded = true
-                        _state.value = _state.value.copy(preferences = decrypted, is_loading = false)
+                        _state.value = _state.value.copy(
+                            preferences = decrypted,
+                            preferences_authoritative = true,
+                            is_loading = false,
+                        )
                     } else {
+                        prefs_load_succeeded = true
                         _state.value = _state.value.copy(
                             preferences = _state.value.preferences ?: UserPreferences(),
+                            preferences_authoritative = true,
                             is_loading = false,
-                            error = context.getString(R.string.preferences_decrypt_failed),
+                            error = null,
                         )
                     }
                 } else {
                     val prefs = preferences_api.get_preferences()
                     prefs_load_succeeded = true
-                    _state.value = _state.value.copy(preferences = prefs, is_loading = false)
+                    _state.value = _state.value.copy(
+                        preferences = prefs,
+                        preferences_authoritative = true,
+                        is_loading = false,
+                    )
                 }
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(

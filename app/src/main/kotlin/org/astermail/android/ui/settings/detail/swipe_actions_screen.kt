@@ -85,8 +85,8 @@ fun SwipeActionsScreen(on_back: () -> Unit) {
     var swipe_left by remember { mutableStateOf("trash") }
     var prefs_loaded by remember { mutableStateOf(false) }
 
-    LaunchedEffect(prefs) {
-        if (prefs != null && !prefs_loaded) {
+    LaunchedEffect(prefs, state.preferences_authoritative) {
+        if (prefs != null && state.preferences_authoritative && !prefs_loaded) {
             prefs_loaded = true
             swipe_right = prefs.swipe_right_action
             swipe_left = prefs.swipe_left_action
@@ -107,7 +107,7 @@ fun SwipeActionsScreen(on_back: () -> Unit) {
         title = stringResource(R.string.swipe_actions),
         on_back = on_back,
     ) {
-        if (prefs == null) {
+        if (prefs == null || !state.preferences_authoritative) {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
                 contentAlignment = Alignment.Center,

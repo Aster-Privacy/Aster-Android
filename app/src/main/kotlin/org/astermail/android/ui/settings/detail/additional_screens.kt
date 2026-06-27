@@ -729,7 +729,7 @@ fun DeveloperScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
 
     LaunchedEffect(Unit) { vm.load_preferences() }
 
-    val prefs_seeded = prefs != null
+    val prefs_seeded = prefs != null && state.preferences_authoritative
     var dev_mode by remember(prefs_seeded) { mutableStateOf(prefs?.dev_mode ?: false) }
     var show_raw_headers by remember(prefs_seeded) { mutableStateOf(prefs?.show_raw_headers ?: false) }
     var allow_insecure by remember(prefs_seeded) { mutableStateOf(prefs?.allow_insecure ?: false) }
@@ -737,8 +737,8 @@ fun DeveloperScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
     var save_trigger by remember { mutableIntStateOf(0) }
     var prefs_loaded_dev by remember { mutableStateOf(false) }
 
-    LaunchedEffect(prefs) {
-        if (prefs != null && !prefs_loaded_dev) {
+    LaunchedEffect(prefs, state.preferences_authoritative) {
+        if (prefs != null && state.preferences_authoritative && !prefs_loaded_dev) {
             prefs_loaded_dev = true
             dev_mode = prefs.dev_mode
             show_raw_headers = prefs.show_raw_headers

@@ -118,7 +118,7 @@ fun NotificationsScreen(
 
     LaunchedEffect(Unit) { vm.load_preferences() }
 
-    val prefs_seeded = prefs != null
+    val prefs_seeded = prefs != null && state.preferences_authoritative
     var push by remember(prefs_seeded) { mutableStateOf(prefs?.push_notifications ?: true) }
     var sound by remember(prefs_seeded) { mutableStateOf(prefs?.sound ?: true) }
     var vibrate by remember(prefs_seeded) { mutableStateOf(prefs?.vibrate ?: true) }
@@ -150,8 +150,8 @@ fun NotificationsScreen(
         onDispose { lifecycle_owner.lifecycle.removeObserver(observer) }
     }
 
-    LaunchedEffect(prefs) {
-        if (prefs != null && !prefs_loaded) {
+    LaunchedEffect(prefs, state.preferences_authoritative) {
+        if (prefs != null && state.preferences_authoritative && !prefs_loaded) {
             prefs_loaded = true
             push = prefs.push_notifications
             sound = prefs.sound
@@ -215,7 +215,7 @@ fun NotificationsScreen(
         title = stringResource(R.string.notifications),
         on_back = on_back,
     ) {
-        if (prefs == null) {
+        if (prefs == null || !state.preferences_authoritative) {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
                 contentAlignment = Alignment.Center,
