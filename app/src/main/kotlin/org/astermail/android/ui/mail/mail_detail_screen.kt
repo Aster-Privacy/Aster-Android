@@ -2652,6 +2652,14 @@ private fun email_html_view(
             body.contains(Regex("<table[^>]*(?:width|bgcolor|background)\\s*=", RegexOption.IGNORE_CASE)) ||
             (body.split(Regex("<table\\b", RegexOption.IGNORE_CASE)).size - 1) > 2
         )
+        val render_body = if (has_newsletter_layout) {
+            body
+                .replace(Regex("""\bmin-width\s*:\s*[1-9]\d{2,3}px""", RegexOption.IGNORE_CASE), "min-width:0")
+                .replace(Regex("""(?<![a-z-])width\s*:\s*[4-9]\d{2,3}px""", RegexOption.IGNORE_CASE), "width:100%")
+                .replace(Regex("""\bwidth\s*=\s*["']?[4-9]\d{2,3}["']?""", RegexOption.IGNORE_CASE), "width=\"100%\"")
+        } else {
+            body
+        }
         val declares_light = body.contains(Regex("color-scheme\\s*:\\s*light\\s+only", RegexOption.IGNORE_CASE))
         val declares_light_bg = is_html_body && body.contains(
             Regex(
@@ -2733,7 +2741,7 @@ details[open].aster-forwarded-collapse>summary::before{transform:rotate(90deg)}
 details.aster-forwarded-collapse>.aster-forwarded-content{padding-top:8px}
 $dark_css
 </style>
-</head><body style="$body_style"><div id="m">$body</div>
+</head><body style="$body_style"><div id="m">$render_body</div>
 <script nonce="$csp_nonce">
 (function(){
   var body=document.body;
