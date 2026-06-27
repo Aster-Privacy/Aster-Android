@@ -2813,7 +2813,7 @@ a,a *{color:#60a5fa!important}
 """ else ""
 
         val table_css = if (has_newsletter_layout) {
-            "#m{max-width:100%!important;overflow-x:hidden!important}#m table{max-width:100%!important;width:100%!important;border-collapse:collapse}#m img{max-width:100%!important;height:auto!important}td,th{min-width:0!important;box-sizing:border-box!important;max-width:100%!important}#m td,#m th,#m p,#m h1,#m h2,#m h3,#m h4,#m h5,#m h6,#m div,#m span,#m a{white-space:normal!important;overflow-wrap:break-word!important;word-wrap:break-word!important}"
+            "#m{max-width:100%!important;overflow-x:hidden!important}#m table{max-width:100%!important;width:100%!important}#m img{max-width:100%!important;height:auto!important}td,th{min-width:0!important;box-sizing:border-box!important;max-width:100%!important}#m td,#m th,#m p,#m h1,#m h2,#m h3,#m h4,#m h5,#m h6,#m div,#m span,#m a{white-space:normal!important;overflow-wrap:break-word!important;word-wrap:break-word!important}"
         } else {
             "table{max-width:100%!important;border-collapse:collapse;width:100%!important}td,th{overflow-wrap:break-word}"
         }
