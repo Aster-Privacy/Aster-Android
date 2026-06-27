@@ -337,6 +337,7 @@ fun MailDetailScreen(
         ?: current_account?.profile_picture?.takeIf { it.isNotBlank() }
     var show_action_sheet by remember { mutableStateOf(false) }
     var show_topbar_menu by remember { mutableStateOf(false) }
+    var show_message_details by remember { mutableStateOf(false) }
     var show_raw_source_dialog by remember { mutableStateOf(false) }
     var show_encryption_info by remember { mutableStateOf(false) }
     var show_snooze_sheet by remember { mutableStateOf(false) }
@@ -583,6 +584,15 @@ fun MailDetailScreen(
                             } else {
                                 show_toast(context.getString(R.string.nothing_to_print))
                             }
+                        }
+                        detail_menu_action(
+                            icon = Icons.Outlined.Info,
+                            text = stringResource(R.string.message_details),
+                            tint = colors.text_primary,
+                            test_tag = "message_details",
+                        ) {
+                            show_topbar_menu = false
+                            show_message_details = true
                         }
                         detail_menu_action(
                             icon = Icons.Outlined.Code,
@@ -1201,6 +1211,14 @@ fun MailDetailScreen(
                 mail_vm.apply_tag(email_id, picked.tag_token, display)
                 show_label_sheet = false
             },
+        )
+    }
+
+    if (show_message_details) {
+        message_details_dialog(
+            message = messages.lastOrNull(),
+            subject = email?.subject.orEmpty(),
+            on_close = { show_message_details = false },
         )
     }
 
@@ -1897,6 +1915,113 @@ private fun raw_source_dialog(
                         }
                         clipboard?.setPrimaryClip(clip)
                         Toast.makeText(context, context.getString(R.string.detail_raw_source_copied), Toast.LENGTH_SHORT).show()
+                    },
+                )
+            }
+        },
+    )
+}
+
+@Composable
+private fun message_detail_row(label: String, value: String) {
+    val colors = AsterMaterial.colors
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
+        Text(
+            text = label,
+            color = colors.text_muted,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.width(78.dp),
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = value,
+            color = colors.text_primary,
+            fontSize = 13.sp,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun message_details_dialog(
+    message: ThreadMessage?,
+    subject: String,
+    on_close: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val context = LocalContext.current
+    val headers_text = remember(message) {
+        message?.raw_headers?.takeIf { it.isNotEmpty() }
+            ?.joinToString("\n") { "${it.first}: ${it.second}" }
+            .orEmpty()
+    }
+    org.astermail.android.design.components.AsterDialog(
+        on_dismiss = on_close,
+        title = stringResource(R.string.message_details),
+        message = if (message == null) stringResource(R.string.detail_raw_source_unavailable) else null,
+        body = if (message == null) null else ({
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 440.dp)
+                    .verticalScroll(rememberScrollState()),
+            ) {
+                message_detail_row(
+                    stringResource(R.string.from_label),
+                    "${message.sender_name} <${message.sender_email}>",
+                )
+                if (message.to_label.isNotBlank()) {
+                    message_detail_row(stringResource(R.string.to_label), message.to_label)
+                }
+                message_detail_row(
+                    stringResource(R.string.date),
+                    java.text.SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z", java.util.Locale.US)
+                        .format(java.util.Date(message.timestamp)),
+                )
+                if (subject.isNotBlank()) {
+                    message_detail_row(stringResource(R.string.subject_label), subject)
+                }
+                message_detail_row(
+                    stringResource(R.string.message_id_label),
+                    "<${message.id}@astermail.org>",
+                )
+                message_detail_row(
+                    stringResource(R.string.encryption),
+                    if (message.is_encrypted) stringResource(R.string.encrypted_e2e) else stringResource(R.string.encrypted_in_transit),
+                )
+                Spacer(Modifier.height(AsterSpacing.md))
+                Text(
+                    text = stringResource(R.string.message_headers),
+                    color = colors.text_muted,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = headers_text.ifBlank { stringResource(R.string.no_raw_headers) },
+                    color = colors.text_primary,
+                    fontSize = 12.sp,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                )
+            }
+        }),
+        footer = {
+            org.astermail.android.design.components.AsterDialogOutlineButton(
+                label = stringResource(R.string.detail_raw_source_close),
+                onClick = on_close,
+            )
+            if (message != null && headers_text.isNotBlank()) {
+                org.astermail.android.design.components.AsterDialogPrimaryButton(
+                    label = stringResource(R.string.copy_headers),
+                    onClick = {
+                        val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                        val clip = android.content.ClipData.newPlainText("headers", headers_text)
+                        clip.description.extras = android.os.PersistableBundle().apply {
+                            putBoolean("android.content.extra.IS_SENSITIVE", true)
+                        }
+                        clipboard?.setPrimaryClip(clip)
+                        Toast.makeText(context, context.getString(R.string.headers_copied), Toast.LENGTH_SHORT).show()
                     },
                 )
             }

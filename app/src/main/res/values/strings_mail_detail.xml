@@ -22,4 +22,13 @@
     <string name="detail_raw_source_unavailable">Raw source is unavailable for this message.</string>
     <string name="detail_star_action">Star message</string>
     <string name="detail_unstar_action">Unstar message</string>
+    <string name="message_details">Message details</string>
+    <string name="from_label">From</string>
+    <string name="to_label">To</string>
+    <string name="subject_label">Subject</string>
+    <string name="message_id_label">Message ID</string>
+    <string name="message_headers">Message headers</string>
+    <string name="no_raw_headers">No raw headers available for this message.</string>
+    <string name="copy_headers">Copy headers</string>
+    <string name="headers_copied">Headers copied</string>
 </resources>

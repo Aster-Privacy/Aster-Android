@@ -143,6 +143,7 @@ data class ThreadMessageDecrypted(
     val to_addresses: List<String> = emptyList(),
     val cc_addresses: List<String> = emptyList(),
     val has_attachments: Boolean = false,
+    val raw_headers: List<Pair<String, String>> = emptyList(),
 )
 
 @Singleton
@@ -638,6 +639,7 @@ class MailRepository @Inject constructor(
             to_addresses = envelope?.to?.map { it.second } ?: emptyList(),
             cc_addresses = envelope?.cc?.map { it.second } ?: emptyList(),
             has_attachments = meta?.has_attachments ?: false,
+            raw_headers = envelope?.raw_headers ?: emptyList(),
         )
     }
 

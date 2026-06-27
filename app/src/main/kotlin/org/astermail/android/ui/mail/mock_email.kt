@@ -142,6 +142,7 @@ data class ThreadMessage(
     val is_read: Boolean = true,
     val preview: String = body.take(80),
     val attachments: List<MessageAttachment> = emptyList(),
+    val raw_headers: List<Pair<String, String>> = emptyList(),
 )
 
 private val label_work = Color(0xFF3B82F6)
@@ -1087,6 +1088,7 @@ fun thread_message_to_mock(msg: org.astermail.android.mail.ThreadMessageDecrypte
         is_encrypted = msg.is_encrypted,
         trackers_blocked = 0,
         is_read = msg.is_read,
+        raw_headers = msg.raw_headers,
     )
 }
 
