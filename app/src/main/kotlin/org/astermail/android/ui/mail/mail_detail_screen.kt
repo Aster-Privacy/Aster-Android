@@ -2887,12 +2887,10 @@ $dark_css
   }
   function measure_h(){
     var m=document.getElementById('m');
-    var base=m?m.offsetHeight:0;
+    if(!m)return 0;
     if(document.documentElement.getAttribute('data-nl'))return aster_content_height();
-    var de=document.documentElement;var b=document.body;var h=base;
-    if(de)h=Math.max(h,de.scrollHeight,de.offsetHeight);
-    if(b)h=Math.max(h,b.scrollHeight,b.offsetHeight);
-    return h+4;
+    var pb=parseFloat(window.getComputedStyle(document.body).paddingBottom)||0;
+    return Math.ceil(m.getBoundingClientRect().bottom+pb)+4;
   }
   function report_h(){if(document.getElementById('m'))console.log('ASTER_HEIGHT:'+measure_h())}
   function report_h_exact(){if(document.getElementById('m'))console.log('ASTER_HEIGHT_EXACT:'+measure_h())}
@@ -3391,7 +3389,7 @@ $dark_css
                     web_view.postDelayed({
                         if (!has_measured) {
                             web_view.evaluateJavascript(
-                                "(function(){var m=document.getElementById('m');if(!m)return 0;var h=Math.round(m.getBoundingClientRect().height);if(!document.documentElement.getAttribute('data-nl')){var de=document.documentElement;var b=document.body;if(de)h=Math.max(h,de.scrollHeight);if(b)h=Math.max(h,b.scrollHeight);h+=4;}return h;})()",
+                                "(function(){var m=document.getElementById('m');if(!m)return 0;if(document.documentElement.getAttribute('data-nl'))return Math.round(m.getBoundingClientRect().height);var pb=parseFloat(window.getComputedStyle(document.body).paddingBottom)||0;return Math.ceil(m.getBoundingClientRect().bottom+pb)+4;})()",
                             ) { result ->
                                 val parsed = result?.trim()?.removeSurrounding("\"")?.toIntOrNull() ?: 0
                                 if (parsed > 0) {

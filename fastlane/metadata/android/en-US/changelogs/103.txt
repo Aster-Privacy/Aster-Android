@@ -1,0 +1,4 @@
+Bug fixes and improvements:
+
+- Fixed extra blank space below short messages in the email view
+- Improved message height sizing for a tighter, cleaner read view
