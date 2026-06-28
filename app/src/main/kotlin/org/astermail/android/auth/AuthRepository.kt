@@ -359,7 +359,8 @@ class AuthRepository @Inject constructor(
                 password_hash = base64_encode(password_hash_bytes),
                 password_salt = base64_encode(salt_bytes),
                 argon2_params = Argon2Params(memory = 65536, iterations = 3, parallelism = 4),
-                identity_key = pgp_keys?.armored_public_key ?: base64_encode(identity.public_key),
+                identity_key = pgp_keys?.armored_public_key?.let { base64_encode(it.toByteArray(Charsets.UTF_8)) }
+                    ?: base64_encode(identity.public_key),
                 signed_prekey = base64_encode(prekey.public_key),
                 signed_prekey_signature = base64_encode(signature),
                 encrypted_vault = base64_encode(vault_envelope.encrypted_vault),

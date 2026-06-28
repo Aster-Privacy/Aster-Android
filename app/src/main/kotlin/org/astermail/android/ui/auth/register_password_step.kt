@@ -351,9 +351,9 @@ private fun terms_agreement_text(
     on_privacy_click: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val prefix = stringResource(R.string.register_agree_prefix)
+    val prefix = stringResource(R.string.register_agree_prefix) + " "
     val terms = stringResource(R.string.terms_of_service)
-    val and_word = stringResource(R.string.register_agree_and)
+    val and_word = " " + stringResource(R.string.register_agree_and) + " "
     val privacy = stringResource(R.string.privacy_policy)
 
     val annotated = buildAnnotatedString {

@@ -1,0 +1,4 @@
+Bug fixes and improvements:
+
+- Fixed account creation failing with a validation error during sign-up
+- Fixed spacing around the Terms of service and Privacy policy links
