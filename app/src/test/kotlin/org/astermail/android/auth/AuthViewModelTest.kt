@@ -33,7 +33,6 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.astermail.android.api.ApiError
-import org.astermail.android.crypto.RecoveryKeyResult
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -111,7 +110,7 @@ class AuthViewModelTest {
     @Test
     fun `initial state is idle`() {
         assertEquals(AuthUiState.Idle, vm.ui_state.value)
-        assertNull(vm.recovery_mnemonic.value)
+        assertNull(vm.recovery_codes.value)
     }
 
     @Test
@@ -324,10 +323,10 @@ class AuthViewModelTest {
     }
 
     @Test
-    fun `submit_register transitions to loading then success with mnemonic`() = runTest {
-        val recovery = RecoveryKeyResult("word1 word2 word3", ByteArray(16) { 0x01 })
+    fun `submit_register transitions to loading then success with codes`() = runTest {
+        val codes = listOf("ASTER-AAAA-BBBB-CCCC", "ASTER-DDDD-EEEE-FFFF")
         coEvery { repository.register(any(), any(), any()) } returns
-            Result.success(RegisterSuccess(recovery))
+            Result.success(RegisterSuccess(codes))
 
         vm.submit_register("test@astermail.org", "password12345!", "password12345!")
         assertEquals(AuthUiState.Loading, vm.ui_state.value)
@@ -335,14 +334,13 @@ class AuthViewModelTest {
         advanceUntilIdle()
 
         assertEquals(AuthUiState.Success, vm.ui_state.value)
-        assertEquals("word1 word2 word3", vm.recovery_mnemonic.value)
+        assertEquals(codes, vm.recovery_codes.value)
     }
 
     @Test
     fun `submit_register trims email before validation`() = runTest {
-        val recovery = RecoveryKeyResult("mnemonic", ByteArray(8))
         coEvery { repository.register(any(), any(), any()) } returns
-            Result.success(RegisterSuccess(recovery))
+            Result.success(RegisterSuccess(listOf("ASTER-AAAA-BBBB-CCCC")))
 
         vm.submit_register("  test@astermail.org  ", "password12345!", "password12345!")
         advanceUntilIdle()
@@ -401,9 +399,8 @@ class AuthViewModelTest {
 
     @Test
     fun `submit_register accepts password exactly 12 characters`() = runTest {
-        val recovery = RecoveryKeyResult("words", ByteArray(8))
         coEvery { repository.register(any(), any(), any()) } returns
-            Result.success(RegisterSuccess(recovery))
+            Result.success(RegisterSuccess(listOf("ASTER-AAAA-BBBB-CCCC")))
 
         vm.submit_register("test@astermail.org", "123456789012", "123456789012")
         advanceUntilIdle()
@@ -439,7 +436,7 @@ class AuthViewModelTest {
     fun `submit_register ignores duplicate call while loading`() = runTest {
         coEvery { repository.register(any(), any(), any()) } coAnswers {
             kotlinx.coroutines.delay(5000)
-            Result.success(RegisterSuccess(RecoveryKeyResult("m", ByteArray(4))))
+            Result.success(RegisterSuccess(listOf("ASTER-AAAA-BBBB-CCCC")))
         }
 
         vm.submit_register("test@astermail.org", "password12345!", "password12345!")
@@ -454,9 +451,8 @@ class AuthViewModelTest {
 
     @Test
     fun `submit_register with captcha token passes it through`() = runTest {
-        val recovery = RecoveryKeyResult("m", ByteArray(4))
         coEvery { repository.register(any(), any(), any()) } returns
-            Result.success(RegisterSuccess(recovery))
+            Result.success(RegisterSuccess(listOf("ASTER-AAAA-BBBB-CCCC")))
 
         vm.submit_register("test@astermail.org", "password12345!", "password12345!", "tok123")
         advanceUntilIdle()
@@ -465,18 +461,18 @@ class AuthViewModelTest {
     }
 
     @Test
-    fun `consume_recovery_mnemonic clears the mnemonic`() = runTest {
-        val recovery = RecoveryKeyResult("secret words", ByteArray(8))
+    fun `consume_recovery_codes clears the codes`() = runTest {
+        val codes = listOf("ASTER-AAAA-BBBB-CCCC", "ASTER-DDDD-EEEE-FFFF")
         coEvery { repository.register(any(), any(), any()) } returns
-            Result.success(RegisterSuccess(recovery))
+            Result.success(RegisterSuccess(codes))
 
         vm.submit_register("test@astermail.org", "password12345!", "password12345!")
         advanceUntilIdle()
-        assertEquals("secret words", vm.recovery_mnemonic.value)
+        assertEquals(codes, vm.recovery_codes.value)
 
-        vm.consume_recovery_mnemonic()
+        vm.consume_recovery_codes()
 
-        assertNull(vm.recovery_mnemonic.value)
+        assertNull(vm.recovery_codes.value)
     }
 
     @Test

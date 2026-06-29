@@ -107,11 +107,25 @@ data class CompleteRecoveryResponse(
     val success: Boolean,
 )
 
+@Serializable
+data class SaveRecoveryBackupRequest(
+    val recovery_shares: List<RecoveryShareData>,
+    val encrypted_vault_backup: String,
+    val vault_backup_nonce: String,
+    val recovery_key_salt: String,
+)
+
+@Serializable
+data class SaveRecoveryBackupResponse(
+    val success: Boolean,
+)
+
 interface RecoveryApi {
     suspend fun initiate(request: InitiateRecoveryRequest): InitiateRecoveryResponse
     suspend fun initiate_email(request: InitiateEmailRecoveryRequest): InitiateEmailRecoveryResponse
     suspend fun validate_email(request: ValidateEmailRecoveryRequest): ValidateEmailRecoveryResponse
     suspend fun complete(request: CompleteRecoveryRequest): CompleteRecoveryResponse
+    suspend fun backup(request: SaveRecoveryBackupRequest): SaveRecoveryBackupResponse
 }
 
 class RecoveryApiImpl(private val client: ApiClient) : RecoveryApi {
@@ -143,6 +157,14 @@ class RecoveryApiImpl(private val client: ApiClient) : RecoveryApi {
 
     override suspend fun complete(request: CompleteRecoveryRequest): CompleteRecoveryResponse {
         val response = client.http.post("${client.base_url}$base/complete") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun backup(request: SaveRecoveryBackupRequest): SaveRecoveryBackupResponse {
+        val response = client.http.post("${client.base_url}$base/backup") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }

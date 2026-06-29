@@ -63,10 +63,10 @@ fun RegisterScreen(
     val colors = AsterMaterial.colors
     val state = remember_register_flow_state()
     val auth_state by view_model.ui_state.collectAsStateWithLifecycle()
-    val recovery by view_model.recovery_mnemonic.collectAsStateWithLifecycle()
+    val recovery_codes by view_model.recovery_codes.collectAsStateWithLifecycle()
 
-    LaunchedEffect(recovery) {
-        if (recovery != null && state.step.value == RegisterStep.generating) {
+    LaunchedEffect(recovery_codes) {
+        if (recovery_codes != null && state.step.value == RegisterStep.generating) {
             state.step.value = RegisterStep.recovery_key
         }
     }
@@ -145,7 +145,7 @@ fun RegisterScreen(
                     )
                     RegisterStep.generating -> RegisterGeneratingStep()
                     RegisterStep.recovery_key -> RegisterRecoveryStep(
-                        mnemonic = recovery.orEmpty(),
+                        codes = recovery_codes.orEmpty(),
                         on_continue = {
                             state.step.value = RegisterStep.recovery_email
                         },
@@ -153,11 +153,11 @@ fun RegisterScreen(
                     RegisterStep.recovery_email -> RegisterRecoveryEmailStep(
                         state = state,
                         on_continue = {
-                            view_model.consume_recovery_mnemonic()
+                            view_model.consume_recovery_codes()
                             state.step.value = RegisterStep.plan_selection
                         },
                         on_skip = {
-                            view_model.consume_recovery_mnemonic()
+                            view_model.consume_recovery_codes()
                             state.step.value = RegisterStep.plan_selection
                         },
                     )

@@ -48,11 +48,13 @@ import org.astermail.android.api.auth.LoginResponse
 import org.astermail.android.api.auth.LoginResult
 import org.astermail.android.api.auth.RegisterRequest
 import org.astermail.android.api.auth.TotpLoginVerifyRequest
+import org.astermail.android.api.recovery.RecoveryApi
+import org.astermail.android.api.recovery.RecoveryShareData
+import org.astermail.android.api.recovery.SaveRecoveryBackupRequest
 import org.astermail.android.api.settings.ChangePasswordRequest
 import org.astermail.android.api.settings.SettingsApi
 import org.astermail.android.crypto.CryptoNative
 import org.astermail.android.crypto.PgpKeyGenerator
-import org.astermail.android.crypto.RecoveryKeyResult
 import org.astermail.android.storage.AccountStore
 import org.astermail.android.storage.SessionKeyStore
 import org.astermail.android.storage.SessionSnapshotStore
@@ -63,7 +65,7 @@ import org.astermail.android.storage.ThemeStore
 import org.astermail.android.storage.TokenStore
 import org.astermail.android.storage.TrustedDeviceStore
 
-data class RegisterSuccess(val recovery: RecoveryKeyResult)
+data class RegisterSuccess(val recovery_codes: List<String>)
 
 data class TotpChallenge(
     val pending_login_token: String,
@@ -83,6 +85,7 @@ sealed interface LoginOutcome {
 @Singleton
 class AuthRepository @Inject constructor(
     private val auth_api: AuthApi,
+    private val recovery_api: RecoveryApi,
     private val settings_api: SettingsApi,
     private val api_client: ApiClient,
     private val token_store: TokenStore,
@@ -329,7 +332,6 @@ class AuthRepository @Inject constructor(
         val identity = CryptoNative.generate_identity_keypair_struct()
         val prekey = CryptoNative.generate_identity_keypair_struct()
         val signature = CryptoNative.sign_with_identity(identity.private_key, prekey.public_key)
-        val recovery = CryptoNative.generate_recovery_key()
 
         val passphrase_chars = password.toCharArray()
         val pgp_keys = try {
@@ -340,10 +342,13 @@ class AuthRepository @Inject constructor(
             passphrase_chars.fill(' ')
         }
 
+        val recovery_codes = generate_recovery_codes()
+        val recovery_key = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
+
         val vault_json = build_vault_json(
             identity_private_b64 = base64_encode(identity.private_key),
             prekey_private_b64 = base64_encode(prekey.private_key),
-            recovery_mnemonic = recovery.mnemonic,
+            recovery_codes = recovery_codes,
             pgp_private_key = pgp_keys?.armored_private_key,
         )
         val vault_plaintext = vault_json.toByteArray(Charsets.UTF_8)
@@ -392,6 +397,25 @@ class AuthRepository @Inject constructor(
         signature.fill(0)
         password_hash_bytes.fill(0)
 
+        val vault_for_backup = vault_json.toByteArray(Charsets.UTF_8)
+        val vault_backup = encrypt_vault_backup(vault_for_backup, recovery_key)
+        vault_for_backup.fill(0)
+        val recovery_shares = recovery_codes.map { code -> generate_recovery_share(code, recovery_key) }
+        recovery_key.fill(0)
+
+        runCatching {
+            recovery_api.backup(
+                SaveRecoveryBackupRequest(
+                    recovery_shares = recovery_shares,
+                    encrypted_vault_backup = vault_backup.encrypted_data,
+                    vault_backup_nonce = vault_backup.nonce,
+                    recovery_key_salt = vault_backup.salt,
+                ),
+            )
+        }
+
+        session_key_store.put_recovery_codes(recovery_codes)
+
         val profile = runCatching { auth_api.me() }.getOrNull()
         account_store.add_or_update(
             StoredAccount(
@@ -407,7 +431,7 @@ class AuthRepository @Inject constructor(
         _is_signed_in.value = true
         runCatching { UnifiedPushState.clear_backend_registration(context) }
         runCatching { UnifiedPushState.try_register(context) }
-        RegisterSuccess(recovery = recovery)
+        RegisterSuccess(recovery_codes = recovery_codes)
     }
 
     private fun save_session_snapshot(account_id: String) {
@@ -760,7 +784,7 @@ class AuthRepository @Inject constructor(
     private fun build_vault_json(
         identity_private_b64: String,
         prekey_private_b64: String,
-        recovery_mnemonic: String? = null,
+        recovery_codes: List<String>? = null,
         pgp_private_key: String? = null,
     ): String {
         val obj = org.json.JSONObject()
@@ -768,8 +792,10 @@ class AuthRepository @Inject constructor(
         obj.put("identity_private_key", identity_private_b64)
         obj.put("signed_prekey_private", prekey_private_b64)
         obj.put("created_at", System.currentTimeMillis() / 1000L)
-        if (recovery_mnemonic != null) {
-            obj.put("recovery_codes", org.json.JSONArray().put(recovery_mnemonic))
+        if (!recovery_codes.isNullOrEmpty()) {
+            val arr = org.json.JSONArray()
+            recovery_codes.forEach { arr.put(it) }
+            obj.put("recovery_codes", arr)
         }
         if (pgp_private_key != null) {
             obj.put("identity_key", pgp_private_key)
@@ -801,6 +827,70 @@ class AuthRepository @Inject constructor(
         return cipher.doFinal(ciphertext)
     }
 
+    private fun generate_recovery_codes(): List<String> {
+        val chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+        val random = java.security.SecureRandom()
+        return (1..6).map {
+            val seg1 = (1..4).map { chars[random.nextInt(chars.length)] }.joinToString("")
+            val seg2 = (1..4).map { chars[random.nextInt(chars.length)] }.joinToString("")
+            val seg3 = (1..4).map { chars[random.nextInt(chars.length)] }.joinToString("")
+            "ASTER-$seg1-$seg2-$seg3"
+        }
+    }
+
+    private fun hash_recovery_code(code: String): String {
+        val cleaned = code.uppercase().trim()
+        val digest = java.security.MessageDigest.getInstance("SHA-256")
+        val hash = digest.digest(cleaned.toByteArray(Charsets.UTF_8))
+        return base64_encode(hash)
+    }
+
+    private fun generate_recovery_share(code: String, recovery_key: ByteArray): RecoveryShareData {
+        val code_hash = hash_recovery_code(code)
+        val salt = ByteArray(16).also { java.security.SecureRandom().nextBytes(it) }
+        val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
+        val code_chars = code.uppercase().trim().toCharArray()
+        val spec = javax.crypto.spec.PBEKeySpec(code_chars, salt, pbkdf2_iterations, 256)
+        val factory = javax.crypto.SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+        val derived = factory.generateSecret(spec).encoded
+        spec.clearPassword()
+        val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, javax.crypto.spec.SecretKeySpec(derived, "AES"), javax.crypto.spec.GCMParameterSpec(128, nonce))
+        val encrypted = cipher.doFinal(recovery_key)
+        derived.fill(0)
+        return RecoveryShareData(
+            code_hash = code_hash,
+            code_salt = base64_encode(salt),
+            encrypted_recovery_key = base64_encode(encrypted),
+            recovery_key_nonce = base64_encode(nonce),
+        )
+    }
+
+    private data class VaultBackupResult(val encrypted_data: String, val nonce: String, val salt: String)
+
+    private fun encrypt_vault_backup(vault: ByteArray, recovery_key: ByteArray): VaultBackupResult {
+        val salt = ByteArray(16).also { java.security.SecureRandom().nextBytes(it) }
+        val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
+        val derived = hkdf_sha256(recovery_key, salt, HKDF_INFO.toByteArray(Charsets.UTF_8), 32)
+        val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, javax.crypto.spec.SecretKeySpec(derived, "AES"), javax.crypto.spec.GCMParameterSpec(128, nonce))
+        val encrypted = cipher.doFinal(vault)
+        derived.fill(0)
+        return VaultBackupResult(base64_encode(encrypted), base64_encode(nonce), base64_encode(salt))
+    }
+
+    private fun hkdf_sha256(ikm: ByteArray, salt: ByteArray, info: ByteArray, length: Int): ByteArray {
+        val mac = javax.crypto.Mac.getInstance("HmacSHA256")
+        mac.init(javax.crypto.spec.SecretKeySpec(salt, "HmacSHA256"))
+        val prk = mac.doFinal(ikm)
+        mac.init(javax.crypto.spec.SecretKeySpec(prk, "HmacSHA256"))
+        mac.update(info)
+        mac.update(byteArrayOf(1))
+        val okm = mac.doFinal()
+        prk.fill(0)
+        return okm.copyOf(length)
+    }
+
     private fun base64_encode(bytes: ByteArray): String =
         android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
 
@@ -815,5 +905,6 @@ class AuthRepository @Inject constructor(
     companion object {
         private const val pbkdf2_iterations = 310000
         private const val vault_pbkdf2_iterations = 310000
+        private const val HKDF_INFO = "Aster Mail_Recovery_Vault_v1"
     }
 }

@@ -53,8 +53,8 @@ class AuthViewModel @Inject constructor(
     private val _ui_state = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
     val ui_state: StateFlow<AuthUiState> = _ui_state.asStateFlow()
 
-    private val _recovery_mnemonic = MutableStateFlow<String?>(null)
-    val recovery_mnemonic: StateFlow<String?> = _recovery_mnemonic.asStateFlow()
+    private val _recovery_codes = MutableStateFlow<List<String>?>(null)
+    val recovery_codes: StateFlow<List<String>?> = _recovery_codes.asStateFlow()
 
     val is_signed_in: StateFlow<Boolean> = repository.is_signed_in
 
@@ -115,8 +115,7 @@ class AuthViewModel @Inject constructor(
             val result = repository.register(trimmed, password, captcha_token)
             result.fold(
                 onSuccess = { success ->
-                    _recovery_mnemonic.value = success.recovery.mnemonic
-                    success.recovery.bytes.fill(0)
+                    _recovery_codes.value = success.recovery_codes
                     _ui_state.value = AuthUiState.Success
                 },
                 onFailure = { t ->
@@ -126,8 +125,8 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    fun consume_recovery_mnemonic() {
-        _recovery_mnemonic.value = null
+    fun consume_recovery_codes() {
+        _recovery_codes.value = null
     }
 
     fun reset_state() {
