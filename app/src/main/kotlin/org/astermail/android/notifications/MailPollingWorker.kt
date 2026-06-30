@@ -83,6 +83,8 @@ class MailPollingWorker(
 
         if (UnifiedPushState.has_pending_registration(context)) {
             UnifiedPushState.try_register(context)
+        } else if (UnifiedPushState.subscription_stale(context)) {
+            UnifiedPushState.refresh_backend_subscription(context)
         }
 
         if (inputData.getBoolean(KEY_FORCE_NOTIFY, false)) {

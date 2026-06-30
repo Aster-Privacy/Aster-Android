@@ -47,6 +47,9 @@ object UnifiedPushState {
     private const val KEY_ENDPOINT = "endpoint_url"
     private const val KEY_REGISTERED_ENDPOINT = "registered_endpoint_url"
     private const val KEY_REGISTERED_P256DH = "registered_p256dh"
+    private const val KEY_REGISTERED_AUTH = "registered_auth"
+    private const val KEY_LAST_SUBSCRIBED_AT = "last_subscribed_at"
+    private const val RESUBSCRIBE_INTERVAL_MS = 24L * 60L * 60L * 1000L
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     @Serializable
@@ -92,6 +95,8 @@ object UnifiedPushState {
             .remove(KEY_ENDPOINT)
             .remove(KEY_REGISTERED_ENDPOINT)
             .remove(KEY_REGISTERED_P256DH)
+            .remove(KEY_REGISTERED_AUTH)
+            .remove(KEY_LAST_SUBSCRIBED_AT)
             .apply()
     }
 
@@ -100,7 +105,26 @@ object UnifiedPushState {
             .edit()
             .remove(KEY_REGISTERED_ENDPOINT)
             .remove(KEY_REGISTERED_P256DH)
+            .remove(KEY_REGISTERED_AUTH)
+            .remove(KEY_LAST_SUBSCRIBED_AT)
             .apply()
+    }
+
+    fun subscription_stale(context: Context): Boolean {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val endpoint = prefs.getString(KEY_REGISTERED_ENDPOINT, null) ?: return false
+        val p256dh = prefs.getString(KEY_REGISTERED_P256DH, null) ?: return false
+        if (endpoint.isBlank() || p256dh.isBlank()) return false
+        val last = prefs.getLong(KEY_LAST_SUBSCRIBED_AT, 0L)
+        return System.currentTimeMillis() - last > RESUBSCRIBE_INTERVAL_MS
+    }
+
+    fun refresh_backend_subscription(context: Context) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val endpoint = prefs.getString(KEY_REGISTERED_ENDPOINT, null) ?: return
+        val p256dh = prefs.getString(KEY_REGISTERED_P256DH, null) ?: return
+        val auth = prefs.getString(KEY_REGISTERED_AUTH, null) ?: return
+        post_subscription(context, endpoint, p256dh, auth)
     }
 
     fun try_register(context: Context) {
@@ -147,8 +171,20 @@ object UnifiedPushState {
         auth: String,
     ) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        if (prefs.getString(KEY_REGISTERED_ENDPOINT, null) == endpoint_url &&
-            prefs.getString(KEY_REGISTERED_P256DH, null) == p256dh) return
+        val unchanged = prefs.getString(KEY_REGISTERED_ENDPOINT, null) == endpoint_url &&
+            prefs.getString(KEY_REGISTERED_P256DH, null) == p256dh &&
+            prefs.getString(KEY_REGISTERED_AUTH, null) == auth
+        if (unchanged && !subscription_stale(context)) return
+        post_subscription(context, endpoint_url, p256dh, auth)
+    }
+
+    private fun post_subscription(
+        context: Context,
+        endpoint_url: String,
+        p256dh: String,
+        auth: String,
+    ) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         scope.launch {
             runCatching {
                 val client = EntryPointAccessors.fromApplication(
@@ -168,6 +204,8 @@ object UnifiedPushState {
                 prefs.edit()
                     .putString(KEY_REGISTERED_ENDPOINT, endpoint_url)
                     .putString(KEY_REGISTERED_P256DH, p256dh)
+                    .putString(KEY_REGISTERED_AUTH, auth)
+                    .putLong(KEY_LAST_SUBSCRIBED_AT, System.currentTimeMillis())
                     .apply()
             }
         }
