@@ -1273,7 +1273,19 @@ class MailRepository @Inject constructor(
         val passphrase = session_key_store.get_passphrase() ?: return null
         return try {
             val chars = String(passphrase, Charsets.UTF_8).toCharArray()
-            val result = PgpDecryptor.decrypt(ciphertext, identity_key, chars)
+            val keys_to_try = buildList {
+                add(identity_key)
+                session_key_store.get_previous_keys()?.let { addAll(it) }
+            }.filter { it.contains("-----BEGIN PGP") }
+            var result: String? = null
+            for (key in keys_to_try) {
+                result = try {
+                    PgpDecryptor.decrypt(ciphertext, key, chars)
+                } catch (_: Throwable) {
+                    null
+                }
+                if (result != null) break
+            }
             passphrase.fill(0)
             result
         } catch (_: Throwable) {
