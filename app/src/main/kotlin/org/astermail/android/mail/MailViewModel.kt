@@ -43,6 +43,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.astermail.android.R
 import org.astermail.android.api.mail.MailUserStatsResponse
+import org.astermail.android.notifications.MailPollingWorker
 import org.astermail.android.api.send.ExternalAttachmentPayload
 import org.astermail.android.ui.mail.MessageAttachment
 
@@ -696,6 +697,7 @@ class MailViewModel @Inject constructor(
 
     fun mark_read(item_id: String) {
         if (item_id == DEMO_PHISH_ITEM_ID) return
+        MailPollingWorker.cancel_message_notification(context, item_id)
         val item = _inbox_state.value.items.find { it.id == item_id }
             ?: folder_cache.values.firstNotNullOfOrNull { c -> c.items.find { it.id == item_id } }
         read_overrides[item_id] = true
@@ -1247,6 +1249,7 @@ class MailViewModel @Inject constructor(
 
     fun mark_read_bulk(item_ids: List<String>) {
         if (item_ids.isEmpty()) return
+        MailPollingWorker.cancel_message_notifications(context, item_ids)
         item_ids.forEach { read_overrides[it] = true }
         _inbox_state.value = _inbox_state.value.copy(
             items = _inbox_state.value.items.map {
@@ -1267,6 +1270,7 @@ class MailViewModel @Inject constructor(
     }
 
     fun mark_all_read_scope(folder: String) {
+        MailPollingWorker.clear_all_mail_notifications(context)
         _inbox_state.value = _inbox_state.value.copy(
             items = _inbox_state.value.items.map { it.copy(is_read = true) },
         )

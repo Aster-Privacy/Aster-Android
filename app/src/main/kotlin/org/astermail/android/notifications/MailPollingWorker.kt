@@ -485,8 +485,44 @@ class MailPollingWorker(
             manager.notify(SUMMARY_NOTIFICATION_ID, summary)
         }
 
+        const val MESSAGE_ID_BASE = 2000
+
         fun message_notification_id(seed: Int): Int {
-            return 2000 + ((seed and 0x7fffffff) % 1_000_000)
+            return MESSAGE_ID_BASE + ((seed and 0x7fffffff) % 1_000_000)
+        }
+
+        fun cancel_message_notification(context: Context, item_id: String) {
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
+            val cancelled = message_notification_id(item_id.hashCode())
+            manager.cancel(cancelled)
+            clear_summary_if_empty(manager, setOf(cancelled))
+        }
+
+        fun cancel_message_notifications(context: Context, item_ids: List<String>) {
+            if (item_ids.isEmpty()) return
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
+            val cancelled = item_ids.map { message_notification_id(it.hashCode()) }.toSet()
+            cancelled.forEach { manager.cancel(it) }
+            clear_summary_if_empty(manager, cancelled)
+        }
+
+        fun clear_all_mail_notifications(context: Context) {
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
+            manager.activeNotifications.forEach { active ->
+                if (active.id >= MESSAGE_ID_BASE || active.id == SUMMARY_NOTIFICATION_ID || active.id == NOTIFICATION_ID) {
+                    manager.cancel(active.id)
+                }
+            }
+        }
+
+        private fun clear_summary_if_empty(manager: NotificationManager, just_cancelled: Set<Int>) {
+            val has_remaining_message = manager.activeNotifications.any {
+                it.id >= MESSAGE_ID_BASE && it.id !in just_cancelled
+            }
+            if (!has_remaining_message) {
+                manager.cancel(SUMMARY_NOTIFICATION_ID)
+                manager.cancel(NOTIFICATION_ID)
+            }
         }
 
         private fun can_post(context: Context): Boolean {
