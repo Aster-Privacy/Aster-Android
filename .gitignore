@@ -36,3 +36,9 @@ _ui*.xml
 /.test_artifacts/
 /test_screenshots/
 /my-downloads/
+
+# local dev/test artifacts (never commit)
+/.fdroid_artifact/
+/test_shots/
+/.tmp/
+/BUGS.md
