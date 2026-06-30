@@ -2653,13 +2653,14 @@ private fun GhostAliasSheet(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ExpiringSheet(
+internal fun ExpiringSheet(
     on_close: () -> Unit,
     on_pick: (hours: Int, label: String, password: String?) -> Unit,
 ) {
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
     var password by remember { mutableStateOf("") }
+    var selected_hours by remember { mutableStateOf<Int?>(null) }
     val password_arg = password.trim().ifBlank { null }
     ModalBottomSheet(
         onDismissRequest = on_close,
@@ -2697,9 +2698,9 @@ private fun ExpiringSheet(
             val one_hour_label = stringResource(R.string.duration_one_hour)
             val one_day_label = stringResource(R.string.duration_one_day)
             val seven_days_label = stringResource(R.string.duration_n_days, 7)
-            sheet_row(Icons.Outlined.LockClock, stringResource(R.string.expires_in_hour), colors.text_primary) { on_pick(1, one_hour_label, password_arg) }
-            sheet_row(Icons.Outlined.LockClock, stringResource(R.string.expires_in_day), colors.text_primary) { on_pick(24, one_day_label, password_arg) }
-            sheet_row(Icons.Outlined.LockClock, stringResource(R.string.expires_in_days, 7), colors.text_primary) { on_pick(24 * 7, seven_days_label, password_arg) }
+            toggle_sheet_row(Icons.Outlined.LockClock, stringResource(R.string.expires_in_hour), selected_hours == 1) { selected_hours = 1 }
+            toggle_sheet_row(Icons.Outlined.LockClock, stringResource(R.string.expires_in_day), selected_hours == 24) { selected_hours = 24 }
+            toggle_sheet_row(Icons.Outlined.LockClock, stringResource(R.string.expires_in_days, 7), selected_hours == 24 * 7) { selected_hours = 24 * 7 }
             Spacer(Modifier.height(AsterSpacing.md))
             Text(
                 text = stringResource(R.string.expiry_password_label),
@@ -2735,7 +2736,9 @@ private fun ExpiringSheet(
                     ),
                     textStyle = MaterialTheme.typography.bodyLarge.copy(color = colors.text_primary),
                     cursorBrush = androidx.compose.ui.graphics.SolidColor(colors.accent_blue),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("expiry_password_field"),
                     decorationBox = { inner ->
                         if (password.isEmpty()) {
                             Text(
@@ -2748,6 +2751,21 @@ private fun ExpiringSheet(
                     },
                 )
             }
+            Spacer(Modifier.height(AsterSpacing.md))
+            org.astermail.android.design.components.AsterButton(
+                label = stringResource(R.string.accept),
+                onClick = {
+                    val hours = selected_hours ?: return@AsterButton
+                    val label = when (hours) {
+                        1 -> one_hour_label
+                        24 -> one_day_label
+                        else -> seven_days_label
+                    }
+                    on_pick(hours, label, password_arg)
+                },
+                enabled = selected_hours != null,
+                modifier = Modifier.padding(horizontal = AsterSpacing.sm),
+            )
             Spacer(Modifier.height(AsterSpacing.lg))
         }
     }

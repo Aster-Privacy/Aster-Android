@@ -5,6 +5,7 @@
     <string name="valid_for_days">Valid for %1$d days</string>
     <string name="set_message_expiry">Set message expiry</string>
     <string name="message_expiry_subtitle">Recipients will lose access after the chosen window.</string>
+    <string name="accept">Accept</string>
     <string name="expiry_password_label">Password protect (optional)</string>
     <string name="expiry_password_subtitle">External recipients must enter this password to open the message.</string>
     <string name="expires_in_day">Expires in 1 day</string>
