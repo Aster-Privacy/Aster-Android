@@ -95,45 +95,53 @@ fun TurnstileWidget(
 
     AndroidView(
         factory = { context ->
-            val asset_loader = WebViewAssetLoader.Builder()
-                .setDomain(TURNSTILE_DOMAIN)
-                .addPathHandler(
-                    "/assets/",
-                    WebViewAssetLoader.AssetsPathHandler(context),
-                )
-                .build()
+            runCatching {
+                val asset_loader = WebViewAssetLoader.Builder()
+                    .setDomain(TURNSTILE_DOMAIN)
+                    .addPathHandler(
+                        "/assets/",
+                        WebViewAssetLoader.AssetsPathHandler(context),
+                    )
+                    .build()
 
-            WebView(context).apply {
-                settings.javaScriptEnabled = true
-                settings.domStorageEnabled = true
-                settings.userAgentString = settings.userAgentString
-                    .replace("; wv", "")
-                webViewClient = AssetLoaderWebViewClient(asset_loader)
-                setBackgroundColor(android.graphics.Color.TRANSPARENT)
-                setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
-                addJavascriptInterface(
-                    TurnstileBridge(
-                        on_token = { current_on_token.value(it) },
-                        on_error = { current_on_error.value(it) },
-                        on_expired = { current_on_expired.value() },
-                    ),
-                    "AsterBridge",
-                )
-                loadUrl(
-                    "https://$TURNSTILE_DOMAIN/assets/turnstile.html?sitekey=$TURNSTILE_SITE_KEY",
-                )
-            }.also { web_view_ref.value = it }
+                WebView(context).apply {
+                    settings.javaScriptEnabled = true
+                    settings.domStorageEnabled = true
+                    settings.userAgentString = (settings.userAgentString ?: "")
+                        .replace("; wv", "")
+                    webViewClient = AssetLoaderWebViewClient(asset_loader)
+                    setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                    setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
+                    addJavascriptInterface(
+                        TurnstileBridge(
+                            on_token = { current_on_token.value(it) },
+                            on_error = { current_on_error.value(it) },
+                            on_expired = { current_on_expired.value() },
+                        ),
+                        "AsterBridge",
+                    )
+                    loadUrl(
+                        "https://$TURNSTILE_DOMAIN/assets/turnstile.html?sitekey=$TURNSTILE_SITE_KEY",
+                    )
+                }.also { web_view_ref.value = it }
+            }.getOrElse { error ->
+                web_view_ref.value = null
+                current_on_error.value(error.message ?: "webview_unavailable")
+                android.widget.FrameLayout(context)
+            }
         },
         modifier = modifier
             .fillMaxWidth()
             .height(75.dp),
-        onRelease = { web_view ->
-            runCatching {
-                web_view.removeJavascriptInterface("AsterBridge")
-                web_view.stopLoading()
-                web_view.loadUrl("about:blank")
-                web_view.removeAllViews()
-                web_view.destroy()
+        onRelease = { view ->
+            (view as? WebView)?.let { web_view ->
+                runCatching {
+                    web_view.removeJavascriptInterface("AsterBridge")
+                    web_view.stopLoading()
+                    web_view.loadUrl("about:blank")
+                    web_view.removeAllViews()
+                    web_view.destroy()
+                }
             }
             web_view_ref.value = null
         },
