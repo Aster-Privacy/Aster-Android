@@ -1152,4 +1152,32 @@ class MailViewModelTest {
 
         assertEquals(150, vm.inbox_state.value.total)
     }
+
+    @Test
+    fun `load_inbox reconciles cache window with returned ids and min timestamp`() = runTest {
+        val page = fake_inbox_page(3)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        coVerify {
+            search_index_manager.reconcile_inbox_window(
+                setOf("id_1", "id_2", "id_3"),
+                "2026-04-26T10:01:00Z",
+            )
+        }
+    }
+
+    @Test
+    fun `mark_read_delayed marks read after delay and persists to cache`() = runTest {
+        coEvery { repository.mark_read(any(), any(), any()) } returns Result.success(Unit)
+
+        vm.mark_read_delayed("id_42", 1000L)
+        advanceUntilIdle()
+
+        coVerify { repository.mark_read("id_42", true, any()) }
+        coVerify { search_index_manager.update_read("id_42", true) }
+    }
+
 }

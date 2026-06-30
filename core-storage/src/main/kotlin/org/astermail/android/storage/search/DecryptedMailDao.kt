@@ -35,6 +35,9 @@ interface DecryptedMailDao {
     @Query("SELECT id FROM decrypted_mail_cache")
     suspend fun get_all_ids(): List<String>
 
+    @Query("SELECT id FROM decrypted_mail_cache WHERE timestamp > :min_timestamp")
+    suspend fun ids_newer_than(min_timestamp: String): List<String>
+
     @Query("SELECT COUNT(*) FROM decrypted_mail_cache")
     suspend fun count(): Int
 

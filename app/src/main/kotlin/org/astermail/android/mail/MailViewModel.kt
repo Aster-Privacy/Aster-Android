@@ -136,6 +136,7 @@ class MailViewModel @Inject constructor(
     private val star_overrides = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
     private val pin_overrides = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
     private val read_overrides = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+    private val mark_read_jobs = java.util.concurrent.ConcurrentHashMap<String, Job>()
 
     data class ToastEvent(
         val message: String,
@@ -346,7 +347,7 @@ class MailViewModel @Inject constructor(
             if (_inbox_state.value.items.isEmpty()) {
                 val persisted = runCatching { search_index_manager.get_cached_items() }.getOrNull().orEmpty()
                 if (persisted.isNotEmpty() && _inbox_state.value.current_folder == folder && folder == "inbox") {
-                    val safe = persisted.take(20).filter { !it.is_trashed && !it.is_archived }
+                    val safe = persisted.filter { !it.is_trashed && !it.is_archived && !it.is_spam }.take(20)
                     if (safe.isNotEmpty()) {
                         val items = safe.map { it.to_inbox_item() }
                             .filter { folder_matches(folder, it) }
@@ -403,6 +404,7 @@ class MailViewModel @Inject constructor(
                     folder_cache[folder] = _inbox_state.value
                     folder_cache_time[folder] = System.currentTimeMillis()
                     search_index_manager.on_items_loaded(page.items)
+                    reconcile_cache_window(folder, page)
                     search_index_manager.ensure_index_built()
                 },
                 onFailure = { t ->
@@ -445,9 +447,17 @@ class MailViewModel @Inject constructor(
                 folder_cache[folder] = _inbox_state.value
                 folder_cache_time[folder] = System.currentTimeMillis()
                 search_index_manager.on_items_loaded(page.items)
+                reconcile_cache_window(folder, page)
                 search_index_manager.ensure_index_built()
             }
         }
+    }
+
+    private suspend fun reconcile_cache_window(folder: String, page: InboxPage) {
+        if (folder != "inbox" || page.items.isEmpty()) return
+        val min_timestamp = page.items.minOf { it.timestamp }
+        val returned_ids = page.items.map { it.id }.toHashSet()
+        runCatching { search_index_manager.reconcile_inbox_window(returned_ids, min_timestamp) }
     }
 
     fun load_more() {
@@ -674,6 +684,16 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    fun mark_read_delayed(item_id: String, delay_ms: Long) {
+        if (item_id == DEMO_PHISH_ITEM_ID) return
+        mark_read_jobs.remove(item_id)?.cancel()
+        mark_read_jobs[item_id] = viewModelScope.launch {
+            if (delay_ms > 0) kotlinx.coroutines.delay(delay_ms)
+            mark_read(item_id)
+            mark_read_jobs.remove(item_id)
+        }
+    }
+
     fun mark_read(item_id: String) {
         if (item_id == DEMO_PHISH_ITEM_ID) return
         val item = _inbox_state.value.items.find { it.id == item_id }
@@ -691,7 +711,12 @@ class MailViewModel @Inject constructor(
         }
         invalidate_caches(listOf("starred"))
         viewModelScope.launch {
-            repository.mark_read(item_id, true, item?.raw_item)
+            runCatching { search_index_manager.update_read(item_id, true) }
+            var result = repository.mark_read(item_id, true, item?.raw_item)
+            if (result.isFailure) {
+                kotlinx.coroutines.delay(1500L)
+                result = repository.mark_read(item_id, true, item?.raw_item)
+            }
         }
     }
 

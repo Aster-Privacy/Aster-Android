@@ -84,6 +84,18 @@ class SearchIndexManager @Inject constructor(
 
     suspend fun get_cached_items(): List<DecryptedMailEntity> = dao.get_all()
 
+    suspend fun reconcile_inbox_window(returned_ids: Set<String>, min_timestamp: String) {
+        if (returned_ids.isEmpty() || min_timestamp.isBlank()) return
+        val stale = dao.ids_newer_than(min_timestamp).filterNot { it in returned_ids }
+        if (stale.isEmpty()) return
+        val snoozed_ids = runCatching {
+            mail_api.list_messages(limit = 100, item_type = "received", is_snoozed = true)
+                .items.map { it.id }.toHashSet()
+        }.getOrNull() ?: return
+        val removable = stale.filterNot { it in snoozed_ids }
+        if (removable.isNotEmpty()) dao.remove_items(removable)
+    }
+
     suspend fun update_read(id: String, is_read: Boolean) = dao.update_read(id, is_read)
 
     suspend fun update_starred(id: String, is_starred: Boolean) = dao.update_starred(id, is_starred)

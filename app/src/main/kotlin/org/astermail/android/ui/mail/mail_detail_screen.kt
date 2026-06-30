@@ -294,8 +294,7 @@ fun MailDetailScreen(
             "never" -> return@LaunchedEffect
             else -> 1000L
         }
-        if (delay_ms > 0) kotlinx.coroutines.delay(delay_ms)
-        mail_vm.mark_read(email_id)
+        mail_vm.mark_read_delayed(email_id, delay_ms)
     }
 
     LaunchedEffect(Unit) {
