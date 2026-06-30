@@ -35,6 +35,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,6 +47,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -59,6 +62,7 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterSecondaryButton
+import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.settings.DecryptedSignature
 import org.astermail.android.settings.SettingsViewModel
 
@@ -69,14 +73,18 @@ fun SignatureScreen(
 ) {
     val colors = AsterMaterial.colors
     val vm: SettingsViewModel = hiltViewModel()
+    val plan_vm: PlanLimitsViewModel = hiltViewModel()
     val signatures by vm.signatures.collectAsStateWithLifecycle()
     val state by vm.state.collectAsStateWithLifecycle()
+    val plan_state by plan_vm.state.collectAsStateWithLifecycle()
+    val is_paid = plan_state.limits?.let { it.plan_code != "free" } ?: false
     var editing by remember { mutableStateOf<DecryptedSignature?>(null) }
     var creating by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         vm.load_aliases()
         vm.load_signature()
+        vm.load_preferences()
     }
 
     if (editing != null || creating) {
@@ -170,6 +178,51 @@ fun SignatureScreen(
             label = stringResource(R.string.add_signature),
             onClick = { creating = true },
         )
+        v_gap(AsterSpacing.xxl)
+        section_label(stringResource(R.string.show_aster_branding))
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.show_aster_branding_description),
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
+                    modifier = Modifier.weight(1f),
+                )
+                Spacer(Modifier.width(AsterSpacing.md))
+                Switch(
+                    checked = state.preferences?.show_aster_branding != false,
+                    enabled = is_paid && state.preferences != null && state.preferences_authoritative,
+                    onCheckedChange = { checked ->
+                        val base = state.preferences ?: return@Switch
+                        vm.save_preferences(base.copy(show_aster_branding = checked))
+                    },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Color.White,
+                        checkedTrackColor = colors.accent_blue,
+                        uncheckedThumbColor = Color.White,
+                        uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
+                    ),
+                )
+            }
+        }
+        if (!is_paid) {
+            v_gap(AsterSpacing.md)
+            Text(
+                text = stringResource(R.string.show_aster_branding_free_note),
+                color = colors.text_muted,
+                fontSize = 12.sp,
+            )
+            v_gap(AsterSpacing.sm)
+            AsterSecondaryButton(
+                label = stringResource(R.string.upgrade),
+                onClick = { on_open("billing") },
+            )
+        }
         v_gap(AsterSpacing.xxl)
     }
 }

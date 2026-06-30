@@ -1567,6 +1567,9 @@
     <string name="delete_alias_confirm_message">Supprimer définitivement %1$s ? Les e-mails envoyés à cet alias seront rejetés.</string>
     <string name="delete_draft">Supprimer le brouillon</string>
     <string name="delete_signature">Supprimer la signature</string>
+    <string name="show_aster_branding">Filigrane Aster Mail</string>
+    <string name="show_aster_branding_description">Afficher « Sécurisé par Aster Mail » en bas des e-mails sortants.</string>
+    <string name="show_aster_branding_free_note">Passez à une formule payante pour retirer le filigrane.</string>
     <string name="deleting_account">Suppression du compte…</string>
     <string name="duration_n_hours">%1$d heures</string>
     <string name="duration_one_hour">1 heure</string>

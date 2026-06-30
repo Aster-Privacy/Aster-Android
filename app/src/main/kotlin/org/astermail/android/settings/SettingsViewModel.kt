@@ -68,6 +68,7 @@ import org.astermail.android.api.tags.UpdateTagRequest
 import org.astermail.android.api.preferences.PreferencesApi
 import org.astermail.android.api.preferences.SaveEncryptedPreferencesRequest
 import org.astermail.android.api.preferences.UserPreferences
+import org.astermail.android.api.preferences.merge_decrypted_preferences
 import org.astermail.android.api.recovery_email.RecoveryEmailApi
 import org.astermail.android.api.recovery_email.RecoveryEmailApiImpl
 import org.astermail.android.api.recovery_email.SaveRecoveryEmailRequest
@@ -466,8 +467,10 @@ class SettingsViewModel @Inject constructor(
                     addr.copy(encrypted_local_part = local_part)
                 }
                 _state.value = _state.value.copy(custom_domain_addresses = decrypted)
-            } catch (_: Throwable) {
-                // non-critical - compose still works without custom domain addresses
+            } catch (t: Throwable) {
+                if (org.astermail.android.BuildConfig.DEBUG) {
+                    android.util.Log.w("SettingsVM", "load_custom_domain_addresses failed", t)
+                }
             }
         }
     }
@@ -1510,7 +1513,7 @@ class SettingsViewModel @Inject constructor(
                         return@launch
                     }
                     val decrypted = try {
-                        decrypt_preferences(enc, nonce, identity_key)
+                        decrypt_preferences(enc, nonce, identity_key, _state.value.preferences)
                     } catch (_: Throwable) {
                         null
                     }
@@ -2498,6 +2501,7 @@ class SettingsViewModel @Inject constructor(
         encrypted_b64: String,
         nonce_b64: String,
         identity_key: String,
+        previous: UserPreferences?,
     ): UserPreferences {
         val ciphertext = android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT)
         val nonce = android.util.Base64.decode(nonce_b64, android.util.Base64.DEFAULT)
@@ -2506,7 +2510,7 @@ class SettingsViewModel @Inject constructor(
         val plaintext = aes_gcm_decrypt(ciphertext, key, nonce)
         key.fill(0)
         val json_str = String(plaintext, Charsets.UTF_8)
-        return prefs_json.decodeFromString(UserPreferences.serializer(), json_str)
+        return merge_decrypted_preferences(prefs_json, json_str, previous)
     }
 
     private fun encrypt_preferences(

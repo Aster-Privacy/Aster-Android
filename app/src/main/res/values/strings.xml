@@ -1068,6 +1068,9 @@
     <string name="signature_placement">Placement</string>
     <string name="add_signature">Add signature</string>
     <string name="delete_signature">Delete signature</string>
+    <string name="show_aster_branding">Aster Mail watermark</string>
+    <string name="show_aster_branding_description">Show \'Secured by Aster Mail\' at the bottom of outgoing emails.</string>
+    <string name="show_aster_branding_free_note">Upgrade to a paid plan to remove the watermark.</string>
 
     <!-- Templates -->
     <string name="templates">Templates</string>
