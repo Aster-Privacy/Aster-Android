@@ -635,7 +635,7 @@ class SettingsViewModel @Inject constructor(
 
     suspend fun create_directory_now(key: String, domain: String, captcha_token: String? = null): Boolean {
         return try {
-            val dir_hash = compute_routing_address_hash(key.lowercase(), domain)
+            val dir_hash = compute_directory_key_hash(key.lowercase())
             val (enc_label, label_nonce) = encrypt_alias_field(key.lowercase())
             settings_api.create_directory(
                 CreateDirectoryRequest(
@@ -2442,6 +2442,11 @@ class SettingsViewModel @Inject constructor(
     private fun compute_routing_address_hash(local_part: String, domain: String): String {
         val data = "${local_part.lowercase()}@$domain".toByteArray(Charsets.UTF_8)
         val hash = MessageDigest.getInstance("SHA-256").digest(data)
+        return android.util.Base64.encodeToString(hash, android.util.Base64.NO_WRAP)
+    }
+
+    private fun compute_directory_key_hash(key: String): String {
+        val hash = MessageDigest.getInstance("SHA-256").digest(key.lowercase().toByteArray(Charsets.UTF_8))
         return android.util.Base64.encodeToString(hash, android.util.Base64.NO_WRAP)
     }
 
