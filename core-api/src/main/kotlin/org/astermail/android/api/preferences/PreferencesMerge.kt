@@ -22,6 +22,7 @@
 package org.astermail.android.api.preferences
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
 
@@ -43,4 +44,21 @@ fun merge_decrypted_preferences(
     }
 
     return json.decodeFromJsonElement(UserPreferences.serializer(), merged)
+}
+
+fun encode_preferences_preserving_unknown(
+    json: Json,
+    prefs: UserPreferences,
+    original_json_str: String?,
+): String {
+    val known = json.encodeToJsonElement(UserPreferences.serializer(), prefs).jsonObject
+    val original = original_json_str
+        ?.let { runCatching { json.parseToJsonElement(it).jsonObject }.getOrNull() }
+        ?: return json.encodeToString(JsonObject.serializer(), known)
+    val known_keys = known.keys
+    val merged = buildJsonObject {
+        for ((k, v) in original) if (k !in known_keys) put(k, v)
+        for ((k, v) in known) put(k, v)
+    }
+    return json.encodeToString(JsonObject.serializer(), merged)
 }

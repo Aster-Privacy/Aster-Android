@@ -22,7 +22,10 @@
 package org.astermail.android.settings
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.astermail.android.api.preferences.UserPreferences
+import org.astermail.android.api.preferences.encode_preferences_preserving_unknown
 import org.astermail.android.api.preferences.merge_decrypted_preferences
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -88,5 +91,49 @@ class PreferencesMergeTest {
 
         assertFalse(merged.show_aster_branding)
         assertEquals(30, merged.undo_send_seconds)
+    }
+
+    @Test
+    fun encode_preserves_a_web_only_key_the_app_does_not_model() {
+        val server_blob = """{"theme":"dark","undo_send_period":"30 seconds","show_aster_branding":false}"""
+        val prefs = merge_decrypted_preferences(json, server_blob, null)
+
+        val encoded = encode_preferences_preserving_unknown(json, prefs, server_blob)
+        val obj = json.parseToJsonElement(encoded).jsonObject
+
+        assertEquals("30 seconds", obj["undo_send_period"]?.jsonPrimitive?.content)
+    }
+
+    @Test
+    fun plain_serialization_would_drop_the_web_only_key() {
+        val server_blob = """{"undo_send_period":"30 seconds"}"""
+        val prefs = merge_decrypted_preferences(json, server_blob, null)
+
+        val plain = json.encodeToString(UserPreferences.serializer(), prefs)
+
+        assertFalse(plain.contains("undo_send_period"))
+    }
+
+    @Test
+    fun encode_lets_the_app_value_win_for_a_shared_key() {
+        val server_blob = """{"show_aster_branding":true,"undo_send_period":"30 seconds"}"""
+        val prefs = merge_decrypted_preferences(json, server_blob, null).copy(show_aster_branding = false)
+
+        val encoded = encode_preferences_preserving_unknown(json, prefs, server_blob)
+        val obj = json.parseToJsonElement(encoded).jsonObject
+
+        assertEquals("false", obj["show_aster_branding"]?.jsonPrimitive?.content)
+        assertEquals("30 seconds", obj["undo_send_period"]?.jsonPrimitive?.content)
+    }
+
+    @Test
+    fun encode_without_an_original_blob_emits_only_known_keys() {
+        val prefs = UserPreferences(show_aster_branding = false)
+
+        val encoded = encode_preferences_preserving_unknown(json, prefs, null)
+        val obj = json.parseToJsonElement(encoded).jsonObject
+
+        assertFalse(obj.containsKey("undo_send_period"))
+        assertTrue(obj.containsKey("show_aster_branding"))
     }
 }

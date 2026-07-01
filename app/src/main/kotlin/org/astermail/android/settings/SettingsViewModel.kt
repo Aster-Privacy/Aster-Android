@@ -68,6 +68,7 @@ import org.astermail.android.api.tags.UpdateTagRequest
 import org.astermail.android.api.preferences.PreferencesApi
 import org.astermail.android.api.preferences.SaveEncryptedPreferencesRequest
 import org.astermail.android.api.preferences.UserPreferences
+import org.astermail.android.api.preferences.encode_preferences_preserving_unknown
 import org.astermail.android.api.preferences.merge_decrypted_preferences
 import org.astermail.android.api.recovery_email.RecoveryEmailApi
 import org.astermail.android.api.recovery_email.RecoveryEmailApiImpl
@@ -2497,6 +2498,9 @@ class SettingsViewModel @Inject constructor(
         this.explicitNulls = false
     }
 
+    @Volatile
+    private var last_preferences_raw_json: String? = null
+
     private fun decrypt_preferences(
         encrypted_b64: String,
         nonce_b64: String,
@@ -2510,6 +2514,7 @@ class SettingsViewModel @Inject constructor(
         val plaintext = aes_gcm_decrypt(ciphertext, key, nonce)
         key.fill(0)
         val json_str = String(plaintext, Charsets.UTF_8)
+        last_preferences_raw_json = json_str
         return merge_decrypted_preferences(prefs_json, json_str, previous)
     }
 
@@ -2517,7 +2522,7 @@ class SettingsViewModel @Inject constructor(
         prefs: UserPreferences,
         identity_key: String,
     ): SaveEncryptedPreferencesRequest {
-        val json_str = prefs_json.encodeToString(UserPreferences.serializer(), prefs)
+        val json_str = encode_preferences_preserving_unknown(prefs_json, prefs, last_preferences_raw_json)
         val plaintext = json_str.toByteArray(Charsets.UTF_8)
         val key_material = (identity_key + PREFERENCES_KEY_SUFFIX).toByteArray(Charsets.UTF_8)
         val key = MessageDigest.getInstance("SHA-256").digest(key_material)
