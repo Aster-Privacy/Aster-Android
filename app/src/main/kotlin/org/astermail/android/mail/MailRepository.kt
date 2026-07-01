@@ -59,11 +59,20 @@ import org.astermail.android.api.send.ExternalSendRequest
 import org.astermail.android.api.send.SendApi
 import org.astermail.android.api.send.SimpleSendRequest
 import org.astermail.android.api.send.SimpleSendResponse
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.astermail.android.crypto.CryptoNative
 import org.astermail.android.crypto.PgpDecryptor
+import org.astermail.android.notifications.UndoSendWorker
 import org.astermail.android.storage.SessionKeyStore
+import org.astermail.android.storage.outbox.PendingSendDao
+import org.astermail.android.storage.outbox.PendingSendEntity
+
+enum class PendingSendOutcome { SENT, GONE, RETRY }
+
+private const val STATUS_PENDING = "pending"
+private const val STATUS_SENDING = "sending"
 
 data class DecryptedEnvelope(
     val subject: String,
@@ -156,6 +165,7 @@ class MailRepository @Inject constructor(
     private val scheduled_api: ScheduledApi,
     private val ratchet_decryptor: org.astermail.android.mail.ratchet.RatchetDecryptor,
     private val ratchet_encryptor: org.astermail.android.mail.ratchet.RatchetEncryptor,
+    private val pending_send_dao: PendingSendDao,
     @ApplicationContext private val context: Context,
 ) {
     private val pbkdf2_key_cache = java.util.concurrent.ConcurrentHashMap<String, ByteArray>()
@@ -186,6 +196,15 @@ class MailRepository @Inject constructor(
     private val _send_result_events = kotlinx.coroutines.flow.MutableSharedFlow<Result<Unit>>(extraBufferCapacity = 8)
     val send_result_events: kotlinx.coroutines.flow.SharedFlow<Result<Unit>> = _send_result_events
 
+    private val outbox_json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+    private val undo_canceled_ids = java.util.Collections.newSetFromMap(
+        java.util.concurrent.ConcurrentHashMap<String, Boolean>(),
+    )
+
+    init {
+        app_scope.launch { runCatching { reconcile_pending_sends() } }
+    }
+
     fun schedule_send_with_undo(
         to: List<String>,
         cc: List<String>,
@@ -202,16 +221,32 @@ class MailRepository @Inject constructor(
         suppress_branding: Boolean? = null,
         undo_seconds: Int,
         draft_id: String? = null,
-        on_completed: ((Result<Unit>) -> Unit)? = null,
     ) {
         val delay_ms = undo_seconds.coerceAtLeast(1) * 1000L
-        val canceled_flag = java.util.concurrent.atomic.AtomicBoolean(false)
-        val pending_ref = java.util.concurrent.atomic.AtomicReference<PendingUndoSend?>(null)
-        val job = app_scope.launch {
+        val pending_id = java.util.UUID.randomUUID().toString()
+        val pending = PendingUndoSend(
+            started_at_ms = System.currentTimeMillis(),
+            duration_ms = delay_ms,
+            draft_id = draft_id?.takeIf { it.isNotBlank() },
+            to = to,
+            cc = cc,
+            bcc = bcc,
+            subject = subject,
+            body_html = body_html,
+            sender_email = sender_email,
+            sender_display_name = sender_display_name,
+            attachment_names = attachments.map { it.filename },
+            undo = { undo_pending_send(pending_id) },
+        )
+        _pending_undo_send.value = pending
+        app_scope.launch {
             kotlinx.coroutines.delay(delay_ms)
-            pending_ref.get()?.let { _pending_undo_send.compareAndSet(it, null) }
-            if (!canceled_flag.get()) {
-                val result = send_email(
+            _pending_undo_send.compareAndSet(pending, null)
+        }
+        app_scope.launch {
+            runCatching {
+                persist_and_schedule_undo_send(
+                    pending_id = pending_id,
                     to = to,
                     cc = cc,
                     bcc = bcc,
@@ -225,35 +260,134 @@ class MailRepository @Inject constructor(
                     attachments = attachments,
                     sender_alias_hash = sender_alias_hash,
                     suppress_branding = suppress_branding,
+                    delay_ms = delay_ms,
+                    draft_id = draft_id,
                 )
-                val unit_result: Result<Unit> = result.map { }
-                if (result.isSuccess) {
-                    draft_id?.takeIf { it.isNotBlank() }?.let { runCatching { delete_draft(it) } }
-                }
-                _send_result_events.tryEmit(unit_result)
-                on_completed?.invoke(unit_result)
             }
         }
-        val pending = PendingUndoSend(
-            started_at_ms = System.currentTimeMillis(),
-            duration_ms = delay_ms,
-            draft_id = draft_id?.takeIf { it.isNotBlank() },
-            to = to,
-            cc = cc,
-            bcc = bcc,
+    }
+
+    suspend fun persist_and_schedule_undo_send(
+        pending_id: String,
+        to: List<String>,
+        cc: List<String>,
+        bcc: List<String>,
+        subject: String,
+        body_html: String,
+        sender_email: String?,
+        sender_display_name: String?,
+        thread_token: String?,
+        expires_at: String?,
+        expiry_password: String?,
+        attachments: List<ExternalAttachmentPayload>,
+        sender_alias_hash: String?,
+        suppress_branding: Boolean?,
+        delay_ms: Long,
+        draft_id: String?,
+    ): String {
+        val now = System.currentTimeMillis()
+        val row = PendingSendEntity(
+            id = pending_id,
+            to_json = outbox_json.encodeToString(to),
+            cc_json = outbox_json.encodeToString(cc),
+            bcc_json = outbox_json.encodeToString(bcc),
             subject = subject,
             body_html = body_html,
             sender_email = sender_email,
             sender_display_name = sender_display_name,
-            attachment_names = attachments.map { it.filename },
-            undo = {
-                canceled_flag.set(true)
-                job.cancel()
-                pending_ref.get()?.let { _pending_undo_send.compareAndSet(it, null) }
-            },
+            thread_token = thread_token,
+            expires_at = expires_at,
+            expiry_password = expiry_password,
+            attachments_json = outbox_json.encodeToString(attachments),
+            sender_alias_hash = sender_alias_hash,
+            suppress_branding = suppress_branding,
+            draft_id = draft_id?.takeIf { it.isNotBlank() },
+            fire_at_ms = now + delay_ms,
+            status = STATUS_PENDING,
+            created_at_ms = now,
         )
-        pending_ref.set(pending)
-        _pending_undo_send.value = pending
+        pending_send_dao.upsert(row)
+        if (undo_canceled_ids.remove(pending_id)) {
+            runCatching { pending_send_dao.delete_by_id(pending_id) }
+            return pending_id
+        }
+        val safety_draft_id = draft_id?.takeIf { it.isNotBlank() } ?: run {
+            save_draft(
+                subject = subject,
+                body_html = body_html,
+                sender_email = sender_email,
+                to = to,
+                cc = cc,
+                existing_draft_id = null,
+            ).getOrNull()
+        }
+        if (!safety_draft_id.isNullOrBlank()) {
+            runCatching { pending_send_dao.update_draft_id(pending_id, safety_draft_id) }
+        }
+        if (undo_canceled_ids.remove(pending_id)) {
+            runCatching { pending_send_dao.delete_by_id(pending_id) }
+            return pending_id
+        }
+        runCatching { UndoSendWorker.enqueue(context, pending_id, delay_ms) }
+        return pending_id
+    }
+
+    private fun undo_pending_send(pending_id: String) {
+        undo_canceled_ids.add(pending_id)
+        _pending_undo_send.value?.let { _pending_undo_send.compareAndSet(it, null) }
+        app_scope.launch {
+            runCatching { UndoSendWorker.cancel(context, pending_id) }
+            runCatching { pending_send_dao.delete_by_id(pending_id) }
+        }
+    }
+
+    suspend fun run_pending_send(pending_id: String): PendingSendOutcome {
+        val row = pending_send_dao.get_by_id(pending_id) ?: return PendingSendOutcome.GONE
+        if (undo_canceled_ids.contains(pending_id)) {
+            runCatching { pending_send_dao.delete_by_id(pending_id) }
+            return PendingSendOutcome.GONE
+        }
+        val claimed = pending_send_dao.mark_sending(pending_id)
+        if (claimed == 0 && row.status != STATUS_SENDING) return PendingSendOutcome.GONE
+        _pending_undo_send.value?.let { _pending_undo_send.compareAndSet(it, null) }
+        val attachments = runCatching {
+            outbox_json.decodeFromString<List<ExternalAttachmentPayload>>(row.attachments_json)
+        }.getOrDefault(emptyList())
+        val result = send_email(
+            to = runCatching { outbox_json.decodeFromString<List<String>>(row.to_json) }.getOrDefault(emptyList()),
+            cc = runCatching { outbox_json.decodeFromString<List<String>>(row.cc_json) }.getOrDefault(emptyList()),
+            bcc = runCatching { outbox_json.decodeFromString<List<String>>(row.bcc_json) }.getOrDefault(emptyList()),
+            subject = row.subject,
+            body_html = row.body_html,
+            sender_email = row.sender_email,
+            sender_display_name = row.sender_display_name,
+            thread_token = row.thread_token,
+            expires_at = row.expires_at,
+            expiry_password = row.expiry_password,
+            attachments = attachments,
+            sender_alias_hash = row.sender_alias_hash,
+            suppress_branding = row.suppress_branding,
+        )
+        val response = result.getOrNull()
+        return if (result.isSuccess && response?.success == true) {
+            runCatching { pending_send_dao.delete_by_id(pending_id) }
+            row.draft_id?.takeIf { it.isNotBlank() }?.let { runCatching { delete_draft(it) } }
+            _send_result_events.tryEmit(Result.success(Unit))
+            PendingSendOutcome.SENT
+        } else {
+            runCatching { pending_send_dao.mark_pending(pending_id) }
+            _send_result_events.tryEmit(Result.failure(result.exceptionOrNull() ?: IllegalStateException("send rejected")))
+            PendingSendOutcome.RETRY
+        }
+    }
+
+    suspend fun reconcile_pending_sends() {
+        val rows = runCatching { pending_send_dao.get_all() }.getOrDefault(emptyList())
+        val now = System.currentTimeMillis()
+        for (row in rows) {
+            val remaining = (row.fire_at_ms - now).coerceAtLeast(0L)
+            runCatching { UndoSendWorker.enqueue_if_absent(context, row.id, remaining) }
+        }
     }
 
     fun clear_caches() {

@@ -601,6 +601,7 @@ class AuthRepository @Inject constructor(
             org.astermail.android.mail.AsterProfileResolverHolder.shared?.clear()
         }
         database.decrypted_mail_dao().clear_all()
+        runCatching { database.pending_send_dao().clear_all() }
         if (current_id != null) {
             account_store.remove(current_id)
             runCatching { session_snapshot_store.remove(current_id) }

@@ -931,40 +931,26 @@ fun ComposeScreen(
         val snap_subject = subject
         val snap_from = from_alias
         if (undo_send_enabled) {
-            scope.launch {
-                draft_save_job?.cancel()
-                val snapshot_draft_id = current_draft_id.takeIf { it.isNotBlank() }
-                    ?: mail_vm.save_draft(
-                        subject = snap_subject,
-                        body_html = body_html,
-                        sender_email = snap_from,
-                        to = snap_to,
-                        cc = snap_cc,
-                        existing_draft_id = null,
-                    ).getOrNull()
-                if (snapshot_draft_id != null && snapshot_draft_id.isNotBlank()) {
-                    current_draft_id = snapshot_draft_id
-                }
-                mail_vm.schedule_send_with_undo(
-                    to = snap_to,
-                    cc = snap_cc,
-                    bcc = snap_bcc,
-                    subject = snap_subject,
-                    body_html = body_html,
-                    sender_email = snap_from,
-                    sender_display_name = settings_state.user?.display_name,
-                    expires_at = expires_at_iso,
-                    expiry_password = expiry_password,
-                    attachments = attachment_payloads,
-                    sender_alias_hash = if (snap_from != user_email) alias_hash_map[snap_from]?.takeIf { it.isNotBlank() } else null,
-                    suppress_branding = suppress_branding,
-                    undo_seconds = undo_send_seconds,
-                    draft_id = snapshot_draft_id,
-                )
-                is_sending = false
-                send_lock.set(false)
-                on_sent()
-            }
+            draft_save_job?.cancel()
+            mail_vm.schedule_send_with_undo(
+                to = snap_to,
+                cc = snap_cc,
+                bcc = snap_bcc,
+                subject = snap_subject,
+                body_html = body_html,
+                sender_email = snap_from,
+                sender_display_name = settings_state.user?.display_name,
+                expires_at = expires_at_iso,
+                expiry_password = expiry_password,
+                attachments = attachment_payloads,
+                sender_alias_hash = if (snap_from != user_email) alias_hash_map[snap_from]?.takeIf { it.isNotBlank() } else null,
+                suppress_branding = suppress_branding,
+                undo_seconds = undo_send_seconds,
+                draft_id = current_draft_id.takeIf { it.isNotBlank() },
+            )
+            is_sending = false
+            send_lock.set(false)
+            on_sent()
         } else {
             execute_send(body_html, attachment_payloads, snap_to, snap_cc, snap_bcc, snap_subject, snap_from, suppress_branding)
         }

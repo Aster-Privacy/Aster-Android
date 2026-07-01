@@ -41,7 +41,11 @@ import org.astermail.android.api.mail.ThreadMessageItem
 import org.astermail.android.api.mail.ThreadWithMessages
 import org.astermail.android.api.send.SendApi
 import org.astermail.android.api.send.SimpleSendResponse
+import org.astermail.android.api.mail.CreateMailItemResponse
+import org.astermail.android.api.mail.DeleteResponse
 import org.astermail.android.storage.SessionKeyStore
+import org.astermail.android.storage.outbox.PendingSendDao
+import org.astermail.android.storage.outbox.PendingSendEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -62,7 +66,29 @@ class MailRepositoryTest {
     private lateinit var ratchet_decryptor: org.astermail.android.mail.ratchet.RatchetDecryptor
     private lateinit var ratchet_encryptor: org.astermail.android.mail.ratchet.RatchetEncryptor
     private lateinit var context: android.content.Context
+    private lateinit var pending_send_dao: FakePendingSendDao
     private lateinit var repo: MailRepository
+
+    private class FakePendingSendDao : PendingSendDao {
+        val rows = java.util.concurrent.ConcurrentHashMap<String, PendingSendEntity>()
+        override suspend fun upsert(row: PendingSendEntity) { rows[row.id] = row }
+        override suspend fun get_by_id(id: String): PendingSendEntity? = rows[id]
+        override suspend fun get_all(): List<PendingSendEntity> = rows.values.toList()
+        override suspend fun update_draft_id(id: String, draft_id: String?) {
+            rows[id]?.let { rows[id] = it.copy(draft_id = draft_id) }
+        }
+        override suspend fun mark_sending(id: String): Int {
+            val row = rows[id] ?: return 0
+            if (row.status != "pending") return 0
+            rows[id] = row.copy(status = "sending")
+            return 1
+        }
+        override suspend fun mark_pending(id: String) {
+            rows[id]?.let { rows[id] = it.copy(status = "pending") }
+        }
+        override suspend fun delete_by_id(id: String) { rows.remove(id) }
+        override suspend fun clear_all() { rows.clear() }
+    }
 
     @Before
     fun setup() {
@@ -82,8 +108,11 @@ class MailRepositoryTest {
         ratchet_decryptor = mockk(relaxed = true)
         ratchet_encryptor = mockk(relaxed = true)
         context = mockk(relaxed = true)
-        every { session_key_store.get_identity_key() } returns null
+        every { session_key_store.get_identity_key() } returns "test_identity_key"
         every { session_key_store.get_passphrase() } returns null
+        every { session_key_store.get_user_email() } returns "me@astermail.org"
+        every { session_key_store.has_ratchet_keys() } returns false
+        pending_send_dao = FakePendingSendDao()
         repo = MailRepository(
             mail_api = mail_api,
             send_api = send_api,
@@ -93,6 +122,7 @@ class MailRepositoryTest {
             scheduled_api = scheduled_api,
             ratchet_decryptor = ratchet_decryptor,
             ratchet_encryptor = ratchet_encryptor,
+            pending_send_dao = pending_send_dao,
             context = context,
         )
     }
@@ -860,5 +890,151 @@ class MailRepositoryTest {
         assertTrue(inbox_item.is_read)
         assertTrue(inbox_item.is_starred)
         assertTrue(inbox_item.has_attachments)
+    }
+
+    private fun pending_row(
+        id: String,
+        status: String = "pending",
+        draft_id: String? = null,
+        to: String = "friend@astermail.org",
+        fire_at_ms: Long = 0L,
+    ): PendingSendEntity = PendingSendEntity(
+        id = id,
+        to_json = "[\"$to\"]",
+        cc_json = "[]",
+        bcc_json = "[]",
+        subject = "Subject",
+        body_html = "<p>body</p>",
+        sender_email = "me@astermail.org",
+        sender_display_name = null,
+        thread_token = null,
+        expires_at = null,
+        expiry_password = null,
+        attachments_json = "[]",
+        sender_alias_hash = null,
+        suppress_branding = null,
+        draft_id = draft_id,
+        fire_at_ms = fire_at_ms,
+        status = status,
+        created_at_ms = 0L,
+    )
+
+    private fun wait_until(timeout_ms: Long = 2000L, predicate: () -> Boolean) {
+        val deadline = System.currentTimeMillis() + timeout_ms
+        while (System.currentTimeMillis() < deadline) {
+            if (predicate()) return
+            Thread.sleep(10)
+        }
+    }
+
+    @Test
+    fun `persist_and_schedule_undo_send stores a pending row and writes a safety draft`() = runTest {
+        coEvery { mail_api.create_message(any()) } returns CreateMailItemResponse(id = "safety_draft_1", success = true)
+
+        repo.persist_and_schedule_undo_send(
+            pending_id = "pend_1",
+            to = listOf("friend@astermail.org"),
+            cc = emptyList(),
+            bcc = emptyList(),
+            subject = "Hi",
+            body_html = "<p>hello</p>",
+            sender_email = "me@astermail.org",
+            sender_display_name = null,
+            thread_token = null,
+            expires_at = null,
+            expiry_password = null,
+            attachments = emptyList(),
+            sender_alias_hash = null,
+            suppress_branding = null,
+            delay_ms = 10_000L,
+            draft_id = null,
+        )
+
+        val row = pending_send_dao.get_by_id("pend_1")
+        assertNotNull(row)
+        assertEquals("pending", row!!.status)
+        assertEquals("safety_draft_1", row.draft_id)
+        coVerify { mail_api.create_message(any()) }
+    }
+
+    @Test
+    fun `run_pending_send delivers once and reports gone on a second run`() = runTest {
+        pending_send_dao.upsert(pending_row("pend_2", draft_id = "draft_2"))
+        coEvery { send_api.send_simple(any()) } returns SimpleSendResponse(success = true, message = "ok", mail_item_id = "sent_2")
+        coEvery { mail_api.delete_draft(any()) } returns DeleteResponse(success = true, deleted_count = 1)
+
+        val first = repo.run_pending_send("pend_2")
+
+        assertEquals(PendingSendOutcome.SENT, first)
+        assertNull(pending_send_dao.get_by_id("pend_2"))
+        coVerify(exactly = 1) { send_api.send_simple(any()) }
+        coVerify { mail_api.delete_draft("draft_2") }
+
+        val second = repo.run_pending_send("pend_2")
+
+        assertEquals(PendingSendOutcome.GONE, second)
+        coVerify(exactly = 1) { send_api.send_simple(any()) }
+    }
+
+    @Test
+    fun `run_pending_send keeps the row and draft when the send throws`() = runTest {
+        pending_send_dao.upsert(pending_row("pend_3", draft_id = "draft_3"))
+        coEvery { send_api.send_simple(any()) } throws RuntimeException("network down")
+
+        val outcome = repo.run_pending_send("pend_3")
+
+        assertEquals(PendingSendOutcome.RETRY, outcome)
+        assertEquals("pending", pending_send_dao.get_by_id("pend_3")?.status)
+        coVerify(exactly = 0) { mail_api.delete_draft(any()) }
+    }
+
+    @Test
+    fun `run_pending_send keeps the row and draft when the server rejects the send`() = runTest {
+        pending_send_dao.upsert(pending_row("pend_4", draft_id = "draft_4"))
+        coEvery { send_api.send_simple(any()) } returns SimpleSendResponse(success = false, message = "rejected", mail_item_id = null)
+
+        val outcome = repo.run_pending_send("pend_4")
+
+        assertEquals(PendingSendOutcome.RETRY, outcome)
+        assertEquals("pending", pending_send_dao.get_by_id("pend_4")?.status)
+        coVerify(exactly = 0) { mail_api.delete_draft(any()) }
+    }
+
+    @Test
+    fun `run_pending_send does nothing for an already-undone send`() = runTest {
+        val outcome = repo.run_pending_send("never_persisted")
+
+        assertEquals(PendingSendOutcome.GONE, outcome)
+        coVerify(exactly = 0) { send_api.send_simple(any()) }
+        coVerify(exactly = 0) { mail_api.delete_draft(any()) }
+    }
+
+    @Test
+    fun `undo cancels a scheduled send without deleting the draft`() = runTest {
+        coEvery { mail_api.create_message(any()) } returns CreateMailItemResponse(id = "safety_draft_6", success = true)
+
+        repo.schedule_send_with_undo(
+            to = listOf("friend@astermail.org"),
+            cc = emptyList(),
+            bcc = emptyList(),
+            subject = "Hi",
+            body_html = "<p>hello</p>",
+            sender_email = "me@astermail.org",
+            sender_display_name = null,
+            undo_seconds = 10,
+            draft_id = null,
+        )
+
+        val pending = repo.pending_undo_send.value
+        assertNotNull(pending)
+        pending!!.undo()
+
+        wait_until { pending_send_dao.rows.isEmpty() }
+
+        assertNull(repo.pending_undo_send.value)
+        assertTrue(pending_send_dao.rows.isEmpty())
+        coVerify(exactly = 0) { send_api.send_simple(any()) }
+        coVerify(exactly = 0) { send_api.send_external(any()) }
+        coVerify(exactly = 0) { mail_api.delete_draft(any()) }
     }
 }
