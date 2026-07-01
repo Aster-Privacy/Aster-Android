@@ -1,0 +1,5 @@
+Bug fixes and improvements:
+
+- Fixed settings quietly resetting themselves, including the Aster Mail watermark toggle turning itself back on.
+- Fixed emails vanishing when you left the app during the undo-send window; queued sends now survive the app closing.
+- Fixed addresses created from a directory not receiving mail.
