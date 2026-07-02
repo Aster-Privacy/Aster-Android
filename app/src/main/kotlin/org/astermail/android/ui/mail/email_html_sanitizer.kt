@@ -109,7 +109,7 @@ object EmailHtmlSanitizer {
         out = out.replace(Regex("<base\\b[^>]*/?>", RegexOption.IGNORE_CASE), "")
         out = out.replace(Regex("<meta\\b[^>]*http-equiv\\s*=\\s*[\"']?refresh[\"']?[^>]*/?>", RegexOption.IGNORE_CASE), "")
         out = out.replace(Regex("<link\\b[^>]*rel\\s*=\\s*[\"']?(?:import|prefetch|preload)[\"']?[^>]*/?>", RegexOption.IGNORE_CASE), "")
-        out = out.replace(Regex("<form\\b[^>]*>[\\s\\S]*?</form\\s*>", RegexOption.IGNORE_CASE), "")
+        out = out.replace(Regex("<form\\b[^>]*>|</form\\s*>", RegexOption.IGNORE_CASE), "")
         return out
     }
 

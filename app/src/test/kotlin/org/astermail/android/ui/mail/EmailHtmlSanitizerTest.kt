@@ -94,4 +94,22 @@ class EmailHtmlSanitizerTest {
         assertFalse(out.contains("evil.example"))
         assertTrue(out.contains("hi"))
     }
+
+    @Test
+    fun keeps_content_inside_form_wrapper() {
+        val html = """<form action="https://sender.example/submit"><p>survey question</p><a href="https://sender.example/answer">Answer here</a></form>"""
+        val out = EmailHtmlSanitizer.sanitize(html)
+        assertTrue(out.contains("survey question"))
+        assertTrue(out.contains("https://sender.example/answer"))
+        assertFalse(out.contains("<form"))
+        assertFalse(out.contains("sender.example/submit"))
+    }
+
+    @Test
+    fun unwraps_unknown_tags_keeping_content() {
+        val html = """<mj-text><p>mj inside</p></mj-text><o:p><span>office text</span></o:p>"""
+        val out = EmailHtmlSanitizer.sanitize(html)
+        assertTrue(out.contains("mj inside"))
+        assertTrue(out.contains("office text"))
+    }
 }
