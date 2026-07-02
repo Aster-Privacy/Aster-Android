@@ -96,7 +96,11 @@ object EmailHtmlSanitizer {
 
     private fun strip_dangerous_blocks(html: String): String {
         var out = html
-        out = out.replace(Regex("<!--\\[if[^\\]]*\\]>[\\s\\S]*?<!\\[endif\\]-->", RegexOption.IGNORE_CASE), "")
+        out = out.replace(Regex("<!--\\[if\\s[^\\]!]*?mso[^\\]]*?\\]>[\\s\\S]*?<!\\[endif\\]\\s*--\\s*>", RegexOption.IGNORE_CASE), "")
+        out = out.replace(Regex("<!--\\[if\\s!mso\\]><!-->\\s*", RegexOption.IGNORE_CASE), "")
+        out = out.replace(Regex("\\s*<!--<!\\[endif\\]\\s*--\\s*>", RegexOption.IGNORE_CASE), "")
+        out = out.replace(Regex("<!--\\[if\\s!mso\\]>\\s*<!--\\s*--\\s*>", RegexOption.IGNORE_CASE), "")
+        out = out.replace(Regex("<!--\\s*<!\\[endif\\]\\s*--\\s*>", RegexOption.IGNORE_CASE), "")
         out = out.replace(Regex("<script\\b[^>]*>[\\s\\S]*?</script\\s*>", RegexOption.IGNORE_CASE), "")
         out = out.replace(Regex("<iframe\\b[^>]*>[\\s\\S]*?</iframe\\s*>", RegexOption.IGNORE_CASE), "")
         out = out.replace(Regex("<object\\b[^>]*>[\\s\\S]*?</object\\s*>", RegexOption.IGNORE_CASE), "")
