@@ -27,6 +27,8 @@ import org.astermail.android.api.settings.BlockedSenderInfo
 import org.astermail.android.api.settings.BlockedSendersResponse
 import org.astermail.android.api.settings.ChangePasswordRequest
 import org.astermail.android.api.settings.ChangePasswordResponse
+import org.astermail.android.api.settings.DirectoryAvailabilityRequest
+import org.astermail.android.api.settings.DirectoryAvailabilityResponse
 import org.astermail.android.api.settings.FeedbackRequest
 import org.astermail.android.api.settings.RecoveryKeyResponse
 import org.astermail.android.api.settings.SecurityStatusResponse
@@ -42,8 +44,45 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlinx.serialization.json.Json
 
 class SettingsModelsTest {
+
+    private val json = Json { ignoreUnknownKeys = true }
+
+    @Test
+    fun `DirectoryAvailabilityRequest serializes hash field`() {
+        val encoded = json.encodeToString(
+            DirectoryAvailabilityRequest.serializer(),
+            DirectoryAvailabilityRequest(directory_hash = "aGFzaA=="),
+        )
+        assertTrue(encoded.contains("\"directory_hash\""))
+        assertTrue(encoded.contains("aGFzaA=="))
+    }
+
+    @Test
+    fun `DirectoryAvailabilityResponse defaults to unavailable`() {
+        val response = DirectoryAvailabilityResponse()
+        assertFalse(response.available)
+    }
+
+    @Test
+    fun `DirectoryAvailabilityResponse decodes available true`() {
+        val decoded = json.decodeFromString(
+            DirectoryAvailabilityResponse.serializer(),
+            "{\"available\":true}",
+        )
+        assertTrue(decoded.available)
+    }
+
+    @Test
+    fun `DirectoryAvailabilityResponse decodes available false`() {
+        val decoded = json.decodeFromString(
+            DirectoryAvailabilityResponse.serializer(),
+            "{\"available\":false}",
+        )
+        assertFalse(decoded.available)
+    }
 
     @Test
     fun `SessionInfo defaults`() {

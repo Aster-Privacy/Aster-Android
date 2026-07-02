@@ -1429,6 +1429,9 @@
     <string name="alias_action_add">Ajouter</string>
     <string name="alias_directory_key_label">Clé du répertoire</string>
     <string name="alias_directory_example">anything%1$s%2$s@astermail.org</string>
+    <string name="alias_directory_available">Ce répertoire est disponible.</string>
+    <string name="alias_directory_not_available">Ce répertoire est déjà pris.</string>
+    <string name="checking_availability">Vérification de la disponibilité...</string>
     <string name="alias_creating">Création...</string>
     <string name="alias_separator_hint">Fonctionne avec les séparateurs . + #</string>
     <string name="alias_delete_directory">Supprimer le répertoire</string>
