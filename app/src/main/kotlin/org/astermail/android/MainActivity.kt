@@ -1311,6 +1311,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                         settings_vm.reset_for_account_switch()
                         accounts_vm.switch_account(account.id) { restored ->
                             if (restored) {
+                                settings_vm.load_preferences()
                                 selected_folder = "inbox"
                                 filter_kind = null
                                 nav_controller.navigate(routes.inbox) {

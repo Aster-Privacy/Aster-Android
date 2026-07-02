@@ -27,6 +27,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import org.astermail.android.api.preferences.UserPreferences
 import org.astermail.android.api.preferences.encode_preferences_preserving_unknown
 import org.astermail.android.api.preferences.merge_decrypted_preferences
+import org.astermail.android.api.preferences.rebase_preferences_changes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -166,5 +167,47 @@ class PreferencesMergeTest {
 
         assertFalse(obj.containsKey("undo_send_period"))
         assertTrue(obj.containsKey("show_aster_branding"))
+    }
+
+    @Test
+    fun rebase_keeps_server_values_for_keys_the_user_did_not_change() {
+        val server = UserPreferences(theme = "dark", conversation_grouping = false)
+        val baseline = UserPreferences()
+        val updated = baseline.copy(swipe_right_action = "star")
+
+        val rebased = rebase_preferences_changes(json, server, baseline, updated)
+
+        assertEquals("dark", rebased.theme)
+        assertFalse(rebased.conversation_grouping)
+        assertEquals("star", rebased.swipe_right_action)
+    }
+
+    @Test
+    fun rebase_applies_user_change_over_server_value() {
+        val server = UserPreferences(theme = "dark")
+        val baseline = UserPreferences(theme = "dark")
+        val updated = baseline.copy(theme = "light")
+
+        val rebased = rebase_preferences_changes(json, server, baseline, updated)
+
+        assertEquals("light", rebased.theme)
+    }
+
+    @Test
+    fun rebase_with_defaults_baseline_does_not_clobber_server_with_defaults() {
+        val server = UserPreferences(
+            theme = "dark",
+            haptic_enabled = false,
+            load_remote_images = "always",
+        )
+        val baseline: UserPreferences? = null
+        val updated = UserPreferences(show_aster_branding = false)
+
+        val rebased = rebase_preferences_changes(json, server, baseline, updated)
+
+        assertEquals("dark", rebased.theme)
+        assertFalse(rebased.haptic_enabled)
+        assertEquals("always", rebased.load_remote_images)
+        assertFalse(rebased.show_aster_branding)
     }
 }

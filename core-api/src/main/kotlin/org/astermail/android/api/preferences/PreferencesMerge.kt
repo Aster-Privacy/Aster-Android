@@ -63,6 +63,27 @@ fun merge_decrypted_preferences(
     return json.decodeFromJsonElement(UserPreferences.serializer(), merged)
 }
 
+fun rebase_preferences_changes(
+    json: Json,
+    base: UserPreferences,
+    baseline: UserPreferences?,
+    updated: UserPreferences,
+): UserPreferences {
+    val base_obj = json.encodeToJsonElement(UserPreferences.serializer(), base).jsonObject
+    val baseline_obj = json.encodeToJsonElement(
+        UserPreferences.serializer(),
+        baseline ?: UserPreferences(),
+    ).jsonObject
+    val updated_obj = json.encodeToJsonElement(UserPreferences.serializer(), updated).jsonObject
+    val merged = buildJsonObject {
+        for ((k, base_value) in base_obj) {
+            val new_value = updated_obj[k]
+            put(k, if (new_value != null && new_value != baseline_obj[k]) new_value else base_value)
+        }
+    }
+    return json.decodeFromJsonElement(UserPreferences.serializer(), merged)
+}
+
 fun encode_preferences_preserving_unknown(
     json: Json,
     prefs: UserPreferences,

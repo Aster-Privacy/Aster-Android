@@ -1372,6 +1372,147 @@ class SettingsViewModelTest {
         coVerify(exactly = 1) { preferences_api.save_encrypted_preferences(any()) }
     }
 
+    private fun test_prefs_key(identity_key: String): ByteArray =
+        java.security.MessageDigest.getInstance("SHA-256")
+            .digest((identity_key + "astermail-preferences-v1").toByteArray(Charsets.UTF_8))
+
+    private fun encrypt_test_blob(json_str: String, identity_key: String): Pair<String, String> {
+        val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
+        val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(
+            javax.crypto.Cipher.ENCRYPT_MODE,
+            javax.crypto.spec.SecretKeySpec(test_prefs_key(identity_key), "AES"),
+            javax.crypto.spec.GCMParameterSpec(128, nonce),
+        )
+        val ct = cipher.doFinal(json_str.toByteArray(Charsets.UTF_8))
+        return java.util.Base64.getEncoder().encodeToString(ct) to
+            java.util.Base64.getEncoder().encodeToString(nonce)
+    }
+
+    private fun decrypt_test_blob(encrypted_b64: String, nonce_b64: String, identity_key: String): String {
+        val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(
+            javax.crypto.Cipher.DECRYPT_MODE,
+            javax.crypto.spec.SecretKeySpec(test_prefs_key(identity_key), "AES"),
+            javax.crypto.spec.GCMParameterSpec(128, java.util.Base64.getDecoder().decode(nonce_b64)),
+        )
+        return String(cipher.doFinal(java.util.Base64.getDecoder().decode(encrypted_b64)), Charsets.UTF_8)
+    }
+
+    @Test
+    fun `save after failed decrypt rebases onto fresh server blob instead of writing defaults`() = runTest {
+        val identity_key = "user_identity_key"
+        val server_json = """{"theme":"dark","haptic_enabled":false,"web_only_setting":"keep_me"}"""
+        val (blob, nonce) = encrypt_test_blob(server_json, identity_key)
+        coEvery { preferences_api.get_encrypted_preferences() } returns
+            org.astermail.android.api.preferences.EncryptedPreferencesResponse(
+                encrypted_preferences = blob,
+                preferences_nonce = nonce,
+            )
+        every { session_key_store.get_identity_key() } returns "wrong_key_during_startup"
+
+        val fresh_vm = SettingsViewModel(
+            auth_api = auth_api,
+            user_api = user_api,
+            settings_api = settings_api,
+            labels_api = labels_api,
+            family_api = family_api,
+            tags_api = tags_api,
+            preferences_api = preferences_api,
+            signatures_api = signatures_api,
+            ghost_alias_api = ghost_alias_api,
+            auto_forward_api = auto_forward_api,
+            developer_api = developer_api,
+            subscriptions_api = subscriptions_api,
+            recovery_email_api = recovery_email_api,
+            security_api = security_api,
+            encryption_api = encryption_api,
+            auth_repository = auth_repository,
+            session_key_store = session_key_store,
+            token_store = token_store,
+            account_store = account_store,
+            context = context,
+        )
+        advanceUntilIdle()
+
+        every { session_key_store.get_identity_key() } returns identity_key
+        val request = io.mockk.slot<org.astermail.android.api.preferences.SaveEncryptedPreferencesRequest>()
+        coEvery { preferences_api.save_encrypted_preferences(capture(request)) } returns Unit
+
+        val shown = fresh_vm.state.value.preferences!!
+        fresh_vm.save_preferences(shown.copy(show_aster_branding = false))
+        advanceUntilIdle()
+
+        assertEquals(SaveStatus.SAVED, fresh_vm.state.value.save_status)
+        val written = decrypt_test_blob(
+            request.captured.encrypted_preferences,
+            request.captured.preferences_nonce,
+            identity_key,
+        )
+        assertTrue(written.contains("\"theme\":\"dark\""))
+        assertTrue(written.contains("\"haptic_enabled\":false"))
+        assertTrue(written.contains("\"web_only_setting\":\"keep_me\""))
+        assertTrue(written.contains("\"show_aster_branding\":false"))
+    }
+
+    @Test
+    fun `reset_for_account_switch blocks saves until preferences reload`() = runTest {
+        advanceUntilIdle()
+
+        vm.reset_for_account_switch()
+        vm.save_preferences(UserPreferences(load_remote_images = "always"))
+        advanceUntilIdle()
+
+        assertEquals(SaveStatus.ERROR, vm.state.value.save_status)
+        coVerify(exactly = 0) { preferences_api.save_encrypted_preferences(any()) }
+        coVerify(exactly = 0) { preferences_api.save_preferences(any()) }
+        coVerify(exactly = 0) { preferences_api.save_preferences_raw(any()) }
+    }
+
+    @Test
+    fun `plaintext save preserves web-only keys from the raw load`() = runTest {
+        coEvery { preferences_api.get_encrypted_preferences() } returns
+            org.astermail.android.api.preferences.EncryptedPreferencesResponse()
+        coEvery { preferences_api.get_preferences_raw() } returns
+            """{"theme":"dark","web_only_setting":"keep_me"}"""
+        every { session_key_store.get_identity_key() } returns null
+
+        val vm = SettingsViewModel(
+            auth_api = auth_api,
+            user_api = user_api,
+            settings_api = settings_api,
+            labels_api = labels_api,
+            family_api = family_api,
+            tags_api = tags_api,
+            preferences_api = preferences_api,
+            signatures_api = signatures_api,
+            ghost_alias_api = ghost_alias_api,
+            auto_forward_api = auto_forward_api,
+            developer_api = developer_api,
+            subscriptions_api = subscriptions_api,
+            recovery_email_api = recovery_email_api,
+            security_api = security_api,
+            encryption_api = encryption_api,
+            auth_repository = auth_repository,
+            session_key_store = session_key_store,
+            token_store = token_store,
+            account_store = account_store,
+            context = context,
+        )
+        advanceUntilIdle()
+        assertEquals("dark", vm.state.value.preferences?.theme)
+
+        val body = io.mockk.slot<String>()
+        coEvery { preferences_api.save_preferences_raw(capture(body)) } returns Unit
+
+        vm.save_preferences(vm.state.value.preferences!!.copy(theme = "light"))
+        advanceUntilIdle()
+
+        assertEquals(SaveStatus.SAVED, vm.state.value.save_status)
+        assertTrue(body.captured.contains("\"web_only_setting\":\"keep_me\""))
+        assertTrue(body.captured.contains("\"theme\":\"light\""))
+    }
+
     @Test
     fun `save_preferences refuses and never writes when encrypted account has no identity key`() = runTest {
         coEvery { preferences_api.get_encrypted_preferences() } returns

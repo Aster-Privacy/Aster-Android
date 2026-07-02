@@ -70,6 +70,8 @@ import org.astermail.android.api.preferences.SaveEncryptedPreferencesRequest
 import org.astermail.android.api.preferences.UserPreferences
 import org.astermail.android.api.preferences.encode_preferences_preserving_unknown
 import org.astermail.android.api.preferences.merge_decrypted_preferences
+import org.astermail.android.api.preferences.rebase_preferences_changes
+import kotlinx.serialization.json.jsonObject
 import org.astermail.android.api.recovery_email.RecoveryEmailApi
 import org.astermail.android.api.recovery_email.RecoveryEmailApiImpl
 import org.astermail.android.api.recovery_email.SaveRecoveryEmailRequest
@@ -207,10 +209,6 @@ class SettingsViewModel @Inject constructor(
     )
     val state: StateFlow<SettingsUiState> = _state.asStateFlow()
 
-    init {
-        load_preferences()
-    }
-
     private val _signature_text = MutableStateFlow("")
     val signature_text: StateFlow<String> = _signature_text.asStateFlow()
 
@@ -226,6 +224,10 @@ class SettingsViewModel @Inject constructor(
     private var save_preferences_job: kotlinx.coroutines.Job? = null
     private var prefs_load_succeeded = false
     private var account_uses_encrypted_prefs = false
+
+    init {
+        load_preferences()
+    }
 
     fun load_profile() {
         viewModelScope.launch {
@@ -385,6 +387,12 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun reset_for_account_switch() {
+        load_preferences_job?.cancel()
+        save_preferences_job?.cancel()
+        prefs_load_succeeded = false
+        account_uses_encrypted_prefs = false
+        last_preferences_raw_json = null
+        last_synced_preferences = null
         _state.value = SettingsUiState()
     }
 
@@ -1652,6 +1660,7 @@ class SettingsViewModel @Inject constructor(
                     }
                     if (decrypted != null) {
                         prefs_load_succeeded = true
+                        last_synced_preferences = decrypted
                         _state.value = _state.value.copy(
                             preferences = decrypted,
                             preferences_authoritative = true,
@@ -1667,8 +1676,9 @@ class SettingsViewModel @Inject constructor(
                         )
                     }
                 } else {
-                    val prefs = preferences_api.get_preferences()
+                    val prefs = load_plaintext_preferences()
                     prefs_load_succeeded = true
+                    last_synced_preferences = prefs
                     _state.value = _state.value.copy(
                         preferences = prefs,
                         preferences_authoritative = true,
@@ -1921,13 +1931,31 @@ class SettingsViewModel @Inject constructor(
         }
         load_preferences_job?.cancel()
         save_preferences_job?.cancel()
+        val baseline = last_synced_preferences
         _state.value = _state.value.copy(preferences = prefs, save_status = SaveStatus.SAVING)
         save_preferences_job = viewModelScope.launch {
             try {
                 val identity_key = await_identity_key()
                 if (!identity_key.isNullOrBlank()) {
-                    val request = encrypt_preferences(prefs, identity_key)
-                    preferences_api.save_encrypted_preferences(request)
+                    var to_save = prefs
+                    val fresh = preferences_api.get_encrypted_preferences()
+                    val fresh_enc = fresh.encrypted_preferences
+                    val fresh_nonce = fresh.preferences_nonce
+                    if (!fresh_enc.isNullOrBlank() && !fresh_nonce.isNullOrBlank()) {
+                        val server_prefs = try {
+                            decrypt_preferences(fresh_enc, fresh_nonce, identity_key, baseline)
+                        } catch (_: Throwable) {
+                            null
+                        }
+                        if (server_prefs != null) {
+                            to_save = rebase_preferences_changes(prefs_json, server_prefs, baseline, prefs)
+                        }
+                    }
+                    val payload = encode_preferences_preserving_unknown(prefs_json, to_save, last_preferences_raw_json)
+                    preferences_api.save_encrypted_preferences(encrypt_preferences_payload(payload, identity_key))
+                    last_preferences_raw_json = payload
+                    last_synced_preferences = to_save
+                    _state.value = _state.value.copy(preferences = to_save, save_status = SaveStatus.SAVED)
                 } else if (account_uses_encrypted_prefs) {
                     _state.value = _state.value.copy(
                         save_status = SaveStatus.ERROR,
@@ -1935,9 +1963,17 @@ class SettingsViewModel @Inject constructor(
                     )
                     return@launch
                 } else {
-                    preferences_api.save_preferences(prefs)
+                    val raw = last_preferences_raw_json
+                    if (raw != null) {
+                        val payload = encode_preferences_preserving_unknown(prefs_json, prefs, raw)
+                        preferences_api.save_preferences_raw(payload)
+                        last_preferences_raw_json = payload
+                    } else {
+                        preferences_api.save_preferences(prefs)
+                    }
+                    last_synced_preferences = prefs
+                    _state.value = _state.value.copy(save_status = SaveStatus.SAVED)
                 }
-                _state.value = _state.value.copy(save_status = SaveStatus.SAVED)
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     save_status = SaveStatus.ERROR,
@@ -2643,6 +2679,9 @@ class SettingsViewModel @Inject constructor(
     @Volatile
     private var last_preferences_raw_json: String? = null
 
+    @Volatile
+    private var last_synced_preferences: UserPreferences? = null
+
     private fun decrypt_preferences(
         encrypted_b64: String,
         nonce_b64: String,
@@ -2660,11 +2699,37 @@ class SettingsViewModel @Inject constructor(
         return merge_decrypted_preferences(prefs_json, json_str, previous)
     }
 
-    private fun encrypt_preferences(
-        prefs: UserPreferences,
+    private suspend fun load_plaintext_preferences(): UserPreferences {
+        val raw = try { preferences_api.get_preferences_raw() } catch (_: Throwable) { null }
+        val sanitized = raw?.let { sanitize_plaintext_raw(it) }
+        if (sanitized != null) {
+            val merged = runCatching {
+                merge_decrypted_preferences(prefs_json, sanitized, _state.value.preferences)
+            }.getOrNull()
+            if (merged != null) {
+                last_preferences_raw_json = sanitized
+                return merged
+            }
+        }
+        return preferences_api.get_preferences()
+    }
+
+    private fun sanitize_plaintext_raw(raw: String): String? {
+        val obj = runCatching {
+            kotlinx.serialization.json.Json.parseToJsonElement(raw).jsonObject
+        }.getOrNull() ?: return null
+        val filtered = kotlinx.serialization.json.buildJsonObject {
+            for ((k, v) in obj) {
+                if (k != "encrypted_preferences" && k != "preferences_nonce") put(k, v)
+            }
+        }
+        return prefs_json.encodeToString(kotlinx.serialization.json.JsonObject.serializer(), filtered)
+    }
+
+    private fun encrypt_preferences_payload(
+        json_str: String,
         identity_key: String,
     ): SaveEncryptedPreferencesRequest {
-        val json_str = encode_preferences_preserving_unknown(prefs_json, prefs, last_preferences_raw_json)
         val plaintext = json_str.toByteArray(Charsets.UTF_8)
         val key_material = (identity_key + PREFERENCES_KEY_SUFFIX).toByteArray(Charsets.UTF_8)
         val key = MessageDigest.getInstance("SHA-256").digest(key_material)

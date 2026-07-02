@@ -135,7 +135,9 @@ data class SetDefaultSenderRequest(
 
 interface PreferencesApi {
     suspend fun get_preferences(): UserPreferences
+    suspend fun get_preferences_raw(): String
     suspend fun save_preferences(prefs: UserPreferences): UserPreferences
+    suspend fun save_preferences_raw(json_body: String)
     suspend fun get_encrypted_preferences(): EncryptedPreferencesResponse
     suspend fun save_encrypted_preferences(request: SaveEncryptedPreferencesRequest)
     suspend fun get_default_sender(): DefaultSenderResponse
@@ -150,6 +152,15 @@ class PreferencesApiImpl(private val client: ApiClient) : PreferencesApi {
         return decode_or_throw(response)
     }
 
+    override suspend fun get_preferences_raw(): String {
+        val response = client.http.get("${client.base_url}$base")
+        if (response.status.value !in 200..299) {
+            val body = try { response.body<String>() } catch (_: Throwable) { "" }
+            throw client.map_http_status(response.status.value, body)
+        }
+        return response.body()
+    }
+
     override suspend fun save_preferences(prefs: UserPreferences): UserPreferences {
         val response = client.http.put("${client.base_url}$base") {
             contentType(ContentType.Application.Json)
@@ -157,6 +168,18 @@ class PreferencesApiImpl(private val client: ApiClient) : PreferencesApi {
             setBody(prefs)
         }
         return decode_or_throw(response)
+    }
+
+    override suspend fun save_preferences_raw(json_body: String) {
+        val response = client.http.put("${client.base_url}$base") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(io.ktor.http.content.TextContent(json_body, ContentType.Application.Json))
+        }
+        if (response.status.value !in 200..299) {
+            val body = try { response.body<String>() } catch (_: Throwable) { "" }
+            throw client.map_http_status(response.status.value, body)
+        }
     }
 
     override suspend fun get_encrypted_preferences(): EncryptedPreferencesResponse {
