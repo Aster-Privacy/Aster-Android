@@ -1511,12 +1511,17 @@ private fun expanded_message(
             val no_body_text = stringResource(R.string.no_body)
             val plain_html by produceState(initialValue = "", msg.body, msg.is_encrypted, e2e_no_key_text, no_body_text) {
                 value = withContext(kotlinx.coroutines.Dispatchers.Default) {
-                val raw = msg.body.ifBlank {
+                val body_source = msg.body.ifBlank {
                     if (msg.is_encrypted) {
                         e2e_no_key_text
                     } else {
                         no_body_text
                     }
+                }
+                val raw = if (org.astermail.android.mail.FormatFlowed.looks_flowed(body_source)) {
+                    org.astermail.android.mail.FormatFlowed.unflow(body_source)
+                } else {
+                    body_source
                 }
                 val escaped = raw
                     .replace("&", "&amp;")
