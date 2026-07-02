@@ -3122,7 +3122,7 @@ $dark_css
         }
         val src_replaced = PROXY_SRC_PATTERN.replace(protocol_normalized) { match ->
             val prefix = match.groupValues[1]
-            val url = match.groupValues[2]
+            val url = match.groupValues[2].replace("&amp;", "&")
             val suffix = match.groupValues[3]
             val encoded = java.net.URLEncoder.encode(url, "UTF-8")
             "$prefix$proxy_base$encoded$suffix"
@@ -3149,7 +3149,7 @@ $dark_css
         }
         return PROXY_CSS_URL_PATTERN.replace(srcset_replaced) { match ->
             val prefix = match.groupValues[1]
-            val url = match.groupValues[2]
+            val url = match.groupValues[2].replace("&amp;", "&")
             val suffix = match.groupValues[3]
             val encoded = java.net.URLEncoder.encode(url, "UTF-8")
             "$prefix$proxy_base$encoded$suffix"
