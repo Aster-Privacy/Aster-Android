@@ -1272,4 +1272,5 @@
     <string name="pending_deletion_restoring">Herstellen…</string>
     <string name="pending_deletion_error">Kan je account niet herstellen. Probeer het opnieuw.</string>
     <string name="pending_deletion_restored">Welkom terug. Je account is hersteld.</string>
+    <string name="image_blocked_placeholder">[Afbeelding geblokkeerd]</string>
 </resources>

@@ -1888,4 +1888,5 @@
     <string name="pending_deletion_restoring">Restauration…</string>
     <string name="pending_deletion_error">Impossible de restaurer votre compte. Veuillez réessayer.</string>
     <string name="pending_deletion_restored">Bon retour. Votre compte a été restauré.</string>
+    <string name="image_blocked_placeholder">[Image bloquée]</string>
 </resources>

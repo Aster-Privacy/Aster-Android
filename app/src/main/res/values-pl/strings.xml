@@ -1276,4 +1276,5 @@
     <string name="pending_deletion_restoring">Przywracanie…</string>
     <string name="pending_deletion_error">Nie można przywrócić konta. Spróbuj ponownie.</string>
     <string name="pending_deletion_restored">Witaj ponownie. Twoje konto zostało przywrócone.</string>
+    <string name="image_blocked_placeholder">[Obraz zablokowany]</string>
 </resources>

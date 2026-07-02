@@ -1280,4 +1280,5 @@
     <string name="pending_deletion_restoring">جارٍ الاستعادة…</string>
     <string name="pending_deletion_error">تعذّرت استعادة حسابك. يرجى المحاولة مرة أخرى.</string>
     <string name="pending_deletion_restored">مرحبًا بعودتك. تمت استعادة حسابك.</string>
+    <string name="image_blocked_placeholder">[تم حظر الصورة]</string>
 </resources>

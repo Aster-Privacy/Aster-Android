@@ -1272,4 +1272,5 @@
     <string name="pending_deletion_restoring">Ripristino…</string>
     <string name="pending_deletion_error">Impossibile ripristinare il tuo account. Riprova.</string>
     <string name="pending_deletion_restored">Bentornato. Il tuo account è stato ripristinato.</string>
+    <string name="image_blocked_placeholder">[Immagine bloccata]</string>
 </resources>

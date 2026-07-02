@@ -112,4 +112,83 @@ class EmailHtmlSanitizerTest {
         assertTrue(out.contains("mj inside"))
         assertTrue(out.contains("office text"))
     }
+
+    @Test
+    fun strips_tracking_params_from_links() {
+        val html = """<a href="https://x.example/p?utm_source=nl&utm_campaign=c&id=5&fbclid=abc">link</a>"""
+        val out = EmailHtmlSanitizer.sanitize(html)
+        assertTrue(out.contains("https://x.example/p?id=5"))
+        assertFalse(out.contains("utm_source"))
+        assertFalse(out.contains("fbclid"))
+    }
+
+    @Test
+    fun keeps_links_without_tracking_params_unchanged() {
+        val url = "https://x.example/p?id=5&page=2"
+        val out = EmailHtmlSanitizer.sanitize("""<a href="$url">link</a>""")
+        assertTrue(out.contains(url.replace("&", "&amp;")))
+    }
+
+    @Test
+    fun autolinks_bare_urls_in_text() {
+        val out = EmailHtmlSanitizer.sanitize("<p>visit https://example.com/page now</p>")
+        assertTrue(out.contains("""<a href="https://example.com/page""""))
+        assertTrue(out.contains("visit"))
+        assertTrue(out.contains("now"))
+    }
+
+    @Test
+    fun does_not_autolink_inside_existing_anchor() {
+        val out = EmailHtmlSanitizer.sanitize("""<a href="https://a.example"><span>see https://b.example</span></a>""")
+        assertFalse(out.contains("""href="https://b.example""""))
+    }
+
+    @Test
+    fun replaces_blocked_remote_images_with_placeholder() {
+        val html = """<p>text</p><img src="https://x.example/banner.png" alt="Banner" width="600" height="200">"""
+        val out = EmailHtmlSanitizer.replace_blocked_images(html, "[Image blocked]")
+        assertFalse(out.contains("<img"))
+        assertTrue(out.contains("blocked-image"))
+        assertTrue(out.contains("data-original-src=\"https://x.example/banner.png\""))
+        assertTrue(out.contains(">Banner</span>"))
+        assertTrue(out.contains("text"))
+    }
+
+    @Test
+    fun blocked_image_without_alt_uses_placeholder_text() {
+        val out = EmailHtmlSanitizer.replace_blocked_images(
+            """<img src="https://x.example/hero.jpg" width="600" height="300" style="display:block">""",
+            "[Image blocked]",
+        )
+        assertTrue(out.contains("[Image blocked]"))
+    }
+
+    @Test
+    fun blocked_tracking_pixels_are_removed_entirely() {
+        val out = EmailHtmlSanitizer.replace_blocked_images(
+            """<p>hi</p><img src="https://track.example/o.gif" width="1" height="1">""",
+            "[Image blocked]",
+        )
+        assertFalse(out.contains("blocked-image"))
+        assertFalse(out.contains("track.example"))
+        assertTrue(out.contains("hi"))
+    }
+
+    @Test
+    fun replace_blocked_images_keeps_data_and_cid_images() {
+        val html = """<img src="data:image/png;base64,AAAA" alt="inline"><img src="cid:part1" alt="attached">"""
+        val out = EmailHtmlSanitizer.replace_blocked_images(html, "[Image blocked]")
+        assertTrue(out.contains("data:image/png;base64,AAAA"))
+        assertTrue(out.contains("cid:part1"))
+        assertFalse(out.contains("blocked-image"))
+    }
+
+    @Test
+    fun strips_dark_mode_media_from_style_blocks() {
+        val html = """<html><head><style>p{color:#111}@media (prefers-color-scheme: dark){p{color:#eee;background:#000}}h1{margin:0}</style></head><body><p>hi</p></body></html>"""
+        val out = EmailHtmlSanitizer.sanitize(html)
+        assertFalse(out.contains("prefers-color-scheme"))
+        assertTrue(out.contains("color:#111"))
+        assertTrue(out.contains("h1{margin:0}"))
+    }
 }

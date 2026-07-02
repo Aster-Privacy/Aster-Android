@@ -1270,4 +1270,5 @@
     <string name="pending_deletion_restoring">復元中…</string>
     <string name="pending_deletion_error">アカウントを復元できませんでした。もう一度お試しください。</string>
     <string name="pending_deletion_restored">おかえりなさい。アカウントが復元されました。</string>
+    <string name="image_blocked_placeholder">[画像はブロックされました]</string>
 </resources>

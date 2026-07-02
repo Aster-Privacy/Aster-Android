@@ -2764,6 +2764,7 @@ private fun email_html_view(
         else -> 100
     }
     val forwarded_label = stringResource(R.string.forwarded_message_label)
+    val image_blocked_label = stringResource(R.string.image_blocked_placeholder)
 
     var content_height_dp by remember(html) { mutableStateOf(0.dp) }
     var has_measured by remember(html) { mutableStateOf(false) }
@@ -2851,6 +2852,7 @@ body{height:auto!important;min-height:0!important;margin:0;overflow-x:hidden;ove
 img{max-width:100%!important;height:auto!important}
 a{color:$link_hex;text-decoration:underline}
 pre,code{overflow-x:auto;max-width:100%}
+.blocked-image{display:inline-block;padding:4px 8px;border-radius:4px;font-size:12px;background-color:${if (simple_dark) "#1f1f1f" else "#f3f4f6"};color:#9ca3af${if (simple_dark) "!important" else ""};border:1px dashed ${if (simple_dark) "#374151" else "#e5e7eb"}}
 $table_css
 .aster_quote,.gmail_quote,.protonmail_quote,.yahoo_quoted,.moz-cite-prefix{display:none}
 .aster-quoted-content .aster_quote,.aster-quoted-content .gmail_quote,.aster-quoted-content .protonmail_quote,.aster-quoted-content .yahoo_quoted,.aster-quoted-content .moz-cite-prefix,.aster-forwarded-content .aster_quote,.aster-forwarded-content .gmail_quote,.aster-forwarded-content .protonmail_quote{display:block;margin:0;padding:0}
@@ -3114,7 +3116,7 @@ $dark_css
             val suffix = match.groupValues[3]
             "${prefix}data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==${suffix}"
         }
-        if (!allow_external) return cid_normalized
+        if (!allow_external) return EmailHtmlSanitizer.replace_blocked_images(cid_normalized, image_blocked_label)
         val protocol_normalized = PROXY_PROTOCOL_RELATIVE_SRC_PATTERN.replace(cid_normalized) { match ->
             "${match.groupValues[1]}https:${match.groupValues[2]}${match.groupValues[3]}"
         }
