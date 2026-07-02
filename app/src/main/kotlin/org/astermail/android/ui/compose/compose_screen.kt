@@ -255,10 +255,19 @@ fun ComposeScreen(
         options.toList()
     }
 
-    val alias_hash_map = remember(settings_state.aliases, settings_state.custom_domain_addresses) {
+    val alias_hash_map = remember(
+        settings_state.aliases,
+        settings_state.custom_domain_addresses,
+        settings_state.ghost_aliases,
+    ) {
         val map = mutableMapOf<String, String>()
         settings_state.aliases.forEach { map[it.address] = it.alias_address_hash }
         settings_state.custom_domain_addresses.forEach { map[it.address] = it.local_part_hash }
+        settings_state.ghost_aliases.forEach { ghost ->
+            if (ghost.address.isNotBlank() && ghost.alias_address_hash.isNotBlank()) {
+                map[ghost.address] = ghost.alias_address_hash
+            }
+        }
         map.toMap()
     }
 
