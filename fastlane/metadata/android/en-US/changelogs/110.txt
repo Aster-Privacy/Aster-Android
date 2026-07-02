@@ -1,0 +1,5 @@
+Bug fixes and improvements:
+
+- Fixed settings occasionally resetting to their defaults
+- Settings changes now sync safely across all your devices
+- Fixed settings carrying over incorrectly after switching accounts
