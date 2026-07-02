@@ -3248,9 +3248,16 @@ $dark_css
                 if (req_uri.host != "app.astermail.org") return null
                 if (req_uri.path != "/api/images/v1/proxy") return null
                 if (!url.startsWith(proxy_base)) return null
+                fun transparent_pixel(): android.webkit.WebResourceResponse {
+                    val gif = android.util.Base64.decode(
+                        "R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==",
+                        android.util.Base64.DEFAULT,
+                    )
+                    return android.webkit.WebResourceResponse("image/gif", null, java.io.ByteArrayInputStream(gif))
+                }
                 val current_token = settings_vm.get_access_token()
-                if (current_token.isNullOrBlank()) return null
-                val ctx = view?.context ?: return null
+                if (current_token.isNullOrBlank()) return transparent_pixel()
+                val ctx = view?.context ?: return transparent_pixel()
                 val client = email_image_client(ctx)
                 return try {
                     fun fetch(bearer: String): okhttp3.Response {
@@ -3264,12 +3271,12 @@ $dark_css
                     if (resp.code == 401) {
                         resp.close()
                         val refreshed = settings_vm.refresh_access_token_blocking()
-                        if (refreshed.isNullOrBlank()) return null
+                        if (refreshed.isNullOrBlank()) return transparent_pixel()
                         resp = fetch(refreshed)
                     }
-                    if (!resp.isSuccessful) { resp.close(); return null }
+                    if (!resp.isSuccessful) { resp.close(); return transparent_pixel() }
                     val body = resp.body
-                    if (body == null) { resp.close(); return null }
+                    if (body == null) { resp.close(); return transparent_pixel() }
                     val content_type = resp.header("Content-Type")?.substringBefore(';')?.trim()
                         ?.takeIf { it.isNotBlank() } ?: "image/jpeg"
                     val stream = object : java.io.FilterInputStream(body.byteStream()) {
@@ -3278,7 +3285,7 @@ $dark_css
                         }
                     }
                     android.webkit.WebResourceResponse(content_type, null, stream)
-                } catch (_: Throwable) { null }
+                } catch (_: Throwable) { transparent_pixel() }
             }
         }
     }
