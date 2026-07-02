@@ -1,0 +1,7 @@
+Bug fixes and improvements:
+
+- Fixed buttons missing from some newsletter emails
+- Blocked images now show a clean placeholder instead of a broken icon
+- Icons in Aster system emails now display correctly
+- Web addresses in plain text emails are now tappable links
+- Tracking codes are stripped from links in emails
