@@ -402,6 +402,14 @@ fun ThreadInboxRow(
                         modifier = Modifier.size(14.dp),
                     )
                 }
+                Spacer(Modifier.width(AsterSpacing.sm))
+                star_button(
+                    is_starred = thread.is_starred,
+                    on_toggle = {
+                        if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        on_toggle_star()
+                    },
+                )
             }
             if (thread.label_colors.isNotEmpty() || attachment_chips.isNotEmpty()) {
                 Spacer(Modifier.height(4.dp))
