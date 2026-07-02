@@ -56,6 +56,8 @@ import org.astermail.android.api.preferences.PreferencesApi
 import org.astermail.android.api.preferences.UserPreferences
 import org.astermail.android.api.settings.AliasInfo
 import org.astermail.android.api.settings.AliasListResponse
+import org.astermail.android.api.settings.DeletedAliasInfo
+import org.astermail.android.api.settings.ListDeletedAliasesResponse
 import org.astermail.android.api.settings.BlockedSenderInfo
 import org.astermail.android.api.settings.BlockedSendersResponse
 import org.astermail.android.api.settings.SecurityStatusResponse
@@ -671,6 +673,87 @@ class SettingsViewModelTest {
 
         assertEquals(1, vm.state.value.aliases.size)
         assertEquals("a2", vm.state.value.aliases[0].id)
+    }
+
+    @Test
+    fun `load_deleted_aliases populates and decrypts trash`() = runTest {
+        val encoded = java.util.Base64.getEncoder()
+            .encodeToString("myalias".toByteArray())
+        val deleted = listOf(
+            DeletedAliasInfo(
+                id = "d1",
+                encrypted_local_part = encoded,
+                domain = "astermail.org",
+                is_random = true,
+                deleted_at = "2026-07-02T09:26:00Z",
+            ),
+        )
+        coEvery { settings_api.list_deleted_aliases() } returns
+            ListDeletedAliasesResponse(deleted, total = 1)
+
+        vm.load_deleted_aliases()
+        advanceUntilIdle()
+
+        assertEquals(1, vm.state.value.deleted_aliases.size)
+        assertEquals("myalias@astermail.org", vm.state.value.deleted_aliases[0].address)
+        assertEquals("2026-07-02T09:26:00Z", vm.state.value.deleted_aliases[0].deleted_at)
+    }
+
+    @Test
+    fun `restore_deleted_alias removes from trash`() = runTest {
+        val encoded = java.util.Base64.getEncoder()
+            .encodeToString("myalias".toByteArray())
+        coEvery { settings_api.list_deleted_aliases() } returns
+            ListDeletedAliasesResponse(
+                listOf(
+                    DeletedAliasInfo(
+                        id = "d1",
+                        encrypted_local_part = encoded,
+                        domain = "astermail.org",
+                        is_random = true,
+                    ),
+                ),
+                total = 1,
+            )
+        coEvery { settings_api.list_aliases() } returns AliasListResponse(emptyList())
+
+        vm.load_deleted_aliases()
+        advanceUntilIdle()
+        assertEquals(1, vm.state.value.deleted_aliases.size)
+
+        vm.restore_deleted_alias("d1")
+        advanceUntilIdle()
+
+        assertTrue(vm.state.value.deleted_aliases.isEmpty())
+        coVerify { settings_api.restore_deleted_alias("d1") }
+    }
+
+    @Test
+    fun `empty_deleted_aliases clears trash`() = runTest {
+        val encoded = java.util.Base64.getEncoder()
+            .encodeToString("myalias".toByteArray())
+        coEvery { settings_api.list_deleted_aliases() } returns
+            ListDeletedAliasesResponse(
+                listOf(
+                    DeletedAliasInfo(
+                        id = "d1",
+                        encrypted_local_part = encoded,
+                        domain = "astermail.org",
+                        is_random = true,
+                    ),
+                ),
+                total = 1,
+            )
+
+        vm.load_deleted_aliases()
+        advanceUntilIdle()
+        assertEquals(1, vm.state.value.deleted_aliases.size)
+
+        vm.empty_deleted_aliases()
+        advanceUntilIdle()
+
+        assertTrue(vm.state.value.deleted_aliases.isEmpty())
+        coVerify { settings_api.empty_deleted_aliases() }
     }
 
     @Test

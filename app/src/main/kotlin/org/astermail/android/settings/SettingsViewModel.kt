@@ -81,6 +81,7 @@ import org.astermail.android.api.security.TrustedDevice
 import org.astermail.android.api.settings.AddDomainRequest
 import org.astermail.android.api.settings.AliasDirectory
 import org.astermail.android.api.settings.AliasInfo
+import org.astermail.android.api.settings.DeletedAliasInfo
 import org.astermail.android.api.settings.CustomDomainAddressInfo
 import org.astermail.android.api.settings.AliasPreferences
 import org.astermail.android.api.settings.BlockedSenderInfo
@@ -88,6 +89,7 @@ import org.astermail.android.api.settings.CheckAliasAvailabilityRequest
 import org.astermail.android.api.settings.CreateAliasRequest
 import org.astermail.android.api.settings.CreateDirectoryRequest
 import org.astermail.android.api.settings.CustomDomain
+import org.astermail.android.api.settings.DirectoryAvailabilityRequest
 import org.astermail.android.api.settings.FeedbackRequest
 import org.astermail.android.api.settings.SecurityStatusResponse
 import org.astermail.android.api.settings.SessionInfo
@@ -131,6 +133,8 @@ data class SettingsUiState(
     val webhooks: List<WebhookInfo> = emptyList(),
     val directories: List<AliasDirectory> = emptyList(),
     val directories_loading: Boolean = false,
+    val deleted_aliases: List<DecryptedDeletedAlias> = emptyList(),
+    val deleted_aliases_loading: Boolean = false,
     val alias_preferences: AliasPreferences? = null,
     val recovery_email_address: String? = null,
     val recovery_email_set: Boolean = false,
@@ -155,6 +159,13 @@ data class SettingsUiState(
 )
 
 enum class SaveStatus { IDLE, SAVING, SAVED, ERROR }
+
+data class DecryptedDeletedAlias(
+    val id: String,
+    val address: String,
+    val display_name: String?,
+    val deleted_at: String,
+)
 
 data class DecryptedSignature(
     val id: String,
@@ -481,12 +492,121 @@ class SettingsViewModel @Inject constructor(
             try {
                 settings_api.delete_alias(alias_id)
                 _state.update { s -> s.copy(aliases = s.aliases.filter { it.id != alias_id }) }
+                load_deleted_aliases()
             } catch (_: Throwable) {
                 _state.value = _state.value.copy(
                     action_result = context.getString(R.string.failed_delete_alias),
                 )
             }
         }
+    }
+
+    fun load_deleted_aliases() {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(deleted_aliases_loading = true)
+            try {
+                val response = settings_api.list_deleted_aliases()
+                val decrypted = response.aliases.map { decrypt_deleted_alias(it) }
+                _state.value = _state.value.copy(
+                    deleted_aliases = decrypted,
+                    deleted_aliases_loading = false,
+                )
+            } catch (t: Throwable) {
+                if (org.astermail.android.BuildConfig.DEBUG) {
+                    android.util.Log.w("SettingsVM", "load_deleted_aliases failed", t)
+                }
+                _state.value = _state.value.copy(deleted_aliases_loading = false)
+            }
+        }
+    }
+
+    fun restore_deleted_alias(deleted_id: String) {
+        viewModelScope.launch {
+            try {
+                settings_api.restore_deleted_alias(deleted_id)
+                _state.update { s -> s.copy(deleted_aliases = s.deleted_aliases.filter { it.id != deleted_id }) }
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.alias_restored),
+                )
+                load_aliases()
+            } catch (_: Throwable) {
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.failed_restore_alias),
+                )
+                load_deleted_aliases()
+            }
+        }
+    }
+
+    fun purge_deleted_alias(deleted_id: String) {
+        viewModelScope.launch {
+            try {
+                settings_api.purge_deleted_alias(deleted_id)
+                _state.update { s -> s.copy(deleted_aliases = s.deleted_aliases.filter { it.id != deleted_id }) }
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.alias_purged),
+                )
+            } catch (_: Throwable) {
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.failed_purge_alias),
+                )
+                load_deleted_aliases()
+            }
+        }
+    }
+
+    fun empty_deleted_aliases() {
+        viewModelScope.launch {
+            try {
+                settings_api.empty_deleted_aliases()
+                _state.value = _state.value.copy(
+                    deleted_aliases = emptyList(),
+                    action_result = context.getString(R.string.trash_emptied),
+                )
+            } catch (_: Throwable) {
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.failed_empty_trash),
+                )
+                load_deleted_aliases()
+            }
+        }
+    }
+
+    private fun decrypt_deleted_alias(alias: DeletedAliasInfo): DecryptedDeletedAlias {
+        val local_part = try {
+            if (alias.is_random) {
+                try {
+                    String(
+                        android.util.Base64.decode(alias.encrypted_local_part, android.util.Base64.DEFAULT),
+                        Charsets.UTF_8,
+                    )
+                } catch (_: Throwable) {
+                    alias.encrypted_local_part
+                }
+            } else {
+                decrypt_alias_field(alias.encrypted_local_part, alias.local_part_nonce)
+            }
+        } catch (_: Throwable) {
+            ""
+        }
+        val enc_name = alias.encrypted_display_name
+        val name_nonce = alias.display_name_nonce
+        val display_name = if (!enc_name.isNullOrBlank() && !name_nonce.isNullOrBlank()) {
+            try {
+                decrypt_alias_field(enc_name, name_nonce)
+            } catch (_: Throwable) {
+                null
+            }
+        } else {
+            null
+        }
+        val address = if (local_part.isNotBlank()) "$local_part@${alias.domain}" else "@${alias.domain}"
+        return DecryptedDeletedAlias(
+            id = alias.id,
+            address = address,
+            display_name = display_name,
+            deleted_at = alias.deleted_at,
+        )
     }
 
     fun create_alias(local_part: String, domain: String, display_name: String? = null) {
@@ -613,6 +733,18 @@ class SettingsViewModel @Inject constructor(
                     alias_address_hash = addr_hash,
                     routing_address_hash = routing_hash,
                 )
+            )
+            response.available
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    suspend fun check_directory_availability(key: String): Boolean {
+        return try {
+            val dir_hash = compute_directory_key_hash(key.lowercase())
+            val response = settings_api.check_directory_availability(
+                DirectoryAvailabilityRequest(directory_hash = dir_hash)
             )
             response.available
         } catch (_: Throwable) {

@@ -416,6 +416,21 @@
     <string name="trash_emptied">Trash emptied</string>
     <string name="failed_empty_trash">Failed to empty trash</string>
 
+    <!-- Recently deleted aliases (alias trash) -->
+    <string name="recently_deleted_aliases_title">Recently deleted</string>
+    <string name="recently_deleted_aliases_description">Restore an alias you deleted. Deleted aliases are kept for a limited time.</string>
+    <string name="alias_restore">Restore</string>
+    <string name="alias_delete_permanently">Delete permanently</string>
+    <string name="alias_deleted_at">Deleted %1$s</string>
+    <string name="purge_alias_confirm_title">Delete alias permanently?</string>
+    <string name="purge_alias_confirm_message">Permanently delete %1$s? This can\'t be undone.</string>
+    <string name="empty_trash_confirm_title">Empty trash?</string>
+    <string name="empty_trash_confirm_message">Permanently delete all deleted aliases? This can\'t be undone.</string>
+    <string name="alias_restored">Alias restored</string>
+    <string name="alias_purged">Alias permanently deleted</string>
+    <string name="failed_restore_alias">Failed to restore alias</string>
+    <string name="failed_purge_alias">Failed to delete alias</string>
+
     <!-- Filtered inbox -->
     <string name="no_messages_in">No messages in %s</string>
     <string name="type_folder">folder</string>

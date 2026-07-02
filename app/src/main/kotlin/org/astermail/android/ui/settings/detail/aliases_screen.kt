@@ -96,6 +96,7 @@ import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.design.components.UpgradeGate
+import org.astermail.android.settings.DecryptedDeletedAlias
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.ui.auth.TurnstileWidget
 
@@ -124,6 +125,7 @@ fun AliasesScreen(
     val tab_labels = tab_labels_computed()
     val catch_all_locked = plan_vm.is_feature_locked("has_catch_all") && !plan_state.is_loading
     val alias_directories_locked = plan_vm.is_feature_locked("max_alias_directories") && !plan_state.is_loading
+    val alias_restore_locked = plan_vm.is_feature_locked("has_advanced_aliases") && !plan_state.is_loading
 
     var selected_tab by remember { mutableStateOf(0) }
     var pending_delete_alias by remember { mutableStateOf<Pair<String, String>?>(null) }
@@ -143,6 +145,7 @@ fun AliasesScreen(
         vm.load_aliases()
         vm.load_domains()
         vm.load_custom_domain_addresses()
+        vm.load_deleted_aliases()
     }
 
     LaunchedEffect(open_create) {
@@ -189,6 +192,8 @@ fun AliasesScreen(
                 context = context,
                 scope = scope,
                 on_show_create = { show_create_alias = true },
+                restore_locked = alias_restore_locked,
+                on_upgrade = { on_open("billing") },
             )
             1 -> domains_tab(
                 vm = vm,
@@ -262,6 +267,8 @@ private fun aliases_tab(
     context: Context,
     scope: kotlinx.coroutines.CoroutineScope,
     on_show_create: () -> Unit,
+    restore_locked: Boolean = false,
+    on_upgrade: () -> Unit = {},
 ) {
     var pending_delete by remember { mutableStateOf<Pair<String, String>?>(null) }
     val colors = AsterMaterial.colors
@@ -398,6 +405,13 @@ private fun aliases_tab(
         }
     }
 
+    recently_deleted_section(
+        vm = vm,
+        state = state,
+        restore_locked = restore_locked,
+        on_upgrade = on_upgrade,
+    )
+
     pending_delete?.let { (id, address) ->
         org.astermail.android.design.components.AsterDialog(
             on_dismiss = { pending_delete = null },
@@ -414,6 +428,176 @@ private fun aliases_tab(
                 )
             },
         )
+    }
+}
+
+@Composable
+private fun recently_deleted_section(
+    vm: SettingsViewModel,
+    state: org.astermail.android.settings.SettingsUiState,
+    restore_locked: Boolean,
+    on_upgrade: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val deleted = state.deleted_aliases
+    if (deleted.isEmpty()) return
+
+    var expanded by remember { mutableStateOf(false) }
+    var pending_purge by remember { mutableStateOf<DecryptedDeletedAlias?>(null) }
+    var confirm_empty by remember { mutableStateOf(false) }
+
+    v_gap(AsterSpacing.lg)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(SquircleShape(10.dp))
+            .clickable { expanded = !expanded }
+            .padding(vertical = AsterSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Delete,
+            contentDescription = null,
+            tint = colors.text_tertiary,
+            modifier = Modifier.size(16.dp),
+        )
+        Spacer(Modifier.width(AsterSpacing.sm))
+        Text(
+            text = stringResource(R.string.recently_deleted_aliases_title),
+            color = colors.text_tertiary,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(
+            text = "(${deleted.size})",
+            color = colors.text_muted,
+            fontSize = 13.sp,
+        )
+        Spacer(Modifier.weight(1f))
+        Icon(
+            imageVector = if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+            contentDescription = null,
+            tint = colors.text_muted,
+            modifier = Modifier.size(20.dp),
+        )
+    }
+
+    if (expanded) {
+        v_gap(AsterSpacing.xs)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.recently_deleted_aliases_description),
+                color = colors.text_tertiary,
+                fontSize = 12.sp,
+                modifier = Modifier.weight(1f),
+            )
+            if (!restore_locked) {
+                TextButton(onClick = { confirm_empty = true }) {
+                    Text(
+                        text = stringResource(R.string.empty_trash),
+                        color = colors.danger,
+                        fontSize = 13.sp,
+                    )
+                }
+            }
+        }
+        v_gap(AsterSpacing.sm)
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            deleted.forEachIndexed { idx, alias ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = alias.address,
+                            color = colors.text_primary,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
+                        Text(
+                            text = stringResource(R.string.alias_deleted_at, format_deleted_date(alias.deleted_at)),
+                            color = colors.text_tertiary,
+                            fontSize = 12.sp,
+                        )
+                    }
+                    if (restore_locked) {
+                        AsterGhostButton(
+                            label = stringResource(R.string.upgrade),
+                            onClick = on_upgrade,
+                        )
+                    } else {
+                        AsterGhostButton(
+                            label = stringResource(R.string.alias_restore),
+                            onClick = { vm.restore_deleted_alias(alias.id) },
+                        )
+                        AsterIconButton(
+                            icon = Icons.Outlined.Delete,
+                            content_description = stringResource(R.string.alias_delete_permanently),
+                            onClick = { pending_purge = alias },
+                            tint = colors.danger,
+                        )
+                    }
+                }
+                if (idx < deleted.lastIndex) AsterDivider(modifier = Modifier)
+            }
+        }
+    }
+
+    pending_purge?.let { alias ->
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { pending_purge = null },
+            title = stringResource(R.string.purge_alias_confirm_title),
+            message = stringResource(R.string.purge_alias_confirm_message, alias.address),
+            footer = {
+                org.astermail.android.design.components.AsterDialogOutlineButton(
+                    label = stringResource(R.string.cancel),
+                    onClick = { pending_purge = null },
+                )
+                org.astermail.android.design.components.AsterDialogDestructiveButton(
+                    label = stringResource(R.string.alias_delete_permanently),
+                    onClick = { vm.purge_deleted_alias(alias.id); pending_purge = null },
+                )
+            },
+        )
+    }
+
+    if (confirm_empty) {
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { confirm_empty = false },
+            title = stringResource(R.string.empty_trash_confirm_title),
+            message = stringResource(R.string.empty_trash_confirm_message),
+            footer = {
+                org.astermail.android.design.components.AsterDialogOutlineButton(
+                    label = stringResource(R.string.cancel),
+                    onClick = { confirm_empty = false },
+                )
+                org.astermail.android.design.components.AsterDialogDestructiveButton(
+                    label = stringResource(R.string.empty_trash),
+                    onClick = { vm.empty_deleted_aliases(); confirm_empty = false },
+                )
+            },
+        )
+    }
+}
+
+private fun format_deleted_date(iso: String): String {
+    return try {
+        val date_part = iso.substringBefore('T')
+        val parsed = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).parse(date_part)
+        if (parsed != null) {
+            java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM).format(parsed)
+        } else {
+            date_part
+        }
+    } catch (_: Throwable) {
+        iso
     }
 }
 
@@ -531,8 +715,23 @@ private fun directories_tab(
     var captcha_reset by remember { mutableStateOf(0) }
     var separator_menu_open by remember { mutableStateOf(false) }
     var is_creating by remember { mutableStateOf(false) }
+    var dir_availability by remember { mutableStateOf<Boolean?>(null) }
+    var dir_checking by remember { mutableStateOf(false) }
     val separators = listOf(".", "+", "#")
     val key_valid = dir_key.matches(Regex("[a-z0-9-]{2,}"))
+
+    LaunchedEffect(dir_key) {
+        if (!key_valid) {
+            dir_availability = null
+            dir_checking = false
+            return@LaunchedEffect
+        }
+        dir_checking = true
+        dir_availability = null
+        delay(500)
+        dir_availability = vm.check_directory_availability(dir_key)
+        dir_checking = false
+    }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -578,6 +777,32 @@ private fun directories_tab(
             color = colors.text_tertiary,
             fontSize = 12.sp,
         )
+        when {
+            dir_checking -> {
+                v_gap(AsterSpacing.xs)
+                Text(
+                    text = stringResource(R.string.checking_availability),
+                    color = colors.text_muted,
+                    fontSize = 12.sp,
+                )
+            }
+            dir_availability == true -> {
+                v_gap(AsterSpacing.xs)
+                Text(
+                    text = stringResource(R.string.alias_directory_available),
+                    color = colors.success,
+                    fontSize = 12.sp,
+                )
+            }
+            dir_availability == false -> {
+                v_gap(AsterSpacing.xs)
+                Text(
+                    text = stringResource(R.string.alias_directory_not_available),
+                    color = colors.danger,
+                    fontSize = 12.sp,
+                )
+            }
+        }
         v_gap(AsterSpacing.sm)
         TurnstileWidget(
             on_token = { token -> captcha_token = token },
@@ -591,7 +816,7 @@ private fun directories_tab(
 
     AsterButton(
         label = if (is_creating) stringResource(R.string.alias_creating) else stringResource(R.string.create_directory),
-        enabled = key_valid && captcha_token != null && !is_creating,
+        enabled = key_valid && captcha_token != null && !is_creating && dir_availability != false,
         onClick = {
             is_creating = true
             scope.launch {
@@ -1256,6 +1481,13 @@ private fun create_alias_dialog(
                             )
                         }
                     }
+                }
+                if (local_part.isNotBlank()) {
+                    Text(
+                        text = "$local_part@$selected_domain",
+                        color = colors.text_secondary,
+                        fontSize = 12.sp,
+                    )
                 }
                 OutlinedTextField(
                     value = display_name,

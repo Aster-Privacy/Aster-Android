@@ -171,6 +171,25 @@ data class AllDomainAddressesResponse(
 )
 
 @Serializable
+data class DeletedAliasInfo(
+    val id: String,
+    val original_alias_id: String = "",
+    val encrypted_local_part: String = "",
+    val local_part_nonce: String = "",
+    val encrypted_display_name: String? = null,
+    val display_name_nonce: String? = null,
+    val domain: String = "",
+    val is_random: Boolean = false,
+    val deleted_at: String = "",
+)
+
+@Serializable
+data class ListDeletedAliasesResponse(
+    val aliases: List<DeletedAliasInfo> = emptyList(),
+    val total: Long = 0,
+)
+
+@Serializable
 data class CreateAliasResponse(
     val id: String = "",
     val success: Boolean = false,
@@ -221,6 +240,16 @@ data class CreateDirectoryRequest(
 data class CreateDirectoryResponse(
     val id: String = "",
     val success: Boolean = false,
+)
+
+@Serializable
+data class DirectoryAvailabilityRequest(
+    val directory_hash: String,
+)
+
+@Serializable
+data class DirectoryAvailabilityResponse(
+    val available: Boolean = false,
 )
 
 @Serializable
@@ -383,6 +412,10 @@ interface SettingsApi {
     suspend fun unblock_sender(address: String)
     suspend fun list_aliases(limit: Int = 100, offset: Int = 0): AliasListResponse
     suspend fun delete_alias(alias_id: String)
+    suspend fun list_deleted_aliases(): ListDeletedAliasesResponse
+    suspend fun restore_deleted_alias(deleted_id: String)
+    suspend fun purge_deleted_alias(deleted_id: String)
+    suspend fun empty_deleted_aliases()
     suspend fun create_alias(request: CreateAliasRequest): CreateAliasResponse
     suspend fun update_alias(alias_id: String, request: UpdateAliasRequest): Boolean
     suspend fun list_all_domain_addresses(): AllDomainAddressesResponse
@@ -399,6 +432,7 @@ interface SettingsApi {
     suspend fun check_alias_availability(request: CheckAliasAvailabilityRequest): CheckAliasAvailabilityResponse
     suspend fun list_directories(): ListDirectoriesResponse
     suspend fun create_directory(request: CreateDirectoryRequest): CreateDirectoryResponse
+    suspend fun check_directory_availability(request: DirectoryAvailabilityRequest): DirectoryAvailabilityResponse
     suspend fun update_directory(directory_id: String, request: UpdateDirectoryRequest): Boolean
     suspend fun delete_directory(directory_id: String)
     suspend fun get_alias_preferences(): AliasPreferences
@@ -510,6 +544,38 @@ class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
 
     override suspend fun delete_alias(alias_id: String) {
         val response = client.http.delete("${client.base_url}/api/addresses/v1/aliases/$alias_id") {
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+        }
+        if (response.status.value !in 200..299) {
+            throw client.map_http_status(response.status.value, "")
+        }
+    }
+
+    override suspend fun list_deleted_aliases(): ListDeletedAliasesResponse {
+        val response = client.http.get("${client.base_url}/api/addresses/v1/aliases/deleted")
+        return decode_or_throw(response)
+    }
+
+    override suspend fun restore_deleted_alias(deleted_id: String) {
+        val response = client.http.post("${client.base_url}/api/addresses/v1/aliases/deleted/$deleted_id/restore") {
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+        }
+        if (response.status.value !in 200..299) {
+            throw client.map_http_status(response.status.value, "")
+        }
+    }
+
+    override suspend fun purge_deleted_alias(deleted_id: String) {
+        val response = client.http.delete("${client.base_url}/api/addresses/v1/aliases/deleted/$deleted_id") {
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+        }
+        if (response.status.value !in 200..299) {
+            throw client.map_http_status(response.status.value, "")
+        }
+    }
+
+    override suspend fun empty_deleted_aliases() {
+        val response = client.http.delete("${client.base_url}/api/addresses/v1/aliases/deleted") {
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
         }
         if (response.status.value !in 200..299) {
@@ -634,6 +700,15 @@ class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
 
     override suspend fun create_directory(request: CreateDirectoryRequest): CreateDirectoryResponse {
         val response = client.http.post("${client.base_url}/api/addresses/v1/aliases/directories") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun check_directory_availability(request: DirectoryAvailabilityRequest): DirectoryAvailabilityResponse {
+        val response = client.http.post("${client.base_url}/api/addresses/v1/aliases/directories/availability") {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)
