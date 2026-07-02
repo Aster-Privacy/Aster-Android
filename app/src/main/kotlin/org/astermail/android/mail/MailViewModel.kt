@@ -100,6 +100,12 @@ class MailViewModel @Inject constructor(
     private val _thread_state = MutableStateFlow(ThreadUiState())
     val thread_state: StateFlow<ThreadUiState> = _thread_state.asStateFlow()
 
+    val visible_order: StateFlow<List<String>> = repository.visible_order
+
+    fun set_visible_order(ids: List<String>) {
+        repository.set_visible_order(ids)
+    }
+
     private val _search_state = MutableStateFlow(SearchUiState())
     val search_state: StateFlow<SearchUiState> = _search_state.asStateFlow()
 

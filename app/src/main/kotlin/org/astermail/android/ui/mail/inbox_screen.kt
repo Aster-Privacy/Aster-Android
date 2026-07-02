@@ -405,6 +405,11 @@ fun InboxScreen(
     }
     val visible_threads = threads
 
+    val visible_order_ids = remember(visible_threads) { visible_threads.map { it.newest.id } }
+    LaunchedEffect(visible_order_ids) {
+        mail_vm.set_visible_order(visible_order_ids)
+    }
+
     LaunchedEffect(list_state, current_folder) {
         snapshotFlow {
             val layout_info = list_state.layoutInfo

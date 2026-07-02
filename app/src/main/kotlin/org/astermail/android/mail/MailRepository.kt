@@ -173,6 +173,13 @@ class MailRepository @Inject constructor(
     @Volatile private var cached_sent_folder_token: String? = null
     fun get_user_email(): String? = session_key_store.get_user_email()
 
+    private val _visible_order = kotlinx.coroutines.flow.MutableStateFlow<List<String>>(emptyList())
+    val visible_order: kotlinx.coroutines.flow.StateFlow<List<String>> = _visible_order
+
+    fun set_visible_order(ids: List<String>) {
+        if (_visible_order.value != ids) _visible_order.value = ids
+    }
+
     data class PendingUndoSend(
         val started_at_ms: Long,
         val duration_ms: Long,

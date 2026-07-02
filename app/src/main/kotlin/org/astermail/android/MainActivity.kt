@@ -599,14 +599,34 @@ private fun AsterNavHost() {
                 if (inbox_entry != null) hiltViewModel(inbox_entry) else hiltViewModel()
             val shared_settings_vm: org.astermail.android.settings.SettingsViewModel =
                 if (inbox_entry != null) hiltViewModel(inbox_entry) else hiltViewModel()
+            val visible_order by shared_mail_vm.visible_order.collectAsStateWithLifecycle()
+            val neighbor_id: (Int) -> String? = neighbor@{ delta ->
+                val idx = visible_order.indexOf(email_id)
+                if (idx < 0) return@neighbor null
+                visible_order.getOrNull(idx + delta)
+            }
+            val open_neighbor: (String) -> Unit = { next_id ->
+                nav_controller.navigate(routes.mail_detail_for(next_id)) {
+                    popUpTo(routes.mail_detail) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
             MailDetailScreen(
                 email_id = email_id,
                 on_back = { nav_controller.popBackStack() },
                 on_reply = { msg_id, ghost -> nav_controller.navigate(routes.compose_reply(msg_id, "reply", ghost)) },
                 on_reply_all = { msg_id, ghost -> nav_controller.navigate(routes.compose_reply(msg_id, "reply_all", ghost)) },
                 on_forward = { msg_id, ghost -> nav_controller.navigate(routes.compose_reply(msg_id, "forward", ghost)) },
-                on_archive = { nav_controller.popBackStack() },
-                on_delete = { nav_controller.popBackStack() },
+                on_archive = {
+                    val next = neighbor_id(1)
+                    if (next != null) open_neighbor(next) else nav_controller.popBackStack()
+                },
+                on_delete = {
+                    val next = neighbor_id(1)
+                    if (next != null) open_neighbor(next) else nav_controller.popBackStack()
+                },
+                on_next = neighbor_id(1)?.let { next -> { open_neighbor(next) } },
+                on_previous = neighbor_id(-1)?.let { prev -> { open_neighbor(prev) } },
                 on_navigate = { path ->
                     val route = when {
                         path.startsWith("settings/") -> routes.settings_detail(path.removePrefix("settings/"))
