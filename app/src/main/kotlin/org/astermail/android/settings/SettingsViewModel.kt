@@ -1905,12 +1905,13 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun generate_ghost_local_part(): String {
-        val chars = "abcdefghijklmnopqrstuvwxyz0123456789"
         val rng = java.security.SecureRandom()
-        val word1 = (1..6).map { chars[rng.nextInt(chars.length)] }.joinToString("")
-        val word2 = (1..6).map { chars[rng.nextInt(chars.length)] }.joinToString("")
-        val digits = rng.nextInt(90) + 10
-        return "$word1.$word2$digits"
+        val first = GHOST_FIRST_WORDS[rng.nextInt(GHOST_FIRST_WORDS.size)]
+        val second = GHOST_SECOND_WORDS[rng.nextInt(GHOST_SECOND_WORDS.size)]
+        val token = (1..GHOST_TOKEN_LENGTH)
+            .map { GHOST_TOKEN_ALPHABET[rng.nextInt(GHOST_TOKEN_ALPHABET.length)] }
+            .joinToString("")
+        return "$first.$second$token"
     }
 
     fun expire_ghost_alias(alias_id: String) {
@@ -2422,6 +2423,10 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    private fun normalize_alias_local_part(local_part: String): String {
+        return local_part.lowercase().replace(".", "")
+    }
+
     private fun compute_alias_address_hash(local_part: String, domain: String): String {
         val enc_key = derive_encryption_key()
         try {
@@ -2431,7 +2436,7 @@ class SettingsViewModel @Inject constructor(
             combined.fill(0)
             val mac = Mac.getInstance("HmacSHA256")
             mac.init(SecretKeySpec(hmac_key_bytes, "HmacSHA256"))
-            val sig = mac.doFinal("${local_part.lowercase()}@$domain".toByteArray(Charsets.UTF_8))
+            val sig = mac.doFinal("${normalize_alias_local_part(local_part)}@$domain".toByteArray(Charsets.UTF_8))
             hmac_key_bytes.fill(0)
             return android.util.Base64.encodeToString(sig, android.util.Base64.NO_WRAP)
         } finally {
@@ -2440,7 +2445,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun compute_routing_address_hash(local_part: String, domain: String): String {
-        val data = "${local_part.lowercase()}@$domain".toByteArray(Charsets.UTF_8)
+        val data = "${normalize_alias_local_part(local_part)}@$domain".toByteArray(Charsets.UTF_8)
         val hash = MessageDigest.getInstance("SHA-256").digest(data)
         return android.util.Base64.encodeToString(hash, android.util.Base64.NO_WRAP)
     }
@@ -2598,5 +2603,29 @@ class SettingsViewModel @Inject constructor(
         private val TAG_VERSIONS = listOf(TAG_VERSION_CURRENT)
         private val FOLDER_VERSIONS = listOf(FOLDER_VERSION_CURRENT, TAG_VERSION_CURRENT)
         private val ALIAS_VERSIONS = listOf("astermail-envelope-v1", "astermail-import-v1")
+
+        private const val GHOST_TOKEN_ALPHABET = "abcdefghijklmnopqrstuvwxyz234567"
+        private const val GHOST_TOKEN_LENGTH = 8
+        private val GHOST_FIRST_WORDS = listOf(
+            "sage", "ember", "coral", "cedar", "haven", "iris", "jasper", "luna", "moss", "reed",
+            "wren", "ash", "briar", "brook", "clover", "dawn", "elm", "fern", "flint", "glen",
+            "hazel", "ivy", "jade", "lark", "maple", "nova", "olive", "pearl", "pine", "rain",
+            "robin", "rowan", "sky", "thorn", "vale", "willow", "birch", "cliff", "cove", "dune",
+            "frost", "gale", "heath", "indigo", "juniper", "kit", "lake", "marsh", "mist", "oak",
+            "petal", "quill", "ridge", "river", "rune", "shade", "silver", "slate", "snow", "sparrow",
+            "stone", "storm", "summit", "terra", "tide", "vine", "wave", "winter", "zen", "aurora",
+            "bay", "blaze", "breeze", "cobalt", "delta", "echo", "flora", "grove", "harbor", "isle",
+            "lyric", "onyx",
+        )
+        private val GHOST_SECOND_WORDS = listOf(
+            "ridge", "vale", "frost", "stone", "brook", "field", "wood", "lake", "dale", "ward",
+            "hill", "lane", "marsh", "cross", "moon", "star", "light", "crest", "peak", "shore",
+            "drift", "bloom", "glade", "grove", "haven", "moor", "cliff", "dell", "fern", "ford",
+            "gate", "glen", "haze", "isle", "knoll", "ledge", "loft", "nest", "path", "pond",
+            "rain", "reef", "rise", "sage", "shade", "slope", "spring", "trail", "veil", "vista",
+            "wind", "hollow", "ember", "arrow", "flare", "harbor", "bridge", "canyon", "dusk", "echo",
+            "flame", "forge", "gleam", "heron", "inlet", "jewel", "kelp", "leaf", "meadow", "north",
+            "orchid", "pine", "quartz", "raven", "sierra", "torch", "umber",
+        )
     }
 }

@@ -1,0 +1,4 @@
+Bug fixes and improvements:
+
+- Ghost aliases now use the same readable, word-based address format as the web and desktop apps.
+- Fixed sending from a ghost alias.
