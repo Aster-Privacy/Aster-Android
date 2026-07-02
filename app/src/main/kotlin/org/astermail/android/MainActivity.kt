@@ -600,10 +600,17 @@ private fun AsterNavHost() {
             val shared_settings_vm: org.astermail.android.settings.SettingsViewModel =
                 if (inbox_entry != null) hiltViewModel(inbox_entry) else hiltViewModel()
             val visible_order by shared_mail_vm.visible_order.collectAsStateWithLifecycle()
+            val stable_order = androidx.compose.runtime.remember {
+                androidx.compose.runtime.mutableStateOf(visible_order)
+            }
+            androidx.compose.runtime.LaunchedEffect(visible_order, email_id) {
+                if (email_id in visible_order) stable_order.value = visible_order
+            }
             val neighbor_id: (Int) -> String? = neighbor@{ delta ->
-                val idx = visible_order.indexOf(email_id)
+                val order = stable_order.value
+                val idx = order.indexOf(email_id)
                 if (idx < 0) return@neighbor null
-                visible_order.getOrNull(idx + delta)
+                order.getOrNull(idx + delta)
             }
             val open_neighbor: (String) -> Unit = { next_id ->
                 nav_controller.navigate(routes.mail_detail_for(next_id)) {
