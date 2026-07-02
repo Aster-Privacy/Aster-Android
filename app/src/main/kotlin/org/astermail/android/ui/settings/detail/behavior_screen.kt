@@ -172,7 +172,7 @@ fun BehaviorScreen(
     var spam_sensitivity by remember(prefs_loaded) { mutableStateOf(prefs?.spam_sensitivity ?: "medium") }
     var auto_delete_spam_days by remember(prefs_loaded) { mutableIntStateOf(prefs?.auto_delete_spam_days ?: 30) }
     var folder_lock_mode by remember(prefs_loaded) { mutableStateOf(prefs?.folder_lock_mode ?: "session") }
-    var haptic by remember(prefs_loaded) { mutableStateOf(prefs?.haptic_feedback ?: true) }
+    var haptic by remember(prefs_loaded) { mutableStateOf(prefs?.haptic_enabled ?: true) }
     var dev_mode by remember(prefs_loaded) { mutableStateOf(prefs?.dev_mode ?: false) }
     var save_trigger by remember { mutableIntStateOf(0) }
     var loaded_signature by remember { mutableStateOf<Int?>(null) }
@@ -199,7 +199,7 @@ fun BehaviorScreen(
                 spam_sensitivity = prefs.spam_sensitivity
                 auto_delete_spam_days = prefs.auto_delete_spam_days
                 folder_lock_mode = prefs.folder_lock_mode
-                haptic = prefs.haptic_feedback
+                haptic = prefs.haptic_enabled
                 dev_mode = prefs.dev_mode
             }
         }
@@ -226,7 +226,7 @@ fun BehaviorScreen(
                 spam_sensitivity = spam_sensitivity,
                 auto_delete_spam_days = auto_delete_spam_days,
                 folder_lock_mode = folder_lock_mode,
-                haptic_feedback = haptic,
+                haptic_enabled = haptic,
                 dev_mode = dev_mode,
             ),
         )

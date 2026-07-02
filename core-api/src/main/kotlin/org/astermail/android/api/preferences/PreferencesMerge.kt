@@ -22,9 +22,27 @@
 package org.astermail.android.api.preferences
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.longOrNull
+
+private fun json_kind_matches(incoming: JsonElement, base: JsonElement): Boolean {
+    if (incoming !is JsonPrimitive || base !is JsonPrimitive) {
+        return incoming::class == base::class
+    }
+    return when {
+        base.booleanOrNull != null -> incoming.booleanOrNull != null
+        base.isString -> incoming.isString
+        base.longOrNull != null || base.doubleOrNull != null ->
+            !incoming.isString && (incoming.longOrNull != null || incoming.doubleOrNull != null)
+        else -> true
+    }
+}
 
 fun merge_decrypted_preferences(
     json: Json,
@@ -32,17 +50,16 @@ fun merge_decrypted_preferences(
     previous: UserPreferences?,
 ): UserPreferences {
     val incoming = json.parseToJsonElement(json_str).jsonObject
-
-    if (previous == null) {
-        return json.decodeFromJsonElement(UserPreferences.serializer(), incoming)
-    }
-
-    val base = json.encodeToJsonElement(UserPreferences.serializer(), previous).jsonObject
+    val base = json.encodeToJsonElement(
+        UserPreferences.serializer(),
+        previous ?: UserPreferences(),
+    ).jsonObject
     val merged = buildJsonObject {
-        for ((k, v) in base) put(k, v)
-        for ((k, v) in incoming) put(k, v)
+        for ((k, base_value) in base) {
+            val in_value = incoming[k]
+            put(k, if (in_value != null && json_kind_matches(in_value, base_value)) in_value else base_value)
+        }
     }
-
     return json.decodeFromJsonElement(UserPreferences.serializer(), merged)
 }
 

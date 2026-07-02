@@ -168,7 +168,7 @@ fun InboxScreen(
     val inbox_state by mail_vm.inbox_state.collectAsStateWithLifecycle()
     val attachment_chips by mail_vm.inbox_attachment_chips.collectAsStateWithLifecycle()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
-    val haptic_enabled = settings_state.preferences?.haptic_feedback ?: true
+    val haptic_enabled = settings_state.preferences?.haptic_enabled ?: true
     val context_for_prefs = LocalContext.current
     val plan_prefs = remember { context_for_prefs.getSharedPreferences("aster_plan", android.content.Context.MODE_PRIVATE) }
     val initial_paid = remember { plan_prefs.getBoolean("has_paid", false) }

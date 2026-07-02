@@ -968,7 +968,7 @@ fun PrivacyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
 
     val prefs_seeded = prefs != null
     var block_trackers by remember(prefs_seeded) { mutableStateOf(prefs?.block_trackers ?: true) }
-    var remote_images by remember(prefs_seeded) { mutableStateOf(prefs?.load_remote_images ?: false) }
+    var remote_images by remember(prefs_seeded) { mutableStateOf(prefs?.load_remote_images == "always") }
     var send_receipts by remember(prefs_seeded) { mutableStateOf(prefs?.send_read_receipts ?: false) }
     var link_warnings by remember(prefs_seeded) { mutableStateOf(prefs?.warn_suspicious_links ?: true) }
     var strip_exif by remember(prefs_seeded) { mutableStateOf(prefs?.strip_exif ?: true) }
@@ -980,7 +980,7 @@ fun PrivacyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
         if (prefs != null && !prefs_loaded_priv) {
             prefs_loaded_priv = true
             block_trackers = prefs.block_trackers
-            remote_images = prefs.load_remote_images
+            remote_images = prefs.load_remote_images == "always"
             send_receipts = prefs.send_read_receipts
             link_warnings = prefs.warn_suspicious_links
             strip_exif = prefs.strip_exif
@@ -993,7 +993,7 @@ fun PrivacyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
         vm.save_preferences(
             base.copy(
                 block_trackers = block_trackers,
-                load_remote_images = remote_images,
+                load_remote_images = if (remote_images) "always" else "never",
                 send_read_receipts = send_receipts,
                 warn_suspicious_links = link_warnings,
                 strip_exif = strip_exif,

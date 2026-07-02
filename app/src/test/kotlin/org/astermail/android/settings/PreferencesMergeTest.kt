@@ -127,6 +127,37 @@ class PreferencesMergeTest {
     }
 
     @Test
+    fun string_load_remote_images_from_web_does_not_reset_other_settings() {
+        val previous = UserPreferences(
+            haptic_enabled = false,
+            conversation_grouping = false,
+            inbox_categories_enabled = false,
+            theme = "dark",
+        )
+        val web_blob = """{"load_remote_images":"never","theme":"dark","haptic_enabled":false,"conversation_grouping":false,"inbox_categories_enabled":false,"block_tracking_pixels":true}"""
+
+        val merged = merge_decrypted_preferences(json, web_blob, previous)
+
+        assertEquals("never", merged.load_remote_images)
+        assertFalse(merged.haptic_enabled)
+        assertFalse(merged.conversation_grouping)
+        assertFalse(merged.inbox_categories_enabled)
+        assertEquals("dark", merged.theme)
+        assertTrue(merged.block_tracking_pixels)
+    }
+
+    @Test
+    fun a_wrong_typed_key_keeps_the_base_value_instead_of_resetting() {
+        val previous = UserPreferences(undo_send_seconds = 25, conversation_grouping = false)
+        val bad_blob = """{"undo_send_seconds":"not a number","conversation_grouping":false}"""
+
+        val merged = merge_decrypted_preferences(json, bad_blob, previous)
+
+        assertEquals(25, merged.undo_send_seconds)
+        assertFalse(merged.conversation_grouping)
+    }
+
+    @Test
     fun encode_without_an_original_blob_emits_only_known_keys() {
         val prefs = UserPreferences(show_aster_branding = false)
 

@@ -1,0 +1,4 @@
+Bug fixes and improvements:
+
+- Fixed settings (content protection, haptic feedback, conversation grouping, inbox categories, theme) resetting to defaults after using the web app.
+- Settings now stay in sync when switching between the web and mobile apps.

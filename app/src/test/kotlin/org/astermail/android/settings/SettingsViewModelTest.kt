@@ -555,12 +555,12 @@ class SettingsViewModelTest {
 
     @Test
     fun `save_preferences updates state and sets saved status`() = runTest {
-        val prefs = UserPreferences(load_remote_images = true)
+        val prefs = UserPreferences(load_remote_images = "always")
 
         vm.save_preferences(prefs)
         advanceUntilIdle()
 
-        assertEquals(true, vm.state.value.preferences?.load_remote_images)
+        assertEquals("always", vm.state.value.preferences?.load_remote_images)
         assertEquals(SaveStatus.SAVED, vm.state.value.save_status)
     }
 
@@ -1282,7 +1282,7 @@ class SettingsViewModelTest {
         )
         advanceUntilIdle()
 
-        fresh_vm.save_preferences(UserPreferences(load_remote_images = true))
+        fresh_vm.save_preferences(UserPreferences(load_remote_images = "always"))
         advanceUntilIdle()
 
         assertEquals(SaveStatus.SAVED, fresh_vm.state.value.save_status)
@@ -1322,7 +1322,7 @@ class SettingsViewModelTest {
         )
         advanceUntilIdle()
 
-        fresh_vm.save_preferences(UserPreferences(load_remote_images = true))
+        fresh_vm.save_preferences(UserPreferences(load_remote_images = "always"))
         advanceUntilIdle()
 
         assertEquals(SaveStatus.ERROR, fresh_vm.state.value.save_status)
@@ -1411,7 +1411,7 @@ class SettingsViewModelTest {
     fun `save_preferences error sets error status`() = runTest {
         every { session_key_store.get_identity_key() } throws RuntimeException("key error")
 
-        vm.save_preferences(UserPreferences(load_remote_images = true))
+        vm.save_preferences(UserPreferences(load_remote_images = "always"))
         advanceUntilIdle()
 
         assertEquals(SaveStatus.ERROR, vm.state.value.save_status)
@@ -1585,7 +1585,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `save_preferences sets saving then saved status`() = runTest {
-        vm.save_preferences(UserPreferences(load_remote_images = true))
+        vm.save_preferences(UserPreferences(load_remote_images = "always"))
         advanceUntilIdle()
 
         assertEquals(SaveStatus.SAVED, vm.state.value.save_status)
