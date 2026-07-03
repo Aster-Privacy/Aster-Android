@@ -738,6 +738,7 @@
     <string name="current">Huidig</string>
     <string name="unlimited_aliases">Onbeperkte aliassen</string>
     <string name="aliases_count">%d aliassen</string>
+    <string name="alias_page_indicator">Pagina %1$d van %2$d</string>
     <string name="unlimited_domains">Onbeperkte domeinen</string>
     <string name="domains_count">%d domeinen</string>
     <string name="cancel_subscription_title">Abonnement annuleren</string>

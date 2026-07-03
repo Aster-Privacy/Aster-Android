@@ -738,6 +738,7 @@
     <string name="current">当前</string>
     <string name="unlimited_aliases">无限别名</string>
     <string name="aliases_count">%d 个别名</string>
+    <string name="alias_page_indicator">第 %1$d 页，共 %2$d 页</string>
     <string name="unlimited_domains">无限域名</string>
     <string name="domains_count">%d 个域名</string>
     <string name="cancel_subscription_title">取消订阅</string>

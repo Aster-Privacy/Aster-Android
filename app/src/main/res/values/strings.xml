@@ -1015,6 +1015,7 @@
     <string name="current">Current</string>
     <string name="unlimited_aliases">Unlimited aliases</string>
     <string name="aliases_count">%d aliases</string>
+    <string name="alias_page_indicator">Page %1$d of %2$d</string>
     <string name="unlimited_domains">Unlimited domains</string>
     <string name="domains_count">%d domains</string>
     <string name="cancel_subscription_title">Cancel subscription</string>

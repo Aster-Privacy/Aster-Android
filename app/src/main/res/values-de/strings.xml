@@ -739,6 +739,7 @@
     <string name="current">Aktuell</string>
     <string name="unlimited_aliases">Unbegrenzte Aliase</string>
     <string name="aliases_count">%d Aliase</string>
+    <string name="alias_page_indicator">Seite %1$d von %2$d</string>
     <string name="unlimited_domains">Unbegrenzte Domains</string>
     <string name="domains_count">%d Domains</string>
     <string name="cancel_subscription_title">Abonnement kündigen</string>

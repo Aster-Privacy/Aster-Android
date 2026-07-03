@@ -738,6 +738,7 @@
     <string name="current">현재</string>
     <string name="unlimited_aliases">무제한 별칭</string>
     <string name="aliases_count">별칭 %d개</string>
+    <string name="alias_page_indicator">%1$d / %2$d 페이지</string>
     <string name="unlimited_domains">무제한 도메인</string>
     <string name="domains_count">도메인 %d개</string>
     <string name="cancel_subscription_title">구독 취소</string>

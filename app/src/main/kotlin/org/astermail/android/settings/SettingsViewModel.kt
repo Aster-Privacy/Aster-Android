@@ -39,8 +39,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.astermail.android.api.ApiError
 import org.astermail.android.api.auth.AuthApi
 import org.astermail.android.api.auth.UserInfo
@@ -458,7 +460,9 @@ class SettingsViewModel @Inject constructor(
                     offset += response.aliases.size
                     page++
                 }
-                val decrypted = all_aliases.map { decrypt_alias(it) }
+                val decrypted = withContext(Dispatchers.Default) {
+                    all_aliases.map { decrypt_alias(it) }
+                }
                 _state.value = _state.value.copy(
                     aliases = decrypted,
                     max_aliases = max_aliases,

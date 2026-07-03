@@ -47,6 +47,7 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Domain
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material.icons.outlined.KeyboardArrowLeft
 import androidx.compose.material.icons.outlined.KeyboardArrowRight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -304,8 +305,16 @@ private fun aliases_tab(
             )
         }
     } else {
+        val page_size = 100
+        val page_count = (state.aliases.size + page_size - 1) / page_size
+        var alias_page by remember(state.aliases.size) { mutableStateOf(0) }
+        val current_page = alias_page.coerceIn(0, (page_count - 1).coerceAtLeast(0))
+        val page_from = current_page * page_size
+        val page_to = minOf(page_from + page_size, state.aliases.size)
+        val page_items = state.aliases.subList(page_from, page_to)
+
         AsterCard(modifier = Modifier.fillMaxWidth()) {
-            state.aliases.forEachIndexed { idx, alias ->
+            page_items.forEachIndexed { idx, alias ->
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -356,14 +365,24 @@ private fun aliases_tab(
                         )
                         AsterIconButton(
                             icon = Icons.Outlined.Delete,
-                            content_description = "Delete",
+                            content_description = stringResource(R.string.delete),
                             onClick = { pending_delete = alias.id to alias.address },
                             tint = colors.danger,
                         )
                     }
                 }
-                if (idx < state.aliases.lastIndex) AsterDivider(modifier = Modifier)
+                if (idx < page_items.lastIndex) AsterDivider(modifier = Modifier)
             }
+        }
+
+        if (page_count > 1) {
+            v_gap(AsterSpacing.sm)
+            alias_pager(
+                current_page = current_page,
+                page_count = page_count,
+                on_prev = { alias_page = (current_page - 1).coerceAtLeast(0) },
+                on_next = { alias_page = (current_page + 1).coerceAtMost(page_count - 1) },
+            )
         }
     }
 
@@ -427,6 +446,40 @@ private fun aliases_tab(
                     onClick = { vm.delete_alias(id); pending_delete = null },
                 )
             },
+        )
+    }
+}
+
+@Composable
+private fun alias_pager(
+    current_page: Int,
+    page_count: Int,
+    on_prev: () -> Unit,
+    on_next: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        AsterIconButton(
+            icon = Icons.Outlined.KeyboardArrowLeft,
+            content_description = stringResource(R.string.back),
+            onClick = on_prev,
+            enabled = current_page > 0,
+        )
+        Text(
+            text = stringResource(R.string.alias_page_indicator, current_page + 1, page_count),
+            color = colors.text_secondary,
+            fontSize = 13.sp,
+            modifier = Modifier.padding(horizontal = AsterSpacing.md),
+        )
+        AsterIconButton(
+            icon = Icons.Outlined.KeyboardArrowRight,
+            content_description = stringResource(R.string.next),
+            onClick = on_next,
+            enabled = current_page < page_count - 1,
         )
     }
 }

@@ -738,6 +738,7 @@
     <string name="current">現在</string>
     <string name="unlimited_aliases">無制限のエイリアス</string>
     <string name="aliases_count">%d個のエイリアス</string>
+    <string name="alias_page_indicator">%1$d / %2$d ページ</string>
     <string name="unlimited_domains">無制限のドメイン</string>
     <string name="domains_count">%d個のドメイン</string>
     <string name="cancel_subscription_title">サブスクリプションをキャンセル</string>

@@ -738,6 +738,7 @@
     <string name="current">الحالي</string>
     <string name="unlimited_aliases">أسماء مستعارة غير محدودة</string>
     <string name="aliases_count">%d أسماء مستعارة</string>
+    <string name="alias_page_indicator">الصفحة %1$d من %2$d</string>
     <string name="unlimited_domains">نطاقات غير محدودة</string>
     <string name="domains_count">%d نطاقات</string>
     <string name="cancel_subscription_title">إلغاء الاشتراك</string>
