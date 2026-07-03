@@ -343,7 +343,16 @@ fun InboxScreen(
     val categories_enabled = current_folder == "inbox" &&
         (settings_state.preferences?.inbox_categories_enabled ?: true)
     val active_category = inbox_category
-    val emails_fingerprint = emails.size to (emails.firstOrNull()?.id to emails.lastOrNull()?.id)
+    val emails_fingerprint = run {
+        var hash = emails.size
+        emails.forEach { e ->
+            hash = 31 * hash + e.id.hashCode()
+            hash = 31 * hash + (if (e.is_starred) 1 else 0)
+            hash = 31 * hash + (if (e.is_read) 2 else 0)
+            hash = 31 * hash + (if (e.is_pinned) 4 else 0)
+        }
+        hash
+    }
     val category_source = remember(emails_fingerprint, categories_enabled, active_category) {
         if (categories_enabled) {
             emails.filter { org.astermail.android.mail.category_for_tab(it.category) == active_category }
