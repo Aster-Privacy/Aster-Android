@@ -287,12 +287,24 @@ fun ComposeScreen(
         )
     }
 
-    var from_alias by remember(alias_options, thread_ghost_match, primary_sender_email) {
+    var from_alias by rememberSaveable {
         val initial = thread_ghost_match
             ?.takeIf { it in alias_options }
             ?: primary_sender_email.takeIf { it.isNotBlank() && it in alias_options }
             ?: alias_options.firstOrNull().orEmpty()
         mutableStateOf(initial)
+    }
+    var from_manually_selected by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(alias_options, thread_ghost_match, primary_sender_email) {
+        if (from_manually_selected) return@LaunchedEffect
+        val resolved = thread_ghost_match
+            ?.takeIf { it in alias_options }
+            ?: primary_sender_email.takeIf { it.isNotBlank() && it in alias_options }
+            ?: alias_options.firstOrNull().orEmpty()
+        if (resolved.isNotBlank() && resolved != from_alias) {
+            from_alias = resolved
+        }
     }
 
     val effective_mode = if (mode == "reply" && settings_state.preferences?.default_reply_behavior == "reply_all") "reply_all" else mode
@@ -1459,6 +1471,7 @@ fun ComposeScreen(
             on_close = { show_from_sheet = false },
             on_select = { selected ->
                 from_alias = selected
+                from_manually_selected = true
                 show_from_sheet = false
             },
             on_set_primary = { selected ->
@@ -1565,6 +1578,7 @@ fun ComposeScreen(
                     when (val result = settings_vm.create_ghost_alias_now(note = "${days}d")) {
                         is SettingsViewModel.GhostAliasResult.Success -> {
                             from_alias = result.address
+                            from_manually_selected = true
                             settings_vm.load_aliases()
                             Toast.makeText(context, context.getString(R.string.ghost_alias_created, result.address), Toast.LENGTH_LONG).show()
                         }
