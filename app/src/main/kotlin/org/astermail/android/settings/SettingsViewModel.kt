@@ -39,8 +39,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.astermail.android.api.ApiError
 import org.astermail.android.api.auth.AuthApi
 import org.astermail.android.api.auth.UserInfo
@@ -202,6 +205,8 @@ class SettingsViewModel @Inject constructor(
     val account_store: org.astermail.android.storage.AccountStore,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
+
+    internal var default_dispatcher: CoroutineDispatcher = Dispatchers.Default
 
     private val _state = MutableStateFlow(SettingsUiState())
     private val optimistic_label_tokens = java.util.Collections.newSetFromMap(
@@ -458,7 +463,9 @@ class SettingsViewModel @Inject constructor(
                     offset += response.aliases.size
                     page++
                 }
-                val decrypted = all_aliases.map { decrypt_alias(it) }
+                val decrypted = withContext(default_dispatcher) {
+                    all_aliases.map { decrypt_alias(it) }
+                }
                 _state.value = _state.value.copy(
                     aliases = decrypted,
                     max_aliases = max_aliases,
@@ -2826,3 +2833,4 @@ class SettingsViewModel @Inject constructor(
         )
     }
 }
+

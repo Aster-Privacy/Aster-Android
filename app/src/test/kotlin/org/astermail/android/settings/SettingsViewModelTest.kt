@@ -169,6 +169,7 @@ class SettingsViewModelTest {
             account_store = account_store,
             context = context,
         )
+        vm.default_dispatcher = dispatcher
     }
 
     @After

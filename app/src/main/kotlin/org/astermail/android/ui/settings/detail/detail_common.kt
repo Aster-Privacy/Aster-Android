@@ -79,6 +79,7 @@ internal fun detail_scaffold(
     on_back: () -> Unit,
     trailing: (@Composable () -> Unit)? = null,
     scroll_state: ScrollState? = null,
+    scrollable: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -91,13 +92,20 @@ internal fun detail_scaffold(
     ) {
         AsterTopBar(title = title, on_back = on_back, trailing = trailing)
         AsterDivider()
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(effective_scroll)
-                .padding(AsterSpacing.lg),
-            content = content,
-        )
+        if (scrollable) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(effective_scroll)
+                    .padding(AsterSpacing.lg),
+                content = content,
+            )
+        } else {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                content = content,
+            )
+        }
     }
 }
 
