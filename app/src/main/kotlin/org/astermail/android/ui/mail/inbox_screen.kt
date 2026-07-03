@@ -379,8 +379,13 @@ fun InboxScreen(
         }
     }
 
+    var last_scroll_reset_key by rememberSaveable { mutableStateOf("") }
     LaunchedEffect(sort_mode, current_folder) {
-        list_state.scrollToItem(0)
+        val reset_key = "$sort_mode|$current_folder"
+        if (last_scroll_reset_key.isNotEmpty() && last_scroll_reset_key != reset_key) {
+            list_state.scrollToItem(0)
+        }
+        last_scroll_reset_key = reset_key
     }
 
     LaunchedEffect(settings_state.preferences?.conversation_order) {
