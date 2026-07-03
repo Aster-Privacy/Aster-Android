@@ -1,0 +1,5 @@
+Bug fixes and improvements:
+
+- Newsletter and marketing emails now show their buttons and banner images instead of leaving a blank gap.
+- Background images used by many "Confirm subscription" style buttons now load correctly through the private image proxy.
+- With images turned off, a button that relies on a background image now shows a readable placeholder instead of vanishing.
