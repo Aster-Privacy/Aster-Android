@@ -1272,4 +1272,7 @@
     <string name="pending_deletion_error">계정을 복원할 수 없습니다. 다시 시도해 주세요.</string>
     <string name="pending_deletion_restored">다시 오신 것을 환영합니다. 계정이 복원되었습니다.</string>
     <string name="image_blocked_placeholder">[이미지 차단됨]</string>
+    <string name="alias_available">이 별칭은 사용할 수 있습니다.</string>
+    <string name="alias_not_available">이 별칭은 이미 사용 중입니다.</string>
+    <string name="alias_check_failed">사용 가능 여부를 확인할 수 없습니다. 그래도 만들어 볼 수 있습니다.</string>
 </resources>

@@ -1274,4 +1274,7 @@
     <string name="pending_deletion_error">Kan je account niet herstellen. Probeer het opnieuw.</string>
     <string name="pending_deletion_restored">Welkom terug. Je account is hersteld.</string>
     <string name="image_blocked_placeholder">[Afbeelding geblokkeerd]</string>
+    <string name="alias_available">Deze alias is beschikbaar.</string>
+    <string name="alias_not_available">Deze alias is al in gebruik.</string>
+    <string name="alias_check_failed">Kan beschikbaarheid niet controleren. Je kunt hem toch proberen aan te maken.</string>
 </resources>

@@ -1842,6 +1842,9 @@
     <string name="alias_directory_available">This directory is available.</string>
     <string name="alias_directory_not_available">This directory is already taken.</string>
     <string name="checking_availability">Checking availability...</string>
+    <string name="alias_available">This alias is available.</string>
+    <string name="alias_not_available">This alias is already taken.</string>
+    <string name="alias_check_failed">Couldn\'t check availability. You can still try to create it.</string>
     <string name="alias_creating">Creating...</string>
     <string name="alias_separator_hint">Works with . + # separators</string>
     <string name="alias_delete_directory">Delete directory</string>

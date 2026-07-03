@@ -1274,4 +1274,7 @@
     <string name="pending_deletion_error">Impossibile ripristinare il tuo account. Riprova.</string>
     <string name="pending_deletion_restored">Bentornato. Il tuo account è stato ripristinato.</string>
     <string name="image_blocked_placeholder">[Immagine bloccata]</string>
+    <string name="alias_available">Questo alias è disponibile.</string>
+    <string name="alias_not_available">Questo alias è già in uso.</string>
+    <string name="alias_check_failed">Impossibile verificare la disponibilità. Puoi comunque provare a crearlo.</string>
 </resources>

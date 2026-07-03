@@ -1282,4 +1282,7 @@
     <string name="pending_deletion_error">تعذّرت استعادة حسابك. يرجى المحاولة مرة أخرى.</string>
     <string name="pending_deletion_restored">مرحبًا بعودتك. تمت استعادة حسابك.</string>
     <string name="image_blocked_placeholder">[تم حظر الصورة]</string>
+    <string name="alias_available">هذا الاسم المستعار متاح.</string>
+    <string name="alias_not_available">هذا الاسم المستعار مستخدم بالفعل.</string>
+    <string name="alias_check_failed">تعذر التحقق من التوفر. لا يزال بإمكانك محاولة إنشائه.</string>
 </resources>

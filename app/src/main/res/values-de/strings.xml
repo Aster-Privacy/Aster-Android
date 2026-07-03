@@ -1275,4 +1275,7 @@
     <string name="pending_deletion_error">Ihr Konto konnte nicht wiederhergestellt werden. Bitte versuchen Sie es erneut.</string>
     <string name="pending_deletion_restored">Willkommen zurück. Ihr Konto wurde wiederhergestellt.</string>
     <string name="image_blocked_placeholder">[Bild blockiert]</string>
+    <string name="alias_available">Dieser Alias ist verfügbar.</string>
+    <string name="alias_not_available">Dieser Alias ist bereits vergeben.</string>
+    <string name="alias_check_failed">Verfügbarkeit konnte nicht geprüft werden. Du kannst dennoch versuchen, ihn zu erstellen.</string>
 </resources>

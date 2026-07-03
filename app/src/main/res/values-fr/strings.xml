@@ -1890,4 +1890,7 @@
     <string name="pending_deletion_error">Impossible de restaurer votre compte. Veuillez réessayer.</string>
     <string name="pending_deletion_restored">Bon retour. Votre compte a été restauré.</string>
     <string name="image_blocked_placeholder">[Image bloquée]</string>
+    <string name="alias_available">Cet alias est disponible.</string>
+    <string name="alias_not_available">Cet alias est déjà pris.</string>
+    <string name="alias_check_failed">Impossible de vérifier la disponibilité. Vous pouvez quand même essayer de le créer.</string>
 </resources>

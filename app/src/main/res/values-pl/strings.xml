@@ -1278,4 +1278,7 @@
     <string name="pending_deletion_error">Nie można przywrócić konta. Spróbuj ponownie.</string>
     <string name="pending_deletion_restored">Witaj ponownie. Twoje konto zostało przywrócone.</string>
     <string name="image_blocked_placeholder">[Obraz zablokowany]</string>
+    <string name="alias_available">Ten alias jest dostępny.</string>
+    <string name="alias_not_available">Ten alias jest już zajęty.</string>
+    <string name="alias_check_failed">Nie można sprawdzić dostępności. Nadal możesz spróbować go utworzyć.</string>
 </resources>

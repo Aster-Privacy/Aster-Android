@@ -736,7 +736,13 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    suspend fun check_alias_availability(local_part: String, domain: String): Boolean {
+    sealed class AliasAvailability {
+        object Available : AliasAvailability()
+        object Taken : AliasAvailability()
+        data class CheckFailed(val message: String) : AliasAvailability()
+    }
+
+    suspend fun check_alias_availability(local_part: String, domain: String): AliasAvailability {
         return try {
             val addr_hash = compute_alias_address_hash(local_part.lowercase(), domain)
             val routing_hash = compute_routing_address_hash(local_part.lowercase(), domain)
@@ -746,9 +752,12 @@ class SettingsViewModel @Inject constructor(
                     routing_address_hash = routing_hash,
                 )
             )
-            response.available
-        } catch (_: Throwable) {
-            false
+            if (response.available) AliasAvailability.Available else AliasAvailability.Taken
+        } catch (t: Throwable) {
+            if (org.astermail.android.BuildConfig.DEBUG) {
+                android.util.Log.w("SettingsVM", "check_alias_availability failed for @$domain", t)
+            }
+            AliasAvailability.CheckFailed(t.message ?: context.getString(R.string.something_went_wrong))
         }
     }
 

@@ -45,6 +45,7 @@ import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Domain
+import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.KeyboardArrowLeft
@@ -1462,10 +1463,15 @@ private fun create_alias_dialog(
     var selected_domain by remember { mutableStateOf("astermail.org") }
     var captcha_token by remember { mutableStateOf<String?>(null) }
     var captcha_reset by remember { mutableStateOf(0) }
-    var availability by remember { mutableStateOf<Boolean?>(null) }
+    var availability by remember { mutableStateOf<SettingsViewModel.AliasAvailability?>(null) }
     var checking by remember { mutableStateOf(false) }
+    var domain_menu_open by remember { mutableStateOf(false) }
     val colors = AsterMaterial.colors
     val scope = rememberCoroutineScope()
+    val settings_state by vm.state.collectAsStateWithLifecycle()
+    val available_domains = remember(settings_state.domains) {
+        (listOf("astermail.org", "aster.cx") + settings_state.domains.map { it.domain_name }).distinct()
+    }
 
     LaunchedEffect(local_part, selected_domain) {
         if (local_part.length < 3) {
@@ -1476,8 +1482,7 @@ private fun create_alias_dialog(
         checking = true
         availability = null
         delay(500)
-        val result = vm.check_alias_availability(local_part, selected_domain)
-        availability = result
+        availability = vm.check_alias_availability(local_part, selected_domain)
         checking = false
     }
 
@@ -1498,39 +1503,67 @@ private fun create_alias_dialog(
                         checking -> {
                             { CircularProgressIndicator(modifier = Modifier.size(16.dp), color = colors.text_muted, strokeWidth = 2.dp) }
                         }
-                        availability == true -> {
+                        availability is SettingsViewModel.AliasAvailability.Available -> {
                             { Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = colors.success, modifier = Modifier.size(20.dp)) }
                         }
-                        availability == false -> {
+                        availability is SettingsViewModel.AliasAvailability.Taken -> {
                             { Icon(Icons.Outlined.Cancel, contentDescription = null, tint = colors.danger, modifier = Modifier.size(20.dp)) }
+                        }
+                        availability is SettingsViewModel.AliasAvailability.CheckFailed -> {
+                            { Icon(Icons.Outlined.ErrorOutline, contentDescription = null, tint = colors.warning, modifier = Modifier.size(20.dp)) }
                         }
                         else -> null
                     },
                 )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(colors.input_bg, SquircleShape(18.dp))
-                        .border(1.dp, colors.input_border, SquircleShape(18.dp))
-                        .padding(4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    listOf("astermail.org", "aster.cx").forEach { domain ->
-                        val active = selected_domain == domain
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(40.dp)
-                                .clip(SquircleShape(14.dp))
-                                .background(if (active) colors.accent_blue else Color.Transparent)
-                                .clickable { selected_domain = domain },
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(
-                                text = "@$domain",
-                                color = if (active) Color.White else colors.text_muted,
-                                fontSize = 13.sp,
-                                fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium,
+                val availability_hint: Pair<String, Color>? = when {
+                    checking -> stringResource(R.string.checking_availability) to colors.text_muted
+                    availability is SettingsViewModel.AliasAvailability.Available ->
+                        stringResource(R.string.alias_available) to colors.success
+                    availability is SettingsViewModel.AliasAvailability.Taken ->
+                        stringResource(R.string.alias_not_available) to colors.danger
+                    availability is SettingsViewModel.AliasAvailability.CheckFailed ->
+                        stringResource(R.string.alias_check_failed) to colors.warning
+                    else -> null
+                }
+                availability_hint?.let { (text, color) ->
+                    Text(text = text, color = color, fontSize = 12.sp)
+                }
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(SquircleShape(18.dp))
+                            .background(colors.input_bg, SquircleShape(18.dp))
+                            .border(1.dp, colors.input_border, SquircleShape(18.dp))
+                            .clickable { domain_menu_open = true }
+                            .padding(horizontal = AsterSpacing.lg, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = "@$selected_domain",
+                            color = colors.text_primary,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Icon(
+                            imageVector = Icons.Outlined.ExpandMore,
+                            contentDescription = null,
+                            tint = colors.text_muted,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = domain_menu_open,
+                        onDismissRequest = { domain_menu_open = false },
+                    ) {
+                        available_domains.forEach { domain ->
+                            DropdownMenuItem(
+                                text = { Text("@$domain", fontSize = 14.sp) },
+                                onClick = {
+                                    selected_domain = domain
+                                    domain_menu_open = false
+                                },
                             )
                         }
                     }
@@ -1573,14 +1606,21 @@ private fun create_alias_dialog(
             }
         },
         confirmButton = {
+            val can_create = local_part.isNotBlank() &&
+                captcha_token != null &&
+                !checking &&
+                availability !is SettingsViewModel.AliasAvailability.Taken
             TextButton(
                 onClick = {
                     val t = captcha_token
-                    if (local_part.isNotBlank() && t != null) on_create(local_part, selected_domain, t)
+                    if (can_create && t != null) on_create(local_part, selected_domain, t)
                 },
-                enabled = local_part.isNotBlank() && captcha_token != null && availability != false,
+                enabled = can_create,
             ) {
-                Text(stringResource(R.string.create), color = colors.accent_blue)
+                Text(
+                    stringResource(R.string.create),
+                    color = if (can_create) colors.accent_blue else colors.text_muted,
+                )
             }
         },
         dismissButton = {
