@@ -252,16 +252,6 @@ private val PROXY_BACKGROUND_ATTR_PATTERN = Regex(
     RegexOption.IGNORE_CASE,
 )
 
-private val BLOCKED_CSS_URL_PATTERN = Regex(
-    """url\(\s*["']?(?:https?:)?//[^"')\s]+["']?\s*\)""",
-    RegexOption.IGNORE_CASE,
-)
-
-private val BLOCKED_BACKGROUND_ATTR_PATTERN = Regex(
-    """\s+background\s*=\s*["'](?:https?:)?//[^"']+["']""",
-    RegexOption.IGNORE_CASE,
-)
-
 private val CID_SRC_PATTERN = Regex(
     """(src\s*=\s*["'])cid:([^"']+)(["'])""",
     RegexOption.IGNORE_CASE,
@@ -3166,8 +3156,7 @@ $dark_css
         }
         if (!allow_external) {
             val imgs_blocked = EmailHtmlSanitizer.replace_blocked_images(cid_normalized, image_blocked_label)
-            val css_stripped = BLOCKED_CSS_URL_PATTERN.replace(imgs_blocked, "none")
-            return BLOCKED_BACKGROUND_ATTR_PATTERN.replace(css_stripped, "")
+            return EmailHtmlSanitizer.neutralize_blocked_backgrounds(imgs_blocked)
         }
         return proxy_external_urls(cid_normalized, proxy_base)
     }

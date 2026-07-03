@@ -212,6 +212,50 @@ class EmailHtmlSanitizerTest {
     }
 
     @Test
+    fun blocked_background_image_button_gets_readable_placeholder() {
+        val html = """<table><tr><td background="https://cdn.example/btn.png"><a href="https://ex.com/c" style="color:#ffffff;padding:15px 30px;display:inline-block">Confirm email subscription button</a></td></tr></table>"""
+        val out = EmailHtmlSanitizer.neutralize_blocked_backgrounds(html)
+        assertFalse(out.contains("cdn.example/btn.png"))
+        assertTrue(out.contains("background-color:#6b7280"))
+        assertTrue(out.contains("Confirm email subscription button"))
+    }
+
+    @Test
+    fun blocked_inline_style_background_gets_placeholder() {
+        val html = """<a href="https://ex.com/c" style="background:url('https://cdn.example/btn.png') center;color:#ffffff;padding:15px 30px">Go</a>"""
+        val out = EmailHtmlSanitizer.neutralize_blocked_backgrounds(html)
+        assertFalse(out.contains("cdn.example/btn.png"))
+        assertTrue(out.contains("background-color:#6b7280"))
+    }
+
+    @Test
+    fun blocked_background_keeps_existing_solid_color_no_placeholder() {
+        val html = """<table><tr><td background="https://cdn.example/btn.png" bgcolor="#000000"><a style="color:#fff">x</a></td></tr></table>"""
+        val out = EmailHtmlSanitizer.neutralize_blocked_backgrounds(html)
+        assertFalse(out.contains("cdn.example/btn.png"))
+        assertTrue(out.contains("bgcolor=\"#000000\""))
+        assertFalse(out.contains("#6b7280"))
+    }
+
+    @Test
+    fun blocked_background_shorthand_with_color_keeps_color() {
+        val html = """<a style="background:#000000 url('https://cdn.example/btn.png') center;color:#fff">x</a>"""
+        val out = EmailHtmlSanitizer.neutralize_blocked_backgrounds(html)
+        assertFalse(out.contains("cdn.example/btn.png"))
+        assertTrue(out.contains("#000000"))
+        assertFalse(out.contains("#6b7280"))
+    }
+
+    @Test
+    fun neutralize_leaves_non_background_content_alone() {
+        val html = """<p style="color:#111">hello <a href="https://ex.com">link</a></p>"""
+        val out = EmailHtmlSanitizer.neutralize_blocked_backgrounds(html)
+        assertFalse(out.contains("#6b7280"))
+        assertTrue(out.contains("hello"))
+        assertTrue(out.contains("https://ex.com"))
+    }
+
+    @Test
     fun strips_dark_mode_media_from_style_blocks() {
         val html = """<html><head><style>p{color:#111}@media (prefers-color-scheme: dark){p{color:#eee;background:#000}}h1{margin:0}</style></head><body><p>hi</p></body></html>"""
         val out = EmailHtmlSanitizer.sanitize(html)

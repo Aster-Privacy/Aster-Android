@@ -145,6 +145,49 @@ object EmailHtmlSanitizer {
         return doc.body().html()
     }
 
+    private val remote_url_prefix = Regex("^(?:https?:)?//", RegexOption.IGNORE_CASE)
+
+    private val css_remote_url = Regex(
+        """url\(\s*["']?(?:https?:)?//[^"')\s]+["']?\s*\)""",
+        RegexOption.IGNORE_CASE,
+    )
+
+    private val solid_bg_color = Regex(
+        """background(?:-color)?\s*:\s*[^;]*(#[0-9a-f]{3,8}|rgb|hsl|\b(?:black|white|red|green|blue|gray|grey|silver|navy|teal|maroon|purple|orange|yellow)\b)""",
+        RegexOption.IGNORE_CASE,
+    )
+
+    fun neutralize_blocked_backgrounds(html: String): String {
+        if (html.isBlank()) return html
+        val doc = Jsoup.parseBodyFragment(html)
+        for (el in doc.select("[background]")) {
+            if (remote_url_prefix.containsMatchIn(el.attr("background").trim())) {
+                el.removeAttr("background")
+                apply_bg_placeholder(el)
+            }
+        }
+        for (el in doc.select("[style]")) {
+            val style = el.attr("style")
+            if (css_remote_url.containsMatchIn(style)) {
+                el.attr("style", css_remote_url.replace(style, "none"))
+                apply_bg_placeholder(el)
+            }
+        }
+        for (st in doc.select("style")) {
+            val css = st.data()
+            if (css_remote_url.containsMatchIn(css)) st.html(css_remote_url.replace(css, "none"))
+        }
+        return doc.body().html()
+    }
+
+    private fun apply_bg_placeholder(el: Element) {
+        if (el.attr("bgcolor").isNotBlank()) return
+        val style = el.attr("style")
+        if (solid_bg_color.containsMatchIn(style)) return
+        val sep = if (style.isBlank() || style.trimEnd().endsWith(";")) "" else ";"
+        el.attr("style", style + sep + "background-color:#6b7280")
+    }
+
     private fun autolink_bare_urls(doc: Document) {
         val url_re = Regex("""https?://[^\s<>"'{}|\\^`\[\]]+""")
         val skip_ancestors = setOf("a", "style", "script")
