@@ -229,9 +229,9 @@ object EmailHtmlSanitizer {
                 "table", "border", "cellpadding", "cellspacing", "bgcolor",
                 "background", "width", "height", "align",
             )
-            .addAttributes("td", "colspan", "rowspan", "bgcolor", "valign", "align", "width", "height")
-            .addAttributes("th", "colspan", "rowspan", "bgcolor", "valign", "align", "width", "height")
-            .addAttributes("tr", "bgcolor", "valign", "align")
+            .addAttributes("td", "colspan", "rowspan", "bgcolor", "background", "valign", "align", "width", "height")
+            .addAttributes("th", "colspan", "rowspan", "bgcolor", "background", "valign", "align", "width", "height")
+            .addAttributes("tr", "bgcolor", "background", "valign", "align")
             .addAttributes("font", "color", "face", "size")
             .addAttributes("ol", "start", "reversed", "type")
             .addAttributes("ul", "type")

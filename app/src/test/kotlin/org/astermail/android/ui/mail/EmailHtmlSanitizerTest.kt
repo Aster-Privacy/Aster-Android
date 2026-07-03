@@ -184,6 +184,34 @@ class EmailHtmlSanitizerTest {
     }
 
     @Test
+    fun keeps_background_image_attribute_on_table_cells() {
+        val html = """
+            <table><tr><td background="https://cdn.example/btn.png" bgcolor="#000000">
+            <a href="https://ex.com/c" style="color:#ffffff;padding:15px 30px;display:inline-block">Confirm email subscription button</a>
+            </td></tr></table>
+        """.trimIndent()
+        val out = EmailHtmlSanitizer.sanitize(html)
+        assertTrue(out.contains("background=\"https://cdn.example/btn.png\""))
+        assertTrue(out.contains("bgcolor=\"#000000\""))
+        assertTrue(out.contains("Confirm email subscription button"))
+    }
+
+    @Test
+    fun keeps_css_background_url_in_inline_style() {
+        val html = """<a href="https://ex.com/c" style="background:url('https://cdn.example/btn.png') no-repeat;color:#ffffff">Go</a>"""
+        val out = EmailHtmlSanitizer.sanitize(html)
+        assertTrue(out.contains("cdn.example/btn.png"))
+        assertTrue(out.contains("url("))
+    }
+
+    @Test
+    fun keeps_css_background_url_in_style_block() {
+        val html = """<html><head><style>.b{background:url(https://cdn.example/btn.png) center;color:#fff}</style></head><body><a class="b" href="https://ex.com/c">Go</a></body></html>"""
+        val out = EmailHtmlSanitizer.sanitize(html)
+        assertTrue(out.contains("cdn.example/btn.png"))
+    }
+
+    @Test
     fun strips_dark_mode_media_from_style_blocks() {
         val html = """<html><head><style>p{color:#111}@media (prefers-color-scheme: dark){p{color:#eee;background:#000}}h1{margin:0}</style></head><body><p>hi</p></body></html>"""
         val out = EmailHtmlSanitizer.sanitize(html)

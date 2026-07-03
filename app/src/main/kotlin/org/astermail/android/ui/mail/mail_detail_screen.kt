@@ -243,7 +243,22 @@ private val PROXY_PROTOCOL_RELATIVE_SRC_PATTERN = Regex(
 )
 
 private val PROXY_CSS_URL_PATTERN = Regex(
-    """(url\(\s*["']?)(https?://[^"')]+)(["']?\s*\))""",
+    """(url\(\s*["']?)((?:https?:)?//[^"')\s]+)(["']?\s*\))""",
+    RegexOption.IGNORE_CASE,
+)
+
+private val PROXY_BACKGROUND_ATTR_PATTERN = Regex(
+    """(background\s*=\s*["'])((?:https?:)?//[^"']+)(["'])""",
+    RegexOption.IGNORE_CASE,
+)
+
+private val BLOCKED_CSS_URL_PATTERN = Regex(
+    """url\(\s*["']?(?:https?:)?//[^"')\s]+["']?\s*\)""",
+    RegexOption.IGNORE_CASE,
+)
+
+private val BLOCKED_BACKGROUND_ATTR_PATTERN = Regex(
+    """\s+background\s*=\s*["'](?:https?:)?//[^"']+["']""",
     RegexOption.IGNORE_CASE,
 )
 
@@ -251,6 +266,39 @@ private val CID_SRC_PATTERN = Regex(
     """(src\s*=\s*["'])cid:([^"']+)(["'])""",
     RegexOption.IGNORE_CASE,
 )
+
+internal fun proxy_external_urls(html: String, proxy_base: String): String {
+    fun to_proxied(raw_url: String): String {
+        val url = raw_url.replace("&amp;", "&")
+        val absolute = if (url.startsWith("//")) "https:$url" else url
+        return proxy_base + java.net.URLEncoder.encode(absolute, "UTF-8")
+    }
+    val protocol_normalized = PROXY_PROTOCOL_RELATIVE_SRC_PATTERN.replace(html) { match ->
+        "${match.groupValues[1]}https:${match.groupValues[2]}${match.groupValues[3]}"
+    }
+    val src_replaced = PROXY_SRC_PATTERN.replace(protocol_normalized) { match ->
+        "${match.groupValues[1]}${to_proxied(match.groupValues[2])}${match.groupValues[3]}"
+    }
+    val srcset_replaced = PROXY_SRCSET_PATTERN.replace(src_replaced) { match ->
+        val proxied = match.groupValues[2].split(",").joinToString(",") { entry ->
+            val parts = entry.trim().split(Regex("\\s+"), 2)
+            val url = parts[0]
+            val descriptor = if (parts.size > 1) " ${parts[1]}" else ""
+            if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("//")) {
+                "${to_proxied(url)}$descriptor"
+            } else {
+                ""
+            }
+        }
+        "${match.groupValues[1]}$proxied${match.groupValues[3]}"
+    }
+    val background_attr_replaced = PROXY_BACKGROUND_ATTR_PATTERN.replace(srcset_replaced) { match ->
+        "${match.groupValues[1]}${to_proxied(match.groupValues[2])}${match.groupValues[3]}"
+    }
+    return PROXY_CSS_URL_PATTERN.replace(background_attr_replaced) { match ->
+        "${match.groupValues[1]}${to_proxied(match.groupValues[2])}${match.groupValues[3]}"
+    }
+}
 
 private val GHOST_LOCAL_PATTERN = Regex("^[a-z]+\\.[a-z]+\\d{2}@", RegexOption.IGNORE_CASE)
 
@@ -3116,44 +3164,12 @@ $dark_css
             val suffix = match.groupValues[3]
             "${prefix}data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==${suffix}"
         }
-        if (!allow_external) return EmailHtmlSanitizer.replace_blocked_images(cid_normalized, image_blocked_label)
-        val protocol_normalized = PROXY_PROTOCOL_RELATIVE_SRC_PATTERN.replace(cid_normalized) { match ->
-            "${match.groupValues[1]}https:${match.groupValues[2]}${match.groupValues[3]}"
+        if (!allow_external) {
+            val imgs_blocked = EmailHtmlSanitizer.replace_blocked_images(cid_normalized, image_blocked_label)
+            val css_stripped = BLOCKED_CSS_URL_PATTERN.replace(imgs_blocked, "none")
+            return BLOCKED_BACKGROUND_ATTR_PATTERN.replace(css_stripped, "")
         }
-        val src_replaced = PROXY_SRC_PATTERN.replace(protocol_normalized) { match ->
-            val prefix = match.groupValues[1]
-            val url = match.groupValues[2].replace("&amp;", "&")
-            val suffix = match.groupValues[3]
-            val encoded = java.net.URLEncoder.encode(url, "UTF-8")
-            "$prefix$proxy_base$encoded$suffix"
-        }
-        val srcset_replaced = PROXY_SRCSET_PATTERN.replace(src_replaced) { match ->
-            val prefix = match.groupValues[1]
-            val srcset_value = match.groupValues[2]
-            val suffix = match.groupValues[3]
-            val proxied = srcset_value.split(",").joinToString(",") { entry ->
-                val parts = entry.trim().split(Regex("\\s+"), 2)
-                val url = parts[0]
-                val descriptor = if (parts.size > 1) " ${parts[1]}" else ""
-                if (url.startsWith("http://") || url.startsWith("https://")) {
-                    val encoded = java.net.URLEncoder.encode(url, "UTF-8")
-                    "$proxy_base$encoded$descriptor"
-                } else if (url.startsWith("//")) {
-                    val encoded = java.net.URLEncoder.encode("https:$url", "UTF-8")
-                    "$proxy_base$encoded$descriptor"
-                } else {
-                    ""
-                }
-            }
-            "$prefix$proxied$suffix"
-        }
-        return PROXY_CSS_URL_PATTERN.replace(srcset_replaced) { match ->
-            val prefix = match.groupValues[1]
-            val url = match.groupValues[2].replace("&amp;", "&")
-            val suffix = match.groupValues[3]
-            val encoded = java.net.URLEncoder.encode(url, "UTF-8")
-            "$prefix$proxy_base$encoded$suffix"
-        }
+        return proxy_external_urls(cid_normalized, proxy_base)
     }
 
     LaunchedEffect(html, allow_external, bg_hex) {
