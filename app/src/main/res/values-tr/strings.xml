@@ -667,6 +667,7 @@
     <string name="forwards_to_inbox">Gelen kutunuza yönlendirir</string>
     <string name="delete_alias">Takma adı sil</string>
     <string name="custom_domains">Özel alan adları</string>
+    <string name="alias_view_custom">Özel takma adlar</string>
     <string name="custom_domains_desktop_only">Özel alan adları masaüstünde yönetilmelidir</string>
     <string name="custom_domains_description">Özel alan adları eklemek ve yapılandırmak DNS kurulumu gerektirir ve yalnızca masaüstü uygulamasından kullanılabilir.</string>
     <string name="open_on_desktop">Masaüstünde aç</string>

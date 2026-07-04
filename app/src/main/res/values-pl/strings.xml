@@ -667,6 +667,7 @@
     <string name="forwards_to_inbox">Przekierowuje do skrzynki odbiorczej</string>
     <string name="delete_alias">Usuń alias</string>
     <string name="custom_domains">Domeny niestandardowe</string>
+    <string name="alias_view_custom">Aliasy niestandardowe</string>
     <string name="custom_domains_desktop_only">Domeny niestandardowe muszą być zarządzane na komputerze</string>
     <string name="custom_domains_description">Dodawanie i konfigurowanie domen niestandardowych wymaga ustawień DNS i jest dostępne tylko w aplikacji desktopowej.</string>
     <string name="open_on_desktop">Otwórz na komputerze</string>

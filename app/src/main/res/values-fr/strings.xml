@@ -707,6 +707,7 @@
     <string name="forwards_to_inbox">Redirigé vers votre boîte de réception</string>
     <string name="delete_alias">Supprimer l\'alias</string>
     <string name="custom_domains">Domaines personnalisés</string>
+    <string name="alias_view_custom">Alias personnalisés</string>
     <string name="custom_domains_desktop_only">Les domaines personnalisés doivent être gérés sur ordinateur</string>
     <string name="custom_domains_description">L\'ajout et la configuration de domaines personnalisés nécessitent une configuration DNS et ne sont disponibles que via l\'application de bureau.</string>
     <string name="open_on_desktop">Ouvrir sur ordinateur</string>

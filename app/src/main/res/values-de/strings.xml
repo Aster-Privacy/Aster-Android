@@ -668,6 +668,7 @@
     <string name="forwards_to_inbox">Weiterleitung an Ihren Posteingang</string>
     <string name="delete_alias">Alias löschen</string>
     <string name="custom_domains">Benutzerdefinierte Domains</string>
+    <string name="alias_view_custom">Benutzerdefinierte Aliase</string>
     <string name="custom_domains_desktop_only">Benutzerdefinierte Domains müssen auf dem Desktop verwaltet werden</string>
     <string name="custom_domains_description">Das Hinzufügen und Konfigurieren benutzerdefinierter Domains erfordert DNS-Einrichtung und ist nur über die Desktop-App verfügbar.</string>
     <string name="open_on_desktop">Auf dem Desktop öffnen</string>

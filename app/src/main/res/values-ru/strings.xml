@@ -667,6 +667,7 @@
     <string name="forwards_to_inbox">Пересылает во входящие</string>
     <string name="delete_alias">Удалить псевдоним</string>
     <string name="custom_domains">Пользовательские домены</string>
+    <string name="alias_view_custom">Пользовательские псевдонимы</string>
     <string name="custom_domains_desktop_only">Пользовательские домены настраиваются только на компьютере</string>
     <string name="custom_domains_description">Добавление и настройка пользовательских доменов требует настройки DNS и доступно только через настольное приложение.</string>
     <string name="open_on_desktop">Открыть на компьютере</string>

@@ -667,6 +667,7 @@
     <string name="forwards_to_inbox">받은 편지함으로 전달</string>
     <string name="delete_alias">별칭 삭제</string>
     <string name="custom_domains">커스텀 도메인</string>
+    <string name="alias_view_custom">커스텀 별칭</string>
     <string name="custom_domains_desktop_only">커스텀 도메인은 데스크톱에서 관리해야 합니다</string>
     <string name="custom_domains_description">커스텀 도메인 추가 및 구성에는 DNS 설정이 필요하며 데스크톱 앱에서만 사용할 수 있습니다.</string>
     <string name="open_on_desktop">데스크톱에서 열기</string>

@@ -938,6 +938,7 @@
     <string name="revoke_api_key_title">Revoke API key?</string>
     <string name="revoke_api_key_confirm_message">Any apps using this key will stop working immediately. This cannot be undone.</string>
     <string name="custom_domains">Custom domains</string>
+    <string name="alias_view_custom">Custom aliases</string>
     <string name="custom_domains_desktop_only">Custom domains must be managed on desktop</string>
     <string name="custom_domains_description">Adding and configuring custom domains requires DNS setup and is only available through the desktop app.</string>
     <string name="open_on_desktop">Open on desktop</string>

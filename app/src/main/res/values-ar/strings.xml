@@ -667,6 +667,7 @@
     <string name="forwards_to_inbox">يحول إلى صندوق الوارد</string>
     <string name="delete_alias">حذف الاسم المستعار</string>
     <string name="custom_domains">نطاقات مخصصة</string>
+    <string name="alias_view_custom">الأسماء المستعارة المخصصة</string>
     <string name="custom_domains_desktop_only">يجب إدارة النطاقات المخصصة من سطح المكتب</string>
     <string name="custom_domains_description">إضافة وتكوين النطاقات المخصصة تتطلب إعداد DNS وهي متاحة فقط من خلال تطبيق سطح المكتب.</string>
     <string name="open_on_desktop">فتح على سطح المكتب</string>

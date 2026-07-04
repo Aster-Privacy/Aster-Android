@@ -668,6 +668,7 @@
     <string name="forwards_to_inbox">Se reenvía a tu bandeja de entrada</string>
     <string name="delete_alias">Eliminar alias</string>
     <string name="custom_domains">Dominios personalizados</string>
+    <string name="alias_view_custom">Alias personalizados</string>
     <string name="custom_domains_desktop_only">Los dominios personalizados deben administrarse en el escritorio</string>
     <string name="custom_domains_description">Agregar y configurar dominios personalizados requiere configuración DNS y solo está disponible a través de la aplicación de escritorio.</string>
     <string name="open_on_desktop">Abrir en el escritorio</string>

@@ -667,6 +667,7 @@
     <string name="forwards_to_inbox">转发到收件箱</string>
     <string name="delete_alias">删除别名</string>
     <string name="custom_domains">自定义域名</string>
+    <string name="alias_view_custom">自定义别名</string>
     <string name="custom_domains_desktop_only">自定义域名需在桌面端管理</string>
     <string name="custom_domains_description">添加和配置自定义域名需要 DNS 设置，仅通过桌面应用可用。</string>
     <string name="open_on_desktop">在桌面端打开</string>

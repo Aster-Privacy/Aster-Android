@@ -667,6 +667,7 @@
     <string name="forwards_to_inbox">Stuurt door naar je inbox</string>
     <string name="delete_alias">Alias verwijderen</string>
     <string name="custom_domains">Aangepaste domeinen</string>
+    <string name="alias_view_custom">Aangepaste aliassen</string>
     <string name="custom_domains_desktop_only">Aangepaste domeinen moeten op desktop worden beheerd</string>
     <string name="custom_domains_description">Het toevoegen en configureren van aangepaste domeinen vereist DNS-instelling en is alleen beschikbaar via de desktop-app.</string>
     <string name="open_on_desktop">Openen op desktop</string>

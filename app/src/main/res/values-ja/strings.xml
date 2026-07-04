@@ -667,6 +667,7 @@
     <string name="forwards_to_inbox">受信トレイに転送</string>
     <string name="delete_alias">エイリアスを削除</string>
     <string name="custom_domains">カスタムドメイン</string>
+    <string name="alias_view_custom">カスタムエイリアス</string>
     <string name="custom_domains_desktop_only">カスタムドメインはデスクトップで管理する必要があります</string>
     <string name="custom_domains_description">カスタムドメインの追加と設定にはDNS設定が必要で、デスクトップアプリからのみ利用できます。</string>
     <string name="open_on_desktop">デスクトップで開く</string>
