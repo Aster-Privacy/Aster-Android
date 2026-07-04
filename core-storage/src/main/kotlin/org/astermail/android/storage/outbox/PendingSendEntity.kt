@@ -44,4 +44,5 @@ data class PendingSendEntity(
     val fire_at_ms: Long,
     val status: String,
     val created_at_ms: Long,
+    val sending_started_at_ms: Long = 0,
 )

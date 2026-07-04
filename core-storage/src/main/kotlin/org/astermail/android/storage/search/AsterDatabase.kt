@@ -28,7 +28,7 @@ import org.astermail.android.storage.outbox.PendingSendEntity
 
 @Database(
     entities = [DecryptedMailEntity::class, PendingSendEntity::class],
-    version = 4,
+    version = 5,
     exportSchema = false,
 )
 abstract class AsterDatabase : RoomDatabase() {
