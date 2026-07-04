@@ -287,19 +287,35 @@ fun ComposeScreen(
         )
     }
 
+    val received_on_alias = remember(reply_to, thread_state.messages, alias_options, mode, user_email) {
+        if (mode == "new" || mode == "draft") {
+            null
+        } else {
+            val msg = thread_state.messages.firstOrNull { it.id == reply_to }
+                ?: thread_state.messages.filter { it.raw_item.item_type != "sent" }.maxByOrNull { it.timestamp }
+                ?: thread_state.messages.lastOrNull()
+            val candidates = ((msg?.to_addresses ?: emptyList()) + (msg?.cc_addresses ?: emptyList()))
+                .map { it.trim() }
+                .filter { it.isNotBlank() }
+            val options_by_lower = alias_options.associateBy { it.lowercase() }
+            val matches = candidates.mapNotNull { options_by_lower[it.lowercase()] }
+            matches.firstOrNull { it.lowercase() != user_email.lowercase() } ?: matches.firstOrNull()
+        }
+    }
+
     var from_alias by rememberSaveable {
-        val initial = thread_ghost_match
-            ?.takeIf { it in alias_options }
+        val initial = received_on_alias
+            ?: thread_ghost_match?.takeIf { it in alias_options }
             ?: primary_sender_email.takeIf { it.isNotBlank() && it in alias_options }
             ?: alias_options.firstOrNull().orEmpty()
         mutableStateOf(initial)
     }
     var from_manually_selected by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(alias_options, thread_ghost_match, primary_sender_email) {
+    LaunchedEffect(alias_options, received_on_alias, thread_ghost_match, primary_sender_email) {
         if (from_manually_selected) return@LaunchedEffect
-        val resolved = thread_ghost_match
-            ?.takeIf { it in alias_options }
+        val resolved = received_on_alias
+            ?: thread_ghost_match?.takeIf { it in alias_options }
             ?: primary_sender_email.takeIf { it.isNotBlank() && it in alias_options }
             ?: alias_options.firstOrNull().orEmpty()
         if (resolved.isNotBlank() && resolved != from_alias) {
