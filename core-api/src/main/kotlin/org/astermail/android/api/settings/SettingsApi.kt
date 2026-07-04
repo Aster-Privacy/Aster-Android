@@ -298,6 +298,28 @@ data class UpdateAliasRequest(
 )
 
 @Serializable
+data class CreateDomainAddressRequest(
+    val encrypted_local_part: String,
+    val local_part_nonce: String,
+    val local_part_hash: String,
+    val address_routing_hash: String,
+    val encrypted_display_name: String? = null,
+    val display_name_nonce: String? = null,
+    val profile_picture: String? = null,
+    val captcha_token: String? = null,
+)
+
+@Serializable
+data class CreateDomainAddressResponse(
+    val id: String = "",
+)
+
+@Serializable
+data class UpdateDomainAddressRequest(
+    val is_enabled: Boolean? = null,
+)
+
+@Serializable
 data class CustomDomain(
     val id: String,
     val domain_name: String,
@@ -419,6 +441,9 @@ interface SettingsApi {
     suspend fun create_alias(request: CreateAliasRequest): CreateAliasResponse
     suspend fun update_alias(alias_id: String, request: UpdateAliasRequest): Boolean
     suspend fun list_all_domain_addresses(): AllDomainAddressesResponse
+    suspend fun create_domain_address(domain_id: String, request: CreateDomainAddressRequest): CreateDomainAddressResponse
+    suspend fun update_domain_address(domain_id: String, address_id: String, request: UpdateDomainAddressRequest)
+    suspend fun delete_domain_address(domain_id: String, address_id: String)
     suspend fun list_domains(): DomainListResponse
     suspend fun add_domain(request: AddDomainRequest): CustomDomain
     suspend fun delete_domain(domain_id: String)
@@ -607,6 +632,37 @@ class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
     override suspend fun list_all_domain_addresses(): AllDomainAddressesResponse {
         val response = client.http.get("${client.base_url}/api/addresses/v1/domains/addresses")
         return decode_or_throw(response)
+    }
+
+    override suspend fun create_domain_address(domain_id: String, request: CreateDomainAddressRequest): CreateDomainAddressResponse {
+        val response = client.http.post("${client.base_url}/api/addresses/v1/domains/$domain_id/addresses") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun update_domain_address(domain_id: String, address_id: String, request: UpdateDomainAddressRequest) {
+        val response = client.http.patch("${client.base_url}/api/addresses/v1/domains/$domain_id/addresses/$address_id") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        if (response.status.value !in 200..299) {
+            val body = try { response.body<String>() } catch (_: Throwable) { "" }
+            throw client.map_http_status(response.status.value, body)
+        }
+    }
+
+    override suspend fun delete_domain_address(domain_id: String, address_id: String) {
+        val response = client.http.delete("${client.base_url}/api/addresses/v1/domains/$domain_id/addresses/$address_id") {
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+        }
+        if (response.status.value !in 200..299) {
+            val body = try { response.body<String>() } catch (_: Throwable) { "" }
+            throw client.map_http_status(response.status.value, body)
+        }
     }
 
     override suspend fun list_domains(): DomainListResponse {
