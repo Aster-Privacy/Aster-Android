@@ -331,6 +331,7 @@
     <string name="save_failed">保存失败</string>
 
     <string name="search_mail">搜索邮件</string>
+    <string name="search_aliases">搜索别名</string>
     <string name="filter_from">发件人</string>
     <string name="filter_to">收件人</string>
     <string name="filter_has_attachment">有附件</string>

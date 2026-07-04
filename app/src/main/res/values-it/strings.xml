@@ -331,6 +331,7 @@
     <string name="save_failed">Salvataggio non riuscito</string>
 
     <string name="search_mail">Cerca nella posta</string>
+    <string name="search_aliases">Cerca alias</string>
     <string name="filter_from">Da</string>
     <string name="filter_to">A</string>
     <string name="filter_has_attachment">Ha allegato</string>

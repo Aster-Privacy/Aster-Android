@@ -332,6 +332,7 @@
     <string name="save_failed">Error al guardar</string>
 
     <string name="search_mail">Buscar correos</string>
+    <string name="search_aliases">Buscar alias</string>
     <string name="filter_from">De</string>
     <string name="filter_to">Para</string>
     <string name="filter_has_attachment">Con adjunto</string>

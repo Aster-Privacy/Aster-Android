@@ -331,6 +331,7 @@
     <string name="save_failed">Nie udało się zapisać</string>
 
     <string name="search_mail">Szukaj w poczcie</string>
+    <string name="search_aliases">Szukaj aliasów</string>
     <string name="filter_from">Od</string>
     <string name="filter_to">Do</string>
     <string name="filter_has_attachment">Ma załącznik</string>

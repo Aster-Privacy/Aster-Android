@@ -332,6 +332,7 @@
     <string name="save_failed">Speichern fehlgeschlagen</string>
 
     <string name="search_mail">E-Mails durchsuchen</string>
+    <string name="search_aliases">Aliase durchsuchen</string>
     <string name="filter_from">Von</string>
     <string name="filter_to">An</string>
     <string name="filter_has_attachment">Mit Anhang</string>

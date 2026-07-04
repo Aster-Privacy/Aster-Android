@@ -331,6 +331,7 @@
     <string name="save_failed">Kaydedilemedi</string>
 
     <string name="search_mail">E-postada ara</string>
+    <string name="search_aliases">Takma adlarda ara</string>
     <string name="filter_from">Kimden</string>
     <string name="filter_to">Kime</string>
     <string name="filter_has_attachment">Ek var</string>

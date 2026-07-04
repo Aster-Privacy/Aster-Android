@@ -355,6 +355,7 @@
 
     <!-- Search -->
     <string name="search_mail">Rechercher dans les e-mails</string>
+    <string name="search_aliases">Rechercher des alias</string>
     <string name="filter_from">De</string>
     <string name="filter_to">À</string>
     <string name="filter_has_attachment">Avec pièce jointe</string>

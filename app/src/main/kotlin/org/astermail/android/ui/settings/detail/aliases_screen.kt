@@ -50,6 +50,7 @@ import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.KeyboardArrowLeft
 import androidx.compose.material.icons.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -283,9 +284,18 @@ private fun aliases_tab(
     var pending_delete by remember { mutableStateOf<Pair<String, String>?>(null) }
     var pending_domain_address_delete by remember { mutableStateOf<Triple<String, String, String>?>(null) }
     var alias_view by remember { mutableStateOf(0) }
+    var alias_query by remember { mutableStateOf("") }
     val colors = AsterMaterial.colors
     val show_custom = state.custom_domain_addresses.isNotEmpty()
     val alias_view_effective = if (show_custom) alias_view else 0
+    val query = alias_query.trim()
+    val filtered_aliases = if (query.isEmpty()) state.aliases else state.aliases.filter {
+        it.address.contains(query, ignoreCase = true) ||
+            it.encrypted_display_name?.contains(query, ignoreCase = true) == true
+    }
+    val filtered_custom_addresses = if (query.isEmpty()) state.custom_domain_addresses else state.custom_domain_addresses.filter {
+        it.address.contains(query, ignoreCase = true)
+    }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -295,7 +305,7 @@ private fun aliases_tab(
         Text(
             text = stringResource(
                 R.string.aliases_count,
-                if (alias_view_effective == 1) state.custom_domain_addresses.size else state.aliases.size,
+                if (alias_view_effective == 1) filtered_custom_addresses.size else filtered_aliases.size,
             ),
             color = colors.text_tertiary,
             fontSize = 13.sp,
@@ -307,6 +317,35 @@ private fun aliases_tab(
     v_gap(AsterSpacing.sm)
     if (show_custom) {
         alias_view_selector(selected = alias_view_effective, on_select = { alias_view = it })
+        v_gap(AsterSpacing.sm)
+    }
+
+    val search_source_size = if (alias_view_effective == 1) state.custom_domain_addresses.size else state.aliases.size
+    if (search_source_size > 0) {
+        OutlinedTextField(
+            value = alias_query,
+            onValueChange = { alias_query = it },
+            placeholder = { Text(stringResource(R.string.search_aliases), fontSize = 14.sp) },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Outlined.Search,
+                    contentDescription = null,
+                    tint = colors.text_muted,
+                    modifier = Modifier.size(20.dp),
+                )
+            },
+            trailingIcon = if (alias_query.isEmpty()) null else {
+                {
+                    AsterIconButton(
+                        icon = Icons.Outlined.Cancel,
+                        content_description = stringResource(R.string.cancel),
+                        onClick = { alias_query = "" },
+                    )
+                }
+            },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
         v_gap(AsterSpacing.sm)
     }
 
@@ -325,14 +364,18 @@ private fun aliases_tab(
                 subtitle = state.error ?: stringResource(R.string.no_aliases_subtitle),
             )
         }
+    } else if (filtered_aliases.isEmpty()) {
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            detail_row(title = stringResource(R.string.no_results_found))
+        }
     } else {
         val page_size = 100
-        val page_count = (state.aliases.size + page_size - 1) / page_size
-        var alias_page by remember(state.aliases.size) { mutableStateOf(0) }
+        val page_count = (filtered_aliases.size + page_size - 1) / page_size
+        var alias_page by remember(query, filtered_aliases.size) { mutableStateOf(0) }
         val current_page = alias_page.coerceIn(0, (page_count - 1).coerceAtLeast(0))
         val page_from = current_page * page_size
-        val page_to = minOf(page_from + page_size, state.aliases.size)
-        val page_items = state.aliases.subList(page_from, page_to)
+        val page_to = minOf(page_from + page_size, filtered_aliases.size)
+        val page_items = filtered_aliases.subList(page_from, page_to)
 
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             page_items.forEachIndexed { idx, alias ->
@@ -408,14 +451,20 @@ private fun aliases_tab(
     }
     }
 
-    if (alias_view_effective == 1) {
+    if (alias_view_effective == 1 && filtered_custom_addresses.isEmpty()) {
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            detail_row(title = stringResource(R.string.no_results_found))
+        }
+    }
+
+    if (alias_view_effective == 1 && filtered_custom_addresses.isNotEmpty()) {
         val cd_page_size = 100
-        val cd_page_count = (state.custom_domain_addresses.size + cd_page_size - 1) / cd_page_size
-        var cd_page by remember(state.custom_domain_addresses.size) { mutableStateOf(0) }
+        val cd_page_count = (filtered_custom_addresses.size + cd_page_size - 1) / cd_page_size
+        var cd_page by remember(query, filtered_custom_addresses.size) { mutableStateOf(0) }
         val cd_current_page = cd_page.coerceIn(0, (cd_page_count - 1).coerceAtLeast(0))
         val cd_from = cd_current_page * cd_page_size
-        val cd_to = minOf(cd_from + cd_page_size, state.custom_domain_addresses.size)
-        val cd_items = state.custom_domain_addresses.subList(cd_from, cd_to)
+        val cd_to = minOf(cd_from + cd_page_size, filtered_custom_addresses.size)
+        val cd_items = filtered_custom_addresses.subList(cd_from, cd_to)
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             cd_items.forEachIndexed { idx, addr ->
                 Column(

@@ -331,6 +331,7 @@
     <string name="save_failed">فشل الحفظ</string>
 
     <string name="search_mail">البحث في البريد</string>
+    <string name="search_aliases">البحث في الأسماء المستعارة</string>
     <string name="filter_from">من</string>
     <string name="filter_to">إلى</string>
     <string name="filter_has_attachment">يحتوي على مرفق</string>

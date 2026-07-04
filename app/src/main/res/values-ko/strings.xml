@@ -331,6 +331,7 @@
     <string name="save_failed">저장 실패</string>
 
     <string name="search_mail">메일 검색</string>
+    <string name="search_aliases">별칭 검색</string>
     <string name="filter_from">보낸 사람</string>
     <string name="filter_to">받는 사람</string>
     <string name="filter_has_attachment">첨부 파일 있음</string>

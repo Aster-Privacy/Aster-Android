@@ -331,6 +331,7 @@
     <string name="save_failed">Opslaan mislukt</string>
 
     <string name="search_mail">E-mail zoeken</string>
+    <string name="search_aliases">Aliassen zoeken</string>
     <string name="filter_from">Van</string>
     <string name="filter_to">Aan</string>
     <string name="filter_has_attachment">Heeft bijlage</string>
