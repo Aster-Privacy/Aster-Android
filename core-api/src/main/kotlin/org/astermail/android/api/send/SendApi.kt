@@ -22,6 +22,7 @@
 package org.astermail.android.api.send
 
 import io.ktor.client.call.body
+import io.ktor.client.plugins.timeout
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -119,9 +120,14 @@ interface SendApi {
 
 class SendApiImpl(private val client: ApiClient) : SendApi {
     private val base = "/api/mail/v1/send"
+    private val send_timeout_ms = 60_000L
 
     override suspend fun send_simple(request: SimpleSendRequest): SimpleSendResponse {
         val response = client.http.post("${client.base_url}$base") {
+            timeout {
+                requestTimeoutMillis = send_timeout_ms
+                socketTimeoutMillis = send_timeout_ms
+            }
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)
@@ -131,6 +137,10 @@ class SendApiImpl(private val client: ApiClient) : SendApi {
 
     override suspend fun send_external(request: ExternalSendRequest): ExternalSendResponse {
         val response = client.http.post("${client.base_url}$base/external") {
+            timeout {
+                requestTimeoutMillis = send_timeout_ms
+                socketTimeoutMillis = send_timeout_ms
+            }
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)

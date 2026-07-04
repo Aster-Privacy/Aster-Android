@@ -332,6 +332,8 @@
     <string name="save_failed">Speichern fehlgeschlagen</string>
 
     <string name="search_mail">E-Mails durchsuchen</string>
+    <string name="send_problem_title">Problem beim Senden der E-Mail</string>
+    <string name="send_problem_message">Ihre Nachricht konnte noch nicht gesendet werden. Die App versucht es im Hintergrund weiter.</string>
     <string name="filter_from">Von</string>
     <string name="filter_to">An</string>
     <string name="filter_has_attachment">Mit Anhang</string>

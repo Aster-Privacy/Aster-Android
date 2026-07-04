@@ -331,6 +331,8 @@
     <string name="save_failed">فشل الحفظ</string>
 
     <string name="search_mail">البحث في البريد</string>
+    <string name="send_problem_title">مشكلة في إرسال البريد</string>
+    <string name="send_problem_message">تعذر إرسال رسالتك حتى الآن. سيواصل التطبيق المحاولة في الخلفية.</string>
     <string name="filter_from">من</string>
     <string name="filter_to">إلى</string>
     <string name="filter_has_attachment">يحتوي على مرفق</string>

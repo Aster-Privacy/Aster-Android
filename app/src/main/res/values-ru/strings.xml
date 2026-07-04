@@ -331,6 +331,8 @@
     <string name="save_failed">Не удалось сохранить</string>
 
     <string name="search_mail">Поиск почты</string>
+    <string name="send_problem_title">Проблема с отправкой почты</string>
+    <string name="send_problem_message">Ваше сообщение пока не удалось отправить. Приложение продолжит попытки в фоновом режиме.</string>
     <string name="filter_from">От</string>
     <string name="filter_to">Кому</string>
     <string name="filter_has_attachment">С вложением</string>

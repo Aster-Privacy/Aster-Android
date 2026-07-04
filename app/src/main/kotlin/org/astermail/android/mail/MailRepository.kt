@@ -202,6 +202,12 @@ class MailRepository @Inject constructor(
     val pending_undo_send: kotlinx.coroutines.flow.StateFlow<PendingUndoSend?> = _pending_undo_send
     private val _send_result_events = kotlinx.coroutines.flow.MutableSharedFlow<Result<Unit>>(extraBufferCapacity = 8)
     val send_result_events: kotlinx.coroutines.flow.SharedFlow<Result<Unit>> = _send_result_events
+    private val _send_problem = kotlinx.coroutines.flow.MutableStateFlow(false)
+    val send_problem: kotlinx.coroutines.flow.StateFlow<Boolean> = _send_problem
+
+    fun clear_send_problem() {
+        _send_problem.value = false
+    }
 
     private val outbox_json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
     private val undo_canceled_ids = java.util.Collections.newSetFromMap(
@@ -379,10 +385,12 @@ class MailRepository @Inject constructor(
         return if (result.isSuccess && response?.success == true) {
             runCatching { pending_send_dao.delete_by_id(pending_id) }
             row.draft_id?.takeIf { it.isNotBlank() }?.let { runCatching { delete_draft(it) } }
+            _send_problem.value = false
             _send_result_events.tryEmit(Result.success(Unit))
             PendingSendOutcome.SENT
         } else {
             runCatching { pending_send_dao.mark_pending(pending_id) }
+            _send_problem.value = true
             _send_result_events.tryEmit(Result.failure(result.exceptionOrNull() ?: IllegalStateException("send rejected")))
             PendingSendOutcome.RETRY
         }

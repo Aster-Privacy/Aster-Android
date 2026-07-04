@@ -498,6 +498,8 @@
 
     <!-- Search -->
     <string name="search_mail">Search mail</string>
+    <string name="send_problem_title">Problem sending mail</string>
+    <string name="send_problem_message">Your message could not be sent yet. The app will keep retrying in the background.</string>
     <string name="filter_from">From</string>
     <string name="filter_to">To</string>
     <string name="filter_has_attachment">Has attachment</string>

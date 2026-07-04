@@ -331,6 +331,8 @@
     <string name="save_failed">Salvataggio non riuscito</string>
 
     <string name="search_mail">Cerca nella posta</string>
+    <string name="send_problem_title">Problema durante l\'invio della posta</string>
+    <string name="send_problem_message">Non è stato ancora possibile inviare il messaggio. L\'app continuerà a riprovare in background.</string>
     <string name="filter_from">Da</string>
     <string name="filter_to">A</string>
     <string name="filter_has_attachment">Ha allegato</string>

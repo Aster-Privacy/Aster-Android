@@ -331,6 +331,8 @@
     <string name="save_failed">保存失败</string>
 
     <string name="search_mail">搜索邮件</string>
+    <string name="send_problem_title">邮件发送出现问题</string>
+    <string name="send_problem_message">您的邮件尚未发送成功。应用将在后台继续重试。</string>
     <string name="filter_from">发件人</string>
     <string name="filter_to">收件人</string>
     <string name="filter_has_attachment">有附件</string>

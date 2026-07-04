@@ -1490,6 +1490,12 @@ class MailViewModel @Inject constructor(
 
     val pending_undo_send: StateFlow<MailRepository.PendingUndoSend?> = repository.pending_undo_send
 
+    val send_problem: StateFlow<Boolean> = repository.send_problem
+
+    fun dismiss_send_problem() {
+        repository.clear_send_problem()
+    }
+
     init {
         viewModelScope.launch {
             repository.send_result_events.collect { result ->

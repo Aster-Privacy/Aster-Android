@@ -331,6 +331,8 @@
     <string name="save_failed">保存に失敗しました</string>
 
     <string name="search_mail">メールを検索</string>
+    <string name="send_problem_title">メール送信に問題があります</string>
+    <string name="send_problem_message">メッセージをまだ送信できていません。アプリはバックグラウンドで再試行を続けます。</string>
     <string name="filter_from">差出人</string>
     <string name="filter_to">宛先</string>
     <string name="filter_has_attachment">添付ファイルあり</string>
