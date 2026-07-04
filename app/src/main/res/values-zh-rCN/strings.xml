@@ -1271,4 +1271,5 @@
     <string name="pending_deletion_error">无法恢复您的账户。请重试。</string>
     <string name="pending_deletion_restored">欢迎回来。您的账户已恢复。</string>
     <string name="image_blocked_placeholder">[图片已被拦截]</string>
+    <string name="csrf_unavailable">此会话已损坏！请重新登录。</string>
 </resources>

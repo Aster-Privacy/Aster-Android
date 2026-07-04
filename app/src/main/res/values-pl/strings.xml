@@ -1277,4 +1277,5 @@
     <string name="pending_deletion_error">Nie można przywrócić konta. Spróbuj ponownie.</string>
     <string name="pending_deletion_restored">Witaj ponownie. Twoje konto zostało przywrócone.</string>
     <string name="image_blocked_placeholder">[Obraz zablokowany]</string>
+    <string name="csrf_unavailable">Ta sesja jest uszkodzona! Zaloguj się ponownie.</string>
 </resources>

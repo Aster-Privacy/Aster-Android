@@ -1273,4 +1273,5 @@
     <string name="pending_deletion_error">Não foi possível restaurar sua conta. Tente novamente.</string>
     <string name="pending_deletion_restored">Bem-vindo de volta. Sua conta foi restaurada.</string>
     <string name="image_blocked_placeholder">[Imagem bloqueada]</string>
+    <string name="csrf_unavailable">Esta sessão está corrompida! Faça login novamente.</string>
 </resources>

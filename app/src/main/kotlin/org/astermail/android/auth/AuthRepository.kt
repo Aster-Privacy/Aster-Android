@@ -487,6 +487,15 @@ class AuthRepository @Inject constructor(
         return true
     }
 
+    suspend fun ensure_csrf_ready(): Boolean {
+        if (!_is_signed_in.value) return true
+        if (api_client.get_csrf() != null) return true
+        return when (try_refresh_session()) {
+            RefreshOutcome.Success -> api_client.get_csrf() != null
+            RefreshOutcome.AuthFailed, RefreshOutcome.Transient -> false
+        }
+    }
+
     fun has_stored_session(account_id: String): Boolean = session_snapshot_store.has(account_id)
 
     suspend fun change_password(current_password: String, new_password: String): Result<Unit> = runCatching {
