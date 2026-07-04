@@ -1192,7 +1192,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 id = label.label_token,
                 label = readable_name ?: drawer_context.getString(R.string.folder_decrypt_failed),
                 icon = Icons.Outlined.Folder,
-                count = label.item_count?.toInt() ?: 0,
+                count = label.unread_count?.toInt() ?: 0,
             )
         }
 

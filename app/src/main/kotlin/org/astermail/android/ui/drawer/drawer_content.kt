@@ -492,7 +492,7 @@ fun DrawerContent(
                                 icon = item.icon,
                                 label = item.label,
                                 count = item.count,
-                                is_unread_count = false,
+                                is_unread_count = true,
                                 selected = item.id == selected_id,
                                 on_click = {
                                     on_select(item.id)

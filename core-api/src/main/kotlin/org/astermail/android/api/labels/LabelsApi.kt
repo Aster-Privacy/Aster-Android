@@ -52,6 +52,7 @@ data class LabelItem(
     val sort_order: Int = 0,
     val parent_token: String? = null,
     val item_count: Long? = null,
+    val unread_count: Long? = null,
     val created_at: String? = null,
     val updated_at: String? = null,
 )
