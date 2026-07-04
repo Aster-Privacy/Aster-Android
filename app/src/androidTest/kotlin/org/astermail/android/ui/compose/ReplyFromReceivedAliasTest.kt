@@ -22,6 +22,7 @@
 package org.astermail.android.ui.compose
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,18 +36,21 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.astermail.android.design.AsterTheme
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 //
-// Reproduces the compose "From" bug where replying defaulted to the pinned
-// sender instead of the alias the original message was received on. The fixed
-// resolution mirrors compose_screen.kt: received_on_alias (the user-owned
-// address in the original message's To/Cc) takes priority over the pinned
-// primary sender.
+// Exercises the REAL production reply-From resolution (compute_received_on_alias /
+// resolve_reply_from_alias in reply_from_resolver.kt, the exact functions
+// ComposeScreen calls). The compose harness drives the same rememberSaveable +
+// LaunchedEffect state pattern as ComposeScreen using those production functions.
 //
 @RunWith(AndroidJUnit4::class)
 class ReplyFromReceivedAliasTest {
@@ -54,94 +58,128 @@ class ReplyFromReceivedAliasTest {
     @get:Rule
     val compose_rule = createComposeRule()
 
-    private val primary = "myfeedreader34@aster.cx"
+    private val primary = "familyownervigkl@astermail.org"
     private val received_alias = "shopdeals@aster.cx"
     private val other_alias = "news@aster.cx"
+    private val pinned = "quick.leaf91@astermail.org"
+    private val ghost = "ghost.robin7x9q@astermail.org"
+    private val options = listOf(primary, received_alias, other_alias, pinned)
 
-    // mirrors the async SettingsViewModel + loaded thread state
-    private class State {
-        var user_email by mutableStateOf("")
-        var aliases by mutableStateOf(listOf<String>())
-        var default_sender by mutableStateOf("")
-        var reply_to_addresses by mutableStateOf(listOf<String>())
-    }
-
-    private fun resolve_options(user_email: String, aliases: List<String>): List<String> {
-        val options = mutableListOf<String>()
-        if (user_email.isNotBlank()) options.add(user_email)
-        aliases.forEach { if (it.isNotBlank() && it !in options) options.add(it) }
-        if (options.isEmpty()) options.add("you@astermail.org")
-        return options.toList()
-    }
-
-    @Composable
-    private fun reply_from_field(state: State) {
-        val alias_options = resolve_options(state.user_email, state.aliases)
-        val primary_sender_email = state.default_sender.takeIf { it.isNotBlank() }
-            ?: state.user_email
-
-        val received_on_alias = remember(state.reply_to_addresses, alias_options, state.user_email) {
-            val options_by_lower = alias_options.associateBy { it.lowercase() }
-            val matches = state.reply_to_addresses
-                .map { it.trim() }
-                .filter { it.isNotBlank() }
-                .mapNotNull { options_by_lower[it.lowercase()] }
-            matches.firstOrNull { it.lowercase() != state.user_email.lowercase() } ?: matches.firstOrNull()
-        }
-
-        var from_alias by rememberSaveable {
-            val initial = received_on_alias
-                ?: primary_sender_email.takeIf { it.isNotBlank() && it in alias_options }
-                ?: alias_options.firstOrNull().orEmpty()
-            mutableStateOf(initial)
-        }
-        var from_manually_selected by rememberSaveable { mutableStateOf(false) }
-
-        LaunchedEffect(alias_options, received_on_alias, primary_sender_email) {
-            if (from_manually_selected) return@LaunchedEffect
-            val resolved = received_on_alias
-                ?: primary_sender_email.takeIf { it.isNotBlank() && it in alias_options }
-                ?: alias_options.firstOrNull().orEmpty()
-            if (resolved.isNotBlank() && resolved != from_alias) from_alias = resolved
-        }
-
-        Column { Text(from_alias, modifier = Modifier.testTag("from_value")) }
+    @Test
+    fun received_on_alias_beats_pinned_and_primary() {
+        val received = compute_received_on_alias(listOf(received_alias), options, primary)
+        assertEquals(received_alias, received)
+        val from = resolve_reply_from_alias(received, null, pinned, options)
+        assertEquals(received_alias, from)
     }
 
     @Test
-    fun reply_defaults_to_received_on_alias_not_pinned() {
-        val state = State()
-        compose_rule.setContent { AsterTheme { reply_from_field(state) } }
-        compose_rule.waitForIdle()
+    fun prefers_non_primary_when_both_addressed() {
+        val received = compute_received_on_alias(listOf(primary, received_alias), options, primary)
+        assertEquals(received_alias, received)
+    }
 
-        // settings + the replied-to message land: mail was received on received_alias,
-        // but the pinned default sender is primary
-        compose_rule.runOnUiThread {
-            state.user_email = primary
-            state.aliases = listOf(received_alias, other_alias)
-            state.default_sender = primary
-            state.reply_to_addresses = listOf(received_alias)
+    @Test
+    fun matches_case_insensitively_and_trims() {
+        val received = compute_received_on_alias(listOf("  ShopDeals@ASTER.cx "), options, primary)
+        assertEquals(received_alias, received)
+    }
+
+    @Test
+    fun matches_alias_present_in_cc() {
+        val received = compute_received_on_alias(
+            listOf("stranger@example.com", other_alias),
+            options,
+            primary,
+        )
+        assertEquals(other_alias, received)
+    }
+
+    @Test
+    fun no_owned_recipient_falls_back_to_pinned() {
+        val received = compute_received_on_alias(listOf("someone-else@example.com"), options, primary)
+        assertNull(received)
+        val from = resolve_reply_from_alias(received, null, pinned, options)
+        assertEquals(pinned, from)
+    }
+
+    @Test
+    fun received_on_primary_stays_primary() {
+        val received = compute_received_on_alias(listOf(primary), options, primary)
+        assertEquals(primary, received)
+        val from = resolve_reply_from_alias(received, null, pinned, options)
+        assertEquals(primary, from)
+    }
+
+    @Test
+    fun ghost_match_used_when_no_received_alias() {
+        val ghost_options = options + ghost
+        val from = resolve_reply_from_alias(null, ghost, pinned, ghost_options)
+        assertEquals(ghost, from)
+    }
+
+    @Test
+    fun received_alias_beats_ghost_match() {
+        val ghost_options = options + ghost
+        val from = resolve_reply_from_alias(received_alias, ghost, pinned, ghost_options)
+        assertEquals(received_alias, from)
+    }
+
+    // Drives the real production resolver through ComposeScreen's actual state
+    // pattern: initial value at first composition (thread not yet loaded), then
+    // the async thread load supplies the received alias via LaunchedEffect.
+    @Composable
+    private fun reply_from_harness(
+        received_on_alias: String?,
+        thread_ghost_match: String?,
+    ) {
+        var from_alias by rememberSaveable {
+            mutableStateOf(resolve_reply_from_alias(received_on_alias, thread_ghost_match, pinned, options))
         }
-        compose_rule.waitForIdle()
+        var from_manually_selected by rememberSaveable { mutableStateOf(false) }
 
+        LaunchedEffect(received_on_alias, thread_ghost_match) {
+            if (from_manually_selected) return@LaunchedEffect
+            val resolved = resolve_reply_from_alias(received_on_alias, thread_ghost_match, pinned, options)
+            if (resolved.isNotBlank() && resolved != from_alias) from_alias = resolved
+        }
+
+        Column {
+            Text(from_alias, modifier = Modifier.testTag("from_value"))
+            Button(onClick = {
+                from_alias = other_alias
+                from_manually_selected = true
+            }) { Text("pick_other") }
+        }
+    }
+
+    @Test
+    fun harness_resolves_received_alias_after_async_load() {
+        var received by mutableStateOf<String?>(null)
+        compose_rule.setContent { AsterTheme { reply_from_harness(received, null) } }
+        compose_rule.waitForIdle()
+        // before the thread loads, nothing owned resolved -> pinned fallback
+        compose_rule.onNodeWithTag("from_value").assertTextEquals(pinned)
+
+        compose_rule.runOnUiThread { received = received_alias }
+        compose_rule.waitForIdle()
+        // async thread load supplies the received alias -> From snaps to it
         compose_rule.onNodeWithTag("from_value").assertTextEquals(received_alias)
     }
 
     @Test
-    fun reply_falls_back_to_pinned_when_no_owned_recipient() {
-        val state = State()
-        compose_rule.setContent { AsterTheme { reply_from_field(state) } }
+    fun harness_manual_selection_survives_async_load() {
+        var received by mutableStateOf<String?>(null)
+        compose_rule.setContent { AsterTheme { reply_from_harness(received, null) } }
         compose_rule.waitForIdle()
 
-        // the original message was addressed to a non-owned address only
-        compose_rule.runOnUiThread {
-            state.user_email = primary
-            state.aliases = listOf(received_alias, other_alias)
-            state.default_sender = primary
-            state.reply_to_addresses = listOf("someone-else@example.com")
-        }
+        compose_rule.onNodeWithText("pick_other").performClick()
         compose_rule.waitForIdle()
+        compose_rule.onNodeWithTag("from_value").assertTextEquals(other_alias)
 
-        compose_rule.onNodeWithTag("from_value").assertTextEquals(primary)
+        compose_rule.runOnUiThread { received = received_alias }
+        compose_rule.waitForIdle()
+        // manual choice must not be overridden by the late received-alias resolve
+        compose_rule.onNodeWithTag("from_value").assertTextEquals(other_alias)
     }
 }
