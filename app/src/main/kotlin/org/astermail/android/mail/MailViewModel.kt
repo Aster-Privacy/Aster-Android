@@ -1452,6 +1452,9 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    suspend fun get_or_create_thread_token(original_email_id: String, existing_thread_token: String?): String? =
+        repository.get_or_create_thread_token(original_email_id, existing_thread_token)
+
     suspend fun send_email(
         to: List<String>,
         cc: List<String> = emptyList(),

@@ -540,6 +540,32 @@ class MailRepository @Inject constructor(
         }
     }
 
+    suspend fun get_or_create_thread_token(
+        original_email_id: String,
+        existing_thread_token: String?,
+    ): String? {
+        if (!existing_thread_token.isNullOrBlank()) return existing_thread_token
+        return try {
+            val digest = MessageDigest.getInstance("SHA-256")
+                .digest(("astermail-thread:" + original_email_id).toByteArray(Charsets.UTF_8))
+            val thread_token = android.util.Base64.encodeToString(digest, android.util.Base64.NO_WRAP)
+            val meta_json = org.json.JSONObject().apply {
+                put("created_from", original_email_id)
+                put("created_at", java.time.Instant.now().toString())
+            }.toString()
+            val (encrypted_meta, meta_nonce) = encrypt_envelope(meta_json)
+            try {
+                mail_api.create_thread(thread_token, encrypted_meta, meta_nonce)
+            } catch (e: org.astermail.android.api.ApiError.UnknownError) {
+                if (!e.detail.contains("already exists", ignoreCase = true)) throw e
+            }
+            mail_api.link_mail_to_thread(original_email_id, thread_token)
+            thread_token
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
     suspend fun fetch_single_message(item_id: String): Result<InboxItem> = runCatching {
         val item = mail_api.get_message(item_id)
         decrypt_inbox_item(item)

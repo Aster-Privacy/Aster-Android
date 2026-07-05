@@ -876,6 +876,11 @@ fun ComposeScreen(
         }
         scope.launch {
             val display_name = settings_state.user?.display_name
+            val resolved_thread_token = if (!reply_to.isNullOrBlank() && (mode == "reply" || mode == "reply_all")) {
+                mail_vm.get_or_create_thread_token(reply_to, thread_state.item?.thread_token)
+            } else {
+                null
+            }
             val result = mail_vm.send_email(
                 to = snapshot_to,
                 cc = snapshot_cc,
@@ -884,6 +889,7 @@ fun ComposeScreen(
                 body_html = body_html,
                 sender_email = snapshot_from,
                 sender_display_name = display_name,
+                thread_token = resolved_thread_token,
                 expires_at = expires_at_iso,
                 expiry_password = expiry_password,
                 attachments = attachment_payloads,
