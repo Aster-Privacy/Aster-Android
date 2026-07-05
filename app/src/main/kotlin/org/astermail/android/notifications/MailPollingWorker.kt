@@ -134,24 +134,24 @@ class MailPollingWorker(
             return Result.retry()
         }
         val new_unread = stats.unread
-        val new_inbox = stats.inbox
+        val new_notifiable = stats.notifiable ?: stats.inbox
 
-        val has_baseline = prefs.contains(KEY_CACHED_INBOX)
-        val cached_inbox = prefs.getInt(KEY_CACHED_INBOX, new_inbox)
-        val last_notified_inbox = prefs.getInt(KEY_LAST_NOTIFIED_INBOX, -1)
+        val has_baseline = prefs.contains(KEY_CACHED_NOTIFIABLE)
+        val cached_notifiable = prefs.getInt(KEY_CACHED_NOTIFIABLE, new_notifiable)
+        val last_notified = prefs.getInt(KEY_LAST_NOTIFIED_COUNT, -1)
 
-        val has_pending_new_mail = has_baseline && new_inbox > cached_inbox &&
-            new_unread > 0 && new_inbox != last_notified_inbox
+        val has_pending_new_mail = has_baseline && new_notifiable > cached_notifiable &&
+            new_notifiable != last_notified
         val suppressed_by_quiet_hours = has_pending_new_mail && is_quiet_hours_now(context)
         if (has_pending_new_mail && !suppressed_by_quiet_hours) {
-            val arrived = (new_inbox - cached_inbox).coerceAtMost(new_unread)
+            val arrived = new_notifiable - cached_notifiable
             notify_for_new_mail(arrived)
-            prefs.edit().putInt(KEY_LAST_NOTIFIED_INBOX, new_inbox).apply()
+            prefs.edit().putInt(KEY_LAST_NOTIFIED_COUNT, new_notifiable).apply()
         }
 
         val editor = prefs.edit().putInt(KEY_CACHED_UNREAD, new_unread)
         if (!suppressed_by_quiet_hours) {
-            editor.putInt(KEY_CACHED_INBOX, new_inbox)
+            editor.putInt(KEY_CACHED_NOTIFIABLE, new_notifiable)
         }
         editor.apply()
         schedule_next(context)
@@ -234,9 +234,9 @@ class MailPollingWorker(
         const val KEY_FORCE_NOTIFY = "force_notify"
         private const val PREFS_NAME = "mail_polling_prefs"
         private const val KEY_CACHED_UNREAD = "cached_unread_count"
-        private const val KEY_CACHED_INBOX = "cached_inbox_count"
+        private const val KEY_CACHED_NOTIFIABLE = "cached_notifiable_count"
         private const val KEY_PUSH_ENABLED = "push_notifications_enabled"
-        private const val KEY_LAST_NOTIFIED_INBOX = "last_notified_inbox_count"
+        private const val KEY_LAST_NOTIFIED_COUNT = "last_notified_notifiable_count"
         private const val KEY_PRIVATE_NOTIFICATIONS = "private_notifications"
         private const val KEY_NOTIFY_NEW_EMAIL = "notify_new_email"
         private const val KEY_QUIET_HOURS_ENABLED = "quiet_hours_enabled"
