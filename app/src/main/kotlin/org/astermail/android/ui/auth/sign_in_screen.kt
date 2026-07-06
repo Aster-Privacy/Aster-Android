@@ -134,8 +134,8 @@ fun SignInScreen(
     val submit: () -> Unit = {
         if (can_submit) {
             keyboard_controller?.hide()
-            val local_part = email.trim().substringBefore("@")
-            val full_email = "$local_part@$email_domain"
+            val trimmed = email.trim()
+            val full_email = if (trimmed.contains("@")) trimmed else "$trimmed@$email_domain"
             view_model.submit_login(full_email, password, captcha_token)
         }
     }
@@ -209,8 +209,24 @@ fun SignInScreen(
 
                 AsterTextField(
                     value = email,
-                    onValueChange = {
-                        email = it
+                    onValueChange = { raw ->
+                        val at_index = raw.indexOf('@')
+                        val matched = if (at_index != -1) {
+                            val domain_part = raw.substring(at_index + 1).lowercase()
+                            when {
+                                domain_part == "astermail.org" || domain_part.endsWith(".astermail.org") -> "astermail.org"
+                                domain_part == "aster.cx" || domain_part.endsWith(".aster.cx") -> "aster.cx"
+                                else -> null
+                            }
+                        } else {
+                            null
+                        }
+                        if (matched != null) {
+                            email_domain = matched
+                            email = raw.substring(0, at_index)
+                        } else {
+                            email = raw
+                        }
                         if (state is AuthUiState.Error) view_model.reset_state()
                     },
                     label = stringResource(R.string.username),
