@@ -276,6 +276,7 @@
     <string name="swipe_mark_as_unread">Mark as unread</string>
     <string name="swipe_report_spam">Report spam</string>
     <string name="swipe_move_to_inbox">Move to inbox</string>
+    <string name="swipe_none">None</string>
 
     <!-- Email row -->
     <string name="has_attachment">Has attachment</string>

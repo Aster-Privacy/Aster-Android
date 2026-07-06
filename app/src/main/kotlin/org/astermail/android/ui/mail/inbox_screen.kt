@@ -1462,6 +1462,8 @@ private fun swipeable_thread_row(
             state = dismiss_state,
             modifier = Modifier,
             gesturesEnabled = gesture_is_horizontal && !is_dismissed,
+            enableDismissFromStartToEnd = swipe_start_action != "none",
+            enableDismissFromEndToStart = swipe_end_action != "none",
             backgroundContent = {
                 val direction = dismiss_state.dismissDirection
                 val (bg, align, icon, label) = when (direction) {
@@ -1541,6 +1543,7 @@ private fun swipe_action_label(action: String): String = when (action) {
     "restore_trash" -> stringResource(R.string.swipe_restore)
     "unmark_spam" -> stringResource(R.string.swipe_not_spam)
     "delete_permanent" -> stringResource(R.string.swipe_delete_forever)
+    "none" -> ""
     else -> stringResource(R.string.swipe_archive)
 }
 

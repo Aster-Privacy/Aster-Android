@@ -208,6 +208,7 @@
     <string name="swipe_mark_as_unread">Отметить как непрочитанное</string>
     <string name="swipe_report_spam">Сообщить о спаме</string>
     <string name="swipe_move_to_inbox">Переместить во входящие</string>
+    <string name="swipe_none">Нет</string>
 
     <string name="has_attachment">есть вложение</string>
     <string name="starred">избранное</string>

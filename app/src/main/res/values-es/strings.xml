@@ -209,6 +209,7 @@
     <string name="swipe_mark_as_unread">Marcar como no leído</string>
     <string name="swipe_report_spam">Reportar como spam</string>
     <string name="swipe_move_to_inbox">Mover a bandeja de entrada</string>
+    <string name="swipe_none">Ninguno</string>
 
     <string name="has_attachment">tiene adjunto</string>
     <string name="starred">destacado</string>

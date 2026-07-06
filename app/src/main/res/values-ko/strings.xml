@@ -208,6 +208,7 @@
     <string name="swipe_mark_as_unread">읽지 않음으로 표시</string>
     <string name="swipe_report_spam">스팸 신고</string>
     <string name="swipe_move_to_inbox">받은 편지함으로 이동</string>
+    <string name="swipe_none">없음</string>
 
     <string name="has_attachment">첨부 파일 있음</string>
     <string name="starred">별표 표시됨</string>

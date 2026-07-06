@@ -208,6 +208,7 @@
     <string name="swipe_mark_as_unread">Okunmadı olarak işaretle</string>
     <string name="swipe_report_spam">Spam olarak bildir</string>
     <string name="swipe_move_to_inbox">Gelen kutusuna taşı</string>
+    <string name="swipe_none">Yok</string>
 
     <string name="has_attachment">ek var</string>
     <string name="starred">yıldızlı</string>

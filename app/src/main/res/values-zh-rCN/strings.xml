@@ -208,6 +208,7 @@
     <string name="swipe_mark_as_unread">标为未读</string>
     <string name="swipe_report_spam">举报垃圾邮件</string>
     <string name="swipe_move_to_inbox">移至收件箱</string>
+    <string name="swipe_none">无</string>
 
     <string name="has_attachment">有附件</string>
     <string name="starred">已加星标</string>

@@ -208,6 +208,7 @@
     <string name="swipe_mark_as_unread">未読にする</string>
     <string name="swipe_report_spam">スパムを報告</string>
     <string name="swipe_move_to_inbox">受信トレイに移動</string>
+    <string name="swipe_none">なし</string>
 
     <string name="has_attachment">添付ファイルあり</string>
     <string name="starred">スター付き</string>

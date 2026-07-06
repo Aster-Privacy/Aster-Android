@@ -208,6 +208,7 @@
     <string name="swipe_mark_as_unread">Segna come non letto</string>
     <string name="swipe_report_spam">Segnala come spam</string>
     <string name="swipe_move_to_inbox">Sposta nella posta in arrivo</string>
+    <string name="swipe_none">Nessuna</string>
 
     <string name="has_attachment">ha allegato</string>
     <string name="starred">preferito</string>

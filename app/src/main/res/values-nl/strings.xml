@@ -208,6 +208,7 @@
     <string name="swipe_mark_as_unread">Als ongelezen markeren</string>
     <string name="swipe_report_spam">Als spam melden</string>
     <string name="swipe_move_to_inbox">Naar inbox verplaatsen</string>
+    <string name="swipe_none">Geen</string>
 
     <string name="has_attachment">heeft bijlage</string>
     <string name="starred">met ster</string>
