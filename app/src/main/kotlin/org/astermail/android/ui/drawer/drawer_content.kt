@@ -22,6 +22,8 @@
 package org.astermail.android.ui.drawer
 
 import org.astermail.android.BuildConfig
+import android.content.Context
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -237,6 +239,12 @@ private val label_icon_presets: List<Pair<String, ImageVector>> = listOf(
 private fun parse_hex_color(hex: String): Color =
     parse_hex_color_safe(hex) ?: Color(0xFF3B82F6)
 
+private const val sidebar_prefs_name = "aster_sidebar"
+private const val key_more_collapsed = "more_collapsed"
+private const val key_folders_collapsed = "folders_collapsed"
+private const val key_labels_collapsed = "labels_collapsed"
+private const val key_aliases_collapsed = "aliases_collapsed"
+
 @Composable
 fun DrawerContent(
     selected_id: String,
@@ -281,20 +289,37 @@ fun DrawerContent(
     val current_workspace = user_email
     val clipboard = LocalClipboardManager.current
 
-    var more_expanded by rememberSaveable { mutableStateOf(false) }
-    var folders_expanded by rememberSaveable { mutableStateOf(false) }
-    var labels_expanded by rememberSaveable { mutableStateOf(false) }
-    var aliases_expanded by rememberSaveable { mutableStateOf(false) }
+    val sidebar_prefs_context = LocalContext.current
+    val sidebar_prefs = remember { sidebar_prefs_context.getSharedPreferences(sidebar_prefs_name, Context.MODE_PRIVATE) }
+
+    var more_expanded by rememberSaveable {
+        mutableStateOf(!sidebar_prefs.getBoolean(key_more_collapsed, false))
+    }
+    var folders_expanded by rememberSaveable {
+        mutableStateOf(!sidebar_prefs.getBoolean(key_folders_collapsed, false))
+    }
+    var labels_expanded by rememberSaveable {
+        mutableStateOf(!sidebar_prefs.getBoolean(key_labels_collapsed, false))
+    }
+    var aliases_expanded by rememberSaveable {
+        mutableStateOf(!sidebar_prefs.getBoolean(key_aliases_collapsed, false))
+    }
     var aliases_show_all by remember { mutableStateOf(false) }
     val aliases_collapsed_count = 5
     var prefs_synced by rememberSaveable { mutableStateOf(false) }
 
     androidx.compose.runtime.LaunchedEffect(preferences_loaded) {
         if (preferences_loaded && !prefs_synced) {
-            more_expanded = !initial_more_collapsed
-            folders_expanded = !initial_folders_collapsed
-            labels_expanded = !initial_labels_collapsed
-            aliases_expanded = !initial_aliases_collapsed
+            if (!sidebar_prefs.contains(key_more_collapsed)) more_expanded = !initial_more_collapsed
+            if (!sidebar_prefs.contains(key_folders_collapsed)) folders_expanded = !initial_folders_collapsed
+            if (!sidebar_prefs.contains(key_labels_collapsed)) labels_expanded = !initial_labels_collapsed
+            if (!sidebar_prefs.contains(key_aliases_collapsed)) aliases_expanded = !initial_aliases_collapsed
+            sidebar_prefs.edit()
+                .putBoolean(key_more_collapsed, !more_expanded)
+                .putBoolean(key_folders_collapsed, !folders_expanded)
+                .putBoolean(key_labels_collapsed, !labels_expanded)
+                .putBoolean(key_aliases_collapsed, !aliases_expanded)
+                .apply()
             prefs_synced = true
         }
     }
@@ -418,6 +443,7 @@ fun DrawerContent(
                 expanded = more_expanded,
                 on_toggle = {
                     more_expanded = !more_expanded
+                    sidebar_prefs.edit().putBoolean(key_more_collapsed, !more_expanded).apply()
                     on_sidebar_toggle("sidebar_more_collapsed", !more_expanded)
                 },
             )
@@ -471,6 +497,7 @@ fun DrawerContent(
                 expanded = folders_expanded,
                 on_toggle = {
                     folders_expanded = !folders_expanded
+                    sidebar_prefs.edit().putBoolean(key_folders_collapsed, !folders_expanded).apply()
                     on_sidebar_toggle("sidebar_folders_collapsed", !folders_expanded)
                 },
                 show_add = true,
@@ -511,6 +538,7 @@ fun DrawerContent(
                 expanded = labels_expanded,
                 on_toggle = {
                     labels_expanded = !labels_expanded
+                    sidebar_prefs.edit().putBoolean(key_labels_collapsed, !labels_expanded).apply()
                     on_sidebar_toggle("sidebar_labels_collapsed", !labels_expanded)
                 },
                 show_add = true,
@@ -550,6 +578,7 @@ fun DrawerContent(
                 expanded = aliases_expanded,
                 on_toggle = {
                     aliases_expanded = !aliases_expanded
+                    sidebar_prefs.edit().putBoolean(key_aliases_collapsed, !aliases_expanded).apply()
                     on_sidebar_toggle("sidebar_aliases_collapsed", !aliases_expanded)
                 },
                 show_add = true,
