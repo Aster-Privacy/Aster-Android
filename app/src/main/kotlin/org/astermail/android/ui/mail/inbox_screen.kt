@@ -113,6 +113,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
@@ -158,6 +159,8 @@ fun InboxScreen(
     display_title: String? = null,
     inbox_category: String = "primary",
     on_folder_change: (String) -> Unit = {},
+    custom_folders: List<Pair<String, String>> = emptyList(),
+    on_custom_folder_change: (String, String) -> Unit = { _, _ -> },
 ) {
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
@@ -632,6 +635,8 @@ fun InboxScreen(
                         show_divider = scrolled_elevation,
                         current_folder = current_folder,
                         on_folder_change = on_folder_change,
+                        custom_folders = custom_folders,
+                        on_custom_folder_change = on_custom_folder_change,
                     )
                 }
             }
@@ -1040,6 +1045,8 @@ private fun inbox_top_bar(
     show_divider: Boolean,
     current_folder: String = "inbox",
     on_folder_change: (String) -> Unit = {},
+    custom_folders: List<Pair<String, String>> = emptyList(),
+    on_custom_folder_change: (String, String) -> Unit = { _, _ -> },
 ) {
     val colors = AsterMaterial.colors
     val divider_alpha by animateFloatAsState(
@@ -1118,6 +1125,28 @@ private fun inbox_top_bar(
                                 if (id != current_folder) on_folder_change(id)
                             },
                         )
+                    }
+                    if (custom_folders.isNotEmpty()) {
+                        AsterDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        custom_folders.forEach { (id, name) ->
+                            DropdownMenuItem(
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                                text = {
+                                    Text(
+                                        text = name,
+                                        fontSize = 15.sp,
+                                        fontWeight = if (id == current_folder) FontWeight.SemiBold else FontWeight.Normal,
+                                        color = if (id == current_folder) colors.accent_blue else colors.text_primary,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                },
+                                onClick = {
+                                    folder_menu_open = false
+                                    if (id != current_folder) on_custom_folder_change(id, name)
+                                },
+                            )
+                        }
                     }
                 }
             }

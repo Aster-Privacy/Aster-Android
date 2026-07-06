@@ -1196,6 +1196,15 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
             )
         }
 
+    val quick_custom_folders = settings_state.labels
+        .filter { !it.is_system }
+        .filter { it.folder_type == "folder" || it.folder_type == "custom" }
+        .mapNotNull { label ->
+            val readable_name = label.encrypted_name?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
+                ?: return@mapNotNull null
+            label.label_token to readable_name
+        }
+
     val label_colors = listOf(
         Color(0xFF3B82F6),
         Color(0xFF22C55E),
@@ -1438,6 +1447,13 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                                 filter_kind = null
                                 selected_folder = id
                             },
+                            custom_folders = quick_custom_folders,
+                            on_custom_folder_change = { id, name ->
+                                filter_kind = "folder"
+                                filter_value = id
+                                filter_name = name
+                                selected_folder = id
+                            },
                         )
                     }
                     selected_folder == "subscriptions" -> {
@@ -1474,6 +1490,13 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             inbox_category = inbox_category,
                             display_title = if (selected_folder == "inbox" && categories_enabled) category_titles[inbox_category] else null,
                             on_folder_change = { selected_folder = it },
+                            custom_folders = quick_custom_folders,
+                            on_custom_folder_change = { id, name ->
+                                filter_kind = "folder"
+                                filter_value = id
+                                filter_name = name
+                                selected_folder = id
+                            },
                         )
                     }
                 }
