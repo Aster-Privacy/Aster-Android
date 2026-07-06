@@ -35,6 +35,8 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -1269,7 +1271,7 @@ fun MailDetailScreen(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun expanded_message(
     msg: ThreadMessage,
@@ -1301,6 +1303,15 @@ private fun expanded_message(
     can_collapse: Boolean = true,
 ) {
     val colors = AsterMaterial.colors
+    val context = LocalContext.current
+    val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
+    val copied_label = stringResource(R.string.copied)
+    val copy_email = { email: String ->
+        haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+        val cm = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        cm.setPrimaryClip(android.content.ClipData.newPlainText("email_address", email))
+        android.widget.Toast.makeText(context, copied_label, android.widget.Toast.LENGTH_SHORT).show()
+    }
     var show_details by remember { mutableStateOf(false) }
     val tracker_count = remember(msg.body_html, msg.trackers_blocked) {
         val local = if (msg.body_html != null) count_external_content(msg.body_html).tracker_count else 0
@@ -1341,6 +1352,10 @@ private fun expanded_message(
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.combinedClickable(
+                        onClick = on_collapse,
+                        onLongClick = { copy_email(msg.sender_email) },
+                    ),
                 )
                 if (!msg.sender_name.equals(msg.sender_email, ignoreCase = true)) {
                     Spacer(Modifier.height(1.dp))
@@ -1350,6 +1365,10 @@ private fun expanded_message(
                         fontSize = 12.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.combinedClickable(
+                            onClick = on_collapse,
+                            onLongClick = { copy_email(msg.sender_email) },
+                        ),
                     )
                 }
                 Spacer(Modifier.height(2.dp))
@@ -1359,6 +1378,13 @@ private fun expanded_message(
                     fontSize = 12.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.combinedClickable(
+                        onClick = on_collapse,
+                        onLongClick = {
+                            val recipient = msg.to_addresses.joinToString(", ").ifBlank { msg.to_label }
+                            copy_email(recipient)
+                        },
+                    ),
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
