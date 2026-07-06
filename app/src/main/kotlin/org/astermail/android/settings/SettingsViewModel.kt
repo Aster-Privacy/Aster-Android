@@ -755,11 +755,14 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    suspend fun check_directory_availability(key: String): Boolean {
+    suspend fun check_directory_availability(key: String, domain: String): Boolean {
         return try {
-            val dir_hash = compute_directory_key_hash(key.lowercase())
             val response = settings_api.check_directory_availability(
-                DirectoryAvailabilityRequest(directory_hash = dir_hash)
+                DirectoryAvailabilityRequest(
+                    directory_hash = compute_directory_address_hash(key, domain),
+                    legacy_hash = compute_directory_key_hash(key.lowercase()),
+                    domain = domain.lowercase(),
+                )
             )
             response.available
         } catch (_: Throwable) {
@@ -782,11 +785,12 @@ class SettingsViewModel @Inject constructor(
 
     suspend fun create_directory_now(key: String, domain: String, captcha_token: String? = null): Boolean {
         return try {
-            val dir_hash = compute_directory_key_hash(key.lowercase())
+            val dir_hash = compute_directory_address_hash(key, domain)
             val (enc_label, label_nonce) = encrypt_alias_field(key.lowercase())
             settings_api.create_directory(
                 CreateDirectoryRequest(
                     directory_hash = dir_hash,
+                    legacy_hash = compute_directory_key_hash(key.lowercase()),
                     encrypted_label = enc_label,
                     label_nonce = label_nonce,
                     domain = domain,
@@ -2627,6 +2631,12 @@ class SettingsViewModel @Inject constructor(
 
     private fun compute_directory_key_hash(key: String): String {
         val hash = MessageDigest.getInstance("SHA-256").digest(key.lowercase().toByteArray(Charsets.UTF_8))
+        return android.util.Base64.encodeToString(hash, android.util.Base64.NO_WRAP)
+    }
+
+    private fun compute_directory_address_hash(key: String, domain: String): String {
+        val data = "${key.lowercase()}@${domain.lowercase()}".toByteArray(Charsets.UTF_8)
+        val hash = MessageDigest.getInstance("SHA-256").digest(data)
         return android.util.Base64.encodeToString(hash, android.util.Base64.NO_WRAP)
     }
 

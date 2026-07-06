@@ -826,7 +826,7 @@ private fun directories_tab(
     val separators = listOf(".", "+", "#")
     val key_valid = dir_key.matches(Regex("[a-z0-9-]{2,}"))
 
-    LaunchedEffect(dir_key) {
+    LaunchedEffect(dir_key, dir_domain) {
         if (!key_valid) {
             dir_availability = null
             dir_checking = false
@@ -835,7 +835,7 @@ private fun directories_tab(
         dir_checking = true
         dir_availability = null
         delay(500)
-        dir_availability = vm.check_directory_availability(dir_key)
+        dir_availability = vm.check_directory_availability(dir_key, dir_domain)
         dir_checking = false
     }
 

@@ -229,6 +229,7 @@ data class ListDirectoriesResponse(
 @Serializable
 data class CreateDirectoryRequest(
     val directory_hash: String,
+    val legacy_hash: String? = null,
     val encrypted_label: String? = null,
     val label_nonce: String? = null,
     val domain: String,
@@ -245,6 +246,8 @@ data class CreateDirectoryResponse(
 @Serializable
 data class DirectoryAvailabilityRequest(
     val directory_hash: String,
+    val legacy_hash: String? = null,
+    val domain: String? = null,
 )
 
 @Serializable
