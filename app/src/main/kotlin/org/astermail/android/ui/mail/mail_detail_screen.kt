@@ -2727,12 +2727,13 @@ private object html_cache {
     }
     @Synchronized fun get(key: Long): String? = store[key]
     @Synchronized fun put(key: Long, value: String) { store[key] = value }
-    fun key(html_hash: Int, allow_external: Boolean, bg_hex: String, screen_w: Int = 0): Long {
+    fun key(html_hash: Int, allow_external: Boolean, bg_hex: String, screen_w: Int = 0, force_dark: Boolean = false): Long {
         var h = html_hash.toLong() and 0xFFFFFFFFL
         h = h * 31L + (if (allow_external) 1L else 0L)
         h = h * 31L + bg_hex.hashCode().toLong()
         h = h * 31L + org.astermail.android.BuildConfig.VERSION_CODE.toLong()
         h = h * 31L + screen_w.toLong()
+        h = h * 31L + (if (force_dark) 1L else 0L)
         return h
     }
 }
@@ -2803,6 +2804,7 @@ private fun email_html_view(
     }
     val forwarded_label = stringResource(R.string.forwarded_message_label)
     val image_blocked_label = stringResource(R.string.image_blocked_placeholder)
+    val force_dark_emails = is_dark && settings_state.preferences?.force_dark_emails == true
 
     var content_height_dp by remember(html) { mutableStateOf(0.dp) }
     var has_measured by remember(html) { mutableStateOf(false) }
@@ -2848,12 +2850,21 @@ private fun email_html_view(
                 "background-color:transparent;color:$fg_hex;margin:0;padding:6px 10px;font-family:$sys_font;font-size:14px;line-height:1.6;word-wrap:break-word"
         }
 
-        val dark_css = if (simple_dark) """
+        val invert_dark = force_dark_emails && is_html_body && !simple_dark
+        val dark_css = when {
+            simple_dark -> """
 html{color-scheme:dark!important}
 html,body{background-color:transparent!important;color:#e5e5e5!important}
 body *{color:inherit!important}
 a,a *{color:#60a5fa!important}
-""" else ""
+"""
+            invert_dark -> """
+html{background-color:#121212!important}
+body{filter:invert(0.93) hue-rotate(180deg)}
+body img,body picture,body video,body svg{filter:invert(1) hue-rotate(180deg)}
+"""
+            else -> ""
+        }
 
         val table_css = if (has_newsletter_layout) {
             "#m{max-width:100%!important;overflow-x:hidden!important;box-sizing:border-box!important;padding-left:16px!important;padding-right:16px!important}#m table{max-width:100%!important;width:100%!important}#m img{max-width:100%!important;height:auto!important}td,th{min-width:0!important;box-sizing:border-box!important;max-width:100%!important}#m td,#m th,#m p,#m h1,#m h2,#m h3,#m h4,#m h5,#m h6,#m div,#m span,#m a{white-space:normal!important;overflow-wrap:break-word!important;word-wrap:break-word!important}"
@@ -3137,9 +3148,9 @@ $dark_css
     val bg_color = if (!is_html_body_top) android.graphics.Color.TRANSPARENT
         else runCatching { android.graphics.Color.parseColor(bg_hex) }.getOrDefault(android.graphics.Color.BLACK)
 
-    val cache_key = remember(html, allow_external, bg_hex, screen_width_dp) { html_cache.key(html.hashCode(), allow_external, bg_hex, screen_width_dp) }
+    val cache_key = remember(html, allow_external, bg_hex, screen_width_dp, force_dark_emails) { html_cache.key(html.hashCode(), allow_external, bg_hex, screen_width_dp, force_dark_emails) }
     var prebuilt_html by remember(html, allow_external) { mutableStateOf<String?>(html_cache.get(cache_key)) }
-    var loaded_html by remember { mutableStateOf("") }
+    var loaded_built by remember { mutableStateOf("") }
     var loaded_external by remember { mutableStateOf(false) }
     val scale_ref = remember { floatArrayOf(1f) }
     val nl_scale_ref = remember { floatArrayOf(1f) }
@@ -3177,7 +3188,7 @@ $dark_css
         return proxy_external_urls(cid_normalized, proxy_base)
     }
 
-    LaunchedEffect(html, allow_external, bg_hex) {
+    LaunchedEffect(html, allow_external, bg_hex, force_dark_emails) {
         scale_ref[0] = 1f
         val cached = html_cache.get(cache_key)
         if (cached != null) {
@@ -3246,9 +3257,6 @@ $dark_css
 })()"""
                 val fit_and_measure_js = """(function(){window.__aster_fit&&window.__aster_fit();})()"""
                 val email_prefs = settings_vm.state.value.preferences
-                if (email_prefs?.force_dark_emails == true) {
-                    view?.evaluateJavascript("""(function(){var s=document.createElement('style');s.textContent='html,body,table,td,div,p{background-color:#141414!important;color:#f0f0f0!important}a{color:#818cf8!important}img{filter:brightness(0.85)}';document.head.appendChild(s);})()""", null)
-                }
                 if (email_prefs?.underline_links == true) {
                     view?.evaluateJavascript("""(function(){var s=document.createElement('style');s.textContent='a{text-decoration:underline!important}';document.head.appendChild(s);})()""", null)
                 }
@@ -3311,7 +3319,7 @@ $dark_css
         }
     }
 
-    Box(modifier = modifier.background(if (is_nl_ref[0]) androidx.compose.ui.graphics.Color.White else colors.bg_primary), contentAlignment = Alignment.Center) {
+    Box(modifier = modifier.background(if (is_nl_ref[0] && !force_dark_emails) androidx.compose.ui.graphics.Color.White else colors.bg_primary), contentAlignment = Alignment.Center) {
         if (!has_measured) {
             email_body_skeleton(
                 modifier = Modifier
@@ -3431,10 +3439,10 @@ $dark_css
                 web_view.settings.blockNetworkImage = !allow_external
                 web_view.settings.mixedContentMode =
                     android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
-                if (loaded_html != html || loaded_external != allow_external) {
-                    if (loaded_html != html) has_measured = false
-                    web_view.setBackgroundColor(if (is_newsletter) android.graphics.Color.WHITE else bg_color)
-                    loaded_html = html
+                if (loaded_built != built || loaded_external != allow_external) {
+                    if (loaded_built != built) has_measured = false
+                    web_view.setBackgroundColor(if (is_newsletter && !force_dark_emails) android.graphics.Color.WHITE else bg_color)
+                    loaded_built = built
                     loaded_external = allow_external
                     is_nl_ref[0] = is_newsletter
                     nl_scale_ref[0] = if (is_newsletter) {
