@@ -689,6 +689,7 @@
     <string name="no_link_available">Brak dostępnego linku</string>
     <string name="link_copied">Link skopiowany do schowka</string>
     <string name="copy_link">Kopiuj link</string>
+    <string name="share_link">Udostępnij link</string>
     <string name="credits_title">Środki</string>
     <string name="credits_subtitle">Zdobywaj środki Aster, wykonując różne zadania.</string>
     <string name="credits_balance_label">Dostępne saldo</string>

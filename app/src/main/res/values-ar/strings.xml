@@ -689,6 +689,7 @@
     <string name="no_link_available">لا يوجد رابط متاح</string>
     <string name="link_copied">تم نسخ الرابط إلى الحافظة</string>
     <string name="copy_link">نسخ الرابط</string>
+    <string name="share_link">مشاركة الرابط</string>
     <string name="credits_title">الأرصدة</string>
     <string name="credits_subtitle">اكسب أرصدة Aster من خلال إكمال مهام مختلفة.</string>
     <string name="credits_balance_label">الرصيد المتاح</string>

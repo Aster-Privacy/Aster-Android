@@ -3144,6 +3144,7 @@ $dark_css
     val scale_ref = remember { floatArrayOf(1f) }
     val nl_scale_ref = remember { floatArrayOf(1f) }
     val is_nl_ref = remember { booleanArrayOf(false) }
+    var long_pressed_link by remember { mutableStateOf<String?>(null) }
 
     val height_sink = remember {
         height_channel { h, exact ->
@@ -3377,6 +3378,32 @@ $dark_css
                         }
                         false
                     }
+                    setOnLongClickListener {
+                        val hit = hitTestResult
+                        fun is_web_link(href: String?): Boolean =
+                            href != null && (href.startsWith("http://") || href.startsWith("https://"))
+                        when (hit.type) {
+                            android.webkit.WebView.HitTestResult.SRC_ANCHOR_TYPE -> {
+                                val href = hit.extra
+                                if (is_web_link(href)) {
+                                    long_pressed_link = href
+                                    true
+                                } else {
+                                    false
+                                }
+                            }
+                            android.webkit.WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE -> {
+                                val handler = android.os.Handler(android.os.Looper.getMainLooper()) { msg ->
+                                    val href = msg.data.getString("url")
+                                    if (is_web_link(href)) long_pressed_link = href
+                                    true
+                                }
+                                requestFocusNodeHref(handler.obtainMessage())
+                                true
+                            }
+                            else -> false
+                        }
+                    }
                     webChromeClient = object : android.webkit.WebChromeClient() {
                         override fun onConsoleMessage(message: android.webkit.ConsoleMessage?): Boolean {
                             val msg = message?.message() ?: return false
@@ -3463,6 +3490,61 @@ $dark_css
                 }
             },
         )
+    }
+
+    long_pressed_link?.let { link ->
+        link_options_sheet(url = link, on_close = { long_pressed_link = null })
+    }
+}
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun link_options_sheet(
+    url: String,
+    on_close: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val context = LocalContext.current
+    val copied_label = stringResource(R.string.link_copied)
+    val state = rememberModalBottomSheetState()
+    ModalBottomSheet(
+        onDismissRequest = on_close,
+        sheetState = state,
+        containerColor = colors.bg_card,
+        tonalElevation = 0.dp,
+        dragHandle = { AsterDragHandle() },
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(top = AsterSpacing.xs),
+        ) {
+            Text(
+                text = url,
+                color = colors.text_secondary,
+                fontSize = 13.sp,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(horizontal = AsterSpacing.xl, vertical = AsterSpacing.sm),
+            )
+            AsterDivider()
+            sheet_row(stringResource(R.string.copy_link), colors.text_primary) {
+                val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("link", url))
+                Toast.makeText(context, copied_label, Toast.LENGTH_SHORT).show()
+                on_close()
+            }
+            sheet_row(stringResource(R.string.share_link), colors.text_primary) {
+                val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(android.content.Intent.EXTRA_TEXT, url)
+                }
+                context.startActivity(android.content.Intent.createChooser(send, null))
+                on_close()
+            }
+            Spacer(Modifier.height(AsterSpacing.md))
+        }
     }
 }
 

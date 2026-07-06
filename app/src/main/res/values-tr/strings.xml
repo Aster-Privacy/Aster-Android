@@ -689,6 +689,7 @@
     <string name="no_link_available">Bağlantı mevcut değil</string>
     <string name="link_copied">Bağlantı panoya kopyalandı</string>
     <string name="copy_link">Bağlantıyı kopyala</string>
+    <string name="share_link">Bağlantıyı paylaş</string>
     <string name="credits_title">Krediler</string>
     <string name="credits_subtitle">Farklı görevleri tamamlayarak Aster kredisi kazanın.</string>
     <string name="credits_balance_label">Kullanılabilir bakiye</string>

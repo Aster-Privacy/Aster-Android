@@ -964,6 +964,7 @@
     <string name="no_link_available">No link available</string>
     <string name="link_copied">Link copied to clipboard</string>
     <string name="copy_link">Copy Link</string>
+    <string name="share_link">Share link</string>
     <string name="stats">Stats</string>
     <string name="total_referrals">Total Referrals</string>
     <string name="pending">Pending</string>

@@ -689,6 +689,7 @@
     <string name="no_link_available">사용 가능한 링크 없음</string>
     <string name="link_copied">링크가 클립보드에 복사됨</string>
     <string name="copy_link">링크 복사</string>
+    <string name="share_link">링크 공유</string>
     <string name="credits_title">크레딧</string>
     <string name="credits_subtitle">다양한 작업을 완료하여 Aster 크레딧을 적립하세요.</string>
     <string name="credits_balance_label">사용 가능한 잔액</string>

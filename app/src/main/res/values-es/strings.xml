@@ -690,6 +690,7 @@
     <string name="no_link_available">No hay enlace disponible</string>
     <string name="link_copied">Enlace copiado al portapapeles</string>
     <string name="copy_link">Copiar enlace</string>
+    <string name="share_link">Compartir enlace</string>
     <string name="credits_title">Créditos</string>
     <string name="credits_subtitle">Gana créditos de Aster completando distintas tareas.</string>
     <string name="credits_balance_label">Saldo disponible</string>

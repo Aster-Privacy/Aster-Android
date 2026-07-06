@@ -731,6 +731,7 @@
     <string name="no_link_available">Aucun lien disponible</string>
     <string name="link_copied">Lien copié dans le presse-papiers</string>
     <string name="copy_link">Copier le lien</string>
+    <string name="share_link">Partager le lien</string>
     <string name="credits_title">Crédits</string>
     <string name="credits_subtitle">Gagnez des crédits Aster en accomplissant différentes tâches.</string>
     <string name="credits_balance_label">Solde disponible</string>

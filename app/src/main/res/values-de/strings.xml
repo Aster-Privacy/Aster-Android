@@ -690,6 +690,7 @@
     <string name="no_link_available">Kein Link verfügbar</string>
     <string name="link_copied">Link in Zwischenablage kopiert</string>
     <string name="copy_link">Link kopieren</string>
+    <string name="share_link">Link teilen</string>
     <string name="credits_title">Guthaben</string>
     <string name="credits_subtitle">Verdienen Sie Aster-Guthaben, indem Sie verschiedene Aufgaben erledigen.</string>
     <string name="credits_balance_label">Verfügbares Guthaben</string>

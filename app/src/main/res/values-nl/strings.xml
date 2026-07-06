@@ -689,6 +689,7 @@
     <string name="no_link_available">Geen link beschikbaar</string>
     <string name="link_copied">Link naar klembord gekopieerd</string>
     <string name="copy_link">Link kopiëren</string>
+    <string name="share_link">Link delen</string>
     <string name="credits_title">Tegoed</string>
     <string name="credits_subtitle">Verdien Aster-tegoed door verschillende taken te voltooien.</string>
     <string name="credits_balance_label">Beschikbaar saldo</string>

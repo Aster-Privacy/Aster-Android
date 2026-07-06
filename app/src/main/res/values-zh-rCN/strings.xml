@@ -689,6 +689,7 @@
     <string name="no_link_available">没有可用链接</string>
     <string name="link_copied">链接已复制到剪贴板</string>
     <string name="copy_link">复制链接</string>
+    <string name="share_link">分享链接</string>
     <string name="credits_title">积分</string>
     <string name="credits_subtitle">通过完成不同任务赚取 Aster 积分。</string>
     <string name="credits_balance_label">可用余额</string>

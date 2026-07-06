@@ -689,6 +689,7 @@
     <string name="no_link_available">Ссылка недоступна</string>
     <string name="link_copied">Ссылка скопирована в буфер обмена</string>
     <string name="copy_link">Копировать ссылку</string>
+    <string name="share_link">Поделиться ссылкой</string>
     <string name="credits_title">Бонусы</string>
     <string name="credits_subtitle">Зарабатывайте бонусы Aster, выполняя различные задания.</string>
     <string name="credits_balance_label">Доступный баланс</string>

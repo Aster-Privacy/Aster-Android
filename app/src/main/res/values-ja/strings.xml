@@ -689,6 +689,7 @@
     <string name="no_link_available">リンクがありません</string>
     <string name="link_copied">リンクをクリップボードにコピーしました</string>
     <string name="copy_link">リンクをコピー</string>
+    <string name="share_link">リンクを共有</string>
     <string name="credits_title">クレジット</string>
     <string name="credits_subtitle">さまざまなタスクを完了してAsterクレジットを獲得しましょう。</string>
     <string name="credits_balance_label">利用可能残高</string>
