@@ -3450,7 +3450,7 @@ $dark_css
                     label = "web_reveal",
                 )
                 Modifier
-                    .then(if (is_nl_ref[0]) Modifier.padding(horizontal = 12.dp) else Modifier)
+                    .padding(horizontal = 16.dp)
                     .height(animated_h)
                     .alpha(reveal)
             },
