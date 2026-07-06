@@ -372,6 +372,7 @@
     <string name="syncing">جارٍ المزامنة</string>
     <string name="sync_contacts">مزامنة جهات الاتصال</string>
     <string name="search_contacts">البحث في جهات الاتصال</string>
+    <string name="search_aliases">البحث في الأسماء المستعارة…</string>
     <string name="tab_all">الكل</string>
     <string name="tab_favorites">المفضلة</string>
     <string name="contacts_count">%d جهة اتصال</string>

@@ -372,6 +372,7 @@
     <string name="syncing">Eşitleniyor</string>
     <string name="sync_contacts">Kişileri eşitle</string>
     <string name="search_contacts">Kişilerde ara</string>
+    <string name="search_aliases">Rumuzlarda ara…</string>
     <string name="tab_all">Tümü</string>
     <string name="tab_favorites">Favoriler</string>
     <string name="contacts_count">%d kişi</string>

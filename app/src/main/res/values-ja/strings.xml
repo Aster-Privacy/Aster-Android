@@ -372,6 +372,7 @@
     <string name="syncing">同期中</string>
     <string name="sync_contacts">連絡先を同期</string>
     <string name="search_contacts">連絡先を検索</string>
+    <string name="search_aliases">エイリアスを検索…</string>
     <string name="tab_all">すべて</string>
     <string name="tab_favorites">お気に入り</string>
     <string name="contacts_count">%d件の連絡先</string>

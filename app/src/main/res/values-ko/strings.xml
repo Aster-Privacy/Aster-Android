@@ -372,6 +372,7 @@
     <string name="syncing">동기화 중</string>
     <string name="sync_contacts">연락처 동기화</string>
     <string name="search_contacts">연락처 검색</string>
+    <string name="search_aliases">별칭 검색…</string>
     <string name="tab_all">전체</string>
     <string name="tab_favorites">즐겨찾기</string>
     <string name="contacts_count">연락처 %d개</string>

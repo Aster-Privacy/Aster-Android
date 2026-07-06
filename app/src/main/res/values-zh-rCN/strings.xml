@@ -372,6 +372,7 @@
     <string name="syncing">同步中</string>
     <string name="sync_contacts">同步联系人</string>
     <string name="search_contacts">搜索联系人</string>
+    <string name="search_aliases">搜索别名……</string>
     <string name="tab_all">全部</string>
     <string name="tab_favorites">收藏</string>
     <string name="contacts_count">%d 个联系人</string>

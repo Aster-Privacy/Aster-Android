@@ -55,6 +55,7 @@ import androidx.compose.material.icons.outlined.Domain
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -303,7 +304,21 @@ private fun aliases_tab(
     on_upgrade: () -> Unit = {},
 ) {
     var pending_delete by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var alias_query by remember { mutableStateOf("") }
     val colors = AsterMaterial.colors
+
+    val query = alias_query.trim()
+    val visible_aliases = remember(state.aliases, query) {
+        if (query.isBlank()) state.aliases
+        else state.aliases.filter {
+            it.address.contains(query, ignoreCase = true) ||
+                (it.encrypted_display_name ?: "").contains(query, ignoreCase = true)
+        }
+    }
+    val visible_domain_addresses = remember(state.custom_domain_addresses, query) {
+        if (query.isBlank()) state.custom_domain_addresses
+        else state.custom_domain_addresses.filter { it.address.contains(query, ignoreCase = true) }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
@@ -333,6 +348,27 @@ private fun aliases_tab(
                 v_gap(AsterSpacing.sm)
             }
 
+            if (state.aliases.isNotEmpty() || state.custom_domain_addresses.isNotEmpty()) {
+                item(key = "alias_search") {
+                    OutlinedTextField(
+                        value = alias_query,
+                        onValueChange = { alias_query = it },
+                        placeholder = { Text(stringResource(R.string.search_aliases), color = colors.text_muted) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Outlined.Search,
+                                contentDescription = null,
+                                tint = colors.text_muted,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    v_gap(AsterSpacing.sm)
+                }
+            }
+
             if (state.is_loading && state.aliases.isEmpty()) {
                 item(key = "alias_loading") {
                     Box(
@@ -351,15 +387,21 @@ private fun aliases_tab(
                         )
                     }
                 }
+            } else if (visible_aliases.isEmpty() && visible_domain_addresses.isEmpty()) {
+                item(key = "alias_no_results") {
+                    AsterCard(modifier = Modifier.fillMaxWidth()) {
+                        detail_row(title = stringResource(R.string.no_results_found))
+                    }
+                }
             } else {
                 itemsIndexed(
-                    items = state.aliases,
+                    items = visible_aliases,
                     key = { _, alias -> "alias_${alias.id}" },
                 ) { idx, alias ->
                     alias_list_row(
                         alias = alias,
                         idx = idx,
-                        last_index = state.aliases.lastIndex,
+                        last_index = visible_aliases.lastIndex,
                         context = context,
                         on_toggle = { vm.toggle_alias(alias.id) },
                         on_delete = { pending_delete = alias.id to alias.address },
@@ -367,7 +409,7 @@ private fun aliases_tab(
                 }
             }
 
-            if (state.custom_domain_addresses.isNotEmpty()) {
+            if (visible_domain_addresses.isNotEmpty()) {
                 item(key = "custom_domain_header") {
                     v_gap(AsterSpacing.md)
                     Text(
@@ -378,13 +420,13 @@ private fun aliases_tab(
                     v_gap(AsterSpacing.sm)
                 }
                 itemsIndexed(
-                    items = state.custom_domain_addresses,
+                    items = visible_domain_addresses,
                     key = { _, addr -> "cda_${addr.address}" },
                 ) { idx, addr ->
                     custom_domain_address_row(
                         addr = addr,
                         idx = idx,
-                        last_index = state.custom_domain_addresses.lastIndex,
+                        last_index = visible_domain_addresses.lastIndex,
                         context = context,
                     )
                 }

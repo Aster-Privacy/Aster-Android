@@ -372,6 +372,7 @@
     <string name="syncing">Синхронизация</string>
     <string name="sync_contacts">Синхронизировать контакты</string>
     <string name="search_contacts">Поиск контактов</string>
+    <string name="search_aliases">Поиск псевдонимов…</string>
     <string name="tab_all">Все</string>
     <string name="tab_favorites">Избранные</string>
     <string name="contacts_count">%d контактов</string>

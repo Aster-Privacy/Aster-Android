@@ -397,6 +397,7 @@
     <string name="syncing">Synchronisation</string>
     <string name="sync_contacts">Synchroniser les contacts</string>
     <string name="search_contacts">Rechercher des contacts</string>
+    <string name="search_aliases">Rechercher des alias…</string>
     <string name="tab_all">Tous</string>
     <string name="tab_favorites">Favoris</string>
     <string name="contacts_count">%d contacts</string>

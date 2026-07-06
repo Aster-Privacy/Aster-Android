@@ -540,6 +540,7 @@
     <string name="syncing">Syncing</string>
     <string name="sync_contacts">Sync contacts</string>
     <string name="search_contacts">Search contacts</string>
+    <string name="search_aliases">Search aliases…</string>
     <string name="tab_all">All</string>
     <string name="tab_favorites">Favorites</string>
     <string name="contacts_count">%d contacts</string>
