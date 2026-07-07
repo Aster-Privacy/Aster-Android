@@ -282,6 +282,7 @@ class AuthRepository @Inject constructor(
                 }
                 if (keks.isNotEmpty()) session_key_store.put_legacy_keks(keks)
             }
+            absorb_data_kek(vault_obj)
             extract_ratchet_keys(vault_obj)
         } catch (t: Throwable) {
             if (BuildConfig.DEBUG) android.util.Log.w("AuthRepository", "vault decryption failed: ${t.javaClass.simpleName}")
@@ -638,6 +639,15 @@ class AuthRepository @Inject constructor(
         )
     }
 
+    private fun absorb_data_kek(vault_obj: org.json.JSONObject) {
+        val data_kek = vault_obj.optString("data_kek", "")
+        if (data_kek.isBlank()) return
+        val current = session_key_store.get_legacy_keks().orEmpty()
+        if (!current.contains(data_kek)) {
+            session_key_store.put_legacy_keks(listOf(data_kek) + current)
+        }
+    }
+
     fun try_recover_identity_key(): Boolean {
         val identity_already_present = session_key_store.get_identity_key() != null
         val ratchet_already_present = session_key_store.has_ratchet_keys()
@@ -670,6 +680,7 @@ class AuthRepository @Inject constructor(
                     if (keks.isNotEmpty()) session_key_store.put_legacy_keks(keks)
                 }
             }
+            absorb_data_kek(vault_obj)
             extract_ratchet_keys(vault_obj)
             identity_already_present || identity_key.isNotBlank()
         } catch (t: Throwable) {
@@ -712,6 +723,7 @@ class AuthRepository @Inject constructor(
                     }
                     if (keks.isNotEmpty()) session_key_store.put_legacy_keks(keks)
                 }
+                absorb_data_kek(vault_obj)
                 new_identity_key.isNotBlank() && new_identity_key != old_identity_key
             } finally {
                 passphrase.fill(0)
