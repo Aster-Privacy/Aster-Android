@@ -483,7 +483,7 @@ private fun aliases_tab(
                         Spacer(Modifier.height(AsterSpacing.sm))
                         OutlinedTextField(
                             value = note_value,
-                            onValueChange = { if (it.length <= 500) note_value = it },
+                            onValueChange = { if (it.length <= 500 || it.length < note_value.length) note_value = it },
                             placeholder = { Text(stringResource(R.string.alias_note_placeholder)) },
                             minLines = 3,
                             maxLines = 5,

@@ -642,6 +642,10 @@ class AuthRepository @Inject constructor(
     private fun absorb_data_kek(vault_obj: org.json.JSONObject) {
         val data_kek = vault_obj.optString("data_kek", "")
         if (data_kek.isBlank()) return
+        runCatching {
+            val decoded = base64_decode(data_kek)
+            if (decoded.size == 32) session_key_store.put_data_kek(decoded)
+        }
         val current = session_key_store.get_legacy_keks().orEmpty()
         if (!current.contains(data_kek)) {
             session_key_store.put_legacy_keks(listOf(data_kek) + current)

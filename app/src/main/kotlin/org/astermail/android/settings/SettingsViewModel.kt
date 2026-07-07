@@ -463,8 +463,13 @@ class SettingsViewModel @Inject constructor(
                     offset += response.aliases.size
                     page++
                 }
-                val decrypted = withContext(default_dispatcher) {
+                var decrypted = withContext(default_dispatcher) {
                     all_aliases.map { decrypt_alias(it) }
+                }
+                if (decrypted.any { it.decryption_failed } && auth_repository.try_refresh_vault_keys()) {
+                    decrypted = withContext(default_dispatcher) {
+                        all_aliases.map { decrypt_alias(it) }
+                    }
                 }
                 _state.value = _state.value.copy(
                     aliases = decrypted,
@@ -660,7 +665,7 @@ class SettingsViewModel @Inject constructor(
 
     fun update_alias_note(alias_id: String, note: String) {
         val current = _state.value.aliases.firstOrNull { it.id == alias_id } ?: return
-        val cleaned = note.trim()
+        val cleaned = note.replace(Regex("[\\x00-\\x08\\x0B-\\x1F\\x7F]"), "").trim()
         _state.update { s ->
             s.copy(aliases = s.aliases.map { if (it.id == alias_id) it.copy(encrypted_note = cleaned.ifBlank { null }) else it })
         }
@@ -1937,6 +1942,13 @@ class SettingsViewModel @Inject constructor(
         val key = derive_encryption_key()
         try {
             return String(aes_gcm_decrypt(ciphertext, key, nonce), Charsets.UTF_8)
+        } catch (t: Throwable) {
+            val fallback = derive_passphrase_key()
+            try {
+                return String(aes_gcm_decrypt(ciphertext, fallback, nonce), Charsets.UTF_8)
+            } finally {
+                fallback.fill(0)
+            }
         } finally {
             key.fill(0)
         }
@@ -2604,6 +2616,16 @@ class SettingsViewModel @Inject constructor(
         } catch (_: Throwable) {
         }
 
+        try {
+            val key = derive_passphrase_key()
+            try {
+                return String(aes_gcm_decrypt(ciphertext, key, nonce), Charsets.UTF_8)
+            } finally {
+                key.fill(0)
+            }
+        } catch (_: Throwable) {
+        }
+
         val identity_key = session_key_store.get_identity_key()
         if (identity_key != null) {
             for (version in ALIAS_VERSIONS) {
@@ -2703,6 +2725,14 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun derive_encryption_key(): ByteArray {
+        session_key_store.get_data_kek()?.let { kek ->
+            if (kek.size == 32) return kek
+            kek.fill(0)
+        }
+        return derive_passphrase_key()
+    }
+
+    private fun derive_passphrase_key(): ByteArray {
         val passphrase = session_key_store.get_passphrase()
             ?: throw IllegalStateException("no passphrase")
         try {
