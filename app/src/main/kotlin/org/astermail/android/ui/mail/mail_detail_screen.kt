@@ -1151,34 +1151,39 @@ fun MailDetailScreen(
 
     if (current_link != null && !current_link.startsWith("aster:")) {
         val link = current_link
-        org.astermail.android.design.components.AsterAlertDialog(
-            on_dismiss = { pending_link = null },
-            title = stringResource(R.string.open_external_link),
-            message = stringResource(R.string.leaving_aster_warning),
-            confirm_label = stringResource(R.string.open),
-            cancel_label = stringResource(R.string.cancel),
-            on_confirm = {
-                pending_link = null
-                if (!is_safe_external_url(link)) {
+        val open_external_link = {
+            pending_link = null
+            if (!is_safe_external_url(link)) {
+                show_toast(context.getString(R.string.could_not_open_link))
+            } else {
+                try {
+                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link)))
+                } catch (_: Throwable) {
                     show_toast(context.getString(R.string.could_not_open_link))
-                } else {
-                    try {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link)))
-                    } catch (_: Throwable) {
-                        show_toast(context.getString(R.string.could_not_open_link))
-                    }
                 }
-            },
-            extra_content = {
-                Text(
-                    text = link,
-                    color = colors.accent_blue,
-                    fontSize = 13.sp,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            },
-        )
+            }
+        }
+        if (settings_state.preferences?.warn_suspicious_links == false) {
+            LaunchedEffect(link) { open_external_link() }
+        } else {
+            org.astermail.android.design.components.AsterAlertDialog(
+                on_dismiss = { pending_link = null },
+                title = stringResource(R.string.open_external_link),
+                message = stringResource(R.string.leaving_aster_warning),
+                confirm_label = stringResource(R.string.open),
+                cancel_label = stringResource(R.string.cancel),
+                on_confirm = open_external_link,
+                extra_content = {
+                    Text(
+                        text = link,
+                        color = colors.accent_blue,
+                        fontSize = 13.sp,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+            )
+        }
     }
 
     if (show_encryption_info) {
