@@ -184,33 +184,38 @@ class MailPollingWorker(
         }
         var newest: org.astermail.android.mail.InboxItem? = null
         var sender: String? = null
+        var fetched_any_page = false
         repeat(3) { attempt ->
-            if (!sender.isNullOrBlank()) return@repeat
+            if (newest != null) return@repeat
             if (attempt > 0) kotlinx.coroutines.delay(1_500L)
             val page = try {
                 kotlinx.coroutines.withTimeout(20_000L) {
-                    repo.fetch_inbox(limit = arrived.coerceAtMost(5))
+                    repo.fetch_inbox(limit = arrived.coerceIn(1, 5))
                 }.getOrNull()
             } catch (_: Throwable) { null }
-            val candidate = page?.items?.firstOrNull { !it.is_read }
-                ?: page?.items?.firstOrNull()
+            if (page != null) fetched_any_page = true
+            val candidate = page?.items?.let { pick_notifiable_candidate(context, it) }
             val candidate_sender = (candidate?.sender_name?.takeIf { it.isNotBlank() } ?: candidate?.sender_email)?.trim()
-            if (!candidate_sender.isNullOrBlank()) {
+            if (candidate != null && !candidate_sender.isNullOrBlank()) {
                 newest = candidate
                 sender = candidate_sender
             }
         }
-        if (sender.isNullOrBlank()) {
-            show_generic(context, arrived)
+        val fresh = newest
+        if (fresh == null || sender.isNullOrBlank()) {
+            if (!fetched_any_page) {
+                show_generic(context, arrived)
+            }
             return
         }
-        val subject = newest?.subject?.trim().orEmpty()
-        val message_id = message_notification_id(newest?.id?.hashCode() ?: 0)
+        val subject = fresh.subject.trim()
+        val message_id = message_notification_id(fresh.id.hashCode())
+        mark_item_notified(context, fresh.id)
         show_message(
             context = context,
             sender = sender!!,
             subject = subject,
-            preview = newest?.preview.orEmpty(),
+            preview = fresh.preview,
             message_id = message_id,
         )
     }
@@ -237,6 +242,8 @@ class MailPollingWorker(
         private const val KEY_CACHED_NOTIFIABLE = "cached_notifiable_count"
         private const val KEY_PUSH_ENABLED = "push_notifications_enabled"
         private const val KEY_LAST_NOTIFIED_COUNT = "last_notified_notifiable_count"
+        private const val KEY_NOTIFIED_ITEM_IDS = "notified_item_ids"
+        private const val NOTIFIED_ITEM_IDS_MAX = 100
         private const val KEY_PRIVATE_NOTIFICATIONS = "private_notifications"
         private const val KEY_NOTIFY_NEW_EMAIL = "notify_new_email"
         private const val KEY_QUIET_HOURS_ENABLED = "quiet_hours_enabled"
@@ -489,6 +496,32 @@ class MailPollingWorker(
 
         fun message_notification_id(seed: Int): Int {
             return MESSAGE_ID_BASE + ((seed and 0x7fffffff) % 1_000_000)
+        }
+
+        fun pick_notifiable_candidate(
+            context: Context,
+            items: List<org.astermail.android.mail.InboxItem>,
+        ): org.astermail.android.mail.InboxItem? {
+            return items.firstOrNull { !it.is_read && !was_item_notified(context, it.id) }
+        }
+
+        fun was_item_notified(context: Context, item_id: String): Boolean {
+            if (item_id.isBlank()) return false
+            val stored = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .getString(KEY_NOTIFIED_ITEM_IDS, "") ?: ""
+            return stored.split('\n').contains(item_id)
+        }
+
+        fun mark_item_notified(context: Context, item_id: String) {
+            if (item_id.isBlank()) return
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val stored = prefs.getString(KEY_NOTIFIED_ITEM_IDS, "") ?: ""
+            val ids = stored.split('\n')
+                .filter { it.isNotBlank() && it != item_id }
+                .toMutableList()
+            ids.add(item_id)
+            while (ids.size > NOTIFIED_ITEM_IDS_MAX) ids.removeAt(0)
+            prefs.edit().putString(KEY_NOTIFIED_ITEM_IDS, ids.joinToString("\n")).apply()
         }
 
         fun cancel_message_notification(context: Context, item_id: String) {

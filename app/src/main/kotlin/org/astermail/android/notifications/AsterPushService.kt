@@ -65,6 +65,9 @@ class AsterPushService : PushService() {
         }
         if (type == "wake") return PushResult.NeedsFetch
         val item_id = obj.optString("item_id", "")
+        if (item_id.isNotBlank() && MailPollingWorker.was_item_notified(context, item_id)) {
+            return PushResult.Ignore
+        }
         val encrypted_envelope = obj.optString("encrypted_envelope", "").takeIf { it.isNotBlank() }
             ?: return PushResult.NeedsFetch
         val envelope_nonce = obj.optString("envelope_nonce", "").takeIf { it.isNotBlank() }
@@ -78,6 +81,9 @@ class AsterPushService : PushService() {
             MailPollingWorker.message_notification_id(item_id.hashCode())
         } else {
             MailPollingWorker.message_notification_id(System.currentTimeMillis().toInt())
+        }
+        if (item_id.isNotBlank()) {
+            MailPollingWorker.mark_item_notified(context, item_id)
         }
         MailPollingWorker.show_message(
             context = context,

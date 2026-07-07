@@ -129,6 +129,84 @@ class NotificationClearOnReadTest {
     }
 
     @Test
+    fun notified_item_ledger_marks_and_persists() {
+        assertFalse(MailPollingWorker.was_item_notified(context, item_a))
+        MailPollingWorker.mark_item_notified(context, item_a)
+        assertTrue(MailPollingWorker.was_item_notified(context, item_a))
+        assertFalse(MailPollingWorker.was_item_notified(context, item_b))
+
+        MailPollingWorker.cancel_message_notification(context, item_a)
+        assertTrue(
+            "ledger must survive read-cancel so the item is never re-notified",
+            MailPollingWorker.was_item_notified(context, item_a),
+        )
+    }
+
+    @Test
+    fun notified_item_ledger_caps_and_keeps_newest() {
+        val first = "cap-first-" + System.nanoTime()
+        MailPollingWorker.mark_item_notified(context, first)
+        repeat(100) { MailPollingWorker.mark_item_notified(context, "cap-fill-$it-" + System.nanoTime()) }
+        assertFalse("oldest entry evicted past cap", MailPollingWorker.was_item_notified(context, first))
+        val last = "cap-last-" + System.nanoTime()
+        MailPollingWorker.mark_item_notified(context, last)
+        assertTrue(MailPollingWorker.was_item_notified(context, last))
+    }
+
+    private fun inbox_item(id: String, is_read: Boolean) = org.astermail.android.mail.InboxItem(
+        id = id,
+        thread_token = null,
+        thread_message_count = 1,
+        sender_name = "Alice",
+        sender_email = "alice@example.com",
+        subject = "Subject $id",
+        preview = "Preview",
+        timestamp = "now",
+        is_read = is_read,
+        is_starred = false,
+        is_encrypted = false,
+        has_attachments = false,
+        is_trashed = false,
+        is_archived = false,
+        is_spam = false,
+        labels = emptyList(),
+        raw_item = org.astermail.android.api.mail.MailItem(id = id),
+    )
+
+    @Test
+    fun read_email_is_never_renotified_by_later_wake_polls() {
+        val id_a = MailPollingWorker.message_notification_id(item_a.hashCode())
+
+        val first_pick = MailPollingWorker.pick_notifiable_candidate(
+            context, listOf(inbox_item(item_a, is_read = false)),
+        )
+        assertTrue("fresh unread mail must be picked", first_pick?.id == item_a)
+        MailPollingWorker.mark_item_notified(context, item_a)
+        post_and_await("Alice", "Subject", "Preview", id_a)
+
+        MailPollingWorker.cancel_message_notification(context, item_a)
+        await_id(id_a, false)
+        assertFalse("notification cleared on read", id_a in active_ids())
+
+        repeat(3) {
+            val repick_read = MailPollingWorker.pick_notifiable_candidate(
+                context, listOf(inbox_item(item_a, is_read = true)),
+            )
+            assertTrue("read newest item must never be re-picked", repick_read == null)
+            val repick_unread_again = MailPollingWorker.pick_notifiable_candidate(
+                context, listOf(inbox_item(item_a, is_read = false)),
+            )
+            assertTrue("already-notified item must never be re-picked", repick_unread_again == null)
+        }
+
+        val next_pick = MailPollingWorker.pick_notifiable_candidate(
+            context,
+            listOf(inbox_item(item_b, is_read = false), inbox_item(item_a, is_read = true)),
+        )
+        assertTrue("genuinely new mail must still be picked", next_pick?.id == item_b)
+    }
+
+    @Test
     fun bulk_read_clears_all_targeted_notifications() {
         val id_a = MailPollingWorker.message_notification_id(item_a.hashCode())
         val id_b = MailPollingWorker.message_notification_id(item_b.hashCode())
