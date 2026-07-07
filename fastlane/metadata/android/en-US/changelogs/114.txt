@@ -1,0 +1,7 @@
+Bug fixes and improvements:
+
+- Add private notes to your aliases and find them in search
+- Fixed aliases not displaying on newly created accounts
+- The "Warn on suspicious links" setting is now respected
+- Stopped repeat notifications for emails you already read
+- Long-press a link in an email to copy or share it
