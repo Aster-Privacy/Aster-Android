@@ -373,6 +373,11 @@
     <string name="sync_contacts">مزامنة جهات الاتصال</string>
     <string name="search_contacts">البحث في جهات الاتصال</string>
     <string name="search_aliases">البحث في الأسماء المستعارة…</string>
+    <string name="alias_note_title">ملاحظة الاسم المستعار</string>
+    <string name="alias_note_hint">أنت وحدك من يمكنه رؤية هذه الملاحظة</string>
+    <string name="alias_note_placeholder">أين تستخدم هذا الاسم المستعار، تاريخ التسجيل، أي معلومات مفيدة</string>
+    <string name="alias_note_add">أضف ملاحظة</string>
+    <string name="alias_note_updated">تم تحديث الملاحظة</string>
     <string name="tab_all">الكل</string>
     <string name="tab_favorites">المفضلة</string>
     <string name="contacts_count">%d جهة اتصال</string>

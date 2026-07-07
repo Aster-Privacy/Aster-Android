@@ -658,6 +658,34 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun update_alias_note(alias_id: String, note: String) {
+        val current = _state.value.aliases.firstOrNull { it.id == alias_id } ?: return
+        val cleaned = note.trim()
+        _state.update { s ->
+            s.copy(aliases = s.aliases.map { if (it.id == alias_id) it.copy(encrypted_note = cleaned.ifBlank { null }) else it })
+        }
+        viewModelScope.launch {
+            try {
+                if (cleaned.isBlank()) {
+                    settings_api.update_alias_note(alias_id, null, null)
+                } else {
+                    val (encrypted_note, note_nonce) = encrypt_alias_field(cleaned)
+                    settings_api.update_alias_note(alias_id, encrypted_note, note_nonce)
+                }
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.alias_note_updated),
+                )
+            } catch (_: Throwable) {
+                _state.update { s ->
+                    s.copy(aliases = s.aliases.map { if (it.id == alias_id) it.copy(encrypted_note = current.encrypted_note) else it })
+                }
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.something_went_wrong),
+                )
+            }
+        }
+    }
+
     fun load_domains() {
         viewModelScope.launch {
             _state.value = _state.value.copy(domains_loading = true)
@@ -2525,7 +2553,12 @@ class SettingsViewModel @Inject constructor(
                 decrypt_alias_field(alias.encrypted_local_part, alias.local_part_nonce)
             }
         } catch (_: Throwable) {
-            return alias.copy(encrypted_local_part = "", decryption_failed = true)
+            return alias.copy(
+                encrypted_local_part = "",
+                encrypted_display_name = null,
+                encrypted_note = null,
+                decryption_failed = true,
+            )
         }
         val enc_name = alias.encrypted_display_name
         val name_nonce = alias.display_name_nonce
@@ -2538,9 +2571,21 @@ class SettingsViewModel @Inject constructor(
         } else {
             null
         }
+        val enc_note = alias.encrypted_note
+        val enc_note_nonce = alias.note_nonce
+        val note = if (!enc_note.isNullOrBlank() && !enc_note_nonce.isNullOrBlank()) {
+            try {
+                decrypt_alias_field(enc_note, enc_note_nonce)
+            } catch (_: Throwable) {
+                null
+            }
+        } else {
+            null
+        }
         return alias.copy(
             encrypted_local_part = local_part,
             encrypted_display_name = display_name,
+            encrypted_note = note,
         )
     }
 

@@ -82,6 +82,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -305,6 +306,7 @@ private fun aliases_tab(
 ) {
     var pending_delete by remember { mutableStateOf<Pair<String, String>?>(null) }
     var alias_query by remember { mutableStateOf("") }
+    var note_editing by remember { mutableStateOf<Pair<String, String>?>(null) }
     val colors = AsterMaterial.colors
 
     val query = alias_query.trim()
@@ -312,7 +314,8 @@ private fun aliases_tab(
         if (query.isBlank()) state.aliases
         else state.aliases.filter {
             it.address.contains(query, ignoreCase = true) ||
-                (it.encrypted_display_name ?: "").contains(query, ignoreCase = true)
+                (it.encrypted_display_name ?: "").contains(query, ignoreCase = true) ||
+                (it.encrypted_note ?: "").contains(query, ignoreCase = true)
         }
     }
     val visible_domain_addresses = remember(state.custom_domain_addresses, query) {
@@ -405,6 +408,7 @@ private fun aliases_tab(
                         context = context,
                         on_toggle = { vm.toggle_alias(alias.id) },
                         on_delete = { pending_delete = alias.id to alias.address },
+                        on_edit_note = { note_editing = alias.id to (alias.encrypted_note ?: "") },
                     )
                 }
             }
@@ -459,6 +463,66 @@ private fun aliases_tab(
                 },
             )
         }
+
+        note_editing?.let { (alias_id, initial_note) ->
+            var note_value by remember(alias_id) { mutableStateOf(initial_note) }
+            AlertDialog(
+                onDismissRequest = { note_editing = null },
+                containerColor = colors.bg_card,
+                title = {
+                    Text(
+                        stringResource(R.string.alias_note_title),
+                        color = colors.text_primary,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                },
+                text = {
+                    Column {
+                        Text(stringResource(R.string.alias_note_hint), color = colors.text_muted, fontSize = 12.sp)
+                        Spacer(Modifier.height(AsterSpacing.sm))
+                        OutlinedTextField(
+                            value = note_value,
+                            onValueChange = { if (it.length <= 500) note_value = it },
+                            placeholder = { Text(stringResource(R.string.alias_note_placeholder)) },
+                            minLines = 3,
+                            maxLines = 5,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                },
+                confirmButton = {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(colors.accent_blue)
+                            .clickable {
+                                vm.update_alias_note(alias_id, note_value)
+                                note_editing = null
+                            }
+                            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
+                    ) {
+                        Text(
+                            stringResource(R.string.save),
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
+                },
+                dismissButton = {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .border(1.dp, colors.border_primary, RoundedCornerShape(10.dp))
+                            .clickable { note_editing = null }
+                            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
+                    ) {
+                        Text(stringResource(R.string.cancel), color = colors.text_primary, fontSize = 14.sp)
+                    }
+                },
+            )
+        }
     }
 }
 
@@ -470,6 +534,7 @@ internal fun alias_list_row(
     context: Context,
     on_toggle: () -> Unit,
     on_delete: () -> Unit,
+    on_edit_note: (() -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
     Column(
@@ -495,6 +560,20 @@ internal fun alias_list_row(
                     text = display_name_val,
                     color = colors.text_secondary,
                     fontSize = 12.sp,
+                )
+            }
+            if (on_edit_note != null) {
+                val note_val = alias.encrypted_note
+                Text(
+                    text = if (note_val.isNullOrBlank()) stringResource(R.string.alias_note_add) else note_val,
+                    color = if (note_val.isNullOrBlank()) colors.text_muted else colors.text_tertiary,
+                    fontSize = 12.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { on_edit_note() }
+                        .padding(vertical = 2.dp),
                 )
             }
             Row(

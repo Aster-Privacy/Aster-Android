@@ -373,6 +373,11 @@
     <string name="sync_contacts">連絡先を同期</string>
     <string name="search_contacts">連絡先を検索</string>
     <string name="search_aliases">エイリアスを検索…</string>
+    <string name="alias_note_title">エイリアスのメモ</string>
+    <string name="alias_note_hint">このメモはあなただけが見られます</string>
+    <string name="alias_note_placeholder">このエイリアスの用途、登録日など役立つ情報</string>
+    <string name="alias_note_add">メモを追加</string>
+    <string name="alias_note_updated">メモを更新しました</string>
     <string name="tab_all">すべて</string>
     <string name="tab_favorites">お気に入り</string>
     <string name="contacts_count">%d件の連絡先</string>

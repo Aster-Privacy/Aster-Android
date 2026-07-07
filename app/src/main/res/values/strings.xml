@@ -541,6 +541,11 @@
     <string name="sync_contacts">Sync contacts</string>
     <string name="search_contacts">Search contacts</string>
     <string name="search_aliases">Search aliases…</string>
+    <string name="alias_note_title">Alias note</string>
+    <string name="alias_note_hint">Only you can see this note</string>
+    <string name="alias_note_placeholder">Where you use this alias, sign-up date, anything useful</string>
+    <string name="alias_note_add">Add note</string>
+    <string name="alias_note_updated">Note updated</string>
     <string name="tab_all">All</string>
     <string name="tab_favorites">Favorites</string>
     <string name="contacts_count">%d contacts</string>

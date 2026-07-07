@@ -373,6 +373,11 @@
     <string name="sync_contacts">Синхронизировать контакты</string>
     <string name="search_contacts">Поиск контактов</string>
     <string name="search_aliases">Поиск псевдонимов…</string>
+    <string name="alias_note_title">Заметка о псевдониме</string>
+    <string name="alias_note_hint">Эту заметку видите только вы</string>
+    <string name="alias_note_placeholder">Где вы используете этот псевдоним, дата регистрации, любая полезная информация</string>
+    <string name="alias_note_add">Добавить заметку</string>
+    <string name="alias_note_updated">Заметка обновлена</string>
     <string name="tab_all">Все</string>
     <string name="tab_favorites">Избранные</string>
     <string name="contacts_count">%d контактов</string>

@@ -373,6 +373,11 @@
     <string name="sync_contacts">연락처 동기화</string>
     <string name="search_contacts">연락처 검색</string>
     <string name="search_aliases">별칭 검색…</string>
+    <string name="alias_note_title">별칭 메모</string>
+    <string name="alias_note_hint">이 메모는 회원님만 볼 수 있습니다</string>
+    <string name="alias_note_placeholder">이 별칭을 사용하는 곳, 가입 날짜 등 유용한 정보</string>
+    <string name="alias_note_add">메모 추가</string>
+    <string name="alias_note_updated">메모가 업데이트되었습니다</string>
     <string name="tab_all">전체</string>
     <string name="tab_favorites">즐겨찾기</string>
     <string name="contacts_count">연락처 %d개</string>

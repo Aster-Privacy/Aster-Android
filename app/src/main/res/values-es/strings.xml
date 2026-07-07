@@ -374,6 +374,11 @@
     <string name="sync_contacts">Sincronizar contactos</string>
     <string name="search_contacts">Buscar contactos</string>
     <string name="search_aliases">Buscar alias…</string>
+    <string name="alias_note_title">Nota del alias</string>
+    <string name="alias_note_hint">Solo tú puedes ver esta nota</string>
+    <string name="alias_note_placeholder">Dónde usas este alias, fecha de registro, cualquier dato útil</string>
+    <string name="alias_note_add">Agregar nota</string>
+    <string name="alias_note_updated">Nota actualizada</string>
     <string name="tab_all">Todos</string>
     <string name="tab_favorites">Favoritos</string>
     <string name="contacts_count">%d contactos</string>

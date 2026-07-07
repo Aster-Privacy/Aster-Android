@@ -373,6 +373,11 @@
     <string name="sync_contacts">Kişileri eşitle</string>
     <string name="search_contacts">Kişilerde ara</string>
     <string name="search_aliases">Rumuzlarda ara…</string>
+    <string name="alias_note_title">Rumuz notu</string>
+    <string name="alias_note_hint">Bu notu yalnızca siz görebilirsiniz</string>
+    <string name="alias_note_placeholder">Bu rumuzu nerede kullandığınız, kayıt tarihi, işinize yarayacak her şey</string>
+    <string name="alias_note_add">Not ekle</string>
+    <string name="alias_note_updated">Not güncellendi</string>
     <string name="tab_all">Tümü</string>
     <string name="tab_favorites">Favoriler</string>
     <string name="contacts_count">%d kişi</string>

@@ -373,6 +373,11 @@
     <string name="sync_contacts">Contacten synchroniseren</string>
     <string name="search_contacts">Contacten zoeken</string>
     <string name="search_aliases">Aliassen zoeken…</string>
+    <string name="alias_note_title">Aliasnotitie</string>
+    <string name="alias_note_hint">Alleen jij kunt deze notitie zien</string>
+    <string name="alias_note_placeholder">Waar je deze alias gebruikt, aanmelddatum, alles wat nuttig is</string>
+    <string name="alias_note_add">Notitie toevoegen</string>
+    <string name="alias_note_updated">Notitie bijgewerkt</string>
     <string name="tab_all">Alle</string>
     <string name="tab_favorites">Favorieten</string>
     <string name="contacts_count">%d contacten</string>

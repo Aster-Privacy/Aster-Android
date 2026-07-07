@@ -373,6 +373,11 @@
     <string name="sync_contacts">同步联系人</string>
     <string name="search_contacts">搜索联系人</string>
     <string name="search_aliases">搜索别名……</string>
+    <string name="alias_note_title">别名备注</string>
+    <string name="alias_note_hint">只有你能看到这条备注</string>
+    <string name="alias_note_placeholder">此别名的用途、注册日期等任何有用信息</string>
+    <string name="alias_note_add">添加备注</string>
+    <string name="alias_note_updated">备注已更新</string>
     <string name="tab_all">全部</string>
     <string name="tab_favorites">收藏</string>
     <string name="contacts_count">%d 个联系人</string>
