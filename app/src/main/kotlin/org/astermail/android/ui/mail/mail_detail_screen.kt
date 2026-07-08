@@ -1391,8 +1391,8 @@ private fun expanded_message(
                         },
                     ),
                 )
-                val received_on = remember(msg.id) {
-                    resolve_received_on_address(msg.raw_headers, msg.to_addresses, msg.sender_email)
+                val received_on = remember(msg) {
+                    resolve_received_on_address(msg.raw_headers, msg.to_addresses + msg.cc_addresses, msg.sender_email)
                 }
                 if (received_on != null) {
                     Text(
@@ -2063,7 +2063,7 @@ private fun message_details_dialog(
                 if (message.to_label.isNotBlank()) {
                     message_detail_row(stringResource(R.string.to_label), message.to_label)
                 }
-                resolve_received_on_address(message.raw_headers, message.to_addresses, message.sender_email)?.let {
+                resolve_received_on_address(message.raw_headers, message.to_addresses + message.cc_addresses, message.sender_email)?.let {
                     message_detail_row(stringResource(R.string.received_on_label), it)
                 }
                 message_detail_row(

@@ -66,6 +66,18 @@ class DeliveredToTest {
     }
 
     @Test
+    fun suppresses_when_in_cc() {
+        val headers = listOf("Delivered-To" to "myalias@astermail.org")
+        assertNull(
+            resolve_received_on_address(
+                headers,
+                listOf("other@example.com", "MyAlias@astermail.org"),
+                "sender@example.com",
+            ),
+        )
+    }
+
+    @Test
     fun suppresses_when_already_visible() {
         val headers = listOf("Delivered-To" to "myalias@astermail.org")
         assertNull(
