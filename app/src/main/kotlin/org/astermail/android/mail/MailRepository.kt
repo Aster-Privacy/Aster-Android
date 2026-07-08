@@ -413,6 +413,7 @@ class MailRepository @Inject constructor(
         tag_token: String? = null,
     ): Result<InboxPage> = runCatching {
         val is_received = item_type == "received"
+        val is_plain_inbox = is_received && label_token == null && tag_token == null
         val response = mail_api.list_messages(
             limit = limit,
             cursor = cursor,
@@ -420,6 +421,9 @@ class MailRepository @Inject constructor(
             label_token = label_token,
             tag_token = tag_token,
             is_snoozed = if (is_received) false else null,
+            is_archived = if (is_plain_inbox) false else null,
+            is_trashed = if (is_plain_inbox) false else null,
+            is_spam = if (is_plain_inbox) false else null,
         )
         val filtered_raw = if (is_received) {
             val now_iso = java.time.Instant.now().toString()

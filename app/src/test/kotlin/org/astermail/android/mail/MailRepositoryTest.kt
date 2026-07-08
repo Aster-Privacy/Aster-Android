@@ -164,6 +164,54 @@ class MailRepositoryTest {
     }
 
     @Test
+    fun `fetch_inbox plain inbox excludes archived trashed spam server-side`() = runTest {
+        coEvery { mail_api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = emptyList(), has_more = false, next_cursor = null, total = 0)
+
+        repo.fetch_inbox()
+
+        coVerify {
+            mail_api.list_messages(
+                limit = any(),
+                cursor = any(),
+                item_type = any(),
+                is_starred = any(),
+                is_trashed = false,
+                is_archived = false,
+                is_spam = false,
+                label_token = null,
+                tag_token = null,
+                group_by_thread = any(),
+                is_snoozed = any(),
+            )
+        }
+    }
+
+    @Test
+    fun `fetch_inbox for label does not force archived filter`() = runTest {
+        coEvery { mail_api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = emptyList(), has_more = false, next_cursor = null, total = 0)
+
+        repo.fetch_inbox(label_token = "work")
+
+        coVerify {
+            mail_api.list_messages(
+                limit = any(),
+                cursor = any(),
+                item_type = any(),
+                is_starred = any(),
+                is_trashed = null,
+                is_archived = null,
+                is_spam = null,
+                label_token = "work",
+                tag_token = any(),
+                group_by_thread = any(),
+                is_snoozed = any(),
+            )
+        }
+    }
+
+    @Test
     fun `fetch_inbox with null envelope yields empty sender`() = runTest {
         val items = listOf(fake_mail_item("i1", encrypted_envelope = null))
         coEvery { mail_api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
