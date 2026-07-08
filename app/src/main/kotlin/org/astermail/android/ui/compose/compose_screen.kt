@@ -294,7 +294,12 @@ fun ComposeScreen(
             val msg = thread_state.messages.firstOrNull { it.id == reply_to }
                 ?: thread_state.messages.filter { it.raw_item.item_type != "sent" }.maxByOrNull { it.timestamp }
                 ?: thread_state.messages.lastOrNull()
-            val recipients = (msg?.to_addresses ?: emptyList()) + (msg?.cc_addresses ?: emptyList())
+            val delivered_to = msg?.raw_headers?.let {
+                org.astermail.android.ui.mail.extract_delivered_to(it)
+            }
+            val recipients = listOfNotNull(delivered_to) +
+                (msg?.to_addresses ?: emptyList()) +
+                (msg?.cc_addresses ?: emptyList())
             compute_received_on_alias(recipients, alias_options, user_email)
         }
     }
