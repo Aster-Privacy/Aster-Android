@@ -434,6 +434,7 @@
     <string name="create_label">Utwórz etykietę</string>
     <string name="label_name">Nazwa etykiety</string>
     <string name="create_alias">Utwórz alias</string>
+    <string name="create_alias_invalid_chars">Dozwolone znaki to litery, cyfry, kropki, podkreślenia i myślniki.</string>
     <string name="alias_placeholder">username@astermail.org</string>
     <string name="accounts">Konta</string>
     <string name="add_account">Dodaj konto</string>
@@ -1285,4 +1286,6 @@
     <string name="pending_deletion_error">Nie można przywrócić konta. Spróbuj ponownie.</string>
     <string name="pending_deletion_restored">Witaj ponownie. Twoje konto zostało przywrócone.</string>
     <string name="image_blocked_placeholder">[Obraz zablokowany]</string>
+    <string name="received_on_prefix">odebrano na %s</string>
+    <string name="received_on_label">Odebrano na</string>
 </resources>

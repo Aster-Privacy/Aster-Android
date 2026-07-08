@@ -460,6 +460,7 @@
     <string name="create_label">Créer un libellé</string>
     <string name="label_name">Nom du libellé</string>
     <string name="create_alias">Créer un alias</string>
+    <string name="create_alias_invalid_chars">L\'alias contient des caractères invalides</string>
     <string name="alias_placeholder">utilisateur@astermail.org</string>
     <string name="accounts">Comptes</string>
     <string name="add_account">Ajouter un compte</string>
@@ -1897,4 +1898,6 @@
     <string name="pending_deletion_error">Impossible de restaurer votre compte. Veuillez réessayer.</string>
     <string name="pending_deletion_restored">Bon retour. Votre compte a été restauré.</string>
     <string name="image_blocked_placeholder">[Image bloquée]</string>
+    <string name="received_on_prefix">reçu sur %s</string>
+    <string name="received_on_label">Reçu sur</string>
 </resources>

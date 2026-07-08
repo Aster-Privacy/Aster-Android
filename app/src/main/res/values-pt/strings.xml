@@ -434,6 +434,7 @@
     <string name="create_label">Criar etiqueta</string>
     <string name="label_name">Nome da etiqueta</string>
     <string name="create_alias">Criar alias</string>
+    <string name="create_alias_invalid_chars">Letras, números, pontos, sublinhados e hifens são os caracteres permitidos.</string>
     <string name="alias_placeholder">username@astermail.org</string>
     <string name="accounts">Contas</string>
     <string name="add_account">Adicionar conta</string>
@@ -1281,4 +1282,6 @@
     <string name="pending_deletion_error">Não foi possível restaurar sua conta. Tente novamente.</string>
     <string name="pending_deletion_restored">Bem-vindo de volta. Sua conta foi restaurada.</string>
     <string name="image_blocked_placeholder">[Imagem bloqueada]</string>
+    <string name="received_on_prefix">recebido em %s</string>
+    <string name="received_on_label">Recebido em</string>
 </resources>

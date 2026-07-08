@@ -434,6 +434,7 @@
     <string name="create_label">Label aanmaken</string>
     <string name="label_name">Labelnaam</string>
     <string name="create_alias">Alias aanmaken</string>
+    <string name="create_alias_invalid_chars">Letters, cijfers, punten, underscores en koppeltekens zijn de toegestane tekens.</string>
     <string name="alias_placeholder">username@astermail.org</string>
     <string name="accounts">Accounts</string>
     <string name="add_account">Account toevoegen</string>
@@ -1281,4 +1282,6 @@
     <string name="pending_deletion_error">Kan je account niet herstellen. Probeer het opnieuw.</string>
     <string name="pending_deletion_restored">Welkom terug. Je account is hersteld.</string>
     <string name="image_blocked_placeholder">[Afbeelding geblokkeerd]</string>
+    <string name="received_on_prefix">ontvangen op %s</string>
+    <string name="received_on_label">Ontvangen op</string>
 </resources>

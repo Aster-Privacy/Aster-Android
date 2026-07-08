@@ -434,6 +434,7 @@
     <string name="create_label">Etiket oluştur</string>
     <string name="label_name">Etiket adı</string>
     <string name="create_alias">Takma ad oluştur</string>
+    <string name="create_alias_invalid_chars">İzin verilen karakterler: harfler, rakamlar, noktalar, alt çizgiler ve tireler.</string>
     <string name="alias_placeholder">username@astermail.org</string>
     <string name="accounts">Hesaplar</string>
     <string name="add_account">Hesap ekle</string>
@@ -1281,4 +1282,6 @@
     <string name="pending_deletion_error">Hesabınız geri yüklenemedi. Lütfen tekrar deneyin.</string>
     <string name="pending_deletion_restored">Tekrar hoş geldiniz. Hesabınız geri yüklendi.</string>
     <string name="image_blocked_placeholder">[Görsel engellendi]</string>
+    <string name="received_on_prefix">%s adresinde alındı</string>
+    <string name="received_on_label">Alındığı adres</string>
 </resources>

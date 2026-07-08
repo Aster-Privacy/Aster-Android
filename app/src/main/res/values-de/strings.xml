@@ -435,6 +435,7 @@
     <string name="create_label">Label erstellen</string>
     <string name="label_name">Labelname</string>
     <string name="create_alias">Alias erstellen</string>
+    <string name="create_alias_invalid_chars">Buchstaben, Zahlen, Punkte, Unterstriche und Bindestriche sind erlaubte Zeichen.</string>
     <string name="alias_placeholder">benutzername@astermail.org</string>
     <string name="accounts">Konten</string>
     <string name="add_account">Konto hinzufügen</string>
@@ -1282,4 +1283,6 @@
     <string name="pending_deletion_error">Ihr Konto konnte nicht wiederhergestellt werden. Bitte versuchen Sie es erneut.</string>
     <string name="pending_deletion_restored">Willkommen zurück. Ihr Konto wurde wiederhergestellt.</string>
     <string name="image_blocked_placeholder">[Bild blockiert]</string>
+    <string name="received_on_prefix">empfangen an %s</string>
+    <string name="received_on_label">Empfangen an</string>
 </resources>

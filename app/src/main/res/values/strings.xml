@@ -396,6 +396,8 @@
     <string name="moved_to_trash">Moved %d conversation(s) to trash</string>
     <string name="participants_and_others">%1$s &amp; %2$d others</string>
     <string name="to_label_prefix">to %s</string>
+    <string name="received_on_prefix">received on %s</string>
+    <string name="received_on_label">Received on</string>
     <string name="failed_to_trash">Failed to move to trash</string>
     <string name="failed_report_spam">Failed to report spam</string>
     <string name="moved_to_inbox">Moved to inbox</string>
@@ -604,6 +606,7 @@
     <string name="create_label">Create Label</string>
     <string name="label_name">Label name</string>
     <string name="create_alias">Create Alias</string>
+    <string name="create_alias_invalid_chars">Letters, numbers, dots, underscores, and hyphens are the allowed characters.</string>
     <string name="alias_placeholder">username@astermail.org</string>
     <string name="accounts">Accounts</string>
     <string name="add_account">Add account</string>

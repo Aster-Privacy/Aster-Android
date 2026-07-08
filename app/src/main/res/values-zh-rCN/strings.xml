@@ -434,6 +434,7 @@
     <string name="create_label">创建标签</string>
     <string name="label_name">标签名称</string>
     <string name="create_alias">创建别名</string>
+    <string name="create_alias_invalid_chars">允许使用字母、数字、点、下划线和连字符。</string>
     <string name="alias_placeholder">username@astermail.org</string>
     <string name="accounts">账户</string>
     <string name="add_account">添加账户</string>
@@ -1279,4 +1280,6 @@
     <string name="pending_deletion_error">无法恢复您的账户。请重试。</string>
     <string name="pending_deletion_restored">欢迎回来。您的账户已恢复。</string>
     <string name="image_blocked_placeholder">[图片已被拦截]</string>
+    <string name="received_on_prefix">通过 %s 接收</string>
+    <string name="received_on_label">接收地址</string>
 </resources>

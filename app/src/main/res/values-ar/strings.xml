@@ -434,6 +434,7 @@
     <string name="create_label">إنشاء تصنيف</string>
     <string name="label_name">اسم التصنيف</string>
     <string name="create_alias">إنشاء اسم مستعار</string>
+    <string name="create_alias_invalid_chars">الأحرف والأرقام والنقاط والشرطات السفلية والشرطات هي الأحرف المسموح بها.</string>
     <string name="alias_placeholder">username@astermail.org</string>
     <string name="accounts">الحسابات</string>
     <string name="add_account">إضافة حساب</string>
@@ -1289,4 +1290,6 @@
     <string name="pending_deletion_error">تعذّرت استعادة حسابك. يرجى المحاولة مرة أخرى.</string>
     <string name="pending_deletion_restored">مرحبًا بعودتك. تمت استعادة حسابك.</string>
     <string name="image_blocked_placeholder">[تم حظر الصورة]</string>
+    <string name="received_on_prefix">تم الاستلام على %s</string>
+    <string name="received_on_label">تم الاستلام على</string>
 </resources>

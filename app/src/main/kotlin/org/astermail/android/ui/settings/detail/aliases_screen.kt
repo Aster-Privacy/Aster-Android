@@ -1641,8 +1641,15 @@ private fun create_alias_dialog(
     val colors = AsterMaterial.colors
     val scope = rememberCoroutineScope()
 
+    val local_part_valid = remember(local_part) {
+        local_part.length in 3..64 &&
+            local_part.matches(Regex("^[a-z0-9][a-z0-9._-]*[a-z0-9]$")) &&
+            !local_part.contains("..") &&
+            !local_part.matches(Regex("^[0-9]+$"))
+    }
+
     LaunchedEffect(local_part, selected_domain) {
-        if (local_part.length < 3) {
+        if (!local_part_valid) {
             availability = null
             checking = false
             return@LaunchedEffect
@@ -1668,6 +1675,12 @@ private fun create_alias_dialog(
                     placeholder = { Text(stringResource(R.string.create_alias_placeholder)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
+                    isError = local_part.isNotEmpty() && !local_part_valid,
+                    supportingText = if (local_part.isNotEmpty() && !local_part_valid) {
+                        { Text(stringResource(R.string.create_alias_invalid_chars), color = colors.danger, fontSize = 12.sp) }
+                    } else {
+                        null
+                    },
                     trailingIcon = when {
                         checking -> {
                             { CircularProgressIndicator(modifier = Modifier.size(16.dp), color = colors.text_muted, strokeWidth = 2.dp) }
@@ -1750,9 +1763,9 @@ private fun create_alias_dialog(
             TextButton(
                 onClick = {
                     val t = captcha_token
-                    if (local_part.isNotBlank() && t != null) on_create(local_part, selected_domain, t)
+                    if (local_part_valid && t != null) on_create(local_part, selected_domain, t)
                 },
-                enabled = local_part.isNotBlank() && captcha_token != null && availability != false,
+                enabled = local_part_valid && captcha_token != null && availability != false,
             ) {
                 Text(stringResource(R.string.create), color = colors.accent_blue)
             }
