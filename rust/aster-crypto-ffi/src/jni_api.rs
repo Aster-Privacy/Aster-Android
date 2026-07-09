@@ -33,7 +33,7 @@ use rand::rngs::OsRng;
 use rand::RngCore;
 use sha2::{Digest, Sha256};
 use std::sync::{Mutex, Once};
-use zeroize::Zeroizing;
+use zeroize::{Zeroize, Zeroizing};
 
 static HASH_EMAIL_PEPPER_CELL: Mutex<Option<Zeroizing<Vec<u8>>>> = Mutex::new(None);
 static HASH_EMAIL_FALLBACK_WARNED: Once = Once::new();
@@ -162,10 +162,12 @@ pub extern "system" fn Java_org_astermail_android_crypto_CryptoNative_generate_1
     let mut out = Vec::with_capacity(64);
     out.extend_from_slice(verifying.as_bytes());
     out.extend_from_slice(&signing.to_bytes());
-    match env.byte_array_from_slice(&out) {
+    let result = match env.byte_array_from_slice(&out) {
         Ok(arr) => arr.into_raw(),
         Err(_) => std::ptr::null_mut(),
-    }
+    };
+    out.zeroize();
+    result
 }
 
 #[no_mangle]
@@ -370,25 +372,12 @@ pub extern "system" fn Java_org_astermail_android_crypto_CryptoNative_hash_1emai
             base64::engine::general_purpose::STANDARD.encode(digest)
         }
         None => {
-            #[cfg(not(debug_assertions))]
-            {
-                HASH_EMAIL_FALLBACK_WARNED.call_once(|| {
-                    eprintln!(
-                        "aster-crypto-ffi: hash_email called without pepper configured; refusing to hash in release build"
-                    );
-                });
-                return std::ptr::null_mut();
-            }
-            #[cfg(debug_assertions)]
-            {
-                HASH_EMAIL_FALLBACK_WARNED.call_once(|| {
-                    eprintln!(
-                        "aster-crypto-ffi: ASTER_HASH_EMAIL_PEPPER unset; falling back to plain SHA-256(email)"
-                    );
-                });
-                let digest = Sha256::digest(normalized.as_bytes());
-                base64::engine::general_purpose::STANDARD.encode(digest)
-            }
+            HASH_EMAIL_FALLBACK_WARNED.call_once(|| {
+                eprintln!(
+                    "aster-crypto-ffi: hash_email called without pepper configured; refusing to hash"
+                );
+            });
+            return std::ptr::null_mut();
         }
     };
     match env.new_string(b64) {
