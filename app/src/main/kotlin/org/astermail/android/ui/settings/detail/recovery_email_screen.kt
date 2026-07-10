@@ -43,16 +43,19 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterTextField
+import org.astermail.android.design.components.DialogConfirmStyle
 import org.astermail.android.settings.SaveStatus
 import org.astermail.android.settings.SettingsViewModel
 
@@ -63,9 +66,16 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
 
-    LaunchedEffect(Unit) { vm.load_recovery_email() }
+    LaunchedEffect(Unit) {
+        vm.load_recovery_email()
+        vm.load_security_status()
+    }
 
     var email by rememberSaveable { mutableStateOf("") }
+    var show_step_up by rememberSaveable { mutableStateOf(false) }
+    var step_up_is_remove by rememberSaveable { mutableStateOf(false) }
+    var step_up_password by rememberSaveable { mutableStateOf("") }
+    var step_up_code by rememberSaveable { mutableStateOf("") }
 
     LaunchedEffect(state.recovery_email_address) {
         if (email.isBlank() && !state.recovery_email_address.isNullOrBlank()) {
@@ -159,7 +169,12 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
             } else {
                 stringResource(R.string.save_recovery_email)
             },
-            onClick = { vm.save_recovery_email(email) },
+            onClick = {
+                step_up_is_remove = false
+                step_up_password = ""
+                step_up_code = ""
+                show_step_up = true
+            },
             enabled = email.trim().contains("@") && state.save_status != SaveStatus.SAVING,
             is_loading = state.save_status == SaveStatus.SAVING,
         )
@@ -177,12 +192,85 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
             v_gap(AsterSpacing.sm)
             AsterGhostButton(
                 label = stringResource(R.string.recovery_email_remove),
-                onClick = { vm.remove_recovery_email() },
+                onClick = {
+                    step_up_is_remove = true
+                    step_up_password = ""
+                    step_up_code = ""
+                    show_step_up = true
+                },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = state.save_status != SaveStatus.SAVING,
             )
         }
 
         v_gap(AsterSpacing.xxl)
+    }
+
+    if (show_step_up) {
+        val totp_on = state.security_status?.totp_enabled == true
+        val can_confirm = step_up_password.isNotBlank() &&
+            (!totp_on || step_up_code.length == 6) &&
+            state.save_status != SaveStatus.SAVING
+        AsterAlertDialog(
+            on_dismiss = { show_step_up = false },
+            title = if (step_up_is_remove) {
+                stringResource(R.string.recovery_email_remove)
+            } else {
+                stringResource(R.string.recovery_email)
+            },
+            message = stringResource(R.string.recovery_step_up_description),
+            confirm_label = if (step_up_is_remove) {
+                stringResource(R.string.recovery_email_remove)
+            } else {
+                stringResource(R.string.save_recovery_email)
+            },
+            cancel_label = stringResource(R.string.cancel),
+            confirm_style = if (step_up_is_remove) {
+                DialogConfirmStyle.destructive
+            } else {
+                DialogConfirmStyle.primary
+            },
+            confirm_enabled = can_confirm,
+            is_busy = state.save_status == SaveStatus.SAVING,
+            on_confirm = {
+                val code = if (totp_on) step_up_code else null
+                if (step_up_is_remove) {
+                    vm.remove_recovery_email(step_up_password, code)
+                } else {
+                    vm.save_recovery_email(email, step_up_password, code)
+                }
+                show_step_up = false
+            },
+            extra_content = {
+                androidx.compose.foundation.layout.Column {
+                    AsterTextField(
+                        value = step_up_password,
+                        onValueChange = { step_up_password = it },
+                        label = stringResource(R.string.password),
+                        placeholder = stringResource(R.string.enter_your_password),
+                        visual_transformation = PasswordVisualTransformation(),
+                        keyboard_options = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done,
+                        ),
+                    )
+                    if (totp_on) {
+                        v_gap(AsterSpacing.md)
+                        AsterTextField(
+                            value = step_up_code,
+                            onValueChange = { input ->
+                                step_up_code = input.filter { it.isDigit() }.take(6)
+                            },
+                            label = stringResource(R.string.authenticator_code),
+                            placeholder = "000000",
+                            keyboard_options = KeyboardOptions(
+                                keyboardType = KeyboardType.NumberPassword,
+                                imeAction = ImeAction.Done,
+                            ),
+                        )
+                    }
+                }
+            },
+        )
     }
 }
