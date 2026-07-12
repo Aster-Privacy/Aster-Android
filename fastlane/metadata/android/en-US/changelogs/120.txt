@@ -1,0 +1,4 @@
+Bug fixes and improvements:
+
+- Fixed a connection error that could prevent sign-in on some networks.
+- Improved the reliability of the app's secure connection to Aster.
