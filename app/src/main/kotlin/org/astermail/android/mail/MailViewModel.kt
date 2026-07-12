@@ -272,6 +272,7 @@ class MailViewModel @Inject constructor(
         total: Int?,
     ): List<InboxItem> {
         if (previous_items.isEmpty()) return page_items
+        if (page_items.isEmpty()) return previous_items
         if (total != null && total <= page_items.size) return page_items
         val page_ids = page_items.map { it.id }.toHashSet()
         val cap = (total ?: previous_items.size).coerceAtLeast(page_items.size)

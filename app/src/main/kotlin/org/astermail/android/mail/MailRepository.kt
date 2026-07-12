@@ -646,6 +646,17 @@ class MailRepository @Inject constructor(
 
     suspend fun trash(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<Unit> = runCatching {
         mail_api.bulk_action(BulkScopeRequest(action = "trash", ids = item_ids))
+        item_ids.forEachIndexed { index, item_id ->
+            val raw_item = raw_items.getOrNull(index) ?: return@forEachIndexed
+            val request = build_metadata_patch(
+                raw_item,
+                mapOf(
+                    "is_trashed" to true,
+                    "is_archived" to false,
+                ),
+            )
+            runCatching { mail_api.patch_metadata(item_id, request) }
+        }
         Unit
     }
 
@@ -774,13 +785,13 @@ class MailRepository @Inject constructor(
             subject = envelope?.subject ?: "",
             preview = envelope?.let { clean_preview(it.body_text, it.body_html) } ?: "",
             timestamp = item.message_ts ?: item.created_at ?: "",
-            is_read = (item.is_read == true) || (meta?.is_read == true) || ((meta?.is_trashed ?: item.is_trashed) == true),
+            is_read = (item.is_read == true) || (meta?.is_read == true) || ((item.is_trashed ?: meta?.is_trashed) == true),
             is_starred = meta?.is_starred ?: false,
             is_encrypted = item.encrypted_envelope != null,
             has_attachments = meta?.has_attachments ?: false,
-            is_trashed = meta?.is_trashed ?: item.is_trashed ?: false,
+            is_trashed = item.is_trashed ?: meta?.is_trashed ?: false,
             is_archived = meta?.is_archived ?: false,
-            is_spam = meta?.is_spam ?: item.is_spam ?: false,
+            is_spam = item.is_spam ?: meta?.is_spam ?: false,
             labels = item.labels?.mapNotNull { it.folder_token } ?: emptyList(),
             tag_tokens = item.tag_tokens ?: emptyList(),
             category = if (envelope != null) classify(envelope, meta) else "primary",
