@@ -77,6 +77,7 @@ import org.astermail.android.api.preferences.rebase_preferences_changes
 import kotlinx.serialization.json.jsonObject
 import org.astermail.android.api.recovery_email.RecoveryEmailApi
 import org.astermail.android.api.recovery_email.RecoveryEmailApiImpl
+import org.astermail.android.api.recovery_email.RemoveRecoveryEmailRequest
 import org.astermail.android.api.recovery_email.SaveRecoveryEmailRequest
 import org.astermail.android.api.security.AuditEvent
 import org.astermail.android.api.security.HardwareKey
@@ -1316,11 +1317,13 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun save_recovery_email(email: String) {
+    fun save_recovery_email(email: String, password: String, totp_code: String?) {
         viewModelScope.launch {
             _state.value = _state.value.copy(save_status = SaveStatus.SAVING, error = null)
             val normalized = email.trim().lowercase()
             try {
+                val password_hash = auth_repository.derive_password_hash_b64(password)
+                    ?: throw IllegalStateException(context.getString(R.string.something_went_wrong))
                 val identity_key = session_key_store.get_identity_key()
                     ?: throw IllegalStateException("no identity key")
                 val encrypted = encrypt_recovery_email(normalized, identity_key)
@@ -1331,6 +1334,8 @@ class SettingsViewModel @Inject constructor(
                         email_nonce = encrypted.nonce_b64,
                         email_hash = email_hash,
                         plaintext_email = normalized,
+                        password_hash = password_hash,
+                        totp_code = totp_code?.ifBlank { null },
                     ),
                 )
                 _state.value = _state.value.copy(
@@ -1374,11 +1379,18 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun remove_recovery_email() {
+    fun remove_recovery_email(password: String, totp_code: String?) {
         viewModelScope.launch {
             _state.value = _state.value.copy(save_status = SaveStatus.SAVING, error = null)
             try {
-                recovery_email_api.remove()
+                val password_hash = auth_repository.derive_password_hash_b64(password)
+                    ?: throw IllegalStateException(context.getString(R.string.something_went_wrong))
+                recovery_email_api.remove(
+                    RemoveRecoveryEmailRequest(
+                        password_hash = password_hash,
+                        totp_code = totp_code?.ifBlank { null },
+                    ),
+                )
                 _state.value = _state.value.copy(
                     recovery_email_address = null,
                     recovery_email_set = false,
