@@ -104,8 +104,6 @@ fun SignInScreen(
     var email_domain by remember { mutableStateOf("astermail.org") }
     var password by remember { mutableStateOf("") }
     var password_visible by remember { mutableStateOf(false) }
-    var captcha_token by remember { mutableStateOf<String?>(null) }
-    var captcha_reset_trigger by remember { mutableStateOf(0) }
     val email_focus = remember { FocusRequester() }
     val password_focus = remember { FocusRequester() }
     val keyboard_controller = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
@@ -129,21 +127,14 @@ fun SignInScreen(
 
     val is_loading = state is AuthUiState.Loading
     val error_message = (state as? AuthUiState.Error)?.message
-    val can_submit = email.isNotBlank() && password.isNotBlank() && !captcha_token.isNullOrBlank() && !is_loading
+    val can_submit = email.isNotBlank() && password.isNotBlank() && !is_loading
 
     val submit: () -> Unit = {
         if (can_submit) {
             keyboard_controller?.hide()
             val trimmed = email.trim()
             val full_email = if (trimmed.contains("@")) trimmed else "$trimmed@$email_domain"
-            view_model.submit_login(full_email, password, captcha_token)
-        }
-    }
-
-    LaunchedEffect(error_message) {
-        if (error_message != null) {
-            captcha_token = null
-            captcha_reset_trigger += 1
+            view_model.submit_login(full_email, password)
         }
     }
 
@@ -311,21 +302,6 @@ fun SignInScreen(
                         enabled = !is_loading,
                     )
                 }
-
-                Spacer(Modifier.height(AsterSpacing.md))
-
-                TurnstileWidget(
-                    on_token = { captcha_token = it },
-                    on_error = {
-                        captcha_token = null
-                        captcha_reset_trigger += 1
-                    },
-                    on_expired = {
-                        captcha_token = null
-                        captcha_reset_trigger += 1
-                    },
-                    reset_trigger = captcha_reset_trigger,
-                )
 
                 Spacer(Modifier.height(AsterSpacing.md))
 
