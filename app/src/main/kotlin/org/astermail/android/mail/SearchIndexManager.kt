@@ -132,7 +132,14 @@ class SearchIndexManager @Inject constructor(
             val max_pages = 20
             var page = 0
             while (page < max_pages) {
-                val response = mail_api.list_messages(limit = 50, cursor = cursor, item_type = "received")
+                val response = mail_api.list_messages(
+                    limit = 50,
+                    cursor = cursor,
+                    item_type = "received",
+                    is_trashed = false,
+                    is_archived = false,
+                    is_spam = false,
+                )
                 val new_items = response.items.filter { it.id !in existing_ids }
                 if (new_items.isNotEmpty()) {
                     val decrypted = repository.decrypt_items_for_cache(new_items)
