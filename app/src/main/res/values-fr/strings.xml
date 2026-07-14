@@ -951,11 +951,14 @@
     <string name="ext_error_oauth_failed">Impossible de démarrer la connexion. Vérifiez votre réseau et réessayez.</string>
     <string name="ext_error_manual_failed">Impossible d\'enregistrer le compte. Vérifiez l\'hôte, le port et les identifiants.</string>
     <string name="ext_error_no_session">Votre session a expiré. Déconnectez-vous puis reconnectez-vous pour continuer.</string>
+    <string name="ext_error_sync_failed">Échec de la synchronisation. Vérifiez les identifiants du compte et réessayez.</string>
     <string name="ext_manual_saved">Compte ajouté. Synchronisation en cours…</string>
     <string name="ext_last_sync">Dernière synchronisation : %1$s</string>
     <string name="ext_section_oauth">Changement rapide</string>
-    <string name="ext_oauth_coming_soon">Bientôt disponible sur Android</string>
-    <string name="ext_oauth_coming_soon_body">La connexion Google, Outlook et Yahoo arrivera sur Android dans une prochaine version. En attendant, utilisez la configuration manuelle ci-dessous avec un mot de passe d\'application.</string>
+    <string name="ext_oauth_body">Connectez-vous avec votre fournisseur pour lier un compte en une étape.</string>
+    <string name="ext_oauth_connect_google">Se connecter avec Google</string>
+    <string name="ext_oauth_connect_microsoft">Se connecter avec Microsoft</string>
+    <string name="ext_oauth_connect_yahoo">Se connecter avec Yahoo</string>
     <string name="import_provider_coming_soon">Bientôt</string>
     <string name="import_connect_manual_cta">Connecter via IMAP</string>
     <string name="ext_section_manual">Configuration manuelle</string>
@@ -1385,7 +1388,7 @@
     <!-- Onboarding -->
     <string name="onboarding_skip">Passer</string>
     <string name="onboarding_slide1_title">Bienvenue sur Aster</string>
-    <string name="onboarding_slide1_body">Un e-mail privé qui vous protège vraiment. Pas de surveillance, pas de publicités, pas de portes dérobées.</string>
+    <string name="onboarding_slide1_body">Un e-mail privé qui vous protège vraiment. Pas de surveillance, pas de publicités.</string>
     <string name="onboarding_slide2_title">Chiffré de bout en bout</string>
     <string name="onboarding_slide2_body">Chaque message est chiffré avec vos clés avant de quitter votre appareil. Même Aster ne peut pas lire vos e-mails.</string>
     <string name="onboarding_slide3_title">Zéro traçage</string>
