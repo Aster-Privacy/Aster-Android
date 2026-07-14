@@ -899,11 +899,14 @@
     <string name="ext_error_oauth_failed">Не удалось начать вход. Проверьте соединение и повторите попытку.</string>
     <string name="ext_error_manual_failed">Не удалось сохранить аккаунт. Проверьте хост, порт и учётные данные.</string>
     <string name="ext_error_no_session">Сеанс истёк. Выйдите и войдите снова, чтобы продолжить.</string>
+    <string name="ext_error_sync_failed">Не удалось синхронизировать. Проверьте учётные данные аккаунта и повторите попытку.</string>
     <string name="ext_manual_saved">Учётная запись добавлена. Начинается синхронизация…</string>
     <string name="ext_last_sync">Последняя синхронизация: %1$s</string>
     <string name="ext_section_oauth">Быстрое переключение</string>
-    <string name="ext_oauth_coming_soon">Скоро в Android</string>
-    <string name="ext_oauth_coming_soon_body">Вход через Google, Outlook и Yahoo появится в Android в следующих версиях. Пока используйте ручную настройку ниже с паролем приложения.</string>
+    <string name="ext_oauth_body">Войдите через своего провайдера, чтобы подключить аккаунт в один шаг.</string>
+    <string name="ext_oauth_connect_google">Войти через Google</string>
+    <string name="ext_oauth_connect_microsoft">Войти через Microsoft</string>
+    <string name="ext_oauth_connect_yahoo">Войти через Yahoo</string>
     <string name="import_provider_coming_soon">Скоро</string>
     <string name="import_connect_manual_cta">Подключить по IMAP</string>
     <string name="ext_section_manual">Ручная настройка</string>

@@ -899,11 +899,14 @@
     <string name="ext_error_oauth_failed">تعذر بدء تسجيل الدخول. تحقق من اتصالك وحاول مرة أخرى.</string>
     <string name="ext_error_manual_failed">تعذر حفظ الحساب. تحقق من المضيف والمنفذ وبيانات الاعتماد.</string>
     <string name="ext_error_no_session">انتهت جلستك. سجل الخروج ثم الدخول للمتابعة.</string>
+    <string name="ext_error_sync_failed">فشلت المزامنة. تحقق من بيانات اعتماد الحساب وأعد المحاولة.</string>
     <string name="ext_manual_saved">تم إضافة الحساب. تبدأ المزامنة…</string>
     <string name="ext_last_sync">آخر مزامنة: %1$s</string>
     <string name="ext_section_oauth">تبديل سريع</string>
-    <string name="ext_oauth_coming_soon">قريبًا على Android</string>
-    <string name="ext_oauth_coming_soon_body">سيتوفر تسجيل الدخول عبر Google وOutlook وYahoo على Android في إصدار قادم. استخدم حاليًا الإعداد اليدوي أدناه مع كلمة مرور التطبيق.</string>
+    <string name="ext_oauth_body">سجّل الدخول عبر مزوّدك لربط حساب في خطوة واحدة.</string>
+    <string name="ext_oauth_connect_google">تسجيل الدخول عبر Google</string>
+    <string name="ext_oauth_connect_microsoft">تسجيل الدخول عبر Microsoft</string>
+    <string name="ext_oauth_connect_yahoo">تسجيل الدخول عبر Yahoo</string>
     <string name="import_provider_coming_soon">قريبًا</string>
     <string name="import_connect_manual_cta">الاتصال عبر IMAP</string>
     <string name="ext_section_manual">إعداد يدوي</string>

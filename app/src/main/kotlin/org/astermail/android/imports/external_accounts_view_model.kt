@@ -41,16 +41,18 @@ import org.astermail.android.api.external_accounts.OAuthAuthorizeRequest
 import org.astermail.android.api.external_accounts.TriggerSyncRequest
 import org.astermail.android.storage.SessionKeyStore
 
-enum class ExternalAccountsError { LOAD_FAILED, OAUTH_FAILED, MANUAL_FAILED, NO_SESSION_KEY, DELETE_FAILED }
+enum class ExternalAccountsError { LOAD_FAILED, OAUTH_FAILED, MANUAL_FAILED, NO_SESSION_KEY, DELETE_FAILED, SYNC_FAILED }
 
 data class ExternalAccountsUiState(
     val accounts: List<ExternalAccount> = emptyList(),
+    val decrypted: Map<String, ExternalAccountData> = emptyMap(),
     val loading: Boolean = false,
     val connecting_provider: String? = null,
     val authorize_url: String? = null,
     val error: ExternalAccountsError? = null,
     val manual_submitting: Boolean = false,
     val manual_success: Boolean = false,
+    val syncing_tokens: Set<String> = emptySet(),
 )
 
 @HiltViewModel
@@ -67,7 +69,22 @@ class ExternalAccountsViewModel @Inject constructor(
             _state.value = _state.value.copy(loading = true, error = null)
             runCatching { withContext(Dispatchers.IO) { api.list_accounts() } }
                 .onSuccess { res ->
-                    _state.value = _state.value.copy(accounts = res.accounts, loading = false)
+                    val master = session_keys.get() ?: session_keys.get_passphrase()
+                    val decrypted = if (master != null) {
+                        res.accounts.mapNotNull { acct ->
+                            runCatching {
+                                decrypt_account_data(
+                                    encrypted_account_data = acct.encrypted_account_data,
+                                    account_data_nonce = acct.account_data_nonce,
+                                    master_key = master,
+                                    integrity_hash = acct.integrity_hash,
+                                )
+                            }.getOrNull()?.let { acct.account_token to it }
+                        }.toMap()
+                    } else {
+                        emptyMap()
+                    }
+                    _state.value = _state.value.copy(accounts = res.accounts, decrypted = decrypted, loading = false)
                 }
                 .onFailure {
                     _state.value = _state.value.copy(loading = false, error = ExternalAccountsError.LOAD_FAILED)
@@ -75,7 +92,7 @@ class ExternalAccountsViewModel @Inject constructor(
         }
     }
 
-    fun start_oauth(provider: String, account_email: String) {
+    fun start_oauth(provider: String) {
         viewModelScope.launch {
             _state.value = _state.value.copy(connecting_provider = provider, authorize_url = null, error = null)
             val master = session_keys.get() ?: session_keys.get_passphrase()
@@ -84,10 +101,11 @@ class ExternalAccountsViewModel @Inject constructor(
                 return@launch
             }
             try {
-                val token = generate_account_token(account_email, master)
+                val placeholder_email = "oauth-$provider-${java.time.Instant.now().toEpochMilli()}@import"
+                val token = generate_account_token(placeholder_email, master)
                 val placeholder = ExternalAccountData(
-                    email = account_email,
-                    display_name = account_email,
+                    email = placeholder_email,
+                    display_name = provider,
                     created_at = java.time.Instant.now().toString(),
                 )
                 val encrypted = encrypt_account_data(placeholder, master)
@@ -133,11 +151,7 @@ class ExternalAccountsViewModel @Inject constructor(
                             accounts = res.accounts,
                             connecting_provider = null,
                         )
-                        runCatching {
-                            withContext(Dispatchers.IO) {
-                                api.trigger_sync(TriggerSyncRequest(account_token = new_one.account_token))
-                            }
-                        }
+                        trigger_sync(new_one.account_token)
                         return@launch
                     }
                 }
@@ -194,11 +208,7 @@ class ExternalAccountsViewModel @Inject constructor(
                 }
                 _state.value = _state.value.copy(manual_submitting = false, manual_success = true)
                 load()
-                runCatching {
-                    withContext(Dispatchers.IO) {
-                        api.trigger_sync(TriggerSyncRequest(account_token = token))
-                    }
-                }
+                trigger_sync(token)
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(manual_submitting = false, error = ExternalAccountsError.MANUAL_FAILED)
             }
@@ -218,10 +228,21 @@ class ExternalAccountsViewModel @Inject constructor(
 
     fun trigger_sync(account_token: String) {
         viewModelScope.launch {
-            runCatching {
+            _state.value = _state.value.copy(
+                syncing_tokens = _state.value.syncing_tokens + account_token,
+                error = null,
+            )
+            val result = runCatching {
                 withContext(Dispatchers.IO) {
                     api.trigger_sync(TriggerSyncRequest(account_token = account_token))
                 }
+            }
+            _state.value = _state.value.copy(syncing_tokens = _state.value.syncing_tokens - account_token)
+            val failed = result.isFailure || result.getOrNull()?.success == false
+            if (failed) {
+                _state.value = _state.value.copy(error = ExternalAccountsError.SYNC_FAILED)
+            } else {
+                load()
             }
         }
     }

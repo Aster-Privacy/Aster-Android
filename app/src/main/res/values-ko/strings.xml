@@ -899,11 +899,14 @@
     <string name="ext_error_oauth_failed">로그인을 시작할 수 없습니다. 연결을 확인한 후 다시 시도하세요.</string>
     <string name="ext_error_manual_failed">계정을 저장할 수 없습니다. 호스트, 포트, 자격 증명을 확인하세요.</string>
     <string name="ext_error_no_session">세션이 만료되었습니다. 로그아웃 후 다시 로그인하여 계속하세요.</string>
+    <string name="ext_error_sync_failed">동기화에 실패했습니다. 계정 자격 증명을 확인한 후 다시 시도하세요.</string>
     <string name="ext_manual_saved">계정이 추가되었습니다. 동기화를 시작합니다…</string>
     <string name="ext_last_sync">마지막 동기화: %1$s</string>
     <string name="ext_section_oauth">빠른 전환</string>
-    <string name="ext_oauth_coming_soon">Android에서 곧 제공</string>
-    <string name="ext_oauth_coming_soon_body">Google, Outlook, Yahoo 로그인은 향후 Android 버전에서 제공될 예정입니다. 지금은 앱 비밀번호로 아래 수동 설정을 사용하세요.</string>
+    <string name="ext_oauth_body">제공업체로 로그인하여 계정을 한 단계로 연결하세요.</string>
+    <string name="ext_oauth_connect_google">Google로 로그인</string>
+    <string name="ext_oauth_connect_microsoft">Microsoft로 로그인</string>
+    <string name="ext_oauth_connect_yahoo">Yahoo로 로그인</string>
     <string name="import_provider_coming_soon">곧 제공</string>
     <string name="import_connect_manual_cta">IMAP으로 연결</string>
     <string name="ext_section_manual">수동 설정</string>

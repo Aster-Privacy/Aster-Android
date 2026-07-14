@@ -900,11 +900,14 @@
     <string name="ext_error_oauth_failed">Anmeldung konnte nicht gestartet werden. Verbindung prüfen und erneut versuchen.</string>
     <string name="ext_error_manual_failed">Konto konnte nicht gespeichert werden. Host, Port und Zugangsdaten prüfen.</string>
     <string name="ext_error_no_session">Sitzung abgelaufen. Abmelden und neu anmelden, um fortzufahren.</string>
+    <string name="ext_error_sync_failed">Synchronisierung fehlgeschlagen. Zugangsdaten des Kontos prüfen und erneut versuchen.</string>
     <string name="ext_manual_saved">Konto hinzugefügt. Synchronisierung beginnt…</string>
     <string name="ext_last_sync">Letzte Synchronisierung: %1$s</string>
     <string name="ext_section_oauth">Schnellwechsel</string>
-    <string name="ext_oauth_coming_soon">Bald in Android verfügbar</string>
-    <string name="ext_oauth_coming_soon_body">Google-, Outlook- und Yahoo-Anmeldung folgen in einer kommenden Android-Version. Verwenden Sie vorerst die manuelle Einrichtung unten mit einem App-Passwort.</string>
+    <string name="ext_oauth_body">Melden Sie sich mit Ihrem Anbieter an, um ein Konto in einem Schritt zu verbinden.</string>
+    <string name="ext_oauth_connect_google">Mit Google anmelden</string>
+    <string name="ext_oauth_connect_microsoft">Mit Microsoft anmelden</string>
+    <string name="ext_oauth_connect_yahoo">Mit Yahoo anmelden</string>
     <string name="import_provider_coming_soon">Demnächst</string>
     <string name="import_connect_manual_cta">Per IMAP verbinden</string>
     <string name="ext_section_manual">Manuelle Einrichtung</string>
