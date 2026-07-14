@@ -1170,6 +1170,58 @@ class MailViewModelTest {
     }
 
     @Test
+    fun `silent_revalidate does not resurrect an item archived out-of-band`() = runTest {
+        fun item(id: String, minute: Int) = InboxItem(
+            id = id,
+            thread_token = "thread_$id",
+            thread_message_count = 1,
+            sender_name = "Sender $id",
+            sender_email = "$id@example.com",
+            subject = "Subject $id",
+            preview = "Preview $id",
+            timestamp = "2026-04-26T10:0$minute:00Z",
+            is_read = false,
+            is_starred = false,
+            is_encrypted = true,
+            has_attachments = false,
+            is_trashed = false,
+            is_archived = false,
+            is_spam = false,
+            labels = emptyList(),
+            raw_item = mockk(relaxed = true),
+        )
+
+        // Oldest to newest: a(01) b(02) c(03) d(04) e(05).
+        val a = item("a", 1)
+        val b = item("b", 2)
+        val c = item("c", 3)
+        val d = item("d", 4)
+        val e = item("e", 5)
+
+        val initial_page = InboxPage(listOf(e, d, c, b, a), has_more = false, next_cursor = null, total = 5)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(initial_page)
+
+        vm.load_inbox()
+        advanceUntilIdle()
+        assertEquals(listOf("e", "d", "c", "b", "a"), vm.inbox_state.value.items.map { it.id })
+
+        // c is archived out-of-band (e.g. from the web client). The server's fresh page
+        // correctly omits it, but this device's in-memory list still holds it with
+        // is_archived = false. total drops to 4 (one page short of the full 5), so
+        // merge_with_previous's "trust the page" early-return does NOT fire and the
+        // carry-forward path actually runs.
+        val revalidate_page = InboxPage(listOf(e, d, b), has_more = false, next_cursor = null, total = 4)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(revalidate_page)
+
+        vm.load_inbox(force = true)
+        advanceUntilIdle()
+
+        val ids = vm.inbox_state.value.items.map { it.id }
+        assertTrue("archived item 'c' must not reappear in inbox, got $ids", "c" !in ids)
+        assertEquals(listOf("e", "d", "b", "a"), ids)
+    }
+
+    @Test
     fun `mark_read_delayed marks read after delay and persists to cache`() = runTest {
         coEvery { repository.mark_read(any(), any(), any()) } returns Result.success(Unit)
 
