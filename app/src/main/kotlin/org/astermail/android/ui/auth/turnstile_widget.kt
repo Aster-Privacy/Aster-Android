@@ -61,6 +61,11 @@ private class TurnstileBridge(
     fun onExpired() { handler.post { on_expired() } }
 }
 
+private val turnstile_allowed_hosts = setOf(
+    TURNSTILE_DOMAIN,
+    "challenges.cloudflare.com",
+)
+
 private class AssetLoaderWebViewClient(
     private val asset_loader: WebViewAssetLoader,
 ) : WebViewClient() {
@@ -70,6 +75,15 @@ private class AssetLoaderWebViewClient(
     ): WebResourceResponse? {
         return asset_loader.shouldInterceptRequest(request.url)
             ?: super.shouldInterceptRequest(view, request)
+    }
+
+    override fun shouldOverrideUrlLoading(
+        view: WebView,
+        request: WebResourceRequest,
+    ): Boolean {
+        val host = request.url.host
+        if (host == null || host !in turnstile_allowed_hosts) return true
+        return false
     }
 }
 

@@ -1069,6 +1069,7 @@
     <string name="error_timeout">Connessione scaduta. Riprova.</string>
     <string name="error_ssl">Connessione sicura non riuscita. Riprova.</string>
     <string name="error_generic">Qualcosa è andato storto. Riprova.</string>
+    <string name="error_too_many_attempts">Troppi tentativi. Attendi un momento e riprova.</string>
 
     <string name="error_send_recovery">Invio email di recupero non riuscito</string>
     <string name="error_invalid_recovery_code">Formato codice di recupero non valido</string>

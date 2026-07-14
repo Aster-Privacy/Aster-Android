@@ -1070,6 +1070,7 @@
     <string name="error_timeout">Verbindung abgelaufen. Bitte versuchen Sie es erneut.</string>
     <string name="error_ssl">Sichere Verbindung fehlgeschlagen. Bitte versuchen Sie es erneut.</string>
     <string name="error_generic">Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.</string>
+    <string name="error_too_many_attempts">Zu viele Versuche. Bitte warten Sie einen Moment und versuchen Sie es erneut.</string>
 
     <string name="error_send_recovery">Wiederherstellungs-E-Mail konnte nicht gesendet werden</string>
     <string name="error_invalid_recovery_code">Ungültiges Format des Wiederherstellungscodes</string>

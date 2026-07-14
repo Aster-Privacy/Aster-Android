@@ -1069,6 +1069,7 @@
     <string name="error_timeout">接続がタイムアウトしました。もう一度お試しください。</string>
     <string name="error_ssl">安全な接続に失敗しました。もう一度お試しください。</string>
     <string name="error_generic">問題が発生しました。もう一度お試しください。</string>
+    <string name="error_too_many_attempts">試行回数が多すぎます。しばらく待ってからもう一度お試しください。</string>
 
     <string name="error_send_recovery">復旧メールの送信に失敗しました</string>
     <string name="error_invalid_recovery_code">リカバリコードの形式が無効です</string>

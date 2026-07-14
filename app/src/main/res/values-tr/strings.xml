@@ -1069,6 +1069,7 @@
     <string name="error_timeout">Bağlantı zaman aşımına uğradı. Lütfen tekrar deneyin.</string>
     <string name="error_ssl">Güvenli bağlantı başarısız oldu. Lütfen tekrar deneyin.</string>
     <string name="error_generic">Bir şeyler ters gitti. Lütfen tekrar deneyin.</string>
+    <string name="error_too_many_attempts">Çok fazla deneme yapıldı. Lütfen biraz bekleyip tekrar deneyin.</string>
 
     <string name="error_send_recovery">Kurtarma e-postası gönderilemedi</string>
     <string name="error_invalid_recovery_code">Geçersiz kurtarma kodu biçimi</string>

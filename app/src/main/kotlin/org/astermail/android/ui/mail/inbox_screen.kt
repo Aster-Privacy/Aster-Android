@@ -1150,6 +1150,40 @@ private fun inbox_top_bar(
                     }
                 }
             }
+            var overflow_menu_open by remember { mutableStateOf(false) }
+            Box {
+                AsterIconButton(
+                    icon = Icons.Filled.MoreVert,
+                    content_description = stringResource(R.string.more_options),
+                    onClick = { overflow_menu_open = true },
+                    modifier = Modifier.testTag("inbox_overflow_menu"),
+                )
+                DropdownMenu(
+                    expanded = overflow_menu_open,
+                    onDismissRequest = { overflow_menu_open = false },
+                    shape = SquircleShape(18.dp),
+                    containerColor = colors.dropdown_bg,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, colors.border_secondary),
+                    shadowElevation = 8.dp,
+                    tonalElevation = 0.dp,
+                    modifier = Modifier.padding(vertical = 6.dp),
+                ) {
+                    DropdownMenuItem(
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                        text = {
+                            Text(
+                                text = stringResource(if (has_unread) R.string.mark_all_read else R.string.mark_all_unread),
+                                fontSize = 15.sp,
+                                color = colors.text_primary,
+                            )
+                        },
+                        onClick = {
+                            overflow_menu_open = false
+                            on_mark_all_read(has_unread)
+                        },
+                    )
+                }
+            }
             AsterIconButton(
                 icon = Icons.Outlined.Settings,
                 content_description = stringResource(R.string.settings),

@@ -64,7 +64,7 @@
     <!-- Onboarding -->
     <string name="onboarding_skip">Skip</string>
     <string name="onboarding_slide1_title">Welcome to Aster</string>
-    <string name="onboarding_slide1_body">Private email that actually protects you. No surveillance, no ads, no backdoors.</string>
+    <string name="onboarding_slide1_body">Private email that actually protects you.</string>
     <string name="onboarding_slide2_title">End-to-end encrypted</string>
     <string name="onboarding_slide2_body">Every message is encrypted with your keys before leaving your device. Not even Aster can read your mail.</string>
     <string name="onboarding_slide3_title">Zero tracking</string>
@@ -1423,6 +1423,7 @@
     <string name="error_timeout">Connection timed out. Please try again.</string>
     <string name="error_ssl">Secure connection failed. Please try again.</string>
     <string name="error_generic">Something went wrong. Please try again.</string>
+    <string name="error_too_many_attempts">Too many attempts. Please wait a moment and try again.</string>
 
     <!-- Recovery -->
     <string name="error_send_recovery">Failed to send recovery email</string>

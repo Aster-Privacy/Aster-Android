@@ -202,7 +202,7 @@ class MainActivity : ComponentActivity() {
     private fun enforce_secure_flag() {
         val app_lock_configured = runCatching {
             org.astermail.android.security.AppLockStore(applicationContext).is_configured()
-        }.getOrDefault(false)
+        }.getOrDefault(true)
         if (LockdownStore.is_enabled(applicationContext) || app_lock_configured) {
             window.setFlags(
                 android.view.WindowManager.LayoutParams.FLAG_SECURE,

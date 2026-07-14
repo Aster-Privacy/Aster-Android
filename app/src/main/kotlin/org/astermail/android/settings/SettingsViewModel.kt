@@ -1137,7 +1137,9 @@ class SettingsViewModel @Inject constructor(
             try {
                 val v = security_api.enable_vanguard()
                 _state.update { it.copy(vanguard_enabled = v.enabled) }
-            } catch (_: Throwable) {}
+            } catch (_: Throwable) {
+                _state.value = _state.value.copy(action_result = context.getString(R.string.something_went_wrong))
+            }
         }
     }
 
@@ -1146,7 +1148,9 @@ class SettingsViewModel @Inject constructor(
             try {
                 val v = security_api.disable_vanguard()
                 _state.update { it.copy(vanguard_enabled = v.enabled) }
-            } catch (_: Throwable) {}
+            } catch (_: Throwable) {
+                _state.value = _state.value.copy(action_result = context.getString(R.string.something_went_wrong))
+            }
         }
     }
 

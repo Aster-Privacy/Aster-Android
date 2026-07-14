@@ -159,10 +159,12 @@ fun RegisterRecoveryStep(
 }
 
 private fun copy_recovery_codes(context: Context, codes: List<String>) {
+    val text = codes.joinToString("\n")
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
-    val clip = ClipData.newPlainText("recovery codes", codes.joinToString("\n"))
+    val clip = ClipData.newPlainText("recovery codes", text)
     clip.description.extras = android.os.PersistableBundle().apply {
         putBoolean("android.content.extra.IS_SENSITIVE", true)
     }
     clipboard?.setPrimaryClip(clip)
+    org.astermail.android.util.schedule_sensitive_clipboard_clear(context, text)
 }

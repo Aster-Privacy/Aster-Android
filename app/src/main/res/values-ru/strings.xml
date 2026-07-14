@@ -1069,6 +1069,7 @@
     <string name="error_timeout">Время соединения истекло. Попробуйте снова.</string>
     <string name="error_ssl">Ошибка безопасного соединения. Попробуйте снова.</string>
     <string name="error_generic">Что-то пошло не так. Попробуйте снова.</string>
+    <string name="error_too_many_attempts">Слишком много попыток. Подождите немного и повторите попытку.</string>
 
     <string name="error_send_recovery">Не удалось отправить письмо для восстановления</string>
     <string name="error_invalid_recovery_code">Неверный формат кода восстановления</string>

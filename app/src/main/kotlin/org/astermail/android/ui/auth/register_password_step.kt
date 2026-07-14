@@ -99,6 +99,7 @@ fun RegisterPasswordStep(
     val lower_ok = password.any { it.isLowerCase() }
     val number_ok = password.any { it.isDigit() }
     val match_ok = password.isNotEmpty() && password == state.confirm_password.value
+    val passwords_mismatch = state.confirm_password.value.isNotEmpty() && password != state.confirm_password.value
     val captcha_ok = !state.captcha_token.value.isNullOrBlank()
     val can_submit = length_ok && upper_ok && lower_ok && number_ok && match_ok && captcha_ok && !is_loading
 
@@ -178,6 +179,15 @@ fun RegisterPasswordStep(
             content_type = ContentType.NewPassword,
             modifier = Modifier.focusRequester(confirm_focus),
         )
+
+        if (passwords_mismatch) {
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = stringResource(R.string.error_passwords_no_match),
+                color = colors.danger,
+                fontSize = 12.sp,
+            )
+        }
 
         Spacer(Modifier.height(AsterSpacing.lg))
 

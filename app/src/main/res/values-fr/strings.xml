@@ -1131,6 +1131,7 @@
     <string name="error_timeout">La connexion a expiré. Veuillez réessayer.</string>
     <string name="error_ssl">La connexion sécurisée a échoué. Veuillez réessayer.</string>
     <string name="error_generic">Une erreur est survenue. Veuillez réessayer.</string>
+    <string name="error_too_many_attempts">Trop de tentatives. Veuillez patienter un instant et réessayer.</string>
 
     <!-- Recovery -->
     <string name="error_send_recovery">Échec de l\'envoi de l\'e-mail de récupération</string>
@@ -1385,7 +1386,7 @@
     <!-- Onboarding -->
     <string name="onboarding_skip">Passer</string>
     <string name="onboarding_slide1_title">Bienvenue sur Aster</string>
-    <string name="onboarding_slide1_body">Un e-mail privé qui vous protège vraiment. Pas de surveillance, pas de publicités, pas de portes dérobées.</string>
+    <string name="onboarding_slide1_body">Un e-mail privé qui vous protège vraiment.</string>
     <string name="onboarding_slide2_title">Chiffré de bout en bout</string>
     <string name="onboarding_slide2_body">Chaque message est chiffré avec vos clés avant de quitter votre appareil. Même Aster ne peut pas lire vos e-mails.</string>
     <string name="onboarding_slide3_title">Zéro traçage</string>

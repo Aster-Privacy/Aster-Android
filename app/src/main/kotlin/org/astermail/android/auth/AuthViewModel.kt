@@ -153,7 +153,8 @@ class AuthViewModel @Inject constructor(
         is ApiError.NetworkError -> ctx.getString(R.string.error_no_connection)
         is ApiError.ServerError -> ctx.getString(R.string.error_server)
         is ApiError.ValidationError -> t.messages.joinToString(", ").ifBlank { ctx.getString(R.string.error_invalid_request) }
-        is ApiError.UnknownError -> t.detail
+        is ApiError.RateLimited -> ctx.getString(R.string.error_too_many_attempts)
+        is ApiError.UnknownError -> ctx.getString(R.string.error_generic)
         is java.net.UnknownHostException -> ctx.getString(R.string.error_no_connection)
         is java.net.ConnectException -> ctx.getString(R.string.error_no_connection)
         is java.net.SocketTimeoutException -> ctx.getString(R.string.error_timeout)

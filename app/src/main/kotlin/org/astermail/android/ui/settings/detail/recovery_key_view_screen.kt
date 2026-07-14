@@ -265,6 +265,7 @@ fun RecoveryKeyViewScreen(
                                 putBoolean("android.content.extra.IS_SENSITIVE", true)
                             }
                             cm.setPrimaryClip(clip)
+                            org.astermail.android.util.schedule_sensitive_clipboard_clear(context, text)
                             Toast.makeText(context, context.getString(R.string.copied_to_clipboard), Toast.LENGTH_SHORT).show()
                         },
                     )

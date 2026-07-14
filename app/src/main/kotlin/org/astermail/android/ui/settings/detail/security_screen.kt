@@ -70,6 +70,7 @@ import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
+import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -150,6 +151,12 @@ fun SecurityScreen(
         vm.load_trusted_devices()
         vm.load_audit_log()
         vm.load_vanguard_status()
+    }
+
+    LaunchedEffect(state.action_result) {
+        val msg = state.action_result ?: return@LaunchedEffect
+        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+        vm.clear_action_result()
     }
 
     val sec = state.security_status
