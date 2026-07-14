@@ -275,8 +275,10 @@ class MailViewModel @Inject constructor(
         if (total != null && total <= page_items.size) return page_items
         val page_ids = page_items.map { it.id }.toHashSet()
         val cap = (total ?: previous_items.size).coerceAtLeast(page_items.size)
+        val min_page_timestamp = page_items.minOfOrNull { it.timestamp }
         val carried = previous_items.asSequence()
             .filter { it.id !in page_ids }
+            .filter { min_page_timestamp == null || it.timestamp < min_page_timestamp }
             .filter { folder_matches(folder, it) }
             .toList()
         val combined = page_items + carried
