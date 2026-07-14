@@ -899,11 +899,14 @@
     <string name="ext_error_oauth_failed">サインインを開始できませんでした。接続を確認して再試行してください。</string>
     <string name="ext_error_manual_failed">アカウントを保存できませんでした。ホスト、ポート、資格情報を確認してください。</string>
     <string name="ext_error_no_session">セッションの有効期限が切れました。サインアウトしてから再度サインインしてください。</string>
+    <string name="ext_error_sync_failed">同期に失敗しました。アカウントの認証情報を確認してもう一度お試しください。</string>
     <string name="ext_manual_saved">アカウントを追加しました。同期を開始しています…</string>
     <string name="ext_last_sync">前回の同期: %1$s</string>
     <string name="ext_section_oauth">クイックスイッチ</string>
-    <string name="ext_oauth_coming_soon">Android で近日対応</string>
-    <string name="ext_oauth_coming_soon_body">Google、Outlook、Yahoo のサインインは今後の Android リリースで対応予定です。それまでは、下の手動設定とアプリパスワードをご利用ください。</string>
+    <string name="ext_oauth_body">プロバイダーでサインインして、アカウントを1ステップで連携します。</string>
+    <string name="ext_oauth_connect_google">Google でサインイン</string>
+    <string name="ext_oauth_connect_microsoft">Microsoft でサインイン</string>
+    <string name="ext_oauth_connect_yahoo">Yahoo でサインイン</string>
     <string name="import_provider_coming_soon">近日対応</string>
     <string name="import_connect_manual_cta">IMAP で接続</string>
     <string name="ext_section_manual">手動セットアップ</string>

@@ -1211,11 +1211,14 @@
     <string name="ext_error_manual_failed">Couldn\'t save the account. Verify the host, port, and credentials.</string>
     <string name="ext_error_no_session">Your session expired. Sign out and back in to continue.</string>
     <string name="ext_error_delete_failed">Couldn\'t remove that account. Check your connection and try again.</string>
+    <string name="ext_error_sync_failed">Sync failed. Check the account\'s credentials and try again.</string>
     <string name="ext_manual_saved">Account added. Sync starting…</string>
     <string name="ext_last_sync">Last sync: %1$s</string>
     <string name="ext_section_oauth">Quick switch</string>
-    <string name="ext_oauth_coming_soon">Available soon on Android</string>
-    <string name="ext_oauth_coming_soon_body">Google, Outlook and Yahoo sign-in will work on Android in a future release. For now, use Manual setup below with an app password.</string>
+    <string name="ext_oauth_body">Sign in with your provider to connect an account in one step.</string>
+    <string name="ext_oauth_connect_google">Sign in with Google</string>
+    <string name="ext_oauth_connect_microsoft">Sign in with Microsoft</string>
+    <string name="ext_oauth_connect_yahoo">Sign in with Yahoo</string>
     <string name="import_provider_coming_soon">Coming soon</string>
     <string name="import_connect_manual_cta">Connect via IMAP</string>
     <string name="ext_section_manual">Manual setup</string>

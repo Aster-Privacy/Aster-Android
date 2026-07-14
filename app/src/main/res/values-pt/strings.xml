@@ -899,11 +899,14 @@
     <string name="ext_error_oauth_failed">Não foi possível iniciar o login. Verifique sua conexão e tente novamente.</string>
     <string name="ext_error_manual_failed">Não foi possível salvar a conta. Verifique o host, porta e credenciais.</string>
     <string name="ext_error_no_session">Sua sessão expirou. Saia e entre novamente para continuar.</string>
+    <string name="ext_error_sync_failed">Falha na sincronização. Verifique as credenciais da conta e tente novamente.</string>
     <string name="ext_manual_saved">Conta adicionada. Sincronização iniciando…</string>
     <string name="ext_last_sync">Última sincronização: %1$s</string>
     <string name="ext_section_oauth">Troca rápida</string>
-    <string name="ext_oauth_coming_soon">Em breve no Android</string>
-    <string name="ext_oauth_coming_soon_body">Login com Google, Outlook e Yahoo chegará ao Android em uma versão futura. Por enquanto, use a configuração manual abaixo com uma senha de app.</string>
+    <string name="ext_oauth_body">Entre com seu provedor para conectar uma conta em uma única etapa.</string>
+    <string name="ext_oauth_connect_google">Entrar com o Google</string>
+    <string name="ext_oauth_connect_microsoft">Entrar com a Microsoft</string>
+    <string name="ext_oauth_connect_yahoo">Entrar com o Yahoo</string>
     <string name="import_provider_coming_soon">Em breve</string>
     <string name="import_connect_manual_cta">Conectar via IMAP</string>
     <string name="ext_section_manual">Configuração manual</string>

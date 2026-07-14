@@ -899,11 +899,14 @@
     <string name="ext_error_oauth_failed">无法开始登录。请检查网络连接后重试。</string>
     <string name="ext_error_manual_failed">无法保存账户。请检查主机、端口和凭据。</string>
     <string name="ext_error_no_session">会话已过期。请登出后重新登录以继续。</string>
+    <string name="ext_error_sync_failed">同步失败。请检查账户凭据后重试。</string>
     <string name="ext_manual_saved">已添加帐户。同步开始…</string>
     <string name="ext_last_sync">上次同步：%1$s</string>
     <string name="ext_section_oauth">快速切换</string>
-    <string name="ext_oauth_coming_soon">即将在 Android 上推出</string>
-    <string name="ext_oauth_coming_soon_body">Google、Outlook 和 Yahoo 登录将在后续 Android 版本中支持。目前请使用下方的手动设置和应用专用密码。</string>
+    <string name="ext_oauth_body">使用您的提供商登录，一步即可连接账户。</string>
+    <string name="ext_oauth_connect_google">使用 Google 登录</string>
+    <string name="ext_oauth_connect_microsoft">使用 Microsoft 登录</string>
+    <string name="ext_oauth_connect_yahoo">使用 Yahoo 登录</string>
     <string name="import_provider_coming_soon">即将推出</string>
     <string name="import_connect_manual_cta">通过 IMAP 连接</string>
     <string name="ext_section_manual">手动设置</string>

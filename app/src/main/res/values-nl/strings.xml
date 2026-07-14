@@ -899,11 +899,14 @@
     <string name="ext_error_oauth_failed">Aanmelden kan niet worden gestart. Controleer je verbinding en probeer opnieuw.</string>
     <string name="ext_error_manual_failed">Kan account niet opslaan. Controleer host, poort en gegevens.</string>
     <string name="ext_error_no_session">Je sessie is verlopen. Meld je af en weer aan om door te gaan.</string>
+    <string name="ext_error_sync_failed">Synchroniseren mislukt. Controleer de accountgegevens en probeer het opnieuw.</string>
     <string name="ext_manual_saved">Account toegevoegd. Synchronisatie gestart…</string>
     <string name="ext_last_sync">Laatste synchronisatie: %1$s</string>
     <string name="ext_section_oauth">Snel wisselen</string>
-    <string name="ext_oauth_coming_soon">Binnenkort op Android</string>
-    <string name="ext_oauth_coming_soon_body">Inloggen met Google, Outlook en Yahoo komt in een toekomstige Android-versie. Gebruik voorlopig de handmatige instelling met een app-wachtwoord.</string>
+    <string name="ext_oauth_body">Log in met je provider om in één stap een account te koppelen.</string>
+    <string name="ext_oauth_connect_google">Inloggen met Google</string>
+    <string name="ext_oauth_connect_microsoft">Inloggen met Microsoft</string>
+    <string name="ext_oauth_connect_yahoo">Inloggen met Yahoo</string>
     <string name="import_provider_coming_soon">Binnenkort</string>
     <string name="import_connect_manual_cta">Verbinden via IMAP</string>
     <string name="ext_section_manual">Handmatige installatie</string>

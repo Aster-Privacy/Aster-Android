@@ -899,11 +899,14 @@
     <string name="ext_error_oauth_failed">Oturum açma başlatılamadı. Bağlantınızı kontrol edip tekrar deneyin.</string>
     <string name="ext_error_manual_failed">Hesap kaydedilemedi. Sunucu, bağlantı noktası ve kimlik bilgilerini doğrulayın.</string>
     <string name="ext_error_no_session">Oturumunuz sona erdi. Devam etmek için çıkış yapıp tekrar girin.</string>
+    <string name="ext_error_sync_failed">Senkronizasyon başarısız oldu. Hesap kimlik bilgilerini kontrol edip tekrar deneyin.</string>
     <string name="ext_manual_saved">Hesap eklendi. Eşitleme başlıyor…</string>
     <string name="ext_last_sync">Son eşitleme: %1$s</string>
     <string name="ext_section_oauth">Hızlı geçiş</string>
-    <string name="ext_oauth_coming_soon">Yakında Android\'de</string>
-    <string name="ext_oauth_coming_soon_body">Google, Outlook ve Yahoo girişi gelecek bir Android sürümünde gelecek. Şimdilik aşağıdaki manuel kurulumu uygulama parolasıyla kullanın.</string>
+    <string name="ext_oauth_body">Hesabınızı tek adımda bağlamak için sağlayıcınızla oturum açın.</string>
+    <string name="ext_oauth_connect_google">Google ile oturum aç</string>
+    <string name="ext_oauth_connect_microsoft">Microsoft ile oturum aç</string>
+    <string name="ext_oauth_connect_yahoo">Yahoo ile oturum aç</string>
     <string name="import_provider_coming_soon">Yakında</string>
     <string name="import_connect_manual_cta">IMAP ile bağlan</string>
     <string name="ext_section_manual">Manuel kurulum</string>
