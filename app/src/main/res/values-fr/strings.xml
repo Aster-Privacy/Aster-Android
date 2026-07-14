@@ -1388,7 +1388,7 @@
     <!-- Onboarding -->
     <string name="onboarding_skip">Passer</string>
     <string name="onboarding_slide1_title">Bienvenue sur Aster</string>
-    <string name="onboarding_slide1_body">Un e-mail privé qui vous protège vraiment. Pas de surveillance, pas de publicités, pas de portes dérobées.</string>
+    <string name="onboarding_slide1_body">Un e-mail privé qui vous protège vraiment. Pas de surveillance, pas de publicités.</string>
     <string name="onboarding_slide2_title">Chiffré de bout en bout</string>
     <string name="onboarding_slide2_body">Chaque message est chiffré avec vos clés avant de quitter votre appareil. Même Aster ne peut pas lire vos e-mails.</string>
     <string name="onboarding_slide3_title">Zéro traçage</string>
