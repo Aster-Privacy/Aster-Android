@@ -1415,42 +1415,45 @@ private fun expanded_message(
                     fontSize = 12.sp,
                 )
                 Spacer(Modifier.height(4.dp))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(0.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .clickable { show_details = !show_details },
+                    contentAlignment = Alignment.Center,
                 ) {
-                    Box(
+                    Icon(
+                        imageVector = Icons.Filled.KeyboardArrowDown,
+                        contentDescription = if (show_details)
+                            stringResource(R.string.detail_hide_details)
+                        else
+                            stringResource(R.string.detail_show_details),
+                        tint = colors.text_secondary,
                         modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .clickable { show_details = !show_details },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.KeyboardArrowDown,
-                            contentDescription = if (show_details)
-                                stringResource(R.string.detail_hide_details)
-                            else
-                                stringResource(R.string.detail_show_details),
-                            tint = colors.text_secondary,
-                            modifier = Modifier
-                                .size(22.dp)
-                                .graphicsLayer(rotationZ = chevron_rotation),
-                        )
-                    }
-                    AsterIconButton(
-                        icon = Icons.AutoMirrored.Filled.Reply,
-                        content_description = stringResource(R.string.reply),
-                        onClick = on_reply,
-                    )
-                    AsterIconButton(
-                        icon = Icons.Filled.MoreVert,
-                        content_description = stringResource(R.string.more_options),
-                        onClick = on_more,
-                        icon_size = 18,
+                            .size(22.dp)
+                            .graphicsLayer(rotationZ = chevron_rotation),
                     )
                 }
             }
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = AsterSpacing.md),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            AsterIconButton(
+                icon = Icons.AutoMirrored.Filled.Reply,
+                content_description = stringResource(R.string.reply),
+                onClick = on_reply,
+            )
+            AsterIconButton(
+                icon = Icons.Filled.MoreVert,
+                content_description = stringResource(R.string.more_options),
+                onClick = on_more,
+                icon_size = 18,
+            )
         }
 
         AnimatedVisibility(
