@@ -111,6 +111,7 @@
     <string name="save_recovery_email">Save recovery email</string>
     <string name="update_recovery_email">Update recovery email</string>
     <string name="recovery_email_remove">Remove recovery email</string>
+    <string name="recovery_step_up_description">For your security, confirm your password to continue.</string>
     <string name="recovery_email_resend">Resend verification email</string>
     <string name="recovery_email_resent">Verification email sent</string>
     <string name="recovery_email_resend_failed">Could not send verification email</string>
