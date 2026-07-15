@@ -9,8 +9,8 @@
         <domain includeSubdomains="true">astermail.org</domain>
         <domain includeSubdomains="false">app.astermail.org</domain>
         <pin-set expiration="2027-05-16">
-            <pin digest="SHA-256">xzW4Lh0h5AJczrSG3fvSOGZYUsDrxYyt0AlhLpZFUls=</pin>
-            <pin digest="SHA-256">DDf/bfpXnW80wMM5Y2b9zNCdohxBo5lX7rUMiw+DYO4=</pin>
+            <pin digest="SHA-256">kIdp6NNEd8wsugYyyIYFsi1ylMCED3hZbSR8ZFsa/A4=</pin>
+            <pin digest="SHA-256">mEflZT5enoR1FuXLgYYGqnVEoZvmf9c2bVBpiOjYQ0c=</pin>
         </pin-set>
         <trust-anchors>
             <certificates src="system" />

@@ -136,6 +136,7 @@ class MailViewModel @Inject constructor(
 
     private val folder_cache = java.util.concurrent.ConcurrentHashMap<String, InboxUiState>()
     private val folder_cache_time = java.util.concurrent.ConcurrentHashMap<String, Long>()
+    private val pending_removed_ids = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
     private var inbox_load_job: Job? = null
     private var silent_revalidate_job: Job? = null
     private var refresh_job: Job? = null
@@ -271,17 +272,23 @@ class MailViewModel @Inject constructor(
         folder: String,
         total: Int?,
     ): List<InboxItem> {
-        if (previous_items.isEmpty()) return page_items
-        if (total != null && total <= page_items.size) return page_items
-        val page_ids = page_items.map { it.id }.toHashSet()
-        val cap = (total ?: previous_items.size).coerceAtLeast(page_items.size)
-        val min_page_timestamp = page_items.minOfOrNull { it.timestamp }
+        val live_items = if (pending_removed_ids.isEmpty()) {
+            page_items
+        } else {
+            page_items.filter { it.id !in pending_removed_ids }
+        }
+        if (previous_items.isEmpty()) return live_items
+        if (total != null && total <= live_items.size) return live_items
+        val page_ids = live_items.map { it.id }.toHashSet()
+        val cap = (total ?: previous_items.size).coerceAtLeast(live_items.size)
+        val min_page_timestamp = live_items.minOfOrNull { it.timestamp }
         val carried = previous_items.asSequence()
             .filter { it.id !in page_ids }
+            .filter { it.id !in pending_removed_ids }
             .filter { min_page_timestamp == null || it.timestamp < min_page_timestamp }
             .filter { folder_matches(folder, it) }
             .toList()
-        val combined = page_items + carried
+        val combined = live_items + carried
         return if (combined.size > cap) combined.take(cap) else combined
     }
 
@@ -979,6 +986,7 @@ class MailViewModel @Inject constructor(
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id !in item_ids },
         )
+        pending_removed_ids.addAll(item_ids)
         val affected_label_caches = removed_items.flatMap { it.labels }.map { "label:$it" }
         val affected_tag_caches = removed_items.flatMap { it.tag_tokens }.map { "tag:$it" }
         invalidate_caches(listOf("archive", "inbox", "all") + affected_label_caches + affected_tag_caches)
@@ -1005,6 +1013,8 @@ class MailViewModel @Inject constructor(
                 if (BuildConfig.DEBUG) android.util.Log.w("MailVM", "archive threw", t)
                 undo_local_restore(removed_items)
                 emit_toast(context.getString(R.string.failed_to_archive))
+            } finally {
+                pending_removed_ids.removeAll(item_ids.toSet())
             }
         }
     }
@@ -1026,6 +1036,7 @@ class MailViewModel @Inject constructor(
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id !in item_ids },
         )
+        pending_removed_ids.addAll(item_ids)
         invalidate_caches(listOf("trash", "inbox"))
         viewModelScope.launch {
             try {
@@ -1048,6 +1059,8 @@ class MailViewModel @Inject constructor(
             } catch (_: Throwable) {
                 undo_local_restore(removed_items)
                 emit_toast(context.getString(R.string.failed_to_trash))
+            } finally {
+                pending_removed_ids.removeAll(item_ids.toSet())
             }
         }
     }
@@ -1060,16 +1073,21 @@ class MailViewModel @Inject constructor(
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id !in id_set },
         )
+        pending_removed_ids.addAll(id_set)
         viewModelScope.launch {
-            val all_succeeded = item_ids.map { id ->
-                repository.delete_draft(id).isSuccess
-            }.all { it }
-            if (all_succeeded) {
-                load_stats()
-                emit_toast(context.getString(R.string.draft_deleted, item_ids.size))
-            } else {
-                undo_local_restore(removed_items)
-                emit_toast(context.getString(R.string.failed_to_delete_draft))
+            try {
+                val all_succeeded = item_ids.map { id ->
+                    repository.delete_draft(id).isSuccess
+                }.all { it }
+                if (all_succeeded) {
+                    load_stats()
+                    emit_toast(context.getString(R.string.draft_deleted, item_ids.size))
+                } else {
+                    undo_local_restore(removed_items)
+                    emit_toast(context.getString(R.string.failed_to_delete_draft))
+                }
+            } finally {
+                pending_removed_ids.removeAll(id_set)
             }
         }
     }
@@ -1087,22 +1105,27 @@ class MailViewModel @Inject constructor(
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id !in item_ids },
         )
+        pending_removed_ids.addAll(item_ids)
         invalidate_caches(listOf("spam", "inbox"))
         viewModelScope.launch {
-            repository.mark_spam(item_ids, raw_items).fold(
-                onSuccess = {
-                    runCatching { search_index_manager.mark_spam(item_ids) }
-                    emit_toast_undo(
-                        context.getString(R.string.reported_as_spam),
-                        context.getString(R.string.undo),
-                    ) { undo_local_restore(removed_items); unmark_spam_backend_only(item_ids) }
-                    load_stats()
-                },
-                onFailure = {
-                    undo_local_restore(removed_items)
-                    emit_toast(context.getString(R.string.failed_report_spam))
-                },
-            )
+            try {
+                repository.mark_spam(item_ids, raw_items).fold(
+                    onSuccess = {
+                        runCatching { search_index_manager.mark_spam(item_ids) }
+                        emit_toast_undo(
+                            context.getString(R.string.reported_as_spam),
+                            context.getString(R.string.undo),
+                        ) { undo_local_restore(removed_items); unmark_spam_backend_only(item_ids) }
+                        load_stats()
+                    },
+                    onFailure = {
+                        undo_local_restore(removed_items)
+                        emit_toast(context.getString(R.string.failed_report_spam))
+                    },
+                )
+            } finally {
+                pending_removed_ids.removeAll(item_ids.toSet())
+            }
         }
     }
 
@@ -1113,21 +1136,26 @@ class MailViewModel @Inject constructor(
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id !in item_ids },
         )
+        pending_removed_ids.addAll(item_ids)
         invalidate_caches(listOf("spam", "inbox"))
         viewModelScope.launch {
-            repository.unmark_spam(item_ids).fold(
-                onSuccess = {
-                    emit_toast_undo(
-                        context.getString(R.string.moved_to_inbox),
-                        context.getString(R.string.undo),
-                    ) { undo_local_restore(removed_items); mark_spam_backend_only(item_ids) }
-                    load_stats()
-                },
-                onFailure = {
-                    undo_local_restore(removed_items)
-                    emit_toast(context.getString(R.string.failed_remove_spam))
-                },
-            )
+            try {
+                repository.unmark_spam(item_ids).fold(
+                    onSuccess = {
+                        emit_toast_undo(
+                            context.getString(R.string.moved_to_inbox),
+                            context.getString(R.string.undo),
+                        ) { undo_local_restore(removed_items); mark_spam_backend_only(item_ids) }
+                        load_stats()
+                    },
+                    onFailure = {
+                        undo_local_restore(removed_items)
+                        emit_toast(context.getString(R.string.failed_remove_spam))
+                    },
+                )
+            } finally {
+                pending_removed_ids.removeAll(item_ids.toSet())
+            }
         }
     }
 
@@ -1186,22 +1214,27 @@ class MailViewModel @Inject constructor(
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id !in item_ids },
         )
+        pending_removed_ids.addAll(item_ids)
         invalidate_caches(listOf("inbox", "archive"))
         viewModelScope.launch {
-            repository.unarchive(item_ids, raw_items).fold(
-                onSuccess = {
-                    runCatching { search_index_manager.mark_unarchived(item_ids) }
-                    emit_toast_undo(
-                        context.getString(R.string.moved_to_inbox),
-                        context.getString(R.string.undo),
-                    ) { undo_local_restore(removed_items); archive_backend_only(item_ids) }
-                    load_stats()
-                },
-                onFailure = {
-                    undo_local_restore(removed_items)
-                    emit_toast(context.getString(R.string.failed_to_unarchive))
-                },
-            )
+            try {
+                repository.unarchive(item_ids, raw_items).fold(
+                    onSuccess = {
+                        runCatching { search_index_manager.mark_unarchived(item_ids) }
+                        emit_toast_undo(
+                            context.getString(R.string.moved_to_inbox),
+                            context.getString(R.string.undo),
+                        ) { undo_local_restore(removed_items); archive_backend_only(item_ids) }
+                        load_stats()
+                    },
+                    onFailure = {
+                        undo_local_restore(removed_items)
+                        emit_toast(context.getString(R.string.failed_to_unarchive))
+                    },
+                )
+            } finally {
+                pending_removed_ids.removeAll(item_ids.toSet())
+            }
         }
     }
 
@@ -1212,21 +1245,26 @@ class MailViewModel @Inject constructor(
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id !in item_ids },
         )
+        pending_removed_ids.addAll(item_ids)
         invalidate_caches(listOf("inbox", "trash"))
         viewModelScope.launch {
-            repository.restore_trash(item_ids).fold(
-                onSuccess = {
-                    emit_toast_undo(
-                        context.getString(R.string.restored_to_inbox),
-                        context.getString(R.string.undo),
-                    ) { undo_local_restore(removed_items); trash_backend_only(item_ids) }
-                    load_stats()
-                },
-                onFailure = {
-                    undo_local_restore(removed_items)
-                    emit_toast(context.getString(R.string.failed_to_restore))
-                },
-            )
+            try {
+                repository.restore_trash(item_ids).fold(
+                    onSuccess = {
+                        emit_toast_undo(
+                            context.getString(R.string.restored_to_inbox),
+                            context.getString(R.string.undo),
+                        ) { undo_local_restore(removed_items); trash_backend_only(item_ids) }
+                        load_stats()
+                    },
+                    onFailure = {
+                        undo_local_restore(removed_items)
+                        emit_toast(context.getString(R.string.failed_to_restore))
+                    },
+                )
+            } finally {
+                pending_removed_ids.removeAll(item_ids.toSet())
+            }
         }
     }
 
@@ -1240,18 +1278,23 @@ class MailViewModel @Inject constructor(
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id != item_id },
         )
+        pending_removed_ids.add(item_id)
         viewModelScope.launch {
-            repository.delete_permanent(item_id).fold(
-                onSuccess = {
-                    runCatching { search_index_manager.remove_items(listOf(item_id)) }
-                    emit_toast(context.getString(R.string.deleted_permanently))
-                    load_stats()
-                },
-                onFailure = {
-                    _inbox_state.value = _inbox_state.value.copy(items = previous)
-                    emit_toast(context.getString(R.string.failed_to_delete))
-                },
-            )
+            try {
+                repository.delete_permanent(item_id).fold(
+                    onSuccess = {
+                        runCatching { search_index_manager.remove_items(listOf(item_id)) }
+                        emit_toast(context.getString(R.string.deleted_permanently))
+                        load_stats()
+                    },
+                    onFailure = {
+                        _inbox_state.value = _inbox_state.value.copy(items = previous)
+                        emit_toast(context.getString(R.string.failed_to_delete))
+                    },
+                )
+            } finally {
+                pending_removed_ids.remove(item_id)
+            }
         }
     }
 
