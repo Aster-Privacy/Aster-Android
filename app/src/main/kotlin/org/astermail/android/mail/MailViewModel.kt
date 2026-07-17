@@ -569,6 +569,10 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    fun refresh_current_thread() {
+        _thread_state.value.item?.id?.let { load_thread(it) }
+    }
+
     fun load_thread(item_id: String) {
         if (item_id == DEMO_PHISH_ITEM_ID) {
             val demo_item = build_demo_phishing_inbox_item()
@@ -1542,6 +1546,7 @@ class MailViewModel @Inject constructor(
             repository.send_result_events.collect { result ->
                 if (result.isSuccess) {
                     invalidate_caches(listOf("sent", "drafts"))
+                    refresh_current_thread()
                 } else {
                     emit_toast(
                         result.exceptionOrNull()?.message
