@@ -1557,14 +1557,10 @@ private fun expanded_message(
         }
 
         if (!msg.body_html.isNullOrBlank()) {
-            val body_has_dark_hostile_styling = msg.body_html.contains(
-                Regex("background(?:-color)?\\s*[:=]\\s*[\"']?#?(?:fff|FFF|ffffff|FFFFFF|white)", RegexOption.IGNORE_CASE),
-            )
             email_html_view(
                 html = msg.body_html,
                 allow_external = allow_external,
                 access_token = access_token,
-                force_light = is_system && body_has_dark_hostile_styling,
                 on_ready = on_body_ready,
                 on_link_click = on_link_click,
                 modifier = Modifier
