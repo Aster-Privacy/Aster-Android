@@ -498,8 +498,7 @@ class MailViewModel @Inject constructor(
                     )
                     val effective_has_more = page.has_more &&
                         page.next_cursor != null &&
-                        page.next_cursor != cursor &&
-                        new_items.isNotEmpty()
+                        page.next_cursor != cursor
                     _inbox_state.value = _inbox_state.value.copy(
                         items = combined,
                         is_loading_more = false,
@@ -1748,13 +1747,13 @@ class MailViewModel @Inject constructor(
         else -> when {
             folder.startsWith("label:") -> {
                 val label_token = folder.removePrefix("label:")
-                repository.fetch_inbox(limit = limit, cursor = cursor, label_token = label_token)
+                repository.fetch_inbox(limit = limit, cursor = cursor, item_type = null, label_token = label_token)
             }
             folder.startsWith("tag:") -> {
                 val tag_token = folder.removePrefix("tag:")
-                repository.fetch_inbox(limit = limit, cursor = cursor, tag_token = tag_token)
+                repository.fetch_inbox(limit = limit, cursor = cursor, item_type = null, tag_token = tag_token)
             }
-            else -> repository.fetch_inbox(limit = limit, cursor = cursor, label_token = folder)
+            else -> repository.fetch_inbox(limit = limit, cursor = cursor, item_type = null, label_token = folder)
         }
     }
 }

@@ -408,7 +408,7 @@ class MailRepository @Inject constructor(
     suspend fun fetch_inbox(
         limit: Int = 50,
         cursor: String? = null,
-        item_type: String = "received",
+        item_type: String? = "received",
         label_token: String? = null,
         tag_token: String? = null,
     ): Result<InboxPage> = runCatching {
