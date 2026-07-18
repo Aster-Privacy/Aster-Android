@@ -1285,4 +1285,8 @@
     <string name="image_blocked_placeholder">[图片已被拦截]</string>
     <string name="received_on_prefix">通过 %s 接收</string>
     <string name="received_on_label">接收地址</string>
+    <string name="auto_advance_label">归档或删除后</string>
+    <string name="auto_advance_next">转到下一封邮件</string>
+    <string name="auto_advance_previous">转到上一封邮件</string>
+    <string name="auto_advance_back">返回邮件列表</string>
 </resources>

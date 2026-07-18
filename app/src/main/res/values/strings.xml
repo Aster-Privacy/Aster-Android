@@ -2044,4 +2044,8 @@
     <string name="pending_deletion_error">Could not restore your account. Please try again.</string>
     <string name="pending_deletion_restored">Welcome back. Your account has been restored.</string>
     <string name="image_blocked_placeholder">[Image blocked]</string>
+    <string name="auto_advance_label">After archiving or deleting</string>
+    <string name="auto_advance_next">Go to next email</string>
+    <string name="auto_advance_previous">Go to previous email</string>
+    <string name="auto_advance_back">Return to email list</string>
 </resources>

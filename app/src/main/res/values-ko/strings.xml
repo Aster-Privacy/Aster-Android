@@ -1285,4 +1285,8 @@
     <string name="image_blocked_placeholder">[이미지 차단됨]</string>
     <string name="received_on_prefix">%s(으)로 수신</string>
     <string name="received_on_label">수신 주소</string>
+    <string name="auto_advance_label">보관 또는 삭제 후</string>
+    <string name="auto_advance_next">다음 이메일로 이동</string>
+    <string name="auto_advance_previous">이전 이메일로 이동</string>
+    <string name="auto_advance_back">이메일 목록으로 돌아가기</string>
 </resources>

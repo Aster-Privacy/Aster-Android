@@ -1291,4 +1291,8 @@
     <string name="image_blocked_placeholder">[Изображение заблокировано]</string>
     <string name="received_on_prefix">получено на %s</string>
     <string name="received_on_label">Получено на</string>
+    <string name="auto_advance_label">После архивации или удаления</string>
+    <string name="auto_advance_next">Перейти к следующему письму</string>
+    <string name="auto_advance_previous">Перейти к предыдущему письму</string>
+    <string name="auto_advance_back">Вернуться к списку писем</string>
 </resources>

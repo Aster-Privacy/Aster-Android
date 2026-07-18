@@ -1295,4 +1295,8 @@
     <string name="image_blocked_placeholder">[تم حظر الصورة]</string>
     <string name="received_on_prefix">تم الاستلام على %s</string>
     <string name="received_on_label">تم الاستلام على</string>
+    <string name="auto_advance_label">بعد الأرشفة أو الحذف</string>
+    <string name="auto_advance_next">الانتقال إلى البريد التالي</string>
+    <string name="auto_advance_previous">الانتقال إلى البريد السابق</string>
+    <string name="auto_advance_back">العودة إلى قائمة البريد</string>
 </resources>

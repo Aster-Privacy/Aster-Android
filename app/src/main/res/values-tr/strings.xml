@@ -1287,4 +1287,8 @@
     <string name="image_blocked_placeholder">[Görsel engellendi]</string>
     <string name="received_on_prefix">%s adresinde alındı</string>
     <string name="received_on_label">Alındığı adres</string>
+    <string name="auto_advance_label">Arşivleme veya silme sonrası</string>
+    <string name="auto_advance_next">Sonraki e-postaya git</string>
+    <string name="auto_advance_previous">Önceki e-postaya git</string>
+    <string name="auto_advance_back">E-posta listesine dön</string>
 </resources>

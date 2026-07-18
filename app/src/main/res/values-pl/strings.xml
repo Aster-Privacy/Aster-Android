@@ -1291,4 +1291,8 @@
     <string name="image_blocked_placeholder">[Obraz zablokowany]</string>
     <string name="received_on_prefix">odebrano na %s</string>
     <string name="received_on_label">Odebrano na</string>
+    <string name="auto_advance_label">Po archiwizacji lub usunięciu</string>
+    <string name="auto_advance_next">Przejdź do następnej wiadomości</string>
+    <string name="auto_advance_previous">Przejdź do poprzedniej wiadomości</string>
+    <string name="auto_advance_back">Wróć do listy wiadomości</string>
 </resources>

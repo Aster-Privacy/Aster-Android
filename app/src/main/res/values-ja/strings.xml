@@ -1285,4 +1285,8 @@
     <string name="image_blocked_placeholder">[画像はブロックされました]</string>
     <string name="received_on_prefix">%s で受信</string>
     <string name="received_on_label">受信アドレス</string>
+    <string name="auto_advance_label">アーカイブまたは削除後</string>
+    <string name="auto_advance_next">次のメールへ移動</string>
+    <string name="auto_advance_previous">前のメールへ移動</string>
+    <string name="auto_advance_back">メール一覧に戻る</string>
 </resources>

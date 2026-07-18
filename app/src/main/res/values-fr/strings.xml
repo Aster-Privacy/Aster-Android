@@ -1903,4 +1903,8 @@
     <string name="image_blocked_placeholder">[Image bloquée]</string>
     <string name="received_on_prefix">reçu sur %s</string>
     <string name="received_on_label">Reçu sur</string>
+    <string name="auto_advance_label">Après archivage ou suppression</string>
+    <string name="auto_advance_next">Aller à l\'e-mail suivant</string>
+    <string name="auto_advance_previous">Aller à l\'e-mail précédent</string>
+    <string name="auto_advance_back">Revenir à la liste des e-mails</string>
 </resources>

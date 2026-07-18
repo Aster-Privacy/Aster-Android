@@ -1287,4 +1287,8 @@
     <string name="image_blocked_placeholder">[Immagine bloccata]</string>
     <string name="received_on_prefix">ricevuto su %s</string>
     <string name="received_on_label">Ricevuto su</string>
+    <string name="auto_advance_label">Dopo l\'archiviazione o l\'eliminazione</string>
+    <string name="auto_advance_next">Vai all\'email successiva</string>
+    <string name="auto_advance_previous">Vai all\'email precedente</string>
+    <string name="auto_advance_back">Torna all\'elenco delle email</string>
 </resources>

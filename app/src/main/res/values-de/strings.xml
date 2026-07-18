@@ -1288,4 +1288,8 @@
     <string name="image_blocked_placeholder">[Bild blockiert]</string>
     <string name="received_on_prefix">empfangen an %s</string>
     <string name="received_on_label">Empfangen an</string>
+    <string name="auto_advance_label">Nach Archivieren oder Löschen</string>
+    <string name="auto_advance_next">Zur nächsten E-Mail</string>
+    <string name="auto_advance_previous">Zur vorherigen E-Mail</string>
+    <string name="auto_advance_back">Zurück zur E-Mail-Liste</string>
 </resources>
