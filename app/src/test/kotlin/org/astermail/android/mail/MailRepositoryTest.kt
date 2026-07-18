@@ -565,6 +565,8 @@ class MailRepositoryTest {
         coEvery { send_api.send_simple(any()) } returns
             SimpleSendResponse(success = true, message = "ok", mail_item_id = "sent_1")
         every { session_key_store.get_identity_key() } returns "test_identity_key"
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
 
         val result = repo.send_email(
             to = listOf("recipient@astermail.org"),
@@ -574,6 +576,20 @@ class MailRepositoryTest {
 
         assertTrue(result.isSuccess)
         coVerify { send_api.send_simple(any()) }
+    }
+
+    @Test
+    fun `send_email fails closed for internal recipient without ratchet keys`() = runTest {
+        every { session_key_store.has_ratchet_keys() } returns false
+
+        val result = repo.send_email(
+            to = listOf("recipient@astermail.org"),
+            subject = "Test",
+            body_html = "<p>Hello</p>",
+        )
+
+        assertTrue(result.isFailure)
+        coVerify(exactly = 0) { send_api.send_simple(any()) }
     }
 
     @Test
@@ -1041,6 +1057,8 @@ class MailRepositoryTest {
     @Test
     fun `run_pending_send delivers once and reports gone on a second run`() = runTest {
         pending_send_dao.upsert(pending_row("pend_2", draft_id = "draft_2"))
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
         coEvery { send_api.send_simple(any()) } returns SimpleSendResponse(success = true, message = "ok", mail_item_id = "sent_2")
         coEvery { mail_api.delete_draft(any()) } returns DeleteResponse(success = true, deleted_count = 1)
 
