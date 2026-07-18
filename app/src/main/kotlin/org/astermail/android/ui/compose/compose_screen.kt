@@ -55,6 +55,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -88,6 +90,7 @@ import androidx.compose.material.icons.outlined.FormatListNumbered
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -95,6 +98,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -129,6 +133,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -2269,6 +2274,16 @@ private fun FromAliasSheet(
 ) {
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
+    var query by remember { mutableStateOf("") }
+    val normalized_query = query.trim().lowercase()
+    val first_option = options.firstOrNull()
+    val visible_options = remember(options, normalized_query) {
+        if (normalized_query.isEmpty()) {
+            options
+        } else {
+            options.filter { it.lowercase().contains(normalized_query) }
+        }
+    }
     ModalBottomSheet(
         onDismissRequest = on_close,
         sheetState = state,
@@ -2292,83 +2307,122 @@ private fun FromAliasSheet(
                     bottom = AsterSpacing.sm,
                 ),
             )
-            options.forEachIndexed { idx, opt ->
-                val label = when {
-                    idx == 0 -> stringResource(R.string.primary_account)
-                    custom_domain_set.contains(opt) -> stringResource(R.string.custom_domain)
-                    else -> stringResource(R.string.alias)
+            if (options.size >= 8) {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    placeholder = { Text(stringResource(R.string.search_aliases), color = colors.text_muted) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.Search,
+                            contentDescription = null,
+                            tint = colors.text_muted,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    },
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = AsterSpacing.sm)
+                        .testTag("from_sheet_search"),
+                )
+            }
+            if (normalized_query.isNotEmpty() && visible_options.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.no_results_found),
+                    color = colors.text_muted,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = AsterSpacing.lg),
+                    textAlign = TextAlign.Center,
+                )
+            }
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f, fill = false),
+            ) {
+                items(visible_options, key = { it }) { opt ->
+                    val label = when {
+                        opt == first_option -> stringResource(R.string.primary_account)
+                        custom_domain_set.contains(opt) -> stringResource(R.string.custom_domain)
+                        else -> stringResource(R.string.alias)
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(SquircleShape(8.dp))
+                            .clickable { on_select(opt) }
+                            .padding(horizontal = AsterSpacing.sm, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = opt,
+                                color = colors.text_primary,
+                                style = MaterialTheme.typography.bodyLarge,
+                            )
+                            Text(
+                                text = if (opt == primary) stringResource(R.string.primary_badge) else label,
+                                color = if (opt == primary) colors.accent_blue else colors.text_muted,
+                                fontSize = 12.sp,
+                            )
+                        }
+                        Icon(
+                            imageVector = if (opt == primary) Icons.Filled.PushPin else Icons.Outlined.PushPin,
+                            contentDescription = stringResource(R.string.set_as_primary),
+                            tint = if (opt == primary) colors.accent_blue else colors.text_muted,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(SquircleShape(8.dp))
+                                .clickable { on_set_primary(opt) }
+                                .padding(8.dp),
+                        )
+                        if (opt == current) {
+                            Icon(
+                                imageVector = Icons.Outlined.Check,
+                                contentDescription = null,
+                                tint = colors.accent_blue,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
+                    }
                 }
+            }
+            if (normalized_query.isEmpty()) {
+                androidx.compose.material3.HorizontalDivider(
+                    color = colors.border_primary,
+                    thickness = 1.dp,
+                    modifier = Modifier.padding(vertical = AsterSpacing.xs),
+                )
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(SquircleShape(8.dp))
-                        .clickable { on_select(opt) }
+                        .clickable(onClick = on_create_ghost_alias)
                         .padding(horizontal = AsterSpacing.sm, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    Icon(
+                        imageVector = Icons.Outlined.AlternateEmail,
+                        contentDescription = null,
+                        tint = colors.accent_blue,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Spacer(Modifier.width(AsterSpacing.md))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = opt,
-                            color = colors.text_primary,
+                            text = stringResource(R.string.generate_ghost_alias),
+                            color = colors.accent_blue,
                             style = MaterialTheme.typography.bodyLarge,
                         )
                         Text(
-                            text = if (opt == primary) stringResource(R.string.primary_badge) else label,
-                            color = if (opt == primary) colors.accent_blue else colors.text_muted,
+                            text = stringResource(R.string.ghost_alias_subtitle),
+                            color = colors.text_muted,
                             fontSize = 12.sp,
                         )
                     }
-                    Icon(
-                        imageVector = if (opt == primary) Icons.Filled.PushPin else Icons.Outlined.PushPin,
-                        contentDescription = stringResource(R.string.set_as_primary),
-                        tint = if (opt == primary) colors.accent_blue else colors.text_muted,
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(SquircleShape(8.dp))
-                            .clickable { on_set_primary(opt) }
-                            .padding(8.dp),
-                    )
-                    if (opt == current) {
-                        Icon(
-                            imageVector = Icons.Outlined.Check,
-                            contentDescription = null,
-                            tint = colors.accent_blue,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
-                }
-            }
-            androidx.compose.material3.HorizontalDivider(
-                color = colors.border_primary,
-                thickness = 1.dp,
-                modifier = Modifier.padding(vertical = AsterSpacing.xs),
-            )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(SquircleShape(8.dp))
-                    .clickable(onClick = on_create_ghost_alias)
-                    .padding(horizontal = AsterSpacing.sm, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.AlternateEmail,
-                    contentDescription = null,
-                    tint = colors.accent_blue,
-                    modifier = Modifier.size(20.dp),
-                )
-                Spacer(Modifier.width(AsterSpacing.md))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.generate_ghost_alias),
-                        color = colors.accent_blue,
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                    Text(
-                        text = stringResource(R.string.ghost_alias_subtitle),
-                        color = colors.text_muted,
-                        fontSize = 12.sp,
-                    )
                 }
             }
             Spacer(Modifier.height(AsterSpacing.md))
