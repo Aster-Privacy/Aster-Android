@@ -451,6 +451,7 @@ fun ComposeScreen(
         }
     }
     var show_discard_dialog by remember { mutableStateOf(false) }
+    var show_from_mismatch_dialog by remember { mutableStateOf(false) }
     var quoted_html by remember { mutableStateOf<String?>(null) }
     var quoted_meta by remember { mutableStateOf<Triple<String, String, String>?>(null) }
     LaunchedEffect(reply_to, mode, thread_state) {
@@ -924,7 +925,11 @@ fun ComposeScreen(
         }
     }
 
-    fun do_send() {
+    fun do_send(skip_from_guard: Boolean = false) {
+        if (!skip_from_guard && reply_from_mismatch(mode, received_on_alias, from_alias)) {
+            show_from_mismatch_dialog = true
+            return
+        }
         if (!send_lock.compareAndSet(false, true)) return
         to_input.trim().let { if (it.isNotEmpty() && is_valid_email_chip(it)) { to_chips = to_chips + it; to_input = "" } }
         cc_input.trim().let { if (it.isNotEmpty() && is_valid_email_chip(it)) { cc_chips = cc_chips + it; cc_input = "" } }
@@ -1679,6 +1684,52 @@ fun ComposeScreen(
             }
             date_picker.show()
         }
+    }
+
+    if (show_from_mismatch_dialog) {
+        val received_address = received_on_alias.orEmpty()
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { show_from_mismatch_dialog = false },
+            title = stringResource(R.string.reply_from_mismatch_title),
+            message = stringResource(R.string.reply_from_mismatch_message, received_address, from_alias),
+            footer = {
+                androidx.compose.foundation.layout.Column(
+                    modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
+                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+                ) {
+                    org.astermail.android.design.components.AsterDialogPrimaryButton(
+                        label = stringResource(R.string.reply_from_mismatch_use_received, received_address),
+                        onClick = {
+                            show_from_mismatch_dialog = false
+                            if (received_address.isNotBlank()) {
+                                from_alias = received_address
+                                from_manually_selected = true
+                            }
+                            do_send(skip_from_guard = true)
+                        },
+                        modifier = androidx.compose.ui.Modifier.fillMaxWidth().testTag("mismatch_use_received"),
+                    )
+                    androidx.compose.foundation.layout.Row(
+                        modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
+                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+                    ) {
+                        org.astermail.android.design.components.AsterDialogOutlineButton(
+                            label = stringResource(R.string.cancel),
+                            onClick = { show_from_mismatch_dialog = false },
+                            modifier = androidx.compose.ui.Modifier.weight(1f).testTag("mismatch_cancel"),
+                        )
+                        org.astermail.android.design.components.AsterDialogOutlineButton(
+                            label = stringResource(R.string.reply_from_mismatch_send_anyway),
+                            onClick = {
+                                show_from_mismatch_dialog = false
+                                do_send(skip_from_guard = true)
+                            },
+                            modifier = androidx.compose.ui.Modifier.weight(1f).testTag("mismatch_send_anyway"),
+                        )
+                    }
+                }
+            },
+        )
     }
 
     if (show_discard_dialog) {

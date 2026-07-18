@@ -1299,4 +1299,8 @@
     <string name="auto_advance_next">الانتقال إلى البريد التالي</string>
     <string name="auto_advance_previous">الانتقال إلى البريد السابق</string>
     <string name="auto_advance_back">العودة إلى قائمة البريد</string>
+    <string name="reply_from_mismatch_title">الرد من عنوان مختلف؟</string>
+    <string name="reply_from_mismatch_message">تم استلام هذا البريد على %1$s، لكن ردك سيُرسل من %2$s. الرد من عنوان مختلف قد يكشفه للمرسل وقد يُرفض الرد.</string>
+    <string name="reply_from_mismatch_use_received">استخدام %1$s</string>
+    <string name="reply_from_mismatch_send_anyway">الإرسال على أي حال</string>
 </resources>
