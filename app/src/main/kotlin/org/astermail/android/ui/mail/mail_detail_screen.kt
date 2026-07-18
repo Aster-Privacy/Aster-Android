@@ -2150,7 +2150,7 @@ private fun collapsed_message(
 ) {
     val colors = AsterMaterial.colors
 
-    val is_undecryptable = msg.sender_email.isBlank() && msg.body.isBlank()
+    val is_undecryptable = msg.is_undecryptable || (msg.sender_email.isBlank() && msg.body.isBlank())
 
     Column(modifier = Modifier.fillMaxWidth()) {
         if (show_top_divider) {

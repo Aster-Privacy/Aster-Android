@@ -65,6 +65,7 @@ class MailRepositoryTest {
     private lateinit var scheduled_api: org.astermail.android.api.scheduled.ScheduledApi
     private lateinit var ratchet_decryptor: org.astermail.android.mail.ratchet.RatchetDecryptor
     private lateinit var ratchet_encryptor: org.astermail.android.mail.ratchet.RatchetEncryptor
+    private lateinit var ratchet_plaintext_cache: org.astermail.android.mail.ratchet.RatchetPlaintextCache
     private lateinit var context: android.content.Context
     private lateinit var pending_send_dao: FakePendingSendDao
     private lateinit var repo: MailRepository
@@ -107,6 +108,7 @@ class MailRepositoryTest {
         scheduled_api = mockk(relaxed = true)
         ratchet_decryptor = mockk(relaxed = true)
         ratchet_encryptor = mockk(relaxed = true)
+        ratchet_plaintext_cache = mockk(relaxed = true)
         context = mockk(relaxed = true)
         every { session_key_store.get_identity_key() } returns "test_identity_key"
         every { session_key_store.get_passphrase() } returns null
@@ -122,6 +124,7 @@ class MailRepositoryTest {
             scheduled_api = scheduled_api,
             ratchet_decryptor = ratchet_decryptor,
             ratchet_encryptor = ratchet_encryptor,
+            ratchet_plaintext_cache = ratchet_plaintext_cache,
             pending_send_dao = pending_send_dao,
             context = context,
         )
@@ -612,7 +615,7 @@ class MailRepositoryTest {
             created_at = "2026-04-26T10:00:00Z",
         )
 
-        val result = repo.decrypt_single_thread_message(item)
+        val result = kotlinx.coroutines.runBlocking { repo.decrypt_single_thread_message(item) }
 
         assertEquals("msg_null", result.id)
         assertEquals("", result.sender_name)
@@ -636,7 +639,7 @@ class MailRepositoryTest {
             created_at = "2026-04-26T10:00:00Z",
         )
 
-        val result = repo.decrypt_single_thread_message(item)
+        val result = kotlinx.coroutines.runBlocking { repo.decrypt_single_thread_message(item) }
 
         assertEquals("msg_enc", result.id)
         assertTrue(result.is_encrypted)
@@ -835,7 +838,7 @@ class MailRepositoryTest {
             metadata = MailItemMetadata(is_read = false),
         )
 
-        val result = repo.decrypt_single_thread_message(item)
+        val result = kotlinx.coroutines.runBlocking { repo.decrypt_single_thread_message(item) }
 
         assertFalse(result.is_read)
     }
@@ -850,7 +853,7 @@ class MailRepositoryTest {
             metadata = null,
         )
 
-        val result = repo.decrypt_single_thread_message(item)
+        val result = kotlinx.coroutines.runBlocking { repo.decrypt_single_thread_message(item) }
 
         assertTrue(result.is_read)
     }

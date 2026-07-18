@@ -253,6 +253,8 @@
     <string name="stop_receiving_from">Almayı durdur</string>
     <string name="external_content_blocked">Harici görseller, yazı tipleri ve izleyiciler engellendi</string>
     <string name="e2e_encrypted_message">Uçtan uca şifreli mesaj</string>
+    <string name="e2e_encryption_failed">Gönderilemedi: uçtan uca şifreleme başarısız oldu. Mesaj gönderilmedi.</string>
+    <string name="e2e_keys_not_ready">Gönderilemedi: şifreleme anahtarları henüz hazır değil. Mesaj gönderilmedi.</string>
     <string name="e2e_no_key_description">Bu mesaj, bu cihazın henüz sahip olmadığı bir anahtarla şifrelenmiş. Okumak için Aster web uygulamasında açın.</string>
     <string name="no_body">(içerik yok)</string>
     <string name="attachments_count">%d ek</string>

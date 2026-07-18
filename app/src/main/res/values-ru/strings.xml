@@ -253,6 +253,8 @@
     <string name="stop_receiving_from">Прекратить получать от</string>
     <string name="external_content_blocked">Внешние изображения, шрифты и трекеры заблокированы</string>
     <string name="e2e_encrypted_message">Сообщение со сквозным шифрованием</string>
+    <string name="e2e_encryption_failed">Не удалось отправить: сбой сквозного шифрования. Сообщение не отправлено.</string>
+    <string name="e2e_keys_not_ready">Не удалось отправить: ключи шифрования ещё не готовы. Сообщение не отправлено.</string>
     <string name="e2e_no_key_description">Это сообщение зашифровано ключом, которого нет на этом устройстве. Откройте его в веб-приложении Aster, чтобы прочитать.</string>
     <string name="no_body">(нет текста)</string>
     <string name="attachments_count">%d вложение(й)</string>

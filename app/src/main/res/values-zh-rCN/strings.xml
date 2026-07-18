@@ -253,6 +253,8 @@
     <string name="stop_receiving_from">停止接收</string>
     <string name="external_content_blocked">外部图片、字体和跟踪器已拦截</string>
     <string name="e2e_encrypted_message">端到端加密消息</string>
+    <string name="e2e_encryption_failed">无法发送：端到端加密失败。邮件未发送。</string>
+    <string name="e2e_keys_not_ready">无法发送：加密密钥尚未就绪。邮件未发送。</string>
     <string name="e2e_no_key_description">此消息使用此设备尚未拥有的密钥加密。请在 Aster 网页端打开阅读。</string>
     <string name="no_body">（无正文）</string>
     <string name="attachments_count">%d 个附件</string>

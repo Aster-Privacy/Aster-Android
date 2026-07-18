@@ -254,6 +254,8 @@
     <string name="stop_receiving_from">Dejar de recibir de</string>
     <string name="external_content_blocked">Imágenes externas, fuentes y rastreadores bloqueados</string>
     <string name="e2e_encrypted_message">Mensaje cifrado de extremo a extremo</string>
+    <string name="e2e_encryption_failed">No se pudo enviar: falló el cifrado de extremo a extremo. El mensaje no se envió.</string>
+    <string name="e2e_keys_not_ready">No se pudo enviar: las claves de cifrado aún no están listas. El mensaje no se envió.</string>
     <string name="e2e_no_key_description">Este mensaje está cifrado con una clave que este dispositivo aún no posee. Ábrelo en la aplicación web de Aster para leerlo.</string>
     <string name="no_body">(sin contenido)</string>
     <string name="attachments_count">%d adjunto(s)</string>

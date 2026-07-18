@@ -40,6 +40,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.astermail.android.api.mail.BulkScopeFilter
 import org.astermail.android.api.mail.BulkScopeRequest
 import org.astermail.android.api.mail.BulkScopeResponse
@@ -86,9 +87,17 @@ data class DecryptedEnvelope(
     val raw_headers: List<Pair<String, String>> = emptyList(),
     val list_unsubscribe: String? = null,
     val sender_verification: String? = null,
+    val is_undecryptable: Boolean = false,
 )
 
 const val ASTER_SUBJECT_BUNDLE_PREFIX = "ASTER_BUNDLE_V2"
+
+val ASTER_INTERNAL_DOMAINS = listOf("astermail.org", "aster.cx", "gs-cloud.space")
+
+fun is_internal_recipient(email: String): Boolean {
+    val normalized = email.trim().lowercase()
+    return ASTER_INTERNAL_DOMAINS.any { normalized.endsWith("@$it") }
+}
 
 internal data class SubjectBundle(val subject: String?, val body: String)
 
@@ -153,6 +162,7 @@ data class ThreadMessageDecrypted(
     val cc_addresses: List<String> = emptyList(),
     val has_attachments: Boolean = false,
     val raw_headers: List<Pair<String, String>> = emptyList(),
+    val is_undecryptable: Boolean = false,
 )
 
 @Singleton
@@ -165,6 +175,7 @@ class MailRepository @Inject constructor(
     private val scheduled_api: ScheduledApi,
     private val ratchet_decryptor: org.astermail.android.mail.ratchet.RatchetDecryptor,
     private val ratchet_encryptor: org.astermail.android.mail.ratchet.RatchetEncryptor,
+    private val ratchet_plaintext_cache: org.astermail.android.mail.ratchet.RatchetPlaintextCache,
     private val pending_send_dao: PendingSendDao,
     @ApplicationContext private val context: Context,
 ) {
@@ -403,6 +414,7 @@ class MailRepository @Inject constructor(
         identity_key_cache.values.forEach { it.fill(0) }
         identity_key_cache.clear()
         cached_sent_folder_token = null
+        ratchet_plaintext_cache.clear()
     }
 
     suspend fun fetch_inbox(
@@ -512,7 +524,7 @@ class MailRepository @Inject constructor(
             pages++
         }
         val found = draft ?: throw IllegalStateException("draft not found")
-        val envelope = try_decrypt_envelope(found.encrypted_content, found.content_nonce)
+        val envelope = try_decrypt_envelope(found.encrypted_content, found.content_nonce, found.id)
         val item = decrypt_draft_item(found)
         Pair(item, envelope)
     }
@@ -736,7 +748,7 @@ class MailRepository @Inject constructor(
     }
 
     private fun decrypt_draft_item(draft: org.astermail.android.api.mail.DraftItem): InboxItem {
-        val envelope = try_decrypt_envelope(draft.encrypted_content, draft.content_nonce)
+        val envelope = try_decrypt_envelope(draft.encrypted_content, draft.content_nonce, draft.id)
         val user_email = get_user_email() ?: ""
         return InboxItem(
             id = draft.id,
@@ -777,7 +789,7 @@ class MailRepository @Inject constructor(
         }
 
     private fun decrypt_inbox_item(item: MailItem): InboxItem {
-        val envelope = try_decrypt_envelope(item.encrypted_envelope, item.envelope_nonce)
+        val envelope = try_decrypt_envelope(item.encrypted_envelope, item.envelope_nonce, item.id)
         val enc_meta = item.encrypted_metadata
         val meta_nonce = item.metadata_nonce
         val meta = item.metadata
@@ -807,12 +819,11 @@ class MailRepository @Inject constructor(
         )
     }
 
-    fun decrypt_single_thread_message(item: ThreadMessageItem): ThreadMessageDecrypted {
-        return decrypt_thread_message(item)
-    }
+    suspend fun decrypt_single_thread_message(item: ThreadMessageItem): ThreadMessageDecrypted =
+        withContext(Dispatchers.IO) { decrypt_thread_message(item) }
 
     private fun decrypt_thread_message(item: ThreadMessageItem): ThreadMessageDecrypted {
-        val envelope = try_decrypt_envelope(item.encrypted_envelope, item.envelope_nonce)
+        val envelope = try_decrypt_envelope(item.encrypted_envelope, item.envelope_nonce, item.id)
         val meta = item.metadata
         val to_names = envelope?.to?.map { it.first.ifBlank { it.second } } ?: listOf("me")
         return ThreadMessageDecrypted(
@@ -830,6 +841,7 @@ class MailRepository @Inject constructor(
             cc_addresses = envelope?.cc?.map { it.second } ?: emptyList(),
             has_attachments = meta?.has_attachments ?: false,
             raw_headers = envelope?.raw_headers ?: emptyList(),
+            is_undecryptable = envelope?.is_undecryptable ?: false,
         )
     }
 
@@ -850,11 +862,12 @@ class MailRepository @Inject constructor(
     ): DecryptedEnvelope? = try_decrypt_envelope(encrypted_envelope, envelope_nonce)
 
     fun decrypt_item_for_export(item: MailItem): DecryptedEnvelope? =
-        try_decrypt_envelope(item.encrypted_envelope, item.envelope_nonce)
+        try_decrypt_envelope(item.encrypted_envelope, item.envelope_nonce, item.id)
 
     private fun try_decrypt_envelope(
         encrypted_envelope: String?,
         envelope_nonce: String?,
+        message_id: String? = null,
     ): DecryptedEnvelope? {
         if (encrypted_envelope.isNullOrBlank()) return null
         return try {
@@ -900,7 +913,7 @@ class MailRepository @Inject constructor(
             val json_str = String(decrypted, Charsets.UTF_8)
             decrypted.fill(0)
             val envelope = parse_envelope_json(json_str)
-            if (envelope != null) decrypt_pgp_body_fields(envelope) else null
+            if (envelope != null) decrypt_pgp_body_fields(envelope, message_id) else null
         } catch (_: Throwable) {
             null
         }
@@ -1484,9 +1497,10 @@ class MailRepository @Inject constructor(
         }
     }
 
-    private fun decrypt_pgp_body_fields(envelope: DecryptedEnvelope): DecryptedEnvelope {
+    private fun decrypt_pgp_body_fields(envelope: DecryptedEnvelope, message_id: String? = null): DecryptedEnvelope {
         var body_text = envelope.body_text
         var body_html = envelope.body_html
+        var is_undecryptable = false
 
         val ratchet_candidate = when {
             ratchet_decryptor.looks_like_ratchet_envelope(body_text) -> body_text
@@ -1496,15 +1510,25 @@ class MailRepository @Inject constructor(
         if (ratchet_candidate != null) {
             val our_email = session_key_store.get_user_email()
             val sender_email = envelope.from_email
-            if (org.astermail.android.BuildConfig.DEBUG) {
-                android.util.Log.d("AsterRatchet", "envelope detected has_keys=${session_key_store.has_ratchet_keys()}")
-            }
             if (!our_email.isNullOrBlank() && sender_email.isNotBlank()) {
                 val decrypted = kotlinx.coroutines.runBlocking {
-                    ratchet_decryptor.try_decrypt(ratchet_candidate, our_email, sender_email)
-                }
-                if (org.astermail.android.BuildConfig.DEBUG) {
-                    android.util.Log.d("AsterRatchet", "decrypt result: ${if (decrypted == org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL) "UNDECRYPTABLE" else "ok"}")
+                    val cached = if (!message_id.isNullOrBlank()) ratchet_plaintext_cache.get(message_id) else null
+                    if (cached != null) {
+                        cached
+                    } else {
+                        val delivered_to = org.astermail.android.ui.mail.extract_delivered_to(envelope.raw_headers)
+                        val our_addresses = buildList {
+                            add(our_email)
+                            if (!delivered_to.isNullOrBlank()) add(delivered_to)
+                        }
+                        val result = ratchet_decryptor.try_decrypt(ratchet_candidate, our_addresses, sender_email)
+                        if (result != org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL &&
+                            !message_id.isNullOrBlank()
+                        ) {
+                            ratchet_plaintext_cache.put(message_id, result)
+                        }
+                        result
+                    }
                 }
                 if (decrypted != org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL) {
                     body_text = decrypted
@@ -1512,6 +1536,7 @@ class MailRepository @Inject constructor(
                 } else {
                     body_text = ""
                     body_html = null
+                    is_undecryptable = true
                 }
             }
         }
@@ -1550,12 +1575,14 @@ class MailRepository @Inject constructor(
         return if (
             body_text != envelope.body_text ||
             body_html != envelope.body_html ||
-            resolved_subject != envelope.subject
+            resolved_subject != envelope.subject ||
+            is_undecryptable != envelope.is_undecryptable
         ) {
             envelope.copy(
                 subject = resolved_subject,
                 body_text = body_text,
                 body_html = body_html,
+                is_undecryptable = is_undecryptable,
             )
         } else {
             envelope
@@ -1594,9 +1621,7 @@ class MailRepository @Inject constructor(
             token
         } catch (_: Throwable) { cached_sent_folder_token }
 
-        val all_external = to.any { !it.endsWith("@astermail.org") && !it.endsWith("@aster.cx") } ||
-            cc.any { !it.endsWith("@astermail.org") && !it.endsWith("@aster.cx") } ||
-            bcc.any { !it.endsWith("@astermail.org") && !it.endsWith("@aster.cx") }
+        val all_external = (to + cc + bcc).any { !is_internal_recipient(it) }
 
         if (all_external) {
             val ephemeral_key = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
@@ -1659,20 +1684,22 @@ class MailRepository @Inject constructor(
             )
         } else {
             val from_addr = sender_email ?: session_key_store.get_user_email() ?: ""
-            val internal_recipients = (to + cc + bcc).filter {
-                it.endsWith("@astermail.org") || it.endsWith("@aster.cx")
-            }
-            val ratchet_body = if (
-                from_addr.isNotBlank() &&
-                internal_recipients.isNotEmpty() &&
-                session_key_store.has_ratchet_keys()
-            ) {
-                try {
-                    ratchet_encryptor.encrypt_envelope(from_addr, internal_recipients, body_html)
-                } catch (t: Throwable) {
-                    if (BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "ratchet encrypt failed; falling back to legacy body", t)
-                    null
+            val internal_recipients = (to + cc + bcc).filter { is_internal_recipient(it) }
+
+            val ratchet_body = if (internal_recipients.isNotEmpty()) {
+                if (from_addr.isBlank() || !session_key_store.has_ratchet_keys()) {
+                    throw IllegalStateException(context.getString(R.string.e2e_keys_not_ready))
                 }
+                val wrapped = ASTER_SUBJECT_BUNDLE_PREFIX + org.json.JSONObject().apply {
+                    put("s", subject)
+                    put("b", body_html)
+                }.toString()
+                val encrypted = try {
+                    ratchet_encryptor.encrypt_envelope(from_addr, internal_recipients, wrapped)
+                } catch (t: Throwable) {
+                    throw IllegalStateException(context.getString(R.string.e2e_encryption_failed), t)
+                }
+                encrypted ?: throw IllegalStateException(context.getString(R.string.e2e_encryption_failed))
             } else null
 
             val final_body = ratchet_body ?: body_html
@@ -1742,9 +1769,7 @@ class MailRepository @Inject constructor(
         scheduled_at: String,
         sender_alias_hash: String? = null,
     ): Result<String> = runCatching {
-        val is_external = to.any { !it.endsWith("@astermail.org") && !it.endsWith("@aster.cx") } ||
-            cc.any { !it.endsWith("@astermail.org") && !it.endsWith("@aster.cx") } ||
-            bcc.any { !it.endsWith("@astermail.org") && !it.endsWith("@aster.cx") }
+        val is_external = (to + cc + bcc).any { !is_internal_recipient(it) }
 
         val ephemeral_key = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
         val base_nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }

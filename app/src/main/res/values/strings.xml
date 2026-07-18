@@ -339,6 +339,8 @@
     <string name="external_content_blocked">External images, fonts, and trackers blocked</string>
     <string name="e2e_encrypted_message">End-to-end encrypted message</string>
     <string name="e2e_no_key_description">This message is encrypted with a key this device does not yet hold. Open it on the Aster web app to read.</string>
+    <string name="e2e_encryption_failed">Could not send: end-to-end encryption failed. The message was not sent.</string>
+    <string name="e2e_keys_not_ready">Could not send: encryption keys aren\'t ready yet. The message was not sent.</string>
     <string name="no_body">(no body)</string>
     <string name="attachments_count">%d attachment(s)</string>
     <string name="download_complete">Download complete</string>
