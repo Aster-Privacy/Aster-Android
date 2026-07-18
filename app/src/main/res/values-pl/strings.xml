@@ -253,6 +253,8 @@
     <string name="stop_receiving_from">Przestań odbierać od</string>
     <string name="external_content_blocked">Zewnętrzne obrazy, czcionki i elementy śledzące zablokowane</string>
     <string name="e2e_encrypted_message">Wiadomość zaszyfrowana end-to-end</string>
+    <string name="e2e_encryption_failed">Nie można wysłać: szyfrowanie end-to-end nie powiodło się. Wiadomość nie została wysłana.</string>
+    <string name="e2e_keys_not_ready">Nie można wysłać: klucze szyfrowania nie są jeszcze gotowe. Wiadomość nie została wysłana.</string>
     <string name="e2e_no_key_description">Ta wiadomość jest zaszyfrowana kluczem, którego to urządzenie jeszcze nie posiada. Otwórz ją w aplikacji webowej Aster, aby przeczytać.</string>
     <string name="no_body">(brak treści)</string>
     <string name="attachments_count">%d załącznik(ów)</string>

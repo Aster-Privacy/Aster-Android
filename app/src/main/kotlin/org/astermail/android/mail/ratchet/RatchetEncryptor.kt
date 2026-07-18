@@ -31,12 +31,19 @@ import org.astermail.android.api.ratchet.RatchetApi
 import org.astermail.android.crypto.ratchet.RatchetCrypto
 import org.astermail.android.storage.SessionKeyStore
 
+class RatchetEncryptionException(
+    val recipient: String?,
+    message: String,
+    cause: Throwable? = null,
+) : Exception(message, cause)
+
 @Singleton
 class RatchetEncryptor @Inject constructor(
     private val state_store: RatchetStateStore,
     private val session_key_store: SessionKeyStore,
     private val ratchet_api: RatchetApi,
     private val syncer: RatchetStateSyncer,
+    private val conversation_locks: ConversationLocks,
 ) {
 
     private val json = Json {
@@ -51,12 +58,20 @@ class RatchetEncryptor @Inject constructor(
         body: String,
     ): String? {
         if (recipients.isEmpty()) return null
-        val sender_identity_public = session_key_store.get_ratchet_identity_public_b64() ?: return null
-        val sender_identity_jwk = session_key_store.get_ratchet_identity_jwk() ?: return null
+        val sender_identity_public = session_key_store.get_ratchet_identity_public_b64()
+            ?: throw RatchetEncryptionException(null, "missing ratchet identity public key")
+        val sender_identity_jwk = session_key_store.get_ratchet_identity_jwk()
+            ?: throw RatchetEncryptionException(null, "missing ratchet identity key")
 
         val per_recipient = mutableMapOf<String, RatchetRecipientData>()
         for (recipient_email in recipients) {
-            val data = encrypt_for_recipient(sender_email, sender_identity_public, sender_identity_jwk, recipient_email, body) ?: return null
+            val data = try {
+                encrypt_for_recipient(sender_email, sender_identity_public, sender_identity_jwk, recipient_email, body)
+            } catch (e: RatchetEncryptionException) {
+                throw e
+            } catch (e: Throwable) {
+                throw RatchetEncryptionException(recipient_email, "ratchet encryption failed for recipient", e)
+            } ?: throw RatchetEncryptionException(recipient_email, "no prekey bundle available for recipient")
             per_recipient[recipient_email.lowercase()] = data
         }
 
@@ -78,6 +93,19 @@ class RatchetEncryptor @Inject constructor(
         val conversation_id = X3dh.derive_conversation_id(sender_email, recipient_email)
         val username = recipient_email.substringBefore('@')
 
+        return conversation_locks.with_lock(conversation_id) {
+            encrypt_for_recipient_locked(conversation_id, username, sender_identity_public, sender_identity_jwk, recipient_email, body)
+        }
+    }
+
+    private suspend fun encrypt_for_recipient_locked(
+        conversation_id: String,
+        username: String,
+        sender_identity_public: String,
+        sender_identity_jwk: String,
+        recipient_email: String,
+        body: String,
+    ): RatchetRecipientData? {
         var state = state_store.load(conversation_id)
         if (state != null && state.bootstrap == null) {
             state = null
