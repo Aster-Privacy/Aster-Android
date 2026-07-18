@@ -338,6 +338,7 @@ fun InboxScreen(
     var sort_mode_user_set by remember { mutableStateOf(false) }
     var sort_mode by remember { mutableStateOf(InboxSortMode.newest) }
     var select_mode by remember { mutableStateOf(false) }
+    var select_all_active by remember { mutableStateOf(false) }
     val selected_ids = remember { mutableStateListOf<String>() }
     var show_empty_trash_dialog by remember { mutableStateOf(false) }
     var confirm_action_pending by remember { mutableStateOf<String?>(null) }
@@ -434,6 +435,13 @@ fun InboxScreen(
         mail_vm.set_visible_order(visible_order_ids)
     }
 
+    LaunchedEffect(select_all_active, visible_order_ids) {
+        if (select_all_active) {
+            selected_ids.clear()
+            selected_ids.addAll(visible_threads.map { it.thread_id })
+        }
+    }
+
     LaunchedEffect(list_state, current_folder) {
         snapshotFlow {
             val layout_info = list_state.layoutInfo
@@ -496,14 +504,20 @@ fun InboxScreen(
         select_mode = true
         selected_ids.clear()
         selected_ids.addAll(visible_threads.map { it.thread_id })
+        if (inbox_state.has_more) {
+            select_all_active = true
+            mail_vm.load_all_remaining()
+        }
     }
 
     fun exit_select_mode() {
         select_mode = false
+        select_all_active = false
         selected_ids.clear()
     }
 
     fun toggle_selection(id: String) {
+        select_all_active = false
         if (selected_ids.contains(id)) selected_ids.remove(id) else selected_ids.add(id)
         if (selected_ids.isEmpty()) select_mode = false
     }

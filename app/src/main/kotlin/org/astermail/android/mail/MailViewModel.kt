@@ -535,6 +535,34 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    fun load_all_remaining(on_complete: (() -> Unit)? = null) {
+        viewModelScope.launch {
+            val started_folder = _inbox_state.value.current_folder
+            var guard = 0
+            while (guard < 200) {
+                val s = _inbox_state.value
+                if (s.current_folder != started_folder) return@launch
+                if (!s.has_more) break
+                if (s.is_loading || s.is_loading_more) {
+                    kotlinx.coroutines.delay(50)
+                    continue
+                }
+                val before_cursor = s.next_cursor
+                val before_count = s.items.size
+                load_more()
+                var waited = 0
+                while (_inbox_state.value.is_loading_more && waited < 400) {
+                    kotlinx.coroutines.delay(25)
+                    waited++
+                }
+                val after = _inbox_state.value
+                if (after.next_cursor == before_cursor && after.items.size == before_count) break
+                guard++
+            }
+            if (_inbox_state.value.current_folder == started_folder) on_complete?.invoke()
+        }
+    }
+
     fun get_user_email(): String? = repository.get_user_email()
 
     fun load_stats(force: Boolean = true) {
