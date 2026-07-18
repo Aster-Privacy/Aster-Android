@@ -1196,14 +1196,16 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
             )
         }
 
-    val quick_custom_folders = settings_state.labels
-        .filter { !it.is_system }
-        .filter { it.folder_type == "folder" || it.folder_type == "custom" }
-        .mapNotNull { label ->
-            val readable_name = label.encrypted_name?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
-                ?: return@mapNotNull null
-            label.label_token to readable_name
-        }
+    val quick_custom_folders = androidx.compose.runtime.remember(settings_state.labels) {
+        settings_state.labels
+            .filter { !it.is_system }
+            .filter { it.folder_type == "folder" || it.folder_type == "custom" }
+            .mapNotNull { label ->
+                val readable_name = label.encrypted_name?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
+                    ?: return@mapNotNull null
+                label.label_token to readable_name
+            }
+    }
 
     val label_colors = listOf(
         Color(0xFF3B82F6),

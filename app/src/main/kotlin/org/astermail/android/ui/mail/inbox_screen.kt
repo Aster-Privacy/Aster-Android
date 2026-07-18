@@ -179,7 +179,7 @@ fun InboxScreen(
     var cached_paid by rememberSaveable { mutableStateOf(initial_paid) }
     var plan_known by rememberSaveable { mutableStateOf(initial_plan_known) }
     var fresh_check_complete by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { settings_vm.load_subscription() }
+    LaunchedEffect(Unit) { settings_vm.load_subscription(force = false) }
     LaunchedEffect(settings_state.subscription, settings_state.is_loading) {
         val sub = settings_state.subscription
         if (sub != null) {
@@ -284,8 +284,13 @@ fun InboxScreen(
 
     val lifecycle_owner = LocalLifecycleOwner.current
     DisposableEffect(lifecycle_owner) {
+        var initial_resume_replayed = false
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
+                if (!initial_resume_replayed) {
+                    initial_resume_replayed = true
+                    return@LifecycleEventObserver
+                }
                 settings_vm.load_preferences()
                 settings_vm.load_tags()
                 mail_vm.load_inbox(current_folder, force = true)
@@ -296,9 +301,9 @@ fun InboxScreen(
     }
 
     LaunchedEffect(current_folder) {
-        mail_vm.load_inbox(current_folder, force = true)
-        mail_vm.load_stats()
-        settings_vm.load_tags()
+        mail_vm.load_inbox(current_folder)
+        mail_vm.load_stats(force = false)
+        settings_vm.load_tags(force = false)
     }
 
     val attachment_ids_key = remember(inbox_state.items) {
@@ -324,8 +329,10 @@ fun InboxScreen(
                 is_pinned = if (local.is_pinned != server.is_pinned) local.is_pinned else server.is_pinned,
             )
         }
-        emails.clear()
-        emails.addAll(merged)
+        if (merged != emails.toList()) {
+            emails.clear()
+            emails.addAll(merged)
+        }
     }
     val is_refreshing = inbox_state.is_refreshing
     var sort_mode_user_set by remember { mutableStateOf(false) }
