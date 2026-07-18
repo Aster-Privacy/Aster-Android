@@ -429,7 +429,10 @@ class AuthViewModelTest {
 
         val state = vm.ui_state.value
         assertTrue(state is AuthUiState.Error)
-        assertEquals("email taken", (state as AuthUiState.Error).message)
+        assertEquals(
+            "Something went wrong. Please try again.",
+            (state as AuthUiState.Error).message,
+        )
     }
 
     @Test
@@ -510,7 +513,7 @@ class AuthViewModelTest {
     }
 
     @Test
-    fun `submit_login unknown error detail is surfaced`() = runTest {
+    fun `submit_login unknown error shows generic message not raw detail`() = runTest {
         coEvery { repository.login(any(), any(), any()) } returns
             Result.failure(ApiError.UnknownError("custom detail"))
 
@@ -519,7 +522,10 @@ class AuthViewModelTest {
 
         val state = vm.ui_state.value
         assertTrue(state is AuthUiState.Error)
-        assertEquals("custom detail", (state as AuthUiState.Error).message)
+        assertEquals(
+            "Something went wrong. Please try again.",
+            (state as AuthUiState.Error).message,
+        )
     }
 
     @Test

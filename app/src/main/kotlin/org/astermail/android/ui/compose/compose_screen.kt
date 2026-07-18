@@ -905,6 +905,9 @@ fun ComposeScreen(
                 onSuccess = {
                     is_sending = false
                     send_lock.set(false)
+                    if (resolved_thread_token != null) {
+                        mail_vm.refresh_current_thread()
+                    }
                     on_sent()
                 },
                 onFailure = { t ->
@@ -971,25 +974,33 @@ fun ComposeScreen(
         val snap_from = from_alias
         if (undo_send_enabled) {
             draft_save_job?.cancel()
-            mail_vm.schedule_send_with_undo(
-                to = snap_to,
-                cc = snap_cc,
-                bcc = snap_bcc,
-                subject = snap_subject,
-                body_html = body_html,
-                sender_email = snap_from,
-                sender_display_name = settings_state.user?.display_name,
-                expires_at = expires_at_iso,
-                expiry_password = expiry_password,
-                attachments = attachment_payloads,
-                sender_alias_hash = if (snap_from != user_email) alias_hash_map[snap_from]?.takeIf { it.isNotBlank() } else null,
-                suppress_branding = suppress_branding,
-                undo_seconds = undo_send_seconds,
-                draft_id = current_draft_id.takeIf { it.isNotBlank() },
-            )
-            is_sending = false
-            send_lock.set(false)
-            on_sent()
+            scope.launch {
+                val resolved_thread_token = if (!reply_to.isNullOrBlank() && (mode == "reply" || mode == "reply_all")) {
+                    mail_vm.get_or_create_thread_token(reply_to, thread_state.item?.thread_token)
+                } else {
+                    null
+                }
+                mail_vm.schedule_send_with_undo(
+                    to = snap_to,
+                    cc = snap_cc,
+                    bcc = snap_bcc,
+                    subject = snap_subject,
+                    body_html = body_html,
+                    sender_email = snap_from,
+                    sender_display_name = settings_state.user?.display_name,
+                    thread_token = resolved_thread_token,
+                    expires_at = expires_at_iso,
+                    expiry_password = expiry_password,
+                    attachments = attachment_payloads,
+                    sender_alias_hash = if (snap_from != user_email) alias_hash_map[snap_from]?.takeIf { it.isNotBlank() } else null,
+                    suppress_branding = suppress_branding,
+                    undo_seconds = undo_send_seconds,
+                    draft_id = current_draft_id.takeIf { it.isNotBlank() },
+                )
+                is_sending = false
+                send_lock.set(false)
+                on_sent()
+            }
         } else {
             execute_send(body_html, attachment_payloads, snap_to, snap_cc, snap_bcc, snap_subject, snap_from, suppress_branding)
         }

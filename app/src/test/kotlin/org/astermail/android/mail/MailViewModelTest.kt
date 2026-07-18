@@ -248,6 +248,88 @@ class MailViewModelTest {
     }
 
     @Test
+    fun `load_more continues past pages of already-loaded items`() = runTest {
+        val page1 = fake_inbox_page(3, has_more = true, next_cursor = "c1")
+        coEvery { repository.fetch_inbox(any(), cursor = isNull(), any(), any()) } returns Result.success(page1)
+
+        vm.load_inbox()
+        advanceUntilIdle()
+        assertEquals(3, vm.inbox_state.value.items.size)
+
+        val duplicate_page = InboxPage(page1.items, has_more = true, next_cursor = "c2", total = 5)
+        coEvery { repository.fetch_inbox(any(), cursor = eq("c1"), any(), any()) } returns Result.success(duplicate_page)
+        val fresh_items = (4..5).map { i ->
+            InboxItem(
+                id = "id_$i", thread_token = "t$i", thread_message_count = 1,
+                sender_name = "S$i", sender_email = "s$i@x.com",
+                subject = "Sub$i", preview = "P$i", timestamp = "2026-04-26T10:0$i:00Z",
+                is_read = false, is_starred = false, is_encrypted = true,
+                has_attachments = false, is_trashed = false, is_archived = false,
+                is_spam = false, labels = emptyList(), raw_item = mockk(relaxed = true),
+            )
+        }
+        val fresh_page = InboxPage(fresh_items, has_more = false, next_cursor = null, total = 5)
+        coEvery { repository.fetch_inbox(any(), cursor = eq("c2"), any(), any()) } returns Result.success(fresh_page)
+
+        vm.load_more()
+        advanceUntilIdle()
+
+        val state = vm.inbox_state.value
+        assertEquals(5, state.items.size)
+        assertEquals("id_5", state.items.last().id)
+        assertFalse(state.is_loading_more)
+        assertFalse(state.has_more)
+    }
+
+    @Test
+    fun `load_all_remaining pages through every page until has_more is false`() = runTest {
+        fun mk(i: Int) = InboxItem(
+            id = "id_$i", thread_token = "t$i", thread_message_count = 1,
+            sender_name = "S$i", sender_email = "s$i@x.com",
+            subject = "Sub$i", preview = "P$i", timestamp = "2026-04-26T10:0$i:00Z",
+            is_read = false, is_starred = false, is_encrypted = true,
+            has_attachments = false, is_trashed = false, is_archived = false,
+            is_spam = false, labels = emptyList(), raw_item = mockk(relaxed = true),
+        )
+
+        val page1 = InboxPage(listOf(mk(1), mk(2), mk(3)), has_more = true, next_cursor = "c1", total = 9)
+        coEvery { repository.fetch_inbox(any(), cursor = isNull(), any(), any()) } returns Result.success(page1)
+
+        vm.load_inbox()
+        advanceUntilIdle()
+        assertEquals(3, vm.inbox_state.value.items.size)
+        assertTrue(vm.inbox_state.value.has_more)
+
+        val page2 = InboxPage(listOf(mk(4), mk(5), mk(6)), has_more = true, next_cursor = "c2", total = 9)
+        coEvery { repository.fetch_inbox(any(), cursor = eq("c1"), any(), any()) } returns Result.success(page2)
+        val page3 = InboxPage(listOf(mk(7), mk(8), mk(9)), has_more = false, next_cursor = null, total = 9)
+        coEvery { repository.fetch_inbox(any(), cursor = eq("c2"), any(), any()) } returns Result.success(page3)
+
+        vm.load_all_remaining()
+        advanceUntilIdle()
+
+        val state = vm.inbox_state.value
+        assertEquals(9, state.items.size)
+        assertFalse(state.has_more)
+        assertNull(state.next_cursor)
+    }
+
+    @Test
+    fun `load_all_remaining fires completion callback`() = runTest {
+        val page = fake_inbox_page(2, has_more = false)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        var done = false
+        vm.load_all_remaining { done = true }
+        advanceUntilIdle()
+
+        assertTrue(done)
+    }
+
+    @Test
     fun `load_more does nothing when no more pages`() = runTest {
         val page = fake_inbox_page(2, has_more = false)
         coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
@@ -260,6 +342,58 @@ class MailViewModelTest {
 
         clear_dispatcher_records()
         coVerify(exactly = 1) { repository.fetch_inbox(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `load_more keeps has_more when a page returns only duplicate items`() = runTest {
+        val page1 = fake_inbox_page(3, has_more = true, next_cursor = "cursor_1")
+        coEvery { repository.fetch_inbox(any(), cursor = isNull(), any(), any()) } returns Result.success(page1)
+
+        vm.load_inbox()
+        advanceUntilIdle()
+        assertEquals(3, vm.inbox_state.value.items.size)
+
+        val duplicate_page = InboxPage(
+            items = page1.items,
+            has_more = true,
+            next_cursor = "cursor_2",
+            total = 6,
+        )
+        coEvery { repository.fetch_inbox(any(), cursor = eq("cursor_1"), any(), any()) } returns
+            Result.success(duplicate_page)
+
+        vm.load_more()
+        advanceUntilIdle()
+
+        val state = vm.inbox_state.value
+        assertEquals(3, state.items.size)
+        assertTrue(state.has_more)
+        assertEquals("cursor_2", state.next_cursor)
+
+        val page3 = InboxPage(
+            items = listOf(
+                InboxItem(
+                    id = "id_4", thread_token = "t4", thread_message_count = 1,
+                    sender_name = "S4", sender_email = "s4@x.com",
+                    subject = "Sub4", preview = "P4", timestamp = "2026-04-26T10:04:00Z",
+                    is_read = false, is_starred = false, is_encrypted = true,
+                    has_attachments = false, is_trashed = false, is_archived = false,
+                    is_spam = false, labels = emptyList(), raw_item = mockk(relaxed = true),
+                ),
+            ),
+            has_more = false,
+            next_cursor = null,
+            total = 4,
+        )
+        coEvery { repository.fetch_inbox(any(), cursor = eq("cursor_2"), any(), any()) } returns
+            Result.success(page3)
+
+        vm.load_more()
+        advanceUntilIdle()
+
+        val final_state = vm.inbox_state.value
+        assertEquals(4, final_state.items.size)
+        assertFalse(final_state.has_more)
     }
 
     @Test
@@ -591,6 +725,51 @@ class MailViewModelTest {
 
         assertEquals(2, vm.inbox_state.value.items.size)
         coVerify { repository.fetch_inbox(any(), any(), any(), label_token = "lbl_123") }
+    }
+
+    @Test
+    fun `load_inbox label folder does not force item_type received`() = runTest {
+        coEvery {
+            repository.fetch_inbox(any(), any(), item_type = isNull(), label_token = eq("lbl_123"))
+        } returns Result.success(fake_inbox_page(2))
+
+        vm.load_inbox("label:lbl_123", force = true)
+        advanceUntilIdle()
+
+        assertEquals(2, vm.inbox_state.value.items.size)
+        coVerify {
+            repository.fetch_inbox(any(), any(), item_type = null, label_token = "lbl_123")
+        }
+    }
+
+    @Test
+    fun `load_inbox tag folder does not force item_type received`() = runTest {
+        coEvery {
+            repository.fetch_inbox(any(), any(), item_type = isNull(), tag_token = eq("tag_123"))
+        } returns Result.success(fake_inbox_page(2))
+
+        vm.load_inbox("tag:tag_123", force = true)
+        advanceUntilIdle()
+
+        assertEquals(2, vm.inbox_state.value.items.size)
+        coVerify {
+            repository.fetch_inbox(any(), any(), item_type = null, tag_token = "tag_123")
+        }
+    }
+
+    @Test
+    fun `load_inbox custom folder does not force item_type received`() = runTest {
+        coEvery {
+            repository.fetch_inbox(any(), any(), item_type = isNull(), label_token = eq("custom_folder_token"))
+        } returns Result.success(fake_inbox_page(2))
+
+        vm.load_inbox("custom_folder_token", force = true)
+        advanceUntilIdle()
+
+        assertEquals(2, vm.inbox_state.value.items.size)
+        coVerify {
+            repository.fetch_inbox(any(), any(), item_type = null, label_token = "custom_folder_token")
+        }
     }
 
     @Test

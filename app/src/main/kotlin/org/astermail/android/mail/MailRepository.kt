@@ -408,15 +408,18 @@ class MailRepository @Inject constructor(
     suspend fun fetch_inbox(
         limit: Int = 50,
         cursor: String? = null,
-        item_type: String = "received",
+        item_type: String? = "received",
         label_token: String? = null,
         tag_token: String? = null,
+        offset: Int? = null,
     ): Result<InboxPage> = runCatching {
         val is_received = item_type == "received"
         val is_plain_inbox = is_received && label_token == null && tag_token == null
+        val is_token_scope = label_token != null || tag_token != null
         val response = mail_api.list_messages(
             limit = limit,
-            cursor = cursor,
+            cursor = if (is_token_scope) null else cursor,
+            offset = if (is_token_scope) offset else null,
             item_type = item_type,
             label_token = label_token,
             tag_token = tag_token,
@@ -433,10 +436,15 @@ class MailRepository @Inject constructor(
             }
         } else response.items
         val items = decrypt_items_parallel(filtered_raw)
+        val next_cursor = if (is_token_scope && response.next_cursor == null && response.has_more) {
+            ((offset ?: 0) + response.items.size).toString()
+        } else {
+            response.next_cursor
+        }
         InboxPage(
             items = items,
             has_more = response.has_more,
-            next_cursor = response.next_cursor,
+            next_cursor = next_cursor,
             total = response.total,
         )
     }

@@ -382,6 +382,7 @@ fun MailDetailScreen(
     var show_snooze_sheet by remember { mutableStateOf(false) }
     var show_folder_sheet by remember { mutableStateOf(false) }
     var show_label_sheet by remember { mutableStateOf(false) }
+    var action_target_id by remember { mutableStateOf<String?>(null) }
     var toast_message by remember { mutableStateOf<String?>(null) }
     var top_toast_state by remember { mutableStateOf<org.astermail.android.ui.common.TopToastState?>(null) }
 
@@ -892,6 +893,10 @@ fun MailDetailScreen(
                             on_reply = { on_reply(msg.id, thread_ghost_email) },
                             on_reply_all = { on_reply_all(msg.id, thread_ghost_email) },
                             on_forward = { on_forward(msg.id, thread_ghost_email) },
+                            on_more = {
+                                action_target_id = msg.id
+                                show_action_sheet = true
+                            },
                             on_attachment_tap = { att ->
                                 is_downloading_attachment = true
                                 mail_vm.download_attachment(att) { result ->
@@ -1025,7 +1030,7 @@ fun MailDetailScreen(
     }
 
     if (show_action_sheet) {
-        val target = messages.lastOrNull()?.id.orEmpty()
+        val target = action_target_id ?: messages.lastOrNull()?.id.orEmpty()
         action_menu_sheet(
             on_close = { show_action_sheet = false },
             on_reply = { show_action_sheet = false; on_reply(target, thread_ghost_email) },
@@ -1296,6 +1301,7 @@ private fun expanded_message(
     on_reply: () -> Unit,
     on_reply_all: () -> Unit,
     on_forward: () -> Unit,
+    on_more: () -> Unit,
     on_attachment_tap: (MessageAttachment) -> Unit = {},
     on_attachment_download: (MessageAttachment) -> Unit = {},
     is_system: Boolean = false,
@@ -1545,14 +1551,10 @@ private fun expanded_message(
         }
 
         if (!msg.body_html.isNullOrBlank()) {
-            val body_has_dark_hostile_styling = msg.body_html.contains(
-                Regex("background(?:-color)?\\s*[:=]\\s*[\"']?#?(?:fff|FFF|ffffff|FFFFFF|white)", RegexOption.IGNORE_CASE),
-            )
             email_html_view(
                 html = msg.body_html,
                 allow_external = allow_external,
                 access_token = access_token,
-                force_light = is_system && body_has_dark_hostile_styling,
                 on_ready = on_body_ready,
                 on_link_click = on_link_click,
                 modifier = Modifier
