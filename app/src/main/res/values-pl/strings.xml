@@ -433,6 +433,10 @@
     <string name="no_aliases_yet">Brak aliasów</string>
     <string name="create_folder">Utwórz folder</string>
     <string name="folder_name">Nazwa folderu</string>
+    <string name="parent_folder">Folder nadrzędny</string>
+    <string name="parent_folder_none">Brak</string>
+    <string name="move_folder_up">Przenieś w górę</string>
+    <string name="move_folder_down">Przenieś w dół</string>
     <string name="create_label">Utwórz etykietę</string>
     <string name="label_name">Nazwa etykiety</string>
     <string name="create_alias">Utwórz alias</string>

@@ -433,6 +433,10 @@
     <string name="no_aliases_yet">まだエイリアスはありません</string>
     <string name="create_folder">フォルダを作成</string>
     <string name="folder_name">フォルダ名</string>
+    <string name="parent_folder">親フォルダ</string>
+    <string name="parent_folder_none">なし</string>
+    <string name="move_folder_up">上へ移動</string>
+    <string name="move_folder_down">下へ移動</string>
     <string name="create_label">ラベルを作成</string>
     <string name="label_name">ラベル名</string>
     <string name="create_alias">エイリアスを作成</string>

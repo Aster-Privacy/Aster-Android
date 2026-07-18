@@ -433,6 +433,10 @@
     <string name="no_aliases_yet">Nessun alias ancora</string>
     <string name="create_folder">Crea cartella</string>
     <string name="folder_name">Nome cartella</string>
+    <string name="parent_folder">Cartella principale</string>
+    <string name="parent_folder_none">Nessuna</string>
+    <string name="move_folder_up">Sposta su</string>
+    <string name="move_folder_down">Sposta giù</string>
     <string name="create_label">Crea etichetta</string>
     <string name="label_name">Nome etichetta</string>
     <string name="create_alias">Crea alias</string>

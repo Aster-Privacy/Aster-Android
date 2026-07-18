@@ -433,6 +433,10 @@
     <string name="no_aliases_yet">Псевдонимов пока нет</string>
     <string name="create_folder">Создать папку</string>
     <string name="folder_name">Название папки</string>
+    <string name="parent_folder">Родительская папка</string>
+    <string name="parent_folder_none">Нет</string>
+    <string name="move_folder_up">Вверх</string>
+    <string name="move_folder_down">Вниз</string>
     <string name="create_label">Создать метку</string>
     <string name="label_name">Название метки</string>
     <string name="create_alias">Создать псевдоним</string>

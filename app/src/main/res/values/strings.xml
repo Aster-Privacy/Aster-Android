@@ -606,6 +606,10 @@
     <string name="no_aliases_yet">No aliases yet</string>
     <string name="create_folder">Create Folder</string>
     <string name="folder_name">Folder name</string>
+    <string name="parent_folder">Parent folder</string>
+    <string name="parent_folder_none">None</string>
+    <string name="move_folder_up">Move up</string>
+    <string name="move_folder_down">Move down</string>
     <string name="create_label">Create Label</string>
     <string name="label_name">Label name</string>
     <string name="create_alias">Create Alias</string>

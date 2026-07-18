@@ -433,6 +433,10 @@
     <string name="no_aliases_yet">아직 별칭이 없습니다</string>
     <string name="create_folder">폴더 만들기</string>
     <string name="folder_name">폴더 이름</string>
+    <string name="parent_folder">상위 폴더</string>
+    <string name="parent_folder_none">없음</string>
+    <string name="move_folder_up">위로 이동</string>
+    <string name="move_folder_down">아래로 이동</string>
     <string name="create_label">라벨 만들기</string>
     <string name="label_name">라벨 이름</string>
     <string name="create_alias">별칭 만들기</string>

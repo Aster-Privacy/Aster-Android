@@ -433,6 +433,10 @@
     <string name="no_aliases_yet">Nog geen aliassen</string>
     <string name="create_folder">Map aanmaken</string>
     <string name="folder_name">Mapnaam</string>
+    <string name="parent_folder">Bovenliggende map</string>
+    <string name="parent_folder_none">Geen</string>
+    <string name="move_folder_up">Omhoog</string>
+    <string name="move_folder_down">Omlaag</string>
     <string name="create_label">Label aanmaken</string>
     <string name="label_name">Labelnaam</string>
     <string name="create_alias">Alias aanmaken</string>

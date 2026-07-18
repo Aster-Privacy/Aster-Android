@@ -433,6 +433,10 @@
     <string name="no_aliases_yet">还没有别名</string>
     <string name="create_folder">创建文件夹</string>
     <string name="folder_name">文件夹名称</string>
+    <string name="parent_folder">上级文件夹</string>
+    <string name="parent_folder_none">无</string>
+    <string name="move_folder_up">上移</string>
+    <string name="move_folder_down">下移</string>
     <string name="create_label">创建标签</string>
     <string name="label_name">标签名称</string>
     <string name="create_alias">创建别名</string>

@@ -433,6 +433,10 @@
     <string name="no_aliases_yet">Nenhum alias ainda</string>
     <string name="create_folder">Criar pasta</string>
     <string name="folder_name">Nome da pasta</string>
+    <string name="parent_folder">Pasta principal</string>
+    <string name="parent_folder_none">Nenhuma</string>
+    <string name="move_folder_up">Mover para cima</string>
+    <string name="move_folder_down">Mover para baixo</string>
     <string name="create_label">Criar etiqueta</string>
     <string name="label_name">Nome da etiqueta</string>
     <string name="create_alias">Criar alias</string>

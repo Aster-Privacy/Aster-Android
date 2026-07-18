@@ -459,6 +459,10 @@
     <string name="no_aliases_yet">Aucun alias pour l\'instant</string>
     <string name="create_folder">Créer un dossier</string>
     <string name="folder_name">Nom du dossier</string>
+    <string name="parent_folder">Dossier parent</string>
+    <string name="parent_folder_none">Aucun</string>
+    <string name="move_folder_up">Monter</string>
+    <string name="move_folder_down">Descendre</string>
     <string name="create_label">Créer un libellé</string>
     <string name="label_name">Nom du libellé</string>
     <string name="create_alias">Créer un alias</string>

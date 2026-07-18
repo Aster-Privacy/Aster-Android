@@ -433,6 +433,10 @@
     <string name="no_aliases_yet">لا أسماء مستعارة بعد</string>
     <string name="create_folder">إنشاء مجلد</string>
     <string name="folder_name">اسم المجلد</string>
+    <string name="parent_folder">المجلد الأصل</string>
+    <string name="parent_folder_none">بدون</string>
+    <string name="move_folder_up">تحريك لأعلى</string>
+    <string name="move_folder_down">تحريك لأسفل</string>
     <string name="create_label">إنشاء تصنيف</string>
     <string name="label_name">اسم التصنيف</string>
     <string name="create_alias">إنشاء اسم مستعار</string>

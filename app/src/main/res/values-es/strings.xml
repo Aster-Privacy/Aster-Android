@@ -434,6 +434,10 @@
     <string name="no_aliases_yet">Aún no hay alias</string>
     <string name="create_folder">Crear carpeta</string>
     <string name="folder_name">Nombre de la carpeta</string>
+    <string name="parent_folder">Carpeta principal</string>
+    <string name="parent_folder_none">Ninguna</string>
+    <string name="move_folder_up">Subir</string>
+    <string name="move_folder_down">Bajar</string>
     <string name="create_label">Crear etiqueta</string>
     <string name="label_name">Nombre de la etiqueta</string>
     <string name="create_alias">Crear alias</string>
