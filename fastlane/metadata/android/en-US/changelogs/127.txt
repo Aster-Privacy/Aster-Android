@@ -1,0 +1,5 @@
+Bug fixes and improvements:
+
+- Custom folders now load all of their emails, not just the first page
+- The inbox now loads all messages as you scroll
+- "Select all" now selects every email in the folder, not only the ones on screen
