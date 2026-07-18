@@ -248,6 +248,40 @@ class MailViewModelTest {
     }
 
     @Test
+    fun `load_more continues past pages of already-loaded items`() = runTest {
+        val page1 = fake_inbox_page(3, has_more = true, next_cursor = "c1")
+        coEvery { repository.fetch_inbox(any(), cursor = isNull(), any(), any()) } returns Result.success(page1)
+
+        vm.load_inbox()
+        advanceUntilIdle()
+        assertEquals(3, vm.inbox_state.value.items.size)
+
+        val duplicate_page = InboxPage(page1.items, has_more = true, next_cursor = "c2", total = 5)
+        coEvery { repository.fetch_inbox(any(), cursor = eq("c1"), any(), any()) } returns Result.success(duplicate_page)
+        val fresh_items = (4..5).map { i ->
+            InboxItem(
+                id = "id_$i", thread_token = "t$i", thread_message_count = 1,
+                sender_name = "S$i", sender_email = "s$i@x.com",
+                subject = "Sub$i", preview = "P$i", timestamp = "2026-04-26T10:0$i:00Z",
+                is_read = false, is_starred = false, is_encrypted = true,
+                has_attachments = false, is_trashed = false, is_archived = false,
+                is_spam = false, labels = emptyList(), raw_item = mockk(relaxed = true),
+            )
+        }
+        val fresh_page = InboxPage(fresh_items, has_more = false, next_cursor = null, total = 5)
+        coEvery { repository.fetch_inbox(any(), cursor = eq("c2"), any(), any()) } returns Result.success(fresh_page)
+
+        vm.load_more()
+        advanceUntilIdle()
+
+        val state = vm.inbox_state.value
+        assertEquals(5, state.items.size)
+        assertEquals("id_5", state.items.last().id)
+        assertFalse(state.is_loading_more)
+        assertFalse(state.has_more)
+    }
+
+    @Test
     fun `load_more does nothing when no more pages`() = runTest {
         val page = fake_inbox_page(2, has_more = false)
         coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)

@@ -43,6 +43,7 @@ interface MailApi {
     suspend fun list_messages(
         limit: Int? = null,
         cursor: String? = null,
+        offset: Int? = null,
         item_type: String? = null,
         is_starred: Boolean? = null,
         is_trashed: Boolean? = null,
@@ -127,6 +128,7 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
     override suspend fun list_messages(
         limit: Int?,
         cursor: String?,
+        offset: Int?,
         item_type: String?,
         is_starred: Boolean?,
         is_trashed: Boolean?,
@@ -140,6 +142,7 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
         val response = client.http.get("${client.base_url}$base/messages") {
             limit?.let { parameter("limit", it) }
             cursor?.let { parameter("cursor", it) }
+            offset?.let { parameter("offset", it) }
             item_type?.let { parameter("item_type", it) }
             is_starred?.let { parameter("is_starred", it) }
             is_trashed?.let { parameter("is_trashed", it) }

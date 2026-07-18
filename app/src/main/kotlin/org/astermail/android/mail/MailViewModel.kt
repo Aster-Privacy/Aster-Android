@@ -1,4 +1,4 @@
-﻿//
+//
 // Aster Communications Inc.
 //
 // Copyright (c) 2026 Aster Communications Inc.
@@ -479,41 +479,56 @@ class MailViewModel @Inject constructor(
     fun load_more() {
         val state = _inbox_state.value
         if (state.is_loading || state.is_loading_more || !state.has_more) return
-        val cursor = state.next_cursor ?: return
+        var cursor = state.next_cursor ?: return
         val started_folder = state.current_folder
         _inbox_state.value = state.copy(is_loading_more = true)
         viewModelScope.launch {
-            val result = fetch_for_folder(started_folder, cursor)
-            if (_inbox_state.value.current_folder != started_folder) {
-                _inbox_state.value = _inbox_state.value.copy(is_loading_more = false)
+            var pages_scanned = 0
+            while (true) {
+                val page = try {
+                    fetch_for_folder(started_folder, cursor).getOrNull()
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    null
+                }
+                if (_inbox_state.value.current_folder != started_folder) {
+                    _inbox_state.value = _inbox_state.value.copy(is_loading_more = false)
+                    return@launch
+                }
+                if (page == null) {
+                    if (pages_scanned > 0) {
+                        _inbox_state.update { it.copy(is_loading_more = false, next_cursor = cursor) }
+                    } else {
+                        _inbox_state.update { it.copy(is_loading_more = false) }
+                        emit_toast(context.getString(R.string.failed_to_load))
+                    }
+                    return@launch
+                }
+                val existing = _inbox_state.value.items
+                val existing_ids = existing.map { it.id }.toHashSet()
+                val new_items = page.items.filter { it.id !in existing_ids }
+                val cursor_advanced = page.next_cursor != null && page.next_cursor != cursor
+                pages_scanned++
+                if (new_items.isEmpty() && page.has_more && cursor_advanced && pages_scanned < 20) {
+                    cursor = page.next_cursor!!
+                    continue
+                }
+                val combined = apply_pin_overrides(
+                    apply_star_overrides(apply_read_overrides(existing + new_items)),
+                )
+                val effective_has_more = page.has_more && cursor_advanced
+                _inbox_state.value = _inbox_state.value.copy(
+                    items = combined,
+                    is_loading_more = false,
+                    has_more = effective_has_more,
+                    next_cursor = if (effective_has_more) page.next_cursor else null,
+                )
+                folder_cache[started_folder] = _inbox_state.value
+                folder_cache_time[started_folder] = System.currentTimeMillis()
+                search_index_manager.on_items_loaded(page.items)
                 return@launch
             }
-            result.fold(
-                onSuccess = { page ->
-                    val existing = _inbox_state.value.items
-                    val existing_ids = existing.map { it.id }.toHashSet()
-                    val new_items = page.items.filter { it.id !in existing_ids }
-                    val combined = apply_pin_overrides(
-                        apply_star_overrides(apply_read_overrides(existing + new_items)),
-                    )
-                    val effective_has_more = page.has_more &&
-                        page.next_cursor != null &&
-                        page.next_cursor != cursor
-                    _inbox_state.value = _inbox_state.value.copy(
-                        items = combined,
-                        is_loading_more = false,
-                        has_more = effective_has_more,
-                        next_cursor = if (effective_has_more) page.next_cursor else null,
-                    )
-                    folder_cache[started_folder] = _inbox_state.value
-                    folder_cache_time[started_folder] = System.currentTimeMillis()
-                    search_index_manager.on_items_loaded(page.items)
-                },
-                onFailure = {
-                    _inbox_state.update { it.copy(is_loading_more = false) }
-                    emit_toast(context.getString(R.string.failed_to_load))
-                },
-            )
         }
     }
 
@@ -1752,13 +1767,13 @@ class MailViewModel @Inject constructor(
         else -> when {
             folder.startsWith("label:") -> {
                 val label_token = folder.removePrefix("label:")
-                repository.fetch_inbox(limit = limit, cursor = cursor, item_type = null, label_token = label_token)
+                repository.fetch_inbox(limit = limit, item_type = null, label_token = label_token, offset = cursor?.toIntOrNull())
             }
             folder.startsWith("tag:") -> {
                 val tag_token = folder.removePrefix("tag:")
-                repository.fetch_inbox(limit = limit, cursor = cursor, item_type = null, tag_token = tag_token)
+                repository.fetch_inbox(limit = limit, item_type = null, tag_token = tag_token, offset = cursor?.toIntOrNull())
             }
-            else -> repository.fetch_inbox(limit = limit, cursor = cursor, item_type = null, label_token = folder)
+            else -> repository.fetch_inbox(limit = limit, item_type = null, label_token = folder, offset = cursor?.toIntOrNull())
         }
     }
 }
