@@ -253,6 +253,8 @@
     <string name="stop_receiving_from">Niet meer ontvangen van</string>
     <string name="external_content_blocked">Externe afbeeldingen, lettertypen en trackers geblokkeerd</string>
     <string name="e2e_encrypted_message">End-to-end versleuteld bericht</string>
+    <string name="e2e_encryption_failed">Verzenden mislukt: end-to-end-versleuteling mislukt. Het bericht is niet verzonden.</string>
+    <string name="e2e_keys_not_ready">Verzenden mislukt: versleutelingssleutels zijn nog niet gereed. Het bericht is niet verzonden.</string>
     <string name="e2e_no_key_description">Dit bericht is versleuteld met een sleutel die dit apparaat nog niet heeft. Open het in de Aster-webapp om te lezen.</string>
     <string name="no_body">(geen inhoud)</string>
     <string name="attachments_count">%d bijlage(n)</string>

@@ -253,6 +253,8 @@
     <string name="stop_receiving_from">التوقف عن الاستقبال من</string>
     <string name="external_content_blocked">تم حظر الصور والخطوط والمتتبعات الخارجية</string>
     <string name="e2e_encrypted_message">رسالة مشفرة من طرف إلى طرف</string>
+    <string name="e2e_encryption_failed">تعذّر الإرسال: فشل التشفير من طرف إلى طرف. لم تُرسَل الرسالة.</string>
+    <string name="e2e_keys_not_ready">تعذّر الإرسال: مفاتيح التشفير ليست جاهزة بعد. لم تُرسَل الرسالة.</string>
     <string name="e2e_no_key_description">هذه الرسالة مشفرة بمفتاح لا يمتلكه هذا الجهاز بعد. افتحها على تطبيق Aster الويب لقراءتها.</string>
     <string name="no_body">(بدون محتوى)</string>
     <string name="attachments_count">%d مرفق(ات)</string>

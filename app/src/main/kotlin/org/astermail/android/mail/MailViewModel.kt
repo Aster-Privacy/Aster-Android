@@ -610,7 +610,7 @@ class MailViewModel @Inject constructor(
                 ThreadUiState(
                     is_loading = true,
                     item = seed,
-                    messages = listOf(single_message_from_item(seed)),
+                    messages = listOf(seed_message_from_inbox_item(seed)),
                 )
             } else {
                 ThreadUiState(is_loading = true)
@@ -667,7 +667,7 @@ class MailViewModel @Inject constructor(
         }
     }
 
-    private fun single_message_from_item(item: InboxItem): ThreadMessageDecrypted {
+    private suspend fun single_message_from_item(item: InboxItem): ThreadMessageDecrypted {
         val raw = item.raw_item
         val thread_item = org.astermail.android.api.mail.ThreadMessageItem(
             id = raw.id,
@@ -679,6 +679,32 @@ class MailViewModel @Inject constructor(
             metadata = raw.metadata,
         )
         return repository.decrypt_single_thread_message(thread_item)
+    }
+
+    private fun seed_message_from_inbox_item(item: InboxItem): ThreadMessageDecrypted {
+        val raw = item.raw_item
+        val thread_item = org.astermail.android.api.mail.ThreadMessageItem(
+            id = raw.id,
+            item_type = raw.item_type,
+            encrypted_envelope = raw.encrypted_envelope,
+            envelope_nonce = raw.envelope_nonce,
+            message_ts = raw.message_ts,
+            created_at = raw.created_at,
+            metadata = raw.metadata,
+        )
+        return ThreadMessageDecrypted(
+            id = item.id,
+            sender_name = item.sender_name,
+            sender_email = item.sender_email,
+            to_label = "",
+            timestamp = item.timestamp,
+            body_text = item.preview,
+            body_html = null,
+            is_encrypted = item.is_encrypted,
+            is_read = item.is_read,
+            raw_item = thread_item,
+            has_attachments = item.has_attachments,
+        )
     }
 
     private fun load_attachments_for_thread(messages: List<ThreadMessageDecrypted>) {
@@ -1683,7 +1709,7 @@ class MailViewModel @Inject constructor(
         )
     }
 
-    private fun item_to_single_message(item: InboxItem): ThreadMessageDecrypted {
+    private suspend fun item_to_single_message(item: InboxItem): ThreadMessageDecrypted {
         val raw = item.raw_item
         val thread_item = org.astermail.android.api.mail.ThreadMessageItem(
             id = raw.id,
