@@ -1,0 +1,1 @@
+Fixes for Aster-to-Aster encrypted mail: messages no longer go blank when reopened, subjects are preserved, alias recipients decrypt correctly, and encrypted mail never falls back to unencrypted sending.
