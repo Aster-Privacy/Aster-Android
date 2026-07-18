@@ -59,6 +59,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -106,6 +108,18 @@ private data class SearchOperator(
     val negated: Boolean,
     val key: String,
     val value: String,
+)
+
+private val operator_chips_saver = listSaver<List<SearchOperator>, String>(
+    save = { chips ->
+        chips.map { "${if (it.negated) "1" else "0"}|${it.key}|${it.value}" }
+    },
+    restore = { saved ->
+        saved.map {
+            val parts = it.split("|", limit = 3)
+            SearchOperator(parts[0] == "1", parts[1], parts[2])
+        }
+    },
 )
 
 private fun parse_query(raw: String): ParsedQuery {
@@ -235,8 +249,10 @@ fun SearchScreen(
     val mail_vm: MailViewModel = hiltViewModel()
     val search_state by mail_vm.search_state.collectAsStateWithLifecycle()
     val initial_parsed = remember(initial_query) { parse_query(initial_query.trim()) }
-    var operator_chips by remember(initial_query) { mutableStateOf(initial_parsed.operators) }
-    var free_text by remember(initial_query) { mutableStateOf(initial_parsed.free_text) }
+    var operator_chips by rememberSaveable(initial_query, stateSaver = operator_chips_saver) {
+        mutableStateOf(initial_parsed.operators)
+    }
+    var free_text by rememberSaveable(initial_query) { mutableStateOf(initial_parsed.free_text) }
     val query = remember(operator_chips, free_text) {
         val ops = operator_chips.joinToString(" ") {
             val prefix = if (it.negated) "-" else ""
@@ -245,11 +261,13 @@ fun SearchScreen(
         }
         listOf(ops, free_text).filter { it.isNotBlank() }.joinToString(" ")
     }
-    var active_filter by remember { mutableStateOf<String?>(null) }
+    var active_filter by rememberSaveable { mutableStateOf<String?>(null) }
     val focus_requester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
-        focus_requester.requestFocus()
+        if (free_text.isEmpty() && operator_chips.isEmpty() && active_filter == null) {
+            focus_requester.requestFocus()
+        }
         mail_vm.build_search_index()
     }
 
