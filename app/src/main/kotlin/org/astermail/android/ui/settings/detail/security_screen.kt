@@ -173,7 +173,7 @@ fun SecurityScreen(
         if (state.login_alerts_enabled == true) s++
         if (prefs?.block_tracking_pixels == true) s++
         if (prefs?.block_external_images == true) s++
-        if (prefs?.strip_exif == true) s++
+        if (prefs?.strip_exif_on_compose == true) s++
         if (prefs?.send_read_receipts == false) s++
         s
     }
@@ -308,7 +308,7 @@ fun SecurityScreen(
                         score_checklist_row("Login alerts", state.login_alerts_enabled == true, colors) { vm.set_login_alerts(state.login_alerts_enabled != true) }
                         score_checklist_row("Block Spy Pixels", prefs?.block_tracking_pixels == true, colors) { toggle { it.copy(block_tracking_pixels = it.block_tracking_pixels != true) } }
                         score_checklist_row("Block Remote Images", prefs?.block_external_images == true, colors) { toggle { it.copy(block_external_images = it.block_external_images != true) } }
-                        score_checklist_row("Strip Image Metadata", prefs?.strip_exif == true, colors) { toggle { it.copy(strip_exif = it.strip_exif != true) } }
+                        score_checklist_row("Strip Image Metadata", prefs?.strip_exif_on_compose == true, colors) { toggle { it.copy(strip_exif = it.strip_exif_on_compose != true, strip_exif_on_compose = it.strip_exif_on_compose != true) } }
                         score_checklist_row("Read receipts off", prefs?.send_read_receipts == false, colors) { toggle { it.copy(send_read_receipts = it.send_read_receipts != false) } }
                     }
                 }
@@ -539,8 +539,8 @@ fun SecurityScreen(
                     info_description = stringResource(R.string.strip_exif_info_desc),
                     trailing = {
                         Switch(
-                            checked = prefs.strip_exif != false,
-                            onCheckedChange = { v -> toggle { it.copy(strip_exif = v) } },
+                            checked = prefs.strip_exif_on_compose != false,
+                            onCheckedChange = { v -> toggle { it.copy(strip_exif = v, strip_exif_on_compose = v) } },
                             colors = SwitchDefaults.colors(
                                 checkedTrackColor = colors.accent_blue,
                                 uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),

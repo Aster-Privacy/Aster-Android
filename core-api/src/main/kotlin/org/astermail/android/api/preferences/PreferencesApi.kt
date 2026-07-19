@@ -76,6 +76,7 @@ data class UserPreferences(
     val send_read_receipts: Boolean = false,
     val warn_suspicious_links: Boolean = true,
     val strip_exif: Boolean = true,
+    val strip_exif_on_compose: Boolean = true,
     val ghost_mode: Boolean = false,
     val dev_mode: Boolean = false,
     val show_raw_headers: Boolean = false,

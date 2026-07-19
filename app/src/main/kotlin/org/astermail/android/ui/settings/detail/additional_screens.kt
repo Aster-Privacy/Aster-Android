@@ -971,7 +971,7 @@ fun PrivacyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
     var remote_images by remember(prefs_seeded) { mutableStateOf(prefs?.load_remote_images == "always") }
     var send_receipts by remember(prefs_seeded) { mutableStateOf(prefs?.send_read_receipts ?: false) }
     var link_warnings by remember(prefs_seeded) { mutableStateOf(prefs?.warn_suspicious_links ?: true) }
-    var strip_exif by remember(prefs_seeded) { mutableStateOf(prefs?.strip_exif ?: true) }
+    var strip_exif by remember(prefs_seeded) { mutableStateOf(prefs?.strip_exif_on_compose ?: true) }
     var ghost_mode by remember(prefs_seeded) { mutableStateOf(prefs?.ghost_mode ?: false) }
     var save_trigger by remember { mutableIntStateOf(0) }
     var prefs_loaded_priv by remember { mutableStateOf(false) }
@@ -983,7 +983,7 @@ fun PrivacyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
             remote_images = prefs.load_remote_images == "always"
             send_receipts = prefs.send_read_receipts
             link_warnings = prefs.warn_suspicious_links
-            strip_exif = prefs.strip_exif
+            strip_exif = prefs.strip_exif_on_compose
             ghost_mode = prefs.ghost_mode
         }
     }
@@ -997,6 +997,7 @@ fun PrivacyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                 send_read_receipts = send_receipts,
                 warn_suspicious_links = link_warnings,
                 strip_exif = strip_exif,
+                strip_exif_on_compose = strip_exif,
                 ghost_mode = ghost_mode,
             ),
         )
