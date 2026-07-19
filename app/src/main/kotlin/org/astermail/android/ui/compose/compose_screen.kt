@@ -55,6 +55,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -88,6 +90,7 @@ import androidx.compose.material.icons.outlined.FormatListNumbered
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -95,6 +98,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -129,6 +133,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -178,7 +183,11 @@ data class AttachmentItem(
     val mime_type: String,
 )
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+@OptIn(
+    ExperimentalFoundationApi::class,
+    ExperimentalMaterial3Api::class,
+    androidx.compose.foundation.layout.ExperimentalLayoutApi::class,
+)
 @Composable
 fun ComposeScreen(
     on_back: () -> Unit,
@@ -446,6 +455,7 @@ fun ComposeScreen(
         }
     }
     var show_discard_dialog by remember { mutableStateOf(false) }
+    var show_from_mismatch_dialog by remember { mutableStateOf(false) }
     var quoted_html by remember { mutableStateOf<String?>(null) }
     var quoted_meta by remember { mutableStateOf<Triple<String, String, String>?>(null) }
     LaunchedEffect(reply_to, mode, thread_state) {
@@ -919,7 +929,11 @@ fun ComposeScreen(
         }
     }
 
-    fun do_send() {
+    fun do_send(skip_from_guard: Boolean = false) {
+        if (!skip_from_guard && reply_from_mismatch(mode, received_on_alias, from_alias)) {
+            show_from_mismatch_dialog = true
+            return
+        }
         if (!send_lock.compareAndSet(false, true)) return
         to_input.trim().let { if (it.isNotEmpty() && is_valid_email_chip(it)) { to_chips = to_chips + it; to_input = "" } }
         cc_input.trim().let { if (it.isNotEmpty() && is_valid_email_chip(it)) { cc_chips = cc_chips + it; cc_input = "" } }
@@ -1676,6 +1690,66 @@ fun ComposeScreen(
         }
     }
 
+    if (show_from_mismatch_dialog) {
+        val received_address = received_on_alias.orEmpty()
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { show_from_mismatch_dialog = false },
+            title = stringResource(R.string.reply_from_mismatch_title),
+            message = stringResource(R.string.reply_from_mismatch_message, received_address, from_alias),
+            footer = {
+                androidx.compose.foundation.layout.FlowRow(
+                    modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
+                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(
+                        4.dp,
+                        Alignment.End,
+                    ),
+                ) {
+                    androidx.compose.material3.TextButton(
+                        modifier = androidx.compose.ui.Modifier.testTag("mismatch_cancel"),
+                        onClick = { show_from_mismatch_dialog = false },
+                    ) {
+                        Text(
+                            text = stringResource(R.string.cancel),
+                            color = colors.text_secondary,
+                            fontSize = 14.sp,
+                        )
+                    }
+                    androidx.compose.material3.TextButton(
+                        modifier = androidx.compose.ui.Modifier.testTag("mismatch_send_anyway"),
+                        onClick = {
+                            show_from_mismatch_dialog = false
+                            do_send(skip_from_guard = true)
+                        },
+                    ) {
+                        Text(
+                            text = stringResource(R.string.reply_from_mismatch_send_anyway),
+                            color = colors.text_secondary,
+                            fontSize = 14.sp,
+                        )
+                    }
+                    androidx.compose.material3.TextButton(
+                        modifier = androidx.compose.ui.Modifier.testTag("mismatch_use_received"),
+                        onClick = {
+                            show_from_mismatch_dialog = false
+                            if (received_address.isNotBlank()) {
+                                from_alias = received_address
+                                from_manually_selected = true
+                            }
+                            do_send(skip_from_guard = true)
+                        },
+                    ) {
+                        Text(
+                            text = stringResource(R.string.reply_from_mismatch_use_received),
+                            color = colors.accent_blue,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                }
+            },
+        )
+    }
+
     if (show_discard_dialog) {
         org.astermail.android.design.components.AsterDialog(
             on_dismiss = { show_discard_dialog = false },
@@ -2269,6 +2343,16 @@ private fun FromAliasSheet(
 ) {
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
+    var query by remember { mutableStateOf("") }
+    val normalized_query = query.trim().lowercase()
+    val first_option = options.firstOrNull()
+    val visible_options = remember(options, normalized_query) {
+        if (normalized_query.isEmpty()) {
+            options
+        } else {
+            options.filter { it.lowercase().contains(normalized_query) }
+        }
+    }
     ModalBottomSheet(
         onDismissRequest = on_close,
         sheetState = state,
@@ -2292,83 +2376,122 @@ private fun FromAliasSheet(
                     bottom = AsterSpacing.sm,
                 ),
             )
-            options.forEachIndexed { idx, opt ->
-                val label = when {
-                    idx == 0 -> stringResource(R.string.primary_account)
-                    custom_domain_set.contains(opt) -> stringResource(R.string.custom_domain)
-                    else -> stringResource(R.string.alias)
+            if (options.size >= 8) {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    placeholder = { Text(stringResource(R.string.search_aliases), color = colors.text_muted) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.Search,
+                            contentDescription = null,
+                            tint = colors.text_muted,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    },
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = AsterSpacing.sm)
+                        .testTag("from_sheet_search"),
+                )
+            }
+            if (normalized_query.isNotEmpty() && visible_options.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.no_results_found),
+                    color = colors.text_muted,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = AsterSpacing.lg),
+                    textAlign = TextAlign.Center,
+                )
+            }
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f, fill = false),
+            ) {
+                items(visible_options, key = { it }) { opt ->
+                    val label = when {
+                        opt == first_option -> stringResource(R.string.primary_account)
+                        custom_domain_set.contains(opt) -> stringResource(R.string.custom_domain)
+                        else -> stringResource(R.string.alias)
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(SquircleShape(8.dp))
+                            .clickable { on_select(opt) }
+                            .padding(horizontal = AsterSpacing.sm, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = opt,
+                                color = colors.text_primary,
+                                style = MaterialTheme.typography.bodyLarge,
+                            )
+                            Text(
+                                text = if (opt == primary) stringResource(R.string.primary_badge) else label,
+                                color = if (opt == primary) colors.accent_blue else colors.text_muted,
+                                fontSize = 12.sp,
+                            )
+                        }
+                        Icon(
+                            imageVector = if (opt == primary) Icons.Filled.PushPin else Icons.Outlined.PushPin,
+                            contentDescription = stringResource(R.string.set_as_primary),
+                            tint = if (opt == primary) colors.accent_blue else colors.text_muted,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(SquircleShape(8.dp))
+                                .clickable { on_set_primary(opt) }
+                                .padding(8.dp),
+                        )
+                        if (opt == current) {
+                            Icon(
+                                imageVector = Icons.Outlined.Check,
+                                contentDescription = null,
+                                tint = colors.accent_blue,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
+                    }
                 }
+            }
+            if (normalized_query.isEmpty()) {
+                androidx.compose.material3.HorizontalDivider(
+                    color = colors.border_primary,
+                    thickness = 1.dp,
+                    modifier = Modifier.padding(vertical = AsterSpacing.xs),
+                )
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(SquircleShape(8.dp))
-                        .clickable { on_select(opt) }
+                        .clickable(onClick = on_create_ghost_alias)
                         .padding(horizontal = AsterSpacing.sm, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    Icon(
+                        imageVector = Icons.Outlined.AlternateEmail,
+                        contentDescription = null,
+                        tint = colors.accent_blue,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Spacer(Modifier.width(AsterSpacing.md))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = opt,
-                            color = colors.text_primary,
+                            text = stringResource(R.string.generate_ghost_alias),
+                            color = colors.accent_blue,
                             style = MaterialTheme.typography.bodyLarge,
                         )
                         Text(
-                            text = if (opt == primary) stringResource(R.string.primary_badge) else label,
-                            color = if (opt == primary) colors.accent_blue else colors.text_muted,
+                            text = stringResource(R.string.ghost_alias_subtitle),
+                            color = colors.text_muted,
                             fontSize = 12.sp,
                         )
                     }
-                    Icon(
-                        imageVector = if (opt == primary) Icons.Filled.PushPin else Icons.Outlined.PushPin,
-                        contentDescription = stringResource(R.string.set_as_primary),
-                        tint = if (opt == primary) colors.accent_blue else colors.text_muted,
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(SquircleShape(8.dp))
-                            .clickable { on_set_primary(opt) }
-                            .padding(8.dp),
-                    )
-                    if (opt == current) {
-                        Icon(
-                            imageVector = Icons.Outlined.Check,
-                            contentDescription = null,
-                            tint = colors.accent_blue,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
-                }
-            }
-            androidx.compose.material3.HorizontalDivider(
-                color = colors.border_primary,
-                thickness = 1.dp,
-                modifier = Modifier.padding(vertical = AsterSpacing.xs),
-            )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(SquircleShape(8.dp))
-                    .clickable(onClick = on_create_ghost_alias)
-                    .padding(horizontal = AsterSpacing.sm, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.AlternateEmail,
-                    contentDescription = null,
-                    tint = colors.accent_blue,
-                    modifier = Modifier.size(20.dp),
-                )
-                Spacer(Modifier.width(AsterSpacing.md))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.generate_ghost_alias),
-                        color = colors.accent_blue,
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                    Text(
-                        text = stringResource(R.string.ghost_alias_subtitle),
-                        color = colors.text_muted,
-                        fontSize = 12.sp,
-                    )
                 }
             }
             Spacer(Modifier.height(AsterSpacing.md))

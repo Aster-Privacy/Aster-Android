@@ -1906,4 +1906,12 @@
     <string name="image_blocked_placeholder">[Image bloquée]</string>
     <string name="received_on_prefix">reçu sur %s</string>
     <string name="received_on_label">Reçu sur</string>
+    <string name="auto_advance_label">Après archivage ou suppression</string>
+    <string name="auto_advance_next">Aller à l\'e-mail suivant</string>
+    <string name="auto_advance_previous">Aller à l\'e-mail précédent</string>
+    <string name="auto_advance_back">Revenir à la liste des e-mails</string>
+    <string name="reply_from_mismatch_title">Répondre depuis une autre adresse ?</string>
+    <string name="reply_from_mismatch_message">Cet e-mail a été reçu sur %1$s, mais votre réponse sera envoyée depuis %2$s. Répondre depuis une autre adresse peut la révéler à l\'expéditeur et la réponse peut être rejetée.</string>
+    <string name="reply_from_mismatch_use_received">Utiliser l\'adresse de réception</string>
+    <string name="reply_from_mismatch_send_anyway">Envoyer quand même</string>
 </resources>

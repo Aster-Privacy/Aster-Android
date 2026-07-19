@@ -1291,4 +1291,12 @@
     <string name="image_blocked_placeholder">[Imagen bloqueada]</string>
     <string name="received_on_prefix">recibido en %s</string>
     <string name="received_on_label">Recibido en</string>
+    <string name="auto_advance_label">Después de archivar o eliminar</string>
+    <string name="auto_advance_next">Ir al siguiente correo</string>
+    <string name="auto_advance_previous">Ir al correo anterior</string>
+    <string name="auto_advance_back">Volver a la lista de correos</string>
+    <string name="reply_from_mismatch_title">¿Responder desde otra dirección?</string>
+    <string name="reply_from_mismatch_message">Este correo se recibió en %1$s, pero tu respuesta se enviará desde %2$s. Responder desde otra dirección puede revelarla al remitente y la respuesta podría ser rechazada.</string>
+    <string name="reply_from_mismatch_use_received">Usar dirección de recepción</string>
+    <string name="reply_from_mismatch_send_anyway">Enviar de todos modos</string>
 </resources>
