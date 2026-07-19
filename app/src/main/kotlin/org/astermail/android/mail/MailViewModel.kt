@@ -438,16 +438,19 @@ class MailViewModel @Inject constructor(
         }
     }
 
-    fun foreground_fallback_tick() {
-        val foreground = runCatching {
+    internal var foreground_check: () -> Boolean = {
+        runCatching {
             androidx.lifecycle.ProcessLifecycleOwner.get()
                 .lifecycle.currentState
                 .isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)
-        }.getOrDefault(false)
+        }.getOrDefault(true)
+    }
+
+    fun foreground_fallback_tick() {
         val has_push = runCatching {
             org.astermail.android.notifications.UnifiedPushState.endpoint(context) != null
         }.getOrDefault(false)
-        if (foreground && !has_push) {
+        if (foreground_check() && !has_push) {
             silent_revalidate(_inbox_state.value.current_folder)
         }
     }
@@ -1607,7 +1610,9 @@ class MailViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             repository.new_mail_events.collect {
-                silent_revalidate(_inbox_state.value.current_folder)
+                if (foreground_check()) {
+                    silent_revalidate(_inbox_state.value.current_folder)
+                }
             }
         }
         viewModelScope.launch {
