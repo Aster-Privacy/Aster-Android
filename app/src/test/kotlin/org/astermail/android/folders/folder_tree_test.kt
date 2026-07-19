@@ -84,6 +84,15 @@ class folder_tree_test {
             nodes.map { it.label.label_token },
         )
         assertEquals(listOf(0, 1, 2, 1, 0), nodes.map { it.depth })
+
+        val by_token = nodes.associateBy { it.label.label_token }
+        assertTrue(by_token.getValue("root").has_next)
+        assertTrue(by_token.getValue("child_a").has_next)
+        assertEquals(listOf(true), by_token.getValue("child_a").trail)
+        assertEquals(listOf(true, true), by_token.getValue("grandchild").trail)
+        assertTrue(!by_token.getValue("grandchild").has_next)
+        assertTrue(!by_token.getValue("child_b").has_next)
+        assertTrue(!by_token.getValue("other_root").has_next)
     }
 
     @Test

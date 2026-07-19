@@ -28,6 +28,8 @@ const val max_folder_depth = 4
 data class folder_node(
     val label: LabelItem,
     val depth: Int,
+    val trail: List<Boolean> = emptyList(),
+    val has_next: Boolean = false,
 )
 
 fun is_custom_folder(label: LabelItem): Boolean =
@@ -50,15 +52,17 @@ fun flatten_folder_tree(labels: List<LabelItem>): List<folder_node> {
     }
     val result = mutableListOf<folder_node>()
     val visited = mutableSetOf<String>()
-    fun walk(parent: String?, depth: Int) {
+    fun walk(parent: String?, depth: Int, trail: List<Boolean>) {
         val children = by_parent[parent] ?: return
-        for (child in children.sortedWith(sibling_comparator)) {
-            if (!visited.add(child.label_token)) continue
-            result.add(folder_node(child, depth))
-            if (depth < max_folder_depth) walk(child.label_token, depth + 1)
+        val sorted = children.sortedWith(sibling_comparator)
+        sorted.forEachIndexed { index, child ->
+            if (!visited.add(child.label_token)) return@forEachIndexed
+            val has_next = index < sorted.lastIndex
+            result.add(folder_node(child, depth, trail, has_next))
+            if (depth < max_folder_depth) walk(child.label_token, depth + 1, trail + has_next)
         }
     }
-    walk(null, 0)
+    walk(null, 0, emptyList())
     for (folder in folders.sortedWith(sibling_comparator)) {
         if (visited.add(folder.label_token)) result.add(folder_node(folder, 0))
     }

@@ -149,6 +149,8 @@ data class drawer_folder_item(
     val icon: ImageVector,
     val count: Int = 0,
     val depth: Int = 0,
+    val trail: List<Boolean> = emptyList(),
+    val has_next: Boolean = false,
 )
 
 data class folder_parent_option(
@@ -538,6 +540,8 @@ fun DrawerContent(
                                     on_close()
                                 },
                                 depth = item.depth,
+                                trail = item.trail,
+                                has_next = item.has_next,
                             )
                         }
                     }
@@ -1363,35 +1367,59 @@ private fun collapsible_section_header(
 }
 
 @Composable
-private fun tree_indent_guides(depth: Int) {
+private fun tree_indent_guides(
+    depth: Int,
+    trail: List<Boolean> = emptyList(),
+    has_next: Boolean = false,
+) {
     if (depth <= 0) return
-    val colors = AsterMaterial.colors
-    Row(modifier = Modifier.height(46.dp)) {
-        repeat(depth) { level ->
-            Box(
-                modifier = Modifier
-                    .width(18.dp)
-                    .fillMaxHeight(),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .padding(start = 8.dp)
-                        .width(1.dp)
-                        .fillMaxHeight()
-                        .background(colors.border_secondary),
+    val guide_color = AsterMaterial.colors.border_secondary
+    androidx.compose.foundation.Canvas(
+        modifier = Modifier
+            .width((depth * 18).dp)
+            .height(46.dp),
+    ) {
+        val stroke_width = 1.5.dp.toPx()
+        val slot = 18.dp.toPx()
+        val line_offset = 8.dp.toPx()
+        val cy = size.height / 2f
+        val curve_start = 10.dp.toPx()
+        val curve_reach = 9.dp.toPx()
+        val stroke_style = androidx.compose.ui.graphics.drawscope.Stroke(
+            width = stroke_width,
+            cap = androidx.compose.ui.graphics.StrokeCap.Round,
+        )
+        for (level in 0 until depth - 1) {
+            if (trail.getOrNull(level + 1) == true) {
+                val x = level * slot + line_offset
+                drawLine(
+                    color = guide_color,
+                    start = androidx.compose.ui.geometry.Offset(x, 0f),
+                    end = androidx.compose.ui.geometry.Offset(x, size.height),
+                    strokeWidth = stroke_width,
                 )
-                if (level == depth - 1) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.CenterStart)
-                            .padding(start = 9.dp)
-                            .width(8.dp)
-                            .height(1.dp)
-                            .background(colors.border_secondary),
-                    )
-                }
             }
+        }
+        val branch_x = (depth - 1) * slot + line_offset
+        if (has_next) {
+            drawLine(
+                color = guide_color,
+                start = androidx.compose.ui.geometry.Offset(branch_x, 0f),
+                end = androidx.compose.ui.geometry.Offset(branch_x, size.height),
+                strokeWidth = stroke_width,
+            )
+            val branch = androidx.compose.ui.graphics.Path().apply {
+                moveTo(branch_x, cy - curve_start)
+                quadraticBezierTo(branch_x, cy, branch_x + curve_reach, cy)
+            }
+            drawPath(path = branch, color = guide_color, style = stroke_style)
+        } else {
+            val elbow = androidx.compose.ui.graphics.Path().apply {
+                moveTo(branch_x, 0f)
+                lineTo(branch_x, cy - curve_start)
+                quadraticBezierTo(branch_x, cy, branch_x + curve_reach, cy)
+            }
+            drawPath(path = elbow, color = guide_color, style = stroke_style)
         }
     }
 }
@@ -1406,6 +1434,8 @@ private fun drawer_row(
     on_click: () -> Unit,
     test_tag: String? = null,
     depth: Int = 0,
+    trail: List<Boolean> = emptyList(),
+    has_next: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
     val bg by animateColorAsState(
@@ -1430,7 +1460,7 @@ private fun drawer_row(
                 .height(46.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            tree_indent_guides(depth)
+            tree_indent_guides(depth, trail, has_next)
             Icon(
                 imageVector = icon,
                 contentDescription = null,

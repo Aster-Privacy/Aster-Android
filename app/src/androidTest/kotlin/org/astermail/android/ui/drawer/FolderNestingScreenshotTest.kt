@@ -74,9 +74,9 @@ class FolderNestingScreenshotTest {
                     on_close = {},
                     api_folder_items = listOf(
                         drawer_folder_item(id = "t1", label = "Test 1", icon = Icons.Outlined.Folder, count = 3, depth = 0),
-                        drawer_folder_item(id = "apple", label = "Apple", icon = Icons.Outlined.Folder, count = 0, depth = 1),
-                        drawer_folder_item(id = "boy", label = "Boy", icon = Icons.Outlined.Folder, count = 1, depth = 1),
-                        drawer_folder_item(id = "cat", label = "Cat", icon = Icons.Outlined.Folder, count = 0, depth = 2),
+                        drawer_folder_item(id = "apple", label = "Apple", icon = Icons.Outlined.Folder, count = 0, depth = 1, trail = listOf(true), has_next = true),
+                        drawer_folder_item(id = "boy", label = "Boy", icon = Icons.Outlined.Folder, count = 1, depth = 1, trail = listOf(true), has_next = false),
+                        drawer_folder_item(id = "cat", label = "Cat", icon = Icons.Outlined.Folder, count = 0, depth = 2, trail = listOf(true, false), has_next = false),
                         drawer_folder_item(id = "zoo", label = "Zoo", icon = Icons.Outlined.Folder, count = 0, depth = 0),
                     ),
                     folder_parent_options = listOf(

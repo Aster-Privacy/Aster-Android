@@ -1194,6 +1194,8 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
             icon = Icons.Outlined.Folder,
             count = label.unread_count?.toInt() ?: 0,
             depth = node.depth,
+            trail = node.trail,
+            has_next = node.has_next,
         )
     }
 
