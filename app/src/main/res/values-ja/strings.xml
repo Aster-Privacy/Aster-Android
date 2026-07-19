@@ -1291,6 +1291,6 @@
     <string name="auto_advance_back">メール一覧に戻る</string>
     <string name="reply_from_mismatch_title">別のアドレスから返信しますか？</string>
     <string name="reply_from_mismatch_message">このメールは %1$s で受信しましたが、返信は %2$s から送信されます。別のアドレスから返信すると、そのアドレスが送信者に知られたり、返信が拒否されたりする可能性があります。</string>
-    <string name="reply_from_mismatch_use_received">%1$s を使用</string>
+    <string name="reply_from_mismatch_use_received">受信アドレスを使用</string>
     <string name="reply_from_mismatch_send_anyway">そのまま送信</string>
 </resources>

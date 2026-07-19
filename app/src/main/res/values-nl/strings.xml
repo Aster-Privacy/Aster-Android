@@ -1293,6 +1293,6 @@
     <string name="auto_advance_back">Terug naar e-maillijst</string>
     <string name="reply_from_mismatch_title">Antwoorden vanaf een ander adres?</string>
     <string name="reply_from_mismatch_message">Deze e-mail is ontvangen op %1$s, maar je antwoord wordt verzonden vanaf %2$s. Antwoorden vanaf een ander adres kan dit adres onthullen aan de afzender en het antwoord kan worden geweigerd.</string>
-    <string name="reply_from_mismatch_use_received">%1$s gebruiken</string>
+    <string name="reply_from_mismatch_use_received">Ontvangstadres gebruiken</string>
     <string name="reply_from_mismatch_send_anyway">Toch verzenden</string>
 </resources>

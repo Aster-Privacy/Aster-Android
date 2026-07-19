@@ -183,7 +183,11 @@ data class AttachmentItem(
     val mime_type: String,
 )
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+@OptIn(
+    ExperimentalFoundationApi::class,
+    ExperimentalMaterial3Api::class,
+    androidx.compose.foundation.layout.ExperimentalLayoutApi::class,
+)
 @Composable
 fun ComposeScreen(
     on_back: () -> Unit,
@@ -1693,12 +1697,38 @@ fun ComposeScreen(
             title = stringResource(R.string.reply_from_mismatch_title),
             message = stringResource(R.string.reply_from_mismatch_message, received_address, from_alias),
             footer = {
-                androidx.compose.foundation.layout.Column(
+                androidx.compose.foundation.layout.FlowRow(
                     modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
-                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(
+                        4.dp,
+                        Alignment.End,
+                    ),
                 ) {
-                    org.astermail.android.design.components.AsterDialogPrimaryButton(
-                        label = stringResource(R.string.reply_from_mismatch_use_received, received_address),
+                    androidx.compose.material3.TextButton(
+                        modifier = androidx.compose.ui.Modifier.testTag("mismatch_cancel"),
+                        onClick = { show_from_mismatch_dialog = false },
+                    ) {
+                        Text(
+                            text = stringResource(R.string.cancel),
+                            color = colors.text_secondary,
+                            fontSize = 14.sp,
+                        )
+                    }
+                    androidx.compose.material3.TextButton(
+                        modifier = androidx.compose.ui.Modifier.testTag("mismatch_send_anyway"),
+                        onClick = {
+                            show_from_mismatch_dialog = false
+                            do_send(skip_from_guard = true)
+                        },
+                    ) {
+                        Text(
+                            text = stringResource(R.string.reply_from_mismatch_send_anyway),
+                            color = colors.text_secondary,
+                            fontSize = 14.sp,
+                        )
+                    }
+                    androidx.compose.material3.TextButton(
+                        modifier = androidx.compose.ui.Modifier.testTag("mismatch_use_received"),
                         onClick = {
                             show_from_mismatch_dialog = false
                             if (received_address.isNotBlank()) {
@@ -1707,24 +1737,12 @@ fun ComposeScreen(
                             }
                             do_send(skip_from_guard = true)
                         },
-                        modifier = androidx.compose.ui.Modifier.fillMaxWidth().testTag("mismatch_use_received"),
-                    )
-                    androidx.compose.foundation.layout.Row(
-                        modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
-                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
                     ) {
-                        org.astermail.android.design.components.AsterDialogOutlineButton(
-                            label = stringResource(R.string.cancel),
-                            onClick = { show_from_mismatch_dialog = false },
-                            modifier = androidx.compose.ui.Modifier.weight(1f).testTag("mismatch_cancel"),
-                        )
-                        org.astermail.android.design.components.AsterDialogOutlineButton(
-                            label = stringResource(R.string.reply_from_mismatch_send_anyway),
-                            onClick = {
-                                show_from_mismatch_dialog = false
-                                do_send(skip_from_guard = true)
-                            },
-                            modifier = androidx.compose.ui.Modifier.weight(1f).testTag("mismatch_send_anyway"),
+                        Text(
+                            text = stringResource(R.string.reply_from_mismatch_use_received),
+                            color = colors.accent_blue,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
                         )
                     }
                 }

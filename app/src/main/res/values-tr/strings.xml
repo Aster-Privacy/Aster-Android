@@ -1293,6 +1293,6 @@
     <string name="auto_advance_back">E-posta listesine dön</string>
     <string name="reply_from_mismatch_title">Farklı bir adresten yanıtlansın mı?</string>
     <string name="reply_from_mismatch_message">Bu e-posta %1$s adresinde alındı, ancak yanıtınız %2$s adresinden gönderilecek. Farklı bir adresten yanıtlamak bu adresi gönderene açığa çıkarabilir ve yanıt reddedilebilir.</string>
-    <string name="reply_from_mismatch_use_received">%1$s kullan</string>
+    <string name="reply_from_mismatch_use_received">Alınan adresi kullan</string>
     <string name="reply_from_mismatch_send_anyway">Yine de gönder</string>
 </resources>
