@@ -204,6 +204,12 @@ fun InboxScreen(
 
     var top_toast_state by remember { mutableStateOf<org.astermail.android.ui.common.TopToastState?>(null) }
     LaunchedEffect(mail_vm) {
+        while (true) {
+            kotlinx.coroutines.delay(60_000)
+            mail_vm.foreground_fallback_tick()
+        }
+    }
+    LaunchedEffect(mail_vm) {
         mail_vm.toast_events.collect { evt ->
             top_toast_state = org.astermail.android.ui.common.TopToastState(
                 message = evt.message,

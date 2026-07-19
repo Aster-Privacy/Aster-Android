@@ -438,6 +438,20 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    fun foreground_fallback_tick() {
+        val foreground = runCatching {
+            androidx.lifecycle.ProcessLifecycleOwner.get()
+                .lifecycle.currentState
+                .isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)
+        }.getOrDefault(false)
+        val has_push = runCatching {
+            org.astermail.android.notifications.UnifiedPushState.endpoint(context) != null
+        }.getOrDefault(false)
+        if (foreground && !has_push) {
+            silent_revalidate(_inbox_state.value.current_folder)
+        }
+    }
+
     private fun silent_revalidate(folder: String) {
         silent_revalidate_job?.cancel()
         silent_revalidate_job = viewModelScope.launch {
@@ -1591,6 +1605,11 @@ class MailViewModel @Inject constructor(
     val pending_undo_send: StateFlow<MailRepository.PendingUndoSend?> = repository.pending_undo_send
 
     init {
+        viewModelScope.launch {
+            repository.new_mail_events.collect {
+                silent_revalidate(_inbox_state.value.current_folder)
+            }
+        }
         viewModelScope.launch {
             repository.send_result_events.collect { result ->
                 if (result.isSuccess) {

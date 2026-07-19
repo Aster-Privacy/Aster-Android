@@ -202,6 +202,12 @@ class MailRepository @Inject constructor(
     val pending_undo_send: kotlinx.coroutines.flow.StateFlow<PendingUndoSend?> = _pending_undo_send
     private val _send_result_events = kotlinx.coroutines.flow.MutableSharedFlow<Result<Unit>>(extraBufferCapacity = 8)
     val send_result_events: kotlinx.coroutines.flow.SharedFlow<Result<Unit>> = _send_result_events
+    private val _new_mail_events = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 4)
+    val new_mail_events: kotlinx.coroutines.flow.SharedFlow<Unit> = _new_mail_events
+
+    fun signal_new_mail() {
+        _new_mail_events.tryEmit(Unit)
+    }
 
     private val outbox_json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
     private val undo_canceled_ids = java.util.Collections.newSetFromMap(
