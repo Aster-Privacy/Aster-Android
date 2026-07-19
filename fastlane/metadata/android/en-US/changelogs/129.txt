@@ -1,0 +1,6 @@
+Bug fixes and improvements:
+
+- Replying now warns you before sending from a different address than the one that received the email, so your main address stays private
+- New setting to choose what opens after you archive or delete an email
+- The From address picker is now searchable and scrolls smoothly with many aliases
+- Fixes for Aster-to-Aster encrypted mail reliability
