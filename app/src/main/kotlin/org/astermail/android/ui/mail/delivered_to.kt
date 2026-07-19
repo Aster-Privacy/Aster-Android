@@ -37,6 +37,15 @@ fun extract_delivered_to(raw_headers: List<Pair<String, String>>): String? {
         ?.lowercase()
 }
 
+fun resolve_inbox_received_on(
+    raw_headers: List<Pair<String, String>>,
+    user_email: String?,
+): String? {
+    val delivered = extract_delivered_to(raw_headers) ?: return null
+    val primary = user_email?.trim()?.lowercase()
+    return if (primary != null && delivered == primary) null else delivered
+}
+
 fun resolve_received_on_address(
     raw_headers: List<Pair<String, String>>,
     visible_addresses: List<String>,

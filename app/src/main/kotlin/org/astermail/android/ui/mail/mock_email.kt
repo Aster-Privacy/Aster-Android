@@ -50,6 +50,7 @@ data class Email(
     val thread_message_count: Int = 1,
     val size_bytes: Long = 0,
     val category: String = "primary",
+    val received_on: String? = null,
 )
 
 data class ThreadRow(
@@ -1059,6 +1060,7 @@ fun inbox_item_to_email(
         label_names = matched_tags.map { it.encrypted_name },
         label_icons = matched_tags.map { it.encrypted_icon.orEmpty() },
         category = item.category,
+        received_on = item.received_on,
     )
 }
 
