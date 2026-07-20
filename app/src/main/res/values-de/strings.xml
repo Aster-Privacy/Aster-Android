@@ -1294,4 +1294,12 @@
     <string name="image_blocked_placeholder">[Bild blockiert]</string>
     <string name="received_on_prefix">empfangen an %s</string>
     <string name="received_on_label">Empfangen an</string>
+    <string name="auto_advance_label">Nach Archivieren oder Löschen</string>
+    <string name="auto_advance_next">Zur nächsten E-Mail</string>
+    <string name="auto_advance_previous">Zur vorherigen E-Mail</string>
+    <string name="auto_advance_back">Zurück zur E-Mail-Liste</string>
+    <string name="reply_from_mismatch_title">Von einer anderen Adresse antworten?</string>
+    <string name="reply_from_mismatch_message">Diese E-Mail wurde auf %1$s empfangen, deine Antwort wird aber von %2$s gesendet. Eine Antwort von einer anderen Adresse kann diese dem Absender offenlegen und die Antwort kann abgelehnt werden.</string>
+    <string name="reply_from_mismatch_use_received">Empfangsadresse verwenden</string>
+    <string name="reply_from_mismatch_send_anyway">Trotzdem senden</string>
 </resources>

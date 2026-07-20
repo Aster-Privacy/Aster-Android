@@ -186,6 +186,9 @@ data class DecryptedSignature(
     val placement: Int?,
 )
 
+private const val SUBSCRIPTION_TTL_MS = 300_000L
+private const val TAGS_TTL_MS = 60_000L
+
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val auth_api: AuthApi,
@@ -213,6 +216,8 @@ class SettingsViewModel @Inject constructor(
     internal var default_dispatcher: CoroutineDispatcher = Dispatchers.Default
 
     private val _state = MutableStateFlow(SettingsUiState())
+    private var last_subscription_load_ms = 0L
+    private var last_tags_load_ms = 0L
     private val optimistic_label_tokens = java.util.Collections.newSetFromMap(
         java.util.concurrent.ConcurrentHashMap<String, Boolean>(),
     )
@@ -402,6 +407,8 @@ class SettingsViewModel @Inject constructor(
         account_uses_encrypted_prefs = false
         last_preferences_raw_json = null
         last_synced_preferences = null
+        last_subscription_load_ms = 0L
+        last_tags_load_ms = 0L
         _state.value = SettingsUiState()
     }
 
@@ -972,7 +979,10 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun load_subscription() {
+    fun load_subscription(force: Boolean = true) {
+        val now = System.currentTimeMillis()
+        if (!force && _state.value.subscription != null && now - last_subscription_load_ms < SUBSCRIPTION_TTL_MS) return
+        last_subscription_load_ms = now
         viewModelScope.launch {
             _state.value = _state.value.copy(is_loading = true, error = null)
             try {
@@ -1564,7 +1574,10 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun load_tags() {
+    fun load_tags(force: Boolean = true) {
+        val now = System.currentTimeMillis()
+        if (!force && last_tags_load_ms > 0L && now - last_tags_load_ms < TAGS_TTL_MS) return
+        last_tags_load_ms = now
         viewModelScope.launch {
             try {
                 val response = tags_api.list_tags(include_counts = true)

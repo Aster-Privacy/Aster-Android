@@ -618,20 +618,23 @@ private fun AsterNavHost() {
                     launchSingleTop = true
                 }
             }
+            val settings_state by shared_settings_vm.state.collectAsStateWithLifecycle()
+            val advance_after_action: () -> Unit = {
+                val next = when (settings_state.preferences?.auto_advance ?: "Go to next message") {
+                    "Go to next message" -> neighbor_id(1)
+                    "Go to previous message" -> neighbor_id(-1)
+                    else -> null
+                }
+                if (next != null) open_neighbor(next) else nav_controller.popBackStack()
+            }
             MailDetailScreen(
                 email_id = email_id,
                 on_back = { nav_controller.popBackStack() },
                 on_reply = { msg_id, ghost -> nav_controller.navigate(routes.compose_reply(msg_id, "reply", ghost)) },
                 on_reply_all = { msg_id, ghost -> nav_controller.navigate(routes.compose_reply(msg_id, "reply_all", ghost)) },
                 on_forward = { msg_id, ghost -> nav_controller.navigate(routes.compose_reply(msg_id, "forward", ghost)) },
-                on_archive = {
-                    val next = neighbor_id(1)
-                    if (next != null) open_neighbor(next) else nav_controller.popBackStack()
-                },
-                on_delete = {
-                    val next = neighbor_id(1)
-                    if (next != null) open_neighbor(next) else nav_controller.popBackStack()
-                },
+                on_archive = advance_after_action,
+                on_delete = advance_after_action,
                 on_next = neighbor_id(1)?.let { next -> { open_neighbor(next) } },
                 on_previous = neighbor_id(-1)?.let { prev -> { open_neighbor(prev) } },
                 on_navigate = { path ->

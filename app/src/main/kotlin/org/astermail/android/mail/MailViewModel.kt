@@ -48,6 +48,7 @@ import org.astermail.android.api.send.ExternalAttachmentPayload
 import org.astermail.android.ui.mail.MessageAttachment
 
 private const val INBOX_FETCH_BACKSTOP_MS = 18_000L
+private const val STATS_TTL_MS = 30_000L
 
 data class BatchActionState(
     val action_key: String,
@@ -138,6 +139,7 @@ class MailViewModel @Inject constructor(
     private val folder_cache_time = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val pending_removed_ids = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
     private var inbox_load_job: Job? = null
+    private var last_stats_load_ms = 0L
     private var silent_revalidate_job: Job? = null
     private var refresh_job: Job? = null
     private var account_generation = 0
@@ -205,6 +207,7 @@ class MailViewModel @Inject constructor(
         refresh_job?.cancel()
         folder_cache.clear()
         folder_cache_time.clear()
+        last_stats_load_ms = 0L
         star_overrides.clear()
         pin_overrides.clear()
         read_overrides.clear()
@@ -435,6 +438,23 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    internal var foreground_check: () -> Boolean = {
+        runCatching {
+            androidx.lifecycle.ProcessLifecycleOwner.get()
+                .lifecycle.currentState
+                .isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)
+        }.getOrDefault(true)
+    }
+
+    fun foreground_fallback_tick() {
+        val has_push = runCatching {
+            org.astermail.android.notifications.UnifiedPushState.endpoint(context) != null
+        }.getOrDefault(false)
+        if (foreground_check() && !has_push) {
+            silent_revalidate(_inbox_state.value.current_folder)
+        }
+    }
+
     private fun silent_revalidate(folder: String) {
         silent_revalidate_job?.cancel()
         silent_revalidate_job = viewModelScope.launch {
@@ -532,9 +552,40 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    fun load_all_remaining(on_complete: (() -> Unit)? = null) {
+        viewModelScope.launch {
+            val started_folder = _inbox_state.value.current_folder
+            var guard = 0
+            while (guard < 200) {
+                val s = _inbox_state.value
+                if (s.current_folder != started_folder) return@launch
+                if (!s.has_more) break
+                if (s.is_loading || s.is_loading_more) {
+                    kotlinx.coroutines.delay(50)
+                    continue
+                }
+                val before_cursor = s.next_cursor
+                val before_count = s.items.size
+                load_more()
+                var waited = 0
+                while (_inbox_state.value.is_loading_more && waited < 400) {
+                    kotlinx.coroutines.delay(25)
+                    waited++
+                }
+                val after = _inbox_state.value
+                if (after.next_cursor == before_cursor && after.items.size == before_count) break
+                guard++
+            }
+            if (_inbox_state.value.current_folder == started_folder) on_complete?.invoke()
+        }
+    }
+
     fun get_user_email(): String? = repository.get_user_email()
 
-    fun load_stats() {
+    fun load_stats(force: Boolean = true) {
+        val now = System.currentTimeMillis()
+        if (!force && _inbox_state.value.stats != null && now - last_stats_load_ms < STATS_TTL_MS) return
+        last_stats_load_ms = now
         viewModelScope.launch {
             repository.get_stats().onSuccess { stats ->
                 _inbox_state.update { it.copy(stats = stats) }
@@ -1583,6 +1634,13 @@ class MailViewModel @Inject constructor(
     val pending_undo_send: StateFlow<MailRepository.PendingUndoSend?> = repository.pending_undo_send
 
     init {
+        viewModelScope.launch {
+            repository.new_mail_events.collect {
+                if (foreground_check()) {
+                    silent_revalidate(_inbox_state.value.current_folder)
+                }
+            }
+        }
         viewModelScope.launch {
             repository.send_result_events.collect { result ->
                 if (result.isSuccess) {

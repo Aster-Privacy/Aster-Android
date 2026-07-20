@@ -2050,4 +2050,12 @@
     <string name="pending_deletion_error">Could not restore your account. Please try again.</string>
     <string name="pending_deletion_restored">Welcome back. Your account has been restored.</string>
     <string name="image_blocked_placeholder">[Image blocked]</string>
+    <string name="auto_advance_label">After archiving or deleting</string>
+    <string name="auto_advance_next">Go to next email</string>
+    <string name="auto_advance_previous">Go to previous email</string>
+    <string name="auto_advance_back">Return to email list</string>
+    <string name="reply_from_mismatch_title">Reply from a different address?</string>
+    <string name="reply_from_mismatch_message">This email was received on %1$s, but your reply is set to send from %2$s. Replying from a different address can expose it to the sender, and the reply may be rejected.</string>
+    <string name="reply_from_mismatch_use_received">Use received address</string>
+    <string name="reply_from_mismatch_send_anyway">Send anyway</string>
 </resources>

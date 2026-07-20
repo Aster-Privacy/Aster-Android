@@ -77,6 +77,8 @@ class MailViewModelTest {
         search_index_manager = mockk(relaxed = true)
         every { repository.send_result_events } returns
             kotlinx.coroutines.flow.MutableSharedFlow()
+        every { repository.new_mail_events } returns
+            kotlinx.coroutines.flow.MutableSharedFlow()
         every { repository.pending_undo_send } returns
             kotlinx.coroutines.flow.MutableStateFlow(null)
         coEvery { repository.get_stats() } returns Result.success(MailUserStatsResponse())
@@ -279,6 +281,54 @@ class MailViewModelTest {
         assertEquals("id_5", state.items.last().id)
         assertFalse(state.is_loading_more)
         assertFalse(state.has_more)
+    }
+
+    @Test
+    fun `load_all_remaining pages through every page until has_more is false`() = runTest {
+        fun mk(i: Int) = InboxItem(
+            id = "id_$i", thread_token = "t$i", thread_message_count = 1,
+            sender_name = "S$i", sender_email = "s$i@x.com",
+            subject = "Sub$i", preview = "P$i", timestamp = "2026-04-26T10:0$i:00Z",
+            is_read = false, is_starred = false, is_encrypted = true,
+            has_attachments = false, is_trashed = false, is_archived = false,
+            is_spam = false, labels = emptyList(), raw_item = mockk(relaxed = true),
+        )
+
+        val page1 = InboxPage(listOf(mk(1), mk(2), mk(3)), has_more = true, next_cursor = "c1", total = 9)
+        coEvery { repository.fetch_inbox(any(), cursor = isNull(), any(), any()) } returns Result.success(page1)
+
+        vm.load_inbox()
+        advanceUntilIdle()
+        assertEquals(3, vm.inbox_state.value.items.size)
+        assertTrue(vm.inbox_state.value.has_more)
+
+        val page2 = InboxPage(listOf(mk(4), mk(5), mk(6)), has_more = true, next_cursor = "c2", total = 9)
+        coEvery { repository.fetch_inbox(any(), cursor = eq("c1"), any(), any()) } returns Result.success(page2)
+        val page3 = InboxPage(listOf(mk(7), mk(8), mk(9)), has_more = false, next_cursor = null, total = 9)
+        coEvery { repository.fetch_inbox(any(), cursor = eq("c2"), any(), any()) } returns Result.success(page3)
+
+        vm.load_all_remaining()
+        advanceUntilIdle()
+
+        val state = vm.inbox_state.value
+        assertEquals(9, state.items.size)
+        assertFalse(state.has_more)
+        assertNull(state.next_cursor)
+    }
+
+    @Test
+    fun `load_all_remaining fires completion callback`() = runTest {
+        val page = fake_inbox_page(2, has_more = false)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        var done = false
+        vm.load_all_remaining { done = true }
+        advanceUntilIdle()
+
+        assertTrue(done)
     }
 
     @Test
@@ -1361,6 +1411,23 @@ class MailViewModelTest {
 
         coVerify { repository.mark_read("id_42", true, any()) }
         coVerify { search_index_manager.update_read("id_42", true) }
+    }
+
+    @Test
+    fun `new_mail signal triggers silent revalidate of current folder`() = runTest {
+        val new_mail = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 4)
+        every { repository.new_mail_events } returns new_mail
+        coEvery { repository.fetch_inbox(any(), any(), any(), any(), any(), any()) } returns
+            Result.success(InboxPage(items = emptyList(), has_more = false, next_cursor = null, total = 0))
+        vm = MailViewModel(context, repository, search_index_manager)
+        vm.foreground_check = { true }
+        advanceUntilIdle()
+        io.mockk.clearMocks(repository, answers = false, recordedCalls = true, childMocks = false, verificationMarks = true, exclusionRules = false)
+
+        new_mail.tryEmit(Unit)
+        advanceUntilIdle()
+
+        coVerify(atLeast = 1) { repository.fetch_inbox(any(), any(), any(), any(), any(), any()) }
     }
 
 }

@@ -156,6 +156,7 @@ fun BehaviorScreen(
 
     val prefs_loaded = prefs != null && state.preferences_authoritative
     var mark_read by remember(prefs_loaded) { mutableStateOf(prefs?.mark_as_read ?: "1_second") }
+    var auto_advance by remember(prefs_loaded) { mutableStateOf(prefs?.auto_advance ?: "Go to next message") }
     var conversation_grouping by remember(prefs_loaded) { mutableStateOf(prefs?.conversation_grouping ?: true) }
     var inbox_categories by remember(prefs_loaded) { mutableStateOf(prefs?.inbox_categories_enabled ?: true) }
     var conversation_order by remember(prefs_loaded) { mutableStateOf(prefs?.conversation_order ?: "newest") }
@@ -183,6 +184,7 @@ fun BehaviorScreen(
             if (loaded_signature != sig && save_trigger == 0) {
                 loaded_signature = sig
                 mark_read = prefs.mark_as_read
+                auto_advance = prefs.auto_advance
                 conversation_grouping = prefs.conversation_grouping
                 inbox_categories = prefs.inbox_categories_enabled
                 conversation_order = prefs.conversation_order
@@ -210,6 +212,7 @@ fun BehaviorScreen(
         vm.save_preferences(
             base.copy(
                 mark_as_read = mark_read,
+                auto_advance = auto_advance,
                 conversation_grouping = conversation_grouping,
                 inbox_categories_enabled = inbox_categories,
                 conversation_order = conversation_order,
@@ -262,6 +265,24 @@ fun BehaviorScreen(
                 ).forEachIndexed { i, (id, label) ->
                     behavior_option("${stringResource(R.string.mark_as_read)}: $label", mark_read == id) { mark_read = id; save_trigger++ }
                     if (i < 3) AsterDivider(modifier = Modifier)
+                }
+            }
+            v_gap(AsterSpacing.md)
+            AsterCard(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = stringResource(R.string.auto_advance_label),
+                    color = colors.text_primary,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),
+                )
+                listOf(
+                    "Go to next message" to stringResource(R.string.auto_advance_next),
+                    "Go to previous message" to stringResource(R.string.auto_advance_previous),
+                    "Go back to message list" to stringResource(R.string.auto_advance_back),
+                ).forEachIndexed { i, (id, label) ->
+                    behavior_option(label, auto_advance == id) { auto_advance = id; save_trigger++ }
+                    if (i < 2) AsterDivider(modifier = Modifier)
                 }
             }
             v_gap(AsterSpacing.md)

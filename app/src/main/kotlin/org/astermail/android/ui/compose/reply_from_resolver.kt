@@ -34,6 +34,17 @@ fun compute_received_on_alias(
     return matches.firstOrNull { it.lowercase() != user_email.lowercase() } ?: matches.firstOrNull()
 }
 
+fun reply_from_mismatch(
+    mode: String?,
+    received_on_alias: String?,
+    from_alias: String,
+): Boolean {
+    if (mode != "reply" && mode != "reply_all") return false
+    val received = received_on_alias?.trim().orEmpty()
+    if (received.isEmpty()) return false
+    return !received.equals(from_alias.trim(), ignoreCase = true)
+}
+
 fun resolve_reply_from_alias(
     received_on_alias: String?,
     thread_ghost_match: String?,

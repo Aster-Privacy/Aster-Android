@@ -78,6 +78,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import org.astermail.android.R
 import org.astermail.android.auth.AuthUiState
+import org.astermail.android.debugtools.debug_build_banner
 import org.astermail.android.auth.AuthViewModel
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
@@ -359,6 +360,8 @@ fun SignInScreen(
                 Spacer(Modifier.height(AsterSpacing.xxl))
             }
         }
+
+        debug_build_banner()
     }
 }
 

@@ -1293,4 +1293,12 @@
     <string name="image_blocked_placeholder">[Görsel engellendi]</string>
     <string name="received_on_prefix">%s adresinde alındı</string>
     <string name="received_on_label">Alındığı adres</string>
+    <string name="auto_advance_label">Arşivleme veya silme sonrası</string>
+    <string name="auto_advance_next">Sonraki e-postaya git</string>
+    <string name="auto_advance_previous">Önceki e-postaya git</string>
+    <string name="auto_advance_back">E-posta listesine dön</string>
+    <string name="reply_from_mismatch_title">Farklı bir adresten yanıtlansın mı?</string>
+    <string name="reply_from_mismatch_message">Bu e-posta %1$s adresinde alındı, ancak yanıtınız %2$s adresinden gönderilecek. Farklı bir adresten yanıtlamak bu adresi gönderene açığa çıkarabilir ve yanıt reddedilebilir.</string>
+    <string name="reply_from_mismatch_use_received">Alınan adresi kullan</string>
+    <string name="reply_from_mismatch_send_anyway">Yine de gönder</string>
 </resources>
