@@ -64,6 +64,9 @@ class SessionKeyStore(context: Context? = null) {
     private var legacy_keks: List<String>? = null
 
     @Volatile
+    private var data_kek: ByteArray? = null
+
+    @Volatile
     private var ratchet_identity_jwk: String? = null
 
     @Volatile
@@ -104,6 +107,7 @@ class SessionKeyStore(context: Context? = null) {
                 if (saved_keks != null && saved_keks.isNotBlank()) {
                     legacy_keks = saved_keks.split("\n").filter { it.isNotBlank() }
                 }
+                data_kek = decode_b64_field(p, key_data_kek)
                 ratchet_identity_jwk = p.getString(key_ratchet_identity_jwk, null)
                 ratchet_identity_public_b64 = p.getString(key_ratchet_identity_pub, null)
                 ratchet_signed_prekey_jwk = p.getString(key_ratchet_spk_jwk, null)
@@ -257,6 +261,20 @@ class SessionKeyStore(context: Context? = null) {
         }
     }
 
+    fun put_data_kek(kek: ByteArray) {
+        synchronized(lock) {
+            data_kek?.fill(0)
+            data_kek = kek.copyOf()
+            prefs?.edit()?.putString(key_data_kek, encode_b64(kek))?.apply()
+        }
+    }
+
+    fun get_data_kek(): ByteArray? {
+        synchronized(lock) {
+            return data_kek?.copyOf()
+        }
+    }
+
     fun get(): ByteArray? {
         synchronized(lock) {
             return key_material?.copyOf()
@@ -329,6 +347,8 @@ class SessionKeyStore(context: Context? = null) {
             recovery_codes = null
             previous_keys = null
             legacy_keks = null
+            data_kek?.fill(0)
+            data_kek = null
             ratchet_identity_jwk = null
             ratchet_identity_public_b64 = null
             ratchet_signed_prekey_jwk = null
@@ -359,6 +379,7 @@ class SessionKeyStore(context: Context? = null) {
         private const val key_recovery_codes = "recovery_codes"
         private const val key_previous_keys = "previous_keys"
         private const val key_legacy_keks = "legacy_keks"
+        private const val key_data_kek = "data_kek"
         private const val key_ratchet_identity_jwk = "ratchet_identity_jwk"
         private const val key_ratchet_identity_pub = "ratchet_identity_pub"
         private const val key_ratchet_spk_jwk = "ratchet_spk_jwk"

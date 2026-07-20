@@ -208,6 +208,7 @@
     <string name="swipe_mark_as_unread">Okunmadı olarak işaretle</string>
     <string name="swipe_report_spam">Spam olarak bildir</string>
     <string name="swipe_move_to_inbox">Gelen kutusuna taşı</string>
+    <string name="swipe_none">Yok</string>
 
     <string name="has_attachment">ek var</string>
     <string name="starred">yıldızlı</string>
@@ -252,6 +253,8 @@
     <string name="stop_receiving_from">Almayı durdur</string>
     <string name="external_content_blocked">Harici görseller, yazı tipleri ve izleyiciler engellendi</string>
     <string name="e2e_encrypted_message">Uçtan uca şifreli mesaj</string>
+    <string name="e2e_encryption_failed">Gönderilemedi: uçtan uca şifreleme başarısız oldu. Mesaj gönderilmedi.</string>
+    <string name="e2e_keys_not_ready">Gönderilemedi: şifreleme anahtarları henüz hazır değil. Mesaj gönderilmedi.</string>
     <string name="e2e_no_key_description">Bu mesaj, bu cihazın henüz sahip olmadığı bir anahtarla şifrelenmiş. Okumak için Aster web uygulamasında açın.</string>
     <string name="no_body">(içerik yok)</string>
     <string name="attachments_count">%d ek</string>
@@ -333,6 +336,7 @@
     <string name="search_mail">E-postada ara</string>
     <string name="send_problem_title">Posta gönderiminde sorun</string>
     <string name="send_problem_message">Mesajınız henüz gönderilemedi. Uygulama arka planda denemeye devam edecek.</string>
+    <string name="search_aliases">Takma adlarda ara</string>
     <string name="filter_from">Kimden</string>
     <string name="filter_to">Kime</string>
     <string name="filter_has_attachment">Ek var</string>
@@ -373,6 +377,11 @@
     <string name="syncing">Eşitleniyor</string>
     <string name="sync_contacts">Kişileri eşitle</string>
     <string name="search_contacts">Kişilerde ara</string>
+    <string name="alias_note_title">Rumuz notu</string>
+    <string name="alias_note_hint">Bu notu yalnızca siz görebilirsiniz</string>
+    <string name="alias_note_placeholder">Bu rumuzu nerede kullandığınız, kayıt tarihi, işinize yarayacak her şey</string>
+    <string name="alias_note_add">Not ekle</string>
+    <string name="alias_note_updated">Not güncellendi</string>
     <string name="tab_all">Tümü</string>
     <string name="tab_favorites">Favoriler</string>
     <string name="contacts_count">%d kişi</string>
@@ -426,9 +435,14 @@
     <string name="no_aliases_yet">Henüz takma ad yok</string>
     <string name="create_folder">Klasör oluştur</string>
     <string name="folder_name">Klasör adı</string>
+    <string name="parent_folder">Üst klasör</string>
+    <string name="parent_folder_none">Yok</string>
+    <string name="move_folder_up">Yukarı taşı</string>
+    <string name="move_folder_down">Aşağı taşı</string>
     <string name="create_label">Etiket oluştur</string>
     <string name="label_name">Etiket adı</string>
     <string name="create_alias">Takma ad oluştur</string>
+    <string name="create_alias_invalid_chars">İzin verilen karakterler: harfler, rakamlar, noktalar, alt çizgiler ve tireler.</string>
     <string name="alias_placeholder">username@astermail.org</string>
     <string name="accounts">Hesaplar</string>
     <string name="add_account">Hesap ekle</string>
@@ -669,6 +683,7 @@
     <string name="forwards_to_inbox">Gelen kutunuza yönlendirir</string>
     <string name="delete_alias">Takma adı sil</string>
     <string name="custom_domains">Özel alan adları</string>
+    <string name="alias_view_custom">Özel takma adlar</string>
     <string name="custom_domains_desktop_only">Özel alan adları masaüstünde yönetilmelidir</string>
     <string name="custom_domains_description">Özel alan adları eklemek ve yapılandırmak DNS kurulumu gerektirir ve yalnızca masaüstü uygulamasından kullanılabilir.</string>
     <string name="open_on_desktop">Masaüstünde aç</string>
@@ -690,6 +705,7 @@
     <string name="no_link_available">Bağlantı mevcut değil</string>
     <string name="link_copied">Bağlantı panoya kopyalandı</string>
     <string name="copy_link">Bağlantıyı kopyala</string>
+    <string name="share_link">Bağlantıyı paylaş</string>
     <string name="credits_title">Krediler</string>
     <string name="credits_subtitle">Farklı görevleri tamamlayarak Aster kredisi kazanın.</string>
     <string name="credits_balance_label">Kullanılabilir bakiye</string>
@@ -740,6 +756,7 @@
     <string name="current">Mevcut</string>
     <string name="unlimited_aliases">Sınırsız takma ad</string>
     <string name="aliases_count">%d takma ad</string>
+    <string name="alias_page_indicator">Sayfa %1$d / %2$d</string>
     <string name="unlimited_domains">Sınırsız alan adı</string>
     <string name="domains_count">%d alan adı</string>
     <string name="cancel_subscription_title">Aboneliği iptal et</string>
@@ -892,11 +909,14 @@
     <string name="ext_error_oauth_failed">Oturum açma başlatılamadı. Bağlantınızı kontrol edip tekrar deneyin.</string>
     <string name="ext_error_manual_failed">Hesap kaydedilemedi. Sunucu, bağlantı noktası ve kimlik bilgilerini doğrulayın.</string>
     <string name="ext_error_no_session">Oturumunuz sona erdi. Devam etmek için çıkış yapıp tekrar girin.</string>
+    <string name="ext_error_sync_failed">Senkronizasyon başarısız oldu. Hesap kimlik bilgilerini kontrol edip tekrar deneyin.</string>
     <string name="ext_manual_saved">Hesap eklendi. Eşitleme başlıyor…</string>
     <string name="ext_last_sync">Son eşitleme: %1$s</string>
     <string name="ext_section_oauth">Hızlı geçiş</string>
-    <string name="ext_oauth_coming_soon">Yakında Android\'de</string>
-    <string name="ext_oauth_coming_soon_body">Google, Outlook ve Yahoo girişi gelecek bir Android sürümünde gelecek. Şimdilik aşağıdaki manuel kurulumu uygulama parolasıyla kullanın.</string>
+    <string name="ext_oauth_body">Hesabınızı tek adımda bağlamak için sağlayıcınızla oturum açın.</string>
+    <string name="ext_oauth_connect_google">Google ile oturum aç</string>
+    <string name="ext_oauth_connect_microsoft">Microsoft ile oturum aç</string>
+    <string name="ext_oauth_connect_yahoo">Yahoo ile oturum aç</string>
     <string name="import_provider_coming_soon">Yakında</string>
     <string name="import_connect_manual_cta">IMAP ile bağlan</string>
     <string name="ext_section_manual">Manuel kurulum</string>
@@ -1275,4 +1295,18 @@
     <string name="pending_deletion_error">Hesabınız geri yüklenemedi. Lütfen tekrar deneyin.</string>
     <string name="pending_deletion_restored">Tekrar hoş geldiniz. Hesabınız geri yüklendi.</string>
     <string name="image_blocked_placeholder">[Görsel engellendi]</string>
+    <string name="alias_available">Bu takma ad kullanılabilir.</string>
+    <string name="alias_not_available">Bu takma ad zaten kullanımda.</string>
+    <string name="alias_check_failed">Kullanılabilirlik kontrol edilemedi. Yine de oluşturmayı deneyebilirsiniz.</string>
+    <string name="csrf_unavailable">Bu oturum bozuk! Lütfen yeniden giriş yapın.</string>
+    <string name="received_on_prefix">%s adresinde alındı</string>
+    <string name="received_on_label">Alındığı adres</string>
+    <string name="auto_advance_label">Arşivleme veya silme sonrası</string>
+    <string name="auto_advance_next">Sonraki e-postaya git</string>
+    <string name="auto_advance_previous">Önceki e-postaya git</string>
+    <string name="auto_advance_back">E-posta listesine dön</string>
+    <string name="reply_from_mismatch_title">Farklı bir adresten yanıtlansın mı?</string>
+    <string name="reply_from_mismatch_message">Bu e-posta %1$s adresinde alındı, ancak yanıtınız %2$s adresinden gönderilecek. Farklı bir adresten yanıtlamak bu adresi gönderene açığa çıkarabilir ve yanıt reddedilebilir.</string>
+    <string name="reply_from_mismatch_use_received">Alınan adresi kullan</string>
+    <string name="reply_from_mismatch_send_anyway">Yine de gönder</string>
 </resources>

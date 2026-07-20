@@ -22,6 +22,8 @@
 package org.astermail.android.ui.drawer
 
 import org.astermail.android.BuildConfig
+import android.content.Context
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -99,6 +101,8 @@ import androidx.compose.material.icons.outlined.WorkspacePremium
 import androidx.compose.material.icons.automirrored.outlined.Label
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
@@ -144,6 +148,16 @@ data class drawer_folder_item(
     val label: String,
     val icon: ImageVector,
     val count: Int = 0,
+    val depth: Int = 0,
+    val trail: List<Boolean> = emptyList(),
+    val has_next: Boolean = false,
+)
+
+data class folder_parent_option(
+    val token: String,
+    val label: String,
+    val depth: Int,
+    val path_label: String,
 )
 
 data class drawer_label_item(
@@ -237,6 +251,12 @@ private val label_icon_presets: List<Pair<String, ImageVector>> = listOf(
 private fun parse_hex_color(hex: String): Color =
     parse_hex_color_safe(hex) ?: Color(0xFF3B82F6)
 
+private const val sidebar_prefs_name = "aster_sidebar"
+private const val key_more_collapsed = "more_collapsed"
+private const val key_folders_collapsed = "folders_collapsed"
+private const val key_labels_collapsed = "labels_collapsed"
+private const val key_aliases_collapsed = "aliases_collapsed"
+
 @Composable
 fun DrawerContent(
     selected_id: String,
@@ -266,7 +286,8 @@ fun DrawerContent(
     on_add_account: () -> Unit = {},
     on_open_workspace_sheet: () -> Unit = {},
     on_create_label: (name: String, color: String, icon: String?) -> Unit = { _, _, _ -> },
-    on_create_folder: (String) -> Unit = {},
+    on_create_folder: (name: String, parent_token: String?) -> Unit = { _, _ -> },
+    folder_parent_options: List<folder_parent_option> = emptyList(),
     on_logout: () -> Unit = {},
     initial_more_collapsed: Boolean = false,
     initial_folders_collapsed: Boolean = false,
@@ -281,20 +302,37 @@ fun DrawerContent(
     val current_workspace = user_email
     val clipboard = LocalClipboardManager.current
 
-    var more_expanded by rememberSaveable { mutableStateOf(false) }
-    var folders_expanded by rememberSaveable { mutableStateOf(false) }
-    var labels_expanded by rememberSaveable { mutableStateOf(false) }
-    var aliases_expanded by rememberSaveable { mutableStateOf(false) }
+    val sidebar_prefs_context = LocalContext.current
+    val sidebar_prefs = remember { sidebar_prefs_context.getSharedPreferences(sidebar_prefs_name, Context.MODE_PRIVATE) }
+
+    var more_expanded by rememberSaveable {
+        mutableStateOf(!sidebar_prefs.getBoolean(key_more_collapsed, false))
+    }
+    var folders_expanded by rememberSaveable {
+        mutableStateOf(!sidebar_prefs.getBoolean(key_folders_collapsed, false))
+    }
+    var labels_expanded by rememberSaveable {
+        mutableStateOf(!sidebar_prefs.getBoolean(key_labels_collapsed, false))
+    }
+    var aliases_expanded by rememberSaveable {
+        mutableStateOf(!sidebar_prefs.getBoolean(key_aliases_collapsed, false))
+    }
     var aliases_show_all by remember { mutableStateOf(false) }
     val aliases_collapsed_count = 5
     var prefs_synced by rememberSaveable { mutableStateOf(false) }
 
     androidx.compose.runtime.LaunchedEffect(preferences_loaded) {
         if (preferences_loaded && !prefs_synced) {
-            more_expanded = !initial_more_collapsed
-            folders_expanded = !initial_folders_collapsed
-            labels_expanded = !initial_labels_collapsed
-            aliases_expanded = !initial_aliases_collapsed
+            if (!sidebar_prefs.contains(key_more_collapsed)) more_expanded = !initial_more_collapsed
+            if (!sidebar_prefs.contains(key_folders_collapsed)) folders_expanded = !initial_folders_collapsed
+            if (!sidebar_prefs.contains(key_labels_collapsed)) labels_expanded = !initial_labels_collapsed
+            if (!sidebar_prefs.contains(key_aliases_collapsed)) aliases_expanded = !initial_aliases_collapsed
+            sidebar_prefs.edit()
+                .putBoolean(key_more_collapsed, !more_expanded)
+                .putBoolean(key_folders_collapsed, !folders_expanded)
+                .putBoolean(key_labels_collapsed, !labels_expanded)
+                .putBoolean(key_aliases_collapsed, !aliases_expanded)
+                .apply()
             prefs_synced = true
         }
     }
@@ -418,6 +456,7 @@ fun DrawerContent(
                 expanded = more_expanded,
                 on_toggle = {
                     more_expanded = !more_expanded
+                    sidebar_prefs.edit().putBoolean(key_more_collapsed, !more_expanded).apply()
                     on_sidebar_toggle("sidebar_more_collapsed", !more_expanded)
                 },
             )
@@ -471,6 +510,7 @@ fun DrawerContent(
                 expanded = folders_expanded,
                 on_toggle = {
                     folders_expanded = !folders_expanded
+                    sidebar_prefs.edit().putBoolean(key_folders_collapsed, !folders_expanded).apply()
                     on_sidebar_toggle("sidebar_folders_collapsed", !folders_expanded)
                 },
                 show_add = true,
@@ -492,13 +532,16 @@ fun DrawerContent(
                                 icon = item.icon,
                                 label = item.label,
                                 count = item.count,
-                                is_unread_count = false,
+                                is_unread_count = true,
                                 selected = item.id == selected_id,
                                 on_click = {
                                     on_select(item.id)
                                     on_navigate_folder(item.id, item.label)
                                     on_close()
                                 },
+                                depth = item.depth,
+                                trail = item.trail,
+                                has_next = item.has_next,
                             )
                         }
                     }
@@ -511,6 +554,7 @@ fun DrawerContent(
                 expanded = labels_expanded,
                 on_toggle = {
                     labels_expanded = !labels_expanded
+                    sidebar_prefs.edit().putBoolean(key_labels_collapsed, !labels_expanded).apply()
                     on_sidebar_toggle("sidebar_labels_collapsed", !labels_expanded)
                 },
                 show_add = true,
@@ -550,6 +594,7 @@ fun DrawerContent(
                 expanded = aliases_expanded,
                 on_toggle = {
                     aliases_expanded = !aliases_expanded
+                    sidebar_prefs.edit().putBoolean(key_aliases_collapsed, !aliases_expanded).apply()
                     on_sidebar_toggle("sidebar_aliases_collapsed", !aliases_expanded)
                 },
                 show_add = true,
@@ -705,12 +750,13 @@ fun DrawerContent(
     }
 
     if (show_create_folder) {
-        create_item_dialog(
+        create_folder_dialog(
             title = stringResource(R.string.create_folder),
             placeholder = stringResource(R.string.folder_name),
+            parent_options = folder_parent_options,
             on_dismiss = { show_create_folder = false },
-            on_create = { name ->
-                on_create_folder(name)
+            on_create = { name, parent_token ->
+                on_create_folder(name, parent_token)
                 show_create_folder = false
             },
         )
@@ -729,36 +775,127 @@ fun DrawerContent(
 }
 
 @Composable
-private fun create_item_dialog(
+private fun create_folder_dialog(
     title: String,
     placeholder: String,
+    parent_options: List<folder_parent_option>,
     on_dismiss: () -> Unit,
-    on_create: (String) -> Unit,
+    on_create: (name: String, parent_token: String?) -> Unit,
 ) {
     val colors = AsterMaterial.colors
     var text_value by remember { mutableStateOf("") }
+    var selected_parent by remember { mutableStateOf<folder_parent_option?>(null) }
+    var parent_menu_open by remember { mutableStateOf(false) }
+    val none_label = stringResource(R.string.parent_folder_none)
 
     org.astermail.android.design.components.AsterAlertDialog(
         on_dismiss = on_dismiss,
         title = title,
         confirm_label = stringResource(R.string.save),
         cancel_label = stringResource(R.string.cancel),
-        on_confirm = { if (text_value.isNotBlank()) on_create(text_value.trim()) },
+        on_confirm = { if (text_value.isNotBlank()) on_create(text_value.trim(), selected_parent?.token) },
         confirm_enabled = text_value.isNotBlank(),
         extra_content = {
-            OutlinedTextField(
-                value = text_value,
-                onValueChange = { text_value = it },
-                placeholder = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = text_value,
+                    onValueChange = { text_value = it },
+                    placeholder = {
+                        Text(
+                            text = placeholder,
+                            color = colors.text_muted,
+                            fontFamily = inter_family,
+                        )
+                    },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(AsterSpacing.md))
+                Text(
+                    text = stringResource(R.string.parent_folder),
+                    color = colors.text_muted,
+                    fontSize = 13.sp,
+                    fontFamily = inter_family,
+                )
+                Spacer(Modifier.height(AsterSpacing.xs))
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .border(1.dp, colors.border_secondary, RoundedCornerShape(8.dp))
+                            .clickable { parent_menu_open = true }
+                            .testTag("parent_folder_selector")
+                            .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = selected_parent?.label ?: none_label,
+                            color = colors.text_primary,
+                            fontSize = 15.sp,
+                            fontFamily = inter_family,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Icon(
+                            imageVector = Icons.Outlined.KeyboardArrowDown,
+                            contentDescription = null,
+                            tint = colors.text_muted,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = parent_menu_open,
+                        onDismissRequest = { parent_menu_open = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = none_label,
+                                    fontFamily = inter_family,
+                                )
+                            },
+                            onClick = {
+                                selected_parent = null
+                                parent_menu_open = false
+                            },
+                        )
+                        parent_options.forEach { option ->
+                            DropdownMenuItem(
+                                text = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Spacer(Modifier.width((option.depth * 12).dp))
+                                        Icon(
+                                            imageVector = Icons.Outlined.Folder,
+                                            contentDescription = null,
+                                            tint = colors.text_muted,
+                                            modifier = Modifier.size(16.dp),
+                                        )
+                                        Spacer(Modifier.width(AsterSpacing.sm))
+                                        Text(
+                                            text = option.label,
+                                            fontFamily = inter_family,
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    selected_parent = option
+                                    parent_menu_open = false
+                                },
+                            )
+                        }
+                    }
+                }
+                val path_label = selected_parent?.path_label
+                if (!path_label.isNullOrBlank()) {
+                    Spacer(Modifier.height(AsterSpacing.xs))
                     Text(
-                        text = placeholder,
+                        text = path_label,
                         color = colors.text_muted,
+                        fontSize = 12.sp,
                         fontFamily = inter_family,
                     )
-                },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
+                }
+            }
         },
     )
 }
@@ -1230,6 +1367,64 @@ private fun collapsible_section_header(
 }
 
 @Composable
+private fun tree_indent_guides(
+    depth: Int,
+    trail: List<Boolean> = emptyList(),
+    has_next: Boolean = false,
+) {
+    if (depth <= 0) return
+    val guide_color = AsterMaterial.colors.border_secondary
+    androidx.compose.foundation.Canvas(
+        modifier = Modifier
+            .width((depth * 18).dp)
+            .height(46.dp),
+    ) {
+        val stroke_width = 1.5.dp.toPx()
+        val slot = 18.dp.toPx()
+        val line_offset = 8.dp.toPx()
+        val cy = size.height / 2f
+        val curve_start = 10.dp.toPx()
+        val curve_reach = 9.dp.toPx()
+        val stroke_style = androidx.compose.ui.graphics.drawscope.Stroke(
+            width = stroke_width,
+            cap = androidx.compose.ui.graphics.StrokeCap.Round,
+        )
+        for (level in 0 until depth - 1) {
+            if (trail.getOrNull(level + 1) == true) {
+                val x = level * slot + line_offset
+                drawLine(
+                    color = guide_color,
+                    start = androidx.compose.ui.geometry.Offset(x, 0f),
+                    end = androidx.compose.ui.geometry.Offset(x, size.height),
+                    strokeWidth = stroke_width,
+                )
+            }
+        }
+        val branch_x = (depth - 1) * slot + line_offset
+        if (has_next) {
+            drawLine(
+                color = guide_color,
+                start = androidx.compose.ui.geometry.Offset(branch_x, 0f),
+                end = androidx.compose.ui.geometry.Offset(branch_x, size.height),
+                strokeWidth = stroke_width,
+            )
+            val branch = androidx.compose.ui.graphics.Path().apply {
+                moveTo(branch_x, cy - curve_start)
+                quadraticBezierTo(branch_x, cy, branch_x + curve_reach, cy)
+            }
+            drawPath(path = branch, color = guide_color, style = stroke_style)
+        } else {
+            val elbow = androidx.compose.ui.graphics.Path().apply {
+                moveTo(branch_x, 0f)
+                lineTo(branch_x, cy - curve_start)
+                quadraticBezierTo(branch_x, cy, branch_x + curve_reach, cy)
+            }
+            drawPath(path = elbow, color = guide_color, style = stroke_style)
+        }
+    }
+}
+
+@Composable
 private fun drawer_row(
     icon: ImageVector,
     label: String,
@@ -1238,6 +1433,9 @@ private fun drawer_row(
     selected: Boolean,
     on_click: () -> Unit,
     test_tag: String? = null,
+    depth: Int = 0,
+    trail: List<Boolean> = emptyList(),
+    has_next: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
     val bg by animateColorAsState(
@@ -1262,6 +1460,7 @@ private fun drawer_row(
                 .height(46.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            tree_indent_guides(depth, trail, has_next)
             Icon(
                 imageVector = icon,
                 contentDescription = null,

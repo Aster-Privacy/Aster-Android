@@ -43,6 +43,7 @@ interface MailApi {
     suspend fun list_messages(
         limit: Int? = null,
         cursor: String? = null,
+        offset: Int? = null,
         item_type: String? = null,
         is_starred: Boolean? = null,
         is_trashed: Boolean? = null,
@@ -99,6 +100,10 @@ interface MailApi {
     suspend fun add_tag_to_item(item_id: String, tag_token: String)
 
     suspend fun remove_tag_from_item(item_id: String, tag_token: String)
+
+    suspend fun create_thread(thread_token: String, encrypted_meta: String, meta_nonce: String)
+
+    suspend fun link_mail_to_thread(item_id: String, thread_token: String)
 }
 
 @kotlinx.serialization.Serializable
@@ -107,12 +112,23 @@ data class AddLabelRequestBody(val folder_token: String)
 @kotlinx.serialization.Serializable
 data class AddTagRequestBody(val tag_token: String)
 
+@kotlinx.serialization.Serializable
+data class CreateThreadRequestBody(
+    val thread_token: String,
+    val encrypted_meta: String,
+    val meta_nonce: String,
+)
+
+@kotlinx.serialization.Serializable
+data class LinkToThreadRequestBody(val thread_token: String)
+
 class MailApiImpl(private val client: ApiClient) : MailApi {
     private val base = "/api/mail/v1"
 
     override suspend fun list_messages(
         limit: Int?,
         cursor: String?,
+        offset: Int?,
         item_type: String?,
         is_starred: Boolean?,
         is_trashed: Boolean?,
@@ -126,6 +142,7 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
         val response = client.http.get("${client.base_url}$base/messages") {
             limit?.let { parameter("limit", it) }
             cursor?.let { parameter("cursor", it) }
+            offset?.let { parameter("offset", it) }
             item_type?.let { parameter("item_type", it) }
             is_starred?.let { parameter("is_starred", it) }
             is_trashed?.let { parameter("is_trashed", it) }
@@ -310,6 +327,24 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
             "${client.base_url}$base/messages/$item_id/tags/${url_encode_path(tag_token)}",
         ) {
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
+        }
+        throw_if_error(response)
+    }
+
+    override suspend fun create_thread(thread_token: String, encrypted_meta: String, meta_nonce: String) {
+        val response = client.http.post("${client.base_url}$base/messages/threads") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(CreateThreadRequestBody(thread_token, encrypted_meta, meta_nonce))
+        }
+        throw_if_error(response)
+    }
+
+    override suspend fun link_mail_to_thread(item_id: String, thread_token: String) {
+        val response = client.http.put("${client.base_url}$base/messages/$item_id/thread") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(LinkToThreadRequestBody(thread_token))
         }
         throw_if_error(response)
     }

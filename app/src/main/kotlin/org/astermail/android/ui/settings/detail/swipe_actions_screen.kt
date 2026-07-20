@@ -35,7 +35,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.MarkEmailRead
 import androidx.compose.material.icons.filled.MarkEmailUnread
 import androidx.compose.material.icons.filled.Star
@@ -68,8 +67,8 @@ import org.astermail.android.settings.SettingsViewModel
 private data class SwipeActionOption(
     val id: String,
     val label: String,
-    val icon: ImageVector,
-    val color: Color,
+    val icon: ImageVector?,
+    val color: Color?,
 )
 
 @Composable
@@ -100,7 +99,7 @@ fun SwipeActionsScreen(on_back: () -> Unit) {
         SwipeActionOption("mark_unread", stringResource(R.string.swipe_mark_as_unread), Icons.Filled.MarkEmailUnread, colors.warning),
         SwipeActionOption("star", stringResource(R.string.swipe_star), Icons.Filled.Star, colors.warning),
         SwipeActionOption("spam", stringResource(R.string.swipe_report_spam), Icons.Filled.Block, colors.danger),
-        SwipeActionOption("move_to_inbox", stringResource(R.string.swipe_move_to_inbox), Icons.Filled.Inbox, colors.accent_blue),
+        SwipeActionOption("none", stringResource(R.string.swipe_none), null, null),
     )
 
     detail_scaffold(
@@ -181,13 +180,15 @@ private fun swipe_action_option(
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            imageVector = option.icon,
-            contentDescription = null,
-            tint = option.color,
-            modifier = Modifier.size(20.dp),
-        )
-        Spacer(Modifier.width(AsterSpacing.md))
+        if (option.icon != null && option.color != null) {
+            Icon(
+                imageVector = option.icon,
+                contentDescription = null,
+                tint = option.color,
+                modifier = Modifier.size(20.dp),
+            )
+            Spacer(Modifier.width(AsterSpacing.md))
+        }
         Text(
             text = option.label,
             color = colors.text_primary,

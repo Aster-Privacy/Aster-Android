@@ -113,6 +113,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
@@ -133,6 +134,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import org.astermail.android.R
+import org.astermail.android.debugtools.debug_build_pill_inline
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
@@ -158,6 +160,8 @@ fun InboxScreen(
     display_title: String? = null,
     inbox_category: String = "primary",
     on_folder_change: (String) -> Unit = {},
+    custom_folders: List<Pair<String, String>> = emptyList(),
+    on_custom_folder_change: (String, String) -> Unit = { _, _ -> },
 ) {
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
@@ -176,7 +180,7 @@ fun InboxScreen(
     var cached_paid by rememberSaveable { mutableStateOf(initial_paid) }
     var plan_known by rememberSaveable { mutableStateOf(initial_plan_known) }
     var fresh_check_complete by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { settings_vm.load_subscription() }
+    LaunchedEffect(Unit) { settings_vm.load_subscription(force = false) }
     LaunchedEffect(settings_state.subscription, settings_state.is_loading) {
         val sub = settings_state.subscription
         if (sub != null) {
@@ -215,6 +219,12 @@ fun InboxScreen(
     }
 
     var top_toast_state by remember { mutableStateOf<org.astermail.android.ui.common.TopToastState?>(null) }
+    LaunchedEffect(mail_vm) {
+        while (true) {
+            kotlinx.coroutines.delay(60_000)
+            mail_vm.foreground_fallback_tick()
+        }
+    }
     LaunchedEffect(mail_vm) {
         mail_vm.toast_events.collect { evt ->
             top_toast_state = org.astermail.android.ui.common.TopToastState(
@@ -296,8 +306,13 @@ fun InboxScreen(
 
     val lifecycle_owner = LocalLifecycleOwner.current
     DisposableEffect(lifecycle_owner) {
+        var initial_resume_replayed = false
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
+                if (!initial_resume_replayed) {
+                    initial_resume_replayed = true
+                    return@LifecycleEventObserver
+                }
                 settings_vm.load_preferences()
                 settings_vm.load_tags()
                 mail_vm.load_inbox(current_folder, force = true)
@@ -308,9 +323,9 @@ fun InboxScreen(
     }
 
     LaunchedEffect(current_folder) {
-        mail_vm.load_inbox(current_folder, force = true)
-        mail_vm.load_stats()
-        settings_vm.load_tags()
+        mail_vm.load_inbox(current_folder)
+        mail_vm.load_stats(force = false)
+        settings_vm.load_tags(force = false)
     }
 
     val attachment_ids_key = remember(inbox_state.items) {
@@ -336,13 +351,16 @@ fun InboxScreen(
                 is_pinned = if (local.is_pinned != server.is_pinned) local.is_pinned else server.is_pinned,
             )
         }
-        emails.clear()
-        emails.addAll(merged)
+        if (merged != emails.toList()) {
+            emails.clear()
+            emails.addAll(merged)
+        }
     }
     val is_refreshing = inbox_state.is_refreshing
     var sort_mode_user_set by remember { mutableStateOf(false) }
     var sort_mode by remember { mutableStateOf(InboxSortMode.newest) }
     var select_mode by remember { mutableStateOf(false) }
+    var select_all_active by remember { mutableStateOf(false) }
     val selected_ids = remember { mutableStateListOf<String>() }
     var show_empty_trash_dialog by remember { mutableStateOf(false) }
     var confirm_action_pending by remember { mutableStateOf<String?>(null) }
@@ -439,6 +457,13 @@ fun InboxScreen(
         mail_vm.set_visible_order(visible_order_ids)
     }
 
+    LaunchedEffect(select_all_active, visible_order_ids) {
+        if (select_all_active) {
+            selected_ids.clear()
+            selected_ids.addAll(visible_threads.map { it.thread_id })
+        }
+    }
+
     LaunchedEffect(list_state, current_folder) {
         snapshotFlow {
             val layout_info = list_state.layoutInfo
@@ -501,14 +526,20 @@ fun InboxScreen(
         select_mode = true
         selected_ids.clear()
         selected_ids.addAll(visible_threads.map { it.thread_id })
+        if (inbox_state.has_more) {
+            select_all_active = true
+            mail_vm.load_all_remaining()
+        }
     }
 
     fun exit_select_mode() {
         select_mode = false
+        select_all_active = false
         selected_ids.clear()
     }
 
     fun toggle_selection(id: String) {
+        select_all_active = false
         if (selected_ids.contains(id)) selected_ids.remove(id) else selected_ids.add(id)
         if (selected_ids.isEmpty()) select_mode = false
     }
@@ -647,6 +678,8 @@ fun InboxScreen(
                         show_divider = scrolled_elevation,
                         current_folder = current_folder,
                         on_folder_change = on_folder_change,
+                        custom_folders = custom_folders,
+                        on_custom_folder_change = on_custom_folder_change,
                     )
                 }
             }
@@ -1055,6 +1088,8 @@ private fun inbox_top_bar(
     show_divider: Boolean,
     current_folder: String = "inbox",
     on_folder_change: (String) -> Unit = {},
+    custom_folders: List<Pair<String, String>> = emptyList(),
+    on_custom_folder_change: (String, String) -> Unit = { _, _ -> },
 ) {
     val colors = AsterMaterial.colors
     val divider_alpha by animateFloatAsState(
@@ -1134,8 +1169,32 @@ private fun inbox_top_bar(
                             },
                         )
                     }
+                    if (custom_folders.isNotEmpty()) {
+                        AsterDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        custom_folders.forEach { (id, name) ->
+                            DropdownMenuItem(
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                                text = {
+                                    Text(
+                                        text = name,
+                                        fontSize = 15.sp,
+                                        fontWeight = if (id == current_folder) FontWeight.SemiBold else FontWeight.Normal,
+                                        color = if (id == current_folder) colors.accent_blue else colors.text_primary,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                },
+                                onClick = {
+                                    folder_menu_open = false
+                                    if (id != current_folder) on_custom_folder_change(id, name)
+                                },
+                            )
+                        }
+                    }
                 }
             }
+            debug_build_pill_inline()
+            Spacer(Modifier.width(AsterSpacing.xs))
             AsterIconButton(
                 icon = Icons.Outlined.Settings,
                 content_description = stringResource(R.string.settings),
@@ -1477,6 +1536,8 @@ private fun swipeable_thread_row(
             state = dismiss_state,
             modifier = Modifier,
             gesturesEnabled = gesture_is_horizontal && !is_dismissed,
+            enableDismissFromStartToEnd = swipe_start_action != "none",
+            enableDismissFromEndToStart = swipe_end_action != "none",
             backgroundContent = {
                 val direction = dismiss_state.dismissDirection
                 val (bg, align, icon, label) = when (direction) {
@@ -1556,6 +1617,7 @@ private fun swipe_action_label(action: String): String = when (action) {
     "restore_trash" -> stringResource(R.string.swipe_restore)
     "unmark_spam" -> stringResource(R.string.swipe_not_spam)
     "delete_permanent" -> stringResource(R.string.swipe_delete_forever)
+    "none" -> ""
     else -> stringResource(R.string.swipe_archive)
 }
 

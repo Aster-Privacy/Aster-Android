@@ -298,15 +298,37 @@ fun ContactDetailScreen(
                 contact.linkedin.isNotBlank()
             if (has_social) {
                 Spacer(Modifier.height(AsterSpacing.md))
+                fun open_contact_url(url: String) {
+                    val uri = Uri.parse(url)
+                    if (uri.scheme?.lowercase() !in setOf("http", "https")) return
+                    runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, uri)) }
+                }
                 DetailCard(title = stringResource(R.string.social)) {
-                    if (contact.website.isNotBlank()) DetailRow(stringResource(R.string.website), contact.website)
+                    if (contact.website.isNotBlank()) {
+                        val url = build_contact_social_url("website", contact.website)
+                        DetailRow(
+                            stringResource(R.string.website),
+                            contact.website,
+                            on_open = url?.let { { open_contact_url(it) } },
+                        )
+                    }
                     if (contact.twitter.isNotBlank()) {
                         if (contact.website.isNotBlank()) AsterDivider()
-                        DetailRow(stringResource(R.string.twitter), contact.twitter)
+                        val url = build_contact_social_url("twitter", contact.twitter)
+                        DetailRow(
+                            stringResource(R.string.twitter),
+                            contact.twitter,
+                            on_open = url?.let { { open_contact_url(it) } },
+                        )
                     }
                     if (contact.linkedin.isNotBlank()) {
                         if (contact.website.isNotBlank() || contact.twitter.isNotBlank()) AsterDivider()
-                        DetailRow(stringResource(R.string.linkedin), contact.linkedin)
+                        val url = build_contact_social_url("linkedin", contact.linkedin)
+                        DetailRow(
+                            stringResource(R.string.linkedin),
+                            contact.linkedin,
+                            on_open = url?.let { { open_contact_url(it) } },
+                        )
                     }
                 }
             }
@@ -396,11 +418,12 @@ private fun DetailCard(title: String, content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun DetailRow(label: String, value: String) {
+private fun DetailRow(label: String, value: String, on_open: (() -> Unit)? = null) {
     val colors = AsterMaterial.colors
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .then(if (on_open != null) Modifier.clickable(onClick = on_open) else Modifier)
             .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.md),
         verticalAlignment = Alignment.Top,
     ) {
@@ -414,9 +437,44 @@ private fun DetailRow(label: String, value: String) {
         Spacer(Modifier.width(AsterSpacing.sm))
         Text(
             text = value,
-            color = colors.text_primary,
+            color = if (on_open != null) colors.accent_blue else colors.text_primary,
             fontSize = 14.sp,
             modifier = Modifier.weight(1f),
         )
+    }
+}
+
+private fun build_contact_social_url(kind: String, raw: String): String? {
+    val value = raw.trim()
+    if (value.isEmpty()) return null
+    val has_scheme = Regex("^[a-zA-Z][a-zA-Z0-9+.-]*:").containsMatchIn(value)
+    fun parse_web_url(candidate: String): Uri? {
+        val uri = runCatching { Uri.parse(candidate) }.getOrNull() ?: return null
+        val scheme = uri.scheme?.lowercase() ?: return null
+        if (scheme != "http" && scheme != "https") return null
+        if (uri.host.isNullOrBlank()) return null
+        return uri
+    }
+    if (kind == "website") {
+        val parsed = parse_web_url(value) ?: if (has_scheme) null else parse_web_url("https://$value")
+        return parsed?.toString()
+    }
+    val hosts = when (kind) {
+        "linkedin" -> listOf("linkedin.com")
+        "twitter" -> listOf("twitter.com", "x.com")
+        else -> return null
+    }
+    val parsed = parse_web_url(value)
+    if (parsed != null) {
+        val host = parsed.host?.lowercase() ?: return null
+        return if (hosts.any { host == it || host.endsWith(".$it") }) parsed.toString() else null
+    }
+    if (has_scheme) return null
+    val handle = java.net.URLEncoder.encode(value.removePrefix("@"), "UTF-8")
+    if (handle.isBlank()) return null
+    return when (kind) {
+        "linkedin" -> "https://linkedin.com/in/$handle"
+        "twitter" -> "https://x.com/$handle"
+        else -> null
     }
 }

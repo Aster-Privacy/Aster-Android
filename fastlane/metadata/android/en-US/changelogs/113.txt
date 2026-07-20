@@ -1,0 +1,4 @@
+Bug fixes and improvements:
+
+- Fixed newsletters sometimes being cut off at the bottom
+- Improved spacing when reading emails

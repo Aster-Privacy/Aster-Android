@@ -389,6 +389,7 @@ class MailModelsTest {
         assertEquals(0, stats.spam)
         assertEquals(0, stats.trash)
         assertEquals(0, stats.unread)
+        assertNull(stats.notifiable)
         assertEquals(0L, stats.storage_used_bytes)
         assertEquals(0L, stats.storage_total_bytes)
     }
@@ -406,13 +407,32 @@ class MailModelsTest {
             spam = 30,
             trash = 80,
             unread = 42,
+            notifiable = 210,
             storage_used_bytes = 536_870_912L,
             storage_total_bytes = 1_073_741_824L,
         )
         assertEquals(500, stats.total_items)
         assertEquals(200, stats.inbox)
         assertEquals(42, stats.unread)
+        assertEquals(210, stats.notifiable)
         assertEquals(536_870_912L, stats.storage_used_bytes)
+    }
+
+    @Test
+    fun `MailUserStatsResponse notifiable absent from old server deserializes null`() {
+        val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+        val legacyPayload = """{"total_items":10,"inbox":5,"unread":3}"""
+        val stats = json.decodeFromString(MailUserStatsResponse.serializer(), legacyPayload)
+        assertEquals(5, stats.inbox)
+        assertNull(stats.notifiable)
+    }
+
+    @Test
+    fun `MailUserStatsResponse notifiable zero is distinct from absent`() {
+        val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+        val payload = """{"total_items":10,"inbox":5,"unread":3,"notifiable":0}"""
+        val stats = json.decodeFromString(MailUserStatsResponse.serializer(), payload)
+        assertEquals(0, stats.notifiable)
     }
 
     @Test

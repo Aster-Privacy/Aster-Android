@@ -35,6 +35,8 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -243,7 +245,12 @@ private val PROXY_PROTOCOL_RELATIVE_SRC_PATTERN = Regex(
 )
 
 private val PROXY_CSS_URL_PATTERN = Regex(
-    """(url\(\s*["']?)(https?://[^"')]+)(["']?\s*\))""",
+    """(url\(\s*["']?)((?:https?:)?//[^"')\s]+)(["']?\s*\))""",
+    RegexOption.IGNORE_CASE,
+)
+
+private val PROXY_BACKGROUND_ATTR_PATTERN = Regex(
+    """(background\s*=\s*["'])((?:https?:)?//[^"']+)(["'])""",
     RegexOption.IGNORE_CASE,
 )
 
@@ -251,6 +258,39 @@ private val CID_SRC_PATTERN = Regex(
     """(src\s*=\s*["'])cid:([^"']+)(["'])""",
     RegexOption.IGNORE_CASE,
 )
+
+internal fun proxy_external_urls(html: String, proxy_base: String): String {
+    fun to_proxied(raw_url: String): String {
+        val url = raw_url.replace("&amp;", "&")
+        val absolute = if (url.startsWith("//")) "https:$url" else url
+        return proxy_base + java.net.URLEncoder.encode(absolute, "UTF-8")
+    }
+    val protocol_normalized = PROXY_PROTOCOL_RELATIVE_SRC_PATTERN.replace(html) { match ->
+        "${match.groupValues[1]}https:${match.groupValues[2]}${match.groupValues[3]}"
+    }
+    val src_replaced = PROXY_SRC_PATTERN.replace(protocol_normalized) { match ->
+        "${match.groupValues[1]}${to_proxied(match.groupValues[2])}${match.groupValues[3]}"
+    }
+    val srcset_replaced = PROXY_SRCSET_PATTERN.replace(src_replaced) { match ->
+        val proxied = match.groupValues[2].split(",").joinToString(",") { entry ->
+            val parts = entry.trim().split(Regex("\\s+"), 2)
+            val url = parts[0]
+            val descriptor = if (parts.size > 1) " ${parts[1]}" else ""
+            if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("//")) {
+                "${to_proxied(url)}$descriptor"
+            } else {
+                ""
+            }
+        }
+        "${match.groupValues[1]}$proxied${match.groupValues[3]}"
+    }
+    val background_attr_replaced = PROXY_BACKGROUND_ATTR_PATTERN.replace(srcset_replaced) { match ->
+        "${match.groupValues[1]}${to_proxied(match.groupValues[2])}${match.groupValues[3]}"
+    }
+    return PROXY_CSS_URL_PATTERN.replace(background_attr_replaced) { match ->
+        "${match.groupValues[1]}${to_proxied(match.groupValues[2])}${match.groupValues[3]}"
+    }
+}
 
 private val GHOST_LOCAL_PATTERN = Regex("^[a-z]+\\.[a-z]+\\d{2}@", RegexOption.IGNORE_CASE)
 
@@ -1111,34 +1151,39 @@ fun MailDetailScreen(
 
     if (current_link != null && !current_link.startsWith("aster:")) {
         val link = current_link
-        org.astermail.android.design.components.AsterAlertDialog(
-            on_dismiss = { pending_link = null },
-            title = stringResource(R.string.open_external_link),
-            message = stringResource(R.string.leaving_aster_warning),
-            confirm_label = stringResource(R.string.open),
-            cancel_label = stringResource(R.string.cancel),
-            on_confirm = {
-                pending_link = null
-                if (!is_safe_external_url(link)) {
+        val open_external_link = {
+            pending_link = null
+            if (!is_safe_external_url(link)) {
+                show_toast(context.getString(R.string.could_not_open_link))
+            } else {
+                try {
+                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link)))
+                } catch (_: Throwable) {
                     show_toast(context.getString(R.string.could_not_open_link))
-                } else {
-                    try {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link)))
-                    } catch (_: Throwable) {
-                        show_toast(context.getString(R.string.could_not_open_link))
-                    }
                 }
-            },
-            extra_content = {
-                Text(
-                    text = link,
-                    color = colors.accent_blue,
-                    fontSize = 13.sp,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            },
-        )
+            }
+        }
+        if (settings_state.preferences?.warn_suspicious_links == false) {
+            LaunchedEffect(link) { open_external_link() }
+        } else {
+            org.astermail.android.design.components.AsterAlertDialog(
+                on_dismiss = { pending_link = null },
+                title = stringResource(R.string.open_external_link),
+                message = stringResource(R.string.leaving_aster_warning),
+                confirm_label = stringResource(R.string.open),
+                cancel_label = stringResource(R.string.cancel),
+                on_confirm = open_external_link,
+                extra_content = {
+                    Text(
+                        text = link,
+                        color = colors.accent_blue,
+                        fontSize = 13.sp,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+            )
+        }
     }
 
     if (show_encryption_info) {
@@ -1176,9 +1221,9 @@ fun MailDetailScreen(
         val settings_state by settings_vm.state.collectAsStateWithLifecycle()
         val unnamed_folder_label = stringResource(R.string.unnamed_folder)
         val folder_decrypt_failed_label = stringResource(R.string.folder_decrypt_failed)
-        val folder_items = settings_state.labels
-            .filter { (it.folder_type == "folder" || it.folder_type == "custom") && !it.is_system }
-            .map { label ->
+        val folder_items = org.astermail.android.folders.flatten_folder_tree(settings_state.labels)
+            .map { node ->
+                val label = node.label
                 val readable = label.encrypted_name?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
                 label.copy(encrypted_name = readable ?: folder_decrypt_failed_label)
             }
@@ -1231,7 +1276,7 @@ fun MailDetailScreen(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun expanded_message(
     msg: ThreadMessage,
@@ -1263,6 +1308,15 @@ private fun expanded_message(
     can_collapse: Boolean = true,
 ) {
     val colors = AsterMaterial.colors
+    val context = LocalContext.current
+    val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
+    val copied_label = stringResource(R.string.copied)
+    val copy_email = { email: String ->
+        haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+        val cm = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        cm.setPrimaryClip(android.content.ClipData.newPlainText("email_address", email))
+        android.widget.Toast.makeText(context, copied_label, android.widget.Toast.LENGTH_SHORT).show()
+    }
     var show_details by remember { mutableStateOf(false) }
     val tracker_count = remember(msg.body_html, msg.trackers_blocked) {
         val local = if (msg.body_html != null) count_external_content(msg.body_html).tracker_count else 0
@@ -1303,6 +1357,10 @@ private fun expanded_message(
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.combinedClickable(
+                        onClick = on_collapse,
+                        onLongClick = { copy_email(msg.sender_email) },
+                    ),
                 )
                 if (!msg.sender_name.equals(msg.sender_email, ignoreCase = true)) {
                     Spacer(Modifier.height(1.dp))
@@ -1312,6 +1370,10 @@ private fun expanded_message(
                         fontSize = 12.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.combinedClickable(
+                            onClick = on_collapse,
+                            onLongClick = { copy_email(msg.sender_email) },
+                        ),
                     )
                 }
                 Spacer(Modifier.height(2.dp))
@@ -1321,7 +1383,30 @@ private fun expanded_message(
                     fontSize = 12.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.combinedClickable(
+                        onClick = on_collapse,
+                        onLongClick = {
+                            val recipient = msg.to_addresses.joinToString(", ").ifBlank { msg.to_label }
+                            copy_email(recipient)
+                        },
+                    ),
                 )
+                val received_on = remember(msg) {
+                    resolve_received_on_address(msg.raw_headers, msg.to_addresses + msg.cc_addresses, msg.sender_email)
+                }
+                if (received_on != null) {
+                    Text(
+                        text = stringResource(R.string.received_on_prefix, received_on),
+                        color = colors.text_muted,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.combinedClickable(
+                            onClick = on_collapse,
+                            onLongClick = { copy_email(received_on) },
+                        ),
+                    )
+                }
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(
@@ -1330,42 +1415,45 @@ private fun expanded_message(
                     fontSize = 12.sp,
                 )
                 Spacer(Modifier.height(4.dp))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(0.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .clickable { show_details = !show_details },
+                    contentAlignment = Alignment.Center,
                 ) {
-                    Box(
+                    Icon(
+                        imageVector = Icons.Filled.KeyboardArrowDown,
+                        contentDescription = if (show_details)
+                            stringResource(R.string.detail_hide_details)
+                        else
+                            stringResource(R.string.detail_show_details),
+                        tint = colors.text_secondary,
                         modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .clickable { show_details = !show_details },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.KeyboardArrowDown,
-                            contentDescription = if (show_details)
-                                stringResource(R.string.detail_hide_details)
-                            else
-                                stringResource(R.string.detail_show_details),
-                            tint = colors.text_secondary,
-                            modifier = Modifier
-                                .size(22.dp)
-                                .graphicsLayer(rotationZ = chevron_rotation),
-                        )
-                    }
-                    AsterIconButton(
-                        icon = Icons.AutoMirrored.Filled.Reply,
-                        content_description = stringResource(R.string.reply),
-                        onClick = on_reply,
-                    )
-                    AsterIconButton(
-                        icon = Icons.Filled.MoreVert,
-                        content_description = stringResource(R.string.more_options),
-                        onClick = on_more,
-                        icon_size = 18,
+                            .size(22.dp)
+                            .graphicsLayer(rotationZ = chevron_rotation),
                     )
                 }
             }
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = AsterSpacing.md),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            AsterIconButton(
+                icon = Icons.AutoMirrored.Filled.Reply,
+                content_description = stringResource(R.string.reply),
+                onClick = on_reply,
+            )
+            AsterIconButton(
+                icon = Icons.Filled.MoreVert,
+                content_description = stringResource(R.string.more_options),
+                onClick = on_more,
+                icon_size = 18,
+            )
         }
 
         AnimatedVisibility(
@@ -1469,14 +1557,10 @@ private fun expanded_message(
         }
 
         if (!msg.body_html.isNullOrBlank()) {
-            val body_has_dark_hostile_styling = msg.body_html.contains(
-                Regex("background(?:-color)?\\s*[:=]\\s*[\"']?#?(?:fff|FFF|ffffff|FFFFFF|white)", RegexOption.IGNORE_CASE),
-            )
             email_html_view(
                 html = msg.body_html,
                 allow_external = allow_external,
                 access_token = access_token,
-                force_light = is_system && body_has_dark_hostile_styling,
                 on_ready = on_body_ready,
                 on_link_click = on_link_click,
                 modifier = Modifier
@@ -1978,6 +2062,9 @@ private fun message_details_dialog(
                 if (message.to_label.isNotBlank()) {
                     message_detail_row(stringResource(R.string.to_label), message.to_label)
                 }
+                resolve_received_on_address(message.raw_headers, message.to_addresses + message.cc_addresses, message.sender_email)?.let {
+                    message_detail_row(stringResource(R.string.received_on_label), it)
+                }
                 message_detail_row(
                     stringResource(R.string.date),
                     java.text.SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z", java.util.Locale.US)
@@ -2069,7 +2156,7 @@ private fun collapsed_message(
 ) {
     val colors = AsterMaterial.colors
 
-    val is_undecryptable = msg.sender_email.isBlank() && msg.body.isBlank()
+    val is_undecryptable = msg.is_undecryptable || (msg.sender_email.isBlank() && msg.body.isBlank())
 
     Column(modifier = Modifier.fillMaxWidth()) {
         if (show_top_divider) {
@@ -2689,12 +2776,13 @@ private object html_cache {
     }
     @Synchronized fun get(key: Long): String? = store[key]
     @Synchronized fun put(key: Long, value: String) { store[key] = value }
-    fun key(html_hash: Int, allow_external: Boolean, bg_hex: String, screen_w: Int = 0): Long {
+    fun key(html_hash: Int, allow_external: Boolean, bg_hex: String, screen_w: Int = 0, force_dark: Boolean = false): Long {
         var h = html_hash.toLong() and 0xFFFFFFFFL
         h = h * 31L + (if (allow_external) 1L else 0L)
         h = h * 31L + bg_hex.hashCode().toLong()
         h = h * 31L + org.astermail.android.BuildConfig.VERSION_CODE.toLong()
         h = h * 31L + screen_w.toLong()
+        h = h * 31L + (if (force_dark) 1L else 0L)
         return h
     }
 }
@@ -2765,6 +2853,7 @@ private fun email_html_view(
     }
     val forwarded_label = stringResource(R.string.forwarded_message_label)
     val image_blocked_label = stringResource(R.string.image_blocked_placeholder)
+    val force_dark_emails = is_dark && settings_state.preferences?.force_dark_emails == true
 
     var content_height_dp by remember(html) { mutableStateOf(0.dp) }
     var has_measured by remember(html) { mutableStateOf(false) }
@@ -2810,15 +2899,24 @@ private fun email_html_view(
                 "background-color:transparent;color:$fg_hex;margin:0;padding:6px 10px;font-family:$sys_font;font-size:14px;line-height:1.6;word-wrap:break-word"
         }
 
-        val dark_css = if (simple_dark) """
+        val invert_dark = force_dark_emails && is_html_body && !simple_dark
+        val dark_css = when {
+            simple_dark -> """
 html{color-scheme:dark!important}
 html,body{background-color:transparent!important;color:#e5e5e5!important}
 body *{color:inherit!important}
 a,a *{color:#60a5fa!important}
-""" else ""
+"""
+            invert_dark -> """
+html{background-color:#121212!important}
+body{filter:invert(0.93) hue-rotate(180deg)}
+body img,body picture,body video,body svg{filter:invert(1) hue-rotate(180deg)}
+"""
+            else -> ""
+        }
 
         val table_css = if (has_newsletter_layout) {
-            "#m{max-width:100%!important;overflow-x:hidden!important}#m table{max-width:100%!important;width:100%!important}#m img{max-width:100%!important;height:auto!important}td,th{min-width:0!important;box-sizing:border-box!important;max-width:100%!important}#m td,#m th,#m p,#m h1,#m h2,#m h3,#m h4,#m h5,#m h6,#m div,#m span,#m a{white-space:normal!important;overflow-wrap:break-word!important;word-wrap:break-word!important}"
+            "#m{max-width:100%!important;overflow-x:hidden!important;box-sizing:border-box!important;padding-left:16px!important;padding-right:16px!important}#m table{max-width:100%!important;width:100%!important}#m img{max-width:100%!important;height:auto!important}td,th{min-width:0!important;box-sizing:border-box!important;max-width:100%!important}#m td,#m th,#m p,#m h1,#m h2,#m h3,#m h4,#m h5,#m h6,#m div,#m span,#m a{white-space:normal!important;overflow-wrap:break-word!important;word-wrap:break-word!important}"
         } else {
             "table{max-width:100%!important;border-collapse:collapse;width:100%!important}td,th{overflow-wrap:break-word}"
         }
@@ -2907,36 +3005,51 @@ $dark_css
     if(full<=0)return full;
     var m_top=m.getBoundingClientRect().top;
     var wall=window.getComputedStyle(m).backgroundColor;
-    var max=0;
+    var content=0;
+    function consider(bottom){var v=bottom-m_top;if(v>content)content=v;}
+    try{
+      var tw=document.createTreeWalker(m,NodeFilter.SHOW_TEXT,null);
+      var rng=document.createRange();
+      while(tw.nextNode()){
+        var tn=tw.currentNode;
+        if(!tn.nodeValue||tn.nodeValue.trim().length===0)continue;
+        rng.selectNodeContents(tn);
+        var rects=rng.getClientRects();
+        for(var k=0;k<rects.length;k++){
+          var rr=rects[k];
+          if(rr.width<=0||rr.height<=0)continue;
+          consider(rr.bottom);
+        }
+      }
+    }catch(_){}
     var all=m.querySelectorAll('*');
     for(var i=0;i<all.length;i++){
       var e=all[i];
       var r=e.getBoundingClientRect();
       if(r.height<=0||r.width<=0)continue;
-      var meaningful=false;
       var tag=e.tagName;
-      if(tag==='IMG'){if(r.height>=4&&r.width>=4)meaningful=true;}
-      else if(tag==='HR'||tag==='VIDEO'||tag==='CANVAS'||tag==='SVG')meaningful=true;
-      if(!meaningful){
+      var vis=false;
+      if(tag==='IMG'){if(r.height>=4&&r.width>=4&&e.naturalWidth>1)vis=true;}
+      else if(tag==='HR'||tag==='VIDEO'||tag==='CANVAS'||tag==='SVG'||tag==='IFRAME')vis=true;
+      if(!vis){
         var cs=window.getComputedStyle(e);
-        var partial=r.height<full*0.9;
-        if(partial){
+        if(r.height<full*0.9){
           var bg=cs.backgroundColor;
-          if(bg&&bg!=='transparent'&&bg!=='rgba(0, 0, 0, 0)'&&bg!==wall)meaningful=true;
-          if(!meaningful&&cs.backgroundImage&&cs.backgroundImage!=='none')meaningful=true;
-          if(!meaningful&&parseFloat(cs.borderTopWidth||0)+parseFloat(cs.borderBottomWidth||0)>0)meaningful=true;
+          if(bg&&bg!=='transparent'&&bg!=='rgba(0, 0, 0, 0)'&&bg!==wall)vis=true;
+          if(!vis&&cs.backgroundImage&&cs.backgroundImage!=='none')vis=true;
+          if(!vis&&parseFloat(cs.borderBottomWidth||0)>0)vis=true;
         }
       }
-      if(!meaningful){
-        for(var c=0;c<e.childNodes.length;c++){
-          var n=e.childNodes[c];
-          if(n.nodeType===3&&n.nodeValue&&n.nodeValue.replace(/ /g,' ').trim().length>0){meaningful=true;break;}
-        }
+      if(vis){consider(r.bottom);continue;}
+      for(var c=0;c<e.childNodes.length;c++){
+        var n=e.childNodes[c];
+        if(n.nodeType===3&&n.nodeValue&&n.nodeValue.trim().length>0){consider(r.bottom);break;}
       }
-      if(meaningful){var bottom=r.bottom-m_top;if(bottom>max)max=bottom;}
     }
-    if(max<=0||max>=full)return full;
-    return Math.min(full,Math.ceil(max));
+    if(content<=0)return full;
+    var trailing=full-content;
+    if(trailing<=48)return full;
+    return Math.min(full,Math.ceil(content)+24);
   }
   function linkify_text_nodes(root){
     var url_re=/((?:https?:\/\/|www\.)[^\s<>"']+[^\s<>"'.,;:!?)\]}])|([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/g;
@@ -3084,13 +3197,14 @@ $dark_css
     val bg_color = if (!is_html_body_top) android.graphics.Color.TRANSPARENT
         else runCatching { android.graphics.Color.parseColor(bg_hex) }.getOrDefault(android.graphics.Color.BLACK)
 
-    val cache_key = remember(html, allow_external, bg_hex, screen_width_dp) { html_cache.key(html.hashCode(), allow_external, bg_hex, screen_width_dp) }
+    val cache_key = remember(html, allow_external, bg_hex, screen_width_dp, force_dark_emails) { html_cache.key(html.hashCode(), allow_external, bg_hex, screen_width_dp, force_dark_emails) }
     var prebuilt_html by remember(html, allow_external) { mutableStateOf<String?>(html_cache.get(cache_key)) }
-    var loaded_html by remember { mutableStateOf("") }
+    var loaded_built by remember { mutableStateOf("") }
     var loaded_external by remember { mutableStateOf(false) }
     val scale_ref = remember { floatArrayOf(1f) }
     val nl_scale_ref = remember { floatArrayOf(1f) }
     val is_nl_ref = remember { booleanArrayOf(false) }
+    var long_pressed_link by remember { mutableStateOf<String?>(null) }
 
     val height_sink = remember {
         height_channel { h, exact ->
@@ -3116,47 +3230,14 @@ $dark_css
             val suffix = match.groupValues[3]
             "${prefix}data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==${suffix}"
         }
-        if (!allow_external) return EmailHtmlSanitizer.replace_blocked_images(cid_normalized, image_blocked_label)
-        val protocol_normalized = PROXY_PROTOCOL_RELATIVE_SRC_PATTERN.replace(cid_normalized) { match ->
-            "${match.groupValues[1]}https:${match.groupValues[2]}${match.groupValues[3]}"
+        if (!allow_external) {
+            val imgs_blocked = EmailHtmlSanitizer.replace_blocked_images(cid_normalized, image_blocked_label)
+            return EmailHtmlSanitizer.neutralize_blocked_backgrounds(imgs_blocked)
         }
-        val src_replaced = PROXY_SRC_PATTERN.replace(protocol_normalized) { match ->
-            val prefix = match.groupValues[1]
-            val url = match.groupValues[2].replace("&amp;", "&")
-            val suffix = match.groupValues[3]
-            val encoded = java.net.URLEncoder.encode(url, "UTF-8")
-            "$prefix$proxy_base$encoded$suffix"
-        }
-        val srcset_replaced = PROXY_SRCSET_PATTERN.replace(src_replaced) { match ->
-            val prefix = match.groupValues[1]
-            val srcset_value = match.groupValues[2]
-            val suffix = match.groupValues[3]
-            val proxied = srcset_value.split(",").joinToString(",") { entry ->
-                val parts = entry.trim().split(Regex("\\s+"), 2)
-                val url = parts[0]
-                val descriptor = if (parts.size > 1) " ${parts[1]}" else ""
-                if (url.startsWith("http://") || url.startsWith("https://")) {
-                    val encoded = java.net.URLEncoder.encode(url, "UTF-8")
-                    "$proxy_base$encoded$descriptor"
-                } else if (url.startsWith("//")) {
-                    val encoded = java.net.URLEncoder.encode("https:$url", "UTF-8")
-                    "$proxy_base$encoded$descriptor"
-                } else {
-                    ""
-                }
-            }
-            "$prefix$proxied$suffix"
-        }
-        return PROXY_CSS_URL_PATTERN.replace(srcset_replaced) { match ->
-            val prefix = match.groupValues[1]
-            val url = match.groupValues[2].replace("&amp;", "&")
-            val suffix = match.groupValues[3]
-            val encoded = java.net.URLEncoder.encode(url, "UTF-8")
-            "$prefix$proxy_base$encoded$suffix"
-        }
+        return proxy_external_urls(cid_normalized, proxy_base)
     }
 
-    LaunchedEffect(html, allow_external, bg_hex) {
+    LaunchedEffect(html, allow_external, bg_hex, force_dark_emails) {
         scale_ref[0] = 1f
         val cached = html_cache.get(cache_key)
         if (cached != null) {
@@ -3225,9 +3306,6 @@ $dark_css
 })()"""
                 val fit_and_measure_js = """(function(){window.__aster_fit&&window.__aster_fit();})()"""
                 val email_prefs = settings_vm.state.value.preferences
-                if (email_prefs?.force_dark_emails == true) {
-                    view?.evaluateJavascript("""(function(){var s=document.createElement('style');s.textContent='html,body,table,td,div,p{background-color:#141414!important;color:#f0f0f0!important}a{color:#818cf8!important}img{filter:brightness(0.85)}';document.head.appendChild(s);})()""", null)
-                }
                 if (email_prefs?.underline_links == true) {
                     view?.evaluateJavascript("""(function(){var s=document.createElement('style');s.textContent='a{text-decoration:underline!important}';document.head.appendChild(s);})()""", null)
                 }
@@ -3290,7 +3368,7 @@ $dark_css
         }
     }
 
-    Box(modifier = modifier.background(colors.bg_primary), contentAlignment = Alignment.Center) {
+    Box(modifier = modifier.background(if (is_nl_ref[0] && !force_dark_emails) androidx.compose.ui.graphics.Color.White else colors.bg_primary), contentAlignment = Alignment.Center) {
         if (!has_measured) {
             email_body_skeleton(
                 modifier = Modifier
@@ -3357,6 +3435,32 @@ $dark_css
                         }
                         false
                     }
+                    setOnLongClickListener {
+                        val hit = hitTestResult
+                        fun is_web_link(href: String?): Boolean =
+                            href != null && (href.startsWith("http://") || href.startsWith("https://"))
+                        when (hit.type) {
+                            android.webkit.WebView.HitTestResult.SRC_ANCHOR_TYPE -> {
+                                val href = hit.extra
+                                if (is_web_link(href)) {
+                                    long_pressed_link = href
+                                    true
+                                } else {
+                                    false
+                                }
+                            }
+                            android.webkit.WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE -> {
+                                val handler = android.os.Handler(android.os.Looper.getMainLooper()) { msg ->
+                                    val href = msg.data.getString("url")
+                                    if (is_web_link(href)) long_pressed_link = href
+                                    true
+                                }
+                                requestFocusNodeHref(handler.obtainMessage())
+                                true
+                            }
+                            else -> false
+                        }
+                    }
                     webChromeClient = object : android.webkit.WebChromeClient() {
                         override fun onConsoleMessage(message: android.webkit.ConsoleMessage?): Boolean {
                             val msg = message?.message() ?: return false
@@ -3384,10 +3488,10 @@ $dark_css
                 web_view.settings.blockNetworkImage = !allow_external
                 web_view.settings.mixedContentMode =
                     android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
-                if (loaded_html != html || loaded_external != allow_external) {
-                    if (loaded_html != html) has_measured = false
-                    web_view.setBackgroundColor(if (is_newsletter) android.graphics.Color.WHITE else bg_color)
-                    loaded_html = html
+                if (loaded_built != built || loaded_external != allow_external) {
+                    if (loaded_built != built) has_measured = false
+                    web_view.setBackgroundColor(if (is_newsletter && !force_dark_emails) android.graphics.Color.WHITE else bg_color)
+                    loaded_built = built
                     loaded_external = allow_external
                     is_nl_ref[0] = is_newsletter
                     nl_scale_ref[0] = if (is_newsletter) {
@@ -3430,7 +3534,7 @@ $dark_css
                     label = "web_reveal",
                 )
                 Modifier
-                    .then(if (is_nl_ref[0]) Modifier.padding(horizontal = 12.dp) else Modifier)
+                    .padding(horizontal = 16.dp)
                     .height(animated_h)
                     .alpha(reveal)
             },
@@ -3443,6 +3547,61 @@ $dark_css
                 }
             },
         )
+    }
+
+    long_pressed_link?.let { link ->
+        link_options_sheet(url = link, on_close = { long_pressed_link = null })
+    }
+}
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun link_options_sheet(
+    url: String,
+    on_close: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val context = LocalContext.current
+    val copied_label = stringResource(R.string.link_copied)
+    val state = rememberModalBottomSheetState()
+    ModalBottomSheet(
+        onDismissRequest = on_close,
+        sheetState = state,
+        containerColor = colors.bg_card,
+        tonalElevation = 0.dp,
+        dragHandle = { AsterDragHandle() },
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(top = AsterSpacing.xs),
+        ) {
+            Text(
+                text = url,
+                color = colors.text_secondary,
+                fontSize = 13.sp,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(horizontal = AsterSpacing.xl, vertical = AsterSpacing.sm),
+            )
+            AsterDivider()
+            sheet_row(stringResource(R.string.copy_link), colors.text_primary) {
+                val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("link", url))
+                Toast.makeText(context, copied_label, Toast.LENGTH_SHORT).show()
+                on_close()
+            }
+            sheet_row(stringResource(R.string.share_link), colors.text_primary) {
+                val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(android.content.Intent.EXTRA_TEXT, url)
+                }
+                context.startActivity(android.content.Intent.createChooser(send, null))
+                on_close()
+            }
+            Spacer(Modifier.height(AsterSpacing.md))
+        }
     }
 }
 

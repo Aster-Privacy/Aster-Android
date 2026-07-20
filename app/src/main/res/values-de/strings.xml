@@ -209,6 +209,7 @@
     <string name="swipe_mark_as_unread">Als ungelesen markieren</string>
     <string name="swipe_report_spam">Als Spam melden</string>
     <string name="swipe_move_to_inbox">In Posteingang verschieben</string>
+    <string name="swipe_none">Keine</string>
 
     <string name="has_attachment">Hat Anhang</string>
     <string name="starred">Markiert</string>
@@ -253,6 +254,8 @@
     <string name="stop_receiving_from">Nicht mehr empfangen von</string>
     <string name="external_content_blocked">Externe Bilder, Schriftarten und Tracker blockiert</string>
     <string name="e2e_encrypted_message">Ende-zu-Ende-verschlüsselte Nachricht</string>
+    <string name="e2e_encryption_failed">Senden fehlgeschlagen: Ende-zu-Ende-Verschlüsselung fehlgeschlagen. Die Nachricht wurde nicht gesendet.</string>
+    <string name="e2e_keys_not_ready">Senden fehlgeschlagen: Verschlüsselungsschlüssel sind noch nicht bereit. Die Nachricht wurde nicht gesendet.</string>
     <string name="e2e_no_key_description">Diese Nachricht ist mit einem Schlüssel verschlüsselt, den dieses Gerät noch nicht besitzt. Öffnen Sie sie in der Aster-Webanwendung, um sie zu lesen.</string>
     <string name="no_body">(kein Inhalt)</string>
     <string name="attachments_count">%d Anhang/Anhänge</string>
@@ -334,6 +337,7 @@
     <string name="search_mail">E-Mails durchsuchen</string>
     <string name="send_problem_title">Problem beim Senden der E-Mail</string>
     <string name="send_problem_message">Ihre Nachricht konnte noch nicht gesendet werden. Die App versucht es im Hintergrund weiter.</string>
+    <string name="search_aliases">Aliase durchsuchen</string>
     <string name="filter_from">Von</string>
     <string name="filter_to">An</string>
     <string name="filter_has_attachment">Mit Anhang</string>
@@ -374,6 +378,11 @@
     <string name="syncing">Synchronisierung</string>
     <string name="sync_contacts">Kontakte synchronisieren</string>
     <string name="search_contacts">Kontakte suchen</string>
+    <string name="alias_note_title">Alias-Notiz</string>
+    <string name="alias_note_hint">Nur du kannst diese Notiz sehen</string>
+    <string name="alias_note_placeholder">Wo du diesen Alias nutzt, Anmeldedatum, alles Nützliche</string>
+    <string name="alias_note_add">Notiz hinzufügen</string>
+    <string name="alias_note_updated">Notiz aktualisiert</string>
     <string name="tab_all">Alle</string>
     <string name="tab_favorites">Favoriten</string>
     <string name="contacts_count">%d Kontakte</string>
@@ -427,9 +436,14 @@
     <string name="no_aliases_yet">Noch keine Aliase</string>
     <string name="create_folder">Ordner erstellen</string>
     <string name="folder_name">Ordnername</string>
+    <string name="parent_folder">Übergeordneter Ordner</string>
+    <string name="parent_folder_none">Keiner</string>
+    <string name="move_folder_up">Nach oben</string>
+    <string name="move_folder_down">Nach unten</string>
     <string name="create_label">Label erstellen</string>
     <string name="label_name">Labelname</string>
     <string name="create_alias">Alias erstellen</string>
+    <string name="create_alias_invalid_chars">Buchstaben, Zahlen, Punkte, Unterstriche und Bindestriche sind erlaubte Zeichen.</string>
     <string name="alias_placeholder">benutzername@astermail.org</string>
     <string name="accounts">Konten</string>
     <string name="add_account">Konto hinzufügen</string>
@@ -670,6 +684,7 @@
     <string name="forwards_to_inbox">Weiterleitung an Ihren Posteingang</string>
     <string name="delete_alias">Alias löschen</string>
     <string name="custom_domains">Benutzerdefinierte Domains</string>
+    <string name="alias_view_custom">Benutzerdefinierte Aliase</string>
     <string name="custom_domains_desktop_only">Benutzerdefinierte Domains müssen auf dem Desktop verwaltet werden</string>
     <string name="custom_domains_description">Das Hinzufügen und Konfigurieren benutzerdefinierter Domains erfordert DNS-Einrichtung und ist nur über die Desktop-App verfügbar.</string>
     <string name="open_on_desktop">Auf dem Desktop öffnen</string>
@@ -691,6 +706,7 @@
     <string name="no_link_available">Kein Link verfügbar</string>
     <string name="link_copied">Link in Zwischenablage kopiert</string>
     <string name="copy_link">Link kopieren</string>
+    <string name="share_link">Link teilen</string>
     <string name="credits_title">Guthaben</string>
     <string name="credits_subtitle">Verdienen Sie Aster-Guthaben, indem Sie verschiedene Aufgaben erledigen.</string>
     <string name="credits_balance_label">Verfügbares Guthaben</string>
@@ -741,6 +757,7 @@
     <string name="current">Aktuell</string>
     <string name="unlimited_aliases">Unbegrenzte Aliase</string>
     <string name="aliases_count">%d Aliase</string>
+    <string name="alias_page_indicator">Seite %1$d von %2$d</string>
     <string name="unlimited_domains">Unbegrenzte Domains</string>
     <string name="domains_count">%d Domains</string>
     <string name="cancel_subscription_title">Abonnement kündigen</string>
@@ -893,11 +910,14 @@
     <string name="ext_error_oauth_failed">Anmeldung konnte nicht gestartet werden. Verbindung prüfen und erneut versuchen.</string>
     <string name="ext_error_manual_failed">Konto konnte nicht gespeichert werden. Host, Port und Zugangsdaten prüfen.</string>
     <string name="ext_error_no_session">Sitzung abgelaufen. Abmelden und neu anmelden, um fortzufahren.</string>
+    <string name="ext_error_sync_failed">Synchronisierung fehlgeschlagen. Zugangsdaten des Kontos prüfen und erneut versuchen.</string>
     <string name="ext_manual_saved">Konto hinzugefügt. Synchronisierung beginnt…</string>
     <string name="ext_last_sync">Letzte Synchronisierung: %1$s</string>
     <string name="ext_section_oauth">Schnellwechsel</string>
-    <string name="ext_oauth_coming_soon">Bald in Android verfügbar</string>
-    <string name="ext_oauth_coming_soon_body">Google-, Outlook- und Yahoo-Anmeldung folgen in einer kommenden Android-Version. Verwenden Sie vorerst die manuelle Einrichtung unten mit einem App-Passwort.</string>
+    <string name="ext_oauth_body">Melden Sie sich mit Ihrem Anbieter an, um ein Konto in einem Schritt zu verbinden.</string>
+    <string name="ext_oauth_connect_google">Mit Google anmelden</string>
+    <string name="ext_oauth_connect_microsoft">Mit Microsoft anmelden</string>
+    <string name="ext_oauth_connect_yahoo">Mit Yahoo anmelden</string>
     <string name="import_provider_coming_soon">Demnächst</string>
     <string name="import_connect_manual_cta">Per IMAP verbinden</string>
     <string name="ext_section_manual">Manuelle Einrichtung</string>
@@ -1276,4 +1296,18 @@
     <string name="pending_deletion_error">Ihr Konto konnte nicht wiederhergestellt werden. Bitte versuchen Sie es erneut.</string>
     <string name="pending_deletion_restored">Willkommen zurück. Ihr Konto wurde wiederhergestellt.</string>
     <string name="image_blocked_placeholder">[Bild blockiert]</string>
+    <string name="alias_available">Dieser Alias ist verfügbar.</string>
+    <string name="alias_not_available">Dieser Alias ist bereits vergeben.</string>
+    <string name="alias_check_failed">Verfügbarkeit konnte nicht geprüft werden. Du kannst dennoch versuchen, ihn zu erstellen.</string>
+    <string name="csrf_unavailable">Diese Sitzung ist fehlerhaft! Bitte melden Sie sich erneut an.</string>
+    <string name="received_on_prefix">empfangen an %s</string>
+    <string name="received_on_label">Empfangen an</string>
+    <string name="auto_advance_label">Nach Archivieren oder Löschen</string>
+    <string name="auto_advance_next">Zur nächsten E-Mail</string>
+    <string name="auto_advance_previous">Zur vorherigen E-Mail</string>
+    <string name="auto_advance_back">Zurück zur E-Mail-Liste</string>
+    <string name="reply_from_mismatch_title">Von einer anderen Adresse antworten?</string>
+    <string name="reply_from_mismatch_message">Diese E-Mail wurde auf %1$s empfangen, deine Antwort wird aber von %2$s gesendet. Eine Antwort von einer anderen Adresse kann diese dem Absender offenlegen und die Antwort kann abgelehnt werden.</string>
+    <string name="reply_from_mismatch_use_received">Empfangsadresse verwenden</string>
+    <string name="reply_from_mismatch_send_anyway">Trotzdem senden</string>
 </resources>

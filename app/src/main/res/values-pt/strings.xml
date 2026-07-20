@@ -208,6 +208,7 @@
     <string name="swipe_mark_as_unread">Marcar como não lido</string>
     <string name="swipe_report_spam">Denunciar como spam</string>
     <string name="swipe_move_to_inbox">Mover para caixa de entrada</string>
+    <string name="swipe_none">Nenhuma</string>
 
     <string name="has_attachment">tem anexo</string>
     <string name="starred">com estrela</string>
@@ -252,6 +253,8 @@
     <string name="stop_receiving_from">Parar de receber de</string>
     <string name="external_content_blocked">Imagens externas, fontes e rastreadores bloqueados</string>
     <string name="e2e_encrypted_message">Mensagem com criptografia de ponta a ponta</string>
+    <string name="e2e_encryption_failed">Não foi possível enviar: falha na criptografia de ponta a ponta. A mensagem não foi enviada.</string>
+    <string name="e2e_keys_not_ready">Não foi possível enviar: as chaves de criptografia ainda não estão prontas. A mensagem não foi enviada.</string>
     <string name="e2e_no_key_description">Esta mensagem está criptografada com uma chave que este dispositivo ainda não possui. Abra-a no aplicativo web Aster para ler.</string>
     <string name="no_body">(sem corpo)</string>
     <string name="attachments_count">%d anexo(s)</string>
@@ -333,6 +336,7 @@
     <string name="search_mail">Pesquisar e-mail</string>
     <string name="send_problem_title">Problema ao enviar e-mail</string>
     <string name="send_problem_message">Ainda não foi possível enviar a sua mensagem. A aplicação continuará a tentar em segundo plano.</string>
+    <string name="search_aliases">Pesquisar aliases</string>
     <string name="filter_from">De</string>
     <string name="filter_to">Para</string>
     <string name="filter_has_attachment">Tem anexo</string>
@@ -373,6 +377,11 @@
     <string name="syncing">Sincronizando</string>
     <string name="sync_contacts">Sincronizar contatos</string>
     <string name="search_contacts">Pesquisar contatos</string>
+    <string name="alias_note_title">Nota do alias</string>
+    <string name="alias_note_hint">Só você pode ver esta nota</string>
+    <string name="alias_note_placeholder">Onde você usa este alias, data de cadastro, qualquer info útil</string>
+    <string name="alias_note_add">Adicionar nota</string>
+    <string name="alias_note_updated">Nota atualizada</string>
     <string name="tab_all">Todos</string>
     <string name="tab_favorites">Favoritos</string>
     <string name="contacts_count">%d contatos</string>
@@ -426,9 +435,14 @@
     <string name="no_aliases_yet">Nenhum alias ainda</string>
     <string name="create_folder">Criar pasta</string>
     <string name="folder_name">Nome da pasta</string>
+    <string name="parent_folder">Pasta principal</string>
+    <string name="parent_folder_none">Nenhuma</string>
+    <string name="move_folder_up">Mover para cima</string>
+    <string name="move_folder_down">Mover para baixo</string>
     <string name="create_label">Criar etiqueta</string>
     <string name="label_name">Nome da etiqueta</string>
     <string name="create_alias">Criar alias</string>
+    <string name="create_alias_invalid_chars">Letras, números, pontos, sublinhados e hifens são os caracteres permitidos.</string>
     <string name="alias_placeholder">username@astermail.org</string>
     <string name="accounts">Contas</string>
     <string name="add_account">Adicionar conta</string>
@@ -669,6 +683,7 @@
     <string name="forwards_to_inbox">Encaminha para sua caixa de entrada</string>
     <string name="delete_alias">Excluir alias</string>
     <string name="custom_domains">Domínios personalizados</string>
+    <string name="alias_view_custom">Aliases personalizados</string>
     <string name="custom_domains_desktop_only">Domínios personalizados devem ser gerenciados no desktop</string>
     <string name="custom_domains_description">Adicionar e configurar domínios personalizados requer configuração de DNS e está disponível apenas pelo aplicativo desktop.</string>
     <string name="open_on_desktop">Abrir no desktop</string>
@@ -690,6 +705,7 @@
     <string name="no_link_available">Nenhum link disponível</string>
     <string name="link_copied">Link copiado para a área de transferência</string>
     <string name="copy_link">Copiar link</string>
+    <string name="share_link">Compartilhar link</string>
     <string name="credits_title">Créditos</string>
     <string name="credits_subtitle">Ganhe créditos Aster completando diferentes tarefas.</string>
     <string name="credits_balance_label">Saldo disponível</string>
@@ -740,6 +756,7 @@
     <string name="current">Atual</string>
     <string name="unlimited_aliases">Aliases ilimitados</string>
     <string name="aliases_count">%d aliases</string>
+    <string name="alias_page_indicator">Página %1$d de %2$d</string>
     <string name="unlimited_domains">Domínios ilimitados</string>
     <string name="domains_count">%d domínios</string>
     <string name="cancel_subscription_title">Cancelar assinatura</string>
@@ -892,11 +909,14 @@
     <string name="ext_error_oauth_failed">Não foi possível iniciar o login. Verifique sua conexão e tente novamente.</string>
     <string name="ext_error_manual_failed">Não foi possível salvar a conta. Verifique o host, porta e credenciais.</string>
     <string name="ext_error_no_session">Sua sessão expirou. Saia e entre novamente para continuar.</string>
+    <string name="ext_error_sync_failed">Falha na sincronização. Verifique as credenciais da conta e tente novamente.</string>
     <string name="ext_manual_saved">Conta adicionada. Sincronização iniciando…</string>
     <string name="ext_last_sync">Última sincronização: %1$s</string>
     <string name="ext_section_oauth">Troca rápida</string>
-    <string name="ext_oauth_coming_soon">Em breve no Android</string>
-    <string name="ext_oauth_coming_soon_body">Login com Google, Outlook e Yahoo chegará ao Android em uma versão futura. Por enquanto, use a configuração manual abaixo com uma senha de app.</string>
+    <string name="ext_oauth_body">Entre com seu provedor para conectar uma conta em uma única etapa.</string>
+    <string name="ext_oauth_connect_google">Entrar com o Google</string>
+    <string name="ext_oauth_connect_microsoft">Entrar com a Microsoft</string>
+    <string name="ext_oauth_connect_yahoo">Entrar com o Yahoo</string>
     <string name="import_provider_coming_soon">Em breve</string>
     <string name="import_connect_manual_cta">Conectar via IMAP</string>
     <string name="ext_section_manual">Configuração manual</string>
@@ -1275,4 +1295,18 @@
     <string name="pending_deletion_error">Não foi possível restaurar sua conta. Tente novamente.</string>
     <string name="pending_deletion_restored">Bem-vindo de volta. Sua conta foi restaurada.</string>
     <string name="image_blocked_placeholder">[Imagem bloqueada]</string>
+    <string name="alias_available">Este alias está disponível.</string>
+    <string name="alias_not_available">Este alias já está em uso.</string>
+    <string name="alias_check_failed">Não foi possível verificar a disponibilidade. Você ainda pode tentar criá-lo.</string>
+    <string name="csrf_unavailable">Esta sessão está corrompida! Faça login novamente.</string>
+    <string name="received_on_prefix">recebido em %s</string>
+    <string name="received_on_label">Recebido em</string>
+    <string name="auto_advance_label">Depois de arquivar ou excluir</string>
+    <string name="auto_advance_next">Ir para o próximo e-mail</string>
+    <string name="auto_advance_previous">Ir para o e-mail anterior</string>
+    <string name="auto_advance_back">Voltar à lista de e-mails</string>
+    <string name="reply_from_mismatch_title">Responder de outro endereço?</string>
+    <string name="reply_from_mismatch_message">Este e-mail foi recebido em %1$s, mas sua resposta será enviada de %2$s. Responder de outro endereço pode revelá-lo ao remetente e a resposta pode ser rejeitada.</string>
+    <string name="reply_from_mismatch_use_received">Usar endereço de recebimento</string>
+    <string name="reply_from_mismatch_send_anyway">Enviar mesmo assim</string>
 </resources>
