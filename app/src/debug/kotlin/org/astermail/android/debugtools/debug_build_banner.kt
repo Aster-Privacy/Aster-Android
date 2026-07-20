@@ -127,6 +127,7 @@ private fun debug_build_notice(modifier: Modifier, on_collapse: () -> Unit) {
     Column(
         modifier = modifier
             .widthIn(max = 420.dp)
+            .clickable(onClick = on_collapse)
             .background(colors.bg_card, RoundedCornerShape(10.dp))
             .border(1.dp, colors.warning.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
             .padding(horizontal = 12.dp, vertical = 10.dp),
@@ -136,7 +137,6 @@ private fun debug_build_notice(modifier: Modifier, on_collapse: () -> Unit) {
             color = colors.warning,
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.clickable(onClick = on_collapse),
         )
         Text(
             text = annotated,
