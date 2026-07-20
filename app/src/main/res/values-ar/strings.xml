@@ -334,6 +334,9 @@
     <string name="save_failed">فشل الحفظ</string>
 
     <string name="search_mail">البحث في البريد</string>
+    <string name="send_problem_title">مشكلة في إرسال البريد</string>
+    <string name="send_problem_message">تعذر إرسال رسالتك حتى الآن. سيواصل التطبيق المحاولة في الخلفية.</string>
+    <string name="search_aliases">البحث في الأسماء المستعارة</string>
     <string name="filter_from">من</string>
     <string name="filter_to">إلى</string>
     <string name="filter_has_attachment">يحتوي على مرفق</string>
@@ -374,7 +377,6 @@
     <string name="syncing">جارٍ المزامنة</string>
     <string name="sync_contacts">مزامنة جهات الاتصال</string>
     <string name="search_contacts">البحث في جهات الاتصال</string>
-    <string name="search_aliases">البحث في الأسماء المستعارة…</string>
     <string name="alias_note_title">ملاحظة الاسم المستعار</string>
     <string name="alias_note_hint">أنت وحدك من يمكنه رؤية هذه الملاحظة</string>
     <string name="alias_note_placeholder">أين تستخدم هذا الاسم المستعار، تاريخ التسجيل، أي معلومات مفيدة</string>
@@ -433,6 +435,10 @@
     <string name="no_aliases_yet">لا أسماء مستعارة بعد</string>
     <string name="create_folder">إنشاء مجلد</string>
     <string name="folder_name">اسم المجلد</string>
+    <string name="parent_folder">المجلد الأصل</string>
+    <string name="parent_folder_none">بدون</string>
+    <string name="move_folder_up">تحريك لأعلى</string>
+    <string name="move_folder_down">تحريك لأسفل</string>
     <string name="create_label">إنشاء تصنيف</string>
     <string name="label_name">اسم التصنيف</string>
     <string name="create_alias">إنشاء اسم مستعار</string>
@@ -677,6 +683,7 @@
     <string name="forwards_to_inbox">يحول إلى صندوق الوارد</string>
     <string name="delete_alias">حذف الاسم المستعار</string>
     <string name="custom_domains">نطاقات مخصصة</string>
+    <string name="alias_view_custom">الأسماء المستعارة المخصصة</string>
     <string name="custom_domains_desktop_only">يجب إدارة النطاقات المخصصة من سطح المكتب</string>
     <string name="custom_domains_description">إضافة وتكوين النطاقات المخصصة تتطلب إعداد DNS وهي متاحة فقط من خلال تطبيق سطح المكتب.</string>
     <string name="open_on_desktop">فتح على سطح المكتب</string>
@@ -749,6 +756,7 @@
     <string name="current">الحالي</string>
     <string name="unlimited_aliases">أسماء مستعارة غير محدودة</string>
     <string name="aliases_count">%d أسماء مستعارة</string>
+    <string name="alias_page_indicator">الصفحة %1$d من %2$d</string>
     <string name="unlimited_domains">نطاقات غير محدودة</string>
     <string name="domains_count">%d نطاقات</string>
     <string name="cancel_subscription_title">إلغاء الاشتراك</string>
@@ -1296,6 +1304,10 @@
     <string name="pending_deletion_error">تعذّرت استعادة حسابك. يرجى المحاولة مرة أخرى.</string>
     <string name="pending_deletion_restored">مرحبًا بعودتك. تمت استعادة حسابك.</string>
     <string name="image_blocked_placeholder">[تم حظر الصورة]</string>
+    <string name="alias_available">هذا الاسم المستعار متاح.</string>
+    <string name="alias_not_available">هذا الاسم المستعار مستخدم بالفعل.</string>
+    <string name="alias_check_failed">تعذر التحقق من التوفر. لا يزال بإمكانك محاولة إنشائه.</string>
+    <string name="csrf_unavailable">هذه الجلسة معطوبة! يرجى تسجيل الدخول مرة أخرى.</string>
     <string name="received_on_prefix">تم الاستلام على %s</string>
     <string name="received_on_label">تم الاستلام على</string>
     <string name="auto_advance_label">بعد الأرشفة أو الحذف</string>

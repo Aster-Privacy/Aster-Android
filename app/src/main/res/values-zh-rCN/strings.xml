@@ -334,6 +334,9 @@
     <string name="save_failed">保存失败</string>
 
     <string name="search_mail">搜索邮件</string>
+    <string name="send_problem_title">邮件发送出现问题</string>
+    <string name="send_problem_message">您的邮件尚未发送成功。应用将在后台继续重试。</string>
+    <string name="search_aliases">搜索别名</string>
     <string name="filter_from">发件人</string>
     <string name="filter_to">收件人</string>
     <string name="filter_has_attachment">有附件</string>
@@ -374,7 +377,6 @@
     <string name="syncing">同步中</string>
     <string name="sync_contacts">同步联系人</string>
     <string name="search_contacts">搜索联系人</string>
-    <string name="search_aliases">搜索别名……</string>
     <string name="alias_note_title">别名备注</string>
     <string name="alias_note_hint">只有你能看到这条备注</string>
     <string name="alias_note_placeholder">此别名的用途、注册日期等任何有用信息</string>
@@ -433,6 +435,10 @@
     <string name="no_aliases_yet">还没有别名</string>
     <string name="create_folder">创建文件夹</string>
     <string name="folder_name">文件夹名称</string>
+    <string name="parent_folder">上级文件夹</string>
+    <string name="parent_folder_none">无</string>
+    <string name="move_folder_up">上移</string>
+    <string name="move_folder_down">下移</string>
     <string name="create_label">创建标签</string>
     <string name="label_name">标签名称</string>
     <string name="create_alias">创建别名</string>
@@ -677,6 +683,7 @@
     <string name="forwards_to_inbox">转发到收件箱</string>
     <string name="delete_alias">删除别名</string>
     <string name="custom_domains">自定义域名</string>
+    <string name="alias_view_custom">自定义别名</string>
     <string name="custom_domains_desktop_only">自定义域名需在桌面端管理</string>
     <string name="custom_domains_description">添加和配置自定义域名需要 DNS 设置，仅通过桌面应用可用。</string>
     <string name="open_on_desktop">在桌面端打开</string>
@@ -749,6 +756,7 @@
     <string name="current">当前</string>
     <string name="unlimited_aliases">无限别名</string>
     <string name="aliases_count">%d 个别名</string>
+    <string name="alias_page_indicator">第 %1$d 页，共 %2$d 页</string>
     <string name="unlimited_domains">无限域名</string>
     <string name="domains_count">%d 个域名</string>
     <string name="cancel_subscription_title">取消订阅</string>
@@ -1286,6 +1294,10 @@
     <string name="pending_deletion_error">无法恢复您的账户。请重试。</string>
     <string name="pending_deletion_restored">欢迎回来。您的账户已恢复。</string>
     <string name="image_blocked_placeholder">[图片已被拦截]</string>
+    <string name="alias_available">此别名可用。</string>
+    <string name="alias_not_available">此别名已被占用。</string>
+    <string name="alias_check_failed">无法检查可用性。你仍然可以尝试创建。</string>
+    <string name="csrf_unavailable">此会话已损坏！请重新登录。</string>
     <string name="received_on_prefix">通过 %s 接收</string>
     <string name="received_on_label">接收地址</string>
     <string name="auto_advance_label">归档或删除后</string>

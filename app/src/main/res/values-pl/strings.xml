@@ -334,6 +334,9 @@
     <string name="save_failed">Nie udało się zapisać</string>
 
     <string name="search_mail">Szukaj w poczcie</string>
+    <string name="send_problem_title">Problem z wysyłaniem poczty</string>
+    <string name="send_problem_message">Twojej wiadomości nie udało się jeszcze wysłać. Aplikacja będzie ponawiać próby w tle.</string>
+    <string name="search_aliases">Szukaj aliasów</string>
     <string name="filter_from">Od</string>
     <string name="filter_to">Do</string>
     <string name="filter_has_attachment">Ma załącznik</string>
@@ -374,7 +377,6 @@
     <string name="syncing">Synchronizacja</string>
     <string name="sync_contacts">Synchronizuj kontakty</string>
     <string name="search_contacts">Szukaj kontaktów</string>
-    <string name="search_aliases">Szukaj aliasów…</string>
     <string name="alias_note_title">Notatka aliasu</string>
     <string name="alias_note_hint">Tylko Ty widzisz tę notatkę</string>
     <string name="alias_note_placeholder">Gdzie używasz tego aliasu, data rejestracji, cokolwiek przydatnego</string>
@@ -433,6 +435,10 @@
     <string name="no_aliases_yet">Brak aliasów</string>
     <string name="create_folder">Utwórz folder</string>
     <string name="folder_name">Nazwa folderu</string>
+    <string name="parent_folder">Folder nadrzędny</string>
+    <string name="parent_folder_none">Brak</string>
+    <string name="move_folder_up">Przenieś w górę</string>
+    <string name="move_folder_down">Przenieś w dół</string>
     <string name="create_label">Utwórz etykietę</string>
     <string name="label_name">Nazwa etykiety</string>
     <string name="create_alias">Utwórz alias</string>
@@ -677,6 +683,7 @@
     <string name="forwards_to_inbox">Przekierowuje do skrzynki odbiorczej</string>
     <string name="delete_alias">Usuń alias</string>
     <string name="custom_domains">Domeny niestandardowe</string>
+    <string name="alias_view_custom">Aliasy niestandardowe</string>
     <string name="custom_domains_desktop_only">Domeny niestandardowe muszą być zarządzane na komputerze</string>
     <string name="custom_domains_description">Dodawanie i konfigurowanie domen niestandardowych wymaga ustawień DNS i jest dostępne tylko w aplikacji desktopowej.</string>
     <string name="open_on_desktop">Otwórz na komputerze</string>
@@ -749,6 +756,7 @@
     <string name="current">Aktualny</string>
     <string name="unlimited_aliases">Nieograniczone aliasy</string>
     <string name="aliases_count">%d aliasów</string>
+    <string name="alias_page_indicator">Strona %1$d z %2$d</string>
     <string name="unlimited_domains">Nieograniczone domeny</string>
     <string name="domains_count">%d domen</string>
     <string name="cancel_subscription_title">Anuluj subskrypcję</string>
@@ -1292,6 +1300,10 @@
     <string name="pending_deletion_error">Nie można przywrócić konta. Spróbuj ponownie.</string>
     <string name="pending_deletion_restored">Witaj ponownie. Twoje konto zostało przywrócone.</string>
     <string name="image_blocked_placeholder">[Obraz zablokowany]</string>
+    <string name="alias_available">Ten alias jest dostępny.</string>
+    <string name="alias_not_available">Ten alias jest już zajęty.</string>
+    <string name="alias_check_failed">Nie można sprawdzić dostępności. Nadal możesz spróbować go utworzyć.</string>
+    <string name="csrf_unavailable">Ta sesja jest uszkodzona! Zaloguj się ponownie.</string>
     <string name="received_on_prefix">odebrano na %s</string>
     <string name="received_on_label">Odebrano na</string>
     <string name="auto_advance_label">Po archiwizacji lub usunięciu</string>

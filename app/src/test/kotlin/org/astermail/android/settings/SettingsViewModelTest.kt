@@ -1254,6 +1254,101 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `create_folder sends parent_token and sort_order and encrypts the name`() = runTest {
+        val request_slot = io.mockk.slot<org.astermail.android.api.labels.CreateLabelRequest>()
+        every { session_key_store.get_identity_key() } returns "test-identity-key"
+        coEvery { labels_api.create_label(capture(request_slot)) } returns
+            CreateLabelResponse(id = "srv", label_token = "srv_tok", success = true)
+
+        vm.create_folder(name = "Receipts", sort_order = 2, parent_token = "parent_tok")
+        advanceUntilIdle()
+
+        val request = request_slot.captured
+        assertEquals("parent_tok", request.parent_token)
+        assertEquals(2, request.sort_order)
+        assertEquals("folder", request.folder_type)
+        assertFalse(request.encrypted_name.contains("Receipts"))
+        assertTrue(request.name_nonce.isNotBlank())
+
+        val optimistic = vm.state.value.labels.single()
+        assertEquals("Receipts", optimistic.encrypted_name)
+        assertEquals("parent_tok", optimistic.parent_token)
+        assertEquals(2, optimistic.sort_order)
+    }
+
+    private suspend fun kotlinx.coroutines.test.TestScope.seed_folders() {
+        val labels = listOf(
+            LabelItem(id = "l1", label_token = "lt1", encrypted_name = "Alpha", sort_order = 0),
+            LabelItem(id = "l2", label_token = "lt2", encrypted_name = "Beta", sort_order = 1),
+            LabelItem(
+                id = "c1",
+                label_token = "ltc1",
+                encrypted_name = "Child",
+                sort_order = 0,
+                parent_token = "lt1",
+            ),
+        )
+        coEvery { labels_api.list_labels(any(), any()) } returns LabelsListResponse(labels)
+        every { session_key_store.get_identity_key() } returns null
+        vm.load_labels()
+        advanceUntilIdle()
+    }
+
+    @Test
+    fun `move_folder swaps sibling sort orders and persists via bulk reorder`() = runTest {
+        seed_folders()
+        val request_slot =
+            io.mockk.slot<org.astermail.android.api.labels.BulkReorderLabelsRequest>()
+        coEvery { labels_api.bulk_reorder_labels(capture(request_slot)) } returns
+            org.astermail.android.api.labels.BulkReorderLabelsResponse(updated = 2)
+
+        vm.move_folder("l2", -1)
+        advanceUntilIdle()
+
+        val entries = request_slot.captured.labels.associate { it.id to it.sort_order }
+        assertEquals(0, entries["l2"])
+        assertEquals(1, entries["l1"])
+
+        val by_id = vm.state.value.labels.associateBy { it.id }
+        assertEquals(0, by_id["l2"]?.sort_order)
+        assertEquals(1, by_id["l1"]?.sort_order)
+        assertEquals("lt1", by_id["c1"]?.parent_token)
+    }
+
+    @Test
+    fun `move_folder at the top edge is a no-op`() = runTest {
+        seed_folders()
+
+        vm.move_folder("l1", -1)
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { labels_api.bulk_reorder_labels(any()) }
+    }
+
+    @Test
+    fun `move_folder scoped to siblings ignores children of other parents`() = runTest {
+        seed_folders()
+
+        vm.move_folder("c1", 1)
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { labels_api.bulk_reorder_labels(any()) }
+    }
+
+    @Test
+    fun `move_folder reverts optimistic order when the api call fails`() = runTest {
+        seed_folders()
+        coEvery { labels_api.bulk_reorder_labels(any()) } throws RuntimeException("offline")
+
+        vm.move_folder("l2", -1)
+        advanceUntilIdle()
+
+        val by_id = vm.state.value.labels.associateBy { it.id }
+        assertEquals(0, by_id["l1"]?.sort_order)
+        assertEquals(1, by_id["l2"]?.sort_order)
+    }
+
+    @Test
     fun `delete_label error does not modify list`() = runTest {
         val labels = listOf(
             LabelItem(id = "l1", label_token = "lt1", encrypted_name = "Work", name_nonce = ""),

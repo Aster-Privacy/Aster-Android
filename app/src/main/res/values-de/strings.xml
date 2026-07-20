@@ -335,6 +335,9 @@
     <string name="save_failed">Speichern fehlgeschlagen</string>
 
     <string name="search_mail">E-Mails durchsuchen</string>
+    <string name="send_problem_title">Problem beim Senden der E-Mail</string>
+    <string name="send_problem_message">Ihre Nachricht konnte noch nicht gesendet werden. Die App versucht es im Hintergrund weiter.</string>
+    <string name="search_aliases">Aliase durchsuchen</string>
     <string name="filter_from">Von</string>
     <string name="filter_to">An</string>
     <string name="filter_has_attachment">Mit Anhang</string>
@@ -375,7 +378,6 @@
     <string name="syncing">Synchronisierung</string>
     <string name="sync_contacts">Kontakte synchronisieren</string>
     <string name="search_contacts">Kontakte suchen</string>
-    <string name="search_aliases">Aliase durchsuchen…</string>
     <string name="alias_note_title">Alias-Notiz</string>
     <string name="alias_note_hint">Nur du kannst diese Notiz sehen</string>
     <string name="alias_note_placeholder">Wo du diesen Alias nutzt, Anmeldedatum, alles Nützliche</string>
@@ -434,6 +436,10 @@
     <string name="no_aliases_yet">Noch keine Aliase</string>
     <string name="create_folder">Ordner erstellen</string>
     <string name="folder_name">Ordnername</string>
+    <string name="parent_folder">Übergeordneter Ordner</string>
+    <string name="parent_folder_none">Keiner</string>
+    <string name="move_folder_up">Nach oben</string>
+    <string name="move_folder_down">Nach unten</string>
     <string name="create_label">Label erstellen</string>
     <string name="label_name">Labelname</string>
     <string name="create_alias">Alias erstellen</string>
@@ -678,6 +684,7 @@
     <string name="forwards_to_inbox">Weiterleitung an Ihren Posteingang</string>
     <string name="delete_alias">Alias löschen</string>
     <string name="custom_domains">Benutzerdefinierte Domains</string>
+    <string name="alias_view_custom">Benutzerdefinierte Aliase</string>
     <string name="custom_domains_desktop_only">Benutzerdefinierte Domains müssen auf dem Desktop verwaltet werden</string>
     <string name="custom_domains_description">Das Hinzufügen und Konfigurieren benutzerdefinierter Domains erfordert DNS-Einrichtung und ist nur über die Desktop-App verfügbar.</string>
     <string name="open_on_desktop">Auf dem Desktop öffnen</string>
@@ -750,6 +757,7 @@
     <string name="current">Aktuell</string>
     <string name="unlimited_aliases">Unbegrenzte Aliase</string>
     <string name="aliases_count">%d Aliase</string>
+    <string name="alias_page_indicator">Seite %1$d von %2$d</string>
     <string name="unlimited_domains">Unbegrenzte Domains</string>
     <string name="domains_count">%d Domains</string>
     <string name="cancel_subscription_title">Abonnement kündigen</string>
@@ -1289,6 +1297,10 @@
     <string name="pending_deletion_error">Ihr Konto konnte nicht wiederhergestellt werden. Bitte versuchen Sie es erneut.</string>
     <string name="pending_deletion_restored">Willkommen zurück. Ihr Konto wurde wiederhergestellt.</string>
     <string name="image_blocked_placeholder">[Bild blockiert]</string>
+    <string name="alias_available">Dieser Alias ist verfügbar.</string>
+    <string name="alias_not_available">Dieser Alias ist bereits vergeben.</string>
+    <string name="alias_check_failed">Verfügbarkeit konnte nicht geprüft werden. Du kannst dennoch versuchen, ihn zu erstellen.</string>
+    <string name="csrf_unavailable">Diese Sitzung ist fehlerhaft! Bitte melden Sie sich erneut an.</string>
     <string name="received_on_prefix">empfangen an %s</string>
     <string name="received_on_label">Empfangen an</string>
     <string name="auto_advance_label">Nach Archivieren oder Löschen</string>

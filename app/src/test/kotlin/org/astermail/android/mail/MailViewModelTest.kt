@@ -77,6 +77,8 @@ class MailViewModelTest {
         search_index_manager = mockk(relaxed = true)
         every { repository.send_result_events } returns
             kotlinx.coroutines.flow.MutableSharedFlow()
+        every { repository.new_mail_events } returns
+            kotlinx.coroutines.flow.MutableSharedFlow()
         every { repository.pending_undo_send } returns
             kotlinx.coroutines.flow.MutableStateFlow(null)
         coEvery { repository.get_stats() } returns Result.success(MailUserStatsResponse())
@@ -1409,6 +1411,23 @@ class MailViewModelTest {
 
         coVerify { repository.mark_read("id_42", true, any()) }
         coVerify { search_index_manager.update_read("id_42", true) }
+    }
+
+    @Test
+    fun `new_mail signal triggers silent revalidate of current folder`() = runTest {
+        val new_mail = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 4)
+        every { repository.new_mail_events } returns new_mail
+        coEvery { repository.fetch_inbox(any(), any(), any(), any(), any(), any()) } returns
+            Result.success(InboxPage(items = emptyList(), has_more = false, next_cursor = null, total = 0))
+        vm = MailViewModel(context, repository, search_index_manager)
+        vm.foreground_check = { true }
+        advanceUntilIdle()
+        io.mockk.clearMocks(repository, answers = false, recordedCalls = true, childMocks = false, verificationMarks = true, exclusionRules = false)
+
+        new_mail.tryEmit(Unit)
+        advanceUntilIdle()
+
+        coVerify(atLeast = 1) { repository.fetch_inbox(any(), any(), any(), any(), any(), any()) }
     }
 
 }

@@ -1221,9 +1221,9 @@ fun MailDetailScreen(
         val settings_state by settings_vm.state.collectAsStateWithLifecycle()
         val unnamed_folder_label = stringResource(R.string.unnamed_folder)
         val folder_decrypt_failed_label = stringResource(R.string.folder_decrypt_failed)
-        val folder_items = settings_state.labels
-            .filter { (it.folder_type == "folder" || it.folder_type == "custom") && !it.is_system }
-            .map { label ->
+        val folder_items = org.astermail.android.folders.flatten_folder_tree(settings_state.labels)
+            .map { node ->
+                val label = node.label
                 val readable = label.encrypted_name?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
                 label.copy(encrypted_name = readable ?: folder_decrypt_failed_label)
             }

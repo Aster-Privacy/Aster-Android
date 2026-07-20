@@ -19,30 +19,15 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 //
 
-package org.astermail.android.storage.outbox
+package org.astermail.android.debugtools
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 
-@Entity(tableName = "pending_send_queue")
-data class PendingSendEntity(
-    @PrimaryKey val id: String,
-    val to_json: String,
-    val cc_json: String,
-    val bcc_json: String,
-    val subject: String,
-    val body_html: String,
-    val sender_email: String?,
-    val sender_display_name: String?,
-    val thread_token: String?,
-    val expires_at: String?,
-    val expiry_password: String?,
-    val attachments_json: String,
-    val sender_alias_hash: String?,
-    val suppress_branding: Boolean?,
-    val draft_id: String?,
-    val fire_at_ms: Long,
-    val status: String,
-    val created_at_ms: Long,
-    val sending_started_at_ms: Long = 0,
-)
+@Composable
+fun debug_build_banner() {
+}
+
+@Composable
+fun debug_build_pill_inline(modifier: Modifier = Modifier) {
+}

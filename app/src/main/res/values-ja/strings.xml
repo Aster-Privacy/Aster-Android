@@ -334,6 +334,9 @@
     <string name="save_failed">保存に失敗しました</string>
 
     <string name="search_mail">メールを検索</string>
+    <string name="send_problem_title">メール送信に問題があります</string>
+    <string name="send_problem_message">メッセージをまだ送信できていません。アプリはバックグラウンドで再試行を続けます。</string>
+    <string name="search_aliases">エイリアスを検索</string>
     <string name="filter_from">差出人</string>
     <string name="filter_to">宛先</string>
     <string name="filter_has_attachment">添付ファイルあり</string>
@@ -374,7 +377,6 @@
     <string name="syncing">同期中</string>
     <string name="sync_contacts">連絡先を同期</string>
     <string name="search_contacts">連絡先を検索</string>
-    <string name="search_aliases">エイリアスを検索…</string>
     <string name="alias_note_title">エイリアスのメモ</string>
     <string name="alias_note_hint">このメモはあなただけが見られます</string>
     <string name="alias_note_placeholder">このエイリアスの用途、登録日など役立つ情報</string>
@@ -433,6 +435,10 @@
     <string name="no_aliases_yet">まだエイリアスはありません</string>
     <string name="create_folder">フォルダを作成</string>
     <string name="folder_name">フォルダ名</string>
+    <string name="parent_folder">親フォルダ</string>
+    <string name="parent_folder_none">なし</string>
+    <string name="move_folder_up">上へ移動</string>
+    <string name="move_folder_down">下へ移動</string>
     <string name="create_label">ラベルを作成</string>
     <string name="label_name">ラベル名</string>
     <string name="create_alias">エイリアスを作成</string>
@@ -677,6 +683,7 @@
     <string name="forwards_to_inbox">受信トレイに転送</string>
     <string name="delete_alias">エイリアスを削除</string>
     <string name="custom_domains">カスタムドメイン</string>
+    <string name="alias_view_custom">カスタムエイリアス</string>
     <string name="custom_domains_desktop_only">カスタムドメインはデスクトップで管理する必要があります</string>
     <string name="custom_domains_description">カスタムドメインの追加と設定にはDNS設定が必要で、デスクトップアプリからのみ利用できます。</string>
     <string name="open_on_desktop">デスクトップで開く</string>
@@ -749,6 +756,7 @@
     <string name="current">現在</string>
     <string name="unlimited_aliases">無制限のエイリアス</string>
     <string name="aliases_count">%d個のエイリアス</string>
+    <string name="alias_page_indicator">%1$d / %2$d ページ</string>
     <string name="unlimited_domains">無制限のドメイン</string>
     <string name="domains_count">%d個のドメイン</string>
     <string name="cancel_subscription_title">サブスクリプションをキャンセル</string>
@@ -1286,6 +1294,10 @@
     <string name="pending_deletion_error">アカウントを復元できませんでした。もう一度お試しください。</string>
     <string name="pending_deletion_restored">おかえりなさい。アカウントが復元されました。</string>
     <string name="image_blocked_placeholder">[画像はブロックされました]</string>
+    <string name="alias_available">このエイリアスは利用可能です。</string>
+    <string name="alias_not_available">このエイリアスは既に使用されています。</string>
+    <string name="alias_check_failed">空き状況を確認できませんでした。作成を試すことはできます。</string>
+    <string name="csrf_unavailable">このセッションは壊れています！もう一度ログインしてください。</string>
     <string name="received_on_prefix">%s で受信</string>
     <string name="received_on_label">受信アドレス</string>
     <string name="auto_advance_label">アーカイブまたは削除後</string>

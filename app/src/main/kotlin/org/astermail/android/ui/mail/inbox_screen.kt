@@ -134,6 +134,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import org.astermail.android.R
+import org.astermail.android.debugtools.debug_build_pill_inline
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
@@ -202,7 +203,28 @@ fun InboxScreen(
     val prefetch_context = LocalContext.current
     val toast_context = LocalContext.current
 
+    val send_problem by mail_vm.send_problem.collectAsStateWithLifecycle()
+    if (send_problem) {
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { mail_vm.dismiss_send_problem() },
+            title = stringResource(R.string.send_problem_title),
+            message = stringResource(R.string.send_problem_message),
+            footer = {
+                org.astermail.android.design.components.AsterDialogOutlineButton(
+                    label = stringResource(R.string.ok),
+                    onClick = { mail_vm.dismiss_send_problem() },
+                )
+            },
+        )
+    }
+
     var top_toast_state by remember { mutableStateOf<org.astermail.android.ui.common.TopToastState?>(null) }
+    LaunchedEffect(mail_vm) {
+        while (true) {
+            kotlinx.coroutines.delay(60_000)
+            mail_vm.foreground_fallback_tick()
+        }
+    }
     LaunchedEffect(mail_vm) {
         mail_vm.toast_events.collect { evt ->
             top_toast_state = org.astermail.android.ui.common.TopToastState(
@@ -1205,6 +1227,8 @@ private fun inbox_top_bar(
                     )
                 }
             }
+            debug_build_pill_inline()
+            Spacer(Modifier.width(AsterSpacing.xs))
             AsterIconButton(
                 icon = Icons.Outlined.Settings,
                 content_description = stringResource(R.string.settings),

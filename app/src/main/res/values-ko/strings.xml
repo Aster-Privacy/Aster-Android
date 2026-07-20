@@ -334,6 +334,9 @@
     <string name="save_failed">저장 실패</string>
 
     <string name="search_mail">메일 검색</string>
+    <string name="send_problem_title">메일 전송 문제</string>
+    <string name="send_problem_message">메시지를 아직 보내지 못했습니다. 앱이 백그라운드에서 계속 재시도합니다.</string>
+    <string name="search_aliases">별칭 검색</string>
     <string name="filter_from">보낸 사람</string>
     <string name="filter_to">받는 사람</string>
     <string name="filter_has_attachment">첨부 파일 있음</string>
@@ -374,7 +377,6 @@
     <string name="syncing">동기화 중</string>
     <string name="sync_contacts">연락처 동기화</string>
     <string name="search_contacts">연락처 검색</string>
-    <string name="search_aliases">별칭 검색…</string>
     <string name="alias_note_title">별칭 메모</string>
     <string name="alias_note_hint">이 메모는 회원님만 볼 수 있습니다</string>
     <string name="alias_note_placeholder">이 별칭을 사용하는 곳, 가입 날짜 등 유용한 정보</string>
@@ -433,6 +435,10 @@
     <string name="no_aliases_yet">아직 별칭이 없습니다</string>
     <string name="create_folder">폴더 만들기</string>
     <string name="folder_name">폴더 이름</string>
+    <string name="parent_folder">상위 폴더</string>
+    <string name="parent_folder_none">없음</string>
+    <string name="move_folder_up">위로 이동</string>
+    <string name="move_folder_down">아래로 이동</string>
     <string name="create_label">라벨 만들기</string>
     <string name="label_name">라벨 이름</string>
     <string name="create_alias">별칭 만들기</string>
@@ -677,6 +683,7 @@
     <string name="forwards_to_inbox">받은 편지함으로 전달</string>
     <string name="delete_alias">별칭 삭제</string>
     <string name="custom_domains">커스텀 도메인</string>
+    <string name="alias_view_custom">커스텀 별칭</string>
     <string name="custom_domains_desktop_only">커스텀 도메인은 데스크톱에서 관리해야 합니다</string>
     <string name="custom_domains_description">커스텀 도메인 추가 및 구성에는 DNS 설정이 필요하며 데스크톱 앱에서만 사용할 수 있습니다.</string>
     <string name="open_on_desktop">데스크톱에서 열기</string>
@@ -749,6 +756,7 @@
     <string name="current">현재</string>
     <string name="unlimited_aliases">무제한 별칭</string>
     <string name="aliases_count">별칭 %d개</string>
+    <string name="alias_page_indicator">%1$d / %2$d 페이지</string>
     <string name="unlimited_domains">무제한 도메인</string>
     <string name="domains_count">도메인 %d개</string>
     <string name="cancel_subscription_title">구독 취소</string>
@@ -1286,6 +1294,10 @@
     <string name="pending_deletion_error">계정을 복원할 수 없습니다. 다시 시도해 주세요.</string>
     <string name="pending_deletion_restored">다시 오신 것을 환영합니다. 계정이 복원되었습니다.</string>
     <string name="image_blocked_placeholder">[이미지 차단됨]</string>
+    <string name="alias_available">이 별칭은 사용할 수 있습니다.</string>
+    <string name="alias_not_available">이 별칭은 이미 사용 중입니다.</string>
+    <string name="alias_check_failed">사용 가능 여부를 확인할 수 없습니다. 그래도 만들어 볼 수 있습니다.</string>
+    <string name="csrf_unavailable">이 세션이 손상되었습니다! 다시 로그인해 주세요.</string>
     <string name="received_on_prefix">%s(으)로 수신</string>
     <string name="received_on_label">수신 주소</string>
     <string name="auto_advance_label">보관 또는 삭제 후</string>

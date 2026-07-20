@@ -41,8 +41,11 @@ interface PendingSendDao {
     @Query("UPDATE pending_send_queue SET draft_id = :draft_id WHERE id = :id")
     suspend fun update_draft_id(id: String, draft_id: String?)
 
-    @Query("UPDATE pending_send_queue SET status = 'sending' WHERE id = :id AND status = 'pending'")
-    suspend fun mark_sending(id: String): Int
+    @Query("UPDATE pending_send_queue SET status = 'sending', sending_started_at_ms = :now WHERE id = :id AND status = 'pending'")
+    suspend fun mark_sending(id: String, now: Long): Int
+
+    @Query("UPDATE pending_send_queue SET sending_started_at_ms = :now WHERE id = :id AND status = 'sending' AND sending_started_at_ms < :stale_before")
+    suspend fun claim_stale_sending(id: String, now: Long, stale_before: Long): Int
 
     @Query("UPDATE pending_send_queue SET status = 'pending' WHERE id = :id")
     suspend fun mark_pending(id: String)

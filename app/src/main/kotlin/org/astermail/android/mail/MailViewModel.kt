@@ -445,6 +445,23 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    internal var foreground_check: () -> Boolean = {
+        runCatching {
+            androidx.lifecycle.ProcessLifecycleOwner.get()
+                .lifecycle.currentState
+                .isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)
+        }.getOrDefault(true)
+    }
+
+    fun foreground_fallback_tick() {
+        val has_push = runCatching {
+            org.astermail.android.notifications.UnifiedPushState.endpoint(context) != null
+        }.getOrDefault(false)
+        if (foreground_check() && !has_push) {
+            silent_revalidate(_inbox_state.value.current_folder)
+        }
+    }
+
     private fun silent_revalidate(folder: String) {
         silent_revalidate_job?.cancel()
         silent_revalidate_job = viewModelScope.launch {
@@ -1665,7 +1682,20 @@ class MailViewModel @Inject constructor(
 
     val pending_undo_send: StateFlow<MailRepository.PendingUndoSend?> = repository.pending_undo_send
 
+    val send_problem: StateFlow<Boolean> = repository.send_problem
+
+    fun dismiss_send_problem() {
+        repository.clear_send_problem()
+    }
+
     init {
+        viewModelScope.launch {
+            repository.new_mail_events.collect {
+                if (foreground_check()) {
+                    silent_revalidate(_inbox_state.value.current_folder)
+                }
+            }
+        }
         viewModelScope.launch {
             repository.send_result_events.collect { result ->
                 if (result.isSuccess) {
@@ -1905,5 +1935,6 @@ fun org.astermail.android.storage.search.DecryptedMailEntity.to_inbox_item(): In
     is_spam = is_spam,
     labels = if (labels.isBlank()) emptyList() else labels.split(","),
     category = category,
+    received_on = received_on,
     raw_item = org.astermail.android.api.mail.MailItem(id = id),
 )

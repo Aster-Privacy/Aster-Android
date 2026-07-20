@@ -53,6 +53,8 @@ import androidx.compose.material.icons.outlined.DesktopWindows
 import androidx.compose.material.icons.outlined.Extension
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Group
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.PhoneAndroid
 import androidx.compose.material.icons.outlined.PrivacyTip
@@ -98,6 +100,8 @@ import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.UpgradeGate
+import org.astermail.android.folders.flatten_folder_tree
+import org.astermail.android.folders.folder_sibling_group
 import org.astermail.android.settings.SettingsViewModel
 
 @Composable
@@ -902,17 +906,17 @@ fun FoldersScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
 
     LaunchedEffect(Unit) { vm.load_labels(folder_type = "folder") }
 
-    val folders = state.labels.filter { it.folder_type == "folder" || it.folder_type == "custom" }
+    val folder_nodes = flatten_folder_tree(state.labels)
 
     detail_scaffold(title = stringResource(R.string.folders), on_back = on_back) {
-        if (state.is_loading && folders.isEmpty()) {
+        if (state.is_loading && folder_nodes.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
                 contentAlignment = Alignment.Center,
             ) {
                 CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
             }
-        } else if (folders.isEmpty()) {
+        } else if (folder_nodes.isEmpty()) {
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 detail_row(
                     title = stringResource(R.string.no_folders),
@@ -920,35 +924,76 @@ fun FoldersScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                 )
             }
         } else {
-            section_label(stringResource(R.string.folders_count, folders.size))
+            section_label(stringResource(R.string.folders_count, folder_nodes.size))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
-                folders.forEachIndexed { idx, f ->
+                folder_nodes.forEachIndexed { idx, node ->
+                    val f = node.label
                     val folder_name = f.encrypted_name ?: f.label_token
                     val count_text = f.item_count?.let { stringResource(R.string.messages_count, it) } ?: ""
-                    detail_row(
-                        title = folder_name,
-                        subtitle = count_text,
-                        icon = Icons.Outlined.Folder,
-                        on_click = {},
-                        trailing = {
-                            if (!f.is_system && !f.is_locked) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .clickable { vm.delete_label(f.id) },
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    androidx.compose.material3.Icon(
-                                        imageVector = Icons.Outlined.Delete,
-                                        contentDescription = stringResource(R.string.delete_folder),
-                                        tint = colors.text_tertiary,
-                                        modifier = Modifier.size(18.dp),
-                                    )
-                                }
-                            }
-                        },
-                    )
-                    if (idx < folders.lastIndex) AsterDivider(modifier = Modifier)
+                    val siblings = folder_sibling_group(state.labels, f.id)
+                    val sibling_index = siblings.indexOfFirst { it.id == f.id }
+                    val can_move_up = sibling_index > 0
+                    val can_move_down = sibling_index in 0 until siblings.lastIndex
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        if (node.depth > 0) Spacer(Modifier.width((node.depth * 16).dp))
+                        Box(modifier = Modifier.weight(1f)) {
+                            detail_row(
+                                title = folder_name,
+                                subtitle = count_text,
+                                icon = Icons.Outlined.Folder,
+                                on_click = {},
+                                trailing = {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .clip(CircleShape)
+                                            .clickable(enabled = can_move_up) { vm.move_folder(f.id, -1) },
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        androidx.compose.material3.Icon(
+                                            imageVector = Icons.Outlined.KeyboardArrowUp,
+                                            contentDescription = stringResource(R.string.move_folder_up),
+                                            tint = if (can_move_up) colors.text_secondary else colors.text_muted.copy(alpha = 0.35f),
+                                            modifier = Modifier.size(20.dp),
+                                        )
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .clip(CircleShape)
+                                            .clickable(enabled = can_move_down) { vm.move_folder(f.id, 1) },
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        androidx.compose.material3.Icon(
+                                            imageVector = Icons.Outlined.KeyboardArrowDown,
+                                            contentDescription = stringResource(R.string.move_folder_down),
+                                            tint = if (can_move_down) colors.text_secondary else colors.text_muted.copy(alpha = 0.35f),
+                                            modifier = Modifier.size(20.dp),
+                                        )
+                                    }
+                                    if (!f.is_system && !f.is_locked) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(32.dp)
+                                                .clickable { vm.delete_label(f.id) },
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            androidx.compose.material3.Icon(
+                                                imageVector = Icons.Outlined.Delete,
+                                                contentDescription = stringResource(R.string.delete_folder),
+                                                tint = colors.text_tertiary,
+                                                modifier = Modifier.size(18.dp),
+                                            )
+                                        }
+                                    }
+                                },
+                            )
+                        }
+                    }
+                    if (idx < folder_nodes.lastIndex) AsterDivider(modifier = Modifier)
                 }
             }
         }

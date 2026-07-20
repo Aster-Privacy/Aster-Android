@@ -44,4 +44,5 @@ data class DecryptedMailEntity(
     val labels: String,
     val indexed_at: Long,
     val category: String = "primary",
+    val received_on: String? = null,
 )

@@ -28,6 +28,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import org.astermail.android.api.mail.BulkScopeRequest
 import org.astermail.android.api.mail.BulkScopeResponse
@@ -1135,5 +1136,27 @@ class MailRepositoryTest {
         coVerify(exactly = 0) { send_api.send_simple(any()) }
         coVerify(exactly = 0) { send_api.send_external(any()) }
         coVerify(exactly = 0) { mail_api.delete_draft(any()) }
+    }
+
+    @Test
+    fun `signal_new_mail emits on new_mail_events`() = runTest {
+        val received = java.util.concurrent.atomic.AtomicInteger(0)
+        val collector_scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default)
+        val job = collector_scope.launch {
+            repo.new_mail_events.collect { received.incrementAndGet() }
+        }
+
+        Thread.sleep(150)
+        repo.signal_new_mail()
+        repo.signal_new_mail()
+
+        wait_until { received.get() >= 2 }
+        assertTrue(received.get() >= 2)
+        job.cancel()
+    }
+
+    @Test
+    fun `signal_new_mail without collectors does not throw`() {
+        repo.signal_new_mail()
     }
 }

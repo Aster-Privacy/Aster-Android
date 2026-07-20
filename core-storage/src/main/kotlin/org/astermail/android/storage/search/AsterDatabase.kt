@@ -28,10 +28,18 @@ import org.astermail.android.storage.outbox.PendingSendEntity
 
 @Database(
     entities = [DecryptedMailEntity::class, PendingSendEntity::class],
-    version = 4,
+    version = 5,
     exportSchema = false,
 )
 abstract class AsterDatabase : RoomDatabase() {
     abstract fun decrypted_mail_dao(): DecryptedMailDao
     abstract fun pending_send_dao(): PendingSendDao
+
+    companion object {
+        val migration_4_5 = object : androidx.room.migration.Migration(4, 5) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE decrypted_mail_cache ADD COLUMN received_on TEXT")
+            }
+        }
+    }
 }

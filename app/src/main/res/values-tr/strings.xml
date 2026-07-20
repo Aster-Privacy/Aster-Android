@@ -334,6 +334,9 @@
     <string name="save_failed">Kaydedilemedi</string>
 
     <string name="search_mail">E-postada ara</string>
+    <string name="send_problem_title">Posta gönderiminde sorun</string>
+    <string name="send_problem_message">Mesajınız henüz gönderilemedi. Uygulama arka planda denemeye devam edecek.</string>
+    <string name="search_aliases">Takma adlarda ara</string>
     <string name="filter_from">Kimden</string>
     <string name="filter_to">Kime</string>
     <string name="filter_has_attachment">Ek var</string>
@@ -374,7 +377,6 @@
     <string name="syncing">Eşitleniyor</string>
     <string name="sync_contacts">Kişileri eşitle</string>
     <string name="search_contacts">Kişilerde ara</string>
-    <string name="search_aliases">Rumuzlarda ara…</string>
     <string name="alias_note_title">Rumuz notu</string>
     <string name="alias_note_hint">Bu notu yalnızca siz görebilirsiniz</string>
     <string name="alias_note_placeholder">Bu rumuzu nerede kullandığınız, kayıt tarihi, işinize yarayacak her şey</string>
@@ -433,6 +435,10 @@
     <string name="no_aliases_yet">Henüz takma ad yok</string>
     <string name="create_folder">Klasör oluştur</string>
     <string name="folder_name">Klasör adı</string>
+    <string name="parent_folder">Üst klasör</string>
+    <string name="parent_folder_none">Yok</string>
+    <string name="move_folder_up">Yukarı taşı</string>
+    <string name="move_folder_down">Aşağı taşı</string>
     <string name="create_label">Etiket oluştur</string>
     <string name="label_name">Etiket adı</string>
     <string name="create_alias">Takma ad oluştur</string>
@@ -677,6 +683,7 @@
     <string name="forwards_to_inbox">Gelen kutunuza yönlendirir</string>
     <string name="delete_alias">Takma adı sil</string>
     <string name="custom_domains">Özel alan adları</string>
+    <string name="alias_view_custom">Özel takma adlar</string>
     <string name="custom_domains_desktop_only">Özel alan adları masaüstünde yönetilmelidir</string>
     <string name="custom_domains_description">Özel alan adları eklemek ve yapılandırmak DNS kurulumu gerektirir ve yalnızca masaüstü uygulamasından kullanılabilir.</string>
     <string name="open_on_desktop">Masaüstünde aç</string>
@@ -749,6 +756,7 @@
     <string name="current">Mevcut</string>
     <string name="unlimited_aliases">Sınırsız takma ad</string>
     <string name="aliases_count">%d takma ad</string>
+    <string name="alias_page_indicator">Sayfa %1$d / %2$d</string>
     <string name="unlimited_domains">Sınırsız alan adı</string>
     <string name="domains_count">%d alan adı</string>
     <string name="cancel_subscription_title">Aboneliği iptal et</string>
@@ -1288,6 +1296,10 @@
     <string name="pending_deletion_error">Hesabınız geri yüklenemedi. Lütfen tekrar deneyin.</string>
     <string name="pending_deletion_restored">Tekrar hoş geldiniz. Hesabınız geri yüklendi.</string>
     <string name="image_blocked_placeholder">[Görsel engellendi]</string>
+    <string name="alias_available">Bu takma ad kullanılabilir.</string>
+    <string name="alias_not_available">Bu takma ad zaten kullanımda.</string>
+    <string name="alias_check_failed">Kullanılabilirlik kontrol edilemedi. Yine de oluşturmayı deneyebilirsiniz.</string>
+    <string name="csrf_unavailable">Bu oturum bozuk! Lütfen yeniden giriş yapın.</string>
     <string name="received_on_prefix">%s adresinde alındı</string>
     <string name="received_on_label">Alındığı adres</string>
     <string name="auto_advance_label">Arşivleme veya silme sonrası</string>

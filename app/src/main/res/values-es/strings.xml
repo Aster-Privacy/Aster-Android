@@ -335,6 +335,9 @@
     <string name="save_failed">Error al guardar</string>
 
     <string name="search_mail">Buscar correos</string>
+    <string name="send_problem_title">Problema al enviar el correo</string>
+    <string name="send_problem_message">Su mensaje aún no se ha podido enviar. La aplicación seguirá intentándolo en segundo plano.</string>
+    <string name="search_aliases">Buscar alias</string>
     <string name="filter_from">De</string>
     <string name="filter_to">Para</string>
     <string name="filter_has_attachment">Con adjunto</string>
@@ -375,7 +378,6 @@
     <string name="syncing">Sincronizando</string>
     <string name="sync_contacts">Sincronizar contactos</string>
     <string name="search_contacts">Buscar contactos</string>
-    <string name="search_aliases">Buscar alias…</string>
     <string name="alias_note_title">Nota del alias</string>
     <string name="alias_note_hint">Solo tú puedes ver esta nota</string>
     <string name="alias_note_placeholder">Dónde usas este alias, fecha de registro, cualquier dato útil</string>
@@ -434,6 +436,10 @@
     <string name="no_aliases_yet">Aún no hay alias</string>
     <string name="create_folder">Crear carpeta</string>
     <string name="folder_name">Nombre de la carpeta</string>
+    <string name="parent_folder">Carpeta principal</string>
+    <string name="parent_folder_none">Ninguna</string>
+    <string name="move_folder_up">Subir</string>
+    <string name="move_folder_down">Bajar</string>
     <string name="create_label">Crear etiqueta</string>
     <string name="label_name">Nombre de la etiqueta</string>
     <string name="create_alias">Crear alias</string>
@@ -678,6 +684,7 @@
     <string name="forwards_to_inbox">Se reenvía a tu bandeja de entrada</string>
     <string name="delete_alias">Eliminar alias</string>
     <string name="custom_domains">Dominios personalizados</string>
+    <string name="alias_view_custom">Alias personalizados</string>
     <string name="custom_domains_desktop_only">Los dominios personalizados deben administrarse en el escritorio</string>
     <string name="custom_domains_description">Agregar y configurar dominios personalizados requiere configuración DNS y solo está disponible a través de la aplicación de escritorio.</string>
     <string name="open_on_desktop">Abrir en el escritorio</string>
@@ -750,6 +757,7 @@
     <string name="current">Actual</string>
     <string name="unlimited_aliases">Alias ilimitados</string>
     <string name="aliases_count">%d alias</string>
+    <string name="alias_page_indicator">Página %1$d de %2$d</string>
     <string name="unlimited_domains">Dominios ilimitados</string>
     <string name="domains_count">%d dominios</string>
     <string name="cancel_subscription_title">Cancelar suscripción</string>
@@ -1289,6 +1297,10 @@
     <string name="pending_deletion_error">No se pudo restaurar tu cuenta. Inténtalo de nuevo.</string>
     <string name="pending_deletion_restored">Bienvenido de nuevo. Tu cuenta ha sido restaurada.</string>
     <string name="image_blocked_placeholder">[Imagen bloqueada]</string>
+    <string name="alias_available">Este alias está disponible.</string>
+    <string name="alias_not_available">Este alias ya está en uso.</string>
+    <string name="alias_check_failed">No se pudo comprobar la disponibilidad. Aun así puedes intentar crearlo.</string>
+    <string name="csrf_unavailable">¡Esta sesión está dañada! Vuelve a iniciar sesión.</string>
     <string name="received_on_prefix">recibido en %s</string>
     <string name="received_on_label">Recibido en</string>
     <string name="auto_advance_label">Después de archivar o eliminar</string>

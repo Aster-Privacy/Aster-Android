@@ -504,6 +504,9 @@
 
     <!-- Search -->
     <string name="search_mail">Search mail</string>
+    <string name="send_problem_title">Problem sending mail</string>
+    <string name="send_problem_message">Your message could not be sent yet. The app will keep retrying in the background.</string>
+    <string name="search_aliases">Search aliases</string>
     <string name="filter_from">From</string>
     <string name="filter_to">To</string>
     <string name="filter_has_attachment">Has attachment</string>
@@ -545,7 +548,6 @@
     <string name="syncing">Syncing</string>
     <string name="sync_contacts">Sync contacts</string>
     <string name="search_contacts">Search contacts</string>
-    <string name="search_aliases">Search aliases…</string>
     <string name="alias_note_title">Alias note</string>
     <string name="alias_note_hint">Only you can see this note</string>
     <string name="alias_note_placeholder">Where you use this alias, sign-up date, anything useful</string>
@@ -606,6 +608,10 @@
     <string name="no_aliases_yet">No aliases yet</string>
     <string name="create_folder">Create Folder</string>
     <string name="folder_name">Folder name</string>
+    <string name="parent_folder">Parent folder</string>
+    <string name="parent_folder_none">None</string>
+    <string name="move_folder_up">Move up</string>
+    <string name="move_folder_down">Move down</string>
     <string name="create_label">Create Label</string>
     <string name="label_name">Label name</string>
     <string name="create_alias">Create Alias</string>
@@ -951,6 +957,7 @@
     <string name="revoke_api_key_title">Revoke API key?</string>
     <string name="revoke_api_key_confirm_message">Any apps using this key will stop working immediately. This cannot be undone.</string>
     <string name="custom_domains">Custom domains</string>
+    <string name="alias_view_custom">Custom aliases</string>
     <string name="custom_domains_desktop_only">Custom domains must be managed on desktop</string>
     <string name="custom_domains_description">Adding and configuring custom domains requires DNS setup and is only available through the desktop app.</string>
     <string name="open_on_desktop">Open on desktop</string>
@@ -1029,6 +1036,7 @@
     <string name="current">Current</string>
     <string name="unlimited_aliases">Unlimited aliases</string>
     <string name="aliases_count">%d aliases</string>
+    <string name="alias_page_indicator">Page %1$d of %2$d</string>
     <string name="unlimited_domains">Unlimited domains</string>
     <string name="domains_count">%d domains</string>
     <string name="cancel_subscription_title">Cancel subscription</string>
@@ -1859,6 +1867,9 @@
     <string name="alias_directory_available">This directory is available.</string>
     <string name="alias_directory_not_available">This directory is already taken.</string>
     <string name="checking_availability">Checking availability...</string>
+    <string name="alias_available">This alias is available.</string>
+    <string name="alias_not_available">This alias is already taken.</string>
+    <string name="alias_check_failed">Couldn\'t check availability. You can still try to create it.</string>
     <string name="alias_creating">Creating...</string>
     <string name="alias_separator_hint">Works with . + # separators</string>
     <string name="alias_delete_directory">Delete directory</string>
@@ -2047,6 +2058,7 @@
     <string name="pending_deletion_error">Could not restore your account. Please try again.</string>
     <string name="pending_deletion_restored">Welcome back. Your account has been restored.</string>
     <string name="image_blocked_placeholder">[Image blocked]</string>
+    <string name="csrf_unavailable">This session is broken! Please, relogin.</string>
     <string name="auto_advance_label">After archiving or deleting</string>
     <string name="auto_advance_next">Go to next email</string>
     <string name="auto_advance_previous">Go to previous email</string>

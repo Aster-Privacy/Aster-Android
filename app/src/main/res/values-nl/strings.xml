@@ -334,6 +334,9 @@
     <string name="save_failed">Opslaan mislukt</string>
 
     <string name="search_mail">E-mail zoeken</string>
+    <string name="send_problem_title">Probleem bij het verzenden van e-mail</string>
+    <string name="send_problem_message">Uw bericht kon nog niet worden verzonden. De app blijft het op de achtergrond proberen.</string>
+    <string name="search_aliases">Aliassen zoeken</string>
     <string name="filter_from">Van</string>
     <string name="filter_to">Aan</string>
     <string name="filter_has_attachment">Heeft bijlage</string>
@@ -374,7 +377,6 @@
     <string name="syncing">Synchroniseren</string>
     <string name="sync_contacts">Contacten synchroniseren</string>
     <string name="search_contacts">Contacten zoeken</string>
-    <string name="search_aliases">Aliassen zoeken…</string>
     <string name="alias_note_title">Aliasnotitie</string>
     <string name="alias_note_hint">Alleen jij kunt deze notitie zien</string>
     <string name="alias_note_placeholder">Waar je deze alias gebruikt, aanmelddatum, alles wat nuttig is</string>
@@ -433,6 +435,10 @@
     <string name="no_aliases_yet">Nog geen aliassen</string>
     <string name="create_folder">Map aanmaken</string>
     <string name="folder_name">Mapnaam</string>
+    <string name="parent_folder">Bovenliggende map</string>
+    <string name="parent_folder_none">Geen</string>
+    <string name="move_folder_up">Omhoog</string>
+    <string name="move_folder_down">Omlaag</string>
     <string name="create_label">Label aanmaken</string>
     <string name="label_name">Labelnaam</string>
     <string name="create_alias">Alias aanmaken</string>
@@ -677,6 +683,7 @@
     <string name="forwards_to_inbox">Stuurt door naar je inbox</string>
     <string name="delete_alias">Alias verwijderen</string>
     <string name="custom_domains">Aangepaste domeinen</string>
+    <string name="alias_view_custom">Aangepaste aliassen</string>
     <string name="custom_domains_desktop_only">Aangepaste domeinen moeten op desktop worden beheerd</string>
     <string name="custom_domains_description">Het toevoegen en configureren van aangepaste domeinen vereist DNS-instelling en is alleen beschikbaar via de desktop-app.</string>
     <string name="open_on_desktop">Openen op desktop</string>
@@ -749,6 +756,7 @@
     <string name="current">Huidig</string>
     <string name="unlimited_aliases">Onbeperkte aliassen</string>
     <string name="aliases_count">%d aliassen</string>
+    <string name="alias_page_indicator">Pagina %1$d van %2$d</string>
     <string name="unlimited_domains">Onbeperkte domeinen</string>
     <string name="domains_count">%d domeinen</string>
     <string name="cancel_subscription_title">Abonnement annuleren</string>
@@ -1288,6 +1296,10 @@
     <string name="pending_deletion_error">Kan je account niet herstellen. Probeer het opnieuw.</string>
     <string name="pending_deletion_restored">Welkom terug. Je account is hersteld.</string>
     <string name="image_blocked_placeholder">[Afbeelding geblokkeerd]</string>
+    <string name="alias_available">Deze alias is beschikbaar.</string>
+    <string name="alias_not_available">Deze alias is al in gebruik.</string>
+    <string name="alias_check_failed">Kan beschikbaarheid niet controleren. Je kunt hem toch proberen aan te maken.</string>
+    <string name="csrf_unavailable">Deze sessie is beschadigd! Log opnieuw in.</string>
     <string name="received_on_prefix">ontvangen op %s</string>
     <string name="received_on_label">Ontvangen op</string>
     <string name="auto_advance_label">Na archiveren of verwijderen</string>
