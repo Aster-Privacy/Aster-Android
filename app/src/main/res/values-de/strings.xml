@@ -434,6 +434,10 @@
     <string name="no_aliases_yet">Noch keine Aliase</string>
     <string name="create_folder">Ordner erstellen</string>
     <string name="folder_name">Ordnername</string>
+    <string name="parent_folder">Übergeordneter Ordner</string>
+    <string name="parent_folder_none">Keiner</string>
+    <string name="move_folder_up">Nach oben</string>
+    <string name="move_folder_down">Nach unten</string>
     <string name="create_label">Label erstellen</string>
     <string name="label_name">Labelname</string>
     <string name="create_alias">Alias erstellen</string>

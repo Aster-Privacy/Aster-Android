@@ -60,10 +60,13 @@ import org.astermail.android.api.family.ReservedAddress
 import org.astermail.android.api.ghost.CreateGhostAliasRequest
 import org.astermail.android.api.ghost.GhostAlias
 import org.astermail.android.api.ghost.GhostAliasApi
+import org.astermail.android.api.labels.BulkReorderLabelsRequest
 import org.astermail.android.api.labels.CreateLabelRequest
 import org.astermail.android.api.labels.LabelsApi
 import org.astermail.android.api.labels.LabelItem
 import org.astermail.android.api.labels.ReferralInfoResponse
+import org.astermail.android.api.labels.ReorderLabelEntry
+import org.astermail.android.folders.folder_sibling_group
 import org.astermail.android.api.tags.CreateTagRequest
 import org.astermail.android.api.tags.TagItem
 import org.astermail.android.api.tags.TagsApi
@@ -1620,7 +1623,12 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun create_folder(name: String, color: String? = null, sort_order: Int? = null) {
+    fun create_folder(
+        name: String,
+        color: String? = null,
+        sort_order: Int? = null,
+        parent_token: String? = null,
+    ) {
         viewModelScope.launch {
             try {
                 val identity_key = session_key_store.get_identity_key() ?: run {
@@ -1639,6 +1647,7 @@ class SettingsViewModel @Inject constructor(
                         color_nonce = color_field?.nonce_b64,
                         folder_type = "folder",
                         sort_order = sort_order,
+                        parent_token = parent_token,
                     ),
                 )
                 val optimistic = LabelItem(
@@ -1648,6 +1657,7 @@ class SettingsViewModel @Inject constructor(
                     encrypted_color = color,
                     folder_type = "folder",
                     sort_order = sort_order ?: 0,
+                    parent_token = parent_token,
                     item_count = 0,
                 )
                 optimistic_label_tokens.add(token)
@@ -1658,6 +1668,34 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     action_result = context.getString(R.string.failed_create_folder),
                 )
+            }
+        }
+    }
+
+    fun move_folder(label_id: String, direction: Int) {
+        viewModelScope.launch {
+            val siblings = folder_sibling_group(_state.value.labels, label_id)
+            val index = siblings.indexOfFirst { it.id == label_id }
+            val target = index + direction
+            if (index < 0 || target < 0 || target > siblings.lastIndex) return@launch
+            val reordered = siblings.toMutableList().apply {
+                add(target, removeAt(index))
+            }
+            val new_orders = reordered.mapIndexed { i, label -> label.id to i }.toMap()
+            val previous_labels = _state.value.labels
+            _state.value = _state.value.copy(
+                labels = previous_labels.map { label ->
+                    new_orders[label.id]?.let { label.copy(sort_order = it) } ?: label
+                },
+            )
+            val changed = reordered.mapIndexedNotNull { i, label ->
+                if (label.sort_order != i) ReorderLabelEntry(id = label.id, sort_order = i) else null
+            }
+            if (changed.isEmpty()) return@launch
+            try {
+                labels_api.bulk_reorder_labels(BulkReorderLabelsRequest(labels = changed))
+            } catch (_: Throwable) {
+                _state.value = _state.value.copy(labels = previous_labels)
             }
         }
     }

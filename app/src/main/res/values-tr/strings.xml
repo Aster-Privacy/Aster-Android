@@ -433,6 +433,10 @@
     <string name="no_aliases_yet">Henüz takma ad yok</string>
     <string name="create_folder">Klasör oluştur</string>
     <string name="folder_name">Klasör adı</string>
+    <string name="parent_folder">Üst klasör</string>
+    <string name="parent_folder_none">Yok</string>
+    <string name="move_folder_up">Yukarı taşı</string>
+    <string name="move_folder_down">Aşağı taşı</string>
     <string name="create_label">Etiket oluştur</string>
     <string name="label_name">Etiket adı</string>
     <string name="create_alias">Takma ad oluştur</string>

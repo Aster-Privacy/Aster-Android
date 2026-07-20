@@ -1186,29 +1186,44 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         ?: accounts_state.accounts.firstOrNull()?.email
         ?: ""
 
-    val api_folders = settings_state.labels
-        .filter { !it.is_system }
-        .filter { it.folder_type == "folder" || it.folder_type == "custom" }
-        .map { label ->
+    val folder_nodes = org.astermail.android.folders.flatten_folder_tree(settings_state.labels)
+
+    val api_folders = folder_nodes.map { node ->
+        val label = node.label
+        val readable_name = label.encrypted_name?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
+        drawer_folder_item(
+            id = label.label_token,
+            label = readable_name ?: drawer_context.getString(R.string.folder_decrypt_failed),
+            icon = Icons.Outlined.Folder,
+            count = label.unread_count?.toInt() ?: 0,
+            depth = node.depth,
+            trail = node.trail,
+            has_next = node.has_next,
+        )
+    }
+
+    val folder_parent_options = folder_nodes
+        .filter { it.depth < org.astermail.android.folders.max_folder_depth }
+        .mapNotNull { node ->
+            val label = node.label
             val readable_name = label.encrypted_name?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
-            drawer_folder_item(
-                id = label.label_token,
-                label = readable_name ?: drawer_context.getString(R.string.folder_decrypt_failed),
-                icon = Icons.Outlined.Folder,
-                count = label.unread_count?.toInt() ?: 0,
+                ?: return@mapNotNull null
+            org.astermail.android.ui.drawer.folder_parent_option(
+                token = label.label_token,
+                label = readable_name,
+                depth = node.depth,
+                path_label = org.astermail.android.folders.folder_path(settings_state.labels, label.label_token)
+                    .filter { it.isNotBlank() && !looks_encrypted(it) }
+                    .joinToString(" · "),
             )
         }
 
-    val quick_custom_folders = androidx.compose.runtime.remember(settings_state.labels) {
-        settings_state.labels
-            .filter { !it.is_system }
-            .filter { it.folder_type == "folder" || it.folder_type == "custom" }
-            .mapNotNull { label ->
-                val readable_name = label.encrypted_name?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
-                    ?: return@mapNotNull null
-                label.label_token to readable_name
-            }
-    }
+    val quick_custom_folders = folder_nodes
+        .mapNotNull { node ->
+            val readable_name = node.label.encrypted_name?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
+                ?: return@mapNotNull null
+            node.label.label_token to readable_name
+        }
 
     val label_colors = listOf(
         Color(0xFF3B82F6),
@@ -1378,9 +1393,18 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 on_create_label = { name, color, icon ->
                     settings_vm.create_tag(name = name, color = color, icon = icon)
                 },
-                on_create_folder = { name ->
-                    settings_vm.create_folder(name = name, sort_order = api_folders.size)
+                on_create_folder = { name, parent_token ->
+                    val sibling_count = settings_state.labels.count {
+                        org.astermail.android.folders.is_custom_folder(it) &&
+                            it.parent_token.orEmpty() == parent_token.orEmpty()
+                    }
+                    settings_vm.create_folder(
+                        name = name,
+                        sort_order = sibling_count,
+                        parent_token = parent_token,
+                    )
                 },
+                folder_parent_options = folder_parent_options,
                 on_logout = {
                     settings_vm.logout {
                         accounts_vm.refresh()
