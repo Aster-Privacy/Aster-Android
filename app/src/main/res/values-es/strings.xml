@@ -335,6 +335,8 @@
     <string name="save_failed">Error al guardar</string>
 
     <string name="search_mail">Buscar correos</string>
+    <string name="send_problem_title">Problema al enviar el correo</string>
+    <string name="send_problem_message">Su mensaje aún no se ha podido enviar. La aplicación seguirá intentándolo en segundo plano.</string>
     <string name="search_aliases">Buscar alias</string>
     <string name="filter_from">De</string>
     <string name="filter_to">Para</string>

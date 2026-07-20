@@ -203,6 +203,21 @@ fun InboxScreen(
     val prefetch_context = LocalContext.current
     val toast_context = LocalContext.current
 
+    val send_problem by mail_vm.send_problem.collectAsStateWithLifecycle()
+    if (send_problem) {
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { mail_vm.dismiss_send_problem() },
+            title = stringResource(R.string.send_problem_title),
+            message = stringResource(R.string.send_problem_message),
+            footer = {
+                org.astermail.android.design.components.AsterDialogOutlineButton(
+                    label = stringResource(R.string.ok),
+                    onClick = { mail_vm.dismiss_send_problem() },
+                )
+            },
+        )
+    }
+
     var top_toast_state by remember { mutableStateOf<org.astermail.android.ui.common.TopToastState?>(null) }
     LaunchedEffect(mail_vm) {
         while (true) {

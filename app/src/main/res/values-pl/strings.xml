@@ -334,6 +334,8 @@
     <string name="save_failed">Nie udało się zapisać</string>
 
     <string name="search_mail">Szukaj w poczcie</string>
+    <string name="send_problem_title">Problem z wysyłaniem poczty</string>
+    <string name="send_problem_message">Twojej wiadomości nie udało się jeszcze wysłać. Aplikacja będzie ponawiać próby w tle.</string>
     <string name="search_aliases">Szukaj aliasów</string>
     <string name="filter_from">Od</string>
     <string name="filter_to">Do</string>

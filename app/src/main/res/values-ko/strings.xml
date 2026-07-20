@@ -334,6 +334,8 @@
     <string name="save_failed">저장 실패</string>
 
     <string name="search_mail">메일 검색</string>
+    <string name="send_problem_title">메일 전송 문제</string>
+    <string name="send_problem_message">메시지를 아직 보내지 못했습니다. 앱이 백그라운드에서 계속 재시도합니다.</string>
     <string name="search_aliases">별칭 검색</string>
     <string name="filter_from">보낸 사람</string>
     <string name="filter_to">받는 사람</string>

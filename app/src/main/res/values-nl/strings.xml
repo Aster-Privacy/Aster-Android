@@ -334,6 +334,8 @@
     <string name="save_failed">Opslaan mislukt</string>
 
     <string name="search_mail">E-mail zoeken</string>
+    <string name="send_problem_title">Probleem bij het verzenden van e-mail</string>
+    <string name="send_problem_message">Uw bericht kon nog niet worden verzonden. De app blijft het op de achtergrond proberen.</string>
     <string name="search_aliases">Aliassen zoeken</string>
     <string name="filter_from">Van</string>
     <string name="filter_to">Aan</string>

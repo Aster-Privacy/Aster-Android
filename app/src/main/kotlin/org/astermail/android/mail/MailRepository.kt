@@ -73,7 +73,7 @@ import org.astermail.android.storage.outbox.PendingSendEntity
 enum class PendingSendOutcome { SENT, GONE, RETRY }
 
 private const val STATUS_PENDING = "pending"
-private const val STATUS_SENDING = "sending"
+private const val SENDING_CLAIM_STALE_MS = 5 * 60 * 1000L
 
 data class DecryptedEnvelope(
     val subject: String,
@@ -213,6 +213,13 @@ class MailRepository @Inject constructor(
     val pending_undo_send: kotlinx.coroutines.flow.StateFlow<PendingUndoSend?> = _pending_undo_send
     private val _send_result_events = kotlinx.coroutines.flow.MutableSharedFlow<Result<Unit>>(extraBufferCapacity = 8)
     val send_result_events: kotlinx.coroutines.flow.SharedFlow<Result<Unit>> = _send_result_events
+    private val _send_problem = kotlinx.coroutines.flow.MutableStateFlow(false)
+    val send_problem: kotlinx.coroutines.flow.StateFlow<Boolean> = _send_problem
+
+    fun clear_send_problem() {
+        _send_problem.value = false
+    }
+
     private val _new_mail_events = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 4)
     val new_mail_events: kotlinx.coroutines.flow.SharedFlow<Unit> = _new_mail_events
 
@@ -371,8 +378,16 @@ class MailRepository @Inject constructor(
             runCatching { pending_send_dao.delete_by_id(pending_id) }
             return PendingSendOutcome.GONE
         }
-        val claimed = pending_send_dao.mark_sending(pending_id)
-        if (claimed == 0 && row.status != STATUS_SENDING) return PendingSendOutcome.GONE
+        val now_ms = System.currentTimeMillis()
+        val claimed = pending_send_dao.mark_sending(pending_id, now_ms)
+        if (claimed == 0) {
+            val stale_claimed = pending_send_dao.claim_stale_sending(
+                pending_id,
+                now_ms,
+                now_ms - SENDING_CLAIM_STALE_MS,
+            )
+            if (stale_claimed == 0) return PendingSendOutcome.RETRY
+        }
         _pending_undo_send.value?.let { _pending_undo_send.compareAndSet(it, null) }
         val attachments = runCatching {
             outbox_json.decodeFromString<List<ExternalAttachmentPayload>>(row.attachments_json)
@@ -396,10 +411,12 @@ class MailRepository @Inject constructor(
         return if (result.isSuccess && response?.success == true) {
             runCatching { pending_send_dao.delete_by_id(pending_id) }
             row.draft_id?.takeIf { it.isNotBlank() }?.let { runCatching { delete_draft(it) } }
+            _send_problem.value = false
             _send_result_events.tryEmit(Result.success(Unit))
             PendingSendOutcome.SENT
         } else {
             runCatching { pending_send_dao.mark_pending(pending_id) }
+            _send_problem.value = true
             _send_result_events.tryEmit(Result.failure(result.exceptionOrNull() ?: IllegalStateException("send rejected")))
             PendingSendOutcome.RETRY
         }

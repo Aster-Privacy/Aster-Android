@@ -358,6 +358,8 @@
 
     <!-- Search -->
     <string name="search_mail">Rechercher dans les e-mails</string>
+    <string name="send_problem_title">Problème lors de l\'envoi de l\'e-mail</string>
+    <string name="send_problem_message">Votre message n\'a pas encore pu être envoyé. L\'application continuera d\'essayer en arrière-plan.</string>
     <string name="search_aliases">Rechercher des alias</string>
     <string name="filter_from">De</string>
     <string name="filter_to">À</string>

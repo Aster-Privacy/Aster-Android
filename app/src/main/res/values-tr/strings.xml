@@ -334,6 +334,8 @@
     <string name="save_failed">Kaydedilemedi</string>
 
     <string name="search_mail">E-postada ara</string>
+    <string name="send_problem_title">Posta gönderiminde sorun</string>
+    <string name="send_problem_message">Mesajınız henüz gönderilemedi. Uygulama arka planda denemeye devam edecek.</string>
     <string name="search_aliases">Takma adlarda ara</string>
     <string name="filter_from">Kimden</string>
     <string name="filter_to">Kime</string>

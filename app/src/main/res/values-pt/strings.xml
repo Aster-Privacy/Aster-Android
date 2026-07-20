@@ -334,6 +334,8 @@
     <string name="save_failed">Falha ao salvar</string>
 
     <string name="search_mail">Pesquisar e-mail</string>
+    <string name="send_problem_title">Problema ao enviar e-mail</string>
+    <string name="send_problem_message">Ainda não foi possível enviar a sua mensagem. A aplicação continuará a tentar em segundo plano.</string>
     <string name="search_aliases">Pesquisar aliases</string>
     <string name="filter_from">De</string>
     <string name="filter_to">Para</string>
