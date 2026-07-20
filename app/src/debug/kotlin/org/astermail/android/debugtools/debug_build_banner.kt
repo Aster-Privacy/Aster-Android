@@ -54,7 +54,7 @@ import androidx.compose.ui.unit.sp
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 
-private const val production_release_url = "https://github.com/Aster-Privacy/Aster-Mail/releases/"
+private const val production_release_url = "https://github.com/Aster-Privacy/Aster-Android/releases/"
 
 @Composable
 fun debug_build_banner() {
