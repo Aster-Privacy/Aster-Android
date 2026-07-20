@@ -182,9 +182,8 @@ class RatchetStateSyncer @Inject constructor(
                     }
                 }
             }
-            if (BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "sync exhausted attempts ($last_error) -> wiping local state to force rebootstrap")
+            if (BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "sync exhausted attempts ($last_error) -> keeping local state, will retry later")
             known_versions.remove(conversation_id)
-            state_store.delete(conversation_id)
             return false
         } catch (t: Throwable) {
             if (BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "sync threw", t)

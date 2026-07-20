@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="debug_banner_label">DEBUG BUILD</string>
+    <string name="debug_banner_link">production build</string>
+    <string name="debug_banner_body">This is a debug build — it is intended for developers only, and may contain serious bugs. Please use the latest %1$s instead.</string>
+</resources>

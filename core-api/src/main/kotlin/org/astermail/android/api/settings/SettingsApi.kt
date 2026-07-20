@@ -35,6 +35,9 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
 
@@ -124,6 +127,8 @@ data class AliasInfo(
     val local_part_nonce: String = "",
     val encrypted_display_name: String? = null,
     val display_name_nonce: String? = null,
+    val encrypted_note: String? = null,
+    val note_nonce: String? = null,
     val alias_address_hash: String = "",
     val domain: String = "",
     val is_enabled: Boolean = true,
@@ -229,6 +234,7 @@ data class ListDirectoriesResponse(
 @Serializable
 data class CreateDirectoryRequest(
     val directory_hash: String,
+    val legacy_hash: String? = null,
     val encrypted_label: String? = null,
     val label_nonce: String? = null,
     val domain: String,
@@ -245,6 +251,8 @@ data class CreateDirectoryResponse(
 @Serializable
 data class DirectoryAvailabilityRequest(
     val directory_hash: String,
+    val legacy_hash: String? = null,
+    val domain: String? = null,
 )
 
 @Serializable
@@ -440,6 +448,7 @@ interface SettingsApi {
     suspend fun empty_deleted_aliases()
     suspend fun create_alias(request: CreateAliasRequest): CreateAliasResponse
     suspend fun update_alias(alias_id: String, request: UpdateAliasRequest): Boolean
+    suspend fun update_alias_note(alias_id: String, encrypted_note: String?, note_nonce: String?): Boolean
     suspend fun list_all_domain_addresses(): AllDomainAddressesResponse
     suspend fun create_domain_address(domain_id: String, request: CreateDomainAddressRequest): CreateDomainAddressResponse
     suspend fun update_domain_address(domain_id: String, address_id: String, request: UpdateDomainAddressRequest)
@@ -622,6 +631,28 @@ class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)
+        }
+        if (response.status.value !in 200..299) {
+            throw client.map_http_status(response.status.value, "")
+        }
+        return true
+    }
+
+    override suspend fun update_alias_note(
+        alias_id: String,
+        encrypted_note: String?,
+        note_nonce: String?,
+    ): Boolean {
+        val body = JsonObject(
+            mapOf(
+                "encrypted_note" to (encrypted_note?.let { JsonPrimitive(it) } ?: JsonNull),
+                "note_nonce" to (note_nonce?.let { JsonPrimitive(it) } ?: JsonNull),
+            ),
+        )
+        val response = client.http.patch("${client.base_url}/api/addresses/v1/aliases/$alias_id") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(body)
         }
         if (response.status.value !in 200..299) {
             throw client.map_http_status(response.status.value, "")

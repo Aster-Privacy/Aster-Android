@@ -208,6 +208,7 @@
     <string name="swipe_mark_as_unread">Отметить как непрочитанное</string>
     <string name="swipe_report_spam">Сообщить о спаме</string>
     <string name="swipe_move_to_inbox">Переместить во входящие</string>
+    <string name="swipe_none">Нет</string>
 
     <string name="has_attachment">есть вложение</string>
     <string name="starred">избранное</string>
@@ -252,6 +253,8 @@
     <string name="stop_receiving_from">Прекратить получать от</string>
     <string name="external_content_blocked">Внешние изображения, шрифты и трекеры заблокированы</string>
     <string name="e2e_encrypted_message">Сообщение со сквозным шифрованием</string>
+    <string name="e2e_encryption_failed">Не удалось отправить: сбой сквозного шифрования. Сообщение не отправлено.</string>
+    <string name="e2e_keys_not_ready">Не удалось отправить: ключи шифрования ещё не готовы. Сообщение не отправлено.</string>
     <string name="e2e_no_key_description">Это сообщение зашифровано ключом, которого нет на этом устройстве. Откройте его в веб-приложении Aster, чтобы прочитать.</string>
     <string name="no_body">(нет текста)</string>
     <string name="attachments_count">%d вложение(й)</string>
@@ -372,6 +375,11 @@
     <string name="syncing">Синхронизация</string>
     <string name="sync_contacts">Синхронизировать контакты</string>
     <string name="search_contacts">Поиск контактов</string>
+    <string name="alias_note_title">Заметка о псевдониме</string>
+    <string name="alias_note_hint">Эту заметку видите только вы</string>
+    <string name="alias_note_placeholder">Где вы используете этот псевдоним, дата регистрации, любая полезная информация</string>
+    <string name="alias_note_add">Добавить заметку</string>
+    <string name="alias_note_updated">Заметка обновлена</string>
     <string name="tab_all">Все</string>
     <string name="tab_favorites">Избранные</string>
     <string name="contacts_count">%d контактов</string>
@@ -425,9 +433,14 @@
     <string name="no_aliases_yet">Псевдонимов пока нет</string>
     <string name="create_folder">Создать папку</string>
     <string name="folder_name">Название папки</string>
+    <string name="parent_folder">Родительская папка</string>
+    <string name="parent_folder_none">Нет</string>
+    <string name="move_folder_up">Вверх</string>
+    <string name="move_folder_down">Вниз</string>
     <string name="create_label">Создать метку</string>
     <string name="label_name">Название метки</string>
     <string name="create_alias">Создать псевдоним</string>
+    <string name="create_alias_invalid_chars">Допустимые символы: буквы, цифры, точки, подчёркивания и дефисы.</string>
     <string name="alias_placeholder">username@astermail.org</string>
     <string name="accounts">Аккаунты</string>
     <string name="add_account">Добавить аккаунт</string>
@@ -690,6 +703,7 @@
     <string name="no_link_available">Ссылка недоступна</string>
     <string name="link_copied">Ссылка скопирована в буфер обмена</string>
     <string name="copy_link">Копировать ссылку</string>
+    <string name="share_link">Поделиться ссылкой</string>
     <string name="credits_title">Бонусы</string>
     <string name="credits_subtitle">Зарабатывайте бонусы Aster, выполняя различные задания.</string>
     <string name="credits_balance_label">Доступный баланс</string>
@@ -893,11 +907,14 @@
     <string name="ext_error_oauth_failed">Не удалось начать вход. Проверьте соединение и повторите попытку.</string>
     <string name="ext_error_manual_failed">Не удалось сохранить аккаунт. Проверьте хост, порт и учётные данные.</string>
     <string name="ext_error_no_session">Сеанс истёк. Выйдите и войдите снова, чтобы продолжить.</string>
+    <string name="ext_error_sync_failed">Не удалось синхронизировать. Проверьте учётные данные аккаунта и повторите попытку.</string>
     <string name="ext_manual_saved">Учётная запись добавлена. Начинается синхронизация…</string>
     <string name="ext_last_sync">Последняя синхронизация: %1$s</string>
     <string name="ext_section_oauth">Быстрое переключение</string>
-    <string name="ext_oauth_coming_soon">Скоро в Android</string>
-    <string name="ext_oauth_coming_soon_body">Вход через Google, Outlook и Yahoo появится в Android в следующих версиях. Пока используйте ручную настройку ниже с паролем приложения.</string>
+    <string name="ext_oauth_body">Войдите через своего провайдера, чтобы подключить аккаунт в один шаг.</string>
+    <string name="ext_oauth_connect_google">Войти через Google</string>
+    <string name="ext_oauth_connect_microsoft">Войти через Microsoft</string>
+    <string name="ext_oauth_connect_yahoo">Войти через Yahoo</string>
     <string name="import_provider_coming_soon">Скоро</string>
     <string name="import_connect_manual_cta">Подключить по IMAP</string>
     <string name="ext_section_manual">Ручная настройка</string>
@@ -1283,4 +1300,15 @@
     <string name="alias_available">Этот псевдоним доступен.</string>
     <string name="alias_not_available">Этот псевдоним уже занят.</string>
     <string name="alias_check_failed">Не удалось проверить доступность. Вы всё равно можете попытаться создать его.</string>
+    <string name="csrf_unavailable">Этот сеанс повреждён! Пожалуйста, войдите снова.</string>
+    <string name="received_on_prefix">получено на %s</string>
+    <string name="received_on_label">Получено на</string>
+    <string name="auto_advance_label">После архивации или удаления</string>
+    <string name="auto_advance_next">Перейти к следующему письму</string>
+    <string name="auto_advance_previous">Перейти к предыдущему письму</string>
+    <string name="auto_advance_back">Вернуться к списку писем</string>
+    <string name="reply_from_mismatch_title">Ответить с другого адреса?</string>
+    <string name="reply_from_mismatch_message">Это письмо получено на %1$s, но ответ будет отправлен с %2$s. Ответ с другого адреса может раскрыть его отправителю и быть отклонён.</string>
+    <string name="reply_from_mismatch_use_received">Использовать адрес получения</string>
+    <string name="reply_from_mismatch_send_anyway">Всё равно отправить</string>
 </resources>

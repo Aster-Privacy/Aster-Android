@@ -1,0 +1,5 @@
+Bug fixes and improvements:
+
+- Alias creation now rejects invalid characters in the username
+- Forwarded mail now shows which of your addresses received it
+- Reliability improvements for encrypted message handling

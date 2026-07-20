@@ -86,6 +86,39 @@ private fun generate_integrity_hash(
     return Base64.encodeToString(signed, Base64.NO_WRAP)
 }
 
+class ExternalAccountDecryptException(message: String) : Exception(message)
+
+fun decrypt_account_data(
+    encrypted_account_data: String,
+    account_data_nonce: String,
+    master_key: ByteArray,
+    integrity_hash: String? = null,
+): ExternalAccountData {
+    if (!integrity_hash.isNullOrEmpty()) {
+        val expected = generate_integrity_hash(encrypted_account_data, account_data_nonce, master_key)
+        if (!MessageDigest.isEqual(expected.toByteArray(Charsets.UTF_8), integrity_hash.toByteArray(Charsets.UTF_8))) {
+            throw ExternalAccountDecryptException("External account data integrity check failed")
+        }
+    }
+
+    val ciphertext = Base64.decode(encrypted_account_data, Base64.NO_WRAP)
+    val nonce = Base64.decode(account_data_nonce, Base64.NO_WRAP)
+    val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+    val key = SecretKeySpec(master_key, "AES")
+    val plaintext = try {
+        cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(128, nonce))
+        cipher.doFinal(ciphertext)
+    } catch (t: Throwable) {
+        throw ExternalAccountDecryptException("Failed to decrypt external account data")
+    }
+
+    return try {
+        json.decodeFromString(ExternalAccountData.serializer(), String(plaintext, Charsets.UTF_8))
+    } finally {
+        plaintext.fill(0)
+    }
+}
+
 fun encrypt_account_data(
     data: ExternalAccountData,
     master_key: ByteArray,

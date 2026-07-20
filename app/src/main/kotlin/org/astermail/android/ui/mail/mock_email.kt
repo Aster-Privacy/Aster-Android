@@ -134,6 +134,8 @@ data class ThreadMessage(
     val sender_name: String,
     val sender_email: String,
     val to_label: String,
+    val to_addresses: List<String> = emptyList(),
+    val cc_addresses: List<String> = emptyList(),
     val timestamp: Long,
     val body: String,
     val body_html: String? = null,
@@ -143,6 +145,7 @@ data class ThreadMessage(
     val preview: String = body.take(80),
     val attachments: List<MessageAttachment> = emptyList(),
     val raw_headers: List<Pair<String, String>> = emptyList(),
+    val is_undecryptable: Boolean = false,
 )
 
 private val label_work = Color(0xFF3B82F6)
@@ -1082,6 +1085,8 @@ fun thread_message_to_mock(msg: org.astermail.android.mail.ThreadMessageDecrypte
         sender_name = msg.sender_name.ifBlank { msg.sender_email.substringBefore('@') },
         sender_email = msg.sender_email,
         to_label = msg.to_label,
+        to_addresses = msg.to_addresses,
+        cc_addresses = msg.cc_addresses,
         timestamp = ts,
         body = display_body,
         body_html = html,
@@ -1089,6 +1094,7 @@ fun thread_message_to_mock(msg: org.astermail.android.mail.ThreadMessageDecrypte
         trackers_blocked = 0,
         is_read = msg.is_read,
         raw_headers = msg.raw_headers,
+        is_undecryptable = msg.is_undecryptable,
     )
 }
 

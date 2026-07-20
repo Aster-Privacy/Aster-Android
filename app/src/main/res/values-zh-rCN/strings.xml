@@ -208,6 +208,7 @@
     <string name="swipe_mark_as_unread">标为未读</string>
     <string name="swipe_report_spam">举报垃圾邮件</string>
     <string name="swipe_move_to_inbox">移至收件箱</string>
+    <string name="swipe_none">无</string>
 
     <string name="has_attachment">有附件</string>
     <string name="starred">已加星标</string>
@@ -252,6 +253,8 @@
     <string name="stop_receiving_from">停止接收</string>
     <string name="external_content_blocked">外部图片、字体和跟踪器已拦截</string>
     <string name="e2e_encrypted_message">端到端加密消息</string>
+    <string name="e2e_encryption_failed">无法发送：端到端加密失败。邮件未发送。</string>
+    <string name="e2e_keys_not_ready">无法发送：加密密钥尚未就绪。邮件未发送。</string>
     <string name="e2e_no_key_description">此消息使用此设备尚未拥有的密钥加密。请在 Aster 网页端打开阅读。</string>
     <string name="no_body">（无正文）</string>
     <string name="attachments_count">%d 个附件</string>
@@ -372,6 +375,11 @@
     <string name="syncing">同步中</string>
     <string name="sync_contacts">同步联系人</string>
     <string name="search_contacts">搜索联系人</string>
+    <string name="alias_note_title">别名备注</string>
+    <string name="alias_note_hint">只有你能看到这条备注</string>
+    <string name="alias_note_placeholder">此别名的用途、注册日期等任何有用信息</string>
+    <string name="alias_note_add">添加备注</string>
+    <string name="alias_note_updated">备注已更新</string>
     <string name="tab_all">全部</string>
     <string name="tab_favorites">收藏</string>
     <string name="contacts_count">%d 个联系人</string>
@@ -425,9 +433,14 @@
     <string name="no_aliases_yet">还没有别名</string>
     <string name="create_folder">创建文件夹</string>
     <string name="folder_name">文件夹名称</string>
+    <string name="parent_folder">上级文件夹</string>
+    <string name="parent_folder_none">无</string>
+    <string name="move_folder_up">上移</string>
+    <string name="move_folder_down">下移</string>
     <string name="create_label">创建标签</string>
     <string name="label_name">标签名称</string>
     <string name="create_alias">创建别名</string>
+    <string name="create_alias_invalid_chars">允许使用字母、数字、点、下划线和连字符。</string>
     <string name="alias_placeholder">username@astermail.org</string>
     <string name="accounts">账户</string>
     <string name="add_account">添加账户</string>
@@ -690,6 +703,7 @@
     <string name="no_link_available">没有可用链接</string>
     <string name="link_copied">链接已复制到剪贴板</string>
     <string name="copy_link">复制链接</string>
+    <string name="share_link">分享链接</string>
     <string name="credits_title">积分</string>
     <string name="credits_subtitle">通过完成不同任务赚取 Aster 积分。</string>
     <string name="credits_balance_label">可用余额</string>
@@ -893,11 +907,14 @@
     <string name="ext_error_oauth_failed">无法开始登录。请检查网络连接后重试。</string>
     <string name="ext_error_manual_failed">无法保存账户。请检查主机、端口和凭据。</string>
     <string name="ext_error_no_session">会话已过期。请登出后重新登录以继续。</string>
+    <string name="ext_error_sync_failed">同步失败。请检查账户凭据后重试。</string>
     <string name="ext_manual_saved">已添加帐户。同步开始…</string>
     <string name="ext_last_sync">上次同步：%1$s</string>
     <string name="ext_section_oauth">快速切换</string>
-    <string name="ext_oauth_coming_soon">即将在 Android 上推出</string>
-    <string name="ext_oauth_coming_soon_body">Google、Outlook 和 Yahoo 登录将在后续 Android 版本中支持。目前请使用下方的手动设置和应用专用密码。</string>
+    <string name="ext_oauth_body">使用您的提供商登录，一步即可连接账户。</string>
+    <string name="ext_oauth_connect_google">使用 Google 登录</string>
+    <string name="ext_oauth_connect_microsoft">使用 Microsoft 登录</string>
+    <string name="ext_oauth_connect_yahoo">使用 Yahoo 登录</string>
     <string name="import_provider_coming_soon">即将推出</string>
     <string name="import_connect_manual_cta">通过 IMAP 连接</string>
     <string name="ext_section_manual">手动设置</string>
@@ -1277,4 +1294,15 @@
     <string name="alias_available">此别名可用。</string>
     <string name="alias_not_available">此别名已被占用。</string>
     <string name="alias_check_failed">无法检查可用性。你仍然可以尝试创建。</string>
+    <string name="csrf_unavailable">此会话已损坏！请重新登录。</string>
+    <string name="received_on_prefix">通过 %s 接收</string>
+    <string name="received_on_label">接收地址</string>
+    <string name="auto_advance_label">归档或删除后</string>
+    <string name="auto_advance_next">转到下一封邮件</string>
+    <string name="auto_advance_previous">转到上一封邮件</string>
+    <string name="auto_advance_back">返回邮件列表</string>
+    <string name="reply_from_mismatch_title">要用其他地址回复吗？</string>
+    <string name="reply_from_mismatch_message">这封邮件是在 %1$s 收到的，但你的回复将从 %2$s 发送。使用其他地址回复可能会向发件人泄露该地址，回复也可能被拒收。</string>
+    <string name="reply_from_mismatch_use_received">使用接收地址</string>
+    <string name="reply_from_mismatch_send_anyway">仍然发送</string>
 </resources>

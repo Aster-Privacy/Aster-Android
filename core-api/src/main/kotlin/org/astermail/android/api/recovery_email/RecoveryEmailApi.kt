@@ -49,6 +49,14 @@ data class SaveRecoveryEmailRequest(
     val email_nonce: String,
     val email_hash: String,
     val plaintext_email: String,
+    val password_hash: String,
+    val totp_code: String? = null,
+)
+
+@Serializable
+data class RemoveRecoveryEmailRequest(
+    val password_hash: String,
+    val totp_code: String? = null,
 )
 
 @Serializable
@@ -65,7 +73,7 @@ interface RecoveryEmailApi {
     suspend fun get_state(): RecoveryEmailStateResponse
     suspend fun save(request: SaveRecoveryEmailRequest): RecoveryEmailSuccessResponse
     suspend fun resend(plaintext_email: String): RecoveryEmailSuccessResponse
-    suspend fun remove(): RecoveryEmailSuccessResponse
+    suspend fun remove(request: RemoveRecoveryEmailRequest): RecoveryEmailSuccessResponse
 }
 
 class RecoveryEmailApiImpl(private val client: ApiClient) : RecoveryEmailApi {
@@ -94,9 +102,11 @@ class RecoveryEmailApiImpl(private val client: ApiClient) : RecoveryEmailApi {
         return decode_or_throw(response)
     }
 
-    override suspend fun remove(): RecoveryEmailSuccessResponse {
+    override suspend fun remove(request: RemoveRecoveryEmailRequest): RecoveryEmailSuccessResponse {
         val response = client.http.delete("${client.base_url}$base") {
+            contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
         }
         return decode_or_throw(response)
     }

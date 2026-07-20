@@ -30,14 +30,21 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Cancel
 import androidx.compose.material.icons.outlined.Check
@@ -78,6 +85,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -164,12 +172,12 @@ fun AliasesScreen(
         }
     }
 
-    detail_scaffold(title = stringResource(R.string.aliases), on_back = on_back) {
+    detail_scaffold(title = stringResource(R.string.aliases), on_back = on_back, scrollable = false) {
         ScrollableTabRow(
             selectedTabIndex = selected_tab,
             containerColor = colors.bg_primary,
             contentColor = colors.accent_blue,
-            edgePadding = AsterSpacing.md,
+            edgePadding = AsterSpacing.lg,
         ) {
             tab_labels.forEachIndexed { i, label ->
                 Tab(
@@ -189,38 +197,44 @@ fun AliasesScreen(
         }
         v_gap(AsterSpacing.sm)
 
-        when (selected_tab) {
-            0 -> aliases_tab(
-                vm = vm,
-                state = state,
-                context = context,
-                scope = scope,
-                on_show_create = { show_create_alias = true },
-                restore_locked = alias_restore_locked,
-                on_upgrade = { on_open("billing") },
-            )
-            1 -> domains_tab(
-                vm = vm,
-                state = state,
-                scope = scope,
-                expanded_domain_id = expanded_domain_id,
-                domain_dns = domain_dns,
-                verifying_domain_id = verifying_domain_id,
-                on_expanded_change = { expanded_domain_id = it },
-                on_dns_loaded = { id, records -> domain_dns = domain_dns + (id to records) },
-                on_verifying_change = { verifying_domain_id = it },
-                on_show_add = { show_add_domain = true },
-                catch_all_locked = catch_all_locked,
-            )
-            2 -> directories_tab(
-                vm = vm,
-                state = state,
-                scope = scope,
-                locked = alias_directories_locked,
-                on_upgrade = { on_open("billing") },
-            )
-            3 -> ghost_tab(vm = vm, state = state, context = context, scope = scope)
-            4 -> preferences_tab(vm = vm, state = state)
+        Box(modifier = Modifier.weight(1f).fillMaxSize()) {
+            when (selected_tab) {
+                0 -> aliases_tab(
+                    vm = vm,
+                    state = state,
+                    context = context,
+                    scope = scope,
+                    on_show_create = { show_create_alias = true },
+                    restore_locked = alias_restore_locked,
+                    on_upgrade = { on_open("billing") },
+                )
+                1 -> tab_scroll {
+                    domains_tab(
+                        vm = vm,
+                        state = state,
+                        scope = scope,
+                        expanded_domain_id = expanded_domain_id,
+                        domain_dns = domain_dns,
+                        verifying_domain_id = verifying_domain_id,
+                        on_expanded_change = { expanded_domain_id = it },
+                        on_dns_loaded = { id, records -> domain_dns = domain_dns + (id to records) },
+                        on_verifying_change = { verifying_domain_id = it },
+                        on_show_add = { show_add_domain = true },
+                        catch_all_locked = catch_all_locked,
+                    )
+                }
+                2 -> tab_scroll {
+                    directories_tab(
+                        vm = vm,
+                        state = state,
+                        scope = scope,
+                        locked = alias_directories_locked,
+                        on_upgrade = { on_open("billing") },
+                    )
+                }
+                3 -> tab_scroll { ghost_tab(vm = vm, state = state, context = context, scope = scope) }
+                4 -> tab_scroll { preferences_tab(vm = vm, state = state) }
+            }
         }
     }
 
@@ -272,6 +286,25 @@ fun AliasesScreen(
 }
 
 @Composable
+private fun tab_scroll(content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = AsterSpacing.lg)
+            .padding(bottom = AsterSpacing.lg),
+        content = content,
+    )
+}
+
+internal fun list_item_shape(idx: Int, last_index: Int): RoundedCornerShape = when {
+    last_index == 0 -> RoundedCornerShape(14.dp)
+    idx == 0 -> RoundedCornerShape(topStart = 14.dp, topEnd = 14.dp)
+    idx == last_index -> RoundedCornerShape(bottomStart = 14.dp, bottomEnd = 14.dp)
+    else -> RoundedCornerShape(0.dp)
+}
+
+@Composable
 private fun aliases_tab(
     vm: SettingsViewModel,
     state: org.astermail.android.settings.SettingsUiState,
@@ -283,364 +316,402 @@ private fun aliases_tab(
 ) {
     var pending_delete by remember { mutableStateOf<Pair<String, String>?>(null) }
     var pending_domain_address_delete by remember { mutableStateOf<Triple<String, String, String>?>(null) }
-    var alias_view by remember { mutableStateOf(0) }
     var alias_query by remember { mutableStateOf("") }
+    var note_editing by remember { mutableStateOf<Pair<String, String>?>(null) }
     val colors = AsterMaterial.colors
-    val show_custom = state.custom_domain_addresses.isNotEmpty()
-    val alias_view_effective = if (show_custom) alias_view else 0
     val query = alias_query.trim()
-    val filtered_aliases = if (query.isEmpty()) state.aliases else state.aliases.filter {
-        it.address.contains(query, ignoreCase = true) ||
-            it.encrypted_display_name?.contains(query, ignoreCase = true) == true
+    val visible_aliases = remember(state.aliases, query) {
+        if (query.isBlank()) state.aliases
+        else state.aliases.filter {
+            it.address.contains(query, ignoreCase = true) ||
+                (it.encrypted_display_name ?: "").contains(query, ignoreCase = true) ||
+                (it.encrypted_note ?: "").contains(query, ignoreCase = true)
+        }
     }
-    val filtered_custom_addresses = if (query.isEmpty()) state.custom_domain_addresses else state.custom_domain_addresses.filter {
-        it.address.contains(query, ignoreCase = true)
+    val visible_domain_addresses = remember(state.custom_domain_addresses, query) {
+        if (query.isBlank()) state.custom_domain_addresses
+        else state.custom_domain_addresses.filter { it.address.contains(query, ignoreCase = true) }
     }
 
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = stringResource(
-                R.string.aliases_count,
-                if (alias_view_effective == 1) filtered_custom_addresses.size else filtered_aliases.size,
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = AsterSpacing.lg,
+                end = AsterSpacing.lg,
+                top = AsterSpacing.sm,
+                bottom = AsterSpacing.lg,
             ),
-            color = colors.text_tertiary,
-            fontSize = 13.sp,
-        )
-        TextButton(onClick = on_show_create) {
-            Text(stringResource(R.string.create), color = colors.accent_blue, fontSize = 14.sp)
-        }
-    }
-    v_gap(AsterSpacing.sm)
-    if (show_custom) {
-        alias_view_selector(selected = alias_view_effective, on_select = { alias_view = it })
-        v_gap(AsterSpacing.sm)
-    }
-
-    val search_source_size = if (alias_view_effective == 1) state.custom_domain_addresses.size else state.aliases.size
-    if (search_source_size > 0) {
-        OutlinedTextField(
-            value = alias_query,
-            onValueChange = { alias_query = it },
-            placeholder = { Text(stringResource(R.string.search_aliases), fontSize = 14.sp) },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Outlined.Search,
-                    contentDescription = null,
-                    tint = colors.text_muted,
-                    modifier = Modifier.size(20.dp),
-                )
-            },
-            trailingIcon = if (alias_query.isEmpty()) null else {
-                {
-                    AsterIconButton(
-                        icon = Icons.Outlined.Cancel,
-                        content_description = stringResource(R.string.cancel),
-                        onClick = { alias_query = "" },
-                    )
-                }
-            },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        v_gap(AsterSpacing.sm)
-    }
-
-    if (alias_view_effective == 0) {
-    if (state.is_loading && state.aliases.isEmpty()) {
-        Box(
-            modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
-            contentAlignment = Alignment.Center,
         ) {
-            CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
-        }
-    } else if (state.aliases.isEmpty()) {
-        AsterCard(modifier = Modifier.fillMaxWidth()) {
-            detail_row(
-                title = stringResource(R.string.no_aliases),
-                subtitle = state.error ?: stringResource(R.string.no_aliases_subtitle),
-            )
-        }
-    } else if (filtered_aliases.isEmpty()) {
-        AsterCard(modifier = Modifier.fillMaxWidth()) {
-            detail_row(title = stringResource(R.string.no_results_found))
-        }
-    } else {
-        val page_size = 100
-        val page_count = (filtered_aliases.size + page_size - 1) / page_size
-        var alias_page by remember(query, filtered_aliases.size) { mutableStateOf(0) }
-        val current_page = alias_page.coerceIn(0, (page_count - 1).coerceAtLeast(0))
-        val page_from = current_page * page_size
-        val page_to = minOf(page_from + page_size, filtered_aliases.size)
-        val page_items = filtered_aliases.subList(page_from, page_to)
-
-        AsterCard(modifier = Modifier.fillMaxWidth()) {
-            page_items.forEachIndexed { idx, alias ->
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
-                ) {
-                    Text(
-                        text = alias.address,
-                        color = if (alias.decryption_failed) colors.text_muted else colors.text_primary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    val display_name_val = alias.encrypted_display_name
-                    if (!display_name_val.isNullOrBlank()) {
-                        Text(
-                            text = display_name_val,
-                            color = colors.text_secondary,
-                            fontSize = 12.sp,
-                        )
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = if (alias.is_enabled) stringResource(R.string.forwards_to_inbox) else stringResource(R.string.alias_status_disabled_badge),
-                            color = if (alias.is_enabled) colors.text_tertiary else colors.danger,
-                            fontSize = 12.sp,
-                            modifier = Modifier.weight(1f),
-                        )
-                        Switch(
-                            checked = alias.is_enabled,
-                            onCheckedChange = { vm.toggle_alias(alias.id) },
-                            modifier = Modifier.size(36.dp, 20.dp),
-                            colors = SwitchDefaults.colors(
-                                checkedTrackColor = colors.accent_blue,
-                                uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
-                            ),
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        AsterIconButton(
-                            icon = Icons.Outlined.ContentCopy,
-                            content_description = stringResource(R.string.copy),
-                            onClick = {
-                                val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                cm.setPrimaryClip(ClipData.newPlainText("alias", alias.address))
-                                android.widget.Toast.makeText(context, context.getString(R.string.copied), android.widget.Toast.LENGTH_SHORT).show()
-                            },
-                        )
-                        AsterIconButton(
-                            icon = Icons.Outlined.Delete,
-                            content_description = stringResource(R.string.delete),
-                            onClick = { pending_delete = alias.id to alias.address },
-                            tint = colors.danger,
-                        )
-                    }
-                }
-                if (idx < page_items.lastIndex) AsterDivider(modifier = Modifier)
-            }
-        }
-
-        if (page_count > 1) {
-            v_gap(AsterSpacing.sm)
-            alias_pager(
-                current_page = current_page,
-                page_count = page_count,
-                on_prev = { alias_page = (current_page - 1).coerceAtLeast(0) },
-                on_next = { alias_page = (current_page + 1).coerceAtMost(page_count - 1) },
-            )
-        }
-    }
-    }
-
-    if (alias_view_effective == 1 && filtered_custom_addresses.isEmpty()) {
-        AsterCard(modifier = Modifier.fillMaxWidth()) {
-            detail_row(title = stringResource(R.string.no_results_found))
-        }
-    }
-
-    if (alias_view_effective == 1 && filtered_custom_addresses.isNotEmpty()) {
-        val cd_page_size = 100
-        val cd_page_count = (filtered_custom_addresses.size + cd_page_size - 1) / cd_page_size
-        var cd_page by remember(query, filtered_custom_addresses.size) { mutableStateOf(0) }
-        val cd_current_page = cd_page.coerceIn(0, (cd_page_count - 1).coerceAtLeast(0))
-        val cd_from = cd_current_page * cd_page_size
-        val cd_to = minOf(cd_from + cd_page_size, filtered_custom_addresses.size)
-        val cd_items = filtered_custom_addresses.subList(cd_from, cd_to)
-        AsterCard(modifier = Modifier.fillMaxWidth()) {
-            cd_items.forEachIndexed { idx, addr ->
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
-                ) {
-                    Text(
-                        text = addr.address,
-                        color = if (addr.decryption_failed) colors.text_muted else colors.text_primary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = if (addr.is_enabled) stringResource(R.string.forwards_to_inbox) else stringResource(R.string.alias_status_disabled_badge),
-                            color = if (addr.is_enabled) colors.text_tertiary else colors.danger,
-                            fontSize = 12.sp,
-                            modifier = Modifier.weight(1f),
-                        )
-                        Switch(
-                            checked = addr.is_enabled,
-                            onCheckedChange = { vm.toggle_domain_address(addr.id, addr.domain_name) },
-                            modifier = Modifier.size(36.dp, 20.dp),
-                            colors = SwitchDefaults.colors(
-                                checkedTrackColor = colors.accent_blue,
-                                uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
-                            ),
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        AsterIconButton(
-                            icon = Icons.Outlined.ContentCopy,
-                            content_description = stringResource(R.string.copy),
-                            onClick = {
-                                val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                cm.setPrimaryClip(ClipData.newPlainText("alias", addr.address))
-                                android.widget.Toast.makeText(context, context.getString(R.string.copied), android.widget.Toast.LENGTH_SHORT).show()
-                            },
-                        )
-                        AsterIconButton(
-                            icon = Icons.Outlined.Delete,
-                            content_description = stringResource(R.string.delete),
-                            onClick = { pending_domain_address_delete = Triple(addr.id, addr.domain_name, addr.address) },
-                            tint = colors.danger,
-                        )
-                    }
-                }
-                if (idx < cd_items.lastIndex) AsterDivider(modifier = Modifier)
-            }
-        }
-        if (cd_page_count > 1) {
-            v_gap(AsterSpacing.sm)
-            alias_pager(
-                current_page = cd_current_page,
-                page_count = cd_page_count,
-                on_prev = { cd_page = (cd_current_page - 1).coerceAtLeast(0) },
-                on_next = { cd_page = (cd_current_page + 1).coerceAtMost(cd_page_count - 1) },
-            )
-        }
-    }
-
-    recently_deleted_section(
-        vm = vm,
-        state = state,
-        restore_locked = restore_locked,
-        on_upgrade = on_upgrade,
-    )
-
-    pending_delete?.let { (id, address) ->
-        org.astermail.android.design.components.AsterDialog(
-            on_dismiss = { pending_delete = null },
-            title = stringResource(R.string.delete_alias),
-            message = stringResource(R.string.alias_delete_confirm_message, address),
-            footer = {
-                org.astermail.android.design.components.AsterDialogOutlineButton(
-                    label = stringResource(R.string.cancel),
-                    onClick = { pending_delete = null },
-                )
-                org.astermail.android.design.components.AsterDialogDestructiveButton(
-                    label = stringResource(R.string.delete),
-                    onClick = { vm.delete_alias(id); pending_delete = null },
-                )
-            },
-        )
-    }
-
-    pending_domain_address_delete?.let { (address_id, domain_name, address) ->
-        org.astermail.android.design.components.AsterDialog(
-            on_dismiss = { pending_domain_address_delete = null },
-            title = stringResource(R.string.delete_alias),
-            message = stringResource(R.string.alias_delete_confirm_message, address),
-            footer = {
-                org.astermail.android.design.components.AsterDialogOutlineButton(
-                    label = stringResource(R.string.cancel),
-                    onClick = { pending_domain_address_delete = null },
-                )
-                org.astermail.android.design.components.AsterDialogDestructiveButton(
-                    label = stringResource(R.string.delete),
-                    onClick = { vm.delete_domain_address(address_id, domain_name); pending_domain_address_delete = null },
-                )
-            },
-        )
-    }
-}
-
-@Composable
-private fun alias_view_selector(selected: Int, on_select: (Int) -> Unit) {
-    val colors = AsterMaterial.colors
-    val labels = listOf(stringResource(R.string.aliases), stringResource(R.string.alias_view_custom))
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(colors.input_bg)
-            .padding(3.dp),
-        horizontalArrangement = Arrangement.spacedBy(3.dp),
-    ) {
-        labels.forEachIndexed { i, label ->
-            val is_selected = i == selected
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(38.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(if (is_selected) colors.accent_blue else colors.input_bg)
-                    .clickable { on_select(i) },
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = label,
-                    color = if (is_selected) Color.White else colors.text_secondary,
-                    fontSize = 14.sp,
-                    fontWeight = if (is_selected) FontWeight.SemiBold else FontWeight.Normal,
-                    maxLines = 1,
-                    textAlign = TextAlign.Center,
+            item(key = "alias_header") {
+                Row(
                     modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.aliases_count, state.aliases.size),
+                        color = colors.text_tertiary,
+                        fontSize = 13.sp,
+                    )
+                    TextButton(onClick = on_show_create) {
+                        Text(stringResource(R.string.create), color = colors.accent_blue, fontSize = 14.sp)
+                    }
+                }
+                v_gap(AsterSpacing.sm)
+            }
+
+            if (state.aliases.isNotEmpty() || state.custom_domain_addresses.isNotEmpty()) {
+                item(key = "alias_search") {
+                    OutlinedTextField(
+                        value = alias_query,
+                        onValueChange = { alias_query = it },
+                        placeholder = { Text(stringResource(R.string.search_aliases), color = colors.text_muted) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Outlined.Search,
+                                contentDescription = null,
+                                tint = colors.text_muted,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    v_gap(AsterSpacing.sm)
+                }
+            }
+
+            if (state.is_loading && state.aliases.isEmpty()) {
+                item(key = "alias_loading") {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
+                    }
+                }
+            } else if (state.aliases.isEmpty()) {
+                item(key = "alias_empty") {
+                    AsterCard(modifier = Modifier.fillMaxWidth()) {
+                        detail_row(
+                            title = stringResource(R.string.no_aliases),
+                            subtitle = state.error ?: stringResource(R.string.no_aliases_subtitle),
+                        )
+                    }
+                }
+            } else if (visible_aliases.isEmpty() && visible_domain_addresses.isEmpty()) {
+                item(key = "alias_no_results") {
+                    AsterCard(modifier = Modifier.fillMaxWidth()) {
+                        detail_row(title = stringResource(R.string.no_results_found))
+                    }
+                }
+            } else {
+                itemsIndexed(
+                    items = visible_aliases,
+                    key = { _, alias -> "alias_${alias.id}" },
+                ) { idx, alias ->
+                    alias_list_row(
+                        alias = alias,
+                        idx = idx,
+                        last_index = visible_aliases.lastIndex,
+                        context = context,
+                        on_toggle = { vm.toggle_alias(alias.id) },
+                        on_delete = { pending_delete = alias.id to alias.address },
+                        on_edit_note = { note_editing = alias.id to (alias.encrypted_note ?: "") },
+                    )
+                }
+            }
+
+            if (visible_domain_addresses.isNotEmpty()) {
+                item(key = "custom_domain_header") {
+                    v_gap(AsterSpacing.md)
+                    Text(
+                        text = stringResource(R.string.custom_domains),
+                        color = colors.text_tertiary,
+                        fontSize = 13.sp,
+                    )
+                    v_gap(AsterSpacing.sm)
+                }
+                itemsIndexed(
+                    items = visible_domain_addresses,
+                    key = { _, addr -> "cda_${addr.address}" },
+                ) { idx, addr ->
+                    custom_domain_address_row(
+                        addr = addr,
+                        idx = idx,
+                        last_index = visible_domain_addresses.lastIndex,
+                        context = context,
+                        on_toggle = { vm.toggle_domain_address(addr.id, addr.domain_name) },
+                        on_delete = { pending_domain_address_delete = Triple(addr.id, addr.domain_name, addr.address) },
+                    )
+                }
+            }
+
+            item(key = "recently_deleted") {
+                recently_deleted_section(
+                    vm = vm,
+                    state = state,
+                    restore_locked = restore_locked,
+                    on_upgrade = on_upgrade,
                 )
             }
+        }
+
+        pending_delete?.let { (id, address) ->
+            org.astermail.android.design.components.AsterDialog(
+                on_dismiss = { pending_delete = null },
+                title = stringResource(R.string.delete_alias),
+                message = stringResource(R.string.alias_delete_confirm_message, address),
+                footer = {
+                    org.astermail.android.design.components.AsterDialogOutlineButton(
+                        label = stringResource(R.string.cancel),
+                        onClick = { pending_delete = null },
+                    )
+                    org.astermail.android.design.components.AsterDialogDestructiveButton(
+                        label = stringResource(R.string.delete),
+                        onClick = { vm.delete_alias(id); pending_delete = null },
+                    )
+                },
+            )
+        }
+
+        pending_domain_address_delete?.let { (address_id, domain_name, address) ->
+            org.astermail.android.design.components.AsterDialog(
+                on_dismiss = { pending_domain_address_delete = null },
+                title = stringResource(R.string.delete_alias),
+                message = stringResource(R.string.alias_delete_confirm_message, address),
+                footer = {
+                    org.astermail.android.design.components.AsterDialogOutlineButton(
+                        label = stringResource(R.string.cancel),
+                        onClick = { pending_domain_address_delete = null },
+                    )
+                    org.astermail.android.design.components.AsterDialogDestructiveButton(
+                        label = stringResource(R.string.delete),
+                        onClick = { vm.delete_domain_address(address_id, domain_name); pending_domain_address_delete = null },
+                    )
+                },
+            )
+        }
+
+        note_editing?.let { (alias_id, initial_note) ->
+            var note_value by remember(alias_id) { mutableStateOf(initial_note) }
+            AlertDialog(
+                onDismissRequest = { note_editing = null },
+                containerColor = colors.bg_card,
+                title = {
+                    Text(
+                        stringResource(R.string.alias_note_title),
+                        color = colors.text_primary,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                },
+                text = {
+                    Column {
+                        Text(stringResource(R.string.alias_note_hint), color = colors.text_muted, fontSize = 12.sp)
+                        Spacer(Modifier.height(AsterSpacing.sm))
+                        OutlinedTextField(
+                            value = note_value,
+                            onValueChange = { if (it.length <= 500 || it.length < note_value.length) note_value = it },
+                            placeholder = { Text(stringResource(R.string.alias_note_placeholder)) },
+                            minLines = 3,
+                            maxLines = 5,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                },
+                confirmButton = {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(colors.accent_blue)
+                            .clickable {
+                                vm.update_alias_note(alias_id, note_value)
+                                note_editing = null
+                            }
+                            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
+                    ) {
+                        Text(
+                            stringResource(R.string.save),
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
+                },
+                dismissButton = {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .border(1.dp, colors.border_primary, RoundedCornerShape(10.dp))
+                            .clickable { note_editing = null }
+                            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
+                    ) {
+                        Text(stringResource(R.string.cancel), color = colors.text_primary, fontSize = 14.sp)
+                    }
+                },
+            )
         }
     }
 }
 
 @Composable
-private fun alias_pager(
-    current_page: Int,
-    page_count: Int,
-    on_prev: () -> Unit,
-    on_next: () -> Unit,
+internal fun alias_list_row(
+    alias: org.astermail.android.api.settings.AliasInfo,
+    idx: Int,
+    last_index: Int,
+    context: Context,
+    on_toggle: () -> Unit,
+    on_delete: () -> Unit,
+    on_edit_note: (() -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(list_item_shape(idx, last_index))
+            .background(colors.bg_card),
     ) {
-        AsterIconButton(
-            icon = Icons.Outlined.KeyboardArrowLeft,
-            content_description = stringResource(R.string.back),
-            onClick = on_prev,
-            enabled = current_page > 0,
-        )
-        Text(
-            text = stringResource(R.string.alias_page_indicator, current_page + 1, page_count),
-            color = colors.text_secondary,
-            fontSize = 13.sp,
-            modifier = Modifier.padding(horizontal = AsterSpacing.md),
-        )
-        AsterIconButton(
-            icon = Icons.Outlined.KeyboardArrowRight,
-            content_description = stringResource(R.string.next),
-            onClick = on_next,
-            enabled = current_page < page_count - 1,
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
+        ) {
+            Text(
+                text = alias.address,
+                color = if (alias.decryption_failed) colors.text_muted else colors.text_primary,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            val display_name_val = alias.encrypted_display_name
+            if (!display_name_val.isNullOrBlank()) {
+                Text(
+                    text = display_name_val,
+                    color = colors.text_secondary,
+                    fontSize = 12.sp,
+                )
+            }
+            if (on_edit_note != null) {
+                val note_val = alias.encrypted_note
+                Text(
+                    text = if (note_val.isNullOrBlank()) stringResource(R.string.alias_note_add) else note_val,
+                    color = if (note_val.isNullOrBlank()) colors.text_muted else colors.text_tertiary,
+                    fontSize = 12.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { on_edit_note() }
+                        .padding(vertical = 2.dp),
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = if (alias.is_enabled) stringResource(R.string.forwards_to_inbox) else stringResource(R.string.alias_status_disabled_badge),
+                    color = if (alias.is_enabled) colors.text_tertiary else colors.danger,
+                    fontSize = 12.sp,
+                    modifier = Modifier.weight(1f),
+                )
+                Switch(
+                    checked = alias.is_enabled,
+                    onCheckedChange = { on_toggle() },
+                    modifier = Modifier.size(36.dp, 20.dp),
+                    colors = SwitchDefaults.colors(
+                        checkedTrackColor = colors.accent_blue,
+                        uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
+                    ),
+                )
+                Spacer(Modifier.width(4.dp))
+                AsterIconButton(
+                    icon = Icons.Outlined.ContentCopy,
+                    content_description = stringResource(R.string.copy),
+                    onClick = {
+                        val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        cm.setPrimaryClip(ClipData.newPlainText("alias", alias.address))
+                        android.widget.Toast.makeText(context, context.getString(R.string.copied), android.widget.Toast.LENGTH_SHORT).show()
+                    },
+                )
+                AsterIconButton(
+                    icon = Icons.Outlined.Delete,
+                    content_description = "Delete",
+                    onClick = on_delete,
+                    tint = colors.danger,
+                )
+            }
+        }
+        if (idx < last_index) AsterDivider(modifier = Modifier)
+    }
+}
+
+@Composable
+private fun custom_domain_address_row(
+    addr: org.astermail.android.api.settings.CustomDomainAddressInfo,
+    idx: Int,
+    last_index: Int,
+    context: Context,
+    on_toggle: () -> Unit,
+    on_delete: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(list_item_shape(idx, last_index))
+            .background(colors.bg_card),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
+        ) {
+            Text(
+                text = addr.address,
+                color = if (addr.decryption_failed) colors.text_muted else colors.text_primary,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = if (addr.is_enabled) stringResource(R.string.forwards_to_inbox) else stringResource(R.string.alias_status_disabled_badge),
+                    color = if (addr.is_enabled) colors.text_tertiary else colors.danger,
+                    fontSize = 12.sp,
+                    modifier = Modifier.weight(1f),
+                )
+                Switch(
+                    checked = addr.is_enabled,
+                    onCheckedChange = { on_toggle() },
+                    modifier = Modifier.size(36.dp, 20.dp),
+                    colors = SwitchDefaults.colors(
+                        checkedTrackColor = colors.accent_blue,
+                        uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
+                    ),
+                )
+                Spacer(Modifier.width(4.dp))
+                AsterIconButton(
+                    icon = Icons.Outlined.ContentCopy,
+                    content_description = stringResource(R.string.copy),
+                    onClick = {
+                        val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        cm.setPrimaryClip(ClipData.newPlainText("alias", addr.address))
+                        android.widget.Toast.makeText(context, context.getString(R.string.copied), android.widget.Toast.LENGTH_SHORT).show()
+                    },
+                )
+                AsterIconButton(
+                    icon = Icons.Outlined.Delete,
+                    content_description = stringResource(R.string.delete),
+                    onClick = on_delete,
+                    tint = colors.danger,
+                )
+            }
+        }
+        if (idx < last_index) AsterDivider(modifier = Modifier)
     }
 }
 
@@ -933,7 +1004,7 @@ private fun directories_tab(
     val separators = listOf(".", "+", "#")
     val key_valid = dir_key.matches(Regex("[a-z0-9-]{2,}"))
 
-    LaunchedEffect(dir_key) {
+    LaunchedEffect(dir_key, dir_domain) {
         if (!key_valid) {
             dir_availability = null
             dir_checking = false
@@ -942,7 +1013,7 @@ private fun directories_tab(
         dir_checking = true
         dir_availability = null
         delay(500)
-        dir_availability = vm.check_directory_availability(dir_key)
+        dir_availability = vm.check_directory_availability(dir_key, dir_domain)
         dir_checking = false
     }
 
@@ -1642,8 +1713,15 @@ private fun create_alias_dialog(
                 .map { AliasDomainOption(it.domain_name, it.id) }
     }
 
+    val local_part_valid = remember(local_part) {
+        local_part.length in 3..64 &&
+            local_part.matches(Regex("^[a-z0-9][a-z0-9._-]*[a-z0-9]$")) &&
+            !local_part.contains("..") &&
+            !local_part.matches(Regex("^[0-9]+$"))
+    }
+
     LaunchedEffect(local_part, selected_domain) {
-        if (local_part.length < 3) {
+        if (!local_part_valid) {
             availability = null
             checking = false
             return@LaunchedEffect
@@ -1673,6 +1751,12 @@ private fun create_alias_dialog(
                     placeholder = { Text(stringResource(R.string.create_alias_placeholder)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
+                    isError = local_part.isNotEmpty() && !local_part_valid,
+                    supportingText = if (local_part.isNotEmpty() && !local_part_valid) {
+                        { Text(stringResource(R.string.create_alias_invalid_chars), color = colors.danger, fontSize = 12.sp) }
+                    } else {
+                        null
+                    },
                     trailingIcon = when {
                         checking -> {
                             { CircularProgressIndicator(modifier = Modifier.size(16.dp), color = colors.text_muted, strokeWidth = 2.dp) }
@@ -1846,3 +1930,4 @@ private fun add_domain_dialog(on_dismiss: () -> Unit, on_add: (String, String) -
         },
     )
 }
+

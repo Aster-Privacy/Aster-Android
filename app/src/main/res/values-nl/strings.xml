@@ -208,6 +208,7 @@
     <string name="swipe_mark_as_unread">Als ongelezen markeren</string>
     <string name="swipe_report_spam">Als spam melden</string>
     <string name="swipe_move_to_inbox">Naar inbox verplaatsen</string>
+    <string name="swipe_none">Geen</string>
 
     <string name="has_attachment">heeft bijlage</string>
     <string name="starred">met ster</string>
@@ -252,6 +253,8 @@
     <string name="stop_receiving_from">Niet meer ontvangen van</string>
     <string name="external_content_blocked">Externe afbeeldingen, lettertypen en trackers geblokkeerd</string>
     <string name="e2e_encrypted_message">End-to-end versleuteld bericht</string>
+    <string name="e2e_encryption_failed">Verzenden mislukt: end-to-end-versleuteling mislukt. Het bericht is niet verzonden.</string>
+    <string name="e2e_keys_not_ready">Verzenden mislukt: versleutelingssleutels zijn nog niet gereed. Het bericht is niet verzonden.</string>
     <string name="e2e_no_key_description">Dit bericht is versleuteld met een sleutel die dit apparaat nog niet heeft. Open het in de Aster-webapp om te lezen.</string>
     <string name="no_body">(geen inhoud)</string>
     <string name="attachments_count">%d bijlage(n)</string>
@@ -372,6 +375,11 @@
     <string name="syncing">Synchroniseren</string>
     <string name="sync_contacts">Contacten synchroniseren</string>
     <string name="search_contacts">Contacten zoeken</string>
+    <string name="alias_note_title">Aliasnotitie</string>
+    <string name="alias_note_hint">Alleen jij kunt deze notitie zien</string>
+    <string name="alias_note_placeholder">Waar je deze alias gebruikt, aanmelddatum, alles wat nuttig is</string>
+    <string name="alias_note_add">Notitie toevoegen</string>
+    <string name="alias_note_updated">Notitie bijgewerkt</string>
     <string name="tab_all">Alle</string>
     <string name="tab_favorites">Favorieten</string>
     <string name="contacts_count">%d contacten</string>
@@ -425,9 +433,14 @@
     <string name="no_aliases_yet">Nog geen aliassen</string>
     <string name="create_folder">Map aanmaken</string>
     <string name="folder_name">Mapnaam</string>
+    <string name="parent_folder">Bovenliggende map</string>
+    <string name="parent_folder_none">Geen</string>
+    <string name="move_folder_up">Omhoog</string>
+    <string name="move_folder_down">Omlaag</string>
     <string name="create_label">Label aanmaken</string>
     <string name="label_name">Labelnaam</string>
     <string name="create_alias">Alias aanmaken</string>
+    <string name="create_alias_invalid_chars">Letters, cijfers, punten, underscores en koppeltekens zijn de toegestane tekens.</string>
     <string name="alias_placeholder">username@astermail.org</string>
     <string name="accounts">Accounts</string>
     <string name="add_account">Account toevoegen</string>
@@ -690,6 +703,7 @@
     <string name="no_link_available">Geen link beschikbaar</string>
     <string name="link_copied">Link naar klembord gekopieerd</string>
     <string name="copy_link">Link kopiëren</string>
+    <string name="share_link">Link delen</string>
     <string name="credits_title">Tegoed</string>
     <string name="credits_subtitle">Verdien Aster-tegoed door verschillende taken te voltooien.</string>
     <string name="credits_balance_label">Beschikbaar saldo</string>
@@ -893,11 +907,14 @@
     <string name="ext_error_oauth_failed">Aanmelden kan niet worden gestart. Controleer je verbinding en probeer opnieuw.</string>
     <string name="ext_error_manual_failed">Kan account niet opslaan. Controleer host, poort en gegevens.</string>
     <string name="ext_error_no_session">Je sessie is verlopen. Meld je af en weer aan om door te gaan.</string>
+    <string name="ext_error_sync_failed">Synchroniseren mislukt. Controleer de accountgegevens en probeer het opnieuw.</string>
     <string name="ext_manual_saved">Account toegevoegd. Synchronisatie gestart…</string>
     <string name="ext_last_sync">Laatste synchronisatie: %1$s</string>
     <string name="ext_section_oauth">Snel wisselen</string>
-    <string name="ext_oauth_coming_soon">Binnenkort op Android</string>
-    <string name="ext_oauth_coming_soon_body">Inloggen met Google, Outlook en Yahoo komt in een toekomstige Android-versie. Gebruik voorlopig de handmatige instelling met een app-wachtwoord.</string>
+    <string name="ext_oauth_body">Log in met je provider om in één stap een account te koppelen.</string>
+    <string name="ext_oauth_connect_google">Inloggen met Google</string>
+    <string name="ext_oauth_connect_microsoft">Inloggen met Microsoft</string>
+    <string name="ext_oauth_connect_yahoo">Inloggen met Yahoo</string>
     <string name="import_provider_coming_soon">Binnenkort</string>
     <string name="import_connect_manual_cta">Verbinden via IMAP</string>
     <string name="ext_section_manual">Handmatige installatie</string>
@@ -1279,4 +1296,15 @@
     <string name="alias_available">Deze alias is beschikbaar.</string>
     <string name="alias_not_available">Deze alias is al in gebruik.</string>
     <string name="alias_check_failed">Kan beschikbaarheid niet controleren. Je kunt hem toch proberen aan te maken.</string>
+    <string name="csrf_unavailable">Deze sessie is beschadigd! Log opnieuw in.</string>
+    <string name="received_on_prefix">ontvangen op %s</string>
+    <string name="received_on_label">Ontvangen op</string>
+    <string name="auto_advance_label">Na archiveren of verwijderen</string>
+    <string name="auto_advance_next">Naar volgende e-mail</string>
+    <string name="auto_advance_previous">Naar vorige e-mail</string>
+    <string name="auto_advance_back">Terug naar e-maillijst</string>
+    <string name="reply_from_mismatch_title">Antwoorden vanaf een ander adres?</string>
+    <string name="reply_from_mismatch_message">Deze e-mail is ontvangen op %1$s, maar je antwoord wordt verzonden vanaf %2$s. Antwoorden vanaf een ander adres kan dit adres onthullen aan de afzender en het antwoord kan worden geweigerd.</string>
+    <string name="reply_from_mismatch_use_received">Ontvangstadres gebruiken</string>
+    <string name="reply_from_mismatch_send_anyway">Toch verzenden</string>
 </resources>

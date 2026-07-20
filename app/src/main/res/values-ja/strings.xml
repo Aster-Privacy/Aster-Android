@@ -208,6 +208,7 @@
     <string name="swipe_mark_as_unread">未読にする</string>
     <string name="swipe_report_spam">スパムを報告</string>
     <string name="swipe_move_to_inbox">受信トレイに移動</string>
+    <string name="swipe_none">なし</string>
 
     <string name="has_attachment">添付ファイルあり</string>
     <string name="starred">スター付き</string>
@@ -252,6 +253,8 @@
     <string name="stop_receiving_from">受信を停止</string>
     <string name="external_content_blocked">外部画像、フォント、トラッカーをブロックしました</string>
     <string name="e2e_encrypted_message">エンドツーエンド暗号化メッセージ</string>
+    <string name="e2e_encryption_failed">送信できませんでした: エンドツーエンド暗号化に失敗しました。メッセージは送信されませんでした。</string>
+    <string name="e2e_keys_not_ready">送信できませんでした: 暗号化キーの準備がまだできていません。メッセージは送信されませんでした。</string>
     <string name="e2e_no_key_description">このメッセージはこのデバイスがまだ持っていないキーで暗号化されています。Asterウェブアプリで開いて読んでください。</string>
     <string name="no_body">(本文なし)</string>
     <string name="attachments_count">%d個の添付ファイル</string>
@@ -372,6 +375,11 @@
     <string name="syncing">同期中</string>
     <string name="sync_contacts">連絡先を同期</string>
     <string name="search_contacts">連絡先を検索</string>
+    <string name="alias_note_title">エイリアスのメモ</string>
+    <string name="alias_note_hint">このメモはあなただけが見られます</string>
+    <string name="alias_note_placeholder">このエイリアスの用途、登録日など役立つ情報</string>
+    <string name="alias_note_add">メモを追加</string>
+    <string name="alias_note_updated">メモを更新しました</string>
     <string name="tab_all">すべて</string>
     <string name="tab_favorites">お気に入り</string>
     <string name="contacts_count">%d件の連絡先</string>
@@ -425,9 +433,14 @@
     <string name="no_aliases_yet">まだエイリアスはありません</string>
     <string name="create_folder">フォルダを作成</string>
     <string name="folder_name">フォルダ名</string>
+    <string name="parent_folder">親フォルダ</string>
+    <string name="parent_folder_none">なし</string>
+    <string name="move_folder_up">上へ移動</string>
+    <string name="move_folder_down">下へ移動</string>
     <string name="create_label">ラベルを作成</string>
     <string name="label_name">ラベル名</string>
     <string name="create_alias">エイリアスを作成</string>
+    <string name="create_alias_invalid_chars">使用できるのは英字、数字、ドット、アンダースコア、ハイフンです。</string>
     <string name="alias_placeholder">username@astermail.org</string>
     <string name="accounts">アカウント</string>
     <string name="add_account">アカウントを追加</string>
@@ -690,6 +703,7 @@
     <string name="no_link_available">リンクがありません</string>
     <string name="link_copied">リンクをクリップボードにコピーしました</string>
     <string name="copy_link">リンクをコピー</string>
+    <string name="share_link">リンクを共有</string>
     <string name="credits_title">クレジット</string>
     <string name="credits_subtitle">さまざまなタスクを完了してAsterクレジットを獲得しましょう。</string>
     <string name="credits_balance_label">利用可能残高</string>
@@ -893,11 +907,14 @@
     <string name="ext_error_oauth_failed">サインインを開始できませんでした。接続を確認して再試行してください。</string>
     <string name="ext_error_manual_failed">アカウントを保存できませんでした。ホスト、ポート、資格情報を確認してください。</string>
     <string name="ext_error_no_session">セッションの有効期限が切れました。サインアウトしてから再度サインインしてください。</string>
+    <string name="ext_error_sync_failed">同期に失敗しました。アカウントの認証情報を確認してもう一度お試しください。</string>
     <string name="ext_manual_saved">アカウントを追加しました。同期を開始しています…</string>
     <string name="ext_last_sync">前回の同期: %1$s</string>
     <string name="ext_section_oauth">クイックスイッチ</string>
-    <string name="ext_oauth_coming_soon">Android で近日対応</string>
-    <string name="ext_oauth_coming_soon_body">Google、Outlook、Yahoo のサインインは今後の Android リリースで対応予定です。それまでは、下の手動設定とアプリパスワードをご利用ください。</string>
+    <string name="ext_oauth_body">プロバイダーでサインインして、アカウントを1ステップで連携します。</string>
+    <string name="ext_oauth_connect_google">Google でサインイン</string>
+    <string name="ext_oauth_connect_microsoft">Microsoft でサインイン</string>
+    <string name="ext_oauth_connect_yahoo">Yahoo でサインイン</string>
     <string name="import_provider_coming_soon">近日対応</string>
     <string name="import_connect_manual_cta">IMAP で接続</string>
     <string name="ext_section_manual">手動セットアップ</string>
@@ -1277,4 +1294,15 @@
     <string name="alias_available">このエイリアスは利用可能です。</string>
     <string name="alias_not_available">このエイリアスは既に使用されています。</string>
     <string name="alias_check_failed">空き状況を確認できませんでした。作成を試すことはできます。</string>
+    <string name="csrf_unavailable">このセッションは壊れています！もう一度ログインしてください。</string>
+    <string name="received_on_prefix">%s で受信</string>
+    <string name="received_on_label">受信アドレス</string>
+    <string name="auto_advance_label">アーカイブまたは削除後</string>
+    <string name="auto_advance_next">次のメールへ移動</string>
+    <string name="auto_advance_previous">前のメールへ移動</string>
+    <string name="auto_advance_back">メール一覧に戻る</string>
+    <string name="reply_from_mismatch_title">別のアドレスから返信しますか？</string>
+    <string name="reply_from_mismatch_message">このメールは %1$s で受信しましたが、返信は %2$s から送信されます。別のアドレスから返信すると、そのアドレスが送信者に知られたり、返信が拒否されたりする可能性があります。</string>
+    <string name="reply_from_mismatch_use_received">受信アドレスを使用</string>
+    <string name="reply_from_mismatch_send_anyway">そのまま送信</string>
 </resources>

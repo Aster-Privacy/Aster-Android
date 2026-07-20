@@ -24,15 +24,20 @@ package org.astermail.android.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import android.content.Context
+import android.widget.Toast
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import org.astermail.android.BuildConfig
+import org.astermail.android.R
 import org.astermail.android.api.auth.AuthApi
 import org.astermail.android.security.LockdownStore
 
@@ -54,6 +59,21 @@ class AuthGateViewModel @Inject constructor(
         }
         _is_ready.value = true
         if (auth_repository.is_signed_in.value) {
+            viewModelScope.launch {
+                val csrf_ok = auth_repository.ensure_csrf_ready()
+                if (!csrf_ok) {
+                    if (BuildConfig.DEBUG) {
+                        android.util.Log.w("AuthGate", "CSRF token fetch failed on launch")
+                    }
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.csrf_unavailable),
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    }
+                }
+            }
             viewModelScope.launch {
                 try {
                     val info = withTimeoutOrNull(8_000L) { auth_api.me() }

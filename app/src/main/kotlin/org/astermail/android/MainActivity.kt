@@ -618,20 +618,23 @@ private fun AsterNavHost() {
                     launchSingleTop = true
                 }
             }
+            val settings_state by shared_settings_vm.state.collectAsStateWithLifecycle()
+            val advance_after_action: () -> Unit = {
+                val next = when (settings_state.preferences?.auto_advance ?: "Go to next message") {
+                    "Go to next message" -> neighbor_id(1)
+                    "Go to previous message" -> neighbor_id(-1)
+                    else -> null
+                }
+                if (next != null) open_neighbor(next) else nav_controller.popBackStack()
+            }
             MailDetailScreen(
                 email_id = email_id,
                 on_back = { nav_controller.popBackStack() },
                 on_reply = { msg_id, ghost -> nav_controller.navigate(routes.compose_reply(msg_id, "reply", ghost)) },
                 on_reply_all = { msg_id, ghost -> nav_controller.navigate(routes.compose_reply(msg_id, "reply_all", ghost)) },
                 on_forward = { msg_id, ghost -> nav_controller.navigate(routes.compose_reply(msg_id, "forward", ghost)) },
-                on_archive = {
-                    val next = neighbor_id(1)
-                    if (next != null) open_neighbor(next) else nav_controller.popBackStack()
-                },
-                on_delete = {
-                    val next = neighbor_id(1)
-                    if (next != null) open_neighbor(next) else nav_controller.popBackStack()
-                },
+                on_archive = advance_after_action,
+                on_delete = advance_after_action,
                 on_next = neighbor_id(1)?.let { next -> { open_neighbor(next) } },
                 on_previous = neighbor_id(-1)?.let { prev -> { open_neighbor(prev) } },
                 on_navigate = { path ->
@@ -1183,17 +1186,43 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         ?: accounts_state.accounts.firstOrNull()?.email
         ?: ""
 
-    val api_folders = settings_state.labels
-        .filter { !it.is_system }
-        .filter { it.folder_type == "folder" || it.folder_type == "custom" }
-        .map { label ->
+    val folder_nodes = org.astermail.android.folders.flatten_folder_tree(settings_state.labels)
+
+    val api_folders = folder_nodes.map { node ->
+        val label = node.label
+        val readable_name = label.encrypted_name?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
+        drawer_folder_item(
+            id = label.label_token,
+            label = readable_name ?: drawer_context.getString(R.string.folder_decrypt_failed),
+            icon = Icons.Outlined.Folder,
+            count = label.unread_count?.toInt() ?: 0,
+            depth = node.depth,
+            trail = node.trail,
+            has_next = node.has_next,
+        )
+    }
+
+    val folder_parent_options = folder_nodes
+        .filter { it.depth < org.astermail.android.folders.max_folder_depth }
+        .mapNotNull { node ->
+            val label = node.label
             val readable_name = label.encrypted_name?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
-            drawer_folder_item(
-                id = label.label_token,
-                label = readable_name ?: drawer_context.getString(R.string.folder_decrypt_failed),
-                icon = Icons.Outlined.Folder,
-                count = label.item_count?.toInt() ?: 0,
+                ?: return@mapNotNull null
+            org.astermail.android.ui.drawer.folder_parent_option(
+                token = label.label_token,
+                label = readable_name,
+                depth = node.depth,
+                path_label = org.astermail.android.folders.folder_path(settings_state.labels, label.label_token)
+                    .filter { it.isNotBlank() && !looks_encrypted(it) }
+                    .joinToString(" · "),
             )
+        }
+
+    val quick_custom_folders = folder_nodes
+        .mapNotNull { node ->
+            val readable_name = node.label.encrypted_name?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
+                ?: return@mapNotNull null
+            node.label.label_token to readable_name
         }
 
     val label_colors = listOf(
@@ -1364,9 +1393,18 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 on_create_label = { name, color, icon ->
                     settings_vm.create_tag(name = name, color = color, icon = icon)
                 },
-                on_create_folder = { name ->
-                    settings_vm.create_folder(name = name, sort_order = api_folders.size)
+                on_create_folder = { name, parent_token ->
+                    val sibling_count = settings_state.labels.count {
+                        org.astermail.android.folders.is_custom_folder(it) &&
+                            it.parent_token.orEmpty() == parent_token.orEmpty()
+                    }
+                    settings_vm.create_folder(
+                        name = name,
+                        sort_order = sibling_count,
+                        parent_token = parent_token,
+                    )
                 },
+                folder_parent_options = folder_parent_options,
                 on_logout = {
                     settings_vm.logout {
                         accounts_vm.refresh()
@@ -1438,6 +1476,13 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                                 filter_kind = null
                                 selected_folder = id
                             },
+                            custom_folders = quick_custom_folders,
+                            on_custom_folder_change = { id, name ->
+                                filter_kind = "folder"
+                                filter_value = id
+                                filter_name = name
+                                selected_folder = id
+                            },
                         )
                     }
                     selected_folder == "subscriptions" -> {
@@ -1474,6 +1519,13 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             inbox_category = inbox_category,
                             display_title = if (selected_folder == "inbox" && categories_enabled) category_titles[inbox_category] else null,
                             on_folder_change = { selected_folder = it },
+                            custom_folders = quick_custom_folders,
+                            on_custom_folder_change = { id, name ->
+                                filter_kind = "folder"
+                                filter_value = id
+                                filter_name = name
+                                selected_folder = id
+                            },
                         )
                     }
                 }
