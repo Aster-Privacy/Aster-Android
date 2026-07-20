@@ -22,6 +22,7 @@
 package org.astermail.android.mail
 
 import org.astermail.android.ui.mail.extract_delivered_to
+import org.astermail.android.ui.mail.resolve_inbox_received_on
 import org.astermail.android.ui.mail.resolve_received_on_address
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -94,5 +95,35 @@ class DeliveredToTest {
                 "myalias@astermail.org",
             ),
         )
+    }
+
+    @Test
+    fun inbox_surfaces_alias_when_not_primary() {
+        val headers = listOf("Delivered-To" to "shopping@aster.cx")
+        assertEquals(
+            "shopping@aster.cx",
+            resolve_inbox_received_on(headers, "me@astermail.org"),
+        )
+    }
+
+    @Test
+    fun inbox_suppresses_primary_address() {
+        val headers = listOf("Delivered-To" to "<Me@AsterMail.org>")
+        assertNull(resolve_inbox_received_on(headers, "me@astermail.org"))
+    }
+
+    @Test
+    fun inbox_surfaces_alias_when_primary_unknown() {
+        val headers = listOf("Delivered-To" to "shopping@aster.cx")
+        assertEquals(
+            "shopping@aster.cx",
+            resolve_inbox_received_on(headers, null),
+        )
+    }
+
+    @Test
+    fun inbox_returns_null_without_delivered_to() {
+        assertNull(resolve_inbox_received_on(emptyList(), "me@astermail.org"))
+        assertNull(resolve_inbox_received_on(listOf("To" to "a@b.c"), "me@astermail.org"))
     }
 }

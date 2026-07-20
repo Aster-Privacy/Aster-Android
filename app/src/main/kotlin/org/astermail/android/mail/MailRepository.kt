@@ -137,6 +137,7 @@ data class InboxItem(
     val labels: List<String>,
     val tag_tokens: List<String> = emptyList(),
     val category: String = "primary",
+    val received_on: String? = null,
     val raw_item: MailItem,
 )
 
@@ -827,6 +828,9 @@ class MailRepository @Inject constructor(
             labels = item.labels?.mapNotNull { it.folder_token } ?: emptyList(),
             tag_tokens = item.tag_tokens ?: emptyList(),
             category = if (envelope != null) classify(envelope, meta) else "primary",
+            received_on = envelope?.raw_headers?.let {
+                org.astermail.android.ui.mail.resolve_inbox_received_on(it, get_user_email())
+            },
             raw_item = if (meta != null) item.copy(metadata = meta) else item,
         )
     }

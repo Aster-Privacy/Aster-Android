@@ -74,6 +74,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Whatshot
+import androidx.compose.material.icons.outlined.AlternateEmail
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -217,6 +218,18 @@ fun EmailRow(
                             on_toggle_star()
                         },
                     )
+                }
+            }
+            email.received_on?.let {
+                Spacer(Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Spacer(Modifier.weight(1f))
+                    alias_chip(it)
                 }
             }
         }
@@ -411,7 +424,7 @@ fun ThreadInboxRow(
                     },
                 )
             }
-            if (thread.label_colors.isNotEmpty() || attachment_chips.isNotEmpty()) {
+            if (thread.label_colors.isNotEmpty() || attachment_chips.isNotEmpty() || email.received_on != null) {
                 Spacer(Modifier.height(4.dp))
                 Row(
                     modifier = Modifier
@@ -420,6 +433,7 @@ fun ThreadInboxRow(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Spacer(Modifier.weight(1f))
+                    email.received_on?.let { alias_chip(it) }
                     attachment_chips.forEach { chip ->
                         inbox_attachment_chip(chip)
                     }
@@ -467,6 +481,37 @@ private fun first_name(full: String): String {
     val trimmed = full.trim()
     val space = trimmed.indexOf(' ')
     return if (space > 0) trimmed.substring(0, space) else trimmed
+}
+
+@Composable
+private fun alias_chip(address: String) {
+    val colors = AsterMaterial.colors
+    val shape = SquircleShape(8.dp)
+    Row(
+        modifier = Modifier
+            .clip(shape)
+            .border(1.dp, colors.border_primary, shape)
+            .padding(horizontal = 8.dp, vertical = 3.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.AlternateEmail,
+            contentDescription = stringResource(R.string.received_on_label),
+            tint = colors.text_tertiary,
+            modifier = Modifier.size(11.dp),
+        )
+        Text(
+            text = address,
+            style = MaterialTheme.typography.labelSmall,
+            color = colors.text_secondary,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            fontFamily = inter_family,
+        )
+    }
 }
 
 @Composable

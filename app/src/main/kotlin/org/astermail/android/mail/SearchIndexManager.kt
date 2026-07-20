@@ -179,6 +179,7 @@ class SearchIndexManager @Inject constructor(
                 labels = item.labels.joinToString(","),
                 indexed_at = System.currentTimeMillis(),
                 category = item.category,
+                received_on = item.received_on,
             )
         }
         mutex.withLock {
