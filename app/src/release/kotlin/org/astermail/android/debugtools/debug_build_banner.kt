@@ -22,7 +22,12 @@
 package org.astermail.android.debugtools
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 
 @Composable
 fun debug_build_banner() {
+}
+
+@Composable
+fun debug_build_pill_inline(modifier: Modifier = Modifier) {
 }

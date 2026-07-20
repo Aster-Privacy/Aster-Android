@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -57,46 +58,44 @@ private const val production_release_url = "https://github.com/Aster-Privacy/Ast
 
 @Composable
 fun debug_build_banner() {
-    var expanded by remember { mutableStateOf(false) }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
             .padding(horizontal = 8.dp, vertical = 4.dp),
     ) {
-        if (expanded) {
-            debug_build_notice(
-                modifier = Modifier.align(Alignment.TopCenter),
-                on_collapse = { expanded = false },
-            )
-        } else {
-            debug_build_pill(
-                modifier = Modifier.align(Alignment.TopEnd),
-                on_expand = { expanded = true },
-            )
+        debug_build_pill_inline(modifier = Modifier.align(Alignment.TopEnd))
+    }
+}
+
+@Composable
+fun debug_build_pill_inline(modifier: Modifier = Modifier) {
+    var expanded by remember { mutableStateOf(false) }
+    val colors = AsterMaterial.colors
+
+    Box(modifier = modifier) {
+        Text(
+            text = stringResource(R.string.debug_banner_label),
+            color = colors.warning,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .clickable { expanded = true }
+                .background(colors.bg_card.copy(alpha = 0.9f), RoundedCornerShape(50))
+                .border(1.dp, colors.warning.copy(alpha = 0.5f), RoundedCornerShape(50))
+                .padding(horizontal = 8.dp, vertical = 3.dp),
+        )
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            debug_build_notice(on_collapse = { expanded = false })
         }
     }
 }
 
 @Composable
-private fun debug_build_pill(modifier: Modifier, on_expand: () -> Unit) {
-    val colors = AsterMaterial.colors
-    Text(
-        text = stringResource(R.string.debug_banner_label),
-        color = colors.warning,
-        fontSize = 10.sp,
-        fontWeight = FontWeight.Bold,
-        modifier = modifier
-            .clickable(onClick = on_expand)
-            .background(colors.bg_card.copy(alpha = 0.9f), RoundedCornerShape(50))
-            .border(1.dp, colors.warning.copy(alpha = 0.5f), RoundedCornerShape(50))
-            .padding(horizontal = 8.dp, vertical = 3.dp),
-    )
-}
-
-@Composable
-private fun debug_build_notice(modifier: Modifier, on_collapse: () -> Unit) {
+private fun debug_build_notice(on_collapse: () -> Unit) {
     val colors = AsterMaterial.colors
     val link_text = stringResource(R.string.debug_banner_link)
     val body = stringResource(R.string.debug_banner_body, link_text)
@@ -125,12 +124,10 @@ private fun debug_build_notice(modifier: Modifier, on_collapse: () -> Unit) {
     }
 
     Column(
-        modifier = modifier
-            .widthIn(max = 420.dp)
+        modifier = Modifier
+            .widthIn(max = 300.dp)
             .clickable(onClick = on_collapse)
-            .background(colors.bg_card, RoundedCornerShape(10.dp))
-            .border(1.dp, colors.warning.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+            .padding(horizontal = 12.dp, vertical = 8.dp),
     ) {
         Text(
             text = stringResource(R.string.debug_banner_label),

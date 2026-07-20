@@ -32,7 +32,6 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ProcessLifecycleOwner
-import org.astermail.android.debugtools.debug_build_banner
 import org.astermail.android.security.AppLockViewModel
 import org.astermail.android.security.LockdownStore
 import org.astermail.android.ui.common.nav_anim_duration_ms
@@ -292,7 +291,6 @@ private fun AsterRoot() {
                     .background(colors.bg_primary),
             ) {
                 AsterNavHost()
-                debug_build_banner()
             }
         }
     }
