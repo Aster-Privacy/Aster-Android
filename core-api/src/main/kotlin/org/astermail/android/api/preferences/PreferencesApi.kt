@@ -59,6 +59,7 @@ data class UserPreferences(
     val reduce_motion: Boolean = false,
     val compact_mode: Boolean = false,
     val mark_as_read: String = "1_second",
+    val auto_advance: String = "Go to next message",
     val default_reply_behavior: String = "reply",
     val block_external_images: Boolean = true,
     val block_tracking_pixels: Boolean = true,

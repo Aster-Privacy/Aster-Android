@@ -216,6 +216,7 @@
     <string name="swipe_mark_as_unread">Marquer comme non lu</string>
     <string name="swipe_report_spam">Signaler comme spam</string>
     <string name="swipe_move_to_inbox">Déplacer vers la boîte de réception</string>
+    <string name="swipe_none">Aucun</string>
 
     <!-- Email row -->
     <string name="has_attachment">contient une pièce jointe</string>
@@ -262,6 +263,8 @@
     <string name="stop_receiving_from">Ne plus recevoir de</string>
     <string name="external_content_blocked">Images externes, polices et traqueurs bloqués</string>
     <string name="e2e_encrypted_message">Message chiffré de bout en bout</string>
+    <string name="e2e_encryption_failed">Envoi impossible : échec du chiffrement de bout en bout. Le message n\'a pas été envoyé.</string>
+    <string name="e2e_keys_not_ready">Envoi impossible : les clés de chiffrement ne sont pas encore prêtes. Le message n\'a pas été envoyé.</string>
     <string name="e2e_no_key_description">Ce message est chiffré avec une clé que cet appareil ne possède pas encore. Ouvrez-le dans l\'application web Aster pour le lire.</string>
     <string name="no_body">(aucun contenu)</string>
     <string name="attachments_count">%d pièce(s) jointe(s)</string>
@@ -396,6 +399,12 @@
     <string name="syncing">Synchronisation</string>
     <string name="sync_contacts">Synchroniser les contacts</string>
     <string name="search_contacts">Rechercher des contacts</string>
+    <string name="search_aliases">Rechercher des alias…</string>
+    <string name="alias_note_title">Note d\'alias</string>
+    <string name="alias_note_hint">Vous seul pouvez voir cette note</string>
+    <string name="alias_note_placeholder">Où vous utilisez cet alias, date d\'inscription, toute info utile</string>
+    <string name="alias_note_add">Ajouter une note</string>
+    <string name="alias_note_updated">Note mise à jour</string>
     <string name="tab_all">Tous</string>
     <string name="tab_favorites">Favoris</string>
     <string name="contacts_count">%d contacts</string>
@@ -450,9 +459,14 @@
     <string name="no_aliases_yet">Aucun alias pour l\'instant</string>
     <string name="create_folder">Créer un dossier</string>
     <string name="folder_name">Nom du dossier</string>
+    <string name="parent_folder">Dossier parent</string>
+    <string name="parent_folder_none">Aucun</string>
+    <string name="move_folder_up">Monter</string>
+    <string name="move_folder_down">Descendre</string>
     <string name="create_label">Créer un libellé</string>
     <string name="label_name">Nom du libellé</string>
     <string name="create_alias">Créer un alias</string>
+    <string name="create_alias_invalid_chars">L\'alias contient des caractères invalides</string>
     <string name="alias_placeholder">utilisateur@astermail.org</string>
     <string name="accounts">Comptes</string>
     <string name="add_account">Ajouter un compte</string>
@@ -730,6 +744,7 @@
     <string name="no_link_available">Aucun lien disponible</string>
     <string name="link_copied">Lien copié dans le presse-papiers</string>
     <string name="copy_link">Copier le lien</string>
+    <string name="share_link">Partager le lien</string>
     <string name="credits_title">Crédits</string>
     <string name="credits_subtitle">Gagnez des crédits Aster en accomplissant différentes tâches.</string>
     <string name="credits_balance_label">Solde disponible</string>
@@ -942,11 +957,14 @@
     <string name="ext_error_oauth_failed">Impossible de démarrer la connexion. Vérifiez votre réseau et réessayez.</string>
     <string name="ext_error_manual_failed">Impossible d\'enregistrer le compte. Vérifiez l\'hôte, le port et les identifiants.</string>
     <string name="ext_error_no_session">Votre session a expiré. Déconnectez-vous puis reconnectez-vous pour continuer.</string>
+    <string name="ext_error_sync_failed">Échec de la synchronisation. Vérifiez les identifiants du compte et réessayez.</string>
     <string name="ext_manual_saved">Compte ajouté. Synchronisation en cours…</string>
     <string name="ext_last_sync">Dernière synchronisation : %1$s</string>
     <string name="ext_section_oauth">Changement rapide</string>
-    <string name="ext_oauth_coming_soon">Bientôt disponible sur Android</string>
-    <string name="ext_oauth_coming_soon_body">La connexion Google, Outlook et Yahoo arrivera sur Android dans une prochaine version. En attendant, utilisez la configuration manuelle ci-dessous avec un mot de passe d\'application.</string>
+    <string name="ext_oauth_body">Connectez-vous avec votre fournisseur pour lier un compte en une étape.</string>
+    <string name="ext_oauth_connect_google">Se connecter avec Google</string>
+    <string name="ext_oauth_connect_microsoft">Se connecter avec Microsoft</string>
+    <string name="ext_oauth_connect_yahoo">Se connecter avec Yahoo</string>
     <string name="import_provider_coming_soon">Bientôt</string>
     <string name="import_connect_manual_cta">Connecter via IMAP</string>
     <string name="ext_section_manual">Configuration manuelle</string>
@@ -1376,7 +1394,7 @@
     <!-- Onboarding -->
     <string name="onboarding_skip">Passer</string>
     <string name="onboarding_slide1_title">Bienvenue sur Aster</string>
-    <string name="onboarding_slide1_body">Un e-mail privé qui vous protège vraiment. Pas de surveillance, pas de publicités, pas de portes dérobées.</string>
+    <string name="onboarding_slide1_body">Un e-mail privé qui vous protège vraiment. Pas de surveillance, pas de publicités.</string>
     <string name="onboarding_slide2_title">Chiffré de bout en bout</string>
     <string name="onboarding_slide2_body">Chaque message est chiffré avec vos clés avant de quitter votre appareil. Même Aster ne peut pas lire vos e-mails.</string>
     <string name="onboarding_slide3_title">Zéro traçage</string>
@@ -1890,4 +1908,14 @@
     <string name="pending_deletion_restored">Bon retour. Votre compte a été restauré.</string>
     <string name="image_blocked_placeholder">[Image bloquée]</string>
     <string name="csrf_unavailable">Cette session est corrompue ! Veuillez vous reconnecter.</string>
+    <string name="received_on_prefix">reçu sur %s</string>
+    <string name="received_on_label">Reçu sur</string>
+    <string name="auto_advance_label">Après archivage ou suppression</string>
+    <string name="auto_advance_next">Aller à l\'e-mail suivant</string>
+    <string name="auto_advance_previous">Aller à l\'e-mail précédent</string>
+    <string name="auto_advance_back">Revenir à la liste des e-mails</string>
+    <string name="reply_from_mismatch_title">Répondre depuis une autre adresse ?</string>
+    <string name="reply_from_mismatch_message">Cet e-mail a été reçu sur %1$s, mais votre réponse sera envoyée depuis %2$s. Répondre depuis une autre adresse peut la révéler à l\'expéditeur et la réponse peut être rejetée.</string>
+    <string name="reply_from_mismatch_use_received">Utiliser l\'adresse de réception</string>
+    <string name="reply_from_mismatch_send_anyway">Envoyer quand même</string>
 </resources>

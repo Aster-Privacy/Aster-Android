@@ -208,6 +208,7 @@
     <string name="swipe_mark_as_unread">Segna come non letto</string>
     <string name="swipe_report_spam">Segnala come spam</string>
     <string name="swipe_move_to_inbox">Sposta nella posta in arrivo</string>
+    <string name="swipe_none">Nessuna</string>
 
     <string name="has_attachment">ha allegato</string>
     <string name="starred">preferito</string>
@@ -252,6 +253,8 @@
     <string name="stop_receiving_from">Smetti di ricevere da</string>
     <string name="external_content_blocked">Immagini esterne, font e tracker bloccati</string>
     <string name="e2e_encrypted_message">Messaggio crittografato end-to-end</string>
+    <string name="e2e_encryption_failed">Invio non riuscito: crittografia end-to-end non riuscita. Il messaggio non è stato inviato.</string>
+    <string name="e2e_keys_not_ready">Invio non riuscito: le chiavi di crittografia non sono ancora pronte. Il messaggio non è stato inviato.</string>
     <string name="e2e_no_key_description">Questo messaggio è crittografato con una chiave che questo dispositivo non possiede ancora. Aprilo nell\'app web Aster per leggerlo.</string>
     <string name="no_body">(nessun contenuto)</string>
     <string name="attachments_count">%d allegato/i</string>
@@ -371,6 +374,12 @@
     <string name="syncing">Sincronizzazione</string>
     <string name="sync_contacts">Sincronizza contatti</string>
     <string name="search_contacts">Cerca contatti</string>
+    <string name="search_aliases">Cerca alias…</string>
+    <string name="alias_note_title">Nota alias</string>
+    <string name="alias_note_hint">Solo tu puoi vedere questa nota</string>
+    <string name="alias_note_placeholder">Dove usi questo alias, data di registrazione, qualsiasi info utile</string>
+    <string name="alias_note_add">Aggiungi nota</string>
+    <string name="alias_note_updated">Nota aggiornata</string>
     <string name="tab_all">Tutti</string>
     <string name="tab_favorites">Preferiti</string>
     <string name="contacts_count">%d contatti</string>
@@ -424,9 +433,14 @@
     <string name="no_aliases_yet">Nessun alias ancora</string>
     <string name="create_folder">Crea cartella</string>
     <string name="folder_name">Nome cartella</string>
+    <string name="parent_folder">Cartella principale</string>
+    <string name="parent_folder_none">Nessuna</string>
+    <string name="move_folder_up">Sposta su</string>
+    <string name="move_folder_down">Sposta giù</string>
     <string name="create_label">Crea etichetta</string>
     <string name="label_name">Nome etichetta</string>
     <string name="create_alias">Crea alias</string>
+    <string name="create_alias_invalid_chars">Lettere, numeri, punti, trattini bassi e trattini sono i caratteri consentiti.</string>
     <string name="alias_placeholder">username@astermail.org</string>
     <string name="accounts">Account</string>
     <string name="add_account">Aggiungi account</string>
@@ -688,6 +702,7 @@
     <string name="no_link_available">Nessun link disponibile</string>
     <string name="link_copied">Link copiato negli appunti</string>
     <string name="copy_link">Copia link</string>
+    <string name="share_link">Condividi link</string>
     <string name="credits_title">Crediti</string>
     <string name="credits_subtitle">Guadagna crediti Aster completando diverse attività.</string>
     <string name="credits_balance_label">Saldo disponibile</string>
@@ -890,11 +905,14 @@
     <string name="ext_error_oauth_failed">Impossibile avviare l\'accesso. Controlla la connessione e riprova.</string>
     <string name="ext_error_manual_failed">Impossibile salvare l\'account. Verifica host, porta e credenziali.</string>
     <string name="ext_error_no_session">Sessione scaduta. Esci e accedi di nuovo per continuare.</string>
+    <string name="ext_error_sync_failed">Sincronizzazione non riuscita. Verifica le credenziali dell\'account e riprova.</string>
     <string name="ext_manual_saved">Account aggiunto. Sincronizzazione in corso…</string>
     <string name="ext_last_sync">Ultima sincronizzazione: %1$s</string>
     <string name="ext_section_oauth">Cambio rapido</string>
-    <string name="ext_oauth_coming_soon">Presto disponibile su Android</string>
-    <string name="ext_oauth_coming_soon_body">L\'accesso con Google, Outlook e Yahoo arriverà su Android in una prossima versione. Per ora usa la configurazione manuale qui sotto con una password per app.</string>
+    <string name="ext_oauth_body">Accedi con il tuo provider per collegare un account in un solo passaggio.</string>
+    <string name="ext_oauth_connect_google">Accedi con Google</string>
+    <string name="ext_oauth_connect_microsoft">Accedi con Microsoft</string>
+    <string name="ext_oauth_connect_yahoo">Accedi con Yahoo</string>
     <string name="import_provider_coming_soon">Prossimamente</string>
     <string name="import_connect_manual_cta">Connetti tramite IMAP</string>
     <string name="ext_section_manual">Configurazione manuale</string>
@@ -1274,4 +1292,14 @@
     <string name="pending_deletion_restored">Bentornato. Il tuo account è stato ripristinato.</string>
     <string name="image_blocked_placeholder">[Immagine bloccata]</string>
     <string name="csrf_unavailable">Questa sessione è danneggiata! Effettua nuovamente l\'accesso.</string>
+    <string name="received_on_prefix">ricevuto su %s</string>
+    <string name="received_on_label">Ricevuto su</string>
+    <string name="auto_advance_label">Dopo l\'archiviazione o l\'eliminazione</string>
+    <string name="auto_advance_next">Vai all\'email successiva</string>
+    <string name="auto_advance_previous">Vai all\'email precedente</string>
+    <string name="auto_advance_back">Torna all\'elenco delle email</string>
+    <string name="reply_from_mismatch_title">Rispondere da un altro indirizzo?</string>
+    <string name="reply_from_mismatch_message">Questa email è stata ricevuta su %1$s, ma la risposta verrà inviata da %2$s. Rispondere da un altro indirizzo può rivelarlo al mittente e la risposta potrebbe essere rifiutata.</string>
+    <string name="reply_from_mismatch_use_received">Usa l\'indirizzo di ricezione</string>
+    <string name="reply_from_mismatch_send_anyway">Invia comunque</string>
 </resources>

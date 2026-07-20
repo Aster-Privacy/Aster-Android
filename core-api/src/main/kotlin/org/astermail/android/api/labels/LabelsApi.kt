@@ -52,6 +52,7 @@ data class LabelItem(
     val sort_order: Int = 0,
     val parent_token: String? = null,
     val item_count: Long? = null,
+    val unread_count: Long? = null,
     val created_at: String? = null,
     val updated_at: String? = null,
 )
@@ -93,6 +94,23 @@ data class UpdateLabelRequest(
     val encrypted_icon: String? = null,
     val icon_nonce: String? = null,
     val sort_order: Int? = null,
+    val parent_token: String? = null,
+)
+
+@Serializable
+data class ReorderLabelEntry(
+    val id: String,
+    val sort_order: Int,
+)
+
+@Serializable
+data class BulkReorderLabelsRequest(
+    val labels: List<ReorderLabelEntry>,
+)
+
+@Serializable
+data class BulkReorderLabelsResponse(
+    val updated: Long = 0,
 )
 
 @Serializable
@@ -115,6 +133,7 @@ interface LabelsApi {
     suspend fun list_labels(include_counts: Boolean = true, folder_type: String? = null): LabelsListResponse
     suspend fun create_label(request: CreateLabelRequest): CreateLabelResponse
     suspend fun update_label(label_id: String, request: UpdateLabelRequest)
+    suspend fun bulk_reorder_labels(request: BulkReorderLabelsRequest): BulkReorderLabelsResponse
     suspend fun delete_label(label_id: String)
     suspend fun get_referral_info(): ReferralInfoResponse
 }
@@ -150,6 +169,15 @@ class LabelsApiImpl(private val client: ApiClient) : LabelsApi {
             val body = try { response.body<String>() } catch (_: Throwable) { "" }
             throw client.map_http_status(response.status.value, body)
         }
+    }
+
+    override suspend fun bulk_reorder_labels(request: BulkReorderLabelsRequest): BulkReorderLabelsResponse {
+        val response = client.http.post("${client.base_url}$labels_base/bulk/reorder") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
     }
 
     override suspend fun delete_label(label_id: String) {

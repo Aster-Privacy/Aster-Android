@@ -208,6 +208,7 @@
     <string name="swipe_mark_as_unread">읽지 않음으로 표시</string>
     <string name="swipe_report_spam">스팸 신고</string>
     <string name="swipe_move_to_inbox">받은 편지함으로 이동</string>
+    <string name="swipe_none">없음</string>
 
     <string name="has_attachment">첨부 파일 있음</string>
     <string name="starred">별표 표시됨</string>
@@ -252,6 +253,8 @@
     <string name="stop_receiving_from">수신 중지</string>
     <string name="external_content_blocked">외부 이미지, 글꼴, 추적기가 차단됨</string>
     <string name="e2e_encrypted_message">종단간 암호화 메시지</string>
+    <string name="e2e_encryption_failed">보낼 수 없음: 종단 간 암호화에 실패했습니다. 메시지가 전송되지 않았습니다.</string>
+    <string name="e2e_keys_not_ready">보낼 수 없음: 암호화 키가 아직 준비되지 않았습니다. 메시지가 전송되지 않았습니다.</string>
     <string name="e2e_no_key_description">이 메시지는 이 기기에 아직 없는 키로 암호화되어 있습니다. Aster 웹 앱에서 열어 읽으세요.</string>
     <string name="no_body">(본문 없음)</string>
     <string name="attachments_count">첨부 파일 %d개</string>
@@ -371,6 +374,12 @@
     <string name="syncing">동기화 중</string>
     <string name="sync_contacts">연락처 동기화</string>
     <string name="search_contacts">연락처 검색</string>
+    <string name="search_aliases">별칭 검색…</string>
+    <string name="alias_note_title">별칭 메모</string>
+    <string name="alias_note_hint">이 메모는 회원님만 볼 수 있습니다</string>
+    <string name="alias_note_placeholder">이 별칭을 사용하는 곳, 가입 날짜 등 유용한 정보</string>
+    <string name="alias_note_add">메모 추가</string>
+    <string name="alias_note_updated">메모가 업데이트되었습니다</string>
     <string name="tab_all">전체</string>
     <string name="tab_favorites">즐겨찾기</string>
     <string name="contacts_count">연락처 %d개</string>
@@ -424,9 +433,14 @@
     <string name="no_aliases_yet">아직 별칭이 없습니다</string>
     <string name="create_folder">폴더 만들기</string>
     <string name="folder_name">폴더 이름</string>
+    <string name="parent_folder">상위 폴더</string>
+    <string name="parent_folder_none">없음</string>
+    <string name="move_folder_up">위로 이동</string>
+    <string name="move_folder_down">아래로 이동</string>
     <string name="create_label">라벨 만들기</string>
     <string name="label_name">라벨 이름</string>
     <string name="create_alias">별칭 만들기</string>
+    <string name="create_alias_invalid_chars">별칭은 영문자, 숫자, 점, 밑줄, 하이픈만 사용할 수 있습니다.</string>
     <string name="alias_placeholder">username@astermail.org</string>
     <string name="accounts">계정</string>
     <string name="add_account">계정 추가</string>
@@ -688,6 +702,7 @@
     <string name="no_link_available">사용 가능한 링크 없음</string>
     <string name="link_copied">링크가 클립보드에 복사됨</string>
     <string name="copy_link">링크 복사</string>
+    <string name="share_link">링크 공유</string>
     <string name="credits_title">크레딧</string>
     <string name="credits_subtitle">다양한 작업을 완료하여 Aster 크레딧을 적립하세요.</string>
     <string name="credits_balance_label">사용 가능한 잔액</string>
@@ -890,11 +905,14 @@
     <string name="ext_error_oauth_failed">로그인을 시작할 수 없습니다. 연결을 확인한 후 다시 시도하세요.</string>
     <string name="ext_error_manual_failed">계정을 저장할 수 없습니다. 호스트, 포트, 자격 증명을 확인하세요.</string>
     <string name="ext_error_no_session">세션이 만료되었습니다. 로그아웃 후 다시 로그인하여 계속하세요.</string>
+    <string name="ext_error_sync_failed">동기화에 실패했습니다. 계정 자격 증명을 확인한 후 다시 시도하세요.</string>
     <string name="ext_manual_saved">계정이 추가되었습니다. 동기화를 시작합니다…</string>
     <string name="ext_last_sync">마지막 동기화: %1$s</string>
     <string name="ext_section_oauth">빠른 전환</string>
-    <string name="ext_oauth_coming_soon">Android에서 곧 제공</string>
-    <string name="ext_oauth_coming_soon_body">Google, Outlook, Yahoo 로그인은 향후 Android 버전에서 제공될 예정입니다. 지금은 앱 비밀번호로 아래 수동 설정을 사용하세요.</string>
+    <string name="ext_oauth_body">제공업체로 로그인하여 계정을 한 단계로 연결하세요.</string>
+    <string name="ext_oauth_connect_google">Google로 로그인</string>
+    <string name="ext_oauth_connect_microsoft">Microsoft로 로그인</string>
+    <string name="ext_oauth_connect_yahoo">Yahoo로 로그인</string>
     <string name="import_provider_coming_soon">곧 제공</string>
     <string name="import_connect_manual_cta">IMAP으로 연결</string>
     <string name="ext_section_manual">수동 설정</string>
@@ -1272,4 +1290,14 @@
     <string name="pending_deletion_restored">다시 오신 것을 환영합니다. 계정이 복원되었습니다.</string>
     <string name="image_blocked_placeholder">[이미지 차단됨]</string>
     <string name="csrf_unavailable">이 세션이 손상되었습니다! 다시 로그인해 주세요.</string>
+    <string name="received_on_prefix">%s(으)로 수신</string>
+    <string name="received_on_label">수신 주소</string>
+    <string name="auto_advance_label">보관 또는 삭제 후</string>
+    <string name="auto_advance_next">다음 이메일로 이동</string>
+    <string name="auto_advance_previous">이전 이메일로 이동</string>
+    <string name="auto_advance_back">이메일 목록으로 돌아가기</string>
+    <string name="reply_from_mismatch_title">다른 주소로 답장할까요?</string>
+    <string name="reply_from_mismatch_message">이 이메일은 %1$s에서 수신했지만 답장은 %2$s에서 전송됩니다. 다른 주소로 답장하면 해당 주소가 발신자에게 노출되거나 답장이 거부될 수 있습니다.</string>
+    <string name="reply_from_mismatch_use_received">수신 주소 사용</string>
+    <string name="reply_from_mismatch_send_anyway">그대로 보내기</string>
 </resources>

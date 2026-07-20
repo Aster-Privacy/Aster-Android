@@ -130,16 +130,30 @@ fun ExternalAccountsScreen(
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(AsterSpacing.lg)) {
                 Text(
-                    text = stringResource(R.string.ext_oauth_coming_soon),
-                    color = colors.text_primary,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Spacer(Modifier.size(AsterSpacing.xs))
-                Text(
-                    text = stringResource(R.string.ext_oauth_coming_soon_body),
+                    text = stringResource(R.string.ext_oauth_body),
                     color = colors.text_tertiary,
                     fontSize = 13.sp,
+                )
+                Spacer(Modifier.size(AsterSpacing.sm))
+                AsterButton(
+                    label = stringResource(R.string.ext_oauth_connect_google),
+                    onClick = { vm.start_oauth("google") },
+                    enabled = state.connecting_provider == null,
+                    is_loading = state.connecting_provider == "google",
+                )
+                v_gap(AsterSpacing.xs)
+                AsterButton(
+                    label = stringResource(R.string.ext_oauth_connect_microsoft),
+                    onClick = { vm.start_oauth("microsoft") },
+                    enabled = state.connecting_provider == null,
+                    is_loading = state.connecting_provider == "microsoft",
+                )
+                v_gap(AsterSpacing.xs)
+                AsterButton(
+                    label = stringResource(R.string.ext_oauth_connect_yahoo),
+                    onClick = { vm.start_oauth("yahoo") },
+                    enabled = state.connecting_provider == null,
+                    is_loading = state.connecting_provider == "yahoo",
                 )
             }
         }
@@ -257,7 +271,8 @@ fun ExternalAccountsScreen(
                 } else {
                     for (acct in state.accounts) {
                         Column(modifier = Modifier.fillMaxWidth().padding(vertical = AsterSpacing.xs)) {
-                            val display_label = acct.oauth_email ?: when (acct.protocol) {
+                            val decrypted_email = state.decrypted[acct.account_token]?.email
+                            val display_label = acct.oauth_email ?: decrypted_email ?: when (acct.protocol) {
                                 "oauth_google", "google" -> stringResource(R.string.ext_label_google_account)
                                 "oauth_microsoft", "microsoft" -> stringResource(R.string.ext_label_microsoft_account)
                                 "oauth_yahoo", "yahoo" -> stringResource(R.string.ext_label_yahoo_account)
@@ -285,11 +300,21 @@ fun ExternalAccountsScreen(
                                     fontSize = 12.sp,
                                 )
                             }
+                            val sync_error = acct.last_sync_error
+                            if (!sync_error.isNullOrBlank()) {
+                                Text(
+                                    text = sync_error,
+                                    color = colors.danger,
+                                    fontSize = 12.sp,
+                                )
+                            }
                             v_gap(AsterSpacing.xs)
                             Row(horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
                                 AsterButton(
                                     label = stringResource(R.string.ext_sync_now),
                                     onClick = { vm.trigger_sync(acct.account_token) },
+                                    enabled = acct.account_token !in state.syncing_tokens,
+                                    is_loading = acct.account_token in state.syncing_tokens,
                                 )
                                 AsterButton(
                                     label = stringResource(R.string.ext_delete),
@@ -310,6 +335,7 @@ fun ExternalAccountsScreen(
                 ExternalAccountsError.MANUAL_FAILED -> stringResource(R.string.ext_error_manual_failed)
                 ExternalAccountsError.NO_SESSION_KEY -> stringResource(R.string.ext_error_no_session)
                 ExternalAccountsError.DELETE_FAILED -> stringResource(R.string.ext_error_delete_failed)
+                ExternalAccountsError.SYNC_FAILED -> stringResource(R.string.ext_error_sync_failed)
             }
             error_banner(msg)
         }

@@ -208,6 +208,7 @@
     <string name="swipe_mark_as_unread">تعليم كغير مقروء</string>
     <string name="swipe_report_spam">الإبلاغ عن بريد مزعج</string>
     <string name="swipe_move_to_inbox">نقل إلى الوارد</string>
+    <string name="swipe_none">بدون</string>
 
     <string name="has_attachment">يحتوي على مرفق</string>
     <string name="starred">مميز بنجمة</string>
@@ -252,6 +253,8 @@
     <string name="stop_receiving_from">التوقف عن الاستقبال من</string>
     <string name="external_content_blocked">تم حظر الصور والخطوط والمتتبعات الخارجية</string>
     <string name="e2e_encrypted_message">رسالة مشفرة من طرف إلى طرف</string>
+    <string name="e2e_encryption_failed">تعذّر الإرسال: فشل التشفير من طرف إلى طرف. لم تُرسَل الرسالة.</string>
+    <string name="e2e_keys_not_ready">تعذّر الإرسال: مفاتيح التشفير ليست جاهزة بعد. لم تُرسَل الرسالة.</string>
     <string name="e2e_no_key_description">هذه الرسالة مشفرة بمفتاح لا يمتلكه هذا الجهاز بعد. افتحها على تطبيق Aster الويب لقراءتها.</string>
     <string name="no_body">(بدون محتوى)</string>
     <string name="attachments_count">%d مرفق(ات)</string>
@@ -371,6 +374,12 @@
     <string name="syncing">جارٍ المزامنة</string>
     <string name="sync_contacts">مزامنة جهات الاتصال</string>
     <string name="search_contacts">البحث في جهات الاتصال</string>
+    <string name="search_aliases">البحث في الأسماء المستعارة…</string>
+    <string name="alias_note_title">ملاحظة الاسم المستعار</string>
+    <string name="alias_note_hint">أنت وحدك من يمكنه رؤية هذه الملاحظة</string>
+    <string name="alias_note_placeholder">أين تستخدم هذا الاسم المستعار، تاريخ التسجيل، أي معلومات مفيدة</string>
+    <string name="alias_note_add">أضف ملاحظة</string>
+    <string name="alias_note_updated">تم تحديث الملاحظة</string>
     <string name="tab_all">الكل</string>
     <string name="tab_favorites">المفضلة</string>
     <string name="contacts_count">%d جهة اتصال</string>
@@ -424,9 +433,14 @@
     <string name="no_aliases_yet">لا أسماء مستعارة بعد</string>
     <string name="create_folder">إنشاء مجلد</string>
     <string name="folder_name">اسم المجلد</string>
+    <string name="parent_folder">المجلد الأصل</string>
+    <string name="parent_folder_none">بدون</string>
+    <string name="move_folder_up">تحريك لأعلى</string>
+    <string name="move_folder_down">تحريك لأسفل</string>
     <string name="create_label">إنشاء تصنيف</string>
     <string name="label_name">اسم التصنيف</string>
     <string name="create_alias">إنشاء اسم مستعار</string>
+    <string name="create_alias_invalid_chars">الأحرف والأرقام والنقاط والشرطات السفلية والشرطات هي الأحرف المسموح بها.</string>
     <string name="alias_placeholder">username@astermail.org</string>
     <string name="accounts">الحسابات</string>
     <string name="add_account">إضافة حساب</string>
@@ -688,6 +702,7 @@
     <string name="no_link_available">لا يوجد رابط متاح</string>
     <string name="link_copied">تم نسخ الرابط إلى الحافظة</string>
     <string name="copy_link">نسخ الرابط</string>
+    <string name="share_link">مشاركة الرابط</string>
     <string name="credits_title">الأرصدة</string>
     <string name="credits_subtitle">اكسب أرصدة Aster من خلال إكمال مهام مختلفة.</string>
     <string name="credits_balance_label">الرصيد المتاح</string>
@@ -890,11 +905,14 @@
     <string name="ext_error_oauth_failed">تعذر بدء تسجيل الدخول. تحقق من اتصالك وحاول مرة أخرى.</string>
     <string name="ext_error_manual_failed">تعذر حفظ الحساب. تحقق من المضيف والمنفذ وبيانات الاعتماد.</string>
     <string name="ext_error_no_session">انتهت جلستك. سجل الخروج ثم الدخول للمتابعة.</string>
+    <string name="ext_error_sync_failed">فشلت المزامنة. تحقق من بيانات اعتماد الحساب وأعد المحاولة.</string>
     <string name="ext_manual_saved">تم إضافة الحساب. تبدأ المزامنة…</string>
     <string name="ext_last_sync">آخر مزامنة: %1$s</string>
     <string name="ext_section_oauth">تبديل سريع</string>
-    <string name="ext_oauth_coming_soon">قريبًا على Android</string>
-    <string name="ext_oauth_coming_soon_body">سيتوفر تسجيل الدخول عبر Google وOutlook وYahoo على Android في إصدار قادم. استخدم حاليًا الإعداد اليدوي أدناه مع كلمة مرور التطبيق.</string>
+    <string name="ext_oauth_body">سجّل الدخول عبر مزوّدك لربط حساب في خطوة واحدة.</string>
+    <string name="ext_oauth_connect_google">تسجيل الدخول عبر Google</string>
+    <string name="ext_oauth_connect_microsoft">تسجيل الدخول عبر Microsoft</string>
+    <string name="ext_oauth_connect_yahoo">تسجيل الدخول عبر Yahoo</string>
     <string name="import_provider_coming_soon">قريبًا</string>
     <string name="import_connect_manual_cta">الاتصال عبر IMAP</string>
     <string name="ext_section_manual">إعداد يدوي</string>
@@ -1282,4 +1300,14 @@
     <string name="pending_deletion_restored">مرحبًا بعودتك. تمت استعادة حسابك.</string>
     <string name="image_blocked_placeholder">[تم حظر الصورة]</string>
     <string name="csrf_unavailable">هذه الجلسة معطوبة! يرجى تسجيل الدخول مرة أخرى.</string>
+    <string name="received_on_prefix">تم الاستلام على %s</string>
+    <string name="received_on_label">تم الاستلام على</string>
+    <string name="auto_advance_label">بعد الأرشفة أو الحذف</string>
+    <string name="auto_advance_next">الانتقال إلى البريد التالي</string>
+    <string name="auto_advance_previous">الانتقال إلى البريد السابق</string>
+    <string name="auto_advance_back">العودة إلى قائمة البريد</string>
+    <string name="reply_from_mismatch_title">الرد من عنوان مختلف؟</string>
+    <string name="reply_from_mismatch_message">تم استلام هذا البريد على %1$s، لكن ردك سيُرسل من %2$s. الرد من عنوان مختلف قد يكشفه للمرسل وقد يُرفض الرد.</string>
+    <string name="reply_from_mismatch_use_received">استخدام عنوان الاستلام</string>
+    <string name="reply_from_mismatch_send_anyway">الإرسال على أي حال</string>
 </resources>

@@ -182,6 +182,7 @@ data class MailUserStatsResponse(
     val spam: Int = 0,
     val trash: Int = 0,
     val unread: Int = 0,
+    val notifiable: Int? = null,
     val storage_used_bytes: Long = 0,
     val storage_total_bytes: Long = 0,
 )

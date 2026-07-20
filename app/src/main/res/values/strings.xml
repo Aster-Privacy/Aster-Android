@@ -64,7 +64,7 @@
     <!-- Onboarding -->
     <string name="onboarding_skip">Skip</string>
     <string name="onboarding_slide1_title">Welcome to Aster</string>
-    <string name="onboarding_slide1_body">Private email that actually protects you. No surveillance, no ads, no backdoors.</string>
+    <string name="onboarding_slide1_body">Private email that actually protects you. No surveillance, no ads.</string>
     <string name="onboarding_slide2_title">End-to-end encrypted</string>
     <string name="onboarding_slide2_body">Every message is encrypted with your keys before leaving your device. Not even Aster can read your mail.</string>
     <string name="onboarding_slide3_title">Zero tracking</string>
@@ -111,6 +111,7 @@
     <string name="save_recovery_email">Save recovery email</string>
     <string name="update_recovery_email">Update recovery email</string>
     <string name="recovery_email_remove">Remove recovery email</string>
+    <string name="recovery_step_up_description">For your security, confirm your password to continue.</string>
     <string name="recovery_email_resend">Resend verification email</string>
     <string name="recovery_email_resent">Verification email sent</string>
     <string name="recovery_email_resend_failed">Could not send verification email</string>
@@ -276,6 +277,7 @@
     <string name="swipe_mark_as_unread">Mark as unread</string>
     <string name="swipe_report_spam">Report spam</string>
     <string name="swipe_move_to_inbox">Move to inbox</string>
+    <string name="swipe_none">None</string>
 
     <!-- Email row -->
     <string name="has_attachment">Has attachment</string>
@@ -337,6 +339,8 @@
     <string name="external_content_blocked">External images, fonts, and trackers blocked</string>
     <string name="e2e_encrypted_message">End-to-end encrypted message</string>
     <string name="e2e_no_key_description">This message is encrypted with a key this device does not yet hold. Open it on the Aster web app to read.</string>
+    <string name="e2e_encryption_failed">Could not send: end-to-end encryption failed. The message was not sent.</string>
+    <string name="e2e_keys_not_ready">Could not send: encryption keys aren\'t ready yet. The message was not sent.</string>
     <string name="no_body">(no body)</string>
     <string name="attachments_count">%d attachment(s)</string>
     <string name="download_complete">Download complete</string>
@@ -395,6 +399,8 @@
     <string name="moved_to_trash">Moved %d conversation(s) to trash</string>
     <string name="participants_and_others">%1$s &amp; %2$d others</string>
     <string name="to_label_prefix">to %s</string>
+    <string name="received_on_prefix">received on %s</string>
+    <string name="received_on_label">Received on</string>
     <string name="failed_to_trash">Failed to move to trash</string>
     <string name="failed_report_spam">Failed to report spam</string>
     <string name="moved_to_inbox">Moved to inbox</string>
@@ -539,6 +545,12 @@
     <string name="syncing">Syncing</string>
     <string name="sync_contacts">Sync contacts</string>
     <string name="search_contacts">Search contacts</string>
+    <string name="search_aliases">Search aliases…</string>
+    <string name="alias_note_title">Alias note</string>
+    <string name="alias_note_hint">Only you can see this note</string>
+    <string name="alias_note_placeholder">Where you use this alias, sign-up date, anything useful</string>
+    <string name="alias_note_add">Add note</string>
+    <string name="alias_note_updated">Note updated</string>
     <string name="tab_all">All</string>
     <string name="tab_favorites">Favorites</string>
     <string name="contacts_count">%d contacts</string>
@@ -594,9 +606,14 @@
     <string name="no_aliases_yet">No aliases yet</string>
     <string name="create_folder">Create Folder</string>
     <string name="folder_name">Folder name</string>
+    <string name="parent_folder">Parent folder</string>
+    <string name="parent_folder_none">None</string>
+    <string name="move_folder_up">Move up</string>
+    <string name="move_folder_down">Move down</string>
     <string name="create_label">Create Label</string>
     <string name="label_name">Label name</string>
     <string name="create_alias">Create Alias</string>
+    <string name="create_alias_invalid_chars">Letters, numbers, dots, underscores, and hyphens are the allowed characters.</string>
     <string name="alias_placeholder">username@astermail.org</string>
     <string name="accounts">Accounts</string>
     <string name="add_account">Add account</string>
@@ -963,6 +980,7 @@
     <string name="no_link_available">No link available</string>
     <string name="link_copied">Link copied to clipboard</string>
     <string name="copy_link">Copy Link</string>
+    <string name="share_link">Share link</string>
     <string name="stats">Stats</string>
     <string name="total_referrals">Total Referrals</string>
     <string name="pending">Pending</string>
@@ -1199,11 +1217,14 @@
     <string name="ext_error_manual_failed">Couldn\'t save the account. Verify the host, port, and credentials.</string>
     <string name="ext_error_no_session">Your session expired. Sign out and back in to continue.</string>
     <string name="ext_error_delete_failed">Couldn\'t remove that account. Check your connection and try again.</string>
+    <string name="ext_error_sync_failed">Sync failed. Check the account\'s credentials and try again.</string>
     <string name="ext_manual_saved">Account added. Sync starting…</string>
     <string name="ext_last_sync">Last sync: %1$s</string>
     <string name="ext_section_oauth">Quick switch</string>
-    <string name="ext_oauth_coming_soon">Available soon on Android</string>
-    <string name="ext_oauth_coming_soon_body">Google, Outlook and Yahoo sign-in will work on Android in a future release. For now, use Manual setup below with an app password.</string>
+    <string name="ext_oauth_body">Sign in with your provider to connect an account in one step.</string>
+    <string name="ext_oauth_connect_google">Sign in with Google</string>
+    <string name="ext_oauth_connect_microsoft">Sign in with Microsoft</string>
+    <string name="ext_oauth_connect_yahoo">Sign in with Yahoo</string>
     <string name="import_provider_coming_soon">Coming soon</string>
     <string name="import_connect_manual_cta">Connect via IMAP</string>
     <string name="ext_section_manual">Manual setup</string>
@@ -2030,4 +2051,12 @@
     <string name="pending_deletion_restored">Welcome back. Your account has been restored.</string>
     <string name="image_blocked_placeholder">[Image blocked]</string>
     <string name="csrf_unavailable">This session is broken! Please, relogin.</string>
+    <string name="auto_advance_label">After archiving or deleting</string>
+    <string name="auto_advance_next">Go to next email</string>
+    <string name="auto_advance_previous">Go to previous email</string>
+    <string name="auto_advance_back">Return to email list</string>
+    <string name="reply_from_mismatch_title">Reply from a different address?</string>
+    <string name="reply_from_mismatch_message">This email was received on %1$s, but your reply is set to send from %2$s. Replying from a different address can expose it to the sender, and the reply may be rejected.</string>
+    <string name="reply_from_mismatch_use_received">Use received address</string>
+    <string name="reply_from_mismatch_send_anyway">Send anyway</string>
 </resources>

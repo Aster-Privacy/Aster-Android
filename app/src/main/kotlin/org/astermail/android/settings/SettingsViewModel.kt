@@ -39,8 +39,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.astermail.android.api.ApiError
 import org.astermail.android.api.auth.AuthApi
 import org.astermail.android.api.auth.UserInfo
@@ -57,10 +60,13 @@ import org.astermail.android.api.family.ReservedAddress
 import org.astermail.android.api.ghost.CreateGhostAliasRequest
 import org.astermail.android.api.ghost.GhostAlias
 import org.astermail.android.api.ghost.GhostAliasApi
+import org.astermail.android.api.labels.BulkReorderLabelsRequest
 import org.astermail.android.api.labels.CreateLabelRequest
 import org.astermail.android.api.labels.LabelsApi
 import org.astermail.android.api.labels.LabelItem
 import org.astermail.android.api.labels.ReferralInfoResponse
+import org.astermail.android.api.labels.ReorderLabelEntry
+import org.astermail.android.folders.folder_sibling_group
 import org.astermail.android.api.tags.CreateTagRequest
 import org.astermail.android.api.tags.TagItem
 import org.astermail.android.api.tags.TagsApi
@@ -74,6 +80,7 @@ import org.astermail.android.api.preferences.rebase_preferences_changes
 import kotlinx.serialization.json.jsonObject
 import org.astermail.android.api.recovery_email.RecoveryEmailApi
 import org.astermail.android.api.recovery_email.RecoveryEmailApiImpl
+import org.astermail.android.api.recovery_email.RemoveRecoveryEmailRequest
 import org.astermail.android.api.recovery_email.SaveRecoveryEmailRequest
 import org.astermail.android.api.security.AuditEvent
 import org.astermail.android.api.security.HardwareKey
@@ -179,6 +186,9 @@ data class DecryptedSignature(
     val placement: Int?,
 )
 
+private const val SUBSCRIPTION_TTL_MS = 300_000L
+private const val TAGS_TTL_MS = 60_000L
+
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val auth_api: AuthApi,
@@ -203,7 +213,11 @@ class SettingsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
+    internal var default_dispatcher: CoroutineDispatcher = Dispatchers.Default
+
     private val _state = MutableStateFlow(SettingsUiState())
+    private var last_subscription_load_ms = 0L
+    private var last_tags_load_ms = 0L
     private val optimistic_label_tokens = java.util.Collections.newSetFromMap(
         java.util.concurrent.ConcurrentHashMap<String, Boolean>(),
     )
@@ -393,6 +407,8 @@ class SettingsViewModel @Inject constructor(
         account_uses_encrypted_prefs = false
         last_preferences_raw_json = null
         last_synced_preferences = null
+        last_subscription_load_ms = 0L
+        last_tags_load_ms = 0L
         _state.value = SettingsUiState()
     }
 
@@ -458,7 +474,14 @@ class SettingsViewModel @Inject constructor(
                     offset += response.aliases.size
                     page++
                 }
-                val decrypted = all_aliases.map { decrypt_alias(it) }
+                var decrypted = withContext(default_dispatcher) {
+                    all_aliases.map { decrypt_alias(it) }
+                }
+                if (decrypted.any { it.decryption_failed } && auth_repository.try_refresh_vault_keys()) {
+                    decrypted = withContext(default_dispatcher) {
+                        all_aliases.map { decrypt_alias(it) }
+                    }
+                }
                 _state.value = _state.value.copy(
                     aliases = decrypted,
                     max_aliases = max_aliases,
@@ -651,6 +674,34 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun update_alias_note(alias_id: String, note: String) {
+        val current = _state.value.aliases.firstOrNull { it.id == alias_id } ?: return
+        val cleaned = note.replace(Regex("[\\x00-\\x08\\x0B-\\x1F\\x7F]"), "").trim()
+        _state.update { s ->
+            s.copy(aliases = s.aliases.map { if (it.id == alias_id) it.copy(encrypted_note = cleaned.ifBlank { null }) else it })
+        }
+        viewModelScope.launch {
+            try {
+                if (cleaned.isBlank()) {
+                    settings_api.update_alias_note(alias_id, null, null)
+                } else {
+                    val (encrypted_note, note_nonce) = encrypt_alias_field(cleaned)
+                    settings_api.update_alias_note(alias_id, encrypted_note, note_nonce)
+                }
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.alias_note_updated),
+                )
+            } catch (_: Throwable) {
+                _state.update { s ->
+                    s.copy(aliases = s.aliases.map { if (it.id == alias_id) it.copy(encrypted_note = current.encrypted_note) else it })
+                }
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.something_went_wrong),
+                )
+            }
+        }
+    }
+
     fun load_domains() {
         viewModelScope.launch {
             _state.value = _state.value.copy(domains_loading = true)
@@ -748,11 +799,14 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    suspend fun check_directory_availability(key: String): Boolean {
+    suspend fun check_directory_availability(key: String, domain: String): Boolean {
         return try {
-            val dir_hash = compute_directory_key_hash(key.lowercase())
             val response = settings_api.check_directory_availability(
-                DirectoryAvailabilityRequest(directory_hash = dir_hash)
+                DirectoryAvailabilityRequest(
+                    directory_hash = compute_directory_address_hash(key, domain),
+                    legacy_hash = compute_directory_key_hash(key.lowercase()),
+                    domain = domain.lowercase(),
+                )
             )
             response.available
         } catch (_: Throwable) {
@@ -775,11 +829,12 @@ class SettingsViewModel @Inject constructor(
 
     suspend fun create_directory_now(key: String, domain: String, captcha_token: String? = null): Boolean {
         return try {
-            val dir_hash = compute_directory_key_hash(key.lowercase())
+            val dir_hash = compute_directory_address_hash(key, domain)
             val (enc_label, label_nonce) = encrypt_alias_field(key.lowercase())
             settings_api.create_directory(
                 CreateDirectoryRequest(
                     directory_hash = dir_hash,
+                    legacy_hash = compute_directory_key_hash(key.lowercase()),
                     encrypted_label = enc_label,
                     label_nonce = label_nonce,
                     domain = domain,
@@ -924,7 +979,10 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun load_subscription() {
+    fun load_subscription(force: Boolean = true) {
+        val now = System.currentTimeMillis()
+        if (!force && _state.value.subscription != null && now - last_subscription_load_ms < SUBSCRIPTION_TTL_MS) return
+        last_subscription_load_ms = now
         viewModelScope.launch {
             _state.value = _state.value.copy(is_loading = true, error = null)
             try {
@@ -1272,11 +1330,13 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun save_recovery_email(email: String) {
+    fun save_recovery_email(email: String, password: String, totp_code: String?) {
         viewModelScope.launch {
             _state.value = _state.value.copy(save_status = SaveStatus.SAVING, error = null)
             val normalized = email.trim().lowercase()
             try {
+                val password_hash = auth_repository.derive_password_hash_b64(password)
+                    ?: throw IllegalStateException(context.getString(R.string.something_went_wrong))
                 val identity_key = session_key_store.get_identity_key()
                     ?: throw IllegalStateException("no identity key")
                 val encrypted = encrypt_recovery_email(normalized, identity_key)
@@ -1287,6 +1347,8 @@ class SettingsViewModel @Inject constructor(
                         email_nonce = encrypted.nonce_b64,
                         email_hash = email_hash,
                         plaintext_email = normalized,
+                        password_hash = password_hash,
+                        totp_code = totp_code?.ifBlank { null },
                     ),
                 )
                 _state.value = _state.value.copy(
@@ -1330,11 +1392,18 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun remove_recovery_email() {
+    fun remove_recovery_email(password: String, totp_code: String?) {
         viewModelScope.launch {
             _state.value = _state.value.copy(save_status = SaveStatus.SAVING, error = null)
             try {
-                recovery_email_api.remove()
+                val password_hash = auth_repository.derive_password_hash_b64(password)
+                    ?: throw IllegalStateException(context.getString(R.string.something_went_wrong))
+                recovery_email_api.remove(
+                    RemoveRecoveryEmailRequest(
+                        password_hash = password_hash,
+                        totp_code = totp_code?.ifBlank { null },
+                    ),
+                )
                 _state.value = _state.value.copy(
                     recovery_email_address = null,
                     recovery_email_set = false,
@@ -1505,7 +1574,10 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun load_tags() {
+    fun load_tags(force: Boolean = true) {
+        val now = System.currentTimeMillis()
+        if (!force && last_tags_load_ms > 0L && now - last_tags_load_ms < TAGS_TTL_MS) return
+        last_tags_load_ms = now
         viewModelScope.launch {
             try {
                 val response = tags_api.list_tags(include_counts = true)
@@ -1551,7 +1623,12 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun create_folder(name: String, color: String? = null, sort_order: Int? = null) {
+    fun create_folder(
+        name: String,
+        color: String? = null,
+        sort_order: Int? = null,
+        parent_token: String? = null,
+    ) {
         viewModelScope.launch {
             try {
                 val identity_key = session_key_store.get_identity_key() ?: run {
@@ -1570,6 +1647,7 @@ class SettingsViewModel @Inject constructor(
                         color_nonce = color_field?.nonce_b64,
                         folder_type = "folder",
                         sort_order = sort_order,
+                        parent_token = parent_token,
                     ),
                 )
                 val optimistic = LabelItem(
@@ -1579,6 +1657,7 @@ class SettingsViewModel @Inject constructor(
                     encrypted_color = color,
                     folder_type = "folder",
                     sort_order = sort_order ?: 0,
+                    parent_token = parent_token,
                     item_count = 0,
                 )
                 optimistic_label_tokens.add(token)
@@ -1589,6 +1668,34 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     action_result = context.getString(R.string.failed_create_folder),
                 )
+            }
+        }
+    }
+
+    fun move_folder(label_id: String, direction: Int) {
+        viewModelScope.launch {
+            val siblings = folder_sibling_group(_state.value.labels, label_id)
+            val index = siblings.indexOfFirst { it.id == label_id }
+            val target = index + direction
+            if (index < 0 || target < 0 || target > siblings.lastIndex) return@launch
+            val reordered = siblings.toMutableList().apply {
+                add(target, removeAt(index))
+            }
+            val new_orders = reordered.mapIndexed { i, label -> label.id to i }.toMap()
+            val previous_labels = _state.value.labels
+            _state.value = _state.value.copy(
+                labels = previous_labels.map { label ->
+                    new_orders[label.id]?.let { label.copy(sort_order = it) } ?: label
+                },
+            )
+            val changed = reordered.mapIndexedNotNull { i, label ->
+                if (label.sort_order != i) ReorderLabelEntry(id = label.id, sort_order = i) else null
+            }
+            if (changed.isEmpty()) return@launch
+            try {
+                labels_api.bulk_reorder_labels(BulkReorderLabelsRequest(labels = changed))
+            } catch (_: Throwable) {
+                _state.value = _state.value.copy(labels = previous_labels)
             }
         }
     }
@@ -1898,6 +2005,13 @@ class SettingsViewModel @Inject constructor(
         val key = derive_encryption_key()
         try {
             return String(aes_gcm_decrypt(ciphertext, key, nonce), Charsets.UTF_8)
+        } catch (t: Throwable) {
+            val fallback = derive_passphrase_key()
+            try {
+                return String(aes_gcm_decrypt(ciphertext, fallback, nonce), Charsets.UTF_8)
+            } finally {
+                fallback.fill(0)
+            }
         } finally {
             key.fill(0)
         }
@@ -2514,7 +2628,12 @@ class SettingsViewModel @Inject constructor(
                 decrypt_alias_field(alias.encrypted_local_part, alias.local_part_nonce)
             }
         } catch (_: Throwable) {
-            return alias.copy(encrypted_local_part = "", decryption_failed = true)
+            return alias.copy(
+                encrypted_local_part = "",
+                encrypted_display_name = null,
+                encrypted_note = null,
+                decryption_failed = true,
+            )
         }
         val enc_name = alias.encrypted_display_name
         val name_nonce = alias.display_name_nonce
@@ -2527,9 +2646,21 @@ class SettingsViewModel @Inject constructor(
         } else {
             null
         }
+        val enc_note = alias.encrypted_note
+        val enc_note_nonce = alias.note_nonce
+        val note = if (!enc_note.isNullOrBlank() && !enc_note_nonce.isNullOrBlank()) {
+            try {
+                decrypt_alias_field(enc_note, enc_note_nonce)
+            } catch (_: Throwable) {
+                null
+            }
+        } else {
+            null
+        }
         return alias.copy(
             encrypted_local_part = local_part,
             encrypted_display_name = display_name,
+            encrypted_note = note,
         )
     }
 
@@ -2540,6 +2671,16 @@ class SettingsViewModel @Inject constructor(
 
         try {
             val key = derive_encryption_key()
+            try {
+                return String(aes_gcm_decrypt(ciphertext, key, nonce), Charsets.UTF_8)
+            } finally {
+                key.fill(0)
+            }
+        } catch (_: Throwable) {
+        }
+
+        try {
+            val key = derive_passphrase_key()
             try {
                 return String(aes_gcm_decrypt(ciphertext, key, nonce), Charsets.UTF_8)
             } finally {
@@ -2623,6 +2764,12 @@ class SettingsViewModel @Inject constructor(
         return android.util.Base64.encodeToString(hash, android.util.Base64.NO_WRAP)
     }
 
+    private fun compute_directory_address_hash(key: String, domain: String): String {
+        val data = "${key.lowercase()}@${domain.lowercase()}".toByteArray(Charsets.UTF_8)
+        val hash = MessageDigest.getInstance("SHA-256").digest(data)
+        return android.util.Base64.encodeToString(hash, android.util.Base64.NO_WRAP)
+    }
+
     private fun decrypt_ghost_alias(alias: GhostAlias): GhostAlias {
         if (alias.encrypted_local_part.isBlank()) return alias.copy(decryption_failed = true)
         return try {
@@ -2641,6 +2788,14 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun derive_encryption_key(): ByteArray {
+        session_key_store.get_data_kek()?.let { kek ->
+            if (kek.size == 32) return kek
+            kek.fill(0)
+        }
+        return derive_passphrase_key()
+    }
+
+    private fun derive_passphrase_key(): ByteArray {
         val passphrase = session_key_store.get_passphrase()
             ?: throw IllegalStateException("no passphrase")
         try {
@@ -2826,3 +2981,4 @@ class SettingsViewModel @Inject constructor(
         )
     }
 }
+
