@@ -1,5 +1,5 @@
 Bug fixes and improvements:
 
+- Removed a duplicate menu button from the email view
 - Fixed archived, deleted, and spam emails briefly appearing in your inbox
 - Stronger protection for encryption keys in memory
-- General stability improvements

@@ -357,4 +357,5 @@ private fun copy_to_clipboard(context: Context, label: String, value: String) {
         putBoolean("android.content.extra.IS_SENSITIVE", true)
     }
     clipboard.setPrimaryClip(clip)
+    org.astermail.android.util.schedule_sensitive_clipboard_clear(context, value)
 }

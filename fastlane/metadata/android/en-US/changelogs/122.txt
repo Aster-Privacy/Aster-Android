@@ -1,0 +1,11 @@
+- Recovery phrase to restore your account
+- Per-alias notes and website lists, with search
+- Custom domain directory + clearer DNS setup
+- Forwarded mail shows the address it arrived on
+- Student & journalist 30% discount
+- Bridge SMTP/IMAP/POP3/JMAP credentials
+- Stronger signing checks + content filtering
+- Step-up to change recovery email or phone
+- Accurate unread counts + category sync
+- Storage add-ons count toward your total
+- Android: dark mode, trash, inbox, notifications

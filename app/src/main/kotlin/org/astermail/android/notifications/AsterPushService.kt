@@ -64,7 +64,7 @@ class AsterPushService : PushService() {
         } catch (_: Throwable) {
             return PushResult.NeedsFetch
         }
-        val app_lock_configured = runCatching { entry.app_lock_store().is_configured() }.getOrNull() == true
+        val app_lock_configured = runCatching { entry.app_lock_store().is_configured() }.getOrDefault(true)
         if (org.astermail.android.security.LockdownStore.is_enabled(context) || app_lock_configured) {
             MailPollingWorker.show_generic(context, 1)
             return PushResult.Shown

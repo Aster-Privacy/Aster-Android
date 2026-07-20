@@ -202,7 +202,7 @@ class MainActivity : ComponentActivity() {
     private fun enforce_secure_flag() {
         val app_lock_configured = runCatching {
             org.astermail.android.security.AppLockStore(applicationContext).is_configured()
-        }.getOrDefault(false)
+        }.getOrDefault(true)
         if (LockdownStore.is_enabled(applicationContext) || app_lock_configured) {
             window.setFlags(
                 android.view.WindowManager.LayoutParams.FLAG_SECURE,
@@ -814,18 +814,34 @@ private fun AsterNavHost() {
             arguments = listOf(navArgument("contact_id") { type = NavType.StringType }),
         ) { entry ->
             val id = entry.arguments?.getString("contact_id").orEmpty()
+            val contacts_entry = remember(nav_controller) {
+                try { nav_controller.getBackStackEntry(routes.contacts) } catch (_: Throwable) {
+                    try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
+                }
+            }
+            val shared_contacts_vm: org.astermail.android.contacts.ContactsViewModel =
+                if (contacts_entry != null) hiltViewModel(contacts_entry) else hiltViewModel()
             ContactDetailScreen(
                 contact_id = id,
                 on_back = { nav_controller.popBackStack() },
                 on_edit = { cid -> nav_controller.navigate(routes.contact_edit_for(cid)) },
                 on_compose = { email -> nav_controller.navigate(routes.compose_new(to = email)) },
+                vm = shared_contacts_vm,
             )
         }
         composable(routes.contact_edit_new) {
+            val contacts_entry = remember(nav_controller) {
+                try { nav_controller.getBackStackEntry(routes.contacts) } catch (_: Throwable) {
+                    try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
+                }
+            }
+            val shared_contacts_vm: org.astermail.android.contacts.ContactsViewModel =
+                if (contacts_entry != null) hiltViewModel(contacts_entry) else hiltViewModel()
             ContactEditScreen(
                 contact_id = null,
                 on_back = { nav_controller.popBackStack() },
                 on_saved = { nav_controller.popBackStack() },
+                vm = shared_contacts_vm,
             )
         }
         composable(
@@ -833,10 +849,18 @@ private fun AsterNavHost() {
             arguments = listOf(navArgument("contact_id") { type = NavType.StringType }),
         ) { entry ->
             val id = entry.arguments?.getString("contact_id")
+            val contacts_entry = remember(nav_controller) {
+                try { nav_controller.getBackStackEntry(routes.contacts) } catch (_: Throwable) {
+                    try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
+                }
+            }
+            val shared_contacts_vm: org.astermail.android.contacts.ContactsViewModel =
+                if (contacts_entry != null) hiltViewModel(contacts_entry) else hiltViewModel()
             ContactEditScreen(
                 contact_id = id,
                 on_back = { nav_controller.popBackStack() },
                 on_saved = { nav_controller.popBackStack() },
+                vm = shared_contacts_vm,
             )
         }
 

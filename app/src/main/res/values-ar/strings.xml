@@ -1082,6 +1082,7 @@
     <string name="error_timeout">انتهت مهلة الاتصال. يرجى المحاولة مرة أخرى.</string>
     <string name="error_ssl">فشل الاتصال الآمن. يرجى المحاولة مرة أخرى.</string>
     <string name="error_generic">حدث خطأ ما. يرجى المحاولة مرة أخرى.</string>
+    <string name="error_too_many_attempts">محاولات كثيرة جدًا. يرجى الانتظار قليلاً والمحاولة مرة أخرى.</string>
 
     <string name="error_send_recovery">فشل في إرسال بريد الاسترداد</string>
     <string name="error_invalid_recovery_code">صيغة رمز الاسترداد غير صالحة</string>

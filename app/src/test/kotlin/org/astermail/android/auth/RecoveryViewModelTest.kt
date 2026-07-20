@@ -134,7 +134,7 @@ class RecoveryViewModelTest {
         val state = vm.state.value
         assertEquals(RecoveryStep.email, state.step)
         assertFalse(state.is_loading)
-        assertEquals("server down", state.error)
+        assertEquals("failed to send recovery email", state.error)
     }
 
     @Test
@@ -270,7 +270,7 @@ class RecoveryViewModelTest {
 
         vm.send_recovery_email("test@test.com")
         advanceUntilIdle()
-        assertEquals("boom", vm.state.value.error)
+        assertEquals("failed to send recovery email", vm.state.value.error)
 
         vm.clear_error()
 

@@ -644,6 +644,7 @@ private fun new_codes_step(
                         putBoolean("android.content.extra.IS_SENSITIVE", true)
                     }
                     clipboard?.setPrimaryClip(clip)
+                    org.astermail.android.util.schedule_sensitive_clipboard_clear(context, text)
                     copied = true
                 },
                 tint = if (copied) Color(0xFF22C55E) else colors.text_muted,

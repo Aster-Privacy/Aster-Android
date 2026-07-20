@@ -86,9 +86,25 @@ object StorageModule {
             val db = build_mail_database(context, meta)
             runCatching { meta.edit().putBoolean(key_sqlcipher_migrated, true).apply() }
             db
-        } catch (_: Throwable) {
+        } catch (first_error: Throwable) {
+            if (org.astermail.android.BuildConfig.DEBUG) {
+                android.util.Log.e("StorageModule", "encrypted db open failed, retrying fresh", first_error)
+            }
             runCatching { context.deleteDatabase(db_name) }
-            build_in_memory_database(context)
+            try {
+                val db = build_mail_database(context, meta)
+                runCatching { meta.edit().putBoolean(key_sqlcipher_migrated, true).apply() }
+                db
+            } catch (second_error: Throwable) {
+                if (org.astermail.android.BuildConfig.DEBUG) {
+                    android.util.Log.e(
+                        "StorageModule",
+                        "encrypted db unavailable, falling back to in-memory (unencrypted, non-persistent)",
+                        second_error,
+                    )
+                }
+                build_in_memory_database(context)
+            }
         }
     }
 

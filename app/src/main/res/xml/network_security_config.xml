@@ -6,9 +6,13 @@
         </trust-anchors>
     </base-config>
     <domain-config>
-        <domain includeSubdomains="true">astermail.org</domain>
         <domain includeSubdomains="false">app.astermail.org</domain>
-        <pin-set expiration="2027-05-16">
+        <pin-set expiration="2028-01-01">
+            <pin digest="SHA-256">DDf/bfpXnW80wMM5Y2b9zNCdohxBo5lX7rUMiw+DYO4=</pin>
+            <pin digest="SHA-256">fk6IOKit1ild5647BH06ujSIq5XbCgqlbYl6ANhhi88=</pin>
+            <pin digest="SHA-256">C5+lpZ7tcVwmwQIMcRtPbsQtWLABXhQzejna0wHFr8M=</pin>
+            <pin digest="SHA-256">diGVwiVYbubAI3RW4hB9xU8e/CH2GnkuvVFZE8zmgzI=</pin>
+            <pin digest="SHA-256">ZtbEdP4fXOZh79o7Pf8qXXNlIKRpQNBzxoh/UgnQ2Qc=</pin>
             <pin digest="SHA-256">kIdp6NNEd8wsugYyyIYFsi1ylMCED3hZbSR8ZFsa/A4=</pin>
             <pin digest="SHA-256">mEflZT5enoR1FuXLgYYGqnVEoZvmf9c2bVBpiOjYQ0c=</pin>
         </pin-set>

@@ -1448,12 +1448,6 @@ private fun expanded_message(
                 content_description = stringResource(R.string.reply),
                 onClick = on_reply,
             )
-            AsterIconButton(
-                icon = Icons.Filled.MoreVert,
-                content_description = stringResource(R.string.more_options),
-                onClick = on_more,
-                icon_size = 18,
-            )
         }
 
         AnimatedVisibility(

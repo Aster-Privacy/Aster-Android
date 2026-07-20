@@ -1,0 +1,5 @@
+Bug fixes and improvements:
+
+- Trashed emails now stay in Trash and no longer reappear in your inbox.
+- Fixed the inbox occasionally going blank right after opening the app.
+- General reliability improvements to how your mail list loads.

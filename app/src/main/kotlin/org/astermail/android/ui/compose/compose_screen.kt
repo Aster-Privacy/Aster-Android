@@ -175,6 +175,8 @@ import org.astermail.android.ui.mail.ComposePrefill
 import org.astermail.android.ui.mail.build_quoted_body
 import org.astermail.android.ui.mail.subject_prefix
 import org.astermail.android.ui.mail.thread_message_to_mock
+import org.astermail.android.util.strip_metadata
+import org.astermail.android.util.strip_status
 
 data class AttachmentItem(
     val uri: Uri,
@@ -805,13 +807,25 @@ fun ComposeScreen(
             if (strip_branding) raw_formatted_body.replace(footer_secured_by_plain, "")
             else raw_formatted_body.removeSuffix(footer_secured_by_plain)
         ).trimEnd('\n', ' ')
+        val strip_metadata_enabled = settings_state.preferences?.strip_exif_on_compose != false
+        val unstripped_names = mutableListOf<String>()
+
+        fun apply_metadata_strip(bytes: ByteArray, item: AttachmentItem): ByteArray {
+            if (!strip_metadata_enabled) return bytes
+            if (!item.mime_type.startsWith("image/")) return bytes
+            val result = strip_metadata(bytes)
+            if (result.status != strip_status.stripped) unstripped_names.add(item.name)
+            return result.data
+        }
+
         val image_html_for = mutableMapOf<Int, String>()
         inline_images.forEachIndexed { idx, img ->
-            val bytes = try {
+            val raw_bytes = try {
                 context.contentResolver.openInputStream(img.uri)?.use { it.readBytes() }
             } catch (_: Throwable) {
                 null
             } ?: return@forEachIndexed
+            val bytes = apply_metadata_strip(raw_bytes, img)
             val b64 = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
             image_html_for[idx] = "<img src=\"data:${img.mime_type};base64,$b64\" alt=\"${img.name}\" style=\"max-width:100%;height:auto;\" />"
         }
@@ -843,16 +857,28 @@ fun ComposeScreen(
 
         val attachment_payloads = attachments.mapNotNull { att ->
             try {
-                val bytes = context.contentResolver.openInputStream(att.uri)?.use { it.readBytes() } ?: return@mapNotNull null
+                val raw_bytes = context.contentResolver.openInputStream(att.uri)?.use { it.readBytes() } ?: return@mapNotNull null
+                val bytes = apply_metadata_strip(raw_bytes, att)
                 org.astermail.android.api.send.ExternalAttachmentPayload(
                     data = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP),
                     filename = att.name,
                     content_type = att.mime_type,
-                    size_bytes = att.size,
+                    size_bytes = bytes.size.toLong(),
                 )
             } catch (_: Throwable) {
                 null
             }
+        }
+
+        if (unstripped_names.isNotEmpty()) {
+            Toast.makeText(
+                context,
+                context.getString(
+                    R.string.compose_metadata_strip_failed,
+                    unstripped_names.joinToString(", "),
+                ),
+                Toast.LENGTH_LONG,
+            ).show()
         }
 
         val quote_block = quoted_html?.let { qh ->

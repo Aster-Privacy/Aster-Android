@@ -1,0 +1,4 @@
+Bug fixes and improvements:
+
+- Fixed sender and recipient addresses getting cut off in the email view
+- Fixed archived emails sometimes reappearing in the inbox

@@ -71,6 +71,7 @@ sealed class ApiError(message: String) : Exception(message) {
     object NotFoundError : ApiError("not found")
     data class ServerError(val code: Int) : ApiError("server error $code")
     data class ValidationError(val messages: List<String>) : ApiError(messages.joinToString("; "))
+    object RateLimited : ApiError("rate limited")
     data class UnknownError(val detail: String) : ApiError(detail)
 }
 
@@ -350,12 +351,14 @@ class ApiClient(
             ).also { emit_storage_full(it) }
         }
         return when (code) {
+            400 -> ApiError.ValidationError(parse_validation_messages(body).ifEmpty { listOf(detail.ifBlank { "bad request" }) })
             401 -> ApiError.UnauthorizedError.also { AuthEventBus.emit_unauthorized() }
             403 -> ApiError.ForbiddenError(detail.ifBlank { "forbidden" })
             404 -> ApiError.NotFoundError
             413 -> ApiError.StorageQuotaExceeded(detail.ifBlank { "storage full" })
                 .also { emit_storage_full(it) }
             422 -> ApiError.ValidationError(parse_validation_messages(body))
+            429 -> ApiError.RateLimited
             in 500..599 -> ApiError.ServerError(code)
             else -> ApiError.UnknownError(body.ifBlank { "http $code" })
         }

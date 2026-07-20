@@ -1083,6 +1083,7 @@
     <string name="error_timeout">La conexión expiró. Por favor inténtalo de nuevo.</string>
     <string name="error_ssl">La conexión segura falló. Por favor inténtalo de nuevo.</string>
     <string name="error_generic">Algo salió mal. Por favor inténtalo de nuevo.</string>
+    <string name="error_too_many_attempts">Demasiados intentos. Espera un momento e inténtalo de nuevo.</string>
 
     <string name="error_send_recovery">Error al enviar el correo de recuperación</string>
     <string name="error_invalid_recovery_code">Formato de código de recuperación no válido</string>

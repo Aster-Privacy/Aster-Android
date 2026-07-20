@@ -40,6 +40,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.astermail.android.R
+import org.astermail.android.api.ApiError
 import org.astermail.android.api.recovery.CompleteRecoveryRequest
 import org.astermail.android.api.recovery.InitiateEmailRecoveryRequest
 import org.astermail.android.api.recovery.InitiateRecoveryRequest
@@ -93,7 +94,7 @@ class RecoveryViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_loading = false,
-                    error = t.message ?: ctx.getString(R.string.error_send_recovery),
+                    error = map_error(t, R.string.error_send_recovery),
                 )
             }
         }
@@ -143,7 +144,7 @@ class RecoveryViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_loading = false,
-                    error = t.message ?: ctx.getString(R.string.error_invalid_code),
+                    error = map_error(t, R.string.error_invalid_code),
                 )
             }
         }
@@ -228,7 +229,7 @@ class RecoveryViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     step = RecoveryStep.password,
                     is_loading = false,
-                    error = t.message ?: ctx.getString(R.string.error_recovery_failed),
+                    error = map_error(t, R.string.error_recovery_failed),
                     processing_status = "",
                 )
             }
@@ -252,6 +253,20 @@ class RecoveryViewModel @Inject constructor(
             else -> return
         }
         _state.value = _state.value.copy(step = prev, error = null)
+    }
+
+    private fun map_error(t: Throwable, fallback: Int): String = when (t) {
+        is ApiError.ValidationError -> t.messages.joinToString(", ").ifBlank { ctx.getString(R.string.error_invalid_request) }
+        is ApiError.RateLimited -> ctx.getString(R.string.error_too_many_attempts)
+        is ApiError.NotFoundError -> ctx.getString(R.string.error_account_not_found)
+        is ApiError.NetworkError -> ctx.getString(R.string.error_no_connection)
+        is ApiError.ServerError -> ctx.getString(R.string.error_server)
+        is ApiError.UnknownError -> ctx.getString(fallback)
+        is java.net.UnknownHostException -> ctx.getString(R.string.error_no_connection)
+        is java.net.ConnectException -> ctx.getString(R.string.error_no_connection)
+        is java.net.SocketTimeoutException -> ctx.getString(R.string.error_timeout)
+        is javax.net.ssl.SSLException -> ctx.getString(R.string.error_ssl)
+        else -> ctx.getString(fallback)
     }
 
     private fun hash_recovery_code(code: String): String {

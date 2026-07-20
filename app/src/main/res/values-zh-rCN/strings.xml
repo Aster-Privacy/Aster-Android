@@ -1082,6 +1082,7 @@
     <string name="error_timeout">连接超时。请重试。</string>
     <string name="error_ssl">安全连接失败。请重试。</string>
     <string name="error_generic">出错了。请重试。</string>
+    <string name="error_too_many_attempts">尝试次数过多,请稍等片刻后重试。</string>
 
     <string name="error_send_recovery">恢复邮件发送失败</string>
     <string name="error_invalid_recovery_code">恢复代码格式无效</string>
