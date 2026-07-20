@@ -134,6 +134,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import org.astermail.android.R
+import org.astermail.android.debugtools.debug_build_pill_inline
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
@@ -1177,6 +1178,8 @@ private fun inbox_top_bar(
                     }
                 }
             }
+            debug_build_pill_inline()
+            Spacer(Modifier.width(AsterSpacing.xs))
             AsterIconButton(
                 icon = Icons.Outlined.Settings,
                 content_description = stringResource(R.string.settings),
