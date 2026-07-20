@@ -1291,6 +1291,7 @@
     <string name="pending_deletion_error">Hesabınız geri yüklenemedi. Lütfen tekrar deneyin.</string>
     <string name="pending_deletion_restored">Tekrar hoş geldiniz. Hesabınız geri yüklendi.</string>
     <string name="image_blocked_placeholder">[Görsel engellendi]</string>
+    <string name="csrf_unavailable">Bu oturum bozuk! Lütfen yeniden giriş yapın.</string>
     <string name="received_on_prefix">%s adresinde alındı</string>
     <string name="received_on_label">Alındığı adres</string>
     <string name="auto_advance_label">Arşivleme veya silme sonrası</string>

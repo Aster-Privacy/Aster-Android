@@ -1299,6 +1299,7 @@
     <string name="pending_deletion_error">تعذّرت استعادة حسابك. يرجى المحاولة مرة أخرى.</string>
     <string name="pending_deletion_restored">مرحبًا بعودتك. تمت استعادة حسابك.</string>
     <string name="image_blocked_placeholder">[تم حظر الصورة]</string>
+    <string name="csrf_unavailable">هذه الجلسة معطوبة! يرجى تسجيل الدخول مرة أخرى.</string>
     <string name="received_on_prefix">تم الاستلام على %s</string>
     <string name="received_on_label">تم الاستلام على</string>
     <string name="auto_advance_label">بعد الأرشفة أو الحذف</string>

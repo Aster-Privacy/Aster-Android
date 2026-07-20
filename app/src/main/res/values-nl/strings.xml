@@ -1291,6 +1291,7 @@
     <string name="pending_deletion_error">Kan je account niet herstellen. Probeer het opnieuw.</string>
     <string name="pending_deletion_restored">Welkom terug. Je account is hersteld.</string>
     <string name="image_blocked_placeholder">[Afbeelding geblokkeerd]</string>
+    <string name="csrf_unavailable">Deze sessie is beschadigd! Log opnieuw in.</string>
     <string name="received_on_prefix">ontvangen op %s</string>
     <string name="received_on_label">Ontvangen op</string>
     <string name="auto_advance_label">Na archiveren of verwijderen</string>

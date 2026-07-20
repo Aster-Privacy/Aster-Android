@@ -1291,6 +1291,7 @@
     <string name="pending_deletion_error">Impossibile ripristinare il tuo account. Riprova.</string>
     <string name="pending_deletion_restored">Bentornato. Il tuo account è stato ripristinato.</string>
     <string name="image_blocked_placeholder">[Immagine bloccata]</string>
+    <string name="csrf_unavailable">Questa sessione è danneggiata! Effettua nuovamente l\'accesso.</string>
     <string name="received_on_prefix">ricevuto su %s</string>
     <string name="received_on_label">Ricevuto su</string>
     <string name="auto_advance_label">Dopo l\'archiviazione o l\'eliminazione</string>

@@ -1907,6 +1907,7 @@
     <string name="pending_deletion_error">Impossible de restaurer votre compte. Veuillez réessayer.</string>
     <string name="pending_deletion_restored">Bon retour. Votre compte a été restauré.</string>
     <string name="image_blocked_placeholder">[Image bloquée]</string>
+    <string name="csrf_unavailable">Cette session est corrompue ! Veuillez vous reconnecter.</string>
     <string name="received_on_prefix">reçu sur %s</string>
     <string name="received_on_label">Reçu sur</string>
     <string name="auto_advance_label">Après archivage ou suppression</string>

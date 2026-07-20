@@ -1292,6 +1292,7 @@
     <string name="pending_deletion_error">Ihr Konto konnte nicht wiederhergestellt werden. Bitte versuchen Sie es erneut.</string>
     <string name="pending_deletion_restored">Willkommen zurück. Ihr Konto wurde wiederhergestellt.</string>
     <string name="image_blocked_placeholder">[Bild blockiert]</string>
+    <string name="csrf_unavailable">Diese Sitzung ist fehlerhaft! Bitte melden Sie sich erneut an.</string>
     <string name="received_on_prefix">empfangen an %s</string>
     <string name="received_on_label">Empfangen an</string>
     <string name="auto_advance_label">Nach Archivieren oder Löschen</string>

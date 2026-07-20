@@ -1295,6 +1295,7 @@
     <string name="pending_deletion_error">Не удалось восстановить аккаунт. Попробуйте ещё раз.</string>
     <string name="pending_deletion_restored">С возвращением. Ваш аккаунт восстановлен.</string>
     <string name="image_blocked_placeholder">[Изображение заблокировано]</string>
+    <string name="csrf_unavailable">Этот сеанс повреждён! Пожалуйста, войдите снова.</string>
     <string name="received_on_prefix">получено на %s</string>
     <string name="received_on_label">Получено на</string>
     <string name="auto_advance_label">После архивации или удаления</string>
