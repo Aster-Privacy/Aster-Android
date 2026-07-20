@@ -263,6 +263,8 @@
     <string name="stop_receiving_from">Ne plus recevoir de</string>
     <string name="external_content_blocked">Images externes, polices et traqueurs bloqués</string>
     <string name="e2e_encrypted_message">Message chiffré de bout en bout</string>
+    <string name="e2e_encryption_failed">Envoi impossible : échec du chiffrement de bout en bout. Le message n\'a pas été envoyé.</string>
+    <string name="e2e_keys_not_ready">Envoi impossible : les clés de chiffrement ne sont pas encore prêtes. Le message n\'a pas été envoyé.</string>
     <string name="e2e_no_key_description">Ce message est chiffré avec une clé que cet appareil ne possède pas encore. Ouvrez-le dans l\'application web Aster pour le lire.</string>
     <string name="no_body">(aucun contenu)</string>
     <string name="attachments_count">%d pièce(s) jointe(s)</string>

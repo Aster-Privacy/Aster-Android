@@ -253,6 +253,8 @@
     <string name="stop_receiving_from">受信を停止</string>
     <string name="external_content_blocked">外部画像、フォント、トラッカーをブロックしました</string>
     <string name="e2e_encrypted_message">エンドツーエンド暗号化メッセージ</string>
+    <string name="e2e_encryption_failed">送信できませんでした: エンドツーエンド暗号化に失敗しました。メッセージは送信されませんでした。</string>
+    <string name="e2e_keys_not_ready">送信できませんでした: 暗号化キーの準備がまだできていません。メッセージは送信されませんでした。</string>
     <string name="e2e_no_key_description">このメッセージはこのデバイスがまだ持っていないキーで暗号化されています。Asterウェブアプリで開いて読んでください。</string>
     <string name="no_body">(本文なし)</string>
     <string name="attachments_count">%d個の添付ファイル</string>

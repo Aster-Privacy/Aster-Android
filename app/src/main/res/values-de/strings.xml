@@ -254,6 +254,8 @@
     <string name="stop_receiving_from">Nicht mehr empfangen von</string>
     <string name="external_content_blocked">Externe Bilder, Schriftarten und Tracker blockiert</string>
     <string name="e2e_encrypted_message">Ende-zu-Ende-verschlüsselte Nachricht</string>
+    <string name="e2e_encryption_failed">Senden fehlgeschlagen: Ende-zu-Ende-Verschlüsselung fehlgeschlagen. Die Nachricht wurde nicht gesendet.</string>
+    <string name="e2e_keys_not_ready">Senden fehlgeschlagen: Verschlüsselungsschlüssel sind noch nicht bereit. Die Nachricht wurde nicht gesendet.</string>
     <string name="e2e_no_key_description">Diese Nachricht ist mit einem Schlüssel verschlüsselt, den dieses Gerät noch nicht besitzt. Öffnen Sie sie in der Aster-Webanwendung, um sie zu lesen.</string>
     <string name="no_body">(kein Inhalt)</string>
     <string name="attachments_count">%d Anhang/Anhänge</string>

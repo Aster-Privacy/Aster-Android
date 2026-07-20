@@ -253,6 +253,8 @@
     <string name="stop_receiving_from">수신 중지</string>
     <string name="external_content_blocked">외부 이미지, 글꼴, 추적기가 차단됨</string>
     <string name="e2e_encrypted_message">종단간 암호화 메시지</string>
+    <string name="e2e_encryption_failed">보낼 수 없음: 종단 간 암호화에 실패했습니다. 메시지가 전송되지 않았습니다.</string>
+    <string name="e2e_keys_not_ready">보낼 수 없음: 암호화 키가 아직 준비되지 않았습니다. 메시지가 전송되지 않았습니다.</string>
     <string name="e2e_no_key_description">이 메시지는 이 기기에 아직 없는 키로 암호화되어 있습니다. Aster 웹 앱에서 열어 읽으세요.</string>
     <string name="no_body">(본문 없음)</string>
     <string name="attachments_count">첨부 파일 %d개</string>

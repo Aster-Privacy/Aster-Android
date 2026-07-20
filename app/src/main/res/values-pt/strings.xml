@@ -253,6 +253,8 @@
     <string name="stop_receiving_from">Parar de receber de</string>
     <string name="external_content_blocked">Imagens externas, fontes e rastreadores bloqueados</string>
     <string name="e2e_encrypted_message">Mensagem com criptografia de ponta a ponta</string>
+    <string name="e2e_encryption_failed">Não foi possível enviar: falha na criptografia de ponta a ponta. A mensagem não foi enviada.</string>
+    <string name="e2e_keys_not_ready">Não foi possível enviar: as chaves de criptografia ainda não estão prontas. A mensagem não foi enviada.</string>
     <string name="e2e_no_key_description">Esta mensagem está criptografada com uma chave que este dispositivo ainda não possui. Abra-a no aplicativo web Aster para ler.</string>
     <string name="no_body">(sem corpo)</string>
     <string name="attachments_count">%d anexo(s)</string>

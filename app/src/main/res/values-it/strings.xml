@@ -253,6 +253,8 @@
     <string name="stop_receiving_from">Smetti di ricevere da</string>
     <string name="external_content_blocked">Immagini esterne, font e tracker bloccati</string>
     <string name="e2e_encrypted_message">Messaggio crittografato end-to-end</string>
+    <string name="e2e_encryption_failed">Invio non riuscito: crittografia end-to-end non riuscita. Il messaggio non è stato inviato.</string>
+    <string name="e2e_keys_not_ready">Invio non riuscito: le chiavi di crittografia non sono ancora pronte. Il messaggio non è stato inviato.</string>
     <string name="e2e_no_key_description">Questo messaggio è crittografato con una chiave che questo dispositivo non possiede ancora. Aprilo nell\'app web Aster per leggerlo.</string>
     <string name="no_body">(nessun contenuto)</string>
     <string name="attachments_count">%d allegato/i</string>
