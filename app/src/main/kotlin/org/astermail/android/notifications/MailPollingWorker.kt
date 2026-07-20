@@ -133,25 +133,29 @@ class MailPollingWorker(
             schedule_next(context)
             return Result.retry()
         }
+        // `unread` is a mailbox-wide count (inbox + every custom folder/label), so it still
+        // increases when a mail rule routes a new message straight into a folder other than
+        // Inbox. `notifiable`/`inbox` are scoped to the primary inbox view and miss those
+        // messages entirely, which used to mean rule-routed mail never triggered a notification.
         val new_unread = stats.unread
         val new_notifiable = stats.notifiable ?: stats.inbox
 
-        val has_baseline = prefs.contains(KEY_CACHED_NOTIFIABLE)
-        val cached_notifiable = prefs.getInt(KEY_CACHED_NOTIFIABLE, new_notifiable)
+        val has_baseline = prefs.contains(KEY_CACHED_UNREAD)
+        val cached_unread = prefs.getInt(KEY_CACHED_UNREAD, new_unread)
         val last_notified = prefs.getInt(KEY_LAST_NOTIFIED_COUNT, -1)
 
-        val has_pending_new_mail = has_baseline && new_notifiable > cached_notifiable &&
-            new_notifiable != last_notified
+        val has_pending_new_mail = has_baseline && new_unread > cached_unread &&
+            new_unread != last_notified
         val suppressed_by_quiet_hours = has_pending_new_mail && is_quiet_hours_now(context)
         if (has_pending_new_mail && !suppressed_by_quiet_hours) {
-            val arrived = new_notifiable - cached_notifiable
+            val arrived = new_unread - cached_unread
             notify_for_new_mail(arrived)
-            prefs.edit().putInt(KEY_LAST_NOTIFIED_COUNT, new_notifiable).apply()
+            prefs.edit().putInt(KEY_LAST_NOTIFIED_COUNT, new_unread).apply()
         }
 
-        val editor = prefs.edit().putInt(KEY_CACHED_UNREAD, new_unread)
+        val editor = prefs.edit().putInt(KEY_CACHED_NOTIFIABLE, new_notifiable)
         if (!suppressed_by_quiet_hours) {
-            editor.putInt(KEY_CACHED_NOTIFIABLE, new_notifiable)
+            editor.putInt(KEY_CACHED_UNREAD, new_unread)
         }
         editor.apply()
         schedule_next(context)
@@ -194,7 +198,30 @@ class MailPollingWorker(
                 }.getOrNull()
             } catch (_: Throwable) { null }
             if (page != null) fetched_any_page = true
-            val candidate = page?.items?.let { pick_notifiable_candidate(context, it) }
+            var candidate = page?.items?.let { pick_notifiable_candidate(context, it) }
+
+            if (candidate == null) {
+                // Nothing new sitting in Inbox — the message may have been auto-filed into a
+                // custom folder by a mail rule before the app ever saw it. Scan folders that
+                // currently report unread mail so those messages still get notified.
+                val folders = try {
+                    kotlinx.coroutines.withTimeout(20_000L) {
+                        repo.list_notifiable_folders()
+                    }.getOrNull()
+                } catch (_: Throwable) { null }
+                if (folders != null) fetched_any_page = true
+                for (folder in folders.orEmpty()) {
+                    val folder_page = try {
+                        kotlinx.coroutines.withTimeout(20_000L) {
+                            repo.fetch_inbox(limit = arrived.coerceIn(1, 5), label_token = folder.label_token)
+                        }.getOrNull()
+                    } catch (_: Throwable) { null }
+                    if (folder_page != null) fetched_any_page = true
+                    candidate = folder_page?.items?.let { pick_notifiable_candidate(context, it) }
+                    if (candidate != null) break
+                }
+            }
+
             val candidate_sender = (candidate?.sender_name?.takeIf { it.isNotBlank() } ?: candidate?.sender_email)?.trim()
             if (candidate != null && !candidate_sender.isNullOrBlank()) {
                 newest = candidate

@@ -655,6 +655,12 @@ class MailRepository @Inject constructor(
         snooze_api.unsnooze_by_mail_item(item_id)
     }
 
+    suspend fun list_notifiable_folders(): Result<List<org.astermail.android.api.labels.LabelItem>> = runCatching {
+        labels_api.list_labels(include_counts = true)
+            .labels
+            .filter { !it.is_system && (it.unread_count ?: 0L) > 0L }
+    }
+
     suspend fun add_label_to_item(item_id: String, label_token: String): Result<Unit> = runCatching {
         mail_api.add_label_to_item(item_id, label_token)
     }

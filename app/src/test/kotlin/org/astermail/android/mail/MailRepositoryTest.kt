@@ -79,10 +79,16 @@ class MailRepositoryTest {
         override suspend fun update_draft_id(id: String, draft_id: String?) {
             rows[id]?.let { rows[id] = it.copy(draft_id = draft_id) }
         }
-        override suspend fun mark_sending(id: String): Int {
+        override suspend fun mark_sending(id: String, now: Long): Int {
             val row = rows[id] ?: return 0
             if (row.status != "pending") return 0
-            rows[id] = row.copy(status = "sending")
+            rows[id] = row.copy(status = "sending", sending_started_at_ms = now)
+            return 1
+        }
+        override suspend fun claim_stale_sending(id: String, now: Long, stale_before: Long): Int {
+            val row = rows[id] ?: return 0
+            if (row.status != "sending" || row.sending_started_at_ms >= stale_before) return 0
+            rows[id] = row.copy(sending_started_at_ms = now)
             return 1
         }
         override suspend fun mark_pending(id: String) {
@@ -1158,5 +1164,51 @@ class MailRepositoryTest {
     @Test
     fun `signal_new_mail without collectors does not throw`() {
         repo.signal_new_mail()
+    }
+
+    @Test
+    fun `list_notifiable_folders excludes system folders and folders with no unread`() = runTest {
+        val custom_with_unread = org.astermail.android.api.labels.LabelItem(
+            id = "l1",
+            label_token = "folder_work",
+            is_system = false,
+            unread_count = 3,
+        )
+        val custom_without_unread = org.astermail.android.api.labels.LabelItem(
+            id = "l2",
+            label_token = "folder_empty",
+            is_system = false,
+            unread_count = 0,
+        )
+        val custom_null_unread = org.astermail.android.api.labels.LabelItem(
+            id = "l3",
+            label_token = "folder_null",
+            is_system = false,
+            unread_count = null,
+        )
+        val system_with_unread = org.astermail.android.api.labels.LabelItem(
+            id = "l4",
+            label_token = "spam",
+            is_system = true,
+            unread_count = 5,
+        )
+        coEvery { labels_api.list_labels(include_counts = true) } returns
+            org.astermail.android.api.labels.LabelsListResponse(
+                labels = listOf(custom_with_unread, custom_without_unread, custom_null_unread, system_with_unread),
+            )
+
+        val result = repo.list_notifiable_folders().getOrNull()
+
+        assertNotNull(result)
+        assertEquals(listOf("folder_work"), result!!.map { it.label_token })
+    }
+
+    @Test
+    fun `list_notifiable_folders returns failure when labels_api throws`() = runTest {
+        coEvery { labels_api.list_labels(include_counts = true) } throws RuntimeException("network error")
+
+        val result = repo.list_notifiable_folders()
+
+        assertTrue(result.isFailure)
     }
 }
