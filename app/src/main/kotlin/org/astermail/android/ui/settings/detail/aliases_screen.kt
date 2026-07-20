@@ -52,8 +52,10 @@ import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Domain
+import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material.icons.outlined.KeyboardArrowLeft
 import androidx.compose.material.icons.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
@@ -82,6 +84,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -240,7 +243,14 @@ fun AliasesScreen(
             on_dismiss = { show_create_alias = false },
             on_create = { local_part, domain, token ->
                 show_create_alias = false
-                scope.launch { vm.create_alias_now(local_part, domain, token) }
+                scope.launch {
+                    val domain_id = domain.domain_id
+                    if (domain_id == null) {
+                        vm.create_alias_now(local_part, domain.domain_name, token)
+                    } else {
+                        vm.create_domain_address_now(local_part, domain_id, domain.domain_name, token)
+                    }
+                }
             },
             vm = vm,
         )
@@ -305,10 +315,10 @@ private fun aliases_tab(
     on_upgrade: () -> Unit = {},
 ) {
     var pending_delete by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var pending_domain_address_delete by remember { mutableStateOf<Triple<String, String, String>?>(null) }
     var alias_query by remember { mutableStateOf("") }
     var note_editing by remember { mutableStateOf<Pair<String, String>?>(null) }
     val colors = AsterMaterial.colors
-
     val query = alias_query.trim()
     val visible_aliases = remember(state.aliases, query) {
         if (query.isBlank()) state.aliases
@@ -432,6 +442,8 @@ private fun aliases_tab(
                         idx = idx,
                         last_index = visible_domain_addresses.lastIndex,
                         context = context,
+                        on_toggle = { vm.toggle_domain_address(addr.id, addr.domain_name) },
+                        on_delete = { pending_domain_address_delete = Triple(addr.id, addr.domain_name, addr.address) },
                     )
                 }
             }
@@ -459,6 +471,24 @@ private fun aliases_tab(
                     org.astermail.android.design.components.AsterDialogDestructiveButton(
                         label = stringResource(R.string.delete),
                         onClick = { vm.delete_alias(id); pending_delete = null },
+                    )
+                },
+            )
+        }
+
+        pending_domain_address_delete?.let { (address_id, domain_name, address) ->
+            org.astermail.android.design.components.AsterDialog(
+                on_dismiss = { pending_domain_address_delete = null },
+                title = stringResource(R.string.delete_alias),
+                message = stringResource(R.string.alias_delete_confirm_message, address),
+                footer = {
+                    org.astermail.android.design.components.AsterDialogOutlineButton(
+                        label = stringResource(R.string.cancel),
+                        onClick = { pending_domain_address_delete = null },
+                    )
+                    org.astermail.android.design.components.AsterDialogDestructiveButton(
+                        label = stringResource(R.string.delete),
+                        onClick = { vm.delete_domain_address(address_id, domain_name); pending_domain_address_delete = null },
                     )
                 },
             )
@@ -623,6 +653,8 @@ private fun custom_domain_address_row(
     idx: Int,
     last_index: Int,
     context: Context,
+    on_toggle: () -> Unit,
+    on_delete: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
     Column(
@@ -631,28 +663,53 @@ private fun custom_domain_address_row(
             .clip(list_item_shape(idx, last_index))
             .background(colors.bg_card),
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
-            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = addr.address,
                 color = if (addr.decryption_failed) colors.text_muted else colors.text_primary,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.weight(1f),
             )
-            AsterIconButton(
-                icon = Icons.Outlined.ContentCopy,
-                content_description = stringResource(R.string.copy),
-                onClick = {
-                    val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                    cm.setPrimaryClip(ClipData.newPlainText("alias", addr.address))
-                    android.widget.Toast.makeText(context, context.getString(R.string.copied), android.widget.Toast.LENGTH_SHORT).show()
-                },
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = if (addr.is_enabled) stringResource(R.string.forwards_to_inbox) else stringResource(R.string.alias_status_disabled_badge),
+                    color = if (addr.is_enabled) colors.text_tertiary else colors.danger,
+                    fontSize = 12.sp,
+                    modifier = Modifier.weight(1f),
+                )
+                Switch(
+                    checked = addr.is_enabled,
+                    onCheckedChange = { on_toggle() },
+                    modifier = Modifier.size(36.dp, 20.dp),
+                    colors = SwitchDefaults.colors(
+                        checkedTrackColor = colors.accent_blue,
+                        uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
+                    ),
+                )
+                Spacer(Modifier.width(4.dp))
+                AsterIconButton(
+                    icon = Icons.Outlined.ContentCopy,
+                    content_description = stringResource(R.string.copy),
+                    onClick = {
+                        val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        cm.setPrimaryClip(ClipData.newPlainText("alias", addr.address))
+                        android.widget.Toast.makeText(context, context.getString(R.string.copied), android.widget.Toast.LENGTH_SHORT).show()
+                    },
+                )
+                AsterIconButton(
+                    icon = Icons.Outlined.Delete,
+                    content_description = stringResource(R.string.delete),
+                    onClick = on_delete,
+                    tint = colors.danger,
+                )
+            }
         }
         if (idx < last_index) AsterDivider(modifier = Modifier)
     }
@@ -1625,21 +1682,36 @@ private fun dns_record_row(label: String, verified: Boolean) {
     }
 }
 
+private data class AliasDomainOption(
+    val domain_name: String,
+    val domain_id: String? = null,
+) {
+    val is_platform: Boolean get() = domain_id == null
+}
+
 @Composable
 private fun create_alias_dialog(
     on_dismiss: () -> Unit,
-    on_create: (String, String, String) -> Unit,
+    on_create: (String, AliasDomainOption, String) -> Unit,
     vm: SettingsViewModel,
 ) {
     var local_part by remember { mutableStateOf("") }
     var display_name by remember { mutableStateOf("") }
-    var selected_domain by remember { mutableStateOf("astermail.org") }
+    var selected_domain by remember { mutableStateOf(AliasDomainOption("astermail.org")) }
     var captcha_token by remember { mutableStateOf<String?>(null) }
     var captcha_reset by remember { mutableStateOf(0) }
-    var availability by remember { mutableStateOf<Boolean?>(null) }
+    var availability by remember { mutableStateOf<SettingsViewModel.AliasAvailability?>(null) }
     var checking by remember { mutableStateOf(false) }
+    var domain_menu_open by remember { mutableStateOf(false) }
     val colors = AsterMaterial.colors
     val scope = rememberCoroutineScope()
+    val settings_state by vm.state.collectAsStateWithLifecycle()
+    val available_domains = remember(settings_state.domains) {
+        listOf(AliasDomainOption("astermail.org"), AliasDomainOption("aster.cx")) +
+            settings_state.domains
+                .filter { it.status == "active" }
+                .map { AliasDomainOption(it.domain_name, it.id) }
+    }
 
     val local_part_valid = remember(local_part) {
         local_part.length in 3..64 &&
@@ -1654,12 +1726,16 @@ private fun create_alias_dialog(
             checking = false
             return@LaunchedEffect
         }
-        checking = true
-        availability = null
-        delay(500)
-        val result = vm.check_alias_availability(local_part, selected_domain)
-        availability = result
-        checking = false
+        if (selected_domain.is_platform) {
+            checking = true
+            availability = null
+            delay(500)
+            availability = vm.check_alias_availability(local_part, selected_domain.domain_name)
+            checking = false
+        } else {
+            checking = false
+            availability = vm.domain_address_availability(local_part, selected_domain.domain_name)
+        }
     }
 
     AlertDialog(
@@ -1685,46 +1761,74 @@ private fun create_alias_dialog(
                         checking -> {
                             { CircularProgressIndicator(modifier = Modifier.size(16.dp), color = colors.text_muted, strokeWidth = 2.dp) }
                         }
-                        availability == true -> {
+                        availability is SettingsViewModel.AliasAvailability.Available -> {
                             { Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = colors.success, modifier = Modifier.size(20.dp)) }
                         }
-                        availability == false -> {
+                        availability is SettingsViewModel.AliasAvailability.Taken -> {
                             { Icon(Icons.Outlined.Cancel, contentDescription = null, tint = colors.danger, modifier = Modifier.size(20.dp)) }
+                        }
+                        availability is SettingsViewModel.AliasAvailability.CheckFailed -> {
+                            { Icon(Icons.Outlined.ErrorOutline, contentDescription = null, tint = colors.warning, modifier = Modifier.size(20.dp)) }
                         }
                         else -> null
                     },
                 )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(colors.input_bg, SquircleShape(18.dp))
-                        .border(1.dp, colors.input_border, SquircleShape(18.dp))
-                        .padding(4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    listOf("astermail.org", "aster.cx").forEach { domain ->
-                        val active = selected_domain == domain
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(40.dp)
-                                .clip(SquircleShape(14.dp))
-                                .background(if (active) colors.accent_blue else Color.Transparent)
-                                .clickable { selected_domain = domain },
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(
-                                text = "@$domain",
-                                color = if (active) Color.White else colors.text_muted,
-                                fontSize = 13.sp,
-                                fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium,
+                val availability_hint: Pair<String, Color>? = when {
+                    checking -> stringResource(R.string.checking_availability) to colors.text_muted
+                    availability is SettingsViewModel.AliasAvailability.Available ->
+                        stringResource(R.string.alias_available) to colors.success
+                    availability is SettingsViewModel.AliasAvailability.Taken ->
+                        stringResource(R.string.alias_not_available) to colors.danger
+                    availability is SettingsViewModel.AliasAvailability.CheckFailed ->
+                        stringResource(R.string.alias_check_failed) to colors.warning
+                    else -> null
+                }
+                availability_hint?.let { (text, color) ->
+                    Text(text = text, color = color, fontSize = 12.sp)
+                }
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(SquircleShape(18.dp))
+                            .background(colors.input_bg, SquircleShape(18.dp))
+                            .border(1.dp, colors.input_border, SquircleShape(18.dp))
+                            .clickable { domain_menu_open = true }
+                            .padding(horizontal = AsterSpacing.lg, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = "@${selected_domain.domain_name}",
+                            color = colors.text_primary,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Icon(
+                            imageVector = Icons.Outlined.ExpandMore,
+                            contentDescription = null,
+                            tint = colors.text_muted,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = domain_menu_open,
+                        onDismissRequest = { domain_menu_open = false },
+                    ) {
+                        available_domains.forEach { domain ->
+                            DropdownMenuItem(
+                                text = { Text("@${domain.domain_name}", fontSize = 14.sp) },
+                                onClick = {
+                                    selected_domain = domain
+                                    domain_menu_open = false
+                                },
                             )
                         }
                     }
                 }
                 if (local_part.isNotBlank()) {
                     Text(
-                        text = "$local_part@$selected_domain",
+                        text = "$local_part@${selected_domain.domain_name}",
                         color = colors.text_secondary,
                         fontSize = 12.sp,
                     )
@@ -1760,14 +1864,21 @@ private fun create_alias_dialog(
             }
         },
         confirmButton = {
+            val can_create = local_part.isNotBlank() &&
+                captcha_token != null &&
+                !checking &&
+                availability !is SettingsViewModel.AliasAvailability.Taken
             TextButton(
                 onClick = {
                     val t = captcha_token
-                    if (local_part_valid && t != null) on_create(local_part, selected_domain, t)
+                    if (can_create && t != null) on_create(local_part, selected_domain, t)
                 },
-                enabled = local_part_valid && captcha_token != null && availability != false,
+                enabled = can_create,
             ) {
-                Text(stringResource(R.string.create), color = colors.accent_blue)
+                Text(
+                    stringResource(R.string.create),
+                    color = if (can_create) colors.accent_blue else colors.text_muted,
+                )
             }
         },
         dismissButton = {

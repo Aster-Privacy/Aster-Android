@@ -334,6 +334,7 @@
     <string name="save_failed">Не удалось сохранить</string>
 
     <string name="search_mail">Поиск почты</string>
+    <string name="search_aliases">Поиск псевдонимов</string>
     <string name="filter_from">От</string>
     <string name="filter_to">Кому</string>
     <string name="filter_has_attachment">С вложением</string>
@@ -374,7 +375,6 @@
     <string name="syncing">Синхронизация</string>
     <string name="sync_contacts">Синхронизировать контакты</string>
     <string name="search_contacts">Поиск контактов</string>
-    <string name="search_aliases">Поиск псевдонимов…</string>
     <string name="alias_note_title">Заметка о псевдониме</string>
     <string name="alias_note_hint">Эту заметку видите только вы</string>
     <string name="alias_note_placeholder">Где вы используете этот псевдоним, дата регистрации, любая полезная информация</string>
@@ -681,6 +681,7 @@
     <string name="forwards_to_inbox">Пересылает во входящие</string>
     <string name="delete_alias">Удалить псевдоним</string>
     <string name="custom_domains">Пользовательские домены</string>
+    <string name="alias_view_custom">Пользовательские псевдонимы</string>
     <string name="custom_domains_desktop_only">Пользовательские домены настраиваются только на компьютере</string>
     <string name="custom_domains_description">Добавление и настройка пользовательских доменов требует настройки DNS и доступно только через настольное приложение.</string>
     <string name="open_on_desktop">Открыть на компьютере</string>
@@ -753,6 +754,7 @@
     <string name="current">Текущий</string>
     <string name="unlimited_aliases">Неограниченные псевдонимы</string>
     <string name="aliases_count">%d псевдонимов</string>
+    <string name="alias_page_indicator">Страница %1$d из %2$d</string>
     <string name="unlimited_domains">Неограниченные домены</string>
     <string name="domains_count">%d доменов</string>
     <string name="cancel_subscription_title">Отменить подписку</string>
@@ -1295,6 +1297,9 @@
     <string name="pending_deletion_error">Не удалось восстановить аккаунт. Попробуйте ещё раз.</string>
     <string name="pending_deletion_restored">С возвращением. Ваш аккаунт восстановлен.</string>
     <string name="image_blocked_placeholder">[Изображение заблокировано]</string>
+    <string name="alias_available">Этот псевдоним доступен.</string>
+    <string name="alias_not_available">Этот псевдоним уже занят.</string>
+    <string name="alias_check_failed">Не удалось проверить доступность. Вы всё равно можете попытаться создать его.</string>
     <string name="csrf_unavailable">Этот сеанс повреждён! Пожалуйста, войдите снова.</string>
     <string name="received_on_prefix">получено на %s</string>
     <string name="received_on_label">Получено на</string>

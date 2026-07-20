@@ -358,6 +358,7 @@
 
     <!-- Search -->
     <string name="search_mail">Rechercher dans les e-mails</string>
+    <string name="search_aliases">Rechercher des alias</string>
     <string name="filter_from">De</string>
     <string name="filter_to">À</string>
     <string name="filter_has_attachment">Avec pièce jointe</string>
@@ -399,7 +400,6 @@
     <string name="syncing">Synchronisation</string>
     <string name="sync_contacts">Synchroniser les contacts</string>
     <string name="search_contacts">Rechercher des contacts</string>
-    <string name="search_aliases">Rechercher des alias…</string>
     <string name="alias_note_title">Note d\'alias</string>
     <string name="alias_note_hint">Vous seul pouvez voir cette note</string>
     <string name="alias_note_placeholder">Où vous utilisez cet alias, date d\'inscription, toute info utile</string>
@@ -721,6 +721,7 @@
     <string name="forwards_to_inbox">Redirigé vers votre boîte de réception</string>
     <string name="delete_alias">Supprimer l\'alias</string>
     <string name="custom_domains">Domaines personnalisés</string>
+    <string name="alias_view_custom">Alias personnalisés</string>
     <string name="custom_domains_desktop_only">Les domaines personnalisés doivent être gérés sur ordinateur</string>
     <string name="custom_domains_description">L\'ajout et la configuration de domaines personnalisés nécessitent une configuration DNS et ne sont disponibles que via l\'application de bureau.</string>
     <string name="open_on_desktop">Ouvrir sur ordinateur</string>
@@ -796,6 +797,7 @@
     <string name="current">Actuel</string>
     <string name="unlimited_aliases">Alias illimités</string>
     <string name="aliases_count">%d alias</string>
+    <string name="alias_page_indicator">Page %1$d sur %2$d</string>
     <string name="unlimited_domains">Domaines illimités</string>
     <string name="domains_count">%d domaines</string>
     <string name="cancel_subscription_title">Annuler l\'abonnement</string>
@@ -1907,6 +1909,9 @@
     <string name="pending_deletion_error">Impossible de restaurer votre compte. Veuillez réessayer.</string>
     <string name="pending_deletion_restored">Bon retour. Votre compte a été restauré.</string>
     <string name="image_blocked_placeholder">[Image bloquée]</string>
+    <string name="alias_available">Cet alias est disponible.</string>
+    <string name="alias_not_available">Cet alias est déjà pris.</string>
+    <string name="alias_check_failed">Impossible de vérifier la disponibilité. Vous pouvez quand même essayer de le créer.</string>
     <string name="csrf_unavailable">Cette session est corrompue ! Veuillez vous reconnecter.</string>
     <string name="received_on_prefix">reçu sur %s</string>
     <string name="received_on_label">Reçu sur</string>

@@ -97,7 +97,9 @@ import org.astermail.android.api.settings.BlockedSenderInfo
 import org.astermail.android.api.settings.CheckAliasAvailabilityRequest
 import org.astermail.android.api.settings.CreateAliasRequest
 import org.astermail.android.api.settings.CreateDirectoryRequest
+import org.astermail.android.api.settings.CreateDomainAddressRequest
 import org.astermail.android.api.settings.CustomDomain
+import org.astermail.android.api.settings.UpdateDomainAddressRequest
 import org.astermail.android.api.settings.DirectoryAvailabilityRequest
 import org.astermail.android.api.settings.FeedbackRequest
 import org.astermail.android.api.settings.SecurityStatusResponse
@@ -783,7 +785,13 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    suspend fun check_alias_availability(local_part: String, domain: String): Boolean {
+    sealed class AliasAvailability {
+        object Available : AliasAvailability()
+        object Taken : AliasAvailability()
+        data class CheckFailed(val message: String) : AliasAvailability()
+    }
+
+    suspend fun check_alias_availability(local_part: String, domain: String): AliasAvailability {
         return try {
             val addr_hash = compute_alias_address_hash(local_part.lowercase(), domain)
             val routing_hash = compute_routing_address_hash(local_part.lowercase(), domain)
@@ -793,10 +801,21 @@ class SettingsViewModel @Inject constructor(
                     routing_address_hash = routing_hash,
                 )
             )
-            response.available
-        } catch (_: Throwable) {
-            false
+            if (response.available) AliasAvailability.Available else AliasAvailability.Taken
+        } catch (t: Throwable) {
+            if (org.astermail.android.BuildConfig.DEBUG) {
+                android.util.Log.w("SettingsVM", "check_alias_availability failed for @$domain", t)
+            }
+            AliasAvailability.CheckFailed(t.message ?: context.getString(R.string.something_went_wrong))
         }
+    }
+
+    fun domain_address_availability(local_part: String, domain_name: String): AliasAvailability {
+        val target = "${local_part.trim().lowercase()}@${domain_name.lowercase()}"
+        val taken = _state.value.custom_domain_addresses.any {
+            !it.decryption_failed && it.address.lowercase() == target
+        }
+        return if (taken) AliasAvailability.Taken else AliasAvailability.Available
     }
 
     suspend fun check_directory_availability(key: String, domain: String): Boolean {
@@ -932,6 +951,64 @@ class SettingsViewModel @Inject constructor(
         } catch (t: Throwable) {
             _state.value = _state.value.copy(action_result = t.message ?: context.getString(R.string.something_went_wrong))
             false
+        }
+    }
+
+    suspend fun create_domain_address_now(local_part: String, domain_id: String, domain_name: String, captcha_token: String? = null): Boolean {
+        return try {
+            val norm = local_part.trim().lowercase()
+            val (enc_local, local_nonce) = encrypt_alias_field(norm)
+            val addr_hash = compute_domain_address_hash(norm, domain_name)
+            val routing_hash = compute_domain_address_routing_hash(norm, domain_name)
+            settings_api.create_domain_address(
+                domain_id,
+                CreateDomainAddressRequest(
+                    encrypted_local_part = enc_local,
+                    local_part_nonce = local_nonce,
+                    local_part_hash = addr_hash,
+                    address_routing_hash = routing_hash,
+                    captcha_token = captcha_token,
+                )
+            )
+            load_custom_domain_addresses()
+            true
+        } catch (t: Throwable) {
+            _state.value = _state.value.copy(action_result = t.message ?: context.getString(R.string.something_went_wrong))
+            false
+        }
+    }
+
+    private fun resolve_domain_id(domain_name: String): String? =
+        _state.value.domains.firstOrNull { it.domain_name.equals(domain_name, ignoreCase = true) }?.id
+
+    fun toggle_domain_address(address_id: String, domain_name: String) {
+        val domain_id = resolve_domain_id(domain_name) ?: return
+        val current = _state.value.custom_domain_addresses.firstOrNull { it.id == address_id } ?: return
+        val new_val = !current.is_enabled
+        _state.update { s -> s.copy(custom_domain_addresses = s.custom_domain_addresses.map { if (it.id == address_id) it.copy(is_enabled = new_val) else it }) }
+        viewModelScope.launch {
+            try {
+                settings_api.update_domain_address(domain_id, address_id, UpdateDomainAddressRequest(is_enabled = new_val))
+            } catch (t: Throwable) {
+                _state.update { s ->
+                    s.copy(
+                        custom_domain_addresses = s.custom_domain_addresses.map { if (it.id == address_id) it.copy(is_enabled = current.is_enabled) else it },
+                        action_result = t.message ?: context.getString(R.string.something_went_wrong),
+                    )
+                }
+            }
+        }
+    }
+
+    fun delete_domain_address(address_id: String, domain_name: String) {
+        val domain_id = resolve_domain_id(domain_name) ?: return
+        viewModelScope.launch {
+            try {
+                settings_api.delete_domain_address(domain_id, address_id)
+                _state.update { s -> s.copy(custom_domain_addresses = s.custom_domain_addresses.filter { it.id != address_id }) }
+            } catch (t: Throwable) {
+                _state.value = _state.value.copy(action_result = t.message ?: context.getString(R.string.something_went_wrong))
+            }
         }
     }
 
@@ -2755,6 +2832,29 @@ class SettingsViewModel @Inject constructor(
 
     private fun compute_routing_address_hash(local_part: String, domain: String): String {
         val data = "${normalize_alias_local_part(local_part)}@$domain".toByteArray(Charsets.UTF_8)
+        val hash = MessageDigest.getInstance("SHA-256").digest(data)
+        return android.util.Base64.encodeToString(hash, android.util.Base64.NO_WRAP)
+    }
+
+    private fun compute_domain_address_hash(local_part: String, domain: String): String {
+        val enc_key = derive_encryption_key()
+        try {
+            val info = "astermail-domain-address-hmac-v1".toByteArray(Charsets.UTF_8)
+            val combined = enc_key + info
+            val hmac_key_bytes = MessageDigest.getInstance("SHA-256").digest(combined)
+            combined.fill(0)
+            val mac = Mac.getInstance("HmacSHA256")
+            mac.init(SecretKeySpec(hmac_key_bytes, "HmacSHA256"))
+            val sig = mac.doFinal("${local_part.lowercase()}@${domain.lowercase()}".toByteArray(Charsets.UTF_8))
+            hmac_key_bytes.fill(0)
+            return android.util.Base64.encodeToString(sig, android.util.Base64.NO_WRAP)
+        } finally {
+            enc_key.fill(0)
+        }
+    }
+
+    private fun compute_domain_address_routing_hash(local_part: String, domain: String): String {
+        val data = "${local_part.lowercase()}@${domain.lowercase()}".toByteArray(Charsets.UTF_8)
         val hash = MessageDigest.getInstance("SHA-256").digest(data)
         return android.util.Base64.encodeToString(hash, android.util.Base64.NO_WRAP)
     }

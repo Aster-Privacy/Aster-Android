@@ -334,6 +334,7 @@
     <string name="save_failed">Salvataggio non riuscito</string>
 
     <string name="search_mail">Cerca nella posta</string>
+    <string name="search_aliases">Cerca alias</string>
     <string name="filter_from">Da</string>
     <string name="filter_to">A</string>
     <string name="filter_has_attachment">Ha allegato</string>
@@ -374,7 +375,6 @@
     <string name="syncing">Sincronizzazione</string>
     <string name="sync_contacts">Sincronizza contatti</string>
     <string name="search_contacts">Cerca contatti</string>
-    <string name="search_aliases">Cerca alias…</string>
     <string name="alias_note_title">Nota alias</string>
     <string name="alias_note_hint">Solo tu puoi vedere questa nota</string>
     <string name="alias_note_placeholder">Dove usi questo alias, data di registrazione, qualsiasi info utile</string>
@@ -681,6 +681,7 @@
     <string name="forwards_to_inbox">Inoltra alla tua posta in arrivo</string>
     <string name="delete_alias">Elimina alias</string>
     <string name="custom_domains">Domini personalizzati</string>
+    <string name="alias_view_custom">Alias personalizzati</string>
     <string name="custom_domains_desktop_only">I domini personalizzati devono essere gestiti su desktop</string>
     <string name="custom_domains_description">Aggiungere e configurare domini personalizzati richiede la configurazione DNS ed è disponibile solo tramite l\'app desktop.</string>
     <string name="open_on_desktop">Apri su desktop</string>
@@ -753,6 +754,7 @@
     <string name="current">Attuale</string>
     <string name="unlimited_aliases">Alias illimitati</string>
     <string name="aliases_count">%d alias</string>
+    <string name="alias_page_indicator">Pagina %1$d di %2$d</string>
     <string name="unlimited_domains">Domini illimitati</string>
     <string name="domains_count">%d domini</string>
     <string name="cancel_subscription_title">Cancella abbonamento</string>
@@ -1291,6 +1293,9 @@
     <string name="pending_deletion_error">Impossibile ripristinare il tuo account. Riprova.</string>
     <string name="pending_deletion_restored">Bentornato. Il tuo account è stato ripristinato.</string>
     <string name="image_blocked_placeholder">[Immagine bloccata]</string>
+    <string name="alias_available">Questo alias è disponibile.</string>
+    <string name="alias_not_available">Questo alias è già in uso.</string>
+    <string name="alias_check_failed">Impossibile verificare la disponibilità. Puoi comunque provare a crearlo.</string>
     <string name="csrf_unavailable">Questa sessione è danneggiata! Effettua nuovamente l\'accesso.</string>
     <string name="received_on_prefix">ricevuto su %s</string>
     <string name="received_on_label">Ricevuto su</string>
