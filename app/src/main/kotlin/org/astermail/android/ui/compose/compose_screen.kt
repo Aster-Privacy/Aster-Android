@@ -978,7 +978,6 @@ fun ComposeScreen(
     }
 
     fun do_send(skip_from_guard: Boolean = false) {
-        android.util.Log.d("ASTER_EXPIRY_DEBUG", "do_send: expires_at_iso=$expires_at_iso expiry_password_present=${expiry_password != null} expiring_flag=$expiring")
         if (!skip_from_guard && reply_from_mismatch(mode, received_on_alias, from_alias)) {
             show_from_mismatch_dialog = true
             return
