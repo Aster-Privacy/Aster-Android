@@ -1227,7 +1227,7 @@ class MailViewModel @Inject constructor(
         }
     }
 
-    fun mark_spam(item_ids: List<String>, thread_count: Int = 1) {
+    fun mark_spam(item_ids: List<String>, thread_count: Int = 1, sender_emails_hint: List<String> = emptyList()) {
         val had_demo = DEMO_PHISH_ITEM_ID in item_ids
         @Suppress("NAME_SHADOWING") val item_ids = handle_demo_in(item_ids)
         if (item_ids.isEmpty()) {
@@ -1244,13 +1244,24 @@ class MailViewModel @Inject constructor(
         invalidate_caches(listOf("spam", "inbox"))
         viewModelScope.launch {
             try {
+                val sender_emails =
+                    removed_items.map { it.sender_email }.ifEmpty { sender_emails_hint }
                 repository.mark_spam(item_ids, raw_items).fold(
                     onSuccess = {
                         runCatching { search_index_manager.mark_spam(item_ids) }
+                        val report_job =
+                            viewModelScope.launch { repository.report_spam_senders(sender_emails) }
                         emit_toast_undo(
                             context.getString(R.string.reported_as_spam),
                             context.getString(R.string.undo),
-                        ) { undo_local_restore(removed_items); unmark_spam_backend_only(item_ids) }
+                        ) {
+                            undo_local_restore(removed_items)
+                            unmark_spam_backend_only(item_ids)
+                            viewModelScope.launch {
+                                report_job.join()
+                                repository.remove_spam_senders(sender_emails)
+                            }
+                        }
                         load_stats()
                     },
                     onFailure = {
@@ -1264,7 +1275,7 @@ class MailViewModel @Inject constructor(
         }
     }
 
-    fun unmark_spam(item_ids: List<String>) {
+    fun unmark_spam(item_ids: List<String>, sender_emails_hint: List<String> = emptyList()) {
         if (item_ids.isEmpty()) return
         val previous = _inbox_state.value.items
         val removed_items = previous.filter { it.id in item_ids }
@@ -1275,12 +1286,23 @@ class MailViewModel @Inject constructor(
         invalidate_caches(listOf("spam", "inbox"))
         viewModelScope.launch {
             try {
+                val sender_emails =
+                    removed_items.map { it.sender_email }.ifEmpty { sender_emails_hint }
                 repository.unmark_spam(item_ids).fold(
                     onSuccess = {
+                        val remove_job =
+                            viewModelScope.launch { repository.remove_spam_senders(sender_emails) }
                         emit_toast_undo(
                             context.getString(R.string.moved_to_inbox),
                             context.getString(R.string.undo),
-                        ) { undo_local_restore(removed_items); mark_spam_backend_only(item_ids) }
+                        ) {
+                            undo_local_restore(removed_items)
+                            mark_spam_backend_only(item_ids)
+                            viewModelScope.launch {
+                                remove_job.join()
+                                repository.report_spam_senders(sender_emails)
+                            }
+                        }
                         load_stats()
                     },
                     onFailure = {

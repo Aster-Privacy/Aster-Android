@@ -648,13 +648,15 @@ fun MailDetailScreen(
                             tint = if (is_spam) colors.accent_blue else colors.danger,
                         ) {
                             show_topbar_menu = false
+                            val spam_sender_hint =
+                                listOfNotNull(messages.lastOrNull()?.sender_email)
                             if (is_spam) {
                                 is_spam_override = false
-                                mail_vm.unmark_spam(listOf(email_id))
+                                mail_vm.unmark_spam(listOf(email_id), sender_emails_hint = spam_sender_hint)
                                 show_toast(context.getString(R.string.swipe_not_spam))
                             } else {
                                 is_spam_override = true
-                                mail_vm.mark_spam(listOf(email_id))
+                                mail_vm.mark_spam(listOf(email_id), sender_emails_hint = spam_sender_hint)
                                 show_toast(context.getString(R.string.reported_as_spam))
                             }
                             on_back()
@@ -1069,13 +1071,14 @@ fun MailDetailScreen(
             },
             on_spam = {
                 show_action_sheet = false
+                val spam_sender_hint = listOfNotNull(messages.lastOrNull()?.sender_email)
                 if (is_spam) {
                     is_spam_override = false
-                    mail_vm.unmark_spam(listOf(email_id))
+                    mail_vm.unmark_spam(listOf(email_id), sender_emails_hint = spam_sender_hint)
                     show_toast(context.getString(R.string.swipe_not_spam))
                 } else {
                     is_spam_override = true
-                    mail_vm.mark_spam(listOf(email_id))
+                    mail_vm.mark_spam(listOf(email_id), sender_emails_hint = spam_sender_hint)
                     val sender = messages.lastOrNull()?.sender_email
                     if (!sender.isNullOrBlank()) {
                         settings_vm.block_sender(sender)

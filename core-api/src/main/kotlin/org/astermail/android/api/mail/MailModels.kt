@@ -97,6 +97,17 @@ data class MailItem(
 )
 
 @Serializable
+data class SpamSenderRequest(
+    val sender_hash: String,
+    val sender_domain_hash: String? = null,
+)
+
+@Serializable
+data class SpamSenderResponse(
+    val success: Boolean = false,
+)
+
+@Serializable
 data class MailItemsListResponse(
     val items: List<MailItem> = emptyList(),
     val total: Int = 0,
@@ -162,6 +173,15 @@ data class ThreadMessageItem(
     val spf_result: String? = null,
     val dkim_result: String? = null,
     val dmarc_result: String? = null,
+    val spam_score: Float? = null,
+    val spam_signals: List<SpamSignalItem>? = null,
+)
+
+@Serializable
+data class SpamSignalItem(
+    val name: String,
+    val score: Float = 0f,
+    val category: String? = null,
 )
 
 @Serializable

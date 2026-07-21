@@ -50,6 +50,7 @@ import org.astermail.android.api.mail.MailItem
 import org.astermail.android.api.mail.MailItemMetadata
 import org.astermail.android.api.mail.MailUserStatsResponse
 import org.astermail.android.api.mail.PatchMetadataRequest
+import org.astermail.android.api.mail.SpamSenderRequest
 import org.astermail.android.api.mail.ThreadMessageItem
 import org.astermail.android.api.mail.ThreadWithMessages
 import org.astermail.android.api.labels.LabelsApi
@@ -717,6 +718,43 @@ class MailRepository @Inject constructor(
     suspend fun unmark_spam(item_ids: List<String>): Result<BulkScopeResponse> = runCatching {
         mail_api.bulk_action(BulkScopeRequest(action = "unmark_spam", ids = item_ids))
     }
+
+    suspend fun report_spam_senders(sender_emails: List<String>) {
+        for (email in normalize_sender_emails(sender_emails)) {
+            val domain = email.substringAfterLast('@', "")
+            runCatching {
+                mail_api.report_spam_sender(
+                    SpamSenderRequest(
+                        sender_hash = sha256_hex(email),
+                        sender_domain_hash = if (domain.isNotEmpty()) sha256_hex(domain) else null,
+                    ),
+                )
+            }
+        }
+    }
+
+    suspend fun remove_spam_senders(sender_emails: List<String>) {
+        for (email in normalize_sender_emails(sender_emails)) {
+            val domain = email.substringAfterLast('@', "")
+            runCatching {
+                mail_api.remove_spam_sender(
+                    sender_hash = sha256_hex(email),
+                    sender_domain_hash = if (domain.isNotEmpty()) sha256_hex(domain) else null,
+                )
+            }
+        }
+    }
+
+    private fun normalize_sender_emails(sender_emails: List<String>): List<String> =
+        sender_emails
+            .map { it.trim().lowercase() }
+            .filter { it.contains('@') }
+            .distinct()
+
+    private fun sha256_hex(value: String): String =
+        java.security.MessageDigest.getInstance("SHA-256")
+            .digest(value.toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }
 
     suspend fun unarchive(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<BulkScopeResponse> = runCatching {
         val response = mail_api.bulk_action(BulkScopeRequest(action = "unarchive", ids = item_ids))

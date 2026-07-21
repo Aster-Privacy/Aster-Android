@@ -71,6 +71,10 @@ interface MailApi {
 
     suspend fun bulk_action(request: BulkScopeRequest): BulkScopeResponse
 
+    suspend fun report_spam_sender(request: SpamSenderRequest): SpamSenderResponse
+
+    suspend fun remove_spam_sender(sender_hash: String, sender_domain_hash: String?): SpamSenderResponse
+
     suspend fun delete_message(item_id: String): DeleteResponse
 
     suspend fun delete_draft(draft_id: String): DeleteResponse
@@ -220,6 +224,27 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun report_spam_sender(request: SpamSenderRequest): SpamSenderResponse {
+        val response = client.http.post("${client.base_url}$base/spam_senders") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun remove_spam_sender(
+        sender_hash: String,
+        sender_domain_hash: String?,
+    ): SpamSenderResponse {
+        val response = client.http.delete("${client.base_url}$base/spam_senders") {
+            parameter("sender_hash", sender_hash)
+            sender_domain_hash?.let { parameter("sender_domain_hash", it) }
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
         }
         return decode_or_throw(response)
     }
