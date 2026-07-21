@@ -68,6 +68,8 @@ class MailPollingWorker(
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit().putLong(KEY_LAST_WORK_START_MS, System.currentTimeMillis()).apply()
         if (org.astermail.android.BuildConfig.DEBUG) {
             val test_count = inputData.getInt(KEY_TEST_COUNT, 0)
             if (test_count > 0) {
@@ -276,6 +278,8 @@ class MailPollingWorker(
         private const val KEY_QUIET_HOURS_ENABLED = "quiet_hours_enabled"
         private const val KEY_QUIET_HOURS_START = "quiet_hours_start"
         private const val KEY_QUIET_HOURS_END = "quiet_hours_end"
+        private const val KEY_LAST_WORK_START_MS = "last_work_start_ms"
+        private const val WORKER_IN_FLIGHT_GRACE_MS = 90_000L
 
         fun set_quiet_hours(context: Context, enabled: Boolean, start: String, end: String) {
             context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -369,15 +373,24 @@ class MailPollingWorker(
             val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
                 .build()
-            val immediate = OneTimeWorkRequestBuilder<MailPollingWorker>()
-                .setConstraints(constraints)
-                .setBackoffCriteria(BackoffPolicy.LINEAR, 30, TimeUnit.SECONDS)
-                .build()
-            WorkManager.getInstance(context).enqueueUniqueWork(
-                WORK_NAME_CHAIN,
-                ExistingWorkPolicy.KEEP,
-                immediate,
-            )
+            // A worker that started very recently is very likely the reason this process is
+            // alive at all (e.g. JobScheduler cold-starting the app to run the polling chain).
+            // Re-enqueuing WORK_NAME_CHAIN here would race the in-flight run and can cancel it
+            // before doWork() gets a chance to check for new mail, so skip it in that window;
+            // doWork() reschedules itself via schedule_next() once it finishes either way.
+            val worker_likely_in_flight =
+                System.currentTimeMillis() - prefs.getLong(KEY_LAST_WORK_START_MS, 0L) < WORKER_IN_FLIGHT_GRACE_MS
+            if (!worker_likely_in_flight) {
+                val immediate = OneTimeWorkRequestBuilder<MailPollingWorker>()
+                    .setConstraints(constraints)
+                    .setBackoffCriteria(BackoffPolicy.LINEAR, 30, TimeUnit.SECONDS)
+                    .build()
+                WorkManager.getInstance(context).enqueueUniqueWork(
+                    WORK_NAME_CHAIN,
+                    ExistingWorkPolicy.KEEP,
+                    immediate,
+                )
+            }
             val backup = PeriodicWorkRequestBuilder<MailPollingWorker>(
                 15, TimeUnit.MINUTES,
                 5, TimeUnit.MINUTES,
@@ -387,7 +400,7 @@ class MailPollingWorker(
                 .build()
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 WORK_NAME,
-                ExistingPeriodicWorkPolicy.UPDATE,
+                ExistingPeriodicWorkPolicy.KEEP,
                 backup,
             )
         }

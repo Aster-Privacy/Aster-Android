@@ -1,0 +1,4 @@
+Bug fixes and improvements:
+
+- Fixed notifications not appearing for mail routed into folders by mail rules
+- Fixed a rare case where background mail checks could be skipped after the app relaunched
