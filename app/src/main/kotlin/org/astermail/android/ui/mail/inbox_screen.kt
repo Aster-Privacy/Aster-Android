@@ -451,6 +451,16 @@ fun InboxScreen(
         else -> 0
     }
     val visible_threads = threads
+    val top_thread_key = visible_threads.firstOrNull()?.thread_id
+    LaunchedEffect(top_thread_key) {
+        if (top_thread_key != null &&
+            list_state.firstVisibleItemIndex <= 1 &&
+            list_state.firstVisibleItemScrollOffset == 0 &&
+            !list_state.isScrollInProgress
+        ) {
+            list_state.scrollToItem(0)
+        }
+    }
 
     val visible_order_ids = remember(visible_threads) { visible_threads.map { it.newest.id } }
     LaunchedEffect(visible_order_ids) {

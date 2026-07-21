@@ -332,7 +332,7 @@ class MailViewModel @Inject constructor(
 
     fun load_inbox(folder: String = "inbox", force: Boolean = false) {
         val current = _inbox_state.value
-        if (current.current_folder != folder) {
+        if (current.current_folder != folder && folder_cache_time.containsKey(current.current_folder)) {
             folder_cache[current.current_folder] = current
         }
         if (!force && current.items.isNotEmpty() && current.current_folder == folder) return
@@ -1700,6 +1700,16 @@ class MailViewModel @Inject constructor(
             repository.send_result_events.collect { result ->
                 if (result.isSuccess) {
                     invalidate_caches(listOf("sent", "drafts"))
+                    viewModelScope.launch {
+                        repeat(2) { attempt ->
+                            kotlinx.coroutines.delay(if (attempt == 0) 1_200L else 5_000L)
+                            invalidate_caches(listOf("sent", "drafts"))
+                            val current = _inbox_state.value.current_folder
+                            if (current == "sent" || current == "drafts") {
+                                silent_revalidate(current)
+                            }
+                        }
+                    }
                     refresh_current_thread()
                 } else {
                     emit_toast(
