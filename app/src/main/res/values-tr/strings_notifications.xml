@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notif_channel_login_alerts_name">Oturum açma uyarıları</string>
+    <string name="notif_channel_login_alerts_description">Hesabınızda yeni bir cihazdan oturum açıldığında uyarılar</string>
+    <string name="notif_login_alert_title">Hesabınızda yeni oturum açıldı</string>
+    <string name="notif_login_alert_public_body">Hesabınızda yeni bir cihazdan oturum açıldı</string>
+    <string name="notif_login_alert_action_yes">Bendim</string>
+    <string name="notif_login_alert_action_revoke">Ben değildim</string>
+    <string name="notif_login_alert_revoking">Yeni oturum kapatılıyor…</string>
+    <string name="notif_login_alert_revoked">Oturum kapatıldı</string>
+    <string name="notif_login_alert_revoked_body">Yeni oturum kapatıldı. Güvenlik ayarlarından parolanızı değiştirmeyi düşünün.</string>
+    <string name="notif_login_alert_revoke_failed">Oturum kapatılamadı</string>
+    <string name="notif_login_alert_revoke_failed_body">Etkin oturumlarınızı gözden geçirmek için uygulamayı açın.</string>
+</resources>

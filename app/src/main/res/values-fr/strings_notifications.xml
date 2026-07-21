@@ -7,6 +7,17 @@
     <string name="notif_action_mark_read">Marquer comme lu</string>
     <string name="notif_action_archive">Archiver</string>
     <string name="notif_group_summary_new_mail">Nouveau courrier</string>
+    <string name="notif_channel_login_alerts_name">Alertes de connexion</string>
+    <string name="notif_channel_login_alerts_description">Alertes lorsqu\'une connexion à votre compte a lieu sur un nouvel appareil</string>
+    <string name="notif_login_alert_title">Nouvelle connexion à votre compte</string>
+    <string name="notif_login_alert_public_body">Un nouvel appareil s\'est connecté à votre compte</string>
+    <string name="notif_login_alert_action_yes">C\'était moi</string>
+    <string name="notif_login_alert_action_revoke">Pas moi</string>
+    <string name="notif_login_alert_revoking">Déconnexion de la nouvelle session…</string>
+    <string name="notif_login_alert_revoked">Session déconnectée</string>
+    <string name="notif_login_alert_revoked_body">La nouvelle session a été déconnectée. Pensez à changer votre mot de passe dans les paramètres de sécurité.</string>
+    <string name="notif_login_alert_revoke_failed">Impossible de déconnecter la session</string>
+    <string name="notif_login_alert_revoke_failed_body">Ouvrez l\'application pour vérifier vos sessions actives.</string>
     <string name="notif_battery_opt_title">Activité en arrière-plan illimitée</string>
     <string name="notif_battery_opt_subtitle">Requis pour des notifications fiables. Appuyez pour activer dans les paramètres système.</string>
 </resources>

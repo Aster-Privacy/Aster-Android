@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notif_channel_login_alerts_name">Оповещения о входе</string>
+    <string name="notif_channel_login_alerts_description">Оповещения при входе в ваш аккаунт с нового устройства</string>
+    <string name="notif_login_alert_title">Новый вход в ваш аккаунт</string>
+    <string name="notif_login_alert_public_body">В ваш аккаунт выполнен вход с нового устройства</string>
+    <string name="notif_login_alert_action_yes">Это был я</string>
+    <string name="notif_login_alert_action_revoke">Это не я</string>
+    <string name="notif_login_alert_revoking">Завершение новой сессии…</string>
+    <string name="notif_login_alert_revoked">Сессия завершена</string>
+    <string name="notif_login_alert_revoked_body">Новая сессия была завершена. Рекомендуем сменить пароль в настройках безопасности.</string>
+    <string name="notif_login_alert_revoke_failed">Не удалось завершить сессию</string>
+    <string name="notif_login_alert_revoke_failed_body">Откройте приложение, чтобы проверить активные сессии.</string>
+</resources>

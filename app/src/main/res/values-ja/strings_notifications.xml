@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notif_channel_login_alerts_name">ログインアラート</string>
+    <string name="notif_channel_login_alerts_description">新しいデバイスからアカウントにサインインしたときのアラート</string>
+    <string name="notif_login_alert_title">アカウントへの新しいサインイン</string>
+    <string name="notif_login_alert_public_body">新しいデバイスがアカウントにサインインしました</string>
+    <string name="notif_login_alert_action_yes">自分です</string>
+    <string name="notif_login_alert_action_revoke">自分ではない</string>
+    <string name="notif_login_alert_revoking">新しいセッションをサインアウトしています…</string>
+    <string name="notif_login_alert_revoked">セッションをサインアウトしました</string>
+    <string name="notif_login_alert_revoked_body">新しいセッションをサインアウトしました。セキュリティ設定でパスワードの変更をご検討ください。</string>
+    <string name="notif_login_alert_revoke_failed">セッションをサインアウトできませんでした</string>
+    <string name="notif_login_alert_revoke_failed_body">アプリを開いてアクティブなセッションを確認してください。</string>
+</resources>

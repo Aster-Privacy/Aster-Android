@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notif_channel_login_alerts_name">登录提醒</string>
+    <string name="notif_channel_login_alerts_description">当有新设备登录您的账户时发出提醒</string>
+    <string name="notif_login_alert_title">您的账户有新的登录</string>
+    <string name="notif_login_alert_public_body">有新设备登录了您的账户</string>
+    <string name="notif_login_alert_action_yes">是我本人</string>
+    <string name="notif_login_alert_action_revoke">不是我</string>
+    <string name="notif_login_alert_revoking">正在退出新会话…</string>
+    <string name="notif_login_alert_revoked">会话已退出</string>
+    <string name="notif_login_alert_revoked_body">新会话已退出。建议在安全设置中修改密码。</string>
+    <string name="notif_login_alert_revoke_failed">无法退出该会话</string>
+    <string name="notif_login_alert_revoke_failed_body">请打开应用查看您的活动会话。</string>
+</resources>

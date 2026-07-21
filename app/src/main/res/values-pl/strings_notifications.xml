@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notif_channel_login_alerts_name">Alerty logowania</string>
+    <string name="notif_channel_login_alerts_description">Alerty, gdy nowe urządzenie zaloguje się na Twoje konto</string>
+    <string name="notif_login_alert_title">Nowe logowanie na Twoje konto</string>
+    <string name="notif_login_alert_public_body">Nowe urządzenie zalogowało się na Twoje konto</string>
+    <string name="notif_login_alert_action_yes">To ja</string>
+    <string name="notif_login_alert_action_revoke">To nie ja</string>
+    <string name="notif_login_alert_revoking">Wylogowywanie nowej sesji…</string>
+    <string name="notif_login_alert_revoked">Sesja wylogowana</string>
+    <string name="notif_login_alert_revoked_body">Nowa sesja została wylogowana. Rozważ zmianę hasła w ustawieniach bezpieczeństwa.</string>
+    <string name="notif_login_alert_revoke_failed">Nie udało się wylogować sesji</string>
+    <string name="notif_login_alert_revoke_failed_body">Otwórz aplikację, aby sprawdzić aktywne sesje.</string>
+</resources>

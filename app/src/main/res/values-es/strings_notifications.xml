@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notif_channel_login_alerts_name">Alertas de inicio de sesión</string>
+    <string name="notif_channel_login_alerts_description">Alertas cuando se inicia sesión en tu cuenta desde un nuevo dispositivo</string>
+    <string name="notif_login_alert_title">Nuevo inicio de sesión en tu cuenta</string>
+    <string name="notif_login_alert_public_body">Un nuevo dispositivo inició sesión en tu cuenta</string>
+    <string name="notif_login_alert_action_yes">Fui yo</string>
+    <string name="notif_login_alert_action_revoke">No fui yo</string>
+    <string name="notif_login_alert_revoking">Cerrando la nueva sesión…</string>
+    <string name="notif_login_alert_revoked">Sesión cerrada</string>
+    <string name="notif_login_alert_revoked_body">La nueva sesión se cerró. Considera cambiar tu contraseña en los ajustes de seguridad.</string>
+    <string name="notif_login_alert_revoke_failed">No se pudo cerrar la sesión</string>
+    <string name="notif_login_alert_revoke_failed_body">Abre la aplicación para revisar tus sesiones activas.</string>
+</resources>

@@ -48,6 +48,19 @@ class AsterPushService : PushService() {
             MailPollingWorker.show_generic(context, 1)
             return PushResult.Shown
         }
+        if (type == "login_alert") {
+            val session_id = obj.optString("session_id", "")
+            if (session_id.isBlank()) return PushResult.Ignore
+            LoginAlertNotifier.enqueue(
+                context = context,
+                session_id = session_id,
+                device = obj.optString("device", ""),
+                browser = obj.optString("browser", ""),
+                location = obj.optString("location", ""),
+                time = obj.optString("time", ""),
+            )
+            return PushResult.Shown
+        }
         if (type != "new_mail" && type != "wake") return PushResult.Ignore
         runCatching {
             EntryPointAccessors.fromApplication(

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notif_channel_login_alerts_name">Aanmeldingswaarschuwingen</string>
+    <string name="notif_channel_login_alerts_description">Waarschuwingen wanneer een nieuw apparaat zich aanmeldt bij je account</string>
+    <string name="notif_login_alert_title">Nieuwe aanmelding bij je account</string>
+    <string name="notif_login_alert_public_body">Een nieuw apparaat heeft zich aangemeld bij je account</string>
+    <string name="notif_login_alert_action_yes">Dit was ik</string>
+    <string name="notif_login_alert_action_revoke">Niet ik</string>
+    <string name="notif_login_alert_revoking">Nieuwe sessie wordt afgemeld…</string>
+    <string name="notif_login_alert_revoked">Sessie afgemeld</string>
+    <string name="notif_login_alert_revoked_body">De nieuwe sessie is afgemeld. Overweeg je wachtwoord te wijzigen in de beveiligingsinstellingen.</string>
+    <string name="notif_login_alert_revoke_failed">Kan de sessie niet afmelden</string>
+    <string name="notif_login_alert_revoke_failed_body">Open de app om je actieve sessies te bekijken.</string>
+</resources>

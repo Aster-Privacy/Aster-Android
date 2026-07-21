@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notif_channel_login_alerts_name">로그인 알림</string>
+    <string name="notif_channel_login_alerts_description">새 기기에서 계정에 로그인하면 알림을 받습니다</string>
+    <string name="notif_login_alert_title">계정에 새로운 로그인</string>
+    <string name="notif_login_alert_public_body">새 기기가 계정에 로그인했습니다</string>
+    <string name="notif_login_alert_action_yes">본인입니다</string>
+    <string name="notif_login_alert_action_revoke">본인이 아님</string>
+    <string name="notif_login_alert_revoking">새 세션을 로그아웃하는 중…</string>
+    <string name="notif_login_alert_revoked">세션이 로그아웃되었습니다</string>
+    <string name="notif_login_alert_revoked_body">새 세션이 로그아웃되었습니다. 보안 설정에서 비밀번호 변경을 고려하세요.</string>
+    <string name="notif_login_alert_revoke_failed">세션을 로그아웃할 수 없습니다</string>
+    <string name="notif_login_alert_revoke_failed_body">앱을 열어 활성 세션을 확인하세요.</string>
+</resources>

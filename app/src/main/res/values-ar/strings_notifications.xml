@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notif_channel_login_alerts_name">تنبيهات تسجيل الدخول</string>
+    <string name="notif_channel_login_alerts_description">تنبيهات عند تسجيل الدخول إلى حسابك من جهاز جديد</string>
+    <string name="notif_login_alert_title">تسجيل دخول جديد إلى حسابك</string>
+    <string name="notif_login_alert_public_body">قام جهاز جديد بتسجيل الدخول إلى حسابك</string>
+    <string name="notif_login_alert_action_yes">كان هذا أنا</string>
+    <string name="notif_login_alert_action_revoke">ليس أنا</string>
+    <string name="notif_login_alert_revoking">جارٍ تسجيل خروج الجلسة الجديدة…</string>
+    <string name="notif_login_alert_revoked">تم تسجيل خروج الجلسة</string>
+    <string name="notif_login_alert_revoked_body">تم تسجيل خروج الجلسة الجديدة. ننصح بتغيير كلمة المرور من إعدادات الأمان.</string>
+    <string name="notif_login_alert_revoke_failed">تعذر تسجيل خروج الجلسة</string>
+    <string name="notif_login_alert_revoke_failed_body">افتح التطبيق لمراجعة جلساتك النشطة.</string>
+</resources>

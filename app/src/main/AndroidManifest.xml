@@ -47,6 +47,11 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".notifications.LoginAlertActionReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
         <service
             android:name=".notifications.AsterPushService"
             android:exported="false">

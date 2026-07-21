@@ -7,6 +7,17 @@
     <string name="notif_action_mark_read">Mark as read</string>
     <string name="notif_action_archive">Archive</string>
     <string name="notif_group_summary_new_mail">New mail</string>
+    <string name="notif_channel_login_alerts_name">Login alerts</string>
+    <string name="notif_channel_login_alerts_description">Alerts when your account is signed in on a new device</string>
+    <string name="notif_login_alert_title">New sign-in to your account</string>
+    <string name="notif_login_alert_public_body">A new device signed in to your account</string>
+    <string name="notif_login_alert_action_yes">This was me</string>
+    <string name="notif_login_alert_action_revoke">Not me</string>
+    <string name="notif_login_alert_revoking">Signing out the new session…</string>
+    <string name="notif_login_alert_revoked">Session signed out</string>
+    <string name="notif_login_alert_revoked_body">The new session was signed out. Consider changing your password in Security settings.</string>
+    <string name="notif_login_alert_revoke_failed">Couldn\'t sign out the session</string>
+    <string name="notif_login_alert_revoke_failed_body">Open the app to review your active sessions.</string>
     <string name="notif_battery_opt_title">Unrestricted background activity</string>
     <string name="notif_battery_opt_subtitle">Required for reliable notifications. Tap to enable in system settings.</string>
 </resources>

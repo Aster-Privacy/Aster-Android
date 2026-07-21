@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notif_channel_login_alerts_name">Avvisi di accesso</string>
+    <string name="notif_channel_login_alerts_description">Avvisi quando viene effettuato l\'accesso al tuo account da un nuovo dispositivo</string>
+    <string name="notif_login_alert_title">Nuovo accesso al tuo account</string>
+    <string name="notif_login_alert_public_body">Un nuovo dispositivo ha effettuato l\'accesso al tuo account</string>
+    <string name="notif_login_alert_action_yes">Ero io</string>
+    <string name="notif_login_alert_action_revoke">Non ero io</string>
+    <string name="notif_login_alert_revoking">Disconnessione della nuova sessione…</string>
+    <string name="notif_login_alert_revoked">Sessione disconnessa</string>
+    <string name="notif_login_alert_revoked_body">La nuova sessione è stata disconnessa. Valuta di cambiare la password nelle impostazioni di sicurezza.</string>
+    <string name="notif_login_alert_revoke_failed">Impossibile disconnettere la sessione</string>
+    <string name="notif_login_alert_revoke_failed_body">Apri l\'app per controllare le sessioni attive.</string>
+</resources>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notif_channel_login_alerts_name">Alertas de início de sessão</string>
+    <string name="notif_channel_login_alerts_description">Alertas quando um novo dispositivo inicia sessão na sua conta</string>
+    <string name="notif_login_alert_title">Novo início de sessão na sua conta</string>
+    <string name="notif_login_alert_public_body">Um novo dispositivo iniciou sessão na sua conta</string>
+    <string name="notif_login_alert_action_yes">Fui eu</string>
+    <string name="notif_login_alert_action_revoke">Não fui eu</string>
+    <string name="notif_login_alert_revoking">A terminar a nova sessão…</string>
+    <string name="notif_login_alert_revoked">Sessão terminada</string>
+    <string name="notif_login_alert_revoked_body">A nova sessão foi terminada. Considere alterar a sua palavra-passe nas definições de segurança.</string>
+    <string name="notif_login_alert_revoke_failed">Não foi possível terminar a sessão</string>
+    <string name="notif_login_alert_revoke_failed_body">Abra a aplicação para rever as suas sessões ativas.</string>
+</resources>

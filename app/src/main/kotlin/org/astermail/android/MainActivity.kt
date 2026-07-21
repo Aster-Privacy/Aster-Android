@@ -171,7 +171,9 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_OPEN_EMAIL_ID = "open_email_id"
+        const val EXTRA_OPEN_SESSIONS = "open_sessions"
         val pending_open_email_id = mutableStateOf<String?>(null)
+        val pending_open_sessions = mutableStateOf(false)
     }
 
     private val lockdown_listener =
@@ -197,6 +199,10 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun consume_open_email_extra(intent: Intent?) {
+        if (intent?.getBooleanExtra(EXTRA_OPEN_SESSIONS, false) == true) {
+            intent.removeExtra(EXTRA_OPEN_SESSIONS)
+            pending_open_sessions.value = true
+        }
         val email_id = intent?.getStringExtra(EXTRA_OPEN_EMAIL_ID)?.takeIf { it.isNotBlank() } ?: return
         intent.removeExtra(EXTRA_OPEN_EMAIL_ID)
         pending_open_email_id.value = email_id
@@ -468,6 +474,15 @@ private fun AsterNavHost() {
         if (pending_open_email.isNullOrBlank() || !is_signed_in_state) return@LaunchedEffect
         MainActivity.pending_open_email_id.value = null
         nav_controller.navigate(routes.mail_detail_for(pending_open_email)) {
+            launchSingleTop = true
+        }
+    }
+
+    val pending_sessions = MainActivity.pending_open_sessions.value
+    androidx.compose.runtime.LaunchedEffect(pending_sessions, is_signed_in_state) {
+        if (!pending_sessions || !is_signed_in_state) return@LaunchedEffect
+        MainActivity.pending_open_sessions.value = false
+        nav_controller.navigate(routes.settings_detail("sessions")) {
             launchSingleTop = true
         }
     }
