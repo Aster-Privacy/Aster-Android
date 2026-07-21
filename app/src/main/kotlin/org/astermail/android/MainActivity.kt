@@ -169,6 +169,11 @@ import org.astermail.android.ui.theme.local_text_scale
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
+    companion object {
+        const val EXTRA_OPEN_EMAIL_ID = "open_email_id"
+        val pending_open_email_id = mutableStateOf<String?>(null)
+    }
+
     private val lockdown_listener =
         android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
             runOnUiThread { enforce_secure_flag() }
@@ -178,10 +183,23 @@ class MainActivity : ComponentActivity() {
         super.onCreate(saved_instance_state)
         enforce_secure_flag()
         LockdownStore.register_listener(applicationContext, lockdown_listener)
+        consume_open_email_extra(intent)
         enableEdgeToEdge()
         setContent {
             AsterRoot()
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        consume_open_email_extra(intent)
+    }
+
+    private fun consume_open_email_extra(intent: Intent?) {
+        val email_id = intent?.getStringExtra(EXTRA_OPEN_EMAIL_ID)?.takeIf { it.isNotBlank() } ?: return
+        intent.removeExtra(EXTRA_OPEN_EMAIL_ID)
+        pending_open_email_id.value = email_id
     }
 
     override fun onResume() {
@@ -444,6 +462,15 @@ private fun AsterNavHost() {
     val context = LocalContext.current
     val a11y = local_accessibility.current
     val nav_duration = if (a11y.reduce_motion) 0 else nav_anim_duration_ms
+
+    val pending_open_email = MainActivity.pending_open_email_id.value
+    androidx.compose.runtime.LaunchedEffect(pending_open_email, is_signed_in_state) {
+        if (pending_open_email.isNullOrBlank() || !is_signed_in_state) return@LaunchedEffect
+        MainActivity.pending_open_email_id.value = null
+        nav_controller.navigate(routes.mail_detail_for(pending_open_email)) {
+            launchSingleTop = true
+        }
+    }
 
     if (is_signed_in_state) {
         org.astermail.android.ui.upgrade.UpgradeHost(

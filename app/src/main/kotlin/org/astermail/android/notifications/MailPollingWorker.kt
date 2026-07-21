@@ -246,6 +246,7 @@ class MailPollingWorker(
             subject = subject,
             preview = fresh.preview,
             message_id = message_id,
+            item_id = fresh.id,
         )
     }
 
@@ -472,6 +473,7 @@ class MailPollingWorker(
             subject: String,
             preview: String,
             message_id: Int,
+            item_id: String = "",
         ) {
             if (!can_post(context)) return
             val private_mode = is_private_notifications(context)
@@ -484,6 +486,20 @@ class MailPollingWorker(
                 .setGroup(GROUP_KEY_NEW_MAIL)
                 .setContentTitle(sender)
                 .setContentText(one_line_subject)
+            if (item_id.isNotBlank()) {
+                val open_intent = Intent(context, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                        Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    putExtra(MainActivity.EXTRA_OPEN_EMAIL_ID, item_id)
+                }
+                builder.setContentIntent(
+                    PendingIntent.getActivity(
+                        context, message_id, open_intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                    ),
+                )
+            }
             if (one_line_preview.isNotBlank()) {
                 builder.setStyle(
                     NotificationCompat.InboxStyle()

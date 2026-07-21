@@ -97,6 +97,7 @@ class AsterPushService : PushService() {
             subject = subject,
             preview = envelope.body_text,
             message_id = notification_id,
+            item_id = item_id,
         )
         return PushResult.Shown
     }
