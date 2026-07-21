@@ -341,7 +341,13 @@ fun ComposeScreen(
                 ?: thread_state.messages.lastOrNull()
             if (msg != null) {
                 val item = thread_state.item
-                val original_subject = item?.subject.orEmpty()
+                val original_subject = sequenceOf(
+                    msg.subject,
+                    item?.subject.orEmpty(),
+                    thread_state.messages.firstNotNullOfOrNull { m ->
+                        m.subject.takeIf { it.isNotBlank() }
+                    }.orEmpty(),
+                ).firstOrNull { it.isNotBlank() }.orEmpty()
                 val me = current_user_email.lowercase()
                 val to_chips = when (effective_mode) {
                     "forward" -> emptyList()
@@ -566,9 +572,13 @@ fun ComposeScreen(
                 to_chips = prefill.to_chips
                 to_chips_set = true
             }
-            if (!subject_set && prefill.subject.isNotBlank()) {
+            val bare_prefixes = setOf("re:", "fwd:")
+            val subject_is_placeholder = subject.isBlank() ||
+                subject.trim().lowercase() in bare_prefixes
+            val prefill_is_placeholder = prefill.subject.trim().lowercase() in bare_prefixes
+            if (!subject_set && prefill.subject.isNotBlank() && subject_is_placeholder) {
                 subject = prefill.subject
-                subject_set = true
+                if (!prefill_is_placeholder) subject_set = true
             }
             if (!body_set && prefill.body.isNotBlank()) {
                 body = prefill.body
@@ -968,6 +978,7 @@ fun ComposeScreen(
     }
 
     fun do_send(skip_from_guard: Boolean = false) {
+        android.util.Log.d("ASTER_EXPIRY_DEBUG", "do_send: expires_at_iso=$expires_at_iso expiry_password_present=${expiry_password != null} expiring_flag=$expiring")
         if (!skip_from_guard && reply_from_mismatch(mode, received_on_alias, from_alias)) {
             show_from_mismatch_dialog = true
             return
@@ -2868,8 +2879,24 @@ internal fun ExpiringSheet(
     var password by remember { mutableStateOf("") }
     var selected_hours by remember { mutableStateOf<Int?>(null) }
     val password_arg = password.trim().ifBlank { null }
+    val one_hour_label_top = stringResource(R.string.duration_one_hour)
+    val one_day_label_top = stringResource(R.string.duration_one_day)
+    val seven_days_label_top = stringResource(R.string.duration_n_days, 7)
+    val commit_or_close: () -> Unit = commit@{
+        val hours = selected_hours
+        if (hours == null) {
+            on_close()
+            return@commit
+        }
+        val label = when (hours) {
+            1 -> one_hour_label_top
+            24 -> one_day_label_top
+            else -> seven_days_label_top
+        }
+        on_pick(hours, label, password_arg)
+    }
     ModalBottomSheet(
-        onDismissRequest = on_close,
+        onDismissRequest = commit_or_close,
         sheetState = state,
         containerColor = colors.bg_card,
         tonalElevation = 0.dp,
@@ -2901,9 +2928,6 @@ internal fun ExpiringSheet(
                     bottom = AsterSpacing.sm,
                 ),
             )
-            val one_hour_label = stringResource(R.string.duration_one_hour)
-            val one_day_label = stringResource(R.string.duration_one_day)
-            val seven_days_label = stringResource(R.string.duration_n_days, 7)
             toggle_sheet_row(Icons.Outlined.LockClock, stringResource(R.string.expires_in_hour), selected_hours == 1) { selected_hours = 1 }
             toggle_sheet_row(Icons.Outlined.LockClock, stringResource(R.string.expires_in_day), selected_hours == 24) { selected_hours = 24 }
             toggle_sheet_row(Icons.Outlined.LockClock, stringResource(R.string.expires_in_days, 7), selected_hours == 24 * 7) { selected_hours = 24 * 7 }
@@ -2960,15 +2984,7 @@ internal fun ExpiringSheet(
             Spacer(Modifier.height(AsterSpacing.md))
             org.astermail.android.design.components.AsterButton(
                 label = stringResource(R.string.accept),
-                onClick = {
-                    val hours = selected_hours ?: return@AsterButton
-                    val label = when (hours) {
-                        1 -> one_hour_label
-                        24 -> one_day_label
-                        else -> seven_days_label
-                    }
-                    on_pick(hours, label, password_arg)
-                },
+                onClick = commit_or_close,
                 enabled = selected_hours != null,
                 modifier = Modifier.padding(horizontal = AsterSpacing.sm),
             )

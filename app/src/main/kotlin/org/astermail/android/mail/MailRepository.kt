@@ -165,6 +165,7 @@ data class ThreadMessageDecrypted(
     val has_attachments: Boolean = false,
     val raw_headers: List<Pair<String, String>> = emptyList(),
     val is_undecryptable: Boolean = false,
+    val subject: String = "",
 )
 
 @Singleton
@@ -255,6 +256,7 @@ class MailRepository @Inject constructor(
         undo_seconds: Int,
         draft_id: String? = null,
     ) {
+        android.util.Log.d("ASTER_EXPIRY_DEBUG", "schedule_send_with_undo: expires_at=$expires_at expiry_password_present=${expiry_password != null}")
         val delay_ms = undo_seconds.coerceAtLeast(1) * 1000L
         val pending_id = java.util.UUID.randomUUID().toString()
         val pending = PendingUndoSend(
@@ -913,6 +915,7 @@ class MailRepository @Inject constructor(
             has_attachments = meta?.has_attachments ?: false,
             raw_headers = envelope?.raw_headers ?: emptyList(),
             is_undecryptable = envelope?.is_undecryptable ?: false,
+            subject = envelope?.subject ?: "",
         )
     }
 
@@ -1728,6 +1731,7 @@ class MailRepository @Inject constructor(
             val encrypted_body = encrypt_field(body_html, derive_nonce(base_nonce, 0x03))
             val ephemeral_key_b64 = android.util.Base64.encodeToString(ephemeral_key, android.util.Base64.NO_WRAP)
             ephemeral_key.fill(0)
+            android.util.Log.d("ASTER_EXPIRY_DEBUG", "send_email: expires_at=$expires_at expiry_password_present=${expiry_password != null}")
             val result = send_api.send_external(
                 ExternalSendRequest(
                     encrypted_recipients = encrypted_recipients,

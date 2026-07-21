@@ -764,6 +764,7 @@ class MailViewModel @Inject constructor(
             is_read = item.is_read,
             raw_item = thread_item,
             has_attachments = item.has_attachments,
+            subject = item.subject,
         )
     }
 
