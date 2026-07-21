@@ -737,7 +737,13 @@ class AuthRepository @Inject constructor(
                     if (keks.isNotEmpty()) session_key_store.put_legacy_keks(keks)
                 }
                 absorb_data_kek(vault_obj)
-                new_identity_key.isNotBlank() && new_identity_key != old_identity_key
+                val old_ratchet_identity = session_key_store.get_ratchet_identity_public_b64()
+                extract_ratchet_keys(vault_obj)
+                val new_ratchet_identity = session_key_store.get_ratchet_identity_public_b64()
+                val identity_changed = new_identity_key.isNotBlank() && new_identity_key != old_identity_key
+                val ratchet_changed =
+                    !new_ratchet_identity.isNullOrBlank() && new_ratchet_identity != old_ratchet_identity
+                identity_changed || ratchet_changed
             } finally {
                 passphrase.fill(0)
             }
@@ -805,6 +811,8 @@ class AuthRepository @Inject constructor(
                 signed_prekey_public_b64 = spk_public,
             )
         }
+        val previous = vault_obj.optJSONArray("ratchet_previous_keys")
+        session_key_store.put_ratchet_previous_keys(previous?.toString())
     }
 
     private fun build_vault_json(

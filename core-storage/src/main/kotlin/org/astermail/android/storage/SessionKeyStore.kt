@@ -78,6 +78,9 @@ class SessionKeyStore(context: Context? = null) {
     @Volatile
     private var ratchet_signed_prekey_public_b64: String? = null
 
+    @Volatile
+    private var ratchet_previous_keys_json: String? = null
+
     init {
         prefs?.let { p ->
             runCatching {
@@ -112,6 +115,7 @@ class SessionKeyStore(context: Context? = null) {
                 ratchet_identity_public_b64 = p.getString(key_ratchet_identity_pub, null)
                 ratchet_signed_prekey_jwk = p.getString(key_ratchet_spk_jwk, null)
                 ratchet_signed_prekey_public_b64 = p.getString(key_ratchet_spk_pub, null)
+                ratchet_previous_keys_json = p.getString(key_ratchet_previous_keys, null)
             }.onFailure { t ->
                 if (org.astermail.android.storage.BuildConfig.DEBUG) {
                     android.util.Log.e("SessionKeyStore", "Failed to load session keys", t)
@@ -139,6 +143,20 @@ class SessionKeyStore(context: Context? = null) {
                 ?.apply()
         }
     }
+
+    fun put_ratchet_previous_keys(previous_keys_json: String?) {
+        synchronized(lock) {
+            ratchet_previous_keys_json = previous_keys_json
+            val editor = prefs?.edit() ?: return
+            if (previous_keys_json.isNullOrBlank()) {
+                editor.remove(key_ratchet_previous_keys).apply()
+            } else {
+                editor.putString(key_ratchet_previous_keys, previous_keys_json).apply()
+            }
+        }
+    }
+
+    fun get_ratchet_previous_keys_json(): String? = synchronized(lock) { ratchet_previous_keys_json }
 
     fun get_ratchet_identity_jwk(): String? = synchronized(lock) { ratchet_identity_jwk }
     fun get_ratchet_identity_public_b64(): String? = synchronized(lock) { ratchet_identity_public_b64 }
@@ -353,6 +371,7 @@ class SessionKeyStore(context: Context? = null) {
             ratchet_identity_public_b64 = null
             ratchet_signed_prekey_jwk = null
             ratchet_signed_prekey_public_b64 = null
+            ratchet_previous_keys_json = null
             prefs?.edit()?.clear()?.apply()
         }
     }
@@ -384,6 +403,7 @@ class SessionKeyStore(context: Context? = null) {
         private const val key_ratchet_identity_pub = "ratchet_identity_pub"
         private const val key_ratchet_spk_jwk = "ratchet_spk_jwk"
         private const val key_ratchet_spk_pub = "ratchet_spk_pub"
+        private const val key_ratchet_previous_keys = "ratchet_previous_keys"
         private const val key_pq_secret_prefix = "pq_secret_"
     }
 }
