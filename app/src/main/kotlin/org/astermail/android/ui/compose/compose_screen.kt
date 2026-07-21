@@ -38,6 +38,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.content.consume
 import androidx.compose.foundation.content.contentReceiver
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -392,6 +393,17 @@ fun ComposeScreen(
         mutableStateOf(initial)
     }
     var to_input by remember { mutableStateOf("") }
+    val to_focus_requester = remember { androidx.compose.ui.focus.FocusRequester() }
+    val is_blank_new_message = remember {
+        reply_to.isNullOrBlank() && mode.isNullOrBlank() && draft_id.isNullOrBlank() &&
+            prefill_to.isNullOrBlank() && to_chips.isEmpty()
+    }
+    LaunchedEffect(Unit) {
+        if (is_blank_new_message) {
+            kotlinx.coroutines.delay(250)
+            runCatching { to_focus_requester.requestFocus() }
+        }
+    }
     var cc_expanded by remember { mutableStateOf(false) }
     var cc_chips by remember { mutableStateOf(listOf<String>()) }
     var cc_input by remember { mutableStateOf("") }
@@ -1145,6 +1157,7 @@ fun ComposeScreen(
                 chip_input(
                     chips = to_chips,
                     input = to_input,
+                    focus_requester = to_focus_requester,
                     on_input_change = { value ->
                         val result = parse_chips(value)
                         to_chips = to_chips + result.new_chips
@@ -1927,6 +1940,7 @@ private fun chip_input(
     trailing: (@Composable () -> Unit)? = null,
     suggestions: List<Contact> = emptyList(),
     on_suggestion_pick: ((String) -> Unit)? = null,
+    focus_requester: androidx.compose.ui.focus.FocusRequester? = null,
 ) {
     val colors = AsterMaterial.colors
     val scroll_state = rememberScrollState()
@@ -1973,6 +1987,11 @@ private fun chip_input(
                     ),
                     modifier = Modifier
                         .widthIn(min = 120.dp)
+                        .let { m ->
+                            if (focus_requester != null) {
+                                m.focusRequester(focus_requester)
+                            } else m
+                        }
                         .onFocusChanged { focus ->
                             if (!focus.isFocused) on_commit()
                         },
