@@ -139,6 +139,8 @@ class GhostAliasApiImpl(private val client: ApiClient) : GhostAliasApi {
         }
         return try {
             response.body()
+        } catch (t: kotlin.coroutines.cancellation.CancellationException) {
+            throw t
         } catch (t: Throwable) {
             throw ApiError.UnknownError(t.message ?: "decode failed")
         }

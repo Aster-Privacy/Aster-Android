@@ -178,6 +178,8 @@ class RecoveryApiImpl(private val client: ApiClient) : RecoveryApi {
         }
         return try {
             response.body()
+        } catch (t: kotlin.coroutines.cancellation.CancellationException) {
+            throw t
         } catch (t: Throwable) {
             throw ApiError.UnknownError(t.message ?: "decode failed")
         }

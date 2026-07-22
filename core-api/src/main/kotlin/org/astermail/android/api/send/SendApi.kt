@@ -155,6 +155,8 @@ class SendApiImpl(private val client: ApiClient) : SendApi {
         }
         return try {
             response.body()
+        } catch (t: kotlin.coroutines.cancellation.CancellationException) {
+            throw t
         } catch (t: Throwable) {
             throw ApiError.UnknownError(t.message ?: "decode failed")
         }

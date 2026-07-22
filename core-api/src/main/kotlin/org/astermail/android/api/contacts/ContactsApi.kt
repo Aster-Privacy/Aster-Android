@@ -269,6 +269,8 @@ class ContactsApiImpl(private val client: ApiClient) : ContactsApi {
         }
         return try {
             response.body()
+        } catch (t: kotlin.coroutines.cancellation.CancellationException) {
+            throw t
         } catch (t: Throwable) {
             throw ApiError.UnknownError(t.message ?: "decode failed")
         }

@@ -222,6 +222,6 @@ class EncryptionApiImpl(private val client: ApiClient) : EncryptionApi {
             val body = try { response.body<String>() } catch (_: Throwable) { "" }
             throw client.map_http_status(response.status.value, body)
         }
-        return try { response.body() } catch (t: Throwable) { throw ApiError.UnknownError(t.message ?: "decode failed") }
+        return try { response.body() } catch (t: kotlin.coroutines.cancellation.CancellationException) { throw t } catch (t: Throwable) { throw ApiError.UnknownError(t.message ?: "decode failed") }
     }
 }

@@ -128,6 +128,8 @@ class DeveloperApiImpl(private val client: ApiClient) : DeveloperApi {
         }
         return try {
             response.body()
+        } catch (t: kotlin.coroutines.cancellation.CancellationException) {
+            throw t
         } catch (t: Throwable) {
             throw ApiError.UnknownError(t.message ?: "decode failed")
         }

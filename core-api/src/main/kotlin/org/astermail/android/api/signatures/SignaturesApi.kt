@@ -190,6 +190,8 @@ class SignaturesApiImpl(private val client: ApiClient) : SignaturesApi {
         }
         return try {
             response.body()
+        } catch (t: kotlin.coroutines.cancellation.CancellationException) {
+            throw t
         } catch (t: Throwable) {
             throw ApiError.UnknownError(t.message ?: "decode failed")
         }

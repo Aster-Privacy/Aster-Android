@@ -247,6 +247,8 @@ class SubscriptionsApiImpl(private val client: ApiClient) : SubscriptionsApi {
         }
         return try {
             response.body()
+        } catch (t: kotlin.coroutines.cancellation.CancellationException) {
+            throw t
         } catch (t: Throwable) {
             throw ApiError.UnknownError(t.message ?: "decode failed")
         }

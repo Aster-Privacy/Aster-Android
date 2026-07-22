@@ -23,6 +23,7 @@ package org.astermail.android.api.mail
 
 import io.ktor.client.call.body
 import io.ktor.client.request.delete
+import io.ktor.client.plugins.timeout
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
@@ -128,6 +129,7 @@ data class LinkToThreadRequestBody(val thread_token: String)
 
 class MailApiImpl(private val client: ApiClient) : MailApi {
     private val base = "/api/mail/v1"
+    private val large_payload_timeout_ms = 60_000L
 
     override suspend fun list_messages(
         limit: Int?,
@@ -181,7 +183,9 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
     override suspend fun get_thread_messages(thread_token: String): ThreadWithMessages {
         val response = client.http.get(
             "${client.base_url}$base/messages/threads/${url_encode_path(thread_token)}/messages",
-        )
+        ) {
+            timeout { requestTimeoutMillis = large_payload_timeout_ms }
+        }
         return decode_or_throw(response)
     }
 
@@ -300,12 +304,16 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
     }
 
     override suspend fun list_attachments(mail_item_id: String): AttachmentListResponse {
-        val response = client.http.get("${client.base_url}$base/attachments/by-mail/$mail_item_id")
+        val response = client.http.get("${client.base_url}$base/attachments/by-mail/$mail_item_id") {
+            timeout { requestTimeoutMillis = large_payload_timeout_ms }
+        }
         return decode_or_throw(response)
     }
 
     override suspend fun get_attachment(attachment_id: String): AttachmentResponse {
-        val response = client.http.get("${client.base_url}$base/attachments/$attachment_id")
+        val response = client.http.get("${client.base_url}$base/attachments/$attachment_id") {
+            timeout { requestTimeoutMillis = large_payload_timeout_ms }
+        }
         return decode_or_throw(response)
     }
 
@@ -381,6 +389,8 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
         }
         return try {
             response.body()
+        } catch (t: kotlin.coroutines.cancellation.CancellationException) {
+            throw t
         } catch (t: Throwable) {
             throw ApiError.UnknownError(t.message ?: "decode failed")
         }

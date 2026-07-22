@@ -202,6 +202,8 @@ class LabelsApiImpl(private val client: ApiClient) : LabelsApi {
         }
         return try {
             response.body()
+        } catch (t: kotlin.coroutines.cancellation.CancellationException) {
+            throw t
         } catch (t: Throwable) {
             throw ApiError.UnknownError(t.message ?: "decode failed")
         }
