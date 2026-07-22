@@ -1314,4 +1314,7 @@
     <string name="reply_from_mismatch_message">Это письмо получено на %1$s, но ответ будет отправлен с %2$s. Ответ с другого адреса может раскрыть его отправителю и быть отклонён.</string>
     <string name="reply_from_mismatch_use_received">Использовать адрес получения</string>
     <string name="reply_from_mismatch_send_anyway">Всё равно отправить</string>
+    <string name="expires_custom">Своя дата и время</string>
+    <string name="expires_custom_at">Истекает %1$s</string>
+    <string name="expiry_time_in_past">Время истечения должно быть в будущем</string>
 </resources>

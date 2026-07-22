@@ -1314,4 +1314,7 @@
     <string name="reply_from_mismatch_message">Ta wiadomość została odebrana na %1$s, ale odpowiedź zostanie wysłana z %2$s. Odpowiedź z innego adresu może ujawnić go nadawcy i zostać odrzucona.</string>
     <string name="reply_from_mismatch_use_received">Użyj adresu odbioru</string>
     <string name="reply_from_mismatch_send_anyway">Wyślij mimo to</string>
+    <string name="expires_custom">Niestandardowa data i godzina</string>
+    <string name="expires_custom_at">Wygasa %1$s</string>
+    <string name="expiry_time_in_past">Czas wygaśnięcia musi być w przyszłości</string>
 </resources>
