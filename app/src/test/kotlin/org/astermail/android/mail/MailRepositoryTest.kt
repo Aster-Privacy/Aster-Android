@@ -45,6 +45,7 @@ import org.astermail.android.api.send.SimpleSendResponse
 import org.astermail.android.api.mail.CreateMailItemResponse
 import org.astermail.android.api.mail.DeleteResponse
 import org.astermail.android.storage.SessionKeyStore
+import org.astermail.android.mail.ratchet.RatchetEncryptionException
 import org.astermail.android.storage.outbox.PendingSendDao
 import org.astermail.android.storage.outbox.PendingSendEntity
 import org.junit.Assert.assertEquals
@@ -93,6 +94,9 @@ class MailRepositoryTest {
         }
         override suspend fun mark_pending(id: String) {
             rows[id]?.let { rows[id] = it.copy(status = "pending") }
+        }
+        override suspend fun mark_failed(id: String) {
+            rows[id]?.let { rows[id] = it.copy(status = "failed") }
         }
         override suspend fun delete_by_id(id: String) { rows.remove(id) }
         override suspend fun clear_all() { rows.clear() }
@@ -1103,6 +1107,21 @@ class MailRepositoryTest {
 
         assertEquals(PendingSendOutcome.RETRY, outcome)
         assertEquals("pending", pending_send_dao.get_by_id("pend_4")?.status)
+        coVerify(exactly = 0) { mail_api.delete_draft(any()) }
+    }
+
+    @Test
+    fun `run_pending_send marks failed when recipient prekey bundle is missing`() = runTest {
+        every { session_key_store.has_ratchet_keys() } returns true
+        every { session_key_store.get_user_email() } returns "me@astermail.org"
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } throws
+            RatchetEncryptionException("friend@astermail.org", "no prekey bundle available for recipient")
+        pending_send_dao.upsert(pending_row("pend_perm", draft_id = "draft_perm"))
+
+        val outcome = repo.run_pending_send("pend_perm")
+
+        assertEquals(PendingSendOutcome.FAILED, outcome)
+        assertEquals("failed", pending_send_dao.get_by_id("pend_perm")?.status)
         coVerify(exactly = 0) { mail_api.delete_draft(any()) }
     }
 

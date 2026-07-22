@@ -71,9 +71,10 @@ import org.astermail.android.storage.SessionKeyStore
 import org.astermail.android.storage.outbox.PendingSendDao
 import org.astermail.android.storage.outbox.PendingSendEntity
 
-enum class PendingSendOutcome { SENT, GONE, RETRY }
+enum class PendingSendOutcome { SENT, GONE, RETRY, FAILED }
 
 private const val STATUS_PENDING = "pending"
+private const val STATUS_FAILED = "failed"
 private const val SENDING_CLAIM_STALE_MS = 5 * 60 * 1000L
 
 data class DecryptedEnvelope(
@@ -418,17 +419,38 @@ class MailRepository @Inject constructor(
             _send_result_events.tryEmit(Result.success(Unit))
             PendingSendOutcome.SENT
         } else {
-            runCatching { pending_send_dao.mark_pending(pending_id) }
+            val err = result.exceptionOrNull()
             _send_problem.value = true
-            _send_result_events.tryEmit(Result.failure(result.exceptionOrNull() ?: IllegalStateException("send rejected")))
-            PendingSendOutcome.RETRY
+            _send_result_events.tryEmit(Result.failure(err ?: IllegalStateException("send rejected")))
+            if (is_permanent_send_failure(err)) {
+                runCatching { pending_send_dao.mark_failed(pending_id) }
+                PendingSendOutcome.FAILED
+            } else {
+                runCatching { pending_send_dao.mark_pending(pending_id) }
+                PendingSendOutcome.RETRY
+            }
         }
+    }
+
+    private fun is_permanent_send_failure(err: Throwable?): Boolean {
+        var cause = err
+        var depth = 0
+        while (cause != null && depth < 6) {
+            if (cause is org.astermail.android.mail.ratchet.RatchetEncryptionException) return true
+            cause = cause.cause
+            depth++
+        }
+        return false
     }
 
     suspend fun reconcile_pending_sends() {
         val rows = runCatching { pending_send_dao.get_all() }.getOrDefault(emptyList())
         val now = System.currentTimeMillis()
         for (row in rows) {
+            if (row.status == STATUS_FAILED) {
+                _send_problem.value = true
+                continue
+            }
             val remaining = (row.fire_at_ms - now).coerceAtLeast(0L)
             runCatching { UndoSendWorker.enqueue_if_absent(context, row.id, remaining) }
         }
@@ -778,6 +800,10 @@ class MailRepository @Inject constructor(
         mail_api.bulk_action(BulkScopeRequest(action = "mark_read", ids = item_ids))
     }
 
+    suspend fun mark_unread_bulk(item_ids: List<String>): Result<BulkScopeResponse> = runCatching {
+        mail_api.bulk_action(BulkScopeRequest(action = "mark_unread", ids = item_ids))
+    }
+
     suspend fun mark_all_read_scope(folder: String): Result<BulkScopeResponse> = runCatching {
         val scope = folder_to_bulk_scope(folder)
         mail_api.bulk_action(BulkScopeRequest(action = "mark_read", scope = scope))
@@ -786,6 +812,11 @@ class MailRepository @Inject constructor(
     suspend fun mark_all_unread_scope(folder: String): Result<BulkScopeResponse> = runCatching {
         val scope = folder_to_bulk_scope(folder)
         mail_api.bulk_action(BulkScopeRequest(action = "mark_unread", scope = scope))
+    }
+
+    fun folder_supports_bulk_scope(folder: String): Boolean = when (folder) {
+        "inbox", "sent", "starred", "trash", "spam", "archive", "snoozed" -> true
+        else -> false
     }
 
     private fun folder_to_bulk_scope(folder: String): org.astermail.android.api.mail.BulkScopeFilter {
@@ -932,7 +963,8 @@ class MailRepository @Inject constructor(
     fun decrypt_envelope_public(
         encrypted_envelope: String?,
         envelope_nonce: String?,
-    ): DecryptedEnvelope? = try_decrypt_envelope(encrypted_envelope, envelope_nonce)
+        message_id: String? = null,
+    ): DecryptedEnvelope? = try_decrypt_envelope(encrypted_envelope, envelope_nonce, message_id)
 
     fun decrypt_item_for_export(item: MailItem): DecryptedEnvelope? =
         try_decrypt_envelope(item.encrypted_envelope, item.envelope_nonce, item.id)

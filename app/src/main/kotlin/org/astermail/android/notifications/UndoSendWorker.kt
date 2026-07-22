@@ -55,7 +55,7 @@ class UndoSendWorker(
             return Result.retry()
         }
         return when (repo.run_pending_send(pending_id)) {
-            PendingSendOutcome.SENT, PendingSendOutcome.GONE -> Result.success()
+            PendingSendOutcome.SENT, PendingSendOutcome.GONE, PendingSendOutcome.FAILED -> Result.success()
             PendingSendOutcome.RETRY -> Result.retry()
         }
     }

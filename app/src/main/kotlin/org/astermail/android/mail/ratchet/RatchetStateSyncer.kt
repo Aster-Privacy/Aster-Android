@@ -51,7 +51,7 @@ class RatchetStateSyncer @Inject constructor(
 
     private val locks = mutableMapOf<String, Mutex>()
     private val locks_guard = Mutex()
-    private val known_versions = mutableMapOf<String, Int>()
+    private val known_versions = java.util.concurrent.ConcurrentHashMap<String, Int>()
 
     private suspend fun lock_for(conversation_id: String): Mutex = locks_guard.withLock {
         locks.getOrPut(conversation_id) { Mutex() }
@@ -171,10 +171,10 @@ class RatchetStateSyncer @Inject constructor(
                         delay(50L * (attempt + 1))
                     }
                     PutStateOutcome.NotFound -> {
-                        if (BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "sync put 404 -> wiping local state to force rebootstrap on next send")
+                        if (BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "sync put 404 -> server lost state, re-posting local copy")
+                        known_version = null
                         known_versions.remove(conversation_id)
-                        state_store.delete(conversation_id)
-                        return false
+                        delay(50L * (attempt + 1))
                     }
                     is PutStateOutcome.Failure -> {
                         last_error = "put failed status=${outcome.status}"

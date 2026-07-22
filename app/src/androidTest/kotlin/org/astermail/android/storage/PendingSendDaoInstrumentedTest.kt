@@ -96,8 +96,8 @@ class PendingSendDaoInstrumentedTest {
         val dao = database.pending_send_dao()
         dao.upsert(row("p2"))
 
-        val first_claim = dao.mark_sending("p2")
-        val second_claim = dao.mark_sending("p2")
+        val first_claim = dao.mark_sending("p2", 1_000L)
+        val second_claim = dao.mark_sending("p2", 1_000L)
 
         assertEquals(1, first_claim)
         assertEquals(0, second_claim)
@@ -109,10 +109,10 @@ class PendingSendDaoInstrumentedTest {
         val dao = database.pending_send_dao()
         dao.upsert(row("p3"))
 
-        assertEquals(1, dao.mark_sending("p3"))
+        assertEquals(1, dao.mark_sending("p3", 1_000L))
         dao.mark_pending("p3")
         assertEquals("pending", dao.get_by_id("p3")?.status)
-        assertEquals(1, dao.mark_sending("p3"))
+        assertEquals(1, dao.mark_sending("p3", 1_000L))
     }
 
     @Test

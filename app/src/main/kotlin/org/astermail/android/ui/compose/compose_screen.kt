@@ -492,6 +492,7 @@ fun ComposeScreen(
         )
     }
     var is_sending by remember { mutableStateOf(false) }
+    var sent by remember { mutableStateOf(false) }
     var send_error by remember { mutableStateOf<String?>(null) }
     var attachments by remember { mutableStateOf(listOf<AttachmentItem>()) }
     var inline_images by remember { mutableStateOf(listOf<AttachmentItem>()) }
@@ -763,7 +764,7 @@ fun ComposeScreen(
     androidx.compose.runtime.DisposableEffect(lifecycle_owner_for_draft) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
             if (event == androidx.lifecycle.Lifecycle.Event.ON_PAUSE) {
-                if (subject.isNotBlank() || body.isNotBlank() || to_chips.isNotEmpty()) {
+                if (!sent && !is_sending && (subject.isNotBlank() || body.isNotBlank() || to_chips.isNotEmpty())) {
                     draft_save_job?.cancel()
                     mail_vm.save_draft_and_finish(
                         subject = subject,
@@ -960,13 +961,18 @@ fun ComposeScreen(
                 suppress_branding = suppress_branding,
             )
             result.fold(
-                onSuccess = {
+                onSuccess = { resp ->
                     is_sending = false
                     send_lock.set(false)
-                    if (resolved_thread_token != null) {
-                        mail_vm.refresh_current_thread()
+                    if (resp.success) {
+                        if (resolved_thread_token != null) {
+                            mail_vm.refresh_current_thread()
+                        }
+                        sent = true
+                        on_sent()
+                    } else {
+                        send_error = resp.message ?: context.getString(R.string.save_failed)
                     }
-                    on_sent()
                 },
                 onFailure = { t ->
                     is_sending = false
@@ -1017,6 +1023,7 @@ fun ComposeScreen(
                     onSuccess = {
                         is_sending = false
                         send_lock.set(false)
+                        sent = true
                         on_sent()
                     },
                     onFailure = { t ->
@@ -1061,6 +1068,7 @@ fun ComposeScreen(
                 )
                 is_sending = false
                 send_lock.set(false)
+                sent = true
                 on_sent()
             }
         } else {

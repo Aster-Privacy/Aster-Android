@@ -26,7 +26,9 @@ import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -153,7 +155,7 @@ class SearchIndexManager @Inject constructor(
             if (epoch.get() == my_epoch) _index_ready.value = true
         } catch (_: Throwable) {
         } finally {
-            mutex.withLock { is_building = false }
+            withContext(NonCancellable) { mutex.withLock { is_building = false } }
         }
     }
 

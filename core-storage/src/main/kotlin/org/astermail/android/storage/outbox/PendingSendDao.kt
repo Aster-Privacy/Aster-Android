@@ -50,6 +50,9 @@ interface PendingSendDao {
     @Query("UPDATE pending_send_queue SET status = 'pending' WHERE id = :id")
     suspend fun mark_pending(id: String)
 
+    @Query("UPDATE pending_send_queue SET status = 'failed' WHERE id = :id")
+    suspend fun mark_failed(id: String)
+
     @Query("DELETE FROM pending_send_queue WHERE id = :id")
     suspend fun delete_by_id(id: String)
 

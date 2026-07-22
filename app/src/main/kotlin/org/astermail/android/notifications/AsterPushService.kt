@@ -91,7 +91,7 @@ class AsterPushService : PushService() {
             ?: return PushResult.NeedsFetch
         val envelope_nonce = obj.optString("envelope_nonce", "").takeIf { it.isNotBlank() }
         val repo = entry.mail_repository()
-        val envelope = repo.decrypt_envelope_public(encrypted_envelope, envelope_nonce)
+        val envelope = repo.decrypt_envelope_public(encrypted_envelope, envelope_nonce, item_id.takeIf { it.isNotBlank() })
             ?: return PushResult.NeedsFetch
         val sender = envelope.from_name.takeIf { it.isNotBlank() } ?: envelope.from_email
         val subject = envelope.subject

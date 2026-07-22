@@ -1485,41 +1485,77 @@ class MailViewModel @Inject constructor(
 
     fun mark_all_read_scope(folder: String) {
         MailPollingWorker.clear_all_mail_notifications(context)
-        _inbox_state.value.items.forEach { read_overrides[it.id] = true }
-        _inbox_state.value = _inbox_state.value.copy(
-            items = _inbox_state.value.items.map { it.copy(is_read = true) },
-        )
-        folder_cache[folder]?.let { cached ->
-            cached.items.forEach { read_overrides[it.id] = true }
-            folder_cache[folder] = cached.copy(items = cached.items.map { it.copy(is_read = true) })
-        }
+        val prior_reads = collect_read_states(folder)
+        prior_reads.keys.forEach { read_overrides[it] = true }
+        apply_bulk_read(folder, true)
         viewModelScope.launch {
-            repository.mark_all_read_scope(folder).fold(
+            val result = if (repository.folder_supports_bulk_scope(folder)) {
+                repository.mark_all_read_scope(folder)
+            } else {
+                val ids = prior_reads.keys.toList()
+                if (ids.isEmpty()) return@launch else repository.mark_read_bulk(ids)
+            }
+            result.fold(
                 onSuccess = {
                     invalidate_caches(listOf(folder))
                     emit_toast(context.getString(R.string.all_marked_read))
                 },
-                onFailure = { emit_toast(context.getString(R.string.failed_mark_all_read)) },
+                onFailure = {
+                    revert_bulk_read(folder, prior_reads)
+                    emit_toast(context.getString(R.string.failed_mark_all_read))
+                },
             )
         }
     }
 
     fun mark_all_unread_scope(folder: String) {
-        _inbox_state.value.items.forEach { read_overrides[it.id] = false }
-        _inbox_state.value = _inbox_state.value.copy(
-            items = _inbox_state.value.items.map { it.copy(is_read = false) },
-        )
-        folder_cache[folder]?.let { cached ->
-            cached.items.forEach { read_overrides[it.id] = false }
-            folder_cache[folder] = cached.copy(items = cached.items.map { it.copy(is_read = false) })
-        }
+        val prior_reads = collect_read_states(folder)
+        prior_reads.keys.forEach { read_overrides[it] = false }
+        apply_bulk_read(folder, false)
         viewModelScope.launch {
-            repository.mark_all_unread_scope(folder).fold(
+            val result = if (repository.folder_supports_bulk_scope(folder)) {
+                repository.mark_all_unread_scope(folder)
+            } else {
+                val ids = prior_reads.keys.toList()
+                if (ids.isEmpty()) return@launch else repository.mark_unread_bulk(ids)
+            }
+            result.fold(
                 onSuccess = {
                     invalidate_caches(listOf(folder))
                     emit_toast(context.getString(R.string.all_marked_unread))
                 },
-                onFailure = { emit_toast(context.getString(R.string.failed_mark_all_unread)) },
+                onFailure = {
+                    revert_bulk_read(folder, prior_reads)
+                    emit_toast(context.getString(R.string.failed_mark_all_unread))
+                },
+            )
+        }
+    }
+
+    private fun collect_read_states(folder: String): Map<String, Boolean> {
+        val states = LinkedHashMap<String, Boolean>()
+        _inbox_state.value.items.forEach { states[it.id] = it.is_read }
+        folder_cache[folder]?.items?.forEach { states.putIfAbsent(it.id, it.is_read) }
+        return states
+    }
+
+    private fun apply_bulk_read(folder: String, target_read: Boolean) {
+        _inbox_state.value = _inbox_state.value.copy(
+            items = _inbox_state.value.items.map { it.copy(is_read = target_read) },
+        )
+        folder_cache[folder]?.let { cached ->
+            folder_cache[folder] = cached.copy(items = cached.items.map { it.copy(is_read = target_read) })
+        }
+    }
+
+    private fun revert_bulk_read(folder: String, prior: Map<String, Boolean>) {
+        prior.keys.forEach { read_overrides.remove(it) }
+        _inbox_state.value = _inbox_state.value.copy(
+            items = _inbox_state.value.items.map { item -> prior[item.id]?.let { item.copy(is_read = it) } ?: item },
+        )
+        folder_cache[folder]?.let { cached ->
+            folder_cache[folder] = cached.copy(
+                items = cached.items.map { item -> prior[item.id]?.let { item.copy(is_read = it) } ?: item },
             )
         }
     }

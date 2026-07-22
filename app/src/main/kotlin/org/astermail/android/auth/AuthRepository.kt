@@ -154,7 +154,7 @@ class AuthRepository @Inject constructor(
         } catch (e: ApiError.UnauthorizedError) {
             RefreshOutcome.AuthFailed
         } catch (e: ApiError.ForbiddenError) {
-            RefreshOutcome.AuthFailed
+            RefreshOutcome.Transient
         } catch (_: Throwable) {
             RefreshOutcome.Transient
         }
@@ -596,6 +596,13 @@ class AuthRepository @Inject constructor(
 
     suspend fun logout(): Result<Unit> = runCatching {
         val current_id = session_key_store.get_user_id()
+        try {
+            withTimeoutOrNull(5_000L) {
+                auth_api.logout()
+            }
+        } catch (e: Throwable) {
+            if (e is CancellationException) throw e
+        }
         token_store.clear()
         api_client.invalidate_bearer_cache()
         session_key_store.clear()
@@ -617,13 +624,6 @@ class AuthRepository @Inject constructor(
             runCatching { session_snapshot_store.remove(current_id) }
         }
         _is_signed_in.value = false
-        try {
-            withTimeoutOrNull(5_000L) {
-                auth_api.logout()
-            }
-        } catch (e: Throwable) {
-            if (e is CancellationException) throw e
-        }
     }
 
     suspend fun refresh_profile(): Result<Unit> = runCatching {

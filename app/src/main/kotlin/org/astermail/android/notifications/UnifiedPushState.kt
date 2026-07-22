@@ -33,6 +33,7 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -197,16 +198,18 @@ object UnifiedPushState {
                     auth = auth,
                     user_agent = "Aster-Android",
                 )
-                client.http.post("${client.base_url}/api/sync/v1/web-push/subscribe") {
+                val response = client.http.post("${client.base_url}/api/sync/v1/web-push/subscribe") {
                     contentType(ContentType.Application.Json)
                     setBody(request)
-                }.body<Map<String, Any?>>()
-                prefs.edit()
-                    .putString(KEY_REGISTERED_ENDPOINT, endpoint_url)
-                    .putString(KEY_REGISTERED_P256DH, p256dh)
-                    .putString(KEY_REGISTERED_AUTH, auth)
-                    .putLong(KEY_LAST_SUBSCRIBED_AT, System.currentTimeMillis())
-                    .apply()
+                }
+                if (response.status.isSuccess()) {
+                    prefs.edit()
+                        .putString(KEY_REGISTERED_ENDPOINT, endpoint_url)
+                        .putString(KEY_REGISTERED_P256DH, p256dh)
+                        .putString(KEY_REGISTERED_AUTH, auth)
+                        .putLong(KEY_LAST_SUBSCRIBED_AT, System.currentTimeMillis())
+                        .apply()
+                }
             }
         }
     }

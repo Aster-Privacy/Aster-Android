@@ -125,14 +125,23 @@ class MailPollingWorker(
             base_url = BuildConfig.API_BASE_URL,
             token_provider = token_provider,
         )
-        val mail_api = MailApiImpl(client)
+        try {
+            return poll_and_notify(context, prefs, MailApiImpl(client))
+        } finally {
+            client.close()
+        }
+    }
 
+    private suspend fun poll_and_notify(
+        context: Context,
+        prefs: android.content.SharedPreferences,
+        mail_api: MailApiImpl,
+    ): Result {
         val stats = try {
             kotlinx.coroutines.withTimeout(20_000L) { mail_api.get_stats() }
         } catch (_: ApiError.UnauthorizedError) {
             return Result.success()
         } catch (_: Throwable) {
-            schedule_next(context)
             return Result.retry()
         }
         // `unread` is a mailbox-wide count (inbox + every custom folder/label), so it still
