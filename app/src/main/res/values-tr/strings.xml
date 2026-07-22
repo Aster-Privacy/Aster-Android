@@ -1310,4 +1310,7 @@
     <string name="reply_from_mismatch_message">Bu e-posta %1$s adresinde alındı, ancak yanıtınız %2$s adresinden gönderilecek. Farklı bir adresten yanıtlamak bu adresi gönderene açığa çıkarabilir ve yanıt reddedilebilir.</string>
     <string name="reply_from_mismatch_use_received">Alınan adresi kullan</string>
     <string name="reply_from_mismatch_send_anyway">Yine de gönder</string>
+    <string name="expires_custom">Özel tarih ve saat</string>
+    <string name="expires_custom_at">%1$s tarihinde sona erer</string>
+    <string name="expiry_time_in_past">Sona erme zamanı gelecekte olmalıdır</string>
 </resources>

@@ -1310,4 +1310,7 @@
     <string name="reply_from_mismatch_message">Este e-mail foi recebido em %1$s, mas sua resposta será enviada de %2$s. Responder de outro endereço pode revelá-lo ao remetente e a resposta pode ser rejeitada.</string>
     <string name="reply_from_mismatch_use_received">Usar endereço de recebimento</string>
     <string name="reply_from_mismatch_send_anyway">Enviar mesmo assim</string>
+    <string name="expires_custom">Data e hora personalizadas</string>
+    <string name="expires_custom_at">Expira em %1$s</string>
+    <string name="expiry_time_in_past">A hora de expiração deve estar no futuro</string>
 </resources>

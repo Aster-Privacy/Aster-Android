@@ -1694,10 +1694,9 @@ fun ComposeScreen(
     if (show_expiring_sheet) {
         ExpiringSheet(
             on_close = { show_expiring_sheet = false },
-            on_pick = { hours, label, password ->
+            on_pick = { expires_epoch_ms, label, password ->
                 show_expiring_sheet = false
-                val expires = java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC).plusHours(hours.toLong())
-                expires_at_iso = java.time.format.DateTimeFormatter.ISO_INSTANT.format(expires.toInstant())
+                expires_at_iso = java.time.Instant.ofEpochMilli(expires_epoch_ms).toString()
                 expiry_password = password
                 expiring = true
                 Toast.makeText(context, context.getString(R.string.message_expires_in, label), Toast.LENGTH_SHORT).show()
@@ -2879,28 +2878,78 @@ private fun GhostAliasSheet(
 @Composable
 internal fun ExpiringSheet(
     on_close: () -> Unit,
-    on_pick: (hours: Int, label: String, password: String?) -> Unit,
+    on_pick: (expires_epoch_ms: Long, label: String, password: String?) -> Unit,
 ) {
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
+    val sheet_context = LocalContext.current
     var password by remember { mutableStateOf("") }
     var selected_hours by remember { mutableStateOf<Int?>(null) }
+    var custom_epoch_ms by remember { mutableStateOf<Long?>(null) }
     val password_arg = password.trim().ifBlank { null }
     val one_hour_label_top = stringResource(R.string.duration_one_hour)
     val one_day_label_top = stringResource(R.string.duration_one_day)
     val seven_days_label_top = stringResource(R.string.duration_n_days, 7)
+    val format_custom_label: (Long) -> String = { epoch_ms ->
+        java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT)
+            .format(java.util.Date(epoch_ms))
+    }
+    val open_custom_picker: () -> Unit = {
+        val calendar = java.util.Calendar.getInstance().apply {
+            custom_epoch_ms?.let { timeInMillis = it }
+        }
+        val date_picker = android.app.DatePickerDialog(
+            sheet_context,
+            { _, year, month, day ->
+                val time_picker = android.app.TimePickerDialog(
+                    sheet_context,
+                    { _, hour, minute ->
+                        val cal = java.util.Calendar.getInstance()
+                        cal.set(year, month, day, hour, minute, 0)
+                        cal.set(java.util.Calendar.MILLISECOND, 0)
+                        if (cal.timeInMillis <= System.currentTimeMillis()) {
+                            Toast.makeText(sheet_context, sheet_context.getString(R.string.expiry_time_in_past), Toast.LENGTH_SHORT).show()
+                        } else {
+                            custom_epoch_ms = cal.timeInMillis
+                            selected_hours = null
+                        }
+                    },
+                    calendar.get(java.util.Calendar.HOUR_OF_DAY),
+                    calendar.get(java.util.Calendar.MINUTE),
+                    android.text.format.DateFormat.is24HourFormat(sheet_context),
+                )
+                time_picker.show()
+            },
+            calendar.get(java.util.Calendar.YEAR),
+            calendar.get(java.util.Calendar.MONTH),
+            calendar.get(java.util.Calendar.DAY_OF_MONTH),
+        )
+        date_picker.datePicker.minDate = System.currentTimeMillis()
+        date_picker.show()
+    }
     val commit_or_close: () -> Unit = commit@{
         val hours = selected_hours
-        if (hours == null) {
+        val custom = custom_epoch_ms
+        if (hours == null && custom == null) {
             on_close()
             return@commit
         }
-        val label = when (hours) {
-            1 -> one_hour_label_top
-            24 -> one_day_label_top
-            else -> seven_days_label_top
+        if (hours != null) {
+            val label = when (hours) {
+                1 -> one_hour_label_top
+                24 -> one_day_label_top
+                else -> seven_days_label_top
+            }
+            on_pick(System.currentTimeMillis() + hours * 3_600_000L, label, password_arg)
+            return@commit
         }
-        on_pick(hours, label, password_arg)
+        if (custom != null) {
+            if (custom <= System.currentTimeMillis()) {
+                Toast.makeText(sheet_context, sheet_context.getString(R.string.expiry_time_in_past), Toast.LENGTH_SHORT).show()
+                return@commit
+            }
+            on_pick(custom, format_custom_label(custom), password_arg)
+        }
     }
     ModalBottomSheet(
         onDismissRequest = commit_or_close,
@@ -2935,9 +2984,14 @@ internal fun ExpiringSheet(
                     bottom = AsterSpacing.sm,
                 ),
             )
-            toggle_sheet_row(Icons.Outlined.LockClock, stringResource(R.string.expires_in_hour), selected_hours == 1) { selected_hours = 1 }
-            toggle_sheet_row(Icons.Outlined.LockClock, stringResource(R.string.expires_in_day), selected_hours == 24) { selected_hours = 24 }
-            toggle_sheet_row(Icons.Outlined.LockClock, stringResource(R.string.expires_in_days, 7), selected_hours == 24 * 7) { selected_hours = 24 * 7 }
+            toggle_sheet_row(Icons.Outlined.LockClock, stringResource(R.string.expires_in_hour), selected_hours == 1) { selected_hours = 1; custom_epoch_ms = null }
+            toggle_sheet_row(Icons.Outlined.LockClock, stringResource(R.string.expires_in_day), selected_hours == 24) { selected_hours = 24; custom_epoch_ms = null }
+            toggle_sheet_row(Icons.Outlined.LockClock, stringResource(R.string.expires_in_days, 7), selected_hours == 24 * 7) { selected_hours = 24 * 7; custom_epoch_ms = null }
+            toggle_sheet_row(
+                Icons.Outlined.Schedule,
+                custom_epoch_ms?.let { stringResource(R.string.expires_custom_at, format_custom_label(it)) } ?: stringResource(R.string.expires_custom),
+                custom_epoch_ms != null,
+            ) { open_custom_picker() }
             Spacer(Modifier.height(AsterSpacing.md))
             Text(
                 text = stringResource(R.string.expiry_password_label),
@@ -2992,7 +3046,7 @@ internal fun ExpiringSheet(
             org.astermail.android.design.components.AsterButton(
                 label = stringResource(R.string.accept),
                 onClick = commit_or_close,
-                enabled = selected_hours != null,
+                enabled = selected_hours != null || custom_epoch_ms != null,
                 modifier = Modifier.padding(horizontal = AsterSpacing.sm),
             )
             Spacer(Modifier.height(AsterSpacing.lg))

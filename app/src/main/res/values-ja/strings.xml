@@ -1308,4 +1308,7 @@
     <string name="reply_from_mismatch_message">このメールは %1$s で受信しましたが、返信は %2$s から送信されます。別のアドレスから返信すると、そのアドレスが送信者に知られたり、返信が拒否されたりする可能性があります。</string>
     <string name="reply_from_mismatch_use_received">受信アドレスを使用</string>
     <string name="reply_from_mismatch_send_anyway">そのまま送信</string>
+    <string name="expires_custom">日時を指定</string>
+    <string name="expires_custom_at">%1$s に期限切れ</string>
+    <string name="expiry_time_in_past">有効期限は未来の日時を指定してください</string>
 </resources>

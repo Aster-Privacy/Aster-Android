@@ -47,7 +47,7 @@ class ExpiringSheetTest {
     @get:Rule
     val compose_rule = createComposeRule()
 
-    private data class PickResult(val hours: Int, val label: String, val password: String?)
+    private data class PickResult(val expires_epoch_ms: Long, val label: String, val password: String?)
 
     private fun render(on_pick: (PickResult) -> Unit) {
         compose_rule.setContent {
@@ -56,13 +56,21 @@ class ExpiringSheetTest {
                 if (visible) {
                     ExpiringSheet(
                         on_close = { visible = false },
-                        on_pick = { hours, label, password ->
-                            on_pick(PickResult(hours, label, password))
+                        on_pick = { expires_epoch_ms, label, password ->
+                            on_pick(PickResult(expires_epoch_ms, label, password))
                             visible = false
                         },
                     )
                 }
             }
+        }
+    }
+
+    private fun assert_epoch_close(expected_offset_ms: Long, actual: Long?) {
+        val now = System.currentTimeMillis()
+        val delta = Math.abs((actual ?: 0L) - (now + expected_offset_ms))
+        if (delta > 120_000L) {
+            throw AssertionError("expiry epoch off by ${delta}ms from expected offset $expected_offset_ms")
         }
     }
 
@@ -91,7 +99,7 @@ class ExpiringSheetTest {
 
         compose_rule.waitForIdle()
         val result = picked
-        assertEquals(1, result?.hours)
+        assert_epoch_close(3_600_000L, result?.expires_epoch_ms)
         assertEquals("hunter2", result?.password)
     }
 
@@ -104,7 +112,7 @@ class ExpiringSheetTest {
         compose_rule.onNodeWithText("Accept").performClick()
 
         compose_rule.waitForIdle()
-        assertEquals(24 * 7, picked?.hours)
+        assert_epoch_close(7L * 24L * 3_600_000L, picked?.expires_epoch_ms)
         assertNull(picked?.password)
     }
 }

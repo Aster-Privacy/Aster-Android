@@ -1310,4 +1310,7 @@
     <string name="reply_from_mismatch_message">Deze e-mail is ontvangen op %1$s, maar je antwoord wordt verzonden vanaf %2$s. Antwoorden vanaf een ander adres kan dit adres onthullen aan de afzender en het antwoord kan worden geweigerd.</string>
     <string name="reply_from_mismatch_use_received">Ontvangstadres gebruiken</string>
     <string name="reply_from_mismatch_send_anyway">Toch verzenden</string>
+    <string name="expires_custom">Aangepaste datum en tijd</string>
+    <string name="expires_custom_at">Verloopt op %1$s</string>
+    <string name="expiry_time_in_past">De vervaltijd moet in de toekomst liggen</string>
 </resources>
