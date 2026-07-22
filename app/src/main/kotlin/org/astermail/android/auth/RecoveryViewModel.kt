@@ -77,6 +77,8 @@ class RecoveryViewModel @Inject constructor(
     private val _state = MutableStateFlow(RecoveryUiState())
     val state: StateFlow<RecoveryUiState> = _state.asStateFlow()
 
+    internal var compute_dispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.Default
+
     private var recovery_token: String? = null
     private var decrypted_vault: ByteArray? = null
     private var user_email: String = ""
@@ -113,7 +115,7 @@ class RecoveryViewModel @Inject constructor(
         _state.value = _state.value.copy(is_loading = true, error = null)
         viewModelScope.launch {
             try {
-                val code_hash = withContext(Dispatchers.Default) {
+                val code_hash = withContext(compute_dispatcher) {
                     hash_recovery_code(normalized)
                 }
                 val response = recovery_api.initiate(
@@ -121,7 +123,7 @@ class RecoveryViewModel @Inject constructor(
                 )
                 recovery_token = response.recovery_token
 
-                withContext(Dispatchers.Default) {
+                withContext(compute_dispatcher) {
                     val recovery_key = decrypt_recovery_key_with_code(
                         normalized,
                         base64_decode(response.encrypted_recovery_key),
@@ -175,11 +177,11 @@ class RecoveryViewModel @Inject constructor(
                 val password_bytes = password.toByteArray(Charsets.UTF_8)
 
                 _state.value = _state.value.copy(processing_status = ctx.getString(R.string.status_encrypting_vault))
-                val new_password_hash = withContext(Dispatchers.Default) {
+                val new_password_hash = withContext(compute_dispatcher) {
                     CryptoNative.derive_pbkdf2_hash(password_bytes, new_salt, PBKDF2_ITERATIONS)
                 }
 
-                val new_envelope = withContext(Dispatchers.Default) {
+                val new_envelope = withContext(compute_dispatcher) {
                     CryptoNative.encrypt_vault_with_password(vault_bytes, password_bytes)
                 }
 
@@ -188,11 +190,11 @@ class RecoveryViewModel @Inject constructor(
                 val new_recovery_key = ByteArray(32).also { SecureRandom().nextBytes(it) }
 
                 _state.value = _state.value.copy(processing_status = ctx.getString(R.string.status_creating_backup))
-                val backup = withContext(Dispatchers.Default) {
+                val backup = withContext(compute_dispatcher) {
                     encrypt_vault_backup(vault_bytes, new_recovery_key)
                 }
 
-                val shares = withContext(Dispatchers.Default) {
+                val shares = withContext(compute_dispatcher) {
                     new_codes.map { code ->
                         generate_recovery_share(code, new_recovery_key)
                     }

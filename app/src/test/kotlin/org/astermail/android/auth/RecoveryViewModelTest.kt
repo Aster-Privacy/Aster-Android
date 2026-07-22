@@ -76,6 +76,7 @@ class RecoveryViewModelTest {
             java.util.Base64.getDecoder().decode(firstArg<String>())
         }
         vm = RecoveryViewModel(application, recovery_api)
+        vm.compute_dispatcher = dispatcher
     }
 
     @After
