@@ -174,6 +174,8 @@ class MainActivity : androidx.fragment.app.FragmentActivity() {
         const val EXTRA_OPEN_SESSIONS = "open_sessions"
         val pending_open_email_id = mutableStateOf<String?>(null)
         val pending_open_sessions = mutableStateOf(false)
+        val pending_reveal_email_id = mutableStateOf<String?>(null)
+        val pending_reveal_folder_tokens = mutableStateOf<List<String>?>(null)
     }
 
     private val lockdown_listener =
@@ -206,6 +208,8 @@ class MainActivity : androidx.fragment.app.FragmentActivity() {
         val email_id = intent?.getStringExtra(EXTRA_OPEN_EMAIL_ID)?.takeIf { it.isNotBlank() } ?: return
         intent.removeExtra(EXTRA_OPEN_EMAIL_ID)
         pending_open_email_id.value = email_id
+        pending_reveal_email_id.value = email_id
+        pending_reveal_folder_tokens.value = null
     }
 
     override fun onResume() {
@@ -661,6 +665,22 @@ private fun AsterNavHost() {
                 }
             }
             val settings_state by shared_settings_vm.state.collectAsStateWithLifecycle()
+            val detail_thread_state by shared_mail_vm.thread_state.collectAsStateWithLifecycle()
+            androidx.compose.runtime.LaunchedEffect(detail_thread_state.item?.id, detail_thread_state.is_loading) {
+                if (detail_thread_state.is_loading) return@LaunchedEffect
+                val reveal_id = MainActivity.pending_reveal_email_id.value ?: return@LaunchedEffect
+                val item = detail_thread_state.item ?: return@LaunchedEffect
+                if (item.id != reveal_id || reveal_id != email_id) return@LaunchedEffect
+                MainActivity.pending_reveal_email_id.value = null
+                val tokens = (
+                    item.labels +
+                        listOfNotNull(item.raw_item.folder_token) +
+                        (item.raw_item.folders?.mapNotNull { it.folder_token } ?: emptyList())
+                    ).distinct()
+                if (tokens.isNotEmpty()) {
+                    MainActivity.pending_reveal_folder_tokens.value = tokens
+                }
+            }
             val advance_after_action: () -> Unit = {
                 val next = when (settings_state.preferences?.auto_advance ?: "Go to next message") {
                     "Go to next message" -> neighbor_id(1)
@@ -1187,6 +1207,21 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
             settings_vm.load_labels()
             settings_vm.load_tags()
         }
+    }
+
+    val pending_reveal_tokens = MainActivity.pending_reveal_folder_tokens.value
+    androidx.compose.runtime.LaunchedEffect(pending_reveal_tokens, settings_state.labels) {
+        val tokens = pending_reveal_tokens ?: return@LaunchedEffect
+        if (settings_state.labels.isEmpty()) return@LaunchedEffect
+        MainActivity.pending_reveal_folder_tokens.value = null
+        val node = org.astermail.android.folders.flatten_folder_tree(settings_state.labels)
+            .firstOrNull { it.label.label_token in tokens } ?: return@LaunchedEffect
+        val readable_name = node.label.encrypted_name
+            ?.takeIf { it.isNotBlank() && !looks_encrypted(it) } ?: return@LaunchedEffect
+        filter_kind = "folder"
+        filter_value = node.label.label_token
+        filter_name = readable_name
+        selected_folder = node.label.label_token
     }
 
     val prefs = settings_state.preferences
