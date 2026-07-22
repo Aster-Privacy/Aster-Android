@@ -398,7 +398,7 @@ private object routes {
     const val contact_edit_new = "contact_edit"
     const val contact_edit = "contact_edit/{contact_id}"
 
-    fun mail_detail_for(email_id: String) = "mail_detail/$email_id"
+    fun mail_detail_for(email_id: String) = "mail_detail/" + java.net.URLEncoder.encode(email_id, "UTF-8")
     fun settings_detail(id: String) = "settings_$id"
     fun contact_detail_for(contact_id: String) = "contact_detail/$contact_id"
     fun contact_edit_for(contact_id: String) = "contact_edit/$contact_id"

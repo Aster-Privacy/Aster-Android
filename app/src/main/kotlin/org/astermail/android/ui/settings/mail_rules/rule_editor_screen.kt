@@ -299,6 +299,7 @@ fun RuleEditorScreen(
                 label = stringResource(R.string.mail_rules_save),
                 onClick = {
                     if (is_saving) return@AsterButton
+                    if (rule_id != null && existing == null) return@AsterButton
                     is_saving = true
                     save_error = null
                     if (existing == null) {
@@ -327,7 +328,7 @@ fun RuleEditorScreen(
                         }
                     }
                 },
-                enabled = is_valid && !is_saving,
+                enabled = is_valid && !is_saving && (rule_id == null || existing != null),
                 modifier = Modifier.testTag("save_rule"),
             )
             Spacer(Modifier.height(AsterSpacing.xxl))

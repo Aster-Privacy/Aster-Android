@@ -78,10 +78,15 @@ class ContactsViewModel @Inject constructor(
         }
     }
 
+    private var latest_contact_request: String? = null
+
     fun load_contact(contact_id: String) {
-        _state.value = _state.value.copy(is_loading = true, error = null)
+        latest_contact_request = contact_id
+        _state.value = _state.value.copy(is_loading = true, error = null, selected_contact = null)
         viewModelScope.launch {
-            repository.fetch_contact(contact_id).fold(
+            val result = repository.fetch_contact(contact_id)
+            if (latest_contact_request != contact_id) return@launch
+            result.fold(
                 onSuccess = { contact ->
                     _state.value = _state.value.copy(
                         selected_contact = contact,

@@ -148,6 +148,7 @@ class AuthRepository @Inject constructor(
             val new_refresh = response.refresh_token ?: current_refresh
             token_store.save(response.access_token, new_refresh)
             api_client.invalidate_bearer_cache()
+            runCatching { session_key_store.get_user_id()?.let { save_session_snapshot(it) } }
             RefreshOutcome.Success
         } catch (e: CancellationException) {
             throw e
@@ -237,6 +238,9 @@ class AuthRepository @Inject constructor(
             runCatching {
                 withTimeoutOrNull(3_000L) { database.decrypted_mail_dao().clear_all() }
             }
+            mail_repository.clear_caches()
+            cancel_all_notifications()
+            runCatching { org.astermail.android.notifications.MailPollingWorker.reset_new_mail_baseline(context) }
         }
         token_store.save(access, login_resp.refresh_token ?: access)
         api_client.invalidate_bearer_cache()
@@ -379,6 +383,16 @@ class AuthRepository @Inject constructor(
 
         val access = register_resp.access_token
             ?: throw ApiError.UnknownError("missing access_token on register")
+        val previous_user_id = session_key_store.get_user_id()
+        if (previous_user_id != null && previous_user_id != register_resp.user_id) {
+            session_key_store.clear()
+            runCatching {
+                withTimeoutOrNull(3_000L) { database.decrypted_mail_dao().clear_all() }
+            }
+            mail_repository.clear_caches()
+            cancel_all_notifications()
+            runCatching { org.astermail.android.notifications.MailPollingWorker.reset_new_mail_baseline(context) }
+        }
         token_store.save(access, register_resp.refresh_token ?: access)
         api_client.invalidate_bearer_cache()
         session_key_store.put(password_hash_bytes)
@@ -576,6 +590,7 @@ class AuthRepository @Inject constructor(
         response.csrf_token?.let { api_client.set_csrf(it) }
         response.access_token?.let { token_store.save(it, token_store.refresh_token ?: it) }
 
+        runCatching { session_key_store.get_user_id()?.let { save_session_snapshot(it) } }
         mail_repository.clear_caches()
         database.decrypted_mail_dao().clear_all()
         session_key_store.get_user_email()?.let { trusted_device_store.clear(it) }

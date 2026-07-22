@@ -140,6 +140,7 @@ class MailPollingWorker(
         val stats = try {
             kotlinx.coroutines.withTimeout(20_000L) { mail_api.get_stats() }
         } catch (_: ApiError.UnauthorizedError) {
+            schedule_next(context)
             return Result.success()
         } catch (_: Throwable) {
             return Result.retry()
@@ -356,6 +357,16 @@ class MailPollingWorker(
             context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                 .edit()
                 .putBoolean(KEY_NOTIFY_NEW_EMAIL, enabled)
+                .apply()
+        }
+
+        fun reset_new_mail_baseline(context: Context) {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .remove(KEY_CACHED_UNREAD)
+                .remove(KEY_CACHED_NOTIFIABLE)
+                .remove(KEY_LAST_NOTIFIED_COUNT)
+                .remove(KEY_NOTIFIED_ITEM_IDS)
                 .apply()
         }
 

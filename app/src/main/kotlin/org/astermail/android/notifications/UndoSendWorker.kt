@@ -46,6 +46,7 @@ class UndoSendWorker(
 
     override suspend fun doWork(): Result {
         val pending_id = inputData.getString(KEY_PENDING_ID) ?: return Result.success()
+        val owner_id = inputData.getString(KEY_OWNER_ID)
         val repo = try {
             EntryPointAccessors.fromApplication(
                 context.applicationContext,
@@ -54,7 +55,7 @@ class UndoSendWorker(
         } catch (_: Throwable) {
             return Result.retry()
         }
-        return when (repo.run_pending_send(pending_id)) {
+        return when (repo.run_pending_send(pending_id, owner_id)) {
             PendingSendOutcome.SENT, PendingSendOutcome.GONE, PendingSendOutcome.FAILED -> Result.success()
             PendingSendOutcome.RETRY -> Result.retry()
         }
@@ -68,18 +69,21 @@ class UndoSendWorker(
 
     companion object {
         const val KEY_PENDING_ID = "pending_send_id"
+        const val KEY_OWNER_ID = "pending_send_owner_id"
         private const val WORK_PREFIX = "undo_send_"
 
         private fun work_name(pending_id: String): String = WORK_PREFIX + pending_id
 
-        fun enqueue(context: Context, pending_id: String, initial_delay_ms: Long) {
+        fun enqueue(context: Context, pending_id: String, initial_delay_ms: Long, owner_id: String? = null) {
             val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
                 .build()
+            val data = Data.Builder().putString(KEY_PENDING_ID, pending_id)
+            owner_id?.let { data.putString(KEY_OWNER_ID, it) }
             val request = OneTimeWorkRequestBuilder<UndoSendWorker>()
                 .setConstraints(constraints)
                 .setInitialDelay(initial_delay_ms.coerceAtLeast(0L), TimeUnit.MILLISECONDS)
-                .setInputData(Data.Builder().putString(KEY_PENDING_ID, pending_id).build())
+                .setInputData(data.build())
                 .setBackoffCriteria(BackoffPolicy.LINEAR, 15, TimeUnit.SECONDS)
                 .build()
             WorkManager.getInstance(context).enqueueUniqueWork(

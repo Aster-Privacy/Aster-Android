@@ -3825,8 +3825,8 @@ private fun save_attachment_to_storage(
     bytes: ByteArray,
 ): Boolean {
     return try {
-        val mime = attachment.content_type.ifBlank { "application/octet-stream" }
         val safe_name = sanitize_filename(attachment.filename)
+        val mime = safe_view_mime(safe_name, attachment.content_type)
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
             val values = ContentValues().apply {
                 put(MediaStore.Downloads.DISPLAY_NAME, safe_name)
