@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.security
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
 import androidx.biometric.BiometricPrompt
@@ -47,11 +50,6 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Backspace
-import androidx.compose.material.icons.outlined.Check
-import androidx.compose.material.icons.outlined.Fingerprint
-import androidx.compose.material.icons.outlined.Visibility
-import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -265,7 +263,7 @@ fun AppLockScreen(store: AppLockStore, on_sign_out: () -> Unit) {
                                 )
                             }
                             Icon(
-                                imageVector = if (show_passphrase) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                                imageVector = if (show_passphrase) TablerIcons.EyeOff else TablerIcons.Eye,
                                 contentDescription = null,
                                 tint = colors.text_muted,
                                 modifier = Modifier
@@ -298,7 +296,7 @@ fun AppLockScreen(store: AppLockStore, on_sign_out: () -> Unit) {
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            imageVector = Icons.Outlined.Fingerprint,
+                            imageVector = TablerIcons.Fingerprint,
                             contentDescription = null,
                             tint = colors.accent_blue,
                             modifier = Modifier.size(20.dp),
@@ -390,7 +388,7 @@ fun PinPad(
             PinKey(label = null, enabled = enabled, bg = Color.Transparent, on_click = {})
             PinKey(label = "0", enabled = enabled, bg = colors.bg_secondary, on_click = { on_digit("0") })
             PinIconKey(
-                icon = Icons.Outlined.Check,
+                icon = TablerIcons.Check,
                 enabled = enabled,
                 bg = colors.bg_secondary,
                 on_click = on_confirm,

@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.drawer
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import org.astermail.android.BuildConfig
 import android.content.Context
 import androidx.compose.ui.platform.LocalContext
@@ -53,53 +56,6 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material.icons.automirrored.outlined.Logout
-import androidx.compose.material.icons.outlined.AlternateEmail
-import androidx.compose.material.icons.outlined.Archive
-import androidx.compose.material.icons.outlined.AttachMoney
-import androidx.compose.material.icons.outlined.AutoAwesome
-import androidx.compose.material.icons.outlined.Bolt
-import androidx.compose.material.icons.outlined.Bookmark
-import androidx.compose.material.icons.outlined.Business
-import androidx.compose.material.icons.outlined.ChatBubbleOutline
-import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.Code
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.Drafts
-import androidx.compose.material.icons.outlined.Email
-import androidx.compose.material.icons.outlined.Favorite
-import androidx.compose.material.icons.outlined.Flag
-import androidx.compose.material.icons.outlined.Folder
-import androidx.compose.material.icons.outlined.Inbox
-import androidx.compose.material.icons.outlined.LocalOffer
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.KeyboardArrowDown
-import androidx.compose.material.icons.outlined.KeyboardArrowUp
-import androidx.compose.material.icons.outlined.KeyboardArrowRight
-import androidx.compose.material.icons.outlined.LocalFireDepartment
-import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.MarkEmailRead
-import androidx.compose.material.icons.outlined.Newspaper
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.NotificationsPaused
-import androidx.compose.material.icons.outlined.People
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Public
-import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.material.icons.outlined.Sell
-import androidx.compose.material.icons.automirrored.outlined.Send
-import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.Shield
-import androidx.compose.material.icons.outlined.ShoppingCart
-import androidx.compose.material.icons.outlined.Star
-import androidx.compose.material.icons.outlined.VisibilityOff
-import androidx.compose.material.icons.outlined.WorkspacePremium
-import androidx.compose.material.icons.automirrored.outlined.Label
-import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -140,7 +96,6 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.parse_hex_color_safe
 import androidx.compose.animation.core.tween
 import org.astermail.android.design.components.AsterDragHandle
-import org.astermail.android.design.inter_family
 import org.astermail.android.storage.StoredAccount
 
 data class drawer_folder_item(
@@ -169,7 +124,7 @@ data class drawer_label_item(
 
 fun resolve_label_icon(key: String?): ImageVector =
     key?.let { name -> label_icon_presets.firstOrNull { it.first == name }?.second }
-        ?: Icons.AutoMirrored.Outlined.Label
+        ?: TablerIcons.Tag
 
 data class drawer_alias_item(
     val id: String,
@@ -216,36 +171,36 @@ private val label_color_presets = listOf(
 private const val default_label_color = "#3b82f6"
 
 private val label_icon_presets: List<Pair<String, ImageVector>> = listOf(
-    "clock" to Icons.Outlined.Schedule,
-    "archive" to Icons.Outlined.Archive,
-    "trash" to Icons.Outlined.Delete,
-    "send" to Icons.AutoMirrored.Outlined.Send,
-    "draft" to Icons.Outlined.Drafts,
-    "star" to Icons.Outlined.Star,
-    "flag" to Icons.Outlined.Flag,
-    "bolt" to Icons.Outlined.Bolt,
-    "shield" to Icons.Outlined.Shield,
-    "warning" to Icons.Outlined.WarningAmber,
-    "check" to Icons.Outlined.CheckCircle,
-    "tag" to Icons.Outlined.Sell,
-    "folder" to Icons.Outlined.Folder,
-    "envelope" to Icons.Outlined.Email,
-    "lock" to Icons.Outlined.Lock,
-    "bell" to Icons.Outlined.Notifications,
-    "sparkles" to Icons.Outlined.AutoAwesome,
-    "fire" to Icons.Outlined.LocalFireDepartment,
-    "heart" to Icons.Outlined.Favorite,
-    "bookmark" to Icons.Outlined.Bookmark,
-    "chat" to Icons.Outlined.ChatBubbleOutline,
-    "document" to Icons.Outlined.Description,
-    "currency" to Icons.Outlined.AttachMoney,
-    "cart" to Icons.Outlined.ShoppingCart,
-    "code" to Icons.Outlined.Code,
-    "user" to Icons.Outlined.Person,
-    "building" to Icons.Outlined.Business,
-    "globe" to Icons.Outlined.Public,
-    "info" to Icons.Outlined.Info,
-    "eye-slash" to Icons.Outlined.VisibilityOff,
+    "clock" to TablerIcons.Clock,
+    "archive" to TablerIcons.Archive,
+    "trash" to TablerIcons.Trash,
+    "send" to TablerIcons.Send,
+    "draft" to TablerIcons.FileText,
+    "star" to TablerIcons.Star,
+    "flag" to TablerIcons.Flag,
+    "bolt" to TablerIcons.Bolt,
+    "shield" to TablerIcons.Shield,
+    "warning" to TablerIcons.AlertTriangle,
+    "check" to TablerIcons.CircleCheck,
+    "tag" to TablerIcons.Tag,
+    "folder" to TablerIcons.Folder,
+    "envelope" to TablerIcons.Mail,
+    "lock" to TablerIcons.Lock,
+    "bell" to TablerIcons.Bell,
+    "sparkles" to TablerIcons.Wand,
+    "fire" to TablerIcons.Flame,
+    "heart" to TablerIcons.Heart,
+    "bookmark" to TablerIcons.Bookmark,
+    "chat" to TablerIcons.MessageDots,
+    "document" to TablerIcons.FileText,
+    "currency" to TablerIcons.CurrencyDollar,
+    "cart" to TablerIcons.ShoppingCart,
+    "code" to TablerIcons.Code,
+    "user" to TablerIcons.User,
+    "building" to TablerIcons.Building,
+    "globe" to TablerIcons.World,
+    "info" to TablerIcons.InfoCircle,
+    "eye-slash" to TablerIcons.EyeOff,
 )
 
 private fun parse_hex_color(hex: String): Color =
@@ -359,22 +314,22 @@ fun DrawerContent(
 
     val core_items = remember(categories_enabled, inbox_unread, drafts_count, spam_count, trash_count, label_inbox, label_sent, label_drafts, label_starred, label_archive, label_spam, label_trash) {
         listOfNotNull(
-            if (categories_enabled) null else drawer_folder_item("inbox", label_inbox, Icons.Outlined.Inbox, inbox_unread),
-            drawer_folder_item("sent", label_sent, Icons.AutoMirrored.Outlined.Send),
-            drawer_folder_item("drafts", label_drafts, Icons.Outlined.Description, drafts_count),
-            drawer_folder_item("starred", label_starred, Icons.Outlined.Star),
-            drawer_folder_item("archive", label_archive, Icons.Outlined.Archive),
-            drawer_folder_item("spam", label_spam, Icons.Outlined.WarningAmber, spam_count),
-            drawer_folder_item("trash", label_trash, Icons.Outlined.Delete, trash_count),
+            if (categories_enabled) null else drawer_folder_item("inbox", label_inbox, TablerIcons.Inbox, inbox_unread),
+            drawer_folder_item("sent", label_sent, TablerIcons.Send),
+            drawer_folder_item("drafts", label_drafts, TablerIcons.FileText, drafts_count),
+            drawer_folder_item("starred", label_starred, TablerIcons.Star),
+            drawer_folder_item("archive", label_archive, TablerIcons.Archive),
+            drawer_folder_item("spam", label_spam, TablerIcons.AlertTriangle, spam_count),
+            drawer_folder_item("trash", label_trash, TablerIcons.Trash, trash_count),
         )
     }
 
     val more_secondary = remember(label_scheduled, label_snoozed, label_all_mail, label_subscriptions) {
         listOf(
-            drawer_folder_item("scheduled", label_scheduled, Icons.Outlined.Schedule),
-            drawer_folder_item("snoozed", label_snoozed, Icons.Outlined.NotificationsPaused),
-            drawer_folder_item("all", label_all_mail, Icons.Outlined.Email),
-            drawer_folder_item("subscriptions", label_subscriptions, Icons.Outlined.Newspaper),
+            drawer_folder_item("scheduled", label_scheduled, TablerIcons.Clock),
+            drawer_folder_item("snoozed", label_snoozed, TablerIcons.BellMinus),
+            drawer_folder_item("all", label_all_mail, TablerIcons.Mail),
+            drawer_folder_item("subscriptions", label_subscriptions, TablerIcons.News),
         )
     }
 
@@ -407,10 +362,10 @@ fun DrawerContent(
 
             if (categories_enabled) {
                 val category_rows = listOf(
-                    Triple("primary", stringResource(R.string.rules_category_primary), Icons.Outlined.Inbox),
-                    Triple("social", stringResource(R.string.rules_category_social), Icons.Outlined.People),
-                    Triple("promotions", stringResource(R.string.rules_category_promotions), Icons.Outlined.LocalOffer),
-                    Triple("updates", stringResource(R.string.rules_category_updates), Icons.Outlined.Notifications),
+                    Triple("primary", stringResource(R.string.rules_category_primary), TablerIcons.Inbox),
+                    Triple("social", stringResource(R.string.rules_category_social), TablerIcons.Users),
+                    Triple("promotions", stringResource(R.string.rules_category_promotions), TablerIcons.Discount),
+                    Triple("updates", stringResource(R.string.rules_category_updates), TablerIcons.Bell),
                 )
                 category_rows.forEach { (key, label, icon) ->
                     drawer_row(
@@ -441,15 +396,7 @@ fun DrawerContent(
                 )
             }
 
-            Spacer(Modifier.height(AsterSpacing.sm))
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = AsterSpacing.lg)
-                    .height(1.dp)
-                    .background(colors.border_secondary),
-            )
-            Spacer(Modifier.height(AsterSpacing.xs))
+            Spacer(Modifier.height(AsterSpacing.md))
 
             collapsible_section_header(
                 text = stringResource(R.string.drawer_more),
@@ -480,7 +427,7 @@ fun DrawerContent(
                         )
                     }
                     drawer_row(
-                        icon = Icons.Outlined.WorkspacePremium,
+                        icon = TablerIcons.Crown,
                         label = stringResource(R.string.subscription),
                         count = 0,
                         is_unread_count = false,
@@ -491,7 +438,7 @@ fun DrawerContent(
                         },
                     )
                     drawer_row(
-                        icon = Icons.Outlined.MarkEmailRead,
+                        icon = TablerIcons.MailOpened,
                         label = stringResource(R.string.refer_a_friend),
                         count = 0,
                         is_unread_count = false,
@@ -669,11 +616,11 @@ fun DrawerContent(
                     .fillMaxWidth()
                     .padding(horizontal = AsterSpacing.lg)
                     .height(1.dp)
-                    .background(colors.border_secondary),
+                    .background(colors.border_secondary.copy(alpha = 0.5f)),
             )
             Spacer(Modifier.height(AsterSpacing.xs))
             drawer_row(
-                icon = Icons.Outlined.People,
+                icon = TablerIcons.Users,
                 label = stringResource(R.string.folder_contacts),
                 count = 0,
                 is_unread_count = false,
@@ -684,7 +631,7 @@ fun DrawerContent(
                 },
             )
             drawer_row(
-                icon = Icons.Outlined.Settings,
+                icon = TablerIcons.Settings,
                 label = stringResource(R.string.settings),
                 count = 0,
                 is_unread_count = false,
@@ -804,7 +751,6 @@ private fun create_folder_dialog(
                         Text(
                             text = placeholder,
                             color = colors.text_muted,
-                            fontFamily = inter_family,
                         )
                     },
                     singleLine = true,
@@ -815,7 +761,6 @@ private fun create_folder_dialog(
                     text = stringResource(R.string.parent_folder),
                     color = colors.text_muted,
                     fontSize = 13.sp,
-                    fontFamily = inter_family,
                 )
                 Spacer(Modifier.height(AsterSpacing.xs))
                 Box(modifier = Modifier.fillMaxWidth()) {
@@ -833,11 +778,10 @@ private fun create_folder_dialog(
                             text = selected_parent?.label ?: none_label,
                             color = colors.text_primary,
                             fontSize = 15.sp,
-                            fontFamily = inter_family,
                             modifier = Modifier.weight(1f),
                         )
                         Icon(
-                            imageVector = Icons.Outlined.KeyboardArrowDown,
+                            imageVector = TablerIcons.ChevronDown,
                             contentDescription = null,
                             tint = colors.text_muted,
                             modifier = Modifier.size(20.dp),
@@ -851,7 +795,6 @@ private fun create_folder_dialog(
                             text = {
                                 Text(
                                     text = none_label,
-                                    fontFamily = inter_family,
                                 )
                             },
                             onClick = {
@@ -865,7 +808,7 @@ private fun create_folder_dialog(
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Spacer(Modifier.width((option.depth * 12).dp))
                                         Icon(
-                                            imageVector = Icons.Outlined.Folder,
+                                            imageVector = TablerIcons.Folder,
                                             contentDescription = null,
                                             tint = colors.text_muted,
                                             modifier = Modifier.size(16.dp),
@@ -873,7 +816,6 @@ private fun create_folder_dialog(
                                         Spacer(Modifier.width(AsterSpacing.sm))
                                         Text(
                                             text = option.label,
-                                            fontFamily = inter_family,
                                         )
                                     }
                                 },
@@ -892,7 +834,6 @@ private fun create_folder_dialog(
                         text = path_label,
                         color = colors.text_muted,
                         fontSize = 12.sp,
-                        fontFamily = inter_family,
                     )
                 }
             }
@@ -933,7 +874,7 @@ private fun create_label_dialog(
                 ) {
                     val icon_vector = selected_icon
                         ?.let { key -> label_icon_presets.firstOrNull { it.first == key }?.second }
-                        ?: Icons.AutoMirrored.Outlined.Label
+                        ?: TablerIcons.Tag
                     Icon(
                         imageVector = icon_vector,
                         contentDescription = null,
@@ -946,7 +887,6 @@ private fun create_label_dialog(
                         color = colors.text_primary,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
-                        fontFamily = inter_family,
                     )
                 }
 
@@ -957,7 +897,6 @@ private fun create_label_dialog(
                         Text(
                             text = stringResource(R.string.label_name),
                             color = colors.text_muted,
-                            fontFamily = inter_family,
                         )
                     },
                     singleLine = true,
@@ -970,7 +909,6 @@ private fun create_label_dialog(
                     color = colors.text_muted,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
-                    fontFamily = inter_family,
                 )
                 Spacer(Modifier.height(AsterSpacing.xs))
                 FlowRow(
@@ -997,7 +935,7 @@ private fun create_label_dialog(
                         ) {
                             if (is_selected) {
                                 Icon(
-                                    imageVector = Icons.Filled.Check,
+                                    imageVector = TablerIcons.Check,
                                     contentDescription = null,
                                     tint = Color.White,
                                     modifier = Modifier.size(14.dp),
@@ -1013,7 +951,6 @@ private fun create_label_dialog(
                     color = colors.text_muted,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
-                    fontFamily = inter_family,
                 )
                 Spacer(Modifier.height(AsterSpacing.xs))
                 FlowRow(
@@ -1097,7 +1034,6 @@ private fun workspace_switcher_sheet(
                 color = colors.text_muted,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
-                fontFamily = inter_family,
                 modifier = Modifier.padding(horizontal = AsterSpacing.sm, vertical = AsterSpacing.xs),
             )
             if (ordered.isEmpty()) {
@@ -1119,7 +1055,6 @@ private fun workspace_switcher_sheet(
                             color = av_fg,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
-                            fontFamily = inter_family,
                         )
                     }
                     Spacer(Modifier.width(AsterSpacing.md))
@@ -1128,11 +1063,10 @@ private fun workspace_switcher_sheet(
                         color = colors.text_primary,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
-                        fontFamily = inter_family,
                         modifier = Modifier.weight(1f),
                     )
                     Icon(
-                        imageVector = Icons.Filled.Check,
+                        imageVector = TablerIcons.Check,
                         contentDescription = stringResource(R.string.current),
                         tint = colors.accent_blue,
                         modifier = Modifier.size(18.dp),
@@ -1162,13 +1096,11 @@ private fun workspace_switcher_sheet(
                             color = colors.text_primary,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
-                            fontFamily = inter_family,
                         )
                         Text(
                             text = account.email,
                             color = colors.text_muted,
                             fontSize = 12.sp,
-                            fontFamily = inter_family,
                         )
                     }
                     Box(
@@ -1178,7 +1110,7 @@ private fun workspace_switcher_sheet(
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.ContentCopy,
+                            imageVector = TablerIcons.Copy,
                             contentDescription = stringResource(R.string.copy),
                             tint = colors.text_muted,
                             modifier = Modifier.size(16.dp),
@@ -1186,7 +1118,7 @@ private fun workspace_switcher_sheet(
                     }
                     if (is_current) {
                         Icon(
-                            imageVector = Icons.Filled.Check,
+                            imageVector = TablerIcons.Check,
                             contentDescription = stringResource(R.string.current),
                             tint = colors.accent_blue,
                             modifier = Modifier.size(18.dp),
@@ -1202,7 +1134,7 @@ private fun workspace_switcher_sheet(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.Add,
+                    imageVector = TablerIcons.Plus,
                     contentDescription = null,
                     tint = if (can_add) colors.text_muted else colors.text_muted.copy(alpha = 0.4f),
                     modifier = Modifier.size(18.dp),
@@ -1213,7 +1145,6 @@ private fun workspace_switcher_sheet(
                     color = if (can_add) colors.text_primary else colors.text_muted,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
-                    fontFamily = inter_family,
                 )
             }
             Row(
@@ -1224,7 +1155,7 @@ private fun workspace_switcher_sheet(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Outlined.Logout,
+                    imageVector = TablerIcons.Logout,
                     contentDescription = null,
                     tint = colors.danger,
                     modifier = Modifier.size(18.dp),
@@ -1235,7 +1166,6 @@ private fun workspace_switcher_sheet(
                     color = colors.danger,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
-                    fontFamily = inter_family,
                 )
             }
             Spacer(Modifier.height(AsterSpacing.md))
@@ -1256,49 +1186,53 @@ private fun workspace_header(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(horizontal = 10.dp, vertical = 2.dp)
+                .clip(RoundedCornerShape(18.dp))
+                .background(colors.bg_hover)
                 .clickable(onClick = on_click)
-                .padding(horizontal = 20.dp, vertical = 12.dp)
+                .padding(horizontal = 14.dp, vertical = 12.dp)
                 .testTag("workspace_switcher"),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            SenderAvatar(
-                email = account_email,
-                name = account_name,
-                size = 28.dp,
-                profile_picture_url = profile_picture,
-                modifier = Modifier.testTag("account_avatar"),
-            )
-            Spacer(Modifier.width(10.dp))
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .border(1.5.dp, colors.border_secondary, CircleShape)
+                    .padding(2.dp),
+            ) {
+                SenderAvatar(
+                    email = account_email,
+                    name = account_name,
+                    size = 38.dp,
+                    profile_picture_url = profile_picture,
+                    modifier = Modifier.testTag("account_avatar"),
+                )
+            }
+            Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = stringResource(R.string.app_name),
                     color = colors.text_primary,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    fontFamily = inter_family,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = (-0.2).sp,
                 )
                 Text(
                     text = current_address,
                     color = colors.text_muted,
-                    fontSize = 11.sp,
-                    fontFamily = inter_family,
+                    fontSize = 12.sp,
                     maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 )
             }
             Icon(
-                imageVector = Icons.Outlined.KeyboardArrowDown,
+                imageVector = TablerIcons.ChevronDown,
                 contentDescription = stringResource(R.string.switch_workspace),
                 tint = colors.text_muted,
                 modifier = Modifier.size(20.dp),
             )
         }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(colors.border_secondary),
-        )
+        Spacer(Modifier.height(AsterSpacing.xs))
     }
 }
 
@@ -1321,31 +1255,30 @@ private fun collapsible_section_header(
             .fillMaxWidth()
             .clickable(onClick = on_toggle)
             .padding(
-                start = 16.dp,
-                end = 12.dp,
-                top = 14.dp,
-                bottom = 6.dp,
+                start = 24.dp,
+                end = 16.dp,
+                top = 18.dp,
+                bottom = 8.dp,
             ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        Text(
+            text = text.uppercase(),
+            color = colors.text_muted.copy(alpha = 0.75f),
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.8.sp,
+            modifier = Modifier.weight(1f),
+        )
         Icon(
-            imageVector = Icons.Outlined.KeyboardArrowDown,
+            imageVector = TablerIcons.ChevronDown,
             contentDescription = null,
-            tint = colors.text_muted.copy(alpha = 0.8f),
+            tint = colors.text_muted.copy(alpha = 0.7f),
             modifier = Modifier
                 .size(16.dp)
                 .graphicsLayer { rotationZ = chevron_rotation },
         )
-        Spacer(Modifier.width(6.dp))
-        Text(
-            text = text.uppercase(),
-            color = colors.text_muted.copy(alpha = 0.85f),
-            fontSize = 11.sp,
-            fontWeight = FontWeight.SemiBold,
-            letterSpacing = 0.6.sp,
-            fontFamily = inter_family,
-            modifier = Modifier.weight(1f),
-        )
+        Spacer(Modifier.width(if (show_add) 8.dp else 0.dp))
         if (show_add) {
             Box(
                 modifier = Modifier
@@ -1356,7 +1289,7 @@ private fun collapsible_section_header(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.Add,
+                    imageVector = TablerIcons.Plus,
                     contentDescription = stringResource(R.string.add),
                     tint = colors.text_muted,
                     modifier = Modifier.size(14.dp),
@@ -1439,25 +1372,41 @@ private fun drawer_row(
 ) {
     val colors = AsterMaterial.colors
     val bg by animateColorAsState(
-        targetValue = if (selected) colors.indicator_bg else Color.Transparent,
+        targetValue = if (selected) colors.text_primary.copy(alpha = 0.09f) else Color.Transparent,
         animationSpec = tween(durationMillis = 150),
         label = "row_bg",
     )
-    val text_color = colors.text_primary
-    val icon_color = if (selected) colors.text_primary else colors.text_muted
+    val border_color by animateColorAsState(
+        targetValue = if (selected) colors.text_primary.copy(alpha = 0.10f) else Color.Transparent,
+        animationSpec = tween(durationMillis = 150),
+        label = "row_border",
+    )
+    val text_color by animateColorAsState(
+        targetValue = if (selected) colors.text_primary else colors.text_secondary,
+        animationSpec = tween(durationMillis = 150),
+        label = "row_text",
+    )
+    val icon_color by animateColorAsState(
+        targetValue = if (selected) colors.text_primary else colors.text_muted,
+        animationSpec = tween(durationMillis = 150),
+        label = "row_icon",
+    )
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(46.dp)
+            .padding(horizontal = 10.dp, vertical = 2.dp)
+            .height(48.dp)
+            .clip(RoundedCornerShape(15.dp))
             .background(bg)
+            .border(1.dp, border_color, RoundedCornerShape(15.dp))
             .clickable(onClick = on_click)
             .then(if (test_tag != null) Modifier.testTag(test_tag) else Modifier),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .height(46.dp),
+                .padding(horizontal = 15.dp)
+                .height(48.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             tree_indent_guides(depth, trail, has_next)
@@ -1467,13 +1416,13 @@ private fun drawer_row(
                 tint = icon_color,
                 modifier = Modifier.size(22.dp),
             )
-            Spacer(Modifier.width(18.dp))
+            Spacer(Modifier.width(16.dp))
             Text(
                 text = label,
                 color = text_color,
-                fontSize = 16.sp,
-                fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
-                fontFamily = inter_family,
+                fontSize = 15.5.sp,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                letterSpacing = (-0.15).sp,
                 modifier = Modifier.weight(1f),
             )
             if (count > 0 && is_unread_count) {
@@ -1490,16 +1439,12 @@ private fun drawer_row(
 @Composable
 private fun count_badge(value: Int, emphasized: Boolean, selected: Boolean) {
     val colors = AsterMaterial.colors
-    val text_color = when {
-        selected -> colors.text_secondary
-        else -> colors.text_muted
-    }
+    val text_color = if (selected) colors.text_secondary else colors.text_muted
     Text(
         text = value.toString(),
         color = text_color,
         fontSize = 13.sp,
         fontWeight = FontWeight.Medium,
-        fontFamily = inter_family,
     )
 }
 
@@ -1513,7 +1458,7 @@ private fun drawer_label_row(
 ) {
     val colors = AsterMaterial.colors
     val bg by animateColorAsState(
-        targetValue = if (selected) colors.indicator_bg else Color.Transparent,
+        targetValue = if (selected) colors.text_primary.copy(alpha = 0.08f) else Color.Transparent,
         animationSpec = tween(durationMillis = 150),
         label = "row_bg",
     )
@@ -1524,10 +1469,12 @@ private fun drawer_label_row(
     )
     val row_modifier = Modifier
         .fillMaxWidth()
+        .padding(horizontal = 10.dp, vertical = 2.dp)
+        .clip(RoundedCornerShape(15.dp))
         .background(bg)
         .clickable(onClick = on_click)
-        .padding(horizontal = 20.dp)
-        .height(46.dp)
+        .padding(horizontal = 15.dp)
+        .height(48.dp)
     Row(
         modifier = row_modifier,
         verticalAlignment = Alignment.CenterVertically,
@@ -1538,13 +1485,13 @@ private fun drawer_label_row(
             tint = color,
             modifier = Modifier.size(22.dp),
         )
-        Spacer(Modifier.width(18.dp))
+        Spacer(Modifier.width(16.dp))
         Text(
             text = label,
             color = text_color,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Normal,
-            fontFamily = inter_family,
+            fontSize = 15.5.sp,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+            letterSpacing = (-0.15).sp,
             modifier = Modifier.weight(1f),
         )
     }
@@ -1558,38 +1505,40 @@ private fun drawer_alias_row(
 ) {
     val colors = AsterMaterial.colors
     val bg by animateColorAsState(
-        targetValue = if (selected) colors.indicator_bg else Color.Transparent,
+        targetValue = if (selected) colors.text_primary.copy(alpha = 0.08f) else Color.Transparent,
         animationSpec = tween(durationMillis = 150),
         label = "row_bg",
     )
-    val text_color by animateColorAsState(
-        targetValue = if (selected) colors.text_primary else colors.text_secondary,
+    val icon_color by animateColorAsState(
+        targetValue = if (selected) colors.text_primary else colors.text_muted,
         animationSpec = tween(durationMillis = 150),
-        label = "row_text",
+        label = "row_icon",
     )
     val row_modifier = Modifier
         .fillMaxWidth()
+        .padding(horizontal = 10.dp, vertical = 2.dp)
+        .clip(RoundedCornerShape(15.dp))
         .background(bg)
         .clickable(onClick = on_click)
-        .padding(horizontal = 20.dp)
-        .height(46.dp)
+        .padding(horizontal = 15.dp)
+        .height(48.dp)
     Row(
         modifier = row_modifier,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = Icons.Outlined.AlternateEmail,
+            imageVector = TablerIcons.At,
             contentDescription = null,
-            tint = if (selected) colors.text_primary else colors.text_muted,
+            tint = icon_color,
             modifier = Modifier.size(22.dp),
         )
-        Spacer(Modifier.width(18.dp))
+        Spacer(Modifier.width(16.dp))
         Text(
             text = address,
-            color = colors.text_primary,
+            color = if (selected) colors.text_primary else colors.text_secondary,
             fontSize = 15.sp,
-            fontWeight = FontWeight.Normal,
-            fontFamily = inter_family,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+            letterSpacing = (-0.15).sp,
             modifier = Modifier.weight(1f),
         )
     }
@@ -1640,7 +1589,6 @@ private fun drawer_footer(
                 color = colors.text_muted,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Medium,
-                fontFamily = inter_family,
             )
         }
     }
@@ -1672,7 +1620,6 @@ private fun storage_meter(used_percent: Float, label: String) {
                 color = colors.text_secondary,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
-                fontFamily = inter_family,
                 modifier = Modifier.weight(1f),
             )
             Text(
@@ -1680,7 +1627,6 @@ private fun storage_meter(used_percent: Float, label: String) {
                 color = colors.text_muted,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
-                fontFamily = inter_family,
             )
         }
         Spacer(Modifier.height(8.dp))
@@ -1712,7 +1658,6 @@ private fun storage_meter(used_percent: Float, label: String) {
                 text = label,
                 color = colors.text_muted,
                 fontSize = 12.sp,
-                fontFamily = inter_family,
             )
         }
     }
@@ -1754,7 +1699,7 @@ private fun show_more_row(text: String, expanded: Boolean, on_click: () -> Unit)
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = Icons.Outlined.KeyboardArrowDown,
+            imageVector = TablerIcons.ChevronDown,
             contentDescription = null,
             tint = colors.text_muted,
             modifier = Modifier
@@ -1767,7 +1712,6 @@ private fun show_more_row(text: String, expanded: Boolean, on_click: () -> Unit)
             color = colors.text_muted,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
-            fontFamily = inter_family,
         )
     }
 }
@@ -1779,7 +1723,6 @@ private fun empty_section_hint(text: String) {
         text = text,
         color = colors.text_muted,
         fontSize = 13.sp,
-        fontFamily = inter_family,
         modifier = Modifier.padding(
             start = AsterSpacing.xxl,
             top = AsterSpacing.xs,

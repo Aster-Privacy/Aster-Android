@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.settings.detail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
@@ -46,10 +49,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Check
-import androidx.compose.material.icons.outlined.CreditCard
-import androidx.compose.material.icons.outlined.CurrencyBitcoin
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.AlertDialog as M3AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -360,7 +359,7 @@ fun SubscriptionsScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (current_code != "free") {
                             Icon(
-                                imageVector = Icons.Outlined.Star,
+                                imageVector = TablerIcons.Star,
                                 contentDescription = null,
                                 tint = colors.accent_blue,
                                 modifier = Modifier.size(24.dp),
@@ -420,7 +419,7 @@ fun SubscriptionsScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (current_code != "free") {
                         Icon(
-                            imageVector = Icons.Outlined.Star,
+                            imageVector = TablerIcons.Star,
                             contentDescription = null,
                             tint = colors.accent_blue,
                             modifier = Modifier.size(24.dp),
@@ -642,13 +641,13 @@ private fun payment_method_dialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
                 payment_method_option(
-                    icon = Icons.Outlined.CreditCard,
+                    icon = TablerIcons.CreditCard,
                     label = stringResource(R.string.payment_method_card),
                     subtitle = stringResource(R.string.payment_method_card_subtitle),
                     onClick = on_card,
                 )
                 payment_method_option(
-                    icon = Icons.Outlined.CurrencyBitcoin,
+                    icon = TablerIcons.CurrencyBitcoin,
                     label = stringResource(R.string.payment_method_crypto),
                     subtitle = stringResource(R.string.payment_method_crypto_subtitle),
                     onClick = on_crypto,
@@ -738,7 +737,7 @@ private fun crypto_term_dialog(
                             fontWeight = if (term_active) FontWeight.SemiBold else FontWeight.Normal,
                         )
                         if (term_active) {
-                            Icon(Icons.Outlined.Check, null, tint = Color.White, modifier = Modifier.size(18.dp))
+                            Icon(TablerIcons.Check, null, tint = Color.White, modifier = Modifier.size(18.dp))
                         }
                     }
                 }
@@ -802,7 +801,7 @@ private fun feature_row(@StringRes feature_res: Int) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = Icons.Outlined.Check,
+            imageVector = TablerIcons.Check,
             contentDescription = null,
             tint = colors.success,
             modifier = Modifier.size(16.dp),

@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.settings.detail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -42,12 +45,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Check
-import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material.icons.outlined.FileDownload
-import androidx.compose.material.icons.outlined.Key
-import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -302,7 +299,7 @@ fun EncryptionScreen(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
                             Icon(
-                                imageVector = Icons.Outlined.CheckCircle,
+                                imageVector = TablerIcons.CircleCheck,
                                 contentDescription = null,
                                 tint = colors.success,
                                 modifier = Modifier.size(13.dp),
@@ -339,7 +336,7 @@ fun EncryptionScreen(
                                 .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
                         )
                         AsterIconButton(
-                            icon = Icons.Outlined.ContentCopy,
+                            icon = TablerIcons.Copy,
                             content_description = stringResource(R.string.copy_fingerprint_action),
                             onClick = {
                                 copy_to_clipboard(context, context.getString(R.string.clipboard_label_identity_fingerprint), fingerprint)
@@ -382,7 +379,7 @@ fun EncryptionScreen(
                         )
                         if (identity_public_b64 != null) {
                             AsterIconButton(
-                                icon = Icons.Outlined.ContentCopy,
+                                icon = TablerIcons.Copy,
                                 content_description = stringResource(R.string.copy_public_key_action),
                                 onClick = {
                                     copy_to_clipboard(context, context.getString(R.string.clipboard_label_identity_public_key), identity_public_b64)
@@ -460,7 +457,7 @@ fun EncryptionScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.Key,
+                        imageVector = TablerIcons.Key,
                         contentDescription = null,
                         tint = colors.text_muted,
                         modifier = Modifier.size(24.dp),
@@ -920,7 +917,7 @@ private fun key_card_action(
         horizontalArrangement = Arrangement.Center,
     ) {
         Icon(
-            imageVector = Icons.Outlined.FileDownload,
+            imageVector = TablerIcons.Download,
             contentDescription = null,
             tint = colors.text_primary,
             modifier = Modifier.size(15.dp),
@@ -947,7 +944,7 @@ private fun encryption_feature_row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = Icons.Outlined.Check,
+            imageVector = TablerIcons.Check,
             contentDescription = null,
             tint = colors.success,
             modifier = Modifier.size(15.dp),
@@ -1025,7 +1022,7 @@ private fun storage_format_card(
                 contentAlignment = Alignment.Center,
             ) {
                 if (selected) {
-                    Icon(Icons.Outlined.Check, null, tint = Color.White, modifier = Modifier.size(10.dp))
+                    Icon(TablerIcons.Check, null, tint = Color.White, modifier = Modifier.size(10.dp))
                 }
             }
         }

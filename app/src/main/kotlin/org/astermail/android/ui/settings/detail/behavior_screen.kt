@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.settings.detail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -40,7 +43,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
@@ -91,7 +93,7 @@ private fun behavior_option(label: String, selected: Boolean, on_click: () -> Un
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.Check,
+                    imageVector = TablerIcons.Check,
                     contentDescription = null,
                     tint = Color.White,
                     modifier = Modifier.size(13.dp),

@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.settings.detail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.animation.AnimatedVisibility
@@ -36,8 +39,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Computer
-import androidx.compose.material.icons.outlined.PhoneAndroid
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -233,7 +234,7 @@ private fun session_row(
     val colors = AsterMaterial.colors
     val device_label = parse_device_label(session)
     val is_mobile = is_mobile_session(session)
-    val icon = if (is_mobile) Icons.Outlined.PhoneAndroid else Icons.Outlined.Computer
+    val icon = if (is_mobile) TablerIcons.DeviceMobile else TablerIcons.DeviceDesktop
 
     Row(
         modifier = Modifier

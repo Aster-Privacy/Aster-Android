@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.settings.detail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -33,7 +36,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
@@ -81,7 +83,7 @@ private fun access_option_row(label: String, selected: Boolean, on_click: () -> 
                 modifier = Modifier.size(20.dp).background(colors.accent_blue, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(imageVector = Icons.Outlined.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(13.dp))
+                Icon(imageVector = TablerIcons.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(13.dp))
             }
         }
     }

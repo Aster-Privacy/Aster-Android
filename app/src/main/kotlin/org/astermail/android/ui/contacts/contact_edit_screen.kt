@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.contacts
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -40,7 +43,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -149,7 +151,7 @@ fun ContactEditScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AsterIconButton(
-                icon = Icons.AutoMirrored.Filled.ArrowBack,
+                icon = TablerIcons.ArrowBack,
                 content_description = stringResource(R.string.back),
                 onClick = on_back,
             )

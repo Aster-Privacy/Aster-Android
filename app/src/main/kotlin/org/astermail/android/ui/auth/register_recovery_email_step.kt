@@ -21,6 +21,10 @@
 
 package org.astermail.android.ui.auth
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,15 +35,17 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.astermail.android.R
@@ -62,19 +68,32 @@ fun RegisterRecoveryEmailStep(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = AsterSpacing.xxl),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(Modifier.height(AsterSpacing.sm))
+        Spacer(Modifier.height(AsterSpacing.xl))
+
+        Image(
+            painter = painterResource(R.drawable.aster_wordmark),
+            contentDescription = null,
+            modifier = Modifier.height(40.dp),
+        )
+
+        Spacer(Modifier.height(AsterSpacing.xl))
+
         Text(
             text = stringResource(R.string.add_backup_email),
             color = colors.text_primary,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
+            fontSize = 30.sp,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = (-0.3).sp,
+            textAlign = TextAlign.Center,
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(AsterSpacing.md))
         Text(
             text = stringResource(R.string.backup_email_description),
             color = colors.text_tertiary,
             fontSize = 14.sp,
+            textAlign = TextAlign.Center,
         )
 
         Spacer(Modifier.height(AsterSpacing.xxl))
@@ -89,7 +108,7 @@ fun RegisterRecoveryEmailStep(
                 imeAction = ImeAction.Done,
             ),
             leading_icon = {
-                Icon(Icons.Filled.Email, null, tint = colors.text_muted)
+                Icon(TablerIcons.Mail, null, tint = colors.text_muted)
             },
         )
 

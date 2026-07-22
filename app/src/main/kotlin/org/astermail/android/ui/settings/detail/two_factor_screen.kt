@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.settings.detail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -37,7 +40,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.VerifiedUser
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -132,7 +134,7 @@ private fun idle_panel(state: org.astermail.android.twofactor.TwoFactorUiState, 
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                imageVector = Icons.Outlined.VerifiedUser,
+                imageVector = TablerIcons.ShieldCheck,
                 contentDescription = null,
                 tint = if (state.enabled) colors.success else colors.text_tertiary,
                 modifier = Modifier.size(28.dp),

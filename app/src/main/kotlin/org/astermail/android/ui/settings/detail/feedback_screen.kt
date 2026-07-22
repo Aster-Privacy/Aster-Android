@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.settings.detail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -36,9 +39,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.BugReport
-import androidx.compose.material.icons.outlined.Favorite
-import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -124,11 +124,11 @@ fun FeedbackScreen(
         )
         section_label(stringResource(R.string.category))
         Row(modifier = Modifier.fillMaxWidth().padding(vertical = AsterSpacing.sm)) {
-            category_chip(stringResource(R.string.category_feedback), Icons.Outlined.Favorite, category == "general") { category = "general" }
+            category_chip(stringResource(R.string.category_feedback), TablerIcons.Heart, category == "general") { category = "general" }
             Spacer(Modifier.width(AsterSpacing.sm))
-            category_chip(stringResource(R.string.category_idea), Icons.Outlined.Lightbulb, category == "feature") { category = "feature" }
+            category_chip(stringResource(R.string.category_idea), TablerIcons.Bulb, category == "feature") { category = "feature" }
             Spacer(Modifier.width(AsterSpacing.sm))
-            category_chip(stringResource(R.string.category_bug), Icons.Outlined.BugReport, category == "bug") { category = "bug" }
+            category_chip(stringResource(R.string.category_bug), TablerIcons.Bug, category == "bug") { category = "bug" }
         }
         v_gap(AsterSpacing.md)
         section_label(stringResource(R.string.message))

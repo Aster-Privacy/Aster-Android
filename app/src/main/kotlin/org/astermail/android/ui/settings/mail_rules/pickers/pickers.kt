@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.settings.mail_rules.pickers
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -47,7 +50,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
@@ -163,7 +165,7 @@ fun row_select(
             exit = fadeOut(tween(100)) + scaleOut(targetScale = 0.6f, animationSpec = tween(100)),
         ) {
             Icon(
-                imageVector = Icons.Outlined.Check,
+                imageVector = TablerIcons.Check,
                 contentDescription = null,
                 tint = colors.accent_blue,
                 modifier = Modifier.size(20.dp),

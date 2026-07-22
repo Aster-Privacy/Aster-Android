@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.settings.detail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -46,18 +49,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Cancel
-import androidx.compose.material.icons.outlined.Check
-import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Domain
-import androidx.compose.material.icons.outlined.ErrorOutline
-import androidx.compose.material.icons.outlined.ExpandLess
-import androidx.compose.material.icons.outlined.ExpandMore
-import androidx.compose.material.icons.outlined.KeyboardArrowLeft
-import androidx.compose.material.icons.outlined.KeyboardArrowRight
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -369,7 +360,7 @@ private fun aliases_tab(
                         placeholder = { Text(stringResource(R.string.search_aliases), color = colors.text_muted) },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Outlined.Search,
+                                imageVector = TablerIcons.Search,
                                 contentDescription = null,
                                 tint = colors.text_muted,
                                 modifier = Modifier.size(18.dp),
@@ -629,7 +620,7 @@ internal fun alias_list_row(
                 )
                 Spacer(Modifier.width(4.dp))
                 AsterIconButton(
-                    icon = Icons.Outlined.ContentCopy,
+                    icon = TablerIcons.Copy,
                     content_description = stringResource(R.string.copy),
                     onClick = {
                         val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -638,7 +629,7 @@ internal fun alias_list_row(
                     },
                 )
                 AsterIconButton(
-                    icon = Icons.Outlined.Delete,
+                    icon = TablerIcons.Trash,
                     content_description = "Delete",
                     onClick = on_delete,
                     tint = colors.danger,
@@ -723,7 +714,7 @@ private fun custom_domain_address_row(
                 )
                 Spacer(Modifier.width(4.dp))
                 AsterIconButton(
-                    icon = Icons.Outlined.ContentCopy,
+                    icon = TablerIcons.Copy,
                     content_description = stringResource(R.string.copy),
                     onClick = {
                         val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -732,7 +723,7 @@ private fun custom_domain_address_row(
                     },
                 )
                 AsterIconButton(
-                    icon = Icons.Outlined.Delete,
+                    icon = TablerIcons.Trash,
                     content_description = stringResource(R.string.delete),
                     onClick = on_delete,
                     tint = colors.danger,
@@ -768,7 +759,7 @@ private fun recently_deleted_section(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = Icons.Outlined.Delete,
+            imageVector = TablerIcons.Trash,
             contentDescription = null,
             tint = colors.text_tertiary,
             modifier = Modifier.size(16.dp),
@@ -788,7 +779,7 @@ private fun recently_deleted_section(
         )
         Spacer(Modifier.weight(1f))
         Icon(
-            imageVector = if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+            imageVector = if (expanded) TablerIcons.ChevronUp else TablerIcons.ChevronDown,
             contentDescription = null,
             tint = colors.text_muted,
             modifier = Modifier.size(20.dp),
@@ -850,7 +841,7 @@ private fun recently_deleted_section(
                             onClick = { vm.restore_deleted_alias(alias.id) },
                         )
                         AsterIconButton(
-                            icon = Icons.Outlined.Delete,
+                            icon = TablerIcons.Trash,
                             content_description = stringResource(R.string.alias_delete_permanently),
                             onClick = { pending_purge = alias },
                             tint = colors.danger,
@@ -1191,7 +1182,7 @@ private fun directories_tab(
                         ),
                     )
                     AsterIconButton(
-                        icon = Icons.Outlined.Delete,
+                        icon = TablerIcons.Trash,
                         content_description = stringResource(R.string.alias_delete_directory),
                         onClick = { vm.delete_directory(dir.id) },
                         tint = colors.danger,
@@ -1420,7 +1411,7 @@ private fun preferences_tab(
                 else -> stringResource(R.string.alias_unsubscribe_preserve_desc)
             },
             trailing = {
-                Icon(imageVector = Icons.Outlined.KeyboardArrowRight, contentDescription = null, tint = colors.text_muted, modifier = Modifier.size(20.dp))
+                Icon(imageVector = TablerIcons.ChevronRight, contentDescription = null, tint = colors.text_muted, modifier = Modifier.size(20.dp))
             },
             on_click = { show_unsubscribe_dialog = true },
             info_title = stringResource(R.string.alias_unsubscribe_action),
@@ -1599,7 +1590,7 @@ private fun preference_option(
         }
         if (selected) {
             Icon(
-                imageVector = Icons.Outlined.Check,
+                imageVector = TablerIcons.Check,
                 contentDescription = null,
                 tint = colors.accent_blue,
                 modifier = Modifier.size(20.dp),
@@ -1626,7 +1617,7 @@ private fun domain_card(
         Column(modifier = Modifier.padding(AsterSpacing.lg)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector = Icons.Outlined.Domain,
+                    imageVector = TablerIcons.Building,
                     contentDescription = null,
                     tint = colors.text_tertiary,
                     modifier = Modifier.size(20.dp),
@@ -1641,12 +1632,12 @@ private fun domain_card(
                     )
                 }
                 AsterIconButton(
-                    icon = if (is_expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                    icon = if (is_expanded) TablerIcons.ChevronUp else TablerIcons.ChevronDown,
                     content_description = if (is_expanded) stringResource(R.string.domain_collapse) else stringResource(R.string.domain_expand),
                     onClick = on_expand,
                 )
                 AsterIconButton(
-                    icon = Icons.Outlined.Delete,
+                    icon = TablerIcons.Trash,
                     content_description = stringResource(R.string.domain_delete_domain),
                     onClick = on_delete,
                     tint = colors.danger,
@@ -1700,7 +1691,7 @@ private fun dns_record_row(label: String, verified: Boolean) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = Icons.Outlined.Check,
+            imageVector = TablerIcons.Check,
             contentDescription = null,
             tint = if (verified) colors.success else colors.text_muted,
             modifier = Modifier.size(16.dp),
@@ -1790,13 +1781,13 @@ private fun create_alias_dialog(
                             { CircularProgressIndicator(modifier = Modifier.size(16.dp), color = colors.text_muted, strokeWidth = 2.dp) }
                         }
                         availability is SettingsViewModel.AliasAvailability.Available -> {
-                            { Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = colors.success, modifier = Modifier.size(20.dp)) }
+                            { Icon(TablerIcons.CircleCheck, contentDescription = null, tint = colors.success, modifier = Modifier.size(20.dp)) }
                         }
                         availability is SettingsViewModel.AliasAvailability.Taken -> {
-                            { Icon(Icons.Outlined.Cancel, contentDescription = null, tint = colors.danger, modifier = Modifier.size(20.dp)) }
+                            { Icon(TablerIcons.X, contentDescription = null, tint = colors.danger, modifier = Modifier.size(20.dp)) }
                         }
                         availability is SettingsViewModel.AliasAvailability.CheckFailed -> {
-                            { Icon(Icons.Outlined.ErrorOutline, contentDescription = null, tint = colors.warning, modifier = Modifier.size(20.dp)) }
+                            { Icon(TablerIcons.AlertCircle, contentDescription = null, tint = colors.warning, modifier = Modifier.size(20.dp)) }
                         }
                         else -> null
                     },
@@ -1833,7 +1824,7 @@ private fun create_alias_dialog(
                             modifier = Modifier.weight(1f),
                         )
                         Icon(
-                            imageVector = Icons.Outlined.ExpandMore,
+                            imageVector = TablerIcons.ChevronDown,
                             contentDescription = null,
                             tint = colors.text_muted,
                             modifier = Modifier.size(20.dp),

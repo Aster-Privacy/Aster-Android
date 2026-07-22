@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.settings.detail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -33,7 +36,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -152,7 +154,7 @@ fun CustomizeToolbarScreen(
                     }
                 }
                 Icon(
-                    imageVector = Icons.Filled.MoreHoriz,
+                    imageVector = TablerIcons.Dots,
                     contentDescription = null,
                     tint = colors.text_primary,
                     modifier = Modifier.size(22.dp),

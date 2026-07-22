@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.settings.mail_rules
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -44,8 +47,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -146,7 +147,7 @@ fun MailRulesListScreen(
                 .padding(AsterSpacing.lg)
                 .testTag("add_rule"),
         ) {
-            Icon(imageVector = Icons.Filled.Add, contentDescription = null)
+            Icon(imageVector = TablerIcons.Plus, contentDescription = null)
         }
     }
 }
@@ -297,7 +298,7 @@ private fun rule_row(
         Spacer(Modifier.width(AsterSpacing.sm))
         Box {
             IconButton(onClick = { menu_open = true }) {
-                Icon(imageVector = Icons.Filled.MoreVert, contentDescription = null, tint = colors.text_secondary)
+                Icon(imageVector = TablerIcons.DotsVertical, contentDescription = null, tint = colors.text_secondary)
             }
             DropdownMenu(expanded = menu_open, onDismissRequest = { menu_open = false }) {
                 DropdownMenuItem(

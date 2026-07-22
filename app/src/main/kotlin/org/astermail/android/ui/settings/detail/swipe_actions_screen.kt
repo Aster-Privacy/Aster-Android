@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.settings.detail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -32,12 +35,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Archive
-import androidx.compose.material.icons.filled.Block
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.MarkEmailRead
-import androidx.compose.material.icons.filled.MarkEmailUnread
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -93,12 +90,12 @@ fun SwipeActionsScreen(on_back: () -> Unit) {
     }
 
     val action_options = listOf(
-        SwipeActionOption("archive", stringResource(R.string.swipe_archive), Icons.Filled.Archive, colors.accent_blue),
-        SwipeActionOption("trash", stringResource(R.string.swipe_delete), Icons.Filled.Delete, colors.danger),
-        SwipeActionOption("mark_read", stringResource(R.string.swipe_mark_as_read), Icons.Filled.MarkEmailRead, colors.success),
-        SwipeActionOption("mark_unread", stringResource(R.string.swipe_mark_as_unread), Icons.Filled.MarkEmailUnread, colors.warning),
-        SwipeActionOption("star", stringResource(R.string.swipe_star), Icons.Filled.Star, colors.warning),
-        SwipeActionOption("spam", stringResource(R.string.swipe_report_spam), Icons.Filled.Block, colors.danger),
+        SwipeActionOption("archive", stringResource(R.string.swipe_archive), TablerIcons.Archive, colors.accent_blue),
+        SwipeActionOption("trash", stringResource(R.string.swipe_delete), TablerIcons.Trash, colors.danger),
+        SwipeActionOption("mark_read", stringResource(R.string.swipe_mark_as_read), TablerIcons.MailOpened, colors.success),
+        SwipeActionOption("mark_unread", stringResource(R.string.swipe_mark_as_unread), TablerIcons.Mail, colors.warning),
+        SwipeActionOption("star", stringResource(R.string.swipe_star), TablerIcons.Star, colors.warning),
+        SwipeActionOption("spam", stringResource(R.string.swipe_report_spam), TablerIcons.Ban, colors.danger),
         SwipeActionOption("none", stringResource(R.string.swipe_none), null, null),
     )
 

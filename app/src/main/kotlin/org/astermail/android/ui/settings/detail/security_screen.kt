@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.settings.detail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -41,32 +44,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AlternateEmail
-import androidx.compose.material.icons.outlined.Block
-import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.DeleteForever
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Devices
-import androidx.compose.material.icons.outlined.Error
-import androidx.compose.material.icons.outlined.ExpandLess
-import androidx.compose.material.icons.outlined.ExpandMore
-import androidx.compose.material.icons.outlined.HideImage
-import androidx.compose.material.icons.outlined.History
-import androidx.compose.material.icons.outlined.Key
-import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.Login
-import androidx.compose.material.icons.outlined.Logout
-import androidx.compose.material.icons.outlined.NotificationsActive
-import androidx.compose.material.icons.outlined.Password
-import androidx.compose.material.icons.outlined.PrivacyTip
-import androidx.compose.material.icons.outlined.RemoveRedEye
-import androidx.compose.material.icons.outlined.Security
-import androidx.compose.material.icons.outlined.Shield
-import androidx.compose.material.icons.outlined.TrackChanges
-import androidx.compose.material.icons.outlined.VerifiedUser
-import androidx.compose.material.icons.outlined.VpnKey
-import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
@@ -120,15 +97,15 @@ private fun format_relative_date(iso: String): String {
 }
 
 private fun audit_icon(event_type: String): ImageVector = when {
-    event_type.contains("login") || event_type.contains("sign_in") -> Icons.Outlined.Login
-    event_type.contains("logout") || event_type.contains("sign_out") -> Icons.Outlined.Logout
-    event_type.contains("password") -> Icons.Outlined.Password
-    event_type.contains("two_factor") || event_type.contains("totp") || event_type.contains("2fa") -> Icons.Outlined.VerifiedUser
-    event_type.contains("key") || event_type.contains("passkey") -> Icons.Outlined.Key
-    event_type.contains("session") -> Icons.Outlined.Devices
-    event_type.contains("recovery") -> Icons.Outlined.VpnKey
-    event_type.contains("fail") || event_type.contains("block") || event_type.contains("deny") -> Icons.Outlined.Error
-    else -> Icons.Outlined.Security
+    event_type.contains("login") || event_type.contains("sign_in") -> TablerIcons.Login
+    event_type.contains("logout") || event_type.contains("sign_out") -> TablerIcons.Logout
+    event_type.contains("password") -> TablerIcons.Lock
+    event_type.contains("two_factor") || event_type.contains("totp") || event_type.contains("2fa") -> TablerIcons.ShieldCheck
+    event_type.contains("key") || event_type.contains("passkey") -> TablerIcons.Key
+    event_type.contains("session") -> TablerIcons.Devices
+    event_type.contains("recovery") -> TablerIcons.Key
+    event_type.contains("fail") || event_type.contains("block") || event_type.contains("deny") -> TablerIcons.AlertTriangle
+    else -> TablerIcons.Shield
 }
 
 @Composable
@@ -269,7 +246,7 @@ fun SecurityScreen(
                             }
                             Spacer(Modifier.width(AsterSpacing.xs))
                             Icon(
-                                imageVector = if (score_expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                                imageVector = if (score_expanded) TablerIcons.ChevronUp else TablerIcons.ChevronDown,
                                 contentDescription = null,
                                 tint = colors.text_muted,
                                 modifier = Modifier.size(18.dp),
@@ -322,21 +299,21 @@ fun SecurityScreen(
             detail_row(
                 title = stringResource(R.string.change_password),
                 subtitle = stringResource(R.string.change_password_subtitle),
-                icon = Icons.Outlined.Lock,
+                icon = TablerIcons.Lock,
                 on_click = { on_open("change_password") },
             )
             AsterDivider()
             detail_row(
                 title = stringResource(R.string.two_factor_auth),
                 subtitle = totp_sub,
-                icon = Icons.Outlined.VerifiedUser,
+                icon = TablerIcons.ShieldCheck,
                 on_click = { on_open("two_factor") },
             )
             AsterDivider()
             detail_row(
                 title = stringResource(R.string.login_alerts),
                 subtitle = stringResource(R.string.login_alerts_subtitle),
-                icon = Icons.Outlined.NotificationsActive,
+                icon = TablerIcons.BellRinging,
                 info_title = stringResource(R.string.login_alerts_info_title),
                 info_description = stringResource(R.string.login_alerts_info_desc),
                 trailing = {
@@ -355,7 +332,7 @@ fun SecurityScreen(
             detail_row(
                 title = stringResource(R.string.active_sessions),
                 subtitle = stringResource(R.string.devices_signed_in),
-                icon = Icons.Outlined.Devices,
+                icon = TablerIcons.Devices,
                 on_click = { on_open("sessions") },
             )
             AsterDivider()
@@ -363,10 +340,10 @@ fun SecurityScreen(
                 detail_row(
                     title = stringResource(R.string.passkeys_security_keys),
                     subtitle = "$hardware_keys_count passkey${if (hardware_keys_count == 1) "" else "s"} registered",
-                    icon = Icons.Outlined.Key,
+                    icon = TablerIcons.Key,
                     trailing = {
                         AsterIconButton(
-                            icon = if (hardware_keys_expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                            icon = if (hardware_keys_expanded) TablerIcons.ChevronUp else TablerIcons.ChevronDown,
                             content_description = null,
                             onClick = { hardware_keys_expanded = !hardware_keys_expanded },
                         )
@@ -394,7 +371,7 @@ fun SecurityScreen(
                 detail_row(
                     title = stringResource(R.string.passkeys_security_keys),
                     subtitle = stringResource(R.string.passkeys_none_subtitle),
-                    icon = Icons.Outlined.Key,
+                    icon = TablerIcons.Key,
                 )
             }
         }
@@ -407,7 +384,7 @@ fun SecurityScreen(
                 detail_row(
                     title = stringResource(R.string.no_trusted_devices),
                     subtitle = stringResource(R.string.no_trusted_devices_subtitle),
-                    icon = Icons.Outlined.Shield,
+                    icon = TablerIcons.Shield,
                 )
             } else {
                 state.trusted_devices.forEachIndexed { idx, device ->
@@ -444,7 +421,7 @@ fun SecurityScreen(
                 detail_row(
                     title = stringResource(R.string.block_remote_images),
                     subtitle = stringResource(R.string.block_remote_images_subtitle_security),
-                    icon = Icons.Outlined.HideImage,
+                    icon = TablerIcons.PhotoOff,
                     info_title = stringResource(R.string.block_remote_images_info_title),
                     info_description = stringResource(R.string.block_remote_images_info_desc),
                     trailing = {
@@ -462,7 +439,7 @@ fun SecurityScreen(
                 detail_row(
                     title = stringResource(R.string.block_tracking_pixels),
                     subtitle = stringResource(R.string.block_tracking_pixels_subtitle_security),
-                    icon = Icons.Outlined.TrackChanges,
+                    icon = TablerIcons.Target,
                     info_title = stringResource(R.string.block_tracking_pixels_info_title),
                     info_description = stringResource(R.string.block_tracking_pixels_info_desc),
                     trailing = {
@@ -480,7 +457,7 @@ fun SecurityScreen(
                 detail_row(
                     title = stringResource(R.string.block_tracking_links),
                     subtitle = stringResource(R.string.block_tracking_links_subtitle),
-                    icon = Icons.Outlined.Shield,
+                    icon = TablerIcons.Shield,
                     info_title = stringResource(R.string.block_tracking_links_info_title),
                     info_description = stringResource(R.string.block_tracking_links_info_desc),
                     trailing = {
@@ -498,7 +475,7 @@ fun SecurityScreen(
                 detail_row(
                     title = stringResource(R.string.warn_suspicious_links),
                     subtitle = stringResource(R.string.warn_suspicious_links_subtitle),
-                    icon = Icons.Outlined.Warning,
+                    icon = TablerIcons.AlertCircle,
                     info_title = stringResource(R.string.warn_suspicious_links_info_title),
                     info_description = stringResource(R.string.warn_suspicious_links_info_desc),
                     trailing = {
@@ -534,7 +511,7 @@ fun SecurityScreen(
                 detail_row(
                     title = stringResource(R.string.strip_exif),
                     subtitle = stringResource(R.string.strip_exif_subtitle),
-                    icon = Icons.Outlined.PrivacyTip,
+                    icon = TablerIcons.ShieldLock,
                     info_title = stringResource(R.string.strip_exif_info_title),
                     info_description = stringResource(R.string.strip_exif_info_desc),
                     trailing = {
@@ -552,7 +529,7 @@ fun SecurityScreen(
                 detail_row(
                     title = stringResource(R.string.send_read_receipts),
                     subtitle = stringResource(R.string.send_read_receipts_subtitle),
-                    icon = Icons.Outlined.RemoveRedEye,
+                    icon = TablerIcons.Eye,
                     trailing = {
                         Switch(
                             checked = prefs.send_read_receipts == true,
@@ -575,7 +552,7 @@ fun SecurityScreen(
                 detail_row(
                     title = stringResource(R.string.no_recent_activity),
                     subtitle = stringResource(R.string.no_recent_activity_subtitle),
-                    icon = Icons.Outlined.History,
+                    icon = TablerIcons.History,
                 )
             } else {
                 state.audit_events.forEachIndexed { idx, event ->
@@ -592,14 +569,14 @@ fun SecurityScreen(
             detail_row(
                 title = stringResource(R.string.recovery_key),
                 subtitle = stringResource(R.string.backup_access),
-                icon = Icons.Outlined.VpnKey,
+                icon = TablerIcons.Key,
                 on_click = { on_open("recovery_key_view") },
             )
             AsterDivider()
             detail_row(
                 title = stringResource(R.string.recovery_email),
                 subtitle = recovery_email_sub,
-                icon = Icons.Outlined.AlternateEmail,
+                icon = TablerIcons.At,
                 on_click = { on_open("recovery_email") },
             )
         }
@@ -611,14 +588,14 @@ fun SecurityScreen(
             detail_row(
                 title = stringResource(R.string.blocked_senders),
                 subtitle = stringResource(R.string.blocked_senders_subtitle_security),
-                icon = Icons.Outlined.Block,
+                icon = TablerIcons.Ban,
                 on_click = { on_open("blocked") },
             )
             AsterDivider()
             detail_row(
                 title = stringResource(R.string.encryption_keys),
                 subtitle = stringResource(R.string.encryption_keys_subtitle),
-                icon = Icons.Outlined.Security,
+                icon = TablerIcons.Shield,
                 on_click = { on_open("encryption") },
             )
         }
@@ -629,7 +606,7 @@ fun SecurityScreen(
             detail_row(
                 title = stringResource(R.string.delete_account),
                 subtitle = stringResource(R.string.delete_account_subtitle),
-                icon = Icons.Outlined.DeleteForever,
+                icon = TablerIcons.TrashOff,
                 on_click = { on_open("delete_account") },
             )
         }
@@ -865,7 +842,7 @@ private fun score_checklist_row(
     ) {
         if (checked) {
             Icon(
-                imageVector = Icons.Outlined.CheckCircle,
+                imageVector = TablerIcons.CircleCheck,
                 contentDescription = null,
                 tint = colors.success,
                 modifier = Modifier.size(17.dp),
@@ -885,7 +862,7 @@ private fun score_checklist_row(
             modifier = Modifier.weight(1f),
         )
         Icon(
-            imageVector = Icons.Outlined.ExpandMore,
+            imageVector = TablerIcons.ChevronDown,
             contentDescription = null,
             tint = colors.text_muted,
             modifier = Modifier.size(14.dp),
@@ -910,7 +887,7 @@ private fun hardware_key_row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = Icons.Outlined.Key,
+            imageVector = TablerIcons.Key,
             contentDescription = null,
             tint = colors.text_secondary,
             modifier = Modifier.size(20.dp),
@@ -930,7 +907,7 @@ private fun hardware_key_row(
             )
         }
         AsterIconButton(
-            icon = Icons.Outlined.Edit,
+            icon = TablerIcons.Edit,
             content_description = stringResource(R.string.hardware_key_rename),
             onClick = {
                 rename_text = key.display_name
@@ -939,7 +916,7 @@ private fun hardware_key_row(
             tint = colors.text_secondary,
         )
         AsterIconButton(
-            icon = Icons.Outlined.Delete,
+            icon = TablerIcons.Trash,
             content_description = stringResource(R.string.hardware_key_remove),
             onClick = on_delete,
             tint = colors.danger,
@@ -983,7 +960,7 @@ private fun trusted_device_row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = Icons.Outlined.Devices,
+            imageVector = TablerIcons.Devices,
             contentDescription = null,
             tint = colors.text_secondary,
             modifier = Modifier.size(20.dp),
@@ -1012,7 +989,7 @@ private fun trusted_device_row(
             }
         }
         AsterIconButton(
-            icon = Icons.Outlined.Delete,
+            icon = TablerIcons.Trash,
             content_description = stringResource(R.string.trusted_device_revoke),
             onClick = on_revoke,
             tint = colors.danger,

@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.settings.detail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -34,9 +37,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -275,13 +275,13 @@ private fun feature_cell(value: cell_value) {
     val colors = AsterMaterial.colors
     when (value) {
         is cell_value.yes -> Icon(
-            imageVector = Icons.Default.Check,
+            imageVector = TablerIcons.Check,
             contentDescription = null,
             tint = colors.success,
             modifier = Modifier.size(18.dp),
         )
         is cell_value.no -> Icon(
-            imageVector = Icons.Default.Close,
+            imageVector = TablerIcons.X,
             contentDescription = null,
             tint = colors.text_tertiary.copy(alpha = 0.4f),
             modifier = Modifier.size(16.dp),

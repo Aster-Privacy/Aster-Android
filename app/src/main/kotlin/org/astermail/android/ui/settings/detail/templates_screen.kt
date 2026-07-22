@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.settings.detail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -35,9 +38,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -198,7 +198,7 @@ private fun template_row(
             }
         }
         Icon(
-            imageVector = Icons.Outlined.Edit,
+            imageVector = TablerIcons.Edit,
             contentDescription = stringResource(R.string.edit),
             tint = colors.text_tertiary,
             modifier = Modifier
@@ -207,7 +207,7 @@ private fun template_row(
                 .padding(8.dp),
         )
         Icon(
-            imageVector = Icons.Outlined.Delete,
+            imageVector = TablerIcons.Trash,
             contentDescription = stringResource(R.string.delete),
             tint = colors.danger,
             modifier = Modifier

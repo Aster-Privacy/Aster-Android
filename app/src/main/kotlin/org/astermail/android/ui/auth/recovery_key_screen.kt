@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.auth
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -41,7 +44,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -166,7 +168,7 @@ fun RecoveryKeyScreen(
                     ) {
                         if (saved) {
                             Icon(
-                                imageVector = Icons.Filled.Check,
+                                imageVector = TablerIcons.Check,
                                 contentDescription = null,
                                 tint = Color.White,
                                 modifier = Modifier.size(14.dp),

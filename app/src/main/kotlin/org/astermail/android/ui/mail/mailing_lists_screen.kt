@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.mail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,8 +41,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.outlined.MarkEmailRead
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -111,7 +112,7 @@ fun MailingListsScreen(on_back: () -> Unit = {}, on_open_drawer: (() -> Unit)? =
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 org.astermail.android.design.components.AsterIconButton(
-                    icon = Icons.Filled.Menu,
+                    icon = TablerIcons.Menu2,
                     content_description = stringResource(R.string.open_drawer),
                     onClick = on_open_drawer,
                 )
@@ -188,7 +189,7 @@ fun MailingListsScreen(on_back: () -> Unit = {}, on_open_drawer: (() -> Unit)? =
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Icon(
-                                imageVector = Icons.Outlined.MarkEmailRead,
+                                imageVector = TablerIcons.MailOpened,
                                 contentDescription = null,
                                 tint = colors.text_tertiary,
                                 modifier = Modifier.size(40.dp),

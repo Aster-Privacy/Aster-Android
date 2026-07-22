@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.contacts
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -55,15 +58,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material.icons.outlined.StarBorder
-import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
@@ -104,7 +98,6 @@ import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterIconButton
-import org.astermail.android.design.inter_family
 import org.astermail.android.ui.mail.SenderAvatar
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -184,13 +177,13 @@ fun ContactsScreen(
         ) {
             if (on_open_drawer != null) {
                 AsterIconButton(
-                    icon = Icons.Filled.Menu,
+                    icon = TablerIcons.Menu2,
                     content_description = stringResource(R.string.open_drawer),
                     onClick = on_open_drawer,
                 )
             } else {
                 AsterIconButton(
-                    icon = Icons.AutoMirrored.Filled.ArrowBack,
+                    icon = TablerIcons.ArrowBack,
                     content_description = stringResource(R.string.back),
                     onClick = on_back,
                 )
@@ -224,14 +217,14 @@ fun ContactsScreen(
                                 label = "sync_rotation",
                             )
                         Icon(
-                            imageVector = Icons.Outlined.Sync,
+                            imageVector = TablerIcons.ArrowsRightLeft,
                             contentDescription = stringResource(R.string.syncing),
                             tint = colors.accent_blue,
                             modifier = Modifier.size(22.dp).rotate(rotation),
                         )
                     } else {
                         Icon(
-                            imageVector = Icons.Outlined.Sync,
+                            imageVector = TablerIcons.ArrowsRightLeft,
                             contentDescription = stringResource(R.string.sync_contacts),
                             tint = colors.text_secondary,
                             modifier = Modifier.size(22.dp),
@@ -257,7 +250,7 @@ fun ContactsScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.Search,
+                    imageVector = TablerIcons.Search,
                     contentDescription = null,
                     tint = colors.text_muted,
                     modifier = Modifier.size(18.dp),
@@ -289,7 +282,7 @@ fun ContactsScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.Close,
+                            imageVector = TablerIcons.X,
                             contentDescription = stringResource(R.string.clear),
                             tint = colors.text_muted,
                             modifier = Modifier.size(14.dp),
@@ -384,7 +377,7 @@ fun ContactsScreen(
             .testTag("fab_add_contact"),
     ) {
         Icon(
-            imageVector = Icons.Filled.Add,
+            imageVector = TablerIcons.Plus,
             contentDescription = stringResource(R.string.new_contact),
         )
     }
@@ -459,7 +452,7 @@ private fun ContactRow(contact: Contact, on_click: () -> Unit) {
                 if (contact.is_favorite) {
                     Spacer(Modifier.width(AsterSpacing.xs))
                     Icon(
-                        imageVector = Icons.Filled.Star,
+                        imageVector = TablerIcons.Star,
                         contentDescription = null,
                         tint = Color(0xFFFBBF24),
                         modifier = Modifier.size(12.dp),
@@ -481,7 +474,7 @@ private fun ContactRow(contact: Contact, on_click: () -> Unit) {
         }
         Spacer(Modifier.width(AsterSpacing.sm))
         Icon(
-            imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+            imageVector = TablerIcons.ChevronRight,
             contentDescription = null,
             tint = colors.text_muted,
             modifier = Modifier.size(18.dp),

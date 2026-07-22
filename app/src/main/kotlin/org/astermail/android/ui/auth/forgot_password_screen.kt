@@ -21,10 +21,19 @@
 
 package org.astermail.android.ui.auth
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.ContentValues
 import android.content.Context
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
+import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.Image
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -55,19 +64,11 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AlternateEmail
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.Key
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import kotlinx.coroutines.delay
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -80,6 +81,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -143,6 +145,7 @@ fun ForgotPasswordScreen(
 
             AnimatedContent(
                 targetState = state.step,
+                modifier = Modifier.weight(1f),
                 transitionSpec = {
                     (slideInHorizontally { it / 3 } + fadeIn()) togetherWith
                         (slideOutHorizontally { -it / 3 } + fadeOut())
@@ -151,9 +154,11 @@ fun ForgotPasswordScreen(
             ) { step ->
                 Column(
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxSize()
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = AsterSpacing.xxl),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     when (step) {
                         RecoveryStep.email -> email_step(
@@ -205,18 +210,27 @@ private fun email_step(
     val colors = AsterMaterial.colors
     var email by remember { mutableStateOf("") }
 
-    Spacer(Modifier.height(AsterSpacing.sm))
+    Spacer(Modifier.height(AsterSpacing.xl))
+    Image(
+        painter = painterResource(R.drawable.aster_wordmark),
+        contentDescription = null,
+        modifier = Modifier.height(40.dp),
+    )
+    Spacer(Modifier.height(AsterSpacing.xl))
     Text(
         text = stringResource(R.string.recover_your_account),
         color = colors.text_primary,
-        fontSize = 24.sp,
-        fontWeight = FontWeight.Bold,
+        fontSize = 30.sp,
+        fontWeight = FontWeight.ExtraBold,
+        letterSpacing = (-0.3).sp,
+        textAlign = TextAlign.Center,
     )
-    Spacer(Modifier.height(6.dp))
+    Spacer(Modifier.height(AsterSpacing.md))
     Text(
         text = stringResource(R.string.enter_email_for_recovery),
         color = colors.text_tertiary,
         fontSize = 14.sp,
+        textAlign = TextAlign.Center,
     )
 
     Spacer(Modifier.height(AsterSpacing.xxl))
@@ -241,7 +255,7 @@ private fun email_step(
         ),
         leading_icon = {
             Icon(
-                imageVector = Icons.Filled.AlternateEmail,
+                imageVector = TablerIcons.At,
                 contentDescription = null,
                 tint = colors.text_muted,
             )
@@ -288,18 +302,27 @@ private fun email_sent_step(
     on_use_code: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    Spacer(Modifier.height(AsterSpacing.xxxl))
+    Spacer(Modifier.height(AsterSpacing.xl))
+    Image(
+        painter = painterResource(R.drawable.aster_wordmark),
+        contentDescription = null,
+        modifier = Modifier.height(40.dp),
+    )
+    Spacer(Modifier.height(AsterSpacing.xl))
     Text(
         text = stringResource(R.string.recovery_email_sent),
         color = colors.text_primary,
-        fontSize = 24.sp,
-        fontWeight = FontWeight.Bold,
+        fontSize = 30.sp,
+        fontWeight = FontWeight.ExtraBold,
+        letterSpacing = (-0.3).sp,
+        textAlign = TextAlign.Center,
     )
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(AsterSpacing.md))
     Text(
         text = stringResource(R.string.recovery_email_sent_description),
         color = colors.text_tertiary,
         fontSize = 14.sp,
+        textAlign = TextAlign.Center,
     )
 
     Spacer(Modifier.height(AsterSpacing.xxl))
@@ -322,18 +345,27 @@ private fun code_step(
     val colors = AsterMaterial.colors
     var code by remember { mutableStateOf("") }
 
-    Spacer(Modifier.height(AsterSpacing.sm))
+    Spacer(Modifier.height(AsterSpacing.xl))
+    Image(
+        painter = painterResource(R.drawable.aster_wordmark),
+        contentDescription = null,
+        modifier = Modifier.height(40.dp),
+    )
+    Spacer(Modifier.height(AsterSpacing.xl))
     Text(
         text = stringResource(R.string.enter_recovery_code),
         color = colors.text_primary,
-        fontSize = 24.sp,
-        fontWeight = FontWeight.Bold,
+        fontSize = 30.sp,
+        fontWeight = FontWeight.ExtraBold,
+        letterSpacing = (-0.3).sp,
+        textAlign = TextAlign.Center,
     )
-    Spacer(Modifier.height(6.dp))
+    Spacer(Modifier.height(AsterSpacing.md))
     Text(
         text = stringResource(R.string.enter_recovery_code_description),
         color = colors.text_tertiary,
         fontSize = 14.sp,
+        textAlign = TextAlign.Center,
     )
 
     Spacer(Modifier.height(AsterSpacing.xxl))
@@ -359,7 +391,7 @@ private fun code_step(
         ),
         leading_icon = {
             Icon(
-                imageVector = Icons.Filled.Key,
+                imageVector = TablerIcons.Key,
                 contentDescription = null,
                 tint = colors.text_muted,
             )
@@ -399,18 +431,27 @@ private fun password_step(
     var confirm_visible by remember { mutableStateOf(false) }
     val confirm_focus = remember { androidx.compose.ui.focus.FocusRequester() }
 
-    Spacer(Modifier.height(AsterSpacing.sm))
+    Spacer(Modifier.height(AsterSpacing.xl))
+    Image(
+        painter = painterResource(R.drawable.aster_wordmark),
+        contentDescription = null,
+        modifier = Modifier.height(40.dp),
+    )
+    Spacer(Modifier.height(AsterSpacing.xl))
     Text(
         text = stringResource(R.string.create_new_password),
         color = colors.text_primary,
-        fontSize = 24.sp,
-        fontWeight = FontWeight.Bold,
+        fontSize = 30.sp,
+        fontWeight = FontWeight.ExtraBold,
+        letterSpacing = (-0.3).sp,
+        textAlign = TextAlign.Center,
     )
-    Spacer(Modifier.height(6.dp))
+    Spacer(Modifier.height(AsterSpacing.md))
     Text(
         text = stringResource(R.string.choose_strong_password),
         color = colors.text_tertiary,
         fontSize = 14.sp,
+        textAlign = TextAlign.Center,
     )
 
     Spacer(Modifier.height(AsterSpacing.xxl))
@@ -435,11 +476,11 @@ private fun password_step(
             onNext = { confirm_focus.requestFocus() },
         ),
         leading_icon = {
-            Icon(Icons.Filled.Lock, null, tint = colors.text_muted)
+            Icon(TablerIcons.Lock, null, tint = colors.text_muted)
         },
         trailing_icon = {
             AsterIconButton(
-                icon = if (password_visible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                icon = if (password_visible) TablerIcons.EyeOff else TablerIcons.Eye,
                 content_description = stringResource(if (password_visible) R.string.hide_password else R.string.show_password),
                 onClick = { password_visible = !password_visible },
                 tint = colors.text_muted,
@@ -473,11 +514,11 @@ private fun password_step(
             },
         ),
         leading_icon = {
-            Icon(Icons.Filled.Lock, null, tint = colors.text_muted)
+            Icon(TablerIcons.Lock, null, tint = colors.text_muted)
         },
         trailing_icon = {
             AsterIconButton(
-                icon = if (confirm_visible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                icon = if (confirm_visible) TablerIcons.EyeOff else TablerIcons.Eye,
                 content_description = stringResource(if (confirm_visible) R.string.hide_password else R.string.show_password),
                 onClick = { confirm_visible = !confirm_visible },
                 tint = colors.text_muted,
@@ -591,26 +632,31 @@ private fun new_codes_step(
     val colors = AsterMaterial.colors
     val context = LocalContext.current
     var codes_visible by remember { mutableStateOf(false) }
-    var copied by remember { mutableStateOf(false) }
-    LaunchedEffect(copied) {
-        if (copied) {
-            delay(2000)
-            copied = false
-        }
-    }
+    val copied_message = stringResource(R.string.copied_to_clipboard)
+    val saved_message = stringResource(R.string.saved_file, FORGOT_PASSWORD_CODES_FILE_NAME)
+    val failed_message = stringResource(R.string.failed_to_save)
 
-    Spacer(Modifier.height(AsterSpacing.sm))
+    Spacer(Modifier.height(AsterSpacing.xl))
+    Image(
+        painter = painterResource(R.drawable.aster_wordmark),
+        contentDescription = null,
+        modifier = Modifier.height(40.dp),
+    )
+    Spacer(Modifier.height(AsterSpacing.xl))
     Text(
         text = stringResource(R.string.save_new_recovery_codes),
         color = colors.text_primary,
-        fontSize = 24.sp,
-        fontWeight = FontWeight.Bold,
+        fontSize = 30.sp,
+        fontWeight = FontWeight.ExtraBold,
+        letterSpacing = (-0.3).sp,
+        textAlign = TextAlign.Center,
     )
-    Spacer(Modifier.height(6.dp))
+    Spacer(Modifier.height(AsterSpacing.md))
     Text(
         text = stringResource(R.string.old_codes_invalidated),
         color = colors.text_tertiary,
         fontSize = 14.sp,
+        textAlign = TextAlign.Center,
     )
 
     Spacer(Modifier.height(AsterSpacing.xxl))
@@ -626,30 +672,12 @@ private fun new_codes_step(
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(AsterSpacing.xs)) {
-            AsterIconButton(
-                icon = if (codes_visible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                content_description = stringResource(if (codes_visible) R.string.hide_codes else R.string.show_codes),
-                onClick = { codes_visible = !codes_visible },
-                tint = colors.text_muted,
-            )
-            AsterIconButton(
-                icon = if (copied) Icons.Filled.Check else Icons.Filled.ContentCopy,
-                content_description = stringResource(R.string.copy_codes),
-                onClick = {
-                    val text = codes.joinToString("\n")
-                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
-                    val clip = ClipData.newPlainText("recovery codes", text)
-                    clip.description.extras = android.os.PersistableBundle().apply {
-                        putBoolean("android.content.extra.IS_SENSITIVE", true)
-                    }
-                    clipboard?.setPrimaryClip(clip)
-                    org.astermail.android.util.schedule_sensitive_clipboard_clear(context, text)
-                    copied = true
-                },
-                tint = if (copied) Color(0xFF22C55E) else colors.text_muted,
-            )
-        }
+        AsterIconButton(
+            icon = if (codes_visible) TablerIcons.EyeOff else TablerIcons.Eye,
+            content_description = stringResource(if (codes_visible) R.string.hide_codes else R.string.show_codes),
+            onClick = { codes_visible = !codes_visible },
+            tint = colors.text_muted,
+        )
     }
 
     Spacer(Modifier.height(AsterSpacing.md))
@@ -680,14 +708,81 @@ private fun new_codes_step(
         }
     }
 
-    Spacer(Modifier.height(AsterSpacing.xxl))
+    Spacer(Modifier.height(AsterSpacing.xl))
 
     AsterButton(
+        label = stringResource(R.string.copy_to_clipboard),
+        onClick = {
+            val text = codes.joinToString("\n")
+            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+            val clip = ClipData.newPlainText("recovery codes", text)
+            clip.description.extras = android.os.PersistableBundle().apply {
+                putBoolean("android.content.extra.IS_SENSITIVE", true)
+            }
+            clipboard?.setPrimaryClip(clip)
+            org.astermail.android.util.schedule_sensitive_clipboard_clear(context, text)
+            Toast.makeText(context, copied_message, Toast.LENGTH_SHORT).show()
+        },
+    )
+
+    Spacer(Modifier.height(AsterSpacing.md))
+
+    AsterSecondaryButton(
+        label = stringResource(R.string.download),
+        onClick = {
+            val saved = download_forgot_password_codes(context, codes)
+            Toast.makeText(context, if (saved) saved_message else failed_message, Toast.LENGTH_SHORT).show()
+        },
+    )
+
+    Spacer(Modifier.height(AsterSpacing.md))
+
+    AsterSecondaryButton(
         label = stringResource(R.string.continue_action),
         onClick = on_continue,
     )
 
     Spacer(Modifier.height(AsterSpacing.xxl))
+}
+
+private const val FORGOT_PASSWORD_CODES_FILE_NAME = "aster-recovery-codes.txt"
+
+private fun download_forgot_password_codes(context: Context, codes: List<String>): Boolean {
+    val bytes = codes.joinToString("\n").toByteArray()
+    return try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val values = ContentValues().apply {
+                put(MediaStore.Downloads.DISPLAY_NAME, FORGOT_PASSWORD_CODES_FILE_NAME)
+                put(MediaStore.Downloads.MIME_TYPE, "text/plain")
+                put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                put(MediaStore.Downloads.IS_PENDING, 1)
+            }
+            val uri = context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+            if (uri != null) {
+                context.contentResolver.openOutputStream(uri)?.use { out ->
+                    out.write(bytes)
+                    out.flush()
+                }
+                val done = ContentValues().apply { put(MediaStore.Downloads.IS_PENDING, 0) }
+                context.contentResolver.update(uri, done, null, null)
+                true
+            } else {
+                false
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            dir.mkdirs()
+            val file = java.io.File(dir, FORGOT_PASSWORD_CODES_FILE_NAME)
+            if (!file.canonicalPath.startsWith(dir.canonicalPath + java.io.File.separator)) {
+                return false
+            }
+            file.writeBytes(bytes)
+            true
+        }
+    } catch (_: Throwable) {
+        false
+    }
 }
 
 @Composable
@@ -706,7 +801,7 @@ private fun success_step(on_sign_in: () -> Unit) {
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = Icons.Filled.Check,
+                imageVector = TablerIcons.Check,
                 contentDescription = null,
                 tint = Color(0xFF22C55E),
                 modifier = Modifier.size(32.dp),

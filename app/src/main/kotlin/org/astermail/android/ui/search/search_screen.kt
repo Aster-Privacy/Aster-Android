@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.search
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -47,9 +50,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -82,7 +82,6 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
-import org.astermail.android.design.inter_family
 import org.astermail.android.mail.InboxItem
 import org.astermail.android.mail.MailViewModel
 import org.astermail.android.ui.mail.EmailRow
@@ -314,7 +313,7 @@ fun SearchScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    imageVector = TablerIcons.ArrowBack,
                     contentDescription = stringResource(R.string.back),
                     tint = colors.text_primary,
                     modifier = Modifier.size(22.dp),
@@ -331,7 +330,7 @@ fun SearchScreen(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Outlined.Search,
+                        imageVector = TablerIcons.Search,
                         contentDescription = null,
                         tint = colors.text_muted,
                         modifier = Modifier.size(18.dp),
@@ -343,7 +342,6 @@ fun SearchScreen(
                                 text = stringResource(R.string.search_mail),
                                 color = colors.text_muted,
                                 fontSize = 15.sp,
-                                fontFamily = inter_family,
                             )
                         }
                         BasicTextField(
@@ -353,7 +351,6 @@ fun SearchScreen(
                             textStyle = TextStyle(
                                 color = colors.text_primary,
                                 fontSize = 15.sp,
-                                fontFamily = inter_family,
                             ),
                             cursorBrush = SolidColor(colors.accent_blue),
                             modifier = Modifier.fillMaxWidth().focusRequester(focus_requester),
@@ -369,7 +366,7 @@ fun SearchScreen(
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
-                                imageVector = Icons.Outlined.Close,
+                                imageVector = TablerIcons.X,
                                 contentDescription = stringResource(R.string.clear),
                                 tint = colors.text_muted,
                                 modifier = Modifier.size(20.dp),
@@ -441,7 +438,6 @@ fun SearchScreen(
                         text = stringResource(R.string.decrypting_indexing),
                         color = colors.text_muted,
                         fontSize = 13.sp,
-                        fontFamily = inter_family,
                     )
                 }
             }
@@ -458,7 +454,6 @@ fun SearchScreen(
                     color = colors.text_muted,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
-                    fontFamily = inter_family,
                 )
                 Spacer(Modifier.height(AsterSpacing.md))
                 search_tip(stringResource(R.string.op_from), stringResource(R.string.op_from_desc)) { free_text = "from:"; focus_requester.requestFocus() }
@@ -478,7 +473,6 @@ fun SearchScreen(
                     text = stringResource(R.string.search_privacy_note),
                     color = colors.text_muted,
                     fontSize = 12.sp,
-                    fontFamily = inter_family,
                     lineHeight = 18.sp,
                 )
             }
@@ -491,7 +485,7 @@ fun SearchScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
-                        imageVector = Icons.Outlined.Search,
+                        imageVector = TablerIcons.Search,
                         contentDescription = null,
                         tint = colors.text_muted,
                         modifier = Modifier.size(40.dp),
@@ -501,7 +495,6 @@ fun SearchScreen(
                         text = stringResource(R.string.no_results_found),
                         color = colors.text_muted,
                         fontSize = 15.sp,
-                        fontFamily = inter_family,
                     )
                 }
             }
@@ -510,7 +503,6 @@ fun SearchScreen(
                 text = stringResource(R.string.results_count, filtered.size),
                 color = colors.text_muted,
                 fontSize = 12.sp,
-                fontFamily = inter_family,
                 modifier = Modifier.padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
             )
             LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -546,7 +538,6 @@ private fun search_tip(syntax: String, description: String, on_click: () -> Unit
             color = colors.accent_blue,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
-            fontFamily = inter_family,
             modifier = Modifier.width(140.dp),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -555,7 +546,6 @@ private fun search_tip(syntax: String, description: String, on_click: () -> Unit
             text = description,
             color = colors.text_muted,
             fontSize = 13.sp,
-            fontFamily = inter_family,
         )
     }
 }
@@ -590,7 +580,6 @@ private fun operator_chip(op: SearchOperator, on_remove: () -> Unit) {
             color = colors.accent_blue,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
-            fontFamily = inter_family,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -603,7 +592,7 @@ private fun operator_chip(op: SearchOperator, on_remove: () -> Unit) {
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = Icons.Outlined.Close,
+                imageVector = TablerIcons.X,
                 contentDescription = null,
                 tint = colors.accent_blue,
                 modifier = Modifier.size(14.dp),
@@ -641,7 +630,6 @@ private fun search_chip(text: String, selected: Boolean, on_click: () -> Unit) {
             color = animated_text,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
-            fontFamily = inter_family,
         )
     }
 }

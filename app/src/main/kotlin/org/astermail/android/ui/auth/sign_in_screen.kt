@@ -21,11 +21,15 @@
 
 package org.astermail.android.ui.auth
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -40,16 +44,10 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
@@ -72,6 +70,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -152,6 +151,47 @@ fun SignInScreen(
         return
     }
 
+    val fields = SignInFieldState(
+        email = email,
+        password = password,
+        password_visible = password_visible,
+        email_domain = email_domain,
+        error_message = error_message,
+        is_loading = is_loading,
+        can_submit = can_submit,
+    )
+    val callbacks = SignInCallbacks(
+        on_email_change = { raw ->
+            val at_index = raw.indexOf('@')
+            val matched = if (at_index != -1) {
+                val domain_part = raw.substring(at_index + 1).lowercase()
+                when {
+                    domain_part == "astermail.org" || domain_part.endsWith(".astermail.org") -> "astermail.org"
+                    domain_part == "aster.cx" || domain_part.endsWith(".aster.cx") -> "aster.cx"
+                    else -> null
+                }
+            } else {
+                null
+            }
+            if (matched != null) {
+                email_domain = matched
+                email = raw.substring(0, at_index)
+            } else {
+                email = raw
+            }
+            if (state is AuthUiState.Error) view_model.reset_state()
+        },
+        on_password_change = {
+            password = it
+            if (state is AuthUiState.Error) view_model.reset_state()
+        },
+        on_toggle_password_visible = { password_visible = !password_visible },
+        on_domain_select = { email_domain = it },
+        on_submit = submit,
+        on_forgot_password = on_forgot_password,
+        on_register = on_register,
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -159,185 +199,207 @@ fun SignInScreen(
             .systemBarsPadding()
             .imePadding(),
     ) {
+        AsterTopBar(
+            title = "",
+            on_back = on_back,
+        )
+
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
+            modifier = Modifier.fillMaxSize(),
         ) {
-            AsterTopBar(title = "", on_back = on_back)
+            Spacer(Modifier.weight(1.4f))
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = AsterSpacing.xxl),
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
             ) {
-                Spacer(Modifier.height(AsterSpacing.sm))
-
-                Text(
-                    text = stringResource(R.string.sign_in_title),
-                    color = colors.text_primary,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
+                Image(
+                    painter = painterResource(R.drawable.aster_wordmark),
+                    contentDescription = null,
+                    modifier = Modifier.height(40.dp),
                 )
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    text = stringResource(R.string.sign_in_subtitle),
-                    color = colors.text_tertiary,
-                    fontSize = 14.sp,
-                )
-
-                Spacer(Modifier.height(AsterSpacing.xxl))
-
-                AnimatedVisibility(
-                    visible = error_message != null,
-                    enter = expandVertically() + fadeIn(),
-                    exit = shrinkVertically() + fadeOut(),
-                ) {
-                    Column {
-                        error_banner(message = error_message ?: "")
-                        Spacer(Modifier.height(AsterSpacing.lg))
-                    }
-                }
-
-                AsterTextField(
-                    value = email,
-                    onValueChange = { raw ->
-                        val at_index = raw.indexOf('@')
-                        val matched = if (at_index != -1) {
-                            val domain_part = raw.substring(at_index + 1).lowercase()
-                            when {
-                                domain_part == "astermail.org" || domain_part.endsWith(".astermail.org") -> "astermail.org"
-                                domain_part == "aster.cx" || domain_part.endsWith(".aster.cx") -> "aster.cx"
-                                else -> null
-                            }
-                        } else {
-                            null
-                        }
-                        if (matched != null) {
-                            email_domain = matched
-                            email = raw.substring(0, at_index)
-                        } else {
-                            email = raw
-                        }
-                        if (state is AuthUiState.Error) view_model.reset_state()
-                    },
-                    label = stringResource(R.string.username),
-                    placeholder = stringResource(R.string.username_placeholder),
-                    enabled = !is_loading,
-                    keyboard_options = KeyboardOptions(
-                        keyboardType = KeyboardType.Email,
-                        imeAction = ImeAction.Next,
-                    ),
-                    keyboard_actions = KeyboardActions(
-                        onNext = { password_focus.requestFocus() },
-                    ),
-                    leading_icon = {
-                        Icon(
-                            imageVector = Icons.Filled.AccountCircle,
-                            contentDescription = null,
-                            tint = colors.text_muted,
-                        )
-                    },
-                    content_type = ContentType.Username,
-                    modifier = Modifier.focusRequester(email_focus),
-                )
-
-                Spacer(Modifier.height(AsterSpacing.md))
-
-                domain_toggle(
-                    selected = email_domain,
-                    on_select = { email_domain = it },
-                )
-
-                Spacer(Modifier.height(AsterSpacing.lg))
-
-                AsterTextField(
-                    value = password,
-                    onValueChange = {
-                        password = it
-                        if (state is AuthUiState.Error) view_model.reset_state()
-                    },
-                    label = stringResource(R.string.password),
-                    placeholder = stringResource(R.string.password_placeholder),
-                    enabled = !is_loading,
-                    visual_transformation = if (password_visible) {
-                        VisualTransformation.None
-                    } else {
-                        PasswordVisualTransformation()
-                    },
-                    keyboard_options = KeyboardOptions(
-                        keyboardType = KeyboardType.Password,
-                        imeAction = ImeAction.Done,
-                    ),
-                    keyboard_actions = KeyboardActions(
-                        onDone = { submit() },
-                    ),
-                    leading_icon = {
-                        Icon(
-                            imageVector = Icons.Filled.Lock,
-                            contentDescription = null,
-                            tint = colors.text_muted,
-                        )
-                    },
-                    trailing_icon = {
-                        AsterIconButton(
-                            icon = if (password_visible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                            content_description = stringResource(if (password_visible) R.string.hide_password else R.string.show_password),
-                            onClick = { password_visible = !password_visible },
-                            tint = colors.text_muted,
-                        )
-                    },
-                    content_type = ContentType.Password,
-                    modifier = Modifier.focusRequester(password_focus),
-                )
-
-                Spacer(Modifier.height(AsterSpacing.xs))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                ) {
-                    AsterGhostButton(
-                        label = stringResource(R.string.forgot_password),
-                        onClick = on_forgot_password,
-                        enabled = !is_loading,
-                    )
-                }
-
-                Spacer(Modifier.height(AsterSpacing.md))
-
-                AsterButton(
-                    label = stringResource(R.string.sign_in),
-                    onClick = submit,
-                    enabled = can_submit,
-                    is_loading = is_loading,
-                )
-
-                Spacer(Modifier.height(AsterSpacing.lg))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
-                ) {
-                    Text(
-                        text = stringResource(R.string.no_account_prompt),
-                        color = colors.text_tertiary,
-                        fontSize = 14.sp,
-                    )
-                    Text(
-                        text = stringResource(R.string.sign_up),
-                        color = colors.accent_blue,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.clickable(enabled = !is_loading, onClick = on_register),
-                    )
-                }
-
-                Spacer(Modifier.height(AsterSpacing.xxl))
             }
+
+            Spacer(Modifier.height(AsterSpacing.xl))
+
+            aster_variant_body(fields, callbacks, email_focus, password_focus)
+            Spacer(Modifier.weight(1f))
         }
 
         debug_build_banner()
+    }
+}
+
+private data class SignInFieldState(
+    val email: String,
+    val password: String,
+    val password_visible: Boolean,
+    val email_domain: String,
+    val error_message: String?,
+    val is_loading: Boolean,
+    val can_submit: Boolean,
+)
+
+private class SignInCallbacks(
+    val on_email_change: (String) -> Unit,
+    val on_password_change: (String) -> Unit,
+    val on_toggle_password_visible: () -> Unit,
+    val on_domain_select: (String) -> Unit,
+    val on_submit: () -> Unit,
+    val on_forgot_password: () -> Unit,
+    val on_register: () -> Unit,
+)
+
+@Composable
+private fun aster_variant_body(
+    fields: SignInFieldState,
+    cb: SignInCallbacks,
+    email_focus: FocusRequester,
+    password_focus: FocusRequester,
+) {
+    val colors = AsterMaterial.colors
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.xxl),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Spacer(Modifier.height(AsterSpacing.xl))
+
+        Text(
+            text = stringResource(R.string.sign_in_title),
+            color = colors.text_primary,
+            fontSize = 30.sp,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = (-0.3).sp,
+        )
+
+        Spacer(Modifier.height(AsterSpacing.xl))
+
+        AnimatedVisibility(
+            visible = fields.error_message != null,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut(),
+        ) {
+            Column {
+                error_banner(message = fields.error_message ?: "")
+                Spacer(Modifier.height(AsterSpacing.lg))
+            }
+        }
+
+        AsterTextField(
+            value = fields.email,
+            onValueChange = cb.on_email_change,
+            label = stringResource(R.string.username),
+            placeholder = stringResource(R.string.username_placeholder),
+            enabled = !fields.is_loading,
+            keyboard_options = KeyboardOptions(
+                keyboardType = KeyboardType.Email,
+                imeAction = ImeAction.Next,
+            ),
+            keyboard_actions = KeyboardActions(
+                onNext = { password_focus.requestFocus() },
+            ),
+            leading_icon = {
+                Icon(
+                    imageVector = TablerIcons.User,
+                    contentDescription = null,
+                    tint = colors.text_muted,
+                )
+            },
+            content_type = ContentType.Username,
+            modifier = Modifier.focusRequester(email_focus),
+        )
+
+        Spacer(Modifier.height(AsterSpacing.md))
+
+        domain_toggle(
+            selected = fields.email_domain,
+            on_select = cb.on_domain_select,
+        )
+
+        Spacer(Modifier.height(AsterSpacing.lg))
+
+        AsterTextField(
+            value = fields.password,
+            onValueChange = cb.on_password_change,
+            label = stringResource(R.string.password),
+            placeholder = stringResource(R.string.password_placeholder),
+            enabled = !fields.is_loading,
+            visual_transformation = if (fields.password_visible) {
+                VisualTransformation.None
+            } else {
+                PasswordVisualTransformation()
+            },
+            keyboard_options = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done,
+            ),
+            keyboard_actions = KeyboardActions(
+                onDone = { cb.on_submit() },
+            ),
+            leading_icon = {
+                Icon(
+                    imageVector = TablerIcons.Lock,
+                    contentDescription = null,
+                    tint = colors.text_muted,
+                )
+            },
+            trailing_icon = {
+                AsterIconButton(
+                    icon = if (fields.password_visible) TablerIcons.EyeOff else TablerIcons.Eye,
+                    content_description = stringResource(if (fields.password_visible) R.string.hide_password else R.string.show_password),
+                    onClick = cb.on_toggle_password_visible,
+                    tint = colors.text_muted,
+                )
+            },
+            content_type = ContentType.Password,
+            modifier = Modifier.focusRequester(password_focus),
+        )
+
+        Spacer(Modifier.height(AsterSpacing.xs))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End,
+        ) {
+            AsterGhostButton(
+                label = stringResource(R.string.forgot_password),
+                onClick = cb.on_forgot_password,
+                enabled = !fields.is_loading,
+            )
+        }
+
+        Spacer(Modifier.height(AsterSpacing.md))
+
+        AsterButton(
+            label = stringResource(R.string.sign_in),
+            onClick = cb.on_submit,
+            enabled = fields.can_submit,
+            is_loading = fields.is_loading,
+        )
+
+        Spacer(Modifier.height(AsterSpacing.lg))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+        ) {
+            Text(
+                text = stringResource(R.string.no_account_prompt),
+                color = colors.text_tertiary,
+                fontSize = 14.sp,
+            )
+            Text(
+                text = stringResource(R.string.sign_up),
+                color = colors.accent_blue,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.clickable(enabled = !fields.is_loading, onClick = cb.on_register),
+            )
+        }
+
+        Spacer(Modifier.height(AsterSpacing.xxl))
     }
 }
 
@@ -439,7 +501,7 @@ private fun TotpVerifyScreen(
                     ),
                     leading_icon = {
                         Icon(
-                            imageVector = Icons.Filled.Lock,
+                            imageVector = TablerIcons.Lock,
                             contentDescription = null,
                             tint = colors.text_muted,
                         )

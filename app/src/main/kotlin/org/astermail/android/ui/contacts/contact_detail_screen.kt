@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.contacts
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
@@ -43,13 +46,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Email
-import androidx.compose.material.icons.outlined.Phone
-import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -127,14 +123,14 @@ fun ContactDetailScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AsterIconButton(
-                icon = Icons.AutoMirrored.Filled.ArrowBack,
+                icon = TablerIcons.ArrowBack,
                 content_description = stringResource(R.string.back),
                 onClick = on_back,
                 modifier = Modifier.testTag("back"),
             )
             Spacer(Modifier.weight(1f))
             AsterIconButton(
-                icon = if (is_favorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                icon = if (is_favorite) TablerIcons.Star else TablerIcons.Star,
                 content_description = if (is_favorite) stringResource(R.string.unfavorite) else stringResource(R.string.favorite),
                 onClick = {
                     is_favorite = !is_favorite
@@ -145,7 +141,7 @@ fun ContactDetailScreen(
                 tint = if (is_favorite) colors.warning else Color.Unspecified,
             )
             AsterIconButton(
-                icon = Icons.Outlined.Edit,
+                icon = TablerIcons.Edit,
                 content_description = stringResource(R.string.edit),
                 onClick = { contact?.let { on_edit(it.id) } },
             )
@@ -213,19 +209,19 @@ fun ContactDetailScreen(
                     .padding(horizontal = AsterSpacing.xxl),
                 horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md),
             ) {
-                QuickAction(Icons.Outlined.Email, stringResource(R.string.mail), Modifier.weight(1f)) {
+                QuickAction(TablerIcons.Mail, stringResource(R.string.mail), Modifier.weight(1f)) {
                     if (on_compose != null && contact.email.isNotBlank()) {
                         on_compose(contact.email)
                     }
                 }
-                QuickAction(Icons.Outlined.Phone, stringResource(R.string.call), Modifier.weight(1f)) {
+                QuickAction(TablerIcons.Phone, stringResource(R.string.call), Modifier.weight(1f)) {
                     val phone = contact.phone.ifBlank { contact.work_phone }
                     if (phone.isNotBlank()) {
                         val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${phone}"))
                         context.startActivity(intent)
                     }
                 }
-                QuickAction(Icons.Outlined.ContentCopy, stringResource(R.string.copy), Modifier.weight(1f)) {
+                QuickAction(TablerIcons.Copy, stringResource(R.string.copy), Modifier.weight(1f)) {
                     if (contact.email.isNotBlank()) {
                         clipboard_manager.setText(AnnotatedString(contact.email))
                     }

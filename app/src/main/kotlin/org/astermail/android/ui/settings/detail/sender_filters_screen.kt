@@ -21,15 +21,11 @@
 
 package org.astermail.android.ui.settings.detail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Block
-import androidx.compose.material.icons.outlined.FilterAlt
-import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.CloudDownload
-import androidx.compose.material.icons.outlined.MarkEmailRead
-import androidx.compose.material.icons.outlined.Storage
-import androidx.compose.material.icons.outlined.Unsubscribe
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -46,27 +42,27 @@ fun SenderFiltersScreen(
     detail_scaffold(title = stringResource(R.string.mail_management), on_back = on_back) {
         section_label(stringResource(R.string.filters_rules))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
-            detail_row(title = stringResource(R.string.filters), subtitle = stringResource(R.string.rules_sort_mail), icon = Icons.Outlined.FilterAlt, on_click = { on_open("filters") })
+            detail_row(title = stringResource(R.string.filters), subtitle = stringResource(R.string.rules_sort_mail), icon = TablerIcons.Filter, on_click = { on_open("filters") })
             AsterDivider(modifier = Modifier)
-            detail_row(title = stringResource(R.string.auto_forward), subtitle = stringResource(R.string.forward_matching), icon = Icons.Outlined.MarkEmailRead, on_click = { on_open("auto_forward") })
+            detail_row(title = stringResource(R.string.auto_forward), subtitle = stringResource(R.string.forward_matching), icon = TablerIcons.MailOpened, on_click = { on_open("auto_forward") })
         }
         v_gap(AsterSpacing.lg)
         section_label(stringResource(R.string.block_allow))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
-            detail_row(title = stringResource(R.string.blocked_senders), subtitle = stringResource(R.string.senders_never_hear), icon = Icons.Outlined.Block, on_click = { on_open("blocked") })
+            detail_row(title = stringResource(R.string.blocked_senders), subtitle = stringResource(R.string.senders_never_hear), icon = TablerIcons.Ban, on_click = { on_open("blocked") })
             AsterDivider(modifier = Modifier)
-            detail_row(title = stringResource(R.string.allowlist), subtitle = stringResource(R.string.always_allow), icon = Icons.Outlined.CheckCircle, on_click = { on_open("allowlist") })
+            detail_row(title = stringResource(R.string.allowlist), subtitle = stringResource(R.string.always_allow), icon = TablerIcons.CircleCheck, on_click = { on_open("allowlist") })
             AsterDivider(modifier = Modifier)
-            detail_row(title = stringResource(R.string.subscriptions_label), subtitle = stringResource(R.string.mailing_lists_on), icon = Icons.Outlined.Unsubscribe, on_click = { on_open("subscriptions") })
+            detail_row(title = stringResource(R.string.subscriptions_label), subtitle = stringResource(R.string.mailing_lists_on), icon = TablerIcons.Mail, on_click = { on_open("subscriptions") })
         }
         v_gap(AsterSpacing.lg)
         section_label(stringResource(R.string.storage_data))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
-            detail_row(title = stringResource(R.string.storage_title), subtitle = stringResource(R.string.see_using_space), icon = Icons.Outlined.Storage, on_click = { on_open("storage") })
+            detail_row(title = stringResource(R.string.storage_title), subtitle = stringResource(R.string.see_using_space), icon = TablerIcons.Database, on_click = { on_open("storage") })
             AsterDivider(modifier = Modifier)
-            detail_row(title = stringResource(R.string.import_label), subtitle = stringResource(R.string.import_from_providers), icon = Icons.Outlined.CloudDownload, on_click = { on_open("import") })
+            detail_row(title = stringResource(R.string.import_label), subtitle = stringResource(R.string.import_from_providers), icon = TablerIcons.CloudDownload, on_click = { on_open("import") })
             AsterDivider(modifier = Modifier)
-            detail_row(title = stringResource(R.string.export_label), subtitle = stringResource(R.string.export_your_mail), icon = Icons.Outlined.CloudDownload, on_click = { on_open("export") })
+            detail_row(title = stringResource(R.string.export_label), subtitle = stringResource(R.string.export_your_mail), icon = TablerIcons.CloudDownload, on_click = { on_open("export") })
         }
         v_gap(AsterSpacing.xxl)
     }

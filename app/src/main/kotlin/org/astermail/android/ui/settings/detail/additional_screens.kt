@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.settings.detail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -46,19 +49,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Api
-import androidx.compose.material.icons.outlined.Check
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.DesktopWindows
-import androidx.compose.material.icons.outlined.Extension
-import androidx.compose.material.icons.outlined.Folder
-import androidx.compose.material.icons.outlined.Group
-import androidx.compose.material.icons.outlined.KeyboardArrowDown
-import androidx.compose.material.icons.outlined.KeyboardArrowUp
-import androidx.compose.material.icons.outlined.Link
-import androidx.compose.material.icons.outlined.PhoneAndroid
-import androidx.compose.material.icons.outlined.PrivacyTip
-import androidx.compose.material.icons.outlined.Tablet
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -183,9 +173,9 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
                 state.sessions.forEachIndexed { idx, s ->
                     val dt = s.device_type.lowercase()
                     val icon = when {
-                        dt.contains("android") || dt.contains("mobile") || dt.contains("iphone") -> Icons.Outlined.PhoneAndroid
-                        dt.contains("tablet") || dt.contains("ipad") -> Icons.Outlined.Tablet
-                        else -> Icons.Outlined.DesktopWindows
+                        dt.contains("android") || dt.contains("mobile") || dt.contains("iphone") -> TablerIcons.DeviceMobile
+                        dt.contains("tablet") || dt.contains("ipad") -> TablerIcons.DeviceTablet
+                        else -> TablerIcons.DeviceDesktop
                     }
                     val name = listOfNotNull(
                         s.device_type.takeIf { it.isNotBlank() },
@@ -659,7 +649,7 @@ private fun credit_task_row(
         ) {
             if (is_completed) {
                 androidx.compose.material3.Icon(
-                    imageVector = Icons.Outlined.Check,
+                    imageVector = TablerIcons.Check,
                     contentDescription = null,
                     tint = colors.success,
                     modifier = Modifier.size(20.dp),
@@ -810,7 +800,7 @@ fun DeveloperScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                 detail_row(
                     title = if (cache_cleared) stringResource(R.string.cache_cleared) else stringResource(R.string.clear_local_cache),
                     subtitle = stringResource(R.string.cache_resets_subtitle),
-                    icon = Icons.Outlined.Delete,
+                    icon = TablerIcons.Trash,
                     on_click = {
                         try {
                             context.cacheDir.deleteRecursively()
@@ -882,7 +872,7 @@ fun LabelsScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                                 contentAlignment = Alignment.Center,
                             ) {
                                 androidx.compose.material3.Icon(
-                                    imageVector = Icons.Outlined.Delete,
+                                    imageVector = TablerIcons.Trash,
                                     contentDescription = stringResource(R.string.delete_label),
                                     tint = colors.text_tertiary,
                                     modifier = Modifier.size(18.dp),
@@ -943,7 +933,7 @@ fun FoldersScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                             detail_row(
                                 title = folder_name,
                                 subtitle = count_text,
-                                icon = Icons.Outlined.Folder,
+                                icon = TablerIcons.Folder,
                                 on_click = {},
                                 trailing = {
                                     Box(
@@ -954,7 +944,7 @@ fun FoldersScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                                         contentAlignment = Alignment.Center,
                                     ) {
                                         androidx.compose.material3.Icon(
-                                            imageVector = Icons.Outlined.KeyboardArrowUp,
+                                            imageVector = TablerIcons.ChevronUp,
                                             contentDescription = stringResource(R.string.move_folder_up),
                                             tint = if (can_move_up) colors.text_secondary else colors.text_muted.copy(alpha = 0.35f),
                                             modifier = Modifier.size(20.dp),
@@ -968,7 +958,7 @@ fun FoldersScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                                         contentAlignment = Alignment.Center,
                                     ) {
                                         androidx.compose.material3.Icon(
-                                            imageVector = Icons.Outlined.KeyboardArrowDown,
+                                            imageVector = TablerIcons.ChevronDown,
                                             contentDescription = stringResource(R.string.move_folder_down),
                                             tint = if (can_move_down) colors.text_secondary else colors.text_muted.copy(alpha = 0.35f),
                                             modifier = Modifier.size(20.dp),
@@ -982,7 +972,7 @@ fun FoldersScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                                             contentAlignment = Alignment.Center,
                                         ) {
                                             androidx.compose.material3.Icon(
-                                                imageVector = Icons.Outlined.Delete,
+                                                imageVector = TablerIcons.Trash,
                                                 contentDescription = stringResource(R.string.delete_folder),
                                                 tint = colors.text_tertiary,
                                                 modifier = Modifier.size(18.dp),
@@ -1095,7 +1085,7 @@ fun PrivacyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
             v_gap(AsterSpacing.lg)
             detail_row(
                 title = stringResource(R.string.privacy_policy),
-                icon = Icons.Outlined.PrivacyTip,
+                icon = TablerIcons.ShieldLock,
                 on_click = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://astermail.org/privacy"))) },
             )
         }
@@ -1141,7 +1131,7 @@ fun ApiKeysScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                     detail_row(
                         title = k.decrypted_name.ifBlank { stringResource(R.string.api_key_default_name) },
                         subtitle = "${k.prefix}... - created ${k.created_at ?: ""}",
-                        icon = Icons.Outlined.Api,
+                        icon = TablerIcons.Plug,
                         on_click = {},
                         trailing = {
                             AsterGhostButton(label = stringResource(R.string.revoke), onClick = { pending_revoke = k.id })
@@ -1199,7 +1189,7 @@ fun IntegrationsScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) 
             detail_row(
                 title = stringResource(R.string.slack),
                 subtitle = stringResource(R.string.slack_subtitle),
-                icon = Icons.Outlined.Extension,
+                icon = TablerIcons.Puzzle,
                 on_click = {
                     context.startActivity(
                         Intent(Intent.ACTION_VIEW, Uri.parse("https://app.astermail.org/settings/integrations")),
@@ -1210,7 +1200,7 @@ fun IntegrationsScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) 
             detail_row(
                 title = stringResource(R.string.calendar),
                 subtitle = stringResource(R.string.calendar_subtitle),
-                icon = Icons.Outlined.Extension,
+                icon = TablerIcons.Puzzle,
                 on_click = {
                     context.startActivity(
                         Intent(Intent.ACTION_VIEW, Uri.parse("https://app.astermail.org/settings/integrations")),
@@ -1221,7 +1211,7 @@ fun IntegrationsScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) 
             detail_row(
                 title = stringResource(R.string.zapier),
                 subtitle = stringResource(R.string.zapier_subtitle),
-                icon = Icons.Outlined.Extension,
+                icon = TablerIcons.Puzzle,
                 on_click = {
                     context.startActivity(
                         Intent(Intent.ACTION_VIEW, Uri.parse("https://app.astermail.org/settings/integrations")),
@@ -1237,7 +1227,7 @@ fun IntegrationsScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) 
             detail_row(
                 title = stringResource(R.string.manage_webhooks),
                 subtitle = subtitle,
-                icon = Icons.Outlined.Link,
+                icon = TablerIcons.Link,
                 on_click = {
                     context.startActivity(
                         Intent(Intent.ACTION_VIEW, Uri.parse("https://app.astermail.org/settings/integrations")),
@@ -1274,7 +1264,7 @@ fun FamilyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                 detail_row(
                     title = stringResource(R.string.manage_family),
                     subtitle = stringResource(R.string.manage_family_subtitle),
-                    icon = Icons.Outlined.Group,
+                    icon = TablerIcons.Users,
                     on_click = {
                         context.startActivity(
                             Intent(Intent.ACTION_VIEW, Uri.parse("https://app.astermail.org/settings/family")),
@@ -1285,7 +1275,7 @@ fun FamilyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                 detail_row(
                     title = stringResource(R.string.kids_reserved_addresses),
                     subtitle = stringResource(R.string.kids_reserved_subtitle),
-                    icon = Icons.Outlined.Group,
+                    icon = TablerIcons.Users,
                     on_click = { on_open("family_kids") },
                 )
             }
@@ -1621,7 +1611,7 @@ fun LanguageScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                         )
                         if (selected == code) {
                             androidx.compose.material3.Icon(
-                                imageVector = Icons.Outlined.Check,
+                                imageVector = TablerIcons.Check,
                                 contentDescription = null,
                                 tint = colors.accent_blue,
                                 modifier = Modifier.size(20.dp),

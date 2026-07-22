@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.security
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -41,9 +44,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.Visibility
-import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
@@ -223,7 +223,7 @@ fun AppLockSetupSheet(
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.ArrowBack,
+                            imageVector = TablerIcons.ArrowBack,
                             contentDescription = null,
                             tint = colors.text_primary,
                             modifier = Modifier.size(18.dp),
@@ -566,7 +566,7 @@ private fun setup_passphrase_field(
             )
         }
         Icon(
-            imageVector = if (show) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+            imageVector = if (show) TablerIcons.EyeOff else TablerIcons.Eye,
             contentDescription = null,
             tint = colors.text_muted,
             modifier = Modifier

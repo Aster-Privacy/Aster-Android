@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.settings.mail_rules
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -33,7 +36,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -121,7 +123,7 @@ fun chip_pill_row(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.Close,
+                    imageVector = TablerIcons.X,
                     contentDescription = stringResource(R.string.rules_remove),
                     tint = colors.text_tertiary,
                     modifier = Modifier.size(14.dp),

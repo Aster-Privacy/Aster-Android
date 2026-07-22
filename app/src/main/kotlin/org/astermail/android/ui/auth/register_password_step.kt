@@ -21,15 +21,18 @@
 
 package org.astermail.android.ui.auth
 
-import androidx.compose.animation.togetherWith
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -42,10 +45,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,7 +54,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -67,6 +65,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -108,27 +107,38 @@ fun RegisterPasswordStep(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = AsterSpacing.xxl),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(Modifier.height(AsterSpacing.sm))
+        Spacer(Modifier.height(AsterSpacing.xl))
+
+        Image(
+            painter = painterResource(R.drawable.aster_wordmark),
+            contentDescription = null,
+            modifier = Modifier.height(40.dp),
+        )
+
+        Spacer(Modifier.height(AsterSpacing.xl))
 
         Text(
             text = stringResource(R.string.secure_your_account),
             color = colors.text_primary,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-        )
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = stringResource(R.string.create_strong_password),
-            color = colors.text_tertiary,
-            fontSize = 14.sp,
+            fontSize = 30.sp,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = (-0.3).sp,
+            textAlign = TextAlign.Center,
         )
 
-        Spacer(Modifier.height(AsterSpacing.xxl))
+        Spacer(Modifier.height(AsterSpacing.xl))
 
-        if (error_message != null) {
-            error_banner(message = error_message)
-            Spacer(Modifier.height(AsterSpacing.lg))
+        androidx.compose.animation.AnimatedVisibility(
+            visible = error_message != null,
+            enter = androidx.compose.animation.expandVertically() + androidx.compose.animation.fadeIn(),
+            exit = androidx.compose.animation.shrinkVertically() + androidx.compose.animation.fadeOut(),
+        ) {
+            Column {
+                error_banner(message = error_message ?: "")
+                Spacer(Modifier.height(AsterSpacing.md))
+            }
         }
 
         AsterTextField(
@@ -141,11 +151,11 @@ fun RegisterPasswordStep(
             keyboard_options = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
             keyboard_actions = KeyboardActions(onNext = { confirm_focus.requestFocus() }),
             leading_icon = {
-                Icon(Icons.Filled.Lock, null, tint = colors.text_muted)
+                Icon(TablerIcons.Lock, null, tint = colors.text_muted)
             },
             trailing_icon = {
                 AsterIconButton(
-                    icon = if (password_visible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                    icon = if (password_visible) TablerIcons.EyeOff else TablerIcons.Eye,
                     content_description = if (password_visible) stringResource(R.string.hide_password) else stringResource(R.string.show_password),
                     onClick = { password_visible = !password_visible },
                     tint = colors.text_muted,
@@ -154,7 +164,7 @@ fun RegisterPasswordStep(
             content_type = ContentType.NewPassword,
         )
 
-        Spacer(Modifier.height(AsterSpacing.lg))
+        Spacer(Modifier.height(AsterSpacing.md))
 
         AsterTextField(
             value = state.confirm_password.value,
@@ -166,11 +176,11 @@ fun RegisterPasswordStep(
             keyboard_options = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
             keyboard_actions = KeyboardActions(onDone = { if (can_submit) on_next() }),
             leading_icon = {
-                Icon(Icons.Filled.Lock, null, tint = colors.text_muted)
+                Icon(TablerIcons.Lock, null, tint = colors.text_muted)
             },
             trailing_icon = {
                 AsterIconButton(
-                    icon = if (confirm_visible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                    icon = if (confirm_visible) TablerIcons.EyeOff else TablerIcons.Eye,
                     content_description = if (confirm_visible) stringResource(R.string.hide_password) else stringResource(R.string.show_password),
                     onClick = { confirm_visible = !confirm_visible },
                     tint = colors.text_muted,
@@ -189,7 +199,7 @@ fun RegisterPasswordStep(
             )
         }
 
-        Spacer(Modifier.height(AsterSpacing.lg))
+        Spacer(Modifier.height(AsterSpacing.md))
 
         keep_signed_in_row(
             checked = state.remember_me.value,
@@ -198,10 +208,12 @@ fun RegisterPasswordStep(
 
         Spacer(Modifier.height(AsterSpacing.md))
 
-        password_requirement(met = length_ok, label = stringResource(R.string.requirement_8_chars))
-        password_requirement(met = upper_ok, label = stringResource(R.string.requirement_uppercase))
-        password_requirement(met = lower_ok, label = stringResource(R.string.requirement_lowercase))
-        password_requirement(met = number_ok, label = stringResource(R.string.requirement_number))
+        password_strength_hint(
+            length_ok = length_ok,
+            upper_ok = upper_ok,
+            lower_ok = lower_ok,
+            number_ok = number_ok,
+        )
 
         Spacer(Modifier.height(AsterSpacing.md))
 
@@ -234,7 +246,7 @@ fun RegisterPasswordStep(
             is_loading = is_loading,
         )
 
-        Spacer(Modifier.height(AsterSpacing.lg))
+        Spacer(Modifier.height(AsterSpacing.md))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -254,7 +266,7 @@ fun RegisterPasswordStep(
             )
         }
 
-        Spacer(Modifier.height(AsterSpacing.xxl))
+        Spacer(Modifier.height(AsterSpacing.lg))
     }
 }
 
@@ -270,25 +282,14 @@ private fun keep_signed_in_row(
             .clickable(onClick = on_toggle),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val box_bg = if (checked) colors.accent_blue else Color.Transparent
-        val box_border = if (checked) colors.accent_blue else colors.border_primary
-        Box(
-            modifier = Modifier
-                .size(20.dp)
-                .background(box_bg, shape = RoundedCornerShape(4.dp))
-                .border(1.5.dp, box_border, shape = RoundedCornerShape(4.dp)),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (checked) {
-                Icon(
-                    imageVector = Icons.Filled.Check,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(14.dp),
-                )
-            }
-        }
-        Spacer(Modifier.size(AsterSpacing.md))
+        androidx.compose.material3.Checkbox(
+            checked = checked,
+            onCheckedChange = { on_toggle() },
+            colors = androidx.compose.material3.CheckboxDefaults.colors(
+                checkedColor = colors.accent_blue,
+                uncheckedColor = colors.text_muted,
+            ),
+        )
         Text(
             text = stringResource(R.string.keep_me_signed_in),
             color = colors.text_secondary,
@@ -298,60 +299,60 @@ private fun keep_signed_in_row(
 }
 
 @Composable
-private fun password_requirement(met: Boolean, label: String) {
+private fun password_strength_hint(
+    length_ok: Boolean,
+    upper_ok: Boolean,
+    lower_ok: Boolean,
+    number_ok: Boolean,
+) {
     val colors = AsterMaterial.colors
-    val tint by androidx.compose.animation.animateColorAsState(
-        targetValue = if (met) colors.success else colors.text_muted,
+    val met_count = listOf(length_ok, upper_ok, lower_ok, number_ok).count { it }
+
+    val bar_color by androidx.compose.animation.animateColorAsState(
+        targetValue = when (met_count) {
+            4 -> colors.success
+            0, 1 -> colors.danger
+            else -> colors.warning
+        },
         animationSpec = androidx.compose.animation.core.tween(durationMillis = 220),
-        label = "password_req_tint",
+        label = "password_strength_color",
     )
-    Row(
-        modifier = Modifier.padding(vertical = 3.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        androidx.compose.animation.AnimatedContent(
-            targetState = met,
-            transitionSpec = {
-                (androidx.compose.animation.fadeIn(
-                    animationSpec = androidx.compose.animation.core.tween(durationMillis = 180),
-                ) + androidx.compose.animation.scaleIn(
-                    animationSpec = androidx.compose.animation.core.tween(durationMillis = 220),
-                    initialScale = 0.5f,
-                )) togetherWith (androidx.compose.animation.fadeOut(
-                    animationSpec = androidx.compose.animation.core.tween(durationMillis = 140),
-                ) + androidx.compose.animation.scaleOut(
-                    animationSpec = androidx.compose.animation.core.tween(durationMillis = 160),
-                    targetScale = 0.5f,
-                ))
-            },
-            label = "password_req_icon",
-        ) { is_met ->
-            if (is_met) {
-                Icon(
-                    imageVector = Icons.Filled.Check,
-                    contentDescription = null,
-                    tint = tint,
-                    modifier = Modifier.size(14.dp),
-                )
-            } else {
-                Box(
-                    modifier = Modifier.size(14.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(4.dp)
-                            .background(tint, RoundedCornerShape(2.dp)),
-                    )
-                }
-            }
+    val bar_fraction by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = met_count / 4f,
+        animationSpec = androidx.compose.animation.core.tween(durationMillis = 220),
+        label = "password_strength_fraction",
+    )
+
+    val hint = when {
+        !length_ok -> stringResource(R.string.requirement_8_chars)
+        !upper_ok -> stringResource(R.string.requirement_uppercase)
+        !lower_ok -> stringResource(R.string.requirement_lowercase)
+        !number_ok -> stringResource(R.string.requirement_number)
+        else -> null
+    }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(4.dp)
+                .background(colors.border_secondary, RoundedCornerShape(2.dp)),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth(fraction = bar_fraction)
+                    .background(bar_color, RoundedCornerShape(2.dp)),
+            )
         }
-        Spacer(Modifier.size(8.dp))
-        Text(
-            text = label,
-            color = tint,
-            fontSize = 12.sp,
-        )
+        if (hint != null) {
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = hint,
+                color = colors.text_tertiary,
+                fontSize = 12.sp,
+            )
+        }
     }
 }
 

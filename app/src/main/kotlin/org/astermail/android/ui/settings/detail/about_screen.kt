@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.settings.detail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
@@ -32,10 +35,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.Gavel
-import androidx.compose.material.icons.outlined.Mail
-import androidx.compose.material.icons.outlined.OpenInNew
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -77,7 +76,7 @@ fun AboutScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.Mail,
+                    imageVector = TablerIcons.Mail,
                     contentDescription = stringResource(R.string.aster_logo),
                     tint = androidx.compose.ui.graphics.Color.White,
                     modifier = Modifier.size(40.dp),
@@ -105,11 +104,11 @@ fun AboutScreen(
             )
         }
         AsterCard(modifier = Modifier.fillMaxWidth()) {
-            detail_row(title = stringResource(R.string.privacy_policy), icon = Icons.Outlined.Description, on_click = { open_url("https://astermail.org/privacy") })
+            detail_row(title = stringResource(R.string.privacy_policy), icon = TablerIcons.FileText, on_click = { open_url("https://astermail.org/privacy") })
             AsterDivider()
-            detail_row(title = stringResource(R.string.terms_of_service), icon = Icons.Outlined.Gavel, on_click = { open_url("https://astermail.org/terms") })
+            detail_row(title = stringResource(R.string.terms_of_service), icon = TablerIcons.Scale, on_click = { open_url("https://astermail.org/terms") })
             AsterDivider()
-            detail_row(title = stringResource(R.string.source_on_github), subtitle = stringResource(R.string.licensed_agpl), icon = Icons.Outlined.OpenInNew, on_click = { open_url("https://github.com/AsterCommunications") })
+            detail_row(title = stringResource(R.string.source_on_github), subtitle = stringResource(R.string.licensed_agpl), icon = TablerIcons.ExternalLink, on_click = { open_url("https://github.com/AsterCommunications") })
         }
         v_gap(AsterSpacing.xxl)
     }

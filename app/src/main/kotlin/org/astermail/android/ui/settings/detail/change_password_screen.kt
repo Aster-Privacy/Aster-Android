@@ -21,11 +21,12 @@
 
 package org.astermail.android.ui.settings.detail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -150,7 +151,7 @@ private fun password_field(
         ),
         trailing_icon = {
             Icon(
-                imageVector = if (visible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                imageVector = if (visible) TablerIcons.EyeOff else TablerIcons.Eye,
                 contentDescription = if (visible) stringResource(R.string.hide_password) else stringResource(R.string.show_password),
                 tint = colors.text_tertiary,
                 modifier = Modifier.clickable(onClick = on_toggle),

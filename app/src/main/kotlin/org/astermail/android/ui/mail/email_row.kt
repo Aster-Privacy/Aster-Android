@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.mail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -41,41 +44,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Label
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Archive
-import androidx.compose.material.icons.filled.AttachFile
-import androidx.compose.material.icons.filled.AttachMoney
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.filled.Business
-import androidx.compose.material.icons.automirrored.filled.Chat
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Drafts
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Flag
-import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PushPin
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.filled.Whatshot
-import androidx.compose.material.icons.outlined.AlternateEmail
-import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -99,7 +67,6 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
-import org.astermail.android.design.inter_family
 import org.astermail.android.mail.MailViewModel
 import org.astermail.android.api.preferences.UserPreferences
 
@@ -197,7 +164,7 @@ fun EmailRow(
                 ) {
                     if (is_pinned) {
                         Icon(
-                            imageVector = Icons.Filled.PushPin,
+                            imageVector = TablerIcons.Pin,
                             contentDescription = stringResource(R.string.pinned),
                             tint = colors.accent_blue,
                             modifier = Modifier.size(14.dp),
@@ -205,7 +172,7 @@ fun EmailRow(
                     }
                     if (email.has_attachment) {
                         Icon(
-                            imageVector = Icons.Filled.AttachFile,
+                            imageVector = TablerIcons.Paperclip,
                             contentDescription = stringResource(R.string.has_attachment),
                             tint = colors.text_tertiary,
                             modifier = Modifier.size(14.dp),
@@ -248,7 +215,7 @@ private fun star_button(is_starred: Boolean, on_toggle: () -> Unit, modifier: Mo
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = if (is_starred) Icons.Filled.Star else Icons.Outlined.StarBorder,
+            imageVector = if (is_starred) TablerIcons.Star else TablerIcons.Star,
             contentDescription = if (is_starred) stringResource(R.string.starred) else stringResource(R.string.not_starred),
             tint = tint,
             modifier = Modifier.size(20.dp),
@@ -320,7 +287,7 @@ fun ThreadInboxRow(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = Icons.Filled.Check,
+                    imageVector = TablerIcons.Check,
                     contentDescription = stringResource(R.string.selected),
                     tint = Color.White,
                     modifier = Modifier.size(20.dp),
@@ -354,7 +321,7 @@ fun ThreadInboxRow(
                 )
                 if (thread.has_attachment) {
                     Icon(
-                        imageVector = Icons.Filled.AttachFile,
+                        imageVector = TablerIcons.Paperclip,
                         contentDescription = stringResource(R.string.has_attachment),
                         tint = colors.text_tertiary,
                         modifier = Modifier
@@ -409,7 +376,7 @@ fun ThreadInboxRow(
                 if (is_pinned) {
                     Spacer(Modifier.width(AsterSpacing.sm))
                     Icon(
-                        imageVector = Icons.Filled.PushPin,
+                        imageVector = TablerIcons.Pin,
                         contentDescription = stringResource(R.string.pinned),
                         tint = colors.accent_blue,
                         modifier = Modifier.size(14.dp),
@@ -496,7 +463,7 @@ private fun alias_chip(address: String) {
         horizontalArrangement = Arrangement.spacedBy(5.dp),
     ) {
         Icon(
-            imageVector = Icons.Outlined.AlternateEmail,
+            imageVector = TablerIcons.At,
             contentDescription = stringResource(R.string.received_on_label),
             tint = colors.text_tertiary,
             modifier = Modifier.size(11.dp),
@@ -509,7 +476,6 @@ private fun alias_chip(address: String) {
             fontWeight = FontWeight.Medium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            fontFamily = inter_family,
         )
     }
 }
@@ -551,43 +517,42 @@ private fun label_chip(color: Color, name: String, icon: String) {
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                fontFamily = inter_family,
             )
         }
     }
 }
 
 private fun material_icon_from_name(name: String) = when (name.trim()) {
-    "clock" -> Icons.Filled.Schedule
-    "archive" -> Icons.Filled.Archive
-    "trash" -> Icons.Filled.Delete
-    "send" -> Icons.AutoMirrored.Filled.Send
-    "draft" -> Icons.Filled.Drafts
-    "star" -> Icons.Filled.Star
-    "flag" -> Icons.Filled.Flag
-    "bolt" -> Icons.Filled.Bolt
-    "shield" -> Icons.Filled.Security
-    "warning" -> Icons.Filled.Warning
-    "check" -> Icons.Filled.CheckCircle
-    "tag" -> Icons.AutoMirrored.Filled.Label
-    "folder" -> Icons.Filled.Folder
-    "envelope" -> Icons.Filled.Email
-    "lock" -> Icons.Filled.Lock
-    "bell" -> Icons.Filled.Notifications
-    "sparkles" -> Icons.Filled.AutoAwesome
-    "fire" -> Icons.Filled.Whatshot
-    "heart" -> Icons.Filled.Favorite
-    "bookmark" -> Icons.Filled.Bookmark
-    "chat" -> Icons.AutoMirrored.Filled.Chat
-    "document" -> Icons.Filled.Description
-    "currency" -> Icons.Filled.AttachMoney
-    "cart" -> Icons.Filled.ShoppingCart
-    "code" -> Icons.Filled.Code
-    "user" -> Icons.Filled.Person
-    "building" -> Icons.Filled.Business
-    "globe" -> Icons.Filled.Language
-    "info" -> Icons.Filled.Info
-    "eye-slash" -> Icons.Filled.VisibilityOff
+    "clock" -> TablerIcons.Clock
+    "archive" -> TablerIcons.Archive
+    "trash" -> TablerIcons.Trash
+    "send" -> TablerIcons.Send
+    "draft" -> TablerIcons.FileText
+    "star" -> TablerIcons.Star
+    "flag" -> TablerIcons.Flag
+    "bolt" -> TablerIcons.Bolt
+    "shield" -> TablerIcons.Shield
+    "warning" -> TablerIcons.AlertCircle
+    "check" -> TablerIcons.CircleCheck
+    "tag" -> TablerIcons.Tag
+    "folder" -> TablerIcons.Folder
+    "envelope" -> TablerIcons.Mail
+    "lock" -> TablerIcons.Lock
+    "bell" -> TablerIcons.Bell
+    "sparkles" -> TablerIcons.Wand
+    "fire" -> TablerIcons.TrendingUp
+    "heart" -> TablerIcons.Heart
+    "bookmark" -> TablerIcons.Bookmark
+    "chat" -> TablerIcons.MessageCircle
+    "document" -> TablerIcons.FileText
+    "currency" -> TablerIcons.CurrencyDollar
+    "cart" -> TablerIcons.ShoppingCart
+    "code" -> TablerIcons.Code
+    "user" -> TablerIcons.User
+    "building" -> TablerIcons.Building
+    "globe" -> TablerIcons.Language
+    "info" -> TablerIcons.InfoCircle
+    "eye-slash" -> TablerIcons.EyeOff
     else -> null
 }
 
@@ -604,7 +569,7 @@ private fun inbox_attachment_chip(chip: MailViewModel.InboxAttachmentChip) {
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Icon(
-            imageVector = Icons.Filled.AttachFile,
+            imageVector = TablerIcons.Paperclip,
             contentDescription = null,
             tint = type_color,
             modifier = Modifier.size(12.dp),
@@ -616,7 +581,6 @@ private fun inbox_attachment_chip(chip: MailViewModel.InboxAttachmentChip) {
             fontSize = 11.sp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            fontFamily = inter_family,
         )
     }
 }
@@ -652,7 +616,6 @@ private fun thread_count_pill(count: Int) {
             color = colors.text_secondary,
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
-            fontFamily = inter_family,
         )
     }
 }

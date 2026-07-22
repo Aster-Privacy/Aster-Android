@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.upgrade
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -34,7 +37,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -88,7 +90,7 @@ fun UpgradeInlineCard(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = Icons.Outlined.AutoAwesome,
+            imageVector = TablerIcons.Wand,
             contentDescription = null,
             tint = colors.accent_blue,
             modifier = Modifier.size(24.dp),

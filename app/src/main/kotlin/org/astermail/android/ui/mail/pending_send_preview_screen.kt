@@ -18,6 +18,9 @@
 
 package org.astermail.android.ui.mail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import android.annotation.SuppressLint
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -43,8 +46,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -118,7 +119,7 @@ fun pending_send_preview_screen(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    imageVector = TablerIcons.ArrowBack,
                     contentDescription = null,
                     tint = colors.text_primary,
                 )
@@ -244,7 +245,7 @@ fun pending_send_preview_screen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                imageVector = Icons.Outlined.Schedule,
+                imageVector = TablerIcons.Clock,
                 contentDescription = null,
                 tint = colors.text_muted,
                 modifier = Modifier.size(18.dp),

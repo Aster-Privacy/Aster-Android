@@ -21,11 +21,13 @@
 
 package org.astermail.android.ui.auth
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import android.provider.Settings
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
@@ -47,9 +49,6 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AlternateEmail
-import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -71,6 +70,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import org.astermail.android.R
+import org.astermail.android.design.AsterDuration
+import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterSecondaryButton
@@ -107,17 +108,17 @@ fun OnboardingScreen(
             OnboardingSlide(
                 title_res = R.string.onboarding_slide2_title,
                 body_res = R.string.onboarding_slide2_body,
-                icon = Icons.Outlined.Lock,
+                icon = TablerIcons.Lock,
             ),
             OnboardingSlide(
                 title_res = R.string.onboarding_slide3_title,
                 body_res = R.string.onboarding_slide3_body,
-                icon = Icons.Outlined.VisibilityOff,
+                icon = TablerIcons.EyeOff,
             ),
             OnboardingSlide(
                 title_res = R.string.onboarding_slide4_title,
                 body_res = R.string.onboarding_slide4_body,
-                icon = Icons.Outlined.AlternateEmail,
+                icon = TablerIcons.At,
             ),
         )
     }
@@ -179,7 +180,7 @@ fun OnboardingScreen(
                     val is_selected = pager_state.currentPage == index
                     val dot_width by animateDpAsState(
                         targetValue = if (is_selected) 24.dp else 8.dp,
-                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                        animationSpec = tween(durationMillis = AsterDuration.short_4, easing = AsterEasing.standard_enter),
                         label = "dot",
                     )
                     Box(
@@ -208,7 +209,13 @@ fun OnboardingScreen(
                     label = stringResource(R.string.next),
                     onClick = {
                         scope.launch {
-                            pager_state.animateScrollToPage(pager_state.currentPage + 1)
+                            pager_state.animateScrollToPage(
+                                page = pager_state.currentPage + 1,
+                                animationSpec = tween(
+                                    durationMillis = AsterDuration.medium_3,
+                                    easing = AsterEasing.standard_enter,
+                                ),
+                            )
                         }
                     },
                 )
@@ -248,10 +255,11 @@ private fun onboarding_page(slide: OnboardingSlide) {
         Text(
             text = stringResource(slide.title_res),
             color = colors.text_primary,
-            fontSize = 26.sp,
-            fontWeight = FontWeight.Bold,
+            fontSize = 30.sp,
+            fontWeight = FontWeight.ExtraBold,
             textAlign = TextAlign.Center,
-            lineHeight = 32.sp,
+            lineHeight = 36.sp,
+            letterSpacing = (-0.3).sp,
         )
 
         Spacer(Modifier.height(14.dp))
@@ -259,7 +267,7 @@ private fun onboarding_page(slide: OnboardingSlide) {
         Text(
             text = stringResource(slide.body_res),
             color = colors.text_tertiary,
-            fontSize = 15.sp,
+            fontSize = 16.sp,
             textAlign = TextAlign.Center,
             lineHeight = 22.sp,
             modifier = Modifier.widthIn(max = 320.dp),

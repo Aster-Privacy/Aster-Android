@@ -18,6 +18,9 @@
 
 package org.astermail.android.ui.common
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -36,7 +39,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -143,7 +145,7 @@ fun top_toast_overlay(
                 }
                 Spacer(Modifier.width(8.dp))
                 Icon(
-                    imageVector = Icons.Outlined.Close,
+                    imageVector = TablerIcons.X,
                     contentDescription = null,
                     tint = colors.text_muted,
                     modifier = Modifier

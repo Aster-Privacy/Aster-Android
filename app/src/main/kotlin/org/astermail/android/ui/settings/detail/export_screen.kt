@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.settings.detail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -35,9 +38,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.CloudDownload
-import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -149,7 +149,7 @@ private fun warning_step(
         Column(modifier = Modifier.padding(AsterSpacing.lg)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector = Icons.Outlined.WarningAmber,
+                    imageVector = TablerIcons.AlertTriangle,
                     contentDescription = null,
                     tint = Color(0xFFD97706),
                     modifier = Modifier.size(22.dp),
@@ -325,7 +325,7 @@ private fun format_card(title: String, subtitle: String, selected: Boolean, on_c
         if (selected) {
             Spacer(Modifier.width(AsterSpacing.md))
             Icon(
-                imageVector = Icons.Outlined.CheckCircle,
+                imageVector = TablerIcons.CircleCheck,
                 contentDescription = null,
                 tint = Color.White,
                 modifier = Modifier.size(22.dp),
@@ -409,7 +409,7 @@ private fun complete_step(
     v_gap(AsterSpacing.xxl)
     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         Icon(
-            imageVector = Icons.Outlined.CheckCircle,
+            imageVector = TablerIcons.CircleCheck,
             contentDescription = null,
             tint = colors.success,
             modifier = Modifier.size(52.dp),

@@ -21,6 +21,9 @@
 
 package org.astermail.android.design.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -30,7 +33,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -63,7 +65,7 @@ fun AsterTopBar(
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (on_back != null) {
                 AsterIconButton(
-                    icon = Icons.AutoMirrored.Filled.ArrowBack,
+                    icon = TablerIcons.ArrowBack,
                     content_description = null,
                     onClick = on_back,
                     tint = colors.text_primary,

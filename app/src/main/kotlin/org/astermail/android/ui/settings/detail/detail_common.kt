@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.settings.detail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -42,8 +45,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -126,7 +127,7 @@ internal fun info_dialog_button(title: String, description: String) {
     val colors = AsterMaterial.colors
     var show by remember { mutableStateOf(false) }
     Icon(
-        imageVector = Icons.Outlined.Info,
+        imageVector = TablerIcons.InfoCircle,
         contentDescription = stringResource(R.string.info),
         tint = colors.text_muted,
         modifier = Modifier
@@ -206,7 +207,7 @@ internal fun detail_row(
             trailing()
         } else if (on_click != null) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                imageVector = TablerIcons.ChevronRight,
                 contentDescription = null,
                 tint = colors.text_tertiary,
                 modifier = Modifier.size(20.dp),

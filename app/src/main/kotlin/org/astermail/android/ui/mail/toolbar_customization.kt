@@ -21,18 +21,11 @@
 
 package org.astermail.android.ui.mail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import android.content.Context
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Reply
-import androidx.compose.material.icons.automirrored.outlined.Forward
-import androidx.compose.material.icons.automirrored.outlined.Label
-import androidx.compose.material.icons.outlined.Archive
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.FolderOpen
-import androidx.compose.material.icons.outlined.MarkEmailRead
-import androidx.compose.material.icons.outlined.Report
-import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.ui.graphics.vector.ImageVector
 import org.astermail.android.R
 
@@ -43,16 +36,16 @@ data class ToolbarAction(
 )
 
 val toolbar_action_catalog: List<ToolbarAction> = listOf(
-    ToolbarAction("read", R.string.mark_as_read, Icons.Outlined.MarkEmailRead),
-    ToolbarAction("trash", R.string.move_to_trash, Icons.Outlined.Delete),
-    ToolbarAction("archive", R.string.swipe_archive, Icons.Outlined.Archive),
-    ToolbarAction("folder", R.string.move_to_folder, Icons.Outlined.FolderOpen),
-    ToolbarAction("label", R.string.label, Icons.AutoMirrored.Outlined.Label),
-    ToolbarAction("star", R.string.star, Icons.Outlined.Star),
-    ToolbarAction("snooze", R.string.snooze, Icons.Outlined.Schedule),
-    ToolbarAction("spam", R.string.report_spam, Icons.Outlined.Report),
-    ToolbarAction("reply", R.string.reply, Icons.AutoMirrored.Filled.Reply),
-    ToolbarAction("forward", R.string.forward, Icons.AutoMirrored.Outlined.Forward),
+    ToolbarAction("read", R.string.mark_as_read, TablerIcons.MailOpened),
+    ToolbarAction("trash", R.string.move_to_trash, TablerIcons.Trash),
+    ToolbarAction("archive", R.string.swipe_archive, TablerIcons.Archive),
+    ToolbarAction("folder", R.string.move_to_folder, TablerIcons.Folder),
+    ToolbarAction("label", R.string.label, TablerIcons.Tag),
+    ToolbarAction("star", R.string.star, TablerIcons.Star),
+    ToolbarAction("snooze", R.string.snooze, TablerIcons.Clock),
+    ToolbarAction("spam", R.string.report_spam, TablerIcons.AlertOctagon),
+    ToolbarAction("reply", R.string.reply, TablerIcons.ArrowBackUp),
+    ToolbarAction("forward", R.string.forward, TablerIcons.MailForward),
 )
 
 private const val prefs_name = "aster_toolbar"

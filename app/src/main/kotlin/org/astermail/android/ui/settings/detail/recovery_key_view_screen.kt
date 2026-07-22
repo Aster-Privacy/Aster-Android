@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.settings.detail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -40,8 +43,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -98,7 +99,7 @@ fun RecoveryKeyViewScreen(
                     verticalAlignment = Alignment.Top,
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.Lock,
+                        imageVector = TablerIcons.Lock,
                         contentDescription = null,
                         tint = colors.accent_blue,
                         modifier = Modifier.size(22.dp),
@@ -170,7 +171,7 @@ fun RecoveryKeyViewScreen(
                     verticalAlignment = Alignment.Top,
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.Warning,
+                        imageVector = TablerIcons.AlertCircle,
                         contentDescription = null,
                         tint = colors.warning,
                         modifier = Modifier.size(22.dp),

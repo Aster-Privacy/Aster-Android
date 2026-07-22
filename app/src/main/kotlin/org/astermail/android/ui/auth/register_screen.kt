@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.auth
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -36,7 +39,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -49,7 +54,7 @@ import org.astermail.android.auth.AuthUiState
 import org.astermail.android.auth.AuthViewModel
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.components.AsterTopBar
+import org.astermail.android.design.components.AsterIconButton
 
 @Composable
 fun RegisterScreen(
@@ -190,18 +195,28 @@ private fun register_progress_header(
         return
     }
 
-    Column {
-        AsterTopBar(title = "", on_back = if (show_back) on_back else { {} })
-        if (!show_progress) return
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = AsterSpacing.xxl, vertical = AsterSpacing.sm),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .padding(horizontal = AsterSpacing.xl),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (show_back) {
+            AsterIconButton(
+                icon = TablerIcons.ArrowBack,
+                content_description = null,
+                onClick = on_back,
+                tint = colors.text_primary,
+                icon_size = 26,
+            )
+            Spacer(Modifier.width(AsterSpacing.md))
+        }
+
+        if (show_progress) {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .weight(1f)
                     .height(4.dp)
                     .background(colors.border_secondary, RoundedCornerShape(2.dp)),
             ) {
@@ -212,6 +227,8 @@ private fun register_progress_header(
                         .background(colors.accent_blue, RoundedCornerShape(2.dp)),
                 )
             }
+        } else {
+            Spacer(Modifier.weight(1f))
         }
     }
 }

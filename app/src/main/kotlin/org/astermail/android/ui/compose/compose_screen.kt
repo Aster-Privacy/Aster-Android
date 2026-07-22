@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.compose
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import org.astermail.android.BuildConfig
 import android.net.Uri
 import android.widget.Toast
@@ -66,32 +69,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.PushPin
-import androidx.compose.material.icons.outlined.AlternateEmail
-import androidx.compose.material.icons.outlined.PushPin
-import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.AttachFile
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Check
-import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material.icons.outlined.ContentPaste
-import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.FolderOpen
-import androidx.compose.material.icons.outlined.Image
-import androidx.compose.material.icons.outlined.KeyboardArrowDown
-import androidx.compose.material.icons.outlined.LockClock
-import androidx.compose.material.icons.outlined.FormatBold
-import androidx.compose.material.icons.outlined.FormatItalic
-import androidx.compose.material.icons.outlined.FormatUnderlined
-import androidx.compose.material.icons.outlined.FormatStrikethrough
-import androidx.compose.material.icons.outlined.FormatListBulleted
-import androidx.compose.material.icons.outlined.FormatListNumbered
-import androidx.compose.material.icons.outlined.MoreVert
-import androidx.compose.material.icons.outlined.PhotoLibrary
-import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -1093,7 +1070,7 @@ fun ComposeScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AsterIconButton(
-                icon = Icons.AutoMirrored.Filled.ArrowBack,
+                icon = TablerIcons.ArrowBack,
                 content_description = stringResource(R.string.back),
                 onClick = try_back,
                 tint = colors.text_primary,
@@ -1110,13 +1087,13 @@ fun ComposeScreen(
                 modifier = Modifier.weight(1f),
             )
             AsterIconButton(
-                icon = Icons.Outlined.AttachFile,
+                icon = TablerIcons.Paperclip,
                 content_description = stringResource(R.string.attach),
                 onClick = { show_attach_sheet = true },
                 modifier = Modifier.testTag("attach"),
             )
             AsterIconButton(
-                icon = Icons.Outlined.MoreVert,
+                icon = TablerIcons.DotsVertical,
                 content_description = stringResource(R.string.more_options),
                 onClick = { show_overflow_sheet = true },
             )
@@ -1162,7 +1139,7 @@ fun ComposeScreen(
                         modifier = Modifier.weight(1f),
                     )
                     Icon(
-                        imageVector = Icons.Outlined.KeyboardArrowDown,
+                        imageVector = TablerIcons.ChevronDown,
                         contentDescription = stringResource(R.string.send_from),
                         tint = colors.text_tertiary,
                         modifier = Modifier.size(20.dp),
@@ -1343,7 +1320,7 @@ fun ComposeScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.Close,
+                            imageVector = TablerIcons.X,
                             contentDescription = stringResource(R.string.dismiss),
                             tint = colors.danger,
                             modifier = Modifier.size(14.dp),
@@ -1480,7 +1457,7 @@ fun ComposeScreen(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Icon(
-                                imageVector = Icons.Outlined.AttachFile,
+                                imageVector = TablerIcons.Paperclip,
                                 contentDescription = null,
                                 tint = colors.text_muted,
                                 modifier = Modifier.size(16.dp),
@@ -1512,7 +1489,7 @@ fun ComposeScreen(
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Icon(
-                                    imageVector = Icons.Outlined.Close,
+                                    imageVector = TablerIcons.X,
                                     contentDescription = stringResource(R.string.remove),
                                     tint = colors.text_muted,
                                     modifier = Modifier.size(14.dp),
@@ -1880,7 +1857,7 @@ private fun send_fab(enabled: Boolean, on_click: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = Icons.AutoMirrored.Filled.Send,
+            imageVector = TablerIcons.Send,
             contentDescription = stringResource(R.string.send),
             tint = tint,
             modifier = Modifier.size(18.dp),
@@ -1896,7 +1873,7 @@ private fun caret_toggle(expanded: Boolean, on_toggle: () -> Unit) {
         label = "caret_rotation",
     )
     Icon(
-        imageVector = Icons.Outlined.KeyboardArrowDown,
+        imageVector = TablerIcons.ChevronDown,
         contentDescription = stringResource(R.string.toggle_cc_bcc),
         tint = colors.text_tertiary,
         modifier = Modifier
@@ -2156,7 +2133,7 @@ private fun recipient_chip(text: String, on_remove: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = Icons.Outlined.Lock,
+            imageVector = TablerIcons.Lock,
             contentDescription = if (is_encrypted) stringResource(R.string.end_to_end_encrypted) else stringResource(R.string.protected_in_transit),
             tint = accent,
             modifier = Modifier
@@ -2211,7 +2188,7 @@ private fun recipient_chip(text: String, on_remove: () -> Unit) {
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = Icons.Outlined.Close,
+                imageVector = TablerIcons.X,
                 contentDescription = "${stringResource(R.string.remove)} $text",
                 tint = colors.text_tertiary,
                 modifier = Modifier.size(14.dp),
@@ -2262,10 +2239,10 @@ private fun compose_format_bar(
             .padding(horizontal = AsterSpacing.xs, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        format_icon_btn(Icons.Outlined.FormatBold, stringResource(R.string.bold), bold, on_bold)
-        format_icon_btn(Icons.Outlined.FormatItalic, stringResource(R.string.italic), italic, on_italic)
-        format_icon_btn(Icons.Outlined.FormatUnderlined, stringResource(R.string.underline), underline, on_underline)
-        format_icon_btn(Icons.Outlined.FormatStrikethrough, stringResource(R.string.strikethrough), strike, on_strike)
+        format_icon_btn(TablerIcons.Bold, stringResource(R.string.bold), bold, on_bold)
+        format_icon_btn(TablerIcons.Italic, stringResource(R.string.italic), italic, on_italic)
+        format_icon_btn(TablerIcons.Underline, stringResource(R.string.underline), underline, on_underline)
+        format_icon_btn(TablerIcons.Strikethrough, stringResource(R.string.strikethrough), strike, on_strike)
         Box(
             modifier = Modifier
                 .padding(horizontal = 4.dp)
@@ -2273,8 +2250,8 @@ private fun compose_format_bar(
                 .height(20.dp)
                 .background(colors.border_secondary),
         )
-        format_icon_btn(Icons.Outlined.FormatListBulleted, stringResource(R.string.bullet_list), false, on_bullet)
-        format_icon_btn(Icons.Outlined.FormatListNumbered, stringResource(R.string.numbered_list), false, on_number)
+        format_icon_btn(TablerIcons.List, stringResource(R.string.bullet_list), false, on_bullet)
+        format_icon_btn(TablerIcons.List, stringResource(R.string.numbered_list), false, on_number)
         Box(
             modifier = Modifier
                 .padding(horizontal = 4.dp)
@@ -2282,8 +2259,8 @@ private fun compose_format_bar(
                 .height(20.dp)
                 .background(colors.border_secondary),
         )
-        AsterIconButton(icon = Icons.Outlined.AttachFile, content_description = stringResource(R.string.attach), onClick = on_attach)
-        AsterIconButton(icon = Icons.Outlined.Description, content_description = stringResource(R.string.signature_select), onClick = on_signature)
+        AsterIconButton(icon = TablerIcons.Paperclip, content_description = stringResource(R.string.attach), onClick = on_attach)
+        AsterIconButton(icon = TablerIcons.FileText, content_description = stringResource(R.string.signature_select), onClick = on_signature)
         Spacer(Modifier.weight(1f))
         AnimatedVisibility(
             visible = draft_status.isNotBlank(),
@@ -2384,8 +2361,8 @@ private fun AttachSheet(
                     bottom = AsterSpacing.sm,
                 ),
             )
-            sheet_row(Icons.Outlined.FolderOpen, stringResource(R.string.device_file), colors.text_primary, on_pick_file)
-            sheet_row(Icons.Outlined.PhotoLibrary, stringResource(R.string.photo), colors.text_primary, on_pick_photo)
+            sheet_row(TablerIcons.Folder, stringResource(R.string.device_file), colors.text_primary, on_pick_file)
+            sheet_row(TablerIcons.Stack, stringResource(R.string.photo), colors.text_primary, on_pick_photo)
             Spacer(Modifier.height(AsterSpacing.md))
         }
     }
@@ -2445,7 +2422,7 @@ private fun FromAliasSheet(
                     placeholder = { Text(stringResource(R.string.search_aliases), color = colors.text_muted) },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.Outlined.Search,
+                            imageVector = TablerIcons.Search,
                             contentDescription = null,
                             tint = colors.text_muted,
                             modifier = Modifier.size(18.dp),
@@ -2501,7 +2478,7 @@ private fun FromAliasSheet(
                             )
                         }
                         Icon(
-                            imageVector = if (opt == primary) Icons.Filled.PushPin else Icons.Outlined.PushPin,
+                            imageVector = if (opt == primary) TablerIcons.Pin else TablerIcons.Pin,
                             contentDescription = stringResource(R.string.set_as_primary),
                             tint = if (opt == primary) colors.accent_blue else colors.text_muted,
                             modifier = Modifier
@@ -2512,7 +2489,7 @@ private fun FromAliasSheet(
                         )
                         if (opt == current) {
                             Icon(
-                                imageVector = Icons.Outlined.Check,
+                                imageVector = TablerIcons.Check,
                                 contentDescription = null,
                                 tint = colors.accent_blue,
                                 modifier = Modifier.size(20.dp),
@@ -2536,7 +2513,7 @@ private fun FromAliasSheet(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.AlternateEmail,
+                        imageVector = TablerIcons.At,
                         contentDescription = null,
                         tint = colors.accent_blue,
                         modifier = Modifier.size(20.dp),
@@ -2597,19 +2574,19 @@ private fun OverflowSheet(
                 ),
             )
             toggle_sheet_row(
-                Icons.Outlined.Schedule,
+                TablerIcons.Clock,
                 stringResource(R.string.schedule_send),
                 scheduled_send,
                 on_toggle_scheduled,
             )
             toggle_sheet_row(
-                Icons.Outlined.LockClock,
+                TablerIcons.ShieldLock,
                 stringResource(R.string.expiring_email),
                 expiring,
                 on_toggle_expiring,
             )
             sheet_row(
-                Icons.Outlined.Description,
+                TablerIcons.FileText,
                 stringResource(R.string.use_template),
                 colors.text_primary,
                 on_open_templates,
@@ -2685,7 +2662,7 @@ private fun TemplatePickerSheet(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Icon(
-                                imageVector = Icons.Outlined.Description,
+                                imageVector = TablerIcons.FileText,
                                 contentDescription = null,
                                 tint = colors.text_secondary,
                                 modifier = Modifier.size(20.dp),
@@ -2764,7 +2741,7 @@ private fun SignaturePickerSheet(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.Close,
+                    imageVector = TablerIcons.X,
                     contentDescription = null,
                     tint = if (is_none_selected) colors.accent_blue else colors.text_secondary,
                     modifier = Modifier.size(20.dp),
@@ -2788,7 +2765,7 @@ private fun SignaturePickerSheet(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.Description,
+                        imageVector = TablerIcons.FileText,
                         contentDescription = null,
                         tint = if (is_selected) colors.accent_blue else colors.text_secondary,
                         modifier = Modifier.size(20.dp),
@@ -2814,7 +2791,7 @@ private fun SignaturePickerSheet(
                     }
                     if (is_selected) {
                         Icon(
-                            imageVector = Icons.Outlined.Check,
+                            imageVector = TablerIcons.Check,
                             contentDescription = null,
                             tint = colors.accent_blue,
                             modifier = Modifier.size(18.dp),
@@ -2868,7 +2845,7 @@ private fun GhostAliasSheet(
                     bottom = AsterSpacing.sm,
                 ),
             )
-            sheet_row(Icons.Outlined.AlternateEmail, stringResource(R.string.valid_for_days, 30), colors.text_primary) { on_pick(30) }
+            sheet_row(TablerIcons.At, stringResource(R.string.valid_for_days, 30), colors.text_primary) { on_pick(30) }
             Spacer(Modifier.height(AsterSpacing.md))
         }
     }
@@ -2984,11 +2961,11 @@ internal fun ExpiringSheet(
                     bottom = AsterSpacing.sm,
                 ),
             )
-            toggle_sheet_row(Icons.Outlined.LockClock, stringResource(R.string.expires_in_hour), selected_hours == 1) { selected_hours = 1; custom_epoch_ms = null }
-            toggle_sheet_row(Icons.Outlined.LockClock, stringResource(R.string.expires_in_day), selected_hours == 24) { selected_hours = 24; custom_epoch_ms = null }
-            toggle_sheet_row(Icons.Outlined.LockClock, stringResource(R.string.expires_in_days, 7), selected_hours == 24 * 7) { selected_hours = 24 * 7; custom_epoch_ms = null }
+            toggle_sheet_row(TablerIcons.ShieldLock, stringResource(R.string.expires_in_hour), selected_hours == 1) { selected_hours = 1; custom_epoch_ms = null }
+            toggle_sheet_row(TablerIcons.ShieldLock, stringResource(R.string.expires_in_day), selected_hours == 24) { selected_hours = 24; custom_epoch_ms = null }
+            toggle_sheet_row(TablerIcons.ShieldLock, stringResource(R.string.expires_in_days, 7), selected_hours == 24 * 7) { selected_hours = 24 * 7; custom_epoch_ms = null }
             toggle_sheet_row(
-                Icons.Outlined.Schedule,
+                TablerIcons.Clock,
                 custom_epoch_ms?.let { stringResource(R.string.expires_custom_at, format_custom_label(it)) } ?: stringResource(R.string.expires_custom),
                 custom_epoch_ms != null,
             ) { open_custom_picker() }
@@ -3118,7 +3095,7 @@ private fun toggle_sheet_row(
         )
         if (active) {
             Icon(
-                imageVector = Icons.Outlined.Check,
+                imageVector = TablerIcons.Check,
                 contentDescription = null,
                 tint = colors.accent_blue,
                 modifier = Modifier.size(18.dp),

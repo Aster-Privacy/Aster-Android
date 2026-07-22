@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.mail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -49,39 +52,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Sort
-import androidx.compose.material.icons.filled.Archive
-import androidx.compose.material.icons.filled.Block
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Checklist
-import androidx.compose.material.icons.filled.NotificationsOff
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Block
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Inbox
-import androidx.compose.material.icons.filled.MarkEmailRead
-import androidx.compose.material.icons.filled.MarkEmailUnread
-import androidx.compose.material.icons.filled.ArrowDownward
-import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.outlined.FilterList
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.SelectAll
-import androidx.compose.material.icons.outlined.Archive
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.DeleteForever
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Inbox
-import androidx.compose.material.icons.outlined.MarkEmailRead
-import androidx.compose.material.icons.outlined.AutoAwesome
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Surface
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -736,17 +706,17 @@ fun InboxScreen(
                         when (current_folder) {
                             "archive" -> SwipeConfig(
                                 start_label = restore_label_outer, end_label = delete_label_outer,
-                                start_icon = Icons.Filled.Inbox, end_icon = Icons.Filled.Delete,
+                                start_icon = TablerIcons.Inbox, end_icon = TablerIcons.Trash,
                                 start_action = "unarchive", end_action = "trash",
                             )
                             "trash" -> SwipeConfig(
                                 start_label = restore_label_outer, end_label = delete_forever_label_outer,
-                                start_icon = Icons.Filled.Inbox, end_icon = Icons.Filled.Delete,
+                                start_icon = TablerIcons.Inbox, end_icon = TablerIcons.Trash,
                                 start_action = "restore_trash", end_action = "delete_permanent",
                             )
                             "spam" -> SwipeConfig(
                                 start_label = not_spam_label_outer, end_label = delete_label_outer,
-                                start_icon = Icons.Filled.Inbox, end_icon = Icons.Filled.Delete,
+                                start_icon = TablerIcons.Inbox, end_icon = TablerIcons.Trash,
                                 start_action = "unmark_spam", end_action = "trash",
                             )
                             else -> SwipeConfig(
@@ -1005,7 +975,7 @@ fun InboxScreen(
                     .testTag("compose"),
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.Edit,
+                    imageVector = TablerIcons.Edit,
                     contentDescription = stringResource(R.string.compose),
                     modifier = Modifier.size(24.dp),
                 )
@@ -1117,7 +1087,7 @@ private fun inbox_top_bar(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AsterIconButton(
-                icon = Icons.Filled.Menu,
+                icon = TablerIcons.Menu2,
                 content_description = stringResource(R.string.open_drawer),
                 onClick = on_open_drawer,
                 modifier = Modifier.testTag("account_avatar"),
@@ -1145,7 +1115,7 @@ private fun inbox_top_bar(
                     }
                     Spacer(Modifier.width(4.dp))
                     Icon(
-                        imageVector = Icons.Filled.KeyboardArrowDown,
+                        imageVector = TablerIcons.ChevronDown,
                         contentDescription = stringResource(R.string.switch_folder),
                         tint = colors.text_muted,
                         modifier = Modifier.size(20.dp),
@@ -1206,7 +1176,7 @@ private fun inbox_top_bar(
             var overflow_menu_open by remember { mutableStateOf(false) }
             Box {
                 AsterIconButton(
-                    icon = Icons.Filled.MoreVert,
+                    icon = TablerIcons.DotsVertical,
                     content_description = stringResource(R.string.more_options),
                     onClick = { overflow_menu_open = true },
                     modifier = Modifier.testTag("inbox_overflow_menu"),
@@ -1240,7 +1210,7 @@ private fun inbox_top_bar(
             debug_build_pill_inline()
             Spacer(Modifier.width(AsterSpacing.xs))
             AsterIconButton(
-                icon = Icons.Outlined.Settings,
+                icon = TablerIcons.Settings,
                 content_description = stringResource(R.string.settings),
                 onClick = on_open_settings,
                 modifier = Modifier.testTag("settings"),
@@ -1259,7 +1229,7 @@ private fun inbox_top_bar(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                imageVector = Icons.Filled.Search,
+                imageVector = TablerIcons.Search,
                 contentDescription = null,
                 tint = colors.text_muted,
                 modifier = Modifier.size(18.dp),
@@ -1283,7 +1253,7 @@ private fun sort_menu_item(label: String, is_selected: Boolean, on_click: () -> 
         text = { Text(label) },
         leadingIcon = {
             if (is_selected) {
-                Icon(Icons.Filled.Check, contentDescription = null)
+                Icon(TablerIcons.Check, contentDescription = null)
             } else {
                 Spacer(Modifier.size(24.dp))
             }
@@ -1321,7 +1291,7 @@ private fun select_mode_top_bar(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AsterIconButton(
-                icon = Icons.Filled.Close,
+                icon = TablerIcons.X,
                 content_description = stringResource(R.string.exit_selection),
                 onClick = on_close,
                 modifier = Modifier.testTag("exit_select"),
@@ -1335,7 +1305,7 @@ private fun select_mode_top_bar(
                 modifier = Modifier.weight(1f),
             )
             AsterIconButton(
-                icon = Icons.Filled.SelectAll,
+                icon = TablerIcons.Selector,
                 content_description = stringResource(R.string.select_all),
                 onClick = on_select_all,
             )
@@ -1379,7 +1349,7 @@ private fun select_mode_bottom_bar(
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
                 bottom_select_action(
-                    icon = Icons.Outlined.MarkEmailRead,
+                    icon = TablerIcons.MailOpened,
                     label = stringResource(R.string.mark_read_action),
                     enabled = enabled,
                     onClick = on_mark_read,
@@ -1388,13 +1358,13 @@ private fun select_mode_bottom_bar(
                 when (current_folder) {
                     "trash" -> {
                         bottom_select_action(
-                            icon = Icons.Outlined.Inbox,
+                            icon = TablerIcons.Inbox,
                             label = stringResource(R.string.swipe_restore),
                             enabled = enabled,
                             onClick = on_restore,
                         )
                         bottom_select_action(
-                            icon = Icons.Outlined.DeleteForever,
+                            icon = TablerIcons.TrashOff,
                             label = stringResource(R.string.swipe_delete_forever),
                             enabled = enabled,
                             onClick = on_delete_permanent,
@@ -1403,19 +1373,19 @@ private fun select_mode_bottom_bar(
                     }
                     "archive" -> {
                         bottom_select_action(
-                            icon = Icons.Outlined.Inbox,
+                            icon = TablerIcons.Inbox,
                             label = stringResource(R.string.swipe_restore),
                             enabled = enabled,
                             onClick = on_unarchive,
                         )
                         bottom_select_action(
-                            icon = Icons.Filled.Block,
+                            icon = TablerIcons.Ban,
                             label = stringResource(R.string.report_spam),
                             enabled = enabled,
                             onClick = on_mark_spam,
                         )
                         bottom_select_action(
-                            icon = Icons.Outlined.Delete,
+                            icon = TablerIcons.Trash,
                             label = stringResource(R.string.delete_action),
                             enabled = enabled,
                             onClick = on_delete,
@@ -1424,13 +1394,13 @@ private fun select_mode_bottom_bar(
                     }
                     "spam" -> {
                         bottom_select_action(
-                            icon = Icons.Outlined.Inbox,
+                            icon = TablerIcons.Inbox,
                             label = stringResource(R.string.swipe_not_spam),
                             enabled = enabled,
                             onClick = on_unmark_spam,
                         )
                         bottom_select_action(
-                            icon = Icons.Outlined.Delete,
+                            icon = TablerIcons.Trash,
                             label = stringResource(R.string.delete_action),
                             enabled = enabled,
                             onClick = on_delete,
@@ -1439,20 +1409,20 @@ private fun select_mode_bottom_bar(
                     }
                     else -> {
                         bottom_select_action(
-                            icon = Icons.Outlined.Archive,
+                            icon = TablerIcons.Archive,
                             label = stringResource(R.string.archive_action),
                             enabled = enabled,
                             onClick = on_archive,
                             test_tag = "archive_selected",
                         )
                         bottom_select_action(
-                            icon = Icons.Filled.Block,
+                            icon = TablerIcons.Ban,
                             label = stringResource(R.string.report_spam),
                             enabled = enabled,
                             onClick = on_mark_spam,
                         )
                         bottom_select_action(
-                            icon = Icons.Outlined.Delete,
+                            icon = TablerIcons.Trash,
                             label = stringResource(R.string.delete_action),
                             enabled = enabled,
                             onClick = on_delete,
@@ -1521,8 +1491,8 @@ private fun swipeable_thread_row(
     is_pinned: Boolean = false,
     swipe_start_label: String = stringResource(R.string.swipe_archive),
     swipe_end_label: String = stringResource(R.string.swipe_delete),
-    swipe_start_icon: androidx.compose.ui.graphics.vector.ImageVector = Icons.Filled.Archive,
-    swipe_end_icon: androidx.compose.ui.graphics.vector.ImageVector = Icons.Filled.Delete,
+    swipe_start_icon: androidx.compose.ui.graphics.vector.ImageVector = TablerIcons.Archive,
+    swipe_end_icon: androidx.compose.ui.graphics.vector.ImageVector = TablerIcons.Trash,
     swipe_start_color: Color = AsterMaterial.colors.accent_blue,
     swipe_end_color: Color = AsterMaterial.colors.danger,
     modifier: Modifier = Modifier,
@@ -1666,18 +1636,18 @@ private fun swipe_action_label(action: String): String = when (action) {
 }
 
 private fun swipe_action_icon(action: String): androidx.compose.ui.graphics.vector.ImageVector = when (action) {
-    "archive" -> Icons.Filled.Archive
-    "trash" -> Icons.Filled.Delete
-    "mark_read" -> Icons.Filled.MarkEmailRead
-    "mark_unread" -> Icons.Filled.MarkEmailUnread
-    "star" -> Icons.Filled.Star
-    "spam" -> Icons.Filled.Block
-    "move_to_inbox" -> Icons.Filled.Inbox
-    "unarchive" -> Icons.Filled.Inbox
-    "restore_trash" -> Icons.Filled.Inbox
-    "unmark_spam" -> Icons.Filled.Inbox
-    "delete_permanent" -> Icons.Filled.Delete
-    else -> Icons.Filled.Archive
+    "archive" -> TablerIcons.Archive
+    "trash" -> TablerIcons.Trash
+    "mark_read" -> TablerIcons.MailOpened
+    "mark_unread" -> TablerIcons.Mail
+    "star" -> TablerIcons.Star
+    "spam" -> TablerIcons.Ban
+    "move_to_inbox" -> TablerIcons.Inbox
+    "unarchive" -> TablerIcons.Inbox
+    "restore_trash" -> TablerIcons.Inbox
+    "unmark_spam" -> TablerIcons.Inbox
+    "delete_permanent" -> TablerIcons.Trash
+    else -> TablerIcons.Archive
 }
 
 private fun execute_swipe_action(
@@ -1802,16 +1772,16 @@ private fun empty_inbox_state(folder: String = "inbox") {
     val colors = AsterMaterial.colors
     val icon = remember(folder) {
         when (folder) {
-            "inbox" -> Icons.Filled.Inbox
-            "sent" -> Icons.AutoMirrored.Filled.Send
-            "drafts" -> Icons.Filled.Edit
-            "starred" -> Icons.Filled.Star
-            "trash" -> Icons.Filled.Delete
-            "spam" -> Icons.Filled.Block
-            "archive" -> Icons.Filled.Archive
-            "scheduled" -> Icons.Filled.Schedule
-            "snoozed" -> Icons.Filled.NotificationsOff
-            else -> Icons.Filled.Inbox
+            "inbox" -> TablerIcons.Inbox
+            "sent" -> TablerIcons.Send
+            "drafts" -> TablerIcons.Edit
+            "starred" -> TablerIcons.Star
+            "trash" -> TablerIcons.Trash
+            "spam" -> TablerIcons.Ban
+            "archive" -> TablerIcons.Archive
+            "scheduled" -> TablerIcons.Clock
+            "snoozed" -> TablerIcons.BellOff
+            else -> TablerIcons.Inbox
         }
     }
     val title = when (folder) {

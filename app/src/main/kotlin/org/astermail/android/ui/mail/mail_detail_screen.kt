@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.mail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import org.astermail.android.BuildConfig
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.basicMarquee
@@ -61,51 +64,6 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Reply
-import androidx.compose.material.icons.automirrored.filled.ReplyAll
-import androidx.compose.material.icons.automirrored.filled.Forward
-import androidx.compose.material.icons.filled.MoreHoriz
-import androidx.compose.material.icons.filled.AttachFile
-import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.outlined.LockOpen
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.outlined.Code
-import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.FolderZip
-import androidx.compose.material.icons.outlined.GppGood
-import androidx.compose.material.icons.outlined.Image
-import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
-import androidx.compose.material.icons.outlined.MusicNote
-import androidx.compose.material.icons.outlined.Videocam
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.UnfoldMore
-import androidx.compose.material.icons.outlined.Archive
-import androidx.compose.material.icons.outlined.WarningAmber
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.material.icons.outlined.Shield
-import androidx.compose.material.icons.outlined.Unarchive
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material.icons.outlined.ImageNotSupported
-import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.Unsubscribe
-import androidx.compose.material.icons.outlined.StarBorder
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.MoveToInbox
-import androidx.compose.material.icons.outlined.MarkEmailUnread
-import androidx.compose.material.icons.outlined.MarkEmailRead
-import androidx.compose.material.icons.outlined.PushPin
-import androidx.compose.material.icons.outlined.Bedtime
-import androidx.compose.material.icons.outlined.FolderOpen
-import androidx.compose.material.icons.automirrored.outlined.Label
-import androidx.compose.material.icons.outlined.Print
-import androidx.compose.material.icons.outlined.Report
-import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -169,10 +127,6 @@ import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
-import androidx.compose.material.icons.filled.ZoomIn
-import androidx.compose.material.icons.filled.ZoomOut
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
@@ -458,7 +412,7 @@ fun MailDetailScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 AsterIconButton(
-                    icon = Icons.AutoMirrored.Filled.ArrowBack,
+                    icon = TablerIcons.ArrowBack,
                     content_description = stringResource(R.string.back),
                     onClick = on_back,
                     modifier = Modifier.testTag("back"),
@@ -501,7 +455,7 @@ fun MailDetailScreen(
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                         ) {
                             Icon(
-                                imageVector = if (is_thread_encrypted) Icons.Filled.Lock else Icons.Outlined.LockOpen,
+                                imageVector = if (is_thread_encrypted) TablerIcons.Lock else TablerIcons.LockOpen,
                                 contentDescription = null,
                                 tint = tint,
                                 modifier = Modifier.size(16.dp),
@@ -520,7 +474,7 @@ fun MailDetailScreen(
                 val is_archived = api_item?.is_archived == true
                 Box {
                     AsterIconButton(
-                        icon = Icons.Filled.MoreVert,
+                        icon = TablerIcons.DotsVertical,
                         content_description = stringResource(R.string.more),
                         onClick = { show_topbar_menu = true },
                         modifier = Modifier.testTag("more"),
@@ -539,7 +493,7 @@ fun MailDetailScreen(
                     ) {
                         val is_pinned = api_item?.raw_item?.metadata?.is_pinned == true
                         detail_menu_action(
-                            icon = if (is_starred) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                            icon = if (is_starred) TablerIcons.Star else TablerIcons.Star,
                             text = if (is_starred) stringResource(R.string.unstar) else stringResource(R.string.star),
                             tint = if (is_starred) colors.accent_blue else colors.text_primary,
                         ) {
@@ -550,7 +504,7 @@ fun MailDetailScreen(
                             show_toast(if (!is_starred) context.getString(R.string.starred) else context.getString(R.string.unstarred))
                         }
                         detail_menu_action(
-                            icon = if (is_archived) Icons.Outlined.MoveToInbox else Icons.Outlined.Archive,
+                            icon = if (is_archived) TablerIcons.Inbox else TablerIcons.Archive,
                             text = if (is_archived) stringResource(R.string.swipe_move_to_inbox) else stringResource(R.string.archive_action),
                             tint = colors.text_primary,
                             test_tag = "archive",
@@ -567,7 +521,7 @@ fun MailDetailScreen(
                             }
                         }
                         detail_menu_action(
-                            icon = Icons.Outlined.MarkEmailUnread,
+                            icon = TablerIcons.Mail,
                             text = stringResource(R.string.mark_as_unread),
                             tint = colors.text_primary,
                         ) {
@@ -577,7 +531,7 @@ fun MailDetailScreen(
                             on_back()
                         }
                         detail_menu_action(
-                            icon = Icons.Outlined.PushPin,
+                            icon = TablerIcons.Pin,
                             text = if (is_pinned) stringResource(R.string.unpin) else stringResource(R.string.pin_to_top),
                             tint = colors.text_primary,
                         ) {
@@ -585,7 +539,7 @@ fun MailDetailScreen(
                             mail_vm.toggle_pin(email_id)
                         }
                         detail_menu_action(
-                            icon = Icons.Outlined.Bedtime,
+                            icon = TablerIcons.Moon,
                             text = stringResource(R.string.snooze),
                             tint = colors.text_primary,
                         ) {
@@ -594,7 +548,7 @@ fun MailDetailScreen(
                         }
                         detail_menu_divider()
                         detail_menu_action(
-                            icon = Icons.Outlined.FolderOpen,
+                            icon = TablerIcons.Folder,
                             text = stringResource(R.string.move_to_folder),
                             tint = colors.text_primary,
                         ) {
@@ -603,7 +557,7 @@ fun MailDetailScreen(
                             show_folder_sheet = true
                         }
                         detail_menu_action(
-                            icon = Icons.AutoMirrored.Outlined.Label,
+                            icon = TablerIcons.Tag,
                             text = stringResource(R.string.add_label),
                             tint = colors.text_primary,
                         ) {
@@ -612,7 +566,7 @@ fun MailDetailScreen(
                             show_label_sheet = true
                         }
                         detail_menu_action(
-                            icon = Icons.Outlined.Print,
+                            icon = TablerIcons.Printer,
                             text = stringResource(R.string.print),
                             tint = colors.text_primary,
                         ) {
@@ -625,7 +579,7 @@ fun MailDetailScreen(
                             }
                         }
                         detail_menu_action(
-                            icon = Icons.Outlined.Info,
+                            icon = TablerIcons.InfoCircle,
                             text = stringResource(R.string.message_details),
                             tint = colors.text_primary,
                             test_tag = "message_details",
@@ -634,7 +588,7 @@ fun MailDetailScreen(
                             show_message_details = true
                         }
                         detail_menu_action(
-                            icon = Icons.Outlined.Code,
+                            icon = TablerIcons.Code,
                             text = stringResource(R.string.detail_view_raw_source),
                             tint = colors.text_primary,
                         ) {
@@ -643,7 +597,7 @@ fun MailDetailScreen(
                         }
                         detail_menu_divider()
                         detail_menu_action(
-                            icon = Icons.Outlined.Report,
+                            icon = TablerIcons.AlertOctagon,
                             text = if (is_spam) stringResource(R.string.swipe_not_spam) else stringResource(R.string.report_spam),
                             tint = if (is_spam) colors.accent_blue else colors.danger,
                         ) {
@@ -662,7 +616,7 @@ fun MailDetailScreen(
                             on_back()
                         }
                         detail_menu_action(
-                            icon = Icons.Outlined.Block,
+                            icon = TablerIcons.Ban,
                             text = stringResource(R.string.block_sender),
                             tint = colors.danger,
                         ) {
@@ -675,7 +629,7 @@ fun MailDetailScreen(
                             }
                         }
                         detail_menu_action(
-                            icon = Icons.Outlined.Delete,
+                            icon = TablerIcons.Trash,
                             text = stringResource(R.string.delete_action),
                             tint = colors.danger,
                         ) {
@@ -1001,29 +955,29 @@ fun MailDetailScreen(
                 ) {
                     val read_state = api_item?.is_read == true
                     if (read_state) {
-                        bottom_action(Icons.Outlined.MarkEmailUnread, stringResource(R.string.mark_as_unread), test_tag = "mark_read") {
+                        bottom_action(TablerIcons.Mail, stringResource(R.string.mark_as_unread), test_tag = "mark_read") {
                             mail_vm.mark_unread(email_id)
                             show_toast(context.getString(R.string.marked_as_unread))
                             on_back()
                         }
                     } else {
-                        bottom_action(Icons.Outlined.MarkEmailRead, stringResource(R.string.mark_as_read), test_tag = "mark_read") {
+                        bottom_action(TablerIcons.MailOpened, stringResource(R.string.mark_as_read), test_tag = "mark_read") {
                             mail_vm.mark_read(email_id)
                             show_toast(context.getString(R.string.mark_as_read))
                         }
                     }
-                    bottom_action(Icons.Outlined.Delete, stringResource(R.string.move_to_trash), test_tag = "delete") {
+                    bottom_action(TablerIcons.Trash, stringResource(R.string.move_to_trash), test_tag = "delete") {
                         mail_vm.trash(listOf(email_id))
                         on_delete()
                         show_toast(context.getString(R.string.move_to_trash))
                     }
-                    bottom_action(Icons.Outlined.FolderOpen, stringResource(R.string.move_to_folder)) {
+                    bottom_action(TablerIcons.Folder, stringResource(R.string.move_to_folder)) {
                         show_folder_sheet = true
                     }
-                    bottom_action(Icons.AutoMirrored.Outlined.Label, stringResource(R.string.label)) {
+                    bottom_action(TablerIcons.Tag, stringResource(R.string.label)) {
                         show_label_sheet = true
                     }
-                    bottom_action(Icons.Filled.MoreHoriz, stringResource(R.string.more)) {
+                    bottom_action(TablerIcons.Dots, stringResource(R.string.more)) {
                         show_action_sheet = true
                     }
                 }
@@ -1426,7 +1380,7 @@ private fun expanded_message(
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.KeyboardArrowDown,
+                        imageVector = TablerIcons.ChevronDown,
                         contentDescription = if (show_details)
                             stringResource(R.string.detail_hide_details)
                         else
@@ -1447,7 +1401,7 @@ private fun expanded_message(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AsterIconButton(
-                icon = Icons.AutoMirrored.Filled.Reply,
+                icon = TablerIcons.ArrowBackUp,
                 content_description = stringResource(R.string.reply),
                 onClick = on_reply,
             )
@@ -1460,20 +1414,20 @@ private fun expanded_message(
         ) {
             Column(modifier = Modifier.fillMaxWidth().background(colors.bg_primary)) {
                 info_row(
-                    icon = Icons.Outlined.Lock,
+                    icon = TablerIcons.Lock,
                     label = stringResource(R.string.encryption),
                     value = if (msg.is_encrypted) stringResource(R.string.encrypted_e2e) else stringResource(R.string.encrypted_in_transit),
                     tint = if (msg.is_encrypted) colors.success else colors.text_secondary,
                 )
                 info_row(
-                    icon = Icons.Outlined.Shield,
+                    icon = TablerIcons.Shield,
                     label = stringResource(R.string.tracker_protection),
                     value = if (tracker_count > 0) stringResource(R.string.trackers_blocked_count, tracker_count) else stringResource(R.string.no_trackers),
                     tint = if (tracker_count > 0) colors.warning else colors.success,
                     test_tag = "tracker_badge",
                 )
                 info_row(
-                    icon = Icons.Outlined.Schedule,
+                    icon = TablerIcons.Clock,
                     label = stringResource(R.string.date),
                     value = msg.timestamp.format_full_datetime(),
                     tint = colors.text_secondary,
@@ -1575,7 +1529,7 @@ private fun expanded_message(
                 horizontalArrangement = Arrangement.Center,
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.Lock,
+                    imageVector = TablerIcons.Lock,
                     contentDescription = null,
                     tint = colors.text_muted,
                     modifier = Modifier.size(16.dp),
@@ -1691,7 +1645,7 @@ private fun reply_action_row(
         horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
     ) {
         reply_action_button(
-            icon = Icons.AutoMirrored.Filled.Reply,
+            icon = TablerIcons.ArrowBackUp,
             label = stringResource(R.string.reply),
             bg = colors.accent_blue,
             fg = androidx.compose.ui.graphics.Color.White,
@@ -1701,7 +1655,7 @@ private fun reply_action_row(
             modifier = Modifier.weight(1f),
         )
         reply_action_button(
-            icon = Icons.AutoMirrored.Filled.ReplyAll,
+            icon = TablerIcons.ArrowsLeft,
             label = stringResource(R.string.reply_all),
             bg = colors.bg_card,
             fg = colors.text_primary,
@@ -1711,7 +1665,7 @@ private fun reply_action_row(
             modifier = Modifier.weight(1f),
         )
         reply_action_button(
-            icon = Icons.AutoMirrored.Filled.Forward,
+            icon = TablerIcons.MailForward,
             label = stringResource(R.string.forward),
             bg = colors.bg_card,
             fg = colors.text_primary,
@@ -1838,7 +1792,7 @@ private fun unsubscribe_banner(
     on_unsubscribe: () -> Unit,
 ) {
     compact_banner(
-        icon = Icons.Outlined.Unsubscribe,
+        icon = TablerIcons.Mail,
         label = stringResource(R.string.detail_unsubscribe_title),
     ) {
         compact_banner_action(
@@ -1874,7 +1828,7 @@ private fun external_content_banner(
     }
     val label = if (summary_parts.isNotEmpty()) summary_parts.joinToString(", ")
         else stringResource(R.string.detail_external_images_blocked)
-    compact_banner(icon = Icons.Outlined.ImageNotSupported, label = label) {
+    compact_banner(icon = TablerIcons.PhotoOff, label = label) {
         compact_banner_action(
             label = stringResource(R.string.detail_external_allow_once),
             primary = false,
@@ -1906,7 +1860,7 @@ private fun traffic_saver_banner(
     }
     val label = if (summary_parts.isNotEmpty()) summary_parts.joinToString(", ")
         else stringResource(R.string.detail_external_images_traffic_blocked)
-    compact_banner(icon = Icons.Outlined.ImageNotSupported, label = label) {
+    compact_banner(icon = TablerIcons.PhotoOff, label = label) {
         compact_banner_action(
             label = stringResource(R.string.detail_external_allow_once),
             primary = false,
@@ -2178,7 +2132,7 @@ private fun collapsed_message(
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.Lock,
+                        imageVector = TablerIcons.Lock,
                         contentDescription = null,
                         tint = colors.text_muted,
                         modifier = Modifier.size(18.dp),
@@ -2720,7 +2674,7 @@ private fun info_banner(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.Close,
+                    imageVector = TablerIcons.X,
                     contentDescription = stringResource(R.string.dismiss),
                     tint = colors.text_muted,
                     modifier = Modifier.size(14.dp),
@@ -3624,7 +3578,7 @@ private fun attachment_section(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Icon(
-                imageVector = Icons.Filled.AttachFile,
+                imageVector = TablerIcons.Paperclip,
                 contentDescription = null,
                 tint = colors.text_muted,
                 modifier = Modifier.size(14.dp),
@@ -3722,7 +3676,7 @@ private fun attachment_chip(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = Icons.Filled.Download,
+                imageVector = TablerIcons.Download,
                 contentDescription = stringResource(R.string.download),
                 tint = colors.text_primary,
                 modifier = Modifier.size(20.dp),
@@ -3733,19 +3687,19 @@ private fun attachment_chip(
 
 private fun attachment_icon(content_type: String): ImageVector {
     return when {
-        content_type.startsWith("image/") -> Icons.Outlined.Image
-        content_type.startsWith("video/") -> Icons.Outlined.Videocam
-        content_type.startsWith("audio/") -> Icons.Outlined.MusicNote
-        content_type.contains("pdf") -> Icons.Outlined.Description
+        content_type.startsWith("image/") -> TablerIcons.Photo
+        content_type.startsWith("video/") -> TablerIcons.Video
+        content_type.startsWith("audio/") -> TablerIcons.Music
+        content_type.contains("pdf") -> TablerIcons.FileText
         content_type.contains("zip") || content_type.contains("gzip") ||
             content_type.contains("tar") || content_type.contains("rar") ||
-            content_type.contains("7z") -> Icons.Outlined.FolderZip
+            content_type.contains("7z") -> TablerIcons.FileZip
         content_type.contains("html") || content_type.contains("xml") ||
-            content_type.contains("json") || content_type.contains("javascript") -> Icons.Outlined.Code
+            content_type.contains("json") || content_type.contains("javascript") -> TablerIcons.Code
         content_type.startsWith("text/") || content_type.contains("document") ||
             content_type.contains("msword") || content_type.contains("spreadsheet") ||
-            content_type.contains("presentation") -> Icons.Outlined.Description
-        else -> Icons.AutoMirrored.Outlined.InsertDriveFile
+            content_type.contains("presentation") -> TablerIcons.FileText
+        else -> TablerIcons.File
     }
 }
 
@@ -3936,7 +3890,7 @@ private fun attachment_preview_dialog(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 AsterIconButton(
-                    icon = Icons.Outlined.Close,
+                    icon = TablerIcons.X,
                     content_description = stringResource(R.string.close),
                     onClick = on_close,
                     tint = Color.White,
@@ -3952,14 +3906,14 @@ private fun attachment_preview_dialog(
                     modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
                 )
                 AsterIconButton(
-                    icon = Icons.Filled.Download,
+                    icon = TablerIcons.Download,
                     content_description = stringResource(R.string.download),
                     onClick = on_download,
                     tint = Color.White,
                     modifier = Modifier.size(48.dp),
                 )
                 AsterIconButton(
-                    icon = Icons.AutoMirrored.Filled.OpenInNew,
+                    icon = TablerIcons.ExternalLink,
                     content_description = stringResource(R.string.open_with),
                     onClick = {
                         try {
@@ -4213,7 +4167,7 @@ private fun encryption_badge(size: androidx.compose.ui.unit.Dp) {
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = Icons.Filled.Lock,
+            imageVector = TablerIcons.Lock,
             contentDescription = null,
             tint = Color.White,
             modifier = Modifier.size(size * 0.6f),
@@ -4242,7 +4196,7 @@ private fun phishing_banner(result: org.astermail.android.security.PhishingResul
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                imageVector = Icons.Filled.Warning,
+                imageVector = TablerIcons.AlertCircle,
                 contentDescription = null,
                 tint = tint,
                 modifier = Modifier.size(20.dp),

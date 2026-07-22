@@ -21,6 +21,9 @@
 
 package org.astermail.android.design.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import org.astermail.android.design.SquircleShape
 
 import androidx.compose.foundation.background
@@ -35,7 +38,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -58,7 +60,7 @@ fun UpgradeGate(
     requires_label: String,
     button_label: String,
     modifier: Modifier = Modifier,
-    icon: androidx.compose.ui.graphics.vector.ImageVector = Icons.Outlined.Lock,
+    icon: androidx.compose.ui.graphics.vector.ImageVector = TablerIcons.Lock,
 ) {
     val colors = AsterMaterial.colors
     Column(

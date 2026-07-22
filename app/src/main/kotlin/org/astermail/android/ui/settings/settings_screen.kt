@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.settings
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -38,34 +41,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.outlined.Reply
-import androidx.compose.material.icons.outlined.AlternateEmail
-import androidx.compose.material.icons.outlined.Tune
-import androidx.compose.material.icons.outlined.Sync
-import androidx.compose.material.icons.outlined.BugReport
-import androidx.compose.material.icons.outlined.CloudUpload
-import androidx.compose.material.icons.outlined.CloudDownload
-import androidx.compose.material.icons.outlined.Code
-import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.Drafts
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Feedback
-import androidx.compose.material.icons.automirrored.outlined.Forward
-import androidx.compose.material.icons.outlined.Group
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Key
-import androidx.compose.material.icons.outlined.SwapHoriz
-import androidx.compose.material.icons.outlined.MarkEmailRead
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.Palette
-import androidx.compose.material.icons.outlined.Payment
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Security
-import androidx.compose.material.icons.outlined.Storage
-import androidx.compose.material.icons.outlined.TextFields
-import androidx.compose.material.icons.outlined.VisibilityOff
-import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -110,56 +85,56 @@ private fun build_settings_sections(is_family: Boolean) = listOf(
     settings_section(
         R.string.settings_account,
         buildList {
-            add(settings_row_item("profile", R.string.settings_profile, icon = Icons.Outlined.Person))
-            add(settings_row_item("aliases", R.string.settings_aliases, icon = Icons.Outlined.AlternateEmail))
-if (is_family) add(settings_row_item("family", R.string.settings_family, icon = Icons.Outlined.Group))
-            add(settings_row_item("billing", R.string.settings_plans_billing, icon = Icons.Outlined.Payment))
-            add(settings_row_item("storage", R.string.settings_storage, icon = Icons.Outlined.Storage))
+            add(settings_row_item("profile", R.string.settings_profile, icon = TablerIcons.User))
+            add(settings_row_item("aliases", R.string.settings_aliases, icon = TablerIcons.At))
+if (is_family) add(settings_row_item("family", R.string.settings_family, icon = TablerIcons.Users))
+            add(settings_row_item("billing", R.string.settings_plans_billing, icon = TablerIcons.CreditCard))
+            add(settings_row_item("storage", R.string.settings_storage, icon = TablerIcons.Database))
         },
     ),
     settings_section(
         R.string.settings_section_security,
         listOf(
-            settings_row_item("security", R.string.settings_security, icon = Icons.Outlined.Security),
-            settings_row_item("encryption", R.string.settings_encryption, icon = Icons.Outlined.Key),
+            settings_row_item("security", R.string.settings_security, icon = TablerIcons.Shield),
+            settings_row_item("encryption", R.string.settings_encryption, icon = TablerIcons.Key),
         ),
     ),
     settings_section(
         R.string.settings_section_mail,
         listOf(
-            settings_row_item("notifications", R.string.settings_notifications, icon = Icons.Outlined.Notifications),
-            settings_row_item("signature", R.string.settings_signature, icon = Icons.Outlined.Edit),
-            settings_row_item("templates", R.string.settings_templates, icon = Icons.Outlined.Description),
-            settings_row_item("behavior", R.string.settings_behavior, icon = Icons.AutoMirrored.Outlined.Reply),
-            settings_row_item("swipe_actions", R.string.settings_swipe_actions, icon = Icons.Outlined.SwapHoriz),
-            settings_row_item("mail_rules", R.string.mail_rules_title, icon = Icons.Outlined.Tune),
-            settings_row_item("auto_forward", R.string.settings_auto_forward, icon = Icons.AutoMirrored.Outlined.Forward),
-            settings_row_item("vacation_reply", R.string.settings_vacation_reply, icon = Icons.Outlined.MarkEmailRead),
+            settings_row_item("notifications", R.string.settings_notifications, icon = TablerIcons.Bell),
+            settings_row_item("signature", R.string.settings_signature, icon = TablerIcons.Edit),
+            settings_row_item("templates", R.string.settings_templates, icon = TablerIcons.FileText),
+            settings_row_item("behavior", R.string.settings_behavior, icon = TablerIcons.ArrowBackUp),
+            settings_row_item("swipe_actions", R.string.settings_swipe_actions, icon = TablerIcons.ArrowsLeftRight),
+            settings_row_item("mail_rules", R.string.mail_rules_title, icon = TablerIcons.Adjustments),
+            settings_row_item("auto_forward", R.string.settings_auto_forward, icon = TablerIcons.MailForward),
+            settings_row_item("vacation_reply", R.string.settings_vacation_reply, icon = TablerIcons.MailOpened),
         ),
     ),
     settings_section(
         R.string.settings_section_appearance,
         listOf(
-            settings_row_item("appearance", R.string.settings_appearance, icon = Icons.Outlined.Palette),
-            settings_row_item("accessibility", R.string.settings_accessibility, icon = Icons.Outlined.TextFields),
+            settings_row_item("appearance", R.string.settings_appearance, icon = TablerIcons.Palette),
+            settings_row_item("accessibility", R.string.settings_accessibility, icon = TablerIcons.Typography),
         ),
     ),
     settings_section(
         R.string.settings_section_data,
         listOf(
-            settings_row_item("external_accounts", R.string.external_accounts, icon = Icons.Outlined.Sync),
-            settings_row_item("import", R.string.settings_import, icon = Icons.Outlined.CloudUpload),
-            settings_row_item("export", R.string.settings_export, icon = Icons.Outlined.CloudDownload),
-            settings_row_item("connection", R.string.settings_connection, icon = Icons.Outlined.Wifi),
+            settings_row_item("external_accounts", R.string.external_accounts, icon = TablerIcons.ArrowsRightLeft),
+            settings_row_item("import", R.string.settings_import, icon = TablerIcons.CloudUpload),
+            settings_row_item("export", R.string.settings_export, icon = TablerIcons.CloudDownload),
+            settings_row_item("connection", R.string.settings_connection, icon = TablerIcons.Wifi),
         ),
     ),
     settings_section(
         R.string.settings_section_other,
         listOf(
-            settings_row_item("feedback", R.string.settings_feedback, icon = Icons.Outlined.Feedback),
-            settings_row_item("about", R.string.about, icon = Icons.Outlined.Info),
-            settings_row_item("developer", R.string.developer, icon = Icons.Outlined.Code),
-            settings_row_item("diagnostics", R.string.settings_diagnostics, icon = Icons.Outlined.BugReport),
+            settings_row_item("feedback", R.string.settings_feedback, icon = TablerIcons.MessageReport),
+            settings_row_item("about", R.string.about, icon = TablerIcons.InfoCircle),
+            settings_row_item("developer", R.string.developer, icon = TablerIcons.Code),
+            settings_row_item("diagnostics", R.string.settings_diagnostics, icon = TablerIcons.Bug),
         ),
     ),
 )
@@ -356,7 +331,7 @@ private fun settings_row(row: settings_row_item, on_click: () -> Unit) {
             }
         }
         Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            imageVector = TablerIcons.ChevronRight,
             contentDescription = null,
             tint = colors.text_tertiary,
             modifier = Modifier.size(18.dp),

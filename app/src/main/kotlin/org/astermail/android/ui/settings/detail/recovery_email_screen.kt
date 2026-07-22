@@ -21,13 +21,15 @@
 
 package org.astermail.android.ui.settings.detail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import android.widget.Toast
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -158,7 +160,7 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
                 imeAction = ImeAction.Done,
             ),
             leading_icon = {
-                Icon(Icons.Filled.Email, null, tint = colors.text_muted)
+                Icon(TablerIcons.Mail, null, tint = colors.text_muted)
             },
         )
         v_gap(AsterSpacing.lg)

@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.mail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,7 +39,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -78,7 +80,7 @@ fun FilteredInboxScreen(
     val requested_folder = when (filter_type) {
         FilterType.folder -> filter_value
         FilterType.label -> "label:$filter_value"
-        FilterType.alias -> "inbox"
+        FilterType.alias -> "routing:$filter_value"
     }
     LaunchedEffect(requested_folder) {
         mail_vm.load_inbox(requested_folder, force = true)
@@ -192,7 +194,7 @@ private fun filtered_top_bar(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AsterIconButton(
-                icon = Icons.Filled.Menu,
+                icon = TablerIcons.Menu2,
                 content_description = stringResource(R.string.open_drawer),
                 onClick = on_open_drawer,
             )

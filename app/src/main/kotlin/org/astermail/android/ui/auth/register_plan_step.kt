@@ -21,8 +21,12 @@
 
 package org.astermail.android.ui.auth
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -40,7 +44,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -57,8 +60,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -224,20 +229,32 @@ fun RegisterPlanStep(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = AsterSpacing.xxl),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(Modifier.height(AsterSpacing.sm))
+        Spacer(Modifier.height(AsterSpacing.xl))
+
+        Image(
+            painter = painterResource(R.drawable.aster_wordmark),
+            contentDescription = null,
+            modifier = Modifier.height(40.dp),
+        )
+
+        Spacer(Modifier.height(AsterSpacing.xl))
 
         Text(
             text = stringResource(R.string.choose_your_plan),
             color = colors.text_primary,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
+            fontSize = 30.sp,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = (-0.3).sp,
+            textAlign = TextAlign.Center,
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(AsterSpacing.md))
         Text(
             text = stringResource(R.string.plan_subtitle),
             color = colors.text_tertiary,
             fontSize = 14.sp,
+            textAlign = TextAlign.Center,
         )
 
         Spacer(Modifier.height(AsterSpacing.xl))
@@ -385,7 +402,7 @@ private fun plan_card(
                 )
                 if (is_selected) {
                     Icon(
-                        imageVector = Icons.Filled.CheckCircle,
+                        imageVector = TablerIcons.CircleCheck,
                         contentDescription = null,
                         tint = colors.accent_blue,
                         modifier = Modifier.size(24.dp),

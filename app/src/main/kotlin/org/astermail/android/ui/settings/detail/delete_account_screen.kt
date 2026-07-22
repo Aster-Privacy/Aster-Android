@@ -21,12 +21,13 @@
 
 package org.astermail.android.ui.settings.detail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -84,7 +85,7 @@ fun DeleteAccountScreen(
             ),
             trailing_icon = {
                 Icon(
-                    imageVector = if (state.show_password) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                    imageVector = if (state.show_password) TablerIcons.EyeOff else TablerIcons.Eye,
                     contentDescription = if (state.show_password) stringResource(R.string.hide_password) else stringResource(R.string.show_password),
                     tint = colors.text_tertiary,
                     modifier = Modifier.clickable(onClick = view_model::toggle_show_password),
