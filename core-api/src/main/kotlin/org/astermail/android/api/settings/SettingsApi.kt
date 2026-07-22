@@ -133,6 +133,7 @@ data class AliasInfo(
     val domain: String = "",
     val is_enabled: Boolean = true,
     val is_random: Boolean = false,
+    val never_inbox: Boolean = false,
     val profile_picture: String? = null,
     val created_at: String = "",
     val updated_at: String = "",
@@ -302,6 +303,7 @@ data class CreateAliasRequest(
 @Serializable
 data class UpdateAliasRequest(
     val is_enabled: Boolean? = null,
+    val never_inbox: Boolean? = null,
     val display_name: String? = null,
 )
 

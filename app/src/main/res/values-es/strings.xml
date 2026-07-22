@@ -1300,6 +1300,9 @@
     <string name="alias_available">Este alias está disponible.</string>
     <string name="alias_not_available">Este alias ya está en uso.</string>
     <string name="alias_check_failed">No se pudo comprobar la disponibilidad. Aun así puedes intentar crearlo.</string>
+    <string name="alias_never_inbox">Nunca enviar a la bandeja de entrada</string>
+    <string name="alias_never_inbox_info_title">Nunca enviar a la bandeja de entrada</string>
+    <string name="alias_never_inbox_info_desc">Cuando está activado, los nuevos correos recibidos a través de este alias se mantienen fuera de tu bandeja de entrada principal. Aún puedes encontrarlos en Todos los correos y al abrir este alias.</string>
     <string name="csrf_unavailable">¡Esta sesión está dañada! Vuelve a iniciar sesión.</string>
     <string name="received_on_prefix">recibido en %s</string>
     <string name="received_on_label">Recibido en</string>

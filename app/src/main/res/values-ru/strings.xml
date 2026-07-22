@@ -1303,6 +1303,9 @@
     <string name="alias_available">Этот псевдоним доступен.</string>
     <string name="alias_not_available">Этот псевдоним уже занят.</string>
     <string name="alias_check_failed">Не удалось проверить доступность. Вы всё равно можете попытаться создать его.</string>
+    <string name="alias_never_inbox">Никогда не отправлять во входящие</string>
+    <string name="alias_never_inbox_info_title">Никогда не отправлять во входящие</string>
+    <string name="alias_never_inbox_info_desc">Когда включено, новые письма, полученные через этот псевдоним, не попадают в основные входящие. Вы по-прежнему можете найти их в папке «Вся почта», а также открыв этот псевдоним.</string>
     <string name="csrf_unavailable">Этот сеанс повреждён! Пожалуйста, войдите снова.</string>
     <string name="received_on_prefix">получено на %s</string>
     <string name="received_on_label">Получено на</string>

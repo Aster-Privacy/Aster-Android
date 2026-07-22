@@ -1297,6 +1297,9 @@
     <string name="alias_available">此别名可用。</string>
     <string name="alias_not_available">此别名已被占用。</string>
     <string name="alias_check_failed">无法检查可用性。你仍然可以尝试创建。</string>
+    <string name="alias_never_inbox">永不发送到收件箱</string>
+    <string name="alias_never_inbox_info_title">永不发送到收件箱</string>
+    <string name="alias_never_inbox_info_desc">启用后，通过此别名收到的新邮件将不会进入你的主收件箱。你仍然可以在“所有邮件”中找到它们，也可以打开此别名查看。</string>
     <string name="csrf_unavailable">此会话已损坏！请重新登录。</string>
     <string name="received_on_prefix">通过 %s 接收</string>
     <string name="received_on_label">接收地址</string>

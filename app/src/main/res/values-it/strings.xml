@@ -1299,6 +1299,9 @@
     <string name="alias_available">Questo alias è disponibile.</string>
     <string name="alias_not_available">Questo alias è già in uso.</string>
     <string name="alias_check_failed">Impossibile verificare la disponibilità. Puoi comunque provare a crearlo.</string>
+    <string name="alias_never_inbox">Non inviare mai alla posta in arrivo</string>
+    <string name="alias_never_inbox_info_title">Non inviare mai alla posta in arrivo</string>
+    <string name="alias_never_inbox_info_desc">Quando attivo, le nuove email ricevute tramite questo alias restano fuori dalla tua posta in arrivo principale. Puoi comunque trovarle in Tutta la posta e aprendo questo alias.</string>
     <string name="csrf_unavailable">Questa sessione è danneggiata! Effettua nuovamente l\'accesso.</string>
     <string name="received_on_prefix">ricevuto su %s</string>
     <string name="received_on_label">Ricevuto su</string>

@@ -1299,6 +1299,9 @@
     <string name="alias_available">Este alias está disponível.</string>
     <string name="alias_not_available">Este alias já está em uso.</string>
     <string name="alias_check_failed">Não foi possível verificar a disponibilidade. Você ainda pode tentar criá-lo.</string>
+    <string name="alias_never_inbox">Nunca enviar para a caixa de entrada</string>
+    <string name="alias_never_inbox_info_title">Nunca enviar para a caixa de entrada</string>
+    <string name="alias_never_inbox_info_desc">Quando ativado, os novos e-mails recebidos através deste alias ficam fora da sua caixa de entrada principal. Você ainda pode encontrá-los em Todos os e-mails e ao abrir este alias.</string>
     <string name="csrf_unavailable">Esta sessão está corrompida! Faça login novamente.</string>
     <string name="received_on_prefix">recebido em %s</string>
     <string name="received_on_label">Recebido em</string>

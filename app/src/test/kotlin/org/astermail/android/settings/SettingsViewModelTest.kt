@@ -1051,6 +1051,68 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `toggle_alias_never_inbox flips value and calls api`() = runTest {
+        val aliases = listOf(
+            AliasInfo(id = "a1", encrypted_local_part = "alias1", domain = "astermail.org", never_inbox = false),
+        )
+        coEvery { settings_api.list_aliases() } returns AliasListResponse(aliases)
+        every { session_key_store.get_identity_key() } returns null
+        coEvery {
+            settings_api.update_alias("a1", org.astermail.android.api.settings.UpdateAliasRequest(never_inbox = true))
+        } returns true
+
+        vm.load_aliases()
+        advanceUntilIdle()
+
+        vm.toggle_alias_never_inbox("a1")
+        advanceUntilIdle()
+
+        assertTrue(vm.state.value.aliases.single { it.id == "a1" }.never_inbox)
+        coVerify {
+            settings_api.update_alias("a1", org.astermail.android.api.settings.UpdateAliasRequest(never_inbox = true))
+        }
+    }
+
+    @Test
+    fun `toggle_alias_never_inbox rolls back on api error`() = runTest {
+        val aliases = listOf(
+            AliasInfo(id = "a1", encrypted_local_part = "alias1", domain = "astermail.org", never_inbox = false),
+        )
+        coEvery { settings_api.list_aliases() } returns AliasListResponse(aliases)
+        every { session_key_store.get_identity_key() } returns null
+        coEvery {
+            settings_api.update_alias("a1", org.astermail.android.api.settings.UpdateAliasRequest(never_inbox = true))
+        } throws RuntimeException("server error")
+
+        vm.load_aliases()
+        advanceUntilIdle()
+
+        vm.toggle_alias_never_inbox("a1")
+        advanceUntilIdle()
+
+        assertFalse(vm.state.value.aliases.single { it.id == "a1" }.never_inbox)
+        assertEquals("Something went wrong", vm.state.value.action_result)
+    }
+
+    @Test
+    fun `toggle_alias_never_inbox nonexistent id is harmless`() = runTest {
+        val aliases = listOf(
+            AliasInfo(id = "a1", encrypted_local_part = "alias1", domain = "astermail.org", never_inbox = false),
+        )
+        coEvery { settings_api.list_aliases() } returns AliasListResponse(aliases)
+        every { session_key_store.get_identity_key() } returns null
+
+        vm.load_aliases()
+        advanceUntilIdle()
+
+        vm.toggle_alias_never_inbox("nonexistent")
+        advanceUntilIdle()
+
+        assertFalse(vm.state.value.aliases.single { it.id == "a1" }.never_inbox)
+        coVerify(exactly = 0) { settings_api.update_alias(any(), any()) }
+    }
+
+    @Test
     fun `load_ghost_aliases error sets error message`() = runTest {
         coEvery { ghost_alias_api.list_ghost_aliases() } throws RuntimeException("ghost error")
 

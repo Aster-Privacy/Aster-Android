@@ -417,6 +417,7 @@ private fun aliases_tab(
                         last_index = visible_aliases.lastIndex,
                         context = context,
                         on_toggle = { vm.toggle_alias(alias.id) },
+                        on_toggle_never_inbox = { vm.toggle_alias_never_inbox(alias.id) },
                         on_delete = { pending_delete = alias.id to alias.address },
                         on_edit_note = { note_editing = alias.id to (alias.encrypted_note ?: "") },
                     )
@@ -565,6 +566,7 @@ internal fun alias_list_row(
     on_toggle: () -> Unit,
     on_delete: () -> Unit,
     on_edit_note: (() -> Unit)? = null,
+    on_toggle_never_inbox: (() -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
     Column(
@@ -641,6 +643,32 @@ internal fun alias_list_row(
                     onClick = on_delete,
                     tint = colors.danger,
                 )
+            }
+            if (on_toggle_never_inbox != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.alias_never_inbox),
+                        color = colors.text_tertiary,
+                        fontSize = 12.sp,
+                    )
+                    info_dialog_button(
+                        title = stringResource(R.string.alias_never_inbox_info_title),
+                        description = stringResource(R.string.alias_never_inbox_info_desc),
+                    )
+                    Spacer(Modifier.weight(1f))
+                    Switch(
+                        checked = alias.never_inbox,
+                        onCheckedChange = { on_toggle_never_inbox() },
+                        modifier = Modifier.size(36.dp, 20.dp),
+                        colors = SwitchDefaults.colors(
+                            checkedTrackColor = colors.accent_blue,
+                            uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
+                        ),
+                    )
+                }
             }
         }
         if (idx < last_index) AsterDivider(modifier = Modifier)

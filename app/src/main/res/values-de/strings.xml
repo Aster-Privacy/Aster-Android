@@ -1300,6 +1300,9 @@
     <string name="alias_available">Dieser Alias ist verfügbar.</string>
     <string name="alias_not_available">Dieser Alias ist bereits vergeben.</string>
     <string name="alias_check_failed">Verfügbarkeit konnte nicht geprüft werden. Du kannst dennoch versuchen, ihn zu erstellen.</string>
+    <string name="alias_never_inbox">Nie in den Posteingang zustellen</string>
+    <string name="alias_never_inbox_info_title">Nie in den Posteingang zustellen</string>
+    <string name="alias_never_inbox_info_desc">Wenn aktiviert, werden neue E-Mails, die über diesen Alias eingehen, aus Ihrem Haupt-Posteingang ferngehalten. Sie finden sie weiterhin unter Alle E-Mails und beim Öffnen dieses Alias.</string>
     <string name="csrf_unavailable">Diese Sitzung ist fehlerhaft! Bitte melden Sie sich erneut an.</string>
     <string name="received_on_prefix">empfangen an %s</string>
     <string name="received_on_label">Empfangen an</string>

@@ -646,6 +646,26 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch { create_alias_now(local_part, domain) }
     }
 
+    fun toggle_alias_never_inbox(alias_id: String) {
+        val current = _state.value.aliases.firstOrNull { it.id == alias_id } ?: return
+        val new_value = !current.never_inbox
+        _state.update { s ->
+            s.copy(aliases = s.aliases.map { if (it.id == alias_id) it.copy(never_inbox = new_value) else it })
+        }
+        viewModelScope.launch {
+            try {
+                settings_api.update_alias(alias_id, UpdateAliasRequest(never_inbox = new_value))
+            } catch (_: Throwable) {
+                _state.update { s ->
+                    s.copy(aliases = s.aliases.map { if (it.id == alias_id) it.copy(never_inbox = current.never_inbox) else it })
+                }
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.something_went_wrong),
+                )
+            }
+        }
+    }
+
     fun toggle_alias(alias_id: String) {
         val current = _state.value.aliases.firstOrNull { it.id == alias_id } ?: return
         val new_enabled = !current.is_enabled

@@ -1307,6 +1307,9 @@
     <string name="alias_available">هذا الاسم المستعار متاح.</string>
     <string name="alias_not_available">هذا الاسم المستعار مستخدم بالفعل.</string>
     <string name="alias_check_failed">تعذر التحقق من التوفر. لا يزال بإمكانك محاولة إنشائه.</string>
+    <string name="alias_never_inbox">عدم الإرسال إلى صندوق الوارد أبدًا</string>
+    <string name="alias_never_inbox_info_title">عدم الإرسال إلى صندوق الوارد أبدًا</string>
+    <string name="alias_never_inbox_info_desc">عند التفعيل، تُحفظ الرسائل الجديدة المستلمة عبر هذا الاسم المستعار خارج صندوق الوارد الرئيسي. لا يزال بإمكانك العثور عليها في كل البريد وعن طريق فتح هذا الاسم المستعار.</string>
     <string name="csrf_unavailable">هذه الجلسة معطوبة! يرجى تسجيل الدخول مرة أخرى.</string>
     <string name="received_on_prefix">تم الاستلام على %s</string>
     <string name="received_on_label">تم الاستلام على</string>

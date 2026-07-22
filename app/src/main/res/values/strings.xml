@@ -1893,6 +1893,9 @@
     <string name="alias_always_expand_info_desc">When enabled, the full alias settings panel is shown by default instead of collapsed.</string>
     <string name="alias_readable_reverse_info_title">Readable Reverse Aliases</string>
     <string name="alias_readable_reverse_info_desc">Makes reverse aliases include the sender\'s email address so you can tell who is replying.</string>
+    <string name="alias_never_inbox">Never send to inbox</string>
+    <string name="alias_never_inbox_info_title">Never Send to Inbox</string>
+    <string name="alias_never_inbox_info_desc">When enabled, new emails received through this alias are kept out of your main inbox. You can still find them in All Mail and by opening this alias.</string>
     <string name="domain_status_active">Active</string>
     <string name="domain_status_setup_required">Setup required</string>
     <string name="domain_collapse">Collapse</string>

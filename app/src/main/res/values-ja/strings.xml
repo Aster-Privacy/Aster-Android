@@ -1297,6 +1297,9 @@
     <string name="alias_available">このエイリアスは利用可能です。</string>
     <string name="alias_not_available">このエイリアスは既に使用されています。</string>
     <string name="alias_check_failed">空き状況を確認できませんでした。作成を試すことはできます。</string>
+    <string name="alias_never_inbox">受信トレイに入れない</string>
+    <string name="alias_never_inbox_info_title">受信トレイに入れない</string>
+    <string name="alias_never_inbox_info_desc">有効にすると、このエイリアスで受信した新着メールはメインの受信トレイに表示されません。「すべてのメール」やこのエイリアスを開くことで引き続き確認できます。</string>
     <string name="csrf_unavailable">このセッションは壊れています！もう一度ログインしてください。</string>
     <string name="received_on_prefix">%s で受信</string>
     <string name="received_on_label">受信アドレス</string>

@@ -1478,6 +1478,9 @@
     <string name="alias_always_expand_info_desc">Quand activé, le panneau complet des paramètres d\'alias est affiché par défaut au lieu d\'être réduit.</string>
     <string name="alias_readable_reverse_info_title">Alias inverse lisible</string>
     <string name="alias_readable_reverse_info_desc">Rend les alias inversés lisibles en incluant l\'adresse e-mail de l\'expéditeur pour savoir qui répond.</string>
+    <string name="alias_never_inbox">Ne jamais envoyer dans la boîte de réception</string>
+    <string name="alias_never_inbox_info_title">Ne jamais envoyer dans la boîte de réception</string>
+    <string name="alias_never_inbox_info_desc">Quand activé, les nouveaux e-mails reçus via cet alias sont tenus à l\'écart de votre boîte de réception principale. Vous pouvez toujours les retrouver dans Tous les e-mails et en ouvrant cet alias.</string>
     <string name="domain_status_active">Actif</string>
     <string name="domain_status_setup_required">Configuration requise</string>
     <string name="domain_collapse">Réduire</string>

@@ -1299,6 +1299,9 @@
     <string name="alias_available">Deze alias is beschikbaar.</string>
     <string name="alias_not_available">Deze alias is al in gebruik.</string>
     <string name="alias_check_failed">Kan beschikbaarheid niet controleren. Je kunt hem toch proberen aan te maken.</string>
+    <string name="alias_never_inbox">Nooit naar inbox sturen</string>
+    <string name="alias_never_inbox_info_title">Nooit naar inbox sturen</string>
+    <string name="alias_never_inbox_info_desc">Wanneer ingeschakeld, blijven nieuwe e-mails die via deze alias binnenkomen buiten je hoofdinbox. Je vindt ze nog steeds in Alle e-mail en door deze alias te openen.</string>
     <string name="csrf_unavailable">Deze sessie is beschadigd! Log opnieuw in.</string>
     <string name="received_on_prefix">ontvangen op %s</string>
     <string name="received_on_label">Ontvangen op</string>

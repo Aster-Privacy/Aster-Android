@@ -1303,6 +1303,9 @@
     <string name="alias_available">Ten alias jest dostępny.</string>
     <string name="alias_not_available">Ten alias jest już zajęty.</string>
     <string name="alias_check_failed">Nie można sprawdzić dostępności. Nadal możesz spróbować go utworzyć.</string>
+    <string name="alias_never_inbox">Nigdy nie wysyłaj do skrzynki odbiorczej</string>
+    <string name="alias_never_inbox_info_title">Nigdy nie wysyłaj do skrzynki odbiorczej</string>
+    <string name="alias_never_inbox_info_desc">Po włączeniu nowe wiadomości otrzymywane przez ten alias nie trafiają do głównej skrzynki odbiorczej. Nadal znajdziesz je w widoku Cała poczta oraz otwierając ten alias.</string>
     <string name="csrf_unavailable">Ta sesja jest uszkodzona! Zaloguj się ponownie.</string>
     <string name="received_on_prefix">odebrano na %s</string>
     <string name="received_on_label">Odebrano na</string>

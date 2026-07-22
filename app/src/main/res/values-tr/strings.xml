@@ -1299,6 +1299,9 @@
     <string name="alias_available">Bu takma ad kullanılabilir.</string>
     <string name="alias_not_available">Bu takma ad zaten kullanımda.</string>
     <string name="alias_check_failed">Kullanılabilirlik kontrol edilemedi. Yine de oluşturmayı deneyebilirsiniz.</string>
+    <string name="alias_never_inbox">Gelen kutusuna asla gönderme</string>
+    <string name="alias_never_inbox_info_title">Gelen Kutusuna Asla Gönderme</string>
+    <string name="alias_never_inbox_info_desc">Etkinleştirildiğinde, bu takma ad üzerinden alınan yeni e-postalar ana gelen kutunuzun dışında tutulur. Bunları yine de Tüm Postalar içinde ve bu takma adı açarak bulabilirsiniz.</string>
     <string name="csrf_unavailable">Bu oturum bozuk! Lütfen yeniden giriş yapın.</string>
     <string name="received_on_prefix">%s adresinde alındı</string>
     <string name="received_on_label">Alındığı adres</string>
