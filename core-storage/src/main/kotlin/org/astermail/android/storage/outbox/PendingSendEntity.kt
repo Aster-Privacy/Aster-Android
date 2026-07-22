@@ -45,4 +45,5 @@ data class PendingSendEntity(
     val status: String,
     val created_at_ms: Long,
     val sending_started_at_ms: Long = 0,
+    val account_id: String? = null,
 )

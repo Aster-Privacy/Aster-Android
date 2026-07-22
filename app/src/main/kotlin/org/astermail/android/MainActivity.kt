@@ -167,7 +167,7 @@ import org.astermail.android.ui.theme.local_accessibility
 import org.astermail.android.ui.theme.local_text_scale
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : androidx.fragment.app.FragmentActivity() {
 
     companion object {
         const val EXTRA_OPEN_EMAIL_ID = "open_email_id"
@@ -470,8 +470,8 @@ private fun AsterNavHost() {
     val nav_duration = if (a11y.reduce_motion) 0 else nav_anim_duration_ms
 
     val pending_open_email = MainActivity.pending_open_email_id.value
-    androidx.compose.runtime.LaunchedEffect(pending_open_email, is_signed_in_state) {
-        if (pending_open_email.isNullOrBlank() || !is_signed_in_state) return@LaunchedEffect
+    androidx.compose.runtime.LaunchedEffect(pending_open_email, is_signed_in_state, is_locked) {
+        if (pending_open_email.isNullOrBlank() || !is_signed_in_state || is_locked) return@LaunchedEffect
         MainActivity.pending_open_email_id.value = null
         nav_controller.navigate(routes.mail_detail_for(pending_open_email)) {
             launchSingleTop = true
@@ -479,8 +479,8 @@ private fun AsterNavHost() {
     }
 
     val pending_sessions = MainActivity.pending_open_sessions.value
-    androidx.compose.runtime.LaunchedEffect(pending_sessions, is_signed_in_state) {
-        if (!pending_sessions || !is_signed_in_state) return@LaunchedEffect
+    androidx.compose.runtime.LaunchedEffect(pending_sessions, is_signed_in_state, is_locked) {
+        if (!pending_sessions || !is_signed_in_state || is_locked) return@LaunchedEffect
         MainActivity.pending_open_sessions.value = false
         nav_controller.navigate(routes.settings_detail("sessions")) {
             launchSingleTop = true

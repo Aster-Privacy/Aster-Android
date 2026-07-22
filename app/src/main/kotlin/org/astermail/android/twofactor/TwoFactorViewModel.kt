@@ -123,7 +123,7 @@ class TwoFactorViewModel @Inject constructor(
             return
         }
         viewModelScope.launch {
-            _state.value = s.copy(is_busy = true, error = null)
+            _state.value = _state.value.copy(is_busy = true, error = null)
             val outcome = runCatching {
                 totp_api.verify_setup(TotpSetupVerifyRequest(code = s.code_input.trim(), setup_token = token))
             }
@@ -167,7 +167,7 @@ class TwoFactorViewModel @Inject constructor(
             return
         }
         viewModelScope.launch {
-            _state.value = s.copy(is_busy = true, error = null)
+            _state.value = _state.value.copy(is_busy = true, error = null)
             val derived = withContext(Dispatchers.Default) {
                 auth_repository.derive_password_hash_b64(s.password_input)
             }

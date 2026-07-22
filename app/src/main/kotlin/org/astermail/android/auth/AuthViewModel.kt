@@ -133,6 +133,12 @@ class AuthViewModel @Inject constructor(
         _ui_state.value = AuthUiState.Idle
     }
 
+    fun cancel_totp(challenge: org.astermail.android.auth.TotpChallenge) {
+        challenge.password_bytes.fill(0)
+        challenge.password_hash_bytes.fill(0)
+        _ui_state.value = AuthUiState.Idle
+    }
+
     private fun is_valid_email(email: String): Boolean {
         val at = email.indexOf('@')
         if (at <= 0 || at == email.length - 1) return false

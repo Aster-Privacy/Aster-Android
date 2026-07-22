@@ -340,6 +340,7 @@ class MailRepository @Inject constructor(
             fire_at_ms = now + delay_ms,
             status = STATUS_PENDING,
             created_at_ms = now,
+            account_id = session_key_store.get_user_id(),
         )
         pending_send_dao.upsert(row)
         if (undo_canceled_ids.remove(pending_id)) {
@@ -378,7 +379,8 @@ class MailRepository @Inject constructor(
 
     suspend fun run_pending_send(pending_id: String, expected_owner: String? = null): PendingSendOutcome {
         val row = pending_send_dao.get_by_id(pending_id) ?: return PendingSendOutcome.GONE
-        if (expected_owner != null && expected_owner != session_key_store.get_user_id()) {
+        val owner = row.account_id ?: expected_owner
+        if (owner != null && owner != session_key_store.get_user_id()) {
             return PendingSendOutcome.RETRY
         }
         if (undo_canceled_ids.contains(pending_id)) {

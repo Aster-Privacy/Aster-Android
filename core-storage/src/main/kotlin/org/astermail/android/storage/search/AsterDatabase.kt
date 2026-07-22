@@ -28,7 +28,7 @@ import org.astermail.android.storage.outbox.PendingSendEntity
 
 @Database(
     entities = [DecryptedMailEntity::class, PendingSendEntity::class],
-    version = 5,
+    version = 6,
     exportSchema = false,
 )
 abstract class AsterDatabase : RoomDatabase() {
@@ -39,6 +39,12 @@ abstract class AsterDatabase : RoomDatabase() {
         val migration_4_5 = object : androidx.room.migration.Migration(4, 5) {
             override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE decrypted_mail_cache ADD COLUMN received_on TEXT")
+            }
+        }
+
+        val migration_5_6 = object : androidx.room.migration.Migration(5, 6) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE pending_send_queue ADD COLUMN account_id TEXT")
             }
         }
     }

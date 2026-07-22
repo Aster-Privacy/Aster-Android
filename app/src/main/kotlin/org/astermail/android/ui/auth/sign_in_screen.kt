@@ -145,8 +145,8 @@ fun SignInScreen(
             challenge = active_totp_challenge,
             view_model = view_model,
             on_back = {
+                view_model.cancel_totp(active_totp_challenge)
                 cached_totp_challenge = null
-                view_model.reset_state()
             },
         )
         return
