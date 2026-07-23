@@ -1124,7 +1124,7 @@
     <string name="fingerprint_copied">フィンガープリントをコピーしました</string>
     <string name="generate_ghost_alias">ゴーストエイリアスを生成</string>
     <string name="ghost_alias_created">ゴーストエイリアスを作成しました: %s</string>
-    <string name="ghost_alias_subtitle">自動的に期限切れになる一時的な@aster.cxアドレスを作成します。</string>
+    <string name="ghost_alias_subtitle">自動的に期限切れになる一時的な@realiased.meアドレスを作成します。</string>
     <string name="icon_label">アイコン</string>
     <string name="load_external_content">外部コンテンツを読み込む</string>
     <string name="loading_identity_key">ID キーを読み込み中...</string>

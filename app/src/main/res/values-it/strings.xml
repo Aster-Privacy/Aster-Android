@@ -1124,7 +1124,7 @@
     <string name="fingerprint_copied">Impronta copiata</string>
     <string name="generate_ghost_alias">Genera alias fantasma</string>
     <string name="ghost_alias_created">Alias fantasma creato: %s</string>
-    <string name="ghost_alias_subtitle">Crea un indirizzo @aster.cx temporaneo che scade automaticamente.</string>
+    <string name="ghost_alias_subtitle">Crea un indirizzo @realiased.me temporaneo che scade automaticamente.</string>
     <string name="icon_label">ICONA</string>
     <string name="load_external_content">Carica contenuto esterno</string>
     <string name="loading_identity_key">Caricamento chiave di identità...</string>

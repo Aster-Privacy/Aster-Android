@@ -1125,7 +1125,7 @@
     <string name="fingerprint_copied">Fingerabdruck kopiert</string>
     <string name="generate_ghost_alias">Ghost-Alias generieren</string>
     <string name="ghost_alias_created">Ghost-Alias erstellt: %s</string>
-    <string name="ghost_alias_subtitle">Erstellt eine temporäre @aster.cx-Adresse, die automatisch abläuft.</string>
+    <string name="ghost_alias_subtitle">Erstellt eine temporäre @realiased.me-Adresse, die automatisch abläuft.</string>
     <string name="icon_label">SYMBOL</string>
     <string name="load_external_content">Externe Inhalte laden</string>
     <string name="loading_identity_key">Identitätsschlüssel wird geladen...</string>

@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Aster Mail</string>
     <string name="generate_ghost_alias">Generate ghost alias</string>
-    <string name="ghost_alias_subtitle">Create a temporary @aster.cx address that auto-expires.</string>
+    <string name="ghost_alias_subtitle">Create a temporary @realiased.me address that auto-expires.</string>
     <string name="valid_for_days">Valid for %1$d days</string>
     <string name="set_message_expiry">Set message expiry</string>
     <string name="message_expiry_subtitle">Recipients will lose access after the chosen window.</string>

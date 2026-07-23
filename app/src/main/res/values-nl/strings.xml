@@ -1124,7 +1124,7 @@
     <string name="fingerprint_copied">Vingerafdruk gekopieerd</string>
     <string name="generate_ghost_alias">Ghost-alias genereren</string>
     <string name="ghost_alias_created">Ghost-alias gemaakt: %s</string>
-    <string name="ghost_alias_subtitle">Maakt een tijdelijk @aster.cx-adres dat automatisch verloopt.</string>
+    <string name="ghost_alias_subtitle">Maakt een tijdelijk @realiased.me-adres dat automatisch verloopt.</string>
     <string name="icon_label">PICTOGRAM</string>
     <string name="load_external_content">Externe inhoud laden</string>
     <string name="loading_identity_key">Identiteitssleutel laden...</string>

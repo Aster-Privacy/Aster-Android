@@ -1124,7 +1124,7 @@
     <string name="fingerprint_copied">Odcisk palca skopiowany</string>
     <string name="generate_ghost_alias">Generuj alias-widmo</string>
     <string name="ghost_alias_created">Utworzono alias-widmo: %s</string>
-    <string name="ghost_alias_subtitle">Tworzy tymczasowy adres @aster.cx, który automatycznie wygasa.</string>
+    <string name="ghost_alias_subtitle">Tworzy tymczasowy adres @realiased.me, który automatycznie wygasa.</string>
     <string name="icon_label">IKONA</string>
     <string name="load_external_content">Załaduj zewnętrzną zawartość</string>
     <string name="loading_identity_key">Ładowanie klucza tożsamości...</string>

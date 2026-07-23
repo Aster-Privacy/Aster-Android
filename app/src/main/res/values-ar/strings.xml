@@ -1124,7 +1124,7 @@
     <string name="fingerprint_copied">تم نسخ البصمة</string>
     <string name="generate_ghost_alias">إنشاء اسم مستعار شبحي</string>
     <string name="ghost_alias_created">تم إنشاء اسم مستعار شبحي: %s</string>
-    <string name="ghost_alias_subtitle">ينشئ عنوان @aster.cx مؤقت ينتهي تلقائيًا.</string>
+    <string name="ghost_alias_subtitle">ينشئ عنوان @realiased.me مؤقت ينتهي تلقائيًا.</string>
     <string name="icon_label">أيقونة</string>
     <string name="load_external_content">تحميل المحتوى الخارجي</string>
     <string name="loading_identity_key">جارٍ تحميل مفتاح الهوية...</string>

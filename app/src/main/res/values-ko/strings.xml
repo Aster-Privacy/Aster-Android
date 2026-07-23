@@ -1124,7 +1124,7 @@
     <string name="fingerprint_copied">지문이 복사됨</string>
     <string name="generate_ghost_alias">고스트 별칭 생성</string>
     <string name="ghost_alias_created">고스트 별칭이 생성됨: %s</string>
-    <string name="ghost_alias_subtitle">자동으로 만료되는 임시 @aster.cx 주소를 생성합니다.</string>
+    <string name="ghost_alias_subtitle">자동으로 만료되는 임시 @realiased.me 주소를 생성합니다.</string>
     <string name="icon_label">아이콘</string>
     <string name="load_external_content">외부 콘텐츠 로드</string>
     <string name="loading_identity_key">신원 키 로드 중...</string>

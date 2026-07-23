@@ -1185,7 +1185,7 @@
     <string name="feature">Fonctionnalité</string>
     <string name="generate_ghost_alias">Générer un alias fantôme</string>
     <string name="ghost_alias_created">Alias fantôme créé : %s</string>
-    <string name="ghost_alias_subtitle">Crée une adresse @aster.cx temporaire qui expire automatiquement.</string>
+    <string name="ghost_alias_subtitle">Crée une adresse @realiased.me temporaire qui expire automatiquement.</string>
     <string name="icon_label">ICÔNE</string>
     <string name="load_external_content">Charger le contenu externe</string>
     <string name="marked_read_count">%d message(s) marqué(s) comme lu</string>

@@ -58,6 +58,7 @@ import org.astermail.android.api.developer.WebhookInfo
 import org.astermail.android.api.family.FamilyApi
 import org.astermail.android.api.family.ReservedAddress
 import org.astermail.android.api.ghost.CreateGhostAliasRequest
+import org.astermail.android.api.ghost.GHOST_ALIAS_DOMAIN
 import org.astermail.android.api.ghost.GhostAlias
 import org.astermail.android.api.ghost.GhostAliasApi
 import org.astermail.android.api.labels.BulkReorderLabelsRequest
@@ -2255,7 +2256,7 @@ class SettingsViewModel @Inject constructor(
 
     suspend fun create_ghost_alias_now(note: String): GhostAliasResult {
         return try {
-            val domain = "astermail.org"
+            val domain = GHOST_ALIAS_DOMAIN
             val local_part = generate_ghost_local_part()
             val (enc_local, local_nonce) = encrypt_alias_field(local_part)
             val addr_hash = compute_alias_address_hash(local_part, domain)

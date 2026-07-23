@@ -1124,7 +1124,7 @@
     <string name="fingerprint_copied">Parmak izi kopyalandı</string>
     <string name="generate_ghost_alias">Hayalet takma ad oluştur</string>
     <string name="ghost_alias_created">Hayalet takma ad oluşturuldu: %s</string>
-    <string name="ghost_alias_subtitle">Otomatik olarak sona eren geçici @aster.cx adresi oluşturur.</string>
+    <string name="ghost_alias_subtitle">Otomatik olarak sona eren geçici @realiased.me adresi oluşturur.</string>
     <string name="icon_label">SİMGE</string>
     <string name="load_external_content">Harici içeriği yükle</string>
     <string name="loading_identity_key">Kimlik anahtarı yükleniyor...</string>

@@ -1124,7 +1124,7 @@
     <string name="fingerprint_copied">Отпечаток скопирован</string>
     <string name="generate_ghost_alias">Создать призрачный псевдоним</string>
     <string name="ghost_alias_created">Призрачный псевдоним создан: %s</string>
-    <string name="ghost_alias_subtitle">Создаёт временный адрес @aster.cx, который истекает автоматически.</string>
+    <string name="ghost_alias_subtitle">Создаёт временный адрес @realiased.me, который истекает автоматически.</string>
     <string name="icon_label">ЗНАЧОК</string>
     <string name="load_external_content">Загрузить внешний контент</string>
     <string name="loading_identity_key">Загрузка ключа идентификации...</string>

@@ -1124,7 +1124,7 @@
     <string name="fingerprint_copied">指纹已复制</string>
     <string name="generate_ghost_alias">生成幽灵别名</string>
     <string name="ghost_alias_created">已创建幽灵别名: %s</string>
-    <string name="ghost_alias_subtitle">创建一个自动过期的临时 @aster.cx 地址。</string>
+    <string name="ghost_alias_subtitle">创建一个自动过期的临时 @realiased.me 地址。</string>
     <string name="icon_label">图标</string>
     <string name="load_external_content">加载外部内容</string>
     <string name="loading_identity_key">正在加载身份密钥...</string>

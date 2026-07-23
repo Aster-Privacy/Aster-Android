@@ -33,6 +33,8 @@ import kotlinx.serialization.Serializable
 import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
 
+const val GHOST_ALIAS_DOMAIN = "realiased.me"
+
 @Serializable
 data class GhostAlias(
     val id: String = "",
