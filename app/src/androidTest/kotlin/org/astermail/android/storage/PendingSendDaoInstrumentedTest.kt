@@ -140,6 +140,35 @@ class PendingSendDaoInstrumentedTest {
     }
 
     @Test
+    fun an_inlined_large_attachment_blob_is_lost_on_read_back() = runBlocking {
+        val dao = database.pending_send_dao()
+        val huge_base64 = "A".repeat(16 * 1024 * 1024)
+        dao.upsert(row("big").copy(attachments_json = huge_base64))
+
+        val faithful = try {
+            dao.get_by_id("big")?.attachments_json == huge_base64
+        } catch (_: Throwable) {
+            false
+        }
+
+        assertTrue(
+            "a >2MB attachment blob inlined into the row must not survive a get_by_id round-trip",
+            !faithful,
+        )
+    }
+
+    @Test
+    fun a_file_ref_row_reads_back_no_matter_how_big_the_attachment_is() = runBlocking {
+        val dao = database.pending_send_dao()
+        dao.upsert(row("ref").copy(attachments_json = "@file:ref.json"))
+
+        val loaded = dao.get_by_id("ref")
+
+        assertNotNull(loaded)
+        assertEquals("@file:ref.json", loaded?.attachments_json)
+    }
+
+    @Test
     fun a_pending_row_survives_a_database_reopen() {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         val db_name = "pending_send_reopen_test.db"

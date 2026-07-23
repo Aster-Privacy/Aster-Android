@@ -37,6 +37,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 enum class ThemeMode { system, light, dark }
 
@@ -65,6 +68,10 @@ class ThemeStore(context: Context) {
     private val key_underline_links = booleanPreferencesKey("underline_links")
     private val key_dyslexia_font = booleanPreferencesKey("dyslexia_font")
     private val key_onboarding_seen = booleanPreferencesKey("onboarding_seen")
+    private val key_color_theme = stringPreferencesKey("color_theme")
+    private val key_custom_theme_seed = stringPreferencesKey("custom_theme_seed")
+    private val key_custom_theme_overrides = stringPreferencesKey("custom_theme_overrides")
+    private val key_font_choice = stringPreferencesKey("font_choice")
 
     val theme_mode: StateFlow<ThemeMode> = app_context.theme_data_store.data
         .map { prefs -> parse_mode(prefs[key_theme_mode]) }
@@ -109,6 +116,22 @@ class ThemeStore(context: Context) {
     val onboarding_seen: StateFlow<Boolean> = app_context.theme_data_store.data
         .map { prefs -> prefs[key_onboarding_seen] ?: false }
         .stateIn(scope, SharingStarted.Eagerly, false)
+
+    val color_theme: StateFlow<String> = app_context.theme_data_store.data
+        .map { prefs -> prefs[key_color_theme] ?: "default" }
+        .stateIn(scope, SharingStarted.Eagerly, "default")
+
+    val custom_theme_seed: StateFlow<String> = app_context.theme_data_store.data
+        .map { prefs -> prefs[key_custom_theme_seed] ?: "#3b82f6" }
+        .stateIn(scope, SharingStarted.Eagerly, "#3b82f6")
+
+    val custom_theme_overrides: StateFlow<Map<String, String>> = app_context.theme_data_store.data
+        .map { prefs -> parse_overrides(prefs[key_custom_theme_overrides]) }
+        .stateIn(scope, SharingStarted.Eagerly, emptyMap())
+
+    val font_choice: StateFlow<String> = app_context.theme_data_store.data
+        .map { prefs -> prefs[key_font_choice] ?: "default" }
+        .stateIn(scope, SharingStarted.Eagerly, "default")
 
     fun set_theme_mode(mode: ThemeMode) {
         scope.launch {
@@ -160,6 +183,26 @@ class ThemeStore(context: Context) {
         scope.launch { app_context.theme_data_store.edit { it[key_onboarding_seen] = seen } }
     }
 
+    fun set_color_theme(id: String) {
+        scope.launch { app_context.theme_data_store.edit { it[key_color_theme] = id } }
+    }
+
+    fun set_custom_theme_seed(hex: String) {
+        scope.launch { app_context.theme_data_store.edit { it[key_custom_theme_seed] = hex } }
+    }
+
+    fun set_custom_theme_overrides(overrides: Map<String, String>) {
+        scope.launch {
+            app_context.theme_data_store.edit {
+                it[key_custom_theme_overrides] = Json.encodeToString(overrides)
+            }
+        }
+    }
+
+    fun set_font_choice(id: String) {
+        scope.launch { app_context.theme_data_store.edit { it[key_font_choice] = id } }
+    }
+
     suspend fun clear() {
         app_context.theme_data_store.edit { it.clear() }
     }
@@ -186,5 +229,14 @@ class ThemeStore(context: Context) {
         raw >= 1.25f -> TextSize.extra_large
         raw >= 1.1f -> TextSize.large
         else -> TextSize.default_size
+    }
+
+    private fun parse_overrides(raw: String?): Map<String, String> {
+        if (raw.isNullOrBlank()) return emptyMap()
+        return try {
+            Json.decodeFromString(raw)
+        } catch (_: Throwable) {
+            emptyMap()
+        }
     }
 }

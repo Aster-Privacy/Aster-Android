@@ -23,9 +23,6 @@ package org.astermail.android.ui.common
 
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.CubicBezierEasing
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -33,16 +30,17 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import org.astermail.android.design.AsterEasing
 
-const val nav_anim_forward_ms = 230
-const val nav_anim_backward_ms = 210
+const val nav_anim_forward_ms = 220
+const val nav_anim_backward_ms = 200
 const val nav_anim_duration_ms = nav_anim_forward_ms
 const val nav_slide_fraction = 0.18f
-private const val nav_fade_in_ms = 170
-private const val nav_fade_out_ms = 150
+private const val nav_fade_in_ms = 150
+private const val nav_fade_out_ms = 130
 
-private val nav_easing_enter = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
-private val nav_easing_exit = CubicBezierEasing(0.4f, 0f, 0.2f, 1f)
+private val nav_easing_enter = AsterEasing.standard_enter
+private val nav_easing_exit = AsterEasing.standard_exit
 
 fun nav_forward_enter(duration: Int = nav_anim_forward_ms): EnterTransition {
     if (duration == 0) return EnterTransition.None
@@ -79,10 +77,7 @@ fun nav_backward_exit(duration: Int = nav_anim_backward_ms): ExitTransition {
 fun nav_sheet_enter(duration: Int = nav_anim_forward_ms): EnterTransition {
     if (duration == 0) return EnterTransition.None
     return slideInVertically(
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioLowBouncy,
-            stiffness = Spring.StiffnessMediumLow,
-        ),
+        animationSpec = tween(durationMillis = 320, easing = AsterEasing.standard_enter),
         initialOffsetY = { h -> h },
     ) + fadeIn(animationSpec = tween(durationMillis = nav_fade_in_ms, easing = nav_easing_enter))
 }
@@ -90,10 +85,7 @@ fun nav_sheet_enter(duration: Int = nav_anim_forward_ms): EnterTransition {
 fun nav_sheet_exit(duration: Int = nav_anim_backward_ms): ExitTransition {
     if (duration == 0) return ExitTransition.None
     return slideOutVertically(
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness = Spring.StiffnessMedium,
-        ),
+        animationSpec = tween(durationMillis = 220, easing = AsterEasing.standard_exit),
         targetOffsetY = { h -> h },
     ) + fadeOut(animationSpec = tween(durationMillis = nav_fade_out_ms, easing = nav_easing_exit))
 }

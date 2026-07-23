@@ -24,29 +24,34 @@ package org.astermail.android.design
 import androidx.compose.animation.core.CubicBezierEasing
 
 object AsterEasing {
-    val standard_in_out = CubicBezierEasing(0.2f, 0f, 0f, 1f)
-    val standard_enter = CubicBezierEasing(0f, 0f, 0f, 1f)
-    val standard_exit = CubicBezierEasing(0.3f, 0f, 1f, 1f)
-    val emphasized_in_out = CubicBezierEasing(0.2f, 0f, 0f, 1f)
-    val emphasized_enter = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
-    val emphasized_exit = CubicBezierEasing(0.3f, 0f, 0.8f, 0.15f)
+    val standard_in_out = CubicBezierEasing(0.25f, 0.1f, 0.25f, 1f)
+    val standard_enter = CubicBezierEasing(0.23f, 1f, 0.32f, 1f)
+    val standard_exit = CubicBezierEasing(0f, 0f, 0.58f, 1f)
+    val emphasized_in_out = CubicBezierEasing(0.42f, 0f, 0.58f, 1f)
+    val emphasized_enter = CubicBezierEasing(0.23f, 1f, 0.32f, 1f)
+    val emphasized_exit = CubicBezierEasing(0f, 0f, 0.58f, 1f)
+    val tap_down = CubicBezierEasing(0f, 0f, 0.58f, 1f)
+    val tap_up = CubicBezierEasing(0f, 0f, 0.58f, 1f)
 }
 
 object AsterDuration {
     const val short_1 = 50
     const val short_2 = 100
-    const val short_3 = 150
-    const val short_4 = 200
-    const val medium_1 = 250
-    const val medium_2 = 300
-    const val medium_3 = 350
-    const val medium_4 = 400
-    const val long_1 = 450
-    const val long_2 = 500
+    const val short_3 = 120
+    const val short_4 = 180
+    const val medium_1 = 200
+    const val medium_2 = 250
+    const val medium_3 = 300
+    const val medium_4 = 350
+    const val long_1 = 400
+    const val long_2 = 450
 
     const val emphasized_enter = 400
-    const val emphasized_exit = 200
-    const val emphasized_enter_delay = 80
-    const val pop_exit = 200
-    const val pop_enter = 300
+    const val emphasized_exit = 250
+    const val emphasized_enter_delay = 60
+    const val pop_exit = 180
+    const val pop_enter = 250
+
+    const val tap_down = 120
+    const val tap_up = 180
 }

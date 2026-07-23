@@ -42,3 +42,4 @@ _ui*.xml
 /test_shots/
 /.tmp/
 /BUGS.md
+/.claude/

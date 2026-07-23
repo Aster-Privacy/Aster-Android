@@ -92,21 +92,43 @@ fun AsterTheme(
     reduce_transparency: Boolean = false,
     dyslexia_font: FontFamily? = null,
     text_spacing: Boolean = false,
+    color_theme_id: ColorThemeId = ColorThemeId.default,
+    custom_theme_seed: String? = null,
+    custom_theme_overrides: Map<String, String> = emptyMap(),
+    font_choice: String = DEFAULT_FONT_ID,
     content: @Composable () -> Unit,
 ) {
-    val resolved_dark = when (theme_mode) {
-        AsterThemeMode.light -> false
-        AsterThemeMode.dark -> true
-        AsterThemeMode.system -> isSystemInDarkTheme()
-        null -> use_dark_theme
+    val forced_dark = AsterColorThemes.is_dark_only(color_theme_id)
+    val resolved_dark = if (forced_dark) {
+        true
+    } else {
+        when (theme_mode) {
+            AsterThemeMode.light -> false
+            AsterThemeMode.dark -> true
+            AsterThemeMode.system -> isSystemInDarkTheme()
+            null -> use_dark_theme
+        }
     }
-    val color_scheme = if (resolved_dark) dark_color_scheme else light_color_scheme
-    var semantic = if (resolved_dark) dark_semantic_colors else light_semantic_colors
+
+    val palette = when (color_theme_id) {
+        ColorThemeId.custom -> MaterialThemeGenerator.to_palette(
+            MaterialThemeGenerator.compute_custom_theme_vars(
+                seed_hex = custom_theme_seed?.takeIf { MaterialThemeGenerator.is_valid_hex_color(it) } ?: "#3b82f6",
+                is_dark = resolved_dark,
+                overrides = custom_theme_overrides,
+            ),
+        )
+        else -> AsterColorThemes.palette_for(color_theme_id)
+    }
+
+    val color_scheme = color_scheme_for(resolved_dark, palette)
+    var semantic = AsterColorThemes.semantic_colors_for(resolved_dark, palette)
     if (high_contrast) semantic = apply_high_contrast(semantic)
     if (reduce_transparency) semantic = apply_reduce_transparency(semantic)
 
-    val active_font = dyslexia_font ?: inter_family
-    val typography = if (dyslexia_font != null || text_spacing) {
+    val chosen_font = font_family_for(font_choice)
+    val active_font = dyslexia_font ?: chosen_font ?: inter_family
+    val typography = if (dyslexia_font != null || chosen_font != null || text_spacing) {
         build_typography(active_font, text_spacing)
     } else {
         aster_typography

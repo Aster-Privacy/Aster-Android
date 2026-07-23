@@ -73,8 +73,8 @@
     <string name="onboarding_slide4_body">Create disposable aliases that forward to your real inbox. Burn any one without affecting the rest.</string>
 
     <!-- Welcome / Auth -->
-    <string name="welcome_tagline">Privacy you can feel</string>
-    <string name="welcome_subtitle">End-to-end encrypted email for people who actually give a damn about their privacy.</string>
+    <string name="welcome_tagline">Private by nature</string>
+    <string name="welcome_subtitle">End-to-end encrypted email for people who actually care about their privacy.</string>
     <string name="log_in">Log in</string>
     <string name="create_account">Create Account</string>
     <string name="sign_in_title">Sign in to Aster</string>
@@ -90,8 +90,8 @@
     <string name="domain_astercx">@aster.cx</string>
 
     <!-- Registration -->
-    <string name="register_title">Create your free account</string>
-    <string name="register_subtitle">One account for all Aster services. Free, secure, and private.</string>
+    <string name="register_title">Create your account</string>
+    <string name="register_subtitle">Private, encrypted email in seconds</string>
     <string name="display_name_optional">Display name (optional)</string>
     <string name="secure_your_account">Secure your account</string>
     <string name="create_strong_password">Create a strong password to protect your account</string>
@@ -731,6 +731,51 @@
     <string name="theme_light_subtitle">Always light theme</string>
     <string name="theme_dark">Dark</string>
     <string name="theme_dark_subtitle">Always dark theme</string>
+    <string name="color_theme">Color theme</string>
+    <string name="color_theme_default">Aster Default</string>
+    <string name="color_theme_custom">Custom theme</string>
+    <string name="color_theme_purple">Purple</string>
+    <string name="color_theme_green">Green</string>
+    <string name="color_theme_rose">Rose</string>
+    <string name="color_theme_orange">Orange</string>
+    <string name="color_theme_teal">Teal</string>
+    <string name="color_theme_indigo">Indigo</string>
+    <string name="color_theme_amber">Amber</string>
+    <string name="color_theme_cyan">Cyan</string>
+    <string name="color_theme_slate">Slate</string>
+    <string name="color_theme_aster_blue">Aster Blue</string>
+    <string name="color_theme_lime">Lime</string>
+    <string name="color_theme_fuchsia">Fuchsia</string>
+    <string name="color_theme_emerald">Emerald</string>
+    <string name="color_theme_pink">Pink</string>
+    <string name="color_theme_black">Black</string>
+    <string name="custom_theme_base_color">Base color</string>
+    <string name="custom_theme_base_color_subtitle">Pick a color and we\'ll build a full palette around it</string>
+    <string name="custom_theme_hex_placeholder">#3b82f6</string>
+    <string name="custom_theme_hex_invalid">Enter a valid hex color, like #3b82f6</string>
+    <string name="custom_theme_upgrade_title">Custom theme</string>
+    <string name="custom_theme_upgrade_description">Build your own color theme from any base color. Upgrade to unlock it.</string>
+    <string name="font">Font</string>
+    <string name="font_subtitle">Choose the typeface used across the app</string>
+    <string name="font_option_default">Aster Default</string>
+    <string name="font_option_system">System UI</string>
+    <string name="font_option_inter">Inter</string>
+    <string name="font_option_roboto">Roboto</string>
+    <string name="font_option_nunito">Nunito</string>
+    <string name="font_option_merriweather">Merriweather</string>
+    <string name="font_option_lora">Lora</string>
+    <string name="font_option_jetbrains_mono">JetBrains Mono</string>
+    <string name="font_option_poppins">Poppins</string>
+    <string name="font_option_montserrat">Montserrat</string>
+    <string name="font_option_work_sans">Work Sans</string>
+    <string name="font_option_ibm_plex_sans">IBM Plex Sans</string>
+    <string name="font_option_ibm_plex_mono">IBM Plex Mono</string>
+    <string name="font_option_space_mono">Space Mono</string>
+    <string name="font_option_playfair_display">Playfair Display</string>
+    <string name="font_option_libre_baskerville">Libre Baskerville</string>
+    <string name="font_option_pt_serif">PT Serif</string>
+    <string name="font_option_raleway">Raleway</string>
+    <string name="pick_font">Choose font</string>
 
     <!-- Accessibility settings -->
     <string name="font_size">Font size</string>

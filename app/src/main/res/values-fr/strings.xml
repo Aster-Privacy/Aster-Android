@@ -37,7 +37,7 @@
     <string name="unsubscribe">Se désabonner</string>
 
     <!-- Welcome / Auth -->
-    <string name="welcome_tagline">La confidentialité que vous ressentez</string>
+    <string name="welcome_tagline">Privé par nature</string>
     <string name="welcome_subtitle">E-mail chiffré de bout en bout pour ceux qui se soucient vraiment de leur vie privée.</string>
     <string name="log_in">Se connecter</string>
     <string name="create_account">Créer un compte</string>
@@ -54,8 +54,8 @@
     <string name="domain_astercx">@aster.cx</string>
 
     <!-- Registration -->
-    <string name="register_title">Créez votre compte gratuit</string>
-    <string name="register_subtitle">Un seul compte pour tous les services Aster. Gratuit, sécurisé et privé.</string>
+    <string name="register_title">Créez votre compte</string>
+    <string name="register_subtitle">E-mail privé et chiffré en quelques secondes</string>
     <string name="display_name_optional">Nom d\'affichage (optionnel)</string>
     <string name="secure_your_account">Sécurisez votre compte</string>
     <string name="create_strong_password">Créez un mot de passe fort pour protéger votre compte</string>
@@ -528,6 +528,51 @@
     <string name="theme_light_subtitle">Toujours en thème clair</string>
     <string name="theme_dark">Sombre</string>
     <string name="theme_dark_subtitle">Toujours en thème sombre</string>
+    <string name="color_theme">Thème de couleur</string>
+    <string name="color_theme_default">Aster Default</string>
+    <string name="color_theme_custom">Thème personnalisé</string>
+    <string name="color_theme_purple">Violet</string>
+    <string name="color_theme_green">Vert</string>
+    <string name="color_theme_rose">Rose</string>
+    <string name="color_theme_orange">Orange</string>
+    <string name="color_theme_teal">Sarcelle</string>
+    <string name="color_theme_indigo">Indigo</string>
+    <string name="color_theme_amber">Ambre</string>
+    <string name="color_theme_cyan">Cyan</string>
+    <string name="color_theme_slate">Ardoise</string>
+    <string name="color_theme_aster_blue">Aster Blue</string>
+    <string name="color_theme_lime">Citron vert</string>
+    <string name="color_theme_fuchsia">Fuchsia</string>
+    <string name="color_theme_emerald">Émeraude</string>
+    <string name="color_theme_pink">Rose bonbon</string>
+    <string name="color_theme_black">Noir</string>
+    <string name="custom_theme_base_color">Couleur de base</string>
+    <string name="custom_theme_base_color_subtitle">Choisissez une couleur et nous créerons une palette complète à partir de celle-ci</string>
+    <string name="custom_theme_hex_placeholder">#3b82f6</string>
+    <string name="custom_theme_hex_invalid">Saisissez une couleur hexadécimale valide, par exemple #3b82f6</string>
+    <string name="custom_theme_upgrade_title">Thème personnalisé</string>
+    <string name="custom_theme_upgrade_description">Créez votre propre thème de couleurs à partir de n\'importe quelle couleur de base. Passez à un forfait supérieur pour le débloquer.</string>
+    <string name="font">Police</string>
+    <string name="font_subtitle">Choisissez la police utilisée dans toute l\'application</string>
+    <string name="font_option_default">Aster Default</string>
+    <string name="font_option_system">UI système</string>
+    <string name="font_option_inter">Inter</string>
+    <string name="font_option_roboto">Roboto</string>
+    <string name="font_option_nunito">Nunito</string>
+    <string name="font_option_merriweather">Merriweather</string>
+    <string name="font_option_lora">Lora</string>
+    <string name="font_option_jetbrains_mono">JetBrains Mono</string>
+    <string name="font_option_poppins">Poppins</string>
+    <string name="font_option_montserrat">Montserrat</string>
+    <string name="font_option_work_sans">Work Sans</string>
+    <string name="font_option_ibm_plex_sans">IBM Plex Sans</string>
+    <string name="font_option_ibm_plex_mono">IBM Plex Mono</string>
+    <string name="font_option_space_mono">Space Mono</string>
+    <string name="font_option_playfair_display">Playfair Display</string>
+    <string name="font_option_libre_baskerville">Libre Baskerville</string>
+    <string name="font_option_pt_serif">PT Serif</string>
+    <string name="font_option_raleway">Raleway</string>
+    <string name="pick_font">Choisir la police</string>
 
     <!-- Accessibility settings -->
     <string name="font_size">Taille de la police</string>

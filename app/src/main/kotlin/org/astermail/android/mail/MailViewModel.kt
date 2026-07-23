@@ -1981,6 +1981,10 @@ class MailViewModel @Inject constructor(
                 val tag_token = folder.removePrefix("tag:")
                 repository.fetch_inbox(limit = limit, item_type = null, tag_token = tag_token, offset = cursor?.toIntOrNull())
             }
+            folder.startsWith("routing:") -> {
+                val routing_token = folder.removePrefix("routing:")
+                repository.fetch_inbox(limit = limit, item_type = null, routing_token = routing_token, offset = cursor?.toIntOrNull())
+            }
             else -> repository.fetch_inbox(limit = limit, item_type = null, label_token = folder, offset = cursor?.toIntOrNull())
         }
     }

@@ -44,6 +44,7 @@ import kotlinx.coroutines.withContext
 import org.astermail.android.api.mail.BulkScopeFilter
 import org.astermail.android.api.mail.BulkScopeRequest
 import org.astermail.android.api.mail.BulkScopeResponse
+import org.astermail.android.api.mail.CreateAttachmentRequestBody
 import org.astermail.android.api.mail.CreateMailItemRequest
 import org.astermail.android.api.mail.MailApi
 import org.astermail.android.api.mail.MailItem
@@ -76,6 +77,8 @@ enum class PendingSendOutcome { SENT, GONE, RETRY, FAILED }
 private const val STATUS_PENDING = "pending"
 private const val STATUS_FAILED = "failed"
 private const val SENDING_CLAIM_STALE_MS = 5 * 60 * 1000L
+private const val OUTBOX_FILE_REF_PREFIX = "@file:"
+private const val EMPTY_ATTACHMENTS_JSON = "[]"
 
 data class DecryptedEnvelope(
     val subject: String,
@@ -236,6 +239,34 @@ class MailRepository @Inject constructor(
         java.util.concurrent.ConcurrentHashMap<String, Boolean>(),
     )
 
+    private val outbox_attachments_dir: java.io.File by lazy {
+        java.io.File(context.filesDir, "outbox_attachments").apply { mkdirs() }
+    }
+
+    private fun stage_outbox_attachments(
+        pending_id: String,
+        attachments: List<ExternalAttachmentPayload>,
+    ): String {
+        if (attachments.isEmpty()) return EMPTY_ATTACHMENTS_JSON
+        val file = java.io.File(outbox_attachments_dir, "$pending_id.json")
+        file.writeText(outbox_json.encodeToString(attachments))
+        return OUTBOX_FILE_REF_PREFIX + file.name
+    }
+
+    private fun load_outbox_attachments(attachments_json: String): List<ExternalAttachmentPayload> {
+        if (attachments_json.startsWith(OUTBOX_FILE_REF_PREFIX)) {
+            val name = attachments_json.removePrefix(OUTBOX_FILE_REF_PREFIX)
+            val file = java.io.File(outbox_attachments_dir, name)
+            if (!file.exists()) throw java.io.FileNotFoundException("staged outbox attachments missing: $name")
+            return outbox_json.decodeFromString(file.readText())
+        }
+        return outbox_json.decodeFromString(attachments_json)
+    }
+
+    private fun delete_outbox_attachments(pending_id: String) {
+        runCatching { java.io.File(outbox_attachments_dir, "$pending_id.json").delete() }
+    }
+
     init {
         app_scope.launch { runCatching { reconcile_pending_sends() } }
     }
@@ -333,7 +364,7 @@ class MailRepository @Inject constructor(
             thread_token = thread_token,
             expires_at = expires_at,
             expiry_password = expiry_password,
-            attachments_json = outbox_json.encodeToString(attachments),
+            attachments_json = stage_outbox_attachments(pending_id, attachments),
             sender_alias_hash = sender_alias_hash,
             suppress_branding = suppress_branding,
             draft_id = draft_id?.takeIf { it.isNotBlank() },
@@ -345,6 +376,7 @@ class MailRepository @Inject constructor(
         pending_send_dao.upsert(row)
         if (undo_canceled_ids.remove(pending_id)) {
             runCatching { pending_send_dao.delete_by_id(pending_id) }
+            delete_outbox_attachments(pending_id)
             return pending_id
         }
         val safety_draft_id = draft_id?.takeIf { it.isNotBlank() } ?: run {
@@ -362,6 +394,7 @@ class MailRepository @Inject constructor(
         }
         if (undo_canceled_ids.remove(pending_id)) {
             runCatching { pending_send_dao.delete_by_id(pending_id) }
+            delete_outbox_attachments(pending_id)
             return pending_id
         }
         runCatching { UndoSendWorker.enqueue(context, pending_id, delay_ms, session_key_store.get_user_id()) }
@@ -374,6 +407,7 @@ class MailRepository @Inject constructor(
         app_scope.launch {
             runCatching { UndoSendWorker.cancel(context, pending_id) }
             runCatching { pending_send_dao.delete_by_id(pending_id) }
+            delete_outbox_attachments(pending_id)
         }
     }
 
@@ -385,6 +419,7 @@ class MailRepository @Inject constructor(
         }
         if (undo_canceled_ids.contains(pending_id)) {
             runCatching { pending_send_dao.delete_by_id(pending_id) }
+            delete_outbox_attachments(pending_id)
             return PendingSendOutcome.GONE
         }
         val now_ms = System.currentTimeMillis()
@@ -398,9 +433,12 @@ class MailRepository @Inject constructor(
             if (stale_claimed == 0) return PendingSendOutcome.RETRY
         }
         _pending_undo_send.value?.let { _pending_undo_send.compareAndSet(it, null) }
-        val attachments = runCatching {
-            outbox_json.decodeFromString<List<ExternalAttachmentPayload>>(row.attachments_json)
-        }.getOrDefault(emptyList())
+        val attachments = runCatching { load_outbox_attachments(row.attachments_json) }.getOrElse { err ->
+            _send_problem.value = true
+            _send_result_events.tryEmit(Result.failure(IllegalStateException("attachment payload unavailable", err)))
+            runCatching { pending_send_dao.mark_failed(pending_id) }
+            return PendingSendOutcome.FAILED
+        }
         val result = send_email(
             to = runCatching { outbox_json.decodeFromString<List<String>>(row.to_json) }.getOrDefault(emptyList()),
             cc = runCatching { outbox_json.decodeFromString<List<String>>(row.cc_json) }.getOrDefault(emptyList()),
@@ -419,6 +457,7 @@ class MailRepository @Inject constructor(
         val response = result.getOrNull()
         return if (result.isSuccess && response?.success == true) {
             runCatching { pending_send_dao.delete_by_id(pending_id) }
+            delete_outbox_attachments(pending_id)
             row.draft_id?.takeIf { it.isNotBlank() }?.let { runCatching { delete_draft(it) } }
             _send_problem.value = false
             _send_result_events.tryEmit(Result.success(Unit))
@@ -477,10 +516,11 @@ class MailRepository @Inject constructor(
         label_token: String? = null,
         tag_token: String? = null,
         offset: Int? = null,
+        routing_token: String? = null,
     ): Result<InboxPage> = runCatching {
         val is_received = item_type == "received"
-        val is_plain_inbox = is_received && label_token == null && tag_token == null
-        val is_token_scope = label_token != null || tag_token != null
+        val is_plain_inbox = is_received && label_token == null && tag_token == null && routing_token == null
+        val is_token_scope = label_token != null || tag_token != null || routing_token != null
         val response = mail_api.list_messages(
             limit = limit,
             cursor = if (is_token_scope) null else cursor,
@@ -492,6 +532,7 @@ class MailRepository @Inject constructor(
             is_archived = if (is_plain_inbox) false else null,
             is_trashed = if (is_plain_inbox) false else null,
             is_spam = if (is_plain_inbox) false else null,
+            routing_token = routing_token,
         )
         val filtered_raw = if (is_received) {
             val now_iso = java.time.Instant.now().toString()
@@ -1292,7 +1333,11 @@ class MailRepository @Inject constructor(
                     decrypt_envelope_pbkdf2(encrypted_meta)
                 }
                 else -> {
-                    decrypt_envelope_identity_key(encrypted_meta, nonce_bytes)
+                    try {
+                        decrypt_envelope_identity_key(encrypted_meta, nonce_bytes)
+                    } catch (_: Throwable) {
+                        decrypt_envelope_pbkdf2(encrypted_meta)
+                    }
                 }
             }
 
@@ -1787,6 +1832,10 @@ class MailRepository @Inject constructor(
                     suppress_branding = suppress_branding,
                 ),
             )
+            val sent_item_id = result.mail_item_id
+            if (result.success && !sent_item_id.isNullOrBlank() && attachments.isNotEmpty()) {
+                link_sender_attachments(sent_item_id, attachments)
+            }
             SimpleSendResponse(
                 success = result.success,
                 message = result.message,
@@ -1834,6 +1883,57 @@ class MailRepository @Inject constructor(
                     suppress_branding = suppress_branding,
                 ),
             )
+        }
+    }
+
+    internal suspend fun link_sender_attachments(
+        mail_item_id: String,
+        attachments: List<ExternalAttachmentPayload>,
+    ) {
+        attachments.forEachIndexed { index, att ->
+            runCatching {
+                val raw = android.util.Base64.decode(att.data, android.util.Base64.DEFAULT)
+                val session_key = ByteArray(32).also { SecureRandom().nextBytes(it) }
+                val data_nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
+                val encrypted_data = aes_gcm_encrypt(raw, session_key, data_nonce)
+
+                val meta_json = org.json.JSONObject().apply {
+                    put("filename", att.filename)
+                    put("content_type", att.content_type)
+                    put(
+                        "session_key",
+                        android.util.Base64.encodeToString(session_key, android.util.Base64.NO_WRAP),
+                    )
+                    att.content_id?.let {
+                        put("content_id", it)
+                        put("is_inline", true)
+                    }
+                }.toString()
+                session_key.fill(0)
+
+                val (encrypted_meta, _) = encrypt_envelope(meta_json)
+                val meta_nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
+
+                mail_api.create_attachment(
+                    mail_item_id,
+                    CreateAttachmentRequestBody(
+                        encrypted_data = android.util.Base64.encodeToString(
+                            encrypted_data,
+                            android.util.Base64.NO_WRAP,
+                        ),
+                        data_nonce = android.util.Base64.encodeToString(
+                            data_nonce,
+                            android.util.Base64.NO_WRAP,
+                        ),
+                        encrypted_meta = encrypted_meta,
+                        meta_nonce = android.util.Base64.encodeToString(
+                            meta_nonce,
+                            android.util.Base64.NO_WRAP,
+                        ),
+                        seq_num = index,
+                    ),
+                )
+            }
         }
     }
 

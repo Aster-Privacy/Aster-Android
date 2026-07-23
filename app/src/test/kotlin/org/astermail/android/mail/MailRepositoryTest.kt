@@ -40,14 +40,19 @@ import org.astermail.android.api.mail.MailUserStatsResponse
 import org.astermail.android.api.mail.PatchMetadataRequest
 import org.astermail.android.api.mail.ThreadMessageItem
 import org.astermail.android.api.mail.ThreadWithMessages
+import org.astermail.android.api.mail.AttachmentResponse
+import org.astermail.android.api.mail.CreateAttachmentRequestBody
+import org.astermail.android.api.send.ExternalAttachmentPayload
 import org.astermail.android.api.send.SendApi
 import org.astermail.android.api.send.SimpleSendResponse
+import io.mockk.slot
 import org.astermail.android.api.mail.CreateMailItemResponse
 import org.astermail.android.api.mail.DeleteResponse
 import org.astermail.android.storage.SessionKeyStore
 import org.astermail.android.mail.ratchet.RatchetEncryptionException
 import org.astermail.android.storage.outbox.PendingSendDao
 import org.astermail.android.storage.outbox.PendingSendEntity
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -1229,5 +1234,56 @@ class MailRepositoryTest {
         val result = repo.list_notifiable_folders()
 
         assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `link_sender_attachments round-trips filename and bytes with backend-legal nonces`() = runTest {
+        every { session_key_store.get_passphrase() } answers {
+            "correct horse battery staple".toByteArray(Charsets.UTF_8)
+        }
+        val raw_bytes = ByteArray(4096) { (it % 251).toByte() }
+        val payload = ExternalAttachmentPayload(
+            data = java.util.Base64.getEncoder().encodeToString(raw_bytes),
+            filename = "book.epub",
+            content_type = "application/epub+zip",
+            size_bytes = raw_bytes.size.toLong(),
+        )
+        val captured = slot<CreateAttachmentRequestBody>()
+        coEvery { mail_api.create_attachment("sent_1", capture(captured)) } answers {
+            val body = captured.captured
+            AttachmentResponse(
+                id = "att_1",
+                mail_item_id = "sent_1",
+                encrypted_data = body.encrypted_data,
+                data_nonce = body.data_nonce,
+                encrypted_meta = body.encrypted_meta,
+                meta_nonce = body.meta_nonce,
+                size_bytes = body.encrypted_data.length.toLong(),
+                seq_num = body.seq_num ?: 0,
+            )
+        }
+
+        repo.link_sender_attachments("sent_1", listOf(payload))
+
+        assertTrue("create_attachment must have been called", captured.isCaptured)
+        val body = captured.captured
+        assertEquals(
+            "backend requires a 12-byte data_nonce",
+            12,
+            java.util.Base64.getDecoder().decode(body.data_nonce).size,
+        )
+        assertEquals(
+            "backend requires a 12-byte meta_nonce",
+            12,
+            java.util.Base64.getDecoder().decode(body.meta_nonce).size,
+        )
+
+        val meta = repo.decrypt_attachment_meta(body.encrypted_meta, body.meta_nonce)
+        assertNotNull("sent-copy attachment meta must decrypt", meta)
+        assertEquals("book.epub", meta!!.filename)
+        assertEquals("application/epub+zip", meta.content_type)
+
+        val decrypted = repo.decrypt_attachment_data(body.encrypted_data, body.data_nonce, meta.session_key)
+        assertArrayEquals("sent-copy attachment bytes must round-trip", raw_bytes, decrypted)
     }
 }

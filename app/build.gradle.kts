@@ -88,6 +88,8 @@ android {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
         resources.excludes += "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
         resources.excludes += "META-INF/versions/**/OSGI-INF/MANIFEST.MF"
+        resources.excludes += "/META-INF/LICENSE.md"
+        resources.excludes += "/META-INF/LICENSE-notice.md"
     }
 
     testOptions {
@@ -120,6 +122,7 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
     implementation(libs.compose.material.icons.extended)
+    implementation(libs.tabler.icons)
     debugImplementation(libs.compose.ui.tooling)
 
     implementation(libs.hilt.android)
@@ -165,6 +168,8 @@ dependencies {
     testImplementation(libs.okhttp.mockwebserver)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.mockk.android)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-test-manifest")

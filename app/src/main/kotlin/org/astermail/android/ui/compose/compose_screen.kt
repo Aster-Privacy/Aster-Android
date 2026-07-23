@@ -163,6 +163,8 @@ data class AttachmentItem(
     val mime_type: String,
 )
 
+private class AttachmentEncodeException(val filename: String, cause: Throwable?) : Exception(cause)
+
 @OptIn(
     ExperimentalFoundationApi::class,
     ExperimentalMaterial3Api::class,
@@ -855,19 +857,19 @@ fun ComposeScreen(
         }
         with_images = with_images.replace(Regex("\\[\\[ASTER_IMG_\\d+]]"), "")
 
-        val attachment_payloads = attachments.mapNotNull { att ->
-            try {
-                val raw_bytes = context.contentResolver.openInputStream(att.uri)?.use { it.readBytes() } ?: return@mapNotNull null
-                val bytes = apply_metadata_strip(raw_bytes, att)
-                org.astermail.android.api.send.ExternalAttachmentPayload(
-                    data = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP),
-                    filename = att.name,
-                    content_type = att.mime_type,
-                    size_bytes = bytes.size.toLong(),
-                )
-            } catch (_: Throwable) {
-                null
-            }
+        val attachment_payloads = attachments.map { att ->
+            val raw_bytes = try {
+                context.contentResolver.openInputStream(att.uri)?.use { it.readBytes() }
+            } catch (t: Throwable) {
+                throw AttachmentEncodeException(att.name, t)
+            } ?: throw AttachmentEncodeException(att.name, null)
+            val bytes = apply_metadata_strip(raw_bytes, att)
+            org.astermail.android.api.send.ExternalAttachmentPayload(
+                data = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP),
+                filename = att.name,
+                content_type = att.mime_type,
+                size_bytes = bytes.size.toLong(),
+            )
         }
 
         if (unstripped_names.isNotEmpty()) {
@@ -974,7 +976,14 @@ fun ComposeScreen(
         is_sending = true
         send_error = null
 
-        val (body_html, attachment_payloads, suppress_branding) = prepare_send_data()
+        val (body_html, attachment_payloads, suppress_branding) = try {
+            prepare_send_data()
+        } catch (e: AttachmentEncodeException) {
+            is_sending = false
+            send_lock.set(false)
+            send_error = context.getString(R.string.compose_attachment_read_failed, e.filename)
+            return
+        }
 
         if (scheduled_send) {
             if (attachment_payloads.isNotEmpty()) {

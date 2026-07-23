@@ -21,6 +21,9 @@
 
 package org.astermail.android
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
+
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -86,6 +89,7 @@ import org.astermail.android.auth.AuthGateViewModel
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterTheme
 import org.astermail.android.design.AsterThemeMode
+import org.astermail.android.design.ColorThemeId
 import org.astermail.android.design.parse_hex_color_safe
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
@@ -101,7 +105,6 @@ import org.astermail.android.ui.contacts.ContactDetailScreen
 import org.astermail.android.ui.contacts.ContactEditScreen
 import org.astermail.android.ui.contacts.ContactsScreen
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Folder
 import org.astermail.android.ui.drawer.DrawerContent
 import org.astermail.android.ui.drawer.drawer_alias_item
 import org.astermail.android.ui.drawer.drawer_folder_item
@@ -276,6 +279,10 @@ private fun AsterRoot() {
     val text_spacing by theme_vm.text_spacing.collectAsStateWithLifecycle()
     val underline_links by theme_vm.underline_links.collectAsStateWithLifecycle()
     val dyslexia_font by theme_vm.dyslexia_font.collectAsStateWithLifecycle()
+    val color_theme by theme_vm.color_theme.collectAsStateWithLifecycle()
+    val custom_theme_seed by theme_vm.custom_theme_seed.collectAsStateWithLifecycle()
+    val custom_theme_overrides by theme_vm.custom_theme_overrides.collectAsStateWithLifecycle()
+    val font_choice by theme_vm.font_choice.collectAsStateWithLifecycle()
     val resolved_mode = when (mode_state) {
         ThemeMode.system -> AsterThemeMode.system
         ThemeMode.light -> AsterThemeMode.light
@@ -300,6 +307,10 @@ private fun AsterRoot() {
         reduce_transparency = reduce_transparency,
         dyslexia_font = dyslexia_family,
         text_spacing = text_spacing,
+        color_theme_id = ColorThemeId.from_key(color_theme),
+        custom_theme_seed = custom_theme_seed,
+        custom_theme_overrides = custom_theme_overrides,
+        font_choice = font_choice,
     ) {
         val base_density = LocalDensity.current
         val compact_factor = if (compact_mode) 0.9f else 1f
@@ -540,17 +551,21 @@ private fun AsterNavHost() {
             OnboardingScreen(
                 on_sign_in = {
                     theme_vm.mark_onboarding_seen()
-                    nav_controller.navigate(routes.welcome) {
-                        popUpTo(routes.onboarding) { inclusive = true }
+                    nav_controller.navigate(routes.sign_in) {
+                        popUpTo(routes.onboarding) {
+                            inclusive = true
+                            saveState = false
+                        }
                     }
-                    nav_controller.navigate(routes.sign_in)
                 },
                 on_create_account = {
                     theme_vm.mark_onboarding_seen()
-                    nav_controller.navigate(routes.welcome) {
-                        popUpTo(routes.onboarding) { inclusive = true }
+                    nav_controller.navigate(routes.register) {
+                        popUpTo(routes.onboarding) {
+                            inclusive = true
+                            saveState = false
+                        }
                     }
-                    nav_controller.navigate(routes.register)
                 },
                 on_skip = {
                     theme_vm.mark_onboarding_seen()
@@ -588,7 +603,12 @@ private fun AsterNavHost() {
                         popUpTo(0) { inclusive = true }
                     }
                 },
-                on_register = { nav_controller.navigate(routes.register) },
+                on_register = {
+                    nav_controller.navigate(routes.register) {
+                        popUpTo(routes.sign_in) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
                 prefill_email = prefill,
             )
         }
@@ -600,7 +620,12 @@ private fun AsterNavHost() {
                         popUpTo(routes.welcome) { inclusive = true }
                     }
                 },
-                on_sign_in = { nav_controller.navigate(routes.sign_in) },
+                on_sign_in = {
+                    nav_controller.navigate(routes.sign_in) {
+                        popUpTo(routes.register) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
                 on_terms_click = {
                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://astermail.org/terms")))
                 },
@@ -930,7 +955,7 @@ private fun AsterNavHost() {
         val open_detail: (String) -> Unit = { id -> nav_controller.navigate(routes.settings_detail(id)) }
 
         composable(routes.settings_detail("appearance")) {
-            AppearanceScreen(on_back = { back(); Unit })
+            AppearanceScreen(on_back = { back(); Unit }, on_open = open_detail)
         }
         composable(routes.settings_detail("profile")) {
             ProfileScreen(
@@ -988,10 +1013,10 @@ private fun AsterNavHost() {
             EncryptionScreen(on_back = { back(); Unit }, on_open = open_detail)
         }
         composable(routes.settings_detail("theme")) {
-            AppearanceScreen(on_back = { back(); Unit })
+            AppearanceScreen(on_back = { back(); Unit }, on_open = open_detail)
         }
         composable(routes.settings_detail("text_size")) {
-            AppearanceScreen(on_back = { back(); Unit })
+            AppearanceScreen(on_back = { back(); Unit }, on_open = open_detail)
         }
         composable(
             route = routes.settings_detail("aliases") + "?create={create}",
@@ -1295,7 +1320,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         drawer_folder_item(
             id = label.label_token,
             label = readable_name ?: drawer_context.getString(R.string.folder_decrypt_failed),
-            icon = Icons.Outlined.Folder,
+            icon = TablerIcons.Folder,
             count = label.unread_count?.toInt() ?: 0,
             depth = node.depth,
             trail = node.trail,
@@ -1374,6 +1399,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
             drawer_alias_item(
                 id = alias.id,
                 address = alias.address,
+                routing_token = alias.alias_address_hash.ifBlank { null },
             )
         } + settings_state.custom_domain_addresses
         .filter { !looks_encrypted(it.encrypted_local_part) }
@@ -1435,9 +1461,13 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                     selected_folder = id
                     scope.launch { drawer_state.close() }
                 },
-                on_navigate_alias = { _, name ->
+                on_navigate_alias = { _, name, routing_token ->
                     scope.launch { drawer_state.close() }
-                    nav_controller.navigate(routes.search_for("to:$name"))
+                    if (routing_token != null) {
+                        nav_controller.navigate(routes.alias_filter_for(routing_token, name))
+                    } else {
+                        nav_controller.navigate(routes.search_for("to:$name"))
+                    }
                 },
                 inbox_unread = stats?.unread ?: 0,
                 drafts_count = stats?.drafts ?: 0,

@@ -54,6 +54,7 @@ interface MailApi {
         tag_token: String? = null,
         group_by_thread: Boolean? = null,
         is_snoozed: Boolean? = null,
+        routing_token: String? = null,
     ): MailItemsListResponse
 
     suspend fun get_message(item_id: String): MailItem
@@ -94,6 +95,11 @@ interface MailApi {
 
     suspend fun list_attachments(mail_item_id: String): AttachmentListResponse
 
+    suspend fun create_attachment(
+        mail_item_id: String,
+        request: CreateAttachmentRequestBody,
+    ): AttachmentResponse
+
     suspend fun get_attachment(attachment_id: String): AttachmentResponse
 
     suspend fun batch_attachment_meta(mail_item_ids: List<String>): BatchAttachmentMetaResponse
@@ -127,6 +133,15 @@ data class CreateThreadRequestBody(
 @kotlinx.serialization.Serializable
 data class LinkToThreadRequestBody(val thread_token: String)
 
+@kotlinx.serialization.Serializable
+data class CreateAttachmentRequestBody(
+    val encrypted_data: String,
+    val data_nonce: String,
+    val encrypted_meta: String,
+    val meta_nonce: String,
+    val seq_num: Int? = null,
+)
+
 class MailApiImpl(private val client: ApiClient) : MailApi {
     private val base = "/api/mail/v1"
     private val large_payload_timeout_ms = 60_000L
@@ -144,6 +159,7 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
         tag_token: String?,
         group_by_thread: Boolean?,
         is_snoozed: Boolean?,
+        routing_token: String?,
     ): MailItemsListResponse {
         val response = client.http.get("${client.base_url}$base/messages") {
             limit?.let { parameter("limit", it) }
@@ -158,6 +174,7 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
             tag_token?.let { parameter("tag_token", it) }
             group_by_thread?.let { parameter("group_by_thread", it) }
             is_snoozed?.let { parameter("is_snoozed", it) }
+            routing_token?.let { parameter("routing_token", it) }
         }
         return decode_or_throw(response)
     }
@@ -306,6 +323,19 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
     override suspend fun list_attachments(mail_item_id: String): AttachmentListResponse {
         val response = client.http.get("${client.base_url}$base/attachments/by-mail/$mail_item_id") {
             timeout { requestTimeoutMillis = large_payload_timeout_ms }
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun create_attachment(
+        mail_item_id: String,
+        request: CreateAttachmentRequestBody,
+    ): AttachmentResponse {
+        val response = client.http.post("${client.base_url}$base/attachments/by-mail/$mail_item_id") {
+            timeout { requestTimeoutMillis = large_payload_timeout_ms }
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
         }
         return decode_or_throw(response)
     }

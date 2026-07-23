@@ -23,7 +23,13 @@ package org.astermail.android.ui.auth
 
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.ContentValues
 import android.content.Context
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
+import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -38,18 +44,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.astermail.android.R
@@ -66,32 +68,41 @@ fun RegisterRecoveryStep(
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
-    var copied by remember { mutableStateOf(false) }
-    LaunchedEffect(copied) {
-        if (copied) {
-            delay(2000)
-            copied = false
-        }
-    }
+    val copied_message = stringResource(R.string.copied_to_clipboard)
+    val saved_message = stringResource(R.string.saved_file, RECOVERY_CODES_FILE_NAME)
+    val failed_message = stringResource(R.string.failed_to_save)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = AsterSpacing.xxl),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(Modifier.height(AsterSpacing.sm))
+        Spacer(Modifier.height(AsterSpacing.xl))
+
+        Image(
+            painter = painterResource(R.drawable.aster_wordmark),
+            contentDescription = null,
+            modifier = Modifier.height(40.dp),
+        )
+
+        Spacer(Modifier.height(AsterSpacing.xl))
+
         Text(
             text = stringResource(R.string.new_recovery_codes_title),
             color = colors.text_primary,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
+            fontSize = 30.sp,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = (-0.3).sp,
+            textAlign = TextAlign.Center,
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(AsterSpacing.md))
         Text(
             text = stringResource(R.string.new_recovery_codes_message),
             color = colors.text_tertiary,
             fontSize = 14.sp,
+            textAlign = TextAlign.Center,
         )
 
         Spacer(Modifier.height(AsterSpacing.xxl))
@@ -128,22 +139,23 @@ fun RegisterRecoveryStep(
             }
         }
 
-        Spacer(Modifier.height(AsterSpacing.md))
-
-        Text(
-            text = if (copied) stringResource(R.string.copied_to_clipboard) else stringResource(R.string.copy_codes),
-            color = if (copied) colors.accent_blue else colors.text_tertiary,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-        )
-
         Spacer(Modifier.height(AsterSpacing.xl))
 
         AsterButton(
             label = stringResource(R.string.copy_to_clipboard),
             onClick = {
                 copy_recovery_codes(context, codes)
-                copied = true
+                Toast.makeText(context, copied_message, Toast.LENGTH_SHORT).show()
+            },
+        )
+
+        Spacer(Modifier.height(AsterSpacing.md))
+
+        AsterSecondaryButton(
+            label = stringResource(R.string.download),
+            onClick = {
+                val saved = download_recovery_codes(context, codes)
+                Toast.makeText(context, if (saved) saved_message else failed_message, Toast.LENGTH_SHORT).show()
             },
         )
 
@@ -158,6 +170,8 @@ fun RegisterRecoveryStep(
     }
 }
 
+private const val RECOVERY_CODES_FILE_NAME = "aster-recovery-codes.txt"
+
 private fun copy_recovery_codes(context: Context, codes: List<String>) {
     val text = codes.joinToString("\n")
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
@@ -167,4 +181,42 @@ private fun copy_recovery_codes(context: Context, codes: List<String>) {
     }
     clipboard?.setPrimaryClip(clip)
     org.astermail.android.util.schedule_sensitive_clipboard_clear(context, text)
+}
+
+private fun download_recovery_codes(context: Context, codes: List<String>): Boolean {
+    val bytes = codes.joinToString("\n").toByteArray()
+    return try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val values = ContentValues().apply {
+                put(MediaStore.Downloads.DISPLAY_NAME, RECOVERY_CODES_FILE_NAME)
+                put(MediaStore.Downloads.MIME_TYPE, "text/plain")
+                put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                put(MediaStore.Downloads.IS_PENDING, 1)
+            }
+            val uri = context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+            if (uri != null) {
+                context.contentResolver.openOutputStream(uri)?.use { out ->
+                    out.write(bytes)
+                    out.flush()
+                }
+                val done = ContentValues().apply { put(MediaStore.Downloads.IS_PENDING, 0) }
+                context.contentResolver.update(uri, done, null, null)
+                true
+            } else {
+                false
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            dir.mkdirs()
+            val file = java.io.File(dir, RECOVERY_CODES_FILE_NAME)
+            if (!file.canonicalPath.startsWith(dir.canonicalPath + java.io.File.separator)) {
+                return false
+            }
+            file.writeBytes(bytes)
+            true
+        }
+    } catch (_: Throwable) {
+        false
+    }
 }

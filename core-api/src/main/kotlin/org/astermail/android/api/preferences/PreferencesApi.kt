@@ -37,6 +37,10 @@ import org.astermail.android.api.ApiError
 data class UserPreferences(
     val language: String = "en",
     val theme: String = "system",
+    val color_theme: String = "default",
+    val custom_theme_seed: String = "#3b82f6",
+    val custom_theme_overrides: Map<String, String> = emptyMap(),
+    val font_choice: String = "default",
     val time_zone: String = "",
     val date_format: String = "",
     val time_format: String = "12h",

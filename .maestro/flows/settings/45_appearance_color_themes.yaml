@@ -1,0 +1,135 @@
+appId: ${APP_ID}
+tags:
+  - settings
+name: appearance_color_themes_and_font
+---
+- runFlow: ../../setup/sign_in.yaml
+- runFlow: ../../setup/open_settings.yaml
+- tapOn:
+    text: "Appearance"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: appearance_screen
+
+- tapOn:
+    id: "swatch_purple"
+- waitForAnimationToEnd
+- takeScreenshot: preset_purple_settings
+- back
+- waitForAnimationToEnd
+- takeScreenshot: preset_purple_inbox
+- tapOn:
+    text: "Compose"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: preset_purple_compose
+- back
+- runFlow: ../../setup/open_settings.yaml
+- tapOn:
+    text: "Appearance"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "swatch_green"
+- waitForAnimationToEnd
+- takeScreenshot: preset_green
+- tapOn:
+    id: "swatch_rose"
+- waitForAnimationToEnd
+- takeScreenshot: preset_rose
+- tapOn:
+    id: "swatch_orange"
+- waitForAnimationToEnd
+- takeScreenshot: preset_orange
+- tapOn:
+    id: "swatch_teal"
+- waitForAnimationToEnd
+- takeScreenshot: preset_teal
+- tapOn:
+    id: "swatch_indigo"
+- waitForAnimationToEnd
+- takeScreenshot: preset_indigo
+- tapOn:
+    id: "swatch_amber"
+- waitForAnimationToEnd
+- takeScreenshot: preset_amber
+- tapOn:
+    id: "swatch_cyan"
+- waitForAnimationToEnd
+- takeScreenshot: preset_cyan
+- tapOn:
+    id: "swatch_slate"
+- waitForAnimationToEnd
+- takeScreenshot: preset_slate
+- tapOn:
+    id: "swatch_aster_blue"
+- waitForAnimationToEnd
+- takeScreenshot: preset_aster_blue
+- tapOn:
+    id: "swatch_lime"
+- waitForAnimationToEnd
+- takeScreenshot: preset_lime
+- tapOn:
+    id: "swatch_fuchsia"
+- waitForAnimationToEnd
+- takeScreenshot: preset_fuchsia
+- tapOn:
+    id: "swatch_emerald"
+- waitForAnimationToEnd
+- takeScreenshot: preset_emerald
+- tapOn:
+    id: "swatch_pink"
+- waitForAnimationToEnd
+- takeScreenshot: preset_pink
+- tapOn:
+    id: "swatch_black"
+- waitForAnimationToEnd
+- takeScreenshot: preset_black
+
+- tapOn:
+    id: "swatch_custom"
+- waitForAnimationToEnd
+- takeScreenshot: custom_theme_default_seed
+- tapOn:
+    id: "custom_hex_input"
+- eraseText
+- inputText: "f97e6d"
+- hideKeyboard
+- waitForAnimationToEnd
+- takeScreenshot: custom_theme_new_seed
+- back
+- waitForAnimationToEnd
+- takeScreenshot: custom_theme_inbox
+- runFlow: ../../setup/open_settings.yaml
+- tapOn:
+    text: "Appearance"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn: "Aster Default"
+- waitForAnimationToEnd
+- takeScreenshot: font_picker
+- tapOn:
+    id: "opt_jetbrains_mono"
+- waitForAnimationToEnd
+- takeScreenshot: font_jetbrains_mono_settings
+- back
+- waitForAnimationToEnd
+- takeScreenshot: font_jetbrains_mono_inbox
+
+- runFlow: ../../setup/open_settings.yaml
+- tapOn:
+    text: "Appearance"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "System"
+    optional: true
+- waitForAnimationToEnd
+- tapOn: "JetBrains Mono"
+- waitForAnimationToEnd
+- tapOn:
+    id: "opt_default"
+- back
+- back

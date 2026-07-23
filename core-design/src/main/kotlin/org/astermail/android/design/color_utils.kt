@@ -50,3 +50,17 @@ fun parse_hex_color_safe(hex: String?): Color? {
 
 fun parse_hex_color_or(hex: String?, fallback: Color): Color =
     parse_hex_color_safe(hex) ?: fallback
+
+fun Color.lighten(amount: Float): Color = Color(
+    red = red + (1f - red) * amount,
+    green = green + (1f - green) * amount,
+    blue = blue + (1f - blue) * amount,
+    alpha = alpha,
+)
+
+fun Color.darken(amount: Float): Color = Color(
+    red = red * (1f - amount),
+    green = green * (1f - amount),
+    blue = blue * (1f - amount),
+    alpha = alpha,
+)

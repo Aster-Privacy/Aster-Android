@@ -14,4 +14,5 @@
     <string name="signature_none">No signature</string>
     <string name="signature_select">Select signature</string>
     <string name="compose_metadata_strip_failed">Could not remove hidden metadata from: %1$s</string>
+    <string name="compose_attachment_read_failed">Couldn\'t attach \"%1$s\". Your email was not sent. Remove or re-add the file and try again.</string>
 </resources>

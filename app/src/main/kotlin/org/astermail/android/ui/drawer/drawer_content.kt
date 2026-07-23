@@ -129,6 +129,7 @@ fun resolve_label_icon(key: String?): ImageVector =
 data class drawer_alias_item(
     val id: String,
     val address: String,
+    val routing_token: String? = null,
 )
 
 private val default_folder_items = emptyList<drawer_folder_item>()
@@ -219,7 +220,7 @@ fun DrawerContent(
     on_close: () -> Unit,
     on_navigate_folder: (String, String) -> Unit = { _, _ -> },
     on_navigate_label: (String, String) -> Unit = { _, _ -> },
-    on_navigate_alias: (String, String) -> Unit = { _, _ -> },
+    on_navigate_alias: (String, String, String?) -> Unit = { _, _, _ -> },
     inbox_unread: Int = 0,
     drafts_count: Int = 0,
     spam_count: Int = 0,
@@ -570,7 +571,7 @@ fun DrawerContent(
                                 selected = item.id == selected_id,
                                 on_click = {
                                     on_select(item.id)
-                                    on_navigate_alias(item.id, item.address)
+                                    on_navigate_alias(item.id, item.address, item.routing_token)
                                     on_close()
                                 },
                             )
@@ -587,7 +588,7 @@ fun DrawerContent(
                                         selected = item.id == selected_id,
                                         on_click = {
                                             on_select(item.id)
-                                            on_navigate_alias(item.id, item.address)
+                                            on_navigate_alias(item.id, item.address, item.routing_token)
                                             on_close()
                                         },
                                     )

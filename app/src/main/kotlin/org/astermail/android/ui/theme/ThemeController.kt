@@ -55,6 +55,10 @@ class ThemeViewModel @Inject constructor(
     val underline_links: StateFlow<Boolean> = theme_store.underline_links
     val dyslexia_font: StateFlow<Boolean> = theme_store.dyslexia_font
     val onboarding_seen: StateFlow<Boolean> = theme_store.onboarding_seen
+    val color_theme: StateFlow<String> = theme_store.color_theme
+    val custom_theme_seed: StateFlow<String> = theme_store.custom_theme_seed
+    val custom_theme_overrides: StateFlow<Map<String, String>> = theme_store.custom_theme_overrides
+    val font_choice: StateFlow<String> = theme_store.font_choice
 
     fun set_mode(mode: ThemeMode) = theme_store.set_theme_mode(mode)
     fun set_text_size(size: TextSize) = theme_store.set_text_size(size)
@@ -68,6 +72,10 @@ class ThemeViewModel @Inject constructor(
     fun set_underline_links(v: Boolean) = theme_store.set_underline_links(v)
     fun set_dyslexia_font(v: Boolean) = theme_store.set_dyslexia_font(v)
     fun mark_onboarding_seen() = theme_store.set_onboarding_seen(true)
+    fun set_color_theme(id: String) = theme_store.set_color_theme(id)
+    fun set_custom_theme_seed(hex: String) = theme_store.set_custom_theme_seed(hex)
+    fun set_custom_theme_overrides(overrides: Map<String, String>) = theme_store.set_custom_theme_overrides(overrides)
+    fun set_font_choice(id: String) = theme_store.set_font_choice(id)
 }
 
 val local_text_scale = compositionLocalOf { 1.0f }
