@@ -106,11 +106,94 @@ fun is_internal_recipient(email: String): Boolean {
 
 internal data class SubjectBundle(val subject: String?, val body: String)
 
+private val bundle_framing_regex =
+    Regex("^[\\s\\u0000-\\u001f\\u007f\\u00a0\\u1680\\u2000-\\u200f\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]*$")
+
+private fun unescape_json_char(escape: Char): Char = when (escape) {
+    'b' -> '\b'
+    'f' -> 12.toChar()
+    'n' -> '\n'
+    'r' -> '\r'
+    't' -> '\t'
+    else -> escape
+}
+
+private data class LenientJsonString(val value: String, val next_index: Int)
+
+private fun read_lenient_json_string(text: String, open_quote_index: Int): LenientJsonString? {
+    if (open_quote_index >= text.length || text[open_quote_index] != '"') return null
+    val value = StringBuilder()
+    var index = open_quote_index + 1
+    while (index < text.length) {
+        val char = text[index]
+        if (char == '"') return LenientJsonString(value.toString(), index + 1)
+        if (char != '\\') {
+            value.append(char)
+            index += 1
+            continue
+        }
+        if (index + 1 >= text.length) break
+        val escape = text[index + 1]
+        if (escape == 'u') {
+            val code = if (index + 6 <= text.length) text.substring(index + 2, index + 6) else ""
+            if (code.length == 4 && code.all { it.isDigit() || it in 'a'..'f' || it in 'A'..'F' }) {
+                value.append(code.toInt(16).toChar())
+                index += 6
+                continue
+            }
+            value.append(escape)
+            index += 2
+            continue
+        }
+        value.append(unescape_json_char(escape))
+        index += 2
+    }
+    return LenientJsonString(value.toString(), text.length)
+}
+
+private fun scan_bundle_payload(payload: String): SubjectBundle? {
+    val open_brace = payload.indexOf('{')
+    if (open_brace == -1) return null
+
+    var subject: String? = null
+    var body: String? = null
+    var index = open_brace + 1
+
+    while (index < payload.length) {
+        val key_quote = payload.indexOf('"', index)
+        if (key_quote == -1) break
+        val key = read_lenient_json_string(payload, key_quote) ?: break
+        val colon = payload.indexOf(':', key.next_index)
+        if (colon == -1) break
+        var value_start = colon + 1
+        while (value_start < payload.length && payload[value_start].isWhitespace()) value_start += 1
+        if (value_start >= payload.length) break
+        if (payload[value_start] != '"') {
+            val comma = payload.indexOf(',', value_start)
+            if (comma == -1) break
+            index = comma + 1
+            continue
+        }
+        val value = read_lenient_json_string(payload, value_start) ?: break
+        if (key.value == "s") subject = value.value
+        if (key.value == "b") body = value.value
+        if (subject != null && body != null) break
+        index = value.next_index
+    }
+
+    if (body == null) return null
+    return SubjectBundle(subject, body)
+}
+
 internal fun extract_subject_bundle(body: String): SubjectBundle {
-    if (body.isEmpty() || !body.startsWith(ASTER_SUBJECT_BUNDLE_PREFIX)) {
+    if (body.isEmpty()) return SubjectBundle(null, body)
+
+    val prefix_index = body.indexOf(ASTER_SUBJECT_BUNDLE_PREFIX)
+    if (prefix_index == -1 || !bundle_framing_regex.matches(body.substring(0, prefix_index))) {
         return SubjectBundle(null, body)
     }
-    val payload = body.substring(ASTER_SUBJECT_BUNDLE_PREFIX.length)
+
+    val payload = body.substring(prefix_index + ASTER_SUBJECT_BUNDLE_PREFIX.length)
     try {
         val obj = org.json.JSONObject(payload)
         val s = obj.opt("s")
@@ -120,7 +203,7 @@ internal fun extract_subject_bundle(body: String): SubjectBundle {
         }
     } catch (_: Throwable) {
     }
-    return SubjectBundle(null, body)
+    return scan_bundle_payload(payload) ?: SubjectBundle(null, payload)
 }
 
 data class InboxItem(
@@ -1720,11 +1803,9 @@ class MailRepository @Inject constructor(
 
         var resolved_subject = envelope.subject
         val bundle = extract_subject_bundle(body_text)
-        if (bundle.subject != null) {
-            body_text = bundle.body
-            if (resolved_subject.isBlank()) {
-                resolved_subject = bundle.subject
-            }
+        body_text = bundle.body
+        if (bundle.subject != null && resolved_subject.isBlank()) {
+            resolved_subject = bundle.subject
         }
 
         return if (
