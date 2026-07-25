@@ -465,7 +465,7 @@ fun ComposeScreen(
             ?: msg.body_text.replace("\n", "<br>")
         quoted_html = original_html
         quoted_meta = Triple(
-            msg.sender_email,
+            msg.display_sender_email ?: msg.sender_email,
             msg.timestamp,
             item?.subject.orEmpty(),
         )
@@ -3133,7 +3133,7 @@ private fun build_quoted_body(
         android.text.Html.fromHtml(raw, android.text.Html.FROM_HTML_MODE_LEGACY).toString().trimEnd()
     } else raw
     val plain = strip_watermarks(plain_raw)
-    val from_line = msg.sender_email
+    val from_line = msg.display_sender_email ?: msg.sender_email
     val to_line = msg.to_addresses.joinToString(", ")
     val subject_line = item?.subject.orEmpty()
     val date_line = msg.timestamp

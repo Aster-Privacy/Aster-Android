@@ -93,7 +93,13 @@ class AsterPushService : PushService() {
         val repo = entry.mail_repository()
         val envelope = repo.decrypt_envelope_public(encrypted_envelope, envelope_nonce, item_id.takeIf { it.isNotBlank() })
             ?: return PushResult.NeedsFetch
-        val sender = envelope.from_name.takeIf { it.isNotBlank() } ?: envelope.from_email
+        val forwarding = org.astermail.android.ui.mail.resolve_forwarding_display(
+            envelope.from_email,
+            envelope.raw_headers,
+        )
+        val sender = forwarding?.display_sender_name
+            ?: envelope.from_name.takeIf { it.isNotBlank() }
+            ?: envelope.from_email
         val subject = envelope.subject
         if (sender.isBlank() || subject.isBlank()) return PushResult.NeedsFetch
         val notification_id = if (item_id.isNotBlank()) {

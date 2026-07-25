@@ -164,7 +164,9 @@ private fun matches_item(item: InboxItem, parsed: ParsedQuery, filter: String?):
     if (parsed.free_text.isNotEmpty()) {
         val q = parsed.free_text
         val in_sender = item.sender_name.lowercase().contains(q) ||
-            item.sender_email.lowercase().contains(q)
+            item.sender_email.lowercase().contains(q) ||
+            item.display_sender_name?.lowercase()?.contains(q) == true ||
+            item.display_sender_email?.lowercase()?.contains(q) == true
         val in_subject = item.subject.lowercase().contains(q)
         val in_preview = item.preview.lowercase().contains(q)
         if (!in_sender && !in_subject && !in_preview) return false
@@ -176,7 +178,9 @@ private fun matches_item(item: InboxItem, parsed: ParsedQuery, filter: String?):
 private fun evaluate_operator(item: InboxItem, op: SearchOperator): Boolean {
     val result = when (op.key) {
         "from" -> item.sender_name.lowercase().contains(op.value) ||
-            item.sender_email.lowercase().contains(op.value)
+            item.sender_email.lowercase().contains(op.value) ||
+            item.display_sender_name?.lowercase()?.contains(op.value) == true ||
+            item.display_sender_email?.lowercase()?.contains(op.value) == true
         "to" -> item.sender_email.lowercase().contains(op.value)
         "subject" -> item.subject.lowercase().contains(op.value)
         "has" -> when (op.value) {

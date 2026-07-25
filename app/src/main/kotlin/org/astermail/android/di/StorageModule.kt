@@ -117,7 +117,7 @@ object StorageModule {
         builder.openHelperFactory(
             net.zetetic.database.sqlcipher.SupportOpenHelperFactory(db_passphrase(meta), null, false),
         )
-        builder.addMigrations(AsterDatabase.migration_4_5, AsterDatabase.migration_5_6)
+        builder.addMigrations(AsterDatabase.migration_4_5, AsterDatabase.migration_5_6, AsterDatabase.migration_6_7)
         builder.fallbackToDestructiveMigration()
         val db = builder.build()
         db.openHelper.writableDatabase

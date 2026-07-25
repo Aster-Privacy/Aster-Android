@@ -223,6 +223,8 @@ data class InboxItem(
     val tag_tokens: List<String> = emptyList(),
     val category: String = "primary",
     val received_on: String? = null,
+    val display_sender_name: String? = null,
+    val display_sender_email: String? = null,
     val raw_item: MailItem,
 )
 
@@ -250,6 +252,8 @@ data class ThreadMessageDecrypted(
     val raw_headers: List<Pair<String, String>> = emptyList(),
     val is_undecryptable: Boolean = false,
     val subject: String = "",
+    val display_sender_name: String? = null,
+    val display_sender_email: String? = null,
 )
 
 @Singleton
@@ -1022,6 +1026,9 @@ class MailRepository @Inject constructor(
             ?: if (!enc_meta.isNullOrBlank() && !meta_nonce.isNullOrBlank()) {
                 decrypt_mail_metadata(enc_meta, meta_nonce)
             } else null
+        val forwarding = envelope?.let {
+            org.astermail.android.ui.mail.resolve_forwarding_display(it.from_email, it.raw_headers)
+        }
         return InboxItem(
             id = item.id,
             thread_token = item.thread_token,
@@ -1044,6 +1051,8 @@ class MailRepository @Inject constructor(
             received_on = envelope?.raw_headers?.let {
                 org.astermail.android.ui.mail.resolve_inbox_received_on(it, get_user_email())
             },
+            display_sender_name = forwarding?.display_sender_name,
+            display_sender_email = forwarding?.display_sender_email,
             raw_item = if (meta != null) item.copy(metadata = meta) else item,
         )
     }
@@ -1054,7 +1063,10 @@ class MailRepository @Inject constructor(
     private fun decrypt_thread_message(item: ThreadMessageItem): ThreadMessageDecrypted {
         val envelope = try_decrypt_envelope(item.encrypted_envelope, item.envelope_nonce, item.id)
         val meta = item.metadata
-        val to_names = envelope?.to?.map { it.first.ifBlank { it.second } } ?: listOf("me")
+        val to_names = envelope?.to?.map { it.second.ifBlank { it.first } } ?: listOf("me")
+        val forwarding = envelope?.let {
+            org.astermail.android.ui.mail.resolve_forwarding_display(it.from_email, it.raw_headers)
+        }
         return ThreadMessageDecrypted(
             id = item.id,
             sender_name = envelope?.from_name ?: "",
@@ -1072,6 +1084,8 @@ class MailRepository @Inject constructor(
             raw_headers = envelope?.raw_headers ?: emptyList(),
             is_undecryptable = envelope?.is_undecryptable ?: false,
             subject = envelope?.subject ?: "",
+            display_sender_name = forwarding?.display_sender_name,
+            display_sender_email = forwarding?.display_sender_email,
         )
     }
 

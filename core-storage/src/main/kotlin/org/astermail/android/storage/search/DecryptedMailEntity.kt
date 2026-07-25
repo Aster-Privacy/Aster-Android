@@ -45,4 +45,6 @@ data class DecryptedMailEntity(
     val indexed_at: Long,
     val category: String = "primary",
     val received_on: String? = null,
+    val display_sender_name: String? = null,
+    val display_sender_email: String? = null,
 )

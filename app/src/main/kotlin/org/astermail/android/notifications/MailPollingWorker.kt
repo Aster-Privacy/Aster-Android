@@ -234,7 +234,11 @@ class MailPollingWorker(
                 }
             }
 
-            val candidate_sender = (candidate?.sender_name?.takeIf { it.isNotBlank() } ?: candidate?.sender_email)?.trim()
+            val candidate_sender = (
+                candidate?.display_sender_name
+                    ?: candidate?.sender_name?.takeIf { it.isNotBlank() }
+                    ?: candidate?.sender_email
+                )?.trim()
             if (candidate != null && !candidate_sender.isNullOrBlank()) {
                 newest = candidate
                 sender = candidate_sender

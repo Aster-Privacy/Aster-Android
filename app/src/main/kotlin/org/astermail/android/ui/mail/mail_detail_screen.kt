@@ -1302,15 +1302,17 @@ private fun expanded_message(
                 .testTag("message_header_$message_index"),
             verticalAlignment = Alignment.Top,
         ) {
+            val shown_sender_name = displayed_sender_name(msg.display_sender_name, msg.sender_name)
+            val shown_sender_email = displayed_sender_email(msg.display_sender_email, msg.sender_email)
             SenderAvatar(
-                email = msg.sender_email,
-                name = msg.sender_name,
+                email = shown_sender_email,
+                name = shown_sender_name,
                 profile_picture_url = if (msg.sender_email.lowercase() == my_email) my_profile_pic else null,
             )
             Spacer(Modifier.width(AsterSpacing.md))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = msg.sender_name,
+                    text = shown_sender_name,
                     color = colors.text_primary,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -1318,20 +1320,20 @@ private fun expanded_message(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.combinedClickable(
                         onClick = on_collapse,
-                        onLongClick = { copy_email(msg.sender_email) },
+                        onLongClick = { copy_email(shown_sender_email) },
                     ),
                 )
-                if (!msg.sender_name.equals(msg.sender_email, ignoreCase = true)) {
+                if (!shown_sender_name.equals(shown_sender_email, ignoreCase = true)) {
                     Spacer(Modifier.height(1.dp))
                     Text(
-                        text = msg.sender_email,
+                        text = shown_sender_email,
                         color = colors.text_muted,
                         fontSize = 12.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.combinedClickable(
                             onClick = on_collapse,
-                            onLongClick = { copy_email(msg.sender_email) },
+                            onLongClick = { copy_email(shown_sender_email) },
                         ),
                     )
                 }
@@ -2004,7 +2006,8 @@ private fun message_details_dialog(
             ) {
                 message_detail_row(
                     stringResource(R.string.from_label),
-                    "${message.sender_name} <${message.sender_email}>",
+                    "${displayed_sender_name(message.display_sender_name, message.sender_name)} " +
+                        "<${displayed_sender_email(message.display_sender_email, message.sender_email)}>",
                 )
                 if (message.to_label.isNotBlank()) {
                     message_detail_row(stringResource(R.string.to_label), message.to_label)
@@ -2136,8 +2139,8 @@ private fun collapsed_message(
                 }
             } else {
                 SenderAvatar(
-                    email = msg.sender_email,
-                    name = msg.sender_name,
+                    email = displayed_sender_email(msg.display_sender_email, msg.sender_email),
+                    name = displayed_sender_name(msg.display_sender_name, msg.sender_name),
                     size = 40.dp,
                     profile_picture_url = if (msg.sender_email.lowercase() == my_email) my_profile_pic else null,
                 )
@@ -2145,7 +2148,8 @@ private fun collapsed_message(
             Spacer(Modifier.width(AsterSpacing.sm))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = if (is_undecryptable) stringResource(R.string.encrypted) else msg.sender_name,
+                    text = if (is_undecryptable) stringResource(R.string.encrypted)
+                        else displayed_sender_name(msg.display_sender_name, msg.sender_name),
                     color = colors.text_primary,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -2524,7 +2528,8 @@ private fun print_email(context: android.content.Context, msg: ThreadMessage, su
     val print_manager = context.getSystemService(android.content.Context.PRINT_SERVICE) as? android.print.PrintManager
         ?: return
     val safe_subject = subject.ifBlank { context.getString(R.string.aster_email) }.take(80)
-    val sender = "${msg.sender_name} <${msg.sender_email}>"
+    val sender = "${displayed_sender_name(msg.display_sender_name, msg.sender_name)} " +
+        "<${displayed_sender_email(msg.display_sender_email, msg.sender_email)}>"
     val timestamp_text = java.text.SimpleDateFormat("MMM d, yyyy h:mm a", java.util.Locale.getDefault())
         .format(java.util.Date(msg.timestamp))
     val body = msg.body_html?.takeIf { it.isNotBlank() }?.let { EmailHtmlSanitizer.sanitize(it) }

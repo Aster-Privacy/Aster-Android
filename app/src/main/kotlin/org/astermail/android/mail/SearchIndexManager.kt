@@ -190,6 +190,8 @@ class SearchIndexManager @Inject constructor(
                 indexed_at = System.currentTimeMillis(),
                 category = item.category,
                 received_on = item.received_on,
+                display_sender_name = item.display_sender_name,
+                display_sender_email = item.display_sender_email,
             )
         }
         mutex.withLock {

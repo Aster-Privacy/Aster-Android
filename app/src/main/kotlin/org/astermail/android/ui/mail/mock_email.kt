@@ -51,6 +51,8 @@ data class Email(
     val size_bytes: Long = 0,
     val category: String = "primary",
     val received_on: String? = null,
+    val display_sender_name: String? = null,
+    val display_sender_email: String? = null,
 )
 
 data class ThreadRow(
@@ -90,7 +92,10 @@ fun group_by_thread(emails: List<Email>): List<ThreadRow> {
         val names = msgs.flatMap { it.label_names }.distinct()
         val icons = msgs.flatMap { it.label_icons }.distinct()
         val ordered_senders = msgs.sortedByDescending { it.received_at }
-            .map { it.sender_name to it.sender_email }
+            .map {
+                displayed_sender_name(it.display_sender_name, it.sender_name) to
+                    displayed_sender_email(it.display_sender_email, it.sender_email)
+            }
         val seen_emails = mutableSetOf<String>()
         val distinct_participants = mutableListOf<Pair<String, String>>()
         for ((nm, em) in ordered_senders) {
@@ -147,6 +152,8 @@ data class ThreadMessage(
     val attachments: List<MessageAttachment> = emptyList(),
     val raw_headers: List<Pair<String, String>> = emptyList(),
     val is_undecryptable: Boolean = false,
+    val display_sender_name: String? = null,
+    val display_sender_email: String? = null,
 )
 
 private val label_work = Color(0xFF3B82F6)
@@ -981,6 +988,8 @@ fun thread_for(email: Email): List<ThreadMessage> {
             body = email.preview,
             is_encrypted = email.is_encrypted,
             trackers_blocked = email.trackers_blocked,
+            display_sender_name = email.display_sender_name,
+            display_sender_email = email.display_sender_email,
         ),
     )
 }
@@ -1001,6 +1010,8 @@ fun find_thread_message(msg_id: String): ThreadMessage? {
                 body = e.preview,
                 is_encrypted = e.is_encrypted,
                 trackers_blocked = e.trackers_blocked,
+                display_sender_name = e.display_sender_name,
+                display_sender_email = e.display_sender_email,
             )
         }
     }
@@ -1061,6 +1072,8 @@ fun inbox_item_to_email(
         label_icons = matched_tags.map { it.encrypted_icon.orEmpty() },
         category = item.category,
         received_on = item.received_on,
+        display_sender_name = item.display_sender_name,
+        display_sender_email = item.display_sender_email,
     )
 }
 
@@ -1097,6 +1110,8 @@ fun thread_message_to_mock(msg: org.astermail.android.mail.ThreadMessageDecrypte
         is_read = msg.is_read,
         raw_headers = msg.raw_headers,
         is_undecryptable = msg.is_undecryptable,
+        display_sender_name = msg.display_sender_name,
+        display_sender_email = msg.display_sender_email,
     )
 }
 
@@ -1154,17 +1169,19 @@ private fun html_to_plain_text(html: String): String {
 
 fun build_quoted_body(msg: ThreadMessage, mode: String): String {
     val plain_body = if (msg.body_html != null) html_to_plain_text(msg.body_html) else msg.body
+    val quoted_name = displayed_sender_name(msg.display_sender_name, msg.sender_name)
+    val quoted_email = displayed_sender_email(msg.display_sender_email, msg.sender_email)
     return when (mode) {
         "forward" -> buildString {
             append("\n\n")
             append("---------- Forwarded message ----------\n")
-            append("From: ${msg.sender_name} <${msg.sender_email}>\n")
+            append("From: $quoted_name <$quoted_email>\n")
             append("Date: ${msg.timestamp.format_full_datetime()}\n\n")
             plain_body.lines().forEach { append("> $it\n") }
         }
         else -> buildString {
             append("\n\n")
-            append("On ${msg.timestamp.format_full_datetime()}, ${msg.sender_name} <${msg.sender_email}> wrote:\n")
+            append("On ${msg.timestamp.format_full_datetime()}, $quoted_name <$quoted_email> wrote:\n")
             plain_body.lines().forEach { append("> $it\n") }
         }
     }

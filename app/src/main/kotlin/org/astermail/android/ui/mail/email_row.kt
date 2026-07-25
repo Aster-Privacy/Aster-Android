@@ -113,14 +113,17 @@ fun EmailRow(
             ),
         verticalAlignment = Alignment.Top,
     ) {
-        SenderAvatar(email = email.sender_email, name = email.sender_name)
+        SenderAvatar(
+            email = displayed_sender_email(email.display_sender_email, email.sender_email),
+            name = displayed_sender_name(email.display_sender_name, email.sender_name),
+        )
 
         Spacer(Modifier.width(AsterSpacing.md))
 
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = email.sender_name,
+                    text = displayed_sender_name(email.display_sender_name, email.sender_name),
                     style = MaterialTheme.typography.bodyLarge,
                     color = sender_color,
                     fontWeight = if (is_unread) FontWeight.Bold else FontWeight.Normal,
@@ -296,9 +299,13 @@ fun ThreadInboxRow(
         } else {
             val participants = androidx.compose.runtime.remember(
                 thread.thread_id, thread.participants, email.sender_name, email.sender_email,
+                email.display_sender_name, email.display_sender_email,
             ) {
                 thread.participants.ifEmpty {
-                    listOf(email.sender_name to email.sender_email)
+                    listOf(
+                        displayed_sender_name(email.display_sender_name, email.sender_name) to
+                            displayed_sender_email(email.display_sender_email, email.sender_email),
+                    )
                 }
             }
             StackedAvatars(participants = participants)
@@ -309,7 +316,7 @@ fun ThreadInboxRow(
                 Text(
                     text = format_participants(
                         thread.participants,
-                        email.sender_name,
+                        displayed_sender_name(email.display_sender_name, email.sender_name),
                         others_template = stringResource(R.string.participants_and_others),
                     ),
                     style = MaterialTheme.typography.bodyLarge,

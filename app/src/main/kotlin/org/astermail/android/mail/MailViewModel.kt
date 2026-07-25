@@ -128,9 +128,11 @@ class MailViewModel @Inject constructor(
         val seen = mutableSetOf<String>()
         val participants = mutableListOf<Pair<String, String>>()
         for (m in ordered) {
-            val key = m.sender_email.lowercase().ifBlank { m.sender_name.lowercase() }
+            val shown_name = m.display_sender_name ?: m.sender_name
+            val shown_email = m.display_sender_email ?: m.sender_email
+            val key = shown_email.lowercase().ifBlank { shown_name.lowercase() }
             if (key.isBlank()) continue
-            if (seen.add(key)) participants.add(m.sender_name to m.sender_email)
+            if (seen.add(key)) participants.add(shown_name to shown_email)
         }
         if (participants.size < 2) return
         _thread_participants.update { it + (thread_token to participants) }
@@ -765,6 +767,8 @@ class MailViewModel @Inject constructor(
             raw_item = thread_item,
             has_attachments = item.has_attachments,
             subject = item.subject,
+            display_sender_name = item.display_sender_name,
+            display_sender_email = item.display_sender_email,
         )
     }
 
@@ -1941,6 +1945,8 @@ class MailViewModel @Inject constructor(
                 sender_name = item.sender_name,
                 sender_email = item.sender_email,
                 body_text = item.preview,
+                display_sender_name = item.display_sender_name,
+                display_sender_email = item.display_sender_email,
             )
         }
     }
@@ -2040,5 +2046,7 @@ fun org.astermail.android.storage.search.DecryptedMailEntity.to_inbox_item(): In
     labels = if (labels.isBlank()) emptyList() else labels.split(","),
     category = category,
     received_on = received_on,
+    display_sender_name = display_sender_name,
+    display_sender_email = display_sender_email,
     raw_item = org.astermail.android.api.mail.MailItem(id = id),
 )
