@@ -106,9 +106,6 @@ fun is_internal_recipient(email: String): Boolean {
 
 internal data class SubjectBundle(val subject: String?, val body: String)
 
-private val bundle_framing_regex =
-    Regex("^[\\s\\u0000-\\u001f\\u007f\\u00a0\\u1680\\u2000-\\u200f\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]*$")
-
 private fun unescape_json_char(escape: Char): Char = when (escape) {
     'b' -> '\b'
     'f' -> 12.toChar()
@@ -189,7 +186,7 @@ internal fun extract_subject_bundle(body: String): SubjectBundle {
     if (body.isEmpty()) return SubjectBundle(null, body)
 
     val prefix_index = body.indexOf(ASTER_SUBJECT_BUNDLE_PREFIX)
-    if (prefix_index == -1 || !bundle_framing_regex.matches(body.substring(0, prefix_index))) {
+    if (prefix_index == -1 || !is_body_framing_only(body.substring(0, prefix_index))) {
         return SubjectBundle(null, body)
     }
 
@@ -1112,7 +1109,7 @@ class MailRepository @Inject constructor(
                 nonce_bytes == null || nonce_bytes.isEmpty() -> {
                     val raw = android.util.Base64.decode(encrypted_envelope, android.util.Base64.DEFAULT)
                     val text = String(raw, Charsets.UTF_8)
-                    if (text.trimStart().startsWith("-----BEGIN PGP")) {
+                    if (body_starts_with(text, "-----BEGIN PGP")) {
                         val pgp_result = try_pgp_decrypt(text)
                         if (pgp_result != null) {
                             if (MimeParser.looks_like_mime(pgp_result)) {
@@ -1392,7 +1389,7 @@ class MailRepository @Inject constructor(
                 }
             } catch (_: Throwable) {}
 
-            if (text.trimStart().startsWith("-----BEGIN PGP")) {
+            if (body_starts_with(text, "-----BEGIN PGP")) {
                 val pgp_result = try_pgp_decrypt(text)
                 if (pgp_result != null) {
                     val json = org.json.JSONObject(pgp_result)
@@ -1699,12 +1696,18 @@ class MailRepository @Inject constructor(
         return text.trim()
     }
 
+    private fun looks_like_ciphertext(text: String): Boolean = text.contains("-----BEGIN PGP") ||
+        text.contains(ASTER_SUBJECT_BUNDLE_PREFIX) ||
+        text.contains("\"double_ratchet_v1\"") ||
+        text.contains("\"double_ratchet_v2\"") ||
+        text.contains("ASTER_RATCHET_UNDECRYPTABLE")
+
     private fun clean_preview(body_text: String, body_html: String?): String {
-        if (body_html != null && !body_html.contains("-----BEGIN PGP")) {
+        if (body_html != null && !looks_like_ciphertext(body_html)) {
             val from_html = strip_html(body_html)
             if (from_html.length > 4) return from_html.take(140)
         }
-        if (body_text.contains("-----BEGIN PGP")) return ""
+        if (looks_like_ciphertext(body_text)) return ""
         return strip_html(body_text).take(140)
     }
 
@@ -1779,11 +1782,11 @@ class MailRepository @Inject constructor(
             }
         }
 
-        if (body_text.trimStart().startsWith("-----BEGIN PGP")) {
+        if (body_starts_with(body_text, "-----BEGIN PGP")) {
             val decrypted = try_pgp_decrypt(body_text)
             if (decrypted != null) body_text = decrypted
         }
-        if (body_html != null && body_html.trimStart().startsWith("-----BEGIN PGP")) {
+        if (body_html != null && body_starts_with(body_html, "-----BEGIN PGP")) {
             val decrypted = try_pgp_decrypt(body_html)
             if (decrypted != null) body_html = decrypted
         }

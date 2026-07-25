@@ -251,7 +251,7 @@ object CryptoNative {
             return factory.generateSecret(spec).encoded
         } finally {
             spec.clearPassword()
-            password_chars.fill(' ')
+            password_chars.fill('\u0000')
         }
     }
 

@@ -29,7 +29,7 @@ data class MimeResult(
 object MimeParser {
 
     fun looks_like_mime(content: String): Boolean {
-        val trimmed = content.trimStart()
+        val trimmed = strip_body_framing(content)
         return trimmed.startsWith("Content-Type:", ignoreCase = true) ||
             trimmed.startsWith("MIME-Version:", ignoreCase = true)
     }

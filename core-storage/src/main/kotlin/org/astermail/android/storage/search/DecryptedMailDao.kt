@@ -52,7 +52,15 @@ interface DecryptedMailDao {
 
     @Query(
         "DELETE FROM decrypted_mail_cache WHERE preview LIKE '%ASTER_BUNDLE_V2%' " +
-            "OR subject LIKE '%ASTER_BUNDLE_V2%'",
+            "OR subject LIKE '%ASTER_BUNDLE_V2%' " +
+            "OR preview LIKE '%double_ratchet_v1%' " +
+            "OR preview LIKE '%double_ratchet_v2%' " +
+            "OR subject LIKE '%double_ratchet_v1%' " +
+            "OR subject LIKE '%double_ratchet_v2%' " +
+            "OR preview LIKE '%ASTER_RATCHET_UNDECRYPTABLE%' " +
+            "OR subject LIKE '%ASTER_RATCHET_UNDECRYPTABLE%' " +
+            "OR preview LIKE '%-----BEGIN PGP%' " +
+            "OR subject LIKE '%-----BEGIN PGP%'",
     )
     suspend fun delete_bundle_poisoned(): Int
 
