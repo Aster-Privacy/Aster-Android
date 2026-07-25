@@ -12,7 +12,7 @@ val is_fdroid_build = project.hasProperty("fdroid") ||
 
 android {
     namespace = "org.astermail.android"
-    compileSdk = 35
+    compileSdk = 36
 
     flavorDimensions += "distribution"
 
@@ -28,7 +28,7 @@ android {
     defaultConfig {
         applicationId = "org.astermail.android"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 132
         versionName = "0.6.123"
 

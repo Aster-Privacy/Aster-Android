@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "org.astermail.android.storage"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig { minSdk = 26 }
 
