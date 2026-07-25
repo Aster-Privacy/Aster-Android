@@ -50,6 +50,12 @@ interface DecryptedMailDao {
     @Query("DELETE FROM decrypted_mail_cache")
     suspend fun clear_all()
 
+    @Query(
+        "DELETE FROM decrypted_mail_cache WHERE preview LIKE '%ASTER_BUNDLE_V2%' " +
+            "OR subject LIKE '%ASTER_BUNDLE_V2%'",
+    )
+    suspend fun delete_bundle_poisoned(): Int
+
     @Query("UPDATE decrypted_mail_cache SET is_read = :is_read WHERE id = :id")
     suspend fun update_read(id: String, is_read: Boolean)
 

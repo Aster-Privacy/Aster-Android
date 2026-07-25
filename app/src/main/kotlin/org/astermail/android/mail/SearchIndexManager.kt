@@ -84,7 +84,14 @@ class SearchIndexManager @Inject constructor(
         }
     }
 
-    suspend fun get_cached_items(): List<DecryptedMailEntity> = dao.get_all()
+    suspend fun get_cached_items(): List<DecryptedMailEntity> {
+        purge_bundle_poisoned()
+        return dao.get_all()
+    }
+
+    private suspend fun purge_bundle_poisoned() {
+        runCatching { dao.delete_bundle_poisoned() }
+    }
 
     suspend fun reconcile_inbox_window(returned_ids: Set<String>, min_timestamp: String) {
         if (returned_ids.isEmpty() || min_timestamp.isBlank()) return
@@ -129,6 +136,7 @@ class SearchIndexManager @Inject constructor(
         if (!took_lock) return
         val my_epoch = epoch.get()
         try {
+            purge_bundle_poisoned()
             val existing_ids = dao.get_all_ids().toHashSet()
             var cursor: String? = null
             val max_pages = 20
