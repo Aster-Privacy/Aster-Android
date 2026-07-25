@@ -1361,4 +1361,21 @@
     <string name="expires_custom">Özel tarih ve saat</string>
     <string name="expires_custom_at">%1$s tarihinde sona erer</string>
     <string name="expiry_time_in_past">Sona erme zamanı gelecekte olmalıdır</string>
+    <string name="section_translation">Çeviri</string>
+    <string name="translate_incoming_label">Gelen e-postaları çevir</string>
+    <string name="translate_incoming_subtitle">Çeviri tamamen cihazınızda gerçekleşir. Sunucuya hiçbir şey gönderilmez.</string>
+    <string name="translate_mode_off">Kapalı</string>
+    <string name="translate_mode_ask">Çevirmeden önce sor</string>
+    <string name="translate_mode_always">Her zaman çevir</string>
+    <string name="translate_my_languages_label">Okuduğunuz diller</string>
+    <string name="translate_my_languages_subtitle">Bu dillerdeki e-postalar çevrilmez.</string>
+    <string name="translate_never_languages_label">Asla çevirme</string>
+    <string name="translate_never_languages_subtitle">Bu dillerdeki e-postalar her zaman olduğu gibi bırakılır.</string>
+    <string name="translation_offer_title">Bu e-posta %1$s dilinden çevrilsin mi?</string>
+    <string name="translation_offer_action">Çevir</string>
+    <string name="translation_offer_dismiss">Şimdi değil</string>
+    <string name="translation_translating">Cihazınızda çevriliyor…</string>
+    <string name="translation_translated">Cihazınızda %1$s dilinden çevrildi</string>
+    <string name="translation_show_original">Orijinali göster</string>
+    <string name="translation_failed">Çeviri başarısız oldu</string>
 </resources>

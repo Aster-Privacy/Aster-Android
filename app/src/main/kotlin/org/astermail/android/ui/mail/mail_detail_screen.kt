@@ -2734,13 +2734,14 @@ private object html_cache {
     }
     @Synchronized fun get(key: Long): String? = store[key]
     @Synchronized fun put(key: Long, value: String) { store[key] = value }
-    fun key(html_hash: Int, allow_external: Boolean, bg_hex: String, screen_w: Int = 0, force_dark: Boolean = false): Long {
+    fun key(html_hash: Int, allow_external: Boolean, bg_hex: String, screen_w: Int = 0, force_dark: Boolean = false, translate: Boolean = false): Long {
         var h = html_hash.toLong() and 0xFFFFFFFFL
         h = h * 31L + (if (allow_external) 1L else 0L)
         h = h * 31L + bg_hex.hashCode().toLong()
         h = h * 31L + org.astermail.android.BuildConfig.VERSION_CODE.toLong()
         h = h * 31L + screen_w.toLong()
         h = h * 31L + (if (force_dark) 1L else 0L)
+        h = h * 31L + (if (translate) 1L else 0L)
         return h
     }
 }
@@ -2783,6 +2784,112 @@ private fun email_image_client(context: android.content.Context): okhttp3.OkHttp
 
 private val mail_detail_image_lock = Any()
 
+private sealed interface TranslationBannerState {
+    object Hidden : TranslationBannerState
+    data class Offer(val language: String) : TranslationBannerState
+    object Translating : TranslationBannerState
+    data class Translated(val language: String) : TranslationBannerState
+    object Failed : TranslationBannerState
+}
+
+@Composable
+private fun translation_banner(
+    state: TranslationBannerState,
+    on_translate: (String) -> Unit,
+    on_show_original: () -> Unit,
+    on_dismiss: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    if (state is TranslationBannerState.Hidden) return
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = AsterSpacing.sm)
+            .clip(RoundedCornerShape(10.dp))
+            .background(colors.accent_blue.copy(alpha = 0.10f))
+            .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        when (state) {
+            is TranslationBannerState.Offer -> {
+                val name = org.astermail.android.translation.language_display_name(state.language)
+                Text(
+                    text = stringResource(R.string.translation_offer_title, name),
+                    color = colors.text_primary,
+                    fontSize = 13.sp,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = stringResource(R.string.translation_offer_action),
+                    color = colors.accent_blue,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .clickable { on_translate(state.language) }
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                )
+                Text(
+                    text = stringResource(R.string.translation_offer_dismiss),
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
+                    modifier = Modifier
+                        .clickable { on_dismiss() }
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                )
+            }
+            is TranslationBannerState.Translating -> {
+                CircularProgressIndicator(
+                    color = colors.accent_blue,
+                    strokeWidth = 2.dp,
+                    modifier = Modifier.size(14.dp),
+                )
+                Spacer(Modifier.width(AsterSpacing.sm))
+                Text(
+                    text = stringResource(R.string.translation_translating),
+                    color = colors.text_secondary,
+                    fontSize = 13.sp,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            is TranslationBannerState.Translated -> {
+                val name = org.astermail.android.translation.language_display_name(state.language)
+                Text(
+                    text = stringResource(R.string.translation_translated, name),
+                    color = colors.text_secondary,
+                    fontSize = 13.sp,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = stringResource(R.string.translation_show_original),
+                    color = colors.accent_blue,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .clickable { on_show_original() }
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                )
+            }
+            is TranslationBannerState.Failed -> {
+                Text(
+                    text = stringResource(R.string.translation_failed),
+                    color = colors.text_secondary,
+                    fontSize = 13.sp,
+                    modifier = Modifier.weight(1f),
+                )
+                Icon(
+                    imageVector = TablerIcons.X,
+                    contentDescription = null,
+                    tint = colors.text_tertiary,
+                    modifier = Modifier
+                        .size(16.dp)
+                        .clickable { on_dismiss() },
+                )
+            }
+            else -> Unit
+        }
+    }
+}
+
 @Composable
 private fun email_html_view(
     html: String,
@@ -2812,6 +2919,79 @@ private fun email_html_view(
     val forwarded_label = stringResource(R.string.forwarded_message_label)
     val image_blocked_label = stringResource(R.string.image_blocked_placeholder)
     val force_dark_emails = is_dark && settings_state.preferences?.force_dark_emails == true
+
+    val translate_mode = settings_state.preferences?.translate_incoming ?: "off"
+    val translate_langs = settings_state.preferences?.translate_languages ?: emptyList()
+    val translate_never_langs = settings_state.preferences?.translate_never_languages ?: emptyList()
+    val ui_language = org.astermail.android.translation.normalize_language_code(
+        java.util.Locale.getDefault().language,
+    )
+    val translate_target = org.astermail.android.translation.normalize_language_code(
+        translate_langs.firstOrNull(),
+    ) ?: ui_language ?: "en"
+    val translate_accepted = remember(translate_langs, translate_never_langs, ui_language) {
+        (translate_langs + translate_never_langs + listOfNotNull(ui_language))
+            .mapNotNull { org.astermail.android.translation.normalize_language_code(it) }
+            .distinct()
+            .joinToString(",")
+    }
+    val web_ref = remember { arrayOfNulls<android.webkit.WebView>(1) }
+    var translation_state by remember(html) {
+        mutableStateOf<TranslationBannerState>(TranslationBannerState.Hidden)
+    }
+    val main_handler = remember { android.os.Handler(android.os.Looper.getMainLooper()) }
+
+    fun run_translation(from: String) {
+        val web = web_ref[0] ?: return
+        translation_state = TranslationBannerState.Translating
+        web.evaluateJavascript(
+            "window.__aster_translate&&window.__aster_translate.run('$from','$translate_target')",
+            null,
+        )
+    }
+
+    fun show_original() {
+        val web = web_ref[0] ?: return
+        web.evaluateJavascript(
+            "window.__aster_translate&&window.__aster_translate.show_original()",
+            null,
+        )
+    }
+
+    val translate_bridge = remember(translate_mode, translate_target) {
+        object {
+            @android.webkit.JavascriptInterface
+            fun on_detect(json: String) {
+                val language = Regex("\"language\"\\s*:\\s*\"([a-z]{2})\"").find(json)?.groupValues?.get(1)
+                val detected = json.contains("\"detected\":true") || json.contains("\"detected\": true")
+                if (!detected || language == null) return
+                if (language == translate_target) return
+                main_handler.post {
+                    if (translate_mode == "always") {
+                        run_translation(language)
+                    } else if (translate_mode == "ask") {
+                        translation_state = TranslationBannerState.Offer(language)
+                    }
+                }
+            }
+
+            @android.webkit.JavascriptInterface
+            fun on_status(json: String) {
+                val state = Regex("\"state\"\\s*:\\s*\"([a-z_]+)\"").find(json)?.groupValues?.get(1)
+                val from = Regex("\"from\"\\s*:\\s*\"([a-z]{2})\"").find(json)?.groupValues?.get(1)
+                main_handler.post {
+                    when (state) {
+                        "translating" -> translation_state = TranslationBannerState.Translating
+                        "translated" -> translation_state =
+                            TranslationBannerState.Translated(from ?: "")
+                        "original" -> translation_state = TranslationBannerState.Hidden
+                        "error" -> translation_state = TranslationBannerState.Failed
+                        else -> Unit
+                    }
+                }
+            }
+        }
+    }
 
     var content_height_dp by remember(html) { mutableStateOf(0.dp) }
     var has_measured by remember(html) { mutableStateOf(false) }
@@ -2894,7 +3074,12 @@ body img,body picture,body video,body svg{filter:invert(1) hue-rotate(180deg)}
             java.security.SecureRandom().nextBytes(nonce_bytes)
             android.util.Base64.encodeToString(nonce_bytes, android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING)
         }
-        val csp_meta = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; img-src https://app.astermail.org data:; style-src 'unsafe-inline'; font-src https://app.astermail.org data:; script-src 'nonce-$csp_nonce'; base-uri 'none'; form-action 'none'; frame-src 'none'; object-src 'none'\">"
+        val script_src = if (translate_mode != "off") {
+            "script-src 'nonce-$csp_nonce' 'wasm-unsafe-eval' https://mail-content.invalid; worker-src https://mail-content.invalid; connect-src https://mail-content.invalid"
+        } else {
+            "script-src 'nonce-$csp_nonce'"
+        }
+        val csp_meta = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; img-src https://app.astermail.org data:; style-src 'unsafe-inline'; font-src https://app.astermail.org data:; $script_src; base-uri 'none'; form-action 'none'; frame-src 'none'; object-src 'none'\">"
 
         return """<!DOCTYPE html><html${if (has_newsletter_layout) " data-nl=\"1\"" else ""}${if (is_html_body && !simple_dark) " style=\"background-color:transparent\"" else ""}><head>
 $csp_meta
@@ -3155,15 +3340,15 @@ $dark_css
     val bg_color = if (!is_html_body_top) android.graphics.Color.TRANSPARENT
         else runCatching { android.graphics.Color.parseColor(bg_hex) }.getOrDefault(android.graphics.Color.BLACK)
 
-    val cache_key = remember(html, allow_external, bg_hex, screen_width_dp, force_dark_emails) { html_cache.key(html.hashCode(), allow_external, bg_hex, screen_width_dp, force_dark_emails) }
-    var prebuilt_html by remember(html, allow_external) { mutableStateOf<String?>(html_cache.get(cache_key)) }
+    val translate_active = translate_mode != "off"
+    val cache_key = remember(html, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active) { html_cache.key(html.hashCode(), allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active) }
+    var prebuilt_html by remember(html, allow_external, translate_active) { mutableStateOf<String?>(html_cache.get(cache_key)) }
     var loaded_built by remember { mutableStateOf("") }
     var loaded_external by remember { mutableStateOf(false) }
     val scale_ref = remember { floatArrayOf(1f) }
     val nl_scale_ref = remember { floatArrayOf(1f) }
     val is_nl_ref = remember { booleanArrayOf(false) }
     var long_pressed_link by remember { mutableStateOf<String?>(null) }
-    val web_ref = remember { arrayOfNulls<android.webkit.WebView>(1) }
 
     val on_height_report by rememberUpdatedState<(Int, Boolean) -> Unit> { h, exact ->
         if (h > 0) {
@@ -3196,7 +3381,7 @@ $dark_css
         return proxy_external_urls(cid_normalized, proxy_base)
     }
 
-    LaunchedEffect(html, allow_external, bg_hex, force_dark_emails) {
+    LaunchedEffect(html, allow_external, bg_hex, force_dark_emails, translate_active) {
         scale_ref[0] = 1f
         val cached = html_cache.get(cache_key)
         if (cached != null) {
@@ -3228,6 +3413,17 @@ $dark_css
             has_measured = true
             on_ready()
         }
+    }
+
+    LaunchedEffect(has_measured, translate_mode, translate_accepted, prebuilt_html) {
+        if (!has_measured || translate_mode == "off") return@LaunchedEffect
+        delay(150)
+        val web = web_ref[0] ?: return@LaunchedEffect
+        val accepted = translate_accepted
+        val boot = "(function(){try{if(window.__aster_translate){window.__aster_translate.detect('$accepted');return;}" +
+            "import('/bergamot/aster_translate.js').then(function(){window.__aster_translate&&window.__aster_translate.detect('$accepted');}).catch(function(e){});" +
+            "}catch(e){}})()"
+        web.evaluateJavascript(boot, null)
     }
 
     val webview_client = remember {
@@ -3292,6 +3488,18 @@ $dark_css
             ): android.webkit.WebResourceResponse? {
                 val req_uri = request?.url ?: return null
                 val url = req_uri.toString()
+                if (req_uri.host == org.astermail.android.translation.TranslationAssets.CONTENT_HOST) {
+                    val ctx0 = view?.context
+                    if (ctx0 != null) {
+                        val served = org.astermail.android.translation.TranslationAssets.serve(
+                            ctx0,
+                            req_uri.host,
+                            req_uri.path,
+                        )
+                        if (served != null) return served
+                    }
+                    return null
+                }
                 if (req_uri.scheme != "https") return null
                 if (req_uri.host != "app.astermail.org") return null
                 if (req_uri.path != "/api/images/v1/proxy") return null
@@ -3338,7 +3546,14 @@ $dark_css
         }
     }
 
-    Box(modifier = modifier.background(if (is_nl_ref[0] && !force_dark_emails) androidx.compose.ui.graphics.Color.White else colors.bg_primary), contentAlignment = Alignment.Center) {
+    Column(modifier = modifier) {
+      translation_banner(
+        state = translation_state,
+        on_translate = { lang -> run_translation(lang) },
+        on_show_original = { show_original() },
+        on_dismiss = { translation_state = TranslationBannerState.Hidden },
+      )
+      Box(modifier = Modifier.fillMaxWidth().background(if (is_nl_ref[0] && !force_dark_emails) androidx.compose.ui.graphics.Color.White else colors.bg_primary), contentAlignment = Alignment.Center) {
         if (!has_measured) {
             email_body_skeleton(
                 modifier = Modifier
@@ -3448,9 +3663,12 @@ $dark_css
                         }
                     }
                     webViewClient = webview_client
+                    addJavascriptInterface(translate_bridge, "AsterTranslateBridge")
+                    web_ref[0] = this
                 }
             },
             update = { web_view ->
+                web_ref[0] = web_view
                 val built = prebuilt_html ?: return@AndroidView
                 val is_newsletter = built.contains("data-nl=\"1\"")
                 web_view.settings.textZoom = text_zoom
@@ -3472,7 +3690,6 @@ $dark_css
                     }
                     scale_ref[0] = nl_scale_ref[0]
                     web_view.loadDataWithBaseURL("https://mail-content.invalid/", built, "text/html", "UTF-8", null)
-                    web_ref[0] = web_view
                     if (!has_measured) web_view.evaluateJavascript(measure_js, null)
                 }
             },
@@ -3502,6 +3719,7 @@ $dark_css
                 }
             },
         )
+      }
     }
 
     long_pressed_link?.let { link ->

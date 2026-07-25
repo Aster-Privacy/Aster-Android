@@ -1362,4 +1362,21 @@
     <string name="expires_custom">Benutzerdefiniertes Datum und Uhrzeit</string>
     <string name="expires_custom_at">Läuft ab: %1$s</string>
     <string name="expiry_time_in_past">Die Ablaufzeit muss in der Zukunft liegen</string>
+    <string name="section_translation">Übersetzung</string>
+    <string name="translate_incoming_label">Eingehende E-Mails übersetzen</string>
+    <string name="translate_incoming_subtitle">Die Übersetzung erfolgt vollständig auf Ihrem Gerät. Es wird nichts an einen Server gesendet.</string>
+    <string name="translate_mode_off">Aus</string>
+    <string name="translate_mode_ask">Vor dem Übersetzen fragen</string>
+    <string name="translate_mode_always">Immer übersetzen</string>
+    <string name="translate_my_languages_label">Sprachen, die Sie lesen</string>
+    <string name="translate_my_languages_subtitle">E-Mails in diesen Sprachen werden nicht übersetzt.</string>
+    <string name="translate_never_languages_label">Nie übersetzen</string>
+    <string name="translate_never_languages_subtitle">E-Mails in diesen Sprachen bleiben immer unverändert.</string>
+    <string name="translation_offer_title">Diese E-Mail aus %1$s übersetzen?</string>
+    <string name="translation_offer_action">Übersetzen</string>
+    <string name="translation_offer_dismiss">Jetzt nicht</string>
+    <string name="translation_translating">Wird auf Ihrem Gerät übersetzt…</string>
+    <string name="translation_translated">Aus %1$s auf Ihrem Gerät übersetzt</string>
+    <string name="translation_show_original">Original anzeigen</string>
+    <string name="translation_failed">Übersetzung fehlgeschlagen</string>
 </resources>

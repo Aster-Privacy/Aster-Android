@@ -1977,4 +1977,21 @@
     <string name="expires_custom">Date et heure personnalisées</string>
     <string name="expires_custom_at">Expire le %1$s</string>
     <string name="expiry_time_in_past">L\'heure d\'expiration doit être dans le futur</string>
+    <string name="section_translation">Traduction</string>
+    <string name="translate_incoming_label">Traduire les e-mails entrants</string>
+    <string name="translate_incoming_subtitle">La traduction s\'effectue entièrement sur votre appareil. Rien n\'est envoyé à un serveur.</string>
+    <string name="translate_mode_off">Désactivée</string>
+    <string name="translate_mode_ask">Demander avant de traduire</string>
+    <string name="translate_mode_always">Toujours traduire</string>
+    <string name="translate_my_languages_label">Langues que vous lisez</string>
+    <string name="translate_my_languages_subtitle">Les e-mails dans ces langues ne seront pas traduits.</string>
+    <string name="translate_never_languages_label">Ne jamais traduire</string>
+    <string name="translate_never_languages_subtitle">Les e-mails dans ces langues restent toujours inchangés.</string>
+    <string name="translation_offer_title">Traduire cet e-mail depuis %1$s ?</string>
+    <string name="translation_offer_action">Traduire</string>
+    <string name="translation_offer_dismiss">Pas maintenant</string>
+    <string name="translation_translating">Traduction sur votre appareil…</string>
+    <string name="translation_translated">Traduit depuis %1$s sur votre appareil</string>
+    <string name="translation_show_original">Afficher l\'original</string>
+    <string name="translation_failed">Échec de la traduction</string>
 </resources>

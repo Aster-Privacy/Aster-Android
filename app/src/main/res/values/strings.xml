@@ -2120,4 +2120,21 @@
     <string name="expires_custom">Custom date and time</string>
     <string name="expires_custom_at">Expires %1$s</string>
     <string name="expiry_time_in_past">Expiration time must be in the future</string>
+    <string name="section_translation">Translation</string>
+    <string name="translate_incoming_label">Translate incoming email</string>
+    <string name="translate_incoming_subtitle">Translation runs entirely on your device. Nothing is sent to a server.</string>
+    <string name="translate_mode_off">Off</string>
+    <string name="translate_mode_ask">Ask before translating</string>
+    <string name="translate_mode_always">Always translate</string>
+    <string name="translate_my_languages_label">Languages you read</string>
+    <string name="translate_my_languages_subtitle">Email in these languages will not be translated.</string>
+    <string name="translate_never_languages_label">Never translate</string>
+    <string name="translate_never_languages_subtitle">Email in these languages is always left unchanged.</string>
+    <string name="translation_offer_title">Translate this email from %1$s?</string>
+    <string name="translation_offer_action">Translate</string>
+    <string name="translation_offer_dismiss">Not now</string>
+    <string name="translation_translating">Translating on your device…</string>
+    <string name="translation_translated">Translated from %1$s on your device</string>
+    <string name="translation_show_original">Show original</string>
+    <string name="translation_failed">Translation failed</string>
 </resources>

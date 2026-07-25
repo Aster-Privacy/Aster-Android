@@ -115,6 +115,9 @@ data class UserPreferences(
     val storage_format: String = "aster",
     val warn_external_recipients: Boolean = true,
     val show_aster_branding: Boolean = true,
+    val translate_incoming: String = "off",
+    val translate_languages: List<String> = emptyList(),
+    val translate_never_languages: List<String> = emptyList(),
     val muted_folder_tokens: List<String> = emptyList(),
 )
 

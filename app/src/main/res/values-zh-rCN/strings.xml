@@ -1359,4 +1359,21 @@
     <string name="expires_custom">自定义日期和时间</string>
     <string name="expires_custom_at">%1$s 过期</string>
     <string name="expiry_time_in_past">过期时间必须晚于当前时间</string>
+    <string name="section_translation">翻译</string>
+    <string name="translate_incoming_label">翻译收到的邮件</string>
+    <string name="translate_incoming_subtitle">翻译完全在您的设备上进行，不会向服务器发送任何内容。</string>
+    <string name="translate_mode_off">关闭</string>
+    <string name="translate_mode_ask">翻译前询问</string>
+    <string name="translate_mode_always">始终翻译</string>
+    <string name="translate_my_languages_label">您能阅读的语言</string>
+    <string name="translate_my_languages_subtitle">这些语言的邮件不会被翻译。</string>
+    <string name="translate_never_languages_label">从不翻译</string>
+    <string name="translate_never_languages_subtitle">这些语言的邮件始终保持不变。</string>
+    <string name="translation_offer_title">将这封邮件从%1$s翻译过来？</string>
+    <string name="translation_offer_action">翻译</string>
+    <string name="translation_offer_dismiss">暂不</string>
+    <string name="translation_translating">正在您的设备上翻译…</string>
+    <string name="translation_translated">已在您的设备上从%1$s翻译</string>
+    <string name="translation_show_original">显示原文</string>
+    <string name="translation_failed">翻译失败</string>
 </resources>

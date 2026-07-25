@@ -1359,4 +1359,21 @@
     <string name="expires_custom">日時を指定</string>
     <string name="expires_custom_at">%1$s に期限切れ</string>
     <string name="expiry_time_in_past">有効期限は未来の日時を指定してください</string>
+    <string name="section_translation">翻訳</string>
+    <string name="translate_incoming_label">受信メールを翻訳</string>
+    <string name="translate_incoming_subtitle">翻訳はすべて端末上で行われます。サーバーには何も送信されません。</string>
+    <string name="translate_mode_off">オフ</string>
+    <string name="translate_mode_ask">翻訳前に確認</string>
+    <string name="translate_mode_always">常に翻訳</string>
+    <string name="translate_my_languages_label">読める言語</string>
+    <string name="translate_my_languages_subtitle">これらの言語のメールは翻訳されません。</string>
+    <string name="translate_never_languages_label">翻訳しない</string>
+    <string name="translate_never_languages_subtitle">これらの言語のメールは常にそのまま表示されます。</string>
+    <string name="translation_offer_title">このメールを%1$sから翻訳しますか？</string>
+    <string name="translation_offer_action">翻訳</string>
+    <string name="translation_offer_dismiss">後で</string>
+    <string name="translation_translating">端末上で翻訳しています…</string>
+    <string name="translation_translated">端末上で%1$sから翻訳しました</string>
+    <string name="translation_show_original">原文を表示</string>
+    <string name="translation_failed">翻訳に失敗しました</string>
 </resources>

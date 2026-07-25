@@ -1369,4 +1369,21 @@
     <string name="expires_custom">تاريخ ووقت مخصصان</string>
     <string name="expires_custom_at">تنتهي في %1$s</string>
     <string name="expiry_time_in_past">يجب أن يكون وقت انتهاء الصلاحية في المستقبل</string>
+    <string name="section_translation">الترجمة</string>
+    <string name="translate_incoming_label">ترجمة البريد الوارد</string>
+    <string name="translate_incoming_subtitle">تتم الترجمة بالكامل على جهازك. لا يُرسَل أي شيء إلى الخادم.</string>
+    <string name="translate_mode_off">إيقاف</string>
+    <string name="translate_mode_ask">السؤال قبل الترجمة</string>
+    <string name="translate_mode_always">الترجمة دائمًا</string>
+    <string name="translate_my_languages_label">اللغات التي تقرؤها</string>
+    <string name="translate_my_languages_subtitle">لن تتم ترجمة البريد بهذه اللغات.</string>
+    <string name="translate_never_languages_label">عدم الترجمة أبدًا</string>
+    <string name="translate_never_languages_subtitle">يُترَك البريد بهذه اللغات دون تغيير دائمًا.</string>
+    <string name="translation_offer_title">هل تريد ترجمة هذا البريد من %1$s؟</string>
+    <string name="translation_offer_action">ترجمة</string>
+    <string name="translation_offer_dismiss">ليس الآن</string>
+    <string name="translation_translating">جارٍ الترجمة على جهازك…</string>
+    <string name="translation_translated">تُرجِم من %1$s على جهازك</string>
+    <string name="translation_show_original">عرض النص الأصلي</string>
+    <string name="translation_failed">فشلت الترجمة</string>
 </resources>

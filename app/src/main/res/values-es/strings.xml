@@ -1362,4 +1362,21 @@
     <string name="expires_custom">Fecha y hora personalizadas</string>
     <string name="expires_custom_at">Expira el %1$s</string>
     <string name="expiry_time_in_past">La hora de caducidad debe estar en el futuro</string>
+    <string name="section_translation">Traducción</string>
+    <string name="translate_incoming_label">Traducir correos entrantes</string>
+    <string name="translate_incoming_subtitle">La traducción se realiza por completo en tu dispositivo. No se envía nada a un servidor.</string>
+    <string name="translate_mode_off">Desactivada</string>
+    <string name="translate_mode_ask">Preguntar antes de traducir</string>
+    <string name="translate_mode_always">Traducir siempre</string>
+    <string name="translate_my_languages_label">Idiomas que lees</string>
+    <string name="translate_my_languages_subtitle">Los correos en estos idiomas no se traducirán.</string>
+    <string name="translate_never_languages_label">No traducir nunca</string>
+    <string name="translate_never_languages_subtitle">Los correos en estos idiomas se dejan siempre sin cambios.</string>
+    <string name="translation_offer_title">¿Traducir este correo del %1$s?</string>
+    <string name="translation_offer_action">Traducir</string>
+    <string name="translation_offer_dismiss">Ahora no</string>
+    <string name="translation_translating">Traduciendo en tu dispositivo…</string>
+    <string name="translation_translated">Traducido del %1$s en tu dispositivo</string>
+    <string name="translation_show_original">Mostrar original</string>
+    <string name="translation_failed">No se pudo traducir</string>
 </resources>

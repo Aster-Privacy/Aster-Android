@@ -1359,4 +1359,21 @@
     <string name="expires_custom">사용자 지정 날짜 및 시간</string>
     <string name="expires_custom_at">%1$s에 만료</string>
     <string name="expiry_time_in_past">만료 시간은 미래여야 합니다</string>
+    <string name="section_translation">번역</string>
+    <string name="translate_incoming_label">수신 이메일 번역</string>
+    <string name="translate_incoming_subtitle">번역은 전적으로 기기에서 실행됩니다. 서버로 전송되는 것은 없습니다.</string>
+    <string name="translate_mode_off">끄기</string>
+    <string name="translate_mode_ask">번역 전에 확인</string>
+    <string name="translate_mode_always">항상 번역</string>
+    <string name="translate_my_languages_label">읽을 수 있는 언어</string>
+    <string name="translate_my_languages_subtitle">이 언어로 된 이메일은 번역되지 않습니다.</string>
+    <string name="translate_never_languages_label">번역 안 함</string>
+    <string name="translate_never_languages_subtitle">이 언어로 된 이메일은 항상 그대로 유지됩니다.</string>
+    <string name="translation_offer_title">이 이메일을 %1$s에서 번역할까요?</string>
+    <string name="translation_offer_action">번역</string>
+    <string name="translation_offer_dismiss">나중에</string>
+    <string name="translation_translating">기기에서 번역 중…</string>
+    <string name="translation_translated">기기에서 %1$s에서 번역됨</string>
+    <string name="translation_show_original">원문 보기</string>
+    <string name="translation_failed">번역 실패</string>
 </resources>

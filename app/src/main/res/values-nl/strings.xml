@@ -1361,4 +1361,21 @@
     <string name="expires_custom">Aangepaste datum en tijd</string>
     <string name="expires_custom_at">Verloopt op %1$s</string>
     <string name="expiry_time_in_past">De vervaltijd moet in de toekomst liggen</string>
+    <string name="section_translation">Vertaling</string>
+    <string name="translate_incoming_label">Inkomende e-mail vertalen</string>
+    <string name="translate_incoming_subtitle">Het vertalen gebeurt volledig op je apparaat. Er wordt niets naar een server gestuurd.</string>
+    <string name="translate_mode_off">Uit</string>
+    <string name="translate_mode_ask">Vragen voordat er wordt vertaald</string>
+    <string name="translate_mode_always">Altijd vertalen</string>
+    <string name="translate_my_languages_label">Talen die je leest</string>
+    <string name="translate_my_languages_subtitle">E-mail in deze talen wordt niet vertaald.</string>
+    <string name="translate_never_languages_label">Nooit vertalen</string>
+    <string name="translate_never_languages_subtitle">E-mail in deze talen blijft altijd ongewijzigd.</string>
+    <string name="translation_offer_title">Deze e-mail vanuit %1$s vertalen?</string>
+    <string name="translation_offer_action">Vertalen</string>
+    <string name="translation_offer_dismiss">Niet nu</string>
+    <string name="translation_translating">Bezig met vertalen op je apparaat…</string>
+    <string name="translation_translated">Vertaald vanuit %1$s op je apparaat</string>
+    <string name="translation_show_original">Origineel tonen</string>
+    <string name="translation_failed">Vertalen mislukt</string>
 </resources>

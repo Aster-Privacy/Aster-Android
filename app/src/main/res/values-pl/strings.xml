@@ -1365,4 +1365,21 @@
     <string name="expires_custom">Niestandardowa data i godzina</string>
     <string name="expires_custom_at">Wygasa %1$s</string>
     <string name="expiry_time_in_past">Czas wygaśnięcia musi być w przyszłości</string>
+    <string name="section_translation">Tłumaczenie</string>
+    <string name="translate_incoming_label">Tłumacz przychodzące wiadomości</string>
+    <string name="translate_incoming_subtitle">Tłumaczenie odbywa się w całości na Twoim urządzeniu. Nic nie jest wysyłane na serwer.</string>
+    <string name="translate_mode_off">Wyłączone</string>
+    <string name="translate_mode_ask">Pytaj przed tłumaczeniem</string>
+    <string name="translate_mode_always">Zawsze tłumacz</string>
+    <string name="translate_my_languages_label">Języki, które znasz</string>
+    <string name="translate_my_languages_subtitle">Wiadomości w tych językach nie będą tłumaczone.</string>
+    <string name="translate_never_languages_label">Nigdy nie tłumacz</string>
+    <string name="translate_never_languages_subtitle">Wiadomości w tych językach zawsze pozostają bez zmian.</string>
+    <string name="translation_offer_title">Przetłumaczyć tę wiadomość z języka %1$s?</string>
+    <string name="translation_offer_action">Przetłumacz</string>
+    <string name="translation_offer_dismiss">Nie teraz</string>
+    <string name="translation_translating">Tłumaczenie na Twoim urządzeniu…</string>
+    <string name="translation_translated">Przetłumaczono z języka %1$s na Twoim urządzeniu</string>
+    <string name="translation_show_original">Pokaż oryginał</string>
+    <string name="translation_failed">Tłumaczenie nie powiodło się</string>
 </resources>

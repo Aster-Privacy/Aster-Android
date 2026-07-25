@@ -75,6 +75,8 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.translation.language_display_name
+import org.astermail.android.translation.translation_language_codes
 
 @Composable
 private fun behavior_option(label: String, selected: Boolean, on_click: () -> Unit) {
@@ -177,6 +179,9 @@ fun BehaviorScreen(
     var folder_lock_mode by remember(prefs_loaded) { mutableStateOf(prefs?.folder_lock_mode ?: "session") }
     var haptic by remember(prefs_loaded) { mutableStateOf(prefs?.haptic_enabled ?: true) }
     var dev_mode by remember(prefs_loaded) { mutableStateOf(prefs?.dev_mode ?: false) }
+    var translate_incoming by remember(prefs_loaded) { mutableStateOf(prefs?.translate_incoming ?: "off") }
+    var translate_languages by remember(prefs_loaded) { mutableStateOf((prefs?.translate_languages ?: emptyList()).toSet()) }
+    var translate_never by remember(prefs_loaded) { mutableStateOf((prefs?.translate_never_languages ?: emptyList()).toSet()) }
     var save_trigger by remember { mutableIntStateOf(0) }
     var loaded_signature by remember { mutableStateOf<Int?>(null) }
 
@@ -205,6 +210,9 @@ fun BehaviorScreen(
                 folder_lock_mode = prefs.folder_lock_mode
                 haptic = prefs.haptic_enabled
                 dev_mode = prefs.dev_mode
+                translate_incoming = prefs.translate_incoming
+                translate_languages = prefs.translate_languages.toSet()
+                translate_never = prefs.translate_never_languages.toSet()
             }
         }
     }
@@ -233,6 +241,9 @@ fun BehaviorScreen(
                 folder_lock_mode = folder_lock_mode,
                 haptic_enabled = haptic,
                 dev_mode = dev_mode,
+                translate_incoming = translate_incoming,
+                translate_languages = translate_languages.toList(),
+                translate_never_languages = translate_never.toList(),
             ),
         )
     }
@@ -331,6 +342,89 @@ fun BehaviorScreen(
                     checked = force_dark_emails,
                     on_change = { force_dark_emails = it; save_trigger++ },
                 )
+            }
+
+            v_gap(AsterSpacing.lg)
+
+            section_label(stringResource(R.string.section_translation))
+            AsterCard(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = stringResource(R.string.translate_incoming_label),
+                    color = colors.text_primary,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),
+                )
+                Text(
+                    text = stringResource(R.string.translate_incoming_subtitle),
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(start = AsterSpacing.lg, end = AsterSpacing.lg, bottom = 4.dp),
+                )
+                listOf(
+                    "off" to stringResource(R.string.translate_mode_off),
+                    "ask" to stringResource(R.string.translate_mode_ask),
+                    "always" to stringResource(R.string.translate_mode_always),
+                ).forEachIndexed { i, (id, label) ->
+                    behavior_option(label, translate_incoming == id) { translate_incoming = id; save_trigger++ }
+                    if (i < 2) AsterDivider(modifier = Modifier)
+                }
+            }
+            if (translate_incoming != "off") {
+                v_gap(AsterSpacing.md)
+                AsterCard(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = stringResource(R.string.translate_my_languages_label),
+                        color = colors.text_primary,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),
+                    )
+                    Text(
+                        text = stringResource(R.string.translate_my_languages_subtitle),
+                        color = colors.text_tertiary,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(start = AsterSpacing.lg, end = AsterSpacing.lg, bottom = 4.dp),
+                    )
+                    translation_language_codes.forEachIndexed { i, code ->
+                        behavior_option(language_display_name(code), translate_languages.contains(code)) {
+                            translate_languages = if (translate_languages.contains(code)) {
+                                translate_languages - code
+                            } else {
+                                translate_languages + code
+                            }
+                            save_trigger++
+                        }
+                        if (i < translation_language_codes.size - 1) AsterDivider(modifier = Modifier)
+                    }
+                }
+                v_gap(AsterSpacing.md)
+                AsterCard(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = stringResource(R.string.translate_never_languages_label),
+                        color = colors.text_primary,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),
+                    )
+                    Text(
+                        text = stringResource(R.string.translate_never_languages_subtitle),
+                        color = colors.text_tertiary,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(start = AsterSpacing.lg, end = AsterSpacing.lg, bottom = 4.dp),
+                    )
+                    translation_language_codes.forEachIndexed { i, code ->
+                        behavior_option(language_display_name(code), translate_never.contains(code)) {
+                            translate_never = if (translate_never.contains(code)) {
+                                translate_never - code
+                            } else {
+                                translate_never + code
+                            }
+                            save_trigger++
+                        }
+                        if (i < translation_language_codes.size - 1) AsterDivider(modifier = Modifier)
+                    }
+                }
             }
 
             v_gap(AsterSpacing.lg)
