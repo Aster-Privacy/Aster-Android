@@ -81,6 +81,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -139,6 +140,7 @@ import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterDragHandle
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.mail.MailViewModel
+import org.astermail.android.mail.body_starts_with
 import org.astermail.android.settings.SettingsViewModel
 
 private val EXTERNAL_RESOURCE_PATTERN = Regex(
@@ -158,7 +160,7 @@ private val LINK_STYLESHEET_PATTERN = Regex(
     RegexOption.IGNORE_CASE,
 )
 
-private data class ExternalContentCounts(
+internal data class ExternalContentCounts(
     val image_count: Int,
     val tracker_count: Int,
     val font_count: Int,
@@ -1516,7 +1518,7 @@ private fun expanded_message(
                 on_link_click = on_link_click,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = AsterSpacing.sm)
+                    .padding(top = AsterSpacing.xs, bottom = AsterSpacing.sm)
                     .testTag("message_body"),
             )
         } else if (msg.body.isBlank()) {
@@ -1593,7 +1595,7 @@ private fun expanded_message(
                 on_link_click = on_link_click,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = AsterSpacing.sm)
+                    .padding(top = AsterSpacing.xs, bottom = AsterSpacing.sm)
                     .testTag("message_body"),
             )
         }
@@ -1722,7 +1724,7 @@ private fun reply_action_button(
 }
 
 @Composable
-private fun compact_banner_action(
+internal fun compact_banner_action(
     label: String,
     primary: Boolean,
     onClick: () -> Unit,
@@ -1742,53 +1744,47 @@ private fun compact_banner_action(
 }
 
 @Composable
-private fun compact_banner(
+internal fun compact_banner(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     actions: @Composable () -> Unit,
 ) {
     val colors = AsterMaterial.colors
     var expanded by remember { mutableStateOf(false) }
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(colors.bg_secondary)
-                .padding(horizontal = AsterSpacing.md, vertical = 7.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = colors.text_secondary,
-                modifier = Modifier.size(16.dp),
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(
-                text = label,
-                color = colors.text_secondary,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-                maxLines = if (expanded) 6 else 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable { expanded = !expanded },
-            )
-            Spacer(Modifier.width(6.dp))
-            actions()
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(colors.border_secondary.copy(alpha = 0.5f)),
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.md, vertical = 3.dp)
+            .clip(SquircleShape(10.dp))
+            .background(colors.bg_secondary)
+            .padding(start = AsterSpacing.md, end = AsterSpacing.sm, top = 6.dp, bottom = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = colors.text_secondary,
+            modifier = Modifier.size(15.dp),
         )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = label,
+            color = colors.text_secondary,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            maxLines = if (expanded) 6 else 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            modifier = Modifier
+                .weight(1f)
+                .clickable { expanded = !expanded },
+        )
+        Spacer(Modifier.width(6.dp))
+        actions()
     }
 }
 
 @Composable
-private fun unsubscribe_banner(
+internal fun unsubscribe_banner(
     on_unsubscribe: () -> Unit,
 ) {
     compact_banner(
@@ -1804,7 +1800,7 @@ private fun unsubscribe_banner(
 }
 
 @Composable
-private fun external_content_banner(
+internal fun external_content_banner(
     counts: ExternalContentCounts,
     on_allow_once: () -> Unit,
     on_always_allow: () -> Unit,
@@ -1844,7 +1840,7 @@ private fun external_content_banner(
 }
 
 @Composable
-private fun traffic_saver_banner(
+internal fun traffic_saver_banner(
     counts: ExternalContentCounts,
     on_load_once: () -> Unit,
     on_disable_traffic_saving: () -> Unit,
@@ -2697,6 +2693,12 @@ private fun is_safe_unsubscribe_url(url: String): Boolean {
     return scheme in safe_unsubscribe_schemes
 }
 
+private const val FALLBACK_MEASURE_JS =
+    "(function(){var m=document.getElementById('m');if(!m)return 0;" +
+        "if(document.documentElement.getAttribute('data-nl'))return Math.round(m.getBoundingClientRect().height);" +
+        "var pb=parseFloat(window.getComputedStyle(document.body).paddingBottom)||0;" +
+        "return Math.ceil(m.getBoundingClientRect().bottom+pb)+4;})()"
+
 private class height_channel(private val on_height: (Int, Boolean) -> Unit) {
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
     private var pending_height = 0
@@ -2815,7 +2817,7 @@ private fun email_html_view(
     })()"""
 
     fun build_html(body: String): String {
-        val is_html_body = body.trimStart().startsWith("<")
+        val is_html_body = body_starts_with(body, "<")
         val has_table = is_html_body && body.contains(Regex("<table", RegexOption.IGNORE_CASE))
         val has_newsletter_layout = has_table && (
             body.contains(Regex("style\\s*=\\s*[\"'][^\"']*width\\s*:\\s*[456789]\\d{2}px", RegexOption.IGNORE_CASE)) ||
@@ -3144,7 +3146,7 @@ $dark_css
 </script></body></html>"""
     }
 
-    val is_html_body_top = html.trimStart().startsWith("<")
+    val is_html_body_top = body_starts_with(html, "<")
     val bg_color = if (!is_html_body_top) android.graphics.Color.TRANSPARENT
         else runCatching { android.graphics.Color.parseColor(bg_hex) }.getOrDefault(android.graphics.Color.BLACK)
 
@@ -3156,22 +3158,23 @@ $dark_css
     val nl_scale_ref = remember { floatArrayOf(1f) }
     val is_nl_ref = remember { booleanArrayOf(false) }
     var long_pressed_link by remember { mutableStateOf<String?>(null) }
+    val web_ref = remember { arrayOfNulls<android.webkit.WebView>(1) }
 
-    val height_sink = remember {
-        height_channel { h, exact ->
-            if (h > 0) {
-                val visual_h = (h * scale_ref[0]).toInt()
-                val new_dp = visual_h.dp
-                if (!has_measured) {
-                    content_height_dp = new_dp
-                    has_measured = true
-                    on_ready()
-                } else if (exact || new_dp > content_height_dp) {
-                    content_height_dp = new_dp
-                }
+    val on_height_report by rememberUpdatedState<(Int, Boolean) -> Unit> { h, exact ->
+        if (h > 0) {
+            val visual_h = (h * scale_ref[0]).toInt()
+            val new_dp = visual_h.dp
+            if (!has_measured) {
+                content_height_dp = new_dp
+                has_measured = true
+                on_ready()
+            } else if (exact || new_dp > content_height_dp) {
+                content_height_dp = new_dp
             }
         }
     }
+
+    val height_sink = remember { height_channel { h, exact -> on_height_report(h, exact) } }
 
     val proxy_base = "https://app.astermail.org/api/images/v1/proxy?url="
 
@@ -3205,6 +3208,17 @@ $dark_css
 
     LaunchedEffect(html, allow_external) {
         delay(600)
+        if (!has_measured) {
+            web_ref[0]?.evaluateJavascript(FALLBACK_MEASURE_JS) { result ->
+                if (!has_measured) {
+                    val parsed = result?.trim()?.removeSurrounding("\"")?.toIntOrNull() ?: 0
+                    if (parsed > 0) content_height_dp = (parsed * scale_ref[0]).toInt().dp
+                    has_measured = true
+                    on_ready()
+                }
+            }
+        }
+        delay(400)
         if (!has_measured) {
             has_measured = true
             on_ready()
@@ -3453,23 +3467,8 @@ $dark_css
                     }
                     scale_ref[0] = nl_scale_ref[0]
                     web_view.loadDataWithBaseURL("https://mail-content.invalid/", built, "text/html", "UTF-8", null)
+                    web_ref[0] = web_view
                     if (!has_measured) web_view.evaluateJavascript(measure_js, null)
-                    web_view.postDelayed({
-                        if (!has_measured) {
-                            web_view.evaluateJavascript(
-                                "(function(){var m=document.getElementById('m');if(!m)return 0;if(document.documentElement.getAttribute('data-nl'))return Math.round(m.getBoundingClientRect().height);var pb=parseFloat(window.getComputedStyle(document.body).paddingBottom)||0;return Math.ceil(m.getBoundingClientRect().bottom+pb)+4;})()",
-                            ) { result ->
-                                val parsed = result?.trim()?.removeSurrounding("\"")?.toIntOrNull() ?: 0
-                                if (parsed > 0) {
-                                    content_height_dp = (parsed * scale_ref[0]).toInt().dp
-                                } else if (content_height_dp == 0.dp) {
-                                    content_height_dp = 320.dp
-                                }
-                                has_measured = true
-                                on_ready()
-                            }
-                        }
-                    }, 800)
                 }
             },
             modifier = run {
@@ -3525,16 +3524,15 @@ private fun link_options_sheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(top = AsterSpacing.xs),
+                .navigationBarsPadding(),
         ) {
             Text(
                 text = url,
                 color = colors.text_secondary,
                 fontSize = 13.sp,
-                maxLines = 3,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(horizontal = AsterSpacing.xl, vertical = AsterSpacing.sm),
+                modifier = Modifier.padding(horizontal = AsterSpacing.xl, vertical = AsterSpacing.xs),
             )
             AsterDivider()
             sheet_row(stringResource(R.string.copy_link), colors.text_primary) {
@@ -3551,7 +3549,7 @@ private fun link_options_sheet(
                 context.startActivity(android.content.Intent.createChooser(send, null))
                 on_close()
             }
-            Spacer(Modifier.height(AsterSpacing.md))
+            Spacer(Modifier.height(AsterSpacing.sm))
         }
     }
 }
