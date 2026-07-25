@@ -1122,6 +1122,7 @@ class MailViewModel @Inject constructor(
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id !in item_ids },
         )
+        val search_removed = remove_search_items(item_ids)
         pending_removed_ids.addAll(item_ids)
         val affected_label_caches = removed_items.flatMap { it.labels }.map { "label:$it" }
         val affected_tag_caches = removed_items.flatMap { it.tag_tokens }.map { "tag:$it" }
@@ -1136,18 +1137,20 @@ class MailViewModel @Inject constructor(
                             thread_count = thread_count,
                             message_fn = { n -> context.getString(R.string.archived_conversations, n) },
                             undo_label = context.getString(R.string.undo),
-                        ) { prev_undo -> { prev_undo?.invoke(); undo_local_restore(removed_items); unarchive_backend_only(item_ids) } }
+                        ) { prev_undo -> { prev_undo?.invoke(); undo_local_restore(removed_items); undo_search_restore(search_removed); unarchive_backend_only(item_ids) } }
                         load_stats()
                     },
                     onFailure = { t ->
                         if (BuildConfig.DEBUG) android.util.Log.w("MailVM", "archive failed", t)
                         undo_local_restore(removed_items)
+                        undo_search_restore(search_removed)
                         emit_toast(context.getString(R.string.failed_to_archive))
                     },
                 )
             } catch (t: Throwable) {
                 if (BuildConfig.DEBUG) android.util.Log.w("MailVM", "archive threw", t)
                 undo_local_restore(removed_items)
+                undo_search_restore(search_removed)
                 emit_toast(context.getString(R.string.failed_to_archive))
             } finally {
                 pending_removed_ids.removeAll(item_ids.toSet())
@@ -1172,6 +1175,7 @@ class MailViewModel @Inject constructor(
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id !in item_ids },
         )
+        val search_removed = remove_search_items(item_ids)
         pending_removed_ids.addAll(item_ids)
         invalidate_caches(listOf("trash", "inbox"))
         viewModelScope.launch {
@@ -1184,16 +1188,18 @@ class MailViewModel @Inject constructor(
                             thread_count = thread_count,
                             message_fn = { n -> context.getString(R.string.moved_to_trash, n) },
                             undo_label = context.getString(R.string.undo),
-                        ) { prev_undo -> { prev_undo?.invoke(); undo_local_restore(removed_items); restore_trash_backend_only(item_ids) } }
+                        ) { prev_undo -> { prev_undo?.invoke(); undo_local_restore(removed_items); undo_search_restore(search_removed); restore_trash_backend_only(item_ids) } }
                         load_stats()
                     },
                     onFailure = {
                         undo_local_restore(removed_items)
+                        undo_search_restore(search_removed)
                         emit_toast(context.getString(R.string.failed_to_trash))
                     },
                 )
             } catch (_: Throwable) {
                 undo_local_restore(removed_items)
+                undo_search_restore(search_removed)
                 emit_toast(context.getString(R.string.failed_to_trash))
             } finally {
                 pending_removed_ids.removeAll(item_ids.toSet())
@@ -1329,6 +1335,26 @@ class MailViewModel @Inject constructor(
         val merged = (current + to_add).sortedByDescending { it.timestamp }
         _inbox_state.value = _inbox_state.value.copy(items = merged)
         invalidate_caches(listOf("inbox", "archive", "trash", "spam"))
+    }
+
+    private fun remove_search_items(item_ids: List<String>): List<InboxItem> {
+        val current = _search_state.value.all_items
+        val removed = current.filter { it.id in item_ids }
+        if (removed.isNotEmpty()) {
+            _search_state.value = _search_state.value.copy(
+                all_items = current.filter { it.id !in item_ids },
+            )
+        }
+        return removed
+    }
+
+    private fun undo_search_restore(removed: List<InboxItem>) {
+        if (removed.isEmpty()) return
+        val current = _search_state.value.all_items
+        val current_ids = current.map { it.id }.toHashSet()
+        val to_add = removed.filter { it.id !in current_ids }
+        if (to_add.isEmpty()) return
+        _search_state.value = _search_state.value.copy(all_items = current + to_add)
     }
 
     fun unarchive_backend_only(item_ids: List<String>) {
@@ -1470,6 +1496,11 @@ class MailViewModel @Inject constructor(
                 if (it.id in item_ids) it.copy(is_read = true) else it
             })
         }
+        _search_state.value = _search_state.value.copy(
+            all_items = _search_state.value.all_items.map {
+                if (it.id in item_ids) it.copy(is_read = true) else it
+            },
+        )
         val thread = _thread_state.value
         if (thread.item != null && thread.item.id in item_ids) {
             _thread_state.value = thread.copy(item = thread.item.copy(is_read = true))

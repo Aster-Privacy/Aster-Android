@@ -24,6 +24,7 @@ package org.astermail.android.ui.search
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -39,6 +40,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -52,11 +55,14 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.listSaver
@@ -70,6 +76,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -82,6 +89,7 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
+import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.mail.InboxItem
 import org.astermail.android.mail.MailViewModel
 import org.astermail.android.ui.mail.EmailRow
@@ -262,6 +270,20 @@ fun SearchScreen(
     }
     var active_filter by rememberSaveable { mutableStateOf<String?>(null) }
     val focus_requester = remember { FocusRequester() }
+    var select_mode by remember { mutableStateOf(false) }
+    val selected_ids = remember { mutableStateListOf<String>() }
+
+    fun exit_select_mode() {
+        select_mode = false
+        selected_ids.clear()
+    }
+
+    fun toggle_selection(id: String) {
+        if (selected_ids.contains(id)) selected_ids.remove(id) else selected_ids.add(id)
+        if (selected_ids.isEmpty()) select_mode = false
+    }
+
+    BackHandler(enabled = select_mode) { exit_select_mode() }
 
     LaunchedEffect(Unit) {
         if (free_text.isEmpty() && operator_chips.isEmpty() && active_filter == null) {
@@ -290,6 +312,35 @@ fun SearchScreen(
         }
     }
 
+    LaunchedEffect(filtered) {
+        if (select_mode) {
+            if (filtered.isEmpty()) {
+                exit_select_mode()
+            } else {
+                val visible = filtered.map { it.id }.toHashSet()
+                selected_ids.removeAll { it !in visible }
+            }
+        }
+    }
+
+    fun mark_read_selected() {
+        val ids = filtered.filter { it.id in selected_ids && !it.is_read }.map { it.id }
+        if (ids.isNotEmpty()) mail_vm.mark_read_bulk(ids)
+        exit_select_mode()
+    }
+
+    fun archive_selected() {
+        val ids = selected_ids.toList()
+        mail_vm.archive(ids, ids.size)
+        exit_select_mode()
+    }
+
+    fun delete_selected() {
+        val ids = selected_ids.toList()
+        mail_vm.trash(ids, ids.size)
+        exit_select_mode()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -297,84 +348,25 @@ fun SearchScreen(
             .systemBarsPadding()
             .imePadding(),
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .padding(start = AsterSpacing.xs, end = AsterSpacing.md),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .clickable(onClick = on_back)
-                    .testTag("back"),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = TablerIcons.ArrowBack,
-                    contentDescription = stringResource(R.string.back),
-                    tint = colors.text_primary,
-                    modifier = Modifier.size(22.dp),
-                )
-            }
-            Spacer(Modifier.width(AsterSpacing.xs))
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(40.dp)
-                    .background(colors.bg_secondary, SquircleShape(18.dp))
-                    .padding(horizontal = AsterSpacing.md),
-                contentAlignment = Alignment.CenterStart,
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = TablerIcons.Search,
-                        contentDescription = null,
-                        tint = colors.text_muted,
-                        modifier = Modifier.size(18.dp),
-                    )
-                    Spacer(Modifier.width(AsterSpacing.sm))
-                    Box(modifier = Modifier.weight(1f)) {
-                        if (free_text.isEmpty() && operator_chips.isEmpty()) {
-                            Text(
-                                text = stringResource(R.string.search_mail),
-                                color = colors.text_muted,
-                                fontSize = 15.sp,
-                            )
-                        }
-                        BasicTextField(
-                            value = free_text,
-                            onValueChange = { free_text = it },
-                            singleLine = true,
-                            textStyle = TextStyle(
-                                color = colors.text_primary,
-                                fontSize = 15.sp,
-                            ),
-                            cursorBrush = SolidColor(colors.accent_blue),
-                            modifier = Modifier.fillMaxWidth().focusRequester(focus_requester),
-                        )
-                    }
-                    if (free_text.isNotEmpty() || operator_chips.isNotEmpty()) {
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .clickable { free_text = ""; operator_chips = emptyList() }
-                                .testTag("search_clear"),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                imageVector = TablerIcons.X,
-                                contentDescription = stringResource(R.string.clear),
-                                tint = colors.text_muted,
-                                modifier = Modifier.size(20.dp),
-                            )
-                        }
-                    }
-                }
-            }
+        if (select_mode) {
+            search_select_top_bar(
+                selected_count = selected_ids.size,
+                on_close = ::exit_select_mode,
+                on_select_all = {
+                    selected_ids.clear()
+                    selected_ids.addAll(filtered.map { it.id })
+                },
+            )
+        } else {
+            search_input_bar(
+                free_text = free_text,
+                on_free_text_change = { free_text = it },
+                show_placeholder = free_text.isEmpty() && operator_chips.isEmpty(),
+                show_clear = free_text.isNotEmpty() || operator_chips.isNotEmpty(),
+                on_clear = { free_text = ""; operator_chips = emptyList() },
+                on_back = on_back,
+                focus_requester = focus_requester,
+            )
         }
 
         if (operator_chips.isNotEmpty()) {
@@ -505,18 +497,27 @@ fun SearchScreen(
                 fontSize = 12.sp,
                 modifier = Modifier.padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
             )
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(filtered, key = { it.id }) { item ->
-                    val email = remember(item) { inbox_item_to_email(item) }
-                    EmailRow(
-                        email = email,
-                        on_click = { on_open_email(item.id) },
-                        on_long_click = {},
-                        on_toggle_star = {
-                            mail_vm.toggle_star(item.id)
-                        },
-                    )
-                }
+            search_results_list(
+                items = filtered,
+                select_mode = select_mode,
+                selected_ids = selected_ids,
+                on_open_email = on_open_email,
+                on_toggle_selection = ::toggle_selection,
+                on_enter_select_mode = { id ->
+                    select_mode = true
+                    selected_ids.clear()
+                    selected_ids.add(id)
+                },
+                on_toggle_star = { mail_vm.toggle_star(it) },
+                modifier = Modifier.weight(1f),
+            )
+            if (select_mode) {
+                search_select_bottom_bar(
+                    selected_count = selected_ids.size,
+                    on_mark_read = ::mark_read_selected,
+                    on_archive = ::archive_selected,
+                    on_delete = ::delete_selected,
+                )
             }
         }
     }
@@ -630,6 +631,279 @@ private fun search_chip(text: String, selected: Boolean, on_click: () -> Unit) {
             color = animated_text,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
+        )
+    }
+}
+
+@Composable
+private fun search_input_bar(
+    free_text: String,
+    on_free_text_change: (String) -> Unit,
+    show_placeholder: Boolean,
+    show_clear: Boolean,
+    on_clear: () -> Unit,
+    on_back: () -> Unit,
+    focus_requester: FocusRequester,
+) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .padding(start = AsterSpacing.xs, end = AsterSpacing.md),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .clickable(onClick = on_back)
+                .testTag("back"),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = TablerIcons.ArrowBack,
+                contentDescription = stringResource(R.string.back),
+                tint = colors.text_primary,
+                modifier = Modifier.size(22.dp),
+            )
+        }
+        Spacer(Modifier.width(AsterSpacing.xs))
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(40.dp)
+                .background(colors.bg_secondary, SquircleShape(18.dp))
+                .padding(horizontal = AsterSpacing.md),
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = TablerIcons.Search,
+                    contentDescription = null,
+                    tint = colors.text_muted,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(AsterSpacing.sm))
+                Box(modifier = Modifier.weight(1f)) {
+                    if (show_placeholder) {
+                        Text(
+                            text = stringResource(R.string.search_mail),
+                            color = colors.text_muted,
+                            fontSize = 15.sp,
+                        )
+                    }
+                    BasicTextField(
+                        value = free_text,
+                        onValueChange = on_free_text_change,
+                        singleLine = true,
+                        textStyle = TextStyle(
+                            color = colors.text_primary,
+                            fontSize = 15.sp,
+                        ),
+                        cursorBrush = SolidColor(colors.accent_blue),
+                        modifier = Modifier.fillMaxWidth().focusRequester(focus_requester),
+                    )
+                }
+                if (show_clear) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .clickable(onClick = on_clear)
+                            .testTag("search_clear"),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = TablerIcons.X,
+                            contentDescription = stringResource(R.string.clear),
+                            tint = colors.text_muted,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+internal fun search_results_list(
+    items: List<InboxItem>,
+    select_mode: Boolean,
+    selected_ids: List<String>,
+    on_open_email: (String) -> Unit,
+    on_toggle_selection: (String) -> Unit,
+    on_enter_select_mode: (String) -> Unit,
+    on_toggle_star: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = AsterMaterial.colors
+    LazyColumn(
+        modifier = modifier.fillMaxSize().testTag("search_results"),
+        contentPadding = PaddingValues(bottom = AsterSpacing.lg),
+    ) {
+        items(items, key = { it.id }) { item ->
+            val email = remember(item) { inbox_item_to_email(item) }
+            val is_selected = select_mode && selected_ids.contains(item.id)
+            if (select_mode) {
+                val toggle_label = stringResource(
+                    if (is_selected) R.string.inbox_a11y_deselect_thread else R.string.inbox_a11y_select_thread,
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(if (is_selected) colors.bg_selected else colors.bg_primary)
+                        .clickable(onClickLabel = toggle_label) { on_toggle_selection(item.id) }
+                        .testTag("search_row_${item.id}"),
+                ) {
+                    EmailRow(
+                        email = email,
+                        on_click = { on_toggle_selection(item.id) },
+                        on_long_click = { on_toggle_selection(item.id) },
+                        on_toggle_star = { on_toggle_star(item.id) },
+                    )
+                }
+            } else {
+                EmailRow(
+                    email = email,
+                    on_click = { on_open_email(item.id) },
+                    on_long_click = { on_enter_select_mode(item.id) },
+                    on_toggle_star = { on_toggle_star(item.id) },
+                    modifier = Modifier.testTag("search_row_${item.id}"),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+internal fun search_select_top_bar(
+    selected_count: Int,
+    on_close: () -> Unit,
+    on_select_all: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .padding(horizontal = AsterSpacing.xs)
+            .testTag("search_select_bar"),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        AsterIconButton(
+            icon = TablerIcons.X,
+            content_description = stringResource(R.string.exit_selection),
+            onClick = on_close,
+            modifier = Modifier.testTag("search_exit_select"),
+        )
+        Spacer(Modifier.width(AsterSpacing.xs))
+        Text(
+            text = if (selected_count == 0) {
+                stringResource(R.string.select)
+            } else {
+                stringResource(R.string.inbox_selected_count, selected_count)
+            },
+            style = MaterialTheme.typography.titleMedium,
+            color = colors.text_primary,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f).testTag("search_selected_count"),
+        )
+        AsterIconButton(
+            icon = TablerIcons.Selector,
+            content_description = stringResource(R.string.select_all),
+            onClick = on_select_all,
+            modifier = Modifier.testTag("search_select_all"),
+        )
+    }
+}
+
+@Composable
+internal fun search_select_bottom_bar(
+    selected_count: Int,
+    on_mark_read: () -> Unit,
+    on_archive: () -> Unit,
+    on_delete: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = AsterMaterial.colors
+    val enabled = selected_count > 0
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = colors.bg_card,
+        shadowElevation = 16.dp,
+        tonalElevation = 0.dp,
+    ) {
+        Column {
+            AsterDivider(modifier = Modifier.fillMaxWidth())
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = AsterSpacing.sm, vertical = AsterSpacing.sm),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceEvenly,
+            ) {
+                search_select_action(
+                    icon = TablerIcons.MailOpened,
+                    label = stringResource(R.string.mark_read_action),
+                    enabled = enabled,
+                    on_click = on_mark_read,
+                    test_tag = "search_mark_read",
+                )
+                search_select_action(
+                    icon = TablerIcons.Archive,
+                    label = stringResource(R.string.archive_action),
+                    enabled = enabled,
+                    on_click = on_archive,
+                    test_tag = "search_archive",
+                )
+                search_select_action(
+                    icon = TablerIcons.Trash,
+                    label = stringResource(R.string.delete_action),
+                    enabled = enabled,
+                    on_click = on_delete,
+                    tint = colors.danger,
+                    test_tag = "search_delete",
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun search_select_action(
+    icon: ImageVector,
+    label: String,
+    enabled: Boolean,
+    on_click: () -> Unit,
+    tint: Color = AsterMaterial.colors.text_primary,
+    test_tag: String? = null,
+) {
+    val colors = AsterMaterial.colors
+    val resolved_tint = if (enabled) tint else colors.text_muted
+    Column(
+        modifier = Modifier
+            .clip(SquircleShape(18.dp))
+            .clickable(enabled = enabled, onClick = on_click)
+            .padding(horizontal = 14.dp, vertical = 8.dp)
+            .then(if (test_tag != null) Modifier.testTag(test_tag) else Modifier),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = resolved_tint,
+            modifier = Modifier.size(22.dp),
+        )
+        Text(
+            text = label,
+            color = resolved_tint,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
         )
     }
 }
