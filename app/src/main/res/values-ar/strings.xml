@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="app_name">Aster Mail</string>
 
     <string name="save">حفظ</string>
@@ -1386,4 +1386,17 @@
     <string name="translation_translated">تُرجِم من %1$s على جهازك</string>
     <string name="translation_show_original">عرض النص الأصلي</string>
     <string name="translation_failed">فشلت الترجمة</string>
+    <string name="customize_toolbar">ØªØ®ØµÙŠØµ Ø´Ø±ÙŠØ· Ø§Ù„Ø£Ø¯ÙˆØ§Øª</string>
+    <string name="customize_toolbar_subtitle">Ø§Ø®ØªØ± Ø§Ù„Ø¥Ø¬Ø±Ø§Ø¡Ø§Øª Ø§Ù„ØªÙŠ ØªØ¸Ù‡Ø± ÙÙŠ Ø§Ù„Ø´Ø±ÙŠØ· Ø§Ù„Ø³ÙÙ„ÙŠ Ø¹Ù†Ø¯ Ù‚Ø±Ø§Ø¡Ø© Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø£Ùˆ ØªØ­Ø¯ÙŠØ¯Ù‡.</string>
+    <string name="reading_toolbar">Ù‚Ø±Ø§Ø¡Ø© Ø§Ù„Ø¨Ø±ÙŠØ¯</string>
+    <string name="selection_toolbar">ØªØ­Ø¯ÙŠØ¯ Ø§Ù„Ø¨Ø±ÙŠØ¯</string>
+    <string name="toolbar_slots">Ø®Ø§Ù†Ø§Øª Ø´Ø±ÙŠØ· Ø§Ù„Ø£Ø¯ÙˆØ§Øª</string>
+    <string name="choose_action">Ø§Ø®ØªØ± Ø¥Ø¬Ø±Ø§Ø¡Ù‹</string>
+    <string name="change">ØªØºÙŠÙŠØ±</string>
+    <string name="unset">ØºÙŠØ± Ù…Ø­Ø¯Ø¯</string>
+    <string name="more_actions">Ø§Ù„Ù…Ø²ÙŠØ¯</string>
+    <string name="marked_unread_count">ØªÙ… ÙˆØ¶Ø¹ Ø¹Ù„Ø§Ù…Ø© ØºÙŠØ± Ù…Ù‚Ø±ÙˆØ¡ Ø¹Ù„Ù‰ %d Ø±Ø³Ø§Ù„Ø©</string>
+    <string name="starred_count">ØªÙ… ØªÙ…ÙŠÙŠØ² %d Ù…Ø­Ø§Ø¯Ø«Ø© Ø¨Ù†Ø¬Ù…Ø©</string>
+    <string name="unstarred_count">ØªÙ…Øª Ø¥Ø²Ø§Ù„Ø© Ø§Ù„Ù†Ø¬Ù…Ø© Ù…Ù† %d Ù…Ø­Ø§Ø¯Ø«Ø©</string>
+    <string name="failed_to_update_selection">ØªØ¹Ø°Ø± ØªØ­Ø¯ÙŠØ« Ø¨Ø¹Ø¶ Ø§Ù„Ù…Ø­Ø§Ø¯Ø«Ø§Øª</string>
 </resources>

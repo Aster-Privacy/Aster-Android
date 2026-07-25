@@ -48,6 +48,7 @@ import org.astermail.android.api.send.ExternalAttachmentPayload
 import org.astermail.android.ui.mail.MessageAttachment
 
 private const val INBOX_FETCH_BACKSTOP_MS = 18_000L
+private const val BULK_ACTION_CONCURRENCY = 6
 private const val CARRIED_ITEM_STALE_MS = 20 * 60 * 1000L
 private const val STATS_TTL_MS = 30_000L
 
@@ -1090,6 +1091,177 @@ class MailViewModel @Inject constructor(
                 },
             )
         }
+    }
+
+    fun apply_label_bulk(item_ids: List<String>, label_token: String, display_name: String) {
+        val ids = item_ids.filter { it != DEMO_PHISH_ITEM_ID }
+        if (ids.isEmpty()) return
+        val id_set = ids.toSet()
+        val prev_items = _inbox_state.value.items.filter { it.id in id_set }.associateBy { it.id }
+        _inbox_state.value = _inbox_state.value.copy(
+            items = _inbox_state.value.items.map {
+                if (it.id in id_set) it.copy(labels = (it.labels + label_token).distinct()) else it
+            },
+        )
+        viewModelScope.launch {
+            val failed_ids = run_bulk_action(ids) { id ->
+                repository.add_label_to_item(id, label_token).isSuccess
+            }
+            invalidate_caches(listOf("label:$label_token"))
+            if (failed_ids.isEmpty()) {
+                emit_toast(context.getString(R.string.added_to_label, display_name))
+            } else {
+                _inbox_state.value = _inbox_state.value.copy(
+                    items = _inbox_state.value.items.map {
+                        val prev = prev_items[it.id]
+                        if (it.id in failed_ids && prev != null) it.copy(labels = prev.labels) else it
+                    },
+                )
+                emit_toast(context.getString(R.string.couldnt_apply_label))
+            }
+        }
+    }
+
+    fun apply_tag_bulk(item_ids: List<String>, tag_token: String, display_name: String) {
+        val ids = item_ids.filter { it != DEMO_PHISH_ITEM_ID }
+        if (ids.isEmpty()) return
+        val id_set = ids.toSet()
+        val prev_items = _inbox_state.value.items.filter { it.id in id_set }.associateBy { it.id }
+        _inbox_state.value = _inbox_state.value.copy(
+            items = _inbox_state.value.items.map {
+                if (it.id in id_set) {
+                    val new_tokens = (it.tag_tokens + tag_token).distinct()
+                    it.copy(
+                        tag_tokens = new_tokens,
+                        raw_item = it.raw_item.copy(tag_tokens = new_tokens),
+                    )
+                } else it
+            },
+        )
+        viewModelScope.launch {
+            val failed_ids = run_bulk_action(ids) { id ->
+                repository.add_tag_to_item(id, tag_token).isSuccess
+            }
+            invalidate_caches(listOf("tag:$tag_token"))
+            if (failed_ids.isEmpty()) {
+                emit_toast(context.getString(R.string.added_to_label, display_name))
+            } else {
+                _inbox_state.value = _inbox_state.value.copy(
+                    items = _inbox_state.value.items.map {
+                        val prev = prev_items[it.id]
+                        if (it.id in failed_ids && prev != null) prev else it
+                    },
+                )
+                emit_toast(context.getString(R.string.couldnt_apply_label))
+            }
+        }
+    }
+
+    fun star_bulk(item_ids: List<String>) {
+        val ids = item_ids.filter { it != DEMO_PHISH_ITEM_ID }
+        if (ids.isEmpty()) return
+        val id_set = ids.toSet()
+        val targets = _inbox_state.value.items.filter { it.id in id_set }
+        if (targets.isEmpty()) return
+        val new_starred = targets.any { !it.is_starred }
+        ids.forEach { star_overrides[it] = new_starred }
+        _inbox_state.value = _inbox_state.value.copy(
+            items = _inbox_state.value.items.map {
+                if (it.id in id_set) it.copy(is_starred = new_starred) else it
+            },
+        )
+        val current_folder = _inbox_state.value.current_folder
+        val updated_cache = folder_cache.mapValues { (folder, cached) ->
+            when {
+                folder == current_folder -> cached
+                folder == "starred" && !new_starred ->
+                    cached.copy(items = cached.items.filter { it.id !in id_set })
+                else -> cached.copy(items = cached.items.map {
+                    if (it.id in id_set) it.copy(is_starred = new_starred) else it
+                })
+            }
+        }
+        folder_cache.putAll(updated_cache)
+        if (new_starred) invalidate_caches(listOf("starred"))
+        val raw_by_id = targets.associate { it.id to it.raw_item }
+        viewModelScope.launch {
+            val failed_ids = run_bulk_action(ids) { id ->
+                repository.toggle_star(id, new_starred, raw_by_id[id]).isSuccess
+            }
+            if (failed_ids.isNotEmpty()) {
+                emit_toast(context.getString(R.string.failed_to_update_selection))
+            } else {
+                emit_toast(
+                    if (new_starred) context.getString(R.string.starred_count, ids.size)
+                    else context.getString(R.string.unstarred_count, ids.size),
+                )
+            }
+        }
+    }
+
+    fun snooze_bulk(item_ids: List<String>, snoozed_until_iso: String, label: String) {
+        val ids = item_ids.filter { it != DEMO_PHISH_ITEM_ID }
+        if (ids.isEmpty()) return
+        viewModelScope.launch {
+            val failed_ids = run_bulk_action(ids) { id ->
+                repository.snooze(id, snoozed_until_iso).isSuccess
+            }
+            val ok_ids = ids.filter { it !in failed_ids }.toSet()
+            if (ok_ids.isNotEmpty()) {
+                _inbox_state.value = _inbox_state.value.copy(
+                    items = _inbox_state.value.items.filter { it.id !in ok_ids },
+                )
+                invalidate_caches(listOf("inbox", "snoozed"))
+            }
+            if (failed_ids.isNotEmpty()) {
+                emit_toast(context.getString(R.string.couldnt_snooze))
+            } else {
+                emit_toast(context.getString(R.string.snoozed_until, label))
+            }
+        }
+    }
+
+    fun mark_unread_bulk(item_ids: List<String>) {
+        if (item_ids.isEmpty()) return
+        item_ids.forEach { read_overrides[it] = false }
+        _inbox_state.value = _inbox_state.value.copy(
+            items = _inbox_state.value.items.map {
+                if (it.id in item_ids) it.copy(is_read = false) else it
+            },
+        )
+        folder_cache.replaceAll { _, cached ->
+            cached.copy(items = cached.items.map {
+                if (it.id in item_ids) it.copy(is_read = false) else it
+            })
+        }
+        _search_state.value = _search_state.value.copy(
+            all_items = _search_state.value.all_items.map {
+                if (it.id in item_ids) it.copy(is_read = false) else it
+            },
+        )
+        val thread = _thread_state.value
+        if (thread.item != null && thread.item.id in item_ids) {
+            _thread_state.value = thread.copy(item = thread.item.copy(is_read = false))
+        }
+        invalidate_caches(listOf("starred"))
+        viewModelScope.launch {
+            repository.mark_unread_bulk(item_ids).fold(
+                onSuccess = { emit_toast(context.getString(R.string.marked_unread_count, item_ids.size)) },
+                onFailure = { emit_toast(context.getString(R.string.failed_mark_read)) },
+            )
+        }
+    }
+
+    private suspend fun run_bulk_action(
+        ids: List<String>,
+        action: suspend (String) -> Boolean,
+    ): Set<String> = kotlinx.coroutines.coroutineScope {
+        val failed = mutableSetOf<String>()
+        ids.chunked(BULK_ACTION_CONCURRENCY).forEach { chunk ->
+            val results = chunk.map { id -> async { id to runCatching { action(id) }.getOrDefault(false) } }.awaitAll()
+            results.forEach { (id, ok) -> if (!ok) failed.add(id) }
+        }
+        failed
     }
 
     private fun count_label(n: Int, singular: String, plural: String): String {

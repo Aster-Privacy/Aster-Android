@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="app_name">Aster Mail</string>
 
     <string name="save">保存</string>
@@ -1376,4 +1376,17 @@
     <string name="translation_translated">已在您的设备上从%1$s翻译</string>
     <string name="translation_show_original">显示原文</string>
     <string name="translation_failed">翻译失败</string>
+    <string name="customize_toolbar">è‡ªå®šä¹‰å·¥å…·æ </string>
+    <string name="customize_toolbar_subtitle">é€‰æ‹©é˜…è¯»æˆ–é€‰ä¸­é‚®ä»¶æ—¶åº•éƒ¨æ ä¸­æ˜¾ç¤ºçš„æ“ä½œã€‚</string>
+    <string name="reading_toolbar">é˜…è¯»é‚®ä»¶æ—¶</string>
+    <string name="selection_toolbar">é€‰ä¸­é‚®ä»¶æ—¶</string>
+    <string name="toolbar_slots">å·¥å…·æ ä½ç½®</string>
+    <string name="choose_action">é€‰æ‹©æ“ä½œ</string>
+    <string name="change">æ›´æ”¹</string>
+    <string name="unset">æœªè®¾ç½®</string>
+    <string name="more_actions">æ›´å¤š</string>
+    <string name="marked_unread_count">å·²å°† %d å°é‚®ä»¶æ ‡è®°ä¸ºæœªè¯»</string>
+    <string name="starred_count">å·²ä¸º %d ä¸ªä¼šè¯åŠ æ³¨æ˜Ÿæ ‡</string>
+    <string name="unstarred_count">å·²ç§»é™¤ %d ä¸ªä¼šè¯çš„æ˜Ÿæ ‡</string>
+    <string name="failed_to_update_selection">éƒ¨åˆ†ä¼šè¯æ›´æ–°å¤±è´¥</string>
 </resources>

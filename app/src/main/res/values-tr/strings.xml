@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="app_name">Aster Mail</string>
 
     <string name="save">Kaydet</string>
@@ -1378,4 +1378,17 @@
     <string name="translation_translated">Cihazınızda %1$s dilinden çevrildi</string>
     <string name="translation_show_original">Orijinali göster</string>
     <string name="translation_failed">Çeviri başarısız oldu</string>
+    <string name="customize_toolbar">AraÃ§ Ã§ubuÄŸunu Ã¶zelleÅŸtir</string>
+    <string name="customize_toolbar_subtitle">E-posta okurken veya seÃ§erken alt Ã§ubukta hangi eylemlerin gÃ¶rÃ¼neceÄŸini seÃ§in.</string>
+    <string name="reading_toolbar">E-posta okuma</string>
+    <string name="selection_toolbar">E-posta seÃ§me</string>
+    <string name="toolbar_slots">AraÃ§ Ã§ubuÄŸu yuvalarÄ±</string>
+    <string name="choose_action">Bir eylem seÃ§in</string>
+    <string name="change">DeÄŸiÅŸtir</string>
+    <string name="unset">AyarlanmadÄ±</string>
+    <string name="more_actions">Daha fazla</string>
+    <string name="marked_unread_count">%d ileti okunmadÄ± olarak iÅŸaretlendi</string>
+    <string name="starred_count">%d konuÅŸma yÄ±ldÄ±zlandÄ±</string>
+    <string name="unstarred_count">%d konuÅŸmanÄ±n yÄ±ldÄ±zÄ± kaldÄ±rÄ±ldÄ±</string>
+    <string name="failed_to_update_selection">BazÄ± konuÅŸmalar gÃ¼ncellenemedi</string>
 </resources>

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Aster Mail</string>
 
@@ -1379,4 +1379,17 @@
     <string name="translation_translated">Aus %1$s auf Ihrem Gerät übersetzt</string>
     <string name="translation_show_original">Original anzeigen</string>
     <string name="translation_failed">Übersetzung fehlgeschlagen</string>
+    <string name="customize_toolbar">Symbolleiste anpassen</string>
+    <string name="customize_toolbar_subtitle">WÃ¤hle aus, welche Aktionen in der unteren Leiste beim Lesen oder AuswÃ¤hlen von E-Mails angezeigt werden.</string>
+    <string name="reading_toolbar">E-Mail lesen</string>
+    <string name="selection_toolbar">E-Mail auswÃ¤hlen</string>
+    <string name="toolbar_slots">Symbolleisten-PlÃ¤tze</string>
+    <string name="choose_action">Aktion auswÃ¤hlen</string>
+    <string name="change">Ã„ndern</string>
+    <string name="unset">Nicht festgelegt</string>
+    <string name="more_actions">Mehr</string>
+    <string name="marked_unread_count">%d Nachricht(en) als ungelesen markiert</string>
+    <string name="starred_count">Stern fÃ¼r %d Unterhaltung(en) gesetzt</string>
+    <string name="unstarred_count">Stern fÃ¼r %d Unterhaltung(en) entfernt</string>
+    <string name="failed_to_update_selection">Einige Unterhaltungen konnten nicht aktualisiert werden</string>
 </resources>

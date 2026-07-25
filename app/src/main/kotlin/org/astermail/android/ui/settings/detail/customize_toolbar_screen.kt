@@ -1,4 +1,4 @@
-﻿//
+//
 // Aster Communications Inc.
 //
 // Copyright (c) 2026 Aster Communications Inc.
@@ -35,7 +35,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -50,6 +49,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -62,12 +62,21 @@ import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterDragHandle
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.ui.mail.ToolbarAction
+import org.astermail.android.ui.mail.cache_selection_toolbar_actions
 import org.astermail.android.ui.mail.cache_toolbar_actions
+import org.astermail.android.ui.mail.load_selection_toolbar_actions
 import org.astermail.android.ui.mail.load_toolbar_actions
+import org.astermail.android.ui.mail.parse_selection_toolbar_actions
 import org.astermail.android.ui.mail.parse_toolbar_actions
+import org.astermail.android.ui.mail.selection_toolbar_action_by_id
+import org.astermail.android.ui.mail.selection_toolbar_action_catalog
+import org.astermail.android.ui.mail.selection_toolbar_slot_count
 import org.astermail.android.ui.mail.toolbar_action_by_id
 import org.astermail.android.ui.mail.toolbar_action_catalog
 import org.astermail.android.ui.mail.toolbar_slot_count
+
+private data class editing_target(val kind: String, val index: Int)
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -82,29 +91,59 @@ fun CustomizeToolbarScreen(
 
     LaunchedEffect(Unit) { settings_vm.load_preferences() }
 
-    var slots by remember { mutableStateOf(load_toolbar_actions(context)) }
-    var editing_slot by remember { mutableStateOf<Int?>(null) }
+    var reading_slots by remember { mutableStateOf(load_toolbar_actions(context)) }
+    var selection_slots by remember { mutableStateOf(load_selection_toolbar_actions(context)) }
+    var editing by remember { mutableStateOf<editing_target?>(null) }
 
     LaunchedEffect(server_prefs?.toolbar_actions) {
         val raw = server_prefs?.toolbar_actions
         if (raw != null) {
             val parsed = parse_toolbar_actions(raw)
-            if (parsed != slots) slots = parsed
+            if (parsed != reading_slots) reading_slots = parsed
             cache_toolbar_actions(context, parsed)
         }
     }
 
-    fun set_slot(index: Int, id: String) {
-        val current = slots.toMutableList()
-        val existing = current.indexOf(id)
-        if (existing >= 0 && existing != index) {
-            current[existing] = current[index]
+    LaunchedEffect(server_prefs?.selection_toolbar_actions) {
+        val raw = server_prefs?.selection_toolbar_actions
+        if (raw != null) {
+            val parsed = parse_selection_toolbar_actions(raw)
+            if (parsed != selection_slots) selection_slots = parsed
+            cache_selection_toolbar_actions(context, parsed)
         }
-        current[index] = id
-        slots = current
-        cache_toolbar_actions(context, current)
+    }
+
+    fun save_prefs() {
         val base = server_prefs ?: org.astermail.android.api.preferences.UserPreferences()
-        settings_vm.save_preferences(base.copy(toolbar_actions = current.joinToString(",")))
+        settings_vm.save_preferences(
+            base.copy(
+                toolbar_actions = reading_slots.joinToString(","),
+                selection_toolbar_actions = selection_slots.joinToString(","),
+            ),
+        )
+    }
+
+    fun set_slot(target: editing_target, id: String) {
+        if (target.kind == "reading") {
+            val current = reading_slots.toMutableList()
+            val existing = current.indexOf(id)
+            if (existing >= 0 && existing != target.index) {
+                current[existing] = current[target.index]
+            }
+            current[target.index] = id
+            reading_slots = current
+            cache_toolbar_actions(context, current)
+        } else {
+            val current = selection_slots.toMutableList()
+            val existing = current.indexOf(id)
+            if (existing >= 0 && existing != target.index) {
+                current[existing] = current[target.index]
+            }
+            current[target.index] = id
+            selection_slots = current
+            cache_selection_toolbar_actions(context, current)
+        }
+        save_prefs()
     }
 
     detail_scaffold(
@@ -117,58 +156,33 @@ fun CustomizeToolbarScreen(
             fontSize = 13.sp,
             modifier = Modifier.padding(bottom = AsterSpacing.md),
         )
-        section_label(stringResource(R.string.toolbar_slots))
-        AsterCard(modifier = Modifier.fillMaxWidth()) {
-            for (i in 0 until toolbar_slot_count) {
-                val id = slots.getOrNull(i)
-                val action = id?.let { toolbar_action_by_id(it) }
-                slot_row(
-                    index = i + 1,
-                    action_label = action?.let { stringResource(it.label_res) }
-                        ?: stringResource(R.string.unset),
-                    action_icon = action?.icon,
-                    on_click = { editing_slot = i },
-                )
-                if (i < toolbar_slot_count - 1) AsterDivider(modifier = Modifier)
-            }
-        }
+        toolbar_section(
+            kind = "selection",
+            title = stringResource(R.string.selection_toolbar),
+            slots = selection_slots,
+            slot_count = selection_toolbar_slot_count,
+            action_lookup = ::selection_toolbar_action_by_id,
+            on_edit = { editing = it },
+        )
         v_gap(AsterSpacing.lg)
-        section_label(stringResource(R.string.preview))
-        AsterCard(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = AsterSpacing.md, vertical = 14.dp),
-                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceAround,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                slots.forEach { id ->
-                    val action = toolbar_action_by_id(id)
-                    if (action != null) {
-                        Icon(
-                            imageVector = action.icon,
-                            contentDescription = null,
-                            tint = colors.text_primary,
-                            modifier = Modifier.size(22.dp),
-                        )
-                    }
-                }
-                Icon(
-                    imageVector = TablerIcons.Dots,
-                    contentDescription = null,
-                    tint = colors.text_primary,
-                    modifier = Modifier.size(22.dp),
-                )
-            }
-        }
+        toolbar_section(
+            kind = "reading",
+            title = stringResource(R.string.reading_toolbar),
+            slots = reading_slots,
+            slot_count = toolbar_slot_count,
+            action_lookup = ::toolbar_action_by_id,
+            on_edit = { editing = it },
+        )
         v_gap(AsterSpacing.xxl)
     }
 
     val sheet_state = rememberModalBottomSheetState()
-    val active_slot = editing_slot
-    if (active_slot != null) {
+    val active = editing
+    if (active != null) {
+        val catalog = if (active.kind == "reading") toolbar_action_catalog else selection_toolbar_action_catalog
+        val slots = if (active.kind == "reading") reading_slots else selection_slots
         ModalBottomSheet(
-            onDismissRequest = { editing_slot = null },
+            onDismissRequest = { editing = null },
             sheetState = sheet_state,
             containerColor = colors.bg_secondary,
             dragHandle = { AsterDragHandle() },
@@ -186,16 +200,17 @@ fun CustomizeToolbarScreen(
                         bottom = AsterSpacing.sm,
                     ),
                 )
-                toolbar_action_catalog.forEachIndexed { i, action ->
-                    val is_current = slots.getOrNull(active_slot) == action.id
+                catalog.forEachIndexed { i, action ->
+                    val is_current = slots.getOrNull(active.index) == action.id
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                set_slot(active_slot, action.id)
-                                editing_slot = null
+                                set_slot(active, action.id)
+                                editing = null
                             }
-                            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
+                            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md)
+                            .testTag("toolbar_choice_${action.id}"),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
@@ -220,9 +235,66 @@ fun CustomizeToolbarScreen(
                             }
                         }
                     }
-                    if (i < toolbar_action_catalog.lastIndex) AsterDivider(modifier = Modifier)
+                    if (i < catalog.lastIndex) AsterDivider(modifier = Modifier)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun toolbar_section(
+    kind: String,
+    title: String,
+    slots: List<String>,
+    slot_count: Int,
+    action_lookup: (String) -> ToolbarAction?,
+    on_edit: (editing_target) -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    section_label(title)
+    AsterCard(modifier = Modifier.fillMaxWidth()) {
+        for (i in 0 until slot_count) {
+            val id = slots.getOrNull(i)
+            val action = id?.let { action_lookup(it) }
+            slot_row(
+                index = i + 1,
+                action_label = action?.let { stringResource(it.label_res) }
+                    ?: stringResource(R.string.unset),
+                action_icon = action?.icon,
+                on_click = { on_edit(editing_target(kind, i)) },
+                test_tag = "${kind}_slot_${i + 1}",
+            )
+            if (i < slot_count - 1) AsterDivider(modifier = Modifier)
+        }
+    }
+    v_gap(AsterSpacing.sm)
+    section_label(stringResource(R.string.preview))
+    AsterCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = AsterSpacing.md, vertical = 14.dp),
+            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            slots.forEach { id ->
+                val action = action_lookup(id)
+                if (action != null) {
+                    Icon(
+                        imageVector = action.icon,
+                        contentDescription = null,
+                        tint = colors.text_primary,
+                        modifier = Modifier.size(22.dp),
+                    )
+                }
+            }
+            Icon(
+                imageVector = TablerIcons.Dots,
+                contentDescription = null,
+                tint = colors.text_primary,
+                modifier = Modifier.size(22.dp),
+            )
         }
     }
 }
@@ -233,13 +305,15 @@ private fun slot_row(
     action_label: String,
     action_icon: androidx.compose.ui.graphics.vector.ImageVector?,
     on_click: () -> Unit,
+    test_tag: String,
 ) {
     val colors = AsterMaterial.colors
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = on_click)
-            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md)
+            .testTag(test_tag),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(

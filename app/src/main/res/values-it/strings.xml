@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="app_name">Aster Mail</string>
 
     <string name="save">Salva</string>
@@ -1378,4 +1378,17 @@
     <string name="translation_translated">Tradotta da %1$s sul tuo dispositivo</string>
     <string name="translation_show_original">Mostra originale</string>
     <string name="translation_failed">Traduzione non riuscita</string>
+    <string name="customize_toolbar">Personalizza barra degli strumenti</string>
+    <string name="customize_toolbar_subtitle">Scegli quali azioni mostrare nella barra inferiore durante la lettura o la selezione delle email.</string>
+    <string name="reading_toolbar">Lettura email</string>
+    <string name="selection_toolbar">Selezione email</string>
+    <string name="toolbar_slots">Slot della barra</string>
+    <string name="choose_action">Scegli un\'azione</string>
+    <string name="change">Modifica</string>
+    <string name="unset">Non impostato</string>
+    <string name="more_actions">Altro</string>
+    <string name="marked_unread_count">%d messaggio/i contrassegnato/i come non letto/i</string>
+    <string name="starred_count">Stella aggiunta a %d conversazione/i</string>
+    <string name="unstarred_count">Stella rimossa da %d conversazione/i</string>
+    <string name="failed_to_update_selection">Impossibile aggiornare alcune conversazioni</string>
 </resources>

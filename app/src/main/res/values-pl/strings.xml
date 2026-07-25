@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="app_name">Aster Mail</string>
 
     <string name="save">Zapisz</string>
@@ -1382,4 +1382,17 @@
     <string name="translation_translated">Przetłumaczono z języka %1$s na Twoim urządzeniu</string>
     <string name="translation_show_original">Pokaż oryginał</string>
     <string name="translation_failed">Tłumaczenie nie powiodło się</string>
+    <string name="customize_toolbar">Dostosuj pasek narzÄ™dzi</string>
+    <string name="customize_toolbar_subtitle">Wybierz, ktÃ³re akcje pojawiajÄ… siÄ™ na dolnym pasku podczas czytania lub zaznaczania wiadomoÅ›ci.</string>
+    <string name="reading_toolbar">Czytanie wiadomoÅ›ci</string>
+    <string name="selection_toolbar">Zaznaczanie wiadomoÅ›ci</string>
+    <string name="toolbar_slots">Miejsca na pasku</string>
+    <string name="choose_action">Wybierz akcjÄ™</string>
+    <string name="change">ZmieÅ„</string>
+    <string name="unset">Nie ustawiono</string>
+    <string name="more_actions">WiÄ™cej</string>
+    <string name="marked_unread_count">Oznaczono %d wiadomoÅ›ci jako nieprzeczytane</string>
+    <string name="starred_count">Oznaczono gwiazdkÄ… %d konwersacji</string>
+    <string name="unstarred_count">UsuniÄ™to gwiazdkÄ™ z %d konwersacji</string>
+    <string name="failed_to_update_selection">Nie udaÅ‚o siÄ™ zaktualizowaÄ‡ niektÃ³rych konwersacji</string>
 </resources>

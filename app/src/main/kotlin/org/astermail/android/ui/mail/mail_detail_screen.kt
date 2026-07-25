@@ -941,6 +941,14 @@ fun MailDetailScreen(
 
         if (email != null && messages.isNotEmpty()) {
             val latest_msg = messages.last()
+            val detail_prefs_state by settings_vm.state.collectAsStateWithLifecycle()
+            LaunchedEffect(detail_prefs_state.preferences?.toolbar_actions) {
+                val raw = detail_prefs_state.preferences?.toolbar_actions
+                if (raw != null) {
+                    cache_toolbar_actions(context, parse_toolbar_actions(raw))
+                }
+            }
+            val detail_toolbar_slots = load_toolbar_actions(context)
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -955,29 +963,88 @@ fun MailDetailScreen(
                     horizontalArrangement = Arrangement.SpaceAround,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    val read_state = api_item?.is_read == true
-                    if (read_state) {
-                        bottom_action(TablerIcons.Mail, stringResource(R.string.mark_as_unread), test_tag = "mark_read") {
-                            mail_vm.mark_unread(email_id)
-                            show_toast(context.getString(R.string.marked_as_unread))
-                            on_back()
+                    detail_toolbar_slots.forEach { slot_id ->
+                        when (slot_id) {
+                            "read" -> {
+                                val read_state = api_item?.is_read == true
+                                if (read_state) {
+                                    bottom_action(TablerIcons.Mail, stringResource(R.string.mark_as_unread), test_tag = "mark_read") {
+                                        mail_vm.mark_unread(email_id)
+                                        show_toast(context.getString(R.string.marked_as_unread))
+                                        on_back()
+                                    }
+                                } else {
+                                    bottom_action(TablerIcons.MailOpened, stringResource(R.string.mark_as_read), test_tag = "mark_read") {
+                                        mail_vm.mark_read(email_id)
+                                        show_toast(context.getString(R.string.mark_as_read))
+                                    }
+                                }
+                            }
+                            "trash" -> bottom_action(TablerIcons.Trash, stringResource(R.string.move_to_trash), test_tag = "delete") {
+                                mail_vm.trash(listOf(email_id))
+                                on_delete()
+                                show_toast(context.getString(R.string.move_to_trash))
+                            }
+                            "archive" -> {
+                                val archived = api_item?.is_archived == true
+                                bottom_action(
+                                    if (archived) TablerIcons.Inbox else TablerIcons.Archive,
+                                    if (archived) stringResource(R.string.swipe_restore) else stringResource(R.string.swipe_archive),
+                                    test_tag = "toolbar_archive",
+                                ) {
+                                    if (archived) {
+                                        mail_vm.unarchive(listOf(email_id))
+                                        on_archive()
+                                        show_toast(context.getString(R.string.moved_to_inbox))
+                                    } else {
+                                        mail_vm.archive(listOf(email_id))
+                                        on_archive()
+                                        show_toast(context.getString(R.string.archived))
+                                    }
+                                }
+                            }
+                            "folder" -> bottom_action(TablerIcons.Folder, stringResource(R.string.move_to_folder)) {
+                                show_folder_sheet = true
+                            }
+                            "label" -> bottom_action(TablerIcons.Tag, stringResource(R.string.label)) {
+                                show_label_sheet = true
+                            }
+                            "star" -> bottom_action(
+                                if (is_starred) TablerIcons.StarOff else TablerIcons.Star,
+                                if (is_starred) stringResource(R.string.unstar) else stringResource(R.string.star),
+                                test_tag = "toolbar_star",
+                            ) {
+                                haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                                mail_vm.toggle_star(email_id)
+                                show_toast(if (!is_starred) context.getString(R.string.starred) else context.getString(R.string.unstarred))
+                            }
+                            "snooze" -> bottom_action(TablerIcons.Clock, stringResource(R.string.snooze)) {
+                                show_snooze_sheet = true
+                            }
+                            "spam" -> bottom_action(TablerIcons.Ban, stringResource(R.string.report_spam), test_tag = "toolbar_spam") {
+                                val spam_sender_hint = listOfNotNull(messages.lastOrNull()?.sender_email)
+                                if (is_spam) {
+                                    is_spam_override = false
+                                    mail_vm.unmark_spam(listOf(email_id), sender_emails_hint = spam_sender_hint)
+                                    show_toast(context.getString(R.string.swipe_not_spam))
+                                } else {
+                                    is_spam_override = true
+                                    mail_vm.mark_spam(listOf(email_id), sender_emails_hint = spam_sender_hint)
+                                    val sender = messages.lastOrNull()?.sender_email
+                                    if (!sender.isNullOrBlank()) {
+                                        settings_vm.block_sender(sender)
+                                    }
+                                    show_toast(context.getString(R.string.reported_as_spam))
+                                }
+                                on_back()
+                            }
+                            "reply" -> bottom_action(TablerIcons.ArrowBackUp, stringResource(R.string.reply), test_tag = "toolbar_reply") {
+                                on_reply(latest_msg.id, thread_ghost_email)
+                            }
+                            "forward" -> bottom_action(TablerIcons.MailForward, stringResource(R.string.forward), test_tag = "toolbar_forward") {
+                                on_forward(latest_msg.id, thread_ghost_email)
+                            }
                         }
-                    } else {
-                        bottom_action(TablerIcons.MailOpened, stringResource(R.string.mark_as_read), test_tag = "mark_read") {
-                            mail_vm.mark_read(email_id)
-                            show_toast(context.getString(R.string.mark_as_read))
-                        }
-                    }
-                    bottom_action(TablerIcons.Trash, stringResource(R.string.move_to_trash), test_tag = "delete") {
-                        mail_vm.trash(listOf(email_id))
-                        on_delete()
-                        show_toast(context.getString(R.string.move_to_trash))
-                    }
-                    bottom_action(TablerIcons.Folder, stringResource(R.string.move_to_folder)) {
-                        show_folder_sheet = true
-                    }
-                    bottom_action(TablerIcons.Tag, stringResource(R.string.label)) {
-                        show_label_sheet = true
                     }
                     bottom_action(TablerIcons.Dots, stringResource(R.string.more)) {
                         show_action_sheet = true
@@ -1054,7 +1121,7 @@ fun MailDetailScreen(
             },
             on_customize_toolbar = {
                 show_action_sheet = false
-                show_toast(context.getString(R.string.customize_toolbar))
+                on_navigate?.invoke("settings/customize_toolbar")
             },
         )
     }
@@ -2323,7 +2390,7 @@ private fun action_menu_sheet(
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-private fun snooze_sheet(
+internal fun snooze_sheet(
     on_close: () -> Unit,
     on_pick: (iso: String, label: String) -> Unit,
 ) {
@@ -2371,7 +2438,7 @@ private fun snooze_sheet(
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-private fun label_picker_sheet(
+internal fun label_picker_sheet(
     title: String,
     empty_message: String,
     items: List<org.astermail.android.api.labels.LabelItem>,
@@ -2425,7 +2492,7 @@ private fun label_picker_sheet(
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-private fun tag_picker_sheet(
+internal fun tag_picker_sheet(
     title: String,
     empty_message: String,
     items: List<org.astermail.android.api.tags.TagItem>,
@@ -2499,7 +2566,7 @@ private fun tag_picker_sheet(
     }
 }
 
-private fun snooze_options(
+internal fun snooze_options(
     later_today_label: String,
     tomorrow_morning_label: String,
     this_weekend_label: String,
@@ -2577,7 +2644,7 @@ private fun print_email(context: android.content.Context, msg: ThreadMessage, su
 }
 
 @Composable
-private fun sheet_row(
+internal fun sheet_row(
     label: String,
     tint: Color,
     on_click: () -> Unit,

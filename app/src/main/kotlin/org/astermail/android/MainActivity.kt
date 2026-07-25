@@ -1614,6 +1614,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                                 filter_name = name
                                 selected_folder = id
                             },
+                            on_customize_toolbar = { nav_controller.navigate(routes.settings_detail("customize_toolbar")) },
                         )
                     }
                     selected_folder == "subscriptions" -> {
@@ -1657,6 +1658,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                                 filter_name = name
                                 selected_folder = id
                             },
+                            on_customize_toolbar = { nav_controller.navigate(routes.settings_detail("customize_toolbar")) },
                         )
                     }
                 }

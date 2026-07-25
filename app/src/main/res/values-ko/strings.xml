@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="app_name">Aster Mail</string>
 
     <string name="save">저장</string>
@@ -1376,4 +1376,17 @@
     <string name="translation_translated">기기에서 %1$s에서 번역됨</string>
     <string name="translation_show_original">원문 보기</string>
     <string name="translation_failed">번역 실패</string>
+    <string name="customize_toolbar">íˆ´ë°” ì‚¬ìš©ìž ì§€ì •</string>
+    <string name="customize_toolbar_subtitle">ë©”ì¼ì„ ì½ê±°ë‚˜ ì„ íƒí•  ë•Œ í•˜ë‹¨ ë°”ì— í‘œì‹œí•  ìž‘ì—…ì„ ì„ íƒí•˜ì„¸ìš”.</string>
+    <string name="reading_toolbar">ë©”ì¼ ì½ê¸°</string>
+    <string name="selection_toolbar">ë©”ì¼ ì„ íƒ</string>
+    <string name="toolbar_slots">íˆ´ë°” ìŠ¬ë¡¯</string>
+    <string name="choose_action">ìž‘ì—… ì„ íƒ</string>
+    <string name="change">ë³€ê²½</string>
+    <string name="unset">ì„¤ì • ì•ˆ ë¨</string>
+    <string name="more_actions">ë”ë³´ê¸°</string>
+    <string name="marked_unread_count">ë©”ì‹œì§€ %dê°œë¥¼ ì½ì§€ ì•ŠìŒìœ¼ë¡œ í‘œì‹œí–ˆìŠµë‹ˆë‹¤</string>
+    <string name="starred_count">ëŒ€í™” %dê°œì— ë³„í‘œë¥¼ ì¶”ê°€í–ˆìŠµë‹ˆë‹¤</string>
+    <string name="unstarred_count">ëŒ€í™” %dê°œì˜ ë³„í‘œë¥¼ ì œê±°í–ˆìŠµë‹ˆë‹¤</string>
+    <string name="failed_to_update_selection">ì¼ë¶€ ëŒ€í™”ë¥¼ ì—…ë°ì´íŠ¸í•˜ì§€ ëª»í–ˆìŠµë‹ˆë‹¤</string>
 </resources>

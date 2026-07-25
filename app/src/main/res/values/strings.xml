@@ -298,6 +298,7 @@
     <string name="unstar">Unstar</string>
     <string name="star">Star</string>
     <string name="more">more</string>
+    <string name="more_actions">More</string>
     <string name="mark_as_unread">Mark as unread</string>
     <string name="marked_as_unread">Marked as unread</string>
     <string name="pinned">Pinned</string>
@@ -362,7 +363,9 @@
     <string name="unarchive">Unarchive</string>
     <string name="label">Label</string>
     <string name="customize_toolbar">Customize toolbar</string>
-    <string name="customize_toolbar_subtitle">Pick which actions appear in the bottom bar when reading an email.</string>
+    <string name="customize_toolbar_subtitle">Pick which actions appear in the bottom bar when reading or selecting email.</string>
+    <string name="reading_toolbar">Reading email</string>
+    <string name="selection_toolbar">Selecting email</string>
     <string name="toolbar_slots">Toolbar slots</string>
     <string name="choose_action">Choose an action</string>
     <string name="change">Change</string>
@@ -414,6 +417,10 @@
     <string name="deleted_permanently">Deleted permanently</string>
     <string name="failed_to_delete">Failed to delete</string>
     <string name="marked_read_count">Marked %d message(s) as read</string>
+    <string name="marked_unread_count">Marked %d message(s) as unread</string>
+    <string name="starred_count">Starred %d conversation(s)</string>
+    <string name="unstarred_count">Unstarred %d conversation(s)</string>
+    <string name="failed_to_update_selection">Failed to update some conversations</string>
     <string name="failed_mark_read">Failed to mark as read</string>
     <string name="all_marked_read">All marked as read</string>
     <string name="failed_mark_all_read">Failed to mark all as read</string>

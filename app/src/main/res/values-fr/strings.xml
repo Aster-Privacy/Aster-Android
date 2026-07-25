@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Aster Mail</string>
 
@@ -1994,4 +1994,11 @@
     <string name="translation_translated">Traduit depuis %1$s sur votre appareil</string>
     <string name="translation_show_original">Afficher l\'original</string>
     <string name="translation_failed">Échec de la traduction</string>
+    <string name="reading_toolbar">Lecture d\'e-mail</string>
+    <string name="selection_toolbar">SÃ©lection d\'e-mails</string>
+    <string name="more_actions">Plus</string>
+    <string name="marked_unread_count">%d message(s) marquÃ©(s) comme non lu(s)</string>
+    <string name="starred_count">%d conversation(s) marquÃ©e(s) d\'une Ã©toile</string>
+    <string name="unstarred_count">Ã‰toile retirÃ©e de %d conversation(s)</string>
+    <string name="failed_to_update_selection">Impossible de mettre Ã  jour certaines conversations</string>
 </resources>

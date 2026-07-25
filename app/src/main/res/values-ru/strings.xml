@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="app_name">Aster Mail</string>
 
     <string name="save">Сохранить</string>
@@ -1382,4 +1382,17 @@
     <string name="translation_translated">Переведено с языка %1$s на вашем устройстве</string>
     <string name="translation_show_original">Показать оригинал</string>
     <string name="translation_failed">Не удалось перевести</string>
+    <string name="customize_toolbar">ÐÐ°ÑÑ‚Ñ€Ð¾Ð¸Ñ‚ÑŒ Ð¿Ð°Ð½ÐµÐ»ÑŒ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ð¹</string>
+    <string name="customize_toolbar_subtitle">Ð’Ñ‹Ð±ÐµÑ€Ð¸Ñ‚Ðµ, ÐºÐ°ÐºÐ¸Ðµ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð¾Ñ‚Ð¾Ð±Ñ€Ð°Ð¶Ð°ÑŽÑ‚ÑÑ Ð² Ð½Ð¸Ð¶Ð½ÐµÐ¹ Ð¿Ð°Ð½ÐµÐ»Ð¸ Ð¿Ñ€Ð¸ Ñ‡Ñ‚ÐµÐ½Ð¸Ð¸ Ð¸Ð»Ð¸ Ð²Ñ‹Ð´ÐµÐ»ÐµÐ½Ð¸Ð¸ Ð¿Ð¸ÑÐµÐ¼.</string>
+    <string name="reading_toolbar">Ð§Ñ‚ÐµÐ½Ð¸Ðµ Ð¿Ð¸ÑÑŒÐ¼Ð°</string>
+    <string name="selection_toolbar">Ð’Ñ‹Ð´ÐµÐ»ÐµÐ½Ð¸Ðµ Ð¿Ð¸ÑÐµÐ¼</string>
+    <string name="toolbar_slots">Ð¡Ð»Ð¾Ñ‚Ñ‹ Ð¿Ð°Ð½ÐµÐ»Ð¸</string>
+    <string name="choose_action">Ð’Ñ‹Ð±ÐµÑ€Ð¸Ñ‚Ðµ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ðµ</string>
+    <string name="change">Ð˜Ð·Ð¼ÐµÐ½Ð¸Ñ‚ÑŒ</string>
+    <string name="unset">ÐÐµ Ð·Ð°Ð´Ð°Ð½Ð¾</string>
+    <string name="more_actions">Ð•Ñ‰Ñ‘</string>
+    <string name="marked_unread_count">ÐŸÐ¾Ð¼ÐµÑ‡ÐµÐ½Ð¾ ÐºÐ°Ðº Ð½ÐµÐ¿Ñ€Ð¾Ñ‡Ð¸Ñ‚Ð°Ð½Ð½Ñ‹Ðµ: %d</string>
+    <string name="starred_count">ÐžÑ‚Ð¼ÐµÑ‡ÐµÐ½Ð¾ Ð·Ð²ÐµÐ·Ð´Ð¾Ð¹: %d</string>
+    <string name="unstarred_count">Ð—Ð²ÐµÐ·Ð´Ð° ÑÐ½ÑÑ‚Ð°: %d</string>
+    <string name="failed_to_update_selection">ÐÐµ ÑƒÐ´Ð°Ð»Ð¾ÑÑŒ Ð¾Ð±Ð½Ð¾Ð²Ð¸Ñ‚ÑŒ Ð½ÐµÐºÐ¾Ñ‚Ð¾Ñ€Ñ‹Ðµ Ð¿ÐµÑ€ÐµÐ¿Ð¸ÑÐºÐ¸</string>
 </resources>

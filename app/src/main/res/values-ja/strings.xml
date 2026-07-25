@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="app_name">Aster Mail</string>
 
     <string name="save">保存</string>
@@ -1376,4 +1376,17 @@
     <string name="translation_translated">端末上で%1$sから翻訳しました</string>
     <string name="translation_show_original">原文を表示</string>
     <string name="translation_failed">翻訳に失敗しました</string>
+    <string name="customize_toolbar">ãƒ„ãƒ¼ãƒ«ãƒãƒ¼ã‚’ã‚«ã‚¹ã‚¿ãƒžã‚¤ã‚º</string>
+    <string name="customize_toolbar_subtitle">ãƒ¡ãƒ¼ãƒ«ã®é–²è¦§æ™‚ã‚„é¸æŠžæ™‚ã«ä¸‹éƒ¨ãƒãƒ¼ã«è¡¨ç¤ºã™ã‚‹æ“ä½œã‚’é¸ã¹ã¾ã™ã€‚</string>
+    <string name="reading_toolbar">ãƒ¡ãƒ¼ãƒ«é–²è¦§æ™‚</string>
+    <string name="selection_toolbar">ãƒ¡ãƒ¼ãƒ«é¸æŠžæ™‚</string>
+    <string name="toolbar_slots">ãƒ„ãƒ¼ãƒ«ãƒãƒ¼ã®ã‚¹ãƒ­ãƒƒãƒˆ</string>
+    <string name="choose_action">æ“ä½œã‚’é¸æŠž</string>
+    <string name="change">å¤‰æ›´</string>
+    <string name="unset">æœªè¨­å®š</string>
+    <string name="more_actions">ãã®ä»–</string>
+    <string name="marked_unread_count">%dä»¶ã®ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’æœªèª­ã«ã—ã¾ã—ãŸ</string>
+    <string name="starred_count">%dä»¶ã®ä¼šè©±ã«ã‚¹ã‚¿ãƒ¼ã‚’ä»˜ã‘ã¾ã—ãŸ</string>
+    <string name="unstarred_count">%dä»¶ã®ä¼šè©±ã®ã‚¹ã‚¿ãƒ¼ã‚’å¤–ã—ã¾ã—ãŸ</string>
+    <string name="failed_to_update_selection">ä¸€éƒ¨ã®ä¼šè©±ã‚’æ›´æ–°ã§ãã¾ã›ã‚“ã§ã—ãŸ</string>
 </resources>

@@ -132,6 +132,7 @@ fun InboxScreen(
     on_folder_change: (String) -> Unit = {},
     custom_folders: List<Pair<String, String>> = emptyList(),
     on_custom_folder_change: (String, String) -> Unit = { _, _ -> },
+    on_customize_toolbar: () -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
@@ -333,6 +334,19 @@ fun InboxScreen(
     var select_all_active by remember { mutableStateOf(false) }
     val selected_ids = remember { mutableStateListOf<String>() }
     var show_empty_trash_dialog by remember { mutableStateOf(false) }
+    var show_selection_overflow by remember { mutableStateOf(false) }
+    var show_bulk_folder_sheet by remember { mutableStateOf(false) }
+    var show_bulk_label_sheet by remember { mutableStateOf(false) }
+    var show_bulk_snooze_sheet by remember { mutableStateOf(false) }
+    LaunchedEffect(settings_state.preferences?.selection_toolbar_actions) {
+        val raw = settings_state.preferences?.selection_toolbar_actions
+        if (raw != null) {
+            cache_selection_toolbar_actions(context_for_prefs, parse_selection_toolbar_actions(raw))
+        }
+    }
+    val selection_toolbar_slots = remember(select_mode, settings_state.preferences?.selection_toolbar_actions) {
+        load_selection_toolbar_actions(context_for_prefs)
+    }
     var confirm_action_pending by remember { mutableStateOf<String?>(null) }
     var confirm_item_ids_pending by remember { mutableStateOf<List<String>>(emptyList()) }
     var confirm_thread_id_pending by remember { mutableStateOf<String?>(null) }
@@ -598,6 +612,84 @@ fun InboxScreen(
         exit_select_mode()
     }
 
+    fun mark_read_selected() {
+        val thread_ids = selected_ids.toSet()
+        val email_ids = emails
+            .filter { it.thread_id in thread_ids && !it.is_read }
+            .map { it.id }
+        if (email_ids.isNotEmpty()) {
+            mail_vm.mark_read_bulk(email_ids)
+        }
+        for (i in emails.indices) {
+            if (emails[i].thread_id in thread_ids && !emails[i].is_read) {
+                emails[i] = emails[i].copy(is_read = true)
+            }
+        }
+        exit_select_mode()
+    }
+
+    fun mark_unread_selected() {
+        val thread_ids = selected_ids.toSet()
+        val email_ids = emails
+            .filter { it.thread_id in thread_ids && it.is_read }
+            .map { it.id }
+        if (email_ids.isNotEmpty()) {
+            mail_vm.mark_unread_bulk(email_ids)
+        }
+        for (i in emails.indices) {
+            if (emails[i].thread_id in thread_ids && emails[i].is_read) {
+                emails[i] = emails[i].copy(is_read = false)
+            }
+        }
+        exit_select_mode()
+    }
+
+    fun star_selected() {
+        val thread_ids = selected_ids.toSet()
+        val new_starred = emails.any { it.thread_id in thread_ids && !it.is_starred }
+        mail_vm.star_bulk(selected_email_ids())
+        for (i in emails.indices) {
+            if (emails[i].thread_id in thread_ids && emails[i].is_starred != new_starred) {
+                emails[i] = emails[i].copy(is_starred = new_starred)
+            }
+        }
+        exit_select_mode()
+    }
+
+    fun snooze_selected(iso: String, label: String) {
+        val to_remove = selected_ids.toSet()
+        mail_vm.snooze_bulk(selected_email_ids(), iso, label)
+        emails.removeAll { it.thread_id in to_remove }
+        exit_select_mode()
+    }
+
+    fun move_selected_to_folder(label_token: String, display_name: String) {
+        mail_vm.apply_label_bulk(selected_email_ids(), label_token, display_name)
+        exit_select_mode()
+    }
+
+    fun label_selected(tag_token: String, display_name: String) {
+        mail_vm.apply_tag_bulk(selected_email_ids(), tag_token, display_name)
+        exit_select_mode()
+    }
+
+    fun run_selection_action(action_id: String) {
+        when (action_id) {
+            "read" -> mark_read_selected()
+            "unread" -> mark_unread_selected()
+            "trash" -> delete_selected()
+            "archive" -> archive_selected()
+                "folder" -> {
+                if (settings_state.labels.isEmpty()) settings_vm.load_labels()
+                show_bulk_folder_sheet = true
+            }
+            "label" -> show_bulk_label_sheet = true
+            "star" -> star_selected()
+            "snooze" -> show_bulk_snooze_sheet = true
+            "spam" -> mark_spam_selected()
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -617,21 +709,7 @@ fun InboxScreen(
                         on_unarchive = ::unarchive_selected,
                         on_unmark_spam = ::unmark_spam_selected,
                         on_delete_permanent = ::delete_permanent_selected,
-                        on_mark_read = {
-                            val thread_ids = selected_ids.toSet()
-                            val email_ids = emails
-                                .filter { it.thread_id in thread_ids && !it.is_read }
-                                .map { it.id }
-                            if (email_ids.isNotEmpty()) {
-                                mail_vm.mark_read_bulk(email_ids)
-                            }
-                            for (i in emails.indices) {
-                                if (emails[i].thread_id in thread_ids && !emails[i].is_read) {
-                                    emails[i] = emails[i].copy(is_read = true)
-                                }
-                            }
-                            exit_select_mode()
-                        },
+                        on_mark_read = ::mark_read_selected,
                         show_divider = scrolled_elevation,
                         current_folder = current_folder,
                     )
@@ -919,28 +997,16 @@ fun InboxScreen(
         ) {
             select_mode_bottom_bar(
                 selected_count = selected_ids.size,
-                on_archive = ::archive_selected,
                 on_delete = ::delete_selected,
                 on_restore = ::restore_selected,
                 on_unarchive = ::unarchive_selected,
                 on_unmark_spam = ::unmark_spam_selected,
                 on_mark_spam = ::mark_spam_selected,
                 on_delete_permanent = ::delete_permanent_selected,
-                on_mark_read = {
-                    val thread_ids = selected_ids.toSet()
-                    val email_ids = emails
-                        .filter { it.thread_id in thread_ids && !it.is_read }
-                        .map { it.id }
-                    if (email_ids.isNotEmpty()) {
-                        mail_vm.mark_read_bulk(email_ids)
-                    }
-                    for (i in emails.indices) {
-                        if (emails[i].thread_id in thread_ids && !emails[i].is_read) {
-                            emails[i] = emails[i].copy(is_read = true)
-                        }
-                    }
-                    exit_select_mode()
-                },
+                on_mark_read = ::mark_read_selected,
+                custom_actions = selection_toolbar_slots,
+                on_action = ::run_selection_action,
+                on_more = { show_selection_overflow = true },
                 current_folder = current_folder,
             )
         }
@@ -980,6 +1046,70 @@ fun InboxScreen(
                     modifier = Modifier.size(24.dp),
                 )
             }
+        }
+
+        if (show_selection_overflow) {
+            selection_overflow_sheet(
+                on_close = { show_selection_overflow = false },
+                on_action = { id ->
+                    show_selection_overflow = false
+                    run_selection_action(id)
+                },
+                on_customize = {
+                    show_selection_overflow = false
+                    on_customize_toolbar()
+                },
+            )
+        }
+
+        if (show_bulk_folder_sheet) {
+            val unnamed_folder_label = stringResource(R.string.unnamed_folder)
+            val folder_decrypt_failed_label = stringResource(R.string.folder_decrypt_failed)
+            val folder_items = org.astermail.android.folders.flatten_folder_tree(settings_state.labels)
+                .map { node ->
+                    val label = node.label
+                    val readable = label.encrypted_name?.takeIf {
+                        it.isNotBlank() && !org.astermail.android.looks_encrypted(it)
+                    }
+                    label.copy(encrypted_name = readable ?: folder_decrypt_failed_label)
+                }
+            label_picker_sheet(
+                title = stringResource(R.string.move_to_folder),
+                empty_message = stringResource(R.string.no_folders_yet_create),
+                items = folder_items,
+                on_close = { show_bulk_folder_sheet = false },
+                on_pick = { picked ->
+                    val display = picked.encrypted_name?.takeIf { it.isNotBlank() }
+                        ?: unnamed_folder_label
+                    show_bulk_folder_sheet = false
+                    move_selected_to_folder(picked.label_token, display)
+                },
+            )
+        }
+
+        if (show_bulk_label_sheet) {
+            val tag_items = settings_state.tags.filter { it.encrypted_name.isNotBlank() }
+            tag_picker_sheet(
+                title = stringResource(R.string.add_label),
+                empty_message = stringResource(R.string.no_labels_yet_create),
+                items = tag_items,
+                on_close = { show_bulk_label_sheet = false },
+                on_pick = { picked ->
+                    val display = picked.encrypted_name.takeIf { it.isNotBlank() } ?: picked.tag_token
+                    show_bulk_label_sheet = false
+                    label_selected(picked.tag_token, display)
+                },
+            )
+        }
+
+        if (show_bulk_snooze_sheet) {
+            snooze_sheet(
+                on_close = { show_bulk_snooze_sheet = false },
+                on_pick = { iso, label ->
+                    show_bulk_snooze_sheet = false
+                    snooze_selected(iso, label)
+                },
+            )
         }
 
         if (show_empty_trash_dialog) {
@@ -1317,9 +1447,8 @@ private fun select_mode_top_bar(
 }
 
 @Composable
-private fun select_mode_bottom_bar(
+internal fun select_mode_bottom_bar(
     selected_count: Int,
-    on_archive: () -> Unit,
     on_delete: () -> Unit,
     on_restore: () -> Unit,
     on_unarchive: () -> Unit,
@@ -1327,6 +1456,9 @@ private fun select_mode_bottom_bar(
     on_mark_spam: () -> Unit,
     on_delete_permanent: () -> Unit,
     on_mark_read: () -> Unit,
+    custom_actions: List<String>,
+    on_action: (String) -> Unit,
+    on_more: () -> Unit,
     current_folder: String,
     modifier: Modifier = Modifier,
 ) {
@@ -1348,15 +1480,15 @@ private fun select_mode_bottom_bar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                bottom_select_action(
-                    icon = TablerIcons.MailOpened,
-                    label = stringResource(R.string.mark_read_action),
-                    enabled = enabled,
-                    onClick = on_mark_read,
-                    test_tag = "mark_read",
-                )
                 when (current_folder) {
                     "trash" -> {
+                        bottom_select_action(
+                            icon = TablerIcons.MailOpened,
+                            label = stringResource(R.string.mark_read_action),
+                            enabled = enabled,
+                            onClick = on_mark_read,
+                            test_tag = "mark_read",
+                        )
                         bottom_select_action(
                             icon = TablerIcons.Inbox,
                             label = stringResource(R.string.swipe_restore),
@@ -1372,6 +1504,13 @@ private fun select_mode_bottom_bar(
                         )
                     }
                     "archive" -> {
+                        bottom_select_action(
+                            icon = TablerIcons.MailOpened,
+                            label = stringResource(R.string.mark_read_action),
+                            enabled = enabled,
+                            onClick = on_mark_read,
+                            test_tag = "mark_read",
+                        )
                         bottom_select_action(
                             icon = TablerIcons.Inbox,
                             label = stringResource(R.string.swipe_restore),
@@ -1394,6 +1533,13 @@ private fun select_mode_bottom_bar(
                     }
                     "spam" -> {
                         bottom_select_action(
+                            icon = TablerIcons.MailOpened,
+                            label = stringResource(R.string.mark_read_action),
+                            enabled = enabled,
+                            onClick = on_mark_read,
+                            test_tag = "mark_read",
+                        )
+                        bottom_select_action(
                             icon = TablerIcons.Inbox,
                             label = stringResource(R.string.swipe_not_spam),
                             enabled = enabled,
@@ -1408,26 +1554,23 @@ private fun select_mode_bottom_bar(
                         )
                     }
                     else -> {
+                        custom_actions.forEach { action_id ->
+                            val action = selection_toolbar_action_by_id(action_id) ?: return@forEach
+                            bottom_select_action(
+                                icon = action.icon,
+                                label = stringResource(action.label_res),
+                                enabled = enabled,
+                                onClick = { on_action(action_id) },
+                                tint = if (action_id == "trash" || action_id == "spam") colors.danger else colors.text_primary,
+                                test_tag = "sel_action_$action_id",
+                            )
+                        }
                         bottom_select_action(
-                            icon = TablerIcons.Archive,
-                            label = stringResource(R.string.archive_action),
+                            icon = TablerIcons.Dots,
+                            label = stringResource(R.string.more_actions),
                             enabled = enabled,
-                            onClick = on_archive,
-                            test_tag = "archive_selected",
-                        )
-                        bottom_select_action(
-                            icon = TablerIcons.Ban,
-                            label = stringResource(R.string.report_spam),
-                            enabled = enabled,
-                            onClick = on_mark_spam,
-                        )
-                        bottom_select_action(
-                            icon = TablerIcons.Trash,
-                            label = stringResource(R.string.delete_action),
-                            enabled = enabled,
-                            onClick = on_delete,
-                            tint = colors.danger,
-                            test_tag = "delete",
+                            onClick = on_more,
+                            test_tag = "sel_action_more",
                         )
                     }
                 }
@@ -1468,6 +1611,77 @@ private fun bottom_select_action(
             fontSize = 11.sp,
             fontWeight = FontWeight.Medium,
             maxLines = 1,
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun selection_overflow_sheet(
+    on_close: () -> Unit,
+    on_action: (String) -> Unit,
+    on_customize: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val state = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    androidx.compose.material3.ModalBottomSheet(
+        onDismissRequest = on_close,
+        sheetState = state,
+        containerColor = colors.bg_card,
+        tonalElevation = 0.dp,
+        dragHandle = { org.astermail.android.design.components.AsterDragHandle() },
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(top = AsterSpacing.xs),
+        ) {
+            overflow_sheet_row("star", TablerIcons.Star, stringResource(R.string.star), colors.text_primary) { on_action("star") }
+            overflow_sheet_row("read", TablerIcons.MailOpened, stringResource(R.string.mark_as_read), colors.text_primary) { on_action("read") }
+            overflow_sheet_row("unread", TablerIcons.Mail, stringResource(R.string.mark_as_unread), colors.text_primary) { on_action("unread") }
+            overflow_sheet_row("archive", TablerIcons.Archive, stringResource(R.string.archive_action), colors.text_primary) { on_action("archive") }
+            overflow_sheet_row("snooze", TablerIcons.Clock, stringResource(R.string.snooze), colors.text_primary) { on_action("snooze") }
+            overflow_sheet_row("folder", TablerIcons.Folder, stringResource(R.string.move_to_folder), colors.text_primary) { on_action("folder") }
+            overflow_sheet_row("label", TablerIcons.Tag, stringResource(R.string.add_label), colors.text_primary) { on_action("label") }
+            AsterDivider()
+            overflow_sheet_row("trash", TablerIcons.Trash, stringResource(R.string.delete_action), colors.danger) { on_action("trash") }
+            overflow_sheet_row("spam", TablerIcons.Ban, stringResource(R.string.report_spam), colors.danger) { on_action("spam") }
+            AsterDivider()
+            overflow_sheet_row("customize", TablerIcons.Settings, stringResource(R.string.customize_toolbar), colors.text_secondary, on_customize)
+            Spacer(Modifier.height(AsterSpacing.md))
+        }
+    }
+}
+
+@Composable
+private fun overflow_sheet_row(
+    action_id: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    tint: Color,
+    on_click: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = on_click)
+            .padding(horizontal = AsterSpacing.xl, vertical = 14.dp)
+            .testTag("sel_overflow_$action_id"),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(20.dp),
+        )
+        Spacer(Modifier.width(AsterSpacing.md))
+        Text(
+            text = label,
+            color = tint,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Medium,
         )
     }
 }

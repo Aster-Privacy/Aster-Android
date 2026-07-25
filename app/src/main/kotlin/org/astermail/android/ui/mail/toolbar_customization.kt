@@ -48,23 +48,54 @@ val toolbar_action_catalog: List<ToolbarAction> = listOf(
     ToolbarAction("forward", R.string.forward, TablerIcons.MailForward),
 )
 
+val selection_toolbar_action_catalog: List<ToolbarAction> = listOf(
+    ToolbarAction("trash", R.string.delete_action, TablerIcons.Trash),
+    ToolbarAction("folder", R.string.move_to_folder, TablerIcons.Folder),
+    ToolbarAction("label", R.string.add_label, TablerIcons.Tag),
+    ToolbarAction("read", R.string.mark_read_action, TablerIcons.MailOpened),
+    ToolbarAction("unread", R.string.mark_as_unread, TablerIcons.Mail),
+    ToolbarAction("archive", R.string.archive_action, TablerIcons.Archive),
+    ToolbarAction("star", R.string.star, TablerIcons.Star),
+    ToolbarAction("snooze", R.string.snooze, TablerIcons.Clock),
+    ToolbarAction("spam", R.string.report_spam, TablerIcons.Ban),
+)
+
 private const val prefs_name = "aster_toolbar"
 private const val key_actions = "actions"
-private const val default_actions = "reply,archive,trash,folder"
+private const val key_selection_actions = "selection_actions"
+private const val default_actions = "read,trash,folder,label"
+private const val selection_default_actions = "trash,folder,label,read"
 const val toolbar_slot_count = 4
+const val selection_toolbar_slot_count = 4
 
-fun parse_toolbar_actions(raw: String?): List<String> {
-    val source = if (raw.isNullOrBlank()) default_actions else raw
+private fun parse_actions(
+    raw: String?,
+    defaults: String,
+    catalog: List<ToolbarAction>,
+    slot_count: Int,
+): List<String> {
+    val source = if (raw.isNullOrBlank()) defaults else raw
     val parsed = source.split(",").map { it.trim() }.filter { it.isNotEmpty() }
-    val valid_ids = toolbar_action_catalog.map { it.id }.toSet()
+    val valid_ids = catalog.map { it.id }.toSet()
     val cleaned = parsed.filter { it in valid_ids }.distinct()
-    val fallback = default_actions.split(",")
-    return (cleaned + fallback.filter { it !in cleaned }).take(toolbar_slot_count)
+    val fallback = defaults.split(",")
+    return (cleaned + fallback.filter { it !in cleaned }).take(slot_count)
 }
+
+fun parse_toolbar_actions(raw: String?): List<String> =
+    parse_actions(raw, default_actions, toolbar_action_catalog, toolbar_slot_count)
+
+fun parse_selection_toolbar_actions(raw: String?): List<String> =
+    parse_actions(raw, selection_default_actions, selection_toolbar_action_catalog, selection_toolbar_slot_count)
 
 fun load_toolbar_actions(context: Context): List<String> {
     val prefs = context.getSharedPreferences(prefs_name, Context.MODE_PRIVATE)
     return parse_toolbar_actions(prefs.getString(key_actions, null))
+}
+
+fun load_selection_toolbar_actions(context: Context): List<String> {
+    val prefs = context.getSharedPreferences(prefs_name, Context.MODE_PRIVATE)
+    return parse_selection_toolbar_actions(prefs.getString(key_selection_actions, null))
 }
 
 fun cache_toolbar_actions(context: Context, ids: List<String>) {
@@ -72,7 +103,12 @@ fun cache_toolbar_actions(context: Context, ids: List<String>) {
     prefs.edit().putString(key_actions, ids.joinToString(",")).apply()
 }
 
-@Deprecated("Use SettingsViewModel.save_preferences to persist e2e; this only writes the local cache.")
-fun save_toolbar_actions(context: Context, ids: List<String>) = cache_toolbar_actions(context, ids)
+fun cache_selection_toolbar_actions(context: Context, ids: List<String>) {
+    val prefs = context.getSharedPreferences(prefs_name, Context.MODE_PRIVATE)
+    prefs.edit().putString(key_selection_actions, ids.joinToString(",")).apply()
+}
 
 fun toolbar_action_by_id(id: String): ToolbarAction? = toolbar_action_catalog.find { it.id == id }
+
+fun selection_toolbar_action_by_id(id: String): ToolbarAction? =
+    selection_toolbar_action_catalog.find { it.id == id }

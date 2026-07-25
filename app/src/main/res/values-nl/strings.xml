@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="app_name">Aster Mail</string>
 
     <string name="save">Opslaan</string>
@@ -1378,4 +1378,17 @@
     <string name="translation_translated">Vertaald vanuit %1$s op je apparaat</string>
     <string name="translation_show_original">Origineel tonen</string>
     <string name="translation_failed">Vertalen mislukt</string>
+    <string name="customize_toolbar">Werkbalk aanpassen</string>
+    <string name="customize_toolbar_subtitle">Kies welke acties in de onderste balk verschijnen bij het lezen of selecteren van e-mail.</string>
+    <string name="reading_toolbar">E-mail lezen</string>
+    <string name="selection_toolbar">E-mail selecteren</string>
+    <string name="toolbar_slots">Werkbalkposities</string>
+    <string name="choose_action">Kies een actie</string>
+    <string name="change">Wijzigen</string>
+    <string name="unset">Niet ingesteld</string>
+    <string name="more_actions">Meer</string>
+    <string name="marked_unread_count">%d bericht(en) als ongelezen gemarkeerd</string>
+    <string name="starred_count">%d gesprek(ken) met ster gemarkeerd</string>
+    <string name="unstarred_count">Ster verwijderd van %d gesprek(ken)</string>
+    <string name="failed_to_update_selection">Kan sommige gesprekken niet bijwerken</string>
 </resources>
