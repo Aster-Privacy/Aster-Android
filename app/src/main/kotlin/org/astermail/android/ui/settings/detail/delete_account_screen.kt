@@ -37,7 +37,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.sp
@@ -49,6 +48,7 @@ import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.settings.DeleteAccountViewModel
+import org.astermail.android.settings.is_valid_totp_or_backup_code
 
 @Composable
 fun DeleteAccountScreen(
@@ -94,12 +94,15 @@ fun DeleteAccountScreen(
         )
         v_gap(AsterSpacing.md)
         AsterTextField(
-            label = stringResource(R.string.totp_code_optional),
+            label = if (state.totp_enabled) stringResource(R.string.totp_code_required_label) else stringResource(R.string.totp_code_optional),
             value = state.totp_code,
             onValueChange = view_model::set_totp_code,
             enabled = !state.is_submitting,
             singleLine = true,
-            keyboard_options = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+            keyboard_options = KeyboardOptions(
+                capitalization = KeyboardCapitalization.Characters,
+                autoCorrectEnabled = false,
+            ),
         )
         v_gap(AsterSpacing.md)
         AsterTextField(
@@ -123,7 +126,8 @@ fun DeleteAccountScreen(
         val required_phrase = stringResource(R.string.delete_account_confirm_word)
         val can_submit = !state.is_submitting &&
             state.password.isNotBlank() &&
-            state.confirm_phrase.trim() == required_phrase
+            state.confirm_phrase.trim() == required_phrase &&
+            (!state.totp_enabled || is_valid_totp_or_backup_code(state.totp_code.trim()))
         AsterButton(
             label = if (state.is_submitting) stringResource(R.string.deleting_account) else stringResource(R.string.delete_account_button),
             onClick = { view_model.submit() },

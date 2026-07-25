@@ -55,6 +55,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.res.stringResource
@@ -277,9 +278,12 @@ private fun disable_panel(state: org.astermail.android.twofactor.TwoFactorUiStat
     AsterTextField(
         value = state.code_input,
         onValueChange = { vm.update_code(it) },
-        label = stringResource(R.string.authenticator_code),
+        label = stringResource(R.string.totp_code_required_label),
         placeholder = stringResource(R.string.code_placeholder),
-        keyboard_options = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+        keyboard_options = KeyboardOptions(
+            capitalization = KeyboardCapitalization.Characters,
+            autoCorrectEnabled = false,
+        ),
     )
     v_gap(AsterSpacing.lg)
     AsterDestructiveButton(

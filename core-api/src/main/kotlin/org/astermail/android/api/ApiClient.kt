@@ -352,7 +352,9 @@ class ApiClient(
         }
         return when (code) {
             400 -> ApiError.ValidationError(parse_validation_messages(body).ifEmpty { listOf(detail.ifBlank { "bad request" }) })
-            401 -> ApiError.UnauthorizedError.also { AuthEventBus.emit_unauthorized() }
+            401 -> ApiError.UnauthorizedError.also {
+                if (server_code != "INVALID_CREDENTIALS") AuthEventBus.emit_unauthorized()
+            }
             403 -> ApiError.ForbiddenError(detail.ifBlank { "forbidden" })
             404 -> ApiError.NotFoundError
             413 -> ApiError.StorageQuotaExceeded(detail.ifBlank { "storage full" })

@@ -114,11 +114,14 @@ class TwoFactorViewModel @Inject constructor(
         }
     }
 
+    private fun is_six_digit_code(code: String): Boolean =
+        code.length == 6 && code.all { it.isDigit() }
+
     fun verify_setup() {
         val s = _state.value
         if (s.is_busy) return
         val token = s.setup_token ?: return
-        if (s.code_input.length < 6) {
+        if (!is_six_digit_code(s.code_input.trim())) {
             _state.value = s.copy(error = context.getString(R.string.enter_six_digit_code))
             return
         }
@@ -162,8 +165,8 @@ class TwoFactorViewModel @Inject constructor(
             _state.value = s.copy(error = context.getString(R.string.enter_account_password))
             return
         }
-        if (s.code_input.length < 6) {
-            _state.value = s.copy(error = context.getString(R.string.enter_six_digit_code))
+        if (!org.astermail.android.settings.is_valid_totp_or_backup_code(s.code_input.trim())) {
+            _state.value = s.copy(error = context.getString(R.string.totp_code_required_error))
             return
         }
         viewModelScope.launch {
@@ -211,7 +214,7 @@ class TwoFactorViewModel @Inject constructor(
     fun confirm_regenerate() {
         val s = _state.value
         if (s.is_busy) return
-        if (s.code_input.length < 6) {
+        if (!is_six_digit_code(s.code_input.trim())) {
             _state.value = s.copy(error = context.getString(R.string.enter_six_digit_code))
             return
         }
@@ -238,8 +241,8 @@ class TwoFactorViewModel @Inject constructor(
     }
 
     fun update_code(value: String) {
-        val digits = value.filter { it.isDigit() }.take(8)
-        _state.value = _state.value.copy(code_input = digits, error = null)
+        val cleaned = value.uppercase().filter { it.isLetterOrDigit() || it == '-' }.take(14)
+        _state.value = _state.value.copy(code_input = cleaned, error = null)
     }
 
     fun update_password(value: String) {
@@ -267,6 +270,9 @@ class TwoFactorViewModel @Inject constructor(
         load_status()
     }
 
-    private fun readable(t: Throwable): String =
-        t.message?.takeIf { it.isNotBlank() } ?: context.getString(R.string.something_went_wrong)
+    private fun readable(t: Throwable): String = when (t) {
+        is org.astermail.android.api.ApiError.UnauthorizedError ->
+            context.getString(R.string.error_invalid_credentials)
+        else -> t.message?.takeIf { it.isNotBlank() } ?: context.getString(R.string.something_went_wrong)
+    }
 }

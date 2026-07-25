@@ -1519,6 +1519,8 @@
     <string name="failed_delete_account">Failed to delete account</string>
     <string name="delete_account_grace_note">Deletion is scheduled 30 days out. Sign in again before then to cancel.</string>
     <string name="totp_code_optional">Two-factor code (if enabled)</string>
+    <string name="totp_code_required_label">Authenticator or backup code</string>
+    <string name="totp_code_required_error">Enter the 6-digit code from your authenticator app, or one of your backup codes</string>
     <string name="enter_account_password">Enter your account password</string>
     <string name="something_went_wrong">Something went wrong</string>
     <string name="preferences_locked_retry">Couldn\'t unlock your settings just now. Showing defaults, pull back and reopen to retry.</string>

@@ -802,8 +802,13 @@ class AuthRepository @Inject constructor(
         _is_signed_in.value = false
     }
 
-    fun derive_password_hash_b64(password: String): String? {
-        val salt = session_key_store.get_password_salt() ?: return null
+    suspend fun derive_password_hash_b64(password: String): String? {
+        val server_salt = session_key_store.get_user_email()?.let { email ->
+            runCatching {
+                base64_decode(auth_api.get_user_salt(CryptoNative.hash_email(email)).salt)
+            }.getOrNull()
+        }
+        val salt = server_salt ?: session_key_store.get_password_salt() ?: return null
         val password_bytes = password.toByteArray(Charsets.UTF_8)
         val hash = CryptoNative.derive_pbkdf2_hash(password_bytes, salt, pbkdf2_iterations)
         password_bytes.fill(0)
