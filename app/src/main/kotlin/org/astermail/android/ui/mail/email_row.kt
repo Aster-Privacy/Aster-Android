@@ -57,6 +57,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -151,6 +153,10 @@ fun EmailRow(
             )
             Spacer(Modifier.height(2.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
+                if (is_unread) {
+                    unread_dot()
+                    Spacer(Modifier.width(6.dp))
+                }
                 Text(
                     text = email.preview,
                     style = MaterialTheme.typography.bodySmall,
@@ -204,6 +210,19 @@ fun EmailRow(
             }
         }
     }
+}
+
+@Composable
+private fun unread_dot(modifier: Modifier = Modifier) {
+    val colors = AsterMaterial.colors
+    val label = stringResource(R.string.filter_unread)
+    Box(
+        modifier = modifier
+            .size(7.dp)
+            .background(colors.accent_blue, CircleShape)
+            .semantics { contentDescription = label }
+            .testTag("unread_dot"),
+    )
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -362,6 +381,10 @@ fun ThreadInboxRow(
             )
             Spacer(Modifier.height(2.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
+                if (is_unread) {
+                    unread_dot()
+                    Spacer(Modifier.width(6.dp))
+                }
                 Text(
                     text = email.preview,
                     style = MaterialTheme.typography.bodySmall,
