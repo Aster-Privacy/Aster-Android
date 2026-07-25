@@ -41,6 +41,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -463,27 +466,47 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             _state.value = _state.value.copy(is_loading = true, error = null)
             try {
-                val page_size = 100
+                val page_size = 1000
                 val max_pages = 50
+                val first_page = settings_api.list_aliases(limit = page_size, offset = 0)
+                val max_aliases = first_page.max_aliases
                 val all_aliases = mutableListOf<AliasInfo>()
-                var offset = 0
-                var max_aliases = 0
-                var page = 0
-                while (page < max_pages) {
-                    val response = settings_api.list_aliases(limit = page_size, offset = offset)
-                    all_aliases.addAll(response.aliases)
-                    max_aliases = response.max_aliases
-                    if (!response.has_more || response.aliases.isEmpty()) break
-                    offset += response.aliases.size
-                    page++
-                }
-                var decrypted = withContext(default_dispatcher) {
-                    all_aliases.map { decrypt_alias(it) }
-                }
-                if (decrypted.any { it.decryption_failed } && auth_repository.try_refresh_vault_keys()) {
-                    decrypted = withContext(default_dispatcher) {
-                        all_aliases.map { decrypt_alias(it) }
+                all_aliases.addAll(first_page.aliases)
+                if (first_page.has_more && first_page.aliases.isNotEmpty()) {
+                    val effective_page_size = first_page.aliases.size
+                    val remaining = (first_page.total - effective_page_size).coerceAtLeast(0)
+                    val remaining_pages = ((remaining + effective_page_size - 1) / effective_page_size)
+                        .toInt()
+                        .coerceAtMost(max_pages - 1)
+                    val later_pages = coroutineScope {
+                        (1..remaining_pages).map { page ->
+                            async {
+                                settings_api.list_aliases(
+                                    limit = effective_page_size,
+                                    offset = effective_page_size * page,
+                                )
+                            }
+                        }.awaitAll()
                     }
+                    val seen_ids = all_aliases.mapTo(mutableSetOf()) { it.id }
+                    later_pages.forEach { response ->
+                        response.aliases.forEach { alias ->
+                            if (seen_ids.add(alias.id)) all_aliases.add(alias)
+                        }
+                    }
+                }
+                val decrypt_all: suspend () -> List<AliasInfo> = {
+                    withContext(default_dispatcher) {
+                        coroutineScope {
+                            all_aliases.chunked(250).map { chunk ->
+                                async { chunk.map { decrypt_alias(it) } }
+                            }.awaitAll().flatten()
+                        }
+                    }
+                }
+                var decrypted = decrypt_all()
+                if (decrypted.any { it.decryption_failed } && auth_repository.try_refresh_vault_keys()) {
+                    decrypted = decrypt_all()
                 }
                 _state.value = _state.value.copy(
                     aliases = decrypted,
