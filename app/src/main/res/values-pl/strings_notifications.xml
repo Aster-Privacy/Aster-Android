@@ -11,4 +11,6 @@
     <string name="notif_login_alert_revoked_body">Nowa sesja została wylogowana. Rozważ zmianę hasła w ustawieniach bezpieczeństwa.</string>
     <string name="notif_login_alert_revoke_failed">Nie udało się wylogować sesji</string>
     <string name="notif_login_alert_revoke_failed_body">Otwórz aplikację, aby sprawdzić aktywne sesje.</string>
+    <string name="mute_folder_notifications">Wycisz powiadomienia folderu</string>
+    <string name="unmute_folder_notifications">Wyłącz wyciszenie powiadomień folderu</string>
 </resources>

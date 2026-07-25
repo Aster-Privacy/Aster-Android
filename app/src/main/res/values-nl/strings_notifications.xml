@@ -11,4 +11,6 @@
     <string name="notif_login_alert_revoked_body">De nieuwe sessie is afgemeld. Overweeg je wachtwoord te wijzigen in de beveiligingsinstellingen.</string>
     <string name="notif_login_alert_revoke_failed">Kan de sessie niet afmelden</string>
     <string name="notif_login_alert_revoke_failed_body">Open de app om je actieve sessies te bekijken.</string>
+    <string name="mute_folder_notifications">Mapmeldingen dempen</string>
+    <string name="unmute_folder_notifications">Dempen van mapmeldingen opheffen</string>
 </resources>

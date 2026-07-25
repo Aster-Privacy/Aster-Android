@@ -83,6 +83,9 @@ class AsterPushService : PushService() {
             return PushResult.Shown
         }
         if (type == "wake") return PushResult.NeedsFetch
+        if (MailPollingWorker.muted_folder_tokens(context).isNotEmpty()) {
+            return PushResult.NeedsFetch
+        }
         val item_id = obj.optString("item_id", "")
         if (item_id.isNotBlank() && MailPollingWorker.was_item_notified(context, item_id)) {
             return PushResult.Ignore

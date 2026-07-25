@@ -894,9 +894,13 @@ fun FoldersScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
     val state by vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
 
-    LaunchedEffect(Unit) { vm.load_labels(folder_type = "folder") }
+    LaunchedEffect(Unit) {
+        vm.load_labels(folder_type = "folder")
+        vm.load_preferences()
+    }
 
     val folder_nodes = flatten_folder_tree(state.labels)
+    val muted_tokens = state.preferences?.muted_folder_tokens ?: emptyList()
 
     detail_scaffold(title = stringResource(R.string.folders), on_back = on_back) {
         if (state.is_loading && folder_nodes.isEmpty()) {
@@ -936,6 +940,29 @@ fun FoldersScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                                 icon = TablerIcons.Folder,
                                 on_click = {},
                                 trailing = {
+                                    if (!f.is_system) {
+                                        val is_muted = f.label_token in muted_tokens
+                                        Box(
+                                            modifier = Modifier
+                                                .size(32.dp)
+                                                .clip(CircleShape)
+                                                .clickable { vm.toggle_folder_notifications(f.label_token) },
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            androidx.compose.material3.Icon(
+                                                imageVector = if (is_muted) TablerIcons.BellOff else TablerIcons.Bell,
+                                                contentDescription = stringResource(
+                                                    if (is_muted) {
+                                                        R.string.unmute_folder_notifications
+                                                    } else {
+                                                        R.string.mute_folder_notifications
+                                                    },
+                                                ),
+                                                tint = if (is_muted) colors.text_muted else colors.text_secondary,
+                                                modifier = Modifier.size(18.dp),
+                                            )
+                                        }
+                                    }
                                     Box(
                                         modifier = Modifier
                                             .size(32.dp)

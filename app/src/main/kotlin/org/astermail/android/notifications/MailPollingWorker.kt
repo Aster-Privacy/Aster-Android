@@ -124,6 +124,7 @@ class MailPollingWorker(
         client = ApiClient(
             base_url = BuildConfig.API_BASE_URL,
             token_provider = token_provider,
+            allow_cleartext_for_test = BuildConfig.API_BASE_URL.startsWith("http://"),
         )
         try {
             return poll_and_notify(context, prefs, MailApiImpl(client))
@@ -222,7 +223,9 @@ class MailPollingWorker(
                     }.getOrNull()
                 } catch (_: Throwable) { null }
                 if (folders != null) fetched_any_page = true
+                val muted = muted_folder_tokens(context)
                 for (folder in folders.orEmpty()) {
+                    if (folder.label_token in muted) continue
                     val folder_page = try {
                         kotlinx.coroutines.withTimeout(20_000L) {
                             repo.fetch_inbox(limit = arrived.coerceIn(1, 5), label_token = folder.label_token)
@@ -290,6 +293,7 @@ class MailPollingWorker(
         private const val NOTIFIED_ITEM_IDS_MAX = 100
         private const val KEY_PRIVATE_NOTIFICATIONS = "private_notifications"
         private const val KEY_NOTIFY_NEW_EMAIL = "notify_new_email"
+        private const val KEY_MUTED_FOLDER_TOKENS = "muted_folder_tokens"
         private const val KEY_QUIET_HOURS_ENABLED = "quiet_hours_enabled"
         private const val KEY_QUIET_HOURS_START = "quiet_hours_start"
         private const val KEY_QUIET_HOURS_END = "quiet_hours_end"
@@ -355,6 +359,35 @@ class MailPollingWorker(
         fun is_notify_new_email(context: Context): Boolean {
             return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                 .getBoolean(KEY_NOTIFY_NEW_EMAIL, true)
+        }
+
+        fun muted_folder_tokens(context: Context): Set<String> {
+            val stored = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .getString(KEY_MUTED_FOLDER_TOKENS, "") ?: ""
+            return stored.split('\n').filter { it.isNotBlank() }.toSet()
+        }
+
+        fun set_muted_folder_tokens(context: Context, tokens: Collection<String>) {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .putString(
+                    KEY_MUTED_FOLDER_TOKENS,
+                    tokens.filter { it.isNotBlank() }.distinct().joinToString("\n"),
+                )
+                .apply()
+        }
+
+        fun is_item_in_muted_folder(
+            item: org.astermail.android.mail.InboxItem,
+            muted: Set<String>,
+        ): Boolean {
+            if (muted.isEmpty()) return false
+            val tokens = (
+                item.labels +
+                    listOfNotNull(item.raw_item.folder_token) +
+                    (item.raw_item.folders?.mapNotNull { it.folder_token } ?: emptyList())
+                ).distinct()
+            return tokens.any { it in muted }
         }
 
         fun set_notify_new_email(context: Context, enabled: Boolean) {
@@ -582,7 +615,12 @@ class MailPollingWorker(
             context: Context,
             items: List<org.astermail.android.mail.InboxItem>,
         ): org.astermail.android.mail.InboxItem? {
-            return items.firstOrNull { !it.is_read && !was_item_notified(context, it.id) }
+            val muted = muted_folder_tokens(context)
+            return items.firstOrNull {
+                !it.is_read &&
+                    !was_item_notified(context, it.id) &&
+                    !is_item_in_muted_folder(it, muted)
+            }
         }
 
         fun was_item_notified(context: Context, item_id: String): Boolean {

@@ -11,4 +11,6 @@
     <string name="notif_login_alert_revoked_body">新しいセッションをサインアウトしました。セキュリティ設定でパスワードの変更をご検討ください。</string>
     <string name="notif_login_alert_revoke_failed">セッションをサインアウトできませんでした</string>
     <string name="notif_login_alert_revoke_failed_body">アプリを開いてアクティブなセッションを確認してください。</string>
+    <string name="mute_folder_notifications">フォルダーの通知をミュート</string>
+    <string name="unmute_folder_notifications">フォルダーの通知のミュートを解除</string>
 </resources>

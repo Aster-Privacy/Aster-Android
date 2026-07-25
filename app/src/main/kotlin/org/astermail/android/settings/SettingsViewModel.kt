@@ -1705,6 +1705,15 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun toggle_folder_notifications(label_token: String) {
+        if (label_token.isBlank()) return
+        val base = _state.value.preferences ?: UserPreferences()
+        val muted = base.muted_folder_tokens
+        val next = if (label_token in muted) muted - label_token else muted + label_token
+        org.astermail.android.notifications.MailPollingWorker.set_muted_folder_tokens(context, next)
+        save_preferences(base.copy(muted_folder_tokens = next))
+    }
+
     fun load_tags(force: Boolean = true) {
         val now = System.currentTimeMillis()
         if (!force && last_tags_load_ms > 0L && now - last_tags_load_ms < TAGS_TTL_MS) return
@@ -1899,6 +1908,8 @@ class SettingsViewModel @Inject constructor(
                     if (decrypted != null) {
                         prefs_load_succeeded = true
                         last_synced_preferences = decrypted
+                        org.astermail.android.notifications.MailPollingWorker
+                            .set_muted_folder_tokens(context, decrypted.muted_folder_tokens)
                         _state.value = _state.value.copy(
                             preferences = decrypted,
                             preferences_authoritative = true,
@@ -1917,6 +1928,8 @@ class SettingsViewModel @Inject constructor(
                     val prefs = load_plaintext_preferences()
                     prefs_load_succeeded = true
                     last_synced_preferences = prefs
+                    org.astermail.android.notifications.MailPollingWorker
+                        .set_muted_folder_tokens(context, prefs.muted_folder_tokens)
                     _state.value = _state.value.copy(
                         preferences = prefs,
                         preferences_authoritative = true,
@@ -2200,6 +2213,8 @@ class SettingsViewModel @Inject constructor(
                     preferences_api.save_encrypted_preferences(encrypt_preferences_payload(payload, identity_key))
                     last_preferences_raw_json = payload
                     last_synced_preferences = to_save
+                    org.astermail.android.notifications.MailPollingWorker
+                        .set_muted_folder_tokens(context, to_save.muted_folder_tokens)
                     _state.value = _state.value.copy(preferences = to_save, save_status = SaveStatus.SAVED)
                 } else if (account_uses_encrypted_prefs) {
                     _state.value = _state.value.copy(

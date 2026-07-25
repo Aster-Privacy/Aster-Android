@@ -11,4 +11,6 @@
     <string name="notif_login_alert_revoked_body">새 세션이 로그아웃되었습니다. 보안 설정에서 비밀번호 변경을 고려하세요.</string>
     <string name="notif_login_alert_revoke_failed">세션을 로그아웃할 수 없습니다</string>
     <string name="notif_login_alert_revoke_failed_body">앱을 열어 활성 세션을 확인하세요.</string>
+    <string name="mute_folder_notifications">폴더 알림 음소거</string>
+    <string name="unmute_folder_notifications">폴더 알림 음소거 해제</string>
 </resources>

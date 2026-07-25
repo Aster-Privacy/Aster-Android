@@ -11,4 +11,6 @@
     <string name="notif_login_alert_revoked_body">La nuova sessione è stata disconnessa. Valuta di cambiare la password nelle impostazioni di sicurezza.</string>
     <string name="notif_login_alert_revoke_failed">Impossibile disconnettere la sessione</string>
     <string name="notif_login_alert_revoke_failed_body">Apri l\'app per controllare le sessioni attive.</string>
+    <string name="mute_folder_notifications">Silenzia le notifiche della cartella</string>
+    <string name="unmute_folder_notifications">Riattiva le notifiche della cartella</string>
 </resources>

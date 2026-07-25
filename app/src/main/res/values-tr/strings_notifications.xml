@@ -11,4 +11,6 @@
     <string name="notif_login_alert_revoked_body">Yeni oturum kapatıldı. Güvenlik ayarlarından parolanızı değiştirmeyi düşünün.</string>
     <string name="notif_login_alert_revoke_failed">Oturum kapatılamadı</string>
     <string name="notif_login_alert_revoke_failed_body">Etkin oturumlarınızı gözden geçirmek için uygulamayı açın.</string>
+    <string name="mute_folder_notifications">Klasör bildirimlerini sessize al</string>
+    <string name="unmute_folder_notifications">Klasör bildirimlerinin sesini aç</string>
 </resources>

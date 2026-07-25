@@ -11,4 +11,6 @@
     <string name="notif_login_alert_revoked_body">Новая сессия была завершена. Рекомендуем сменить пароль в настройках безопасности.</string>
     <string name="notif_login_alert_revoke_failed">Не удалось завершить сессию</string>
     <string name="notif_login_alert_revoke_failed_body">Откройте приложение, чтобы проверить активные сессии.</string>
+    <string name="mute_folder_notifications">Отключить уведомления папки</string>
+    <string name="unmute_folder_notifications">Включить уведомления папки</string>
 </resources>

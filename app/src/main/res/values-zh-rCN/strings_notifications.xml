@@ -11,4 +11,6 @@
     <string name="notif_login_alert_revoked_body">新会话已退出。建议在安全设置中修改密码。</string>
     <string name="notif_login_alert_revoke_failed">无法退出该会话</string>
     <string name="notif_login_alert_revoke_failed_body">请打开应用查看您的活动会话。</string>
+    <string name="mute_folder_notifications">静音文件夹通知</string>
+    <string name="unmute_folder_notifications">取消静音文件夹通知</string>
 </resources>

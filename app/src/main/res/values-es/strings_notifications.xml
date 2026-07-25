@@ -11,4 +11,6 @@
     <string name="notif_login_alert_revoked_body">La nueva sesión se cerró. Considera cambiar tu contraseña en los ajustes de seguridad.</string>
     <string name="notif_login_alert_revoke_failed">No se pudo cerrar la sesión</string>
     <string name="notif_login_alert_revoke_failed_body">Abre la aplicación para revisar tus sesiones activas.</string>
+    <string name="mute_folder_notifications">Silenciar notificaciones de la carpeta</string>
+    <string name="unmute_folder_notifications">Activar notificaciones de la carpeta</string>
 </resources>

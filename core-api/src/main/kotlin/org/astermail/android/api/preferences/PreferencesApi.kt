@@ -115,6 +115,7 @@ data class UserPreferences(
     val storage_format: String = "aster",
     val warn_external_recipients: Boolean = true,
     val show_aster_branding: Boolean = true,
+    val muted_folder_tokens: List<String> = emptyList(),
 )
 
 @Serializable

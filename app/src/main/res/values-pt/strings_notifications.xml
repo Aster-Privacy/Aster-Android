@@ -11,4 +11,6 @@
     <string name="notif_login_alert_revoked_body">A nova sessão foi terminada. Considere alterar a sua palavra-passe nas definições de segurança.</string>
     <string name="notif_login_alert_revoke_failed">Não foi possível terminar a sessão</string>
     <string name="notif_login_alert_revoke_failed_body">Abra a aplicação para rever as suas sessões ativas.</string>
+    <string name="mute_folder_notifications">Silenciar notificações da pasta</string>
+    <string name="unmute_folder_notifications">Reativar notificações da pasta</string>
 </resources>

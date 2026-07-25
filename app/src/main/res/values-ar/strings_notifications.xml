@@ -11,4 +11,6 @@
     <string name="notif_login_alert_revoked_body">تم تسجيل خروج الجلسة الجديدة. ننصح بتغيير كلمة المرور من إعدادات الأمان.</string>
     <string name="notif_login_alert_revoke_failed">تعذر تسجيل خروج الجلسة</string>
     <string name="notif_login_alert_revoke_failed_body">افتح التطبيق لمراجعة جلساتك النشطة.</string>
+    <string name="mute_folder_notifications">كتم إشعارات المجلد</string>
+    <string name="unmute_folder_notifications">إلغاء كتم إشعارات المجلد</string>
 </resources>

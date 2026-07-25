@@ -26,6 +26,10 @@ import org.astermail.android.notifications.MailPollingWorker
 
 class DebugNotificationReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        if (intent.getBooleanExtra("force_poll", false)) {
+            MailPollingWorker.enqueue_forced_notify(context)
+            return
+        }
         val sender = intent.getStringExtra("sender")
         val subject = intent.getStringExtra("subject")
         val preview = intent.getStringExtra("preview")

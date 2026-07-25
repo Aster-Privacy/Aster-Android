@@ -108,6 +108,7 @@ if (is_family) add(settings_row_item("family", R.string.settings_family, icon = 
             settings_row_item("behavior", R.string.settings_behavior, icon = TablerIcons.ArrowBackUp),
             settings_row_item("swipe_actions", R.string.settings_swipe_actions, icon = TablerIcons.ArrowsLeftRight),
             settings_row_item("mail_rules", R.string.mail_rules_title, icon = TablerIcons.Adjustments),
+            settings_row_item("folders", R.string.folders, icon = TablerIcons.Folder),
             settings_row_item("auto_forward", R.string.settings_auto_forward, icon = TablerIcons.MailForward),
             settings_row_item("vacation_reply", R.string.settings_vacation_reply, icon = TablerIcons.MailOpened),
         ),
