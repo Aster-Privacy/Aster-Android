@@ -232,14 +232,14 @@ fun AliasesScreen(
     if (show_create_alias) {
         create_alias_dialog(
             on_dismiss = { show_create_alias = false },
-            on_create = { local_part, domain, token ->
+            on_create = { local_part, domain, token, display_name ->
                 show_create_alias = false
                 scope.launch {
                     val domain_id = domain.domain_id
                     if (domain_id == null) {
-                        vm.create_alias_now(local_part, domain.domain_name, token)
+                        vm.create_alias_now(local_part, domain.domain_name, token, display_name)
                     } else {
-                        vm.create_domain_address_now(local_part, domain_id, domain.domain_name, token)
+                        vm.create_domain_address_now(local_part, domain_id, domain.domain_name, token, display_name)
                     }
                 }
             },
@@ -1711,7 +1711,7 @@ private data class AliasDomainOption(
 @Composable
 private fun create_alias_dialog(
     on_dismiss: () -> Unit,
-    on_create: (String, AliasDomainOption, String) -> Unit,
+    on_create: (String, AliasDomainOption, String, String?) -> Unit,
     vm: SettingsViewModel,
 ) {
     var local_part by remember { mutableStateOf("") }
@@ -1890,7 +1890,7 @@ private fun create_alias_dialog(
             TextButton(
                 onClick = {
                     val t = captcha_token
-                    if (can_create && t != null) on_create(local_part, selected_domain, t)
+                    if (can_create && t != null) on_create(local_part, selected_domain, t, display_name.trim().ifBlank { null })
                 },
                 enabled = can_create,
             ) {

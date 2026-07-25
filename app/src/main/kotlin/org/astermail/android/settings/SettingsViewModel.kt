@@ -644,7 +644,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun create_alias(local_part: String, domain: String, display_name: String? = null) {
-        viewModelScope.launch { create_alias_now(local_part, domain) }
+        viewModelScope.launch { create_alias_now(local_part, domain, display_name = display_name) }
     }
 
     fun toggle_alias_never_inbox(alias_id: String) {
@@ -952,11 +952,12 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    suspend fun create_alias_now(local_part: String, domain: String, captcha_token: String? = null): Boolean {
+    suspend fun create_alias_now(local_part: String, domain: String, captcha_token: String? = null, display_name: String? = null): Boolean {
         return try {
             val (enc_local, local_nonce) = encrypt_alias_field(local_part.lowercase())
             val addr_hash = compute_alias_address_hash(local_part.lowercase(), domain)
             val routing_hash = compute_routing_address_hash(local_part.lowercase(), domain)
+            val name_pair = display_name?.trim()?.takeIf { it.isNotBlank() }?.let { encrypt_alias_field(it) }
             settings_api.create_alias(
                 CreateAliasRequest(
                     encrypted_local_part = enc_local,
@@ -964,6 +965,8 @@ class SettingsViewModel @Inject constructor(
                     alias_address_hash = addr_hash,
                     routing_address_hash = routing_hash,
                     domain = domain,
+                    encrypted_display_name = name_pair?.first,
+                    display_name_nonce = name_pair?.second,
                     captcha_token = captcha_token,
                 )
             )
@@ -975,12 +978,13 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    suspend fun create_domain_address_now(local_part: String, domain_id: String, domain_name: String, captcha_token: String? = null): Boolean {
+    suspend fun create_domain_address_now(local_part: String, domain_id: String, domain_name: String, captcha_token: String? = null, display_name: String? = null): Boolean {
         return try {
             val norm = local_part.trim().lowercase()
             val (enc_local, local_nonce) = encrypt_alias_field(norm)
             val addr_hash = compute_domain_address_hash(norm, domain_name)
             val routing_hash = compute_domain_address_routing_hash(norm, domain_name)
+            val name_pair = display_name?.trim()?.takeIf { it.isNotBlank() }?.let { encrypt_alias_field(it) }
             settings_api.create_domain_address(
                 domain_id,
                 CreateDomainAddressRequest(
@@ -988,6 +992,8 @@ class SettingsViewModel @Inject constructor(
                     local_part_nonce = local_nonce,
                     local_part_hash = addr_hash,
                     address_routing_hash = routing_hash,
+                    encrypted_display_name = name_pair?.first,
+                    display_name_nonce = name_pair?.second,
                     captcha_token = captcha_token,
                 )
             )
