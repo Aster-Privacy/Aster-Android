@@ -21,9 +21,6 @@
 
 package org.astermail.android.notifications
 
-import android.content.Context
-import dagger.hilt.android.EntryPointAccessors
-import org.json.JSONObject
 import org.unifiedpush.android.connector.FailedReason
 import org.unifiedpush.android.connector.PushService
 import org.unifiedpush.android.connector.data.PushEndpoint
@@ -31,97 +28,13 @@ import org.unifiedpush.android.connector.data.PushMessage
 
 class AsterPushService : PushService() {
 
-    private enum class PushResult { Shown, NeedsFetch, Ignore }
-
     override fun onMessage(message: PushMessage, instance: String) {
-        val result = runCatching { handle_push(this, message) }.getOrDefault(PushResult.NeedsFetch)
+        val result = runCatching {
+            handle_push_payload(this, String(message.content, Charsets.UTF_8))
+        }.getOrDefault(PushResult.NeedsFetch)
         if (result == PushResult.NeedsFetch) {
             MailPollingWorker.enqueue_forced_notify(this)
         }
-    }
-
-    private fun handle_push(context: Context, message: PushMessage): PushResult {
-        val text = String(message.content, Charsets.UTF_8)
-        val obj = JSONObject(text)
-        val type = obj.optString("type")
-        if (type == "test") {
-            MailPollingWorker.show_generic(context, 1)
-            return PushResult.Shown
-        }
-        if (type == "login_alert") {
-            val session_id = obj.optString("session_id", "")
-            if (session_id.isBlank()) return PushResult.Ignore
-            LoginAlertNotifier.enqueue(
-                context = context,
-                session_id = session_id,
-                device = obj.optString("device", ""),
-                browser = obj.optString("browser", ""),
-                location = obj.optString("location", ""),
-                time = obj.optString("time", ""),
-            )
-            return PushResult.Shown
-        }
-        if (type != "new_mail" && type != "wake") return PushResult.Ignore
-        runCatching {
-            EntryPointAccessors.fromApplication(
-                context.applicationContext,
-                MailPollingWorker.MailRepositoryEntryPoint::class.java,
-            ).mail_repository().signal_new_mail()
-        }
-        if (!MailPollingWorker.is_notify_new_email(context)) return PushResult.Ignore
-        val entry = try {
-            EntryPointAccessors.fromApplication(
-                context.applicationContext,
-                MailPollingWorker.MailRepositoryEntryPoint::class.java,
-            )
-        } catch (_: Throwable) {
-            return PushResult.NeedsFetch
-        }
-        val app_lock_configured = runCatching { entry.app_lock_store().is_configured() }.getOrDefault(true)
-        if (org.astermail.android.security.LockdownStore.is_enabled(context) || app_lock_configured) {
-            MailPollingWorker.show_generic(context, 1)
-            return PushResult.Shown
-        }
-        if (type == "wake") return PushResult.NeedsFetch
-        if (MailPollingWorker.muted_folder_tokens(context).isNotEmpty()) {
-            return PushResult.NeedsFetch
-        }
-        val item_id = obj.optString("item_id", "")
-        if (item_id.isNotBlank() && MailPollingWorker.was_item_notified(context, item_id)) {
-            return PushResult.Ignore
-        }
-        val encrypted_envelope = obj.optString("encrypted_envelope", "").takeIf { it.isNotBlank() }
-            ?: return PushResult.NeedsFetch
-        val envelope_nonce = obj.optString("envelope_nonce", "").takeIf { it.isNotBlank() }
-        val repo = entry.mail_repository()
-        val envelope = repo.decrypt_envelope_public(encrypted_envelope, envelope_nonce, item_id.takeIf { it.isNotBlank() })
-            ?: return PushResult.NeedsFetch
-        val forwarding = org.astermail.android.ui.mail.resolve_forwarding_display(
-            envelope.from_email,
-            envelope.raw_headers,
-        )
-        val sender = forwarding?.display_sender_name
-            ?: envelope.from_name.takeIf { it.isNotBlank() }
-            ?: envelope.from_email
-        val subject = envelope.subject
-        if (sender.isBlank() || subject.isBlank()) return PushResult.NeedsFetch
-        val notification_id = if (item_id.isNotBlank()) {
-            MailPollingWorker.message_notification_id(item_id.hashCode())
-        } else {
-            MailPollingWorker.message_notification_id(System.currentTimeMillis().toInt())
-        }
-        if (item_id.isNotBlank()) {
-            MailPollingWorker.mark_item_notified(context, item_id)
-        }
-        MailPollingWorker.show_message(
-            context = context,
-            sender = sender,
-            subject = subject,
-            preview = envelope.body_text,
-            message_id = notification_id,
-            item_id = item_id,
-        )
-        return PushResult.Shown
     }
 
     override fun onNewEndpoint(endpoint: PushEndpoint, instance: String) {

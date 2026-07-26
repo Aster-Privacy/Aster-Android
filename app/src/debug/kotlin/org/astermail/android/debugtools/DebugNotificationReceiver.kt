@@ -30,6 +30,11 @@ class DebugNotificationReceiver : BroadcastReceiver() {
             MailPollingWorker.enqueue_forced_notify(context)
             return
         }
+        val push_json = intent.getStringExtra("push_json")
+        if (!push_json.isNullOrBlank()) {
+            org.astermail.android.notifications.handle_push_payload(context, push_json)
+            return
+        }
         val sender = intent.getStringExtra("sender")
         val subject = intent.getStringExtra("subject")
         val preview = intent.getStringExtra("preview")

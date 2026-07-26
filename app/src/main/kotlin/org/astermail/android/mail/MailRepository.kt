@@ -1106,6 +1106,9 @@ class MailRepository @Inject constructor(
         message_id: String? = null,
     ): DecryptedEnvelope? = try_decrypt_envelope(encrypted_envelope, envelope_nonce, message_id)
 
+    fun notification_preview(envelope: DecryptedEnvelope): String =
+        clean_preview(envelope.body_text, envelope.body_html)
+
     fun decrypt_item_for_export(item: MailItem): DecryptedEnvelope? =
         try_decrypt_envelope(item.encrypted_envelope, item.envelope_nonce, item.id)
 
@@ -1682,48 +1685,10 @@ class MailRepository @Inject constructor(
         return result
     }
 
-    private fun strip_html(html: String): String {
-        var text = html
-        text = text.replace(Regex("<style[^>]*>[\\s\\S]*?</style>", RegexOption.IGNORE_CASE), " ")
-        text = text.replace(Regex("<script[^>]*>[\\s\\S]*?</script>", RegexOption.IGNORE_CASE), " ")
-        text = text.replace(Regex("<head[^>]*>[\\s\\S]*?</head>", RegexOption.IGNORE_CASE), " ")
-        text = text.replace(Regex("<[^>]+>"), " ")
-        text = text.replace("&nbsp;", " ")
-        text = text.replace("&amp;", "&")
-        text = text.replace("&lt;", "<")
-        text = text.replace("&gt;", ">")
-        text = text.replace("&quot;", "\"")
-        text = text.replace("&#39;", "'")
-        text = text.replace("&apos;", "'")
-        text = text.replace("&mdash;", "-")
-        text = text.replace("&ndash;", "-")
-        text = text.replace("&hellip;", "...")
-        text = text.replace(Regex("&#(\\d+);")) { m ->
-            m.groupValues[1].toIntOrNull()?.let { code -> runCatching { String(Character.toChars(code)) }.getOrNull() } ?: " "
-        }
-        text = text.replace(Regex("&#x([0-9a-fA-F]+);")) { m ->
-            m.groupValues[1].toIntOrNull(16)?.let { code -> runCatching { String(Character.toChars(code)) }.getOrNull() } ?: " "
-        }
-        text = text.replace(Regex("&[a-zA-Z]+;"), " ")
-        text = text.replace(Regex("[\\u200B-\\u200F\\u202A-\\u202E\\u2060\\uFEFF\\u00AD\\u034F\\u115F\\u1160\\u17B4\\u17B5\\u180E\\u3164\\uFFA0]"), "")
-        text = text.replace(Regex("\\s+"), " ")
-        return text.trim()
-    }
+    private fun strip_html(html: String): String = strip_body_html(html)
 
-    private fun looks_like_ciphertext(text: String): Boolean = text.contains("-----BEGIN PGP") ||
-        text.contains(ASTER_SUBJECT_BUNDLE_PREFIX) ||
-        text.contains("\"double_ratchet_v1\"") ||
-        text.contains("\"double_ratchet_v2\"") ||
-        text.contains("ASTER_RATCHET_UNDECRYPTABLE")
-
-    private fun clean_preview(body_text: String, body_html: String?): String {
-        if (body_html != null && !looks_like_ciphertext(body_html)) {
-            val from_html = strip_html(body_html)
-            if (from_html.length > 4) return from_html.take(140)
-        }
-        if (looks_like_ciphertext(body_text)) return ""
-        return strip_html(body_text).take(140)
-    }
+    private fun clean_preview(body_text: String, body_html: String?): String =
+        clean_body_preview(body_text, body_html)
 
     private fun try_pgp_decrypt(ciphertext: String): String? {
         val identity_key = session_key_store.get_identity_key() ?: return null

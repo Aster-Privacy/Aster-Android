@@ -299,6 +299,8 @@ class MailPollingWorker(
         private const val KEY_QUIET_HOURS_END = "quiet_hours_end"
         private const val KEY_LAST_WORK_START_MS = "last_work_start_ms"
         private const val WORKER_IN_FLIGHT_GRACE_MS = 90_000L
+        private const val SENDER_MAX_LENGTH = 80
+        private const val SUBJECT_MAX_LENGTH = 120
 
         fun set_quiet_hours(context: Context, enabled: Boolean, start: String, end: String) {
             context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -534,14 +536,16 @@ class MailPollingWorker(
         ) {
             if (!can_post(context)) return
             val private_mode = is_private_notifications(context)
-            val one_line_subject = subject.replace(Regex("\\s+"), " ").trim()
+            val safe_sender = org.astermail.android.mail.safe_display_text(sender, SENDER_MAX_LENGTH)
+                .ifBlank { context.getString(R.string.app_name) }
+            val one_line_subject = org.astermail.android.mail.safe_display_text(subject, SUBJECT_MAX_LENGTH)
                 .ifBlank { context.getString(R.string.notif_new_message) }
-            val one_line_preview = preview.replace(Regex("\\s+"), " ").trim()
+            val one_line_preview = org.astermail.android.mail.safe_display_text(preview)
             val builder = base_builder(context)
                 .setWhen(System.currentTimeMillis())
                 .setShowWhen(true)
                 .setGroup(GROUP_KEY_NEW_MAIL)
-                .setContentTitle(sender)
+                .setContentTitle(safe_sender)
                 .setContentText(one_line_subject)
             if (item_id.isNotBlank()) {
                 val open_intent = Intent(context, MainActivity::class.java).apply {
@@ -557,7 +561,7 @@ class MailPollingWorker(
                     ),
                 )
             }
-            if (one_line_preview.isNotBlank()) {
+            if (one_line_preview.isNotBlank() && one_line_preview != one_line_subject) {
                 builder.setStyle(
                     NotificationCompat.InboxStyle()
                         .addLine(one_line_subject)
