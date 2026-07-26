@@ -3078,8 +3078,8 @@ private fun email_html_view(
         )
         val render_body = if (has_newsletter_layout) {
             body
-                .replace(Regex("""\bmin-width\s*:\s*[1-9]\d{2,3}px""", RegexOption.IGNORE_CASE), "min-width:0")
-                .replace(Regex("""(?<![a-z-])width\s*:\s*[4-9]\d{2,3}px""", RegexOption.IGNORE_CASE), "width:100%")
+                .replace(Regex("""(?<!\(\s{0,8})\bmin-width\s*:\s*([1-9]\d{2,3})px""", RegexOption.IGNORE_CASE), "min-width:$1px;min-width:min($1px,100%)")
+                .replace(Regex("""(?<!\(\s{0,8})(?<![a-z-])width\s*:\s*[4-9]\d{2,3}px""", RegexOption.IGNORE_CASE), "width:100%")
                 .replace(Regex("""\bwidth\s*=\s*["']?[4-9]\d{2,3}["']?""", RegexOption.IGNORE_CASE), "width=\"100%\"")
         } else {
             body
@@ -3121,7 +3121,7 @@ body img,body picture,body video,body svg{filter:invert(1) hue-rotate(180deg)}
         }
 
         val table_css = if (has_newsletter_layout) {
-            "#m{max-width:100%!important;overflow-x:hidden!important;box-sizing:border-box!important;padding-left:16px!important;padding-right:16px!important}#m table{max-width:100%!important;width:100%!important}#m img{max-width:100%!important;height:auto!important}td,th{min-width:0!important;box-sizing:border-box!important;max-width:100%!important}#m td,#m th,#m p,#m h1,#m h2,#m h3,#m h4,#m h5,#m h6,#m div,#m span,#m a{white-space:normal!important;overflow-wrap:break-word!important;word-wrap:break-word!important}"
+            "#m{max-width:100%!important;overflow-x:hidden!important;box-sizing:border-box!important;padding-left:16px!important;padding-right:16px!important}#m table{max-width:100%!important;width:100%!important}#m img{max-width:100%!important;height:auto!important}td,th{box-sizing:border-box!important;max-width:100%!important}#m,#m *{word-break:normal!important;overflow-wrap:break-word!important;word-wrap:break-word!important}#m td,#m th,#m p,#m h1,#m h2,#m h3,#m h4,#m h5,#m h6,#m div,#m span,#m a{white-space:normal!important}#m a{word-break:break-all!important}"
         } else {
             "table{max-width:100%!important;border-collapse:collapse;width:100%!important}td,th{overflow-wrap:break-word}"
         }
@@ -3196,6 +3196,19 @@ $dark_css
           nw_els[k].style.whiteSpace='normal';
           nw_els[k].style.overflowWrap='break-word';
         }
+      }
+      var tw=document.createTreeWalker(m_nr,NodeFilter.SHOW_TEXT,null),tn,long_hosts=[];
+      while((tn=tw.nextNode())){
+        var tv=tn.nodeValue||'';
+        if(tv.length<28)continue;
+        var longest=0,run=0;
+        for(var c=0;c<tv.length;c++){
+          if(tv.charCodeAt(c)<=32){run=0;}else{run++;if(run>longest)longest=run;}
+        }
+        if(longest>=28&&tn.parentElement)long_hosts.push(tn.parentElement);
+      }
+      for(var q=0;q<long_hosts.length;q++){
+        long_hosts[q].style.setProperty('word-break','break-all','important');
       }
     }
   }
