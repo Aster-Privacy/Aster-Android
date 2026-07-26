@@ -1,0 +1,7 @@
+Bug fixes and improvements:
+
+- Fresh look: new icons, new typography, and an app icon that matches your wallpaper theme
+- Translate emails right on your device, with nothing sent to a server
+- Choose which buttons appear in the reading and selection toolbars
+- Mute notifications for individual folders, and see the real sender on forwarded alias mail
+- Fixed notifications showing scrambled text, and emails that looked cut off or squeezed into one word per line
