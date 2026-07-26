@@ -1731,6 +1731,9 @@
     <string name="mail_rules_action_auto_reply">Réponse automatique</string>
     <string name="mail_rules_action_categorize">Catégoriser</string>
     <string name="mail_rules_action_delete">Supprimer</string>
+    <string name="mail_rules_action_unsupported">Action non prise en charge</string>
+    <string name="mail_rules_advanced_notice">Cette règle utilise des conditions avancées. Ouvrez-la dans l\'application web pour la modifier.</string>
+    <string name="mail_rules_field_advanced">Condition avancée</string>
     <string name="mail_rules_action_forward">Transférer vers</string>
     <string name="mail_rules_action_mark_as">Marquer comme</string>
     <string name="mail_rules_action_move_to">Déplacer vers</string>
@@ -2001,4 +2004,9 @@
     <string name="starred_count">%d conversation(s) marquÃ©e(s) d\'une Ã©toile</string>
     <string name="unstarred_count">Ã‰toile retirÃ©e de %d conversation(s)</string>
     <string name="failed_to_update_selection">Impossible de mettre Ã  jour certaines conversations</string>
+    <string name="mail_rules_regex_empty">Un motif regex est requis avant d\'enregistrer.</string>
+    <string name="mail_rules_regex_too_long">Ce regex est trop long. Une version raccourcie fonctionnera.</string>
+    <string name="mail_rules_regex_invalid">Ce motif regex contient une erreur. Vérifiez la syntaxe.</string>
+    <string name="mail_rules_regex_backreference">Les références arrière comme \1 ne sont pas prises en charge. Réécrivez le motif sans elles.</string>
+    <string name="mail_rules_regex_lookaround">Le lookahead et le lookbehind ne sont pas pris en charge. Réécrivez le motif sans eux.</string>
 </resources>

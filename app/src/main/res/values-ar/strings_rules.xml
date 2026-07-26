@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="rules_section_sender">المُرسِل</string>
+    <string name="rules_section_recipients">المستلمون</string>
+    <string name="rules_section_content">المحتوى</string>
+    <string name="rules_section_attachments_flags">المرفقات والعلامات</string>
+    <string name="rules_section_numeric_date_auth">الأرقام والتاريخ والمصادقة</string>
+
+    <string name="rules_op_is">يساوي</string>
+    <string name="rules_op_is_not">لا يساوي</string>
+    <string name="rules_op_contains">يحتوي على</string>
+    <string name="rules_op_does_not_contain">لا يحتوي على</string>
+    <string name="rules_op_starts_with">يبدأ بـ</string>
+    <string name="rules_op_ends_with">ينتهي بـ</string>
+    <string name="rules_op_is_empty">فارغ</string>
+    <string name="rules_op_matches_domain">يطابق النطاق</string>
+    <string name="rules_op_matches_regex">يطابق التعبير النمطي</string>
+    <string name="rules_op_greater_than">أكبر من</string>
+    <string name="rules_op_less_than">أصغر من</string>
+    <string name="rules_op_equals">يساوي</string>
+    <string name="rules_op_older_than">أقدم من</string>
+    <string name="rules_op_newer_than">أحدث من</string>
+
+    <string name="rules_value_yes">نعم</string>
+    <string name="rules_value_no">لا</string>
+    <string name="rules_value_read">مقروء</string>
+    <string name="rules_value_unread">غير مقروء</string>
+    <string name="rules_value_on">مفعّل</string>
+    <string name="rules_value_off">معطّل</string>
+    <string name="rules_value_days">%1$d يوم</string>
+    <string name="rules_value_label_count">%1$d تصنيف</string>
+    <string name="rules_value_placeholder_ellipsis">...</string>
+
+    <string name="rules_unit_kb">ك.ب</string>
+    <string name="rules_unit_mb">م.ب</string>
+    <string name="rules_unit_gb">ج.ب</string>
+
+    <string name="rules_category_primary">الرئيسي</string>
+    <string name="rules_category_important">مهم</string>
+    <string name="rules_category_promotions">العروض</string>
+    <string name="rules_category_social">التواصل الاجتماعي</string>
+    <string name="rules_category_updates">التحديثات</string>
+    <string name="rules_category_forums">المنتديات</string>
+
+    <string name="rules_no_labels">لا توجد تصنيفات بعد</string>
+    <string name="rules_remove">إزالة</string>
+    <string name="rules_delete_title">حذف القاعدة؟</string>
+    <string name="rules_delete_message">لن تُطبَّق هذه القاعدة على الرسائل الجديدة بعد الآن. لن يتم التراجع عن التغييرات التي تمت بالفعل.</string>
+    <string name="rules_save_failed">تعذّر حفظ القاعدة</string>
+    <string name="rules_emails_count">%1$d رسالة</string>
+    <string name="rules_copy_suffix">(نسخة)</string>
+    <string name="rules_error_load">تعذّر تحميل القواعد</string>
+    <string name="rules_error_delete">تعذّر حذف القاعدة</string>
+    <string name="rules_error_run">تعذّر تطبيق القاعدة على الرسائل الحالية</string>
+    <string name="rules_error_reorder">تعذّر إعادة ترتيب القواعد</string>
+    <string name="rules_snooze_1_hour">ساعة واحدة</string>
+    <string name="rules_snooze_1_day">يوم واحد</string>
+    <string name="rules_snooze_3_days">3 أيام</string>
+    <string name="rules_snooze_1_week">أسبوع واحد</string>
+    <string name="rules_snooze_current">الحالي: %1$s</string>
+</resources>

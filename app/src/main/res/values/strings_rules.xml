@@ -48,4 +48,14 @@
     <string name="rules_delete_message">This rule will stop running on new mail. Existing changes are not reverted.</string>
     <string name="rules_save_failed">Could not save rule</string>
     <string name="rules_emails_count">%1$d emails</string>
+    <string name="rules_copy_suffix">(copy)</string>
+    <string name="rules_error_load">Could not load rules</string>
+    <string name="rules_error_delete">Could not delete rule</string>
+    <string name="rules_error_run">Could not run rule on existing mail</string>
+    <string name="rules_error_reorder">Could not reorder rules</string>
+    <string name="rules_snooze_1_hour">1 hour</string>
+    <string name="rules_snooze_1_day">1 day</string>
+    <string name="rules_snooze_3_days">3 days</string>
+    <string name="rules_snooze_1_week">1 week</string>
+    <string name="rules_snooze_current">Current: %1$s</string>
 </resources>

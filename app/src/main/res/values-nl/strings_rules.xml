@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="rules_section_sender">Afzender</string>
+    <string name="rules_section_recipients">Ontvangers</string>
+    <string name="rules_section_content">Inhoud</string>
+    <string name="rules_section_attachments_flags">Bijlagen en markeringen</string>
+    <string name="rules_section_numeric_date_auth">Numeriek, datum en authenticatie</string>
+
+    <string name="rules_op_is">is</string>
+    <string name="rules_op_is_not">is niet</string>
+    <string name="rules_op_contains">bevat</string>
+    <string name="rules_op_does_not_contain">bevat niet</string>
+    <string name="rules_op_starts_with">begint met</string>
+    <string name="rules_op_ends_with">eindigt op</string>
+    <string name="rules_op_is_empty">is leeg</string>
+    <string name="rules_op_matches_domain">komt overeen met domein</string>
+    <string name="rules_op_matches_regex">komt overeen met reguliere expressie</string>
+    <string name="rules_op_greater_than">groter dan</string>
+    <string name="rules_op_less_than">kleiner dan</string>
+    <string name="rules_op_equals">gelijk aan</string>
+    <string name="rules_op_older_than">ouder dan</string>
+    <string name="rules_op_newer_than">nieuwer dan</string>
+
+    <string name="rules_value_yes">ja</string>
+    <string name="rules_value_no">nee</string>
+    <string name="rules_value_read">gelezen</string>
+    <string name="rules_value_unread">ongelezen</string>
+    <string name="rules_value_on">aan</string>
+    <string name="rules_value_off">uit</string>
+    <string name="rules_value_days">%1$d dagen</string>
+    <string name="rules_value_label_count">%1$d labels</string>
+    <string name="rules_value_placeholder_ellipsis">...</string>
+
+    <string name="rules_unit_kb">KB</string>
+    <string name="rules_unit_mb">MB</string>
+    <string name="rules_unit_gb">GB</string>
+
+    <string name="rules_category_primary">Primair</string>
+    <string name="rules_category_important">Belangrijk</string>
+    <string name="rules_category_promotions">Reclame</string>
+    <string name="rules_category_social">Sociaal</string>
+    <string name="rules_category_updates">Updates</string>
+    <string name="rules_category_forums">Forums</string>
+
+    <string name="rules_no_labels">Nog geen labels</string>
+    <string name="rules_remove">Verwijderen</string>
+    <string name="rules_delete_title">Regel verwijderen?</string>
+    <string name="rules_delete_message">Deze regel wordt niet meer toegepast op nieuwe e-mail. Al doorgevoerde wijzigingen worden niet teruggedraaid.</string>
+    <string name="rules_save_failed">Kan regel niet opslaan</string>
+    <string name="rules_emails_count">%1$d e-mails</string>
+    <string name="rules_copy_suffix">(kopie)</string>
+    <string name="rules_error_load">Kan regels niet laden</string>
+    <string name="rules_error_delete">Kan regel niet verwijderen</string>
+    <string name="rules_error_run">Kan regel niet toepassen op bestaande e-mail</string>
+    <string name="rules_error_reorder">Kan volgorde van regels niet wijzigen</string>
+    <string name="rules_snooze_1_hour">1 uur</string>
+    <string name="rules_snooze_1_day">1 dag</string>
+    <string name="rules_snooze_3_days">3 dagen</string>
+    <string name="rules_snooze_1_week">1 week</string>
+    <string name="rules_snooze_current">Huidig: %1$s</string>
+</resources>

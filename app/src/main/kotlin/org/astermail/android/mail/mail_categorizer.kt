@@ -25,6 +25,9 @@ import org.astermail.android.api.mail.MailItemMetadata
 
 val CATEGORY_TABS: List<String> = listOf("primary", "promotions", "social", "updates")
 
+private val RULE_CATEGORY_IDS: Set<String> =
+    setOf("primary", "important", "promotions", "social", "updates", "forums")
+
 private val UPDATES_LOCALPARTS: Set<String> = setOf(
     "receipts",
     "receipt",
@@ -111,10 +114,18 @@ private fun matches_any(text: String, patterns: List<Regex>): Boolean {
     return false
 }
 
-fun classify(envelope: DecryptedEnvelope, metadata: MailItemMetadata?): String {
+fun classify(
+    envelope: DecryptedEnvelope,
+    metadata: MailItemMetadata?,
+    rule_category: String? = null,
+): String {
     val pinned_category = metadata?.category
     if (metadata?.category_pinned == true && pinned_category != null) {
         return pinned_category
+    }
+
+    if (rule_category != null && RULE_CATEGORY_IDS.contains(rule_category)) {
+        return rule_category
     }
 
     val email = envelope.from_email

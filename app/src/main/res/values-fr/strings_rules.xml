@@ -48,4 +48,14 @@
     <string name="rules_delete_message">Cette règle ne s\'appliquera plus aux nouveaux messages. Les modifications existantes ne sont pas annulées.</string>
     <string name="rules_save_failed">Impossible d\'enregistrer la règle</string>
     <string name="rules_emails_count">%1$d e-mails</string>
+    <string name="rules_copy_suffix">(copie)</string>
+    <string name="rules_error_load">Impossible de charger les règles</string>
+    <string name="rules_error_delete">Impossible de supprimer la règle</string>
+    <string name="rules_error_run">Impossible d\'appliquer la règle aux messages existants</string>
+    <string name="rules_error_reorder">Impossible de réorganiser les règles</string>
+    <string name="rules_snooze_1_hour">1 heure</string>
+    <string name="rules_snooze_1_day">1 jour</string>
+    <string name="rules_snooze_3_days">3 jours</string>
+    <string name="rules_snooze_1_week">1 semaine</string>
+    <string name="rules_snooze_current">Actuel : %1$s</string>
 </resources>

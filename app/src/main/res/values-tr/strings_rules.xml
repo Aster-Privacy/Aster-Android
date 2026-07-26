@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="rules_section_sender">Gönderen</string>
+    <string name="rules_section_recipients">Alıcılar</string>
+    <string name="rules_section_content">İçerik</string>
+    <string name="rules_section_attachments_flags">Ekler ve işaretler</string>
+    <string name="rules_section_numeric_date_auth">Sayı, tarih ve kimlik doğrulama</string>
+
+    <string name="rules_op_is">eşittir</string>
+    <string name="rules_op_is_not">eşit değildir</string>
+    <string name="rules_op_contains">içerir</string>
+    <string name="rules_op_does_not_contain">içermez</string>
+    <string name="rules_op_starts_with">ile başlar</string>
+    <string name="rules_op_ends_with">ile biter</string>
+    <string name="rules_op_is_empty">boştur</string>
+    <string name="rules_op_matches_domain">alan adıyla eşleşir</string>
+    <string name="rules_op_matches_regex">düzenli ifadeyle eşleşir</string>
+    <string name="rules_op_greater_than">şundan büyük</string>
+    <string name="rules_op_less_than">şundan küçük</string>
+    <string name="rules_op_equals">eşittir</string>
+    <string name="rules_op_older_than">şundan eski</string>
+    <string name="rules_op_newer_than">şundan yeni</string>
+
+    <string name="rules_value_yes">evet</string>
+    <string name="rules_value_no">hayır</string>
+    <string name="rules_value_read">okundu</string>
+    <string name="rules_value_unread">okunmadı</string>
+    <string name="rules_value_on">açık</string>
+    <string name="rules_value_off">kapalı</string>
+    <string name="rules_value_days">%1$d gün</string>
+    <string name="rules_value_label_count">%1$d etiket</string>
+    <string name="rules_value_placeholder_ellipsis">...</string>
+
+    <string name="rules_unit_kb">KB</string>
+    <string name="rules_unit_mb">MB</string>
+    <string name="rules_unit_gb">GB</string>
+
+    <string name="rules_category_primary">Birincil</string>
+    <string name="rules_category_important">Önemli</string>
+    <string name="rules_category_promotions">Tanıtımlar</string>
+    <string name="rules_category_social">Sosyal</string>
+    <string name="rules_category_updates">Güncellemeler</string>
+    <string name="rules_category_forums">Forumlar</string>
+
+    <string name="rules_no_labels">Henüz etiket yok</string>
+    <string name="rules_remove">Kaldır</string>
+    <string name="rules_delete_title">Kural silinsin mi?</string>
+    <string name="rules_delete_message">Bu kural yeni e-postalara artık uygulanmayacak. Daha önce yapılan değişiklikler geri alınmaz.</string>
+    <string name="rules_save_failed">Kural kaydedilemedi</string>
+    <string name="rules_emails_count">%1$d e-posta</string>
+    <string name="rules_copy_suffix">(kopya)</string>
+    <string name="rules_error_load">Kurallar yüklenemedi</string>
+    <string name="rules_error_delete">Kural silinemedi</string>
+    <string name="rules_error_run">Kural mevcut e-postalara uygulanamadı</string>
+    <string name="rules_error_reorder">Kuralların sırası değiştirilemedi</string>
+    <string name="rules_snooze_1_hour">1 saat</string>
+    <string name="rules_snooze_1_day">1 gün</string>
+    <string name="rules_snooze_3_days">3 gün</string>
+    <string name="rules_snooze_1_week">1 hafta</string>
+    <string name="rules_snooze_current">Geçerli: %1$s</string>
+</resources>

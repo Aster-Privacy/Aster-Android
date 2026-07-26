@@ -94,6 +94,7 @@ import org.astermail.android.ui.settings.mail_rules.pickers.label_multi_picker
 import org.astermail.android.ui.settings.mail_rules.pickers.numeric_value_picker
 import org.astermail.android.ui.settings.mail_rules.pickers.options_picker
 import org.astermail.android.ui.settings.mail_rules.pickers.picker_item
+import org.astermail.android.ui.settings.mail_rules.pickers.snooze_picker
 import org.astermail.android.ui.settings.mail_rules.pickers.text_value_picker
 
 private sealed class active_sheet {
@@ -135,15 +136,16 @@ fun RuleEditorScreen(
         mutableStateListOf<Condition>().apply { existing?.conditions?.let { addAll(it) } }
     }
     val actions = remember(existing) {
-        mutableStateListOf<Action>().apply { existing?.actions?.let { addAll(it) } }
+        mutableStateListOf<Action>().apply {
+            existing?.actions?.let { addAll(strip_unavailable_actions(it)) }
+        }
     }
 
     var sheet: active_sheet by remember { mutableStateOf(active_sheet.none) }
     var pending_field: field_id? by remember { mutableStateOf(null) }
     var auto_advance by remember { mutableStateOf(false) }
     var is_saving by remember { mutableStateOf(false) }
-    var save_error by remember { mutableStateOf<String?>(null) }
-    val save_failed_message = stringResource(R.string.rules_save_failed)
+    var save_error by remember { mutableStateOf<Int?>(null) }
 
     val folders = remember(settings_state.labels) {
         settings_state.labels
@@ -160,6 +162,8 @@ fun RuleEditorScreen(
             .map { picker_item(it.tag_token, it.encrypted_name) }
         from_labels + from_tags
     }
+
+    val is_read_only = existing != null && rule_is_advanced(existing)
 
     val is_valid = name.isNotBlank() &&
         conditions.isNotEmpty() && conditions.all { is_condition_complete(it) } &&
@@ -184,6 +188,21 @@ fun RuleEditorScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(AsterSpacing.lg),
         ) {
+            if (is_read_only) {
+                Text(
+                    text = stringResource(R.string.mail_rules_advanced_notice),
+                    color = colors.text_secondary,
+                    fontSize = 13.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(colors.bg_secondary)
+                        .padding(AsterSpacing.md)
+                        .testTag("rule_advanced_notice"),
+                )
+                Spacer(Modifier.height(AsterSpacing.md))
+            }
+
             AsterTextField(
                 value = name,
                 onValueChange = { if (it.length <= 200) name = it },
@@ -222,17 +241,21 @@ fun RuleEditorScreen(
                 condition_chip(
                     condition = condition,
                     on_field = {
-                        pending_field = field_of(condition)
-                        sheet = active_sheet.pick_field
-                    },
-                    on_operator = { sheet = active_sheet.pick_operator(index) },
-                    on_value = { sheet = active_sheet.pick_value(index) },
-                    on_remove = {
-                        if (conditions.size == 1) {
-                            conditions.removeAt(0)
+                        if (!is_read_only) {
+                            pending_field = field_of(condition)
                             sheet = active_sheet.pick_field
-                        } else {
-                            conditions.removeAt(index)
+                        }
+                    },
+                    on_operator = { if (!is_read_only) sheet = active_sheet.pick_operator(index) },
+                    on_value = { if (!is_read_only) sheet = active_sheet.pick_value(index) },
+                    on_remove = {
+                        if (!is_read_only) {
+                            if (conditions.size == 1) {
+                                conditions.removeAt(0)
+                                sheet = active_sheet.pick_field
+                            } else {
+                                conditions.removeAt(index)
+                            }
                         }
                     },
                     modifier = Modifier.testTag("cond_$index"),
@@ -241,21 +264,23 @@ fun RuleEditorScreen(
                     Spacer(Modifier.height(AsterSpacing.sm))
                     and_or_pill(
                         label = if (match_mode == MatchMode.ALL) stringResource(R.string.mail_rules_and) else stringResource(R.string.mail_rules_or),
-                        on_click = { sheet = active_sheet.pick_match_mode },
+                        on_click = { if (!is_read_only) sheet = active_sheet.pick_match_mode },
                     )
                     Spacer(Modifier.height(AsterSpacing.sm))
                 } else {
                     Spacer(Modifier.height(AsterSpacing.sm))
                 }
             }
-            add_chip_pill(
-                label = stringResource(R.string.mail_rules_add_condition),
-                on_click = {
-                    auto_advance = true
-                    sheet = active_sheet.pick_field
-                },
-                modifier = Modifier.testTag("add_condition"),
-            )
+            if (!is_read_only) {
+                add_chip_pill(
+                    label = stringResource(R.string.mail_rules_add_condition),
+                    on_click = {
+                        auto_advance = true
+                        sheet = active_sheet.pick_field
+                    },
+                    modifier = Modifier.testTag("add_condition"),
+                )
+            }
 
             Spacer(Modifier.height(AsterSpacing.xl))
             Text(
@@ -272,26 +297,28 @@ fun RuleEditorScreen(
                     folder_label = (action as? Action.MoveTo)?.folder_token?.let { token ->
                         folders.firstOrNull { it.id == token }?.label
                     },
-                    on_kind = { sheet = active_sheet.pick_action_kind(index) },
-                    on_target = { sheet = active_sheet.pick_action_target(index) },
-                    on_remove = { actions.removeAt(index) },
+                    on_kind = { if (!is_read_only) sheet = active_sheet.pick_action_kind(index) },
+                    on_target = { if (!is_read_only) sheet = active_sheet.pick_action_target(index) },
+                    on_remove = { if (!is_read_only) actions.removeAt(index) },
                     modifier = Modifier.testTag("action_$index"),
                 )
                 Spacer(Modifier.height(AsterSpacing.sm))
             }
-            add_chip_pill(
-                label = stringResource(R.string.mail_rules_add_action),
-                on_click = {
-                    actions.add(default_action_for(action_id.move_to))
-                    sheet = active_sheet.pick_action_kind(actions.lastIndex)
-                },
-                modifier = Modifier.testTag("add_action"),
-            )
+            if (!is_read_only) {
+                add_chip_pill(
+                    label = stringResource(R.string.mail_rules_add_action),
+                    on_click = {
+                        actions.add(default_action_for(action_id.move_to))
+                        sheet = active_sheet.pick_action_kind(actions.lastIndex)
+                    },
+                    modifier = Modifier.testTag("add_action"),
+                )
+            }
 
             Spacer(Modifier.height(AsterSpacing.xxl))
             save_error?.let { msg ->
                 Text(
-                    text = msg,
+                    text = stringResource(msg),
                     color = colors.danger,
                     fontSize = 13.sp,
                     modifier = Modifier.padding(bottom = AsterSpacing.sm),
@@ -300,7 +327,7 @@ fun RuleEditorScreen(
             AsterButton(
                 label = stringResource(R.string.mail_rules_save),
                 onClick = {
-                    if (is_saving) return@AsterButton
+                    if (is_saving || is_read_only) return@AsterButton
                     if (rule_id != null && existing == null) return@AsterButton
                     is_saving = true
                     save_error = null
@@ -314,7 +341,7 @@ fun RuleEditorScreen(
                             actions = actions.toList(),
                         ) { id ->
                             is_saving = false
-                            if (id != null) on_saved() else save_error = state.error ?: save_failed_message
+                            if (id != null) on_saved() else save_error = state.error ?: R.string.rules_save_failed
                         }
                     } else {
                         vm.update_rule(
@@ -326,11 +353,11 @@ fun RuleEditorScreen(
                             actions = actions.toList(),
                         ) { ok ->
                             is_saving = false
-                            if (ok) on_saved() else save_error = state.error ?: save_failed_message
+                            if (ok) on_saved() else save_error = state.error ?: R.string.rules_save_failed
                         }
                     }
                 },
-                enabled = is_valid && !is_saving && (rule_id == null || existing != null),
+                enabled = is_valid && !is_saving && !is_read_only && (rule_id == null || existing != null),
                 modifier = Modifier.testTag("save_rule"),
             )
             Spacer(Modifier.height(AsterSpacing.xxl))
@@ -378,13 +405,13 @@ fun RuleEditorScreen(
         is active_sheet.pick_action_kind -> options_picker(
             on_dismiss = { sheet = active_sheet.none },
             title = stringResource(R.string.mail_rules_pick_action),
-            items = action_id.values().map { picker_item(it.name, action_label(it)) },
-            selected_id = action_of(actions[s.action_index]).name,
+            items = selectable_actions().map { picker_item(it.name, action_label(it)) },
+            selected_id = action_of(actions[s.action_index])?.name,
             on_pick = { id ->
                 val picked = action_id.valueOf(id)
                 actions[s.action_index] = default_action_for(picked)
                 if (picked == action_id.move_to || picked == action_id.apply_labels ||
-                    picked == action_id.forward || picked == action_id.categorize ||
+                    picked == action_id.categorize ||
                     picked == action_id.mark_as
                 ) {
                     sheet = active_sheet.pick_action_target(s.action_index)
@@ -425,8 +452,9 @@ private fun parse_hex(hex: String): Color = try {
 }
 
 @Composable
-private fun action_label(id: action_id): String = stringResource(
+private fun action_label(id: action_id?): String = stringResource(
     when (id) {
+        null -> R.string.mail_rules_action_unsupported
         action_id.move_to -> R.string.mail_rules_action_move_to
         action_id.apply_labels -> R.string.mail_rules_action_apply_labels
         action_id.mark_as -> R.string.mail_rules_action_mark_as
@@ -494,8 +522,9 @@ private fun action_chip(
 }
 
 @Composable
-private fun field_display(field: field_id): String = stringResource(
+private fun field_display(field: field_id?): String = stringResource(
     when (field) {
+        null -> R.string.mail_rules_field_advanced
         field_id.from -> R.string.mail_rules_field_from
         field_id.reply_to -> R.string.mail_rules_field_reply_to
         field_id.to -> R.string.mail_rules_field_to
@@ -625,6 +654,7 @@ private fun value_display(c: Condition): String? {
         is Condition.DkimResult -> c.value.name.lowercase()
         is Condition.SpfResult -> c.value.name.lowercase()
         is Condition.DmarcResult -> c.value.name.lowercase()
+        else -> null
     }
 }
 
@@ -638,13 +668,19 @@ private fun format_size(bytes: Long): String {
     return "%.1f GB".format(gb)
 }
 
+private fun format_snooze_until(value: String): String = runCatching {
+    java.time.OffsetDateTime.parse(value)
+        .atZoneSameInstant(java.time.ZoneId.systemDefault())
+        .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+}.getOrDefault(value)
+
 @Composable
 private fun action_target_display(action: Action, folder_label: String?): String? = when (action) {
     is Action.MoveTo -> folder_label ?: ""
     is Action.ApplyLabels -> if (action.label_tokens.isEmpty()) "" else stringResource(R.string.rules_value_label_count, action.label_tokens.size)
     is Action.MarkAs -> if (action.value == ReadState.READ) stringResource(R.string.rules_value_read) else stringResource(R.string.rules_value_unread)
     is Action.Forward -> action.to
-    is Action.Snooze -> action.until_iso8601
+    is Action.Snooze -> format_snooze_until(action.until_iso8601)
     is Action.Categorize -> category_label(action.category)
     is Action.Notify -> if (action.enabled) stringResource(R.string.rules_value_on) else stringResource(R.string.rules_value_off)
     is Action.AutoReply -> action.template_id
@@ -742,6 +778,21 @@ private fun apply_operator(c: Condition, op_id: String): Condition = when (c) {
     else -> c
 }
 
+private fun uses_regex_op(c: Condition): Boolean = when (c) {
+    is Condition.From -> c.op == AddressOp.MATCHES_REGEX
+    is Condition.ReplyTo -> c.op == AddressOp.MATCHES_REGEX
+    is Condition.To -> c.op == AddressOp.MATCHES_REGEX
+    is Condition.Cc -> c.op == AddressOp.MATCHES_REGEX
+    is Condition.Bcc -> c.op == AddressOp.MATCHES_REGEX
+    is Condition.AnyRecipient -> c.op == AddressOp.MATCHES_REGEX
+    is Condition.Subject -> c.op == TextOp.MATCHES_REGEX
+    is Condition.Body -> c.op == TextOp.MATCHES_REGEX
+    is Condition.ListId -> c.op == TextOp.MATCHES_REGEX
+    is Condition.Header -> c.op == TextOp.MATCHES_REGEX
+    is Condition.AttachmentName -> c.op == AttachmentNameOp.MATCHES_REGEX
+    else -> false
+}
+
 @Composable
 private fun value_picker_for(
     condition: Condition,
@@ -759,6 +810,7 @@ private fun value_picker_for(
                 initial = current,
                 case_sensitive = case,
                 show_case_toggle = true,
+                is_regex = uses_regex_op(condition),
                 on_confirm = { v, c -> on_set(set_value_and_case(condition, v, c)) },
             )
         }
@@ -767,6 +819,7 @@ private fun value_picker_for(
             initial_name = condition.name,
             initial_value = condition.value,
             case_sensitive = condition.case_sensitive == true,
+            is_regex = condition.op == TextOp.MATCHES_REGEX,
             on_confirm = { n, v, c -> on_set(condition.copy(name = n, value = v, case_sensitive = c)) },
         )
         is Condition.HasAttachment -> boolean_value_picker(
@@ -860,6 +913,7 @@ private fun value_picker_for(
             selected_id = condition.value.name,
             on_pick = { on_set(condition.copy(value = AuthResult.valueOf(it))) },
         )
+        else -> on_dismiss()
     }
 }
 
@@ -944,13 +998,11 @@ private fun action_target_picker(
             initial = action.enabled,
             on_confirm = { on_set(action.copy(enabled = it)) },
         )
-        is Action.Snooze -> text_value_picker(
+        is Action.Snooze -> snooze_picker(
             on_dismiss = on_dismiss,
             title = stringResource(R.string.mail_rules_action_snooze),
-            initial = action.until_iso8601,
-            case_sensitive = false,
-            show_case_toggle = false,
-            on_confirm = { v, _ -> on_set(action.copy(until_iso8601 = v)) },
+            current = action.until_iso8601,
+            on_pick = { on_set(action.copy(until_iso8601 = it)) },
         )
         is Action.AutoReply -> text_value_picker(
             on_dismiss = on_dismiss,

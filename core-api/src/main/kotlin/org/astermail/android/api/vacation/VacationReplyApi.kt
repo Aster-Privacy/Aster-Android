@@ -32,6 +32,7 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
 
@@ -72,6 +73,8 @@ interface VacationReplyApi {
     suspend fun delete(): DeleteVacationReplyResponse
     suspend fun toggle(is_enabled: Boolean): VacationReplyResponse
 }
+
+private val vacation_json = Json { ignoreUnknownKeys = true }
 
 class VacationReplyApiImpl(private val client: ApiClient) : VacationReplyApi {
     private val base = "/api/mail/v1/vacation_reply"
@@ -129,7 +132,7 @@ class VacationReplyApiImpl(private val client: ApiClient) : VacationReplyApi {
         val text = try { response.body<String>() } catch (_: Throwable) { return null }
         if (text.isBlank() || text == "null") return null
         return try {
-            kotlinx.serialization.json.Json { ignoreUnknownKeys = true }.decodeFromString<T>(
+            vacation_json.decodeFromString<T>(
                 kotlinx.serialization.serializer(),
                 text,
             )

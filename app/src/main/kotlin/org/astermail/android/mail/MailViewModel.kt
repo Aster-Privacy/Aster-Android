@@ -2148,7 +2148,6 @@ class MailViewModel @Inject constructor(
         is kotlinx.coroutines.TimeoutCancellationException -> true
         is io.ktor.client.plugins.HttpRequestTimeoutException -> true
         is io.ktor.client.network.sockets.ConnectTimeoutException -> true
-        is io.ktor.client.network.sockets.SocketTimeoutException -> true
         is java.net.SocketTimeoutException -> true
         else -> false
     }

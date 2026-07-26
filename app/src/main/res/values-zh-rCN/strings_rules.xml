@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="rules_section_sender">发件人</string>
+    <string name="rules_section_recipients">收件人</string>
+    <string name="rules_section_content">内容</string>
+    <string name="rules_section_attachments_flags">附件和标记</string>
+    <string name="rules_section_numeric_date_auth">数值、日期和验证</string>
+
+    <string name="rules_op_is">等于</string>
+    <string name="rules_op_is_not">不等于</string>
+    <string name="rules_op_contains">包含</string>
+    <string name="rules_op_does_not_contain">不包含</string>
+    <string name="rules_op_starts_with">开头为</string>
+    <string name="rules_op_ends_with">结尾为</string>
+    <string name="rules_op_is_empty">为空</string>
+    <string name="rules_op_matches_domain">匹配域名</string>
+    <string name="rules_op_matches_regex">匹配正则表达式</string>
+    <string name="rules_op_greater_than">大于</string>
+    <string name="rules_op_less_than">小于</string>
+    <string name="rules_op_equals">等于</string>
+    <string name="rules_op_older_than">早于</string>
+    <string name="rules_op_newer_than">晚于</string>
+
+    <string name="rules_value_yes">是</string>
+    <string name="rules_value_no">否</string>
+    <string name="rules_value_read">已读</string>
+    <string name="rules_value_unread">未读</string>
+    <string name="rules_value_on">开</string>
+    <string name="rules_value_off">关</string>
+    <string name="rules_value_days">%1$d 天</string>
+    <string name="rules_value_label_count">%1$d 个标签</string>
+    <string name="rules_value_placeholder_ellipsis">...</string>
+
+    <string name="rules_unit_kb">KB</string>
+    <string name="rules_unit_mb">MB</string>
+    <string name="rules_unit_gb">GB</string>
+
+    <string name="rules_category_primary">主要</string>
+    <string name="rules_category_important">重要</string>
+    <string name="rules_category_promotions">推广</string>
+    <string name="rules_category_social">社交</string>
+    <string name="rules_category_updates">更新</string>
+    <string name="rules_category_forums">论坛</string>
+
+    <string name="rules_no_labels">暂无标签</string>
+    <string name="rules_remove">移除</string>
+    <string name="rules_delete_title">删除此规则？</string>
+    <string name="rules_delete_message">此规则将不再应用于新邮件。已做出的更改不会被撤销。</string>
+    <string name="rules_save_failed">无法保存规则</string>
+    <string name="rules_emails_count">%1$d 封邮件</string>
+    <string name="rules_copy_suffix">(副本)</string>
+    <string name="rules_error_load">无法加载规则</string>
+    <string name="rules_error_delete">无法删除规则</string>
+    <string name="rules_error_run">无法对现有邮件应用此规则</string>
+    <string name="rules_error_reorder">无法调整规则顺序</string>
+    <string name="rules_snooze_1_hour">1 小时</string>
+    <string name="rules_snooze_1_day">1 天</string>
+    <string name="rules_snooze_3_days">3 天</string>
+    <string name="rules_snooze_1_week">1 周</string>
+    <string name="rules_snooze_current">当前: %1$s</string>
+</resources>

@@ -21,6 +21,7 @@
 
 package org.astermail.android.mail_rules
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -36,12 +37,14 @@ import org.astermail.android.api.mail_rules.MailRule
 import org.astermail.android.api.mail_rules.MailRulesApi
 import org.astermail.android.api.mail_rules.MatchMode
 import org.astermail.android.api.mail_rules.UpdateRuleRequest
+import org.astermail.android.ui.settings.mail_rules.rule_is_advanced
+import org.astermail.android.R
 
 data class MailRulesUiState(
     val rules: List<MailRule> = emptyList(),
     val is_loading: Boolean = true,
     val is_refreshing: Boolean = false,
-    val error: String? = null,
+    @StringRes val error: Int? = null,
     val last_saved_id: String? = null,
 )
 
@@ -72,7 +75,7 @@ class MailRulesViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     is_loading = false,
                     is_refreshing = false,
-                    error = t.message ?: "load failed",
+                    error = R.string.rules_error_load,
                 )
             }
         }
@@ -105,7 +108,7 @@ class MailRulesViewModel @Inject constructor(
                 _state.value = _state.value.copy(last_saved_id = response.id)
                 on_done(response.id)
             } catch (t: Throwable) {
-                _state.value = _state.value.copy(error = t.message ?: "create failed")
+                _state.value = _state.value.copy(error = R.string.rules_save_failed)
                 on_done(null)
             }
         }
@@ -139,7 +142,7 @@ class MailRulesViewModel @Inject constructor(
                 )
                 on_done(true)
             } catch (t: Throwable) {
-                _state.value = _state.value.copy(error = t.message ?: "update failed")
+                _state.value = _state.value.copy(error = R.string.rules_save_failed)
                 on_done(false)
             }
         }
@@ -152,7 +155,7 @@ class MailRulesViewModel @Inject constructor(
             try {
                 api.delete(rule_id)
             } catch (t: Throwable) {
-                _state.value = _state.value.copy(rules = original, error = t.message ?: "delete failed")
+                _state.value = _state.value.copy(rules = original, error = R.string.rules_error_delete)
             }
         }
     }
@@ -162,10 +165,11 @@ class MailRulesViewModel @Inject constructor(
         update_rule(rule_id = rule_id, enabled = !rule.enabled)
     }
 
-    fun duplicate_rule(rule_id: String) {
+    fun duplicate_rule(rule_id: String, copy_suffix: String) {
         val rule = _state.value.rules.firstOrNull { it.id == rule_id } ?: return
+        if (rule_is_advanced(rule)) return
         create_rule(
-            name = rule.name + " (copy)",
+            name = "${rule.name} $copy_suffix",
             color = rule.color,
             enabled = rule.enabled,
             match_mode = rule.match_mode,
@@ -179,7 +183,7 @@ class MailRulesViewModel @Inject constructor(
             try {
                 api.run_on_existing(rule_id)
             } catch (t: Throwable) {
-                _state.value = _state.value.copy(error = t.message ?: "run failed")
+                _state.value = _state.value.copy(error = R.string.rules_error_run)
             }
         }
     }
@@ -195,7 +199,7 @@ class MailRulesViewModel @Inject constructor(
             try {
                 api.reorder(current.map { it.id })
             } catch (t: Throwable) {
-                _state.value = _state.value.copy(rules = original, error = t.message ?: "reorder failed")
+                _state.value = _state.value.copy(rules = original, error = R.string.rules_error_reorder)
             }
         }
     }

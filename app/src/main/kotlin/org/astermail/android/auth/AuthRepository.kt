@@ -470,6 +470,7 @@ class AuthRepository @Inject constructor(
         }
     }
 
+    @OptIn(coil.annotation.ExperimentalCoilApi::class)
     suspend fun try_restore_session(account_id: String): Boolean {
         val snapshot = session_snapshot_store.load(account_id) ?: return false
         runCatching { database.decrypted_mail_dao().clear_all() }
@@ -609,6 +610,7 @@ class AuthRepository @Inject constructor(
         }
     }
 
+    @OptIn(coil.annotation.ExperimentalCoilApi::class)
     suspend fun logout(): Result<Unit> = runCatching {
         val current_id = session_key_store.get_user_id()
         try {
@@ -767,6 +769,7 @@ class AuthRepository @Inject constructor(
         }
     }
 
+    @OptIn(coil.annotation.ExperimentalCoilApi::class)
     suspend fun delete_account(password: String, totp_code: String? = null): Result<Unit> = runCatching {
         require(password.isNotBlank()) { "password required" }
         val password_hash = derive_password_hash_b64(password)

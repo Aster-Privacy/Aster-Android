@@ -78,6 +78,7 @@ import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.ui.settings.mail_rules.action_id
 import org.astermail.android.ui.settings.mail_rules.field_id
+import org.astermail.android.ui.settings.mail_rules.regex_error_res
 import kotlin.math.roundToInt
 
 data class picker_section_spec(
@@ -287,6 +288,51 @@ fun options_picker(
     }
 }
 
+private val snooze_presets: List<Pair<Int, java.time.Duration>> = listOf(
+    R.string.rules_snooze_1_hour to java.time.Duration.ofHours(1),
+    R.string.rules_snooze_1_day to java.time.Duration.ofDays(1),
+    R.string.rules_snooze_3_days to java.time.Duration.ofDays(3),
+    R.string.rules_snooze_1_week to java.time.Duration.ofDays(7),
+)
+
+@Composable
+fun snooze_picker(
+    on_dismiss: () -> Unit,
+    title: String,
+    current: String,
+    on_pick: (String) -> Unit,
+) {
+    val current_label = runCatching {
+        java.time.OffsetDateTime.parse(current)
+            .atZoneSameInstant(java.time.ZoneId.systemDefault())
+            .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+    }.getOrNull()
+
+    base_sheet(on_dismiss = on_dismiss, title = title) {
+        Column(modifier = Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState())) {
+            snooze_presets.forEach { (label_res, duration) ->
+                row_select(
+                    label = stringResource(label_res),
+                    sublabel = null,
+                    selected = false,
+                    on_click = {
+                        on_pick(
+                            java.time.OffsetDateTime.now(java.time.ZoneOffset.UTC)
+                                .plus(duration)
+                                .format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                        )
+                        on_dismiss()
+                    },
+                    test_tag = "snooze_${duration.toHours()}",
+                )
+            }
+            if (current_label != null) {
+                section_header(stringResource(R.string.rules_snooze_current, current_label))
+            }
+        }
+    }
+}
+
 @Composable
 fun text_value_picker(
     on_dismiss: () -> Unit,
@@ -294,11 +340,13 @@ fun text_value_picker(
     initial: String,
     case_sensitive: Boolean,
     show_case_toggle: Boolean,
+    is_regex: Boolean = false,
     on_confirm: (String, Boolean) -> Unit,
 ) {
     var value by remember { mutableStateOf(initial) }
     var case by remember { mutableStateOf(case_sensitive) }
     val colors = AsterMaterial.colors
+    val regex_error = if (is_regex) regex_error_res(value) else null
     base_sheet(on_dismiss = on_dismiss, title = title) {
         Column(modifier = Modifier.padding(horizontal = AsterSpacing.lg)) {
             AsterTextField(
@@ -308,6 +356,15 @@ fun text_value_picker(
                 singleLine = false,
                 modifier = Modifier.testTag("value_input"),
             )
+            regex_error?.let {
+                Spacer(Modifier.height(AsterSpacing.sm))
+                Text(
+                    text = stringResource(it),
+                    color = colors.danger,
+                    fontSize = 12.sp,
+                    modifier = Modifier.testTag("regex_error"),
+                )
+            }
             if (show_case_toggle) {
                 Spacer(Modifier.height(AsterSpacing.md))
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -327,6 +384,7 @@ fun text_value_picker(
                     on_confirm(value, case)
                     on_dismiss()
                 },
+                enabled = regex_error == null,
                 modifier = Modifier.testTag("confirm_value"),
             )
             Spacer(Modifier.height(AsterSpacing.md))
@@ -340,12 +398,14 @@ fun header_value_picker(
     initial_name: String,
     initial_value: String,
     case_sensitive: Boolean,
+    is_regex: Boolean = false,
     on_confirm: (String, String, Boolean) -> Unit,
 ) {
     var name by remember { mutableStateOf(initial_name) }
     var value by remember { mutableStateOf(initial_value) }
     var case by remember { mutableStateOf(case_sensitive) }
     val colors = AsterMaterial.colors
+    val regex_error = if (is_regex) regex_error_res(value) else null
     base_sheet(on_dismiss = on_dismiss, title = stringResource(R.string.mail_rules_header_value)) {
         Column(modifier = Modifier.padding(horizontal = AsterSpacing.lg)) {
             AsterTextField(
@@ -361,6 +421,15 @@ fun header_value_picker(
                 label = stringResource(R.string.mail_rules_value),
                 placeholder = stringResource(R.string.mail_rules_value_placeholder),
             )
+            regex_error?.let {
+                Spacer(Modifier.height(AsterSpacing.sm))
+                Text(
+                    text = stringResource(it),
+                    color = colors.danger,
+                    fontSize = 12.sp,
+                    modifier = Modifier.testTag("regex_error"),
+                )
+            }
             Spacer(Modifier.height(AsterSpacing.md))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
@@ -375,6 +444,7 @@ fun header_value_picker(
             AsterButton(
                 label = stringResource(R.string.mail_rules_confirm),
                 onClick = { on_confirm(name, value, case); on_dismiss() },
+                enabled = regex_error == null,
             )
             Spacer(Modifier.height(AsterSpacing.md))
         }

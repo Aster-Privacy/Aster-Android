@@ -57,10 +57,14 @@ import io.ktor.http.takeFrom
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.modules.SerializersModule
+import org.astermail.android.api.mail_rules.Action as MailRuleAction
+import org.astermail.android.api.mail_rules.Condition as MailRuleCondition
 
 sealed class ApiError(message: String) : Exception(message) {
     object NetworkError : ApiError("network error")
@@ -94,6 +98,12 @@ fun build_user_agent(): String {
     return "AsterMail-Android/${BuildConfig.VERSION_NAME} (Android $android_version; SDK $sdk; $device_name)"
 }
 
+@OptIn(ExperimentalSerializationApi::class)
+private val mail_rules_fallback_module = SerializersModule {
+    polymorphicDefaultDeserializer(MailRuleCondition::class) { MailRuleCondition.Unsupported.serializer() }
+    polymorphicDefaultDeserializer(MailRuleAction::class) { MailRuleAction.Unsupported.serializer() }
+}
+
 class ApiClient(
     val base_url: String,
     private val token_provider: TokenProvider,
@@ -110,6 +120,7 @@ class ApiClient(
         isLenient = true
         encodeDefaults = true
         coerceInputValues = true
+        serializersModule = mail_rules_fallback_module
     }
 
     private val csrf_mutex = Mutex()

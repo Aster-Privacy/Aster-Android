@@ -24,6 +24,7 @@ package org.astermail.android.ui.contacts
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
+import android.content.ClipData
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
@@ -46,10 +47,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -59,6 +60,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -69,6 +71,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import kotlinx.coroutines.launch
 import org.astermail.android.contacts.ContactsViewModel
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
@@ -92,7 +95,8 @@ fun ContactDetailScreen(
     val colors = AsterMaterial.colors
     val ui_state by vm.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val clipboard_manager = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
+    val clipboard_scope = rememberCoroutineScope()
 
     LaunchedEffect(contact_id) {
         vm.load_contact(contact_id)
@@ -223,7 +227,11 @@ fun ContactDetailScreen(
                 }
                 QuickAction(TablerIcons.Copy, stringResource(R.string.copy), Modifier.weight(1f)) {
                     if (contact.email.isNotBlank()) {
-                        clipboard_manager.setText(AnnotatedString(contact.email))
+                        clipboard_scope.launch {
+                            clipboard.setClipEntry(
+                                ClipEntry(ClipData.newPlainText("", contact.email)),
+                            )
+                        }
                     }
                 }
             }

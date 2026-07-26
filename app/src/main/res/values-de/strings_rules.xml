@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="rules_section_sender">Absender</string>
+    <string name="rules_section_recipients">Empfänger</string>
+    <string name="rules_section_content">Inhalt</string>
+    <string name="rules_section_attachments_flags">Anhänge und Markierungen</string>
+    <string name="rules_section_numeric_date_auth">Zahlen, Datum und Authentifizierung</string>
+
+    <string name="rules_op_is">ist</string>
+    <string name="rules_op_is_not">ist nicht</string>
+    <string name="rules_op_contains">enthält</string>
+    <string name="rules_op_does_not_contain">enthält nicht</string>
+    <string name="rules_op_starts_with">beginnt mit</string>
+    <string name="rules_op_ends_with">endet mit</string>
+    <string name="rules_op_is_empty">ist leer</string>
+    <string name="rules_op_matches_domain">stimmt mit Domain überein</string>
+    <string name="rules_op_matches_regex">stimmt mit regulärem Ausdruck überein</string>
+    <string name="rules_op_greater_than">größer als</string>
+    <string name="rules_op_less_than">kleiner als</string>
+    <string name="rules_op_equals">gleich</string>
+    <string name="rules_op_older_than">älter als</string>
+    <string name="rules_op_newer_than">neuer als</string>
+
+    <string name="rules_value_yes">ja</string>
+    <string name="rules_value_no">nein</string>
+    <string name="rules_value_read">gelesen</string>
+    <string name="rules_value_unread">ungelesen</string>
+    <string name="rules_value_on">ein</string>
+    <string name="rules_value_off">aus</string>
+    <string name="rules_value_days">%1$d Tage</string>
+    <string name="rules_value_label_count">%1$d Labels</string>
+    <string name="rules_value_placeholder_ellipsis">...</string>
+
+    <string name="rules_unit_kb">KB</string>
+    <string name="rules_unit_mb">MB</string>
+    <string name="rules_unit_gb">GB</string>
+
+    <string name="rules_category_primary">Allgemein</string>
+    <string name="rules_category_important">Wichtig</string>
+    <string name="rules_category_promotions">Werbung</string>
+    <string name="rules_category_social">Soziale Netzwerke</string>
+    <string name="rules_category_updates">Updates</string>
+    <string name="rules_category_forums">Foren</string>
+
+    <string name="rules_no_labels">Noch keine Labels</string>
+    <string name="rules_remove">Entfernen</string>
+    <string name="rules_delete_title">Regel löschen?</string>
+    <string name="rules_delete_message">Diese Regel wird nicht mehr auf neue E-Mails angewendet. Bereits vorgenommene Änderungen werden nicht rückgängig gemacht.</string>
+    <string name="rules_save_failed">Regel konnte nicht gespeichert werden</string>
+    <string name="rules_emails_count">%1$d E-Mails</string>
+    <string name="rules_copy_suffix">(Kopie)</string>
+    <string name="rules_error_load">Regeln konnten nicht geladen werden</string>
+    <string name="rules_error_delete">Regel konnte nicht gelöscht werden</string>
+    <string name="rules_error_run">Regel konnte nicht auf vorhandene E-Mails angewendet werden</string>
+    <string name="rules_error_reorder">Reihenfolge der Regeln konnte nicht geändert werden</string>
+    <string name="rules_snooze_1_hour">1 Stunde</string>
+    <string name="rules_snooze_1_day">1 Tag</string>
+    <string name="rules_snooze_3_days">3 Tage</string>
+    <string name="rules_snooze_1_week">1 Woche</string>
+    <string name="rules_snooze_current">Aktuell: %1$s</string>
+</resources>

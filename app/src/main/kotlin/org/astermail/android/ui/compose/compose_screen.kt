@@ -739,7 +739,7 @@ fun ComposeScreen(
         schedule_draft_save()
     }
 
-    val lifecycle_owner_for_draft = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    val lifecycle_owner_for_draft = androidx.lifecycle.compose.LocalLifecycleOwner.current
     androidx.compose.runtime.DisposableEffect(lifecycle_owner_for_draft) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
             if (event == androidx.lifecycle.Lifecycle.Event.ON_PAUSE) {
@@ -3283,6 +3283,7 @@ private class RichBodyEditText(context: android.content.Context) : android.widge
                 return super.commitText(text, newCursorPosition)
             }
         }
+        @Suppress("DEPRECATION")
         return InputConnectionCompat.createWrapper(wrapped, outAttrs, callback)
     }
 

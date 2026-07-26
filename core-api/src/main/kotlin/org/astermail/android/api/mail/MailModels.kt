@@ -94,6 +94,7 @@ data class MailItem(
     val spf_result: String? = null,
     val dkim_result: String? = null,
     val dmarc_result: String? = null,
+    val rule_category: String? = null,
 )
 
 @Serializable

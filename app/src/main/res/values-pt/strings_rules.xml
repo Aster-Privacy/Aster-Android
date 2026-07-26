@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="rules_section_sender">Remetente</string>
+    <string name="rules_section_recipients">Destinatários</string>
+    <string name="rules_section_content">Conteúdo</string>
+    <string name="rules_section_attachments_flags">Anexos e marcadores</string>
+    <string name="rules_section_numeric_date_auth">Numérico, data e autenticação</string>
+
+    <string name="rules_op_is">é</string>
+    <string name="rules_op_is_not">não é</string>
+    <string name="rules_op_contains">contém</string>
+    <string name="rules_op_does_not_contain">não contém</string>
+    <string name="rules_op_starts_with">começa com</string>
+    <string name="rules_op_ends_with">termina com</string>
+    <string name="rules_op_is_empty">está vazio</string>
+    <string name="rules_op_matches_domain">corresponde ao domínio</string>
+    <string name="rules_op_matches_regex">corresponde à expressão regular</string>
+    <string name="rules_op_greater_than">maior que</string>
+    <string name="rules_op_less_than">menor que</string>
+    <string name="rules_op_equals">igual a</string>
+    <string name="rules_op_older_than">mais antigo que</string>
+    <string name="rules_op_newer_than">mais recente que</string>
+
+    <string name="rules_value_yes">sim</string>
+    <string name="rules_value_no">não</string>
+    <string name="rules_value_read">lido</string>
+    <string name="rules_value_unread">não lido</string>
+    <string name="rules_value_on">ativado</string>
+    <string name="rules_value_off">desativado</string>
+    <string name="rules_value_days">%1$d dias</string>
+    <string name="rules_value_label_count">%1$d etiquetas</string>
+    <string name="rules_value_placeholder_ellipsis">...</string>
+
+    <string name="rules_unit_kb">KB</string>
+    <string name="rules_unit_mb">MB</string>
+    <string name="rules_unit_gb">GB</string>
+
+    <string name="rules_category_primary">Principal</string>
+    <string name="rules_category_important">Importante</string>
+    <string name="rules_category_promotions">Promoções</string>
+    <string name="rules_category_social">Social</string>
+    <string name="rules_category_updates">Atualizações</string>
+    <string name="rules_category_forums">Fóruns</string>
+
+    <string name="rules_no_labels">Ainda não há etiquetas</string>
+    <string name="rules_remove">Remover</string>
+    <string name="rules_delete_title">Excluir a regra?</string>
+    <string name="rules_delete_message">Esta regra deixará de ser aplicada a novos e-mails. As alterações já feitas não são desfeitas.</string>
+    <string name="rules_save_failed">Não foi possível salvar a regra</string>
+    <string name="rules_emails_count">%1$d e-mails</string>
+    <string name="rules_copy_suffix">(cópia)</string>
+    <string name="rules_error_load">Não foi possível carregar as regras</string>
+    <string name="rules_error_delete">Não foi possível excluir a regra</string>
+    <string name="rules_error_run">Não foi possível aplicar a regra aos e-mails existentes</string>
+    <string name="rules_error_reorder">Não foi possível reordenar as regras</string>
+    <string name="rules_snooze_1_hour">1 hora</string>
+    <string name="rules_snooze_1_day">1 dia</string>
+    <string name="rules_snooze_3_days">3 dias</string>
+    <string name="rules_snooze_1_week">1 semana</string>
+    <string name="rules_snooze_current">Atual: %1$s</string>
+</resources>

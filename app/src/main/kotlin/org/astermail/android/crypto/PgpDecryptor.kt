@@ -66,6 +66,7 @@ object PgpDecryptor {
                 val pbe = iterator.next()
                 if (pbe !is PGPPublicKeyEncryptedData) continue
 
+                @Suppress("DEPRECATION")
                 val secret_key = key_rings.getSecretKey(pbe.keyID) ?: continue
 
                 if (!pbe.isIntegrityProtected()) continue

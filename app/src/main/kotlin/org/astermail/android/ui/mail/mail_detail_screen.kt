@@ -3651,7 +3651,9 @@ $dark_css
                     settings.allowUniversalAccessFromFileURLs = false
                     settings.javaScriptCanOpenWindowsAutomatically = false
                     settings.setGeolocationEnabled(false)
+                    @Suppress("DEPRECATION")
                     settings.saveFormData = false
+                    @Suppress("DEPRECATION")
                     settings.savePassword = false
                     isVerticalScrollBarEnabled = false
                     isHorizontalScrollBarEnabled = true

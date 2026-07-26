@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="rules_section_sender">送信者</string>
+    <string name="rules_section_recipients">宛先</string>
+    <string name="rules_section_content">本文</string>
+    <string name="rules_section_attachments_flags">添付ファイルとフラグ</string>
+    <string name="rules_section_numeric_date_auth">数値・日付・認証</string>
+
+    <string name="rules_op_is">が次と一致</string>
+    <string name="rules_op_is_not">が次と一致しない</string>
+    <string name="rules_op_contains">を含む</string>
+    <string name="rules_op_does_not_contain">を含まない</string>
+    <string name="rules_op_starts_with">で始まる</string>
+    <string name="rules_op_ends_with">で終わる</string>
+    <string name="rules_op_is_empty">が空</string>
+    <string name="rules_op_matches_domain">がドメインと一致</string>
+    <string name="rules_op_matches_regex">が正規表現と一致</string>
+    <string name="rules_op_greater_than">より大きい</string>
+    <string name="rules_op_less_than">より小さい</string>
+    <string name="rules_op_equals">と等しい</string>
+    <string name="rules_op_older_than">より古い</string>
+    <string name="rules_op_newer_than">より新しい</string>
+
+    <string name="rules_value_yes">はい</string>
+    <string name="rules_value_no">いいえ</string>
+    <string name="rules_value_read">既読</string>
+    <string name="rules_value_unread">未読</string>
+    <string name="rules_value_on">オン</string>
+    <string name="rules_value_off">オフ</string>
+    <string name="rules_value_days">%1$d 日</string>
+    <string name="rules_value_label_count">ラベル %1$d 件</string>
+    <string name="rules_value_placeholder_ellipsis">...</string>
+
+    <string name="rules_unit_kb">KB</string>
+    <string name="rules_unit_mb">MB</string>
+    <string name="rules_unit_gb">GB</string>
+
+    <string name="rules_category_primary">メイン</string>
+    <string name="rules_category_important">重要</string>
+    <string name="rules_category_promotions">プロモーション</string>
+    <string name="rules_category_social">ソーシャル</string>
+    <string name="rules_category_updates">更新情報</string>
+    <string name="rules_category_forums">フォーラム</string>
+
+    <string name="rules_no_labels">ラベルがありません</string>
+    <string name="rules_remove">削除</string>
+    <string name="rules_delete_title">ルールを削除しますか？</string>
+    <string name="rules_delete_message">このルールは今後の新着メールに適用されなくなります。すでに行われた変更は元に戻りません。</string>
+    <string name="rules_save_failed">ルールを保存できませんでした</string>
+    <string name="rules_emails_count">%1$d 件のメール</string>
+    <string name="rules_copy_suffix">(コピー)</string>
+    <string name="rules_error_load">ルールを読み込めませんでした</string>
+    <string name="rules_error_delete">ルールを削除できませんでした</string>
+    <string name="rules_error_run">既存のメールにルールを適用できませんでした</string>
+    <string name="rules_error_reorder">ルールの並び替えができませんでした</string>
+    <string name="rules_snooze_1_hour">1 時間</string>
+    <string name="rules_snooze_1_day">1 日</string>
+    <string name="rules_snooze_3_days">3 日</string>
+    <string name="rules_snooze_1_week">1 週間</string>
+    <string name="rules_snooze_current">現在: %1$s</string>
+</resources>

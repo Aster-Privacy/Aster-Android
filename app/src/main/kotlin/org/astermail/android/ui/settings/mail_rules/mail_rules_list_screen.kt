@@ -78,6 +78,7 @@ import org.astermail.android.api.mail_rules.MailRule
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogDestructiveButton
 import org.astermail.android.design.components.AsterDialogOutlineButton
@@ -105,8 +106,10 @@ fun MailRulesListScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             AsterTopBar(title = stringResource(R.string.mail_rules_title), on_back = on_back)
             AsterDivider()
+            val copy_suffix = stringResource(R.string.rules_copy_suffix)
             val rules_key = when {
                 state.is_loading -> 0
+                state.rules.isEmpty() && state.error != null -> 3
                 state.rules.isEmpty() -> 1
                 else -> 2
             }
@@ -121,13 +124,17 @@ fun MailRulesListScreen(
                 when (key) {
                     0 -> mail_rules_skeleton()
                     1 -> empty_state()
+                    3 -> error_state(
+                        message = stringResource(state.error ?: R.string.rules_error_load),
+                        on_retry = { vm.load(force_refresh = true) },
+                    )
                     else -> Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                         state.rules.forEach { rule ->
                             rule_row(
                                 rule = rule,
                                 on_open = { on_edit(rule.id) },
                                 on_toggle = { vm.toggle_enabled(rule.id) },
-                                on_duplicate = { vm.duplicate_rule(rule.id) },
+                                on_duplicate = { vm.duplicate_rule(rule.id, copy_suffix) },
                                 on_delete = { vm.delete_rule(rule.id) },
                                 on_run = { vm.run_on_existing(rule.id) },
                             )
@@ -226,6 +233,30 @@ private fun empty_state() {
 }
 
 @Composable
+private fun error_state(message: String, on_retry: () -> Unit) {
+    val colors = AsterMaterial.colors
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(AsterSpacing.xl),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
+    ) {
+        Text(
+            text = message,
+            color = colors.text_secondary,
+            fontSize = 14.sp,
+        )
+        Spacer(Modifier.size(AsterSpacing.md))
+        AsterButton(
+            label = stringResource(R.string.retry),
+            onClick = on_retry,
+            modifier = Modifier.testTag("rules_retry"),
+        )
+    }
+}
+
+@Composable
 private fun rule_row(
     rule: MailRule,
     on_open: () -> Unit,
@@ -305,10 +336,12 @@ private fun rule_row(
                     text = { Text(stringResource(R.string.mail_rules_edit_rule)) },
                     onClick = { menu_open = false; on_open() },
                 )
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.mail_rules_duplicate)) },
-                    onClick = { menu_open = false; on_duplicate() },
-                )
+                if (!rule_is_advanced(rule)) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.mail_rules_duplicate)) },
+                        onClick = { menu_open = false; on_duplicate() },
+                    )
+                }
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.mail_rules_run_on_existing)) },
                     onClick = { menu_open = false; on_run() },

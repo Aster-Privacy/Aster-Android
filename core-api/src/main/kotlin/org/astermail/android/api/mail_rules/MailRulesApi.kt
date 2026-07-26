@@ -103,6 +103,22 @@ enum class MatchMode {
 @JsonClassDiscriminator("field")
 sealed class Condition {
     @Serializable
+    @SerialName("and")
+    data class And(val conditions: List<Condition> = emptyList()) : Condition()
+
+    @Serializable
+    @SerialName("or")
+    data class Or(val conditions: List<Condition> = emptyList()) : Condition()
+
+    @Serializable
+    @SerialName("not")
+    data class Not(val condition: Condition) : Condition()
+
+    @Serializable
+    @SerialName("__unsupported__")
+    data object Unsupported : Condition()
+
+    @Serializable
     @SerialName("from")
     data class From(val op: AddressOp, val value: String, val case_sensitive: Boolean? = null) : Condition()
 
@@ -254,6 +270,10 @@ sealed class Action {
     @Serializable
     @SerialName("notify")
     data class Notify(val enabled: Boolean) : Action()
+
+    @Serializable
+    @SerialName("__unsupported__")
+    data object Unsupported : Action()
 }
 
 @Serializable
@@ -269,6 +289,7 @@ data class MailRule(
     val applied_count: Long = 0,
     val created_at: String? = null,
     val updated_at: String? = null,
+    val expression: String? = null,
 )
 
 @Serializable

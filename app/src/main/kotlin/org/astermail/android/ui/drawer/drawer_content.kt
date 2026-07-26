@@ -25,6 +25,7 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import org.astermail.android.BuildConfig
+import android.content.ClipData
 import android.content.Context
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.animateColorAsState
@@ -70,11 +71,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -256,7 +259,8 @@ fun DrawerContent(
     var show_workspace_sheet by remember { mutableStateOf(false) }
     var show_logout_confirm by remember { mutableStateOf(false) }
     val current_workspace = user_email
-    val clipboard = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
+    val clipboard_scope = rememberCoroutineScope()
 
     val sidebar_prefs_context = LocalContext.current
     val sidebar_prefs = remember { sidebar_prefs_context.getSharedPreferences(sidebar_prefs_name, Context.MODE_PRIVATE) }
@@ -668,7 +672,11 @@ fun DrawerContent(
                 show_workspace_sheet = false
                 on_add_account()
             },
-            on_copy = { addr -> clipboard.setText(AnnotatedString(addr)) },
+            on_copy = { addr ->
+                clipboard_scope.launch {
+                    clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("", addr)))
+                }
+            },
             on_logout = {
                 show_workspace_sheet = false
                 show_logout_confirm = true
@@ -1344,14 +1352,14 @@ private fun tree_indent_guides(
             )
             val branch = androidx.compose.ui.graphics.Path().apply {
                 moveTo(branch_x, cy - curve_start)
-                quadraticBezierTo(branch_x, cy, branch_x + curve_reach, cy)
+                quadraticTo(branch_x, cy, branch_x + curve_reach, cy)
             }
             drawPath(path = branch, color = guide_color, style = stroke_style)
         } else {
             val elbow = androidx.compose.ui.graphics.Path().apply {
                 moveTo(branch_x, 0f)
                 lineTo(branch_x, cy - curve_start)
-                quadraticBezierTo(branch_x, cy, branch_x + curve_reach, cy)
+                quadraticTo(branch_x, cy, branch_x + curve_reach, cy)
             }
             drawPath(path = elbow, color = guide_color, style = stroke_style)
         }

@@ -21,12 +21,15 @@
 
 package org.astermail.android.ui.settings.mail_rules
 
+import androidx.annotation.StringRes
+import org.astermail.android.R
 import org.astermail.android.api.mail_rules.Action
 import org.astermail.android.api.mail_rules.AddressOp
 import org.astermail.android.api.mail_rules.AttachmentNameOp
 import org.astermail.android.api.mail_rules.AuthResult
 import org.astermail.android.api.mail_rules.Condition
 import org.astermail.android.api.mail_rules.DateOp
+import org.astermail.android.api.mail_rules.MailRule
 import org.astermail.android.api.mail_rules.NumericOp
 import org.astermail.android.api.mail_rules.ReadState
 import org.astermail.android.api.mail_rules.TextOp
@@ -56,7 +59,8 @@ fun field_kind_of(field: field_id): field_kind = when (field) {
     field_id.dkim_result, field_id.spf_result, field_id.dmarc_result -> field_kind.auth
 }
 
-fun field_of(condition: Condition): field_id = when (condition) {
+fun field_of(condition: Condition): field_id? = when (condition) {
+    is Condition.And, is Condition.Or, is Condition.Not, Condition.Unsupported -> null
     is Condition.From -> field_id.from
     is Condition.ReplyTo -> field_id.reply_to
     is Condition.To -> field_id.to
@@ -135,7 +139,16 @@ enum class action_id {
     snooze, categorize, notify, forward, delete, auto_reply,
 }
 
-fun action_of(action: Action): action_id = when (action) {
+val unavailable_actions = setOf(action_id.forward, action_id.auto_reply)
+
+fun selectable_actions(): List<action_id> =
+    action_id.values().filter { it !in unavailable_actions }
+
+fun strip_unavailable_actions(list: List<Action>): List<Action> =
+    list.filter { action_of(it).let { id -> id == null || id !in unavailable_actions } }
+
+fun action_of(action: Action): action_id? = when (action) {
+    Action.Unsupported -> null
     is Action.MoveTo -> action_id.move_to
     is Action.ApplyLabels -> action_id.apply_labels
     is Action.MarkAs -> action_id.mark_as
@@ -165,7 +178,74 @@ fun default_action_for(id: action_id): Action = when (id) {
     action_id.auto_reply -> Action.AutoReply(template_id = "")
 }
 
-fun is_condition_complete(c: Condition): Boolean = when (c) {
+const val regex_max_length = 512
+
+@StringRes
+fun regex_error_res(pattern: String): Int? {
+    if (pattern.isEmpty()) return R.string.mail_rules_regex_empty
+    if (pattern.length > regex_max_length) return R.string.mail_rules_regex_too_long
+
+    var index = 0
+    var in_class = false
+
+    while (index < pattern.length) {
+        val ch = pattern[index]
+
+        if (ch == '\\') {
+            val next = pattern.getOrNull(index + 1)
+
+            if (!in_class && next != null && (next in '1'..'9' || next == 'k')) {
+                return R.string.mail_rules_regex_backreference
+            }
+            index += 2
+            continue
+        }
+        if (in_class) {
+            if (ch == ']') in_class = false
+            index += 1
+            continue
+        }
+        if (ch == '[') {
+            in_class = true
+            index += 1
+            continue
+        }
+        if (ch == '(' && pattern.getOrNull(index + 1) == '?') {
+            val third = pattern.getOrNull(index + 2)
+
+            if (third == '=' || third == '!') return R.string.mail_rules_regex_lookaround
+            if (third == '<' && (pattern.getOrNull(index + 3) == '=' || pattern.getOrNull(index + 3) == '!')) {
+                return R.string.mail_rules_regex_lookaround
+            }
+        }
+        index += 1
+    }
+
+    return if (runCatching { Regex(pattern) }.isSuccess) null else R.string.mail_rules_regex_invalid
+}
+
+@StringRes
+fun condition_regex_error(c: Condition): Int? = when (c) {
+    is Condition.From -> if (c.op == AddressOp.MATCHES_REGEX) regex_error_res(c.value) else null
+    is Condition.ReplyTo -> if (c.op == AddressOp.MATCHES_REGEX) regex_error_res(c.value) else null
+    is Condition.To -> if (c.op == AddressOp.MATCHES_REGEX) regex_error_res(c.value) else null
+    is Condition.Cc -> if (c.op == AddressOp.MATCHES_REGEX) regex_error_res(c.value) else null
+    is Condition.Bcc -> if (c.op == AddressOp.MATCHES_REGEX) regex_error_res(c.value) else null
+    is Condition.AnyRecipient -> if (c.op == AddressOp.MATCHES_REGEX) regex_error_res(c.value) else null
+    is Condition.Subject -> if (c.op == TextOp.MATCHES_REGEX) regex_error_res(c.value) else null
+    is Condition.Body -> if (c.op == TextOp.MATCHES_REGEX) regex_error_res(c.value) else null
+    is Condition.ListId -> if (c.op == TextOp.MATCHES_REGEX) regex_error_res(c.value) else null
+    is Condition.Header -> if (c.op == TextOp.MATCHES_REGEX) regex_error_res(c.value) else null
+    is Condition.AttachmentName ->
+        if (c.op == AttachmentNameOp.MATCHES_REGEX) regex_error_res(c.value) else null
+    else -> null
+}
+
+fun is_condition_complete(c: Condition): Boolean =
+    condition_regex_error(c) == null && has_condition_value(c)
+
+private fun has_condition_value(c: Condition): Boolean = when (c) {
+    is Condition.And, is Condition.Or, is Condition.Not, Condition.Unsupported -> false
     is Condition.From -> c.value.isNotBlank() || c.op == AddressOp.IS_NOT
     is Condition.ReplyTo -> c.value.isNotBlank() || c.op == AddressOp.IS_NOT
     is Condition.To -> c.value.isNotBlank() || c.op == AddressOp.IS_NOT
@@ -180,14 +260,28 @@ fun is_condition_complete(c: Condition): Boolean = when (c) {
     else -> true
 }
 
+fun is_valid_rfc3339(value: String): Boolean =
+    value.isNotBlank() && runCatching { java.time.OffsetDateTime.parse(value) }.isSuccess
+
 fun is_action_complete(a: Action): Boolean = when (a) {
+    Action.Unsupported -> false
     is Action.MoveTo -> a.folder_token.isNotBlank()
     is Action.ApplyLabels -> a.label_tokens.isNotEmpty()
     is Action.Forward -> a.to.contains("@")
-    is Action.Snooze -> a.until_iso8601.isNotBlank()
+    is Action.Snooze -> is_valid_rfc3339(a.until_iso8601)
     is Action.AutoReply -> a.template_id.isNotBlank()
     else -> true
 }
+
+fun is_advanced_condition(c: Condition): Boolean = when (c) {
+    is Condition.And, is Condition.Or, is Condition.Not, Condition.Unsupported -> true
+    else -> false
+}
+
+fun is_advanced_action(a: Action): Boolean = a == Action.Unsupported
+
+fun rule_is_advanced(rule: MailRule): Boolean =
+    rule.conditions.any { is_advanced_condition(it) } || rule.actions.any { is_advanced_action(it) }
 
 val palette_colors = listOf(
     "#6366F1", "#3B82F6", "#22C55E", "#F59E0B",

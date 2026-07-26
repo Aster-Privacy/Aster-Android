@@ -139,8 +139,12 @@ fun AsterTheme(
         SideEffect {
             val window = (view.context as? Activity)?.window ?: return@SideEffect
             WindowCompat.setDecorFitsSystemWindows(window, false)
-            window.statusBarColor = Color.Transparent.toArgb()
-            window.navigationBarColor = Color.Transparent.toArgb()
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+                @Suppress("DEPRECATION")
+                window.statusBarColor = Color.Transparent.toArgb()
+                @Suppress("DEPRECATION")
+                window.navigationBarColor = Color.Transparent.toArgb()
+            }
             val controller = WindowCompat.getInsetsController(window, view)
             controller.isAppearanceLightStatusBars = !resolved_dark
             controller.isAppearanceLightNavigationBars = !resolved_dark
@@ -166,8 +170,12 @@ fun AsterTheme(
 fun apply_system_bars(activity: Activity, dark_icons: Boolean) {
     val window = activity.window
     WindowCompat.setDecorFitsSystemWindows(window, false)
-    window.statusBarColor = Color.Transparent.toArgb()
-    window.navigationBarColor = Color.Transparent.toArgb()
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+        @Suppress("DEPRECATION")
+        window.statusBarColor = Color.Transparent.toArgb()
+        @Suppress("DEPRECATION")
+        window.navigationBarColor = Color.Transparent.toArgb()
+    }
     val controller = WindowCompat.getInsetsController(window, window.decorView)
     controller.isAppearanceLightStatusBars = dark_icons
     controller.isAppearanceLightNavigationBars = dark_icons

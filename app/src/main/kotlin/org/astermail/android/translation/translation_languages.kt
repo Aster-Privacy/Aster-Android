@@ -34,7 +34,7 @@ fun normalize_language_code(value: String?): String? {
 }
 
 fun language_display_name(code: String): String {
-    val locale = Locale(code)
+    val locale = Locale.forLanguageTag(code)
     val name = locale.getDisplayLanguage(Locale.getDefault())
     return if (name.isBlank() || name == code) {
         code.uppercase(Locale.US)

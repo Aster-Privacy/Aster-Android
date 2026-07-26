@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="rules_section_sender">Отправитель</string>
+    <string name="rules_section_recipients">Получатели</string>
+    <string name="rules_section_content">Содержимое</string>
+    <string name="rules_section_attachments_flags">Вложения и признаки</string>
+    <string name="rules_section_numeric_date_auth">Числа, дата и аутентификация</string>
+
+    <string name="rules_op_is">равно</string>
+    <string name="rules_op_is_not">не равно</string>
+    <string name="rules_op_contains">содержит</string>
+    <string name="rules_op_does_not_contain">не содержит</string>
+    <string name="rules_op_starts_with">начинается с</string>
+    <string name="rules_op_ends_with">заканчивается на</string>
+    <string name="rules_op_is_empty">пусто</string>
+    <string name="rules_op_matches_domain">совпадает с доменом</string>
+    <string name="rules_op_matches_regex">соответствует регулярному выражению</string>
+    <string name="rules_op_greater_than">больше чем</string>
+    <string name="rules_op_less_than">меньше чем</string>
+    <string name="rules_op_equals">равно</string>
+    <string name="rules_op_older_than">старше чем</string>
+    <string name="rules_op_newer_than">новее чем</string>
+
+    <string name="rules_value_yes">да</string>
+    <string name="rules_value_no">нет</string>
+    <string name="rules_value_read">прочитано</string>
+    <string name="rules_value_unread">не прочитано</string>
+    <string name="rules_value_on">включено</string>
+    <string name="rules_value_off">выключено</string>
+    <string name="rules_value_days">%1$d дн.</string>
+    <string name="rules_value_label_count">Меток: %1$d</string>
+    <string name="rules_value_placeholder_ellipsis">...</string>
+
+    <string name="rules_unit_kb">КБ</string>
+    <string name="rules_unit_mb">МБ</string>
+    <string name="rules_unit_gb">ГБ</string>
+
+    <string name="rules_category_primary">Основное</string>
+    <string name="rules_category_important">Важное</string>
+    <string name="rules_category_promotions">Промоакции</string>
+    <string name="rules_category_social">Соцсети</string>
+    <string name="rules_category_updates">Обновления</string>
+    <string name="rules_category_forums">Форумы</string>
+
+    <string name="rules_no_labels">Меток пока нет</string>
+    <string name="rules_remove">Удалить</string>
+    <string name="rules_delete_title">Удалить правило?</string>
+    <string name="rules_delete_message">Правило перестанет применяться к новым письмам. Уже внесённые изменения не отменяются.</string>
+    <string name="rules_save_failed">Не удалось сохранить правило</string>
+    <string name="rules_emails_count">Писем: %1$d</string>
+    <string name="rules_copy_suffix">(копия)</string>
+    <string name="rules_error_load">Не удалось загрузить правила</string>
+    <string name="rules_error_delete">Не удалось удалить правило</string>
+    <string name="rules_error_run">Не удалось применить правило к существующим письмам</string>
+    <string name="rules_error_reorder">Не удалось изменить порядок правил</string>
+    <string name="rules_snooze_1_hour">1 час</string>
+    <string name="rules_snooze_1_day">1 день</string>
+    <string name="rules_snooze_3_days">3 дня</string>
+    <string name="rules_snooze_1_week">1 неделя</string>
+    <string name="rules_snooze_current">Текущее: %1$s</string>
+</resources>

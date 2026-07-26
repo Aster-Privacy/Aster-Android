@@ -1047,7 +1047,7 @@ class MailRepository @Inject constructor(
             is_spam = item.is_spam ?: meta?.is_spam ?: false,
             labels = item.labels?.mapNotNull { it.folder_token } ?: emptyList(),
             tag_tokens = item.tag_tokens ?: emptyList(),
-            category = if (envelope != null) classify(envelope, meta) else "primary",
+            category = if (envelope != null) classify(envelope, meta, item.rule_category) else "primary",
             received_on = envelope?.raw_headers?.let {
                 org.astermail.android.ui.mail.resolve_inbox_received_on(it, get_user_email())
             },

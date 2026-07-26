@@ -648,7 +648,7 @@ class SettingsViewModelTest {
         val aliases = listOf(
             AliasInfo(id = "a1", encrypted_local_part = "alias1", domain = "astermail.org"),
         )
-        coEvery { settings_api.list_aliases() } returns AliasListResponse(aliases)
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(aliases)
         every { session_key_store.get_identity_key() } returns null
 
         vm.load_aliases()
@@ -663,7 +663,7 @@ class SettingsViewModelTest {
             AliasInfo(id = "a1", encrypted_local_part = "alias1", domain = "astermail.org"),
             AliasInfo(id = "a2", encrypted_local_part = "alias2", domain = "astermail.org"),
         )
-        coEvery { settings_api.list_aliases() } returns AliasListResponse(aliases)
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(aliases)
         every { session_key_store.get_identity_key() } returns null
 
         vm.load_aliases()
@@ -716,7 +716,7 @@ class SettingsViewModelTest {
                 ),
                 total = 1,
             )
-        coEvery { settings_api.list_aliases() } returns AliasListResponse(emptyList())
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(emptyList())
 
         vm.load_deleted_aliases()
         advanceUntilIdle()
@@ -993,7 +993,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_aliases error sets error message`() = runTest {
-        coEvery { settings_api.list_aliases() } throws RuntimeException("alias error")
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } throws RuntimeException("alias error")
 
         vm.load_aliases()
         advanceUntilIdle()
@@ -1005,7 +1005,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_aliases empty list`() = runTest {
-        coEvery { settings_api.list_aliases() } returns AliasListResponse(emptyList())
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(emptyList())
         every { session_key_store.get_identity_key() } returns null
 
         vm.load_aliases()
@@ -1020,7 +1020,7 @@ class SettingsViewModelTest {
         val aliases = listOf(
             AliasInfo(id = "a1", encrypted_local_part = "alias1", domain = "astermail.org"),
         )
-        coEvery { settings_api.list_aliases() } returns AliasListResponse(aliases)
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(aliases)
         every { session_key_store.get_identity_key() } returns null
         coEvery { settings_api.delete_alias("a1") } throws RuntimeException("error")
 
@@ -1038,7 +1038,7 @@ class SettingsViewModelTest {
         val aliases = listOf(
             AliasInfo(id = "a1", encrypted_local_part = "alias1", domain = "astermail.org"),
         )
-        coEvery { settings_api.list_aliases() } returns AliasListResponse(aliases)
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(aliases)
         every { session_key_store.get_identity_key() } returns null
 
         vm.load_aliases()
@@ -1055,7 +1055,7 @@ class SettingsViewModelTest {
         val aliases = listOf(
             AliasInfo(id = "a1", encrypted_local_part = "alias1", domain = "astermail.org", never_inbox = false),
         )
-        coEvery { settings_api.list_aliases() } returns AliasListResponse(aliases)
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(aliases)
         every { session_key_store.get_identity_key() } returns null
         coEvery {
             settings_api.update_alias("a1", org.astermail.android.api.settings.UpdateAliasRequest(never_inbox = true))
@@ -1078,7 +1078,7 @@ class SettingsViewModelTest {
         val aliases = listOf(
             AliasInfo(id = "a1", encrypted_local_part = "alias1", domain = "astermail.org", never_inbox = false),
         )
-        coEvery { settings_api.list_aliases() } returns AliasListResponse(aliases)
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(aliases)
         every { session_key_store.get_identity_key() } returns null
         coEvery {
             settings_api.update_alias("a1", org.astermail.android.api.settings.UpdateAliasRequest(never_inbox = true))
@@ -1099,7 +1099,7 @@ class SettingsViewModelTest {
         val aliases = listOf(
             AliasInfo(id = "a1", encrypted_local_part = "alias1", domain = "astermail.org", never_inbox = false),
         )
-        coEvery { settings_api.list_aliases() } returns AliasListResponse(aliases)
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(aliases)
         every { session_key_store.get_identity_key() } returns null
 
         vm.load_aliases()
@@ -2084,7 +2084,7 @@ class SettingsViewModelTest {
         val aliases = listOf(
             AliasInfo(id = "a1", encrypted_local_part = "", domain = "astermail.org"),
         )
-        coEvery { settings_api.list_aliases() } returns AliasListResponse(aliases)
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(aliases)
         every { session_key_store.get_identity_key() } returns null
 
         vm.load_aliases()

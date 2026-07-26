@@ -1685,6 +1685,9 @@
     <string name="mail_rules_action_forward">Forward to</string>
     <string name="mail_rules_action_delete">Delete</string>
     <string name="mail_rules_action_auto_reply">Auto reply</string>
+    <string name="mail_rules_field_advanced">Advanced condition</string>
+    <string name="mail_rules_action_unsupported">Unsupported action</string>
+    <string name="mail_rules_advanced_notice">This rule uses advanced conditions. Open it in the web app to edit it.</string>
     <string name="upgrade_modal_title">Upgrade your plan</string>
     <string name="upgrade_modal_description_generic">You\'ve reached the limit of your current plan. Upgrade to keep going.</string>
     <string name="upgrade_modal_description_specific">You\'ve reached your %1$s limit on the %2$s plan. Upgrade for more.</string>
@@ -2144,4 +2147,9 @@
     <string name="translation_translated">Translated from %1$s on your device</string>
     <string name="translation_show_original">Show original</string>
     <string name="translation_failed">Translation failed</string>
+    <string name="mail_rules_regex_empty">A regex pattern is needed before saving.</string>
+    <string name="mail_rules_regex_too_long">This regex is too long. A trimmed version will work.</string>
+    <string name="mail_rules_regex_invalid">This regex pattern has a typo. Checking the syntax usually sorts it.</string>
+    <string name="mail_rules_regex_backreference">Backreferences like \1 are not supported. Rewrite the pattern without them.</string>
+    <string name="mail_rules_regex_lookaround">Lookahead and lookbehind are not supported. Rewrite the pattern without them.</string>
 </resources>

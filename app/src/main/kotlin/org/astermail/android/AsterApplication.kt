@@ -36,6 +36,7 @@ import dagger.hilt.components.SingletonComponent
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.astermail.android.api.BuildConfig as ApiBuildConfig
 import org.astermail.android.crypto.CryptoNative
 import org.astermail.android.security.LockdownStore
@@ -128,7 +129,7 @@ class AsterApplication : Application(), ImageLoaderFactory {
                     .protocol(okhttp3.Protocol.HTTP_1_1)
                     .code(403)
                     .message("Blocked by Lockdown Mode")
-                    .body(okhttp3.ResponseBody.create(null, ByteArray(0)))
+                    .body(ByteArray(0).toResponseBody(null))
                     .build()
             }
             chain.proceed(request)
