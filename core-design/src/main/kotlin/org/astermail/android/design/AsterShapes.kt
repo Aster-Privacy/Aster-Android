@@ -21,6 +21,8 @@
 
 package org.astermail.android.design
 
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
@@ -34,6 +36,14 @@ class SquircleShape(
     private val radius: Dp = 18.dp,
     private val smoothing: Float = 0f,
 ) : Shape {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is SquircleShape) return false
+        return radius == other.radius && smoothing == other.smoothing
+    }
+
+    override fun hashCode(): Int = radius.hashCode() * 31 + smoothing.hashCode()
+
     override fun createOutline(
         size: Size,
         layoutDirection: LayoutDirection,
@@ -43,6 +53,9 @@ class SquircleShape(
         val max_r = minOf(size.width, size.height) / 2f
         val r = r_px.coerceAtMost(max_r)
         val s = smoothing.coerceIn(0f, 1f)
+        if (s <= 0f) {
+            return Outline.Rounded(RoundRect(0f, 0f, size.width, size.height, CornerRadius(r, r)))
+        }
         val s_cap = if (r > 0f) ((max_r / r) - 1f).coerceAtLeast(0f) else 0f
         val effective_s = s.coerceAtMost(s_cap * 0.7f)
         val edge = (r * (1f + effective_s)).coerceAtMost(max_r)

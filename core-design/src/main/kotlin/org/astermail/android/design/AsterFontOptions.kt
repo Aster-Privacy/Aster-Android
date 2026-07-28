@@ -23,10 +23,12 @@
 
 package org.astermail.android.design
 
+import android.content.Context
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.googlefonts.Font
 import androidx.compose.ui.text.googlefonts.GoogleFont
+import androidx.compose.ui.text.googlefonts.isAvailableOnDevice
 
 data class FontOption(val id: String, val label: String, val google_font_name: String?)
 
@@ -63,14 +65,30 @@ private val FONT_OPTIONS_BY_ID = FONT_OPTIONS.associateBy { it.id }
 
 fun is_valid_font_id(id: String): Boolean = FONT_OPTIONS_BY_ID.containsKey(id)
 
-fun font_family_for(id: String?): FontFamily? {
+@Volatile
+private var downloadable_fonts_supported: Boolean? = null
+
+fun downloadable_fonts_available(context: Context): Boolean {
+    downloadable_fonts_supported?.let { return it }
+    val supported = runCatching {
+        google_font_provider.isAvailableOnDevice(context.applicationContext)
+    }.getOrDefault(false)
+    downloadable_fonts_supported = supported
+    return supported
+}
+
+fun font_family_for(id: String?, downloadable_allowed: Boolean = true): FontFamily? {
     val option = FONT_OPTIONS_BY_ID[id ?: DEFAULT_FONT_ID] ?: return null
     return when {
         option.id == "default" -> null
         option.id == "system" -> FontFamily.Default
-        option.google_font_name != null -> FontFamily(
-            Font(GoogleFont(option.google_font_name), google_font_provider),
-        )
+        option.google_font_name != null -> {
+            if (!downloadable_allowed) {
+                FontFamily.Default
+            } else {
+                FontFamily(Font(GoogleFont(option.google_font_name), google_font_provider))
+            }
+        }
         else -> null
     }
 }

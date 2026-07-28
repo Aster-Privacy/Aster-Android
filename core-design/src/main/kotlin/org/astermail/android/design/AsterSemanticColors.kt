@@ -66,7 +66,10 @@ data class AsterSemanticColors(
     val thread_header_bg: Color,
     val thread_content_bg: Color,
     val is_dark: Boolean,
+    val star: Color = default_star_color,
 )
+
+val default_star_color = Color(0xFFFBBF24)
 
 val light_semantic_colors = AsterSemanticColors(
     bg_primary = AsterColors.light_bg_primary,

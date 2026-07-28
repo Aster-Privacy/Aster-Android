@@ -34,11 +34,20 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import org.astermail.android.design.AsterMaterial
 
+private fun mix(from: Color, to: Color, amount: Float): Color = Color(
+    red = from.red + (to.red - from.red) * amount,
+    green = from.green + (to.green - from.green) * amount,
+    blue = from.blue + (to.blue - from.blue) * amount,
+    alpha = 1f,
+)
+
 @Composable
 fun shimmer_brush(): Brush {
     val colors = AsterMaterial.colors
-    val base = if (colors.is_dark) Color(0xFF1E1E1E) else Color(0xFFE5E7EB)
-    val highlight = if (colors.is_dark) Color(0xFF2E2E2E) else Color(0xFFF3F4F6)
+    val surface = colors.bg_card
+    val lift = if (colors.is_dark) Color.White else Color.Black
+    val base = mix(mix(surface, lift, if (colors.is_dark) 0.07f else 0.09f), colors.accent_blue, 0.05f)
+    val highlight = mix(mix(surface, lift, if (colors.is_dark) 0.16f else 0.03f), colors.accent_blue, 0.13f)
 
     val transition = rememberInfiniteTransition(label = "shimmer")
     val shimmer_offset by transition.animateFloat(

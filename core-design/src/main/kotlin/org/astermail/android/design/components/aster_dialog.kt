@@ -37,7 +37,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -74,12 +77,14 @@ private val dialog_shape = SquircleShape(18.dp)
 private val dialog_button_shape = SquircleShape(12.dp)
 private val dialog_button_height = 40.dp
 private val dialog_max_width = 360.dp
+private val dialog_max_content_height = 480.dp
 
-private val dlg_blue_top = Color(0xFF4A7AFF)
-private val dlg_blue_mid = Color(0xFF3B6AEF)
-private val dlg_blue_bot = Color(0xFF2D5AE0)
-private val dlg_blue_border_top = Color(0xFF5A8AFF)
-private val dlg_blue_border_bot = Color(0xFF2350D0)
+private fun shade_toward(base: Color, target: Color, amount: Float): Color = Color(
+    red = base.red + (target.red - base.red) * amount,
+    green = base.green + (target.green - base.green) * amount,
+    blue = base.blue + (target.blue - base.blue) * amount,
+    alpha = base.alpha,
+)
 private val dlg_red_top = Color(0xFFEF4444)
 private val dlg_red_mid = Color(0xFFDC2626)
 private val dlg_red_bot = Color(0xFFB91C1C)
@@ -87,6 +92,15 @@ private val dlg_red_border_top = Color(0xFFF87171)
 private val dlg_red_border_bot = Color(0xFF991B1B)
 
 enum class DialogConfirmStyle { primary, destructive }
+
+@Composable
+private fun disable_dialog_window_animation() {
+    val view = androidx.compose.ui.platform.LocalView.current
+    androidx.compose.runtime.SideEffect {
+        val provider = view.parent as? androidx.compose.ui.window.DialogWindowProvider
+        provider?.window?.setWindowAnimations(0)
+    }
+}
 
 @Composable
 fun AsterDialog(
@@ -118,6 +132,7 @@ fun AsterDialog(
             usePlatformDefaultWidth = false,
         ),
     ) {
+        disable_dialog_window_animation()
         Surface(
             modifier = Modifier
                 .widthIn(max = dialog_max_width)
@@ -127,9 +142,16 @@ fun AsterDialog(
             shape = dialog_shape,
             color = colors.bg_card,
             tonalElevation = 0.dp,
+            shadowElevation = 8.dp,
+            border = BorderStroke(1.dp, colors.border_primary),
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 24.dp)) {
+                Column(
+                    modifier = Modifier
+                        .heightIn(max = dialog_max_content_height)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 24.dp, vertical = 24.dp),
+                ) {
                     Text(
                         text = title,
                         color = colors.text_primary,
@@ -205,6 +227,7 @@ fun AsterAlertDialog(
             usePlatformDefaultWidth = false,
         ),
     ) {
+        disable_dialog_window_animation()
         Surface(
             modifier = Modifier
                 .widthIn(max = dialog_max_width)
@@ -214,9 +237,16 @@ fun AsterAlertDialog(
             shape = dialog_shape,
             color = colors.bg_card,
             tonalElevation = 0.dp,
+            shadowElevation = 8.dp,
+            border = BorderStroke(1.dp, colors.border_primary),
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 24.dp)) {
+                Column(
+                    modifier = Modifier
+                        .heightIn(max = dialog_max_content_height)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 24.dp, vertical = 24.dp),
+                ) {
                     Text(
                         text = title,
                         color = colors.text_primary,
@@ -299,17 +329,18 @@ fun AsterDialogPrimaryButton(
     enabled: Boolean = true,
     is_loading: Boolean = false,
 ) {
+    val accent = AsterMaterial.colors.accent_blue
     dialog_depth_button(
         label = label,
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
         is_loading = is_loading,
-        fill_top = dlg_blue_top,
-        fill_mid = dlg_blue_mid,
-        fill_bot = dlg_blue_bot,
-        border_top = dlg_blue_border_top,
-        border_bot = dlg_blue_border_bot,
+        fill_top = shade_toward(accent, Color.White, 0.14f),
+        fill_mid = accent,
+        fill_bot = shade_toward(accent, Color.Black, 0.14f),
+        border_top = shade_toward(accent, Color.White, 0.26f),
+        border_bot = shade_toward(accent, Color.Black, 0.26f),
     )
 }
 

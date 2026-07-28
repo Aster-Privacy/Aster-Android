@@ -65,11 +65,11 @@ fun AsterTopBar(
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (on_back != null) {
                 AsterIconButton(
-                    icon = TablerIcons.ArrowBack,
+                    icon = TablerIcons.ArrowLeft,
                     content_description = null,
                     onClick = on_back,
                     tint = colors.text_primary,
-                    icon_size = 26,
+                    icon_size = 24,
                     modifier = Modifier.testTag("back"),
                 )
             } else {

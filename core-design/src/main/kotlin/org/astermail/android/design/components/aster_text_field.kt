@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -53,6 +54,7 @@ import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.astermail.android.design.AsterMaterial
@@ -76,6 +78,9 @@ fun AsterTextField(
     leading_icon: (@Composable () -> Unit)? = null,
     trailing_icon: (@Composable () -> Unit)? = null,
     content_type: ContentType? = null,
+    min_height: Dp = 52.dp,
+    min_lines: Int = 1,
+    max_lines: Int = if (singleLine) 1 else Int.MAX_VALUE,
 ) {
     val colors = AsterMaterial.colors
     val interaction_source = remember { MutableInteractionSource() }
@@ -101,14 +106,14 @@ fun AsterTextField(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp)
+                .heightIn(min = min_height)
                 .background(colors.input_bg, SquircleShape(18.dp))
                 .border(1.5.dp, border_color, SquircleShape(18.dp))
-                .padding(horizontal = AsterSpacing.md),
-            contentAlignment = Alignment.CenterStart,
+                .padding(horizontal = AsterSpacing.md, vertical = if (singleLine) 0.dp else 14.dp),
+            contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart,
         ) {
             Row(
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = if (singleLine) Alignment.CenterVertically else Alignment.Top,
                 horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
                 modifier = Modifier.fillMaxWidth(),
             ) {
@@ -130,6 +135,8 @@ fun AsterTextField(
                         onValueChange = onValueChange,
                         enabled = enabled,
                         singleLine = singleLine,
+                        minLines = min_lines,
+                        maxLines = max_lines,
                         textStyle = LocalTextStyle.current.copy(
                             color = colors.text_primary,
                             fontSize = 16.sp,
