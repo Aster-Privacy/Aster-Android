@@ -1,7 +1,7 @@
 Bug fixes and improvements:
 
-- Fresh look: new icons, new typography, and an app icon that matches your wallpaper theme
-- Translate emails right on your device, with nothing sent to a server
-- Choose which buttons appear in the reading and selection toolbars
-- Mute notifications for individual folders, and see the real sender on forwarded alias mail
-- Fixed notifications showing scrambled text, and emails that looked cut off or squeezed into one word per line
+- A cleaner look throughout, with a faster and smoother inbox, search and settings
+- Inbox categories in the sidebar, plus archive, delete and mark read straight from a notification
+- Share anything to Aster, open mailto links, and undo a send before it leaves
+- Emails now render the way the sender designed them, images included, in every theme
+- Your theme is applied the moment the app opens, and the Aster footer stays off when you turn it off
