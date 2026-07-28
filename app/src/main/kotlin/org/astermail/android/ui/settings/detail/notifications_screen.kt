@@ -34,8 +34,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -59,7 +57,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import org.astermail.android.R
+import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.notifications.MailPollingWorker
+import org.astermail.android.ui.common.picker_theme_res
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterCard
@@ -89,15 +89,9 @@ private fun switch_row(title: String, subtitle: String?, checked: Boolean, on_ch
                 Text(text = subtitle, color = colors.text_tertiary, fontSize = 13.sp)
             }
         }
-        Switch(
+        AsterSwitch(
             checked = checked,
             onCheckedChange = null,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = Color.White,
-                checkedTrackColor = colors.accent_blue,
-                uncheckedThumbColor = Color.White,
-                uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
-            ),
         )
     }
 }
@@ -114,6 +108,7 @@ fun NotificationsScreen(
     val colors = AsterMaterial.colors
     val prefs = state.preferences
     val context = LocalContext.current
+    val time_picker_theme = picker_theme_res()
     val quiet_hours_locked = plan_vm.is_feature_locked("has_quiet_hours") && !plan_state.is_loading
 
     LaunchedEffect(Unit) { vm.load_preferences() }
@@ -191,6 +186,7 @@ fun NotificationsScreen(
         val m = parts.getOrNull(1)?.toIntOrNull()?.coerceIn(0, 59) ?: 0
         android.app.TimePickerDialog(
             context,
+            time_picker_theme,
             { _, hour, minute -> on_pick(String.format(java.util.Locale.US, "%02d:%02d", hour, minute)) },
             h, m, android.text.format.DateFormat.is24HourFormat(context),
         ).show()

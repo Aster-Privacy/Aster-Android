@@ -46,6 +46,7 @@ class DebugNotificationReceiver : BroadcastReceiver() {
                 subject = subject,
                 preview = preview.orEmpty(),
                 message_id = id,
+                item_id = intent.getStringExtra("item_id").orEmpty(),
             )
             return
         }

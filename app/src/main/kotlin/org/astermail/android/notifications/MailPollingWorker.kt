@@ -560,6 +560,7 @@ class MailPollingWorker(
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                     ),
                 )
+                add_message_actions(context, builder, item_id, message_id)
             }
             if (one_line_preview.isNotBlank() && one_line_preview != one_line_subject) {
                 builder.setStyle(
@@ -584,6 +585,51 @@ class MailPollingWorker(
             manager.notify(message_id, builder.build())
             post_group_summary(context, manager)
         }
+
+        private fun add_message_actions(
+            context: Context,
+            builder: NotificationCompat.Builder,
+            item_id: String,
+            message_id: Int,
+        ) {
+            val actions = listOf(
+                Triple(
+                    MailNotificationActionReceiver.ACTION_ARCHIVE,
+                    R.drawable.ic_action_archive,
+                    R.string.archive,
+                ),
+                Triple(
+                    MailNotificationActionReceiver.ACTION_TRASH,
+                    R.drawable.ic_action_trash,
+                    R.string.delete,
+                ),
+                Triple(
+                    MailNotificationActionReceiver.ACTION_MARK_READ,
+                    R.drawable.ic_action_mark_read,
+                    R.string.mark_as_read,
+                ),
+            )
+            actions.forEachIndexed { index, (action, icon, label) ->
+                val intent = Intent(context, MailNotificationActionReceiver::class.java).apply {
+                    this.action = action
+                    putExtra(MailNotificationActionReceiver.EXTRA_ITEM_ID, item_id)
+                    putExtra(MailNotificationActionReceiver.EXTRA_NOTIFICATION_ID, message_id)
+                }
+                val pending = PendingIntent.getBroadcast(
+                    context,
+                    message_id * ACTION_REQUEST_STRIDE + index,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                )
+                builder.addAction(
+                    NotificationCompat.Action.Builder(icon, context.getString(label), pending)
+                        .setShowsUserInterface(false)
+                        .build(),
+                )
+            }
+        }
+
+        private const val ACTION_REQUEST_STRIDE = 8
 
         private fun post_group_summary(context: Context, manager: NotificationManagerCompat) {
             val intent = Intent(context, MainActivity::class.java).apply {
@@ -651,6 +697,12 @@ class MailPollingWorker(
             val cancelled = message_notification_id(item_id.hashCode())
             manager.cancel(cancelled)
             clear_summary_if_empty(manager, setOf(cancelled))
+        }
+
+        fun cancel_notification_id(context: Context, notification_id: Int) {
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
+            manager.cancel(notification_id)
+            clear_summary_if_empty(manager, setOf(notification_id))
         }
 
         fun cancel_message_notifications(context: Context, item_ids: List<String>) {
