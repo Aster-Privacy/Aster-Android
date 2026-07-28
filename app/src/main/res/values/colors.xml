@@ -1,4 +1,9 @@
 <resources>
     <color name="splash_bg_light">#FFFFFFFF</color>
-    <color name="splash_bg_dark">#FF141414</color>
+    <color name="splash_bg_dark">#FF121212</color>
+    <color name="aster_accent_blue">#FF3B82F6</color>
+    <color name="aster_picker_bg_light">#FFFFFFFF</color>
+    <color name="aster_picker_bg_dark">#FF1C1C1C</color>
+    <color name="aster_picker_text_light">#FF111827</color>
+    <color name="aster_picker_text_dark">#FFF5F5F5</color>
 </resources>

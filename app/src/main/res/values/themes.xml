@@ -3,4 +3,36 @@
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowBackground">@color/splash_bg_light</item>
     </style>
+
+    <style name="Widget.Aster.DatePicker" parent="android:Widget.Material.DatePicker">
+        <item name="android:headerBackground">@color/aster_accent_blue</item>
+    </style>
+
+    <style name="Widget.Aster.TimePicker" parent="android:Widget.Material.TimePicker">
+        <item name="android:headerBackground">@color/aster_accent_blue</item>
+    </style>
+
+    <style name="Widget.Aster.DatePicker.Light" parent="android:Widget.Material.Light.DatePicker">
+        <item name="android:headerBackground">@color/aster_accent_blue</item>
+    </style>
+
+    <style name="Widget.Aster.TimePicker.Light" parent="android:Widget.Material.Light.TimePicker">
+        <item name="android:headerBackground">@color/aster_accent_blue</item>
+    </style>
+
+    <style name="Theme.Aster.Picker.Light" parent="android:Theme.Material.Light.Dialog.Alert">
+        <item name="android:colorAccent">@color/aster_accent_blue</item>
+        <item name="android:textColorPrimary">@color/aster_picker_text_light</item>
+        <item name="android:windowBackground">@color/aster_picker_bg_light</item>
+        <item name="android:datePickerStyle">@style/Widget.Aster.DatePicker.Light</item>
+        <item name="android:timePickerStyle">@style/Widget.Aster.TimePicker.Light</item>
+    </style>
+
+    <style name="Theme.Aster.Picker.Dark" parent="android:Theme.Material.Dialog.Alert">
+        <item name="android:colorAccent">@color/aster_accent_blue</item>
+        <item name="android:textColorPrimary">@color/aster_picker_text_dark</item>
+        <item name="android:windowBackground">@color/aster_picker_bg_dark</item>
+        <item name="android:datePickerStyle">@style/Widget.Aster.DatePicker</item>
+        <item name="android:timePickerStyle">@style/Widget.Aster.TimePicker</item>
+    </style>
 </resources>
