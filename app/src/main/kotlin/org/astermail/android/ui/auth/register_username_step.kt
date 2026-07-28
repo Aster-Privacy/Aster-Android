@@ -83,14 +83,7 @@ fun RegisterUsernameStep(
 ) {
     val colors = AsterMaterial.colors
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = AsterSpacing.xxl),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Spacer(Modifier.weight(1.4f))
-
+    auth_centered_column {
         Image(
             painter = painterResource(R.drawable.aster_wordmark),
             contentDescription = null,
@@ -196,8 +189,6 @@ fun RegisterUsernameStep(
                 modifier = Modifier.clickable(onClick = on_sign_in),
             )
         }
-
-        Spacer(Modifier.weight(1f))
     }
 }
 

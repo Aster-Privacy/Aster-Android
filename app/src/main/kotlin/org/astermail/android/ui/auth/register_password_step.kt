@@ -102,15 +102,7 @@ fun RegisterPasswordStep(
     val captcha_ok = !state.captcha_token.value.isNullOrBlank()
     val can_submit = length_ok && upper_ok && lower_ok && number_ok && match_ok && captcha_ok && !is_loading
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = AsterSpacing.xxl),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Spacer(Modifier.height(AsterSpacing.xl))
-
+    auth_centered_column {
         Image(
             painter = painterResource(R.drawable.aster_wordmark),
             contentDescription = null,
@@ -265,8 +257,6 @@ fun RegisterPasswordStep(
                 modifier = Modifier.clickable(enabled = !is_loading, onClick = on_sign_in),
             )
         }
-
-        Spacer(Modifier.height(AsterSpacing.lg))
     }
 }
 

@@ -6,13 +6,23 @@
   html, body { margin:0; padding:0; background:transparent; display:flex;
     align-items:center; justify-content:center; min-height:65px; overflow:hidden;
     color-scheme:dark; }
-  .cf-wrap { overflow:hidden; border-radius:4px; line-height:0; }
+  .cf-wrap { overflow:hidden; border-radius:4px; line-height:0; transform-origin:center center;
+    width:294px; min-width:294px; flex:none; }
   #cf { margin:-3px; line-height:0; }
 </style>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=_onLoad" async defer></script>
 <script>
 var _wid;
+function _fit() {
+  var wrap = document.querySelector('.cf-wrap');
+  if (!wrap) return;
+  var scale = Math.min(1, window.innerWidth / 296);
+  wrap.style.transform = 'scale(' + scale + ')';
+}
+window.addEventListener('resize', _fit);
+window.addEventListener('load', _fit);
 function _onLoad() {
+  _fit();
   var params = new URLSearchParams(window.location.search);
   var sitekey = params.get('sitekey') || '';
   _wid = turnstile.render('#cf', {

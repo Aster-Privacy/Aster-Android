@@ -147,19 +147,17 @@ fun ForgotPasswordScreen(
                 targetState = state.step,
                 modifier = Modifier.weight(1f),
                 transitionSpec = {
-                    (slideInHorizontally { it / 3 } + fadeIn()) togetherWith
-                        (slideOutHorizontally { -it / 3 } + fadeOut())
+                    if (targetState.ordinal >= initialState.ordinal) {
+                        (slideInHorizontally { it / 3 } + fadeIn()) togetherWith
+                            (slideOutHorizontally { -it / 3 } + fadeOut())
+                    } else {
+                        (slideInHorizontally { -it / 3 } + fadeIn()) togetherWith
+                            (slideOutHorizontally { it / 3 } + fadeOut())
+                    }
                 },
                 label = "recovery_step",
             ) { step ->
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(horizontal = AsterSpacing.xxl),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
+                auth_centered_column {
                     when (step) {
                         RecoveryStep.email -> email_step(
                             is_loading = state.is_loading,

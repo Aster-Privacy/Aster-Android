@@ -91,19 +91,10 @@ fun RecoveryKeyScreen(
             .background(colors.bg_primary)
             .systemBarsPadding(),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-        ) {
+        Column(modifier = Modifier.fillMaxSize()) {
             AsterTopBar(title = "", on_back = {})
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = AsterSpacing.xxl),
-            ) {
-                Spacer(Modifier.height(AsterSpacing.sm))
+            auth_centered_column(horizontal_alignment = Alignment.Start) {
                 Text(
                     text = stringResource(R.string.save_recovery_key),
                     color = colors.text_primary,
@@ -190,8 +181,6 @@ fun RecoveryKeyScreen(
                     onClick = on_continue,
                     enabled = saved,
                 )
-
-                Spacer(Modifier.height(AsterSpacing.xxl))
             }
         }
     }

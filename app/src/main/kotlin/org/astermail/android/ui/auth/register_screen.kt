@@ -204,7 +204,7 @@ private fun register_progress_header(
     ) {
         if (show_back) {
             AsterIconButton(
-                icon = TablerIcons.ArrowBack,
+                icon = TablerIcons.ArrowLeft,
                 content_description = null,
                 onClick = on_back,
                 tint = colors.text_primary,

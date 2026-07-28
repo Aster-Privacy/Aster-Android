@@ -125,11 +125,11 @@ class AuthRepository @Inject constructor(
                     } catch (e2: CancellationException) {
                         throw e2
                     } catch (e2: ApiError.UnauthorizedError) {
-                        logout()
+                        force_sign_out()
                     } catch (_: Throwable) {
                     }
                 }
-                RefreshOutcome.AuthFailed -> logout()
+                RefreshOutcome.AuthFailed -> force_sign_out()
                 RefreshOutcome.Transient -> {
                 }
             }
@@ -610,8 +610,21 @@ class AuthRepository @Inject constructor(
         }
     }
 
+    suspend fun logout(): Result<Unit> = sign_out_internal(remove_account = true)
+
+    suspend fun force_sign_out(): Result<Unit> = sign_out_internal(remove_account = false)
+
+    suspend fun logout_all(): Result<Unit> = runCatching {
+        var remaining = account_store.count() + 1
+        while (remaining-- > 0) {
+            sign_out_internal(remove_account = true)
+            if (!_is_signed_in.value) break
+        }
+        _is_signed_in.value = false
+    }
+
     @OptIn(coil.annotation.ExperimentalCoilApi::class)
-    suspend fun logout(): Result<Unit> = runCatching {
+    private suspend fun sign_out_internal(remove_account: Boolean): Result<Unit> = runCatching {
         val current_id = session_key_store.get_user_id()
         try {
             withTimeoutOrNull(5_000L) {
@@ -637,8 +650,14 @@ class AuthRepository @Inject constructor(
         database.decrypted_mail_dao().clear_all()
         runCatching { database.pending_send_dao().clear_all() }
         if (current_id != null) {
-            account_store.remove(current_id)
             runCatching { session_snapshot_store.remove(current_id) }
+            if (remove_account) account_store.remove(current_id)
+        }
+        val next_account = account_store.get_all()
+            .firstOrNull { it.id != current_id && session_snapshot_store.has(it.id) }
+        if (next_account != null) {
+            account_store.set_current(next_account.id)
+            if (try_restore_session(next_account.id)) return@runCatching
         }
         _is_signed_in.value = false
     }
@@ -801,6 +820,12 @@ class AuthRepository @Inject constructor(
         if (current_id != null) {
             account_store.remove(current_id)
             runCatching { session_snapshot_store.remove(current_id) }
+        }
+        val next_account = account_store.get_all()
+            .firstOrNull { it.id != current_id && session_snapshot_store.has(it.id) }
+        if (next_account != null) {
+            account_store.set_current(next_account.id)
+            if (try_restore_session(next_account.id)) return@runCatching
         }
         _is_signed_in.value = false
     }

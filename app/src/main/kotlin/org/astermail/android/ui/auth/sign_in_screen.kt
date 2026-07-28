@@ -204,26 +204,16 @@ fun SignInScreen(
             on_back = on_back,
         )
 
-        Column(
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            Spacer(Modifier.weight(1.4f))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.aster_wordmark),
-                    contentDescription = null,
-                    modifier = Modifier.height(40.dp),
-                )
-            }
+        auth_centered_column(horizontal_padding = 0.dp) {
+            Image(
+                painter = painterResource(R.drawable.aster_wordmark),
+                contentDescription = null,
+                modifier = Modifier.height(40.dp),
+            )
 
             Spacer(Modifier.height(AsterSpacing.xl))
 
             aster_variant_body(fields, callbacks, email_focus, password_focus)
-            Spacer(Modifier.weight(1f))
         }
 
         debug_build_banner()
@@ -435,20 +425,10 @@ private fun TotpVerifyScreen(
             .systemBarsPadding()
             .imePadding(),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-        ) {
+        Column(modifier = Modifier.fillMaxSize()) {
             AsterTopBar(title = "", on_back = on_back)
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = AsterSpacing.xxl),
-            ) {
-                Spacer(Modifier.height(AsterSpacing.sm))
-
+            auth_centered_column(horizontal_alignment = Alignment.Start) {
                 Text(
                     text = stringResource(R.string.totp_verify_title),
                     color = colors.text_primary,
@@ -557,8 +537,6 @@ private fun TotpVerifyScreen(
                         .align(Alignment.CenterHorizontally)
                         .clickable(enabled = !is_loading) { use_backup = !use_backup },
                 )
-
-                Spacer(Modifier.height(AsterSpacing.xxl))
             }
         }
     }

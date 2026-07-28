@@ -72,15 +72,7 @@ fun RegisterRecoveryStep(
     val saved_message = stringResource(R.string.saved_file, RECOVERY_CODES_FILE_NAME)
     val failed_message = stringResource(R.string.failed_to_save)
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = AsterSpacing.xxl),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Spacer(Modifier.height(AsterSpacing.xl))
-
+    auth_centered_column {
         Image(
             painter = painterResource(R.drawable.aster_wordmark),
             contentDescription = null,
@@ -165,8 +157,6 @@ fun RegisterRecoveryStep(
             label = stringResource(R.string.continue_action),
             onClick = on_continue,
         )
-
-        Spacer(Modifier.height(AsterSpacing.xxl))
     }
 }
 

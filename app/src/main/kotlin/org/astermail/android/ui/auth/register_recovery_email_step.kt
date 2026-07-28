@@ -63,15 +63,7 @@ fun RegisterRecoveryEmailStep(
 ) {
     val colors = AsterMaterial.colors
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = AsterSpacing.xxl),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Spacer(Modifier.height(AsterSpacing.xl))
-
+    auth_centered_column {
         Image(
             painter = painterResource(R.drawable.aster_wordmark),
             contentDescription = null,
@@ -127,7 +119,5 @@ fun RegisterRecoveryEmailStep(
             onClick = on_skip,
             modifier = Modifier.fillMaxWidth(),
         )
-
-        Spacer(Modifier.height(AsterSpacing.xxl))
     }
 }

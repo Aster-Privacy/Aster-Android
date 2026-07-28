@@ -224,15 +224,7 @@ fun RegisterPlanStep(
     val yearly_plans = plans.filter { it.billing_period == "year" || it.price_cents == 0 }
     val display_plans = if (billing_interval == "year" && has_yearly) yearly_plans else monthly_plans
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = AsterSpacing.xxl),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Spacer(Modifier.height(AsterSpacing.xl))
-
+    auth_centered_column {
         Image(
             painter = painterResource(R.drawable.aster_wordmark),
             contentDescription = null,
@@ -318,8 +310,6 @@ fun RegisterPlanStep(
                 onClick = on_continue,
             )
         }
-
-        Spacer(Modifier.height(AsterSpacing.xxl))
     }
 }
 
