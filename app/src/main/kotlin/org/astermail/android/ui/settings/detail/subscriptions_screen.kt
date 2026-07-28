@@ -344,15 +344,17 @@ fun SubscriptionsScreen(
     val default_interval = stringResource(R.string.settings_interval_default)
     val plan_free_label = stringResource(R.string.plan_name_free)
     var billing_interval by remember { mutableStateOf("month") }
+    val plan_load_settled = remember_load_settled(state.is_loading)
 
     detail_scaffold(title = stringResource(R.string.plan_billing), on_back = on_back, scroll_state = scroll_state) {
-        if (state.is_loading && sub == null) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
-            }
+        if (sub == null && (state.is_loading || !plan_load_settled)) {
+            skeleton_hero_card(lines = 2)
+            v_gap(AsterSpacing.lg)
+            skeleton_section_label()
+            skeleton_card_list(rows = 3, trailing_width = 64.dp)
+            v_gap(AsterSpacing.lg)
+            skeleton_section_label()
+            skeleton_card_list(rows = 2, trailing_width = 64.dp)
         } else {
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(AsterSpacing.lg)) {
@@ -627,18 +629,10 @@ private fun payment_method_dialog(
     on_crypto: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    androidx.compose.material3.AlertDialog(
-        onDismissRequest = on_dismiss,
-        containerColor = colors.bg_card,
-        title = {
-            androidx.compose.material3.Text(
-                title,
-                color = colors.text_primary,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-        },
-        text = {
+    org.astermail.android.design.components.AsterDialog(
+        on_dismiss = on_dismiss,
+        title = title,
+        body = {
             Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
                 payment_method_option(
                     icon = TablerIcons.CreditCard,
@@ -654,11 +648,11 @@ private fun payment_method_dialog(
                 )
             }
         },
-        confirmButton = {},
-        dismissButton = {
-            androidx.compose.material3.TextButton(onClick = on_dismiss) {
-                androidx.compose.material3.Text(stringResource(R.string.cancel))
-            }
+        footer = {
+            org.astermail.android.design.components.AsterDialogOutlineButton(
+                label = stringResource(R.string.cancel),
+                onClick = on_dismiss,
+            )
         },
     )
 }
@@ -704,18 +698,10 @@ private fun crypto_term_dialog(
         12 to stringResource(R.string.crypto_term_12_months),
     )
 
-    androidx.compose.material3.AlertDialog(
-        onDismissRequest = on_dismiss,
-        containerColor = colors.bg_card,
-        title = {
-            androidx.compose.material3.Text(
-                stringResource(R.string.crypto_term_title),
-                color = colors.text_primary,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-        },
-        text = {
+    org.astermail.android.design.components.AsterDialog(
+        on_dismiss = on_dismiss,
+        title = stringResource(R.string.crypto_term_title),
+        body = {
             Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs)) {
                 terms.forEach { (months, label) ->
                     val term_active = selected_term == months
@@ -743,15 +729,15 @@ private fun crypto_term_dialog(
                 }
             }
         },
-        confirmButton = {
-            androidx.compose.material3.TextButton(onClick = { on_confirm(selected_term) }) {
-                androidx.compose.material3.Text(stringResource(R.string.action_continue), color = colors.accent_blue)
-            }
-        },
-        dismissButton = {
-            androidx.compose.material3.TextButton(onClick = on_dismiss) {
-                androidx.compose.material3.Text(stringResource(R.string.cancel))
-            }
+        footer = {
+            org.astermail.android.design.components.AsterDialogOutlineButton(
+                label = stringResource(R.string.cancel),
+                onClick = on_dismiss,
+            )
+            org.astermail.android.design.components.AsterDialogPrimaryButton(
+                label = stringResource(R.string.action_continue),
+                onClick = { on_confirm(selected_term) },
+            )
         },
     )
 }

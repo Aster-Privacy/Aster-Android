@@ -26,6 +26,8 @@ data class UnsubscribeInfo(
     val unsubscribe_link: String? = null,
     val unsubscribe_mailto: String? = null,
     val method: String = "none",
+    val list_unsubscribe_header: String? = null,
+    val list_unsubscribe_post: String? = null,
 )
 
 private val UNSUBSCRIBE_LINK_PATTERNS = listOf(
@@ -53,10 +55,46 @@ private fun is_valid_url(url: String): Boolean {
     }
 }
 
+private val HEADER_MAILTO = Regex("""mailto:([^>,\s]+)""", RegexOption.IGNORE_CASE)
+private val HEADER_BRACKETED_HTTP = Regex("""<(https?://[^>]+)>""", RegexOption.IGNORE_CASE)
+private val HEADER_BARE_HTTP = Regex("""(https?://[^,\s>]+)""", RegexOption.IGNORE_CASE)
+
 fun detect_unsubscribe_info(
     html_content: String? = null,
     text_content: String? = null,
+    list_unsubscribe: String? = null,
+    list_unsubscribe_post: String? = null,
 ): UnsubscribeInfo {
+    if (!list_unsubscribe.isNullOrBlank()) {
+        val mailto = HEADER_MAILTO.find(list_unsubscribe)?.groupValues?.get(1)
+        val http_link = HEADER_BRACKETED_HTTP.find(list_unsubscribe)?.groupValues?.get(1)
+            ?: HEADER_BARE_HTTP.find(list_unsubscribe)?.groupValues?.get(1)
+        when {
+            !list_unsubscribe_post.isNullOrBlank() && http_link != null && is_valid_url(http_link) ->
+                return UnsubscribeInfo(
+                    has_unsubscribe = true,
+                    unsubscribe_link = http_link,
+                    method = "one-click",
+                    list_unsubscribe_header = list_unsubscribe,
+                    list_unsubscribe_post = list_unsubscribe_post,
+                )
+            http_link != null && is_valid_url(http_link) ->
+                return UnsubscribeInfo(
+                    has_unsubscribe = true,
+                    unsubscribe_link = http_link,
+                    method = "link",
+                    list_unsubscribe_header = list_unsubscribe,
+                )
+            mailto != null ->
+                return UnsubscribeInfo(
+                    has_unsubscribe = true,
+                    unsubscribe_mailto = mailto,
+                    method = "mailto",
+                    list_unsubscribe_header = list_unsubscribe,
+                )
+        }
+    }
+
     if (html_content != null) {
         val anchor_match = ANCHOR_UNSUBSCRIBE.find(html_content)
         if (anchor_match != null) {
@@ -66,6 +104,7 @@ fun detect_unsubscribe_info(
                     has_unsubscribe = true,
                     unsubscribe_link = href_match.groupValues[1],
                     method = "link",
+                    list_unsubscribe_header = list_unsubscribe,
                 )
             }
         }
@@ -79,6 +118,7 @@ fun detect_unsubscribe_info(
                         has_unsubscribe = true,
                         unsubscribe_link = url,
                         method = "link",
+                        list_unsubscribe_header = list_unsubscribe,
                     )
                 }
             }
@@ -93,9 +133,10 @@ fun detect_unsubscribe_info(
                 has_unsubscribe = true,
                 unsubscribe_link = match.value,
                 method = "link",
+                list_unsubscribe_header = list_unsubscribe,
             )
         }
     }
 
-    return UnsubscribeInfo()
+    return UnsubscribeInfo(list_unsubscribe_header = list_unsubscribe)
 }

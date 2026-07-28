@@ -111,14 +111,6 @@ data class BulkUnsubscribeResult(
 )
 
 @Serializable
-data class ScanResult(
-    val success: Boolean = false,
-    val new_subscriptions: Int = 0,
-    val updated_subscriptions: Int = 0,
-    val message: String = "",
-)
-
-@Serializable
 data class TrackSubscriptionRequest(
     val sender_email: String,
     val sender_name: String? = null,
@@ -149,7 +141,6 @@ interface SubscriptionsApi {
     suspend fun proxy_unsubscribe(request: ProxyUnsubscribeRequest): ProxyUnsubscribeResponse
     suspend fun track_subscription(request: TrackSubscriptionRequest): TrackSubscriptionResponse
     suspend fun reactivate(subscription_id: String): UnsubscribeResult
-    suspend fun scan(): ScanResult
     suspend fun delete(subscription_id: String): UnsubscribeResult
 }
 
@@ -220,15 +211,6 @@ class SubscriptionsApiImpl(private val client: ApiClient) : SubscriptionsApi {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(body)
-        }
-        return decode_or_throw(response)
-    }
-
-    override suspend fun scan(): ScanResult {
-        val response = client.http.post("${client.base_url}$base/scan") {
-            contentType(ContentType.Application.Json)
-            client.get_csrf()?.let { header("X-CSRF-Token", it) }
-            setBody(emptyMap<String, String>())
         }
         return decode_or_throw(response)
     }

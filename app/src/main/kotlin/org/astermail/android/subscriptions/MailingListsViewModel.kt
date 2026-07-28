@@ -36,6 +36,7 @@ import org.astermail.android.api.subscriptions.BulkUnsubscribeRequest
 import org.astermail.android.api.subscriptions.MailingListStats
 import org.astermail.android.api.subscriptions.MailingListSubscription
 import org.astermail.android.api.subscriptions.SubscriptionsApi
+import org.astermail.android.api.subscriptions.TrackSubscriptionRequest
 import org.astermail.android.api.subscriptions.UnsubscribeRequest
 
 data class MailingListsState(
@@ -51,6 +52,7 @@ data class MailingListsState(
 @HiltViewModel
 class MailingListsViewModel @Inject constructor(
     private val api: SubscriptionsApi,
+    private val scanner: SubscriptionScanner,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -79,17 +81,42 @@ class MailingListsViewModel @Inject constructor(
         }
     }
 
-    fun scan() {
+    fun scan(force_full: Boolean = false) {
         if (_state.value.is_scanning) return
         _state.value = _state.value.copy(is_scanning = true, error = null, message = null)
         viewModelScope.launch {
             try {
-                val result = api.scan()
+                val discovered = scanner.scan(force_full = force_full)
+                var tracked = 0
+                for (sender in discovered) {
+                    val result = runCatching {
+                        api.track_subscription(
+                            TrackSubscriptionRequest(
+                                sender_email = sender.sender_email,
+                                sender_name = sender.sender_name.ifBlank { null },
+                                unsubscribe_link = sender.unsubscribe_link,
+                                list_unsubscribe_header = sender.list_unsubscribe_header,
+                                category = sender.category,
+                            ),
+                        )
+                    }.getOrNull()
+                    if (result?.is_new == true) tracked += 1
+                }
                 _state.value = _state.value.copy(
                     is_scanning = false,
-                    message = result.message.ifBlank { context.getString(R.string.scan_complete) },
+                    message = if (tracked > 0) {
+                        context.resources.getQuantityString(
+                            R.plurals.subscriptions_found_count,
+                            tracked,
+                            tracked,
+                        )
+                    } else {
+                        context.getString(R.string.scan_complete)
+                    },
                 )
                 load()
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_scanning = false,
@@ -171,7 +198,7 @@ class MailingListsViewModel @Inject constructor(
         viewModelScope.launch {
             kotlinx.coroutines.delay(500)
             if (_state.value.items.isEmpty() && !_state.value.is_scanning && !_state.value.is_loading) {
-                scan()
+                scan(force_full = true)
             }
         }
     }
