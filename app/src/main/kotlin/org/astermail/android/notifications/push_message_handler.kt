@@ -74,14 +74,15 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
         return PushResult.NeedsFetch
     }
     val item_id = obj.optString("item_id", "")
-    if (item_id.isNotBlank() && MailPollingWorker.was_item_notified(context, item_id)) {
+    if (item_id.isBlank()) return PushResult.NeedsFetch
+    if (MailPollingWorker.was_item_notified(context, item_id)) {
         return PushResult.Ignore
     }
     val encrypted_envelope = obj.optString("encrypted_envelope", "").takeIf { it.isNotBlank() }
         ?: return PushResult.NeedsFetch
     val envelope_nonce = obj.optString("envelope_nonce", "").takeIf { it.isNotBlank() }
     val repo = entry.mail_repository()
-    val envelope = repo.decrypt_envelope_public(encrypted_envelope, envelope_nonce, item_id.takeIf { it.isNotBlank() })
+    val envelope = repo.decrypt_envelope_public(encrypted_envelope, envelope_nonce, item_id)
         ?: return PushResult.NeedsFetch
     if (envelope.is_undecryptable) return PushResult.NeedsFetch
     val forwarding = org.astermail.android.ui.mail.resolve_forwarding_display(
