@@ -25,6 +25,7 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -47,6 +48,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -59,6 +61,16 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
+import org.astermail.android.mail.DEFAULT_SWIPE_LEFT_ACTION
+import org.astermail.android.mail.DEFAULT_SWIPE_RIGHT_ACTION
+import org.astermail.android.mail.SWIPE_ACTION_ARCHIVE
+import org.astermail.android.mail.SWIPE_ACTION_DELETE
+import org.astermail.android.mail.SWIPE_ACTION_NONE
+import org.astermail.android.mail.SWIPE_ACTION_SNOOZE
+import org.astermail.android.mail.SWIPE_ACTION_SPAM
+import org.astermail.android.mail.SWIPE_ACTION_STAR
+import org.astermail.android.mail.SWIPE_ACTION_TOGGLE_READ
+import org.astermail.android.mail.normalize_swipe_action
 import org.astermail.android.settings.SettingsViewModel
 
 private data class SwipeActionOption(
@@ -77,26 +89,26 @@ fun SwipeActionsScreen(on_back: () -> Unit) {
 
     LaunchedEffect(Unit) { vm.load_preferences() }
 
-    var swipe_right by remember { mutableStateOf("archive") }
-    var swipe_left by remember { mutableStateOf("trash") }
+    var swipe_right by remember { mutableStateOf(DEFAULT_SWIPE_RIGHT_ACTION) }
+    var swipe_left by remember { mutableStateOf(DEFAULT_SWIPE_LEFT_ACTION) }
     var prefs_loaded by remember { mutableStateOf(false) }
 
     LaunchedEffect(prefs, state.preferences_authoritative) {
         if (prefs != null && state.preferences_authoritative && !prefs_loaded) {
             prefs_loaded = true
-            swipe_right = prefs.swipe_right_action
-            swipe_left = prefs.swipe_left_action
+            swipe_right = normalize_swipe_action(prefs.swipe_right_action, DEFAULT_SWIPE_RIGHT_ACTION)
+            swipe_left = normalize_swipe_action(prefs.swipe_left_action, DEFAULT_SWIPE_LEFT_ACTION)
         }
     }
 
     val action_options = listOf(
-        SwipeActionOption("archive", stringResource(R.string.swipe_archive), TablerIcons.Archive, colors.accent_blue),
-        SwipeActionOption("trash", stringResource(R.string.swipe_delete), TablerIcons.Trash, colors.danger),
-        SwipeActionOption("mark_read", stringResource(R.string.swipe_mark_as_read), TablerIcons.MailOpened, colors.success),
-        SwipeActionOption("mark_unread", stringResource(R.string.swipe_mark_as_unread), TablerIcons.Mail, colors.warning),
-        SwipeActionOption("star", stringResource(R.string.swipe_star), TablerIcons.Star, colors.warning),
-        SwipeActionOption("spam", stringResource(R.string.swipe_report_spam), TablerIcons.Ban, colors.danger),
-        SwipeActionOption("none", stringResource(R.string.swipe_none), null, null),
+        SwipeActionOption(SWIPE_ACTION_ARCHIVE, stringResource(R.string.swipe_archive), TablerIcons.Archive, colors.accent_blue),
+        SwipeActionOption(SWIPE_ACTION_DELETE, stringResource(R.string.swipe_delete), TablerIcons.Trash, colors.danger),
+        SwipeActionOption(SWIPE_ACTION_TOGGLE_READ, stringResource(R.string.swipe_mark_as_read), TablerIcons.MailOpened, colors.success),
+        SwipeActionOption(SWIPE_ACTION_SNOOZE, stringResource(R.string.snooze), TablerIcons.Clock, colors.warning),
+        SwipeActionOption(SWIPE_ACTION_STAR, stringResource(R.string.swipe_star), TablerIcons.Star, colors.star),
+        SwipeActionOption(SWIPE_ACTION_SPAM, stringResource(R.string.swipe_report_spam), TablerIcons.Ban, colors.danger),
+        SwipeActionOption(SWIPE_ACTION_NONE, stringResource(R.string.swipe_none), TablerIcons.CircleOff, colors.text_muted),
     )
 
     detail_scaffold(
@@ -174,6 +186,7 @@ private fun swipe_action_option(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = on_click)
+            .background(if (selected) colors.accent_blue.copy(alpha = 0.08f) else Color.Transparent)
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -190,14 +203,29 @@ private fun swipe_action_option(
             text = option.label,
             color = colors.text_primary,
             fontSize = 15.sp,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
             modifier = Modifier.weight(1f),
         )
-        if (selected) {
-            Box(
-                modifier = Modifier.size(18.dp).background(colors.accent_blue, CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text("✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.width(AsterSpacing.md))
+        Box(
+            modifier = Modifier
+                .size(22.dp)
+                .clip(CircleShape)
+                .background(if (selected) colors.accent_blue else Color.Transparent)
+                .border(
+                    width = if (selected) 0.dp else 1.5.dp,
+                    color = if (selected) Color.Transparent else colors.border_secondary,
+                    shape = CircleShape,
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (selected) {
+                Icon(
+                    imageVector = TablerIcons.Check,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(14.dp),
+                )
             }
         }
     }

@@ -24,6 +24,11 @@ package org.astermail.android.ui.mail
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -40,21 +45,33 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
@@ -67,6 +84,7 @@ import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterSemanticColors
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.mail.MailViewModel
@@ -82,6 +100,9 @@ fun EmailRow(
     modifier: Modifier = Modifier,
     is_pinned: Boolean = false,
     haptic_enabled: Boolean = true,
+    is_first: Boolean = true,
+    is_last: Boolean = true,
+    is_selected: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
@@ -89,36 +110,72 @@ fun EmailRow(
     val sender_color = if (is_unread) colors.text_primary else colors.text_secondary
     val subject_color = if (is_unread) colors.text_primary else colors.text_secondary
     val preview_color = if (is_unread) colors.text_secondary else colors.text_muted
-    val row_bg = colors.bg_primary.copy(alpha = 0.6f)
+    val row_bg = animateColorAsState(
+        targetValue = when {
+            is_selected -> inbox_card_selected_color(colors)
+            is_unread -> inbox_card_unread_color(colors)
+            else -> inbox_card_read_color(colors)
+        },
+        animationSpec = tween(durationMillis = 220),
+        label = "row_bg",
+    )
+    val interaction_source = remember { MutableInteractionSource() }
     val yesterday_label = stringResource(R.string.yesterday)
     val relative_time = remember(email.received_at, yesterday_label) {
         email.received_at.format_relative_time(yesterday_label)
     }
+    val group_shape = remember(is_first, is_last) { inbox_group_shape(is_first, is_last) }
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(row_bg)
+            .padding(
+                start = inbox_card_horizontal_margin,
+                end = inbox_card_horizontal_margin,
+                bottom = if (is_last) 0.dp else inbox_group_split,
+            )
+            .clip(group_shape)
+            .drawBehind { drawRect(row_bg.value) }
             .combinedClickable(
+                interactionSource = interaction_source,
+                indication = androidx.compose.material3.ripple(),
                 onClick = on_click,
                 onLongClick = {
                     if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                     on_long_click()
                 },
             )
-            .defaultMinSize(minHeight = 80.dp)
+            .defaultMinSize(minHeight = 88.dp)
             .padding(
-                start = AsterSpacing.lg,
-                end = AsterSpacing.lg,
-                top = AsterSpacing.lg,
-                bottom = AsterSpacing.lg,
+                start = inbox_card_content_padding,
+                end = inbox_card_content_padding,
+                top = AsterSpacing.md,
+                bottom = AsterSpacing.md,
             ),
         verticalAlignment = Alignment.Top,
     ) {
-        SenderAvatar(
-            email = displayed_sender_email(email.display_sender_email, email.sender_email),
-            name = displayed_sender_name(email.display_sender_name, email.sender_name),
-        )
+        if (is_selected) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(colors.accent_blue),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = TablerIcons.Check,
+                    contentDescription = stringResource(R.string.selected),
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+        } else {
+            SenderAvatar(
+                email = displayed_sender_email(email.display_sender_email, email.sender_email),
+                name = displayed_sender_name(email.display_sender_name, email.sender_name),
+                size = 44.dp,
+            )
+        }
 
         Spacer(Modifier.width(AsterSpacing.md))
 
@@ -128,6 +185,7 @@ fun EmailRow(
                     text = displayed_sender_name(email.display_sender_name, email.sender_name),
                     style = MaterialTheme.typography.bodyLarge,
                     color = sender_color,
+                    fontSize = 16.sp,
                     fontWeight = if (is_unread) FontWeight.Bold else FontWeight.Normal,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -137,30 +195,32 @@ fun EmailRow(
                     text = relative_time,
                     style = MaterialTheme.typography.labelSmall,
                     color = if (is_unread) colors.text_primary else colors.text_muted,
-                    fontSize = 12.sp,
+                    fontSize = 13.sp,
                     fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
                     modifier = Modifier.padding(start = AsterSpacing.sm),
                 )
+                if (is_unread) {
+                    Spacer(Modifier.width(6.dp))
+                    unread_dot()
+                }
             }
-            Spacer(Modifier.height(2.dp))
+            Spacer(Modifier.height(3.dp))
             Text(
                 text = email.subject,
                 style = MaterialTheme.typography.bodyMedium,
                 color = subject_color,
+                fontSize = 15.sp,
                 fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Spacer(Modifier.height(2.dp))
+            Spacer(Modifier.height(3.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                if (is_unread) {
-                    unread_dot()
-                    Spacer(Modifier.width(6.dp))
-                }
                 Text(
                     text = email.preview,
                     style = MaterialTheme.typography.bodySmall,
                     color = preview_color,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Normal,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -200,8 +260,7 @@ fun EmailRow(
                 Spacer(Modifier.height(4.dp))
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
+                        .fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Spacer(Modifier.weight(1f))
@@ -229,15 +288,28 @@ private fun unread_dot(modifier: Modifier = Modifier) {
 @Composable
 private fun star_button(is_starred: Boolean, on_toggle: () -> Unit, modifier: Modifier = Modifier) {
     val colors = AsterMaterial.colors
-    val tint: Color = if (is_starred) Color(0xFFFBBF24) else colors.border_primary
+    val tint by animateColorAsState(
+        targetValue = if (is_starred) colors.star else colors.text_tertiary,
+        animationSpec = tween(durationMillis = 180),
+        label = "star_tint",
+    )
+    val star_scale = animateFloatAsState(
+        targetValue = if (is_starred) 1.12f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+        label = "star_scale",
+    )
     Box(
         modifier = modifier
             .size(32.dp)
+            .graphicsLayer {
+                scaleX = star_scale.value
+                scaleY = star_scale.value
+            }
             .combinedClickable(onClick = on_toggle, onLongClick = on_toggle),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = if (is_starred) TablerIcons.Star else TablerIcons.Star,
+            imageVector = if (is_starred) Icons.Filled.Star else TablerIcons.Star,
             contentDescription = if (is_starred) stringResource(R.string.starred) else stringResource(R.string.not_starred),
             tint = tint,
             modifier = Modifier.size(20.dp),
@@ -257,7 +329,8 @@ fun ThreadInboxRow(
     is_pinned: Boolean = false,
     attachment_chips: List<MailViewModel.InboxAttachmentChip> = emptyList(),
     haptic_enabled: Boolean = true,
-    row_index: Int = 0,
+    is_first: Boolean = true,
+    is_last: Boolean = true,
     user_prefs: UserPreferences? = null,
 ) {
     val email = thread.newest
@@ -267,43 +340,58 @@ fun ThreadInboxRow(
     val sender_color = if (is_unread) colors.text_primary else colors.text_secondary
     val subject_color = if (is_unread) colors.text_primary else colors.text_secondary
     val preview_color = if (is_unread) colors.text_secondary else colors.text_muted
-    val row_bg = when {
-        is_selected -> colors.accent_blue.copy(alpha = 0.10f)
-        else -> Color.Transparent
-    }
+    val row_bg = animateColorAsState(
+        targetValue = when {
+            is_selected -> inbox_card_selected_color(colors)
+            is_unread -> inbox_card_unread_color(colors)
+            else -> inbox_card_read_color(colors)
+        },
+        animationSpec = tween(durationMillis = 220),
+        label = "row_bg",
+    )
+    val interaction_source = remember { MutableInteractionSource() }
     val yesterday_label = stringResource(R.string.yesterday)
     val relative_time = remember(email.received_at, yesterday_label) {
         email.received_at.format_relative_time(yesterday_label)
     }
+    val group_shape = remember(is_first, is_last) { inbox_group_shape(is_first, is_last) }
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(row_bg),
+            .padding(
+                start = inbox_card_horizontal_margin,
+                end = inbox_card_horizontal_margin,
+                bottom = if (is_last) 0.dp else inbox_group_split,
+            )
+            .clip(group_shape)
+            .drawBehind { drawRect(row_bg.value) },
     ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .combinedClickable(
+                interactionSource = interaction_source,
+                indication = androidx.compose.material3.ripple(),
                 onClick = on_click,
                 onLongClick = {
                     if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                     on_long_click()
                 },
             )
-            .defaultMinSize(minHeight = 80.dp)
+            .defaultMinSize(minHeight = 88.dp)
             .padding(
-                start = AsterSpacing.lg,
-                end = AsterSpacing.lg,
-                top = AsterSpacing.lg,
-                bottom = AsterSpacing.lg,
+                start = inbox_card_content_padding,
+                end = inbox_card_content_padding,
+                top = AsterSpacing.md,
+                bottom = AsterSpacing.md,
             ),
         verticalAlignment = Alignment.Top,
     ) {
         if (is_selected) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(44.dp)
                     .clip(CircleShape)
                     .background(colors.accent_blue),
                 contentAlignment = Alignment.Center,
@@ -327,19 +415,30 @@ fun ThreadInboxRow(
                     )
                 }
             }
-            StackedAvatars(participants = participants)
+            StackedAvatars(participants = participants, size = 44.dp)
         }
         Spacer(Modifier.width(AsterSpacing.md))
         Column(modifier = Modifier.weight(1f)) {
+            val others_template = stringResource(R.string.participants_and_others)
+            val participants_text = remember(
+                thread.thread_id,
+                thread.participants,
+                email.display_sender_name,
+                email.sender_name,
+                others_template,
+            ) {
+                format_participants(
+                    thread.participants,
+                    displayed_sender_name(email.display_sender_name, email.sender_name),
+                    others_template = others_template,
+                )
+            }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = format_participants(
-                        thread.participants,
-                        displayed_sender_name(email.display_sender_name, email.sender_name),
-                        others_template = stringResource(R.string.participants_and_others),
-                    ),
+                    text = participants_text,
                     style = MaterialTheme.typography.bodyLarge,
                     color = sender_color,
+                    fontSize = 16.sp,
                     fontWeight = if (is_unread) FontWeight.Bold else FontWeight.Normal,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -360,35 +459,42 @@ fun ThreadInboxRow(
                     text = relative_time,
                     style = MaterialTheme.typography.labelSmall,
                     color = if (is_unread) colors.text_primary else colors.text_muted,
-                    fontSize = 12.sp,
+                    fontSize = 13.sp,
                     fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
                     modifier = Modifier.padding(start = AsterSpacing.sm),
                 )
+                if (is_unread) {
+                    Spacer(Modifier.width(6.dp))
+                    unread_dot()
+                }
             }
-            Spacer(Modifier.height(2.dp))
-            val subject_text = if (thread.message_count > 1) {
-                stringResource(R.string.inbox_subject_with_count, email.subject.ifBlank { stringResource(R.string.inbox_no_subject) }, thread.message_count)
-            } else {
-                email.subject.ifBlank { stringResource(R.string.inbox_no_subject) }
+            Spacer(Modifier.height(3.dp))
+            val no_subject_label = stringResource(R.string.inbox_no_subject)
+            val row_context = LocalContext.current
+            val subject_text = remember(email.subject, thread.message_count, no_subject_label, row_context) {
+                val base = email.subject.ifBlank { no_subject_label }
+                if (thread.message_count > 1) {
+                    row_context.getString(R.string.inbox_subject_with_count, base, thread.message_count)
+                } else {
+                    base
+                }
             }
             Text(
                 text = subject_text,
                 style = MaterialTheme.typography.bodyMedium,
                 color = subject_color,
+                fontSize = 15.sp,
                 fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Spacer(Modifier.height(2.dp))
+            Spacer(Modifier.height(3.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                if (is_unread) {
-                    unread_dot()
-                    Spacer(Modifier.width(6.dp))
-                }
                 Text(
                     text = email.preview,
                     style = MaterialTheme.typography.bodySmall,
                     color = preview_color,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Normal,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -396,10 +502,12 @@ fun ThreadInboxRow(
                 )
                 if (user_prefs?.show_message_size == true && email.size_bytes > 0) {
                     Spacer(Modifier.width(4.dp))
-                    val size_str = when {
-                        email.size_bytes < 1024L -> "${email.size_bytes}B"
-                        email.size_bytes < 1024L * 1024L -> "${email.size_bytes / 1024L}KB"
-                        else -> "${"%.1f".format(email.size_bytes / (1024.0 * 1024.0))}MB"
+                    val size_str = remember(email.size_bytes) {
+                        when {
+                            email.size_bytes < 1024L -> "${email.size_bytes}B"
+                            email.size_bytes < 1024L * 1024L -> "${email.size_bytes / 1024L}KB"
+                            else -> "${"%.1f".format(email.size_bytes / (1024.0 * 1024.0))}MB"
+                        }
                     }
                     Text(size_str, color = colors.text_muted, fontSize = 11.sp)
                 }
@@ -425,8 +533,7 @@ fun ThreadInboxRow(
                 Spacer(Modifier.height(4.dp))
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
+                        .fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Spacer(Modifier.weight(1f))
@@ -445,16 +552,57 @@ fun ThreadInboxRow(
             }
         }
     }
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 64.dp)
-            .height(0.5.dp)
-            .background(colors.border_secondary.copy(alpha = 0.4f))
-            .align(Alignment.BottomStart),
-    )
     }
 }
+
+internal val inbox_card_horizontal_margin = 10.dp
+internal val inbox_card_vertical_gap = 0.dp
+internal val inbox_card_content_padding = 16.dp
+internal val inbox_card_shape = SquircleShape(16.dp)
+internal val inbox_group_corner = 18.dp
+internal val inbox_group_inner_corner = 6.dp
+internal val inbox_group_split = 3.dp
+
+internal fun inbox_group_shape(is_first: Boolean, is_last: Boolean): Shape = RoundedCornerShape(
+    topStart = if (is_first) inbox_group_corner else inbox_group_inner_corner,
+    topEnd = if (is_first) inbox_group_corner else inbox_group_inner_corner,
+    bottomStart = if (is_last) inbox_group_corner else inbox_group_inner_corner,
+    bottomEnd = if (is_last) inbox_group_corner else inbox_group_inner_corner,
+)
+
+private fun shift_lightness(base: Color, delta: Float, saturation_boost: Float): Color {
+    val hsl = FloatArray(3)
+    androidx.core.graphics.ColorUtils.colorToHSL(base.toArgb(), hsl)
+    hsl[1] = (hsl[1] * saturation_boost).coerceIn(0f, 1f)
+    hsl[2] = (hsl[2] + delta).coerceIn(0f, 1f)
+    return Color(androidx.core.graphics.ColorUtils.HSLToColor(hsl))
+}
+
+private fun lightness_of(color: Color): Float {
+    val hsl = FloatArray(3)
+    androidx.core.graphics.ColorUtils.colorToHSL(color.toArgb(), hsl)
+    return hsl[2]
+}
+
+internal fun inbox_card_read_color(colors: AsterSemanticColors): Color =
+    if (colors.is_dark) {
+        shift_lightness(colors.bg_primary, 0.045f, 1f)
+    } else {
+        shift_lightness(colors.bg_primary, -0.04f, 1f)
+    }
+
+internal fun inbox_card_unread_color(colors: AsterSemanticColors): Color =
+    inbox_card_read_color(colors)
+
+internal fun search_field_bg_color(colors: AsterSemanticColors): Color =
+    if (colors.is_dark) {
+        shift_lightness(colors.bg_primary, 0.09f, 1.15f)
+    } else {
+        shift_lightness(colors.bg_primary, -0.10f, 1.15f)
+    }
+
+internal fun inbox_card_selected_color(colors: AsterSemanticColors): Color =
+    colors.bg_selected
 
 private fun format_participants(
     participants: List<Pair<String, String>>,

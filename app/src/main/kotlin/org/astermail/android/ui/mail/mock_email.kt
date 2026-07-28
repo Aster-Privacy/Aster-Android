@@ -154,7 +154,24 @@ data class ThreadMessage(
     val is_undecryptable: Boolean = false,
     val display_sender_name: String? = null,
     val display_sender_email: String? = null,
+    val is_body_pending: Boolean = false,
+    val item_type: String = "received",
+    val spf_result: String? = null,
+    val dkim_result: String? = null,
+    val dmarc_result: String? = null,
 )
+
+enum class SenderAuthStatus { verified, failed, unknown }
+
+fun sender_auth_status(msg: ThreadMessage): SenderAuthStatus {
+    if (msg.item_type != "received") return SenderAuthStatus.unknown
+    val spf = msg.spf_result?.lowercase()
+    val dkim = msg.dkim_result?.lowercase()
+    val dmarc = msg.dmarc_result?.lowercase()
+    if (dmarc == "pass" && (dkim == "pass" || spf == "pass")) return SenderAuthStatus.verified
+    if (dmarc == "fail" || spf == "fail" || dkim == "fail") return SenderAuthStatus.failed
+    return SenderAuthStatus.unknown
+}
 
 private val label_work = Color(0xFF3B82F6)
 private val label_personal = Color(0xFF10B981)
@@ -1033,17 +1050,23 @@ fun find_email_for_message(msg_id: String): Email? {
     return mock_inbox.firstOrNull { it.id + "_m1" == msg_id }
 }
 
+private val iso_timestamp_parser: ThreadLocal<SimpleDateFormat> = ThreadLocal.withInitial {
+    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).apply {
+        timeZone = java.util.TimeZone.getTimeZone("UTC")
+    }
+}
+
+private fun parse_iso_timestamp(raw: String): Long = try {
+    iso_timestamp_parser.get()!!.parse(raw.take(19))?.time ?: System.currentTimeMillis()
+} catch (_: Throwable) {
+    System.currentTimeMillis()
+}
+
 fun inbox_item_to_email(
     item: org.astermail.android.mail.InboxItem,
     tags: List<org.astermail.android.api.tags.TagItem> = emptyList(),
 ): Email {
-    val ts = try {
-        java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.US).apply {
-            timeZone = java.util.TimeZone.getTimeZone("UTC")
-        }.parse(item.timestamp.take(19))?.time ?: System.currentTimeMillis()
-    } catch (_: Throwable) {
-        System.currentTimeMillis()
-    }
+    val ts = parse_iso_timestamp(item.timestamp)
     val display_name = item.sender_name.ifBlank {
         item.sender_email.substringBefore('@').ifBlank { "Unknown" }
     }
@@ -1078,13 +1101,7 @@ fun inbox_item_to_email(
 }
 
 fun thread_message_to_mock(msg: org.astermail.android.mail.ThreadMessageDecrypted): ThreadMessage {
-    val ts = try {
-        java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.US).apply {
-            timeZone = java.util.TimeZone.getTimeZone("UTC")
-        }.parse(msg.timestamp.take(19))?.time ?: System.currentTimeMillis()
-    } catch (_: Throwable) {
-        System.currentTimeMillis()
-    }
+    val ts = parse_iso_timestamp(msg.timestamp)
     val has_pgp_text = msg.body_text.contains("-----BEGIN PGP")
     val html = if (msg.body_html != null && !msg.body_html.contains("-----BEGIN PGP")) {
         msg.body_html
@@ -1112,6 +1129,11 @@ fun thread_message_to_mock(msg: org.astermail.android.mail.ThreadMessageDecrypte
         is_undecryptable = msg.is_undecryptable,
         display_sender_name = msg.display_sender_name,
         display_sender_email = msg.display_sender_email,
+        is_body_pending = msg.is_body_pending,
+        item_type = msg.raw_item.item_type ?: "received",
+        spf_result = msg.raw_item.spf_result,
+        dkim_result = msg.raw_item.dkim_result,
+        dmarc_result = msg.raw_item.dmarc_result,
     )
 }
 
@@ -1122,22 +1144,40 @@ fun thread_message_with_attachments(
     return msg.copy(attachments = attachments)
 }
 
+private val re_strip_style = Regex("<style[^>]*>[\\s\\S]*?</style>", RegexOption.IGNORE_CASE)
+private val re_strip_script = Regex("<script[^>]*>[\\s\\S]*?</script>", RegexOption.IGNORE_CASE)
+private val re_strip_br = Regex("<br\\s*/?>", RegexOption.IGNORE_CASE)
+private val re_strip_tag = Regex("<[^>]+>")
+private val re_strip_blank_lines = Regex("\\n{3,}")
+private val re_strip_spaces = Regex("[ \\t]+")
+
 private fun strip_html_simple(text: String): String {
     var t = text
-    t = t.replace(Regex("<style[^>]*>[\\s\\S]*?</style>", RegexOption.IGNORE_CASE), "")
-    t = t.replace(Regex("<script[^>]*>[\\s\\S]*?</script>", RegexOption.IGNORE_CASE), "")
-    t = t.replace(Regex("<br\\s*/?>", RegexOption.IGNORE_CASE), "\n")
-    t = t.replace(Regex("<[^>]+>"), "")
+    t = t.replace(re_strip_style, "")
+    t = t.replace(re_strip_script, "")
+    t = t.replace(re_strip_br, "\n")
+    t = t.replace(re_strip_tag, "")
     t = t.replace("&nbsp;", " ")
     t = t.replace("&amp;", "&")
     t = t.replace("&lt;", "<")
     t = t.replace("&gt;", ">")
     t = t.replace("&quot;", "\"")
     t = t.replace("&#39;", "'")
-    t = t.replace(Regex("\\n{3,}"), "\n\n")
-    t = t.replace(Regex("[ \\t]+"), " ")
+    t = t.replace(re_strip_blank_lines, "\n\n")
+    t = t.replace(re_strip_spaces, " ")
     return t.trim()
 }
+
+private val time_of_day_format: ThreadLocal<SimpleDateFormat> =
+    ThreadLocal.withInitial { SimpleDateFormat("h:mm a", Locale.getDefault()) }
+private val weekday_format: ThreadLocal<SimpleDateFormat> =
+    ThreadLocal.withInitial { SimpleDateFormat("EEE", Locale.getDefault()) }
+private val short_date_format: ThreadLocal<SimpleDateFormat> =
+    ThreadLocal.withInitial { SimpleDateFormat("MMM d", Locale.getDefault()) }
+private val long_date_format: ThreadLocal<SimpleDateFormat> =
+    ThreadLocal.withInitial { SimpleDateFormat("MMM d, yyyy", Locale.getDefault()) }
+private val full_datetime_format: ThreadLocal<SimpleDateFormat> =
+    ThreadLocal.withInitial { SimpleDateFormat("MMM d, yyyy h:mm a", Locale.getDefault()) }
 
 fun Long.format_relative_time(yesterday_label: String = "Yesterday"): String {
     val now = Calendar.getInstance()
@@ -1145,7 +1185,7 @@ fun Long.format_relative_time(yesterday_label: String = "Yesterday"): String {
     val same_year = now.get(Calendar.YEAR) == then.get(Calendar.YEAR)
     val same_day = same_year && now.get(Calendar.DAY_OF_YEAR) == then.get(Calendar.DAY_OF_YEAR)
     if (same_day) {
-        return SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(this))
+        return time_of_day_format.get()!!.format(Date(this))
     }
     val yesterday = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -1) }
     val is_yesterday = yesterday.get(Calendar.YEAR) == then.get(Calendar.YEAR) &&
@@ -1153,14 +1193,14 @@ fun Long.format_relative_time(yesterday_label: String = "Yesterday"): String {
     if (is_yesterday) return yesterday_label
     val diff_days = ((now.timeInMillis - this) / (1000L * 60 * 60 * 24)).toInt()
     if (diff_days in 2..6) {
-        return SimpleDateFormat("EEE", Locale.getDefault()).format(Date(this))
+        return weekday_format.get()!!.format(Date(this))
     }
-    val pattern = if (same_year) "MMM d" else "MMM d, yyyy"
-    return SimpleDateFormat(pattern, Locale.getDefault()).format(Date(this))
+    val formatter = if (same_year) short_date_format else long_date_format
+    return formatter.get()!!.format(Date(this))
 }
 
 fun Long.format_full_datetime(): String {
-    return SimpleDateFormat("MMM d, yyyy h:mm a", Locale.getDefault()).format(Date(this))
+    return full_datetime_format.get()!!.format(Date(this))
 }
 
 private fun html_to_plain_text(html: String): String {

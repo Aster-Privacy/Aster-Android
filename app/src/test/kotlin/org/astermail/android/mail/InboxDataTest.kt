@@ -141,9 +141,19 @@ class InboxDataTest {
 
     @Test
     fun `BlockedSenderInfo defaults`() {
-        val blocked = BlockedSenderInfo(address = "spam@evil.com")
-        assertEquals("spam@evil.com", blocked.address)
-        assertEquals(0, blocked.blocked_count)
+        val blocked = BlockedSenderInfo(
+            id = "b1",
+            sender_token = "token1",
+            encrypted_sender_data = "cipher",
+            sender_data_nonce = "nonce",
+        )
+        assertEquals("b1", blocked.id)
+        assertEquals("token1", blocked.sender_token)
+        assertEquals("cipher", blocked.encrypted_sender_data)
+        assertEquals("nonce", blocked.sender_data_nonce)
+        assertEquals("", blocked.integrity_hash)
+        assertFalse(blocked.is_domain)
+        assertEquals("spam", blocked.action)
         assertNull(blocked.created_at)
     }
 
