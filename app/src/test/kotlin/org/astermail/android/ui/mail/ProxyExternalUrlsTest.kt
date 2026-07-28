@@ -85,6 +85,44 @@ class ProxyExternalUrlsTest {
     }
 
     @Test
+    fun proxies_unquoted_img_src() {
+        val out = proxy_external_urls("""<img src=https://cdn.example/hero.png width=40>""", base)
+        assertTrue(out.contains("src=\"${proxied("https://cdn.example/hero.png")}\""))
+        assertTrue(out.contains("width=40"))
+    }
+
+    @Test
+    fun proxies_unquoted_protocol_relative_src() {
+        val out = proxy_external_urls("""<img src=//cdn.example/hero.png>""", base)
+        assertTrue(out.contains("src=\"${proxied("https://cdn.example/hero.png")}\""))
+    }
+
+    @Test
+    fun decodes_numeric_amp_entities_in_url() {
+        val out = proxy_external_urls("""<img src="https://cdn.example/b.png?a=1&#38;b=2">""", base)
+        assertTrue(out.contains(proxied("https://cdn.example/b.png?a=1&b=2")))
+    }
+
+    @Test
+    fun srcset_drops_non_http_entries_without_stray_commas() {
+        val out = proxy_external_urls(
+            """<img srcset="https://cdn.example/a.png 1x, cid:part1 2x, https://cdn.example/b.png 3x">""",
+            base,
+        )
+        assertEquals(
+            """<img srcset="${proxied("https://cdn.example/a.png")} 1x, ${proxied("https://cdn.example/b.png")} 3x">""",
+            out,
+        )
+    }
+
+    @Test
+    fun does_not_double_proxy_an_already_proxied_url() {
+        val already = proxied("https://cdn.example/hero.png")
+        val out = proxy_external_urls("""<img src="$already">""", base)
+        assertEquals("""<img src="$already">""", out)
+    }
+
+    @Test
     fun does_not_reproxy_already_proxied_or_touch_css_property_name() {
         val out = proxy_external_urls("""<div style="background-color:#000000">x</div>""", base)
         assertEquals("""<div style="background-color:#000000">x</div>""", out)

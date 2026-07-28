@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.mail
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -262,5 +263,45 @@ class EmailHtmlSanitizerTest {
         assertFalse(out.contains("prefers-color-scheme"))
         assertTrue(out.contains("color:#111"))
         assertTrue(out.contains("h1{margin:0}"))
+    }
+
+    @Test
+    fun analyze_trackers_counts_spy_pixels_by_domain() {
+        val html = """
+            <p>hello</p>
+            <img src="https://track.example.com/open/abc.gif" width="1" height="1">
+            <img src="https://track.example.com/wf/open?id=2" width="1" height="1">
+            <img src="https://cdn.example.org/logo.png" width="200" height="60" alt="logo">
+        """
+        val report = EmailHtmlSanitizer.analyze_trackers(html)
+        assertEquals(2, report.pixel_count)
+        assertEquals(listOf("track.example.com" to 2), report.pixel_domains)
+    }
+
+    @Test
+    fun analyze_trackers_counts_cleaned_link_params() {
+        val html = """
+            <a href="https://shop.example.com/a?utm_source=news&utm_medium=email&id=7">one</a>
+            <a href="https://shop.example.com/b?utm_source=news">two</a>
+            <a href="https://shop.example.com/c">three</a>
+            <a href="mailto:someone@example.com?utm_source=x">mail</a>
+        """
+        val report = EmailHtmlSanitizer.analyze_trackers(html)
+        assertEquals(2, report.cleaned_link_count)
+        assertEquals(listOf("utm_source" to 2, "utm_medium" to 1), report.param_counts)
+        assertEquals(2, report.total)
+    }
+
+    @Test
+    fun strip_tracking_params_keeps_real_params_and_fragment() {
+        val out = EmailHtmlSanitizer.strip_tracking_params("https://ex.com/p?id=9&utm_campaign=spring&fbclid=zz#top")
+        assertEquals("https://ex.com/p?id=9#top", out)
+    }
+
+    @Test
+    fun url_host_handles_ports_userinfo_and_ipv6() {
+        assertEquals("ex.com", EmailHtmlSanitizer.url_host("https://ex.com:8443/a?b=1"))
+        assertEquals("evil.com", EmailHtmlSanitizer.url_host("https://user:pw@evil.com/path"))
+        assertEquals("[::1]", EmailHtmlSanitizer.url_host("http://[::1]:9000/x"))
     }
 }

@@ -100,6 +100,82 @@ object EmailHtmlSanitizer {
         return if (kept.isEmpty()) base + fragment else base + "?" + kept.joinToString("&") + fragment
     }
 
+    fun removed_tracking_params(url: String): List<String> {
+        val q_idx = url.indexOf('?')
+        if (q_idx == -1) return emptyList()
+        val hash_idx = url.indexOf('#', q_idx)
+        val query = if (hash_idx == -1) url.substring(q_idx + 1) else url.substring(q_idx + 1, hash_idx)
+        if (query.isEmpty()) return emptyList()
+        return query.split('&')
+            .map { it.substringBefore('=') }
+            .filter { it.lowercase() in tracking_params }
+    }
+
+    data class TrackerReport(
+        val pixel_domains: List<Pair<String, Int>> = emptyList(),
+        val param_counts: List<Pair<String, Int>> = emptyList(),
+        val pixel_count: Int = 0,
+        val cleaned_link_count: Int = 0,
+    ) {
+        val total: Int get() = pixel_count + cleaned_link_count
+    }
+
+    private const val TRACKER_SCAN_MAX_CHARS = 2 * 1024 * 1024
+
+    fun analyze_trackers(html: String?): TrackerReport {
+        if (html.isNullOrBlank()) return TrackerReport()
+        if (html.length > TRACKER_SCAN_MAX_CHARS) return TrackerReport()
+        return try {
+            val doc = Jsoup.parseBodyFragment(html)
+            val domains = LinkedHashMap<String, Int>()
+            var pixels = 0
+            for (img in doc.select("img[src]")) {
+                val src = img.attr("src").trim()
+                val lower = src.lowercase()
+                if (!lower.startsWith("http://") && !lower.startsWith("https://")) continue
+                if (!is_tracking_pixel(img)) continue
+                pixels++
+                val host = url_host(src) ?: continue
+                domains[host] = (domains[host] ?: 0) + 1
+            }
+            val params = LinkedHashMap<String, Int>()
+            var cleaned_links = 0
+            for (a in doc.select("a[href]")) {
+                val href = a.attr("href").trim()
+                val lower = href.lowercase()
+                if (!lower.startsWith("http://") && !lower.startsWith("https://")) continue
+                val removed = removed_tracking_params(href)
+                if (removed.isEmpty()) continue
+                cleaned_links++
+                for (p in removed.distinct()) params[p] = (params[p] ?: 0) + 1
+            }
+            TrackerReport(
+                pixel_domains = domains.entries.map { it.key to it.value },
+                param_counts = params.entries.sortedByDescending { it.value }.map { it.key to it.value },
+                pixel_count = pixels,
+                cleaned_link_count = cleaned_links,
+            )
+        } catch (_: Throwable) {
+            TrackerReport()
+        }
+    }
+
+    fun url_host(url: String): String? {
+        val scheme_idx = url.indexOf("//")
+        if (scheme_idx == -1) return null
+        var authority = url.substring(scheme_idx + 2)
+        val end = authority.indexOfFirst { it == '/' || it == '?' || it == '#' }
+        if (end >= 0) authority = authority.substring(0, end)
+        val at_idx = authority.lastIndexOf('@')
+        if (at_idx >= 0) authority = authority.substring(at_idx + 1)
+        if (authority.startsWith("[")) {
+            val close = authority.indexOf(']')
+            if (close > 0) return authority.substring(0, close + 1).lowercase()
+        }
+        val host = authority.substringBefore(':').lowercase()
+        return host.takeIf { it.isNotEmpty() }
+    }
+
     fun is_tracking_pixel(img: Element): Boolean {
         val width = img.attr("width").ifEmpty { null }
         val height = img.attr("height").ifEmpty { null }
@@ -280,7 +356,7 @@ object EmailHtmlSanitizer {
             .addAttributes("ul", "type")
             .addAttributes("li", "value")
             .addAttributes("col", "span", "width")
-            .addProtocols("a", "href", "http", "https", "mailto", "tel", "sms", "cid")
+            .addProtocols("a", "href", "http", "https", "mailto", "tel", "sms", "cid", "aster")
             .addProtocols("img", "src", "http", "https", "data", "cid")
             .addProtocols("blockquote", "cite", "http", "https")
             .preserveRelativeLinks(false)

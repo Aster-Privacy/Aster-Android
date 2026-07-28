@@ -51,6 +51,8 @@ import androidx.compose.ui.res.painterResource
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import org.astermail.android.R
 import org.astermail.android.api.BuildConfig as ApiBuildConfig
 import org.astermail.android.api.auth.PublicProfile
@@ -266,12 +268,18 @@ private fun AsterDomainAvatar(
 
     val fallback_profiles = remember { MutableStateFlow(emptyMap<String, PublicProfile?>()) }
     val profiles_flow = resolver?.profiles ?: fallback_profiles
-    val profiles by profiles_flow.collectAsStateWithLifecycle()
-    val profile = profiles[lower_email]
-    val pic_url = profile?.profile_picture?.takeIf { it.isNotBlank() }
+    val own_picture_flow = remember(profiles_flow, lower_email) {
+        profiles_flow
+            .map { it[lower_email]?.profile_picture?.takeIf { url -> url.isNotBlank() } }
+            .distinctUntilChanged()
+    }
+    val pic_url by own_picture_flow.collectAsStateWithLifecycle(
+        initialValue = profiles_flow.value[lower_email]?.profile_picture?.takeIf { it.isNotBlank() },
+    )
 
-    if (pic_url != null) {
-        var loaded by remember(pic_url) { mutableStateOf(false) }
+    val resolved_pic = pic_url
+    if (resolved_pic != null) {
+        var loaded by remember(resolved_pic) { mutableStateOf(false) }
         Box(
             modifier = modifier.size(size).clip(CircleShape).background(if (loaded) Color.Transparent else Color(0xFF4F46E5)),
             contentAlignment = Alignment.Center,
@@ -284,13 +292,13 @@ private fun AsterDomainAvatar(
                     fontSize = (size.value * 0.4f).sp,
                 )
             }
-            val model = remember(pic_url) { decode_avatar_model(pic_url) }
-            val request = remember(pic_url, model) {
+            val model = remember(resolved_pic) { decode_avatar_model(resolved_pic) }
+            val request = remember(resolved_pic, model) {
                 ImageRequest.Builder(context)
                     .data(model)
-                    .memoryCacheKey(pic_url)
-                    .placeholderMemoryCacheKey(pic_url)
-                    .diskCacheKey(pic_url)
+                    .memoryCacheKey(resolved_pic)
+                    .placeholderMemoryCacheKey(resolved_pic)
+                    .diskCacheKey(resolved_pic)
                     .crossfade(false)
                     .build()
             }
