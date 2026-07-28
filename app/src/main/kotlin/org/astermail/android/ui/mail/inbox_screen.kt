@@ -1341,6 +1341,14 @@ fun InboxScreen(
           }
         }
 
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .height(status_bar_top)
+                .background(colors.bg_primary),
+        )
+
         org.astermail.android.ui.common.top_toast_overlay(
             state = top_toast_state,
             on_dismiss = { top_toast_state = null },
