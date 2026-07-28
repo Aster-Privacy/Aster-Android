@@ -34,8 +34,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
@@ -57,6 +55,7 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDestructiveButton
+import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.UpgradeGate
 import org.astermail.android.vacation.VacationReplyViewModel
@@ -135,15 +134,9 @@ fun VacationReplyScreen(
                         fontSize = 13.sp,
                     )
                 }
-                Switch(
+                AsterSwitch(
                     checked = state.is_enabled,
                     onCheckedChange = { vm.set_enabled(it) },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.White,
-                        checkedTrackColor = colors.accent_blue,
-                        uncheckedThumbColor = Color.White,
-                        uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
-                    ),
                     modifier = Modifier.testTag("vacation_toggle"),
                 )
             }
@@ -185,15 +178,9 @@ fun VacationReplyScreen(
                         fontSize = 12.sp,
                     )
                 }
-                Switch(
+                AsterSwitch(
                     checked = state.external_only,
                     onCheckedChange = { vm.set_external_only(it) },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.White,
-                        checkedTrackColor = colors.accent_blue,
-                        uncheckedThumbColor = Color.White,
-                        uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
-                    ),
                 )
             }
         }

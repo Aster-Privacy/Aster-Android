@@ -43,8 +43,6 @@ import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -68,6 +66,7 @@ import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterSecondaryButton
+import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.export.ExportViewModel
 
 @Composable
@@ -234,10 +233,9 @@ private fun scope_step(
                 Text(stringResource(R.string.export_scope_emails), color = colors.text_primary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
                 Text(stringResource(R.string.export_scope_emails_subtitle), color = colors.text_tertiary, fontSize = 12.sp)
             }
-            Switch(
+            AsterSwitch(
                 checked = include_mail,
                 onCheckedChange = on_mail,
-                colors = SwitchDefaults.colors(checkedTrackColor = colors.accent_blue, uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f)),
             )
         }
         AsterDivider(modifier = Modifier)
@@ -252,10 +250,9 @@ private fun scope_step(
                 Text(stringResource(R.string.export_scope_contacts), color = colors.text_primary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
                 Text(stringResource(R.string.export_scope_contacts_subtitle), color = colors.text_tertiary, fontSize = 12.sp)
             }
-            Switch(
+            AsterSwitch(
                 checked = include_contacts,
                 onCheckedChange = on_contacts,
-                colors = SwitchDefaults.colors(checkedTrackColor = colors.accent_blue, uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f)),
             )
         }
     }
@@ -459,11 +456,3 @@ private fun export_summary_row(label: String, value: String) {
     }
 }
 
-private fun format_bytes(bytes: Long): String {
-    if (bytes < 1024) return "$bytes B"
-    val kb = bytes / 1024.0
-    if (kb < 1024) return "%.1f KB".format(kb)
-    val mb = kb / 1024.0
-    if (mb < 1024) return "%.1f MB".format(mb)
-    return "%.1f GB".format(mb / 1024.0)
-}

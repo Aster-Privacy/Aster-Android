@@ -45,8 +45,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -69,6 +67,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import org.astermail.android.R
+import org.astermail.android.design.components.AsterSwitch
+import org.astermail.android.ui.theme.ThemeViewModel
 import org.astermail.android.api.preferences.UserPreferences
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
@@ -132,15 +132,9 @@ private fun behavior_toggle(
             }
             if (subtitle != null) Text(subtitle, color = colors.text_tertiary, fontSize = 13.sp)
         }
-        Switch(
+        AsterSwitch(
             checked = checked,
             onCheckedChange = null,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = Color.White,
-                checkedTrackColor = colors.accent_blue,
-                uncheckedThumbColor = Color.White,
-                uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
-            ),
         )
     }
 }
@@ -163,6 +157,16 @@ fun BehaviorScreen(
     var auto_advance by remember(prefs_loaded) { mutableStateOf(prefs?.auto_advance ?: "Go to next message") }
     var conversation_grouping by remember(prefs_loaded) { mutableStateOf(prefs?.conversation_grouping ?: true) }
     var inbox_categories by remember(prefs_loaded) { mutableStateOf(prefs?.inbox_categories_enabled ?: true) }
+    var enabled_categories by remember(prefs_loaded) {
+        mutableStateOf(prefs?.enabled_categories ?: emptyList())
+    }
+    var custom_categories by remember(prefs_loaded) {
+        mutableStateOf(prefs?.custom_categories ?: emptyList())
+    }
+    val plan_vm: org.astermail.android.billing.PlanLimitsViewModel = hiltViewModel()
+    val plan_state by plan_vm.state.collectAsStateWithLifecycle()
+    val custom_category_limit =
+        plan_state.limits?.limits?.get("max_custom_categories")?.limit ?: -1
     var conversation_order by remember(prefs_loaded) { mutableStateOf(prefs?.conversation_order ?: "newest") }
     var show_message_size by remember(prefs_loaded) { mutableStateOf(prefs?.show_message_size ?: false) }
     var force_dark_emails by remember(prefs_loaded) { mutableStateOf(prefs?.force_dark_emails ?: false) }
@@ -177,6 +181,7 @@ fun BehaviorScreen(
     var spam_sensitivity by remember(prefs_loaded) { mutableStateOf(prefs?.spam_sensitivity ?: "medium") }
     var auto_delete_spam_days by remember(prefs_loaded) { mutableIntStateOf(prefs?.auto_delete_spam_days ?: 30) }
     var folder_lock_mode by remember(prefs_loaded) { mutableStateOf(prefs?.folder_lock_mode ?: "session") }
+    val theme_vm: ThemeViewModel = hiltViewModel()
     var haptic by remember(prefs_loaded) { mutableStateOf(prefs?.haptic_enabled ?: true) }
     var dev_mode by remember(prefs_loaded) { mutableStateOf(prefs?.dev_mode ?: false) }
     var translate_incoming by remember(prefs_loaded) { mutableStateOf(prefs?.translate_incoming ?: "off") }
@@ -194,6 +199,8 @@ fun BehaviorScreen(
                 auto_advance = prefs.auto_advance
                 conversation_grouping = prefs.conversation_grouping
                 inbox_categories = prefs.inbox_categories_enabled
+                enabled_categories = prefs.enabled_categories
+                custom_categories = prefs.custom_categories
                 conversation_order = prefs.conversation_order
                 show_message_size = prefs.show_message_size
                 force_dark_emails = prefs.force_dark_emails
@@ -209,6 +216,7 @@ fun BehaviorScreen(
                 auto_delete_spam_days = prefs.auto_delete_spam_days
                 folder_lock_mode = prefs.folder_lock_mode
                 haptic = prefs.haptic_enabled
+                theme_vm.set_haptic_enabled(prefs.haptic_enabled)
                 dev_mode = prefs.dev_mode
                 translate_incoming = prefs.translate_incoming
                 translate_languages = prefs.translate_languages.toSet()
@@ -225,6 +233,8 @@ fun BehaviorScreen(
                 auto_advance = auto_advance,
                 conversation_grouping = conversation_grouping,
                 inbox_categories_enabled = inbox_categories,
+                enabled_categories = enabled_categories,
+                custom_categories = org.astermail.android.mail.sanitize_custom_categories(custom_categories),
                 conversation_order = conversation_order,
                 show_message_size = show_message_size,
                 force_dark_emails = force_dark_emails,
@@ -341,6 +351,18 @@ fun BehaviorScreen(
                     subtitle = stringResource(R.string.force_dark_emails_subtitle),
                     checked = force_dark_emails,
                     on_change = { force_dark_emails = it; save_trigger++ },
+                )
+            }
+
+            if (inbox_categories) {
+                v_gap(AsterSpacing.lg)
+                category_settings_section(
+                    enabled_categories = enabled_categories,
+                    custom_categories = custom_categories,
+                    custom_category_limit = custom_category_limit,
+                    on_enabled_change = { enabled_categories = it; save_trigger++ },
+                    on_custom_change = { custom_categories = it; save_trigger++ },
+                    on_upgrade = { on_open("billing") },
                 )
             }
 
@@ -588,7 +610,7 @@ fun BehaviorScreen(
                     title = stringResource(R.string.haptic_feedback),
                     subtitle = stringResource(R.string.haptic_feedback_subtitle),
                     checked = haptic,
-                    on_change = { haptic = it; save_trigger++ },
+                    on_change = { haptic = it; theme_vm.set_haptic_enabled(it); save_trigger++ },
                 )
                 AsterDivider(modifier = Modifier)
                 behavior_toggle(

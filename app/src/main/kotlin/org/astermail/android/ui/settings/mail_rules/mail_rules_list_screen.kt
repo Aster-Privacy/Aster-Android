@@ -48,13 +48,9 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -83,7 +79,10 @@ import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogDestructiveButton
 import org.astermail.android.design.components.AsterDialogOutlineButton
 import org.astermail.android.design.components.AsterDivider
+import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.AsterTopBar
+import org.astermail.android.design.components.aster_dropdown_item
+import org.astermail.android.design.components.aster_dropdown_menu
 import org.astermail.android.design.parse_hex_color_safe
 import org.astermail.android.mail_rules.MailRulesViewModel
 
@@ -316,39 +315,38 @@ private fun rule_row(
                 fontSize = 12.sp,
             )
         }
-        Switch(
+        AsterSwitch(
             checked = rule.enabled,
             onCheckedChange = { on_toggle() },
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = Color.White,
-                checkedTrackColor = colors.accent_blue,
-                uncheckedThumbColor = Color.White,
-                uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
-            ),
         )
         Spacer(Modifier.width(AsterSpacing.sm))
         Box {
             IconButton(onClick = { menu_open = true }) {
                 Icon(imageVector = TablerIcons.DotsVertical, contentDescription = null, tint = colors.text_secondary)
             }
-            DropdownMenu(expanded = menu_open, onDismissRequest = { menu_open = false }) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.mail_rules_edit_rule)) },
-                    onClick = { menu_open = false; on_open() },
+            aster_dropdown_menu(expanded = menu_open, on_dismiss = { menu_open = false }) {
+                aster_dropdown_item(
+                    label = stringResource(R.string.mail_rules_edit_rule),
+                    icon = TablerIcons.Pencil,
+                    on_click = { menu_open = false; on_open() },
                 )
                 if (!rule_is_advanced(rule)) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.mail_rules_duplicate)) },
-                        onClick = { menu_open = false; on_duplicate() },
+                    aster_dropdown_item(
+                        label = stringResource(R.string.mail_rules_duplicate),
+                        icon = TablerIcons.Copy,
+                        on_click = { menu_open = false; on_duplicate() },
                     )
                 }
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.mail_rules_run_on_existing)) },
-                    onClick = { menu_open = false; on_run() },
+                aster_dropdown_item(
+                    label = stringResource(R.string.mail_rules_run_on_existing),
+                    icon = TablerIcons.PlayerPlay,
+                    on_click = { menu_open = false; on_run() },
                 )
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.mail_rules_delete)) },
-                    onClick = { menu_open = false; confirm_delete = true },
+                aster_dropdown_item(
+                    label = stringResource(R.string.mail_rules_delete),
+                    icon = TablerIcons.Trash,
+                    destructive = true,
+                    on_click = { menu_open = false; confirm_delete = true },
                 )
             }
         }

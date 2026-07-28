@@ -50,6 +50,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -71,6 +76,28 @@ data class TopToastState(
     val key: Long = System.currentTimeMillis(),
     val accumulation_key: String? = null,
 )
+
+@Composable
+private fun toast_action(
+    label: String,
+    on_click: () -> Unit,
+    enabled: Boolean = true,
+) {
+    val colors = AsterMaterial.colors
+    val shape = SquircleShape(999.dp)
+    Text(
+        text = label,
+        color = colors.accent_blue,
+        fontSize = 13.sp,
+        fontWeight = FontWeight.SemiBold,
+        maxLines = 1,
+        modifier = Modifier
+            .clip(shape)
+            .background(colors.accent_blue.copy(alpha = 0.12f))
+            .clickable(enabled = enabled, onClick = on_click)
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+    )
+}
 
 @Composable
 fun top_toast_overlay(
@@ -95,13 +122,31 @@ fun top_toast_overlay(
             exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
         ) {
             val s = last_state ?: return@AnimatedVisibility
+            val shape = SquircleShape(999.dp)
             val row_modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-                .clip(SquircleShape(18.dp))
-                .background(colors.dropdown_bg)
-                .border(1.dp, colors.border_secondary, SquircleShape(18.dp))
-                .let { m -> if (s.on_tap != null) m.clickable { s.on_tap.invoke() } else m }
-                .padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp)
+                .padding(horizontal = 12.dp, vertical = 10.dp)
+                .shadow(10.dp, shape, clip = false)
+                .clip(shape)
+                .background(colors.bg_card)
+                .border(1.dp, colors.border_primary, shape)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                ) {
+                    if (s.on_tap != null) {
+                        s.on_tap.invoke()
+                        on_dismiss()
+                    }
+                }
+                .pointerInput(s.key) {
+                    detectVerticalDragGestures { _, drag ->
+                        if (drag < -4f) {
+                            s.on_close?.invoke()
+                            on_dismiss()
+                        }
+                    }
+                }
+                .padding(start = 16.dp, end = 8.dp, top = 11.dp, bottom = 11.dp)
             Row(
                 modifier = row_modifier,
                 verticalAlignment = Alignment.CenterVertically,
@@ -110,37 +155,30 @@ fun top_toast_overlay(
                     text = s.message,
                     color = colors.text_primary,
                     fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
                 )
                 if (s.undo_label != null && s.on_undo != null) {
-                    Spacer(Modifier.width(16.dp))
-                    Text(
-                        text = s.undo_label,
-                        color = colors.accent_blue,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier
-                            .clip(SquircleShape(8.dp))
-                            .clickable {
-                                s.on_undo.invoke()
-                                on_dismiss()
-                            }
-                            .padding(horizontal = 6.dp, vertical = 2.dp),
+                    Spacer(Modifier.width(12.dp))
+                    toast_action(
+                        label = s.undo_label,
+                        on_click = {
+                            s.on_undo.invoke()
+                            on_dismiss()
+                        },
                     )
                 }
                 if (s.secondary_label != null) {
-                    Spacer(Modifier.width(12.dp))
-                    Text(
-                        text = s.secondary_label,
-                        color = colors.accent_blue,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier
-                            .clip(SquircleShape(8.dp))
-                            .clickable(enabled = s.on_secondary != null) {
-                                s.on_secondary?.invoke()
-                                on_dismiss()
-                            }
-                            .padding(horizontal = 6.dp, vertical = 2.dp),
+                    Spacer(Modifier.width(8.dp))
+                    toast_action(
+                        label = s.secondary_label,
+                        enabled = s.on_secondary != null,
+                        on_click = {
+                            s.on_secondary?.invoke()
+                            on_dismiss()
+                        },
                     )
                 }
                 Spacer(Modifier.width(8.dp))

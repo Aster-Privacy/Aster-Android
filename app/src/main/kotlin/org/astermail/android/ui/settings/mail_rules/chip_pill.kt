@@ -93,9 +93,10 @@ fun chip_pill_row(
     Row(
         modifier = modifier
             .height(32.dp)
-            .clip(SquircleShape(12.dp))
-            .background(colors.bg_card, SquircleShape(12.dp))
-            .border(1.dp, colors.border_secondary, SquircleShape(12.dp)),
+            .clip(SquircleShape(999.dp))
+            .background(colors.bg_card, SquircleShape(999.dp))
+            .border(1.dp, colors.border_secondary, SquircleShape(999.dp))
+            .padding(horizontal = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         segments.forEachIndexed { index, spec ->
@@ -146,9 +147,9 @@ fun add_chip_pill(label: String, on_click: () -> Unit, modifier: Modifier = Modi
     Row(
         modifier = modifier
             .height(32.dp)
-            .clip(SquircleShape(12.dp))
+            .clip(SquircleShape(999.dp))
             .background(Color.Transparent)
-            .border(1.dp, colors.accent_blue.copy(alpha = 0.5f), SquircleShape(12.dp))
+            .border(1.dp, colors.accent_blue.copy(alpha = 0.5f), SquircleShape(999.dp))
             .clickable(onClick = on_click)
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,

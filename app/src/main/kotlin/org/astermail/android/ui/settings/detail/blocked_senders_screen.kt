@@ -1,4 +1,4 @@
-﻿//
+//
 // Aster Communications Inc.
 //
 // Copyright (c) 2026 Aster Communications Inc.
@@ -21,16 +21,23 @@
 
 package org.astermail.android.ui.settings.detail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Ban
+import compose.icons.tablericons.World
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,7 +49,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import org.astermail.android.R
@@ -52,7 +61,76 @@ import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterGhostButton
+import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.ui.mail.SenderAvatar
+
+@Composable
+private fun blocked_sender_row(
+    address: String,
+    is_domain: Boolean,
+    on_unblock: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    var expanded by remember { mutableStateOf(false) }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 60.dp)
+            .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (is_domain) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(colors.bg_secondary),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = TablerIcons.World,
+                    contentDescription = null,
+                    tint = colors.text_muted,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+        } else {
+            SenderAvatar(email = address, size = 36.dp)
+        }
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .clickable { expanded = !expanded }
+                .padding(horizontal = AsterSpacing.md),
+        ) {
+            Text(
+                text = address,
+                color = colors.text_primary,
+                fontSize = 15.sp,
+                maxLines = if (expanded) 3 else 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (is_domain) {
+                Text(
+                    text = stringResource(R.string.blocked_domain),
+                    color = colors.text_muted,
+                    fontSize = 12.sp,
+                )
+            }
+        }
+        Text(
+            text = stringResource(R.string.unblock),
+            color = colors.accent_blue,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier
+                .clip(CircleShape)
+                .clickable(onClick = on_unblock)
+                .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
+        )
+    }
+}
 
 @Composable
 fun BlockedSendersScreen(
@@ -64,45 +142,55 @@ fun BlockedSendersScreen(
     val colors = AsterMaterial.colors
     var show_add_dialog by remember { mutableStateOf(false) }
     var add_email by remember { mutableStateOf("") }
+    val senders = state.blocked_senders
 
     LaunchedEffect(Unit) { vm.load_blocked_senders() }
 
     detail_scaffold(title = stringResource(R.string.blocked_senders), on_back = on_back) {
         AsterButton(
-            label = "Block a sender",
+            label = stringResource(R.string.block_a_sender),
             onClick = { show_add_dialog = true },
             modifier = Modifier.fillMaxWidth(),
         )
         v_gap(AsterSpacing.md)
 
-        if (state.is_loading && state.blocked_senders.isEmpty()) {
+        if (state.blocked_senders_loading && senders.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
                 contentAlignment = Alignment.Center,
             ) {
                 CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
             }
-        } else if (state.blocked_senders.isEmpty()) {
+        } else if (state.blocked_senders_error != null) {
+            AsterCard(modifier = Modifier.fillMaxWidth()) {
+                detail_row(
+                    title = stringResource(R.string.blocked_senders_load_failed),
+                    icon = TablerIcons.Ban,
+                    trailing = {
+                        AsterGhostButton(
+                            label = stringResource(R.string.retry),
+                            onClick = { vm.load_blocked_senders() },
+                        )
+                    },
+                )
+            }
+        } else if (senders.isEmpty()) {
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 detail_row(
                     title = stringResource(R.string.no_blocked_senders),
-                    subtitle = state.error ?: stringResource(R.string.no_blocked_senders_subtitle),
+                    subtitle = stringResource(R.string.no_blocked_senders_subtitle),
+                    icon = TablerIcons.Ban,
                 )
             }
         } else {
             AsterCard(modifier = Modifier.fillMaxWidth()) {
-                state.blocked_senders.filter { it.address.isNotBlank() }.forEachIndexed { idx, sender ->
-                    detail_row(
-                        title = sender.address,
-                        subtitle = if (sender.blocked_count > 0) stringResource(R.string.blocked_count, sender.blocked_count) else null,
-                        trailing = {
-                            AsterGhostButton(
-                                label = stringResource(R.string.unblock),
-                                onClick = { vm.unblock_sender(sender.address) },
-                            )
-                        },
+                senders.forEachIndexed { idx, sender ->
+                    blocked_sender_row(
+                        address = sender.address,
+                        is_domain = sender.is_domain,
+                        on_unblock = { vm.unblock_sender(sender.sender_token) },
                     )
-                    if (idx < state.blocked_senders.filter { it.address.isNotBlank() }.lastIndex) AsterDivider(modifier = Modifier)
+                    if (idx < senders.lastIndex) AsterDivider(modifier = Modifier)
                 }
             }
         }
@@ -110,48 +198,32 @@ fun BlockedSendersScreen(
     }
 
     if (show_add_dialog) {
-        AlertDialog(
-            onDismissRequest = { show_add_dialog = false; add_email = "" },
-            containerColor = colors.bg_card,
-            title = {
-                Text("Block sender", color = colors.text_primary, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { show_add_dialog = false; add_email = "" },
+            title = stringResource(R.string.block_sender),
+            message = stringResource(R.string.block_sender_hint),
+            body = {
+                AsterTextField(
+                    value = add_email,
+                    onValueChange = { add_email = it.trim().lowercase() },
+                    placeholder = stringResource(R.string.block_sender_placeholder),
+                    modifier = Modifier.fillMaxWidth(),
+                )
             },
-            text = {
-                Column {
-                    Text(
-                        "Enter the email address to block. You won't receive messages from this sender.",
-                        color = colors.text_secondary,
-                        fontSize = 13.sp,
-                    )
-                    v_gap(AsterSpacing.md)
-                    OutlinedTextField(
-                        value = add_email,
-                        onValueChange = { add_email = it.trim().lowercase() },
-                        label = { Text("Email address") },
-                        placeholder = { Text("e.g. spam@example.com") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
+            footer = {
+                org.astermail.android.design.components.AsterDialogOutlineButton(
+                    label = stringResource(R.string.cancel),
+                    onClick = { show_add_dialog = false; add_email = "" },
+                )
+                org.astermail.android.design.components.AsterDialogDestructiveButton(
+                    label = stringResource(R.string.block),
+                    enabled = add_email.contains("."),
                     onClick = {
-                        if (add_email.isNotBlank()) {
-                            vm.block_sender(add_email)
-                            show_add_dialog = false
-                            add_email = ""
-                        }
+                        vm.block_sender(add_email)
+                        show_add_dialog = false
+                        add_email = ""
                     },
-                    enabled = add_email.contains("@"),
-                ) {
-                    Text("Block", color = colors.danger)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { show_add_dialog = false; add_email = "" }) {
-                    Text("Cancel")
-                }
+                )
             },
         )
     }

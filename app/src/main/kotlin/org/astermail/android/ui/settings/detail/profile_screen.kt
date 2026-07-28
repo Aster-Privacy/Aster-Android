@@ -28,6 +28,8 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,6 +39,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -59,6 +62,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -67,13 +71,19 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import org.astermail.android.R
+import compose.icons.TablerIcons
+import compose.icons.tablericons.ChevronDown
 import org.astermail.android.api.user.Badge
+import org.astermail.android.api.user.UpdateBadgePreferencesRequest
 import org.astermail.android.ui.common.current_user_avatar
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
+import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.AsterTextField
+import org.astermail.android.design.components.aster_dropdown_item
+import org.astermail.android.design.components.aster_dropdown_menu
 import org.astermail.android.settings.SaveStatus
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.ui.common.resolve_primary_sender_email
@@ -237,6 +247,46 @@ fun ProfileScreen(
                     badge_chip(badge)
                 }
             }
+            val badge_prefs = state.badge_preferences
+            if (badge_prefs != null) {
+                v_gap(AsterSpacing.md)
+                AsterCard(modifier = Modifier.fillMaxWidth()) {
+                    active_badge_row(
+                        badges = state.badges,
+                        active_slug = badge_prefs.active_badge_slug,
+                        on_select = { slug ->
+                            vm.update_badge_preferences(
+                                UpdateBadgePreferencesRequest(
+                                    active_badge_slug = slug,
+                                    clear_active_badge = if (slug == null) true else null,
+                                ),
+                            )
+                        },
+                    )
+                    if (badge_prefs.active_badge_slug != null) {
+                        badge_toggle_row(
+                            title = stringResource(R.string.badge_show_on_profile),
+                            subtitle = stringResource(R.string.badge_show_on_profile_description),
+                            checked = badge_prefs.show_badge_profile,
+                            on_change = {
+                                vm.update_badge_preferences(
+                                    UpdateBadgePreferencesRequest(show_badge_profile = it),
+                                )
+                            },
+                        )
+                        badge_toggle_row(
+                            title = stringResource(R.string.badge_show_in_signature),
+                            subtitle = stringResource(R.string.badge_show_in_signature_description),
+                            checked = badge_prefs.show_badge_signature,
+                            on_change = {
+                                vm.update_badge_preferences(
+                                    UpdateBadgePreferencesRequest(show_badge_signature = it),
+                                )
+                            },
+                        )
+                    }
+                }
+            }
         }
         v_gap(AsterSpacing.xxl)
     }
@@ -245,29 +295,159 @@ fun ProfileScreen(
 @Composable
 private fun badge_chip(badge: Badge) {
     val visual = remember(badge.slug) { badge_visual_for(badge.slug) }
-    Box(
+    val shape = remember { RoundedCornerShape(10.dp) }
+    Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
+            .clip(shape)
             .background(visual.color.copy(alpha = 0.13f))
-            .padding(horizontal = 12.dp, vertical = 6.dp),
+            .border(1.dp, visual.color.copy(alpha = 0.30f), shape)
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(5.dp),
-        ) {
-            Icon(
-                imageVector = visual.icon,
-                contentDescription = null,
-                tint = visual.color,
-                modifier = Modifier.size(14.dp),
-            )
+        Icon(
+            imageVector = visual.icon,
+            contentDescription = null,
+            tint = visual.color,
+            modifier = Modifier.size(14.dp),
+        )
+        Text(
+            text = badge.display_name,
+            color = visual.color,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+        )
+        val order = badge.find_order
+        if (order != null && order >= 1) {
             Text(
-                text = badge.display_name,
-                color = visual.color,
-                fontSize = 13.sp,
+                text = format_find_order(order),
+                color = visual.color.copy(alpha = 0.70f),
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
             )
         }
+    }
+}
+
+private fun format_find_order(order: Int): String =
+    "#" + java.text.NumberFormat.getIntegerInstance(java.util.Locale.getDefault()).format(order)
+
+@Composable
+private fun active_badge_row(
+    badges: List<Badge>,
+    active_slug: String?,
+    on_select: (String?) -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    var expanded by remember { mutableStateOf(false) }
+    val active = remember(active_slug, badges) { badges.firstOrNull { it.slug == active_slug } }
+    val none_label = stringResource(R.string.badge_none)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.badge_active),
+                color = colors.text_primary,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+            )
+            Text(
+                text = stringResource(R.string.badges_description),
+                color = colors.text_tertiary,
+                fontSize = 13.sp,
+            )
+        }
+        Spacer(Modifier.width(AsterSpacing.md))
+        Box {
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(colors.input_bg)
+                    .border(1.dp, colors.input_border, RoundedCornerShape(12.dp))
+                    .clickable { expanded = true }
+                    .padding(horizontal = 12.dp, vertical = 9.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                if (active != null) {
+                    val visual = badge_visual_for(active.slug)
+                    Icon(
+                        imageVector = visual.icon,
+                        contentDescription = null,
+                        tint = visual.color,
+                        modifier = Modifier.size(15.dp),
+                    )
+                }
+                Text(
+                    text = active?.display_name ?: none_label,
+                    color = colors.text_primary,
+                    fontSize = 14.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.widthIn(max = 110.dp),
+                )
+                Icon(
+                    imageVector = TablerIcons.ChevronDown,
+                    contentDescription = null,
+                    tint = colors.text_muted,
+                    modifier = Modifier.size(15.dp),
+                )
+            }
+            aster_dropdown_menu(expanded = expanded, on_dismiss = { expanded = false }) {
+                aster_dropdown_item(
+                    label = none_label,
+                    selected = active_slug == null,
+                    on_click = {
+                        expanded = false
+                        on_select(null)
+                    },
+                )
+                badges.forEach { badge ->
+                    val visual = badge_visual_for(badge.slug)
+                    val order = badge.find_order
+                    aster_dropdown_item(
+                        label = if (order != null && order >= 1) {
+                            badge.display_name + "  " + format_find_order(order)
+                        } else {
+                            badge.display_name
+                        },
+                        icon = visual.icon,
+                        selected = badge.slug == active_slug,
+                        on_click = {
+                            expanded = false
+                            on_select(badge.slug)
+                        },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun badge_toggle_row(
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    on_change: (Boolean) -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = title, color = colors.text_primary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+            Text(text = subtitle, color = colors.text_tertiary, fontSize = 13.sp)
+        }
+        Spacer(Modifier.width(AsterSpacing.md))
+        AsterSwitch(checked = checked, onCheckedChange = on_change)
     }
 }
 

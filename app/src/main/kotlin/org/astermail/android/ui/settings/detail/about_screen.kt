@@ -26,24 +26,34 @@ import compose.icons.tablericons.*
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import org.astermail.android.BuildConfig
@@ -53,7 +63,9 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
+import org.astermail.android.ui.common.remember_copy_action
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AboutScreen(
     on_back: () -> Unit,
@@ -69,38 +81,44 @@ fun AboutScreen(
             modifier = Modifier.fillMaxWidth().padding(vertical = AsterSpacing.xl),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Box(
+            Image(
+                painter = painterResource(R.drawable.aster_wordmark),
+                contentDescription = stringResource(R.string.app_name),
+                contentScale = ContentScale.Fit,
                 modifier = Modifier
-                    .size(72.dp)
-                    .background(colors.accent_blue, SquircleShape(18.dp)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = TablerIcons.Mail,
-                    contentDescription = stringResource(R.string.aster_logo),
-                    tint = androidx.compose.ui.graphics.Color.White,
-                    modifier = Modifier.size(40.dp),
-                )
-            }
-            Spacer(Modifier.size(AsterSpacing.md))
-            Text(
-                text = stringResource(R.string.app_name),
-                color = colors.text_primary,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
+                    .fillMaxWidth(0.72f)
+                    .heightIn(max = 76.dp)
+                    .padding(horizontal = AsterSpacing.lg),
             )
+            Spacer(Modifier.size(AsterSpacing.sm))
+            val copy_action = remember_copy_action()
+            val version_text = stringResource(R.string.version_format, BuildConfig.VERSION_NAME)
+            val version_copied = stringResource(R.string.version_copied)
+            val clip_label = stringResource(R.string.app_name)
             Text(
-                text = stringResource(R.string.version_format, BuildConfig.VERSION_NAME),
+                text = version_text,
                 color = colors.text_tertiary,
                 fontSize = 13.sp,
+                modifier = Modifier
+                    .combinedClickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {},
+                        onLongClick = {
+                            copy_action(
+                                clip_label,
+                                BuildConfig.VERSION_NAME,
+                                version_copied,
+                            )
+                        },
+                    )
+                    .padding(horizontal = AsterSpacing.sm, vertical = AsterSpacing.xs),
             )
-            Spacer(Modifier.size(AsterSpacing.md))
+            Spacer(Modifier.size(AsterSpacing.xs))
             Text(
-                text = stringResource(R.string.built_in_canada),
-                color = colors.text_secondary,
-                fontSize = 14.sp,
-                textAlign = TextAlign.Center,
+                text = stringResource(R.string.hold_to_copy_version),
+                color = colors.text_muted,
+                fontSize = 11.sp,
             )
         }
         AsterCard(modifier = Modifier.fillMaxWidth()) {
@@ -108,7 +126,7 @@ fun AboutScreen(
             AsterDivider()
             detail_row(title = stringResource(R.string.terms_of_service), icon = TablerIcons.Scale, on_click = { open_url("https://astermail.org/terms") })
             AsterDivider()
-            detail_row(title = stringResource(R.string.source_on_github), subtitle = stringResource(R.string.licensed_agpl), icon = TablerIcons.ExternalLink, on_click = { open_url("https://github.com/AsterCommunications") })
+            detail_row(title = stringResource(R.string.source_on_github), subtitle = stringResource(R.string.licensed_agpl), icon = TablerIcons.ExternalLink, on_click = { open_url("https://github.com/Aster-Privacy/Aster-Android") })
         }
         v_gap(AsterSpacing.xxl)
     }

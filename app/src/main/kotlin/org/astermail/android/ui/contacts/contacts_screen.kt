@@ -76,6 +76,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
@@ -183,7 +185,7 @@ fun ContactsScreen(
                 )
             } else {
                 AsterIconButton(
-                    icon = TablerIcons.ArrowBack,
+                    icon = TablerIcons.ArrowLeft,
                     content_description = stringResource(R.string.back),
                     onClick = on_back,
                 )
@@ -196,11 +198,15 @@ fun ContactsScreen(
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.weight(1f),
             )
+            val sync_label = stringResource(
+                if (ui_state.is_syncing) R.string.syncing else R.string.sync_contacts,
+            )
             Box(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .clickable { show_sync_confirm = true },
+                    .clickable { show_sync_confirm = true }
+                    .semantics { contentDescription = sync_label },
                 contentAlignment = Alignment.Center,
             ) {
                 AnimatedContent(
@@ -209,18 +215,11 @@ fun ContactsScreen(
                     label = "sync_icon",
                 ) { syncing ->
                     if (syncing) {
-                        val rotation by rememberInfiniteTransition(label = "sync_spin")
-                            .animateFloat(
-                                initialValue = 0f,
-                                targetValue = 360f,
-                                animationSpec = infiniteRepeatable(tween(1000, easing = LinearEasing)),
-                                label = "sync_rotation",
-                            )
-                        Icon(
-                            imageVector = TablerIcons.ArrowsRightLeft,
-                            contentDescription = stringResource(R.string.syncing),
-                            tint = colors.accent_blue,
-                            modifier = Modifier.size(22.dp).rotate(rotation),
+                        androidx.compose.material3.CircularProgressIndicator(
+                            color = colors.accent_blue,
+                            strokeWidth = 2.dp,
+                            strokeCap = androidx.compose.ui.graphics.StrokeCap.Round,
+                            modifier = Modifier.size(20.dp),
                         )
                     } else {
                         Icon(
@@ -256,7 +255,7 @@ fun ContactsScreen(
                     modifier = Modifier.size(18.dp),
                 )
                 Spacer(Modifier.width(AsterSpacing.sm))
-                Box(modifier = Modifier.weight(1f)) {
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                     if (query.isEmpty()) {
                         Text(
                             text = stringResource(R.string.search_contacts),
@@ -408,7 +407,13 @@ private fun letter_of(name: String): String {
 @Composable
 private fun FilterChip(label: String, active: Boolean, on_click: () -> Unit) {
     val colors = AsterMaterial.colors
-    val bg = if (active) colors.accent_blue else colors.bg_tertiary
+    val bg = if (active) {
+        colors.accent_blue
+    } else if (colors.is_dark) {
+        colors.input_bg
+    } else {
+        colors.bg_secondary
+    }
     val fg = if (active) Color.White else colors.text_secondary
     Box(
         modifier = Modifier
@@ -454,7 +459,7 @@ private fun ContactRow(contact: Contact, on_click: () -> Unit) {
                     Icon(
                         imageVector = TablerIcons.Star,
                         contentDescription = null,
-                        tint = Color(0xFFFBBF24),
+                        tint = colors.star,
                         modifier = Modifier.size(12.dp),
                     )
                 }

@@ -127,7 +127,7 @@ fun ContactDetailScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AsterIconButton(
-                icon = TablerIcons.ArrowBack,
+                icon = TablerIcons.ArrowLeft,
                 content_description = stringResource(R.string.back),
                 onClick = on_back,
                 modifier = Modifier.testTag("back"),

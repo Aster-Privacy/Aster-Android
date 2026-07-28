@@ -40,13 +40,6 @@ fun SenderFiltersScreen(
     on_open: (id: String) -> Unit = {},
 ) {
     detail_scaffold(title = stringResource(R.string.mail_management), on_back = on_back) {
-        section_label(stringResource(R.string.filters_rules))
-        AsterCard(modifier = Modifier.fillMaxWidth()) {
-            detail_row(title = stringResource(R.string.filters), subtitle = stringResource(R.string.rules_sort_mail), icon = TablerIcons.Filter, on_click = { on_open("filters") })
-            AsterDivider(modifier = Modifier)
-            detail_row(title = stringResource(R.string.auto_forward), subtitle = stringResource(R.string.forward_matching), icon = TablerIcons.MailOpened, on_click = { on_open("auto_forward") })
-        }
-        v_gap(AsterSpacing.lg)
         section_label(stringResource(R.string.block_allow))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             detail_row(title = stringResource(R.string.blocked_senders), subtitle = stringResource(R.string.senders_never_hear), icon = TablerIcons.Ban, on_click = { on_open("blocked") })
@@ -56,12 +49,15 @@ fun SenderFiltersScreen(
             detail_row(title = stringResource(R.string.subscriptions_label), subtitle = stringResource(R.string.mailing_lists_on), icon = TablerIcons.Mail, on_click = { on_open("subscriptions") })
         }
         v_gap(AsterSpacing.lg)
+        section_label(stringResource(R.string.filters_rules))
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            detail_row(title = stringResource(R.string.auto_forward), subtitle = stringResource(R.string.forward_matching), icon = TablerIcons.MailForward, on_click = { on_open("auto_forward") })
+            AsterDivider(modifier = Modifier)
+            detail_row(title = stringResource(R.string.settings_vacation_reply), subtitle = stringResource(R.string.vacation_reply_short), icon = TablerIcons.MailOpened, on_click = { on_open("vacation_reply") })
+        }
+        v_gap(AsterSpacing.lg)
         section_label(stringResource(R.string.storage_data))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
-            detail_row(title = stringResource(R.string.storage_title), subtitle = stringResource(R.string.see_using_space), icon = TablerIcons.Database, on_click = { on_open("storage") })
-            AsterDivider(modifier = Modifier)
-            detail_row(title = stringResource(R.string.import_label), subtitle = stringResource(R.string.import_from_providers), icon = TablerIcons.CloudDownload, on_click = { on_open("import") })
-            AsterDivider(modifier = Modifier)
             detail_row(title = stringResource(R.string.export_label), subtitle = stringResource(R.string.export_your_mail), icon = TablerIcons.CloudDownload, on_click = { on_open("export") })
         }
         v_gap(AsterSpacing.xxl)

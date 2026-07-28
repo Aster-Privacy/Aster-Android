@@ -55,7 +55,7 @@ import org.astermail.android.design.components.AsterButton
 @Composable
 fun PendingDeletionGate(
     on_reactivated: () -> Unit,
-    on_signed_out: () -> Unit,
+    on_signed_out: (Boolean) -> Unit,
     view_model: PendingDeletionViewModel = hiltViewModel(),
 ) {
     val state by view_model.state.collectAsStateWithLifecycle()

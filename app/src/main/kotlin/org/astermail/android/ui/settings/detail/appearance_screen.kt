@@ -68,6 +68,7 @@ import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.ColorThemeId
+import org.astermail.android.design.dynamic_color_supported
 import org.astermail.android.design.ColorThemePalette
 import org.astermail.android.design.AsterColorThemes
 import org.astermail.android.design.MaterialThemeGenerator
@@ -116,6 +117,7 @@ private fun font_label_res(id: String): Int = when (id) {
 private fun color_theme_label_res(id: ColorThemeId): Int = when (id) {
     ColorThemeId.default -> R.string.color_theme_default
     ColorThemeId.custom -> R.string.color_theme_custom
+    ColorThemeId.dynamic -> R.string.theme_dynamic
     ColorThemeId.purple -> R.string.color_theme_purple
     ColorThemeId.green -> R.string.color_theme_green
     ColorThemeId.rose -> R.string.color_theme_rose
@@ -166,25 +168,26 @@ fun AppearanceScreen(
 
     LaunchedEffect(Unit) { settings_vm.load_preferences() }
 
-    LaunchedEffect(prefs?.theme) {
-        when (prefs?.theme) {
-            "light" -> if (mode != ThemeMode.light) vm.set_mode(ThemeMode.light)
-            "dark" -> if (mode != ThemeMode.dark) vm.set_mode(ThemeMode.dark)
-            "system" -> if (mode != ThemeMode.system) vm.set_mode(ThemeMode.system)
-            else -> {}
+    val prefs_authoritative = prefs != null && settings_state.preferences_authoritative
+    var remote_prefs_adopted by remember { mutableStateOf(false) }
+    val mode_derived_from_color_theme = AsterColorThemes.is_dark_only(color_theme)
+
+    LaunchedEffect(prefs_authoritative, remote_prefs_adopted) {
+        if (!prefs_authoritative || remote_prefs_adopted) return@LaunchedEffect
+        val remote = prefs ?: return@LaunchedEffect
+        remote_prefs_adopted = true
+        if (!mode_derived_from_color_theme) {
+            when (remote.theme) {
+                "light" -> if (mode != ThemeMode.light) vm.set_mode(ThemeMode.light)
+                "dark" -> if (mode != ThemeMode.dark) vm.set_mode(ThemeMode.dark)
+                "system" -> if (mode != ThemeMode.system) vm.set_mode(ThemeMode.system)
+                else -> {}
+            }
         }
-    }
-    LaunchedEffect(prefs?.color_theme) {
-        prefs?.color_theme?.let { if (it != color_theme_key) vm.set_color_theme(it) }
-    }
-    LaunchedEffect(prefs?.custom_theme_seed) {
-        prefs?.custom_theme_seed?.let { if (it != custom_theme_seed) vm.set_custom_theme_seed(it) }
-    }
-    LaunchedEffect(prefs?.custom_theme_overrides) {
-        prefs?.custom_theme_overrides?.let { if (it != custom_theme_overrides) vm.set_custom_theme_overrides(it) }
-    }
-    LaunchedEffect(prefs?.font_choice) {
-        prefs?.font_choice?.let { if (it != font_choice) vm.set_font_choice(it) }
+        remote.color_theme?.let { if (it != color_theme_key) vm.set_color_theme(it) }
+        remote.custom_theme_seed?.let { if (it != custom_theme_seed) vm.set_custom_theme_seed(it) }
+        remote.custom_theme_overrides?.let { if (it != custom_theme_overrides) vm.set_custom_theme_overrides(it) }
+        remote.font_choice?.let { if (it != font_choice) vm.set_font_choice(it) }
     }
 
     LaunchedEffect(plan_limits, color_theme) {
@@ -199,6 +202,7 @@ fun AppearanceScreen(
     }
 
     fun apply(theme_mode: ThemeMode, theme_key: String) {
+        remote_prefs_adopted = true
         vm.set_mode(theme_mode)
         vm.set_color_theme(ColorThemeId.default.name)
         val base = prefs ?: return
@@ -208,6 +212,7 @@ fun AppearanceScreen(
     }
 
     fun apply_color_theme(id: ColorThemeId) {
+        remote_prefs_adopted = true
         vm.set_color_theme(id.name)
         val forced_dark = AsterColorThemes.is_dark_only(id)
         if (forced_dark) vm.set_mode(ThemeMode.dark)
@@ -219,6 +224,7 @@ fun AppearanceScreen(
     }
 
     fun apply_custom_seed(hex: String) {
+        remote_prefs_adopted = true
         vm.set_custom_theme_seed(hex)
         val base = prefs ?: return
         if (base.custom_theme_seed != hex) {
@@ -227,6 +233,7 @@ fun AppearanceScreen(
     }
 
     fun apply_font(id: String) {
+        remote_prefs_adopted = true
         vm.set_font_choice(id)
         val base = prefs ?: return
         if (base.font_choice != id) {
@@ -261,6 +268,14 @@ fun AppearanceScreen(
                 stringResource(R.string.theme_dark_subtitle),
                 mode == ThemeMode.dark && color_theme == ColorThemeId.default,
             ) { apply(ThemeMode.dark, "dark") }
+            if (dynamic_color_supported) {
+                AsterDivider(modifier = Modifier)
+                theme_option_row(
+                    stringResource(R.string.theme_dynamic),
+                    stringResource(R.string.theme_dynamic_subtitle),
+                    color_theme == ColorThemeId.dynamic,
+                ) { apply_color_theme(ColorThemeId.dynamic) }
+            }
         }
 
         v_gap(AsterSpacing.xxl)

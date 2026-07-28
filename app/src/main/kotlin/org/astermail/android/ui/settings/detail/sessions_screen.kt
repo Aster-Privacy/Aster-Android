@@ -87,18 +87,14 @@ fun SessionsScreen(
     }
 
     LaunchedEffect(Unit) { vm.load_sessions() }
+    val sessions_load_settled = remember_load_settled(state.is_loading)
 
     var pending_revoke_id by remember { mutableStateOf<String?>(null) }
     var show_logout_others_confirm by remember { mutableStateOf(false) }
 
     detail_scaffold(title = stringResource(R.string.sessions), on_back = on_back) {
-        if (state.is_loading && state.sessions.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
-            }
+        if (state.sessions.isEmpty() && (state.is_loading || !sessions_load_settled)) {
+            skeleton_card_list(rows = 3, leading_circle = true, trailing_width = 72.dp)
         } else if (state.error != null && state.sessions.isEmpty()) {
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 detail_row(

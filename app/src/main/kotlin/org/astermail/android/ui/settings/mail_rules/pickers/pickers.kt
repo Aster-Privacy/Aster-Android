@@ -53,7 +53,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -75,6 +74,7 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
+import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.ui.settings.mail_rules.action_id
 import org.astermail.android.ui.settings.mail_rules.field_id
@@ -374,7 +374,7 @@ fun text_value_picker(
                         color = colors.text_primary,
                         fontSize = 14.sp,
                     )
-                    Switch(checked = case, onCheckedChange = { case = it })
+                    AsterSwitch(checked = case, onCheckedChange = { case = it })
                 }
             }
             Spacer(Modifier.height(AsterSpacing.lg))
@@ -438,7 +438,7 @@ fun header_value_picker(
                     color = colors.text_primary,
                     fontSize = 14.sp,
                 )
-                Switch(checked = case, onCheckedChange = { case = it })
+                AsterSwitch(checked = case, onCheckedChange = { case = it })
             }
             Spacer(Modifier.height(AsterSpacing.lg))
             AsterButton(

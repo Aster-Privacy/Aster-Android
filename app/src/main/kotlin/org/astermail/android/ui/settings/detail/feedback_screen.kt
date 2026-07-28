@@ -49,6 +49,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -78,13 +79,14 @@ private fun category_chip(label: String, icon: ImageVector, selected: Boolean, o
     Row(
         modifier = Modifier
             .clickable(onClick = on_click)
-            .background(bg, SquircleShape(18.dp))
+            .clip(SquircleShape(999.dp))
+            .background(bg, SquircleShape(999.dp))
             .border(
                 1.dp,
                 if (selected) colors.accent_blue else colors.border_secondary,
-                SquircleShape(18.dp),
+                SquircleShape(999.dp),
             )
-            .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
+            .padding(horizontal = 14.dp, vertical = AsterSpacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(

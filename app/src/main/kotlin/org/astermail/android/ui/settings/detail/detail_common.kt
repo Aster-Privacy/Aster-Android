@@ -45,10 +45,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -71,8 +69,37 @@ import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterTopBar
+
+@Composable
+internal fun relative_time_label(iso: String?): String {
+    val unknown = stringResource(R.string.unknown)
+    if (iso.isNullOrBlank()) return unknown
+    val instant = try {
+        java.time.OffsetDateTime.parse(iso).toInstant()
+    } catch (_: Throwable) {
+        try {
+            java.time.Instant.parse(iso)
+        } catch (_: Throwable) {
+            null
+        }
+    } ?: return iso.take(10)
+    val minutes = java.time.Duration.between(instant, java.time.Instant.now()).toMinutes()
+    val absolute = java.time.format.DateTimeFormatter
+        .ofLocalizedDate(java.time.format.FormatStyle.MEDIUM)
+        .withZone(java.time.ZoneId.systemDefault())
+        .format(instant)
+    return when {
+        minutes < 0 -> absolute
+        minutes < 1 -> stringResource(R.string.active_now)
+        minutes < 60 -> stringResource(R.string.minutes_ago, minutes.toInt())
+        minutes < 60 * 24 -> stringResource(R.string.hours_ago, (minutes / 60).toInt())
+        minutes < 60 * 24 * 7 -> stringResource(R.string.days_ago, (minutes / (60 * 24)).toInt())
+        else -> absolute
+    }
+}
 
 @Composable
 internal fun detail_scaffold(
@@ -91,7 +118,16 @@ internal fun detail_scaffold(
             .background(colors.bg_primary)
             .systemBarsPadding(),
     ) {
-        AsterTopBar(title = title, on_back = on_back, trailing = trailing)
+        AsterTopBar(
+            title = title,
+            on_back = on_back,
+            trailing = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    trailing?.invoke()
+                    org.astermail.android.ui.settings.settings_search_action()
+                }
+            },
+        )
         AsterDivider()
         if (scrollable) {
             Column(
@@ -135,20 +171,12 @@ internal fun info_dialog_button(title: String, description: String) {
             .clickable { show = true },
     )
     if (show) {
-        AlertDialog(
-            onDismissRequest = { show = false },
-            containerColor = colors.bg_card,
-            title = {
-                Text(title, color = colors.text_primary, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-            },
-            text = {
-                Text(description, color = colors.text_secondary, fontSize = 13.sp, lineHeight = 19.sp)
-            },
-            confirmButton = {
-                TextButton(onClick = { show = false }) {
-                    Text(stringResource(R.string.got_it), color = colors.accent_blue)
-                }
-            },
+        AsterAlertDialog(
+            on_dismiss = { show = false },
+            title = title,
+            message = description,
+            confirm_label = stringResource(R.string.got_it),
+            on_confirm = { show = false },
         )
     }
 }

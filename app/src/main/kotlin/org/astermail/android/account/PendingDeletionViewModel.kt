@@ -101,11 +101,12 @@ class PendingDeletionViewModel @Inject constructor(
         }
     }
 
-    fun sign_out(on_done: () -> Unit) {
+    fun sign_out(on_done: (Boolean) -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
             runCatching { auth_repository.logout() }
+            val switched_account = auth_repository.is_signed_in.value
             _state.value = UiState(visible = false)
-            withContext(Dispatchers.Main) { on_done() }
+            withContext(Dispatchers.Main) { on_done(switched_account) }
         }
     }
 

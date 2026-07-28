@@ -38,8 +38,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -64,6 +62,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
+import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.ui.theme.ThemeViewModel
 
@@ -113,15 +112,9 @@ private fun access_toggle_row(
             }
             if (subtitle != null) Text(subtitle, color = colors.text_tertiary, fontSize = 13.sp)
         }
-        Switch(
+        AsterSwitch(
             checked = checked,
             onCheckedChange = on_change,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = Color.White,
-                checkedTrackColor = colors.accent_blue,
-                uncheckedThumbColor = Color.White,
-                uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
-            ),
         )
     }
 }
