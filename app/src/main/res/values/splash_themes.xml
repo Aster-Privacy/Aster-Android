@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="splash_bg_theme_light">#FFFFFFFF</color>
+    <color name="splash_bg_theme_dark">#FF121212</color>
+    <color name="splash_bg_theme_purple">#FF180A31</color>
+    <color name="splash_bg_theme_green">#FF08281C</color>
+    <color name="splash_bg_theme_rose">#FF2E0914</color>
+    <color name="splash_bg_theme_orange">#FF2B1A09</color>
+    <color name="splash_bg_theme_teal">#FF082727</color>
+    <color name="splash_bg_theme_indigo">#FF0C0E3B</color>
+    <color name="splash_bg_theme_amber">#FF231B07</color>
+    <color name="splash_bg_theme_cyan">#FF081F26</color>
+    <color name="splash_bg_theme_slate">#FF16181C</color>
+    <color name="splash_bg_theme_aster_blue">#FF0A1A33</color>
+    <color name="splash_bg_theme_lime">#FF1A2207</color>
+    <color name="splash_bg_theme_fuchsia">#FF2C092A</color>
+    <color name="splash_bg_theme_emerald">#FF072213</color>
+    <color name="splash_bg_theme_pink">#FF2B091D</color>
+    <color name="splash_bg_theme_black">#FF0A0A0A</color>
+</resources>

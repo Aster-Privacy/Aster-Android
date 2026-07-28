@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Aster.Splash.Base" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <style name="Theme.Aster.Splash.Light" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowBackground">@color/splash_bg_theme_light</item>
+    </style>
+
+    <style name="Theme.Aster.Splash.Dark" parent="Theme.Aster.Splash.Base">
+        <item name="android:windowBackground">@color/splash_bg_theme_dark</item>
+    </style>
+
+    <style name="Theme.Aster.Splash.Purple" parent="Theme.Aster.Splash.Base">
+        <item name="android:windowBackground">@color/splash_bg_theme_purple</item>
+    </style>
+
+    <style name="Theme.Aster.Splash.Green" parent="Theme.Aster.Splash.Base">
+        <item name="android:windowBackground">@color/splash_bg_theme_green</item>
+    </style>
+
+    <style name="Theme.Aster.Splash.Rose" parent="Theme.Aster.Splash.Base">
+        <item name="android:windowBackground">@color/splash_bg_theme_rose</item>
+    </style>
+
+    <style name="Theme.Aster.Splash.Orange" parent="Theme.Aster.Splash.Base">
+        <item name="android:windowBackground">@color/splash_bg_theme_orange</item>
+    </style>
+
+    <style name="Theme.Aster.Splash.Teal" parent="Theme.Aster.Splash.Base">
+        <item name="android:windowBackground">@color/splash_bg_theme_teal</item>
+    </style>
+
+    <style name="Theme.Aster.Splash.Indigo" parent="Theme.Aster.Splash.Base">
+        <item name="android:windowBackground">@color/splash_bg_theme_indigo</item>
+    </style>
+
+    <style name="Theme.Aster.Splash.Amber" parent="Theme.Aster.Splash.Base">
+        <item name="android:windowBackground">@color/splash_bg_theme_amber</item>
+    </style>
+
+    <style name="Theme.Aster.Splash.Cyan" parent="Theme.Aster.Splash.Base">
+        <item name="android:windowBackground">@color/splash_bg_theme_cyan</item>
+    </style>
+
+    <style name="Theme.Aster.Splash.Slate" parent="Theme.Aster.Splash.Base">
+        <item name="android:windowBackground">@color/splash_bg_theme_slate</item>
+    </style>
+
+    <style name="Theme.Aster.Splash.AsterBlue" parent="Theme.Aster.Splash.Base">
+        <item name="android:windowBackground">@color/splash_bg_theme_aster_blue</item>
+    </style>
+
+    <style name="Theme.Aster.Splash.Lime" parent="Theme.Aster.Splash.Base">
+        <item name="android:windowBackground">@color/splash_bg_theme_lime</item>
+    </style>
+
+    <style name="Theme.Aster.Splash.Fuchsia" parent="Theme.Aster.Splash.Base">
+        <item name="android:windowBackground">@color/splash_bg_theme_fuchsia</item>
+    </style>
+
+    <style name="Theme.Aster.Splash.Emerald" parent="Theme.Aster.Splash.Base">
+        <item name="android:windowBackground">@color/splash_bg_theme_emerald</item>
+    </style>
+
+    <style name="Theme.Aster.Splash.Pink" parent="Theme.Aster.Splash.Base">
+        <item name="android:windowBackground">@color/splash_bg_theme_pink</item>
+    </style>
+
+    <style name="Theme.Aster.Splash.Black" parent="Theme.Aster.Splash.Base">
+        <item name="android:windowBackground">@color/splash_bg_theme_black</item>
+    </style>
+</resources>

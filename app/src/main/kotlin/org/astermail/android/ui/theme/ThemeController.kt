@@ -38,6 +38,7 @@ data class AccessibilityState(
     val text_spacing: Boolean = false,
     val underline_links: Boolean = false,
     val dyslexia_font: Boolean = false,
+    val haptic_enabled: Boolean = true,
 )
 
 @HiltViewModel
@@ -59,6 +60,7 @@ class ThemeViewModel @Inject constructor(
     val custom_theme_seed: StateFlow<String> = theme_store.custom_theme_seed
     val custom_theme_overrides: StateFlow<Map<String, String>> = theme_store.custom_theme_overrides
     val font_choice: StateFlow<String> = theme_store.font_choice
+    val haptic_enabled: StateFlow<Boolean> = theme_store.haptic_enabled
 
     fun set_mode(mode: ThemeMode) = theme_store.set_theme_mode(mode)
     fun set_text_size(size: TextSize) = theme_store.set_text_size(size)
@@ -70,6 +72,7 @@ class ThemeViewModel @Inject constructor(
     fun set_compact_mode(v: Boolean) = theme_store.set_compact_mode(v)
     fun set_text_spacing(v: Boolean) = theme_store.set_text_spacing(v)
     fun set_underline_links(v: Boolean) = theme_store.set_underline_links(v)
+    fun set_haptic_enabled(v: Boolean) = theme_store.set_haptic_enabled(v)
     fun set_dyslexia_font(v: Boolean) = theme_store.set_dyslexia_font(v)
     fun mark_onboarding_seen() = theme_store.set_onboarding_seen(true)
     fun set_color_theme(id: String) = theme_store.set_color_theme(id)

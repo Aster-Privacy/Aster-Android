@@ -91,6 +91,8 @@ class AsterApplication : Application(), ImageLoaderFactory {
             .getOrDefault("")
 
         val ok_http = OkHttpClient.Builder()
+            .dns(org.astermail.android.api.DualStackDns)
+            .connectTimeout(java.time.Duration.ofMillis(4_000))
             .addInterceptor(bearer_interceptor(token_store, api_host))
             .addInterceptor(lockdown_interceptor(api_host))
             .build()
