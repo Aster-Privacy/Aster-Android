@@ -119,7 +119,7 @@ fun pending_send_preview_screen(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = TablerIcons.ArrowBack,
+                    imageVector = TablerIcons.ArrowLeft,
                     contentDescription = null,
                     tint = colors.text_primary,
                 )
