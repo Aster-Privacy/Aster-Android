@@ -210,4 +210,64 @@ class PreferencesMergeTest {
         assertEquals("always", rebased.load_remote_images)
         assertFalse(rebased.show_aster_branding)
     }
+
+    @Test
+    fun web_written_alias_keys_are_read_into_the_android_fields() {
+        val blob = """
+            {
+              "link_underlines": true,
+              "confirm_before_delete": true,
+              "confirm_before_archive": true,
+              "confirm_before_spam": true,
+              "block_remote_images": true,
+              "force_dark_mode_emails": true,
+              "mark_as_read_delay": "3_seconds",
+              "protected_folder_lock_mode": "always"
+            }
+        """.trimIndent()
+
+        val merged = merge_decrypted_preferences(json, blob, null)
+
+        assertTrue(merged.underline_links)
+        assertTrue(merged.confirm_delete)
+        assertTrue(merged.confirm_archive)
+        assertTrue(merged.confirm_spam)
+        assertTrue(merged.block_external_images)
+        assertTrue(merged.force_dark_emails)
+        assertEquals("3_seconds", merged.mark_as_read)
+        assertEquals("always", merged.folder_lock_mode)
+    }
+
+    @Test
+    fun own_key_wins_when_the_alias_agrees_with_it() {
+        val blob = """
+            {"underline_links": false, "link_underlines": false}
+        """.trimIndent()
+
+        val merged = merge_decrypted_preferences(json, blob, UserPreferences(underline_links = true))
+
+        assertFalse(merged.underline_links)
+    }
+
+    @Test
+    fun encode_mirrors_every_android_key_onto_its_web_alias() {
+        val prefs = UserPreferences(
+            underline_links = false,
+            confirm_delete = true,
+            block_external_images = true,
+            mark_as_read = "3_seconds",
+            folder_lock_mode = "always",
+        )
+
+        val encoded = json.parseToJsonElement(
+            encode_preferences_preserving_unknown(json, prefs, "{\"web_only\":1}"),
+        ).jsonObject
+
+        assertFalse(encoded["link_underlines"]!!.jsonPrimitive.content.toBoolean())
+        assertTrue(encoded["confirm_before_delete"]!!.jsonPrimitive.content.toBoolean())
+        assertTrue(encoded["block_remote_images"]!!.jsonPrimitive.content.toBoolean())
+        assertEquals("3_seconds", encoded["mark_as_read_delay"]!!.jsonPrimitive.content)
+        assertEquals("always", encoded["protected_folder_lock_mode"]!!.jsonPrimitive.content)
+        assertEquals("1", encoded["web_only"]!!.jsonPrimitive.content)
+    }
 }

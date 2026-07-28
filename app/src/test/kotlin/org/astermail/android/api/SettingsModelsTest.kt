@@ -241,20 +241,27 @@ class SettingsModelsTest {
 
     @Test
     fun `BlockedSenderInfo defaults`() {
-        val info = BlockedSenderInfo(address = "spam@evil.com")
-        assertEquals("spam@evil.com", info.address)
-        assertEquals(0, info.blocked_count)
+        val info = BlockedSenderInfo(sender_token = "tok")
+        assertEquals("tok", info.sender_token)
+        assertEquals("spam", info.action)
         assertNull(info.created_at)
     }
 
     @Test
     fun `BlockedSenderInfo with all fields`() {
         val info = BlockedSenderInfo(
-            address = "spam@evil.com",
-            blocked_count = 15,
+            id = "b1",
+            sender_token = "tok",
+            encrypted_sender_data = "cipher",
+            sender_data_nonce = "nonce",
+            integrity_hash = "hash",
+            is_domain = true,
+            action = "delete",
             created_at = "2026-03-01T00:00:00Z",
         )
-        assertEquals(15, info.blocked_count)
+        assertEquals("cipher", info.encrypted_sender_data)
+        assertTrue(info.is_domain)
+        assertEquals("delete", info.action)
         assertEquals("2026-03-01T00:00:00Z", info.created_at)
     }
 
@@ -262,17 +269,18 @@ class SettingsModelsTest {
     fun `BlockedSendersResponse defaults`() {
         val response = BlockedSendersResponse()
         assertTrue(response.blocked_senders.isEmpty())
+        assertEquals(0, response.total)
     }
 
     @Test
     fun `BlockedSendersResponse with items`() {
         val senders = listOf(
-            BlockedSenderInfo(address = "a@b.c"),
-            BlockedSenderInfo(address = "d@e.f", blocked_count = 5),
+            BlockedSenderInfo(sender_token = "a"),
+            BlockedSenderInfo(sender_token = "b", is_domain = true),
         )
-        val response = BlockedSendersResponse(blocked_senders = senders)
+        val response = BlockedSendersResponse(blocked_senders = senders, total = 2)
         assertEquals(2, response.blocked_senders.size)
-        assertEquals(5, response.blocked_senders[1].blocked_count)
+        assertTrue(response.blocked_senders[1].is_domain)
     }
 
     @Test

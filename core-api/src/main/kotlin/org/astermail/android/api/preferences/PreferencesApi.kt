@@ -34,6 +34,16 @@ import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
 
 @Serializable
+data class CustomCategoryRule(
+    val id: String = "",
+    val name: String = "",
+    val icon: String = "tag",
+    val match_domains: List<String> = emptyList(),
+    val match_keywords: List<String> = emptyList(),
+    val enabled: Boolean = true,
+)
+
+@Serializable
 data class UserPreferences(
     val language: String = "en",
     val theme: String = "system",
@@ -94,12 +104,14 @@ data class UserPreferences(
     val sidebar_folders_collapsed: Boolean = false,
     val sidebar_labels_collapsed: Boolean = false,
     val sidebar_aliases_collapsed: Boolean = false,
-    val swipe_right_action: String = "archive",
-    val swipe_left_action: String = "trash",
+    val swipe_right_action: String = "toggle_read",
+    val swipe_left_action: String = "archive",
     val toolbar_actions: String = "",
     val selection_toolbar_actions: String = "",
     val conversation_grouping: Boolean = true,
     val inbox_categories_enabled: Boolean = true,
+    val enabled_categories: List<String> = listOf("promotions", "social", "updates"),
+    val custom_categories: List<CustomCategoryRule> = emptyList(),
     val conversation_order: String = "newest",
     val show_message_size: Boolean = false,
     val force_dark_emails: Boolean = false,
@@ -120,6 +132,7 @@ data class UserPreferences(
     val translate_languages: List<String> = emptyList(),
     val translate_never_languages: List<String> = emptyList(),
     val muted_folder_tokens: List<String> = emptyList(),
+    val reactions_enabled: Boolean = true,
 )
 
 @Serializable

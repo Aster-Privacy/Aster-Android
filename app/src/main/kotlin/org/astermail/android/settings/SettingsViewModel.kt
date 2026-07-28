@@ -68,6 +68,7 @@ import org.astermail.android.api.labels.BulkReorderLabelsRequest
 import org.astermail.android.api.labels.CreateLabelRequest
 import org.astermail.android.api.labels.LabelsApi
 import org.astermail.android.api.labels.LabelItem
+import org.astermail.android.api.labels.ReferralHistoryItem
 import org.astermail.android.api.labels.ReferralInfoResponse
 import org.astermail.android.api.labels.ReorderLabelEntry
 import org.astermail.android.folders.folder_sibling_group
@@ -81,7 +82,11 @@ import org.astermail.android.api.preferences.UserPreferences
 import org.astermail.android.api.preferences.encode_preferences_preserving_unknown
 import org.astermail.android.api.preferences.merge_decrypted_preferences
 import org.astermail.android.api.preferences.rebase_preferences_changes
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
 import org.astermail.android.api.recovery_email.RecoveryEmailApi
 import org.astermail.android.api.recovery_email.RecoveryEmailApiImpl
 import org.astermail.android.api.recovery_email.RemoveRecoveryEmailRequest
@@ -97,6 +102,7 @@ import org.astermail.android.api.settings.AliasInfo
 import org.astermail.android.api.settings.DeletedAliasInfo
 import org.astermail.android.api.settings.CustomDomainAddressInfo
 import org.astermail.android.api.settings.AliasPreferences
+import org.astermail.android.api.settings.BlockSenderRequest
 import org.astermail.android.api.settings.BlockedSenderInfo
 import org.astermail.android.api.settings.CheckAliasAvailabilityRequest
 import org.astermail.android.api.settings.CreateAliasRequest
@@ -119,13 +125,27 @@ import org.astermail.android.api.subscriptions.SubscriptionsApi
 import org.astermail.android.api.user.Badge
 import org.astermail.android.api.user.UserApi
 import org.astermail.android.auth.AuthRepository
+import org.astermail.android.storage.PreferencesCacheStore
 import org.astermail.android.storage.SessionKeyStore
+import org.astermail.android.storage.TextSize
+import org.astermail.android.storage.ThemeMode
+import org.astermail.android.storage.ThemeStore
 import org.astermail.android.storage.TokenStore
+
+data class BlockedSenderView(
+    val id: String,
+    val sender_token: String,
+    val address: String,
+    val is_domain: Boolean,
+    val created_at: String?,
+)
 
 data class SettingsUiState(
     val user: UserInfo? = null,
     val sessions: List<SessionInfo> = emptyList(),
-    val blocked_senders: List<BlockedSenderInfo> = emptyList(),
+    val blocked_senders: List<BlockedSenderView> = emptyList(),
+    val blocked_senders_loading: Boolean = false,
+    val blocked_senders_error: String? = null,
     val aliases: List<AliasInfo> = emptyList(),
     val max_aliases: Int = 0,
     val custom_domain_addresses: List<CustomDomainAddressInfo> = emptyList(),
@@ -137,6 +157,7 @@ data class SettingsUiState(
     val labels: List<LabelItem> = emptyList(),
     val tags: List<TagItem> = emptyList(),
     val referral: ReferralInfoResponse? = null,
+    val referral_history: List<ReferralHistoryItem> = emptyList(),
     val preferences: UserPreferences? = null,
     val preferences_authoritative: Boolean = false,
     val reserved_addresses: List<ReservedAddress> = emptyList(),
@@ -166,6 +187,7 @@ data class SettingsUiState(
     val wkd_status: org.astermail.android.api.encryption.WkdStatusResponse? = null,
     val keyserver_status: org.astermail.android.api.encryption.KeyserverStatusResponse? = null,
     val badges: List<Badge> = emptyList(),
+    val badge_preferences: org.astermail.android.api.user.BadgePreferences? = null,
     val is_loading: Boolean = false,
     val error: String? = null,
     val save_status: SaveStatus = SaveStatus.IDLE,
@@ -182,6 +204,7 @@ data class DecryptedDeletedAlias(
     val deleted_at: String,
 )
 
+@kotlinx.serialization.Serializable
 data class DecryptedSignature(
     val id: String,
     val name: String,
@@ -191,6 +214,11 @@ data class DecryptedSignature(
     val alias_id: String?,
     val placement: Int?,
 )
+
+private val cached_preferences_json = kotlinx.serialization.json.Json {
+    ignoreUnknownKeys = true
+    encodeDefaults = true
+}
 
 private const val SUBSCRIPTION_TTL_MS = 300_000L
 private const val TAGS_TTL_MS = 60_000L
@@ -215,6 +243,8 @@ class SettingsViewModel @Inject constructor(
     private val auth_repository: AuthRepository,
     private val session_key_store: SessionKeyStore,
     private val token_store: TokenStore,
+    private val preferences_cache: PreferencesCacheStore,
+    private val theme_store: ThemeStore,
     val account_store: org.astermail.android.storage.AccountStore,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
@@ -246,7 +276,90 @@ class SettingsViewModel @Inject constructor(
     private var account_uses_encrypted_prefs = false
 
     init {
+        hydrate_cached_preferences()
+        hydrate_cached_signatures()
         load_preferences()
+    }
+
+    private fun cache_account_key(): String? =
+        session_key_store.get_user_id()?.takeIf { it.isNotBlank() }
+            ?: account_store.get_current_id()?.takeIf { it.isNotBlank() }
+
+    fun refresh_cached_preferences() {
+        hydrate_cached_preferences()
+    }
+
+    private fun hydrate_cached_preferences() {
+        val raw = preferences_cache.read(cache_account_key()) ?: return
+        val cached = runCatching {
+            cached_preferences_json.decodeFromString(UserPreferences.serializer(), raw)
+        }.getOrNull() ?: return
+        _state.value = _state.value.copy(preferences = cached)
+        apply_preferences_to_theme_store(cached)
+    }
+
+    private fun persist_cached_preferences(prefs: UserPreferences) {
+        val key = cache_account_key() ?: return
+        val raw = runCatching {
+            cached_preferences_json.encodeToString(UserPreferences.serializer(), prefs)
+        }.getOrNull() ?: return
+        preferences_cache.write(key, raw)
+    }
+
+    fun clear_cached_preferences(account_key: String?) {
+        preferences_cache.clear(account_key)
+    }
+
+    private fun apply_preferences_to_theme_store(prefs: UserPreferences) {
+        val mode = when (prefs.theme) {
+            ThemeMode.light.name -> ThemeMode.light
+            ThemeMode.dark.name -> ThemeMode.dark
+            else -> ThemeMode.system
+        }
+        if (theme_store.theme_mode.value != mode) theme_store.set_theme_mode(mode)
+        if (theme_store.color_theme.value != prefs.color_theme) {
+            theme_store.set_color_theme(prefs.color_theme)
+        }
+        if (theme_store.custom_theme_seed.value != prefs.custom_theme_seed) {
+            theme_store.set_custom_theme_seed(prefs.custom_theme_seed)
+        }
+        if (theme_store.custom_theme_overrides.value != prefs.custom_theme_overrides) {
+            theme_store.set_custom_theme_overrides(prefs.custom_theme_overrides)
+        }
+        if (theme_store.font_choice.value != prefs.font_choice) {
+            theme_store.set_font_choice(prefs.font_choice)
+        }
+        val size = when (prefs.font_size_scale) {
+            "small" -> TextSize.small
+            "large" -> TextSize.large
+            "extra_large" -> TextSize.extra_large
+            else -> TextSize.default_size
+        }
+        if (theme_store.text_size.value != size) theme_store.set_text_size(size)
+        if (theme_store.high_contrast.value != prefs.high_contrast) {
+            theme_store.set_high_contrast(prefs.high_contrast)
+        }
+        if (theme_store.reduce_transparency.value != prefs.reduce_transparency) {
+            theme_store.set_reduce_transparency(prefs.reduce_transparency)
+        }
+        if (theme_store.reduce_motion.value != prefs.reduce_motion) {
+            theme_store.set_reduce_motion(prefs.reduce_motion)
+        }
+        if (theme_store.compact_mode.value != prefs.compact_mode) {
+            theme_store.set_compact_mode(prefs.compact_mode)
+        }
+        if (theme_store.text_spacing.value != prefs.text_spacing) {
+            theme_store.set_text_spacing(prefs.text_spacing)
+        }
+        if (theme_store.underline_links.value != prefs.underline_links) {
+            theme_store.set_underline_links(prefs.underline_links)
+        }
+        if (theme_store.dyslexia_font.value != prefs.dyslexia_font) {
+            theme_store.set_dyslexia_font(prefs.dyslexia_font)
+        }
+        if (theme_store.haptic_enabled.value != prefs.haptic_enabled) {
+            theme_store.set_haptic_enabled(prefs.haptic_enabled)
+        }
     }
 
     fun load_profile() {
@@ -267,14 +380,79 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun load_badges() {
+        hydrate_cached_badges()
         viewModelScope.launch {
             try {
                 val result = user_api.fetch_badges()
-                _state.value = _state.value.copy(badges = result)
+                if (result != _state.value.badges) {
+                    _state.value = _state.value.copy(badges = result)
+                }
+                persist_cached_badges(result)
             } catch (t: Throwable) {
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_badges", t)
             }
         }
+        viewModelScope.launch {
+            try {
+                val prefs = user_api.fetch_badge_preferences()
+                _state.value = _state.value.copy(badge_preferences = prefs)
+            } catch (t: Throwable) {
+                if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_badge_preferences", t)
+            }
+        }
+    }
+
+    fun update_badge_preferences(request: org.astermail.android.api.user.UpdateBadgePreferencesRequest) {
+        val previous = _state.value.badge_preferences ?: org.astermail.android.api.user.BadgePreferences()
+        _state.value = _state.value.copy(
+            badge_preferences = previous.copy(
+                active_badge_slug = if (request.clear_active_badge == true) {
+                    null
+                } else {
+                    request.active_badge_slug ?: previous.active_badge_slug
+                },
+                show_badge_profile = request.show_badge_profile ?: previous.show_badge_profile,
+                show_badge_signature = request.show_badge_signature ?: previous.show_badge_signature,
+                show_badge_ring = request.show_badge_ring ?: previous.show_badge_ring,
+            ),
+        )
+        viewModelScope.launch {
+            try {
+                val updated = user_api.update_badge_preferences(request)
+                _state.value = _state.value.copy(badge_preferences = updated)
+            } catch (t: Throwable) {
+                _state.value = _state.value.copy(badge_preferences = previous)
+                if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "update_badge_preferences", t)
+            }
+        }
+    }
+
+    private fun hydrate_cached_badges() {
+        if (_state.value.badges.isNotEmpty()) return
+        val raw = preferences_cache.read_badges(cache_account_key()) ?: return
+        val cached = runCatching {
+            cached_preferences_json.decodeFromString(
+                kotlinx.serialization.builtins.ListSerializer(
+                    org.astermail.android.api.user.Badge.serializer(),
+                ),
+                raw,
+            )
+        }.getOrNull() ?: return
+        if (cached.isEmpty()) return
+        _state.value = _state.value.copy(badges = cached)
+    }
+
+    private fun persist_cached_badges(badges: List<org.astermail.android.api.user.Badge>) {
+        val key = cache_account_key() ?: return
+        val raw = runCatching {
+            cached_preferences_json.encodeToString(
+                kotlinx.serialization.builtins.ListSerializer(
+                    org.astermail.android.api.user.Badge.serializer(),
+                ),
+                badges,
+            )
+        }.getOrNull() ?: return
+        preferences_cache.write_badges(key, raw)
     }
 
     fun load_default_sender() {
@@ -395,10 +573,10 @@ class SettingsViewModel @Inject constructor(
         _state.value = _state.value.copy(action_result = null)
     }
 
-    fun logout(on_done: () -> Unit = {}) {
+    fun logout(on_done: (Boolean) -> Unit = {}) {
         viewModelScope.launch {
             auth_repository.logout()
-            on_done()
+            on_done(auth_repository.is_signed_in.value)
         }
     }
 
@@ -416,49 +594,179 @@ class SettingsViewModel @Inject constructor(
         last_subscription_load_ms = 0L
         last_tags_load_ms = 0L
         _state.value = SettingsUiState()
+        hydrate_cached_preferences()
     }
 
     fun load_blocked_senders() {
         viewModelScope.launch {
-            _state.value = _state.value.copy(is_loading = true, error = null)
+            _state.update { it.copy(blocked_senders_loading = true, blocked_senders_error = null) }
             try {
                 val response = settings_api.list_blocked_senders()
-                _state.value = _state.value.copy(
-                    blocked_senders = response.blocked_senders,
-                    is_loading = false,
-                )
+                val decrypted = withContext(default_dispatcher) {
+                    response.blocked_senders.mapNotNull { item ->
+                        val address = decrypt_blocked_sender_address(item) ?: return@mapNotNull null
+                        BlockedSenderView(
+                            id = item.id,
+                            sender_token = item.sender_token,
+                            address = address,
+                            is_domain = item.is_domain,
+                            created_at = item.created_at,
+                        )
+                    }
+                }
+                _state.update {
+                    it.copy(blocked_senders = decrypted, blocked_senders_loading = false)
+                }
             } catch (t: Throwable) {
-                _state.value = _state.value.copy(
-                    is_loading = false,
-                    error = t.message ?: context.getString(R.string.something_went_wrong),
-                )
+                _state.update {
+                    it.copy(
+                        blocked_senders_loading = false,
+                        blocked_senders_error = t.message ?: context.getString(R.string.something_went_wrong),
+                    )
+                }
             }
         }
     }
 
-    fun block_sender(address: String) {
+    fun block_sender(address: String, on_result: (Boolean) -> Unit = {}) {
         viewModelScope.launch {
+            val normalized = address.trim().lowercase()
+            if (normalized.isEmpty()) {
+                on_result(false)
+                return@launch
+            }
             try {
-                settings_api.block_sender(address)
-                _state.update { s -> s.copy(blocked_senders = s.blocked_senders + BlockedSenderInfo(address = address)) }
+                val is_domain = !normalized.contains('@')
+                val request = withContext(default_dispatcher) {
+                    build_block_sender_request(normalized, is_domain)
+                }
+                settings_api.block_sender(request)
+                _state.update { s ->
+                    s.copy(
+                        blocked_senders = listOf(
+                            BlockedSenderView(
+                                id = request.sender_token,
+                                sender_token = request.sender_token,
+                                address = normalized,
+                                is_domain = is_domain,
+                                created_at = null,
+                            ),
+                        ) + s.blocked_senders.filter { it.address != normalized },
+                    )
+                }
+                on_result(true)
             } catch (_: Throwable) {
                 _state.value = _state.value.copy(
                     action_result = context.getString(R.string.failed_block_sender),
                 )
+                on_result(false)
             }
         }
     }
 
-    fun unblock_sender(address: String) {
+    fun unblock_sender(sender_token: String) {
         viewModelScope.launch {
+            val previous = _state.value.blocked_senders
+            _state.update { s -> s.copy(blocked_senders = s.blocked_senders.filter { it.sender_token != sender_token }) }
             try {
-                settings_api.unblock_sender(address)
-                _state.update { s -> s.copy(blocked_senders = s.blocked_senders.filter { it.address != address }) }
+                settings_api.unblock_sender(sender_token)
             } catch (_: Throwable) {
-                _state.value = _state.value.copy(
-                    action_result = context.getString(R.string.failed_unblock_sender),
-                )
+                _state.update { s ->
+                    s.copy(
+                        blocked_senders = previous,
+                        action_result = context.getString(R.string.failed_unblock_sender),
+                    )
+                }
             }
+        }
+    }
+
+    private fun blocked_senders_hmac_key(): ByteArray {
+        val raw = derive_encryption_key()
+        try {
+            val info = BLOCKED_SENDERS_HMAC_INFO.toByteArray(Charsets.UTF_8)
+            return MessageDigest.getInstance("SHA-256").digest(raw + info)
+        } finally {
+            raw.fill(0)
+        }
+    }
+
+    private fun hmac_b64(key: ByteArray, data: ByteArray): String {
+        val mac = Mac.getInstance("HmacSHA256")
+        mac.init(SecretKeySpec(key, "HmacSHA256"))
+        return android.util.Base64.encodeToString(mac.doFinal(data), android.util.Base64.NO_WRAP)
+    }
+
+    private fun blocked_sender_integrity_hash(key: ByteArray, encrypted: String, nonce: String): String =
+        hmac_b64(key, "$encrypted:$nonce:$BLOCKED_SENDERS_INTEGRITY_INFO".toByteArray(Charsets.UTF_8))
+
+    private fun decrypt_blocked_sender_address(item: BlockedSenderInfo): String? {
+        if (item.encrypted_sender_data.isBlank() || item.sender_data_nonce.isBlank()) return null
+        return try {
+            val hmac_key = blocked_senders_hmac_key()
+            try {
+                if (item.integrity_hash.isNotBlank()) {
+                    val expected = blocked_sender_integrity_hash(
+                        hmac_key,
+                        item.encrypted_sender_data,
+                        item.sender_data_nonce,
+                    )
+                    if (expected != item.integrity_hash) return null
+                }
+            } finally {
+                hmac_key.fill(0)
+            }
+            val json = decrypt_alias_field(item.encrypted_sender_data, item.sender_data_nonce)
+            val parsed = kotlinx.serialization.json.Json.parseToJsonElement(json).jsonObject
+            parsed["email"]?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() }
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    private fun build_block_sender_request(normalized: String, is_domain: Boolean): BlockSenderRequest {
+        val hmac_key = blocked_senders_hmac_key()
+        try {
+            val prefix = if (is_domain) "domain:" else ""
+            val sender_token = hmac_b64(hmac_key, (prefix + normalized).toByteArray(Charsets.UTF_8))
+            val sender_hash = MessageDigest.getInstance("SHA-256")
+                .digest(normalized.toByteArray(Charsets.UTF_8))
+                .joinToString("") { "%02x".format(it) }
+            val blocked_at = java.time.format.DateTimeFormatter.ISO_INSTANT
+                .format(java.time.Instant.now())
+            val payload = buildJsonObject {
+                put("email", normalized)
+                put("blocked_at", blocked_at)
+                put("is_domain", is_domain)
+                put("_encrypted_at", blocked_at)
+            }.toString()
+            val key = derive_encryption_key()
+            try {
+                val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
+                val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+                cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(128, nonce))
+                val ciphertext = cipher.doFinal(payload.toByteArray(Charsets.UTF_8))
+                val encrypted_sender_data =
+                    android.util.Base64.encodeToString(ciphertext, android.util.Base64.NO_WRAP)
+                val sender_data_nonce =
+                    android.util.Base64.encodeToString(nonce, android.util.Base64.NO_WRAP)
+                return BlockSenderRequest(
+                    sender_token = sender_token,
+                    sender_hash = sender_hash,
+                    encrypted_sender_data = encrypted_sender_data,
+                    sender_data_nonce = sender_data_nonce,
+                    integrity_hash = blocked_sender_integrity_hash(
+                        hmac_key,
+                        encrypted_sender_data,
+                        sender_data_nonce,
+                    ),
+                    is_domain = is_domain,
+                )
+            } finally {
+                key.fill(0)
+            }
+        } finally {
+            hmac_key.fill(0)
         }
     }
 
@@ -1864,7 +2172,14 @@ class SettingsViewModel @Inject constructor(
             } catch (_: Throwable) {
                 ReferralInfoResponse()
             }
-            _state.value = _state.value.copy(referral = info)
+            val history = try {
+                kotlinx.coroutines.withTimeout(10_000L) {
+                    labels_api.get_referral_history().referrals
+                }
+            } catch (_: Throwable) {
+                emptyList()
+            }
+            _state.value = _state.value.copy(referral = info, referral_history = history)
         }
     }
 
@@ -1908,6 +2223,8 @@ class SettingsViewModel @Inject constructor(
                     if (decrypted != null) {
                         prefs_load_succeeded = true
                         last_synced_preferences = decrypted
+                        persist_cached_preferences(decrypted)
+                        apply_preferences_to_theme_store(decrypted)
                         org.astermail.android.notifications.MailPollingWorker
                             .set_muted_folder_tokens(context, decrypted.muted_folder_tokens)
                         _state.value = _state.value.copy(
@@ -1917,9 +2234,10 @@ class SettingsViewModel @Inject constructor(
                         )
                     } else {
                         prefs_load_succeeded = true
+                        val fallback = _state.value.preferences
                         _state.value = _state.value.copy(
-                            preferences = _state.value.preferences ?: UserPreferences(),
-                            preferences_authoritative = true,
+                            preferences = fallback ?: UserPreferences(),
+                            preferences_authoritative = fallback != null,
                             is_loading = false,
                             error = null,
                         )
@@ -1928,6 +2246,8 @@ class SettingsViewModel @Inject constructor(
                     val prefs = load_plaintext_preferences()
                     prefs_load_succeeded = true
                     last_synced_preferences = prefs
+                    persist_cached_preferences(prefs)
+                    apply_preferences_to_theme_store(prefs)
                     org.astermail.android.notifications.MailPollingWorker
                         .set_muted_folder_tokens(context, prefs.muted_folder_tokens)
                     _state.value = _state.value.copy(
@@ -1946,7 +2266,47 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    private fun apply_signature_defaults(decrypted: List<DecryptedSignature>) {
+        _signatures.value = decrypted
+        val global_default = decrypted.firstOrNull { it.alias_id == null && it.is_default }
+            ?: decrypted.firstOrNull { it.alias_id == null }
+        if (global_default == null) {
+            default_signature_id = null
+            default_signature_is_html = false
+            _signature_text.value = ""
+        } else {
+            default_signature_id = global_default.id
+            default_signature_is_html = global_default.is_html
+            _signature_text.value = global_default.content
+        }
+    }
+
+    private fun hydrate_cached_signatures(): Boolean {
+        val raw = preferences_cache.read_signatures(cache_account_key()) ?: return false
+        val cached = runCatching {
+            cached_preferences_json.decodeFromString(
+                kotlinx.serialization.builtins.ListSerializer(DecryptedSignature.serializer()),
+                raw,
+            )
+        }.getOrNull() ?: return false
+        apply_signature_defaults(cached)
+        _signature_loaded.value = true
+        return true
+    }
+
+    private fun persist_cached_signatures(decrypted: List<DecryptedSignature>) {
+        val key = cache_account_key() ?: return
+        val raw = runCatching {
+            cached_preferences_json.encodeToString(
+                kotlinx.serialization.builtins.ListSerializer(DecryptedSignature.serializer()),
+                decrypted,
+            )
+        }.getOrNull() ?: return
+        preferences_cache.write_signatures(key, raw)
+    }
+
     fun load_signature() {
+        hydrate_cached_signatures()
         viewModelScope.launch {
             try {
                 val list = signatures_api.list_signatures()
@@ -1967,18 +2327,8 @@ class SettingsViewModel @Inject constructor(
                         placement = sig.placement,
                     )
                 }
-                _signatures.value = decrypted
-                val global_default = decrypted.firstOrNull { it.alias_id == null && it.is_default }
-                    ?: decrypted.firstOrNull { it.alias_id == null }
-                if (global_default == null) {
-                    default_signature_id = null
-                    default_signature_is_html = false
-                    _signature_text.value = ""
-                } else {
-                    default_signature_id = global_default.id
-                    default_signature_is_html = global_default.is_html
-                    _signature_text.value = global_default.content
-                }
+                apply_signature_defaults(decrypted)
+                persist_cached_signatures(decrypted)
                 _signature_loaded.value = true
             } catch (_: Throwable) {
                 _signature_loaded.value = true
@@ -2191,6 +2541,7 @@ class SettingsViewModel @Inject constructor(
         save_preferences_job?.cancel()
         val baseline = last_synced_preferences
         _state.value = _state.value.copy(preferences = prefs, save_status = SaveStatus.SAVING)
+        persist_cached_preferences(prefs)
         save_preferences_job = viewModelScope.launch {
             try {
                 val identity_key = await_identity_key()
@@ -2213,6 +2564,7 @@ class SettingsViewModel @Inject constructor(
                     preferences_api.save_encrypted_preferences(encrypt_preferences_payload(payload, identity_key))
                     last_preferences_raw_json = payload
                     last_synced_preferences = to_save
+                    persist_cached_preferences(to_save)
                     org.astermail.android.notifications.MailPollingWorker
                         .set_muted_folder_tokens(context, to_save.muted_folder_tokens)
                     _state.value = _state.value.copy(preferences = to_save, save_status = SaveStatus.SAVED)
@@ -2232,6 +2584,7 @@ class SettingsViewModel @Inject constructor(
                         preferences_api.save_preferences(prefs)
                     }
                     last_synced_preferences = prefs
+                    persist_cached_preferences(prefs)
                     _state.value = _state.value.copy(save_status = SaveStatus.SAVED)
                 }
             } catch (t: Throwable) {
@@ -2328,7 +2681,12 @@ class SettingsViewModel @Inject constructor(
             _state.update { s -> s.copy(ghost_aliases = listOf(new_alias) + s.ghost_aliases) }
             GhostAliasResult.Success("$local_part@$domain")
         } catch (t: Throwable) {
-            GhostAliasResult.Failure(t.message ?: context.getString(R.string.could_not_create_ghost_alias))
+            val message = when (t) {
+                is ApiError.RateLimited, is ApiError.PlanLimitExceeded ->
+                    context.getString(R.string.ghost_alias_limit_reached)
+                else -> t.message ?: context.getString(R.string.could_not_create_ghost_alias)
+            }
+            GhostAliasResult.Failure(message)
         }
     }
 
@@ -2343,22 +2701,30 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun expire_ghost_alias(alias_id: String) {
-        viewModelScope.launch {
-            try {
-                ghost_alias_api.expire_ghost_alias(alias_id)
-                load_ghost_aliases()
-            } catch (_: Throwable) {
-            }
-        }
+        viewModelScope.launch { expire_ghost_alias_now(alias_id) }
     }
 
     fun extend_ghost_alias(alias_id: String) {
-        viewModelScope.launch {
-            try {
-                ghost_alias_api.extend_ghost_alias(alias_id)
-                load_ghost_aliases()
-            } catch (_: Throwable) {
-            }
+        viewModelScope.launch { extend_ghost_alias_now(alias_id) }
+    }
+
+    suspend fun expire_ghost_alias_now(alias_id: String): Boolean {
+        return try {
+            ghost_alias_api.expire_ghost_alias(alias_id)
+            load_ghost_aliases()
+            true
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    suspend fun extend_ghost_alias_now(alias_id: String): Boolean {
+        return try {
+            ghost_alias_api.extend_ghost_alias(alias_id)
+            load_ghost_aliases()
+            true
+        } catch (_: Throwable) {
+            false
         }
     }
 
@@ -3114,6 +3480,8 @@ class SettingsViewModel @Inject constructor(
     }
 
     companion object {
+        private const val BLOCKED_SENDERS_HMAC_INFO = "blocked-senders-hmac-v1"
+        private const val BLOCKED_SENDERS_INTEGRITY_INFO = "blocked-senders-v1"
         private const val SALT_PREFIX = "aster-hkdf-salt-v1:"
         private const val DERIVED_KEY_INFO = "aster-storage-encryption-key-v1"
         private const val TAG_VERSION_CURRENT = "astermail-tags-v1"

@@ -34,6 +34,7 @@ import org.astermail.android.storage.AccountStore
 import org.astermail.android.storage.SecurePrefs
 import org.astermail.android.storage.SessionKeyStore
 import org.astermail.android.storage.SessionSnapshotStore
+import org.astermail.android.storage.PreferencesCacheStore
 import org.astermail.android.storage.ThemeStore
 import org.astermail.android.storage.TokenStore
 import org.astermail.android.storage.TrustedDeviceStore
@@ -63,6 +64,11 @@ object StorageModule {
     @Provides
     @Singleton
     fun provide_account_store(@ApplicationContext context: Context): AccountStore = AccountStore(context)
+
+    @Provides
+    @Singleton
+    fun provide_preferences_cache_store(@ApplicationContext context: Context): PreferencesCacheStore =
+        PreferencesCacheStore(context)
 
     @Provides
     @Singleton

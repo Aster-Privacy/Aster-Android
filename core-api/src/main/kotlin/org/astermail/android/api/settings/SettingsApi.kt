@@ -103,21 +103,32 @@ data class TotpStatusResponse(
 )
 
 @Serializable
-private data class BlockRequest(val address: String)
-
-@Serializable
-private data class UnblockRequest(val address: String)
+data class BlockSenderRequest(
+    val sender_token: String,
+    val sender_hash: String,
+    val encrypted_sender_data: String,
+    val sender_data_nonce: String,
+    val integrity_hash: String,
+    val is_domain: Boolean = false,
+    val action: String = "spam",
+)
 
 @Serializable
 data class BlockedSenderInfo(
-    val address: String = "",
-    val blocked_count: Int = 0,
+    val id: String = "",
+    val sender_token: String = "",
+    val encrypted_sender_data: String = "",
+    val sender_data_nonce: String = "",
+    val integrity_hash: String = "",
+    val is_domain: Boolean = false,
+    val action: String = "spam",
     val created_at: String? = null,
 )
 
 @Serializable
 data class BlockedSendersResponse(
     val blocked_senders: List<BlockedSenderInfo> = emptyList(),
+    val total: Int = 0,
 )
 
 @Serializable
@@ -440,8 +451,8 @@ interface SettingsApi {
     suspend fun get_totp_status(): TotpStatusResponse
     suspend fun logout_others()
     suspend fun list_blocked_senders(): BlockedSendersResponse
-    suspend fun block_sender(address: String)
-    suspend fun unblock_sender(address: String)
+    suspend fun block_sender(request: BlockSenderRequest)
+    suspend fun unblock_sender(sender_token: String)
     suspend fun list_aliases(limit: Int = 100, offset: Int = 0): AliasListResponse
     suspend fun delete_alias(alias_id: String)
     suspend fun list_deleted_aliases(): ListDeletedAliasesResponse
@@ -546,22 +557,23 @@ class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
         return decode_or_throw(response)
     }
 
-    override suspend fun block_sender(address: String) {
+    override suspend fun block_sender(request: BlockSenderRequest) {
         val response = client.http.post("${client.base_url}/api/contacts/v1/blocked_senders") {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
-            setBody(BlockRequest(address))
+            setBody(request)
         }
         if (response.status.value !in 200..299) {
             throw client.map_http_status(response.status.value, "")
         }
     }
 
-    override suspend fun unblock_sender(address: String) {
-        val response = client.http.delete("${client.base_url}/api/contacts/v1/blocked_senders") {
-            contentType(ContentType.Application.Json)
+    override suspend fun unblock_sender(sender_token: String) {
+        val encoded = java.net.URLEncoder.encode(sender_token, "UTF-8")
+        val response = client.http.delete(
+            "${client.base_url}/api/contacts/v1/blocked_senders?sender_token=$encoded",
+        ) {
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
-            setBody(UnblockRequest(address))
         }
         if (response.status.value !in 200..299) {
             throw client.map_http_status(response.status.value, "")

@@ -44,6 +44,17 @@ private fun json_kind_matches(incoming: JsonElement, base: JsonElement): Boolean
     }
 }
 
+val web_preference_key_aliases = mapOf(
+    "underline_links" to "link_underlines",
+    "confirm_delete" to "confirm_before_delete",
+    "confirm_archive" to "confirm_before_archive",
+    "confirm_spam" to "confirm_before_spam",
+    "block_external_images" to "block_remote_images",
+    "force_dark_emails" to "force_dark_mode_emails",
+    "mark_as_read" to "mark_as_read_delay",
+    "folder_lock_mode" to "protected_folder_lock_mode",
+)
+
 fun merge_decrypted_preferences(
     json: Json,
     json_str: String,
@@ -56,7 +67,12 @@ fun merge_decrypted_preferences(
     ).jsonObject
     val merged = buildJsonObject {
         for ((k, base_value) in base) {
-            val in_value = incoming[k]
+            val alias_value = web_preference_key_aliases[k]?.let { incoming[it] }
+            val own_value = incoming[k]
+            val in_value = when {
+                alias_value != null && alias_value != own_value -> alias_value
+                else -> own_value
+            }
             put(k, if (in_value != null && json_kind_matches(in_value, base_value)) in_value else base_value)
         }
     }
@@ -97,6 +113,10 @@ fun encode_preferences_preserving_unknown(
     val merged = buildJsonObject {
         for ((k, v) in original) if (k !in known_keys) put(k, v)
         for ((k, v) in known) put(k, v)
+        for ((own_key, web_key) in web_preference_key_aliases) {
+            val v = known[own_key] ?: continue
+            put(web_key, v)
+        }
     }
     return json.encodeToString(JsonObject.serializer(), merged)
 }

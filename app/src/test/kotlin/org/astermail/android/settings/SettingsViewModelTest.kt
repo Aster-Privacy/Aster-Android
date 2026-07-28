@@ -104,8 +104,56 @@ class SettingsViewModelTest {
     private lateinit var session_key_store: SessionKeyStore
     private lateinit var token_store: TokenStore
     private lateinit var account_store: org.astermail.android.storage.AccountStore
+    private lateinit var preferences_cache: org.astermail.android.storage.PreferencesCacheStore
+    private lateinit var theme_store: org.astermail.android.storage.ThemeStore
     private lateinit var context: android.content.Context
     private lateinit var vm: SettingsViewModel
+
+    private val test_data_kek = ByteArray(32) { (it + 1).toByte() }
+
+    private fun blocked_senders_hmac_key(): ByteArray =
+        java.security.MessageDigest.getInstance("SHA-256")
+            .digest(test_data_kek + "blocked-senders-hmac-v1".toByteArray(Charsets.UTF_8))
+
+    private fun hmac_b64(key: ByteArray, data: ByteArray): String {
+        val mac = javax.crypto.Mac.getInstance("HmacSHA256")
+        mac.init(javax.crypto.spec.SecretKeySpec(key, "HmacSHA256"))
+        return java.util.Base64.getEncoder().encodeToString(mac.doFinal(data))
+    }
+
+    private fun blocked_sender_token(address: String, is_domain: Boolean = false): String {
+        val prefix = if (is_domain) "domain:" else ""
+        return hmac_b64(blocked_senders_hmac_key(), (prefix + address).toByteArray(Charsets.UTF_8))
+    }
+
+    private fun encrypted_blocked_sender(
+        address: String,
+        is_domain: Boolean = false,
+    ): BlockedSenderInfo {
+        val token = blocked_sender_token(address, is_domain)
+        val payload = """{"email":"$address","is_domain":$is_domain}"""
+        val nonce = ByteArray(12) { (address[it % address.length].code + it).toByte() }
+        val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(
+            javax.crypto.Cipher.ENCRYPT_MODE,
+            javax.crypto.spec.SecretKeySpec(test_data_kek, "AES"),
+            javax.crypto.spec.GCMParameterSpec(128, nonce),
+        )
+        val encoder = java.util.Base64.getEncoder()
+        val encrypted = encoder.encodeToString(cipher.doFinal(payload.toByteArray(Charsets.UTF_8)))
+        val nonce_b64 = encoder.encodeToString(nonce)
+        return BlockedSenderInfo(
+            id = token,
+            sender_token = token,
+            encrypted_sender_data = encrypted,
+            sender_data_nonce = nonce_b64,
+            integrity_hash = hmac_b64(
+                blocked_senders_hmac_key(),
+                "$encrypted:$nonce_b64:blocked-senders-v1".toByteArray(Charsets.UTF_8),
+            ),
+            is_domain = is_domain,
+        )
+    }
 
     @Before
     fun setup() {
@@ -142,8 +190,29 @@ class SettingsViewModelTest {
         encryption_api = mockk(relaxed = true)
         auth_repository = mockk(relaxed = true)
         session_key_store = mockk(relaxed = true)
+        every { session_key_store.get_data_kek() } answers { test_data_kek.copyOf() }
         token_store = mockk(relaxed = true)
         account_store = mockk(relaxed = true)
+        preferences_cache = mockk(relaxed = true)
+        every { auth_repository.is_signed_in } returns kotlinx.coroutines.flow.MutableStateFlow(false)
+        theme_store = mockk(relaxed = true)
+        every { theme_store.theme_mode } returns
+            kotlinx.coroutines.flow.MutableStateFlow(org.astermail.android.storage.ThemeMode.system)
+        every { theme_store.text_size } returns
+            kotlinx.coroutines.flow.MutableStateFlow(org.astermail.android.storage.TextSize.default_size)
+        every { theme_store.color_theme } returns kotlinx.coroutines.flow.MutableStateFlow("aster")
+        every { theme_store.custom_theme_seed } returns kotlinx.coroutines.flow.MutableStateFlow("")
+        every { theme_store.custom_theme_overrides } returns
+            kotlinx.coroutines.flow.MutableStateFlow(emptyMap())
+        every { theme_store.font_choice } returns kotlinx.coroutines.flow.MutableStateFlow("default")
+        every { theme_store.high_contrast } returns kotlinx.coroutines.flow.MutableStateFlow(false)
+        every { theme_store.reduce_transparency } returns kotlinx.coroutines.flow.MutableStateFlow(false)
+        every { theme_store.reduce_motion } returns kotlinx.coroutines.flow.MutableStateFlow(false)
+        every { theme_store.compact_mode } returns kotlinx.coroutines.flow.MutableStateFlow(false)
+        every { theme_store.text_spacing } returns kotlinx.coroutines.flow.MutableStateFlow(false)
+        every { theme_store.underline_links } returns kotlinx.coroutines.flow.MutableStateFlow(false)
+        every { theme_store.dyslexia_font } returns kotlinx.coroutines.flow.MutableStateFlow(false)
+        every { theme_store.haptic_enabled } returns kotlinx.coroutines.flow.MutableStateFlow(true)
         context = mockk(relaxed = true)
         every { context.getString(org.astermail.android.R.string.something_went_wrong) } returns
             "Something went wrong"
@@ -167,6 +236,8 @@ class SettingsViewModelTest {
             session_key_store = session_key_store,
             token_store = token_store,
             account_store = account_store,
+            preferences_cache = preferences_cache,
+            theme_store = theme_store,
             context = context,
         )
         vm.default_dispatcher = dispatcher
@@ -312,8 +383,8 @@ class SettingsViewModelTest {
     @Test
     fun `load_blocked_senders populates list`() = runTest {
         val blocked = listOf(
-            BlockedSenderInfo(address = "spam@evil.com", blocked_count = 5),
-            BlockedSenderInfo(address = "scam@bad.com", blocked_count = 2),
+            encrypted_blocked_sender("spam@evil.com"),
+            encrypted_blocked_sender("scam@bad.com"),
         )
         coEvery { settings_api.list_blocked_senders() } returns BlockedSendersResponse(blocked)
 
@@ -331,26 +402,26 @@ class SettingsViewModelTest {
 
         assertEquals(1, vm.state.value.blocked_senders.size)
         assertEquals("newspam@evil.com", vm.state.value.blocked_senders[0].address)
-        coVerify { settings_api.block_sender("newspam@evil.com") }
+        coVerify { settings_api.block_sender(any()) }
     }
 
     @Test
     fun `unblock_sender removes from list and calls api`() = runTest {
         val blocked = listOf(
-            BlockedSenderInfo(address = "spam@evil.com"),
-            BlockedSenderInfo(address = "keep@evil.com"),
+            encrypted_blocked_sender("spam@evil.com"),
+            encrypted_blocked_sender("keep@evil.com"),
         )
         coEvery { settings_api.list_blocked_senders() } returns BlockedSendersResponse(blocked)
 
         vm.load_blocked_senders()
         advanceUntilIdle()
 
-        vm.unblock_sender("spam@evil.com")
+        vm.unblock_sender(blocked_sender_token("spam@evil.com"))
         advanceUntilIdle()
 
         assertEquals(1, vm.state.value.blocked_senders.size)
         assertEquals("keep@evil.com", vm.state.value.blocked_senders[0].address)
-        coVerify { settings_api.unblock_sender("spam@evil.com") }
+        coVerify { settings_api.unblock_sender(blocked_sender_token("spam@evil.com")) }
     }
 
     @Test
@@ -789,7 +860,7 @@ class SettingsViewModelTest {
     @Test
     fun `concurrent loads do not corrupt state`() = runTest {
         val sessions = listOf(SessionInfo(id = "s1", is_current = true))
-        val blocked = listOf(BlockedSenderInfo(address = "spam@x.com"))
+        val blocked = listOf(encrypted_blocked_sender("spam@x.com"))
         val storage = StorageOverview(used_bytes = 1000, total_bytes = 10000)
 
         coEvery { settings_api.list_sessions() } returns SessionListResponse(sessions)
@@ -887,7 +958,7 @@ class SettingsViewModelTest {
         advanceUntilIdle()
 
         assertFalse(vm.state.value.is_loading)
-        assertEquals("timeout", vm.state.value.error)
+        assertEquals("timeout", vm.state.value.blocked_senders_error)
         assertTrue(vm.state.value.blocked_senders.isEmpty())
     }
 
@@ -913,8 +984,8 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `block_sender duplicate adds another entry`() = runTest {
-        val blocked = listOf(BlockedSenderInfo(address = "spam@evil.com"))
+    fun `block_sender duplicate replaces the existing entry`() = runTest {
+        val blocked = listOf(encrypted_blocked_sender("spam@evil.com"))
         coEvery { settings_api.list_blocked_senders() } returns BlockedSendersResponse(blocked)
 
         vm.load_blocked_senders()
@@ -923,19 +994,19 @@ class SettingsViewModelTest {
         vm.block_sender("spam@evil.com")
         advanceUntilIdle()
 
-        assertEquals(2, vm.state.value.blocked_senders.size)
+        assertEquals(1, vm.state.value.blocked_senders.size)
     }
 
     @Test
     fun `unblock_sender error does not modify list`() = runTest {
-        val blocked = listOf(BlockedSenderInfo(address = "spam@evil.com"))
+        val blocked = listOf(encrypted_blocked_sender("spam@evil.com"))
         coEvery { settings_api.list_blocked_senders() } returns BlockedSendersResponse(blocked)
         coEvery { settings_api.unblock_sender(any()) } throws RuntimeException("error")
 
         vm.load_blocked_senders()
         advanceUntilIdle()
 
-        vm.unblock_sender("spam@evil.com")
+        vm.unblock_sender(blocked_sender_token("spam@evil.com"))
         advanceUntilIdle()
 
         assertEquals(1, vm.state.value.blocked_senders.size)
@@ -943,17 +1014,17 @@ class SettingsViewModelTest {
 
     @Test
     fun `unblock_sender nonexistent address is harmless`() = runTest {
-        val blocked = listOf(BlockedSenderInfo(address = "spam@evil.com"))
+        val blocked = listOf(encrypted_blocked_sender("spam@evil.com"))
         coEvery { settings_api.list_blocked_senders() } returns BlockedSendersResponse(blocked)
 
         vm.load_blocked_senders()
         advanceUntilIdle()
 
-        vm.unblock_sender("nonexistent@evil.com")
+        vm.unblock_sender(blocked_sender_token("nonexistent@evil.com"))
         advanceUntilIdle()
 
         assertEquals(1, vm.state.value.blocked_senders.size)
-        coVerify { settings_api.unblock_sender("nonexistent@evil.com") }
+        coVerify { settings_api.unblock_sender(blocked_sender_token("nonexistent@evil.com")) }
     }
 
     @Test
@@ -1482,6 +1553,8 @@ class SettingsViewModelTest {
             session_key_store = session_key_store,
             token_store = token_store,
             account_store = account_store,
+            preferences_cache = preferences_cache,
+            theme_store = theme_store,
             context = context,
         )
         advanceUntilIdle()
@@ -1519,6 +1592,8 @@ class SettingsViewModelTest {
             session_key_store = session_key_store,
             token_store = token_store,
             account_store = account_store,
+            preferences_cache = preferences_cache,
+            theme_store = theme_store,
             context = context,
         )
         advanceUntilIdle()
@@ -1589,6 +1664,8 @@ class SettingsViewModelTest {
             session_key_store = session_key_store,
             token_store = token_store,
             account_store = account_store,
+            preferences_cache = preferences_cache,
+            theme_store = theme_store,
             context = context,
         )
         advanceUntilIdle()
@@ -1655,6 +1732,8 @@ class SettingsViewModelTest {
             session_key_store = session_key_store,
             token_store = token_store,
             account_store = account_store,
+            preferences_cache = preferences_cache,
+            theme_store = theme_store,
             context = context,
         )
         advanceUntilIdle()
@@ -1700,6 +1779,8 @@ class SettingsViewModelTest {
             session_key_store = session_key_store,
             token_store = token_store,
             account_store = account_store,
+            preferences_cache = preferences_cache,
+            theme_store = theme_store,
             context = context,
         )
         advanceUntilIdle()
@@ -1754,6 +1835,8 @@ class SettingsViewModelTest {
             session_key_store = session_key_store,
             token_store = token_store,
             account_store = account_store,
+            preferences_cache = preferences_cache,
+            theme_store = theme_store,
             context = context,
         )
         advanceUntilIdle()
@@ -2029,7 +2112,7 @@ class SettingsViewModelTest {
     @Test
     fun `sequential load then mutate preserves unrelated state`() = runTest {
         val sessions = listOf(SessionInfo(id = "s1", is_current = true))
-        val blocked = listOf(BlockedSenderInfo(address = "spam@x.com"))
+        val blocked = listOf(encrypted_blocked_sender("spam@x.com"))
         coEvery { settings_api.list_sessions() } returns SessionListResponse(sessions)
         coEvery { settings_api.list_blocked_senders() } returns BlockedSendersResponse(blocked)
 
@@ -2118,7 +2201,7 @@ class SettingsViewModelTest {
         advanceUntilIdle()
         assertEquals(1, vm.state.value.blocked_senders.size)
 
-        vm.unblock_sender("test@evil.com")
+        vm.unblock_sender(blocked_sender_token("test@evil.com"))
         advanceUntilIdle()
         assertTrue(vm.state.value.blocked_senders.isEmpty())
     }
@@ -2150,12 +2233,12 @@ class SettingsViewModelTest {
         coEvery { settings_api.list_blocked_senders() } throws RuntimeException("fail")
         vm.load_blocked_senders()
         advanceUntilIdle()
-        assertNotNull(vm.state.value.error)
+        assertNotNull(vm.state.value.blocked_senders_error)
 
         coEvery { settings_api.list_blocked_senders() } returns BlockedSendersResponse(emptyList())
         vm.load_blocked_senders()
         advanceUntilIdle()
-        assertNull(vm.state.value.error)
+        assertNull(vm.state.value.blocked_senders_error)
     }
 
     @Test
