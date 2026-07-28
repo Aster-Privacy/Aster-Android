@@ -1,0 +1,7 @@
+Bug fixes and improvements:
+
+- Inbox categories in the sidebar, and going back from one returns you to the full inbox
+- Archive, delete or mark read straight from a new mail notification, with a cleaner preview
+- Message previews no longer show stray code from emails written in HTML
+- The list no longer slides under the clock when the inbox header tucks away
+- Plan and billing now shows your current plan once, not twice
