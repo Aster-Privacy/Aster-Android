@@ -22,11 +22,11 @@
 package org.astermail.android.mail
 
 import org.astermail.android.api.mail.MailItemMetadata
+import org.astermail.android.api.preferences.CustomCategoryRule
 
 val CATEGORY_TABS: List<String> = listOf("primary", "promotions", "social", "updates")
 
-private val RULE_CATEGORY_IDS: Set<String> =
-    setOf("primary", "important", "promotions", "social", "updates", "forums")
+private val RULE_CATEGORY_IDS: Set<String> = BUILTIN_CATEGORY_IDS + "important"
 
 private val UPDATES_LOCALPARTS: Set<String> = setOf(
     "receipts",
@@ -114,18 +114,49 @@ private fun matches_any(text: String, patterns: List<Regex>): Boolean {
     return false
 }
 
+private fun match_custom_category(
+    auth_domains: List<String>,
+    subject: String,
+    custom_categories: List<CustomCategoryRule>,
+): String? {
+    if (custom_categories.isEmpty()) return null
+    val lower_subject = subject.lowercase()
+    for (rule in custom_categories) {
+        if (!rule.enabled) continue
+        val domain_match = rule.match_domains.any { suffix ->
+            auth_domains.any { domain_in_set(it, setOf(suffix)) }
+        }
+        if (domain_match) return rule.id
+        val keyword_match = rule.match_keywords.any { lower_subject.contains(it) }
+        if (keyword_match) return rule.id
+    }
+    return null
+}
+
+private fun resolve_rule_category(
+    rule_category: String?,
+    custom_categories: List<CustomCategoryRule>,
+): String? {
+    if (rule_category.isNullOrEmpty()) return null
+    if (RULE_CATEGORY_IDS.contains(rule_category)) return rule_category
+    val custom = custom_categories.any { it.id == rule_category && it.enabled }
+    return if (custom) rule_category else null
+}
+
 fun classify(
     envelope: DecryptedEnvelope,
     metadata: MailItemMetadata?,
     rule_category: String? = null,
+    custom_categories: List<CustomCategoryRule> = emptyList(),
 ): String {
     val pinned_category = metadata?.category
     if (metadata?.category_pinned == true && pinned_category != null) {
         return pinned_category
     }
 
-    if (rule_category != null && RULE_CATEGORY_IDS.contains(rule_category)) {
-        return rule_category
+    val from_rule = resolve_rule_category(rule_category, custom_categories)
+    if (from_rule != null) {
+        return from_rule
     }
 
     val email = envelope.from_email
@@ -151,8 +182,33 @@ fun classify(
         return "primary"
     }
 
+    val custom_match = match_custom_category(auth_domains, subject, custom_categories)
+    if (custom_match != null) {
+        return custom_match
+    }
+
     if (domain_in_set(from_domain, SOCIAL_DOMAIN_SUFFIXES)) {
         return "social"
+    }
+
+    if (in_any(FINANCE_DOMAIN_SUFFIXES) && matches_any(subject, FINANCE_SUBJECT_PATTERNS)) {
+        return "finance"
+    }
+
+    if (domain_in_set(from_domain, FINANCE_DOMAIN_SUFFIXES)) {
+        return "finance"
+    }
+
+    if (in_any(TRAVEL_DOMAIN_SUFFIXES) && matches_any(subject, TRAVEL_SUBJECT_PATTERNS)) {
+        return "travel"
+    }
+
+    if (domain_in_set(from_domain, TRAVEL_DOMAIN_SUFFIXES)) {
+        return "travel"
+    }
+
+    if (in_any(SHOPPING_DOMAIN_SUFFIXES) && matches_any(subject, SHOPPING_SUBJECT_PATTERNS)) {
+        return "shopping"
     }
 
     val has_list_headers =
@@ -181,7 +237,12 @@ fun classify(
             in_any(BULK_INFRA_DOMAIN_SUFFIXES)
 
     if (!is_automated) {
-        if (in_any(UPDATES_DOMAIN_SUFFIXES) && matches_any(subject, UPDATES_SUBJECT_PATTERNS)) {
+        val known_service =
+            in_any(UPDATES_DOMAIN_SUFFIXES) ||
+                in_any(SHOPPING_DOMAIN_SUFFIXES) ||
+                in_any(FINANCE_DOMAIN_SUFFIXES) ||
+                in_any(TRAVEL_DOMAIN_SUFFIXES)
+        if (known_service && matches_any(subject, UPDATES_SUBJECT_PATTERNS)) {
             return "updates"
         }
         return "primary"
@@ -211,24 +272,36 @@ fun classify(
     return "primary"
 }
 
-fun category_for_tab(category: String?): String {
-    if (category == "forums") return "updates"
-    if (category != null && CATEGORY_TABS.contains(category)) return category
-    return "primary"
+fun category_for_tab(category: String?, active_tabs: List<String> = CATEGORY_TABS): String {
+    if (category.isNullOrEmpty()) return "primary"
+    if (active_tabs.contains(category)) return category
+    if (is_custom_category_id(category)) return "primary"
+    if (!BUILTIN_CATEGORY_IDS.contains(category)) return "primary"
+
+    var target = fold_builtin(category)
+    var guard = 0
+    while (!active_tabs.contains(target) && target != "primary" && guard < 8) {
+        target = fold_builtin(target)
+        guard += 1
+    }
+    return if (active_tabs.contains(target)) target else "primary"
 }
 
-fun category_unread_counts(items: List<InboxItem>): Map<String, Int> {
+fun category_unread_counts(
+    items: List<InboxItem>,
+    active_tabs: List<String> = CATEGORY_TABS,
+): Map<String, Int> {
     val by_thread = LinkedHashMap<String, MutableList<InboxItem>>()
     for (item in items) {
         if (item.is_trashed || item.is_archived || item.is_spam) continue
         by_thread.getOrPut(item.thread_token ?: item.id) { mutableListOf() }.add(item)
     }
     val counts = HashMap<String, Int>()
-    for (tab in CATEGORY_TABS) counts[tab] = 0
+    for (tab in active_tabs) counts[tab] = 0
     for ((_, msgs) in by_thread) {
         if (msgs.none { !it.is_read }) continue
         val newest = msgs.maxByOrNull { it.timestamp } ?: continue
-        val tab = category_for_tab(newest.category)
+        val tab = category_for_tab(newest.category, active_tabs)
         counts[tab] = (counts[tab] ?: 0) + 1
     }
     return counts

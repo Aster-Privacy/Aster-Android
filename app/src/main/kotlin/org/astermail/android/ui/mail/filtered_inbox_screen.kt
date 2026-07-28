@@ -147,20 +147,26 @@ fun FilteredInboxScreen(
                     )
                 }
             } else {
-                LazyColumn(
-                    state = list_state,
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    items(items = threads, key = { it.thread_id }, contentType = { "thread_row" }) { thread ->
-                        Box(modifier = Modifier.background(colors.bg_primary)) {
-                            ThreadInboxRow(
-                                thread = thread,
-                                on_click = { on_open_email(thread.thread_id) },
-                                on_long_click = { on_open_email(thread.thread_id) },
-                                on_toggle_star = { mail_vm.toggle_star(thread.newest.id) },
-                            )
+                Box(modifier = Modifier.fillMaxSize()) {
+                    LazyColumn(
+                        state = list_state,
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        items(items = threads, key = { it.thread_id }, contentType = { "thread_row" }) { thread ->
+                            Box(modifier = Modifier.background(colors.bg_primary)) {
+                                ThreadInboxRow(
+                                    thread = thread,
+                                    on_click = { on_open_email(thread.thread_id) },
+                                    on_long_click = { on_open_email(thread.thread_id) },
+                                    on_toggle_star = { mail_vm.toggle_star(thread.newest.id) },
+                                )
+                            }
                         }
                     }
+                    org.astermail.android.ui.common.fast_scroll_bar(
+                        state = list_state,
+                        modifier = Modifier.align(Alignment.TopEnd),
+                    )
                 }
             }
         }

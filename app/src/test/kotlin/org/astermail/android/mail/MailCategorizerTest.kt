@@ -22,6 +22,7 @@
 package org.astermail.android.mail
 
 import org.astermail.android.api.mail.MailItemMetadata
+import org.astermail.android.api.preferences.CustomCategoryRule
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -219,5 +220,115 @@ class MailCategorizerTest {
         assertEquals("primary", category_for_tab("important"))
         assertEquals("primary", category_for_tab(null))
         assertEquals("social", category_for_tab("social"))
+    }
+
+    @Test
+    fun bank_statement_is_finance() {
+        val env = envelope(
+            from_email = "alerts@chase.com",
+            from_name = "Chase",
+            subject = "Your statement is ready",
+        )
+        assertEquals("finance", classify(env, null))
+    }
+
+    @Test
+    fun airline_itinerary_is_travel() {
+        val env = envelope(
+            from_email = "confirmation@united.com",
+            from_name = "United Airlines",
+            subject = "Your itinerary for flight UA123",
+        )
+        assertEquals("travel", classify(env, null))
+    }
+
+    @Test
+    fun cart_reminder_from_retailer_is_shopping() {
+        val env = envelope(
+            from_email = "hello@etsy.com",
+            from_name = "Etsy",
+            subject = "Price drop on an item in your wishlist",
+        )
+        assertEquals("shopping", classify(env, null))
+    }
+
+    @Test
+    fun shipping_update_from_retailer_is_updates() {
+        val env = envelope(
+            from_email = "orders@etsy.com",
+            from_name = "Etsy",
+            subject = "Your order has shipped",
+        )
+        assertEquals("updates", classify(env, null))
+    }
+
+    @Test
+    fun custom_domain_rule_beats_builtin_signals() {
+        val rules = listOf(
+            CustomCategoryRule(
+                id = "custom:news",
+                name = "News",
+                icon = "globe",
+                match_domains = listOf("linkedin.com"),
+                match_keywords = emptyList(),
+                enabled = true,
+            ),
+        )
+        val env = envelope(
+            from_email = "notifications@linkedin.com",
+            from_name = "LinkedIn",
+            subject = "You have 3 new connections",
+        )
+        assertEquals("custom:news", classify(env, null, null, rules))
+    }
+
+    @Test
+    fun custom_keyword_rule_matches_subject() {
+        val rules = listOf(
+            CustomCategoryRule(
+                id = "custom:digest",
+                name = "Digest",
+                icon = "folder",
+                match_domains = emptyList(),
+                match_keywords = listOf("digest"),
+                enabled = true,
+            ),
+        )
+        val env = envelope(
+            from_email = "hello@somesite.com",
+            from_name = "Some Newsletter",
+            subject = "Weekly Digest for you",
+            list_unsubscribe = "<https://somesite.com/unsub>",
+        )
+        assertEquals("custom:digest", classify(env, null, null, rules))
+    }
+
+    @Test
+    fun disabled_custom_rule_is_ignored() {
+        val rules = listOf(
+            CustomCategoryRule(
+                id = "custom:off",
+                name = "Off",
+                icon = "folder",
+                match_domains = listOf("linkedin.com"),
+                match_keywords = emptyList(),
+                enabled = false,
+            ),
+        )
+        val env = envelope(
+            from_email = "notifications@linkedin.com",
+            from_name = "LinkedIn",
+            subject = "You have 3 new connections",
+        )
+        assertEquals("social", classify(env, null, null, rules))
+    }
+
+    @Test
+    fun category_for_tab_keeps_enabled_extra_tabs() {
+        val tabs = listOf("primary", "promotions", "social", "updates", "forums", "finance")
+        assertEquals("forums", category_for_tab("forums", tabs))
+        assertEquals("finance", category_for_tab("finance", tabs))
+        assertEquals("updates", category_for_tab("travel", tabs))
+        assertEquals("primary", category_for_tab("custom:news", tabs))
     }
 }

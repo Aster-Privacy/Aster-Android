@@ -24,8 +24,9 @@ package org.astermail.android.ui.drawer
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
+import org.astermail.android.design.components.aster_dropdown_item
+import org.astermail.android.design.components.aster_dropdown_menu
 import org.astermail.android.BuildConfig
-import android.content.ClipData
 import android.content.Context
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.animateColorAsState
@@ -36,6 +37,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,7 +49,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -56,27 +60,23 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.offset
 import androidx.compose.material.icons.Icons
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.platform.ClipEntry
-import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -85,7 +85,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.astermail.android.ui.mail.SenderAvatar
@@ -207,6 +209,30 @@ private val label_icon_presets: List<Pair<String, ImageVector>> = listOf(
     "eye-slash" to TablerIcons.EyeOff,
 )
 
+private val category_icons: Map<String, androidx.compose.ui.graphics.vector.ImageVector> = mapOf(
+    "inbox" to TablerIcons.Inbox,
+    "tag" to TablerIcons.Discount,
+    "users" to TablerIcons.Users,
+    "bell" to TablerIcons.Bell,
+    "chat" to TablerIcons.MessageDots,
+    "credit_card" to TablerIcons.CreditCard,
+    "plane" to TablerIcons.Plane,
+    "shopping_bag" to TablerIcons.ShoppingCart,
+    "star" to TablerIcons.Star,
+    "heart" to TablerIcons.Heart,
+    "briefcase" to TablerIcons.Briefcase,
+    "home" to TablerIcons.Home,
+    "globe" to TablerIcons.World,
+    "academic_cap" to TablerIcons.School,
+    "megaphone" to TablerIcons.Speakerphone,
+    "gift" to TablerIcons.Gift,
+    "folder" to TablerIcons.Folder,
+    "sparkles" to TablerIcons.Wand,
+)
+
+private fun category_icon(icon: String): androidx.compose.ui.graphics.vector.ImageVector =
+    category_icons[icon] ?: TablerIcons.Tag
+
 private fun parse_hex_color(hex: String): Color =
     parse_hex_color_safe(hex) ?: Color(0xFF3B82F6)
 
@@ -229,6 +255,7 @@ fun DrawerContent(
     spam_count: Int = 0,
     trash_count: Int = 0,
     categories_enabled: Boolean = false,
+    category_entries: List<org.astermail.android.mail.CategoryEntry> = emptyList(),
     category_unread: Map<String, Int> = emptyMap(),
     selected_category: String = "primary",
     on_select_category: (String) -> Unit = {},
@@ -259,8 +286,6 @@ fun DrawerContent(
     var show_workspace_sheet by remember { mutableStateOf(false) }
     var show_logout_confirm by remember { mutableStateOf(false) }
     val current_workspace = user_email
-    val clipboard = LocalClipboard.current
-    val clipboard_scope = rememberCoroutineScope()
 
     val sidebar_prefs_context = LocalContext.current
     val sidebar_prefs = remember { sidebar_prefs_context.getSharedPreferences(sidebar_prefs_name, Context.MODE_PRIVATE) }
@@ -341,46 +366,39 @@ fun DrawerContent(
     Column(
         modifier = Modifier
             .fillMaxHeight()
-            .width(288.dp)
-            .background(colors.sidebar_bg)
-            .systemBarsPadding(),
+            .fillMaxWidth()
+            .background(colors.bg_primary)
+            .navigationBarsPadding(),
     ) {
+        val current_account = accounts.firstOrNull { it.id == current_account_id }
+        workspace_header(
+            current_address = current_workspace,
+            account_email = current_account?.email ?: user_email,
+            account_name = current_account?.display_name.orEmpty(),
+            profile_picture = current_account?.profile_picture,
+            on_click = {
+                on_open_workspace_sheet()
+                show_workspace_sheet = true
+            },
+        )
+
         Column(
             modifier = Modifier
                 .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(top = AsterSpacing.md),
+                .verticalScroll(rememberScrollState()),
         ) {
-            val current_account = accounts.firstOrNull { it.id == current_account_id }
-            workspace_header(
-                current_address = current_workspace,
-                account_email = current_account?.email ?: user_email,
-                account_name = current_account?.display_name.orEmpty(),
-                profile_picture = current_account?.profile_picture,
-                on_click = {
-                    on_open_workspace_sheet()
-                    show_workspace_sheet = true
-                },
-            )
-
             Spacer(Modifier.height(AsterSpacing.sm))
 
             if (categories_enabled) {
-                val category_rows = listOf(
-                    Triple("primary", stringResource(R.string.rules_category_primary), TablerIcons.Inbox),
-                    Triple("social", stringResource(R.string.rules_category_social), TablerIcons.Users),
-                    Triple("promotions", stringResource(R.string.rules_category_promotions), TablerIcons.Discount),
-                    Triple("updates", stringResource(R.string.rules_category_updates), TablerIcons.Bell),
-                )
-                category_rows.forEach { (key, label, icon) ->
+                category_entries.forEach { entry ->
                     drawer_row(
-                        icon = icon,
-                        label = label,
-                        count = category_unread[key] ?: 0,
+                        icon = category_icon(entry.icon),
+                        label = entry.label,
+                        count = category_unread[entry.id] ?: 0,
                         is_unread_count = true,
-                        selected = selected_id == "inbox" && key == selected_category,
+                        selected = selected_id == "inbox" && entry.id == selected_category,
                         on_click = {
-                            on_select_category(key)
+                            on_select_category(entry.id)
                             on_close()
                         },
                     )
@@ -400,8 +418,6 @@ fun DrawerContent(
                     },
                 )
             }
-
-            Spacer(Modifier.height(AsterSpacing.md))
 
             collapsible_section_header(
                 text = stringResource(R.string.drawer_more),
@@ -432,17 +448,6 @@ fun DrawerContent(
                         )
                     }
                     drawer_row(
-                        icon = TablerIcons.Crown,
-                        label = stringResource(R.string.subscription),
-                        count = 0,
-                        is_unread_count = false,
-                        selected = false,
-                        on_click = {
-                            on_select("plan")
-                            on_close()
-                        },
-                    )
-                    drawer_row(
                         icon = TablerIcons.MailOpened,
                         label = stringResource(R.string.refer_a_friend),
                         count = 0,
@@ -456,7 +461,6 @@ fun DrawerContent(
                 }
             }
 
-            Spacer(Modifier.height(AsterSpacing.md))
             collapsible_section_header(
                 text = stringResource(R.string.drawer_folders),
                 expanded = folders_expanded,
@@ -475,7 +479,6 @@ fun DrawerContent(
                 exit = section_expand_exit(),
             ) {
                 androidx.compose.foundation.layout.Column {
-                    Spacer(Modifier.height(AsterSpacing.xs))
                     if (folder_items.isEmpty()) {
                         empty_section_hint(stringResource(R.string.no_folders_yet))
                     } else {
@@ -500,7 +503,6 @@ fun DrawerContent(
                 }
             }
 
-            Spacer(Modifier.height(AsterSpacing.md))
             collapsible_section_header(
                 text = stringResource(R.string.drawer_labels),
                 expanded = labels_expanded,
@@ -519,7 +521,6 @@ fun DrawerContent(
                 exit = section_expand_exit(),
             ) {
                 androidx.compose.foundation.layout.Column {
-                    Spacer(Modifier.height(AsterSpacing.sm))
                     if (label_items.isEmpty()) {
                         empty_section_hint(stringResource(R.string.no_labels_yet))
                     } else {
@@ -540,7 +541,6 @@ fun DrawerContent(
                 }
             }
 
-            Spacer(Modifier.height(AsterSpacing.md))
             collapsible_section_header(
                 text = stringResource(R.string.drawer_aliases),
                 expanded = aliases_expanded,
@@ -561,7 +561,6 @@ fun DrawerContent(
                 exit = section_expand_exit(),
             ) {
                 androidx.compose.foundation.layout.Column {
-                    Spacer(Modifier.height(AsterSpacing.xs))
                     if (alias_items.isEmpty()) {
                         empty_section_hint(stringResource(R.string.no_aliases_yet))
                     } else {
@@ -651,6 +650,10 @@ fun DrawerContent(
                 drawer_footer(
                     used_fraction = storage_used_fraction,
                     storage_label = storage_label,
+                    on_feedback = {
+                        on_select("feedback")
+                        on_close()
+                    },
                 )
             }
             Spacer(Modifier.height(AsterSpacing.lg))
@@ -671,11 +674,6 @@ fun DrawerContent(
             on_add = {
                 show_workspace_sheet = false
                 on_add_account()
-            },
-            on_copy = { addr ->
-                clipboard_scope.launch {
-                    clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("", addr)))
-                }
             },
             on_logout = {
                 show_workspace_sheet = false
@@ -753,15 +751,10 @@ private fun create_folder_dialog(
         confirm_enabled = text_value.isNotBlank(),
         extra_content = {
             Column(modifier = Modifier.fillMaxWidth()) {
-                OutlinedTextField(
+                org.astermail.android.design.components.AsterTextField(
                     value = text_value,
                     onValueChange = { text_value = it },
-                    placeholder = {
-                        Text(
-                            text = placeholder,
-                            color = colors.text_muted,
-                        )
-                    },
+                    placeholder = placeholder,
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -796,39 +789,24 @@ private fun create_folder_dialog(
                             modifier = Modifier.size(20.dp),
                         )
                     }
-                    DropdownMenu(
+                    aster_dropdown_menu(
                         expanded = parent_menu_open,
-                        onDismissRequest = { parent_menu_open = false },
+                        on_dismiss = { parent_menu_open = false },
                     ) {
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = none_label,
-                                )
-                            },
-                            onClick = {
+                        aster_dropdown_item(
+                            label = none_label,
+                            selected = selected_parent == null,
+                            on_click = {
                                 selected_parent = null
                                 parent_menu_open = false
                             },
                         )
                         parent_options.forEach { option ->
-                            DropdownMenuItem(
-                                text = {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Spacer(Modifier.width((option.depth * 12).dp))
-                                        Icon(
-                                            imageVector = TablerIcons.Folder,
-                                            contentDescription = null,
-                                            tint = colors.text_muted,
-                                            modifier = Modifier.size(16.dp),
-                                        )
-                                        Spacer(Modifier.width(AsterSpacing.sm))
-                                        Text(
-                                            text = option.label,
-                                        )
-                                    }
-                                },
-                                onClick = {
+                            aster_dropdown_item(
+                                label = " ".repeat(option.depth) + option.label,
+                                icon = TablerIcons.Folder,
+                                selected = selected_parent == option,
+                                on_click = {
                                     selected_parent = option
                                     parent_menu_open = false
                                 },
@@ -899,15 +877,10 @@ private fun create_label_dialog(
                     )
                 }
 
-                OutlinedTextField(
+                org.astermail.android.design.components.AsterTextField(
                     value = name_value,
                     onValueChange = { name_value = it },
-                    placeholder = {
-                        Text(
-                            text = stringResource(R.string.label_name),
-                            color = colors.text_muted,
-                        )
-                    },
+                    placeholder = stringResource(R.string.label_name),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -1011,11 +984,15 @@ private fun workspace_switcher_sheet(
     on_dismiss: () -> Unit,
     on_switch: (StoredAccount) -> Unit,
     on_add: () -> Unit,
-    on_copy: (String) -> Unit,
     on_logout: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
     val sheet_state = rememberModalBottomSheetState()
+    val copy_action = org.astermail.android.ui.common.remember_copy_action()
+    val name_copied = stringResource(R.string.name_copied)
+    val email_copied = stringResource(R.string.email_copied)
+    val name_clip_label = stringResource(R.string.display_name)
+    val email_clip_label = stringResource(R.string.email)
 
     val ordered = if (accounts.isNotEmpty()) {
         val current = accounts.firstOrNull { it.id == current_account_id }
@@ -1100,29 +1077,34 @@ private fun workspace_switcher_sheet(
                     )
                     Spacer(Modifier.width(AsterSpacing.md))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = display,
-                            color = colors.text_primary,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                        )
+                        if (display.isNotBlank()) {
+                            Text(
+                                text = display,
+                                color = colors.text_primary,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier
+                                    .combinedClickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null,
+                                        onClick = { if (!is_current) on_switch(account) },
+                                        onLongClick = { copy_action(name_clip_label, display, name_copied) },
+                                    )
+                                    .padding(vertical = 2.dp),
+                            )
+                        }
                         Text(
                             text = account.email,
                             color = colors.text_muted,
                             fontSize = 12.sp,
-                        )
-                    }
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clickable { on_copy(account.email) },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = TablerIcons.Copy,
-                            contentDescription = stringResource(R.string.copy),
-                            tint = colors.text_muted,
-                            modifier = Modifier.size(16.dp),
+                            modifier = Modifier
+                                .combinedClickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                    onClick = { if (!is_current) on_switch(account) },
+                                    onLongClick = { copy_action(email_clip_label, account.email, email_copied) },
+                                )
+                                .padding(vertical = 2.dp),
                         )
                     }
                     if (is_current) {
@@ -1191,40 +1173,38 @@ private fun workspace_header(
     on_click: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .statusBarsPadding(),
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 2.dp)
-                .clip(RoundedCornerShape(18.dp))
-                .background(colors.bg_hover)
+                .padding(horizontal = 8.dp, vertical = 8.dp)
+                .clip(RoundedCornerShape(20.dp))
                 .clickable(onClick = on_click)
-                .padding(horizontal = 14.dp, vertical = 12.dp)
+                .padding(horizontal = 12.dp, vertical = 10.dp)
                 .testTag("workspace_switcher"),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .border(1.5.dp, colors.border_secondary, CircleShape)
-                    .padding(2.dp),
-            ) {
-                SenderAvatar(
-                    email = account_email,
-                    name = account_name,
-                    size = 38.dp,
-                    profile_picture_url = profile_picture,
-                    modifier = Modifier.testTag("account_avatar"),
-                )
-            }
+            SenderAvatar(
+                email = account_email,
+                name = account_name,
+                size = 40.dp,
+                profile_picture_url = profile_picture,
+                modifier = Modifier.testTag("account_avatar"),
+            )
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(R.string.app_name),
+                    text = account_name.ifBlank { current_address.substringBefore('@') },
                     color = colors.text_primary,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = (-0.2).sp,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = (-0.1).sp,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 )
                 Text(
                     text = current_address,
@@ -1241,7 +1221,6 @@ private fun workspace_header(
                 modifier = Modifier.size(20.dp),
             )
         }
-        Spacer(Modifier.height(AsterSpacing.xs))
     }
 }
 
@@ -1266,8 +1245,8 @@ private fun collapsible_section_header(
             .padding(
                 start = 24.dp,
                 end = 16.dp,
-                top = 18.dp,
-                bottom = 8.dp,
+                top = 14.dp,
+                bottom = 4.dp,
             ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -1381,14 +1360,9 @@ private fun drawer_row(
 ) {
     val colors = AsterMaterial.colors
     val bg by animateColorAsState(
-        targetValue = if (selected) colors.text_primary.copy(alpha = 0.09f) else Color.Transparent,
+        targetValue = if (selected) colors.accent_blue.copy(alpha = if (colors.is_dark) 0.22f else 0.14f) else Color.Transparent,
         animationSpec = tween(durationMillis = 150),
         label = "row_bg",
-    )
-    val border_color by animateColorAsState(
-        targetValue = if (selected) colors.text_primary.copy(alpha = 0.10f) else Color.Transparent,
-        animationSpec = tween(durationMillis = 150),
-        label = "row_border",
     )
     val text_color by animateColorAsState(
         targetValue = if (selected) colors.text_primary else colors.text_secondary,
@@ -1405,9 +1379,8 @@ private fun drawer_row(
             .fillMaxWidth()
             .padding(horizontal = 10.dp, vertical = 2.dp)
             .height(48.dp)
-            .clip(RoundedCornerShape(15.dp))
+            .clip(RoundedCornerShape(999.dp))
             .background(bg)
-            .border(1.dp, border_color, RoundedCornerShape(15.dp))
             .clickable(onClick = on_click)
             .then(if (test_tag != null) Modifier.testTag(test_tag) else Modifier),
     ) {
@@ -1434,7 +1407,7 @@ private fun drawer_row(
                 letterSpacing = (-0.15).sp,
                 modifier = Modifier.weight(1f),
             )
-            if (count > 0 && is_unread_count) {
+            if (count > 0) {
                 count_badge(
                     value = count,
                     emphasized = is_unread_count,
@@ -1448,12 +1421,16 @@ private fun drawer_row(
 @Composable
 private fun count_badge(value: Int, emphasized: Boolean, selected: Boolean) {
     val colors = AsterMaterial.colors
-    val text_color = if (selected) colors.text_secondary else colors.text_muted
+    val text_color = when {
+        emphasized && selected -> colors.text_primary
+        emphasized -> colors.text_secondary
+        else -> colors.text_muted
+    }
     Text(
         text = value.toString(),
         color = text_color,
         fontSize = 13.sp,
-        fontWeight = FontWeight.Medium,
+        fontWeight = if (emphasized) FontWeight.SemiBold else FontWeight.Medium,
     )
 }
 
@@ -1467,7 +1444,11 @@ private fun drawer_label_row(
 ) {
     val colors = AsterMaterial.colors
     val bg by animateColorAsState(
-        targetValue = if (selected) colors.text_primary.copy(alpha = 0.08f) else Color.Transparent,
+        targetValue = if (selected) {
+            colors.accent_blue.copy(alpha = if (colors.is_dark) 0.22f else 0.14f)
+        } else {
+            Color.Transparent
+        },
         animationSpec = tween(durationMillis = 150),
         label = "row_bg",
     )
@@ -1479,7 +1460,7 @@ private fun drawer_label_row(
     val row_modifier = Modifier
         .fillMaxWidth()
         .padding(horizontal = 10.dp, vertical = 2.dp)
-        .clip(RoundedCornerShape(15.dp))
+        .clip(RoundedCornerShape(999.dp))
         .background(bg)
         .clickable(onClick = on_click)
         .padding(horizontal = 15.dp)
@@ -1514,7 +1495,11 @@ private fun drawer_alias_row(
 ) {
     val colors = AsterMaterial.colors
     val bg by animateColorAsState(
-        targetValue = if (selected) colors.text_primary.copy(alpha = 0.08f) else Color.Transparent,
+        targetValue = if (selected) {
+            colors.accent_blue.copy(alpha = if (colors.is_dark) 0.22f else 0.14f)
+        } else {
+            Color.Transparent
+        },
         animationSpec = tween(durationMillis = 150),
         label = "row_bg",
     )
@@ -1526,7 +1511,7 @@ private fun drawer_alias_row(
     val row_modifier = Modifier
         .fillMaxWidth()
         .padding(horizontal = 10.dp, vertical = 2.dp)
-        .clip(RoundedCornerShape(15.dp))
+        .clip(RoundedCornerShape(999.dp))
         .background(bg)
         .clickable(onClick = on_click)
         .padding(horizontal = 15.dp)
@@ -1553,16 +1538,20 @@ private fun drawer_alias_row(
     }
 }
 
+private const val aster_wordmark_ratio = 800f / 199f
+
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun drawer_footer(
     used_fraction: Float = 0f,
     storage_label: String = "",
+    on_feedback: () -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(colors.sidebar_bg),
+            .background(colors.bg_primary),
     ) {
         Box(
             modifier = Modifier
@@ -1580,24 +1569,46 @@ private fun drawer_footer(
                 .height(1.dp)
                 .background(colors.border_secondary),
         )
+        val copy_action = org.astermail.android.ui.common.remember_copy_action()
+        val version_copied = stringResource(R.string.version_copied)
+        val clip_label = stringResource(R.string.app_name)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 12.dp),
+                .padding(horizontal = 20.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Image(
                 painter = painterResource(R.drawable.aster_wordmark),
-                contentDescription = null,
-                contentScale = ContentScale.Fit,
-                modifier = Modifier.height(14.dp),
+                contentDescription = stringResource(R.string.app_name),
+                contentScale = ContentScale.FillWidth,
+                modifier = Modifier
+                    .height(22.dp)
+                    .aspectRatio(aster_wordmark_ratio)
+                    .combinedClickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {},
+                        onLongClick = {
+                            copy_action(
+                                clip_label,
+                                "v${org.astermail.android.BuildConfig.VERSION_NAME}",
+                                version_copied,
+                            )
+                        },
+                    ),
             )
             Spacer(Modifier.weight(1f))
             Text(
-                text = "v${org.astermail.android.BuildConfig.VERSION_NAME}",
-                color = colors.text_muted,
-                fontSize = 11.sp,
+                text = stringResource(R.string.leave_us_feedback),
+                color = colors.text_secondary,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
+                modifier = Modifier
+                    .offset(y = 3.dp)
+                    .clip(RoundedCornerShape(999.dp))
+                    .clickable(onClick = on_feedback)
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
             )
         }
     }
