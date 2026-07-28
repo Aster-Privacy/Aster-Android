@@ -24,8 +24,6 @@ package org.astermail.android.security
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Base64
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKey
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -61,22 +59,16 @@ class AppLockStore @Inject constructor(@ApplicationContext private val context: 
     }
 
     private val prefs: SharedPreferences by lazy {
-        val master_key = MasterKey.Builder(context)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build()
-        EncryptedSharedPreferences.create(
-            context,
-            "aster_app_lock",
-            master_key,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
-        )
+        org.astermail.android.storage.SecurePrefs.open(context, "aster_app_lock")
     }
 
     @Volatile private var session_unlocked = false
 
     private val _is_locked = MutableStateFlow(false)
     val is_locked: StateFlow<Boolean> = _is_locked.asStateFlow()
+
+    private val _config_version = MutableStateFlow(0)
+    val config_version: StateFlow<Int> = _config_version.asStateFlow()
 
     fun is_configured(): Boolean = prefs.contains(KEY_PIN_HASH)
 
@@ -133,6 +125,7 @@ class AppLockStore @Inject constructor(@ApplicationContext private val context: 
             putLong(KEY_LOCKOUT_UNTIL, 0L)
             putLong(KEY_LOCKOUT_UNTIL_ELAPSED, 0L)
         }.apply()
+        _config_version.value += 1
         mark_session_unlocked()
     }
 
@@ -166,6 +159,7 @@ class AppLockStore @Inject constructor(@ApplicationContext private val context: 
         }.apply()
         session_unlocked = false
         _is_locked.value = false
+        _config_version.value += 1
     }
 
     private fun record_failed_attempt() {

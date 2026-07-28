@@ -34,6 +34,7 @@ import org.astermail.android.storage.SessionKeyStore
 const val RATCHET_UNDECRYPTABLE_SENTINEL = "\u0000ASTER_RATCHET_UNDECRYPTABLE\u0000"
 
 private const val VAULT_REFRESH_COOLDOWN_MS = 5L * 60L * 1000L
+private const val FORCED_RECOVERY_WINDOW_MS = 30L * 1000L
 
 @Singleton
 class RatchetDecryptor @Inject constructor(
@@ -54,6 +55,16 @@ class RatchetDecryptor @Inject constructor(
 
     @Volatile
     private var last_vault_refresh_at = 0L
+
+    @Volatile
+    private var forced_recovery_until = 0L
+
+    fun begin_forced_recovery() {
+        forced_recovery_until = System.currentTimeMillis() + FORCED_RECOVERY_WINDOW_MS
+        last_vault_refresh_at = 0L
+    }
+
+    private fun forced_recovery_active(): Boolean = System.currentTimeMillis() < forced_recovery_until
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -142,7 +153,8 @@ class RatchetDecryptor @Inject constructor(
                 }
             }
 
-            if (plaintext == null && decrypt_error != null && state_loaded_locally && !is_fresh_bootstrap) {
+            val forced = forced_recovery_active()
+            if (plaintext == null && (decrypt_error != null || forced) && state_loaded_locally && !is_fresh_bootstrap) {
                 val refreshed = try {
                     syncer.fetch_from_server(conversation_id)
                 } catch (_: Throwable) {

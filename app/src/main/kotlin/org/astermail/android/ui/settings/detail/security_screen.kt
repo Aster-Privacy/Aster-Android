@@ -45,11 +45,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -78,9 +75,11 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterCard
+import org.astermail.android.design.components.shimmer_brush
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterSecondaryButton
+import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.security.AppLockStore
 import org.astermail.android.security.AppLockViewModel
 import org.astermail.android.settings.SettingsViewModel
@@ -91,10 +90,6 @@ private fun format_audit_event(type: String): String = type
     .replace("_", " ")
     .split(" ")
     .joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
-
-private fun format_relative_date(iso: String): String {
-    return try { iso.take(10) } catch (_: Throwable) { iso }
-}
 
 private fun audit_icon(event_type: String): ImageVector = when {
     event_type.contains("login") || event_type.contains("sign_in") -> TablerIcons.Login
@@ -157,10 +152,10 @@ fun SecurityScreen(
 
     val score_label = when (score) {
         null -> "…"
-        in 0..2 -> "Weak"
-        in 3..5 -> "Fair"
-        in 6..7 -> "Partial"
-        else -> "Strong"
+        in 0..2 -> stringResource(R.string.score_weak)
+        in 3..5 -> stringResource(R.string.score_fair)
+        in 6..7 -> stringResource(R.string.score_partial)
+        else -> stringResource(R.string.score_strong)
     }
     val score_color = when (score) {
         null -> colors.text_muted
@@ -219,11 +214,9 @@ fun SecurityScreen(
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (score == null) {
-                            androidx.compose.material3.CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp,
-                                color = colors.text_muted,
-                            )
+                            skeleton_block(shimmer_brush(), 34.dp, 15.dp)
+                            Spacer(Modifier.width(AsterSpacing.xs))
+                            skeleton_block(shimmer_brush(), 52.dp, 17.dp, corner = 6.dp)
                         } else {
                             Text(
                                 text = "$score / 8",
@@ -271,6 +264,14 @@ fun SecurityScreen(
                                 .clip(CircleShape)
                                 .background(score_color),
                         )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(6.dp)
+                                .clip(CircleShape)
+                                .background(shimmer_brush()),
+                        )
                     }
                 }
                 AnimatedVisibility(
@@ -279,14 +280,14 @@ fun SecurityScreen(
                     exit = shrinkVertically() + fadeOut(),
                 ) {
                     Column(modifier = Modifier.padding(top = AsterSpacing.md)) {
-                        score_checklist_row("Two-factor authentication", sec?.totp_enabled == true, colors) { on_open("two_factor") }
-                        score_checklist_row("Passkey registered", hardware_keys_count > 0, colors) { on_open("encryption") }
-                        score_checklist_row("Verified recovery email", recovery_email_verified, colors) { on_open("recovery_email") }
-                        score_checklist_row("Login alerts", state.login_alerts_enabled == true, colors) { vm.set_login_alerts(state.login_alerts_enabled != true) }
-                        score_checklist_row("Block Spy Pixels", prefs?.block_tracking_pixels == true, colors) { toggle { it.copy(block_tracking_pixels = it.block_tracking_pixels != true) } }
-                        score_checklist_row("Block Remote Images", prefs?.block_external_images == true, colors) { toggle { it.copy(block_external_images = it.block_external_images != true) } }
-                        score_checklist_row("Strip Image Metadata", prefs?.strip_exif_on_compose == true, colors) { toggle { it.copy(strip_exif = it.strip_exif_on_compose != true, strip_exif_on_compose = it.strip_exif_on_compose != true) } }
-                        score_checklist_row("Read receipts off", prefs?.send_read_receipts == false, colors) { toggle { it.copy(send_read_receipts = it.send_read_receipts != false) } }
+                        score_checklist_row(stringResource(R.string.two_factor_auth), sec?.totp_enabled == true, colors) { on_open("two_factor") }
+                        score_checklist_row(stringResource(R.string.check_passkey_registered), hardware_keys_count > 0, colors) { on_open("encryption") }
+                        score_checklist_row(stringResource(R.string.check_verified_recovery_email), recovery_email_verified, colors) { on_open("recovery_email") }
+                        score_checklist_row(stringResource(R.string.login_alerts), state.login_alerts_enabled == true, colors) { vm.set_login_alerts(state.login_alerts_enabled != true) }
+                        score_checklist_row(stringResource(R.string.block_tracking_pixels), prefs?.block_tracking_pixels == true, colors) { toggle { it.copy(block_tracking_pixels = it.block_tracking_pixels != true) } }
+                        score_checklist_row(stringResource(R.string.block_remote_images), prefs?.block_external_images == true, colors) { toggle { it.copy(block_external_images = it.block_external_images != true) } }
+                        score_checklist_row(stringResource(R.string.strip_exif), prefs?.strip_exif_on_compose == true, colors) { toggle { it.copy(strip_exif = it.strip_exif_on_compose != true, strip_exif_on_compose = it.strip_exif_on_compose != true) } }
+                        score_checklist_row(stringResource(R.string.check_read_receipts_off), prefs?.send_read_receipts == false, colors) { toggle { it.copy(send_read_receipts = it.send_read_receipts != false) } }
                     }
                 }
             }
@@ -317,14 +318,10 @@ fun SecurityScreen(
                 info_title = stringResource(R.string.login_alerts_info_title),
                 info_description = stringResource(R.string.login_alerts_info_desc),
                 trailing = {
-                    Switch(
+                    AsterSwitch(
                         checked = state.login_alerts_enabled == true,
                         onCheckedChange = { v -> vm.set_login_alerts(v) },
                         enabled = state.login_alerts_enabled != null,
-                        colors = SwitchDefaults.colors(
-                            checkedTrackColor = colors.accent_blue,
-                            uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
-                        ),
                     )
                 },
             )
@@ -339,7 +336,7 @@ fun SecurityScreen(
             if (hardware_keys_count > 0) {
                 detail_row(
                     title = stringResource(R.string.passkeys_security_keys),
-                    subtitle = "$hardware_keys_count passkey${if (hardware_keys_count == 1) "" else "s"} registered",
+                    subtitle = androidx.compose.ui.res.pluralStringResource(R.plurals.passkeys_registered_count, hardware_keys_count, hardware_keys_count),
                     icon = TablerIcons.Key,
                     trailing = {
                         AsterIconButton(
@@ -425,13 +422,9 @@ fun SecurityScreen(
                     info_title = stringResource(R.string.block_remote_images_info_title),
                     info_description = stringResource(R.string.block_remote_images_info_desc),
                     trailing = {
-                        Switch(
+                        AsterSwitch(
                             checked = prefs.block_external_images != false,
                             onCheckedChange = { v -> toggle { it.copy(block_external_images = v) } },
-                            colors = SwitchDefaults.colors(
-                                checkedTrackColor = colors.accent_blue,
-                                uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
-                            ),
                         )
                     },
                 )
@@ -443,13 +436,9 @@ fun SecurityScreen(
                     info_title = stringResource(R.string.block_tracking_pixels_info_title),
                     info_description = stringResource(R.string.block_tracking_pixels_info_desc),
                     trailing = {
-                        Switch(
+                        AsterSwitch(
                             checked = prefs.block_tracking_pixels != false,
                             onCheckedChange = { v -> toggle { it.copy(block_tracking_pixels = v) } },
-                            colors = SwitchDefaults.colors(
-                                checkedTrackColor = colors.accent_blue,
-                                uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
-                            ),
                         )
                     },
                 )
@@ -461,13 +450,9 @@ fun SecurityScreen(
                     info_title = stringResource(R.string.block_tracking_links_info_title),
                     info_description = stringResource(R.string.block_tracking_links_info_desc),
                     trailing = {
-                        Switch(
+                        AsterSwitch(
                             checked = prefs.block_tracking_links != false,
                             onCheckedChange = { v -> toggle { it.copy(block_tracking_links = v) } },
-                            colors = SwitchDefaults.colors(
-                                checkedTrackColor = colors.accent_blue,
-                                uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
-                            ),
                         )
                     },
                 )
@@ -479,13 +464,9 @@ fun SecurityScreen(
                     info_title = stringResource(R.string.warn_suspicious_links_info_title),
                     info_description = stringResource(R.string.warn_suspicious_links_info_desc),
                     trailing = {
-                        Switch(
+                        AsterSwitch(
                             checked = prefs.warn_suspicious_links != false,
                             onCheckedChange = { v -> toggle { it.copy(warn_suspicious_links = v) } },
-                            colors = SwitchDefaults.colors(
-                                checkedTrackColor = colors.accent_blue,
-                                uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
-                            ),
                         )
                     },
                 )
@@ -515,13 +496,9 @@ fun SecurityScreen(
                     info_title = stringResource(R.string.strip_exif_info_title),
                     info_description = stringResource(R.string.strip_exif_info_desc),
                     trailing = {
-                        Switch(
+                        AsterSwitch(
                             checked = prefs.strip_exif_on_compose != false,
                             onCheckedChange = { v -> toggle { it.copy(strip_exif = v, strip_exif_on_compose = v) } },
-                            colors = SwitchDefaults.colors(
-                                checkedTrackColor = colors.accent_blue,
-                                uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
-                            ),
                         )
                     },
                 )
@@ -531,13 +508,9 @@ fun SecurityScreen(
                     subtitle = stringResource(R.string.send_read_receipts_subtitle),
                     icon = TablerIcons.Eye,
                     trailing = {
-                        Switch(
+                        AsterSwitch(
                             checked = prefs.send_read_receipts == true,
                             onCheckedChange = { v -> toggle { it.copy(send_read_receipts = v) } },
-                            colors = SwitchDefaults.colors(
-                                checkedTrackColor = colors.accent_blue,
-                                uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
-                            ),
                         )
                     },
                 )
@@ -677,17 +650,13 @@ private fun vanguard_section(vm: SettingsViewModel, lock_vm: AppLockViewModel) {
                         color = colors.text_muted,
                     )
                 } else if (is_nova_plus || state.subscription == null) {
-                    Switch(
+                    AsterSwitch(
                         checked = vanguard_enabled,
                         onCheckedChange = { v ->
                             if (v) vm.enable_vanguard()
                             else show_disable_confirm = true
                         },
                         enabled = state.vanguard_enabled != null,
-                        colors = SwitchDefaults.colors(
-                            checkedTrackColor = colors.accent_blue,
-                            uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
-                        ),
                     )
                 } else {
                     Box(
@@ -804,13 +773,9 @@ private fun app_lock_subsection(
                     fontSize = 12.sp,
                 )
             }
-            Switch(
+            AsterSwitch(
                 checked = enabled,
                 onCheckedChange = on_toggle,
-                colors = SwitchDefaults.colors(
-                    checkedTrackColor = colors.accent_blue,
-                    uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
-                ),
             )
         }
         if (enabled) {
@@ -862,7 +827,7 @@ private fun score_checklist_row(
             modifier = Modifier.weight(1f),
         )
         Icon(
-            imageVector = TablerIcons.ChevronDown,
+            imageVector = TablerIcons.ChevronRight,
             contentDescription = null,
             tint = colors.text_muted,
             modifier = Modifier.size(14.dp),
@@ -901,7 +866,7 @@ private fun hardware_key_row(
                 fontWeight = FontWeight.Medium,
             )
             Text(
-                text = format_relative_date(key.created_at),
+                text = relative_time_label(key.created_at),
                 color = colors.text_tertiary,
                 fontSize = 12.sp,
             )
@@ -935,11 +900,11 @@ private fun hardware_key_row(
                 on_rename(rename_text.trim())
             },
             extra_content = {
-                OutlinedTextField(
+                org.astermail.android.design.components.AsterTextField(
                     value = rename_text,
                     onValueChange = { if (it.length <= 128) rename_text = it },
                     singleLine = true,
-                    placeholder = { Text(stringResource(R.string.hardware_key_rename_placeholder)) },
+                    placeholder = stringResource(R.string.hardware_key_rename_placeholder),
                     modifier = Modifier.fillMaxWidth(),
                 )
             },
@@ -978,7 +943,7 @@ private fun trusted_device_row(
                 val ip = device.ip_snippet
                 if (!ip.isNullOrBlank()) add(ip)
                 val expires = device.expires_at
-                if (!expires.isNullOrBlank()) add("$expires_label ${format_relative_date(expires)}")
+                if (!expires.isNullOrBlank()) add("$expires_label ${relative_time_label(expires)}")
             }.joinToString(" - ")
             if (meta.isNotBlank()) {
                 Text(
@@ -1023,7 +988,7 @@ private fun audit_event_row(
                 fontWeight = FontWeight.Medium,
             )
             val meta = buildList {
-                add(format_relative_date(event.created_at))
+                add(relative_time_label(event.created_at))
                 val ip = event.ip_address
                 if (!ip.isNullOrBlank()) add(ip)
             }.joinToString(" - ")

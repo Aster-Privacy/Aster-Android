@@ -26,44 +26,43 @@ import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 
+private const val ANDROID_KEY_STORE = "AndroidKeyStore"
+
 object SecurePrefs {
+
+    @Volatile
+    var key_material_lost: Boolean = false
+        private set
 
     fun open(context: Context, name: String): SharedPreferences {
         val app = context.applicationContext
         return try {
             create_encrypted(app, name)
         } catch (first: Throwable) {
-            if (!is_corruption_error(first)) {
-                throw SecurePrefsUnavailableException(name, first)
-            }
             runCatching { app.deleteSharedPreferences(name) }
             try {
                 create_encrypted(app, name)
             } catch (second: Throwable) {
-                throw SecurePrefsUnavailableException(name, second).also {
-                    it.addSuppressed(first)
+                reset_key_material(app, name)
+                try {
+                    create_encrypted(app, name)
+                } catch (third: Throwable) {
+                    key_material_lost = true
+                    InMemoryPrefs()
                 }
             }
         }
     }
 
-    private fun is_corruption_error(t: Throwable): Boolean {
-        var cur: Throwable? = t
-        while (cur != null) {
-            val msg = cur.message?.lowercase().orEmpty()
-            val cn = cur.javaClass.name
-            if (cn.contains("InvalidProtocolBufferException", ignoreCase = true)) return true
-            if (cn.contains("AEADBadTagException", ignoreCase = true)) return true
-            if (cn.contains("KeyStoreException", ignoreCase = true) &&
-                (msg.contains("verification failed") || msg.contains("invalid key"))
-            ) return true
-            if (cn.contains("GeneralSecurityException", ignoreCase = true) &&
-                (msg.contains("decryption") || msg.contains("invalid") || msg.contains("tag"))
-            ) return true
-            if (msg.contains("decryption failed") || msg.contains("invalid protocol buffer")) return true
-            cur = cur.cause
+    private fun reset_key_material(context: Context, name: String) {
+        key_material_lost = true
+        runCatching { context.deleteSharedPreferences(name) }
+        runCatching {
+            val store = java.security.KeyStore.getInstance(ANDROID_KEY_STORE).apply { load(null) }
+            if (store.containsAlias(MasterKey.DEFAULT_MASTER_KEY_ALIAS)) {
+                store.deleteEntry(MasterKey.DEFAULT_MASTER_KEY_ALIAS)
+            }
         }
-        return false
     }
 
     private fun create_encrypted(context: Context, name: String): SharedPreferences {
@@ -79,6 +78,3 @@ object SecurePrefs {
         )
     }
 }
-
-class SecurePrefsUnavailableException(name: String, cause: Throwable) :
-    RuntimeException("encrypted prefs unavailable: $name", cause)

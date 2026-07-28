@@ -223,7 +223,7 @@ fun AppLockSetupSheet(
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            imageVector = TablerIcons.ArrowBack,
+                            imageVector = TablerIcons.ArrowLeft,
                             contentDescription = null,
                             tint = colors.text_primary,
                             modifier = Modifier.size(18.dp),

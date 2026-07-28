@@ -45,14 +45,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -100,6 +95,7 @@ import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterSecondaryButton
+import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.storage.SessionKeyStore
 import java.security.MessageDigest
@@ -610,16 +606,12 @@ fun EncryptionScreen(
                 detail_row(
                     title = stringResource(R.string.auto_discover_keys),
                     subtitle = stringResource(R.string.auto_discover_keys_sub),
-                    info_title = "Auto-discover Keys",
-                    info_description = "Automatically fetches encryption keys for your contacts so you can send them encrypted mail without any manual setup.",
+                    info_title = stringResource(R.string.info_auto_discover_title),
+                    info_description = stringResource(R.string.info_auto_discover_desc),
                     trailing = {
-                        Switch(
+                        AsterSwitch(
                             checked = enc.auto_discover_keys != false,
                             onCheckedChange = { vm.toggle_auto_discover_keys() },
-                            colors = SwitchDefaults.colors(
-                                checkedTrackColor = colors.accent_blue,
-                                uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
-                            ),
                         )
                     },
                 )
@@ -627,16 +619,12 @@ fun EncryptionScreen(
                 detail_row(
                     title = stringResource(R.string.encrypt_by_default),
                     subtitle = stringResource(R.string.encrypt_by_default_sub),
-                    info_title = "Encrypt by Default",
-                    info_description = "Automatically encrypts outgoing emails when a recipient's public key is available. No need to toggle encryption per message.",
+                    info_title = stringResource(R.string.info_encrypt_default_title),
+                    info_description = stringResource(R.string.info_encrypt_default_desc),
                     trailing = {
-                        Switch(
+                        AsterSwitch(
                             checked = enc.encrypt_by_default == true,
                             onCheckedChange = { vm.toggle_encrypt_by_default() },
-                            colors = SwitchDefaults.colors(
-                                checkedTrackColor = colors.accent_blue,
-                                uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
-                            ),
                         )
                     },
                 )
@@ -644,16 +632,12 @@ fun EncryptionScreen(
                 detail_row(
                     title = stringResource(R.string.require_encryption),
                     subtitle = stringResource(R.string.require_encryption_sub),
-                    info_title = "Require Encryption",
-                    info_description = "Only send emails that can be encrypted end-to-end. If a recipient doesn't have a PGP key, the message won't send. Only turn this on if you never email people outside of PGP.",
+                    info_title = stringResource(R.string.info_require_encryption_title),
+                    info_description = stringResource(R.string.info_require_encryption_desc),
                     trailing = {
-                        Switch(
+                        AsterSwitch(
                             checked = prefs.require_encryption == true,
                             onCheckedChange = { toggle { it.copy(require_encryption = !it.require_encryption) } },
-                            colors = SwitchDefaults.colors(
-                                checkedTrackColor = colors.accent_blue,
-                                uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
-                            ),
                         )
                     },
                 )
@@ -661,16 +645,12 @@ fun EncryptionScreen(
                 detail_row(
                     title = stringResource(R.string.show_encryption_indicators),
                     subtitle = stringResource(R.string.show_encryption_indicators_sub),
-                    info_title = "Encryption Indicators",
-                    info_description = "Shows a lock icon on emails to tell you whether a message is encrypted, signed, or neither. Handy for knowing what's protected at a glance.",
+                    info_title = stringResource(R.string.info_encryption_indicators_title),
+                    info_description = stringResource(R.string.info_encryption_indicators_desc),
                     trailing = {
-                        Switch(
+                        AsterSwitch(
                             checked = prefs.show_encryption_indicators != false,
                             onCheckedChange = { toggle { it.copy(show_encryption_indicators = !it.show_encryption_indicators) } },
-                            colors = SwitchDefaults.colors(
-                                checkedTrackColor = colors.accent_blue,
-                                uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
-                            ),
                         )
                     },
                 )
@@ -678,16 +658,12 @@ fun EncryptionScreen(
                 detail_row(
                     title = stringResource(R.string.publish_to_wkd),
                     subtitle = stringResource(R.string.publish_to_wkd_sub),
-                    info_title = "What is WKD?",
-                    info_description = "A standard that lets email apps like Thunderbird or Proton automatically find your public key. People can send you encrypted mail without you needing to share your key manually.",
+                    info_title = stringResource(R.string.info_wkd_title),
+                    info_description = stringResource(R.string.info_wkd_desc),
                     trailing = {
-                        Switch(
+                        AsterSwitch(
                             checked = wkd.published == true,
                             onCheckedChange = { vm.toggle_wkd_publishing() },
-                            colors = SwitchDefaults.colors(
-                                checkedTrackColor = colors.accent_blue,
-                                uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
-                            ),
                         )
                     },
                 )
@@ -695,16 +671,12 @@ fun EncryptionScreen(
                 detail_row(
                     title = stringResource(R.string.publish_to_keyservers),
                     subtitle = stringResource(R.string.publish_to_keyservers_sub),
-                    info_title = "What are Keyservers?",
-                    info_description = "Public directories where PGP keys are searchable by email. Publishing here lets anyone find your key. Heads up: most keyservers don't let you fully remove a key once it's published.",
+                    info_title = stringResource(R.string.info_keyservers_title),
+                    info_description = stringResource(R.string.info_keyservers_desc),
                     trailing = {
-                        Switch(
+                        AsterSwitch(
                             checked = ks.published == true,
                             onCheckedChange = { vm.toggle_keyserver_publishing() },
-                            colors = SwitchDefaults.colors(
-                                checkedTrackColor = colors.accent_blue,
-                                uncheckedTrackColor = colors.text_muted.copy(alpha = 0.35f),
-                            ),
                         )
                     },
                 )
@@ -716,34 +688,31 @@ fun EncryptionScreen(
 
     if (show_export_private_dialog) {
         val context_export = context
-        AlertDialog(
-            onDismissRequest = { if (!exporting_private_key) { show_export_private_dialog = false; export_private_password = "" } },
-            containerColor = colors.bg_card,
-            title = {
-                Text(stringResource(R.string.export_private_key_dialog_title), color = colors.text_primary, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { if (!exporting_private_key) { show_export_private_dialog = false; export_private_password = "" } },
+            title = stringResource(R.string.export_private_key_dialog_title),
+            message = stringResource(R.string.export_private_key_message),
+            body = {
+                org.astermail.android.design.components.AsterTextField(
+                    value = export_private_password,
+                    onValueChange = { export_private_password = it; export_private_error = null },
+                    label = stringResource(R.string.export_private_key_password_label),
+                    visual_transformation = PasswordVisualTransformation(),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    error_text = export_private_error,
+                )
             },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
-                    Text(
-                        stringResource(R.string.export_private_key_message),
-                        color = colors.text_secondary,
-                        fontSize = 13.sp,
-                        lineHeight = 19.sp,
-                    )
-                    OutlinedTextField(
-                        value = export_private_password,
-                        onValueChange = { export_private_password = it; export_private_error = null },
-                        label = { Text(stringResource(R.string.export_private_key_password_label)) },
-                        visualTransformation = PasswordVisualTransformation(),
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        isError = export_private_error != null,
-                        supportingText = export_private_error?.let { err -> { Text(err, color = colors.danger, fontSize = 12.sp) } },
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
+            footer = {
+                org.astermail.android.design.components.AsterDialogOutlineButton(
+                    label = stringResource(R.string.cancel),
+                    enabled = !exporting_private_key,
+                    onClick = { show_export_private_dialog = false; export_private_password = "" },
+                )
+                org.astermail.android.design.components.AsterDialogDestructiveButton(
+                    label = if (exporting_private_key) stringResource(R.string.export_private_key_exporting) else stringResource(R.string.export_private_key_button),
+                    enabled = export_private_password.isNotBlank() && !exporting_private_key,
+                    is_loading = exporting_private_key,
                     onClick = {
                         if (export_private_password.isNotBlank() && !exporting_private_key) {
                             exporting_private_key = true
@@ -763,65 +732,29 @@ fun EncryptionScreen(
                             }
                         }
                     },
-                    enabled = export_private_password.isNotBlank() && !exporting_private_key,
-                ) {
-                    Text(if (exporting_private_key) stringResource(R.string.export_private_key_exporting) else stringResource(R.string.export_private_key_button), color = colors.danger)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { if (!exporting_private_key) { show_export_private_dialog = false; export_private_password = "" } }) {
-                    Text(stringResource(R.string.cancel))
-                }
+                )
             },
         )
     }
 
     if (show_regen_confirm) {
-        AlertDialog(
-            onDismissRequest = { show_regen_confirm = false },
-            containerColor = colors.bg_card,
-            title = {
-                Text(
-                    text = stringResource(R.string.regenerate_recovery_codes_title),
-                    color = colors.text_primary,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            },
-            text = {
-                Text(
-                    text = stringResource(R.string.regenerate_recovery_codes_message),
-                    color = colors.text_secondary,
-                    fontSize = 14.sp,
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        show_regen_confirm = false
-                        scope.launch {
-                            regenerating = true
-                            val codes = vm.regenerate_recovery_codes_now()
-                            regenerating = false
-                            if (codes.isNotEmpty()) {
-                                new_recovery_codes = codes
-                                show_new_codes_dialog = true
-                            }
-                        }
-                    },
-                ) {
-                    Text(
-                        text = stringResource(R.string.regenerate),
-                        color = colors.danger,
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { show_regen_confirm = false }) {
-                    Text(
-                        text = stringResource(R.string.cancel),
-                        color = colors.text_secondary,
-                    )
+        org.astermail.android.design.components.AsterAlertDialog(
+            on_dismiss = { show_regen_confirm = false },
+            title = stringResource(R.string.regenerate_recovery_codes_title),
+            message = stringResource(R.string.regenerate_recovery_codes_message),
+            confirm_label = stringResource(R.string.regenerate),
+            cancel_label = stringResource(R.string.cancel),
+            confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
+            on_confirm = {
+                show_regen_confirm = false
+                scope.launch {
+                    regenerating = true
+                    val codes = vm.regenerate_recovery_codes_now()
+                    regenerating = false
+                    if (codes.isNotEmpty()) {
+                        new_recovery_codes = codes
+                        show_new_codes_dialog = true
+                    }
                 }
             },
         )
@@ -829,18 +762,10 @@ fun EncryptionScreen(
 
     if (show_new_codes_dialog && new_recovery_codes.isNotEmpty()) {
         val context_dialog = LocalContext.current
-        AlertDialog(
-            onDismissRequest = {},
-            containerColor = colors.bg_card,
-            title = {
-                Text(
-                    text = stringResource(R.string.new_recovery_codes_title),
-                    color = colors.text_primary,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            },
-            text = {
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { show_new_codes_dialog = false; new_recovery_codes = emptyList() },
+            title = stringResource(R.string.new_recovery_codes_title),
+            body = {
                 Column {
                     Text(
                         text = stringResource(R.string.new_recovery_codes_message),
@@ -848,51 +773,51 @@ fun EncryptionScreen(
                         fontSize = 13.sp,
                     )
                     Spacer(Modifier.size(AsterSpacing.md))
-                    new_recovery_codes.chunked(2).forEach { pair ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                        ) {
-                            pair.forEach { code ->
-                                Text(
-                                    text = code,
-                                    fontFamily = FontFamily.Monospace,
-                                    fontSize = 13.sp,
-                                    color = colors.accent_blue,
-                                )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(SquircleShape(AsterRadius.lg))
+                            .background(colors.bg_secondary)
+                            .padding(vertical = AsterSpacing.md),
+                        verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
+                    ) {
+                        new_recovery_codes.chunked(2).forEach { pair ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                            ) {
+                                pair.forEach { code ->
+                                    Text(
+                                        text = code,
+                                        fontFamily = FontFamily.Monospace,
+                                        fontSize = 13.sp,
+                                        color = colors.accent_blue,
+                                    )
+                                }
                             }
                         }
                     }
-                    Spacer(Modifier.size(AsterSpacing.sm))
-                    TextButton(
-                        onClick = {
-                            copy_to_clipboard(
-                                context_dialog,
-                                "recovery_codes",
-                                new_recovery_codes.joinToString("\n"),
-                            )
-                            Toast.makeText(context_dialog, context_dialog.getString(R.string.copied), Toast.LENGTH_SHORT).show()
-                        },
-                    ) {
-                        Text(
-                            text = stringResource(R.string.copy_all_codes),
-                            color = colors.accent_blue,
-                        )
-                    }
                 }
             },
-            confirmButton = {
-                TextButton(
+            footer = {
+                org.astermail.android.design.components.AsterDialogOutlineButton(
+                    label = stringResource(R.string.copy_all_codes),
+                    onClick = {
+                        copy_to_clipboard(
+                            context_dialog,
+                            "recovery_codes",
+                            new_recovery_codes.joinToString("\n"),
+                        )
+                        Toast.makeText(context_dialog, context_dialog.getString(R.string.copied), Toast.LENGTH_SHORT).show()
+                    },
+                )
+                org.astermail.android.design.components.AsterDialogPrimaryButton(
+                    label = stringResource(R.string.done),
                     onClick = {
                         show_new_codes_dialog = false
                         new_recovery_codes = emptyList()
                     },
-                ) {
-                    Text(
-                        text = stringResource(R.string.done),
-                        color = colors.accent_blue,
-                    )
-                }
+                )
             },
         )
     }
@@ -930,39 +855,6 @@ private fun key_card_action(
             fontWeight = FontWeight.Medium,
             maxLines = 1,
         )
-    }
-}
-
-@Composable
-private fun encryption_feature_row(
-    title: String,
-    subtitle: String,
-    colors: org.astermail.android.design.AsterSemanticColors,
-) {
-    Row(
-        modifier = Modifier.padding(vertical = 3.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            imageVector = TablerIcons.Check,
-            contentDescription = null,
-            tint = colors.success,
-            modifier = Modifier.size(15.dp),
-        )
-        Spacer(Modifier.width(AsterSpacing.sm))
-        Column {
-            Text(
-                text = title,
-                color = colors.text_primary,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-            )
-            Text(
-                text = subtitle,
-                color = colors.text_tertiary,
-                fontSize = 12.sp,
-            )
-        }
     }
 }
 
