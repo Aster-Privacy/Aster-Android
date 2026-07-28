@@ -50,7 +50,6 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.AlertDialog as M3AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -403,8 +402,8 @@ fun SubscriptionsScreen(
                             fontSize = 13.sp,
                         )
                     }
-                    Spacer(Modifier.size(AsterSpacing.lg))
                     if (current_code != "free") {
+                        Spacer(Modifier.size(AsterSpacing.lg))
                         AsterSecondaryButton(
                             label = if (billing_state.is_acting && billing_state.acting_action == "portal") stringResource(R.string.loading) else stringResource(R.string.manage_subscription),
                             onClick = { if (!billing_state.is_acting) billing_vm.open_portal() },
@@ -418,51 +417,6 @@ fun SubscriptionsScreen(
         section_label(stringResource(R.string.plan_includes))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(AsterSpacing.lg)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (current_code != "free") {
-                        Icon(
-                            imageVector = TablerIcons.Star,
-                            contentDescription = null,
-                            tint = colors.accent_blue,
-                            modifier = Modifier.size(24.dp),
-                        )
-                        Spacer(Modifier.width(AsterSpacing.md))
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = sub?.effective_plan_name ?: plan_free_label,
-                            color = colors.text_primary,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Text(
-                            text = stringResource(R.string.current_plan),
-                            color = colors.text_tertiary,
-                            fontSize = 13.sp,
-                        )
-                    }
-                    if (state.is_loading && sub == null) {
-                        CircularProgressIndicator(
-                            color = colors.accent_blue,
-                            modifier = Modifier.size(18.dp),
-                            strokeWidth = 2.dp,
-                        )
-                    } else if (sub != null && sub.effective_price_cents > 0) {
-                        Text(
-                            text = stringResource(
-                                R.string.settings_price_per_interval,
-                                sub.effective_price_cents / 100.0,
-                                sub.effective_interval ?: default_interval,
-                            ),
-                            color = colors.text_primary,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    }
-                }
-                Spacer(Modifier.height(AsterSpacing.md))
-                AsterDivider()
-                Spacer(Modifier.height(AsterSpacing.md))
                 current_features.forEach { feature_res ->
                     feature_row(feature_res)
                 }
