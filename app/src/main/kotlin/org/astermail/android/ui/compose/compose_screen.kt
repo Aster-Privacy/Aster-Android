@@ -24,6 +24,8 @@ package org.astermail.android.ui.compose
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
+import org.astermail.android.design.components.aster_dropdown_item
+import org.astermail.android.design.components.aster_dropdown_menu
 import org.astermail.android.BuildConfig
 import android.net.Uri
 import android.widget.Toast
@@ -37,6 +39,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.content.consume
 import androidx.compose.foundation.content.contentReceiver
@@ -69,16 +72,13 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -145,6 +145,7 @@ import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.mail.MailViewModel
 import org.astermail.android.settings.DecryptedSignature
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.ui.common.picker_theme_res
 import org.astermail.android.ui.common.resolve_primary_sender_email
 import org.astermail.android.ui.common.sender_id_for_email
 import org.astermail.android.contacts.ContactsViewModel
@@ -179,12 +180,15 @@ fun ComposeScreen(
     draft_id: String? = null,
     prefill_to: String? = null,
     thread_ghost_email: String? = null,
+    shared_mail_vm: MailViewModel? = null,
+    shared_settings_vm: SettingsViewModel? = null,
+    share_payload: org.astermail.android.share.SharePayload? = null,
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val mail_vm: MailViewModel = hiltViewModel()
-    val settings_vm: SettingsViewModel = hiltViewModel()
+    val mail_vm: MailViewModel = shared_mail_vm ?: hiltViewModel()
+    val settings_vm: SettingsViewModel = shared_settings_vm ?: hiltViewModel()
     val contacts_vm: ContactsViewModel = hiltViewModel()
     val plan_vm: PlanLimitsViewModel = hiltViewModel()
     val templates_vm: org.astermail.android.templates.TemplatesViewModel = hiltViewModel()
@@ -195,6 +199,22 @@ fun ComposeScreen(
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
     val contacts_state by contacts_vm.state.collectAsStateWithLifecycle()
     val all_contacts = contacts_state.contacts
+    val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
+    val keyboard = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
+    val focus_manager = androidx.compose.ui.platform.LocalFocusManager.current
+    val dismiss_keyboard = {
+        focus_manager.clearFocus(force = true)
+        keyboard?.hide()
+    }
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        onDispose { keyboard?.hide() }
+    }
+    val copy_from_address = { address: String ->
+        haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+        val cm = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        cm.setPrimaryClip(android.content.ClipData.newPlainText("email_address", address))
+        Toast.makeText(context, context.getString(R.string.copied), Toast.LENGTH_SHORT).show()
+    }
 
     LaunchedEffect(Unit) {
         settings_vm.load_profile()
@@ -310,7 +330,10 @@ fun ComposeScreen(
         }
     }
 
-    val effective_mode = if (mode == "reply" && settings_state.preferences?.default_reply_behavior == "reply_all") "reply_all" else mode
+    var mode_override by rememberSaveable { mutableStateOf<String?>(null) }
+    var mode_menu_open by remember { mutableStateOf(false) }
+    val effective_mode = mode_override
+        ?: if (mode == "reply" && settings_state.preferences?.default_reply_behavior == "reply_all") "reply_all" else mode
 
     val prefill = remember(reply_to, effective_mode, thread_state) {
         if (reply_to.isNullOrBlank() || effective_mode.isNullOrBlank()) {
@@ -359,6 +382,16 @@ fun ComposeScreen(
     var show_attach_sheet by remember { mutableStateOf(false) }
     var show_from_sheet by remember { mutableStateOf(false) }
     var show_overflow_sheet by remember { mutableStateOf(false) }
+    val open_from_sheet = {
+        if (!show_from_sheet) {
+            dismiss_keyboard()
+            scope.launch {
+                kotlinx.coroutines.delay(90)
+                show_from_sheet = true
+            }
+        }
+        Unit
+    }
     var show_ghost_alias_sheet by remember { mutableStateOf(false) }
     var show_template_sheet by remember { mutableStateOf(false) }
     var show_signature_sheet by remember { mutableStateOf(false) }
@@ -374,7 +407,11 @@ fun ComposeScreen(
     var subject_set by remember { mutableStateOf(false) }
     var body_set by remember { mutableStateOf(false) }
     var to_chips by remember {
-        val initial = if (!prefill_to.isNullOrBlank()) listOf(prefill_to) else prefill.to_chips
+        val initial = when {
+            !share_payload?.to.isNullOrEmpty() -> share_payload!!.to
+            !prefill_to.isNullOrBlank() -> listOf(prefill_to)
+            else -> prefill.to_chips
+        }
         mutableStateOf(initial)
     }
     var to_input by remember { mutableStateOf("") }
@@ -389,22 +426,31 @@ fun ComposeScreen(
             runCatching { to_focus_requester.requestFocus() }
         }
     }
-    var cc_expanded by remember { mutableStateOf(false) }
-    var cc_chips by remember { mutableStateOf(listOf<String>()) }
+    var cc_expanded by remember { mutableStateOf(!share_payload?.cc.isNullOrEmpty()) }
+    var cc_chips by remember { mutableStateOf(share_payload?.cc.orEmpty()) }
     var cc_input by remember { mutableStateOf("") }
-    var bcc_chips by remember { mutableStateOf(listOf<String>()) }
+    var bcc_chips by remember { mutableStateOf(share_payload?.bcc.orEmpty()) }
     var bcc_input by remember { mutableStateOf("") }
-    var subject by remember { mutableStateOf(prefill.subject) }
+    var subject by remember {
+        mutableStateOf(share_payload?.subject?.takeIf { it.isNotBlank() } ?: prefill.subject)
+    }
+    val share_body_prefix = remember(share_payload) {
+        share_payload?.body?.takeIf { it.isNotBlank() }?.let { it + "\n\n" }.orEmpty()
+    }
     val initial_watermark = remember {
         if (mode != "draft" && prefill.body.isBlank() &&
-            settings_state.preferences?.show_aster_branding != false
+            settings_state.preferences?.show_aster_branding == true
         ) {
             "\n\n${context.getString(R.string.compose_footer_secured_by_plain)}"
         } else {
             ""
         }
     }
-    var body by remember { mutableStateOf(if (prefill.body.isNotBlank()) prefill.body else initial_watermark) }
+    var body by remember {
+        mutableStateOf(
+            if (prefill.body.isNotBlank()) prefill.body else share_body_prefix + initial_watermark,
+        )
+    }
     var initial_to_chips by remember { mutableStateOf<List<String>>(emptyList()) }
     var initial_subject by remember { mutableStateOf("") }
     var initial_body by remember { mutableStateOf("") }
@@ -423,10 +469,11 @@ fun ComposeScreen(
         if (mode == "draft") { signature_applied = true; return@LaunchedEffect }
         if (prefill.body.isNotBlank()) { signature_applied = true; return@LaunchedEffect }
         val resolved = settings_vm.signature_for(current_alias_id)?.content.orEmpty()
-        val show_branding = settings_state.preferences?.show_aster_branding != false
+        val show_branding = settings_state.preferences?.show_aster_branding == true
         val watermark = if (show_branding) "\n\n${context.getString(R.string.compose_footer_secured_by_plain)}" else ""
-        val new_body = if (resolved.isNotBlank()) "\n\n${resolved}${watermark}" else watermark
-        if (body == initial_watermark || body.isBlank()) {
+        val new_body = share_body_prefix +
+            if (resolved.isNotBlank()) "\n\n${resolved}${watermark}" else watermark
+        if (body == share_body_prefix + initial_watermark || body.isBlank()) {
             body = new_body
             initial_body = new_body
         }
@@ -441,35 +488,60 @@ fun ComposeScreen(
         if (resolved == applied_signature) return@LaunchedEffect
         val watermark = context.getString(R.string.compose_footer_secured_by_plain)
         val watermark_suffix = "\n\n${watermark}"
-        if (body.endsWith(watermark_suffix)) {
-            val core = body.substring(0, body.length - watermark_suffix.length)
-            val new_core = if (applied_signature.isNotBlank() && core.endsWith(applied_signature)) {
-                val before = core.substring(0, core.length - applied_signature.length)
-                if (resolved.isNotBlank()) before + resolved else before.trimEnd('\n')
-            } else if (applied_signature.isBlank() && resolved.isNotBlank()) {
-                "${core}\n\n${resolved}"
-            } else core
-            body = new_core + watermark_suffix
-            applied_signature = resolved
+        val kept_suffix = if (body.endsWith(watermark_suffix)) watermark_suffix else ""
+        val core = body.substring(0, body.length - kept_suffix.length)
+        if (applied_signature.isBlank() && resolved.isBlank()) return@LaunchedEffect
+        val new_core = if (applied_signature.isNotBlank() && core.endsWith(applied_signature)) {
+            val before = core.substring(0, core.length - applied_signature.length)
+            if (resolved.isNotBlank()) before + resolved else before.trimEnd('\n')
+        } else if (applied_signature.isBlank() && resolved.isNotBlank()) {
+            "${core}\n\n${resolved}"
+        } else core
+        body = new_core + kept_suffix
+        applied_signature = resolved
+    }
+    LaunchedEffect(settings_state.preferences?.show_aster_branding, signature_applied) {
+        if (!signature_applied) return@LaunchedEffect
+        val show_branding = settings_state.preferences?.show_aster_branding ?: return@LaunchedEffect
+        if (show_branding && mode == "draft") return@LaunchedEffect
+        val watermark = context.getString(R.string.compose_footer_secured_by_plain)
+        val watermark_suffix = "\n\n${watermark}"
+        if (!show_branding) {
+            if (body.endsWith(watermark_suffix)) {
+                val trimmed = body.substring(0, body.length - watermark_suffix.length)
+                if (initial_body == body) initial_body = trimmed
+                body = trimmed
+            }
+        } else if (prefill.body.isBlank() && body == initial_body && !body.contains(watermark)) {
+            val restored = body + watermark_suffix
+            initial_body = restored
+            body = restored
         }
     }
     var show_discard_dialog by remember { mutableStateOf(false) }
     var show_from_mismatch_dialog by remember { mutableStateOf(false) }
-    var quoted_html by remember { mutableStateOf<String?>(null) }
-    var quoted_meta by remember { mutableStateOf<Triple<String, String, String>?>(null) }
-    LaunchedEffect(reply_to, mode, thread_state) {
-        if (reply_to.isNullOrBlank() || mode.isNullOrBlank()) return@LaunchedEffect
-        val msg = thread_state.messages.firstOrNull { it.id == reply_to } ?: thread_state.messages.lastOrNull() ?: return@LaunchedEffect
-        val item = thread_state.item
-        val original_html = msg.body_html?.takeIf { it.isNotBlank() }
-            ?: msg.body_text.replace("\n", "<br>")
-        quoted_html = original_html
-        quoted_meta = Triple(
-            msg.display_sender_email ?: msg.sender_email,
-            msg.timestamp,
-            item?.subject.orEmpty(),
-        )
+    val quoted_source = remember(reply_to, mode, thread_state) {
+        if (reply_to.isNullOrBlank() || mode.isNullOrBlank()) {
+            null
+        } else {
+            val msg = thread_state.messages.firstOrNull { it.id == reply_to }
+                ?: thread_state.messages.lastOrNull()
+            if (msg == null) {
+                null
+            } else {
+                val item = thread_state.item
+                val original_html = msg.body_html?.takeIf { it.isNotBlank() }
+                    ?: msg.body_text.replace("\n", "<br>")
+                original_html to Triple(
+                    msg.display_sender_email ?: msg.sender_email,
+                    msg.timestamp,
+                    item?.subject.orEmpty(),
+                )
+            }
+        }
     }
+    val quoted_html = quoted_source?.first
+    val quoted_meta = quoted_source?.second
     var is_sending by remember { mutableStateOf(false) }
     var sent by remember { mutableStateOf(false) }
     var send_error by remember { mutableStateOf<String?>(null) }
@@ -480,6 +552,9 @@ fun ComposeScreen(
     val format_italic = remember { mutableStateOf(false) }
     val format_underline = remember { mutableStateOf(false) }
     val format_strike = remember { mutableStateOf(false) }
+    val format_quote = remember { mutableStateOf(false) }
+    val show_format_bar = remember { mutableStateOf(false) }
+    var link_dialog_text by remember { mutableStateOf<String?>(null) }
 
     val insert_image_inline: (Uri) -> Boolean = insert@{ uri ->
         val img = build_attachment_from_uri(context, uri) ?: return@insert false
@@ -575,52 +650,56 @@ fun ComposeScreen(
         }
     }
 
+    suspend fun attach_uris(uris: List<Uri>) {
+        if (uris.isEmpty()) return
+        send_error = null
+        val existing_names = attachments.map { it.name }.toMutableSet()
+        var running_total = attachments.sumOf { it.size } + inline_images.sumOf { it.size }
+        val accepted = mutableListOf<AttachmentItem>()
+        var error: String? = null
+        for (uri in uris) {
+            val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                org.astermail.android.share.import_shared_attachment(context, uri)
+            }
+            when (result) {
+                is org.astermail.android.share.AttachmentImport.TooLarge ->
+                    error = context.getString(R.string.attachment_too_large, result.name)
+                is org.astermail.android.share.AttachmentImport.Failed ->
+                    error = context.getString(R.string.attachment_read_failed, result.name)
+                is org.astermail.android.share.AttachmentImport.Imported -> {
+                    val item = result.attachment
+                    when {
+                        existing_names.contains(item.name) ->
+                            error = context.getString(R.string.attachment_already_attached, item.name)
+                        running_total + item.size > org.astermail.android.share.share_attachment_total_max_bytes ->
+                            error = context.getString(R.string.attachment_total_too_large)
+                        else -> {
+                            existing_names.add(item.name)
+                            running_total += item.size
+                            accepted.add(AttachmentItem(item.uri, item.name, item.size, item.mime_type))
+                        }
+                    }
+                }
+            }
+        }
+        if (accepted.isNotEmpty()) attachments = attachments + accepted
+        if (error != null) send_error = error
+    }
+
+    LaunchedEffect(share_payload) {
+        attach_uris(share_payload?.stream_uris.orEmpty())
+    }
+
     val file_picker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenMultipleDocuments(),
     ) { uris ->
-        uris.forEach { uri ->
-            val cursor = context.contentResolver.query(uri, null, null, null, null)
-            var name = "file"
-            var size = 0L
-            cursor?.use {
-                if (it.moveToFirst()) {
-                    val name_idx = it.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
-                    val size_idx = it.getColumnIndex(android.provider.OpenableColumns.SIZE)
-                    if (name_idx >= 0) name = it.getString(name_idx) ?: "file"
-                    if (size_idx >= 0) size = it.getLong(size_idx)
-                }
-            }
-            val mime = context.contentResolver.getType(uri) ?: "application/octet-stream"
-            if (size <= 25 * 1024 * 1024) {
-                attachments = attachments + AttachmentItem(uri, name, size, mime)
-            } else {
-                send_error = context.getString(R.string.attachment_too_large, name)
-            }
-        }
+        scope.launch { attach_uris(uris) }
     }
 
     val image_picker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(),
     ) { uris ->
-        uris.forEach { uri ->
-            val cursor = context.contentResolver.query(uri, null, null, null, null)
-            var name = "image"
-            var size = 0L
-            cursor?.use {
-                if (it.moveToFirst()) {
-                    val name_idx = it.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
-                    val size_idx = it.getColumnIndex(android.provider.OpenableColumns.SIZE)
-                    if (name_idx >= 0) name = it.getString(name_idx) ?: "image"
-                    if (size_idx >= 0) size = it.getLong(size_idx)
-                }
-            }
-            val mime = context.contentResolver.getType(uri) ?: "image/jpeg"
-            if (size <= 25 * 1024 * 1024) {
-                attachments = attachments + AttachmentItem(uri, name, size, mime)
-            } else {
-                send_error = context.getString(R.string.attachment_too_large, name)
-            }
-        }
+        scope.launch { attach_uris(uris) }
     }
 
     val has_any_content = to_chips.isNotEmpty() ||
@@ -646,6 +725,7 @@ fun ComposeScreen(
     val can_send = has_recipient && !is_sending
 
     val try_back: () -> Unit = {
+        dismiss_keyboard()
         if (has_unsaved_changes) show_discard_dialog = true else on_back()
     }
 
@@ -690,6 +770,7 @@ fun ComposeScreen(
         format_italic.value = editable.getSpans(lo, hi, android.text.style.StyleSpan::class.java).any { it.style == android.graphics.Typeface.ITALIC }
         format_underline.value = editable.getSpans(lo, hi, android.text.style.UnderlineSpan::class.java).isNotEmpty()
         format_strike.value = editable.getSpans(lo, hi, android.text.style.StrikethroughSpan::class.java).isNotEmpty()
+        format_quote.value = editable.getSpans(lo, hi, android.text.style.QuoteSpan::class.java).isNotEmpty()
     }
 
     fun apply_inline_span(make_span: () -> Any, is_active: Boolean) {
@@ -739,6 +820,88 @@ fun ComposeScreen(
         schedule_draft_save()
     }
 
+    fun apply_blockquote() {
+        val et = body_editor_ref.value ?: return
+        val editable = et.text ?: return
+        val s = minOf(et.selectionStart, et.selectionEnd).coerceAtLeast(0)
+        val e = maxOf(et.selectionStart, et.selectionEnd).coerceAtMost(editable.length)
+        val line_start = editable.substring(0, s).lastIndexOf('\n').let { if (it < 0) 0 else it + 1 }
+        val line_end = editable.indexOf('\n', e).let { if (it < 0) editable.length else it }
+        val existing = editable.getSpans(line_start, line_end, android.text.style.QuoteSpan::class.java)
+        if (existing.isNotEmpty()) {
+            existing.forEach { editable.removeSpan(it) }
+        } else {
+            editable.setSpan(
+                android.text.style.QuoteSpan(),
+                line_start,
+                line_end,
+                android.text.Spanned.SPAN_INCLUSIVE_INCLUSIVE,
+            )
+        }
+        update_format_state()
+        schedule_draft_save()
+    }
+
+    val rule_line_color = colors.border_secondary.toArgb()
+
+    fun apply_horizontal_rule() {
+        val et = body_editor_ref.value ?: return
+        val editable = et.text ?: return
+        val at = et.selectionEnd.coerceIn(0, editable.length)
+        val prefix = if (at > 0 && editable[at - 1] != '\n') "\n" else ""
+        val inserted = "$prefix \n"
+        editable.insert(at, inserted)
+        val rule_start = at + prefix.length
+        editable.setSpan(
+            android.text.Annotation("aster", "hr"),
+            rule_start,
+            rule_start + 1,
+            android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+        )
+        editable.setSpan(
+            horizontal_rule_span(rule_line_color),
+            rule_start,
+            rule_start + 1,
+            android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+        )
+        et.setSelection((rule_start + 2).coerceAtMost(editable.length))
+        schedule_draft_save()
+    }
+
+    fun apply_link(url: String) {
+        val et = body_editor_ref.value ?: return
+        val editable = et.text ?: return
+        val normalized = url.trim().let {
+            when {
+                it.startsWith("http://", true) || it.startsWith("https://", true) || it.startsWith("mailto:", true) -> it
+                it.contains('@') && !it.contains(' ') -> "mailto:$it"
+                else -> "https://$it"
+            }
+        }
+        if (normalized.length < 8 || normalized.contains(' ')) return
+        val s = minOf(et.selectionStart, et.selectionEnd).coerceAtLeast(0)
+        val e = maxOf(et.selectionStart, et.selectionEnd).coerceAtMost(editable.length)
+        if (s >= e) {
+            editable.insert(s, normalized)
+            editable.setSpan(
+                android.text.style.URLSpan(normalized),
+                s,
+                s + normalized.length,
+                android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+            )
+            et.setSelection((s + normalized.length).coerceAtMost(editable.length))
+        } else {
+            editable.getSpans(s, e, android.text.style.URLSpan::class.java).forEach { editable.removeSpan(it) }
+            editable.setSpan(
+                android.text.style.URLSpan(normalized),
+                s,
+                e,
+                android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+            )
+        }
+        schedule_draft_save()
+    }
+
     val lifecycle_owner_for_draft = androidx.lifecycle.compose.LocalLifecycleOwner.current
     androidx.compose.runtime.DisposableEffect(lifecycle_owner_for_draft) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
@@ -774,37 +937,18 @@ fun ComposeScreen(
         val has_spans = editable.getSpans(0, editable.length, android.text.style.StyleSpan::class.java).isNotEmpty() ||
             editable.getSpans(0, editable.length, android.text.style.UnderlineSpan::class.java).isNotEmpty() ||
             editable.getSpans(0, editable.length, android.text.style.StrikethroughSpan::class.java).isNotEmpty() ||
-            editable.getSpans(0, editable.length, android.text.style.BulletSpan::class.java).isNotEmpty()
+            editable.getSpans(0, editable.length, android.text.style.BulletSpan::class.java).isNotEmpty() ||
+            editable.getSpans(0, editable.length, android.text.style.QuoteSpan::class.java).isNotEmpty() ||
+            editable.getSpans(0, editable.length, android.text.style.URLSpan::class.java).isNotEmpty() ||
+            editable.getSpans(0, editable.length, android.text.Annotation::class.java).any { it.key == "aster" && it.value == "hr" }
         if (!has_spans) return body
-        val sb = StringBuilder()
-        var b = false; var it_ = false; var u = false; var s = false
-        for (i in 0 until editable.length) {
-            val ch = editable[i]
-            val nb = editable.getSpans(i, i + 1, android.text.style.StyleSpan::class.java).any { sp -> sp.style == android.graphics.Typeface.BOLD }
-            val ni = editable.getSpans(i, i + 1, android.text.style.StyleSpan::class.java).any { sp -> sp.style == android.graphics.Typeface.ITALIC }
-            val nu = editable.getSpans(i, i + 1, android.text.style.UnderlineSpan::class.java).isNotEmpty()
-            val ns = editable.getSpans(i, i + 1, android.text.style.StrikethroughSpan::class.java).isNotEmpty()
-            if (s && !ns) { sb.append("</s>"); s = false }
-            if (u && !nu) { sb.append("</u>"); u = false }
-            if (it_ && !ni) { sb.append("</i>"); it_ = false }
-            if (b && !nb) { sb.append("</b>"); b = false }
-            if (!b && nb) { sb.append("<b>"); b = true }
-            if (!it_ && ni) { sb.append("<i>"); it_ = true }
-            if (!u && nu) { sb.append("<u>"); u = true }
-            if (!s && ns) { sb.append("<s>"); s = true }
-            sb.append(ch)
-        }
-        if (s) sb.append("</s>")
-        if (u) sb.append("</u>")
-        if (it_) sb.append("</i>")
-        if (b) sb.append("</b>")
-        return sb.toString()
+        return render_spanned_html(editable)
     }
 
     fun prepare_send_data(): Triple<String, List<org.astermail.android.api.send.ExternalAttachmentPayload>, Boolean> {
         val raw_formatted_body = get_body_with_formatting()
         val strip_branding = settings_state.preferences?.show_aster_branding == false
-        val branding_footer_kept = raw_formatted_body.contains(footer_secured_by_plain)
+        val branding_footer_kept = !strip_branding && raw_formatted_body.contains(footer_secured_by_plain)
         val body_without_footer = (
             if (strip_branding) raw_formatted_body.replace(footer_secured_by_plain, "")
             else raw_formatted_body.removeSuffix(footer_secured_by_plain)
@@ -973,6 +1117,7 @@ fun ComposeScreen(
         bcc_input.trim().let { if (it.isNotEmpty() && is_valid_email_chip(it)) { bcc_chips = bcc_chips + it; bcc_input = "" } }
         if (to_chips.isEmpty() && cc_chips.isEmpty() && bcc_chips.isEmpty()) { send_lock.set(false); return }
         if (is_sending) { send_lock.set(false); return }
+        dismiss_keyboard()
         is_sending = true
         send_error = null
 
@@ -1079,22 +1224,88 @@ fun ComposeScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AsterIconButton(
-                icon = TablerIcons.ArrowBack,
+                icon = TablerIcons.ArrowLeft,
                 content_description = stringResource(R.string.back),
                 onClick = try_back,
                 tint = colors.text_primary,
                 modifier = Modifier.testTag("back"),
             )
             Spacer(Modifier.width(AsterSpacing.sm))
-            Text(
-                text = if (mode == "reply" || mode == "reply_all") stringResource(R.string.compose_reply)
-                    else if (mode == "forward") stringResource(R.string.compose_forward)
-                    else stringResource(R.string.new_message),
-                style = MaterialTheme.typography.titleMedium,
-                color = colors.text_primary,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.weight(1f),
-            )
+            val mode_selectable = effective_mode in listOf("reply", "reply_all", "forward")
+            Column(modifier = Modifier.weight(1f)) {
+                Box {
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .then(
+                                if (mode_selectable) {
+                                    Modifier.clickable { mode_menu_open = true }
+                                } else {
+                                    Modifier
+                                }
+                            )
+                            .padding(horizontal = if (mode_selectable) 6.dp else 0.dp, vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = when (effective_mode) {
+                                "reply", "reply_all" -> stringResource(R.string.compose_reply)
+                                "forward" -> stringResource(R.string.compose_forward)
+                                else -> stringResource(R.string.new_message)
+                            },
+                            style = MaterialTheme.typography.titleMedium,
+                            color = colors.text_primary,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        if (mode_selectable) {
+                            Spacer(Modifier.width(2.dp))
+                            Icon(
+                                imageVector = TablerIcons.ChevronDown,
+                                contentDescription = stringResource(R.string.more_options),
+                                tint = colors.text_tertiary,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                    }
+                    aster_dropdown_menu(
+                        expanded = mode_menu_open,
+                        on_dismiss = { mode_menu_open = false },
+                    ) {
+                        compose_mode_options.forEach { option ->
+                            aster_dropdown_item(
+                                label = stringResource(option.second.second),
+                                icon = option.second.first,
+                                selected = option.first == effective_mode,
+                                on_click = {
+                                    mode_menu_open = false
+                                    if (option.first != effective_mode) {
+                                        mode_override = option.first
+                                        to_chips_set = false
+                                        subject_set = false
+                                        to_chips = emptyList()
+                                        cc_chips = emptyList()
+                                        cc_expanded = false
+                                        subject = ""
+                                    }
+                                },
+                            )
+                        }
+                    }
+                }
+                AnimatedVisibility(
+                    visible = draft_status.isNotBlank(),
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                ) {
+                    Text(
+                        text = draft_status,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (draft_status == stringResource(R.string.save_failed)) colors.danger else colors.text_muted,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
             AsterIconButton(
                 icon = TablerIcons.Paperclip,
                 content_description = stringResource(R.string.attach),
@@ -1134,18 +1345,41 @@ fun ComposeScreen(
                 .verticalScroll(rememberScrollState()),
         ) {
             field_row(label = stringResource(R.string.from)) {
+                var from_expanded by remember(from_alias) { mutableStateOf(false) }
+                var from_truncated by remember(from_alias) { mutableStateOf(false) }
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { show_from_sheet = true }
+                        .clickable { open_from_sheet() }
                         .testTag("from_field"),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    org.astermail.android.ui.mail.SenderAvatar(
+                        email = from_alias,
+                        name = settings_state.user?.display_name.orEmpty(),
+                        size = 24.dp,
+                        profile_picture_url = settings_state.user?.profile_picture,
+                    )
+                    Spacer(Modifier.width(AsterSpacing.sm))
                     Text(
                         text = from_alias,
                         style = MaterialTheme.typography.bodyLarge,
                         color = colors.text_primary,
-                        modifier = Modifier.weight(1f),
+                        maxLines = if (from_expanded) 4 else 1,
+                        overflow = TextOverflow.Ellipsis,
+                        onTextLayout = { if (!from_expanded) from_truncated = it.hasVisualOverflow },
+                        modifier = Modifier
+                            .weight(1f)
+                            .combinedClickable(
+                                onClick = {
+                                    if (from_truncated || from_expanded) {
+                                        from_expanded = !from_expanded
+                                    } else {
+                                        open_from_sheet()
+                                    }
+                                },
+                                onLongClick = { copy_from_address(from_alias) },
+                            ),
                     )
                     Icon(
                         imageVector = TablerIcons.ChevronDown,
@@ -1394,6 +1628,7 @@ fun ComposeScreen(
                                 } else false
                             }
                             on_selection_changed = { _, _ -> update_format_state() }
+                            on_format_requested = { show_format_bar.value = !show_format_bar.value }
                             addTextChangedListener(object : android.text.TextWatcher {
                                 override fun afterTextChanged(s: android.text.Editable?) {
                                     if (suspend_text_watcher) return
@@ -1511,23 +1746,31 @@ fun ComposeScreen(
             }
         }
 
-        Column {
-            AsterDivider()
-            compose_format_bar(
-                bold = format_bold.value,
-                italic = format_italic.value,
-                underline = format_underline.value,
-                strike = format_strike.value,
-                on_bold = { apply_inline_span({ android.text.style.StyleSpan(android.graphics.Typeface.BOLD) }, format_bold.value) },
-                on_italic = { apply_inline_span({ android.text.style.StyleSpan(android.graphics.Typeface.ITALIC) }, format_italic.value) },
-                on_underline = { apply_inline_span({ android.text.style.UnderlineSpan() }, format_underline.value) },
-                on_strike = { apply_inline_span({ android.text.style.StrikethroughSpan() }, format_strike.value) },
-                on_bullet = { apply_bullet_list() },
-                on_number = { apply_number_list() },
-                on_attach = { show_attach_sheet = true },
-                on_signature = { show_signature_sheet = true },
-                draft_status = draft_status,
-            )
+        AnimatedVisibility(
+            visible = show_format_bar.value,
+            enter = androidx.compose.animation.expandVertically() + fadeIn(),
+            exit = androidx.compose.animation.shrinkVertically() + fadeOut(),
+        ) {
+            Column {
+                AsterDivider()
+                compose_format_row(
+                    bold = format_bold.value,
+                    italic = format_italic.value,
+                    underline = format_underline.value,
+                    strike = format_strike.value,
+                    quote = format_quote.value,
+                    on_bold = { apply_inline_span({ android.text.style.StyleSpan(android.graphics.Typeface.BOLD) }, format_bold.value) },
+                    on_italic = { apply_inline_span({ android.text.style.StyleSpan(android.graphics.Typeface.ITALIC) }, format_italic.value) },
+                    on_underline = { apply_inline_span({ android.text.style.UnderlineSpan() }, format_underline.value) },
+                    on_strike = { apply_inline_span({ android.text.style.StrikethroughSpan() }, format_strike.value) },
+                    on_bullet = { apply_bullet_list() },
+                    on_number = { apply_number_list() },
+                    on_quote = { apply_blockquote() },
+                    on_link = { link_dialog_text = "" },
+                    on_rule = { apply_horizontal_rule() },
+                    on_close = { show_format_bar.value = false },
+                )
+            }
         }
     }
 
@@ -1608,6 +1851,10 @@ fun ComposeScreen(
                 show_overflow_sheet = false
                 templates_vm.load()
                 show_template_sheet = true
+            },
+            on_open_signature = {
+                show_overflow_sheet = false
+                show_signature_sheet = true
             },
         )
     }
@@ -1692,13 +1939,16 @@ fun ComposeScreen(
 
     if (show_schedule_picker) {
         val picker_context = LocalContext.current
+        val picker_theme = picker_theme_res()
         LaunchedEffect(Unit) {
             val calendar = java.util.Calendar.getInstance()
             val date_picker = android.app.DatePickerDialog(
                 picker_context,
+                picker_theme,
                 { _, year, month, day ->
                     val time_picker = android.app.TimePickerDialog(
                         picker_context,
+                        picker_theme,
                         { _, hour, minute ->
                             val cal = java.util.Calendar.getInstance()
                             cal.set(year, month, day, hour, minute, 0)
@@ -1730,6 +1980,38 @@ fun ComposeScreen(
             }
             date_picker.show()
         }
+    }
+
+    link_dialog_text?.let { pending_url ->
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { link_dialog_text = null },
+            title = stringResource(R.string.insert_link),
+            body = {
+                org.astermail.android.design.components.AsterTextField(
+                    value = pending_url,
+                    onValueChange = { link_dialog_text = it },
+                    label = stringResource(R.string.link_url_label),
+                    placeholder = stringResource(R.string.link_url_placeholder),
+                    keyboard_options = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Uri,
+                    ),
+                )
+            },
+            footer = {
+                org.astermail.android.design.components.AsterDialogOutlineButton(
+                    label = stringResource(R.string.cancel),
+                    onClick = { link_dialog_text = null },
+                )
+                org.astermail.android.design.components.AsterDialogPrimaryButton(
+                    label = stringResource(R.string.insert),
+                    enabled = pending_url.isNotBlank(),
+                    onClick = {
+                        apply_link(pending_url)
+                        link_dialog_text = null
+                    },
+                )
+            },
+        )
     }
 
     if (show_from_mismatch_dialog) {
@@ -1894,6 +2176,12 @@ private fun caret_toggle(expanded: Boolean, on_toggle: () -> Unit) {
 }
 
 private data class chip_parse_result(val new_chips: List<String>, val remaining: String)
+
+private val compose_mode_options = listOf(
+    "reply" to Pair(TablerIcons.ArrowBackUp, R.string.reply),
+    "reply_all" to Pair(TablerIcons.ArrowsLeft, R.string.reply_all),
+    "forward" to Pair(TablerIcons.MailForward, R.string.forward),
+)
 
 private val email_chip_regex = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
 
@@ -2131,10 +2419,6 @@ private fun recipient_chip(text: String, on_remove: () -> Unit) {
     val is_encrypted = level == EncryptionLevel.END_TO_END
     val accent = if (is_encrypted) colors.accent_blue else colors.text_muted
     var show_tooltip by remember { mutableStateOf(false) }
-    val domain = email_domain(text)
-    val initial = text.firstOrNull()?.uppercaseChar()?.toString().orEmpty()
-    var favicon_loaded by remember(domain) { mutableStateOf(false) }
-
     Row(
         modifier = Modifier
             .background(colors.bg_hover, SquircleShape(AsterRadius.pill))
@@ -2150,34 +2434,10 @@ private fun recipient_chip(text: String, on_remove: () -> Unit) {
                 .clickable { show_tooltip = !show_tooltip },
         )
         Spacer(Modifier.width(6.dp))
-        Box(
-            modifier = Modifier
-                .size(20.dp)
-                .clip(CircleShape)
-                .background(if (favicon_loaded) Color.White else colors.bg_secondary),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (!favicon_loaded) {
-                Text(
-                    text = initial,
-                    color = colors.text_secondary,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-            if (domain.isNotBlank()) {
-                AsyncImage(
-                    model = "${org.astermail.android.api.BuildConfig.API_BASE_URL}/api/images/v1/favicon/$domain",
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(20.dp)
-                        .clip(CircleShape),
-                    onState = { state ->
-                        favicon_loaded = state is coil.compose.AsyncImagePainter.State.Success
-                    },
-                )
-            }
-        }
+        org.astermail.android.ui.mail.SenderAvatar(
+            email = text,
+            size = 20.dp,
+        )
         Spacer(Modifier.width(6.dp))
         Text(
             text = text,
@@ -2224,66 +2484,63 @@ private fun recipient_chip(text: String, on_remove: () -> Unit) {
 }
 
 @Composable
-private fun compose_format_bar(
+private fun compose_format_row(
     bold: Boolean,
     italic: Boolean,
     underline: Boolean,
     strike: Boolean,
+    quote: Boolean,
     on_bold: () -> Unit,
     on_italic: () -> Unit,
     on_underline: () -> Unit,
     on_strike: () -> Unit,
     on_bullet: () -> Unit,
     on_number: () -> Unit,
-    on_attach: () -> Unit,
-    on_signature: () -> Unit,
-    draft_status: String = "",
+    on_quote: () -> Unit,
+    on_link: () -> Unit,
+    on_rule: () -> Unit,
+    on_close: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(colors.bg_secondary)
-            .horizontalScroll(rememberScrollState())
             .padding(horizontal = AsterSpacing.xs, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        format_icon_btn(TablerIcons.Bold, stringResource(R.string.bold), bold, on_bold)
-        format_icon_btn(TablerIcons.Italic, stringResource(R.string.italic), italic, on_italic)
-        format_icon_btn(TablerIcons.Underline, stringResource(R.string.underline), underline, on_underline)
-        format_icon_btn(TablerIcons.Strikethrough, stringResource(R.string.strikethrough), strike, on_strike)
-        Box(
+        Row(
             modifier = Modifier
-                .padding(horizontal = 4.dp)
-                .width(1.dp)
-                .height(20.dp)
-                .background(colors.border_secondary),
-        )
-        format_icon_btn(TablerIcons.List, stringResource(R.string.bullet_list), false, on_bullet)
-        format_icon_btn(TablerIcons.List, stringResource(R.string.numbered_list), false, on_number)
-        Box(
-            modifier = Modifier
-                .padding(horizontal = 4.dp)
-                .width(1.dp)
-                .height(20.dp)
-                .background(colors.border_secondary),
-        )
-        AsterIconButton(icon = TablerIcons.Paperclip, content_description = stringResource(R.string.attach), onClick = on_attach)
-        AsterIconButton(icon = TablerIcons.FileText, content_description = stringResource(R.string.signature_select), onClick = on_signature)
-        Spacer(Modifier.weight(1f))
-        AnimatedVisibility(
-            visible = draft_status.isNotBlank(),
-            enter = fadeIn(),
-            exit = fadeOut(),
+                .weight(1f)
+                .horizontalScroll(rememberScrollState()),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = draft_status,
-                style = MaterialTheme.typography.labelSmall,
-                color = if (draft_status == stringResource(R.string.save_failed)) colors.danger else colors.text_muted,
-                modifier = Modifier.padding(end = AsterSpacing.md),
-            )
+            format_icon_btn(TablerIcons.Bold, stringResource(R.string.bold), bold, on_bold)
+            format_icon_btn(TablerIcons.Italic, stringResource(R.string.italic), italic, on_italic)
+            format_icon_btn(TablerIcons.Underline, stringResource(R.string.underline), underline, on_underline)
+            format_icon_btn(TablerIcons.Strikethrough, stringResource(R.string.strikethrough), strike, on_strike)
+            format_divider()
+            format_icon_btn(TablerIcons.List, stringResource(R.string.bullet_list), false, on_bullet)
+            format_icon_btn(numbered_list_icon, stringResource(R.string.numbered_list), false, on_number)
+            format_icon_btn(TablerIcons.Blockquote, stringResource(R.string.blockquote), quote, on_quote)
+            format_divider()
+            format_icon_btn(TablerIcons.Link, stringResource(R.string.insert_link), false, on_link)
+            format_icon_btn(TablerIcons.Separator, stringResource(R.string.horizontal_rule), false, on_rule)
         }
+        format_divider()
+        format_icon_btn(TablerIcons.X, stringResource(R.string.close), false, on_close)
     }
+}
+
+@Composable
+private fun format_divider() {
+    Box(
+        modifier = Modifier
+            .padding(horizontal = 5.dp)
+            .width(1.dp)
+            .height(20.dp)
+            .background(AsterMaterial.colors.border_secondary),
+    )
 }
 
 @Composable
@@ -2296,8 +2553,8 @@ private fun format_icon_btn(
     val colors = AsterMaterial.colors
     androidx.compose.foundation.layout.Box(
         modifier = Modifier
-            .size(40.dp)
-            .clip(RoundedCornerShape(6.dp))
+            .size(32.dp)
+            .clip(RoundedCornerShape(12.dp))
             .background(if (active) colors.accent_blue.copy(alpha = 0.15f) else androidx.compose.ui.graphics.Color.Transparent)
             .clickable(onClick = on_click),
         contentAlignment = Alignment.Center,
@@ -2306,7 +2563,7 @@ private fun format_icon_btn(
             imageVector = icon,
             contentDescription = description,
             tint = if (active) colors.accent_blue else colors.text_secondary,
-            modifier = Modifier.size(20.dp),
+            modifier = Modifier.size(18.dp),
         )
     }
 }
@@ -2425,11 +2682,11 @@ private fun FromAliasSheet(
                 ),
             )
             if (options.size >= 8) {
-                OutlinedTextField(
+                org.astermail.android.design.components.AsterTextField(
                     value = query,
                     onValueChange = { query = it },
-                    placeholder = { Text(stringResource(R.string.search_aliases), color = colors.text_muted) },
-                    leadingIcon = {
+                    placeholder = stringResource(R.string.search_aliases),
+                    leading_icon = {
                         Icon(
                             imageVector = TablerIcons.Search,
                             contentDescription = null,
@@ -2556,6 +2813,7 @@ private fun OverflowSheet(
     on_toggle_scheduled: () -> Unit,
     on_toggle_expiring: () -> Unit,
     on_open_templates: () -> Unit,
+    on_open_signature: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
@@ -2599,6 +2857,12 @@ private fun OverflowSheet(
                 stringResource(R.string.use_template),
                 colors.text_primary,
                 on_open_templates,
+            )
+            sheet_row(
+                TablerIcons.Signature,
+                stringResource(R.string.signature_select),
+                colors.text_primary,
+                on_open_signature,
             )
             Spacer(Modifier.height(AsterSpacing.md))
         }
@@ -2869,6 +3133,7 @@ internal fun ExpiringSheet(
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
     val sheet_context = LocalContext.current
+    val sheet_picker_theme = picker_theme_res()
     var password by remember { mutableStateOf("") }
     var selected_hours by remember { mutableStateOf<Int?>(null) }
     var custom_epoch_ms by remember { mutableStateOf<Long?>(null) }
@@ -2886,9 +3151,11 @@ internal fun ExpiringSheet(
         }
         val date_picker = android.app.DatePickerDialog(
             sheet_context,
+            sheet_picker_theme,
             { _, year, month, day ->
                 val time_picker = android.app.TimePickerDialog(
                     sheet_context,
+                    sheet_picker_theme,
                     { _, hour, minute ->
                         val cal = java.util.Calendar.getInstance()
                         cal.set(year, month, day, hour, minute, 0)
@@ -3116,6 +3383,132 @@ private fun toggle_sheet_row(
 private fun escape_html(s: String): String =
     s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
 
+private fun safe_href(raw: String): String? {
+    val trimmed = raw.trim()
+    if (trimmed.isEmpty() || trimmed.length > 2048) return null
+    if (trimmed.any { it.isISOControl() }) return null
+    val lower = trimmed.lowercase()
+    val allowed = lower.startsWith("https://") || lower.startsWith("http://") || lower.startsWith("mailto:")
+    if (!allowed) return null
+    return escape_html(trimmed)
+}
+
+private fun render_inline_html(editable: android.text.Editable, start: Int, end: Int): String {
+    if (start >= end) return ""
+    val sb = StringBuilder()
+    var href: String? = null
+    var bold = false
+    var italic = false
+    var underline = false
+    var strike = false
+    for (i in start until end) {
+        val styles = editable.getSpans(i, i + 1, android.text.style.StyleSpan::class.java)
+        val next_bold = styles.any { it.style == android.graphics.Typeface.BOLD || it.style == android.graphics.Typeface.BOLD_ITALIC }
+        val next_italic = styles.any { it.style == android.graphics.Typeface.ITALIC || it.style == android.graphics.Typeface.BOLD_ITALIC }
+        val next_underline = editable.getSpans(i, i + 1, android.text.style.UnderlineSpan::class.java).isNotEmpty()
+        val next_strike = editable.getSpans(i, i + 1, android.text.style.StrikethroughSpan::class.java).isNotEmpty()
+        val next_href = editable.getSpans(i, i + 1, android.text.style.URLSpan::class.java)
+            .firstNotNullOfOrNull { safe_href(it.url ?: "") }
+        if (strike && !next_strike) { sb.append("</s>"); strike = false }
+        if (underline && !next_underline) { sb.append("</u>"); underline = false }
+        if (italic && !next_italic) { sb.append("</i>"); italic = false }
+        if (bold && !next_bold) { sb.append("</b>"); bold = false }
+        if (href != null && next_href != href) {
+            if (strike) { sb.append("</s>"); strike = false }
+            if (underline) { sb.append("</u>"); underline = false }
+            if (italic) { sb.append("</i>"); italic = false }
+            if (bold) { sb.append("</b>"); bold = false }
+            sb.append("</a>")
+            href = null
+        }
+        if (href == null && next_href != null) { sb.append("<a href=\"$next_href\">"); href = next_href }
+        if (!bold && next_bold) { sb.append("<b>"); bold = true }
+        if (!italic && next_italic) { sb.append("<i>"); italic = true }
+        if (!underline && next_underline) { sb.append("<u>"); underline = true }
+        if (!strike && next_strike) { sb.append("<s>"); strike = true }
+        val ch = editable[i]
+        if (ch == IMG_MARKER) sb.append(ch) else sb.append(escape_html(ch.toString()))
+    }
+    if (strike) sb.append("</s>")
+    if (underline) sb.append("</u>")
+    if (italic) sb.append("</i>")
+    if (bold) sb.append("</b>")
+    if (href != null) sb.append("</a>")
+    return sb.toString()
+}
+
+private fun render_spanned_html(editable: android.text.Editable): String {
+    val text = editable.toString()
+    val line_bounds = mutableListOf<Pair<Int, Int>>()
+    var cursor = 0
+    while (cursor <= text.length) {
+        val nl = text.indexOf('\n', cursor)
+        val stop = if (nl < 0) text.length else nl
+        line_bounds.add(cursor to stop)
+        if (nl < 0) break
+        cursor = nl + 1
+    }
+    val out = StringBuilder()
+    var index = 0
+    while (index < line_bounds.size) {
+        val (line_start, line_end) = line_bounds[index]
+        val probe_end = if (line_end > line_start) line_end else minOf(line_start + 1, editable.length)
+        val is_hr = line_start < probe_end && editable
+            .getSpans(line_start, probe_end, android.text.Annotation::class.java)
+            .any { it.key == "aster" && it.value == "hr" }
+        if (is_hr) {
+            out.append("<hr>")
+            index++
+            continue
+        }
+        val is_bullet = line_start < probe_end &&
+            editable.getSpans(line_start, probe_end, android.text.style.BulletSpan::class.java).isNotEmpty()
+        val is_quote = line_start < probe_end &&
+            editable.getSpans(line_start, probe_end, android.text.style.QuoteSpan::class.java).isNotEmpty()
+        if (is_bullet) {
+            out.append("<ul>")
+            while (index < line_bounds.size) {
+                val (s, e) = line_bounds[index]
+                val pe = if (e > s) e else minOf(s + 1, editable.length)
+                if (s >= pe || editable.getSpans(s, pe, android.text.style.BulletSpan::class.java).isEmpty()) break
+                out.append("<li>").append(render_inline_html(editable, s, e)).append("</li>")
+                index++
+            }
+            out.append("</ul>")
+            continue
+        }
+        if (is_quote) {
+            out.append("<blockquote>")
+            var first = true
+            while (index < line_bounds.size) {
+                val (s, e) = line_bounds[index]
+                val pe = if (e > s) e else minOf(s + 1, editable.length)
+                if (s >= pe || editable.getSpans(s, pe, android.text.style.QuoteSpan::class.java).isEmpty()) break
+                if (!first) out.append("<br>")
+                out.append(render_inline_html(editable, s, e))
+                first = false
+                index++
+            }
+            out.append("</blockquote>")
+            continue
+        }
+        out.append(render_inline_html(editable, line_start, line_end))
+        val next = line_bounds.getOrNull(index + 1)
+        if (next != null) {
+            val (ns, ne) = next
+            val npe = if (ne > ns) ne else minOf(ns + 1, editable.length)
+            val next_block = ns < npe && (
+                editable.getSpans(ns, npe, android.text.style.BulletSpan::class.java).isNotEmpty() ||
+                    editable.getSpans(ns, npe, android.text.style.QuoteSpan::class.java).isNotEmpty() ||
+                    editable.getSpans(ns, npe, android.text.Annotation::class.java).any { it.key == "aster" && it.value == "hr" }
+                )
+            if (!next_block) out.append("<br>")
+        }
+        index++
+    }
+    return out.toString()
+}
+
 private val WATERMARK_LINE_RE = Regex("(?i)\\bSecured by Aster Mail\\b\\s*")
 
 private fun strip_watermarks(text: String): String {
@@ -3227,11 +3620,42 @@ private fun load_image_span_async(et: android.widget.EditText, uri: Uri) {
     coil.Coil.imageLoader(ctx).enqueue(request)
 }
 
+private const val format_menu_item_id = 0x00A57E01
+
 private class RichBodyEditText(context: android.content.Context) : android.widget.EditText(context) {
     var on_image_received: ((Uri) -> Unit)? = null
     var on_paste_clipboard: (() -> Boolean)? = null
     var on_selection_changed: ((Int, Int) -> Unit)? = null
+    var on_format_requested: (() -> Unit)? = null
     var suspend_text_watcher: Boolean = false
+
+    init {
+        customSelectionActionModeCallback = object : android.view.ActionMode.Callback {
+            override fun onCreateActionMode(mode: android.view.ActionMode, menu: android.view.Menu): Boolean {
+                menu.add(
+                    android.view.Menu.NONE,
+                    format_menu_item_id,
+                    0,
+                    context.getString(R.string.format),
+                ).setShowAsAction(
+                    android.view.MenuItem.SHOW_AS_ACTION_ALWAYS or
+                        android.view.MenuItem.SHOW_AS_ACTION_WITH_TEXT,
+                )
+                return true
+            }
+
+            override fun onPrepareActionMode(mode: android.view.ActionMode, menu: android.view.Menu): Boolean = false
+
+            override fun onActionItemClicked(mode: android.view.ActionMode, item: android.view.MenuItem): Boolean {
+                if (item.itemId != format_menu_item_id) return false
+                on_format_requested?.invoke()
+                mode.finish()
+                return true
+            }
+
+            override fun onDestroyActionMode(mode: android.view.ActionMode) {}
+        }
+    }
 
     override fun onSelectionChanged(selStart: Int, selEnd: Int) {
         super.onSelectionChanged(selStart, selEnd)
