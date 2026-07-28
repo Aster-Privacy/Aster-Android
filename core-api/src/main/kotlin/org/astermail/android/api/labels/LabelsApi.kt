@@ -127,6 +127,25 @@ data class ReferralInfoResponse(
     val earned_install_ios_cents: Long = 0,
     val earned_install_android_cents: Long = 0,
     val earned_install_desktop_cents: Long = 0,
+    val max_credits_cents: Long = 0,
+    val commission_percent: Int = 0,
+    val is_eligible: Boolean = false,
+)
+
+@Serializable
+data class ReferralHistoryItem(
+    val id: String = "",
+    val referee_email_masked: String = "",
+    val status: String = "",
+    val referrer_credit_cents: Long = 0,
+    val created_at: String? = null,
+    val completed_at: String? = null,
+)
+
+@Serializable
+data class ReferralHistoryResponse(
+    val referrals: List<ReferralHistoryItem> = emptyList(),
+    val total: Long = 0,
 )
 
 interface LabelsApi {
@@ -136,6 +155,7 @@ interface LabelsApi {
     suspend fun bulk_reorder_labels(request: BulkReorderLabelsRequest): BulkReorderLabelsResponse
     suspend fun delete_label(label_id: String)
     suspend fun get_referral_info(): ReferralInfoResponse
+    suspend fun get_referral_history(): ReferralHistoryResponse
 }
 
 class LabelsApiImpl(private val client: ApiClient) : LabelsApi {
@@ -192,6 +212,11 @@ class LabelsApiImpl(private val client: ApiClient) : LabelsApi {
 
     override suspend fun get_referral_info(): ReferralInfoResponse {
         val response = client.http.get("${client.base_url}$billing_base/referrals")
+        return decode_or_throw(response)
+    }
+
+    override suspend fun get_referral_history(): ReferralHistoryResponse {
+        val response = client.http.get("${client.base_url}$billing_base/referrals/history")
         return decode_or_throw(response)
     }
 

@@ -55,11 +55,16 @@ interface MailApi {
         group_by_thread: Boolean? = null,
         is_snoozed: Boolean? = null,
         routing_token: String? = null,
+        order: String? = null,
     ): MailItemsListResponse
 
     suspend fun get_message(item_id: String): MailItem
 
     suspend fun list_drafts(limit: Int? = null, cursor: String? = null): DraftsListResponse
+
+    suspend fun get_draft(draft_id: String): DraftItem
+
+    suspend fun get_thread_draft(thread_token: String): DraftItem?
 
     suspend fun get_stats(): MailUserStatsResponse
 
@@ -84,6 +89,8 @@ interface MailApi {
     suspend fun delete_permanent(item_id: String): DeleteResponse
 
     suspend fun empty_trash(): DeleteResponse
+
+    suspend fun bulk_delete_permanent(request: BulkPermanentDeleteRequest): DeleteResponse
 
     suspend fun create_message(request: CreateMailItemRequest): CreateMailItemResponse
 
@@ -160,6 +167,7 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
         group_by_thread: Boolean?,
         is_snoozed: Boolean?,
         routing_token: String?,
+        order: String?,
     ): MailItemsListResponse {
         val response = client.http.get("${client.base_url}$base/messages") {
             limit?.let { parameter("limit", it) }
@@ -175,6 +183,7 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
             group_by_thread?.let { parameter("group_by_thread", it) }
             is_snoozed?.let { parameter("is_snoozed", it) }
             routing_token?.let { parameter("routing_token", it) }
+            order?.let { parameter("order", it) }
         }
         return decode_or_throw(response)
     }
@@ -190,6 +199,20 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
             cursor?.let { parameter("cursor", it) }
         }
         return decode_or_throw(response)
+    }
+
+    override suspend fun get_draft(draft_id: String): DraftItem {
+        val response = client.http.get(
+            "${client.base_url}$base/drafts/${url_encode_path(draft_id)}",
+        )
+        return decode_or_throw(response)
+    }
+
+    override suspend fun get_thread_draft(thread_token: String): DraftItem? {
+        val response = client.http.get(
+            "${client.base_url}$base/drafts/thread/${url_encode_path(thread_token)}",
+        )
+        return decode_or_throw<DraftItem?>(response)
     }
 
     override suspend fun get_stats(): MailUserStatsResponse {
@@ -294,6 +317,15 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
     override suspend fun empty_trash(): DeleteResponse {
         val response = client.http.delete("${client.base_url}$base/messages/trash") {
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun bulk_delete_permanent(request: BulkPermanentDeleteRequest): DeleteResponse {
+        val response = client.http.delete("${client.base_url}$base/messages/trash/bulk") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
         }
         return decode_or_throw(response)
     }

@@ -56,12 +56,32 @@ data class Badge(
     val icon: String,
     val color: String,
     val granted_at: String,
+    val find_order: Int? = null,
+)
+
+@Serializable
+data class BadgePreferences(
+    val active_badge_slug: String? = null,
+    val show_badge_profile: Boolean = true,
+    val show_badge_signature: Boolean = false,
+    val show_badge_ring: Boolean = false,
+)
+
+@Serializable
+data class UpdateBadgePreferencesRequest(
+    val active_badge_slug: String? = null,
+    val clear_active_badge: Boolean? = null,
+    val show_badge_profile: Boolean? = null,
+    val show_badge_signature: Boolean? = null,
+    val show_badge_ring: Boolean? = null,
 )
 
 interface UserApi {
     suspend fun update_display_name(display_name: String): UpdateDisplayNameResponse
     suspend fun update_profile_picture(profile_picture: String?): UpdateProfilePictureResponse
     suspend fun fetch_badges(): List<Badge>
+    suspend fun fetch_badge_preferences(): BadgePreferences
+    suspend fun update_badge_preferences(request: UpdateBadgePreferencesRequest): BadgePreferences
 }
 
 class UserApiImpl(private val client: ApiClient) : UserApi {
@@ -93,6 +113,26 @@ class UserApiImpl(private val client: ApiClient) : UserApi {
 
     override suspend fun fetch_badges(): List<Badge> {
         val response = client.http.get("${client.base_url}/api/core/v1/badges")
+        if (response.status.value !in 200..299) {
+            throw client.map_http_status(response.status.value, "")
+        }
+        return response.body()
+    }
+
+    override suspend fun fetch_badge_preferences(): BadgePreferences {
+        val response = client.http.get("${client.base_url}/api/core/v1/badges/preferences")
+        if (response.status.value !in 200..299) {
+            throw client.map_http_status(response.status.value, "")
+        }
+        return response.body()
+    }
+
+    override suspend fun update_badge_preferences(request: UpdateBadgePreferencesRequest): BadgePreferences {
+        val response = client.http.patch("${client.base_url}/api/core/v1/badges/preferences") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
         if (response.status.value !in 200..299) {
             throw client.map_http_status(response.status.value, "")
         }

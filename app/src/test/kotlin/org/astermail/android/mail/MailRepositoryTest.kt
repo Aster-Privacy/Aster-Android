@@ -68,6 +68,7 @@ class MailRepositoryTest {
     private lateinit var send_api: SendApi
     private lateinit var snooze_api: org.astermail.android.api.snooze.SnoozeApi
     private lateinit var labels_api: org.astermail.android.api.labels.LabelsApi
+    private lateinit var keys_api: org.astermail.android.api.keys.KeysApi
     private lateinit var session_key_store: SessionKeyStore
     private lateinit var scheduled_api: org.astermail.android.api.scheduled.ScheduledApi
     private lateinit var ratchet_decryptor: org.astermail.android.mail.ratchet.RatchetDecryptor
@@ -120,6 +121,7 @@ class MailRepositoryTest {
         send_api = mockk(relaxed = true)
         snooze_api = mockk(relaxed = true)
         labels_api = mockk(relaxed = true)
+        keys_api = mockk(relaxed = true)
         session_key_store = mockk(relaxed = true)
         scheduled_api = mockk(relaxed = true)
         ratchet_decryptor = mockk(relaxed = true)
@@ -130,12 +132,14 @@ class MailRepositoryTest {
         every { session_key_store.get_passphrase() } returns null
         every { session_key_store.get_user_email() } returns "me@astermail.org"
         every { session_key_store.has_ratchet_keys() } returns false
+        coEvery { mail_api.get_message(any()) } answers { fake_mail_item(firstArg()) }
         pending_send_dao = FakePendingSendDao()
         repo = MailRepository(
             mail_api = mail_api,
             send_api = send_api,
             snooze_api = snooze_api,
             labels_api = labels_api,
+            keys_api = keys_api,
             session_key_store = session_key_store,
             scheduled_api = scheduled_api,
             ratchet_decryptor = ratchet_decryptor,
@@ -876,7 +880,7 @@ class MailRepositoryTest {
     }
 
     @Test
-    fun `decrypt_single_thread_message without metadata defaults is_read true`() {
+    fun `decrypt_single_thread_message without metadata defaults received to unread`() {
         val item = ThreadMessageItem(
             id = "msg_no_meta",
             item_type = "received",
@@ -887,7 +891,7 @@ class MailRepositoryTest {
 
         val result = kotlinx.coroutines.runBlocking { repo.decrypt_single_thread_message(item) }
 
-        assertTrue(result.is_read)
+        assertFalse(result.is_read)
     }
 
     @Test
@@ -943,7 +947,7 @@ class MailRepositoryTest {
     }
 
     @Test
-    fun `read when metadata is read but server has not caught up`() = runTest {
+    fun `server unread flag wins over stale read metadata`() = runTest {
         val item = MailItem(
             id = "meta_read",
             item_type = "received",
@@ -959,7 +963,7 @@ class MailRepositoryTest {
 
         val inbox_item = repo.fetch_inbox().getOrThrow().items[0]
 
-        assertTrue(inbox_item.is_read)
+        assertFalse(inbox_item.is_read)
     }
 
     @Test
@@ -1285,5 +1289,42 @@ class MailRepositoryTest {
 
         val decrypted = repo.decrypt_attachment_data(body.encrypted_data, body.data_nonce, meta.session_key)
         assertArrayEquals("sent-copy attachment bytes must round-trip", raw_bytes, decrypted)
+    }
+
+    @Test
+    fun `reconcile_pending_sends counts failed rows and raises the send problem`() = runTest {
+        pending_send_dao.rows["p_failed"] = pending_row("p_failed", status = "failed")
+        pending_send_dao.rows["p_ok"] = pending_row("p_ok", status = "pending")
+
+        repo.reconcile_pending_sends()
+
+        assertTrue(repo.send_problem.value)
+        assertEquals(1, repo.failed_send_count.value)
+    }
+
+    @Test
+    fun `retry_failed_sends returns failed rows to pending and clears the problem`() = runTest {
+        pending_send_dao.rows["p_failed"] = pending_row("p_failed", status = "failed")
+        repo.reconcile_pending_sends()
+
+        repo.retry_failed_sends()
+
+        assertEquals("pending", pending_send_dao.rows["p_failed"]?.status)
+        assertEquals(0, repo.failed_send_count.value)
+        assertFalse(repo.send_problem.value)
+    }
+
+    @Test
+    fun `discard_failed_sends deletes only the failed rows`() = runTest {
+        pending_send_dao.rows["p_failed"] = pending_row("p_failed", status = "failed")
+        pending_send_dao.rows["p_ok"] = pending_row("p_ok", status = "pending")
+        repo.reconcile_pending_sends()
+
+        repo.discard_failed_sends()
+
+        assertNull(pending_send_dao.rows["p_failed"])
+        assertNotNull(pending_send_dao.rows["p_ok"])
+        assertEquals(0, repo.failed_send_count.value)
+        assertFalse(repo.send_problem.value)
     }
 }

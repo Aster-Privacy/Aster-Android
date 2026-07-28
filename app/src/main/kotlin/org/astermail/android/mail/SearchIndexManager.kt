@@ -70,6 +70,10 @@ class SearchIndexManager @Inject constructor(
         build_job = scope.launch { build_index_background() }
     }
 
+    suspend fun refresh_index_and_wait() {
+        build_index_background()
+    }
+
     fun on_items_loaded(items: List<InboxItem>) {
         val my_epoch = epoch.get()
         val cacheable = items.filter {
@@ -128,6 +132,21 @@ class SearchIndexManager @Inject constructor(
         }
     }
 
+    private data class IndexScope(
+        val is_trashed: Boolean?,
+        val is_archived: Boolean?,
+        val is_spam: Boolean?,
+    )
+
+    private val attachment_probe_batch = 50
+
+    private val index_scopes = listOf(
+        IndexScope(is_trashed = false, is_archived = false, is_spam = false),
+        IndexScope(is_trashed = true, is_archived = null, is_spam = null),
+        IndexScope(is_trashed = null, is_archived = true, is_spam = null),
+        IndexScope(is_trashed = null, is_archived = null, is_spam = true),
+    )
+
     private suspend fun build_index_background() {
         val took_lock = mutex.withLock {
             if (is_building) false
@@ -138,33 +157,73 @@ class SearchIndexManager @Inject constructor(
         try {
             purge_bundle_poisoned()
             val existing_ids = dao.get_all_ids().toHashSet()
-            var cursor: String? = null
             val max_pages = 20
-            var page = 0
-            while (page < max_pages) {
-                val response = mail_api.list_messages(
-                    limit = 50,
-                    cursor = cursor,
-                    item_type = "received",
-                    is_trashed = false,
-                    is_archived = false,
-                    is_spam = false,
-                )
-                val new_items = response.items.filter { it.id !in existing_ids }
-                if (new_items.isNotEmpty()) {
-                    val decrypted = repository.decrypt_items_for_cache(new_items)
-                    cache_items(decrypted, my_epoch)
-                    new_items.forEach { existing_ids.add(it.id) }
+            for (scope in index_scopes) {
+                var cursor: String? = null
+                var page = 0
+                while (page < max_pages) {
+                    val response = mail_api.list_messages(
+                        limit = 50,
+                        cursor = cursor,
+                        item_type = "received",
+                        is_trashed = scope.is_trashed,
+                        is_archived = scope.is_archived,
+                        is_spam = scope.is_spam,
+                    )
+                    val new_items = response.items.filter { it.id !in existing_ids }
+                    val known_ids = response.items.map { it.id }.filter { it in existing_ids }
+                    if (known_ids.isNotEmpty()) {
+                        when (scope.is_trashed) {
+                            true -> dao.mark_trashed(known_ids)
+                            else -> {}
+                        }
+                        when (scope.is_archived) {
+                            true -> dao.mark_archived(known_ids)
+                            false -> dao.mark_unarchived(known_ids)
+                            else -> {}
+                        }
+                        when (scope.is_spam) {
+                            true -> dao.mark_spam(known_ids)
+                            else -> {}
+                        }
+                    }
+                    if (new_items.isNotEmpty()) {
+                        val decrypted = repository.decrypt_items_for_cache(new_items).map {
+                            it.copy(
+                                is_trashed = scope.is_trashed ?: it.is_trashed,
+                                is_archived = scope.is_archived ?: it.is_archived,
+                                is_spam = scope.is_spam ?: it.is_spam,
+                            )
+                        }
+                        cache_items(decrypted, my_epoch)
+                        new_items.forEach { existing_ids.add(it.id) }
+                    }
+                    if (!response.has_more || response.next_cursor == null) break
+                    cursor = response.next_cursor
+                    page++
                 }
-                if (!response.has_more || response.next_cursor == null) break
-                cursor = response.next_cursor
-                page++
             }
+            enrich_attachment_flags(my_epoch)
             if (epoch.get() == my_epoch) _index_ready.value = true
         } catch (_: Throwable) {
         } finally {
             withContext(NonCancellable) { mutex.withLock { is_building = false } }
         }
+    }
+
+    suspend fun resolve_attachment_ids(ids: List<String>): Set<String> {
+        if (ids.isEmpty()) return emptySet()
+        val found = HashSet<String>()
+        for (batch in ids.chunked(attachment_probe_batch)) {
+            found.addAll(repository.find_messages_with_attachments(batch))
+        }
+        if (found.isNotEmpty()) dao.mark_has_attachments(found.toList())
+        return found
+    }
+
+    private suspend fun enrich_attachment_flags(my_epoch: Int) {
+        if (epoch.get() != my_epoch) return
+        resolve_attachment_ids(dao.ids_without_attachments())
     }
 
     private suspend fun cache_items(items: List<InboxItem>, my_epoch: Int) {

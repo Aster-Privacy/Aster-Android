@@ -113,9 +113,34 @@ data class ExternalSendResponse(
     val mail_item_id: String? = null,
 )
 
+@Serializable
+data class ReactRequest(
+    val target_message_id: String,
+    val message_group_id: String? = null,
+    val thread_token: String? = null,
+    val to: List<String>,
+    val body: String,
+    val subject: String = "",
+    val is_e2e_encrypted: Boolean = false,
+    val encrypted_envelope: String? = null,
+    val envelope_nonce: String? = null,
+    val folder_token: String? = null,
+    val sender_email: String? = null,
+    val sender_alias_hash: String? = null,
+    val sender_display_name: String? = null,
+)
+
+@Serializable
+data class ReactResponse(
+    val success: Boolean = false,
+    val message: String = "",
+    val mail_item_ids: List<String> = emptyList(),
+)
+
 interface SendApi {
     suspend fun send_simple(request: SimpleSendRequest): SimpleSendResponse
     suspend fun send_external(request: ExternalSendRequest): ExternalSendResponse
+    suspend fun react(request: ReactRequest): ReactResponse
 }
 
 class SendApiImpl(private val client: ApiClient) : SendApi {
@@ -137,6 +162,19 @@ class SendApiImpl(private val client: ApiClient) : SendApi {
 
     override suspend fun send_external(request: ExternalSendRequest): ExternalSendResponse {
         val response = client.http.post("${client.base_url}$base/external") {
+            timeout {
+                requestTimeoutMillis = send_timeout_ms
+                socketTimeoutMillis = send_timeout_ms
+            }
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun react(request: ReactRequest): ReactResponse {
+        val response = client.http.post("${client.base_url}/api/mail/v1/react") {
             timeout {
                 requestTimeoutMillis = send_timeout_ms
                 socketTimeoutMillis = send_timeout_ms

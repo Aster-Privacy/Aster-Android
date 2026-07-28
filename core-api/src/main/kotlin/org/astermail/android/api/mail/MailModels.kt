@@ -95,6 +95,18 @@ data class MailItem(
     val dkim_result: String? = null,
     val dmarc_result: String? = null,
     val rule_category: String? = null,
+    val is_reaction: Boolean? = null,
+    val message_group_id: String? = null,
+    val reactions: List<ReactionSummary>? = null,
+)
+
+@Serializable
+data class ReactionSummary(
+    val reaction_mail_item_id: String,
+    val source: String = "internal",
+    val emoji: String? = null,
+    val reactor_email: String? = null,
+    val created_at: String? = null,
 )
 
 @Serializable
@@ -176,6 +188,9 @@ data class ThreadMessageItem(
     val dmarc_result: String? = null,
     val spam_score: Float? = null,
     val spam_signals: List<SpamSignalItem>? = null,
+    val is_reaction: Boolean? = null,
+    val message_group_id: String? = null,
+    val reactions: List<ReactionSummary>? = null,
 )
 
 @Serializable
@@ -279,6 +294,11 @@ data class DeleteResponse(
     val success: Boolean = false,
     val deleted_count: Int = 0,
     val status: String? = null,
+)
+
+@Serializable
+data class BulkPermanentDeleteRequest(
+    val ids: List<String>,
 )
 
 @Serializable

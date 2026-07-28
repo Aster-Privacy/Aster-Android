@@ -60,6 +60,7 @@ import org.astermail.android.api.scheduled.ScheduledApi
 import org.astermail.android.api.send.ExternalAttachmentPayload
 import org.astermail.android.api.send.ExternalSendRequest
 import org.astermail.android.api.send.SendApi
+import org.astermail.android.api.send.SendAttachmentPayload
 import org.astermail.android.api.send.SimpleSendRequest
 import org.astermail.android.api.send.SimpleSendResponse
 import kotlinx.serialization.decodeFromString
@@ -67,6 +68,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.astermail.android.crypto.CryptoNative
 import org.astermail.android.crypto.PgpDecryptor
+import org.astermail.android.crypto.PgpEncryptor
 import org.astermail.android.notifications.UndoSendWorker
 import org.astermail.android.storage.SessionKeyStore
 import org.astermail.android.storage.outbox.PendingSendDao
@@ -74,6 +76,9 @@ import org.astermail.android.storage.outbox.PendingSendEntity
 
 enum class PendingSendOutcome { SENT, GONE, RETRY, FAILED }
 
+class TransientSendException : Exception("send retry pending")
+
+private const val SEND_RETRY_QUIET_ATTEMPTS = 2
 private const val STATUS_PENDING = "pending"
 private const val STATUS_FAILED = "failed"
 private const val SENDING_CLAIM_STALE_MS = 5 * 60 * 1000L
@@ -235,6 +240,12 @@ data class AttachmentMeta(
     val content_id: String? = null,
 )
 
+data class DecryptedReaction(
+    val reaction_mail_item_id: String,
+    val emoji: String,
+    val reactor_email: String,
+)
+
 data class ThreadMessageDecrypted(
     val id: String,
     val sender_name: String,
@@ -254,6 +265,7 @@ data class ThreadMessageDecrypted(
     val subject: String = "",
     val display_sender_name: String? = null,
     val display_sender_email: String? = null,
+    val is_body_pending: Boolean = false,
 )
 
 @Singleton
@@ -262,6 +274,7 @@ class MailRepository @Inject constructor(
     private val send_api: SendApi,
     private val snooze_api: org.astermail.android.api.snooze.SnoozeApi,
     private val labels_api: LabelsApi,
+    private val keys_api: org.astermail.android.api.keys.KeysApi,
     private val session_key_store: SessionKeyStore,
     private val scheduled_api: ScheduledApi,
     private val ratchet_decryptor: org.astermail.android.mail.ratchet.RatchetDecryptor,
@@ -270,9 +283,27 @@ class MailRepository @Inject constructor(
     private val pending_send_dao: PendingSendDao,
     @ApplicationContext private val context: Context,
 ) {
+    @Volatile
+    private var custom_categories: List<org.astermail.android.api.preferences.CustomCategoryRule> =
+        emptyList()
+
+    fun set_custom_categories(
+        rules: List<org.astermail.android.api.preferences.CustomCategoryRule>,
+    ) {
+        custom_categories = sanitize_custom_categories(rules)
+    }
+
     private val pbkdf2_key_cache = java.util.concurrent.ConcurrentHashMap<String, ByteArray>()
     private val identity_key_cache = java.util.concurrent.ConcurrentHashMap<String, ByteArray>()
     @Volatile private var cached_sent_folder_token: String? = null
+    private val draft_item_cache =
+        java.util.Collections.synchronizedMap(
+            object : LinkedHashMap<String, org.astermail.android.api.mail.DraftItem>(16, 0.75f, true) {
+                override fun removeEldestEntry(
+                    eldest: MutableMap.MutableEntry<String, org.astermail.android.api.mail.DraftItem>?,
+                ): Boolean = size > 120
+            },
+        )
     fun get_user_email(): String? = session_key_store.get_user_email()
 
     private val _visible_order = kotlinx.coroutines.flow.MutableStateFlow<List<String>>(emptyList())
@@ -306,6 +337,8 @@ class MailRepository @Inject constructor(
     val send_result_events: kotlinx.coroutines.flow.SharedFlow<Result<Unit>> = _send_result_events
     private val _send_problem = kotlinx.coroutines.flow.MutableStateFlow(false)
     val send_problem: kotlinx.coroutines.flow.StateFlow<Boolean> = _send_problem
+    private val _failed_send_count = kotlinx.coroutines.flow.MutableStateFlow(0)
+    val failed_send_count: kotlinx.coroutines.flow.StateFlow<Int> = _failed_send_count
 
     fun clear_send_problem() {
         _send_problem.value = false
@@ -495,7 +528,11 @@ class MailRepository @Inject constructor(
         }
     }
 
-    suspend fun run_pending_send(pending_id: String, expected_owner: String? = null): PendingSendOutcome {
+    suspend fun run_pending_send(
+        pending_id: String,
+        expected_owner: String? = null,
+        attempt: Int = 0,
+    ): PendingSendOutcome {
         val row = pending_send_dao.get_by_id(pending_id) ?: return PendingSendOutcome.GONE
         val owner = row.account_id ?: expected_owner
         if (owner != null && owner != session_key_store.get_user_id()) {
@@ -521,6 +558,7 @@ class MailRepository @Inject constructor(
             _send_problem.value = true
             _send_result_events.tryEmit(Result.failure(IllegalStateException("attachment payload unavailable", err)))
             runCatching { pending_send_dao.mark_failed(pending_id) }
+            refresh_failed_send_count()
             return PendingSendOutcome.FAILED
         }
         val result = send_email(
@@ -548,13 +586,17 @@ class MailRepository @Inject constructor(
             PendingSendOutcome.SENT
         } else {
             val err = result.exceptionOrNull()
-            _send_problem.value = true
-            _send_result_events.tryEmit(Result.failure(err ?: IllegalStateException("send rejected")))
             if (is_permanent_send_failure(err)) {
+                _send_problem.value = true
+                _send_result_events.tryEmit(Result.failure(err ?: IllegalStateException("send rejected")))
                 runCatching { pending_send_dao.mark_failed(pending_id) }
+                refresh_failed_send_count()
                 PendingSendOutcome.FAILED
             } else {
                 runCatching { pending_send_dao.mark_pending(pending_id) }
+                if (attempt >= SEND_RETRY_QUIET_ATTEMPTS) {
+                    _send_result_events.tryEmit(Result.failure(TransientSendException()))
+                }
                 PendingSendOutcome.RETRY
             }
         }
@@ -574,14 +616,49 @@ class MailRepository @Inject constructor(
     suspend fun reconcile_pending_sends() {
         val rows = runCatching { pending_send_dao.get_all() }.getOrDefault(emptyList())
         val now = System.currentTimeMillis()
+        var failed = 0
         for (row in rows) {
             if (row.status == STATUS_FAILED) {
+                failed++
                 _send_problem.value = true
                 continue
             }
             val remaining = (row.fire_at_ms - now).coerceAtLeast(0L)
             runCatching { UndoSendWorker.enqueue_if_absent(context, row.id, remaining) }
         }
+        _failed_send_count.value = failed
+    }
+
+    private suspend fun refresh_failed_send_count() {
+        val rows = runCatching { pending_send_dao.get_all() }.getOrDefault(emptyList())
+        _failed_send_count.value = rows.count { it.status == STATUS_FAILED }
+    }
+
+    suspend fun retry_failed_sends() {
+        val rows = runCatching { pending_send_dao.get_all() }.getOrDefault(emptyList())
+        for (row in rows) {
+            if (row.status != STATUS_FAILED) continue
+            runCatching { pending_send_dao.mark_pending(row.id) }
+            runCatching { UndoSendWorker.enqueue(context, row.id, 0L, row.account_id) }
+        }
+        _failed_send_count.value = 0
+        _send_problem.value = false
+    }
+
+    suspend fun discard_failed_sends() {
+        val rows = runCatching { pending_send_dao.get_all() }.getOrDefault(emptyList())
+        for (row in rows) {
+            if (row.status != STATUS_FAILED) continue
+            runCatching { UndoSendWorker.cancel(context, row.id) }
+            runCatching { pending_send_dao.delete_by_id(row.id) }
+            delete_outbox_attachments(row.id)
+        }
+        _failed_send_count.value = 0
+        _send_problem.value = false
+    }
+
+    fun begin_decrypt_retry() {
+        ratchet_decryptor.begin_forced_recovery()
     }
 
     fun clear_caches() {
@@ -590,6 +667,7 @@ class MailRepository @Inject constructor(
         identity_key_cache.values.forEach { it.fill(0) }
         identity_key_cache.clear()
         cached_sent_folder_token = null
+        draft_item_cache.clear()
         ratchet_plaintext_cache.clear()
     }
 
@@ -601,6 +679,7 @@ class MailRepository @Inject constructor(
         tag_token: String? = null,
         offset: Int? = null,
         routing_token: String? = null,
+        order: String? = null,
     ): Result<InboxPage> = runCatching {
         val is_received = item_type == "received"
         val is_plain_inbox = is_received && label_token == null && tag_token == null && routing_token == null
@@ -617,6 +696,7 @@ class MailRepository @Inject constructor(
             is_trashed = if (is_plain_inbox) false else null,
             is_spam = if (is_plain_inbox) false else null,
             routing_token = routing_token,
+            order = order,
         )
         val filtered_raw = if (is_received) {
             val now_iso = java.time.Instant.now().toString()
@@ -639,12 +719,13 @@ class MailRepository @Inject constructor(
         )
     }
 
-    suspend fun fetch_sent(limit: Int = 50, cursor: String? = null): Result<InboxPage> {
-        return fetch_inbox(limit, cursor, "sent", label_token = null)
+    suspend fun fetch_sent(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> {
+        return fetch_inbox(limit, cursor, "sent", label_token = null, order = order)
     }
 
     suspend fun fetch_drafts(limit: Int = 50, cursor: String? = null): Result<InboxPage> = runCatching {
         val response = mail_api.list_drafts(limit = limit, cursor = cursor)
+        response.items.forEach { draft -> draft_item_cache[draft.id] = draft }
         val items = response.items.map { draft -> decrypt_draft_item(draft) }
         InboxPage(
             items = items,
@@ -654,46 +735,54 @@ class MailRepository @Inject constructor(
         )
     }
 
-    suspend fun fetch_starred(limit: Int = 50, cursor: String? = null): Result<InboxPage> = runCatching {
-        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_starred = true)
+    suspend fun fetch_starred(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
+        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_starred = true, order = order)
         val items = decrypt_items_parallel(response.items)
         InboxPage(items, response.has_more, response.next_cursor, response.total)
     }
 
-    suspend fun fetch_trash(limit: Int = 50, cursor: String? = null): Result<InboxPage> = runCatching {
-        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_trashed = true)
+    suspend fun fetch_trash(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
+        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_trashed = true, order = order)
         val items = decrypt_items_parallel(response.items)
         InboxPage(items, response.has_more, response.next_cursor, response.total)
     }
 
-    suspend fun fetch_spam(limit: Int = 50, cursor: String? = null): Result<InboxPage> = runCatching {
-        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_spam = true)
+    suspend fun fetch_spam(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
+        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_spam = true, order = order)
         val items = decrypt_items_parallel(response.items)
         InboxPage(items, response.has_more, response.next_cursor, response.total)
     }
 
-    suspend fun fetch_archive(limit: Int = 50, cursor: String? = null): Result<InboxPage> = runCatching {
-        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_archived = true)
+    suspend fun fetch_archive(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
+        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_archived = true, order = order)
         val items = decrypt_items_parallel(response.items)
         InboxPage(items, response.has_more, response.next_cursor, response.total)
     }
 
-    suspend fun fetch_scheduled(limit: Int = 50, cursor: String? = null): Result<InboxPage> =
-        fetch_inbox(limit, cursor, "scheduled")
+    suspend fun fetch_scheduled(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> =
+        fetch_inbox(limit, cursor, "scheduled", order = order)
 
-    suspend fun fetch_snoozed(limit: Int = 50, cursor: String? = null): Result<InboxPage> = runCatching {
-        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_snoozed = true)
+    suspend fun fetch_snoozed(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
+        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_snoozed = true, order = order)
         val items = decrypt_items_parallel(response.items)
         InboxPage(items, response.has_more, response.next_cursor, response.total)
+    }
+
+    suspend fun fetch_thread_draft(thread_token: String): InboxItem? {
+        if (thread_token.isBlank()) return null
+        val draft = runCatching { mail_api.get_thread_draft(thread_token) }.getOrNull() ?: return null
+        draft_item_cache[draft.id] = draft
+        return decrypt_draft_item(draft)
     }
 
     suspend fun fetch_draft_for_compose(
         draft_id: String,
     ): Result<Pair<InboxItem, DecryptedEnvelope?>> = runCatching {
         var cursor: String? = null
-        var draft: org.astermail.android.api.mail.DraftItem? = null
+        var draft: org.astermail.android.api.mail.DraftItem? = draft_item_cache[draft_id]
+            ?: runCatching { mail_api.get_draft(draft_id) }.getOrNull()?.takeIf { it.id == draft_id }
         var pages = 0
-        while (pages < 50) {
+        while (draft == null && pages < 50) {
             val response = mail_api.list_drafts(limit = 100, cursor = cursor)
             draft = response.items.firstOrNull { it.id == draft_id }
             if (draft != null) break
@@ -720,16 +809,22 @@ class MailRepository @Inject constructor(
                     is_archived = is_archived,
                     is_spam = is_spam,
                 )
-                val items = decrypt_items_parallel(response.items)
+                val items = decrypt_items_parallel(response.items).map {
+                    it.copy(
+                        is_trashed = is_trashed ?: it.is_trashed,
+                        is_archived = is_archived ?: it.is_archived,
+                        is_spam = is_spam ?: it.is_spam,
+                    )
+                }
                 for (item in items) if (seen.add(item.id)) all.add(item)
                 if (!response.has_more || response.next_cursor == null) return
                 cursor = response.next_cursor
             }
         }
-        drain()
         drain(is_trashed = true)
         drain(is_archived = true)
         drain(is_spam = true)
+        drain()
         all.toList()
     }
 
@@ -778,19 +873,37 @@ class MailRepository @Inject constructor(
     }
 
     suspend fun mark_read(item_id: String, is_read: Boolean, raw_item: MailItem? = null): Result<Unit> = runCatching {
-        val request = build_metadata_patch(raw_item, mapOf("is_read" to is_read))
+        val resolved = raw_item ?: resolve_raw_item(item_id)
+        val request = build_metadata_patch(resolved, mapOf("is_read" to is_read))
         mail_api.patch_metadata(item_id, request)
         Unit
     }
 
+    private suspend fun resolve_raw_item(item_id: String): MailItem? =
+        runCatching { mail_api.get_message(item_id) }.getOrNull()
+
+    suspend fun mark_thread_message_read(message: ThreadMessageItem, is_read: Boolean): Result<Unit> = runCatching {
+        val carrier = MailItem(
+            id = message.id,
+            encrypted_metadata = message.encrypted_metadata,
+            metadata_nonce = message.metadata_nonce,
+            metadata_version = message.metadata_version,
+            metadata = message.metadata,
+        )
+        mail_api.patch_metadata(message.id, build_metadata_patch(carrier, mapOf("is_read" to is_read)))
+        Unit
+    }
+
     suspend fun toggle_star(item_id: String, is_starred: Boolean, raw_item: MailItem? = null): Result<Unit> = runCatching {
-        val request = build_metadata_patch(raw_item, mapOf("is_starred" to is_starred))
+        val resolved = raw_item ?: resolve_raw_item(item_id)
+        val request = build_metadata_patch(resolved, mapOf("is_starred" to is_starred))
         mail_api.patch_metadata(item_id, request)
         Unit
     }
 
     suspend fun toggle_pin(item_id: String, is_pinned: Boolean, raw_item: MailItem? = null): Result<Unit> = runCatching {
-        val request = build_metadata_patch(raw_item, mapOf("is_pinned" to is_pinned))
+        val resolved = raw_item ?: resolve_raw_item(item_id)
+        val request = build_metadata_patch(resolved, mapOf("is_pinned" to is_pinned))
         mail_api.patch_metadata(item_id, request)
         Unit
     }
@@ -930,6 +1043,10 @@ class MailRepository @Inject constructor(
         mail_api.bulk_action(BulkScopeRequest(action = "mark_read", ids = item_ids))
     }
 
+    suspend fun mark_thread_read_all(thread_token: String): Result<Unit> = runCatching {
+        mail_api.mark_thread_read(thread_token)
+    }
+
     suspend fun mark_unread_bulk(item_ids: List<String>): Result<BulkScopeResponse> = runCatching {
         mail_api.bulk_action(BulkScopeRequest(action = "mark_unread", ids = item_ids))
     }
@@ -942,6 +1059,15 @@ class MailRepository @Inject constructor(
     suspend fun mark_all_unread_scope(folder: String): Result<BulkScopeResponse> = runCatching {
         val scope = folder_to_bulk_scope(folder)
         mail_api.bulk_action(BulkScopeRequest(action = "mark_unread", scope = scope))
+    }
+
+    suspend fun bulk_scope_action(folder: String, action: String): Result<BulkScopeResponse> = runCatching {
+        mail_api.bulk_action(BulkScopeRequest(action = action, scope = folder_to_bulk_scope(folder)))
+    }
+
+    fun action_supports_bulk_scope(action: String): Boolean = when (action) {
+        "archive", "trash", "mark_spam", "unmark_spam", "unarchive", "restore_trash", "mark_read", "mark_unread" -> true
+        else -> false
     }
 
     fun folder_supports_bulk_scope(folder: String): Boolean = when (folder) {
@@ -964,6 +1090,7 @@ class MailRepository @Inject constructor(
 
     suspend fun delete_draft(draft_id: String): Result<Unit> = runCatching {
         mail_api.delete_draft(draft_id)
+        draft_item_cache.remove(draft_id)
         Unit
     }
 
@@ -975,6 +1102,17 @@ class MailRepository @Inject constructor(
     suspend fun empty_trash(): Result<Unit> = runCatching {
         mail_api.empty_trash()
         Unit
+    }
+
+    suspend fun bulk_delete_permanent(ids: List<String>): Result<Int> = runCatching {
+        var deleted = 0
+        ids.filter { it.isNotBlank() }.chunked(100).forEach { chunk ->
+            val response = mail_api.bulk_delete_permanent(
+                org.astermail.android.api.mail.BulkPermanentDeleteRequest(ids = chunk),
+            )
+            deleted += response.deleted_count
+        }
+        deleted
     }
 
     private fun decrypt_draft_item(draft: org.astermail.android.api.mail.DraftItem): InboxItem {
@@ -1038,7 +1176,8 @@ class MailRepository @Inject constructor(
             subject = envelope?.subject ?: "",
             preview = envelope?.let { clean_preview(it.body_text, it.body_html) } ?: "",
             timestamp = item.message_ts ?: item.created_at ?: "",
-            is_read = (item.is_read == true) || (meta?.is_read == true) || ((item.is_trashed ?: meta?.is_trashed) == true),
+            is_read = resolve_read_state(item.item_type, item.is_read, meta?.is_read) ||
+                ((item.is_trashed ?: meta?.is_trashed) == true),
             is_starred = meta?.is_starred ?: false,
             is_encrypted = item.encrypted_envelope != null,
             has_attachments = meta?.has_attachments ?: false,
@@ -1047,7 +1186,11 @@ class MailRepository @Inject constructor(
             is_spam = item.is_spam ?: meta?.is_spam ?: false,
             labels = item.labels?.mapNotNull { it.folder_token } ?: emptyList(),
             tag_tokens = item.tag_tokens ?: emptyList(),
-            category = if (envelope != null) classify(envelope, meta, item.rule_category) else "primary",
+            category = if (envelope != null) {
+                classify(envelope, meta, item.rule_category, custom_categories)
+            } else {
+                "primary"
+            },
             received_on = envelope?.raw_headers?.let {
                 org.astermail.android.ui.mail.resolve_inbox_received_on(it, get_user_email())
             },
@@ -1060,9 +1203,20 @@ class MailRepository @Inject constructor(
     suspend fun decrypt_single_thread_message(item: ThreadMessageItem): ThreadMessageDecrypted =
         withContext(Dispatchers.IO) { decrypt_thread_message(item) }
 
+    private fun resolve_read_state(item_type: String?, server_is_read: Boolean?, meta_is_read: Boolean?): Boolean {
+        val is_sent_type = item_type == "sent" || item_type == "draft" || item_type == "scheduled"
+        if (is_sent_type) return true
+        return server_is_read ?: meta_is_read ?: false
+    }
+
     private fun decrypt_thread_message(item: ThreadMessageItem): ThreadMessageDecrypted {
         val envelope = try_decrypt_envelope(item.encrypted_envelope, item.envelope_nonce, item.id)
+        val enc_meta = item.encrypted_metadata
+        val meta_nonce = item.metadata_nonce
         val meta = item.metadata
+            ?: if (!enc_meta.isNullOrBlank() && !meta_nonce.isNullOrBlank()) {
+                decrypt_mail_metadata(enc_meta, meta_nonce)
+            } else null
         val to_names = envelope?.to?.map { it.second.ifBlank { it.first } } ?: listOf("me")
         val forwarding = envelope?.let {
             org.astermail.android.ui.mail.resolve_forwarding_display(it.from_email, it.raw_headers)
@@ -1076,7 +1230,7 @@ class MailRepository @Inject constructor(
             body_text = envelope?.body_text ?: "",
             body_html = envelope?.body_html,
             is_encrypted = item.encrypted_envelope != null,
-            is_read = meta?.is_read ?: true,
+            is_read = resolve_read_state(item.item_type, null, meta?.is_read),
             raw_item = item,
             to_addresses = envelope?.to?.map { it.second } ?: emptyList(),
             cc_addresses = envelope?.cc?.map { it.second } ?: emptyList(),
@@ -1243,17 +1397,8 @@ class MailRepository @Inject constructor(
         throw IllegalStateException("all identity key versions failed")
     }
 
-    private fun aes_gcm_decrypt(ciphertext: ByteArray, key: ByteArray, iv: ByteArray): ByteArray {
-        if (iv.size != 12) throw IllegalStateException("invalid gcm nonce length")
-        if (key.size != 16 && key.size != 24 && key.size != 32) throw IllegalStateException("invalid aes key length")
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(
-            Cipher.DECRYPT_MODE,
-            SecretKeySpec(key, "AES"),
-            GCMParameterSpec(128, iv),
-        )
-        return cipher.doFinal(ciphertext)
-    }
+    private fun aes_gcm_decrypt(ciphertext: ByteArray, key: ByteArray, iv: ByteArray): ByteArray =
+        aes_gcm_decrypt_bytes(ciphertext, key, iv)
 
     private fun aes_gcm_encrypt(plaintext: ByteArray, key: ByteArray, iv: ByteArray): ByteArray {
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
@@ -1429,6 +1574,9 @@ class MailRepository @Inject constructor(
                 nonce_bytes.size == 1 && nonce_bytes[0] == 1.toByte() -> {
                     decrypt_envelope_pbkdf2(encrypted_meta)
                 }
+                is_placeholder_meta_nonce(nonce_bytes) -> {
+                    decrypt_envelope_pbkdf2(encrypted_meta)
+                }
                 else -> {
                     try {
                         decrypt_envelope_identity_key(encrypted_meta, nonce_bytes)
@@ -1456,22 +1604,7 @@ class MailRepository @Inject constructor(
         encrypted_data_b64: String,
         data_nonce_b64: String,
         session_key_b64: String,
-    ): ByteArray {
-        if (session_key_b64.isBlank()) {
-            return android.util.Base64.decode(encrypted_data_b64, android.util.Base64.DEFAULT)
-        }
-        val key = android.util.Base64.decode(session_key_b64, android.util.Base64.DEFAULT)
-        if (key.isEmpty()) {
-            return android.util.Base64.decode(encrypted_data_b64, android.util.Base64.DEFAULT)
-        }
-        try {
-            val ciphertext = android.util.Base64.decode(encrypted_data_b64, android.util.Base64.DEFAULT)
-            val nonce = android.util.Base64.decode(data_nonce_b64, android.util.Base64.DEFAULT)
-            return aes_gcm_decrypt(ciphertext, key, nonce)
-        } finally {
-            key.fill(0)
-        }
-    }
+    ): ByteArray = decrypt_attachment_bytes(encrypted_data_b64, data_nonce_b64, session_key_b64)
 
     suspend fun find_messages_with_attachments(mail_item_ids: List<String>): List<String> {
         return try {
@@ -1927,6 +2060,12 @@ class MailRepository @Inject constructor(
             val final_body = ratchet_body ?: body_html
             val final_subject = if (ratchet_body != null) "" else subject
 
+            val internal_attachments = if (attachments.isNotEmpty()) {
+                build_internal_attachments(to + cc + bcc, attachments)
+            } else {
+                emptyList()
+            }
+
             send_api.send_simple(
                 SimpleSendRequest(
                     to = to,
@@ -1934,6 +2073,7 @@ class MailRepository @Inject constructor(
                     bcc = bcc,
                     subject = final_subject,
                     body = final_body,
+                    attachments = internal_attachments,
                     is_e2e_encrypted = ratchet_body != null,
                     encrypted_envelope = encrypted_envelope,
                     envelope_nonce = envelope_nonce,
@@ -1946,6 +2086,179 @@ class MailRepository @Inject constructor(
                     suppress_branding = suppress_branding,
                 ),
             )
+        }
+    }
+
+    suspend fun send_reaction(
+        target_message_id: String,
+        message_group_id: String?,
+        thread_token: String?,
+        recipient: String,
+        emoji: String,
+        sender_email: String? = null,
+    ): Result<Unit> = runCatching {
+        val from_addr = sender_email ?: session_key_store.get_user_email() ?: ""
+        val payload = org.json.JSONObject().apply {
+            put("aster_reaction", true)
+            put("emoji", emoji)
+        }.toString()
+        val envelope = build_envelope_json(
+            subject = "",
+            body_html = payload,
+            from_email = from_addr,
+            from_name = "",
+            to = listOf(recipient),
+            cc = emptyList(),
+        )
+        val (encrypted_envelope, envelope_nonce) = encrypt_envelope(envelope)
+
+        val sent_folder_token = try {
+            val token = labels_api.list_labels(include_counts = false)
+                .labels.firstOrNull { it.folder_type == "sent" }?.label_token
+            if (token != null) cached_sent_folder_token = token
+            token
+        } catch (_: Throwable) { cached_sent_folder_token }
+
+        val internal = is_internal_recipient(recipient)
+        val resolved_group_id = message_group_id
+            ?: if (internal) {
+                runCatching { mail_api.get_message(target_message_id).message_group_id }.getOrNull()
+            } else {
+                null
+            }
+
+        val body = if (internal) {
+            if (from_addr.isBlank() || !session_key_store.has_ratchet_keys()) {
+                throw IllegalStateException(context.getString(R.string.e2e_keys_not_ready))
+            }
+            val encrypted = try {
+                ratchet_encryptor.encrypt_envelope(from_addr, listOf(recipient), payload)
+            } catch (t: Throwable) {
+                throw IllegalStateException(context.getString(R.string.e2e_encryption_failed), t)
+            }
+            encrypted ?: throw IllegalStateException(context.getString(R.string.e2e_encryption_failed))
+        } else {
+            payload
+        }
+
+        val response = send_api.react(
+            org.astermail.android.api.send.ReactRequest(
+                target_message_id = target_message_id,
+                message_group_id = resolved_group_id,
+                thread_token = thread_token,
+                to = listOf(recipient),
+                body = body,
+                is_e2e_encrypted = internal,
+                encrypted_envelope = encrypted_envelope,
+                envelope_nonce = envelope_nonce,
+                folder_token = sent_folder_token,
+                sender_email = from_addr.ifBlank { null },
+            ),
+        )
+        if (!response.success) {
+            throw IllegalStateException(
+                response.message.ifBlank { context.getString(R.string.reaction_failed) },
+            )
+        }
+    }
+
+    suspend fun resolve_reaction(mail_item_id: String): DecryptedReaction? =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val item = mail_api.get_message(mail_item_id)
+                val envelope = try_decrypt_envelope(
+                    item.encrypted_envelope,
+                    item.envelope_nonce,
+                    item.id,
+                ) ?: return@runCatching null
+                val raw = listOf(envelope.body_text, envelope.body_html.orEmpty())
+                    .map { it.trim() }
+                    .firstOrNull { it.startsWith("{") } ?: return@runCatching null
+                val json = org.json.JSONObject(raw)
+                if (!json.optBoolean("aster_reaction")) return@runCatching null
+                val emoji = json.optString("emoji")
+                if (emoji.isBlank()) return@runCatching null
+                DecryptedReaction(
+                    reaction_mail_item_id = mail_item_id,
+                    emoji = emoji,
+                    reactor_email = envelope.from_email,
+                )
+            }.getOrNull()
+        }
+
+    private suspend fun fetch_internal_public_keys(recipients: List<String>): List<String> {
+        val keys = ArrayList<String>()
+        for (recipient in recipients.filter { is_internal_recipient(it) }) {
+            val username = recipient.substringBefore('@').trim()
+            if (username.isEmpty()) continue
+            val key = runCatching {
+                keys_api.get_recipient_public_key(username, recipient).public_key
+            }.getOrNull()
+            if (!key.isNullOrBlank()) keys.add(key)
+        }
+        return keys
+    }
+
+    private suspend fun build_internal_attachments(
+        recipients: List<String>,
+        attachments: List<ExternalAttachmentPayload>,
+    ): List<SendAttachmentPayload> {
+        val recipient_keys = fetch_internal_public_keys(recipients)
+        return attachments.map { att ->
+            try {
+                val raw = android.util.Base64.decode(att.data, android.util.Base64.DEFAULT)
+                val session_key = ByteArray(32).also { SecureRandom().nextBytes(it) }
+                val data_nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
+                val encrypted_data = aes_gcm_encrypt(raw, session_key, data_nonce)
+
+                val meta_json = org.json.JSONObject().apply {
+                    put("filename", att.filename)
+                    put("content_type", att.content_type)
+                    put(
+                        "session_key",
+                        android.util.Base64.encodeToString(session_key, android.util.Base64.NO_WRAP),
+                    )
+                    att.content_id?.let {
+                        put("content_id", it)
+                        put("is_inline", true)
+                    }
+                }.toString()
+                session_key.fill(0)
+
+                val sealed_meta = if (recipient_keys.isNotEmpty()) {
+                    PgpEncryptor.encrypt_to_keys(meta_json, recipient_keys)
+                        ?: throw IllegalStateException(
+                            context.getString(R.string.e2e_encryption_failed),
+                        )
+                } else {
+                    meta_json
+                }
+
+                val (sender_encrypted_meta, sender_meta_nonce) = encrypt_envelope(meta_json)
+
+                SendAttachmentPayload(
+                    encrypted_data = android.util.Base64.encodeToString(
+                        encrypted_data,
+                        android.util.Base64.NO_WRAP,
+                    ),
+                    data_nonce = android.util.Base64.encodeToString(
+                        data_nonce,
+                        android.util.Base64.NO_WRAP,
+                    ),
+                    sender_encrypted_meta = sender_encrypted_meta,
+                    sender_meta_nonce = server_meta_nonce(sender_meta_nonce),
+                    recipient_encrypted_meta = android.util.Base64.encodeToString(
+                        sealed_meta.toByteArray(Charsets.UTF_8),
+                        android.util.Base64.NO_WRAP,
+                    ),
+                    size_bytes = att.size_bytes,
+                )
+            } catch (t: Throwable) {
+                throw IllegalStateException(
+                    context.getString(R.string.attachment_prepare_failed, att.filename),
+                    t,
+                )
+            }
         }
     }
 
@@ -1974,8 +2287,7 @@ class MailRepository @Inject constructor(
                 }.toString()
                 session_key.fill(0)
 
-                val (encrypted_meta, _) = encrypt_envelope(meta_json)
-                val meta_nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
+                val (encrypted_meta, meta_nonce) = encrypt_envelope(meta_json)
 
                 mail_api.create_attachment(
                     mail_item_id,
@@ -1989,10 +2301,7 @@ class MailRepository @Inject constructor(
                             android.util.Base64.NO_WRAP,
                         ),
                         encrypted_meta = encrypted_meta,
-                        meta_nonce = android.util.Base64.encodeToString(
-                            meta_nonce,
-                            android.util.Base64.NO_WRAP,
-                        ),
+                        meta_nonce = server_meta_nonce(meta_nonce),
                         seq_num = index,
                     ),
                 )
@@ -2028,6 +2337,8 @@ class MailRepository @Inject constructor(
         if (!existing_draft_id.isNullOrBlank() && existing_draft_id != new_id) {
             runCatching { mail_api.delete_draft(existing_draft_id) }
         }
+        if (!existing_draft_id.isNullOrBlank()) draft_item_cache.remove(existing_draft_id)
+        draft_item_cache.remove(new_id)
         new_id
     }
 
@@ -2198,11 +2509,61 @@ class MailRepository @Inject constructor(
 
     companion object {
         private const val PBKDF2_ITERATIONS = 310000
+        private val PLACEHOLDER_META_NONCE = ByteArray(12)
+
+        fun is_placeholder_meta_nonce(nonce: ByteArray): Boolean =
+            nonce.size == 12 && nonce.all { it == 0.toByte() }
+
+        fun server_meta_nonce(envelope_nonce: String): String {
+            val decoded = runCatching {
+                android.util.Base64.decode(envelope_nonce, android.util.Base64.DEFAULT)
+            }.getOrNull()
+            if (decoded != null && decoded.size == 12) return envelope_nonce
+            return android.util.Base64.encodeToString(
+                PLACEHOLDER_META_NONCE,
+                android.util.Base64.NO_WRAP,
+            )
+        }
         private val ENVELOPE_VERSIONS = listOf(
             "astermail-envelope-v1",
             "astermail-import-v1",
             "astermail-draft-v2",
         )
+
+        fun aes_gcm_decrypt_bytes(ciphertext: ByteArray, key: ByteArray, iv: ByteArray): ByteArray {
+            if (iv.size != 12) throw IllegalStateException("invalid gcm nonce length")
+            if (key.size != 16 && key.size != 24 && key.size != 32) {
+                throw IllegalStateException("invalid aes key length")
+            }
+            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+            cipher.init(
+                Cipher.DECRYPT_MODE,
+                SecretKeySpec(key, "AES"),
+                GCMParameterSpec(128, iv),
+            )
+            return cipher.doFinal(ciphertext)
+        }
+
+        fun decrypt_attachment_bytes(
+            encrypted_data_b64: String,
+            data_nonce_b64: String,
+            session_key_b64: String,
+        ): ByteArray {
+            if (session_key_b64.isBlank()) {
+                return android.util.Base64.decode(encrypted_data_b64, android.util.Base64.DEFAULT)
+            }
+            val key = android.util.Base64.decode(session_key_b64, android.util.Base64.DEFAULT)
+            if (key.isEmpty()) {
+                return android.util.Base64.decode(encrypted_data_b64, android.util.Base64.DEFAULT)
+            }
+            try {
+                val ciphertext = android.util.Base64.decode(encrypted_data_b64, android.util.Base64.DEFAULT)
+                val nonce = android.util.Base64.decode(data_nonce_b64, android.util.Base64.DEFAULT)
+                return aes_gcm_decrypt_bytes(ciphertext, key, nonce)
+            } finally {
+                key.fill(0)
+            }
+        }
     }
 }
 

@@ -79,6 +79,24 @@ sealed class ApiError(message: String) : Exception(message) {
     data class UnknownError(val detail: String) : ApiError(detail)
 }
 
+object DualStackDns : okhttp3.Dns {
+    override fun lookup(hostname: String): List<java.net.InetAddress> {
+        val resolved = okhttp3.Dns.SYSTEM.lookup(hostname)
+        if (resolved.size < 2) return resolved
+        val v4 = resolved.filterIsInstance<java.net.Inet4Address>()
+        if (v4.isEmpty() || v4.size == resolved.size) return resolved
+        val v6 = resolved.filter { it !is java.net.Inet4Address }
+        val ordered = ArrayList<java.net.InetAddress>(resolved.size)
+        var i = 0
+        while (i < v4.size || i < v6.size) {
+            if (i < v4.size) ordered.add(v4[i])
+            if (i < v6.size) ordered.add(v6[i])
+            i++
+        }
+        return ordered
+    }
+}
+
 interface TokenProvider {
     suspend fun load(): BearerTokens?
     suspend fun refresh(): BearerTokens?
@@ -141,6 +159,11 @@ class ApiClient(
                     listOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS)
                 }
                 connectionSpecs(specs)
+                dns(DualStackDns)
+                retryOnConnectionFailure(true)
+                connectTimeout(java.time.Duration.ofMillis(4_000))
+                pingInterval(java.time.Duration.ofSeconds(20))
+                connectionPool(okhttp3.ConnectionPool(5, 90, java.util.concurrent.TimeUnit.SECONDS))
             }
             addInterceptor(okhttp3.Interceptor { chain ->
                 val original = chain.request()
@@ -173,9 +196,9 @@ class ApiClient(
         }
 
         install(HttpTimeout) {
-            requestTimeoutMillis = 12_000
-            connectTimeoutMillis = 6_000
-            socketTimeoutMillis = 12_000
+            requestTimeoutMillis = 18_000
+            connectTimeoutMillis = 4_000
+            socketTimeoutMillis = 15_000
         }
 
         install(Auth) {
