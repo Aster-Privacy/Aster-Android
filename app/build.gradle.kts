@@ -58,7 +58,7 @@ android {
 
     buildTypes {
         debug {
-            isDebuggable = true
+            isDebuggable = System.getenv("ASTER_DEBUGGABLE") == "1"
             applicationIdSuffix = ".debug"
         }
         release {
@@ -94,6 +94,14 @@ android {
 
     testOptions {
         unitTests.isReturnDefaultValues = true
+    }
+}
+
+composeCompiler {
+    stabilityConfigurationFiles.add(rootProject.layout.projectDirectory.file("compose_stability.conf"))
+    if (project.hasProperty("composeReports")) {
+        reportsDestination.set(layout.buildDirectory.dir("compose_reports"))
+        metricsDestination.set(layout.buildDirectory.dir("compose_metrics"))
     }
 }
 
