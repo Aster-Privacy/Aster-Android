@@ -1775,9 +1775,13 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                         )
                     }
                     else -> {
-                        BackHandler(enabled = !drawer_state.isOpen && selected_folder != "inbox") {
+                        BackHandler(
+                            enabled = !drawer_state.isOpen &&
+                                (selected_folder != "inbox" || inbox_category != "primary"),
+                        ) {
                             saveable_state_holder.removeState("inbox:inbox")
                             inbox_scroll_top_token += 1
+                            inbox_category = "primary"
                             selected_folder = "inbox"
                         }
                         InboxScreen(
