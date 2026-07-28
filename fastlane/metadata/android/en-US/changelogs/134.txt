@@ -1,7 +1,7 @@
-Bug fixes and improvements:
-
-- Inbox categories and nested folders in the sidebar, per-folder mute, and a fresh look
-- Archive, delete or mark read from a notification, undo a send, share or mailto into Aster
-- Translate emails on device, unsubscribe in bulk, strip photo metadata before sending
-- Aliases on your own domains, with search, faster loading and a receiving-alias chip
-- Steadier inbox and search, better email rendering, more reliable sending
+- Inbox categories, nested folders, per-folder mute, unread dots
+- Archive, delete or mark read from a notification, plus login alerts
+- Undo send, share sheet and mailto, formatting bar, custom expiry
+- On-device translation, bulk unsubscribe, spam reporting
+- Aliases on your own domains, with search and faster loading
+- Settings search, new icons and font, your theme from launch
+- Better rendering, steadier search, reliable sending, security hardening
