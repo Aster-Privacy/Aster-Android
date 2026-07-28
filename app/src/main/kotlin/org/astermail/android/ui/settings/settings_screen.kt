@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -44,15 +45,21 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -65,9 +72,11 @@ import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterTopBar
+import org.astermail.android.design.components.shimmer_brush
 import org.astermail.android.settings.SettingsViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.ui.common.current_user_avatar
+import org.astermail.android.ui.mail.search_field_bg_color
 
 data class settings_row_item(
     val id: String,
@@ -81,60 +90,44 @@ data class settings_section(
     val rows: List<settings_row_item>,
 )
 
-private fun build_settings_sections(is_family: Boolean) = listOf(
+internal fun build_settings_sections(is_family: Boolean) = listOf(
     settings_section(
-        R.string.settings_account,
+        R.string.settings_general,
         buildList {
-            add(settings_row_item("profile", R.string.settings_profile, icon = TablerIcons.User))
+            add(settings_row_item("appearance", R.string.settings_appearance, icon = TablerIcons.Palette))
+            add(settings_row_item("accessibility", R.string.settings_accessibility, icon = TablerIcons.Typography))
+            add(settings_row_item("security", R.string.settings_security, icon = TablerIcons.Shield))
+            add(settings_row_item("encryption", R.string.settings_encryption, icon = TablerIcons.Key))
+            add(settings_row_item("trusted_devices", R.string.trusted_devices, icon = TablerIcons.DeviceDesktop))
             add(settings_row_item("aliases", R.string.settings_aliases, icon = TablerIcons.At))
-if (is_family) add(settings_row_item("family", R.string.settings_family, icon = TablerIcons.Users))
+            add(settings_row_item("ghost_aliases", R.string.settings_ghost_aliases, icon = TablerIcons.EyeOff))
             add(settings_row_item("billing", R.string.settings_plans_billing, icon = TablerIcons.CreditCard))
             add(settings_row_item("storage", R.string.settings_storage, icon = TablerIcons.Database))
+            add(settings_row_item("referral", R.string.refer_a_friend, icon = TablerIcons.Users))
+            if (is_family) add(settings_row_item("family", R.string.settings_family, icon = TablerIcons.Home))
         },
-    ),
-    settings_section(
-        R.string.settings_section_security,
-        listOf(
-            settings_row_item("security", R.string.settings_security, icon = TablerIcons.Shield),
-            settings_row_item("encryption", R.string.settings_encryption, icon = TablerIcons.Key),
-        ),
     ),
     settings_section(
         R.string.settings_section_mail,
         listOf(
             settings_row_item("notifications", R.string.settings_notifications, icon = TablerIcons.Bell),
-            settings_row_item("signature", R.string.settings_signature, icon = TablerIcons.Edit),
-            settings_row_item("templates", R.string.settings_templates, icon = TablerIcons.FileText),
             settings_row_item("behavior", R.string.settings_behavior, icon = TablerIcons.ArrowBackUp),
             settings_row_item("swipe_actions", R.string.settings_swipe_actions, icon = TablerIcons.ArrowsLeftRight),
             settings_row_item("customize_toolbar", R.string.customize_toolbar, icon = TablerIcons.LayoutBottombar),
-            settings_row_item("mail_rules", R.string.mail_rules_title, icon = TablerIcons.Adjustments),
-            settings_row_item("folders", R.string.folders, icon = TablerIcons.Folder),
-            settings_row_item("auto_forward", R.string.settings_auto_forward, icon = TablerIcons.MailForward),
-            settings_row_item("vacation_reply", R.string.settings_vacation_reply, icon = TablerIcons.MailOpened),
-        ),
-    ),
-    settings_section(
-        R.string.settings_section_appearance,
-        listOf(
-            settings_row_item("appearance", R.string.settings_appearance, icon = TablerIcons.Palette),
-            settings_row_item("accessibility", R.string.settings_accessibility, icon = TablerIcons.Typography),
-        ),
-    ),
-    settings_section(
-        R.string.settings_section_data,
-        listOf(
-            settings_row_item("external_accounts", R.string.external_accounts, icon = TablerIcons.ArrowsRightLeft),
+            settings_row_item("signature", R.string.settings_signature, icon = TablerIcons.Edit),
+            settings_row_item("templates", R.string.settings_templates, icon = TablerIcons.FileText),
             settings_row_item("import", R.string.settings_import, icon = TablerIcons.CloudUpload),
-            settings_row_item("export", R.string.settings_export, icon = TablerIcons.CloudDownload),
-            settings_row_item("connection", R.string.settings_connection, icon = TablerIcons.Wifi),
+            settings_row_item("external_accounts", R.string.external_accounts, icon = TablerIcons.ArrowsRightLeft),
+            settings_row_item("sender_filters", R.string.mail_management, icon = TablerIcons.Filter),
+            settings_row_item("mail_rules", R.string.mail_rules_title, icon = TablerIcons.Bolt),
+            settings_row_item("folders", R.string.folders, icon = TablerIcons.Folder),
         ),
     ),
     settings_section(
-        R.string.settings_section_other,
+        R.string.settings_advanced,
         listOf(
-            settings_row_item("feedback", R.string.settings_feedback, icon = TablerIcons.MessageReport),
             settings_row_item("about", R.string.about, icon = TablerIcons.InfoCircle),
+            settings_row_item("feedback", R.string.settings_feedback, icon = TablerIcons.MessageReport),
             settings_row_item("developer", R.string.developer, icon = TablerIcons.Code),
             settings_row_item("diagnostics", R.string.settings_diagnostics, icon = TablerIcons.Bug),
         ),
@@ -160,8 +153,15 @@ fun SettingsScreen(
             .background(colors.bg_primary)
             .systemBarsPadding(),
     ) {
-        AsterTopBar(title = stringResource(R.string.settings), on_back = on_back)
+        AsterTopBar(
+            title = stringResource(R.string.settings),
+            on_back = on_back,
+            trailing = { settings_search_action() },
+        )
         AsterDivider()
+        val is_family = settings_state.subscription?.effective_plan_name
+            ?.contains("family", ignoreCase = true) == true
+        val sections = build_settings_sections(is_family)
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -180,13 +180,12 @@ fun SettingsScreen(
                 username = settings_state.user?.username ?: live_account?.email?.substringBefore("@") ?: "",
                 email = settings_state.user?.email ?: live_account?.email ?: "",
                 subscription = settings_state.subscription,
+                profile_loading = settings_state.user == null && live_account == null,
+                plan_loading = settings_state.subscription == null,
                 on_click = { on_open("profile") },
                 on_upgrade = { on_open("billing") },
             )
             Spacer(Modifier.size(AsterSpacing.lg))
-            val is_family = settings_state.subscription?.effective_plan_name
-                ?.contains("family", ignoreCase = true) == true
-            val sections = build_settings_sections(is_family)
             sections.forEach { section ->
                 section_header(stringResource(section.title_res))
                 Column(
@@ -217,13 +216,15 @@ private fun profile_header(
     username: String,
     email: String,
     subscription: org.astermail.android.api.settings.SubscriptionInfo?,
+    profile_loading: Boolean,
+    plan_loading: Boolean,
     on_click: () -> Unit,
     on_upgrade: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
     val free_label = stringResource(R.string.plan_free)
     val plan_name = subscription?.effective_plan_name
-    val is_free = subscription == null || (
+    val is_free = subscription != null && (
         subscription.effective_price_cents == 0 ||
             (!plan_name.isNullOrBlank() && plan_name.trim().equals(free_label, ignoreCase = true))
         )
@@ -245,22 +246,46 @@ private fun profile_header(
                 size = 88.dp,
             )
             Spacer(Modifier.size(14.dp))
-            Text(
-                text = display_name.ifBlank { username.ifBlank { stringResource(R.string.settings_profile) } },
-                color = colors.text_primary,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-            if (email.isNotBlank()) {
-                Spacer(Modifier.size(2.dp))
-                Text(
-                    text = email,
-                    color = colors.text_tertiary,
-                    fontSize = 13.sp,
+            if (profile_loading) {
+                Box(
+                    modifier = Modifier
+                        .width(150.dp)
+                        .height(20.dp)
+                        .background(shimmer_brush(), SquircleShape(6.dp)),
                 )
+                Spacer(Modifier.size(6.dp))
+                Box(
+                    modifier = Modifier
+                        .width(196.dp)
+                        .height(13.dp)
+                        .background(shimmer_brush(), SquircleShape(6.dp)),
+                )
+            } else {
+                Text(
+                    text = display_name.ifBlank { username.ifBlank { stringResource(R.string.settings_profile) } },
+                    color = colors.text_primary,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                if (email.isNotBlank()) {
+                    Spacer(Modifier.size(2.dp))
+                    Text(
+                        text = email,
+                        color = colors.text_tertiary,
+                        fontSize = 13.sp,
+                    )
+                }
             }
         }
-        if (is_free) {
+        if (plan_loading) {
+            Spacer(Modifier.size(12.dp))
+            Box(
+                modifier = Modifier
+                    .width(112.dp)
+                    .height(33.dp)
+                    .background(shimmer_brush(), SquircleShape(999.dp)),
+            )
+        } else if (is_free) {
             Spacer(Modifier.size(12.dp))
             Box(
                 modifier = Modifier
@@ -300,7 +325,7 @@ private fun section_header(title: String) {
 }
 
 @Composable
-private fun settings_row(row: settings_row_item, on_click: () -> Unit) {
+internal fun settings_row(row: settings_row_item, on_click: () -> Unit) {
     val colors = AsterMaterial.colors
     Row(
         modifier = Modifier

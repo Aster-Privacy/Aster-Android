@@ -41,6 +41,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -56,11 +59,15 @@ import org.astermail.android.R
 import org.astermail.android.billing.BillingViewModel
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import compose.icons.TablerIcons
+import compose.icons.tablericons.AlertTriangle
+import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
+import org.astermail.android.design.components.DialogConfirmStyle
 import org.astermail.android.settings.SettingsViewModel
 
-private fun format_bytes(bytes: Long): String {
+internal fun format_bytes(bytes: Long): String {
     if (bytes < 1024) return "$bytes B"
     val kb = bytes / 1024.0
     if (kb < 1024) return "%.1f KB".format(kb)
@@ -76,19 +83,32 @@ private fun format_bytes(bytes: Long): String {
 fun StorageScreen(
     on_back: () -> Unit,
     on_open: (id: String) -> Unit = {},
+    on_open_folder: (folder_id: String, folder_name: String) -> Unit = { _, _ -> },
 ) {
     val vm: SettingsViewModel = hiltViewModel()
     val state by vm.state.collectAsStateWithLifecycle()
     val mail_vm: org.astermail.android.mail.MailViewModel = hiltViewModel()
     val inbox_state by mail_vm.inbox_state.collectAsStateWithLifecycle()
+    val is_emptying_spam by mail_vm.emptying_spam_state.collectAsStateWithLifecycle()
     val billing_vm: BillingViewModel = hiltViewModel()
     val billing_state by billing_vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
     val context = LocalContext.current
 
+    var load_requested by remember { mutableStateOf(false) }
+    var show_empty_trash_confirm by remember { mutableStateOf(false) }
+    var show_empty_spam_confirm by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
+        load_requested = true
         vm.load_storage()
+        vm.load_subscription(force = false)
         mail_vm.load_stats()
+    }
+
+    LaunchedEffect(Unit) {
+        mail_vm.toast_events.collect { event ->
+            android.widget.Toast.makeText(context, event.message, android.widget.Toast.LENGTH_SHORT).show()
+        }
     }
 
     LaunchedEffect(billing_state.portal_url) {
@@ -109,7 +129,9 @@ fun StorageScreen(
     detail_scaffold(title = stringResource(R.string.storage_title), on_back = on_back) {
         val storage = state.storage
         val stats = inbox_state.stats
-        if (state.is_loading && storage == null) {
+        val awaiting_first_load = storage == null && stats == null &&
+            (!load_requested || state.is_loading || state.error == null)
+        if (awaiting_first_load || (state.is_loading && storage == null && stats == null)) {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
                 contentAlignment = Alignment.Center,
@@ -142,7 +164,7 @@ fun StorageScreen(
                 pct_from_api > 0 -> (pct_from_api / 100.0).toFloat().coerceIn(0f, 1f)
                 else -> 0f
             }
-            val display_fraction = fraction
+            val display_fraction = if (used_bytes > 0) fraction.coerceAtLeast(0.02f) else fraction
             val pct = fraction * 100
             val pct_label = when {
                 pct <= 0f -> "0%"
@@ -150,6 +172,14 @@ fun StorageScreen(
                 pct < 1f -> "%.1f%%".format(pct)
                 else -> "${pct.toInt()}%"
             }
+
+            val over_limit = storage?.is_over_limit == true
+            val bar_color = when {
+                over_limit || fraction >= 0.95f -> colors.danger
+                fraction >= 0.8f -> colors.warning
+                else -> colors.accent_blue
+            }
+            val free_bytes = (total_bytes - used_bytes).coerceAtLeast(0L)
 
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(AsterSpacing.lg)) {
@@ -177,15 +207,62 @@ fun StorageScreen(
                                     .weight(display_fraction)
                                     .fillMaxWidth()
                                     .height(14.dp)
-                                    .background(colors.accent_blue, RoundedCornerShape(7.dp)),
+                                    .background(bar_color, RoundedCornerShape(7.dp)),
                             )
                         }
                         if (display_fraction < 1f) {
                             Box(modifier = Modifier.weight(1f - display_fraction))
                         }
                     }
+                    Spacer(Modifier.size(AsterSpacing.sm))
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = stringResource(R.string.storage_used_label, used),
+                            color = colors.text_tertiary,
+                            fontSize = 12.sp,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text(
+                            text = stringResource(R.string.storage_free_label, format_bytes(free_bytes)),
+                            color = colors.text_tertiary,
+                            fontSize = 12.sp,
+                        )
+                    }
                 }
             }
+            if (over_limit || fraction >= 0.9f) {
+                v_gap(AsterSpacing.md)
+                AsterCard(modifier = Modifier.fillMaxWidth()) {
+                    detail_row(
+                        title = stringResource(
+                            if (over_limit) R.string.storage_locked_title
+                            else R.string.storage_almost_full_title,
+                        ),
+                        subtitle = stringResource(
+                            if (over_limit) R.string.storage_locked_description
+                            else R.string.storage_almost_full_body,
+                        ),
+                        icon = TablerIcons.AlertTriangle,
+                    )
+                }
+            }
+            v_gap(AsterSpacing.lg)
+            storage_plan_section(
+                plan_name = state.subscription?.effective_plan_name,
+                total_bytes = total_bytes,
+                addon_bytes = storage?.addon_bytes ?: 0L,
+                free_bytes = free_bytes,
+            )
+            storage_distribution_section(stats, on_open_folder)
+            storage_mailbox_section(stats, used_bytes)
+            storage_cleanup_section(
+                trash_count = stats?.trash ?: 0,
+                spam_count = stats?.spam ?: 0,
+                is_emptying_spam = is_emptying_spam,
+                on_empty_trash = { show_empty_trash_confirm = true },
+                on_empty_spam = { show_empty_spam_confirm = true },
+                on_open_folder = on_open_folder,
+            )
             v_gap(AsterSpacing.lg)
             Text(
                 text = stringResource(R.string.buy_more_storage_note),
@@ -199,5 +276,35 @@ fun StorageScreen(
             )
         }
         v_gap(AsterSpacing.xxl)
+    }
+
+    if (show_empty_trash_confirm) {
+        AsterAlertDialog(
+            on_dismiss = { show_empty_trash_confirm = false },
+            title = stringResource(R.string.empty_trash),
+            message = stringResource(R.string.empty_trash_confirm),
+            confirm_label = stringResource(R.string.empty_trash),
+            cancel_label = stringResource(R.string.cancel),
+            confirm_style = DialogConfirmStyle.destructive,
+            on_confirm = {
+                show_empty_trash_confirm = false
+                mail_vm.empty_trash()
+            },
+        )
+    }
+
+    if (show_empty_spam_confirm) {
+        AsterAlertDialog(
+            on_dismiss = { show_empty_spam_confirm = false },
+            title = stringResource(R.string.empty_spam),
+            message = stringResource(R.string.empty_spam_confirm),
+            confirm_label = stringResource(R.string.empty_spam),
+            cancel_label = stringResource(R.string.cancel),
+            confirm_style = DialogConfirmStyle.destructive,
+            on_confirm = {
+                show_empty_spam_confirm = false
+                mail_vm.empty_spam()
+            },
+        )
     }
 }
