@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="common_back">Назад</string>
+    <string name="common_storage_used_of_total">%1$s из %2$s</string>
+    <string name="common_storage_used_only">занято %1$s</string>
+    <string name="common_snackbar_dismiss">Скрыть</string>
+    <string name="common_snackbar_undo">Отменить</string>
+</resources>

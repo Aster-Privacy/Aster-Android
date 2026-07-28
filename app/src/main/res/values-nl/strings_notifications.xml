@@ -13,4 +13,13 @@
     <string name="notif_login_alert_revoke_failed_body">Open de app om je actieve sessies te bekijken.</string>
     <string name="mute_folder_notifications">Mapmeldingen dempen</string>
     <string name="unmute_folder_notifications">Dempen van mapmeldingen opheffen</string>
+    <string name="notif_channel_new_mail_name">Nieuwe e-mail</string>
+    <string name="notif_channel_new_mail_description">Meldingen voor nieuwe binnenkomende e-mails</string>
+    <string name="notif_new_message">Nieuw bericht</string>
+    <string name="notif_action_reply">Beantwoorden</string>
+    <string name="notif_action_mark_read">Markeren als gelezen</string>
+    <string name="notif_action_archive">Archiveren</string>
+    <string name="notif_group_summary_new_mail">Nieuwe e-mail</string>
+    <string name="notif_battery_opt_title">Onbeperkte achtergrondactiviteit</string>
+    <string name="notif_battery_opt_subtitle">Vereist voor betrouwbare meldingen. Tik om dit in te schakelen in de systeeminstellingen.</string>
 </resources>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_placeholder">ابحث في البريد</string>
+    <string name="search_clear_cd">مسح البحث</string>
+    <string name="search_back_cd">رجوع</string>
+    <string name="search_remove_filter_cd">إزالة عامل التصفية</string>
+    <string name="search_empty_initial_title">ابحث في بريدك</string>
+    <string name="search_empty_initial_subtitle">اعثر على الرسائل حسب المرسل أو الموضوع أو المحتوى. يجري كل بحث على هذا الجهاز.</string>
+    <string name="search_empty_no_results_title">لا نتائج</string>
+    <string name="search_empty_no_results_subtitle">جرّب كلمة أخرى أو أزل عوامل التصفية.</string>
+    <string name="search_recent_header">الأخيرة</string>
+    <string name="search_recent_clear">مسح</string>
+    <string name="search_quick_all">الكل</string>
+    <string name="search_quick_unread">غير مقروءة</string>
+    <string name="search_quick_attachments">المرفقات</string>
+    <string name="search_quick_flagged">معلّمة</string>
+    <string name="search_filter_has_attachment">تحتوي مرفقًا</string>
+    <string name="search_filter_unread">غير مقروءة</string>
+    <string name="search_filter_starred">بنجمة</string>
+    <string name="search_filter_encrypted">مشفّرة</string>
+    <string name="search_chip_from">من</string>
+    <string name="search_chip_to">إلى</string>
+    <string name="search_chip_subject">الموضوع</string>
+    <string name="search_chip_has">تحتوي</string>
+    <string name="search_chip_is">الحالة</string>
+    <string name="search_chip_in">في</string>
+    <string name="search_chip_before">قبل</string>
+    <string name="search_chip_after">بعد</string>
+    <string name="search_chip_date">التاريخ</string>
+    <string name="search_chip_label">التسمية</string>
+    <string name="search_chip_not_prefix">ليس</string>
+    <string name="search_chip_format">%1$s: %2$s</string>
+    <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>
+</resources>

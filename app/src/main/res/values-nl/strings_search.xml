@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_placeholder">Mail doorzoeken</string>
+    <string name="search_clear_cd">Zoekopdracht wissen</string>
+    <string name="search_back_cd">Terug</string>
+    <string name="search_remove_filter_cd">Filter weghalen</string>
+    <string name="search_empty_initial_title">Doorzoek je mail</string>
+    <string name="search_empty_initial_subtitle">Vind berichten op afzender, onderwerp of inhoud. Alle zoekopdrachten gebeuren op dit toestel.</string>
+    <string name="search_empty_no_results_title">Geen resultaten</string>
+    <string name="search_empty_no_results_subtitle">Probeer een ander woord of haal filters weg.</string>
+    <string name="search_recent_header">Recent</string>
+    <string name="search_recent_clear">Wissen</string>
+    <string name="search_quick_all">Alles</string>
+    <string name="search_quick_unread">Ongelezen</string>
+    <string name="search_quick_attachments">Bijlagen</string>
+    <string name="search_quick_flagged">Gemarkeerd</string>
+    <string name="search_filter_has_attachment">Met bijlage</string>
+    <string name="search_filter_unread">Ongelezen</string>
+    <string name="search_filter_starred">Met ster</string>
+    <string name="search_filter_encrypted">Versleuteld</string>
+    <string name="search_chip_from">Van</string>
+    <string name="search_chip_to">Aan</string>
+    <string name="search_chip_subject">Onderwerp</string>
+    <string name="search_chip_has">Bevat</string>
+    <string name="search_chip_is">Is</string>
+    <string name="search_chip_in">In</string>
+    <string name="search_chip_before">Voor</string>
+    <string name="search_chip_after">Na</string>
+    <string name="search_chip_date">Datum</string>
+    <string name="search_chip_label">Label</string>
+    <string name="search_chip_not_prefix">Niet</string>
+    <string name="search_chip_format">%1$s: %2$s</string>
+    <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>
+</resources>

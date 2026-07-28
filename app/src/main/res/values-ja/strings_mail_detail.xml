@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="detail_show_details">詳細を表示</string>
+    <string name="detail_hide_details">詳細を隠す</string>
+    <string name="detail_show_quoted_text">引用文を表示</string>
+    <string name="detail_hide_quoted_text">引用文を隠す</string>
+    <string name="detail_external_images_blocked">このメッセージには外部コンテンツが含まれます。読み込むと、あなたの行動が差出人に伝わることがあります。</string>
+    <string name="detail_external_allow_once">1 回だけ読み込む</string>
+    <string name="detail_external_always_allow">常に許可</string>
+    <string name="detail_external_images_traffic_blocked">通信量を抑えるため外部画像をブロックしています。</string>
+    <string name="detail_disable_traffic_saving">通信量の節約をやめる</string>
+    <string name="detail_external_dismiss">後で</string>
+    <string name="detail_unsubscribe_title">この差出人はワンタップでの配信停止に対応しています。</string>
+    <string name="detail_unsubscribe_subtitle">このアドレスからのメールは届かなくなります。</string>
+    <string name="detail_view_raw_source">ソースを表示</string>
+    <string name="detail_raw_source_title">メッセージのソース</string>
+    <string name="detail_raw_source_headers">ヘッダー</string>
+    <string name="detail_raw_source_body">本文</string>
+    <string name="detail_raw_source_copy">コピー</string>
+    <string name="detail_raw_source_copied">クリップボードにコピーしました</string>
+    <string name="detail_raw_source_close">閉じる</string>
+    <string name="detail_raw_source_unavailable">このメッセージのソースは取得できません。</string>
+    <string name="detail_star_action">スターを付ける</string>
+    <string name="detail_unstar_action">スターを外す</string>
+    <string name="message_details">メッセージの詳細</string>
+    <string name="from_label">差出人</string>
+    <string name="to_label">宛先</string>
+    <string name="subject_label">件名</string>
+    <string name="message_id_label">メッセージ ID</string>
+    <string name="message_headers">メッセージヘッダー</string>
+    <string name="no_raw_headers">このメッセージのヘッダー情報はありません。</string>
+    <string name="copy_headers">ヘッダーをコピー</string>
+    <string name="headers_copied">ヘッダーをコピーしました</string>
+</resources>

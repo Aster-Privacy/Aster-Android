@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="compose_footer_secured_by_plain">Aster Mail tarafından korunuyor</string>
+    <string name="compose_footer_secured_by_label">Koruyan:</string>
+    <string name="compose_footer_brand">Aster Mail</string>
+    <string name="compose_quote_forwarded_message">İletilen ileti</string>
+    <string name="compose_quote_original_message">Özgün ileti</string>
+    <string name="compose_quote_show_label">%1$s göster</string>
+    <string name="compose_quote_header_from">Kimden:</string>
+    <string name="compose_quote_header_date">Tarih:</string>
+    <string name="compose_quote_header_subject">Konu:</string>
+    <string name="compose_attachment_remove">Eki kaldır</string>
+    <string name="compose_attachment_uploading">%1$s eki yükleniyor</string>
+    <string name="schedule_time_in_past">Planlanan saat ileri bir zaman olmalı</string>
+    <string name="signature_none">İmza yok</string>
+    <string name="signature_select">İmza seç</string>
+    <string name="compose_metadata_strip_failed">Şu dosyadan gizli üstveri kaldırılamadı: %1$s</string>
+    <string name="compose_attachment_read_failed">\"%1$s\" eklenemedi. E-postan gönderilmedi. Dosyayı çıkar ya da yeniden ekleyip tekrar dene.</string>
+</resources>

@@ -73,8 +73,8 @@
     <string name="onboarding_slide4_body">Create disposable aliases that forward to your real inbox. Burn any one without affecting the rest.</string>
 
     <!-- Welcome / Auth -->
-    <string name="welcome_tagline">Private by nature</string>
-    <string name="welcome_subtitle">End-to-end encrypted email for people who actually care about their privacy.</string>
+    <string name="welcome_tagline">Welcome to Aster</string>
+    <string name="welcome_subtitle">Private, convenient, encrypted email.</string>
     <string name="log_in">Log in</string>
     <string name="create_account">Create Account</string>
     <string name="sign_in_title">Sign in to Aster</string>
@@ -214,6 +214,8 @@
 
     <!-- Inbox -->
     <string name="all_caught_up">You\'re all caught up</string>
+    <string name="nothing_in_this_tab">Nothing in this tab</string>
+    <string name="other_tabs_have_mail">Your other tabs still have mail.</string>
     <string name="new_messages_here">New messages will appear here</string>
     <string name="nothing_sent_yet">Nothing sent yet</string>
     <string name="sent_messages_here">Messages you send will appear here</string>
@@ -253,7 +255,7 @@
     <string name="confirm_delete_permanent_message">Permanently delete this email? This cannot be undone.</string>
     <string name="delete_all">Delete all</string>
     <string name="open_drawer">open drawer</string>
-    <string name="compose">compose</string>
+    <string name="compose">Compose</string>
     <string name="sort">sort</string>
     <string name="switch_folder">switch folder</string>
     <string name="more_options">More options</string>
@@ -268,6 +270,10 @@
     <string name="swipe_restore">Restore</string>
     <string name="swipe_delete_forever">Delete forever</string>
     <string name="swipe_not_spam">Not spam</string>
+    <string name="spam_auto_delete_notice">Items in spam will be automatically deleted after %1$d days.</string>
+    <string name="compose_task_label">Compose</string>
+    <string name="compose_locked_title">Aster is locked</string>
+    <string name="compose_locked_message">Unlock Aster to keep writing. Your draft is safe.</string>
     <string name="swipe_read">Read</string>
     <string name="swipe_unread">Unread</string>
     <string name="swipe_star">Star</string>
@@ -297,6 +303,9 @@
     <string name="trackers_blocked_description">Tracking pixels and external requests were removed.</string>
     <string name="unstar">Unstar</string>
     <string name="star">Star</string>
+    <string name="react">React</string>
+    <string name="add_reaction">Add reaction</string>
+    <string name="reaction_failed">Could not send reaction</string>
     <string name="more">more</string>
     <string name="more_actions">More</string>
     <string name="mark_as_unread">Mark as unread</string>
@@ -318,6 +327,14 @@
     <string name="report_spam">Report spam</string>
     <string name="reported_as_spam">Reported as spam</string>
     <string name="block_sender">Block sender</string>
+    <string name="copy_address">Copy address</string>
+    <string name="sender_on_aster">Aster account</string>
+    <string name="messages_from_sender">Find mail from this sender</string>
+    <string name="send_email_to_sender">Write to this sender</string>
+    <string name="add_to_contacts">Save to contacts</string>
+    <string name="remove_from_contacts">Remove from contacts</string>
+    <string name="contact_added_named">Saved %1$s to contacts</string>
+    <string name="contact_removed_named">Removed %1$s from contacts</string>
     <string name="sender_blocked">Sender blocked</string>
     <string name="message_unavailable">Message unavailable</string>
     <string name="no_subject">(no subject)</string>
@@ -336,11 +353,26 @@
     <string name="one_font">1 font</string>
     <string name="n_stylesheets">%1$d stylesheets</string>
     <string name="one_stylesheet">1 stylesheet</string>
+    <string name="blocked_content_details_title">Blocked content</string>
+    <string name="blocked_type_image">Image</string>
+    <string name="blocked_type_tracker">Tracker</string>
+    <string name="blocked_type_font">Font</string>
+    <string name="blocked_type_stylesheet">Stylesheet</string>
+    <string name="blocked_content_details_hint">Nothing here was contacted. Loading it lets the sender see when you opened this message.</string>
+    <string name="tracker_details_hint">Aster removed these before the message was shown, so the sender learns nothing about you.</string>
+    <string name="spy_pixels_blocked">SPY PIXELS BLOCKED</string>
+    <string name="links_cleaned">LINKS CLEANED</string>
+    <string name="param_removed_from_links">Removed %1$s from %2$d links</string>
     <string name="stop_receiving_from">Stop receiving from</string>
     <string name="external_content_blocked">External images, fonts, and trackers blocked</string>
     <string name="e2e_encrypted_message">End-to-end encrypted message</string>
+    <string name="decrypt_failed_title">Message couldn\'t be decrypted</string>
+    <string name="decrypt_failed_body">This message was encrypted with a key this device does not currently hold. Try again, or open it on the Aster web app.</string>
+    <string name="decrypt_retrying">Retrying</string>
+    <string name="decrypt_retry_failed">Still couldn\'t decrypt this message</string>
     <string name="e2e_no_key_description">This message is encrypted with a key this device does not yet hold. Open it on the Aster web app to read.</string>
     <string name="e2e_encryption_failed">Could not send: end-to-end encryption failed. The message was not sent.</string>
+    <string name="attachment_prepare_failed">Could not send: "%1$s" could not be prepared. The message was not sent.</string>
     <string name="e2e_keys_not_ready">Could not send: encryption keys aren\'t ready yet. The message was not sent.</string>
     <string name="no_body">(no body)</string>
     <string name="attachments_count">%d attachment(s)</string>
@@ -412,6 +444,7 @@
     <string name="restored_to_inbox">Restored to inbox</string>
     <string name="failed_to_restore">Failed to restore</string>
     <string name="failed_to_save_draft">Failed to save draft</string>
+    <string name="email_saved_as_draft">Email saved as draft</string>
     <string name="draft_deleted">Deleted %d draft(s)</string>
     <string name="failed_to_delete_draft">Failed to delete draft</string>
     <string name="deleted_permanently">Deleted permanently</string>
@@ -427,7 +460,13 @@
     <string name="all_marked_unread">All marked as unread</string>
     <string name="failed_mark_all_unread">Failed to mark all as unread</string>
     <string name="trash_emptied">Trash emptied</string>
+    <string name="trash_already_empty">Trash is already empty</string>
     <string name="failed_empty_trash">Failed to empty trash</string>
+    <string name="empty_spam">Empty spam</string>
+    <string name="empty_spam_confirm">Everything in spam will be deleted permanently. This cannot be undone.</string>
+    <string name="spam_emptied">Spam emptied</string>
+    <string name="spam_already_empty">Spam is already empty</string>
+    <string name="failed_empty_spam">Failed to empty spam</string>
 
     <!-- Recently deleted aliases (alias trash) -->
     <string name="recently_deleted_aliases_title">Recently deleted</string>
@@ -463,6 +502,23 @@
     <string name="reactivate">Reactivate</string>
     <string name="emails">emails</string>
     <string name="risky">Risky</string>
+    <string name="scan_inbox">Scan inbox</string>
+    <string name="search_senders">Search senders</string>
+    <string name="deselect_all">Deselect all</string>
+    <string name="count_selected">%1$d selected</string>
+    <string name="unsubscribe_selected">Unsubscribe (%1$d)</string>
+    <string name="reactivate_selected">Reactivate (%1$d)</string>
+    <string name="open_unsubscribe_page">Open unsubscribe page</string>
+    <string name="stat_active">Active</string>
+    <string name="stat_unsubscribed">Unsubscribed</string>
+    <string name="stat_emails">Emails</string>
+    <string name="no_unsubscribed_senders">No unsubscribed senders yet</string>
+    <string name="active_senders">Active senders</string>
+    <string name="stop_sender_title">Stop mail from this sender?</string>
+    <string name="stop_sender_body">Aster will ask %1$s to take you off their list. Mail can keep arriving for a few days while they process it, and you can turn this sender back on at any time from the Unsubscribed tab.</string>
+    <string name="stop_sender_confirm">Send request</string>
+    <string name="stop_senders_title">Stop mail from %1$d senders?</string>
+    <string name="stop_senders_body">Aster will ask each of these senders to take you off their list. Mail can keep arriving for a few days while they process it, and you can turn any of them back on at any time from the Unsubscribed tab.</string>
 
     <!-- Compose -->
     <string name="compose_reply">Reply</string>
@@ -490,12 +546,35 @@
     <string name="recipients_required">Add at least one recipient</string>
     <string name="e2e_recipient_description">Messages to this recipient are encrypted with their identity key. Only they can read them.</string>
     <string name="transit_recipient_description">Messages to this recipient are encrypted in transit using TLS. The recipient\'s server may be able to read them.</string>
+    <string name="e2e_point_device">Encrypted on this device before it is sent</string>
+    <string name="e2e_point_keys">Only the recipient identity key can unlock it</string>
+    <string name="e2e_point_quantum">Hardened against future quantum attacks</string>
+    <string name="standard_point_tls">Encrypted in transit with TLS</string>
+    <string name="standard_point_server">The receiving mail server can read the contents</string>
+    <string name="standard_point_storage">Stored encrypted once it reaches Aster</string>
+    <string name="phishing_signal_authentication_failed">%1$s did not pass sender authentication</string>
+    <string name="sender_verified">Verified</string>
+    <string name="sender_verified_description">Aster confirmed this message really came from %1$s.</string>
+    <string name="sender_unverified_title">Sender could not be verified</string>
+    <string name="sender_unverified_description">The checks that prove a message came from %1$s did not pass. Be careful with links, attachments and anything it asks you to do.</string>
+    <string name="sender_authentication">Sender checks</string>
+    <string name="auth_result_pass">passed</string>
+    <string name="auth_result_fail">failed</string>
+    <string name="auth_result_missing">not provided</string>
+    <string name="auth_summary_format">SPF %1$s, DKIM %2$s, DMARC %3$s</string>
+    <string name="format">Format</string>
     <string name="bold">Bold</string>
     <string name="italic">Italic</string>
     <string name="underline">Underline</string>
     <string name="strikethrough">Strikethrough</string>
     <string name="bullet_list">Bullet list</string>
     <string name="numbered_list">Numbered list</string>
+    <string name="blockquote">Quote</string>
+    <string name="insert_link">Insert link</string>
+    <string name="horizontal_rule">Divider line</string>
+    <string name="insert">Insert</string>
+    <string name="link_url_label">Web address</string>
+    <string name="link_url_placeholder">example.com</string>
     <string name="image">Image</string>
     <string name="device_file">Device file</string>
     <string name="photo">Photo</string>
@@ -513,6 +592,8 @@
     <string name="search_mail">Search mail</string>
     <string name="send_problem_title">Problem sending mail</string>
     <string name="send_problem_message">Your message could not be sent yet. The app will keep retrying in the background.</string>
+    <string name="send_still_trying">Still sending. Aster will keep trying in the background.</string>
+    <string name="send_problem_failed_message">Your message could not be sent. You can try again or discard it.</string>
     <string name="search_aliases">Search aliases</string>
     <string name="filter_from">From</string>
     <string name="filter_to">To</string>
@@ -636,6 +717,8 @@
     <string name="refer_a_friend">Refer a friend</string>
 
     <!-- Settings main -->
+    <string name="settings_search_placeholder">Search settings</string>
+    <string name="settings_search_hint">Type to search every setting</string>
     <string name="settings_general">General</string>
     <string name="settings_mail">Mail</string>
     <string name="settings_advanced">Advanced</string>
@@ -721,6 +804,9 @@
     <string name="import_job_created">Import job started</string>
     <string name="import_file_too_large">File is too large (max 10 GiB)</string>
     <string name="attachment_too_large">\"%1$s\" is too large (max 25 MB)</string>
+    <string name="attachment_total_too_large">Attachments can\'t add up to more than 50 MB</string>
+    <string name="attachment_already_attached">\"%1$s\" is already attached</string>
+    <string name="attachment_read_failed">\"%1$s\" could not be read</string>
     <string name="scheduled_send_no_attachments">Scheduled emails can\'t include attachments yet. Remove them or send now.</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
@@ -738,6 +824,8 @@
     <string name="theme_light_subtitle">Always light theme</string>
     <string name="theme_dark">Dark</string>
     <string name="theme_dark_subtitle">Always dark theme</string>
+    <string name="theme_dynamic">Wallpaper colors</string>
+    <string name="theme_dynamic_subtitle">Match your device colors</string>
     <string name="color_theme">Color theme</string>
     <string name="color_theme_default">Aster Default</string>
     <string name="color_theme_custom">Custom theme</string>
@@ -1002,6 +1090,8 @@
     <string name="failed_delete_alias">Could not delete alias</string>
     <string name="failed_revoke_api_key">Could not revoke API key</string>
     <string name="failed_block_sender">Could not block sender</string>
+    <string name="block_sender_confirm_message">New mail from this address goes straight to spam. You can undo this in Settings under Blocked senders.</string>
+    <string name="sender_blocked_named">Blocked %1$s</string>
     <string name="failed_unblock_sender">Could not unblock sender</string>
     <string name="default_signature_name">Default</string>
     <string name="quiet_hours_start">Start</string>
@@ -1062,6 +1152,11 @@
     <string name="share_invite_link">Share invite link</string>
     <string name="share_text">Try Aster, it\'s private email that actually works.</string>
     <string name="share_referral">Share referral</string>
+    <string name="referral_history">Referral history</string>
+    <string name="no_referrals_yet">No referrals yet</string>
+    <string name="referral_history_empty_hint">Friends you invite will show up here.</string>
+    <string name="referral_commission_info">You also earn %1$d%% of every payment they make while they stay subscribed.</string>
+    <string name="referral_max_credits">%1$s of %2$s in referral credit earned</string>
 
     <!-- Billing -->
     <string name="billing">Billing</string>
@@ -1105,6 +1200,12 @@
     <string name="no_blocked_senders_subtitle">You haven\'t blocked anyone yet</string>
     <string name="blocked_count">%d blocked</string>
     <string name="unblock">Unblock</string>
+    <string name="block_a_sender">Block a sender</string>
+    <string name="block_sender_hint">Enter an email address or a domain. New mail from them goes straight to spam.</string>
+    <string name="block_sender_placeholder">spam@example.com</string>
+    <string name="block">Block</string>
+    <string name="blocked_domain">Entire domain</string>
+    <string name="blocked_senders_load_failed">Could not load your blocked senders</string>
 
     <!-- Allowlist -->
     <string name="no_allowlisted_senders">No allowed senders</string>
@@ -1210,6 +1311,7 @@
 
     <!-- Feedback -->
     <string name="feedback">Feedback</string>
+    <string name="leave_us_feedback">Leave us feedback</string>
     <string name="feedback_subtitle">Tell us what\'s on your mind. We read every message.</string>
     <string name="category">Category</string>
     <string name="category_feedback">Feedback</string>
@@ -1320,6 +1422,34 @@
     <string name="storage_load_error">Could not load storage info</string>
     <string name="storage_used_of_total">%1$s of %2$s used</string>
     <string name="storage_percent_of_plan">%s of your plan</string>
+    <string name="storage_used_label">%1$s used</string>
+    <string name="storage_free_label">%1$s free</string>
+    <string name="storage_plan_section">Your plan</string>
+    <string name="storage_plan_row">Plan</string>
+    <string name="storage_included_row">Included with plan</string>
+    <string name="storage_addons_row">Storage add-ons</string>
+    <string name="storage_total_row">Total storage</string>
+    <string name="storage_available_row">Still available</string>
+    <string name="storage_almost_full_title">Storage almost full</string>
+    <string name="storage_almost_full_body">Free up space or add storage before new mail starts bouncing.</string>
+    <string name="storage_where_section">Where your messages are</string>
+    <string name="storage_where_note">Shares are based on how many messages each folder holds.</string>
+    <string name="storage_mailbox_section">Mailbox statistics</string>
+    <string name="storage_total_messages">Total messages</string>
+    <string name="storage_unread_messages">Unread</string>
+    <string name="storage_starred_messages">Starred</string>
+    <string name="storage_scheduled_messages">Scheduled</string>
+    <string name="storage_average_size">Average message size</string>
+    <string name="storage_free_up_section">Free up space</string>
+    <string name="storage_messages_count">%1$s messages</string>
+    <string name="storage_empty_action">Empty</string>
+    <string name="storage_trash_hint">Deleted mail still counts against your storage until the trash is emptied.</string>
+    <string name="storage_spam_hint">Spam is removed automatically after 30 days.</string>
+    <string name="storage_nothing_to_clean">Nothing to clean up right now.</string>
+    <string name="storage_share_of_mail">%1$s of your mail</string>
+    <string name="storage_messages_total">%1$s messages in total</string>
+    <string name="storage_cleanup_title">%1$s (%2$s)</string>
+    <string name="storage_free_up_note">Emptying a folder removes those messages for good and frees the space they use.</string>
 
     <!-- Subscriptions/Plans -->
     <string name="plan_billing">Plan &amp; billing</string>
@@ -1457,7 +1587,6 @@
     <string name="about">About</string>
     <string name="aster_logo">Aster logo</string>
     <string name="version_format">Version %s</string>
-    <string name="built_in_canada">Built with care in Canada</string>
     <string name="terms_of_service">Terms of service</string>
     <string name="register_agree_prefix">By creating an account, you agree to our </string>
     <string name="register_agree_and"> and </string>
@@ -1582,6 +1711,10 @@
         <item quantity="one">%d domain</item>
         <item quantity="other">%d domains</item>
     </plurals>
+    <plurals name="subscriptions_found_count">
+        <item quantity="one">Found %d new subscription</item>
+        <item quantity="other">Found %d new subscriptions</item>
+    </plurals>
     <plurals name="unsubscribed_count">
         <item quantity="one">Unsubscribed %d sender</item>
         <item quantity="other">Unsubscribed %d senders</item>
@@ -1591,6 +1724,12 @@
         <item quantity="other">%d contacts</item>
     </plurals>
     <string name="could_not_create_ghost_alias">Couldn\'t create ghost alias</string>
+    <string name="ghost_alias_limit_reached">Ghost alias limit reached for this month</string>
+    <string name="ghost_extend_confirm_message">Extend %s by another 30 days?</string>
+    <string name="ghost_expire_confirm_message">Expire %s now? Mail sent to it will stop reaching your inbox.</string>
+    <string name="ghost_extended">Ghost alias extended</string>
+    <string name="ghost_expired_toast">Ghost alias expired</string>
+    <string name="ghost_action_failed">Couldn\'t update ghost alias</string>
     <string name="billing_period_year">year</string>
     <string name="billing_period_month">month</string>
     <string name="charge">Charge</string>
@@ -1951,8 +2090,9 @@
     <string name="alias_readable_reverse_info_title">Readable Reverse Aliases</string>
     <string name="alias_readable_reverse_info_desc">Makes reverse aliases include the sender\'s email address so you can tell who is replying.</string>
     <string name="alias_never_inbox">Never send to inbox</string>
+    <string name="alias_never_inbox_chip">Never inbox</string>
     <string name="alias_never_inbox_info_title">Never Send to Inbox</string>
-    <string name="alias_never_inbox_info_desc">When enabled, new emails received through this alias are kept out of your main inbox. You can still find them in All Mail and by opening this alias.</string>
+    <string name="alias_never_inbox_info_desc">When enabled, new emails received through this alias are kept out of your main inbox. You can still find them in All Mail and by opening this alias. A folder rule that matches the message still wins, so it lands in that folder instead.</string>
     <string name="domain_status_active">Active</string>
     <string name="domain_status_setup_required">Setup required</string>
     <string name="domain_collapse">Collapse</string>
@@ -1967,6 +2107,13 @@
     <string name="domain_name_label">Domain name</string>
     <string name="ghost_alias_creating">Creating...</string>
     <string name="ghost_alias_note_label">Note (optional)</string>
+    <string name="ghost_forwarded_count">%d forwarded</string>
+    <string name="ghost_expires_in_days">Expires in %dd</string>
+    <string name="ghost_expires_in_hours">Expires in %dh</string>
+    <string name="ghost_expires_in_minutes">Expires in %dm</string>
+    <string name="ghost_unnamed">Ghost %s</string>
+    <string name="ghost_extend">Extend</string>
+    <string name="ghost_expire_now">Expire now</string>
     <string name="aliases_tab_directories">Directories</string>
     <string name="aliases_tab_preferences">Preferences</string>
 
@@ -2118,6 +2265,9 @@
     <string name="pending_deletion_error">Could not restore your account. Please try again.</string>
     <string name="pending_deletion_restored">Welcome back. Your account has been restored.</string>
     <string name="image_blocked_placeholder">[Image blocked]</string>
+    <string name="image_failed_placeholder">[Image could not be loaded]</string>
+    <string name="image_lightbox_title">Image preview</string>
+    <string name="image_lightbox_failed">This image could not be opened.</string>
     <string name="csrf_unavailable">This session is broken! Please, relogin.</string>
     <string name="auto_advance_label">After archiving or deleting</string>
     <string name="auto_advance_next">Go to next email</string>
@@ -2152,4 +2302,44 @@
     <string name="mail_rules_regex_invalid">This regex pattern has a typo. Checking the syntax usually sorts it.</string>
     <string name="mail_rules_regex_backreference">Backreferences like \1 are not supported. Rewrite the pattern without them.</string>
     <string name="mail_rules_regex_lookaround">Lookahead and lookbehind are not supported. Rewrite the pattern without them.</string>
+    <string name="tap_again_to_exit">Tap again to exit the app</string>
+    <string name="search_action">Search</string>
+    <string name="action_failed">Action failed. Please try again.</string>
+    <string name="version_copied">Version copied</string>
+    <string name="hold_to_copy_version">Hold to copy</string>
+    <string name="name_copied">Name copied</string>
+    <string name="email_copied">Email address copied</string>
+    <string name="badge_active">Active badge</string>
+    <string name="badge_none">None</string>
+    <string name="badge_show_on_profile">Show on profile</string>
+    <string name="badge_show_on_profile_description">Display your active badge to other Aster users.</string>
+    <string name="badge_show_in_signature">Show in signature</string>
+    <string name="badge_show_in_signature_description">Include your active badge in outgoing email signatures.</string>
+    <string name="badges_description">Show off badges you\'ve earned.</string>
+    <string name="vacation_reply_short">Auto-reply while you\'re away</string>
+    <string name="info_auto_discover_title">Auto-discover keys</string>
+    <string name="info_auto_discover_desc">Automatically fetches encryption keys for your contacts so you can send them encrypted mail without any manual setup.</string>
+    <string name="info_encrypt_default_title">Encrypt by default</string>
+    <string name="info_encrypt_default_desc">Automatically encrypts outgoing mail whenever the recipient has a public key, so you never have to turn encryption on per message.</string>
+    <string name="info_require_encryption_title">Require encryption</string>
+    <string name="info_require_encryption_desc">Only send mail that can be encrypted end to end. If a recipient has no key, the message will not send.</string>
+    <string name="info_encryption_indicators_title">Encryption indicators</string>
+    <string name="info_encryption_indicators_desc">Shows a lock icon on mail so you can tell at a glance whether a message is encrypted, signed, or neither.</string>
+    <string name="info_wkd_title">What is WKD?</string>
+    <string name="info_wkd_desc">A standard that lets other mail apps find your public key automatically, so people can send you encrypted mail without asking for it.</string>
+    <string name="info_keyservers_title">What are keyservers?</string>
+    <string name="info_keyservers_desc">Public directories where keys are searchable by email address. Most keyservers do not let you fully remove a key once it is published.</string>
+    <string name="score_weak">Weak</string>
+    <string name="score_fair">Fair</string>
+    <string name="score_partial">Partial</string>
+    <string name="score_strong">Strong</string>
+    <string name="check_passkey_registered">Passkey registered</string>
+    <string name="check_verified_recovery_email">Verified recovery email</string>
+    <string name="check_read_receipts_off">Read receipts off</string>
+    <plurals name="passkeys_registered_count">
+        <item quantity="one">%d passkey registered</item>
+        <item quantity="other">%d passkeys registered</item>
+    </plurals>
+    <string name="share_target_label">Compose email</string>
+    <string name="share_attachment_failed">Some files could not be attached</string>
 </resources>

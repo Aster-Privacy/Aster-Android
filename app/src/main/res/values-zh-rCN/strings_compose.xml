@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="compose_footer_secured_by_plain">由 Aster Mail 保护</string>
+    <string name="compose_footer_secured_by_label">安全保障：</string>
+    <string name="compose_footer_brand">Aster Mail</string>
+    <string name="compose_quote_forwarded_message">转发的邮件</string>
+    <string name="compose_quote_original_message">原始邮件</string>
+    <string name="compose_quote_show_label">显示%1$s</string>
+    <string name="compose_quote_header_from">发件人：</string>
+    <string name="compose_quote_header_date">日期：</string>
+    <string name="compose_quote_header_subject">主题：</string>
+    <string name="compose_attachment_remove">移除附件</string>
+    <string name="compose_attachment_uploading">正在上传附件 %1$s</string>
+    <string name="schedule_time_in_past">定时发送的时间必须晚于现在</string>
+    <string name="signature_none">不使用签名</string>
+    <string name="signature_select">选择签名</string>
+    <string name="compose_metadata_strip_failed">无法清除以下文件中的隐藏元数据：%1$s</string>
+    <string name="compose_attachment_read_failed">无法添加附件 \"%1$s\"。邮件尚未发送。请移除该文件或重新添加后再试。</string>
+</resources>

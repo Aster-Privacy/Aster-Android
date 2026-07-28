@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="common_back">رجوع</string>
+    <string name="common_storage_used_of_total">%1$s من %2$s</string>
+    <string name="common_storage_used_only">%1$s مستخدمة</string>
+    <string name="common_snackbar_dismiss">إخفاء</string>
+    <string name="common_snackbar_undo">تراجع</string>
+</resources>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="compose_footer_secured_by_plain">Aster Mail が保護しています</string>
+    <string name="compose_footer_secured_by_label">保護:</string>
+    <string name="compose_footer_brand">Aster Mail</string>
+    <string name="compose_quote_forwarded_message">転送されたメッセージ</string>
+    <string name="compose_quote_original_message">元のメッセージ</string>
+    <string name="compose_quote_show_label">%1$s を表示</string>
+    <string name="compose_quote_header_from">差出人:</string>
+    <string name="compose_quote_header_date">日時:</string>
+    <string name="compose_quote_header_subject">件名:</string>
+    <string name="compose_attachment_remove">添付を削除</string>
+    <string name="compose_attachment_uploading">添付 %1$s をアップロード中</string>
+    <string name="schedule_time_in_past">予約時刻は未来の時刻にしてください</string>
+    <string name="signature_none">署名なし</string>
+    <string name="signature_select">署名を選択</string>
+    <string name="compose_metadata_strip_failed">次のファイルから隠しメタデータを削除できませんでした: %1$s</string>
+    <string name="compose_attachment_read_failed">\"%1$s\" を添付できませんでした。メールは送信されていません。ファイルを外すか添付し直して、もう一度お試しください。</string>
+</resources>

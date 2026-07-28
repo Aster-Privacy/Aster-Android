@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="common_back">Terug</string>
+    <string name="common_storage_used_of_total">%1$s van %2$s</string>
+    <string name="common_storage_used_only">%1$s gebruikt</string>
+    <string name="common_snackbar_dismiss">Sluiten</string>
+    <string name="common_snackbar_undo">Ongedaan maken</string>
+</resources>

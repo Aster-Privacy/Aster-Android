@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="detail_show_details">상세 보기</string>
+    <string name="detail_hide_details">상세 숨기기</string>
+    <string name="detail_show_quoted_text">인용문 보기</string>
+    <string name="detail_hide_quoted_text">인용문 숨기기</string>
+    <string name="detail_external_images_blocked">이 메일에는 외부 콘텐츠가 있습니다. 불러오면 보낸 사람에게 열람 사실이 알려질 수 있습니다.</string>
+    <string name="detail_external_allow_once">한 번만 불러오기</string>
+    <string name="detail_external_always_allow">항상 허용</string>
+    <string name="detail_external_images_traffic_blocked">데이터를 아끼기 위해 외부 이미지를 차단했습니다.</string>
+    <string name="detail_disable_traffic_saving">데이터 절약 끄기</string>
+    <string name="detail_external_dismiss">나중에</string>
+    <string name="detail_unsubscribe_title">이 발신자는 한 번의 탭으로 수신 거부를 지원합니다.</string>
+    <string name="detail_unsubscribe_subtitle">이 주소에서 오는 메일을 더는 받지 않습니다.</string>
+    <string name="detail_view_raw_source">원본 소스 보기</string>
+    <string name="detail_raw_source_title">메시지 원본 소스</string>
+    <string name="detail_raw_source_headers">헤더</string>
+    <string name="detail_raw_source_body">본문</string>
+    <string name="detail_raw_source_copy">복사</string>
+    <string name="detail_raw_source_copied">클립보드에 복사했습니다</string>
+    <string name="detail_raw_source_close">닫기</string>
+    <string name="detail_raw_source_unavailable">이 메시지의 원본 소스는 볼 수 없습니다.</string>
+    <string name="detail_star_action">메일에 별표 표시</string>
+    <string name="detail_unstar_action">별표 해제</string>
+    <string name="message_details">메시지 정보</string>
+    <string name="from_label">보낸 사람</string>
+    <string name="to_label">받는 사람</string>
+    <string name="subject_label">제목</string>
+    <string name="message_id_label">메시지 ID</string>
+    <string name="message_headers">메시지 헤더</string>
+    <string name="no_raw_headers">이 메시지의 원본 헤더가 없습니다.</string>
+    <string name="copy_headers">헤더 복사</string>
+    <string name="headers_copied">헤더를 복사했습니다</string>
+</resources>

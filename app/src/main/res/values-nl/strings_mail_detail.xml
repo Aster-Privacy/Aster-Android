@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="detail_show_details">Details tonen</string>
+    <string name="detail_hide_details">Details verbergen</string>
+    <string name="detail_show_quoted_text">Geciteerde tekst tonen</string>
+    <string name="detail_hide_quoted_text">Geciteerde tekst verbergen</string>
+    <string name="detail_external_images_blocked">Dit bericht bevat externe inhoud. Als je die laadt, kan de afzender zien dat je het bericht opent.</string>
+    <string name="detail_external_allow_once">Eén keer laden</string>
+    <string name="detail_external_always_allow">Altijd toestaan</string>
+    <string name="detail_external_images_traffic_blocked">Externe afbeeldingen zijn geblokkeerd om data te sparen.</string>
+    <string name="detail_disable_traffic_saving">Databesparing uitzetten</string>
+    <string name="detail_external_dismiss">Niet nu</string>
+    <string name="detail_unsubscribe_title">Deze afzender ondersteunt afmelden met één tik.</string>
+    <string name="detail_unsubscribe_subtitle">Je krijgt geen berichten meer van dit adres.</string>
+    <string name="detail_view_raw_source">Ruwe bron bekijken</string>
+    <string name="detail_raw_source_title">Ruwe bron van het bericht</string>
+    <string name="detail_raw_source_headers">Headers</string>
+    <string name="detail_raw_source_body">Inhoud</string>
+    <string name="detail_raw_source_copy">Kopiëren</string>
+    <string name="detail_raw_source_copied">Naar het klembord gekopieerd</string>
+    <string name="detail_raw_source_close">Sluiten</string>
+    <string name="detail_raw_source_unavailable">Voor dit bericht is geen ruwe bron beschikbaar.</string>
+    <string name="detail_star_action">Bericht met ster markeren</string>
+    <string name="detail_unstar_action">Ster weghalen</string>
+    <string name="message_details">Berichtgegevens</string>
+    <string name="from_label">Van</string>
+    <string name="to_label">Aan</string>
+    <string name="subject_label">Onderwerp</string>
+    <string name="message_id_label">Bericht-ID</string>
+    <string name="message_headers">Berichtheaders</string>
+    <string name="no_raw_headers">Voor dit bericht zijn geen ruwe headers beschikbaar.</string>
+    <string name="copy_headers">Headers kopiëren</string>
+    <string name="headers_copied">Headers gekopieerd</string>
+</resources>

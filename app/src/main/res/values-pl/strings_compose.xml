@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="compose_footer_secured_by_plain">Chronione przez Aster Mail</string>
+    <string name="compose_footer_secured_by_label">Chronione przez</string>
+    <string name="compose_footer_brand">Aster Mail</string>
+    <string name="compose_quote_forwarded_message">Wiadomość przekazana</string>
+    <string name="compose_quote_original_message">Wiadomość oryginalna</string>
+    <string name="compose_quote_show_label">Pokaż %1$s</string>
+    <string name="compose_quote_header_from">Od:</string>
+    <string name="compose_quote_header_date">Data:</string>
+    <string name="compose_quote_header_subject">Temat:</string>
+    <string name="compose_attachment_remove">Usuń załącznik</string>
+    <string name="compose_attachment_uploading">Wysyłanie załącznika %1$s</string>
+    <string name="schedule_time_in_past">Zaplanowana godzina musi być w przyszłości</string>
+    <string name="signature_none">Bez podpisu</string>
+    <string name="signature_select">Wybierz podpis</string>
+    <string name="compose_metadata_strip_failed">Nie udało się usunąć ukrytych metadanych z: %1$s</string>
+    <string name="compose_attachment_read_failed">Nie udało się dołączyć \"%1$s\". Wiadomość nie została wysłana. Usuń plik albo dodaj go ponownie i spróbuj jeszcze raz.</string>
+</resources>

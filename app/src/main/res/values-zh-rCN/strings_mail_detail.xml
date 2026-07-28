@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="detail_show_details">显示详情</string>
+    <string name="detail_hide_details">隐藏详情</string>
+    <string name="detail_show_quoted_text">显示引用内容</string>
+    <string name="detail_hide_quoted_text">隐藏引用内容</string>
+    <string name="detail_external_images_blocked">这封邮件包含外部内容。加载后发件人可能会知道你打开了邮件。</string>
+    <string name="detail_external_allow_once">加载一次</string>
+    <string name="detail_external_always_allow">始终允许</string>
+    <string name="detail_external_images_traffic_blocked">为节省流量，已拦截外部图片。</string>
+    <string name="detail_disable_traffic_saving">关闭流量节省</string>
+    <string name="detail_external_dismiss">暂不</string>
+    <string name="detail_unsubscribe_title">该发件人支持一键退订。</string>
+    <string name="detail_unsubscribe_subtitle">你将不再收到来自该地址的邮件。</string>
+    <string name="detail_view_raw_source">查看原始源码</string>
+    <string name="detail_raw_source_title">邮件原始源码</string>
+    <string name="detail_raw_source_headers">邮件头</string>
+    <string name="detail_raw_source_body">正文</string>
+    <string name="detail_raw_source_copy">复制</string>
+    <string name="detail_raw_source_copied">已复制到剪贴板</string>
+    <string name="detail_raw_source_close">关闭</string>
+    <string name="detail_raw_source_unavailable">这封邮件没有可查看的原始源码。</string>
+    <string name="detail_star_action">为邮件加星标</string>
+    <string name="detail_unstar_action">取消邮件星标</string>
+    <string name="message_details">邮件详情</string>
+    <string name="from_label">发件人</string>
+    <string name="to_label">收件人</string>
+    <string name="subject_label">主题</string>
+    <string name="message_id_label">邮件 ID</string>
+    <string name="message_headers">邮件头信息</string>
+    <string name="no_raw_headers">这封邮件没有原始邮件头。</string>
+    <string name="copy_headers">复制邮件头</string>
+    <string name="headers_copied">已复制邮件头</string>
+</resources>

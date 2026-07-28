@@ -13,4 +13,13 @@
     <string name="notif_login_alert_revoke_failed_body">Otwórz aplikację, aby sprawdzić aktywne sesje.</string>
     <string name="mute_folder_notifications">Wycisz powiadomienia folderu</string>
     <string name="unmute_folder_notifications">Wyłącz wyciszenie powiadomień folderu</string>
+    <string name="notif_channel_new_mail_name">Nowa poczta</string>
+    <string name="notif_channel_new_mail_description">Powiadomienia o nowych wiadomościach przychodzących</string>
+    <string name="notif_new_message">Nowa wiadomość</string>
+    <string name="notif_action_reply">Odpowiedz</string>
+    <string name="notif_action_mark_read">Oznacz jako przeczytane</string>
+    <string name="notif_action_archive">Archiwizuj</string>
+    <string name="notif_group_summary_new_mail">Nowa poczta</string>
+    <string name="notif_battery_opt_title">Nieograniczona aktywność w tle</string>
+    <string name="notif_battery_opt_subtitle">Wymagana do niezawodnych powiadomień. Dotknij, aby włączyć w ustawieniach systemu.</string>
 </resources>

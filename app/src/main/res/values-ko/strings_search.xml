@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_placeholder">메일 검색</string>
+    <string name="search_clear_cd">검색어 지우기</string>
+    <string name="search_back_cd">뒤로</string>
+    <string name="search_remove_filter_cd">필터 제거</string>
+    <string name="search_empty_initial_title">메일 검색</string>
+    <string name="search_empty_initial_subtitle">보낸 사람, 제목, 내용으로 메일을 찾을 수 있습니다. 검색은 모두 이 기기에서 이루어집니다.</string>
+    <string name="search_empty_no_results_title">결과 없음</string>
+    <string name="search_empty_no_results_subtitle">다른 검색어를 쓰거나 필터를 지워 보세요.</string>
+    <string name="search_recent_header">최근 검색</string>
+    <string name="search_recent_clear">지우기</string>
+    <string name="search_quick_all">전체</string>
+    <string name="search_quick_unread">안 읽음</string>
+    <string name="search_quick_attachments">첨부</string>
+    <string name="search_quick_flagged">표시함</string>
+    <string name="search_filter_has_attachment">첨부 있음</string>
+    <string name="search_filter_unread">안 읽음</string>
+    <string name="search_filter_starred">별표</string>
+    <string name="search_filter_encrypted">암호화됨</string>
+    <string name="search_chip_from">보낸 사람</string>
+    <string name="search_chip_to">받는 사람</string>
+    <string name="search_chip_subject">제목</string>
+    <string name="search_chip_has">포함</string>
+    <string name="search_chip_is">상태</string>
+    <string name="search_chip_in">위치</string>
+    <string name="search_chip_before">이전</string>
+    <string name="search_chip_after">이후</string>
+    <string name="search_chip_date">날짜</string>
+    <string name="search_chip_label">라벨</string>
+    <string name="search_chip_not_prefix">제외</string>
+    <string name="search_chip_format">%1$s: %2$s</string>
+    <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>
+</resources>

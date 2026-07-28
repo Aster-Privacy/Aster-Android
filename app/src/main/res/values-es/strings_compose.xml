@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="compose_footer_secured_by_plain">Protegido por Aster Mail</string>
+    <string name="compose_footer_secured_by_label">Protegido por</string>
+    <string name="compose_footer_brand">Aster Mail</string>
+    <string name="compose_quote_forwarded_message">Mensaje reenviado</string>
+    <string name="compose_quote_original_message">Mensaje original</string>
+    <string name="compose_quote_show_label">Mostrar %1$s</string>
+    <string name="compose_quote_header_from">De:</string>
+    <string name="compose_quote_header_date">Fecha:</string>
+    <string name="compose_quote_header_subject">Asunto:</string>
+    <string name="compose_attachment_remove">Quitar el adjunto</string>
+    <string name="compose_attachment_uploading">Subiendo el adjunto %1$s</string>
+    <string name="schedule_time_in_past">La hora programada debe ser futura</string>
+    <string name="signature_none">Sin firma</string>
+    <string name="signature_select">Elegir firma</string>
+    <string name="compose_metadata_strip_failed">No se pudieron quitar los metadatos ocultos de: %1$s</string>
+    <string name="compose_attachment_read_failed">No se pudo adjuntar \"%1$s\". Tu correo no se envió. Quita el archivo o vuelve a añadirlo e inténtalo otra vez.</string>
+</resources>

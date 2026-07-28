@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="inbox_selected_count">выбрано: %1$d</string>
+    <string name="inbox_search_in_folder">Поиск в папке %1$s</string>
+    <string name="inbox_subject_with_count">%1$s (%2$d)</string>
+    <string name="inbox_no_subject">(без темы)</string>
+    <string name="inbox_a11y_select_thread">Выбрать переписку</string>
+    <string name="inbox_a11y_deselect_thread">Снять выбор с переписки</string>
+</resources>

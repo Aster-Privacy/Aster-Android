@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_placeholder">Szukaj w poczcie</string>
+    <string name="search_clear_cd">Wyczyść wyszukiwanie</string>
+    <string name="search_back_cd">Wstecz</string>
+    <string name="search_remove_filter_cd">Usuń filtr</string>
+    <string name="search_empty_initial_title">Przeszukaj swoją pocztę</string>
+    <string name="search_empty_initial_subtitle">Znajdź wiadomości po nadawcy, temacie albo treści. Całe wyszukiwanie odbywa się na tym urządzeniu.</string>
+    <string name="search_empty_no_results_title">Brak wyników</string>
+    <string name="search_empty_no_results_subtitle">Spróbuj innego słowa albo usuń filtry.</string>
+    <string name="search_recent_header">Ostatnie</string>
+    <string name="search_recent_clear">Wyczyść</string>
+    <string name="search_quick_all">Wszystko</string>
+    <string name="search_quick_unread">Nieprzeczytane</string>
+    <string name="search_quick_attachments">Załączniki</string>
+    <string name="search_quick_flagged">Oznaczone</string>
+    <string name="search_filter_has_attachment">Z załącznikiem</string>
+    <string name="search_filter_unread">Nieprzeczytane</string>
+    <string name="search_filter_starred">Z gwiazdką</string>
+    <string name="search_filter_encrypted">Zaszyfrowane</string>
+    <string name="search_chip_from">Od</string>
+    <string name="search_chip_to">Do</string>
+    <string name="search_chip_subject">Temat</string>
+    <string name="search_chip_has">Zawiera</string>
+    <string name="search_chip_is">Jest</string>
+    <string name="search_chip_in">W</string>
+    <string name="search_chip_before">Przed</string>
+    <string name="search_chip_after">Po</string>
+    <string name="search_chip_date">Data</string>
+    <string name="search_chip_label">Etykieta</string>
+    <string name="search_chip_not_prefix">Nie</string>
+    <string name="search_chip_format">%1$s: %2$s</string>
+    <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>
+</resources>

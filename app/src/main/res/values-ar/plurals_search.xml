@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="search_results_count">
+        <item quantity="zero">%d نتيجة</item>
+        <item quantity="one">%d نتيجة</item>
+        <item quantity="two">%d نتيجتين</item>
+        <item quantity="few">%d نتائج</item>
+        <item quantity="many">%d نتيجة</item>
+        <item quantity="other">%d نتيجة</item>
+    </plurals>
+</resources>

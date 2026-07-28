@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="compose_footer_secured_by_plain">Защищено Aster Mail</string>
+    <string name="compose_footer_secured_by_label">Защищено:</string>
+    <string name="compose_footer_brand">Aster Mail</string>
+    <string name="compose_quote_forwarded_message">Пересланное сообщение</string>
+    <string name="compose_quote_original_message">Исходное сообщение</string>
+    <string name="compose_quote_show_label">Показать %1$s</string>
+    <string name="compose_quote_header_from">От:</string>
+    <string name="compose_quote_header_date">Дата:</string>
+    <string name="compose_quote_header_subject">Тема:</string>
+    <string name="compose_attachment_remove">Убрать вложение</string>
+    <string name="compose_attachment_uploading">Загружаем вложение %1$s</string>
+    <string name="schedule_time_in_past">Время отправки должно быть в будущем</string>
+    <string name="signature_none">Без подписи</string>
+    <string name="signature_select">Выбрать подпись</string>
+    <string name="compose_metadata_strip_failed">Не удалось убрать скрытые метаданные из: %1$s</string>
+    <string name="compose_attachment_read_failed">Не удалось прикрепить \"%1$s\". Письмо не отправлено. Уберите файл или добавьте его заново и попробуйте ещё раз.</string>
+</resources>

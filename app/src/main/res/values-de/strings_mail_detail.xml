@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="detail_show_details">Details anzeigen</string>
+    <string name="detail_hide_details">Details ausblenden</string>
+    <string name="detail_show_quoted_text">Zitierten Text anzeigen</string>
+    <string name="detail_hide_quoted_text">Zitierten Text ausblenden</string>
+    <string name="detail_external_images_blocked">Diese Nachricht enthält externe Inhalte. Beim Laden kann der Absender deine Aktivität sehen.</string>
+    <string name="detail_external_allow_once">Einmal laden</string>
+    <string name="detail_external_always_allow">Immer erlauben</string>
+    <string name="detail_external_images_traffic_blocked">Externe Bilder sind blockiert, um Daten zu sparen.</string>
+    <string name="detail_disable_traffic_saving">Datensparen abschalten</string>
+    <string name="detail_external_dismiss">Jetzt nicht</string>
+    <string name="detail_unsubscribe_title">Dieser Absender unterstützt Abmelden mit einem Klick.</string>
+    <string name="detail_unsubscribe_subtitle">Du bekommst keine Nachrichten mehr von dieser Adresse.</string>
+    <string name="detail_view_raw_source">Rohquelltext ansehen</string>
+    <string name="detail_raw_source_title">Rohquelltext der Nachricht</string>
+    <string name="detail_raw_source_headers">Kopfzeilen</string>
+    <string name="detail_raw_source_body">Textkörper</string>
+    <string name="detail_raw_source_copy">Kopieren</string>
+    <string name="detail_raw_source_copied">In die Zwischenablage kopiert</string>
+    <string name="detail_raw_source_close">Schließen</string>
+    <string name="detail_raw_source_unavailable">Für diese Nachricht ist kein Rohquelltext verfügbar.</string>
+    <string name="detail_star_action">Nachricht markieren</string>
+    <string name="detail_unstar_action">Markierung entfernen</string>
+    <string name="message_details">Nachrichtendetails</string>
+    <string name="from_label">Von</string>
+    <string name="to_label">An</string>
+    <string name="subject_label">Betreff</string>
+    <string name="message_id_label">Nachrichten-ID</string>
+    <string name="message_headers">Kopfzeilen der Nachricht</string>
+    <string name="no_raw_headers">Für diese Nachricht gibt es keine Rohkopfzeilen.</string>
+    <string name="copy_headers">Kopfzeilen kopieren</string>
+    <string name="headers_copied">Kopfzeilen kopiert</string>
+</resources>

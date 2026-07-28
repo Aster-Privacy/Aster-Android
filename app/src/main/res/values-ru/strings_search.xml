@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_placeholder">Поиск по почте</string>
+    <string name="search_clear_cd">Очистить поиск</string>
+    <string name="search_back_cd">Назад</string>
+    <string name="search_remove_filter_cd">Убрать фильтр</string>
+    <string name="search_empty_initial_title">Поиск по вашей почте</string>
+    <string name="search_empty_initial_subtitle">Ищите письма по отправителю, теме или содержимому. Весь поиск идёт на этом устройстве.</string>
+    <string name="search_empty_no_results_title">Ничего не найдено</string>
+    <string name="search_empty_no_results_subtitle">Попробуйте другое слово или уберите фильтры.</string>
+    <string name="search_recent_header">Недавние</string>
+    <string name="search_recent_clear">Очистить</string>
+    <string name="search_quick_all">Все</string>
+    <string name="search_quick_unread">Непрочитанные</string>
+    <string name="search_quick_attachments">Вложения</string>
+    <string name="search_quick_flagged">С флажком</string>
+    <string name="search_filter_has_attachment">С вложением</string>
+    <string name="search_filter_unread">Непрочитанные</string>
+    <string name="search_filter_starred">Со звёздочкой</string>
+    <string name="search_filter_encrypted">Зашифрованные</string>
+    <string name="search_chip_from">От</string>
+    <string name="search_chip_to">Кому</string>
+    <string name="search_chip_subject">Тема</string>
+    <string name="search_chip_has">Содержит</string>
+    <string name="search_chip_is">Состояние</string>
+    <string name="search_chip_in">В папке</string>
+    <string name="search_chip_before">До</string>
+    <string name="search_chip_after">После</string>
+    <string name="search_chip_date">Дата</string>
+    <string name="search_chip_label">Метка</string>
+    <string name="search_chip_not_prefix">Кроме</string>
+    <string name="search_chip_format">%1$s: %2$s</string>
+    <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>
+</resources>

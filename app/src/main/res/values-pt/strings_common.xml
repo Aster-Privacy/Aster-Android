@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="common_back">Voltar</string>
+    <string name="common_storage_used_of_total">%1$s de %2$s</string>
+    <string name="common_storage_used_only">%1$s em uso</string>
+    <string name="common_snackbar_dismiss">Fechar</string>
+    <string name="common_snackbar_undo">Desfazer</string>
+</resources>

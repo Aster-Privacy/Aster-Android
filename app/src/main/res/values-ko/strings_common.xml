@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="common_back">뒤로</string>
+    <string name="common_storage_used_of_total">%2$s 중 %1$s</string>
+    <string name="common_storage_used_only">%1$s 사용</string>
+    <string name="common_snackbar_dismiss">닫기</string>
+    <string name="common_snackbar_undo">실행 취소</string>
+</resources>

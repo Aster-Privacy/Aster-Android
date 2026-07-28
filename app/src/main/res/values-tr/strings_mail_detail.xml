@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="detail_show_details">Ayrıntıları göster</string>
+    <string name="detail_hide_details">Ayrıntıları gizle</string>
+    <string name="detail_show_quoted_text">Alıntılanan metni göster</string>
+    <string name="detail_hide_quoted_text">Alıntılanan metni gizle</string>
+    <string name="detail_external_images_blocked">Bu iletide dış içerik var. Yüklersen gönderen, iletiyi açtığını görebilir.</string>
+    <string name="detail_external_allow_once">Bir kez yükle</string>
+    <string name="detail_external_always_allow">Her zaman izin ver</string>
+    <string name="detail_external_images_traffic_blocked">Veri tasarrufu için dış görseller engellendi.</string>
+    <string name="detail_disable_traffic_saving">Veri tasarrufunu kapat</string>
+    <string name="detail_external_dismiss">Şimdi değil</string>
+    <string name="detail_unsubscribe_title">Bu gönderen tek dokunuşla abonelikten çıkmayı destekliyor.</string>
+    <string name="detail_unsubscribe_subtitle">Bu adresten artık ileti almayacaksın.</string>
+    <string name="detail_view_raw_source">Ham kaynağı gör</string>
+    <string name="detail_raw_source_title">İletinin ham kaynağı</string>
+    <string name="detail_raw_source_headers">Başlıklar</string>
+    <string name="detail_raw_source_body">Gövde</string>
+    <string name="detail_raw_source_copy">Kopyala</string>
+    <string name="detail_raw_source_copied">Panoya kopyalandı</string>
+    <string name="detail_raw_source_close">Kapat</string>
+    <string name="detail_raw_source_unavailable">Bu iletinin ham kaynağı yok.</string>
+    <string name="detail_star_action">İletiyi yıldızla</string>
+    <string name="detail_unstar_action">İletinin yıldızını kaldır</string>
+    <string name="message_details">İleti ayrıntıları</string>
+    <string name="from_label">Kimden</string>
+    <string name="to_label">Kime</string>
+    <string name="subject_label">Konu</string>
+    <string name="message_id_label">İleti kimliği</string>
+    <string name="message_headers">İleti başlıkları</string>
+    <string name="no_raw_headers">Bu iletinin ham başlıkları yok.</string>
+    <string name="copy_headers">Başlıkları kopyala</string>
+    <string name="headers_copied">Başlıklar kopyalandı</string>
+</resources>

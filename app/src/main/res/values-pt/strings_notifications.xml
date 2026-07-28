@@ -13,4 +13,13 @@
     <string name="notif_login_alert_revoke_failed_body">Abra a aplicação para rever as suas sessões ativas.</string>
     <string name="mute_folder_notifications">Silenciar notificações da pasta</string>
     <string name="unmute_folder_notifications">Reativar notificações da pasta</string>
+    <string name="notif_channel_new_mail_name">Novo e-mail</string>
+    <string name="notif_channel_new_mail_description">Notificações de novos e-mails recebidos</string>
+    <string name="notif_new_message">Nova mensagem</string>
+    <string name="notif_action_reply">Responder</string>
+    <string name="notif_action_mark_read">Marcar como lida</string>
+    <string name="notif_action_archive">Arquivar</string>
+    <string name="notif_group_summary_new_mail">Novo e-mail</string>
+    <string name="notif_battery_opt_title">Atividade em segundo plano sem restrições</string>
+    <string name="notif_battery_opt_subtitle">Necessária para notificações fiáveis. Toque para ativar nas definições do sistema.</string>
 </resources>

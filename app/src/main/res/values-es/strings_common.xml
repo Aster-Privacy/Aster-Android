@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="common_back">Atrás</string>
+    <string name="common_storage_used_of_total">%1$s de %2$s</string>
+    <string name="common_storage_used_only">%1$s usados</string>
+    <string name="common_snackbar_dismiss">Cerrar</string>
+    <string name="common_snackbar_undo">Deshacer</string>
+</resources>

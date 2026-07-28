@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="compose_footer_secured_by_plain">محمي بواسطة Aster Mail</string>
+    <string name="compose_footer_secured_by_label">محمي بواسطة</string>
+    <string name="compose_footer_brand">Aster Mail</string>
+    <string name="compose_quote_forwarded_message">رسالة مُعاد توجيهها</string>
+    <string name="compose_quote_original_message">الرسالة الأصلية</string>
+    <string name="compose_quote_show_label">إظهار %1$s</string>
+    <string name="compose_quote_header_from">من:</string>
+    <string name="compose_quote_header_date">التاريخ:</string>
+    <string name="compose_quote_header_subject">الموضوع:</string>
+    <string name="compose_attachment_remove">إزالة المرفق</string>
+    <string name="compose_attachment_uploading">جارٍ رفع المرفق %1$s</string>
+    <string name="schedule_time_in_past">يجب أن يكون وقت الجدولة في المستقبل</string>
+    <string name="signature_none">بدون توقيع</string>
+    <string name="signature_select">اختيار التوقيع</string>
+    <string name="compose_metadata_strip_failed">تعذّرت إزالة البيانات المخفية من: %1$s</string>
+    <string name="compose_attachment_read_failed">تعذّر إرفاق \"%1$s\". لم تُرسل رسالتك. أزل الملف أو أضفه من جديد وحاول مرة أخرى.</string>
+</resources>

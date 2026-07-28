@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="detail_show_details">Pokaż szczegóły</string>
+    <string name="detail_hide_details">Ukryj szczegóły</string>
+    <string name="detail_show_quoted_text">Pokaż cytowany tekst</string>
+    <string name="detail_hide_quoted_text">Ukryj cytowany tekst</string>
+    <string name="detail_external_images_blocked">Ta wiadomość zawiera treści zewnętrzne. Ich wczytanie może zdradzić nadawcy, że ją otworzyłeś.</string>
+    <string name="detail_external_allow_once">Wczytaj raz</string>
+    <string name="detail_external_always_allow">Zawsze zezwalaj</string>
+    <string name="detail_external_images_traffic_blocked">Zewnętrzne obrazy są blokowane, aby oszczędzać transfer.</string>
+    <string name="detail_disable_traffic_saving">Wyłącz oszczędzanie transferu</string>
+    <string name="detail_external_dismiss">Nie teraz</string>
+    <string name="detail_unsubscribe_title">Ten nadawca obsługuje wypisanie się jednym dotknięciem.</string>
+    <string name="detail_unsubscribe_subtitle">Nie będziesz już dostawać wiadomości z tego adresu.</string>
+    <string name="detail_view_raw_source">Pokaż źródło wiadomości</string>
+    <string name="detail_raw_source_title">Źródło wiadomości</string>
+    <string name="detail_raw_source_headers">Nagłówki</string>
+    <string name="detail_raw_source_body">Treść</string>
+    <string name="detail_raw_source_copy">Kopiuj</string>
+    <string name="detail_raw_source_copied">Skopiowano do schowka</string>
+    <string name="detail_raw_source_close">Zamknij</string>
+    <string name="detail_raw_source_unavailable">Źródło tej wiadomości jest niedostępne.</string>
+    <string name="detail_star_action">Oznacz wiadomość gwiazdką</string>
+    <string name="detail_unstar_action">Usuń gwiazdkę z wiadomości</string>
+    <string name="message_details">Szczegóły wiadomości</string>
+    <string name="from_label">Od</string>
+    <string name="to_label">Do</string>
+    <string name="subject_label">Temat</string>
+    <string name="message_id_label">Identyfikator wiadomości</string>
+    <string name="message_headers">Nagłówki wiadomości</string>
+    <string name="no_raw_headers">Ta wiadomość nie ma surowych nagłówków.</string>
+    <string name="copy_headers">Kopiuj nagłówki</string>
+    <string name="headers_copied">Skopiowano nagłówki</string>
+</resources>

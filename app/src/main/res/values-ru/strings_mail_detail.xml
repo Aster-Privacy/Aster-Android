@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="detail_show_details">Показать подробности</string>
+    <string name="detail_hide_details">Скрыть подробности</string>
+    <string name="detail_show_quoted_text">Показать цитату</string>
+    <string name="detail_hide_quoted_text">Скрыть цитату</string>
+    <string name="detail_external_images_blocked">В письме есть внешнее содержимое. Если загрузить его, отправитель узнает, что вы открыли письмо.</string>
+    <string name="detail_external_allow_once">Загрузить один раз</string>
+    <string name="detail_external_always_allow">Всегда разрешать</string>
+    <string name="detail_external_images_traffic_blocked">Внешние изображения заблокированы ради экономии трафика.</string>
+    <string name="detail_disable_traffic_saving">Отключить экономию трафика</string>
+    <string name="detail_external_dismiss">Не сейчас</string>
+    <string name="detail_unsubscribe_title">Этот отправитель поддерживает отписку в одно касание.</string>
+    <string name="detail_unsubscribe_subtitle">Письма с этого адреса больше приходить не будут.</string>
+    <string name="detail_view_raw_source">Показать исходный код</string>
+    <string name="detail_raw_source_title">Исходный код письма</string>
+    <string name="detail_raw_source_headers">Заголовки</string>
+    <string name="detail_raw_source_body">Текст</string>
+    <string name="detail_raw_source_copy">Скопировать</string>
+    <string name="detail_raw_source_copied">Скопировано в буфер обмена</string>
+    <string name="detail_raw_source_close">Закрыть</string>
+    <string name="detail_raw_source_unavailable">Исходный код этого письма недоступен.</string>
+    <string name="detail_star_action">Отметить письмо звёздочкой</string>
+    <string name="detail_unstar_action">Снять звёздочку с письма</string>
+    <string name="message_details">Сведения о письме</string>
+    <string name="from_label">От</string>
+    <string name="to_label">Кому</string>
+    <string name="subject_label">Тема</string>
+    <string name="message_id_label">Идентификатор письма</string>
+    <string name="message_headers">Заголовки письма</string>
+    <string name="no_raw_headers">У этого письма нет исходных заголовков.</string>
+    <string name="copy_headers">Скопировать заголовки</string>
+    <string name="headers_copied">Заголовки скопированы</string>
+</resources>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="common_unread_count">
+        <item quantity="zero">%d غير مقروءة</item>
+        <item quantity="one">%d غير مقروءة</item>
+        <item quantity="two">%d غير مقروءتين</item>
+        <item quantity="few">%d غير مقروءة</item>
+        <item quantity="many">%d غير مقروءة</item>
+        <item quantity="other">%d غير مقروءة</item>
+    </plurals>
+    <plurals name="common_new_messages">
+        <item quantity="zero">%d رسالة جديدة</item>
+        <item quantity="one">%d رسالة جديدة</item>
+        <item quantity="two">%d رسالتين جديدتين</item>
+        <item quantity="few">%d رسائل جديدة</item>
+        <item quantity="many">%d رسالة جديدة</item>
+        <item quantity="other">%d رسالة جديدة</item>
+    </plurals>
+</resources>

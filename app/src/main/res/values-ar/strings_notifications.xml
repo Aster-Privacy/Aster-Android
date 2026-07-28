@@ -13,4 +13,13 @@
     <string name="notif_login_alert_revoke_failed_body">افتح التطبيق لمراجعة جلساتك النشطة.</string>
     <string name="mute_folder_notifications">كتم إشعارات المجلد</string>
     <string name="unmute_folder_notifications">إلغاء كتم إشعارات المجلد</string>
+    <string name="notif_channel_new_mail_name">بريد جديد</string>
+    <string name="notif_channel_new_mail_description">إشعارات رسائل البريد الواردة الجديدة</string>
+    <string name="notif_new_message">رسالة جديدة</string>
+    <string name="notif_action_reply">رد</string>
+    <string name="notif_action_mark_read">تعليم كمقروء</string>
+    <string name="notif_action_archive">أرشفة</string>
+    <string name="notif_group_summary_new_mail">بريد جديد</string>
+    <string name="notif_battery_opt_title">نشاط غير مقيّد في الخلفية</string>
+    <string name="notif_battery_opt_subtitle">مطلوب لإشعارات موثوقة. انقر للتفعيل من إعدادات النظام.</string>
 </resources>

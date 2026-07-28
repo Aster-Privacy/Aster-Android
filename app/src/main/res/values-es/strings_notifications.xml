@@ -13,4 +13,13 @@
     <string name="notif_login_alert_revoke_failed_body">Abre la aplicación para revisar tus sesiones activas.</string>
     <string name="mute_folder_notifications">Silenciar notificaciones de la carpeta</string>
     <string name="unmute_folder_notifications">Activar notificaciones de la carpeta</string>
+    <string name="notif_channel_new_mail_name">Correo nuevo</string>
+    <string name="notif_channel_new_mail_description">Notificaciones de nuevos correos entrantes</string>
+    <string name="notif_new_message">Mensaje nuevo</string>
+    <string name="notif_action_reply">Responder</string>
+    <string name="notif_action_mark_read">Marcar como leído</string>
+    <string name="notif_action_archive">Archivar</string>
+    <string name="notif_group_summary_new_mail">Correo nuevo</string>
+    <string name="notif_battery_opt_title">Actividad en segundo plano sin restricciones</string>
+    <string name="notif_battery_opt_subtitle">Necesario para recibir notificaciones fiables. Toca para activarlo en los ajustes del sistema.</string>
 </resources>

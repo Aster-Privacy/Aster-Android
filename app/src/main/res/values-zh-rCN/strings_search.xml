@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_placeholder">搜索邮件</string>
+    <string name="search_clear_cd">清除搜索内容</string>
+    <string name="search_back_cd">返回</string>
+    <string name="search_remove_filter_cd">移除筛选条件</string>
+    <string name="search_empty_initial_title">搜索你的邮件</string>
+    <string name="search_empty_initial_subtitle">可按发件人、主题或内容查找邮件。所有搜索都在本机进行。</string>
+    <string name="search_empty_no_results_title">没有结果</string>
+    <string name="search_empty_no_results_subtitle">换个关键词，或者去掉筛选条件。</string>
+    <string name="search_recent_header">最近</string>
+    <string name="search_recent_clear">清除</string>
+    <string name="search_quick_all">全部</string>
+    <string name="search_quick_unread">未读</string>
+    <string name="search_quick_attachments">附件</string>
+    <string name="search_quick_flagged">已标记</string>
+    <string name="search_filter_has_attachment">含附件</string>
+    <string name="search_filter_unread">未读</string>
+    <string name="search_filter_starred">已加星标</string>
+    <string name="search_filter_encrypted">已加密</string>
+    <string name="search_chip_from">发件人</string>
+    <string name="search_chip_to">收件人</string>
+    <string name="search_chip_subject">主题</string>
+    <string name="search_chip_has">含有</string>
+    <string name="search_chip_is">状态</string>
+    <string name="search_chip_in">位置</string>
+    <string name="search_chip_before">早于</string>
+    <string name="search_chip_after">晚于</string>
+    <string name="search_chip_date">日期</string>
+    <string name="search_chip_label">标签</string>
+    <string name="search_chip_not_prefix">排除</string>
+    <string name="search_chip_format">%1$s：%2$s</string>
+    <string name="search_chip_format_negated">%1$s %2$s：%3$s</string>
+</resources>

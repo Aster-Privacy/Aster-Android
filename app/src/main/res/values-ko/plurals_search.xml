@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="search_results_count">
+        <item quantity="other">결과 %d개</item>
+    </plurals>
+</resources>

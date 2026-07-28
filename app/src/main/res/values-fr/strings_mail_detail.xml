@@ -20,4 +20,15 @@
     <string name="detail_raw_source_unavailable">La source brute n\'est pas disponible pour ce message.</string>
     <string name="detail_star_action">Mettre en favori</string>
     <string name="detail_unstar_action">Retirer des favoris</string>
+    <string name="detail_external_images_traffic_blocked">Les images distantes sont bloquées pour économiser des données.</string>
+    <string name="detail_disable_traffic_saving">Désactiver l\'économie de données</string>
+    <string name="message_details">Détails du message</string>
+    <string name="from_label">De</string>
+    <string name="to_label">À</string>
+    <string name="subject_label">Objet</string>
+    <string name="message_id_label">Identifiant du message</string>
+    <string name="message_headers">En-têtes du message</string>
+    <string name="no_raw_headers">Ce message n\'a pas d\'en-têtes bruts.</string>
+    <string name="copy_headers">Copier les en-têtes</string>
+    <string name="headers_copied">En-têtes copiés</string>
 </resources>

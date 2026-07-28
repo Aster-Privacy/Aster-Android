@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_placeholder">Postada ara</string>
+    <string name="search_clear_cd">Aramayı temizle</string>
+    <string name="search_back_cd">Geri</string>
+    <string name="search_remove_filter_cd">Süzgeci kaldır</string>
+    <string name="search_empty_initial_title">Postanda ara</string>
+    <string name="search_empty_initial_subtitle">İletileri gönderene, konuya ya da içeriğe göre bul. Tüm aramalar bu cihazda yapılır.</string>
+    <string name="search_empty_no_results_title">Sonuç yok</string>
+    <string name="search_empty_no_results_subtitle">Başka bir sözcük dene ya da süzgeçleri kaldır.</string>
+    <string name="search_recent_header">Son aramalar</string>
+    <string name="search_recent_clear">Temizle</string>
+    <string name="search_quick_all">Tümü</string>
+    <string name="search_quick_unread">Okunmamış</string>
+    <string name="search_quick_attachments">Ekler</string>
+    <string name="search_quick_flagged">İşaretli</string>
+    <string name="search_filter_has_attachment">Eki var</string>
+    <string name="search_filter_unread">Okunmamış</string>
+    <string name="search_filter_starred">Yıldızlı</string>
+    <string name="search_filter_encrypted">Şifreli</string>
+    <string name="search_chip_from">Kimden</string>
+    <string name="search_chip_to">Kime</string>
+    <string name="search_chip_subject">Konu</string>
+    <string name="search_chip_has">İçeriyor</string>
+    <string name="search_chip_is">Durum</string>
+    <string name="search_chip_in">Konum</string>
+    <string name="search_chip_before">Şundan önce</string>
+    <string name="search_chip_after">Şundan sonra</string>
+    <string name="search_chip_date">Tarih</string>
+    <string name="search_chip_label">Etiket</string>
+    <string name="search_chip_not_prefix">Değil</string>
+    <string name="search_chip_format">%1$s: %2$s</string>
+    <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>
+</resources>

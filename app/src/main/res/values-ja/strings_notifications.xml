@@ -13,4 +13,13 @@
     <string name="notif_login_alert_revoke_failed_body">アプリを開いてアクティブなセッションを確認してください。</string>
     <string name="mute_folder_notifications">フォルダーの通知をミュート</string>
     <string name="unmute_folder_notifications">フォルダーの通知のミュートを解除</string>
+    <string name="notif_channel_new_mail_name">新着メール</string>
+    <string name="notif_channel_new_mail_description">新着メールの通知</string>
+    <string name="notif_new_message">新しいメッセージ</string>
+    <string name="notif_action_reply">返信</string>
+    <string name="notif_action_mark_read">既読にする</string>
+    <string name="notif_action_archive">アーカイブ</string>
+    <string name="notif_group_summary_new_mail">新着メール</string>
+    <string name="notif_battery_opt_title">バックグラウンド動作の制限を解除</string>
+    <string name="notif_battery_opt_subtitle">通知を確実に受け取るために必要です。タップしてシステム設定で有効にしてください。</string>
 </resources>

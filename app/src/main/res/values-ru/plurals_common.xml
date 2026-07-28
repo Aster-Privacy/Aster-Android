@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="common_unread_count">
+        <item quantity="one">%d непрочитанное</item>
+        <item quantity="few">%d непрочитанных</item>
+        <item quantity="many">%d непрочитанных</item>
+        <item quantity="other">%d непрочитанных</item>
+    </plurals>
+    <plurals name="common_new_messages">
+        <item quantity="one">%d новое письмо</item>
+        <item quantity="few">%d новых письма</item>
+        <item quantity="many">%d новых писем</item>
+        <item quantity="other">%d новых писем</item>
+    </plurals>
+</resources>

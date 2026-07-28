@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_placeholder">Buscar no e-mail</string>
+    <string name="search_clear_cd">Limpar a busca</string>
+    <string name="search_back_cd">Voltar</string>
+    <string name="search_remove_filter_cd">Remover o filtro</string>
+    <string name="search_empty_initial_title">Busque no seu e-mail</string>
+    <string name="search_empty_initial_subtitle">Encontre mensagens por remetente, assunto ou conteúdo. Todas as buscas acontecem neste aparelho.</string>
+    <string name="search_empty_no_results_title">Nenhum resultado</string>
+    <string name="search_empty_no_results_subtitle">Tente outra palavra ou remova os filtros.</string>
+    <string name="search_recent_header">Recentes</string>
+    <string name="search_recent_clear">Limpar</string>
+    <string name="search_quick_all">Tudo</string>
+    <string name="search_quick_unread">Não lidas</string>
+    <string name="search_quick_attachments">Anexos</string>
+    <string name="search_quick_flagged">Sinalizadas</string>
+    <string name="search_filter_has_attachment">Com anexo</string>
+    <string name="search_filter_unread">Não lidas</string>
+    <string name="search_filter_starred">Com estrela</string>
+    <string name="search_filter_encrypted">Criptografadas</string>
+    <string name="search_chip_from">De</string>
+    <string name="search_chip_to">Para</string>
+    <string name="search_chip_subject">Assunto</string>
+    <string name="search_chip_has">Tem</string>
+    <string name="search_chip_is">É</string>
+    <string name="search_chip_in">Em</string>
+    <string name="search_chip_before">Antes de</string>
+    <string name="search_chip_after">Depois de</string>
+    <string name="search_chip_date">Data</string>
+    <string name="search_chip_label">Marcador</string>
+    <string name="search_chip_not_prefix">Não</string>
+    <string name="search_chip_format">%1$s: %2$s</string>
+    <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>
+</resources>

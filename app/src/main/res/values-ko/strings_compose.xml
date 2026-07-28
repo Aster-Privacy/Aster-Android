@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="compose_footer_secured_by_plain">Aster Mail이 보호합니다</string>
+    <string name="compose_footer_secured_by_label">보호:</string>
+    <string name="compose_footer_brand">Aster Mail</string>
+    <string name="compose_quote_forwarded_message">전달된 메시지</string>
+    <string name="compose_quote_original_message">원본 메시지</string>
+    <string name="compose_quote_show_label">%1$s 보기</string>
+    <string name="compose_quote_header_from">보낸 사람:</string>
+    <string name="compose_quote_header_date">날짜:</string>
+    <string name="compose_quote_header_subject">제목:</string>
+    <string name="compose_attachment_remove">첨부 제거</string>
+    <string name="compose_attachment_uploading">첨부 %1$s 업로드 중</string>
+    <string name="schedule_time_in_past">예약 시각은 앞으로의 시각이어야 합니다</string>
+    <string name="signature_none">서명 없음</string>
+    <string name="signature_select">서명 선택</string>
+    <string name="compose_metadata_strip_failed">다음 파일에서 숨은 메타데이터를 지우지 못했습니다: %1$s</string>
+    <string name="compose_attachment_read_failed">\"%1$s\"을(를) 첨부하지 못했습니다. 메일은 보내지지 않았습니다. 파일을 빼거나 다시 넣은 뒤 시도하세요.</string>
+</resources>

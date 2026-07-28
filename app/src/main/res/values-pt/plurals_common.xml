@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="common_unread_count">
+        <item quantity="one">%d não lida</item>
+        <item quantity="other">%d não lidas</item>
+    </plurals>
+    <plurals name="common_new_messages">
+        <item quantity="one">%d mensagem nova</item>
+        <item quantity="other">%d mensagens novas</item>
+    </plurals>
+</resources>

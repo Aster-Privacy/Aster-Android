@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="common_back">Indietro</string>
+    <string name="common_storage_used_of_total">%1$s di %2$s</string>
+    <string name="common_storage_used_only">%1$s usati</string>
+    <string name="common_snackbar_dismiss">Chiudi</string>
+    <string name="common_snackbar_undo">Annulla</string>
+</resources>

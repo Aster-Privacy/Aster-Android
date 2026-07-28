@@ -13,4 +13,13 @@
     <string name="notif_login_alert_revoke_failed_body">Öffnen Sie die App, um Ihre aktiven Sitzungen zu überprüfen.</string>
     <string name="mute_folder_notifications">Ordner-Benachrichtigungen stummschalten</string>
     <string name="unmute_folder_notifications">Stummschaltung des Ordners aufheben</string>
+    <string name="notif_channel_new_mail_name">Neue E-Mails</string>
+    <string name="notif_channel_new_mail_description">Benachrichtigungen für neu eingehende E-Mails</string>
+    <string name="notif_new_message">Neue Nachricht</string>
+    <string name="notif_action_reply">Antworten</string>
+    <string name="notif_action_mark_read">Als gelesen markieren</string>
+    <string name="notif_action_archive">Archivieren</string>
+    <string name="notif_group_summary_new_mail">Neue E-Mails</string>
+    <string name="notif_battery_opt_title">Uneingeschränkte Hintergrundaktivität</string>
+    <string name="notif_battery_opt_subtitle">Erforderlich für zuverlässige Benachrichtigungen. Tippen Sie, um dies in den Systemeinstellungen zu aktivieren.</string>
 </resources>

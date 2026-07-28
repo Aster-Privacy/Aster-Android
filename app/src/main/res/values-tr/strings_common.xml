@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="common_back">Geri</string>
+    <string name="common_storage_used_of_total">%2$s içinde %1$s</string>
+    <string name="common_storage_used_only">%1$s kullanıldı</string>
+    <string name="common_snackbar_dismiss">Kapat</string>
+    <string name="common_snackbar_undo">Geri al</string>
+</resources>

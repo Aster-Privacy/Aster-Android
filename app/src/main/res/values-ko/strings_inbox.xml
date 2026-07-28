@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="inbox_selected_count">%1$d개 선택됨</string>
+    <string name="inbox_search_in_folder">%1$s에서 검색</string>
+    <string name="inbox_subject_with_count">%1$s (%2$d)</string>
+    <string name="inbox_no_subject">(제목 없음)</string>
+    <string name="inbox_a11y_select_thread">대화 선택</string>
+    <string name="inbox_a11y_deselect_thread">대화 선택 해제</string>
+</resources>

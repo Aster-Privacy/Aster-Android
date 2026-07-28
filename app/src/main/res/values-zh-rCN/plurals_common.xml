@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="common_unread_count">
+        <item quantity="other">%d 封未读</item>
+    </plurals>
+    <plurals name="common_new_messages">
+        <item quantity="other">%d 封新邮件</item>
+    </plurals>
+</resources>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_placeholder">Cerca nella posta</string>
+    <string name="search_clear_cd">Cancella la ricerca</string>
+    <string name="search_back_cd">Indietro</string>
+    <string name="search_remove_filter_cd">Togli il filtro</string>
+    <string name="search_empty_initial_title">Cerca nella tua posta</string>
+    <string name="search_empty_initial_subtitle">Trova i messaggi per mittente, oggetto o contenuto. Ogni ricerca avviene su questo dispositivo.</string>
+    <string name="search_empty_no_results_title">Nessun risultato</string>
+    <string name="search_empty_no_results_subtitle">Prova un\'altra parola o togli qualche filtro.</string>
+    <string name="search_recent_header">Recenti</string>
+    <string name="search_recent_clear">Cancella</string>
+    <string name="search_quick_all">Tutto</string>
+    <string name="search_quick_unread">Da leggere</string>
+    <string name="search_quick_attachments">Allegati</string>
+    <string name="search_quick_flagged">Contrassegnati</string>
+    <string name="search_filter_has_attachment">Con allegato</string>
+    <string name="search_filter_unread">Da leggere</string>
+    <string name="search_filter_starred">Con stella</string>
+    <string name="search_filter_encrypted">Cifrati</string>
+    <string name="search_chip_from">Da</string>
+    <string name="search_chip_to">A</string>
+    <string name="search_chip_subject">Oggetto</string>
+    <string name="search_chip_has">Contiene</string>
+    <string name="search_chip_is">È</string>
+    <string name="search_chip_in">In</string>
+    <string name="search_chip_before">Prima del</string>
+    <string name="search_chip_after">Dopo il</string>
+    <string name="search_chip_date">Data</string>
+    <string name="search_chip_label">Etichetta</string>
+    <string name="search_chip_not_prefix">Non</string>
+    <string name="search_chip_format">%1$s: %2$s</string>
+    <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>
+</resources>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="common_back">返回</string>
+    <string name="common_storage_used_of_total">%2$s 中的 %1$s</string>
+    <string name="common_storage_used_only">已用 %1$s</string>
+    <string name="common_snackbar_dismiss">关闭</string>
+    <string name="common_snackbar_undo">撤销</string>
+</resources>

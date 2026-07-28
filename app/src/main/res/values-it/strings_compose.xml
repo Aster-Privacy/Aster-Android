@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="compose_footer_secured_by_plain">Protetto da Aster Mail</string>
+    <string name="compose_footer_secured_by_label">Protetto da</string>
+    <string name="compose_footer_brand">Aster Mail</string>
+    <string name="compose_quote_forwarded_message">Messaggio inoltrato</string>
+    <string name="compose_quote_original_message">Messaggio originale</string>
+    <string name="compose_quote_show_label">Mostra %1$s</string>
+    <string name="compose_quote_header_from">Da:</string>
+    <string name="compose_quote_header_date">Data:</string>
+    <string name="compose_quote_header_subject">Oggetto:</string>
+    <string name="compose_attachment_remove">Rimuovi allegato</string>
+    <string name="compose_attachment_uploading">Caricamento dell\'allegato %1$s</string>
+    <string name="schedule_time_in_past">L\'orario programmato deve essere nel futuro</string>
+    <string name="signature_none">Nessuna firma</string>
+    <string name="signature_select">Scegli la firma</string>
+    <string name="compose_metadata_strip_failed">Impossibile rimuovere i metadati nascosti da: %1$s</string>
+    <string name="compose_attachment_read_failed">Impossibile allegare \"%1$s\". L\'email non è stata inviata. Rimuovi il file o aggiungilo di nuovo e riprova.</string>
+</resources>

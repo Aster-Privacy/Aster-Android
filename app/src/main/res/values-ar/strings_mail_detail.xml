@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="detail_show_details">عرض التفاصيل</string>
+    <string name="detail_hide_details">إخفاء التفاصيل</string>
+    <string name="detail_show_quoted_text">إظهار النص المقتبس</string>
+    <string name="detail_hide_quoted_text">إخفاء النص المقتبس</string>
+    <string name="detail_external_images_blocked">تحتوي هذه الرسالة على محتوى خارجي. قد يكشف تحميله نشاطك للمرسل.</string>
+    <string name="detail_external_allow_once">تحميل مرة واحدة</string>
+    <string name="detail_external_always_allow">السماح دائمًا</string>
+    <string name="detail_external_images_traffic_blocked">تم حجب الصور الخارجية لتوفير البيانات.</string>
+    <string name="detail_disable_traffic_saving">إيقاف توفير البيانات</string>
+    <string name="detail_external_dismiss">ليس الآن</string>
+    <string name="detail_unsubscribe_title">يدعم هذا المرسل إلغاء الاشتراك بنقرة واحدة.</string>
+    <string name="detail_unsubscribe_subtitle">لن تصلك رسائل أخرى من هذا العنوان.</string>
+    <string name="detail_view_raw_source">عرض المصدر الخام</string>
+    <string name="detail_raw_source_title">المصدر الخام للرسالة</string>
+    <string name="detail_raw_source_headers">الترويسات</string>
+    <string name="detail_raw_source_body">المتن</string>
+    <string name="detail_raw_source_copy">نسخ</string>
+    <string name="detail_raw_source_copied">تم النسخ إلى الحافظة</string>
+    <string name="detail_raw_source_close">إغلاق</string>
+    <string name="detail_raw_source_unavailable">المصدر الخام غير متاح لهذه الرسالة.</string>
+    <string name="detail_star_action">تمييز الرسالة بنجمة</string>
+    <string name="detail_unstar_action">إزالة النجمة من الرسالة</string>
+    <string name="message_details">تفاصيل الرسالة</string>
+    <string name="from_label">من</string>
+    <string name="to_label">إلى</string>
+    <string name="subject_label">الموضوع</string>
+    <string name="message_id_label">معرّف الرسالة</string>
+    <string name="message_headers">ترويسات الرسالة</string>
+    <string name="no_raw_headers">لا تتوفر ترويسات خام لهذه الرسالة.</string>
+    <string name="copy_headers">نسخ الترويسات</string>
+    <string name="headers_copied">تم نسخ الترويسات</string>
+</resources>

@@ -12,4 +12,8 @@
     <string name="compose_attachment_remove">Supprimer la pièce jointe</string>
     <string name="compose_attachment_uploading">Envoi de la pièce jointe %1$s</string>
     <string name="compose_attachment_read_failed">Impossible de joindre « %1$s ». Votre e-mail n\'a pas été envoyé. Supprimez ou rajoutez le fichier, puis réessayez.</string>
+    <string name="schedule_time_in_past">L\'heure programmée doit être dans le futur</string>
+    <string name="signature_none">Aucune signature</string>
+    <string name="signature_select">Choisir une signature</string>
+    <string name="compose_metadata_strip_failed">Impossible de retirer les métadonnées cachées de : %1$s</string>
 </resources>

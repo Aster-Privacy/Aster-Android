@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="detail_show_details">Ver detalhes</string>
+    <string name="detail_hide_details">Ocultar detalhes</string>
+    <string name="detail_show_quoted_text">Mostrar o texto citado</string>
+    <string name="detail_hide_quoted_text">Ocultar o texto citado</string>
+    <string name="detail_external_images_blocked">Esta mensagem tem conteúdo externo. Ao carregá-lo, o remetente pode ver sua atividade.</string>
+    <string name="detail_external_allow_once">Carregar uma vez</string>
+    <string name="detail_external_always_allow">Permitir sempre</string>
+    <string name="detail_external_images_traffic_blocked">As imagens externas estão bloqueadas para economizar dados.</string>
+    <string name="detail_disable_traffic_saving">Desativar a economia de dados</string>
+    <string name="detail_external_dismiss">Agora não</string>
+    <string name="detail_unsubscribe_title">Este remetente permite cancelar a inscrição com um toque.</string>
+    <string name="detail_unsubscribe_subtitle">Você deixará de receber mensagens deste endereço.</string>
+    <string name="detail_view_raw_source">Ver o código-fonte</string>
+    <string name="detail_raw_source_title">Código-fonte da mensagem</string>
+    <string name="detail_raw_source_headers">Cabeçalhos</string>
+    <string name="detail_raw_source_body">Corpo</string>
+    <string name="detail_raw_source_copy">Copiar</string>
+    <string name="detail_raw_source_copied">Copiado para a área de transferência</string>
+    <string name="detail_raw_source_close">Fechar</string>
+    <string name="detail_raw_source_unavailable">O código-fonte desta mensagem não está disponível.</string>
+    <string name="detail_star_action">Marcar a mensagem com estrela</string>
+    <string name="detail_unstar_action">Tirar a estrela da mensagem</string>
+    <string name="message_details">Detalhes da mensagem</string>
+    <string name="from_label">De</string>
+    <string name="to_label">Para</string>
+    <string name="subject_label">Assunto</string>
+    <string name="message_id_label">ID da mensagem</string>
+    <string name="message_headers">Cabeçalhos da mensagem</string>
+    <string name="no_raw_headers">Esta mensagem não tem cabeçalhos brutos.</string>
+    <string name="copy_headers">Copiar os cabeçalhos</string>
+    <string name="headers_copied">Cabeçalhos copiados</string>
+</resources>
