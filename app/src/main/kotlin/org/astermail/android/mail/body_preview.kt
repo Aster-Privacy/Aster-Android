@@ -69,6 +69,7 @@ fun strip_body_html(html: String): String {
         m.groupValues[1].toIntOrNull(16)?.let { code -> runCatching { String(Character.toChars(code)) }.getOrNull() } ?: " "
     }
     text = text.replace(Regex("&[a-zA-Z]+;"), " ")
+    text = text.replace(Regex("<[^>]+>"), " ")
     text = text.replace(Regex("[\\u200B-\\u200F\\u202A-\\u202E\\u2060\\uFEFF\\u00AD\\u034F\\u115F\\u1160\\u17B4\\u17B5\\u180E\\u3164\\uFFA0]"), "")
     text = text.replace(Regex("\\s+"), " ")
     return text.trim()
