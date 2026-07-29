@@ -2900,20 +2900,13 @@ class SettingsViewModel @Inject constructor(
 
     private fun apply_saved_default_signature(content: String) {
         val target_id = default_signature_id ?: return
-        val current = _signatures.value
-        val updated = if (current.any { it.id == target_id }) {
-            current.map { if (it.id == target_id) it.copy(content = content) else it }
-        } else {
-            current + DecryptedSignature(
-                id = target_id,
-                name = context.getString(org.astermail.android.R.string.default_signature_name),
-                content = content,
-                is_default = true,
-                is_html = default_signature_is_html,
-                alias_id = null,
-                placement = null,
-            )
-        }
+        val updated = apply_default_signature_content(
+            current = _signatures.value,
+            target_id = target_id,
+            content = content,
+            default_name = context.getString(org.astermail.android.R.string.default_signature_name),
+            is_html = default_signature_is_html,
+        )
         _signatures.value = updated
         persist_cached_signatures(updated)
     }
@@ -4203,3 +4196,23 @@ class SettingsViewModel @Inject constructor(
     }
 }
 
+
+internal fun apply_default_signature_content(
+    current: List<DecryptedSignature>,
+    target_id: String,
+    content: String,
+    default_name: String,
+    is_html: Boolean,
+): List<DecryptedSignature> = if (current.any { it.id == target_id }) {
+    current.map { if (it.id == target_id) it.copy(content = content) else it }
+} else {
+    current + DecryptedSignature(
+        id = target_id,
+        name = default_name,
+        content = content,
+        is_default = true,
+        is_html = is_html,
+        alias_id = null,
+        placement = null,
+    )
+}
