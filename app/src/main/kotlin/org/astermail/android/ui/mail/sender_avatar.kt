@@ -88,6 +88,21 @@ fun get_root_domain(domain: String): String {
 
 fun get_favicon_url(domain: String): String = "$FAVICON_BASE$domain"
 
+private const val FAVICON_MISS_TTL_MS = 30L * 60L * 1000L
+
+private val favicon_missed_at = java.util.concurrent.ConcurrentHashMap<String, Long>()
+
+private fun favicon_recently_missed(root_domain: String): Boolean {
+    val missed_at = favicon_missed_at[root_domain] ?: return false
+    if (System.currentTimeMillis() - missed_at < FAVICON_MISS_TTL_MS) return true
+    favicon_missed_at.remove(root_domain)
+    return false
+}
+
+private fun mark_favicon_missed(root_domain: String) {
+    favicon_missed_at[root_domain] = System.currentTimeMillis()
+}
+
 internal fun decode_avatar_model(url: String): Any {
     if (!url.startsWith("data:")) return url
     val comma = url.indexOf(',')
@@ -166,6 +181,11 @@ fun SenderAvatar(
         return
     }
 
+    if (remember(root_domain) { favicon_recently_missed(root_domain) }) {
+        initials_circle(name, email, bg, fg, size, modifier)
+        return
+    }
+
     val url = remember(root_domain) { "$FAVICON_BASE$root_domain" }
     var loaded by remember(url) { mutableStateOf(false) }
     Box(
@@ -195,6 +215,7 @@ fun SenderAvatar(
             contentScale = ContentScale.Crop,
             onState = { state ->
                 loaded = state is coil.compose.AsyncImagePainter.State.Success
+                if (state is coil.compose.AsyncImagePainter.State.Error) mark_favicon_missed(root_domain)
             },
             modifier = Modifier.size(size).clip(CircleShape),
         )
