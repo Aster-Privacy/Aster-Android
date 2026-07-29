@@ -2545,30 +2545,8 @@ class MailViewModel @Inject constructor(
         }
     }
 
-    private fun folder_matches(folder: String, item: InboxItem): Boolean = when (folder) {
-        "inbox" -> !item.is_trashed && !item.is_archived && !item.is_spam
-        "starred" -> item.is_starred && !item.is_trashed
-        "trash" -> item.is_trashed
-        "spam" -> item.is_spam
-        "archive" -> item.is_archived
-        "all" -> !item.is_trashed
-        "sent" -> item.raw_item.item_type == "sent" && !item.is_trashed
-        "drafts" -> item.raw_item.item_type == "draft" && !item.is_trashed
-        "scheduled" -> item.raw_item.item_type == "scheduled" && !item.is_trashed
-        "outbox" -> item.raw_item.item_type == "outbox" && !item.is_trashed
-        "snoozed" -> !item.is_trashed
-        else -> when {
-            folder.startsWith("label:") -> {
-                val token = folder.removePrefix("label:")
-                item.labels.contains(token) && !item.is_trashed
-            }
-            folder.startsWith("tag:") -> {
-                val token = folder.removePrefix("tag:")
-                item.tag_tokens.contains(token) && !item.is_trashed
-            }
-            else -> item.labels.contains(folder) && !item.is_trashed
-        }
-    }
+    private fun folder_matches(folder: String, item: InboxItem): Boolean =
+        folder_matches_item(folder, item)
 
     private fun is_timeout_failure(t: Throwable?): Boolean = when (t) {
         null -> false
@@ -2656,3 +2634,28 @@ fun org.astermail.android.storage.search.DecryptedMailEntity.to_inbox_item(): In
     display_sender_email = display_sender_email,
     raw_item = org.astermail.android.api.mail.MailItem(id = id),
 )
+
+internal fun folder_matches_item(folder: String, item: InboxItem): Boolean = when (folder) {
+    "inbox" -> !item.is_trashed && !item.is_archived && !item.is_spam
+    "starred" -> item.is_starred && !item.is_trashed
+    "trash" -> item.is_trashed
+    "spam" -> item.is_spam
+    "archive" -> item.is_archived
+    "all" -> !item.is_trashed
+    "sent" -> item.raw_item.item_type == "sent" && !item.is_trashed
+    "drafts" -> item.raw_item.item_type == "draft" && !item.is_trashed
+    "scheduled" -> item.raw_item.item_type == "scheduled" && !item.is_trashed
+    "outbox" -> item.raw_item.item_type == "outbox" && !item.is_trashed
+    "snoozed" -> !item.is_trashed
+    else -> when {
+        folder.startsWith("label:") -> {
+            val token = folder.removePrefix("label:")
+            item.labels.contains(token) && !item.is_trashed
+        }
+        folder.startsWith("tag:") -> {
+            val token = folder.removePrefix("tag:")
+            item.tag_tokens.contains(token) && !item.is_trashed
+        }
+        else -> item.labels.contains(folder) && !item.is_trashed
+    }
+}
