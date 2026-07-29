@@ -35,6 +35,7 @@ const val RATCHET_UNDECRYPTABLE_SENTINEL = "\u0000ASTER_RATCHET_UNDECRYPTABLE\u0
 
 private const val VAULT_REFRESH_COOLDOWN_MS = 5L * 60L * 1000L
 private const val FORCED_RECOVERY_WINDOW_MS = 30L * 1000L
+private const val PQ_SECRET_MISS_TTL_MS = 10L * 60L * 1000L
 
 @Singleton
 class RatchetDecryptor @Inject constructor(
@@ -59,9 +60,13 @@ class RatchetDecryptor @Inject constructor(
     @Volatile
     private var forced_recovery_until = 0L
 
+    private val pq_secret_missed_at = java.util.concurrent.ConcurrentHashMap<Int, Long>()
+
     fun begin_forced_recovery() {
         forced_recovery_until = System.currentTimeMillis() + FORCED_RECOVERY_WINDOW_MS
         last_vault_refresh_at = 0L
+        pq_secret_missed_at.clear()
+        syncer.clear_missing_state_cache()
     }
 
     private fun forced_recovery_active(): Boolean = System.currentTimeMillis() < forced_recovery_until
@@ -312,18 +317,39 @@ class RatchetDecryptor @Inject constructor(
         ).also { shared_secret.fill(0) }
     }
 
+    private fun pq_secret_recently_missed(key_id: Int): Boolean {
+        val missed_at = pq_secret_missed_at[key_id] ?: return false
+        if (System.currentTimeMillis() - missed_at < PQ_SECRET_MISS_TTL_MS) return true
+        pq_secret_missed_at.remove(key_id)
+        return false
+    }
+
+    private fun mark_pq_secret_missed(key_id: Int) {
+        pq_secret_missed_at[key_id] = System.currentTimeMillis()
+    }
+
     private suspend fun fetch_pq_secret(key_id: Int): ByteArray? {
         session_key_store.get_pq_secret(key_id)?.let { return it }
-        val resp = try { ratchet_api.fetch_pq_secret(key_id) } catch (_: Throwable) { null } ?: return null
-        val key = state_store.derive_state_encryption_key() ?: return null
+        if (pq_secret_recently_missed(key_id)) return null
+        val resp = try { ratchet_api.fetch_pq_secret(key_id) } catch (_: Throwable) { null }
+        if (resp == null) {
+            mark_pq_secret_missed(key_id)
+            return null
+        }
+        val key = state_store.derive_state_encryption_key() ?: run {
+            mark_pq_secret_missed(key_id)
+            return null
+        }
         return try {
             val ct = RatchetCrypto.b64_decode(resp.encrypted_secret)
             val nonce = RatchetCrypto.b64_decode(resp.secret_nonce)
             val pt = RatchetCrypto.aes_gcm_decrypt(ct, key, nonce, null)
             session_key_store.put_pq_secret(key_id, pt)
+            pq_secret_missed_at.remove(key_id)
             pt
         } catch (t: Throwable) {
             if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "pq decrypt failed", t)
+            mark_pq_secret_missed(key_id)
             null
         } finally {
             key.fill(0)

@@ -52,9 +52,23 @@ class RatchetStateSyncer @Inject constructor(
     private val locks = mutableMapOf<String, Mutex>()
     private val locks_guard = Mutex()
     private val known_versions = java.util.concurrent.ConcurrentHashMap<String, Int>()
+    private val missing_state_at = java.util.concurrent.ConcurrentHashMap<String, Long>()
+    private val synced_fingerprints = java.util.concurrent.ConcurrentHashMap<String, Int>()
 
     private suspend fun lock_for(conversation_id: String): Mutex = locks_guard.withLock {
         locks.getOrPut(conversation_id) { Mutex() }
+    }
+
+    fun clear_missing_state_cache() {
+        missing_state_at.clear()
+        synced_fingerprints.clear()
+    }
+
+    private fun state_recently_missing(conversation_id: String): Boolean {
+        val missed_at = missing_state_at[conversation_id] ?: return false
+        if (System.currentTimeMillis() - missed_at < MISSING_STATE_TTL_MS) return true
+        missing_state_at.remove(conversation_id)
+        return false
     }
 
     fun decode_server_state(plaintext_json: String): RatchetState? {
@@ -71,10 +85,16 @@ class RatchetStateSyncer @Inject constructor(
     }
 
     suspend fun fetch_from_server(conversation_id: String): RatchetState? {
+        if (state_recently_missing(conversation_id)) return null
         val key = state_store.derive_state_encryption_key() ?: return null
         return try {
             val conv_b64 = RatchetCrypto.b64_encode(conversation_id.toByteArray(Charsets.UTF_8))
-            val resp = ratchet_api.fetch_state(conv_b64) ?: return null
+            val resp = ratchet_api.fetch_state(conv_b64)
+            if (resp == null) {
+                missing_state_at[conversation_id] = System.currentTimeMillis()
+                return null
+            }
+            missing_state_at.remove(conversation_id)
             val ciphertext = RatchetCrypto.b64_decode(resp.encrypted_state)
             val nonce = RatchetCrypto.b64_decode(resp.state_nonce)
             val plaintext = RatchetCrypto.aes_gcm_decrypt(ciphertext, key, nonce, null)
@@ -96,6 +116,8 @@ class RatchetStateSyncer @Inject constructor(
     suspend fun reset(conversation_id: String) {
         lock_for(conversation_id).withLock {
             known_versions.remove(conversation_id)
+            missing_state_at.remove(conversation_id)
+            synced_fingerprints.remove(conversation_id)
             state_store.delete(conversation_id)
             try {
                 val conv_b64 = RatchetCrypto.b64_encode(conversation_id.toByteArray(Charsets.UTF_8))
@@ -115,7 +137,14 @@ class RatchetStateSyncer @Inject constructor(
                 put("state", json.parseToJsonElement(state_element))
                 put("conversation_id", JsonPrimitive(conversation_id))
             }
-            val plaintext = container.toString().toByteArray(Charsets.UTF_8)
+            val container_text = container.toString()
+            val fingerprint = container_text.hashCode()
+            if (synced_fingerprints[conversation_id] == fingerprint &&
+                known_versions.containsKey(conversation_id)
+            ) {
+                return true
+            }
+            val plaintext = container_text.toByteArray(Charsets.UTF_8)
 
             var known_version: Int? = known_versions[conversation_id]
             var last_error = "sync failed"
@@ -132,6 +161,8 @@ class RatchetStateSyncer @Inject constructor(
                         when (val outcome = try_post(conv_b64, ct_b64, nonce_b64)) {
                             is PostStateOutcome.Success -> {
                                 known_versions[conversation_id] = outcome.response.state_version
+                                missing_state_at.remove(conversation_id)
+                                synced_fingerprints[conversation_id] = fingerprint
                                 return true
                             }
                             PostStateOutcome.AlreadyExists -> {
@@ -159,6 +190,8 @@ class RatchetStateSyncer @Inject constructor(
                 when (val outcome = try_put(conv_b64, ct_b64, nonce_b64, current_version)) {
                     is PutStateOutcome.Success -> {
                         known_versions[conversation_id] = outcome.response.state_version
+                        missing_state_at.remove(conversation_id)
+                        synced_fingerprints[conversation_id] = fingerprint
                         return true
                     }
                     PutStateOutcome.VersionConflict -> {
@@ -184,6 +217,7 @@ class RatchetStateSyncer @Inject constructor(
             }
             if (BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "sync exhausted attempts ($last_error) -> keeping local state, will retry later")
             known_versions.remove(conversation_id)
+            synced_fingerprints.remove(conversation_id)
             return false
         } catch (t: Throwable) {
             if (BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "sync threw", t)
@@ -220,5 +254,6 @@ class RatchetStateSyncer @Inject constructor(
 
     companion object {
         private const val MAX_ATTEMPTS = 4
+        private const val MISSING_STATE_TTL_MS = 60L * 1000L
     }
 }

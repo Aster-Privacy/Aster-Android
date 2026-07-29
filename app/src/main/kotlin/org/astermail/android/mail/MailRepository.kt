@@ -82,6 +82,7 @@ private const val SEND_RETRY_QUIET_ATTEMPTS = 2
 private const val STATUS_PENDING = "pending"
 private const val STATUS_FAILED = "failed"
 private const val SENDING_CLAIM_STALE_MS = 5 * 60 * 1000L
+private const val RATCHET_UNDECRYPTABLE_TTL_MS = 10L * 60L * 1000L
 private const val OUTBOX_FILE_REF_PREFIX = "@file:"
 private const val EMPTY_ATTACHMENTS_JSON = "[]"
 
@@ -295,6 +296,7 @@ class MailRepository @Inject constructor(
 
     private val pbkdf2_key_cache = java.util.concurrent.ConcurrentHashMap<String, ByteArray>()
     private val identity_key_cache = java.util.concurrent.ConcurrentHashMap<String, ByteArray>()
+    private val ratchet_undecryptable_at = java.util.concurrent.ConcurrentHashMap<String, Long>()
     @Volatile private var cached_sent_folder_token: String? = null
     private val draft_item_cache =
         java.util.Collections.synchronizedMap(
@@ -658,7 +660,15 @@ class MailRepository @Inject constructor(
     }
 
     fun begin_decrypt_retry() {
+        ratchet_undecryptable_at.clear()
         ratchet_decryptor.begin_forced_recovery()
+    }
+
+    private fun ratchet_recently_undecryptable(message_id: String): Boolean {
+        val failed_at = ratchet_undecryptable_at[message_id] ?: return false
+        if (System.currentTimeMillis() - failed_at < RATCHET_UNDECRYPTABLE_TTL_MS) return true
+        ratchet_undecryptable_at.remove(message_id)
+        return false
     }
 
     fun clear_caches() {
@@ -668,6 +678,7 @@ class MailRepository @Inject constructor(
         identity_key_cache.clear()
         cached_sent_folder_token = null
         draft_item_cache.clear()
+        ratchet_undecryptable_at.clear()
         ratchet_plaintext_cache.clear()
     }
 
@@ -1868,6 +1879,8 @@ class MailRepository @Inject constructor(
                     val cached = if (!message_id.isNullOrBlank()) ratchet_plaintext_cache.get(message_id) else null
                     if (cached != null) {
                         cached
+                    } else if (!message_id.isNullOrBlank() && ratchet_recently_undecryptable(message_id)) {
+                        org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL
                     } else {
                         val delivered_to = org.astermail.android.ui.mail.extract_delivered_to(envelope.raw_headers)
                         val our_addresses = buildList {
@@ -1875,10 +1888,13 @@ class MailRepository @Inject constructor(
                             if (!delivered_to.isNullOrBlank()) add(delivered_to)
                         }
                         val result = ratchet_decryptor.try_decrypt(ratchet_candidate, our_addresses, sender_email)
-                        if (result != org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL &&
-                            !message_id.isNullOrBlank()
-                        ) {
-                            ratchet_plaintext_cache.put(message_id, result)
+                        if (!message_id.isNullOrBlank()) {
+                            if (result != org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL) {
+                                ratchet_undecryptable_at.remove(message_id)
+                                ratchet_plaintext_cache.put(message_id, result)
+                            } else {
+                                ratchet_undecryptable_at[message_id] = System.currentTimeMillis()
+                            }
                         }
                         result
                     }
