@@ -108,6 +108,7 @@ import org.astermail.android.design.components.UpgradeGate
 import org.astermail.android.settings.DecryptedDeletedAlias
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.ui.auth.TurnstileWidget
+import org.astermail.android.util.generate_random_local_part
 
 @Composable
 private fun tab_labels_computed(): List<String> = listOf(
@@ -2028,10 +2029,7 @@ private fun create_alias_dialog(
                         .clip(SquircleShape(8.dp))
                         .border(1.dp, colors.border_primary, SquircleShape(8.dp))
                         .clickable {
-                            val adjectives = listOf("quick", "bright", "calm", "swift", "bold")
-                            val nouns = listOf("river", "cloud", "stone", "leaf", "wave")
-                            val rnd = java.util.Random()
-                            local_part = "${adjectives[rnd.nextInt(adjectives.size)]}.${nouns[rnd.nextInt(nouns.size)]}${(10..99).random()}"
+                            local_part = generate_random_local_part()
                         }
                         .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
                 ) {
