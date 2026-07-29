@@ -77,6 +77,8 @@ data class TotpChallenge(
     val remember_me: Boolean,
 )
 
+private const val UNAUTHORIZED_CHECK_COOLDOWN_MS = 10_000L
+
 sealed interface LoginOutcome {
     data object Success : LoginOutcome
     data class NeedsTotp(val challenge: TotpChallenge) : LoginOutcome
@@ -103,10 +105,14 @@ class AuthRepository @Inject constructor(
     val is_signed_in: StateFlow<Boolean> = _is_signed_in.asStateFlow()
 
     private val unauthorized_check_running = java.util.concurrent.atomic.AtomicBoolean(false)
+    @Volatile private var last_unauthorized_check_ms = 0L
 
     suspend fun handle_unauthorized_signal() {
         if (!_is_signed_in.value) return
+        val now = System.currentTimeMillis()
+        if (now - last_unauthorized_check_ms < UNAUTHORIZED_CHECK_COOLDOWN_MS) return
         if (!unauthorized_check_running.compareAndSet(false, true)) return
+        last_unauthorized_check_ms = now
         try {
             auth_api.me()
         } catch (e: CancellationException) {
@@ -663,9 +669,12 @@ class AuthRepository @Inject constructor(
     }
 
     suspend fun refresh_profile(): Result<Unit> = runCatching {
-        val profile = auth_api.me()
+        absorb_profile(auth_api.me())
+    }
+
+    fun absorb_profile(profile: org.astermail.android.api.auth.UserInfo) {
         val current_id = session_key_store.get_user_id() ?: profile.user_id
-        val email = session_key_store.get_user_email() ?: profile.email ?: return@runCatching
+        val email = session_key_store.get_user_email() ?: profile.email ?: return
         account_store.add_or_update(
             StoredAccount(
                 id = current_id,

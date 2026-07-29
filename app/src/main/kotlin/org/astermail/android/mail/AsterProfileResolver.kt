@@ -40,6 +40,8 @@ import org.astermail.android.api.auth.PublicProfile
 
 private val ASTER_DOMAINS = setOf("astermail.org", "aster.cx")
 
+private const val PROFILE_RESOLVE_TTL_MS = 30L * 60L * 1000L
+
 fun is_aster_domain(domain: String): Boolean = ASTER_DOMAINS.contains(domain.lowercase())
 
 object AsterProfileResolverHolder {
@@ -55,8 +57,16 @@ class AsterProfileResolver @Inject constructor(
     val profiles: StateFlow<Map<String, PublicProfile?>> = _profiles.asStateFlow()
 
     private val pending = mutableSetOf<String>()
+    private val resolved_at = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val mutex = Mutex()
     private var flush_job: Job? = null
+
+    private fun recently_resolved(email: String): Boolean {
+        val at = resolved_at[email] ?: return false
+        if (System.currentTimeMillis() - at < PROFILE_RESOLVE_TTL_MS) return true
+        resolved_at.remove(email)
+        return false
+    }
 
     fun prime(email: String, display_name: String?, profile_picture: String?, profile_color: String? = null) {
         val lower = email.trim().lowercase()
@@ -82,9 +92,11 @@ class AsterProfileResolver @Inject constructor(
         val domain = lower.substringAfter('@', "")
         if (!is_aster_domain(domain)) return
         if (_profiles.value[lower]?.profile_picture?.isNotBlank() == true) return
+        if (recently_resolved(lower)) return
         scope.launch {
             mutex.withLock {
                 if (_profiles.value[lower]?.profile_picture?.isNotBlank() == true) return@withLock
+                if (recently_resolved(lower)) return@withLock
                 if (pending.contains(lower)) return@withLock
                 pending.add(lower)
                 if (flush_job == null) {
@@ -101,6 +113,7 @@ class AsterProfileResolver @Inject constructor(
         scope.launch {
             mutex.withLock {
                 pending.clear()
+                resolved_at.clear()
                 flush_job?.cancel()
                 flush_job = null
                 _profiles.value = emptyMap()
@@ -120,8 +133,10 @@ class AsterProfileResolver @Inject constructor(
             try {
                 val resp = auth_api.batch_profiles(chunk)
                 val current = _profiles.value.toMutableMap()
+                val now = System.currentTimeMillis()
                 for (email in chunk) {
                     current[email] = resp.profiles[email]
+                    resolved_at[email] = now
                 }
                 _profiles.value = current
             } catch (t: Throwable) {
