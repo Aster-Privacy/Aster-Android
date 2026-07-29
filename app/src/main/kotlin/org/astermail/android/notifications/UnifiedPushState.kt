@@ -50,7 +50,14 @@ object UnifiedPushState {
     private const val KEY_REGISTERED_P256DH = "registered_p256dh"
     private const val KEY_REGISTERED_AUTH = "registered_auth"
     private const val KEY_LAST_SUBSCRIBED_AT = "last_subscribed_at"
+    private const val KEY_LAST_REGISTER_ATTEMPT_AT = "last_register_attempt_at"
+    private const val KEY_LAST_SUBSCRIBE_ATTEMPT_AT = "last_subscribe_attempt_at"
+    private const val KEY_VAPID_PUBLIC_KEY = "vapid_public_key"
+    private const val KEY_VAPID_FETCHED_AT = "vapid_fetched_at"
     private const val RESUBSCRIBE_INTERVAL_MS = 24L * 60L * 60L * 1000L
+    private const val REGISTER_COOLDOWN_MS = 15L * 60L * 1000L
+    private const val SUBSCRIBE_COOLDOWN_MS = 5L * 60L * 1000L
+    private const val VAPID_CACHE_TTL_MS = 7L * 24L * 60L * 60L * 1000L
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     @Serializable
@@ -98,6 +105,8 @@ object UnifiedPushState {
             .remove(KEY_REGISTERED_P256DH)
             .remove(KEY_REGISTERED_AUTH)
             .remove(KEY_LAST_SUBSCRIBED_AT)
+            .remove(KEY_LAST_REGISTER_ATTEMPT_AT)
+            .remove(KEY_LAST_SUBSCRIBE_ATTEMPT_AT)
             .apply()
     }
 
@@ -108,6 +117,8 @@ object UnifiedPushState {
             .remove(KEY_REGISTERED_P256DH)
             .remove(KEY_REGISTERED_AUTH)
             .remove(KEY_LAST_SUBSCRIBED_AT)
+            .remove(KEY_LAST_REGISTER_ATTEMPT_AT)
+            .remove(KEY_LAST_SUBSCRIBE_ATTEMPT_AT)
             .apply()
     }
 
@@ -128,7 +139,17 @@ object UnifiedPushState {
         post_subscription(context, endpoint, p256dh, auth)
     }
 
+    private fun cooldown_active(context: Context, key: String, window_ms: Long): Boolean {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val last = prefs.getLong(key, 0L)
+        val now = System.currentTimeMillis()
+        if (last != 0L && now - last < window_ms) return true
+        prefs.edit().putLong(key, now).apply()
+        return false
+    }
+
     fun try_register(context: Context) {
+        if (cooldown_active(context, KEY_LAST_REGISTER_ATTEMPT_AT, REGISTER_COOLDOWN_MS)) return
         scope.launch {
             runCatching {
                 val distributors = UnifiedPush.getDistributors(context)
@@ -150,15 +171,29 @@ object UnifiedPushState {
         }
     }
 
-    private suspend fun get_vapid_public_key(context: Context): String? = runCatching {
-        val client = EntryPointAccessors.fromApplication(
-            context.applicationContext,
-            ApiClientEntryPoint::class.java,
-        ).api_client()
-        client.http.get("${client.base_url}/api/sync/v1/web-push/vapid-key")
-            .body<VapidKeyResponse>()
-            .public_key
-    }.getOrNull()
+    private suspend fun get_vapid_public_key(context: Context): String? {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val cached = prefs.getString(KEY_VAPID_PUBLIC_KEY, null)
+        val fetched_at = prefs.getLong(KEY_VAPID_FETCHED_AT, 0L)
+        if (!cached.isNullOrBlank() && System.currentTimeMillis() - fetched_at < VAPID_CACHE_TTL_MS) {
+            return cached
+        }
+        val fetched = runCatching {
+            val client = EntryPointAccessors.fromApplication(
+                context.applicationContext,
+                ApiClientEntryPoint::class.java,
+            ).api_client()
+            client.http.get("${client.base_url}/api/sync/v1/web-push/vapid-key")
+                .body<VapidKeyResponse>()
+                .public_key
+        }.getOrNull()
+        if (fetched.isNullOrBlank()) return cached
+        prefs.edit()
+            .putString(KEY_VAPID_PUBLIC_KEY, fetched)
+            .putLong(KEY_VAPID_FETCHED_AT, System.currentTimeMillis())
+            .apply()
+        return fetched
+    }
 
     fun unregister(context: Context) {
         runCatching { UnifiedPush.unregister(context) }
@@ -185,6 +220,7 @@ object UnifiedPushState {
         p256dh: String,
         auth: String,
     ) {
+        if (cooldown_active(context, KEY_LAST_SUBSCRIBE_ATTEMPT_AT, SUBSCRIBE_COOLDOWN_MS)) return
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         scope.launch {
             runCatching {
