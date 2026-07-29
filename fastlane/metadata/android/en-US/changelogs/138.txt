@@ -1,0 +1,4 @@
+- Deleting a folder now asks you to confirm first, so an accidental tap cannot wipe it
+- The warning names the folder and tells you your emails stay in your account
+- Folders with subfolders warn you that the subfolders move to the top level
+- Deleting a label asks for confirmation the same way
