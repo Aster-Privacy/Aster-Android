@@ -123,6 +123,7 @@ fun RuleEditorScreen(
     LaunchedEffect(Unit) {
         if (state.rules.isEmpty()) vm.load()
         settings_vm.load_labels()
+        settings_vm.load_tags(force = false)
     }
 
     val existing = remember(rule_id, state.rules) {
@@ -280,6 +281,36 @@ fun RuleEditorScreen(
                     },
                     modifier = Modifier.testTag("add_condition"),
                 )
+            }
+
+            if (!is_read_only && conditions_conflict_under_all(conditions.toList(), match_mode)) {
+                Spacer(Modifier.height(AsterSpacing.md))
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(colors.bg_secondary)
+                        .padding(AsterSpacing.md)
+                        .testTag("rule_conflict_warning"),
+                ) {
+                    Text(
+                        text = stringResource(R.string.mail_rules_conflict_warning),
+                        color = colors.text_secondary,
+                        fontSize = 13.sp,
+                    )
+                    Spacer(Modifier.height(AsterSpacing.sm))
+                    Text(
+                        text = stringResource(R.string.mail_rules_conflict_switch),
+                        color = colors.accent_blue,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .clickable { match_mode = MatchMode.ANY }
+                            .padding(vertical = AsterSpacing.xs, horizontal = AsterSpacing.sm)
+                            .testTag("rule_conflict_switch"),
+                    )
+                }
             }
 
             Spacer(Modifier.height(AsterSpacing.xl))

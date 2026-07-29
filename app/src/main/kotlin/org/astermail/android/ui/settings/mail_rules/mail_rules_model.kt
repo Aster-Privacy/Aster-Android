@@ -30,6 +30,7 @@ import org.astermail.android.api.mail_rules.AuthResult
 import org.astermail.android.api.mail_rules.Condition
 import org.astermail.android.api.mail_rules.DateOp
 import org.astermail.android.api.mail_rules.MailRule
+import org.astermail.android.api.mail_rules.MatchMode
 import org.astermail.android.api.mail_rules.NumericOp
 import org.astermail.android.api.mail_rules.ReadState
 import org.astermail.android.api.mail_rules.TextOp
@@ -271,6 +272,40 @@ fun is_action_complete(a: Action): Boolean = when (a) {
     is Action.Snooze -> is_valid_rfc3339(a.until_iso8601)
     is Action.AutoReply -> a.template_id.isNotBlank()
     else -> true
+}
+
+private fun exclusive_address_value(op: AddressOp, value: String): String? =
+    if (op == AddressOp.IS || op == AddressOp.MATCHES_DOMAIN) value.trim().lowercase().takeIf { it.isNotBlank() } else null
+
+private fun exclusive_text_value(op: TextOp, value: String): String? =
+    if (op == TextOp.IS) value.trim().lowercase().takeIf { it.isNotBlank() } else null
+
+private fun exclusive_signature(c: Condition): Pair<String, String>? {
+    val field = field_of(c)?.name ?: return null
+    val entry = when (c) {
+        is Condition.From -> c.op.name to exclusive_address_value(c.op, c.value)
+        is Condition.ReplyTo -> c.op.name to exclusive_address_value(c.op, c.value)
+        is Condition.To -> c.op.name to exclusive_address_value(c.op, c.value)
+        is Condition.Cc -> c.op.name to exclusive_address_value(c.op, c.value)
+        is Condition.Bcc -> c.op.name to exclusive_address_value(c.op, c.value)
+        is Condition.AnyRecipient -> c.op.name to exclusive_address_value(c.op, c.value)
+        is Condition.Subject -> c.op.name to exclusive_text_value(c.op, c.value)
+        is Condition.Body -> c.op.name to exclusive_text_value(c.op, c.value)
+        is Condition.ListId -> c.op.name to exclusive_text_value(c.op, c.value)
+        else -> return null
+    }
+    val value = entry.second ?: return null
+    return "$field:${entry.first}" to value
+}
+
+fun conditions_conflict_under_all(conditions: List<Condition>, match_mode: MatchMode): Boolean {
+    if (match_mode != MatchMode.ALL || conditions.size < 2) return false
+    val groups = mutableMapOf<String, MutableSet<String>>()
+    conditions.forEach { c ->
+        val signature = exclusive_signature(c) ?: return@forEach
+        groups.getOrPut(signature.first) { mutableSetOf() }.add(signature.second)
+    }
+    return groups.values.any { it.size > 1 }
 }
 
 fun is_advanced_condition(c: Condition): Boolean = when (c) {
