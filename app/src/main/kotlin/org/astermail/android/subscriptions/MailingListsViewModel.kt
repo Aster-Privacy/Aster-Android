@@ -75,7 +75,7 @@ class MailingListsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_loading = false,
-                    error = t.message ?: context.getString(R.string.failed_to_load),
+                    error = org.astermail.android.api.user_facing_error(t, context.getString(R.string.failed_to_load)),
                 )
             }
         }
@@ -120,7 +120,7 @@ class MailingListsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_scanning = false,
-                    error = t.message ?: context.getString(R.string.scan_failed),
+                    error = org.astermail.android.api.user_facing_error(t, context.getString(R.string.scan_failed)),
                 )
             }
         }
@@ -142,7 +142,7 @@ class MailingListsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     pending_ids = _state.value.pending_ids - subscription_id,
-                    error = t.message ?: context.getString(R.string.unsubscribe_failed),
+                    error = org.astermail.android.api.user_facing_error(t, context.getString(R.string.unsubscribe_failed)),
                 )
             }
         }
@@ -165,7 +165,7 @@ class MailingListsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     pending_ids = _state.value.pending_ids - ids.toSet(),
-                    error = t.message ?: context.getString(R.string.bulk_unsubscribe_failed),
+                    error = org.astermail.android.api.user_facing_error(t, context.getString(R.string.bulk_unsubscribe_failed)),
                 )
             }
         }
@@ -186,7 +186,7 @@ class MailingListsViewModel @Inject constructor(
                 throw e
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
-                    error = t.message ?: context.getString(R.string.reactivate_failed),
+                    error = org.astermail.android.api.user_facing_error(t, context.getString(R.string.reactivate_failed)),
                 )
             } finally {
                 _state.value = _state.value.copy(pending_ids = _state.value.pending_ids - subscription_id)

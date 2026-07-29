@@ -72,6 +72,7 @@ import org.astermail.android.api.labels.LabelItem
 import org.astermail.android.api.labels.ReferralHistoryItem
 import org.astermail.android.api.labels.ReferralInfoResponse
 import org.astermail.android.api.labels.ReorderLabelEntry
+import org.astermail.android.api.labels.VerifyFolderPasswordRequest
 import org.astermail.android.folders.folder_sibling_group
 import org.astermail.android.api.tags.CreateTagRequest
 import org.astermail.android.api.tags.TagItem
@@ -395,7 +396,7 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_loading = false,
-                    error = t.message ?: context.getString(R.string.something_went_wrong),
+                    error = user_facing_error(t),
                 )
             }
         }
@@ -502,7 +503,7 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     default_sender_id = null,
-                    error = t.message ?: context.getString(R.string.something_went_wrong),
+                    error = user_facing_error(t),
                 )
             }
         }
@@ -521,7 +522,7 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     save_status = SaveStatus.ERROR,
-                    error = t.message ?: context.getString(R.string.something_went_wrong),
+                    error = user_facing_error(t),
                 )
             }
         }
@@ -555,7 +556,7 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_loading = false,
-                    error = t.message ?: context.getString(R.string.something_went_wrong),
+                    error = user_facing_error(t),
                 )
             }
         }
@@ -611,6 +612,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun reset_for_account_switch() {
+        org.astermail.android.folders.folder_lock_store.lock_all()
         load_preferences_job?.cancel()
         save_preferences_job?.cancel()
         prefs_load_succeeded = false
@@ -654,7 +656,7 @@ class SettingsViewModel @Inject constructor(
                 _state.update {
                     it.copy(
                         blocked_senders_loading = false,
-                        blocked_senders_error = t.message ?: context.getString(R.string.something_went_wrong),
+                        blocked_senders_error = user_facing_error(t),
                     )
                 }
             }
@@ -860,7 +862,7 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_loading = false,
-                    error = t.message ?: context.getString(R.string.something_went_wrong),
+                    error = user_facing_error(t),
                 )
             }
         }
@@ -1104,7 +1106,7 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     domains_loading = false,
-                    action_result = t.message ?: context.getString(R.string.something_went_wrong),
+                    action_result = user_facing_error(t),
                 )
             }
         }
@@ -1117,7 +1119,7 @@ class SettingsViewModel @Inject constructor(
                 load_domains()
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
-                    action_result = t.message ?: context.getString(R.string.something_went_wrong),
+                    action_result = user_facing_error(t),
                 )
             }
         }
@@ -1130,7 +1132,7 @@ class SettingsViewModel @Inject constructor(
                 _state.update { s -> s.copy(domains = s.domains.filter { it.id != domain_id }) }
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
-                    action_result = t.message ?: context.getString(R.string.something_went_wrong),
+                    action_result = user_facing_error(t),
                 )
             }
         }
@@ -1197,7 +1199,7 @@ class SettingsViewModel @Inject constructor(
             if (org.astermail.android.BuildConfig.DEBUG) {
                 android.util.Log.w("SettingsVM", "check_alias_availability failed for @$domain", t)
             }
-            AliasAvailability.CheckFailed(t.message ?: context.getString(R.string.something_went_wrong))
+            AliasAvailability.CheckFailed(user_facing_error(t))
         }
     }
 
@@ -1255,7 +1257,7 @@ class SettingsViewModel @Inject constructor(
             load_directories()
             true
         } catch (t: Throwable) {
-            _state.value = _state.value.copy(action_result = t.message ?: context.getString(R.string.something_went_wrong))
+            _state.value = _state.value.copy(action_result = user_facing_error(t))
             false
         }
     }
@@ -1343,7 +1345,7 @@ class SettingsViewModel @Inject constructor(
             load_aliases(force = true)
             true
         } catch (t: Throwable) {
-            _state.value = _state.value.copy(action_result = t.message ?: context.getString(R.string.something_went_wrong))
+            _state.value = _state.value.copy(action_result = user_facing_error(t))
             false
         }
     }
@@ -1370,7 +1372,7 @@ class SettingsViewModel @Inject constructor(
             load_custom_domain_addresses()
             true
         } catch (t: Throwable) {
-            _state.value = _state.value.copy(action_result = t.message ?: context.getString(R.string.something_went_wrong))
+            _state.value = _state.value.copy(action_result = user_facing_error(t))
             false
         }
     }
@@ -1390,7 +1392,7 @@ class SettingsViewModel @Inject constructor(
                 _state.update { s ->
                     s.copy(
                         custom_domain_addresses = s.custom_domain_addresses.map { if (it.id == address_id) it.copy(is_enabled = current.is_enabled) else it },
-                        action_result = t.message ?: context.getString(R.string.something_went_wrong),
+                        action_result = user_facing_error(t),
                     )
                 }
             }
@@ -1404,7 +1406,7 @@ class SettingsViewModel @Inject constructor(
                 settings_api.delete_domain_address(domain_id, address_id)
                 _state.update { s -> s.copy(custom_domain_addresses = s.custom_domain_addresses.filter { it.id != address_id }) }
             } catch (t: Throwable) {
-                _state.value = _state.value.copy(action_result = t.message ?: context.getString(R.string.something_went_wrong))
+                _state.value = _state.value.copy(action_result = user_facing_error(t))
             }
         }
     }
@@ -1432,7 +1434,7 @@ class SettingsViewModel @Inject constructor(
                 on_result(updated)
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
-                    action_result = t.message ?: context.getString(R.string.something_went_wrong),
+                    action_result = user_facing_error(t),
                 )
             }
         }
@@ -1450,7 +1452,7 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_loading = false,
-                    error = t.message ?: context.getString(R.string.something_went_wrong),
+                    error = user_facing_error(t),
                 )
             }
         }
@@ -1474,7 +1476,7 @@ class SettingsViewModel @Inject constructor(
                 }
                 _state.value = _state.value.copy(
                     is_loading = false,
-                    error = t.message ?: context.getString(R.string.something_went_wrong),
+                    error = user_facing_error(t),
                 )
             }
         }
@@ -1805,7 +1807,7 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_loading = false,
-                    error = t.message ?: context.getString(R.string.something_went_wrong),
+                    error = user_facing_error(t),
                 )
             }
         }
@@ -1911,7 +1913,7 @@ class SettingsViewModel @Inject constructor(
                 context.getString(R.string.recovery_email_already_in_use)
             RecoveryEmailApiImpl.RECOVERY_EMAIL_COOLDOWN ->
                 context.getString(R.string.recovery_email_resend_cooldown)
-            else -> t.message ?: context.getString(R.string.something_went_wrong)
+            else -> user_facing_error(t)
         }
     }
 
@@ -1970,6 +1972,9 @@ class SettingsViewModel @Inject constructor(
         return session_key_store.get_recovery_codes()
     }
 
+    private fun user_facing_error(t: Throwable): String =
+        org.astermail.android.api.user_facing_error(t, context.getString(R.string.something_went_wrong))
+
     fun load_labels(folder_type: String? = null, force: Boolean = false) {
         val now = System.currentTimeMillis()
         val labels_key = folder_type ?: "all"
@@ -2025,11 +2030,16 @@ class SettingsViewModel @Inject constructor(
                     labels = decrypted + surviving + preserved,
                     is_loading = false,
                 )
+                org.astermail.android.notifications.MailPollingWorker.set_protected_folder_tokens(
+                    context,
+                    _state.value.labels.filter { org.astermail.android.folders.is_folder_protected(it) }
+                        .map { it.label_token },
+                )
             } catch (t: Throwable) {
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_labels failed", t)
                 _state.value = _state.value.copy(
                     is_loading = false,
-                    error = t.message ?: context.getString(R.string.something_went_wrong),
+                    error = user_facing_error(t),
                 )
             }
         }
@@ -2042,7 +2052,10 @@ class SettingsViewModel @Inject constructor(
                 if (response.success) {
                     load_labels(force = true)
                 }
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                _state.value = _state.value.copy(
+                    action_result = user_facing_error(t),
+                )
             }
         }
     }
@@ -2054,8 +2067,40 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     labels = _state.value.labels.filter { it.id != label_id },
                 )
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                _state.value = _state.value.copy(
+                    action_result = user_facing_error(t),
+                )
             }
+        }
+    }
+
+    fun unlock_folder(
+        label_id: String,
+        password: String,
+        on_result: (Boolean) -> Unit,
+    ) {
+        viewModelScope.launch {
+            val ok = try {
+                val salt = _state.value.labels.firstOrNull { it.id == label_id }?.password_salt
+                    ?: labels_api.get_label(label_id).password_salt
+                if (salt.isNullOrBlank()) {
+                    false
+                } else {
+                    val password_hash = withContext(Dispatchers.Default) {
+                        org.astermail.android.folders.derive_folder_auth_hash(password, salt)
+                    }
+                    val response = labels_api.verify_folder_password(
+                        label_id,
+                        VerifyFolderPasswordRequest(password_hash = password_hash),
+                    )
+                    response.verified
+                }
+            } catch (_: Throwable) {
+                false
+            }
+            if (ok) org.astermail.android.folders.folder_lock_store.mark_unlocked(label_id)
+            on_result(ok)
         }
     }
 
@@ -2084,7 +2129,7 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(tags = decrypted)
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
-                    error = t.message ?: context.getString(R.string.something_went_wrong),
+                    error = user_facing_error(t),
                 )
             }
         }
@@ -2132,7 +2177,7 @@ class SettingsViewModel @Inject constructor(
                 val token = generate_token_b64()
                 val name_field = encrypt_field_with_version(name, identity_key, FOLDER_VERSION_CURRENT)
                 val color_field = color?.let { encrypt_field_with_version(it, identity_key, FOLDER_VERSION_CURRENT) }
-                labels_api.create_label(
+                val created = labels_api.create_label(
                     CreateLabelRequest(
                         label_token = token,
                         encrypted_name = name_field.ciphertext_b64,
@@ -2145,7 +2190,7 @@ class SettingsViewModel @Inject constructor(
                     ),
                 )
                 val optimistic = LabelItem(
-                    id = token,
+                    id = created.id?.takeIf { it.isNotBlank() } ?: token,
                     label_token = token,
                     encrypted_name = name,
                     encrypted_color = color,
@@ -2319,7 +2364,7 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     preferences = _state.value.preferences ?: UserPreferences(),
                     is_loading = false,
-                    error = t.message ?: context.getString(R.string.something_went_wrong),
+                    error = user_facing_error(t),
                 )
             }
         }
@@ -2435,7 +2480,7 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     save_status = SaveStatus.ERROR,
-                    error = t.message ?: context.getString(R.string.something_went_wrong),
+                    error = user_facing_error(t),
                 )
             }
         }
@@ -2473,7 +2518,7 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     save_status = SaveStatus.ERROR,
-                    error = t.message ?: context.getString(R.string.something_went_wrong),
+                    error = user_facing_error(t),
                 )
             }
         }
@@ -2489,7 +2534,7 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     save_status = SaveStatus.ERROR,
-                    error = t.message ?: context.getString(R.string.something_went_wrong),
+                    error = user_facing_error(t),
                 )
             }
         }
@@ -2505,7 +2550,7 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     save_status = SaveStatus.ERROR,
-                    error = t.message ?: context.getString(R.string.something_went_wrong),
+                    error = user_facing_error(t),
                 )
             }
         }
@@ -2545,7 +2590,7 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     save_status = SaveStatus.ERROR,
-                    error = t.message ?: context.getString(R.string.something_went_wrong),
+                    error = user_facing_error(t),
                 )
             }
         }
@@ -2649,7 +2694,7 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     save_status = SaveStatus.ERROR,
-                    error = t.message ?: context.getString(R.string.something_went_wrong),
+                    error = user_facing_error(t),
                 )
             }
         }
@@ -2693,7 +2738,7 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_loading = false,
-                    error = t.message ?: context.getString(R.string.something_went_wrong),
+                    error = user_facing_error(t),
                 )
             }
         }
@@ -2740,10 +2785,12 @@ class SettingsViewModel @Inject constructor(
             _state.update { s -> s.copy(ghost_aliases = listOf(new_alias) + s.ghost_aliases) }
             GhostAliasResult.Success("$local_part@$domain")
         } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
             val message = when (t) {
                 is ApiError.RateLimited, is ApiError.PlanLimitExceeded ->
                     context.getString(R.string.ghost_alias_limit_reached)
-                else -> t.message ?: context.getString(R.string.could_not_create_ghost_alias)
+                else -> (t as? ApiError)?.message?.takeIf { it.isNotBlank() }
+                    ?: context.getString(R.string.could_not_create_ghost_alias)
             }
             GhostAliasResult.Failure(message)
         }
@@ -2799,7 +2846,7 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_loading = false,
-                    error = t.message ?: context.getString(R.string.something_went_wrong),
+                    error = user_facing_error(t),
                 )
             }
         }
@@ -2843,7 +2890,7 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     save_status = SaveStatus.ERROR,
-                    error = t.message ?: context.getString(R.string.something_went_wrong),
+                    error = user_facing_error(t),
                 )
             }
         }
@@ -2870,7 +2917,7 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     save_status = SaveStatus.ERROR,
-                    error = t.message ?: context.getString(R.string.something_went_wrong),
+                    error = user_facing_error(t),
                 )
             }
         }
@@ -2899,7 +2946,7 @@ class SettingsViewModel @Inject constructor(
                 _state.update { s ->
                     s.copy(
                         forwarding_resending_address = null,
-                        error = t.message ?: context.getString(R.string.something_went_wrong),
+                        error = user_facing_error(t),
                     )
                 }
             }
@@ -2923,7 +2970,7 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.update { s -> s.copy(forwarding_rules = previous) }
                 _state.value = _state.value.copy(
-                    error = t.message ?: context.getString(R.string.something_went_wrong),
+                    error = user_facing_error(t),
                 )
             }
         }
@@ -2963,7 +3010,7 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_loading = false,
-                    error = t.message ?: context.getString(R.string.something_went_wrong),
+                    error = user_facing_error(t),
                 )
             }
         }
@@ -3561,7 +3608,7 @@ class SettingsViewModel @Inject constructor(
                     is_loading = false,
                 ) }
             } catch (t: Throwable) {
-                _state.update { it.copy(is_loading = false, error = t.message) }
+                _state.update { it.copy(is_loading = false, error = user_facing_error(t)) }
             }
         }
     }

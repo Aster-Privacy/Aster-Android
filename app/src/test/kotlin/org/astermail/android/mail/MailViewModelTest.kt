@@ -629,7 +629,7 @@ class MailViewModelTest {
     @Test
     fun `build_search_index error sets error state`() = runTest {
         coEvery { repository.fetch_all_for_search(any()) } returns
-            Result.failure(RuntimeException("timeout"))
+            Result.failure(org.astermail.android.api.ApiError.UnknownError("timeout"))
 
         vm.build_search_index()
         advanceUntilIdle()
@@ -984,7 +984,7 @@ class MailViewModelTest {
         val item = fake_inbox_page(1).items[0]
         coEvery { repository.fetch_single_message("id_1") } returns Result.success(item)
         coEvery { repository.fetch_thread("thread_1") } returns
-            Result.failure(RuntimeException("thread api down"))
+            Result.failure(org.astermail.android.api.ApiError.UnknownError("thread api down"))
         coEvery { repository.decrypt_single_thread_message(any()) } returns ThreadMessageDecrypted(
             id = "id_1",
             sender_name = "",

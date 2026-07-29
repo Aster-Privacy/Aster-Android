@@ -188,7 +188,7 @@ class ContactsViewModelTest {
     @Test
     fun `load_contact error sets error message`() = runTest {
         coEvery { repository.fetch_contact("c_999") } returns
-            Result.failure(RuntimeException("not found"))
+            Result.failure(org.astermail.android.api.ApiError.UnknownError("not found"))
 
         vm.load_contact("c_999")
         advanceUntilIdle()
@@ -251,7 +251,7 @@ class ContactsViewModelTest {
     fun `save_contact failure sets error`() = runTest {
         val contact = fake_contact()
         coEvery { repository.create_contact(contact) } returns
-            Result.failure(RuntimeException("server error"))
+            Result.failure(org.astermail.android.api.ApiError.UnknownError("server error"))
 
         vm.save_contact(contact)
         advanceUntilIdle()
@@ -279,7 +279,7 @@ class ContactsViewModelTest {
     fun `save_contact update failure sets error`() = runTest {
         val contact = fake_contact("c_1")
         coEvery { repository.update_contact("c_1", contact) } returns
-            Result.failure(RuntimeException("forbidden"))
+            Result.failure(org.astermail.android.api.ApiError.UnknownError("forbidden"))
 
         vm.save_contact(contact, existing_id = "c_1")
         advanceUntilIdle()
@@ -320,7 +320,7 @@ class ContactsViewModelTest {
     @Test
     fun `delete_contact failure sets error`() = runTest {
         coEvery { repository.delete_contact("c_1") } returns
-            Result.failure(RuntimeException("unauthorized"))
+            Result.failure(org.astermail.android.api.ApiError.UnknownError("unauthorized"))
 
         vm.delete_contact("c_1")
         advanceUntilIdle()
@@ -364,7 +364,7 @@ class ContactsViewModelTest {
     @Test
     fun `clear_flags resets error from failed operation`() = runTest {
         coEvery { repository.fetch_contacts() } returns
-            Result.failure(RuntimeException("bad request"))
+            Result.failure(org.astermail.android.api.ApiError.UnknownError("bad request"))
 
         vm.load_contacts()
         advanceUntilIdle()
@@ -470,7 +470,7 @@ class ContactsViewModelTest {
     @Test
     fun `error is cleared before new load_contacts call`() = runTest {
         coEvery { repository.fetch_contacts() } returnsMany listOf(
-            Result.failure(RuntimeException("first failure")),
+            Result.failure(org.astermail.android.api.ApiError.UnknownError("first failure")),
             Result.success(listOf(fake_contact())),
         )
 

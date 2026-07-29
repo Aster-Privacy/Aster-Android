@@ -104,6 +104,7 @@ data class ImportUiState(
 @HiltViewModel
 class ImportViewModel @Inject constructor(
     private val api: ImportApi,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ImportUiState())
@@ -223,7 +224,13 @@ class ImportViewModel @Inject constructor(
                 _state.value = _state.value.copy(is_uploading = false, job_created = true)
                 load_jobs()
             } catch (t: Throwable) {
-                _state.value = _state.value.copy(is_uploading = false, error = t.message ?: "error")
+                _state.value = _state.value.copy(
+                    is_uploading = false,
+                    error = org.astermail.android.api.user_facing_error(
+                        t,
+                        context.getString(R.string.something_went_wrong),
+                    ),
+                )
             }
         }
     }

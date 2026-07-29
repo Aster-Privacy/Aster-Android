@@ -282,7 +282,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_profile error sets error message`() = runTest {
-        coEvery { auth_api.me() } throws RuntimeException("unauthorized")
+        coEvery { auth_api.me() } throws org.astermail.android.api.ApiError.UnknownError("unauthorized")
 
         vm.load_profile()
         advanceUntilIdle()
@@ -879,7 +879,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_sessions error sets error message`() = runTest {
-        coEvery { settings_api.list_sessions() } throws RuntimeException("network error")
+        coEvery { settings_api.list_sessions() } throws org.astermail.android.api.ApiError.UnknownError("network error")
 
         vm.load_sessions()
         advanceUntilIdle()
@@ -952,7 +952,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_blocked_senders error sets error message`() = runTest {
-        coEvery { settings_api.list_blocked_senders() } throws RuntimeException("timeout")
+        coEvery { settings_api.list_blocked_senders() } throws org.astermail.android.api.ApiError.UnknownError("timeout")
 
         vm.load_blocked_senders()
         advanceUntilIdle()
@@ -1029,7 +1029,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_storage error sets error message`() = runTest {
-        coEvery { settings_api.get_storage_overview() } throws RuntimeException("storage unavailable")
+        coEvery { settings_api.get_storage_overview() } throws org.astermail.android.api.ApiError.UnknownError("storage unavailable")
 
         vm.load_storage()
         advanceUntilIdle()
@@ -1041,7 +1041,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_subscription error sets error message`() = runTest {
-        coEvery { settings_api.get_subscription() } throws RuntimeException("no subscription")
+        coEvery { settings_api.get_subscription() } throws org.astermail.android.api.ApiError.UnknownError("no subscription")
 
         vm.load_subscription()
         advanceUntilIdle()
@@ -1064,7 +1064,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_aliases error sets error message`() = runTest {
-        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } throws RuntimeException("alias error")
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } throws org.astermail.android.api.ApiError.UnknownError("alias error")
 
         vm.load_aliases()
         advanceUntilIdle()
@@ -1185,7 +1185,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_ghost_aliases error sets error message`() = runTest {
-        coEvery { ghost_alias_api.list_ghost_aliases() } throws RuntimeException("ghost error")
+        coEvery { ghost_alias_api.list_ghost_aliases() } throws org.astermail.android.api.ApiError.UnknownError("ghost error")
 
         vm.load_ghost_aliases()
         advanceUntilIdle()
@@ -1228,7 +1228,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_forwarding_rules error sets error message`() = runTest {
-        coEvery { auto_forward_api.list_rules() } throws RuntimeException("rules error")
+        coEvery { auto_forward_api.list_rules() } throws org.astermail.android.api.ApiError.UnknownError("rules error")
 
         vm.load_forwarding_rules()
         advanceUntilIdle()
@@ -1266,7 +1266,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `create_forwarding_rule error sets error status`() = runTest {
-        coEvery { auto_forward_api.create_rule(any()) } throws RuntimeException("invalid target")
+        coEvery { auto_forward_api.create_rule(any()) } throws org.astermail.android.api.ApiError.UnknownError("invalid target")
 
         vm.create_forwarding_rule("bad", false)
         advanceUntilIdle()
@@ -1328,7 +1328,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_labels error sets error message`() = runTest {
-        coEvery { labels_api.list_labels(any(), any()) } throws RuntimeException("labels error")
+        coEvery { labels_api.list_labels(any(), any()) } throws org.astermail.android.api.ApiError.UnknownError("labels error")
 
         vm.load_labels()
         advanceUntilIdle()
@@ -1407,6 +1407,42 @@ class SettingsViewModelTest {
         assertEquals("Receipts", optimistic.encrypted_name)
         assertEquals("parent_tok", optimistic.parent_token)
         assertEquals(2, optimistic.sort_order)
+    }
+
+    @Test
+    fun `create_folder keeps the server id so delete works immediately`() = runTest {
+        every { session_key_store.get_identity_key() } returns "test-identity-key"
+        coEvery { labels_api.create_label(any()) } returns
+            CreateLabelResponse(id = "srv_id", label_token = "srv_tok", success = true)
+        coEvery { labels_api.delete_label(any()) } returns Unit
+
+        vm.create_folder(name = "Receipts")
+        advanceUntilIdle()
+
+        val created = vm.state.value.labels.single()
+        assertEquals("srv_id", created.id)
+
+        vm.delete_label(created.id)
+        advanceUntilIdle()
+
+        coVerify { labels_api.delete_label("srv_id") }
+        assertTrue(vm.state.value.labels.isEmpty())
+    }
+
+    @Test
+    fun `delete_label failure reports an action result`() = runTest {
+        coEvery { labels_api.list_labels(any(), any()) } returns
+            LabelsListResponse(listOf(LabelItem(id = "l1", label_token = "lt1", encrypted_name = "Alpha")))
+        vm.load_labels()
+        advanceUntilIdle()
+        coEvery { labels_api.delete_label("l1") } throws
+            org.astermail.android.api.ApiError.UnknownError("folder is locked")
+
+        vm.delete_label("l1")
+        advanceUntilIdle()
+
+        assertEquals("folder is locked", vm.state.value.action_result)
+        assertEquals(1, vm.state.value.labels.size)
     }
 
     private suspend fun kotlinx.coroutines.test.TestScope.seed_folders() {
@@ -1862,7 +1898,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_preferences error sets error message`() = runTest {
-        coEvery { preferences_api.get_encrypted_preferences() } throws RuntimeException("prefs error")
+        coEvery { preferences_api.get_encrypted_preferences() } throws org.astermail.android.api.ApiError.UnknownError("prefs error")
 
         vm.load_preferences(force = true)
         advanceUntilIdle()
@@ -1885,7 +1921,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_api_keys error sets error message`() = runTest {
-        coEvery { developer_api.list_api_keys() } throws RuntimeException("api keys error")
+        coEvery { developer_api.list_api_keys() } throws org.astermail.android.api.ApiError.UnknownError("api keys error")
 
         vm.load_api_keys()
         advanceUntilIdle()
@@ -2074,7 +2110,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_profile clears previous error`() = runTest {
-        coEvery { auth_api.me() } throws RuntimeException("first error")
+        coEvery { auth_api.me() } throws org.astermail.android.api.ApiError.UnknownError("first error")
         vm.load_profile()
         advanceUntilIdle()
         assertEquals("first error", vm.state.value.error)

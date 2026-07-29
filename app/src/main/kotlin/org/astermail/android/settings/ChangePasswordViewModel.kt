@@ -112,7 +112,7 @@ class ChangePasswordViewModel @Inject constructor(
             }.onFailure { t ->
                 _state.value = _state.value.copy(
                     is_submitting = false,
-                    error = t.message ?: context.getString(R.string.failed_change_password),
+                    error = org.astermail.android.api.user_facing_error(t, context.getString(R.string.failed_change_password)),
                 )
             }
         }

@@ -41,6 +41,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.astermail.android.R
 import org.astermail.android.api.contacts.ContactsApi
 import org.astermail.android.api.mail.MailApi
 import org.astermail.android.api.mail.MailItem
@@ -171,7 +172,15 @@ class ExportViewModel @Inject constructor(
         } catch (_: CancellationException) {
             // handled in cancel_export
         } catch (t: Throwable) {
-            _state.update { it.copy(is_running = false, error = t.message ?: "Export failed") }
+            _state.update {
+                it.copy(
+                    is_running = false,
+                    error = org.astermail.android.api.user_facing_error(
+                        t,
+                        context.getString(R.string.something_went_wrong),
+                    ),
+                )
+            }
         }
     }
 
