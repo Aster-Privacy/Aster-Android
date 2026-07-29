@@ -1,0 +1,6 @@
+- Password-locked folders now stay locked in the app, including search and notifications
+- Create a folder straight from folder settings
+- Mail rules warn when conditions can never match, and labels show up in the label action
+- Reactions no longer touch the screen edge, and tapping one shows who reacted
+- Japanese text fixed, plus better translations across every language
+- Clearer error messages instead of technical text
