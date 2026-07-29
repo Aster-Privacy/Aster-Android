@@ -6,4 +6,10 @@
     <plurals name="common_new_messages">
         <item quantity="other">%d 封新邮件</item>
     </plurals>
+    <plurals name="common_folders_count">
+        <item quantity="other">%d 个文件夹</item>
+    </plurals>
+    <plurals name="common_messages_count">
+        <item quantity="other">%d 条消息</item>
+    </plurals>
 </resources>

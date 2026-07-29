@@ -8,4 +8,12 @@
         <item quantity="one">%d nuovo messaggio</item>
         <item quantity="other">%d nuovi messaggi</item>
     </plurals>
+    <plurals name="common_folders_count">
+        <item quantity="one">%d cartella</item>
+        <item quantity="other">%d cartelle</item>
+    </plurals>
+    <plurals name="common_messages_count">
+        <item quantity="one">%d messaggio</item>
+        <item quantity="other">%d messaggi</item>
+    </plurals>
 </resources>

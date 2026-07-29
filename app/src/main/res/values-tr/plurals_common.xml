@@ -8,4 +8,12 @@
         <item quantity="one">%d yeni ileti</item>
         <item quantity="other">%d yeni ileti</item>
     </plurals>
+    <plurals name="common_folders_count">
+        <item quantity="one">%d klasör</item>
+        <item quantity="other">%d klasör</item>
+    </plurals>
+    <plurals name="common_messages_count">
+        <item quantity="one">%d mesaj</item>
+        <item quantity="other">%d mesaj</item>
+    </plurals>
 </resources>

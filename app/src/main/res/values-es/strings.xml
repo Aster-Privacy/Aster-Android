@@ -869,6 +869,12 @@
     <string name="keep_copy_in_inbox">Mantener una copia en la bandeja de entrada</string>
     <string name="create_rule">Crear regla</string>
     <string name="auto_forward_saved">Configuración de reenvío automático guardada</string>
+    <string name="forwarding_pending_verification">Verificación pendiente</string>
+    <string name="resend_verification_email">Reenviar correo de verificación</string>
+    <string name="forwarding_awaiting_verification">Esperando verificación: %1$s</string>
+    <string name="forwarding_verification_sent">Correo de verificación enviado a %1$s. El reenvío comenzará cuando se confirme.</string>
+    <string name="forwarding_internal_active">El reenvío está activo. Los destinos de Aster a Aster no necesitan verificación.</string>
+    <string name="forwarding_verification_resent">Correo de verificación reenviado a %1$s</string>
 
     <string name="signature">Firma</string>
     <string name="your_signature">Tu firma</string>
@@ -1398,17 +1404,17 @@
     <string name="translation_show_original">Mostrar original</string>
     <string name="translation_failed">No se pudo traducir</string>
     <string name="customize_toolbar">Personalizar barra de herramientas</string>
-    <string name="customize_toolbar_subtitle">Elige quÃ© acciones aparecen en la barra inferior al leer o seleccionar correos.</string>
+    <string name="customize_toolbar_subtitle">Elige qué acciones aparecen en la barra inferior al leer o seleccionar correos.</string>
     <string name="reading_toolbar">Leyendo correo</string>
     <string name="selection_toolbar">Seleccionando correo</string>
     <string name="toolbar_slots">Espacios de la barra</string>
-    <string name="choose_action">Elige una acciÃ³n</string>
+    <string name="choose_action">Elige una acción</string>
     <string name="change">Cambiar</string>
     <string name="unset">Sin definir</string>
-    <string name="more_actions">MÃ¡s</string>
-    <string name="marked_unread_count">%d mensaje(s) marcado(s) como no leÃ­do(s)</string>
-    <string name="starred_count">%d conversaciÃ³n(es) destacada(s)</string>
-    <string name="unstarred_count">Se quitÃ³ el destacado de %d conversaciÃ³n(es)</string>
+    <string name="more_actions">Más</string>
+    <string name="marked_unread_count">%d mensaje(s) marcado(s) como no leído(s)</string>
+    <string name="starred_count">%d conversación(es) destacada(s)</string>
+    <string name="unstarred_count">Se quitó el destacado de %d conversación(es)</string>
     <string name="failed_to_update_selection">No se pudieron actualizar algunas conversaciones</string>
     <string name="mail_rules_title">Reglas de correo</string>
     <string name="mail_rules_subtitle">Automatiza lo que ocurre con el correo entrante</string>
@@ -2293,10 +2299,17 @@
         <item quantity="one">%d contacto</item>
         <item quantity="other">%d contactos</item>
     </plurals>
-    <string name="forwarding_pending_verification">Verificación pendiente</string>
-    <string name="resend_verification_email">Reenviar correo de verificación</string>
-    <string name="forwarding_awaiting_verification">Esperando verificación: %1$s</string>
-    <string name="forwarding_verification_sent">Correo de verificación enviado a %1$s. El reenvío comenzará cuando se confirme.</string>
-    <string name="forwarding_internal_active">El reenvío está activo. Los destinos de Aster a Aster no necesitan verificación.</string>
-    <string name="forwarding_verification_resent">Correo de verificación reenviado a %1$s</string>
+    <string name="reaction_info_title">Reacción</string>
+    <string name="reaction_info_you">Reaccionaste con %1$s</string>
+    <string name="reaction_info_other">%1$s reaccionó con %2$s</string>
+    <string name="reaction_cannot_be_removed">Las reacciones no se pueden quitar una vez enviadas.</string>
+    <string name="folder_locked_title">Carpeta bloqueada</string>
+    <string name="folder_locked_description">Introduce la contraseña de \"%1$s\" para ver su correo.</string>
+    <string name="folder_unlock_password_placeholder">Contraseña de la carpeta</string>
+    <string name="folder_unlock_action">Desbloquear</string>
+    <string name="folder_unlock_failed">Contraseña incorrecta</string>
+    <string name="folder_locked_badge">Bloqueada</string>
+    <string name="create_folder_subtitle">Crea una carpeta nueva sin salir de esta pantalla</string>
+    <string name="mail_rules_conflict_warning">Estas condiciones se unen con \"y\", así que un correo debe cumplirlas todas. La mayoría solo cumplirá una, por lo que puede que esta regla nunca se aplique.</string>
+    <string name="mail_rules_conflict_switch">Cambiar a \"o\"</string>
 </resources>

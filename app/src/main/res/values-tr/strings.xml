@@ -868,6 +868,12 @@
     <string name="keep_copy_in_inbox">Gelen kutusunda kopya sakla</string>
     <string name="create_rule">Kural oluştur</string>
     <string name="auto_forward_saved">Otomatik yönlendirme ayarları kaydedildi</string>
+    <string name="forwarding_pending_verification">Doğrulama bekleniyor</string>
+    <string name="resend_verification_email">Doğrulama e-postasını yeniden gönder</string>
+    <string name="forwarding_awaiting_verification">Doğrulama bekleniyor: %1$s</string>
+    <string name="forwarding_verification_sent">Doğrulama e-postası %1$s adresine gönderildi. Yönlendirme onaylandıktan sonra başlar.</string>
+    <string name="forwarding_internal_active">Yönlendirme etkin. Aster\'dan Aster\'a hedefler doğrulama gerektirmez.</string>
+    <string name="forwarding_verification_resent">Doğrulama e-postası %1$s adresine yeniden gönderildi</string>
 
     <string name="signature">İmza</string>
     <string name="your_signature">İmzanız</string>
@@ -1396,19 +1402,19 @@
     <string name="translation_translated">Cihazınızda %1$s dilinden çevrildi</string>
     <string name="translation_show_original">Orijinali göster</string>
     <string name="translation_failed">Çeviri başarısız oldu</string>
-    <string name="customize_toolbar">AraÃ§ Ã§ubuÄŸunu Ã¶zelleÅŸtir</string>
-    <string name="customize_toolbar_subtitle">E-posta okurken veya seÃ§erken alt Ã§ubukta hangi eylemlerin gÃ¶rÃ¼neceÄŸini seÃ§in.</string>
+    <string name="customize_toolbar">Araç çubuğunu özelleştir</string>
+    <string name="customize_toolbar_subtitle">E-posta okurken veya seçerken alt çubukta hangi eylemlerin görüneceğini seçin.</string>
     <string name="reading_toolbar">E-posta okuma</string>
-    <string name="selection_toolbar">E-posta seÃ§me</string>
-    <string name="toolbar_slots">AraÃ§ Ã§ubuÄŸu yuvalarÄ±</string>
-    <string name="choose_action">Bir eylem seÃ§in</string>
-    <string name="change">DeÄŸiÅŸtir</string>
-    <string name="unset">AyarlanmadÄ±</string>
+    <string name="selection_toolbar">E-posta seçme</string>
+    <string name="toolbar_slots">Araç çubuğu yuvaları</string>
+    <string name="choose_action">Bir eylem seçin</string>
+    <string name="change">Değiştir</string>
+    <string name="unset">Ayarlanmadı</string>
     <string name="more_actions">Daha fazla</string>
-    <string name="marked_unread_count">%d ileti okunmadÄ± olarak iÅŸaretlendi</string>
-    <string name="starred_count">%d konuÅŸma yÄ±ldÄ±zlandÄ±</string>
-    <string name="unstarred_count">%d konuÅŸmanÄ±n yÄ±ldÄ±zÄ± kaldÄ±rÄ±ldÄ±</string>
-    <string name="failed_to_update_selection">BazÄ± konuÅŸmalar gÃ¼ncellenemedi</string>
+    <string name="marked_unread_count">%d ileti okunmadı olarak işaretlendi</string>
+    <string name="starred_count">%d konuşma yıldızlandı</string>
+    <string name="unstarred_count">%d konuşmanın yıldızı kaldırıldı</string>
+    <string name="failed_to_update_selection">Bazı konuşmalar güncellenemedi</string>
     <string name="mail_rules_title">Posta kuralları</string>
     <string name="mail_rules_subtitle">Gelen postaya ne olacağını otomatikleştirin</string>
     <string name="mail_rules_empty_title">Henüz kural yok</string>
@@ -2292,10 +2298,17 @@
         <item quantity="one">%d kişi</item>
         <item quantity="other">%d kişi</item>
     </plurals>
-    <string name="forwarding_pending_verification">Doğrulama bekleniyor</string>
-    <string name="resend_verification_email">Doğrulama e-postasını yeniden gönder</string>
-    <string name="forwarding_awaiting_verification">Doğrulama bekleniyor: %1$s</string>
-    <string name="forwarding_verification_sent">Doğrulama e-postası %1$s adresine gönderildi. Yönlendirme onaylandıktan sonra başlar.</string>
-    <string name="forwarding_internal_active">Yönlendirme etkin. Aster\'dan Aster\'a hedefler doğrulama gerektirmez.</string>
-    <string name="forwarding_verification_resent">Doğrulama e-postası %1$s adresine yeniden gönderildi</string>
+    <string name="reaction_info_title">Tepki</string>
+    <string name="reaction_info_you">%1$s ile tepki verdin</string>
+    <string name="reaction_info_other">%1$s, %2$s ile tepki verdi</string>
+    <string name="reaction_cannot_be_removed">Tepkiler gönderildikten sonra kaldırılamaz.</string>
+    <string name="folder_locked_title">Kilitli klasör</string>
+    <string name="folder_locked_description">E-postaları görmek için \"%1$s\" klasörünün parolasını girin.</string>
+    <string name="folder_unlock_password_placeholder">Klasör parolası</string>
+    <string name="folder_unlock_action">Kilidi aç</string>
+    <string name="folder_unlock_failed">Parola yanlış</string>
+    <string name="folder_locked_badge">Kilitli</string>
+    <string name="create_folder_subtitle">Bu ekrandan çıkmadan yeni klasör oluşturun</string>
+    <string name="mail_rules_conflict_warning">Bu koşullar \"ve\" ile birleştirildi, yani bir e-postanın hepsini karşılaması gerekir. Çoğu e-posta yalnızca birini karşılar, bu yüzden bu kural hiç çalışmayabilir.</string>
+    <string name="mail_rules_conflict_switch">\"veya\" olarak değiştir</string>
 </resources>

@@ -6,4 +6,10 @@
     <plurals name="common_new_messages">
         <item quantity="other">新着 %d 件</item>
     </plurals>
+    <plurals name="common_folders_count">
+        <item quantity="other">%d個のフォルダ</item>
+    </plurals>
+    <plurals name="common_messages_count">
+        <item quantity="other">%d件のメッセージ</item>
+    </plurals>
 </resources>

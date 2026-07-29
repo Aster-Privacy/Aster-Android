@@ -12,4 +12,16 @@
         <item quantity="many">%d новых писем</item>
         <item quantity="other">%d новых писем</item>
     </plurals>
+    <plurals name="common_folders_count">
+        <item quantity="one">%d папка</item>
+        <item quantity="few">%d папки</item>
+        <item quantity="many">%d папок</item>
+        <item quantity="other">%d папок</item>
+    </plurals>
+    <plurals name="common_messages_count">
+        <item quantity="one">%d сообщение</item>
+        <item quantity="few">%d сообщения</item>
+        <item quantity="many">%d сообщений</item>
+        <item quantity="other">%d сообщений</item>
+    </plurals>
 </resources>

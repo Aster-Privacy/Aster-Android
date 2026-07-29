@@ -869,6 +869,12 @@
     <string name="keep_copy_in_inbox">Kopie im Posteingang behalten</string>
     <string name="create_rule">Regel erstellen</string>
     <string name="auto_forward_saved">Einstellungen für automatische Weiterleitung gespeichert</string>
+    <string name="forwarding_pending_verification">Bestätigung ausstehend</string>
+    <string name="resend_verification_email">Bestätigungs-E-Mail erneut senden</string>
+    <string name="forwarding_awaiting_verification">Bestätigung ausstehend: %1$s</string>
+    <string name="forwarding_verification_sent">Bestätigungs-E-Mail an %1$s gesendet. Die Weiterleitung startet nach der Bestätigung.</string>
+    <string name="forwarding_internal_active">Die Weiterleitung ist aktiv. Ziele von Aster zu Aster benötigen keine Bestätigung.</string>
+    <string name="forwarding_verification_resent">Bestätigungs-E-Mail erneut an %1$s gesendet</string>
 
     <string name="signature">Signatur</string>
     <string name="your_signature">Ihre Signatur</string>
@@ -1123,7 +1129,7 @@
     <string name="register_agree_and"> und </string>
     <string name="licensed_agpl">Lizenziert unter AGPL-3.0</string>
     <string name="source_on_github">Quellcode auf GitHub</string>
-    <string name="downgrade">Downgrade</string>
+    <string name="downgrade">Herabstufen</string>
 
     <string name="contacts_permission_required">Kontaktberechtigung erforderlich</string>
 
@@ -1398,17 +1404,17 @@
     <string name="translation_show_original">Original anzeigen</string>
     <string name="translation_failed">Übersetzung fehlgeschlagen</string>
     <string name="customize_toolbar">Symbolleiste anpassen</string>
-    <string name="customize_toolbar_subtitle">WÃ¤hle aus, welche Aktionen in der unteren Leiste beim Lesen oder AuswÃ¤hlen von E-Mails angezeigt werden.</string>
+    <string name="customize_toolbar_subtitle">Wähle aus, welche Aktionen in der unteren Leiste beim Lesen oder Auswählen von E-Mails angezeigt werden.</string>
     <string name="reading_toolbar">E-Mail lesen</string>
-    <string name="selection_toolbar">E-Mail auswÃ¤hlen</string>
-    <string name="toolbar_slots">Symbolleisten-PlÃ¤tze</string>
-    <string name="choose_action">Aktion auswÃ¤hlen</string>
-    <string name="change">Ã„ndern</string>
+    <string name="selection_toolbar">E-Mail auswählen</string>
+    <string name="toolbar_slots">Symbolleisten-Plätze</string>
+    <string name="choose_action">Aktion auswählen</string>
+    <string name="change">Ändern</string>
     <string name="unset">Nicht festgelegt</string>
     <string name="more_actions">Mehr</string>
     <string name="marked_unread_count">%d Nachricht(en) als ungelesen markiert</string>
-    <string name="starred_count">Stern fÃ¼r %d Unterhaltung(en) gesetzt</string>
-    <string name="unstarred_count">Stern fÃ¼r %d Unterhaltung(en) entfernt</string>
+    <string name="starred_count">Stern für %d Unterhaltung(en) gesetzt</string>
+    <string name="unstarred_count">Stern für %d Unterhaltung(en) entfernt</string>
     <string name="failed_to_update_selection">Einige Unterhaltungen konnten nicht aktualisiert werden</string>
     <string name="mail_rules_title">E-Mail-Regeln</string>
     <string name="mail_rules_subtitle">Automatisieren, was mit eingehender Post passiert</string>
@@ -2293,10 +2299,17 @@
         <item quantity="one">%d Kontakt</item>
         <item quantity="other">%d Kontakte</item>
     </plurals>
-    <string name="forwarding_pending_verification">Bestätigung ausstehend</string>
-    <string name="resend_verification_email">Bestätigungs-E-Mail erneut senden</string>
-    <string name="forwarding_awaiting_verification">Bestätigung ausstehend: %1$s</string>
-    <string name="forwarding_verification_sent">Bestätigungs-E-Mail an %1$s gesendet. Die Weiterleitung startet nach der Bestätigung.</string>
-    <string name="forwarding_internal_active">Die Weiterleitung ist aktiv. Ziele von Aster zu Aster benötigen keine Bestätigung.</string>
-    <string name="forwarding_verification_resent">Bestätigungs-E-Mail erneut an %1$s gesendet</string>
+    <string name="reaction_info_title">Reaktion</string>
+    <string name="reaction_info_you">Du hast mit %1$s reagiert</string>
+    <string name="reaction_info_other">%1$s hat mit %2$s reagiert</string>
+    <string name="reaction_cannot_be_removed">Reaktionen können nach dem Senden nicht entfernt werden.</string>
+    <string name="folder_locked_title">Gesperrter Ordner</string>
+    <string name="folder_locked_description">Gib das Passwort für \"%1$s\" ein, um die E-Mails zu sehen.</string>
+    <string name="folder_unlock_password_placeholder">Ordnerpasswort</string>
+    <string name="folder_unlock_action">Entsperren</string>
+    <string name="folder_unlock_failed">Falsches Passwort</string>
+    <string name="folder_locked_badge">Gesperrt</string>
+    <string name="create_folder_subtitle">Neuen Ordner anlegen, ohne diesen Bildschirm zu verlassen</string>
+    <string name="mail_rules_conflict_warning">Diese Bedingungen sind mit \"und\" verknüpft, eine E-Mail muss also alle erfüllen. Die meisten E-Mails erfüllen nur eine, daher wird diese Regel vielleicht nie ausgeführt.</string>
+    <string name="mail_rules_conflict_switch">Auf \"oder\" umstellen</string>
 </resources>

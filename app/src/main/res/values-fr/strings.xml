@@ -914,6 +914,12 @@
     <string name="keep_copy_in_inbox">Garder une copie dans la boîte de réception</string>
     <string name="create_rule">Créer une règle</string>
     <string name="auto_forward_saved">Paramètres de transfert automatique enregistrés</string>
+    <string name="forwarding_pending_verification">Vérification en attente</string>
+    <string name="resend_verification_email">Renvoyer l\'e-mail de vérification</string>
+    <string name="forwarding_awaiting_verification">En attente de vérification : %1$s</string>
+    <string name="forwarding_verification_sent">E-mail de vérification envoyé à %1$s. Le transfert démarre après confirmation.</string>
+    <string name="forwarding_internal_active">Le transfert est actif. Les destinations Aster vers Aster ne nécessitent pas de vérification.</string>
+    <string name="forwarding_verification_resent">E-mail de vérification renvoyé à %1$s</string>
 
     <!-- Signature -->
     <string name="signature">Signature</string>
@@ -2016,12 +2022,12 @@
     <string name="translation_show_original">Afficher l\'original</string>
     <string name="translation_failed">Échec de la traduction</string>
     <string name="reading_toolbar">Lecture d\'e-mail</string>
-    <string name="selection_toolbar">SÃ©lection d\'e-mails</string>
+    <string name="selection_toolbar">Sélection d\'e-mails</string>
     <string name="more_actions">Plus</string>
-    <string name="marked_unread_count">%d message(s) marquÃ©(s) comme non lu(s)</string>
-    <string name="starred_count">%d conversation(s) marquÃ©e(s) d\'une Ã©toile</string>
-    <string name="unstarred_count">Ã‰toile retirÃ©e de %d conversation(s)</string>
-    <string name="failed_to_update_selection">Impossible de mettre Ã  jour certaines conversations</string>
+    <string name="marked_unread_count">%d message(s) marqué(s) comme non lu(s)</string>
+    <string name="starred_count">%d conversation(s) marquée(s) d\'une étoile</string>
+    <string name="unstarred_count">Étoile retirée de %d conversation(s)</string>
+    <string name="failed_to_update_selection">Impossible de mettre à jour certaines conversations</string>
     <string name="mail_rules_regex_empty">Un motif regex est requis avant d\'enregistrer.</string>
     <string name="mail_rules_regex_too_long">Ce regex est trop long. Une version raccourcie fonctionnera.</string>
     <string name="mail_rules_regex_invalid">Ce motif regex contient une erreur. Vérifiez la syntaxe.</string>
@@ -2320,10 +2326,17 @@
         <item quantity="one">%d contact</item>
         <item quantity="other">%d contacts</item>
     </plurals>
-    <string name="forwarding_pending_verification">Vérification en attente</string>
-    <string name="resend_verification_email">Renvoyer l\'e-mail de vérification</string>
-    <string name="forwarding_awaiting_verification">En attente de vérification : %1$s</string>
-    <string name="forwarding_verification_sent">E-mail de vérification envoyé à %1$s. Le transfert démarre après confirmation.</string>
-    <string name="forwarding_internal_active">Le transfert est actif. Les destinations Aster vers Aster ne nécessitent pas de vérification.</string>
-    <string name="forwarding_verification_resent">E-mail de vérification renvoyé à %1$s</string>
+    <string name="reaction_info_title">Réaction</string>
+    <string name="reaction_info_you">Vous avez réagi avec %1$s</string>
+    <string name="reaction_info_other">%1$s a réagi avec %2$s</string>
+    <string name="reaction_cannot_be_removed">Les réactions ne peuvent pas être retirées une fois envoyées.</string>
+    <string name="folder_locked_title">Dossier verrouillé</string>
+    <string name="folder_locked_description">Saisissez le mot de passe de \"%1$s\" pour voir ses e-mails.</string>
+    <string name="folder_unlock_password_placeholder">Mot de passe du dossier</string>
+    <string name="folder_unlock_action">Déverrouiller</string>
+    <string name="folder_unlock_failed">Mot de passe incorrect</string>
+    <string name="folder_locked_badge">Verrouillé</string>
+    <string name="create_folder_subtitle">Créez un dossier sans quitter cet écran</string>
+    <string name="mail_rules_conflict_warning">Ces conditions sont reliées par \"et\", un e-mail doit donc toutes les remplir. La plupart n\'en remplissent qu\'une, cette règle risque donc de ne jamais s\'appliquer.</string>
+    <string name="mail_rules_conflict_switch">Passer à \"ou\"</string>
 </resources>

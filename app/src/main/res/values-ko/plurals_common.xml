@@ -6,4 +6,10 @@
     <plurals name="common_new_messages">
         <item quantity="other">새 메일 %d통</item>
     </plurals>
+    <plurals name="common_folders_count">
+        <item quantity="other">폴더 %d개</item>
+    </plurals>
+    <plurals name="common_messages_count">
+        <item quantity="other">메시지 %d개</item>
+    </plurals>
 </resources>

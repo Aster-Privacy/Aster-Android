@@ -8,4 +8,12 @@
         <item quantity="one">%d mensagem nova</item>
         <item quantity="other">%d mensagens novas</item>
     </plurals>
+    <plurals name="common_folders_count">
+        <item quantity="one">%d pasta</item>
+        <item quantity="other">%d pastas</item>
+    </plurals>
+    <plurals name="common_messages_count">
+        <item quantity="one">%d mensagem</item>
+        <item quantity="other">%d mensagens</item>
+    </plurals>
 </resources>

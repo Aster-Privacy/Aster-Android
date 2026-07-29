@@ -306,6 +306,10 @@
     <string name="react">React</string>
     <string name="add_reaction">Add reaction</string>
     <string name="reaction_failed">Could not send reaction</string>
+    <string name="reaction_info_title">Reaction</string>
+    <string name="reaction_info_you">You reacted with %1$s</string>
+    <string name="reaction_info_other">%1$s reacted with %2$s</string>
+    <string name="reaction_cannot_be_removed">Reactions cannot be removed once sent.</string>
     <string name="more">more</string>
     <string name="more_actions">More</string>
     <string name="mark_as_unread">Mark as unread</string>
@@ -692,6 +696,12 @@
     <string name="drawer_aliases">Aliases</string>
     <string name="no_folders_yet">No folders yet</string>
     <string name="folder_decrypt_failed">Folder (decryption failed)</string>
+    <string name="folder_locked_title">Locked folder</string>
+    <string name="folder_locked_description">Enter the password for \"%1$s\" to view its mail.</string>
+    <string name="folder_unlock_password_placeholder">Folder password</string>
+    <string name="folder_unlock_action">Unlock</string>
+    <string name="folder_unlock_failed">Incorrect password</string>
+    <string name="folder_locked_badge">Locked</string>
     <string name="no_labels_yet">No labels yet</string>
     <string name="no_aliases_yet">No aliases yet</string>
     <string name="create_folder">Create Folder</string>
@@ -1242,6 +1252,12 @@
     <string name="keep_copy_in_inbox">Keep a copy in inbox</string>
     <string name="create_rule">Create rule</string>
     <string name="auto_forward_saved">Auto-forward settings saved</string>
+    <string name="forwarding_pending_verification">Pending verification</string>
+    <string name="resend_verification_email">Resend verification email</string>
+    <string name="forwarding_awaiting_verification">Awaiting verification: %1$s</string>
+    <string name="forwarding_verification_sent">Verification email sent to %1$s. Forwarding starts once it is confirmed.</string>
+    <string name="forwarding_internal_active">Forwarding is active. Aster to Aster destinations do not need verification.</string>
+    <string name="forwarding_verification_resent">Verification email resent to %1$s</string>
 
     <!-- Signature -->
     <string name="signature">Signature</string>
@@ -1761,6 +1777,9 @@
     <string name="mail_rules_match_mode">Match mode</string>
     <string name="mail_rules_match_all">Match all</string>
     <string name="mail_rules_match_any">Match any</string>
+    <string name="create_folder_subtitle">Add a new folder without leaving this screen</string>
+    <string name="mail_rules_conflict_warning">These conditions are joined with \"and\", so an email has to match every one of them. Most emails will only match one, so this rule may never run.</string>
+    <string name="mail_rules_conflict_switch">Switch to \"or\"</string>
     <string name="mail_rules_pick_field">Pick field</string>
     <string name="mail_rules_pick_operator">Pick operator</string>
     <string name="mail_rules_pick_action">Pick action</string>
@@ -2342,10 +2361,4 @@
     </plurals>
     <string name="share_target_label">Compose email</string>
     <string name="share_attachment_failed">Some files could not be attached</string>
-    <string name="forwarding_pending_verification">Pending verification</string>
-    <string name="resend_verification_email">Resend verification email</string>
-    <string name="forwarding_awaiting_verification">Awaiting verification: %1$s</string>
-    <string name="forwarding_verification_sent">Verification email sent to %1$s. Forwarding starts once it is confirmed.</string>
-    <string name="forwarding_internal_active">Forwarding is active. Aster to Aster destinations do not need verification.</string>
-    <string name="forwarding_verification_resent">Verification email resent to %1$s</string>
 </resources>

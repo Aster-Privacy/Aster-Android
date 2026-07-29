@@ -868,6 +868,12 @@
     <string name="keep_copy_in_inbox">الاحتفاظ بنسخة في الوارد</string>
     <string name="create_rule">إنشاء قاعدة</string>
     <string name="auto_forward_saved">تم حفظ إعدادات التحويل التلقائي</string>
+    <string name="forwarding_pending_verification">في انتظار التحقق</string>
+    <string name="resend_verification_email">إعادة إرسال بريد التحقق</string>
+    <string name="forwarding_awaiting_verification">في انتظار التحقق: %1$s</string>
+    <string name="forwarding_verification_sent">تم إرسال بريد التحقق إلى %1$s. يبدأ التحويل بعد التأكيد.</string>
+    <string name="forwarding_internal_active">التحويل نشط. لا تحتاج الوجهات من Aster إلى Aster إلى تحقق.</string>
+    <string name="forwarding_verification_resent">تمت إعادة إرسال بريد التحقق إلى %1$s</string>
 
     <string name="signature">التوقيع</string>
     <string name="your_signature">توقيعك</string>
@@ -2320,10 +2326,17 @@
         <item quantity="many">%d جهة اتصال</item>
         <item quantity="other">%d جهة اتصال</item>
     </plurals>
-    <string name="forwarding_pending_verification">في انتظار التحقق</string>
-    <string name="resend_verification_email">إعادة إرسال بريد التحقق</string>
-    <string name="forwarding_awaiting_verification">في انتظار التحقق: %1$s</string>
-    <string name="forwarding_verification_sent">تم إرسال بريد التحقق إلى %1$s. يبدأ التحويل بعد التأكيد.</string>
-    <string name="forwarding_internal_active">التحويل نشط. لا تحتاج الوجهات من Aster إلى Aster إلى تحقق.</string>
-    <string name="forwarding_verification_resent">تمت إعادة إرسال بريد التحقق إلى %1$s</string>
+    <string name="reaction_info_title">تفاعل</string>
+    <string name="reaction_info_you">لقد تفاعلت بـ %1$s</string>
+    <string name="reaction_info_other">تفاعل %1$s بـ %2$s</string>
+    <string name="reaction_cannot_be_removed">لا يمكن إزالة التفاعلات بعد إرسالها.</string>
+    <string name="folder_locked_title">مجلد مقفل</string>
+    <string name="folder_locked_description">أدخل كلمة مرور \"%1$s\" لعرض بريده.</string>
+    <string name="folder_unlock_password_placeholder">كلمة مرور المجلد</string>
+    <string name="folder_unlock_action">إلغاء القفل</string>
+    <string name="folder_unlock_failed">كلمة المرور غير صحيحة</string>
+    <string name="folder_locked_badge">مقفل</string>
+    <string name="create_folder_subtitle">أنشئ مجلدًا جديدًا دون مغادرة هذه الشاشة</string>
+    <string name="mail_rules_conflict_warning">هذه الشروط مرتبطة بـ \"و\"، لذا يجب أن تطابق الرسالة جميعها. معظم الرسائل تطابق شرطًا واحدًا فقط، لذلك قد لا تعمل هذه القاعدة أبدًا.</string>
+    <string name="mail_rules_conflict_switch">التبديل إلى \"أو\"</string>
 </resources>
