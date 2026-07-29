@@ -93,9 +93,11 @@ class ExpiringSheetTest {
         var picked: PickResult? = null
         render { picked = it }
 
+        compose_rule.onNodeWithText("Expires in 1 hour").assertIsDisplayed().performClick()
+        compose_rule.waitForIdle()
         compose_rule.onNodeWithTag("expiry_password_field").performTextInput("hunter2")
-        compose_rule.onNodeWithText("Expires in 1 hour").performClick()
-        compose_rule.onNodeWithText("Accept").performClick()
+        compose_rule.waitForIdle()
+        compose_rule.onNodeWithText("Accept").assertIsEnabled().performClick()
 
         compose_rule.waitForIdle()
         val result = picked
