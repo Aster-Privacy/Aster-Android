@@ -104,7 +104,7 @@ class FolderNestingDrawerTest {
         compose_rule.onAllNodesWithText("None")
             .filterToOne(hasAnyAncestor(isPopup()))
             .assertIsDisplayed()
-        compose_rule.onAllNodesWithText("Boy")
+        compose_rule.onAllNodesWithText("Boy", substring = true)
             .filterToOne(hasAnyAncestor(isPopup()))
             .performClick()
 

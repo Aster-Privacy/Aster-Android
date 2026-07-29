@@ -97,7 +97,7 @@ class FolderNestingScreenshotTest {
         compose_rule.onNode(hasSetTextAction()).performTextInput("Receipts")
         compose_rule.onNodeWithTag("parent_folder_selector").performClick()
         compose_rule.waitForIdle()
-        compose_rule.onAllNodesWithText("Boy")
+        compose_rule.onAllNodesWithText("Boy", substring = true)
             .filterToOne(hasAnyAncestor(isPopup()))
             .performClick()
         compose_rule.waitForIdle()
