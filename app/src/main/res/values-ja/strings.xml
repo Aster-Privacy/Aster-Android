@@ -2393,4 +2393,24 @@
     <string name="alias_export_summary">%2$d 個のファイルに %1$d 件。</string>
     <string name="alias_export_download">保存</string>
     <string name="alias_export_failed">エクスポートに失敗しました。何も保存されていません。</string>
+    <string name="chip_any_time">すべての期間</string>
+    <string name="chip_older_than_week">1週間以上前</string>
+    <string name="chip_older_than_month">1か月以上前</string>
+    <string name="chip_older_than_six_months">6か月以上前</string>
+    <string name="chip_older_than_year">1年以上前</string>
+    <string name="chip_custom_range">期間を指定</string>
+    <string name="chip_attachment_image">画像</string>
+    <string name="chip_attachment_document">ドキュメント</string>
+    <string name="chip_attachment_pdf">PDF</string>
+    <string name="chip_attachment_video">動画</string>
+    <string name="chip_is_unread">未読</string>
+    <string name="chip_name_or_email">名前またはメールアドレス</string>
+    <string name="chip_no_people">一致する連絡先がありません</string>
+    <string name="chip_advanced_search">詳細検索</string>
+    <string name="spam_trash_hidden_notice">迷惑メールとゴミ箱に検索条件に一致するメールがあります。</string>
+    <string name="view_spam_trash_messages">メールを表示</string>
+    <string name="search_scope_anywhere">メール、迷惑メール、ゴミ箱</string>
+    <string name="advanced_has_words">次のキーワードを含む</string>
+    <string name="advanced_date_within">期間</string>
+    <string name="advanced_search_scope">検索対象</string>
 </resources>

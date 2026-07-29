@@ -2401,4 +2401,24 @@
     <string name="alias_export_summary">%1$d Einträge in %2$d Datei(en).</string>
     <string name="alias_export_download">Speichern</string>
     <string name="alias_export_failed">Export fehlgeschlagen. Es wurde nichts gespeichert.</string>
+    <string name="chip_any_time">Jederzeit</string>
+    <string name="chip_older_than_week">Älter als eine Woche</string>
+    <string name="chip_older_than_month">Älter als ein Monat</string>
+    <string name="chip_older_than_six_months">Älter als 6 Monate</string>
+    <string name="chip_older_than_year">Älter als ein Jahr</string>
+    <string name="chip_custom_range">Eigener Zeitraum</string>
+    <string name="chip_attachment_image">Bild</string>
+    <string name="chip_attachment_document">Dokument</string>
+    <string name="chip_attachment_pdf">PDF</string>
+    <string name="chip_attachment_video">Video</string>
+    <string name="chip_is_unread">Ist ungelesen</string>
+    <string name="chip_name_or_email">Name oder E-Mail</string>
+    <string name="chip_no_people">Keine passenden Personen</string>
+    <string name="chip_advanced_search">Erweiterte Suche</string>
+    <string name="spam_trash_hidden_notice">Einige Nachrichten in Spam und Papierkorb entsprechen deiner Suche.</string>
+    <string name="view_spam_trash_messages">Nachrichten ansehen</string>
+    <string name="search_scope_anywhere">E-Mails, Spam &amp; Papierkorb</string>
+    <string name="advanced_has_words">Enthält die Wörter</string>
+    <string name="advanced_date_within">Zeitraum</string>
+    <string name="advanced_search_scope">Suchen in</string>
 </resources>

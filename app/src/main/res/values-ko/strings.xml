@@ -2393,4 +2393,24 @@
     <string name="alias_export_summary">파일 %2$d개에 항목 %1$d개.</string>
     <string name="alias_export_download">저장</string>
     <string name="alias_export_failed">내보내기에 실패했습니다. 아무것도 저장되지 않았습니다.</string>
+    <string name="chip_any_time">모든 기간</string>
+    <string name="chip_older_than_week">1주일 이전</string>
+    <string name="chip_older_than_month">1개월 이전</string>
+    <string name="chip_older_than_six_months">6개월 이전</string>
+    <string name="chip_older_than_year">1년 이전</string>
+    <string name="chip_custom_range">기간 지정</string>
+    <string name="chip_attachment_image">이미지</string>
+    <string name="chip_attachment_document">문서</string>
+    <string name="chip_attachment_pdf">PDF</string>
+    <string name="chip_attachment_video">동영상</string>
+    <string name="chip_is_unread">읽지 않음</string>
+    <string name="chip_name_or_email">이름 또는 이메일</string>
+    <string name="chip_no_people">일치하는 사람이 없습니다</string>
+    <string name="chip_advanced_search">고급 검색</string>
+    <string name="spam_trash_hidden_notice">스팸과 휴지통에 검색과 일치하는 메일이 있습니다.</string>
+    <string name="view_spam_trash_messages">메일 보기</string>
+    <string name="search_scope_anywhere">메일, 스팸, 휴지통</string>
+    <string name="advanced_has_words">다음 단어 포함</string>
+    <string name="advanced_date_within">기간</string>
+    <string name="advanced_search_scope">검색 범위</string>
 </resources>

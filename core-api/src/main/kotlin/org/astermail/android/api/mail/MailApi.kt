@@ -52,6 +52,8 @@ interface MailApi {
         is_trashed: Boolean? = null,
         is_archived: Boolean? = null,
         is_spam: Boolean? = null,
+        include_spam: Boolean? = null,
+        include_trash: Boolean? = null,
         label_token: String? = null,
         tag_token: String? = null,
         group_by_thread: Boolean? = null,
@@ -164,6 +166,8 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
         is_trashed: Boolean?,
         is_archived: Boolean?,
         is_spam: Boolean?,
+        include_spam: Boolean?,
+        include_trash: Boolean?,
         label_token: String?,
         tag_token: String?,
         group_by_thread: Boolean?,
@@ -184,6 +188,8 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
             is_trashed?.let { parameter("is_trashed", it) }
             is_archived?.let { parameter("is_archived", it) }
             is_spam?.let { parameter("is_spam", it) }
+            include_spam?.let { parameter("include_spam", it) }
+            include_trash?.let { parameter("include_trash", it) }
             label_token?.let { parameter("label_token", it) }
             tag_token?.let { parameter("tag_token", it) }
             group_by_thread?.let { parameter("group_by_thread", it) }

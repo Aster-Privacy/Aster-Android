@@ -2400,4 +2400,24 @@
     <string name="alias_export_summary">%1$d items verdeeld over %2$d bestand(en).</string>
     <string name="alias_export_download">Opslaan</string>
     <string name="alias_export_failed">Export mislukt. Er is niets opgeslagen.</string>
+    <string name="chip_any_time">Elk moment</string>
+    <string name="chip_older_than_week">Ouder dan een week</string>
+    <string name="chip_older_than_month">Ouder dan een maand</string>
+    <string name="chip_older_than_six_months">Ouder dan 6 maanden</string>
+    <string name="chip_older_than_year">Ouder dan een jaar</string>
+    <string name="chip_custom_range">Aangepast bereik</string>
+    <string name="chip_attachment_image">Afbeelding</string>
+    <string name="chip_attachment_document">Document</string>
+    <string name="chip_attachment_pdf">PDF</string>
+    <string name="chip_attachment_video">Video</string>
+    <string name="chip_is_unread">Is ongelezen</string>
+    <string name="chip_name_or_email">Naam of e-mail</string>
+    <string name="chip_no_people">Geen overeenkomende personen</string>
+    <string name="chip_advanced_search">Geavanceerd zoeken</string>
+    <string name="spam_trash_hidden_notice">Sommige berichten in Spam en Prullenbak komen overeen met je zoekopdracht.</string>
+    <string name="view_spam_trash_messages">Berichten bekijken</string>
+    <string name="search_scope_anywhere">Mail, spam en prullenbak</string>
+    <string name="advanced_has_words">Bevat de woorden</string>
+    <string name="advanced_date_within">Periode</string>
+    <string name="advanced_search_scope">Zoeken in</string>
 </resources>

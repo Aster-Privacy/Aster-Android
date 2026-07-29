@@ -2414,4 +2414,24 @@
     <string name="alias_export_summary">Записей: %1$d, файлов: %2$d.</string>
     <string name="alias_export_download">Сохранить</string>
     <string name="alias_export_failed">Экспорт не выполнен. Ничего не сохранено.</string>
+    <string name="chip_any_time">Любое время</string>
+    <string name="chip_older_than_week">Старше недели</string>
+    <string name="chip_older_than_month">Старше месяца</string>
+    <string name="chip_older_than_six_months">Старше 6 месяцев</string>
+    <string name="chip_older_than_year">Старше года</string>
+    <string name="chip_custom_range">Свой диапазон</string>
+    <string name="chip_attachment_image">Изображение</string>
+    <string name="chip_attachment_document">Документ</string>
+    <string name="chip_attachment_pdf">PDF</string>
+    <string name="chip_attachment_video">Видео</string>
+    <string name="chip_is_unread">Непрочитанные</string>
+    <string name="chip_name_or_email">Имя или адрес</string>
+    <string name="chip_no_people">Нет подходящих контактов</string>
+    <string name="chip_advanced_search">Расширенный поиск</string>
+    <string name="spam_trash_hidden_notice">Некоторые письма в спаме и корзине соответствуют запросу.</string>
+    <string name="view_spam_trash_messages">Показать письма</string>
+    <string name="search_scope_anywhere">Почта, спам и корзина</string>
+    <string name="advanced_has_words">Содержит слова</string>
+    <string name="advanced_date_within">Диапазон даты</string>
+    <string name="advanced_search_scope">Искать в</string>
 </resources>

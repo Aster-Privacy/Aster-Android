@@ -196,7 +196,13 @@ class ExportViewModel @Inject constructor(
 
         while (has_more) {
             yield()
-            val response = mail_api.list_messages(limit = 50, cursor = cursor, item_type = "all")
+            val response = mail_api.list_messages(
+                limit = 50,
+                cursor = cursor,
+                item_type = "all",
+                include_spam = true,
+                include_trash = false,
+            )
             if (cursor == null) _state.update { it.copy(total = it.total + response.total) }
 
             for (item in response.items) {

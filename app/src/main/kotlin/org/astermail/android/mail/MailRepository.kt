@@ -691,6 +691,8 @@ class MailRepository @Inject constructor(
         offset: Int? = null,
         routing_token: String? = null,
         order: String? = null,
+        include_spam: Boolean? = null,
+        include_trash: Boolean? = null,
     ): Result<InboxPage> = runCatching {
         val is_received = item_type == "received"
         val is_plain_inbox = is_received && label_token == null && tag_token == null && routing_token == null
@@ -706,6 +708,8 @@ class MailRepository @Inject constructor(
             is_archived = if (is_plain_inbox) false else null,
             is_trashed = if (is_plain_inbox) false else null,
             is_spam = if (is_plain_inbox) false else null,
+            include_spam = include_spam,
+            include_trash = include_trash,
             routing_token = routing_token,
             order = order,
         )

@@ -128,10 +128,15 @@ private data class ParsedQuery(
     val operators: List<SearchOperator>,
 )
 
-private data class SearchOperator(
+internal data class SearchOperator(
     val negated: Boolean,
     val key: String,
     val value: String,
+)
+
+internal data class SearchOutcome(
+    val results: List<InboxItem>,
+    val hidden_spam_trash: Int,
 )
 
 private val operator_chips_saver = listSaver<List<SearchOperator>, String>(
@@ -163,7 +168,17 @@ private fun parse_query(raw: String): ParsedQuery {
     )
 }
 
-private fun matches_item(item: InboxItem, parsed: ParsedQuery, filter: String?): Boolean {
+private fun matches_item(
+    item: InboxItem,
+    parsed: ParsedQuery,
+    filter: String?,
+    apply_scope: Boolean = true,
+): Boolean {
+    if (apply_scope) {
+        if (item.is_spam && !scope_includes_spam(parsed.operators)) return false
+        if (item.is_trashed && !scope_includes_trash(parsed.operators)) return false
+    }
+
     val filter_ok = when (filter) {
         "Unread" -> !item.is_read
         "Starred" -> item.is_starred
@@ -202,7 +217,7 @@ private fun evaluate_operator(item: InboxItem, op: SearchOperator): Boolean {
         "subject" -> item.subject.contains(op.value, ignoreCase = true)
         "has" -> when (op.value) {
             "attachment", "attachments" -> item.has_attachments
-            else -> item.has_attachments
+            else -> matches_attachment_type(item, op.value)
         }
         "is" -> when (op.value) {
             "unread" -> !item.is_read
@@ -218,7 +233,8 @@ private fun evaluate_operator(item: InboxItem, op: SearchOperator): Boolean {
             "archive", "archived" -> item.is_archived
             "spam" -> item.is_spam
             "starred" -> item.is_starred
-            "all" -> true
+            "all" -> !item.is_trashed && !item.is_spam
+            "anywhere" -> true
             else -> true
         }
         "before" -> {
@@ -337,6 +353,7 @@ fun SearchScreen(
     var show_folder_sheet by remember { mutableStateOf(false) }
     var show_label_sheet by remember { mutableStateOf(false) }
     var show_snooze_sheet by remember { mutableStateOf(false) }
+    var advanced_open by remember { mutableStateOf(false) }
 
     LaunchedEffect(settings_state.preferences?.selection_toolbar_actions) {
         val raw = settings_state.preferences?.selection_toolbar_actions
@@ -403,12 +420,12 @@ fun SearchScreen(
         }
     }
 
-    val computed by androidx.compose.runtime.produceState<List<org.astermail.android.mail.InboxItem>?>(
+    val computed by androidx.compose.runtime.produceState<SearchOutcome?>(
         initialValue = null,
         parsed, active_filter, sorted_corpus, has_query,
     ) {
         if (!has_query) {
-            value = emptyList()
+            value = SearchOutcome(emptyList(), 0)
             return@produceState
         }
         val corpus = sorted_corpus
@@ -419,21 +436,41 @@ fun SearchScreen(
         value = null
         if (parsed.free_text.isNotEmpty()) kotlinx.coroutines.delay(120)
         value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-            corpus.filter { matches_item(it, parsed, active_filter) }
+            val results = mutableListOf<org.astermail.android.mail.InboxItem>()
+            var hidden = 0
+            for (item in corpus) {
+                if (matches_item(item, parsed, active_filter)) {
+                    results.add(item)
+                    continue
+                }
+                if ((item.is_spam || item.is_trashed) &&
+                    matches_item(item, parsed, active_filter, apply_scope = false)
+                ) {
+                    hidden++
+                }
+            }
+            SearchOutcome(results, hidden)
         }
     }
 
     var last_results by remember { mutableStateOf<List<org.astermail.android.mail.InboxItem>>(emptyList()) }
     LaunchedEffect(computed, has_query) {
         val settled = computed
-        last_results = if (!has_query) emptyList() else settled ?: last_results
+        last_results = if (!has_query) emptyList() else settled?.results ?: last_results
     }
     val results_pending = has_query && computed == null
+    val hidden_spam_trash = computed?.hidden_spam_trash ?: 0
+    val chip_people = remember(search_state.all_items) {
+        collect_chip_people(search_state.all_items)
+    }
+    val custom_chips = remember(operator_chips) {
+        operator_chips.filterNot { is_quick_operator(it) }
+    }
     val lock_revision by org.astermail.android.folders.folder_lock_store.revision.collectAsState()
     val locked_tokens = remember(settings_state.labels, lock_revision) {
         org.astermail.android.folders.protected_folder_tokens(settings_state.labels)
     }
-    val visible_results = computed ?: last_results
+    val visible_results = computed?.results ?: last_results
     val filtered = remember(visible_results, locked_tokens) {
         if (locked_tokens.isEmpty()) visible_results
         else visible_results.filter { item -> item.labels.none { it in locked_tokens } }
@@ -535,7 +572,16 @@ fun SearchScreen(
             )
         }
 
-        if (operator_chips.isNotEmpty()) {
+        if (!select_mode) {
+            search_chip_row(
+                operators = operator_chips,
+                people = chip_people,
+                on_operators_change = { operator_chips = it },
+                on_advanced_click = { advanced_open = true },
+            )
+        }
+
+        if (custom_chips.isNotEmpty()) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -543,7 +589,7 @@ fun SearchScreen(
                     .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
                 horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
             ) {
-                operator_chips.forEach { op ->
+                custom_chips.forEach { op ->
                     operator_chip(op) {
                         operator_chips = operator_chips.filterNot { it === op }
                     }
@@ -552,6 +598,36 @@ fun SearchScreen(
         }
 
         AsterDivider()
+
+        if (has_query && !results_pending && hidden_spam_trash > 0) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+            ) {
+                Text(
+                    text = stringResource(R.string.spam_trash_hidden_notice),
+                    color = colors.text_muted,
+                    fontSize = 12.sp,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = stringResource(R.string.view_spam_trash_messages),
+                    color = colors.accent_blue,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier
+                        .clip(SquircleShape(8.dp))
+                        .clickable {
+                            operator_chips = without_key(operator_chips, "in") +
+                                SearchOperator(false, "in", "anywhere")
+                        }
+                        .padding(horizontal = AsterSpacing.sm, vertical = 4.dp),
+                )
+            }
+        }
 
         if (has_query && search_state.is_indexing) {
             androidx.compose.material3.LinearProgressIndicator(
@@ -622,7 +698,7 @@ fun SearchScreen(
                 )
             }
         } else if (filtered.isEmpty() && results_pending) {
-            Spacer(Modifier.weight(1f))
+            org.astermail.android.ui.mail.inbox_skeleton(Modifier.weight(1f))
         } else if (filtered.isEmpty()) {
             Box(
                 modifier = Modifier
@@ -741,6 +817,19 @@ fun SearchScreen(
                 mail_vm.snooze_bulk(selected_ids.toList(), iso, label)
                 exit_select_mode()
             },
+        )
+    }
+
+    if (advanced_open) {
+        advanced_search_sheet(
+            operators = operator_chips,
+            free_text = free_text,
+            on_apply = { next_operators, next_text ->
+                advanced_open = false
+                operator_chips = next_operators
+                set_free_text(next_text)
+            },
+            on_dismiss = { advanced_open = false },
         )
     }
 }
