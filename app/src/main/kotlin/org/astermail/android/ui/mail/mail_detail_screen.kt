@@ -2199,7 +2199,7 @@ private fun expanded_message(
             )
         }
 
-        reaction_chip_row(reactions = reactions, my_email = my_email, on_react = on_react)
+        reaction_chip_row(reactions = reactions, my_email = my_email)
 
         if (!is_last) Spacer(Modifier.height(AsterSpacing.md))
     }
@@ -2362,10 +2362,10 @@ private fun reaction_quick_picker(visible: Boolean, on_pick: (String) -> Unit) {
 private fun reaction_chip_row(
     reactions: List<DecryptedReaction>,
     my_email: String,
-    on_react: (String) -> Unit = {},
 ) {
     if (reactions.isEmpty()) return
     val colors = AsterMaterial.colors
+    var info_emoji by remember { mutableStateOf<String?>(null) }
     val groups = remember(reactions, my_email) {
         reactions.groupBy { it.emoji }
             .map { (emoji, list) ->
@@ -2380,7 +2380,8 @@ private fun reaction_chip_row(
     FlowRow(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = AsterSpacing.sm),
+            .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm)
+            .testTag("reaction_chip_row"),
         horizontalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
         verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
     ) {
@@ -2396,7 +2397,7 @@ private fun reaction_chip_row(
                         color = if (mine) colors.accent_blue.copy(alpha = 0.55f) else colors.border_primary,
                         shape = shape,
                     )
-                    .clickable { on_react(emoji) }
+                    .clickable { info_emoji = emoji }
                     .padding(horizontal = 10.dp),
                 horizontalArrangement = Arrangement.spacedBy(5.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -2410,6 +2411,44 @@ private fun reaction_chip_row(
                 )
             }
         }
+    }
+
+    info_emoji?.let { emoji ->
+        val reactors = reactions.filter { it.emoji == emoji }
+        val you_label = stringResource(R.string.reaction_info_you, emoji)
+        val others = reactors
+            .filterNot { it.reactor_email.equals(my_email, ignoreCase = true) }
+            .map { it.reactor_email }
+            .distinct()
+        val mine = reactors.any { it.reactor_email.equals(my_email, ignoreCase = true) }
+        org.astermail.android.design.components.AsterAlertDialog(
+            on_dismiss = { info_emoji = null },
+            title = stringResource(R.string.reaction_info_title),
+            confirm_label = stringResource(R.string.ok),
+            on_confirm = { info_emoji = null },
+            extra_content = {
+                Column(modifier = Modifier.fillMaxWidth().testTag("reaction_info_dialog")) {
+                    if (mine) {
+                        Text(text = you_label, color = colors.text_primary, fontSize = 15.sp)
+                        Spacer(Modifier.height(AsterSpacing.xs))
+                    }
+                    others.forEach { email ->
+                        Text(
+                            text = stringResource(R.string.reaction_info_other, email, emoji),
+                            color = colors.text_secondary,
+                            fontSize = 14.sp,
+                        )
+                        Spacer(Modifier.height(AsterSpacing.xs))
+                    }
+                    Spacer(Modifier.height(AsterSpacing.xs))
+                    Text(
+                        text = stringResource(R.string.reaction_cannot_be_removed),
+                        color = colors.text_muted,
+                        fontSize = 13.sp,
+                    )
+                }
+            },
+        )
     }
 }
 
