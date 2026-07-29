@@ -1083,6 +1083,11 @@
     <string name="no_folders_subtitle">لم تقم بإنشاء أي مجلدات بعد</string>
     <string name="folders_count">%d مجلدات</string>
     <string name="delete_folder">حذف المجلد</string>
+    <string name="delete_folder_confirm_title">حذف المجلد؟</string>
+    <string name="delete_folder_confirm_message">سيُزال «%1$s»، ولا يمكن التراجع. الرسائل بداخله تبقى في حسابك، إنما لن تظل مصنّفة تحت هذا المجلد.</string>
+    <string name="delete_folder_confirm_subfolders">سيتم نقل المجلدات الفرعية إلى المستوى الأعلى.</string>
+    <string name="delete_label_confirm_title">حذف التصنيف؟</string>
+    <string name="delete_label_confirm_message">سيُزال «%1$s» من كل رسالة يحملها، ولا يمكن التراجع. الرسائل نفسها تبقى في حسابك.</string>
 
     <string name="api_keys">مفاتيح API</string>
     <string name="no_api_keys">لا مفاتيح API</string>

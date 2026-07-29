@@ -806,14 +806,18 @@ fun DeveloperScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
 }
 
 @Composable
-fun LabelsScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
-    val vm: SettingsViewModel = hiltViewModel()
+fun LabelsScreen(
+    on_back: () -> Unit,
+    on_open: (id: String) -> Unit = {},
+    vm: SettingsViewModel = hiltViewModel(),
+) {
     val state by vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
 
     LaunchedEffect(Unit) { vm.load_labels(folder_type = "label") }
 
     val labels = state.labels.filter { it.folder_type == "label" }
+    var pending_label_delete by remember { mutableStateOf<org.astermail.android.api.labels.LabelItem?>(null) }
 
     detail_scaffold(title = stringResource(R.string.labels), on_back = on_back) {
         if (state.is_loading && labels.isEmpty()) {
@@ -855,7 +859,8 @@ fun LabelsScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                             Box(
                                 modifier = Modifier
                                     .size(36.dp)
-                                    .clickable { vm.delete_label(l.id) }
+                                    .clip(CircleShape)
+                                    .clickable { pending_label_delete = l }
                                     .padding(AsterSpacing.xs),
                                 contentAlignment = Alignment.Center,
                             ) {
@@ -874,11 +879,30 @@ fun LabelsScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
         }
         v_gap(AsterSpacing.xxl)
     }
+
+    pending_label_delete?.let { target ->
+        val target_name = target.encrypted_name?.takeIf { it.isNotBlank() } ?: target.label_token
+        org.astermail.android.design.components.AsterAlertDialog(
+            on_dismiss = { pending_label_delete = null },
+            title = stringResource(R.string.delete_label_confirm_title),
+            message = stringResource(R.string.delete_label_confirm_message, target_name),
+            confirm_label = stringResource(R.string.delete),
+            cancel_label = stringResource(R.string.cancel),
+            confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
+            on_confirm = {
+                vm.delete_label(target.id)
+                pending_label_delete = null
+            },
+        )
+    }
 }
 
 @Composable
-fun FoldersScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
-    val vm: SettingsViewModel = hiltViewModel()
+fun FoldersScreen(
+    on_back: () -> Unit,
+    on_open: (id: String) -> Unit = {},
+    vm: SettingsViewModel = hiltViewModel(),
+) {
     val state by vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
 
@@ -890,6 +914,7 @@ fun FoldersScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
     val folder_nodes = flatten_folder_tree(state.labels)
     val muted_tokens = state.preferences?.muted_folder_tokens ?: emptyList()
     var show_create_folder by remember { mutableStateOf(false) }
+    var pending_folder_delete by remember { mutableStateOf<org.astermail.android.api.labels.LabelItem?>(null) }
     val folders_context = LocalContext.current
 
     LaunchedEffect(state.action_result) {
@@ -1015,7 +1040,8 @@ fun FoldersScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                                         Box(
                                             modifier = Modifier
                                                 .size(32.dp)
-                                                .clickable { vm.delete_label(f.id) },
+                                                .clip(CircleShape)
+                                                .clickable { pending_folder_delete = f },
                                             contentAlignment = Alignment.Center,
                                         ) {
                                             androidx.compose.material3.Icon(
@@ -1049,6 +1075,33 @@ fun FoldersScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
             },
         )
     }
+
+    pending_folder_delete?.let { target ->
+        val target_name = target.encrypted_name?.takeIf { it.isNotBlank() } ?: target.label_token
+        val has_subfolders = org.astermail.android.folders.descendant_tokens(
+            state.labels,
+            target.label_token,
+        ).isNotEmpty()
+        org.astermail.android.design.components.AsterAlertDialog(
+            on_dismiss = { pending_folder_delete = null },
+            title = stringResource(R.string.delete_folder_confirm_title),
+            message = delete_folder_confirm_body(target_name, has_subfolders),
+            confirm_label = stringResource(R.string.delete),
+            cancel_label = stringResource(R.string.cancel),
+            confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
+            on_confirm = {
+                vm.delete_label(target.id)
+                pending_folder_delete = null
+            },
+        )
+    }
+}
+
+@Composable
+private fun delete_folder_confirm_body(folder_name: String, has_subfolders: Boolean): String {
+    val body = stringResource(R.string.delete_folder_confirm_message, folder_name)
+    val subfolders = stringResource(R.string.delete_folder_confirm_subfolders)
+    return if (has_subfolders) "$body $subfolders" else body
 }
 
 @Composable

@@ -1084,6 +1084,11 @@
     <string name="no_folders_subtitle">Sie haben noch keine Ordner erstellt</string>
     <string name="folders_count">%d Ordner</string>
     <string name="delete_folder">Ordner löschen</string>
+    <string name="delete_folder_confirm_title">Ordner löschen?</string>
+    <string name="delete_folder_confirm_message">„%1$s“ wird entfernt, und es lässt sich nicht rückgängig machen. Die enthaltenen E-Mails bleiben in Ihrem Konto, sie sind nur nicht mehr unter diesem Ordner abgelegt.</string>
+    <string name="delete_folder_confirm_subfolders">Unterordner werden auf die oberste Ebene verschoben.</string>
+    <string name="delete_label_confirm_title">Label löschen?</string>
+    <string name="delete_label_confirm_message">„%1$s“ wird von allen E-Mails entfernt, und es lässt sich nicht rückgängig machen. Die E-Mails selbst bleiben in Ihrem Konto.</string>
 
     <string name="api_keys">API-Schlüssel</string>
     <string name="no_api_keys">Keine API-Schlüssel</string>

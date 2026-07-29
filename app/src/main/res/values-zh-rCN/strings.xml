@@ -1083,6 +1083,11 @@
     <string name="no_folders_subtitle">您还没有创建任何文件夹</string>
     <string name="folders_count">%d 个文件夹</string>
     <string name="delete_folder">删除文件夹</string>
+    <string name="delete_folder_confirm_title">删除文件夹？</string>
+    <string name="delete_folder_confirm_message">“%1$s”将被移除，且无法撤销。其中的邮件会保留在您的账户里，只是不再归在这个文件夹之下。</string>
+    <string name="delete_folder_confirm_subfolders">子文件夹将移至顶层。</string>
+    <string name="delete_label_confirm_title">删除标签？</string>
+    <string name="delete_label_confirm_message">“%1$s”将从所有带有该标签的邮件上移除，且无法撤销。邮件本身会保留在您的账户里。</string>
 
     <string name="api_keys">API 密钥</string>
     <string name="no_api_keys">没有 API 密钥</string>

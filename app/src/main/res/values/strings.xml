@@ -1559,6 +1559,11 @@
     <string name="no_folders_subtitle">You haven\'t created any folders yet</string>
     <string name="folders_count">%d folders</string>
     <string name="delete_folder">Delete folder</string>
+    <string name="delete_folder_confirm_title">Delete folder?</string>
+    <string name="delete_folder_confirm_message">“%1$s” will be removed, and you cannot undo it. The emails inside stay in your account, they will just no longer be filed under this folder.</string>
+    <string name="delete_folder_confirm_subfolders">Subfolders will be moved to the top level.</string>
+    <string name="delete_label_confirm_title">Delete label?</string>
+    <string name="delete_label_confirm_message">“%1$s” will be removed from every email it is on, and you cannot undo it. The emails themselves stay in your account.</string>
 
     <!-- API Keys -->
     <string name="api_keys">API keys</string>

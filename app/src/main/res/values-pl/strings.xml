@@ -1083,6 +1083,11 @@
     <string name="no_folders_subtitle">Nie utworzyłeś jeszcze żadnych folderów</string>
     <string name="folders_count">%d folderów</string>
     <string name="delete_folder">Usuń folder</string>
+    <string name="delete_folder_confirm_title">Usunąć folder?</string>
+    <string name="delete_folder_confirm_message">„%1$s” zostanie usunięty bez możliwości cofnięcia. Wiadomości w nim pozostaną na koncie, tylko nie będą już przypisane do tego folderu.</string>
+    <string name="delete_folder_confirm_subfolders">Podfoldery zostaną przeniesione na najwyższy poziom.</string>
+    <string name="delete_label_confirm_title">Usunąć etykietę?</string>
+    <string name="delete_label_confirm_message">„%1$s” zostanie usunięta ze wszystkich wiadomości bez możliwości cofnięcia. Same wiadomości pozostaną na koncie.</string>
 
     <string name="api_keys">Klucze API</string>
     <string name="no_api_keys">Brak kluczy API</string>

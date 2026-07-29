@@ -1084,6 +1084,11 @@
     <string name="no_folders_subtitle">Aún no has creado carpetas</string>
     <string name="folders_count">%d carpetas</string>
     <string name="delete_folder">Eliminar carpeta</string>
+    <string name="delete_folder_confirm_title">¿Eliminar carpeta?</string>
+    <string name="delete_folder_confirm_message">«%1$s» se eliminará y no podrás deshacerlo. Los correos de dentro permanecen en tu cuenta, solo dejarán de estar archivados en esta carpeta.</string>
+    <string name="delete_folder_confirm_subfolders">Las subcarpetas se moverán al nivel superior.</string>
+    <string name="delete_label_confirm_title">¿Eliminar etiqueta?</string>
+    <string name="delete_label_confirm_message">«%1$s» se quitará de todos los correos que la tengan y no podrás deshacerlo. Los correos permanecen en tu cuenta.</string>
 
     <string name="api_keys">Claves API</string>
     <string name="no_api_keys">Sin claves API</string>

@@ -1083,6 +1083,11 @@
     <string name="no_folders_subtitle">Henüz klasör oluşturmadınız</string>
     <string name="folders_count">%d klasör</string>
     <string name="delete_folder">Klasörü sil</string>
+    <string name="delete_folder_confirm_title">Klasör silinsin mi?</string>
+    <string name="delete_folder_confirm_message">“%1$s” kaldırılır ve geri alamazsınız. İçindeki e-postalar hesabınızda kalır, yalnızca artık bu klasör altında dosyalanmazlar.</string>
+    <string name="delete_folder_confirm_subfolders">Alt klasörler en üst düzeye taşınacak.</string>
+    <string name="delete_label_confirm_title">Etiket silinsin mi?</string>
+    <string name="delete_label_confirm_message">“%1$s” bulunduğu tüm e-postalardan kaldırılır ve geri alamazsınız. E-postaların kendisi hesabınızda kalır.</string>
 
     <string name="api_keys">API anahtarları</string>
     <string name="no_api_keys">API anahtarı yok</string>

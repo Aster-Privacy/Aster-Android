@@ -1083,6 +1083,11 @@
     <string name="no_folders_subtitle">Вы ещё не создали папок</string>
     <string name="folders_count">%d папок</string>
     <string name="delete_folder">Удалить папку</string>
+    <string name="delete_folder_confirm_title">Удалить папку?</string>
+    <string name="delete_folder_confirm_message">«%1$s» будет удалена, и отменить это нельзя. Письма внутри останутся в учётной записи, просто не будут относиться к этой папке.</string>
+    <string name="delete_folder_confirm_subfolders">Подпапки будут перемещены на верхний уровень.</string>
+    <string name="delete_label_confirm_title">Удалить метку?</string>
+    <string name="delete_label_confirm_message">«%1$s» будет снята со всех писем, и отменить это нельзя. Сами письма останутся в учётной записи.</string>
 
     <string name="api_keys">API-ключи</string>
     <string name="no_api_keys">Нет API-ключей</string>

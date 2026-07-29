@@ -1138,6 +1138,11 @@
     <string name="no_folders_subtitle">Vous n\'avez pas encore créé de dossier</string>
     <string name="folders_count">%d dossiers</string>
     <string name="delete_folder">Supprimer le dossier</string>
+    <string name="delete_folder_confirm_title">Supprimer le dossier ?</string>
+    <string name="delete_folder_confirm_message">« %1$s » sera retiré, et vous ne pouvez pas annuler cette action. Les messages à l\'intérieur restent dans votre compte, ils ne seront simplement plus classés dans ce dossier.</string>
+    <string name="delete_folder_confirm_subfolders">Les sous-dossiers seront déplacés vers le niveau supérieur.</string>
+    <string name="delete_label_confirm_title">Supprimer le libellé ?</string>
+    <string name="delete_label_confirm_message">« %1$s » sera retiré de tous les messages concernés, et vous ne pouvez pas annuler cette action. Les messages restent dans votre compte.</string>
 
     <!-- API Keys -->
     <string name="api_keys">Clés API</string>

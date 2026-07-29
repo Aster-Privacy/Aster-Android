@@ -1083,6 +1083,11 @@
     <string name="no_folders_subtitle">Je hebt nog geen mappen aangemaakt</string>
     <string name="folders_count">%d mappen</string>
     <string name="delete_folder">Map verwijderen</string>
+    <string name="delete_folder_confirm_title">Map verwijderen?</string>
+    <string name="delete_folder_confirm_message">“%1$s” wordt verwijderd en u kunt dit niet ongedaan maken. De e-mails erin blijven in uw account, ze worden alleen niet langer onder deze map opgeslagen.</string>
+    <string name="delete_folder_confirm_subfolders">Submappen worden naar het hoogste niveau verplaatst.</string>
+    <string name="delete_label_confirm_title">Label verwijderen?</string>
+    <string name="delete_label_confirm_message">“%1$s” wordt van alle e-mails met dit label verwijderd en u kunt dit niet ongedaan maken. De e-mails zelf blijven in uw account.</string>
 
     <string name="api_keys">API-sleutels</string>
     <string name="no_api_keys">Geen API-sleutels</string>

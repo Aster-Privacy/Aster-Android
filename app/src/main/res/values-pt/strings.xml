@@ -1083,6 +1083,11 @@
     <string name="no_folders_subtitle">Você ainda não criou nenhuma pasta</string>
     <string name="folders_count">%d pastas</string>
     <string name="delete_folder">Excluir pasta</string>
+    <string name="delete_folder_confirm_title">Excluir pasta?</string>
+    <string name="delete_folder_confirm_message">“%1$s” será removida, e você não pode desfazer. Os e-mails de dentro permanecem na sua conta, apenas não estarão mais arquivados nesta pasta.</string>
+    <string name="delete_folder_confirm_subfolders">As subpastas serão movidas para o nível superior.</string>
+    <string name="delete_label_confirm_title">Excluir etiqueta?</string>
+    <string name="delete_label_confirm_message">“%1$s” será removida de todos os e-mails que a têm, e você não pode desfazer. Os e-mails permanecem na sua conta.</string>
 
     <string name="api_keys">Chaves de API</string>
     <string name="no_api_keys">Sem chaves de API</string>

@@ -1083,6 +1083,11 @@
     <string name="no_folders_subtitle">Non hai ancora creato nessuna cartella</string>
     <string name="folders_count">%d cartelle</string>
     <string name="delete_folder">Elimina cartella</string>
+    <string name="delete_folder_confirm_title">Eliminare la cartella?</string>
+    <string name="delete_folder_confirm_message">«%1$s» verrà rimossa, e non è possibile annullare l\'operazione. Le email al suo interno restano nel suo account, semplicemente non saranno più archiviate in questa cartella.</string>
+    <string name="delete_folder_confirm_subfolders">Le sottocartelle verranno spostate al livello superiore.</string>
+    <string name="delete_label_confirm_title">Eliminare l\'etichetta?</string>
+    <string name="delete_label_confirm_message">«%1$s» verrà rimossa da tutte le email che la portano, e non è possibile annullare l\'operazione. Le email restano nel suo account.</string>
 
     <string name="api_keys">Chiavi API</string>
     <string name="no_api_keys">Nessuna chiave API</string>

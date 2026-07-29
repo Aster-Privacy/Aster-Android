@@ -1083,6 +1083,11 @@
     <string name="no_folders_subtitle">まだフォルダを作成していません</string>
     <string name="folders_count">%d個のフォルダ</string>
     <string name="delete_folder">フォルダを削除</string>
+    <string name="delete_folder_confirm_title">フォルダを削除しますか？</string>
+    <string name="delete_folder_confirm_message">「%1$s」は削除され、元に戻せません。中のメールはアカウントに残りますが、このフォルダには紐付かなくなります。</string>
+    <string name="delete_folder_confirm_subfolders">サブフォルダはトップレベルに移動されます。</string>
+    <string name="delete_label_confirm_title">ラベルを削除しますか？</string>
+    <string name="delete_label_confirm_message">「%1$s」は付いているすべてのメールから削除され、元に戻せません。メール自体はアカウントに残ります。</string>
 
     <string name="api_keys">APIキー</string>
     <string name="no_api_keys">APIキーはありません</string>

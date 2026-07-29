@@ -1083,6 +1083,11 @@
     <string name="no_folders_subtitle">아직 폴더를 만들지 않았습니다</string>
     <string name="folders_count">폴더 %d개</string>
     <string name="delete_folder">폴더 삭제</string>
+    <string name="delete_folder_confirm_title">폴더를 삭제할까요?</string>
+    <string name="delete_folder_confirm_message">‘%1$s’ 폴더가 제거되며 되돌릴 수 없습니다. 안에 있던 이메일은 계정에 그대로 남고, 더 이상 이 폴더로 분류되지 않습니다.</string>
+    <string name="delete_folder_confirm_subfolders">하위 폴더는 최상위로 이동됩니다.</string>
+    <string name="delete_label_confirm_title">라벨을 삭제할까요?</string>
+    <string name="delete_label_confirm_message">‘%1$s’ 라벨이 붙어 있는 모든 이메일에서 제거되며 되돌릴 수 없습니다. 이메일 자체는 계정에 그대로 남습니다.</string>
 
     <string name="api_keys">API 키</string>
     <string name="no_api_keys">API 키 없음</string>
