@@ -1,0 +1,6 @@
+- Tap an alias to expand it and change its settings without leaving the app
+- Expanded aliases now show delivery folder, stats, pinned senders, rules and blocked mail
+- Sent mail shows up properly again, along with drafts, scheduled and outbox
+- Editing your signature now sticks instead of reverting
+- Copying an email address tells you exactly what was copied
+- Hold the star icon to see whether a message is starred
