@@ -16,16 +16,14 @@
 
 package org.astermail.android.ui.settings
 
-import android.graphics.Bitmap
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -43,18 +41,19 @@ import org.astermail.android.api.aliases.AliasRuleCondition
 import org.astermail.android.api.aliases.AliasStatsResponse
 import org.astermail.android.api.aliases.SENDER_PIN_MODE_ALLOWLIST
 import org.astermail.android.api.settings.AliasInfo
+import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.AsterTheme
 import org.astermail.android.settings.AliasDetailState
 import org.astermail.android.settings.DecryptedAliasContact
 import org.astermail.android.settings.DecryptedAliasPin
 import org.astermail.android.settings.SettingsUiState
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.ui.capture_screenshot
 import org.astermail.android.ui.settings.detail.alias_detail_panel
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.File
-import java.io.FileOutputStream
 
 @RunWith(AndroidJUnit4::class)
 class AliasDetailPanelTest {
@@ -64,12 +63,8 @@ class AliasDetailPanelTest {
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
-    private fun save_screenshot(name: String, node: SemanticsNodeInteraction = compose_rule.onRoot()) {
-        val bitmap = node.captureToImage().asAndroidBitmap()
-        val dir = context.getExternalFilesDir(null) ?: context.filesDir
-        FileOutputStream(File(dir, "$name.png")).use { out ->
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
-        }
+    private fun save_screenshot(name: String) {
+        capture_screenshot(name, compose_rule.onRoot())
     }
 
     private fun sample_alias() = AliasInfo(
@@ -119,7 +114,9 @@ class AliasDetailPanelTest {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .verticalScroll(rememberScrollState()),
+                        .background(AsterMaterial.colors.bg_card)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
                 ) {
                     alias_detail_panel(alias = sample_alias(), detail = detail, vm = vm)
                 }

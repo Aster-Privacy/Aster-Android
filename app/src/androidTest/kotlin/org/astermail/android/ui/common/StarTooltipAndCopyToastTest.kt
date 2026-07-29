@@ -16,8 +16,11 @@
 
 package org.astermail.android.ui.common
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -34,6 +37,9 @@ import androidx.test.platform.app.InstrumentationRegistry
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Star
 import org.astermail.android.R
+import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterTheme
+import org.astermail.android.ui.capture_device_screenshot
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -48,13 +54,25 @@ class StarTooltipAndCopyToastTest {
 
     private fun set_star(is_starred: Boolean) {
         compose_rule.setContent {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                star_toggle_icon(
-                    is_starred = is_starred,
-                    icon = TablerIcons.Star,
-                    onClick = {},
-                    modifier = Modifier.testTag("star"),
-                )
+            AsterTheme {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(AsterMaterial.colors.bg_primary),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    star_toggle_icon(
+                        is_starred = is_starred,
+                        icon = if (is_starred) Icons.Filled.Star else TablerIcons.Star,
+                        tint = if (is_starred) {
+                            AsterMaterial.colors.accent_blue
+                        } else {
+                            AsterMaterial.colors.text_muted
+                        },
+                        onClick = {},
+                        modifier = Modifier.testTag("star"),
+                    )
+                }
             }
         }
     }
@@ -69,6 +87,7 @@ class StarTooltipAndCopyToastTest {
         val tooltip = compose_rule.onAllNodesWithText(label)
             .filterToOne(hasAnyAncestor(isPopup()))
         tooltip.assertIsDisplayed()
+        capture_device_screenshot("star_tooltip_not_starred")
 
         val anchor_top = compose_rule.onNodeWithTag("star").fetchSemanticsNode()
             .boundsInRoot.top
@@ -89,6 +108,7 @@ class StarTooltipAndCopyToastTest {
         compose_rule.onAllNodesWithText(label)
             .filterToOne(hasAnyAncestor(isPopup()))
             .assertIsDisplayed()
+        capture_device_screenshot("star_tooltip_starred")
     }
 
     @Test
