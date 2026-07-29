@@ -2400,4 +2400,24 @@
     <string name="alias_export_summary">%1$d entradas em %2$d ficheiro(s).</string>
     <string name="alias_export_download">Guardar</string>
     <string name="alias_export_failed">A exportação falhou. Nada foi guardado.</string>
+    <string name="chip_any_time">Qualquer data</string>
+    <string name="chip_older_than_week">Mais de uma semana</string>
+    <string name="chip_older_than_month">Mais de um mês</string>
+    <string name="chip_older_than_six_months">Mais de 6 meses</string>
+    <string name="chip_older_than_year">Mais de um ano</string>
+    <string name="chip_custom_range">Intervalo personalizado</string>
+    <string name="chip_attachment_image">Imagem</string>
+    <string name="chip_attachment_document">Documento</string>
+    <string name="chip_attachment_pdf">PDF</string>
+    <string name="chip_attachment_video">Vídeo</string>
+    <string name="chip_is_unread">Não lido</string>
+    <string name="chip_name_or_email">Nome ou e-mail</string>
+    <string name="chip_no_people">Nenhuma pessoa correspondente</string>
+    <string name="chip_advanced_search">Pesquisa avançada</string>
+    <string name="spam_trash_hidden_notice">Algumas mensagens no Spam e na Lixeira correspondem à sua pesquisa.</string>
+    <string name="view_spam_trash_messages">Ver mensagens</string>
+    <string name="search_scope_anywhere">E-mail, spam e lixeira</string>
+    <string name="advanced_has_words">Contém as palavras</string>
+    <string name="advanced_date_within">Intervalo de datas</string>
+    <string name="advanced_search_scope">Pesquisar em</string>
 </resources>

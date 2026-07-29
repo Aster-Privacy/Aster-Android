@@ -2451,4 +2451,24 @@
     <string name="alias_export_warning_title">This file is not encrypted</string>
     <string name="alias_export_warning_body">Anyone who opens it can read every alias, note and website it contains. Keep it in your password manager or on an encrypted drive.</string>
     <string name="alias_export_summary">%1$d entries across %2$d file(s).</string>
+    <string name="chip_any_time">Any time</string>
+    <string name="chip_older_than_week">Older than a week</string>
+    <string name="chip_older_than_month">Older than a month</string>
+    <string name="chip_older_than_six_months">Older than 6 months</string>
+    <string name="chip_older_than_year">Older than a year</string>
+    <string name="chip_custom_range">Custom range</string>
+    <string name="chip_attachment_image">Image</string>
+    <string name="chip_attachment_document">Document</string>
+    <string name="chip_attachment_pdf">PDF</string>
+    <string name="chip_attachment_video">Video</string>
+    <string name="chip_is_unread">Is unread</string>
+    <string name="chip_name_or_email">Name or email</string>
+    <string name="chip_no_people">No matching people</string>
+    <string name="chip_advanced_search">Advanced search</string>
+    <string name="spam_trash_hidden_notice">Some messages in Spam and Trash match your search.</string>
+    <string name="view_spam_trash_messages">View messages</string>
+    <string name="search_scope_anywhere">Mail, Spam &amp; Trash</string>
+    <string name="advanced_has_words">Has the words</string>
+    <string name="advanced_date_within">Date within</string>
+    <string name="advanced_search_scope">Search in</string>
 </resources>

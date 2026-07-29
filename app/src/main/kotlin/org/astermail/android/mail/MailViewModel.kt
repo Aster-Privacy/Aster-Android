@@ -2592,7 +2592,14 @@ class MailViewModel @Inject constructor(
         "archive" -> repository.fetch_archive(limit = limit, cursor = cursor, order = list_order)
         "scheduled" -> repository.fetch_scheduled(limit = limit, cursor = cursor, order = list_order)
         "snoozed" -> repository.fetch_snoozed(limit = limit, cursor = cursor, order = list_order)
-        "all" -> repository.fetch_inbox(limit = limit, cursor = cursor, item_type = "all", order = list_order)
+        "all" -> repository.fetch_inbox(
+            limit = limit,
+            cursor = cursor,
+            item_type = "all",
+            order = list_order,
+            include_spam = false,
+            include_trash = false,
+        )
         else -> when {
             folder.startsWith("label:") -> {
                 val label_token = folder.removePrefix("label:")
@@ -2641,7 +2648,7 @@ internal fun folder_matches_item(folder: String, item: InboxItem): Boolean = whe
     "trash" -> item.is_trashed
     "spam" -> item.is_spam
     "archive" -> item.is_archived
-    "all" -> !item.is_trashed
+    "all" -> !item.is_trashed && !item.is_spam
     "sent" -> item.raw_item.item_type == "sent" && !item.is_trashed
     "drafts" -> item.raw_item.item_type == "draft" && !item.is_trashed
     "scheduled" -> item.raw_item.item_type == "scheduled" && !item.is_trashed

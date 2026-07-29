@@ -2428,4 +2428,24 @@
     <string name="alias_export_summary">%1$d إدخالات في %2$d ملف.</string>
     <string name="alias_export_download">حفظ</string>
     <string name="alias_export_failed">فشل التصدير. لم يتم حفظ أي شيء.</string>
+    <string name="chip_any_time">أي وقت</string>
+    <string name="chip_older_than_week">أقدم من أسبوع</string>
+    <string name="chip_older_than_month">أقدم من شهر</string>
+    <string name="chip_older_than_six_months">أقدم من 6 أشهر</string>
+    <string name="chip_older_than_year">أقدم من سنة</string>
+    <string name="chip_custom_range">نطاق مخصص</string>
+    <string name="chip_attachment_image">صورة</string>
+    <string name="chip_attachment_document">مستند</string>
+    <string name="chip_attachment_pdf">PDF</string>
+    <string name="chip_attachment_video">فيديو</string>
+    <string name="chip_is_unread">غير مقروء</string>
+    <string name="chip_name_or_email">الاسم أو البريد الإلكتروني</string>
+    <string name="chip_no_people">لا يوجد أشخاص مطابقون</string>
+    <string name="chip_advanced_search">بحث متقدم</string>
+    <string name="spam_trash_hidden_notice">بعض الرسائل في البريد العشوائي والمهملات تطابق بحثك.</string>
+    <string name="view_spam_trash_messages">عرض الرسائل</string>
+    <string name="search_scope_anywhere">البريد والبريد العشوائي والمهملات</string>
+    <string name="advanced_has_words">يحتوي على الكلمات</string>
+    <string name="advanced_date_within">نطاق التاريخ</string>
+    <string name="advanced_search_scope">البحث في</string>
 </resources>

@@ -2428,4 +2428,24 @@
     <string name="alias_export_summary">%1$d entrées réparties sur %2$d fichier(s).</string>
     <string name="alias_export_download">Enregistrer</string>
     <string name="alias_export_failed">Échec de l\'exportation. Rien n\'a été enregistré.</string>
+    <string name="chip_any_time">N’importe quand</string>
+    <string name="chip_older_than_week">Plus d’une semaine</string>
+    <string name="chip_older_than_month">Plus d’un mois</string>
+    <string name="chip_older_than_six_months">Plus de 6 mois</string>
+    <string name="chip_older_than_year">Plus d’un an</string>
+    <string name="chip_custom_range">Période personnalisée</string>
+    <string name="chip_attachment_image">Image</string>
+    <string name="chip_attachment_document">Document</string>
+    <string name="chip_attachment_pdf">PDF</string>
+    <string name="chip_attachment_video">Vidéo</string>
+    <string name="chip_is_unread">Non lu</string>
+    <string name="chip_name_or_email">Nom ou e-mail</string>
+    <string name="chip_no_people">Aucune personne correspondante</string>
+    <string name="chip_advanced_search">Recherche avancée</string>
+    <string name="spam_trash_hidden_notice">Certains messages dans Spam et Corbeille correspondent à votre recherche.</string>
+    <string name="view_spam_trash_messages">Voir les messages</string>
+    <string name="search_scope_anywhere">Messages, spam et corbeille</string>
+    <string name="advanced_has_words">Contient les mots</string>
+    <string name="advanced_date_within">Période</string>
+    <string name="advanced_search_scope">Rechercher dans</string>
 </resources>

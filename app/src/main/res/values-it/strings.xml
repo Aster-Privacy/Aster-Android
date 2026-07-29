@@ -2400,4 +2400,24 @@
     <string name="alias_export_summary">%1$d voci in %2$d file.</string>
     <string name="alias_export_download">Salva</string>
     <string name="alias_export_failed">Esportazione non riuscita. Non è stato salvato nulla.</string>
+    <string name="chip_any_time">Qualsiasi data</string>
+    <string name="chip_older_than_week">Più di una settimana</string>
+    <string name="chip_older_than_month">Più di un mese</string>
+    <string name="chip_older_than_six_months">Più di 6 mesi</string>
+    <string name="chip_older_than_year">Più di un anno</string>
+    <string name="chip_custom_range">Intervallo personalizzato</string>
+    <string name="chip_attachment_image">Immagine</string>
+    <string name="chip_attachment_document">Documento</string>
+    <string name="chip_attachment_pdf">PDF</string>
+    <string name="chip_attachment_video">Video</string>
+    <string name="chip_is_unread">Non letto</string>
+    <string name="chip_name_or_email">Nome o email</string>
+    <string name="chip_no_people">Nessuna persona corrispondente</string>
+    <string name="chip_advanced_search">Ricerca avanzata</string>
+    <string name="spam_trash_hidden_notice">Alcuni messaggi in Spam e Cestino corrispondono alla tua ricerca.</string>
+    <string name="view_spam_trash_messages">Visualizza messaggi</string>
+    <string name="search_scope_anywhere">Posta, spam e cestino</string>
+    <string name="advanced_has_words">Contiene le parole</string>
+    <string name="advanced_date_within">Intervallo di date</string>
+    <string name="advanced_search_scope">Cerca in</string>
 </resources>

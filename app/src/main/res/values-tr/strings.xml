@@ -2400,4 +2400,24 @@
     <string name="alias_export_summary">%2$d dosyada toplam %1$d kayıt.</string>
     <string name="alias_export_download">Kaydet</string>
     <string name="alias_export_failed">Dışa aktarma başarısız. Hiçbir şey kaydedilmedi.</string>
+    <string name="chip_any_time">Herhangi bir zaman</string>
+    <string name="chip_older_than_week">Bir haftadan eski</string>
+    <string name="chip_older_than_month">Bir aydan eski</string>
+    <string name="chip_older_than_six_months">6 aydan eski</string>
+    <string name="chip_older_than_year">Bir yıldan eski</string>
+    <string name="chip_custom_range">Özel aralık</string>
+    <string name="chip_attachment_image">Resim</string>
+    <string name="chip_attachment_document">Belge</string>
+    <string name="chip_attachment_pdf">PDF</string>
+    <string name="chip_attachment_video">Video</string>
+    <string name="chip_is_unread">Okunmamış</string>
+    <string name="chip_name_or_email">Ad veya e-posta</string>
+    <string name="chip_no_people">Eşleşen kişi yok</string>
+    <string name="chip_advanced_search">Gelişmiş arama</string>
+    <string name="spam_trash_hidden_notice">Spam ve Çöp Kutusundaki bazı mesajlar aramanızla eşleşiyor.</string>
+    <string name="view_spam_trash_messages">Mesajları görüntüle</string>
+    <string name="search_scope_anywhere">Posta, spam ve çöp kutusu</string>
+    <string name="advanced_has_words">Şu kelimeleri içeriyor</string>
+    <string name="advanced_date_within">Tarih aralığı</string>
+    <string name="advanced_search_scope">Şurada ara</string>
 </resources>

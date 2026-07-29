@@ -2393,4 +2393,24 @@
     <string name="alias_export_summary">共 %1$d 条，分为 %2$d 个文件。</string>
     <string name="alias_export_download">保存</string>
     <string name="alias_export_failed">导出失败，未保存任何文件。</string>
+    <string name="chip_any_time">任何时间</string>
+    <string name="chip_older_than_week">一周以前</string>
+    <string name="chip_older_than_month">一个月以前</string>
+    <string name="chip_older_than_six_months">6 个月以前</string>
+    <string name="chip_older_than_year">一年以前</string>
+    <string name="chip_custom_range">自定义时间范围</string>
+    <string name="chip_attachment_image">图片</string>
+    <string name="chip_attachment_document">文档</string>
+    <string name="chip_attachment_pdf">PDF</string>
+    <string name="chip_attachment_video">视频</string>
+    <string name="chip_is_unread">未读</string>
+    <string name="chip_name_or_email">姓名或邮箱</string>
+    <string name="chip_no_people">没有匹配的联系人</string>
+    <string name="chip_advanced_search">高级搜索</string>
+    <string name="spam_trash_hidden_notice">垃圾邮件和回收站中有符合搜索条件的邮件。</string>
+    <string name="view_spam_trash_messages">查看邮件</string>
+    <string name="search_scope_anywhere">邮件、垃圾邮件和回收站</string>
+    <string name="advanced_has_words">包含字词</string>
+    <string name="advanced_date_within">时间范围</string>
+    <string name="advanced_search_scope">搜索范围</string>
 </resources>
