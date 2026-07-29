@@ -48,6 +48,9 @@ data class LabelItem(
     val icon_nonce: String? = null,
     val is_system: Boolean = false,
     val is_locked: Boolean = false,
+    val is_password_protected: Boolean = false,
+    val password_set: Boolean = false,
+    val password_salt: String? = null,
     val folder_type: String = "folder",
     val sort_order: Int = 0,
     val parent_token: String? = null,
@@ -148,8 +151,22 @@ data class ReferralHistoryResponse(
     val total: Long = 0,
 )
 
+@Serializable
+data class VerifyFolderPasswordRequest(
+    val password_hash: String,
+)
+
+@Serializable
+data class VerifyFolderPasswordResponse(
+    val verified: Boolean = false,
+    val encrypted_folder_key: String? = null,
+    val folder_key_nonce: String? = null,
+)
+
 interface LabelsApi {
     suspend fun list_labels(include_counts: Boolean = true, folder_type: String? = null): LabelsListResponse
+    suspend fun get_label(label_id: String): LabelItem
+    suspend fun verify_folder_password(label_id: String, request: VerifyFolderPasswordRequest): VerifyFolderPasswordResponse
     suspend fun create_label(request: CreateLabelRequest): CreateLabelResponse
     suspend fun update_label(label_id: String, request: UpdateLabelRequest)
     suspend fun bulk_reorder_labels(request: BulkReorderLabelsRequest): BulkReorderLabelsResponse
@@ -166,6 +183,23 @@ class LabelsApiImpl(private val client: ApiClient) : LabelsApi {
         val response = client.http.get("${client.base_url}$labels_base") {
             parameter("include_counts", include_counts)
             folder_type?.let { parameter("folder_type", it) }
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun get_label(label_id: String): LabelItem {
+        val response = client.http.get("${client.base_url}$labels_base/$label_id")
+        return decode_or_throw(response)
+    }
+
+    override suspend fun verify_folder_password(
+        label_id: String,
+        request: VerifyFolderPasswordRequest,
+    ): VerifyFolderPasswordResponse {
+        val response = client.http.post("${client.base_url}$labels_base/$label_id/password/verify") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
         }
         return decode_or_throw(response)
     }

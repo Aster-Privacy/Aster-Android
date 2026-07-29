@@ -60,6 +60,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -428,7 +429,15 @@ fun SearchScreen(
         last_results = if (!has_query) emptyList() else settled ?: last_results
     }
     val results_pending = has_query && computed == null
-    val filtered = computed ?: last_results
+    val lock_revision by org.astermail.android.folders.folder_lock_store.revision.collectAsState()
+    val locked_tokens = remember(settings_state.labels, lock_revision) {
+        org.astermail.android.folders.protected_folder_tokens(settings_state.labels)
+    }
+    val visible_results = computed ?: last_results
+    val filtered = remember(visible_results, locked_tokens) {
+        if (locked_tokens.isEmpty()) visible_results
+        else visible_results.filter { item -> item.labels.none { it in locked_tokens } }
+    }
 
     LaunchedEffect(filtered, results_pending) {
         if (select_mode && !results_pending) {

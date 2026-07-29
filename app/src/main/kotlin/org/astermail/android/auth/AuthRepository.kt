@@ -534,14 +534,14 @@ class AuthRepository @Inject constructor(
         }
         val stored_salt = server_salt
             ?: session_key_store.get_password_salt()
-            ?: throw ApiError.UnknownError("session expired â€” please sign in again")
+            ?: throw ApiError.UnknownError("session expired - please sign in again")
 
         val current_password_hash = CryptoNative.derive_pbkdf2_hash(
             current_password_bytes, stored_salt, pbkdf2_iterations,
         )
 
         val (encrypted_vault_b64, vault_nonce_b64) = session_key_store.get_encrypted_vault()
-            ?: throw ApiError.UnknownError("vault unavailable â€” please sign in again")
+            ?: throw ApiError.UnknownError("vault unavailable - please sign in again")
 
         val vault_plain = try {
             CryptoNative.decrypt_vault_with_password(
@@ -642,6 +642,7 @@ class AuthRepository @Inject constructor(
         token_store.clear()
         api_client.invalidate_bearer_cache()
         session_key_store.clear()
+        org.astermail.android.folders.folder_lock_store.lock_all()
         mail_repository.clear_caches()
         runCatching { theme_store.clear() }
         cancel_all_notifications()
@@ -813,6 +814,7 @@ class AuthRepository @Inject constructor(
         token_store.clear()
         api_client.invalidate_bearer_cache()
         session_key_store.clear()
+        org.astermail.android.folders.folder_lock_store.lock_all()
         mail_repository.clear_caches()
         runCatching { theme_store.clear() }
         cancel_all_notifications()

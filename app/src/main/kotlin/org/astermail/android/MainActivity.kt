@@ -65,6 +65,7 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -1403,7 +1404,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         drawer_folder_item(
             id = label.label_token,
             label = readable_name ?: drawer_context.getString(R.string.folder_decrypt_failed),
-            icon = TablerIcons.Folder,
+            icon = if (org.astermail.android.folders.is_folder_protected(label)) TablerIcons.Lock else TablerIcons.Folder,
             count = label.unread_count?.toInt() ?: 0,
             depth = node.depth,
             trail = node.trail,
@@ -1493,6 +1494,30 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
             )
         }
 
+    val lock_revision by org.astermail.android.folders.folder_lock_store.revision.collectAsState()
+
+    var pending_unlock_folder by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var unlock_verifying by remember { mutableStateOf(false) }
+    var unlock_error by remember { mutableStateOf<String?>(null) }
+
+    val open_custom_folder: (String, String) -> Unit = { token, name ->
+        filter_kind = "folder"
+        filter_value = token
+        filter_name = name
+        selected_folder = token
+    }
+
+    val request_custom_folder: (String, String) -> Unit = { token, name ->
+        lock_revision.let { }
+        val label = settings_state.labels.firstOrNull { it.label_token == token }
+        if (label != null && org.astermail.android.folders.requires_unlock(label)) {
+            unlock_error = null
+            pending_unlock_folder = token to name
+        } else {
+            open_custom_folder(token, name)
+        }
+    }
+
     ModalNavigationDrawer(
         drawerState = drawer_state,
         scrimColor = Color.Black.copy(alpha = 0.32f),
@@ -1525,10 +1550,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 },
                 on_close = { scope.launch { drawer_state.close() } },
                 on_navigate_folder = { id, name ->
-                    filter_kind = "folder"
-                    filter_value = id
-                    filter_name = name
-                    selected_folder = id
+                    request_custom_folder(id, name)
                     scope.launch { drawer_state.close() }
                 },
                 on_navigate_label = { id, name ->
@@ -1739,12 +1761,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                                 selected_folder = id
                             },
                             custom_folders = quick_custom_folders,
-                            on_custom_folder_change = { id, name ->
-                                filter_kind = "folder"
-                                filter_value = id
-                                filter_name = name
-                                selected_folder = id
-                            },
+                            on_custom_folder_change = { id, name -> request_custom_folder(id, name) },
                             on_customize_toolbar = { nav_controller.navigate(routes.settings_detail("customize_toolbar")) },
                         )
                     }
@@ -1804,12 +1821,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             display_title = if (selected_folder == "inbox" && categories_enabled) category_titles[inbox_category] else null,
                             on_folder_change = { selected_folder = it },
                             custom_folders = quick_custom_folders,
-                            on_custom_folder_change = { id, name ->
-                                filter_kind = "folder"
-                                filter_value = id
-                                filter_name = name
-                                selected_folder = id
-                            },
+                            on_custom_folder_change = { id, name -> request_custom_folder(id, name) },
                             on_customize_toolbar = { nav_controller.navigate(routes.settings_detail("customize_toolbar")) },
                             scroll_top_token = if (selected_folder == "inbox") inbox_scroll_top_token else 0,
                         )
@@ -1817,6 +1829,39 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 }
             }
         }
+    }
+
+    pending_unlock_folder?.let { (token, name) ->
+        val label = settings_state.labels.firstOrNull { it.label_token == token }
+        val unlock_failed_text = stringResource(R.string.folder_unlock_failed)
+        org.astermail.android.ui.folders.folder_unlock_dialog(
+            folder_name = name,
+            verifying = unlock_verifying,
+            error_text = unlock_error,
+            on_dismiss = {
+                pending_unlock_folder = null
+                unlock_verifying = false
+                unlock_error = null
+            },
+            on_submit = { password ->
+                val label_id = label?.id
+                if (label_id == null) {
+                    unlock_error = unlock_failed_text
+                } else {
+                    unlock_verifying = true
+                    unlock_error = null
+                    settings_vm.unlock_folder(label_id, password) { ok ->
+                        unlock_verifying = false
+                        if (ok) {
+                            pending_unlock_folder = null
+                            open_custom_folder(token, name)
+                        } else {
+                            unlock_error = unlock_failed_text
+                        }
+                    }
+                }
+            },
+        )
     }
 }
 

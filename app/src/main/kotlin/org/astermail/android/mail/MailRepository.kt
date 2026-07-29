@@ -936,7 +936,11 @@ class MailRepository @Inject constructor(
     suspend fun list_notifiable_folders(): Result<List<org.astermail.android.api.labels.LabelItem>> = runCatching {
         labels_api.list_labels(include_counts = true)
             .labels
-            .filter { !it.is_system && (it.unread_count ?: 0L) > 0L }
+            .filter {
+                !it.is_system &&
+                    (it.unread_count ?: 0L) > 0L &&
+                    !org.astermail.android.folders.is_folder_protected(it)
+            }
     }
 
     suspend fun add_label_to_item(item_id: String, label_token: String): Result<Unit> = runCatching {

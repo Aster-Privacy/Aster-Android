@@ -294,6 +294,7 @@ class MailPollingWorker(
         private const val KEY_PRIVATE_NOTIFICATIONS = "private_notifications"
         private const val KEY_NOTIFY_NEW_EMAIL = "notify_new_email"
         private const val KEY_MUTED_FOLDER_TOKENS = "muted_folder_tokens"
+        private const val KEY_PROTECTED_FOLDER_TOKENS = "protected_folder_tokens"
         private const val KEY_QUIET_HOURS_ENABLED = "quiet_hours_enabled"
         private const val KEY_QUIET_HOURS_START = "quiet_hours_start"
         private const val KEY_QUIET_HOURS_END = "quiet_hours_end"
@@ -363,10 +364,24 @@ class MailPollingWorker(
                 .getBoolean(KEY_NOTIFY_NEW_EMAIL, true)
         }
 
-        fun muted_folder_tokens(context: Context): Set<String> {
+        private fun stored_token_set(context: Context, key: String): Set<String> {
             val stored = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                .getString(KEY_MUTED_FOLDER_TOKENS, "") ?: ""
+                .getString(key, "") ?: ""
             return stored.split('\n').filter { it.isNotBlank() }.toSet()
+        }
+
+        fun muted_folder_tokens(context: Context): Set<String> =
+            stored_token_set(context, KEY_MUTED_FOLDER_TOKENS) +
+                stored_token_set(context, KEY_PROTECTED_FOLDER_TOKENS)
+
+        fun set_protected_folder_tokens(context: Context, tokens: Collection<String>) {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .putString(
+                    KEY_PROTECTED_FOLDER_TOKENS,
+                    tokens.filter { it.isNotBlank() }.distinct().joinToString("\n"),
+                )
+                .apply()
         }
 
         fun set_muted_folder_tokens(context: Context, tokens: Collection<String>) {
