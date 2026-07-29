@@ -32,6 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -52,6 +53,7 @@ private const val WARM_CACHE_MIN_ITEMS = 8
 private const val BULK_ACTION_CONCURRENCY = 6
 private const val CARRIED_ITEM_STALE_MS = 20 * 60 * 1000L
 private const val STATS_TTL_MS = 30_000L
+private const val STATS_DEBOUNCE_MS = 1_200L
 private const val DECRYPT_RETRY_TIMEOUT_MS = 20_000L
 
 data class BatchActionState(
@@ -265,6 +267,7 @@ class MailViewModel @Inject constructor(
     private var list_order: String? = null
     private var inbox_load_job: Job? = null
     private var last_stats_load_ms = 0L
+    private var stats_job: Job? = null
     private val _emptying_spam = MutableStateFlow(false)
     val emptying_spam_state: StateFlow<Boolean> = _emptying_spam.asStateFlow()
     private var silent_revalidate_job: Job? = null
@@ -739,8 +742,10 @@ class MailViewModel @Inject constructor(
     fun load_stats(force: Boolean = true) {
         val now = System.currentTimeMillis()
         if (!force && _inbox_state.value.stats != null && now - last_stats_load_ms < STATS_TTL_MS) return
-        last_stats_load_ms = now
-        viewModelScope.launch {
+        stats_job?.cancel()
+        stats_job = viewModelScope.launch {
+            delay(STATS_DEBOUNCE_MS)
+            last_stats_load_ms = System.currentTimeMillis()
             repository.get_stats().onSuccess { stats ->
                 _inbox_state.update { it.copy(stats = stats) }
             }
