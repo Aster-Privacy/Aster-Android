@@ -2285,4 +2285,10 @@
     <plurals name="contacts_count_plural">
         <item quantity="other">連絡先 %d 件</item>
     </plurals>
+    <string name="forwarding_pending_verification">確認待ち</string>
+    <string name="resend_verification_email">確認メールを再送信</string>
+    <string name="forwarding_awaiting_verification">確認待ち: %1$s</string>
+    <string name="forwarding_verification_sent">%1$s に確認メールを送信しました。確認後に転送が開始されます。</string>
+    <string name="forwarding_internal_active">転送は有効です。Aster から Aster への宛先には確認は不要です。</string>
+    <string name="forwarding_verification_resent">%1$s に確認メールを再送信しました</string>
 </resources>

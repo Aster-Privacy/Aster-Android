@@ -2285,4 +2285,10 @@
     <plurals name="contacts_count_plural">
         <item quantity="other">연락처 %d개</item>
     </plurals>
+    <string name="forwarding_pending_verification">확인 대기 중</string>
+    <string name="resend_verification_email">확인 이메일 다시 보내기</string>
+    <string name="forwarding_awaiting_verification">확인 대기 중: %1$s</string>
+    <string name="forwarding_verification_sent">%1$s(으)로 확인 이메일을 보냈습니다. 확인 후 전달이 시작됩니다.</string>
+    <string name="forwarding_internal_active">전달이 활성화되어 있습니다. Aster 간 대상은 확인이 필요하지 않습니다.</string>
+    <string name="forwarding_verification_resent">%1$s(으)로 확인 이메일을 다시 보냈습니다</string>
 </resources>

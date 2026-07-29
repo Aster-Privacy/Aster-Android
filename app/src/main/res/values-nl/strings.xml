@@ -2292,4 +2292,10 @@
         <item quantity="one">%d contact</item>
         <item quantity="other">%d contacten</item>
     </plurals>
+    <string name="forwarding_pending_verification">Verificatie in behandeling</string>
+    <string name="resend_verification_email">Verificatie-e-mail opnieuw versturen</string>
+    <string name="forwarding_awaiting_verification">Wacht op verificatie: %1$s</string>
+    <string name="forwarding_verification_sent">Verificatie-e-mail verzonden naar %1$s. Doorsturen begint zodra dit is bevestigd.</string>
+    <string name="forwarding_internal_active">Doorsturen is actief. Bestemmingen van Aster naar Aster hoeven niet te worden geverifieerd.</string>
+    <string name="forwarding_verification_resent">Verificatie-e-mail opnieuw verzonden naar %1$s</string>
 </resources>

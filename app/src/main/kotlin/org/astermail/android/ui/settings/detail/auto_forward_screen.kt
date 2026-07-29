@@ -85,9 +85,17 @@ fun AutoForwardScreen(
 
     LaunchedEffect(state.save_status) {
         if (state.save_status == SaveStatus.SAVED) {
-            Toast.makeText(context, context.getString(R.string.auto_forward_saved), Toast.LENGTH_SHORT).show()
+            if (state.forwarding_notice == null) {
+                Toast.makeText(context, context.getString(R.string.auto_forward_saved), Toast.LENGTH_SHORT).show()
+            }
             vm.reset_save_status()
         }
+    }
+
+    LaunchedEffect(state.forwarding_notice) {
+        val notice = state.forwarding_notice ?: return@LaunchedEffect
+        Toast.makeText(context, notice, Toast.LENGTH_LONG).show()
+        vm.clear_forwarding_notice()
     }
 
     detail_scaffold(title = stringResource(R.string.auto_forward_title), on_back = on_back) {
@@ -192,6 +200,42 @@ fun AutoForwardScreen(
                 },
                 enabled = target.contains("@"),
             )
+            val pending = active_rule?.pending_destinations.orEmpty()
+            if (pending.isNotEmpty()) {
+                v_gap(AsterSpacing.lg)
+                AsterCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(AsterSpacing.lg)) {
+                        Text(
+                            text = stringResource(R.string.forwarding_pending_verification),
+                            color = colors.warning,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
+                        pending.forEach { destination ->
+                            v_gap(AsterSpacing.sm)
+                            Text(
+                                text = stringResource(
+                                    R.string.forwarding_awaiting_verification,
+                                    destination.address,
+                                ),
+                                color = colors.text_tertiary,
+                                fontSize = 13.sp,
+                            )
+                            v_gap(AsterSpacing.sm)
+                            AsterButton(
+                                label = stringResource(R.string.resend_verification_email),
+                                onClick = {
+                                    active_rule?.let {
+                                        vm.resend_forwarding_confirmation(it.id, destination.address)
+                                    }
+                                },
+                                enabled = state.forwarding_resending_address == null,
+                                is_loading = state.forwarding_resending_address == destination.address,
+                            )
+                        }
+                    }
+                }
+            }
         }
         v_gap(AsterSpacing.xxl)
     }

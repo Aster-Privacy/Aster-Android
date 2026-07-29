@@ -2320,4 +2320,10 @@
         <item quantity="many">%d جهة اتصال</item>
         <item quantity="other">%d جهة اتصال</item>
     </plurals>
+    <string name="forwarding_pending_verification">في انتظار التحقق</string>
+    <string name="resend_verification_email">إعادة إرسال بريد التحقق</string>
+    <string name="forwarding_awaiting_verification">في انتظار التحقق: %1$s</string>
+    <string name="forwarding_verification_sent">تم إرسال بريد التحقق إلى %1$s. يبدأ التحويل بعد التأكيد.</string>
+    <string name="forwarding_internal_active">التحويل نشط. لا تحتاج الوجهات من Aster إلى Aster إلى تحقق.</string>
+    <string name="forwarding_verification_resent">تمت إعادة إرسال بريد التحقق إلى %1$s</string>
 </resources>

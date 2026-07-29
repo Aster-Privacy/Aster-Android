@@ -2292,4 +2292,10 @@
         <item quantity="one">%d contatto</item>
         <item quantity="other">%d contatti</item>
     </plurals>
+    <string name="forwarding_pending_verification">Verifica in sospeso</string>
+    <string name="resend_verification_email">Invia di nuovo l\'email di verifica</string>
+    <string name="forwarding_awaiting_verification">In attesa di verifica: %1$s</string>
+    <string name="forwarding_verification_sent">Email di verifica inviata a %1$s. L\'inoltro inizia dopo la conferma.</string>
+    <string name="forwarding_internal_active">L\'inoltro è attivo. Le destinazioni da Aster ad Aster non richiedono verifica.</string>
+    <string name="forwarding_verification_resent">Email di verifica inviata di nuovo a %1$s</string>
 </resources>

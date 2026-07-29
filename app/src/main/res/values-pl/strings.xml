@@ -2306,4 +2306,10 @@
         <item quantity="many">%d kontaktów</item>
         <item quantity="other">%d kontaktów</item>
     </plurals>
+    <string name="forwarding_pending_verification">Oczekuje na weryfikację</string>
+    <string name="resend_verification_email">Wyślij ponownie e-mail weryfikacyjny</string>
+    <string name="forwarding_awaiting_verification">Oczekuje na weryfikację: %1$s</string>
+    <string name="forwarding_verification_sent">E-mail weryfikacyjny wysłany na %1$s. Przekazywanie ruszy po potwierdzeniu.</string>
+    <string name="forwarding_internal_active">Przekazywanie jest aktywne. Adresy Aster do Aster nie wymagają weryfikacji.</string>
+    <string name="forwarding_verification_resent">E-mail weryfikacyjny wysłany ponownie na %1$s</string>
 </resources>

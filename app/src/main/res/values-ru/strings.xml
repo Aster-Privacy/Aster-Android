@@ -2306,4 +2306,10 @@
         <item quantity="many">%d контактов</item>
         <item quantity="other">%d контактов</item>
     </plurals>
+    <string name="forwarding_pending_verification">Ожидает подтверждения</string>
+    <string name="resend_verification_email">Отправить письмо подтверждения снова</string>
+    <string name="forwarding_awaiting_verification">Ожидает подтверждения: %1$s</string>
+    <string name="forwarding_verification_sent">Письмо для подтверждения отправлено на %1$s. Пересылка начнётся после подтверждения.</string>
+    <string name="forwarding_internal_active">Пересылка активна. Адреса Aster на Aster не требуют подтверждения.</string>
+    <string name="forwarding_verification_resent">Письмо для подтверждения повторно отправлено на %1$s</string>
 </resources>

@@ -39,6 +39,14 @@ import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
 
 @Serializable
+data class ForwardingDestinationStatus(
+    val address: String = "",
+    val is_internal: Boolean = false,
+    val confirmed: Boolean = true,
+    val confirmation_sent_at: String? = null,
+)
+
+@Serializable
 data class ForwardingRule(
     val id: String = "",
     val name: String = "",
@@ -46,9 +54,15 @@ data class ForwardingRule(
     val forward_to: List<String> = emptyList(),
     val keep_copy: Boolean = true,
     val created_at: String? = null,
+    val destinations: List<ForwardingDestinationStatus> = emptyList(),
+    val pending_confirmation: Boolean = false,
 ) {
     val target_address: String get() = forward_to.firstOrNull().orEmpty()
     val enabled: Boolean get() = is_enabled
+    val pending_destinations: List<ForwardingDestinationStatus>
+        get() = destinations.filter { !it.confirmed }
+    val all_destinations_internal: Boolean
+        get() = destinations.isNotEmpty() && destinations.all { it.is_internal }
 }
 
 @Serializable
@@ -80,12 +94,19 @@ data class ToggleForwardingRuleRequest(
     val is_enabled: Boolean,
 )
 
+@Serializable
+data class ResendForwardingConfirmationRequest(
+    val id: String,
+    val address: String,
+)
+
 interface AutoForwardApi {
     suspend fun list_rules(): ForwardingRulesResponse
     suspend fun create_rule(request: CreateForwardingRuleRequest): ForwardingRule
     suspend fun update_rule(request: UpdateForwardingRuleRequest)
     suspend fun toggle_rule(request: ToggleForwardingRuleRequest)
     suspend fun delete_rule(rule_id: String)
+    suspend fun resend_confirmation(request: ResendForwardingConfirmationRequest)
 }
 
 class AutoForwardApiImpl(private val client: ApiClient) : AutoForwardApi {
@@ -124,6 +145,18 @@ class AutoForwardApiImpl(private val client: ApiClient) : AutoForwardApi {
         }
         if (response.status.value !in 200..299) {
             throw client.map_http_status(response.status.value, "")
+        }
+    }
+
+    override suspend fun resend_confirmation(request: ResendForwardingConfirmationRequest) {
+        val response = client.http.post("${client.base_url}$base/resend_confirmation") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        if (response.status.value !in 200..299) {
+            val body = try { response.body<String>() } catch (_: Throwable) { "" }
+            throw client.map_http_status(response.status.value, body)
         }
     }
 

@@ -2292,4 +2292,10 @@
         <item quantity="one">%d kişi</item>
         <item quantity="other">%d kişi</item>
     </plurals>
+    <string name="forwarding_pending_verification">Doğrulama bekleniyor</string>
+    <string name="resend_verification_email">Doğrulama e-postasını yeniden gönder</string>
+    <string name="forwarding_awaiting_verification">Doğrulama bekleniyor: %1$s</string>
+    <string name="forwarding_verification_sent">Doğrulama e-postası %1$s adresine gönderildi. Yönlendirme onaylandıktan sonra başlar.</string>
+    <string name="forwarding_internal_active">Yönlendirme etkin. Aster\'dan Aster\'a hedefler doğrulama gerektirmez.</string>
+    <string name="forwarding_verification_resent">Doğrulama e-postası %1$s adresine yeniden gönderildi</string>
 </resources>

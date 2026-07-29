@@ -2342,4 +2342,10 @@
     </plurals>
     <string name="share_target_label">Compose email</string>
     <string name="share_attachment_failed">Some files could not be attached</string>
+    <string name="forwarding_pending_verification">Pending verification</string>
+    <string name="resend_verification_email">Resend verification email</string>
+    <string name="forwarding_awaiting_verification">Awaiting verification: %1$s</string>
+    <string name="forwarding_verification_sent">Verification email sent to %1$s. Forwarding starts once it is confirmed.</string>
+    <string name="forwarding_internal_active">Forwarding is active. Aster to Aster destinations do not need verification.</string>
+    <string name="forwarding_verification_resent">Verification email resent to %1$s</string>
 </resources>

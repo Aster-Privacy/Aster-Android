@@ -2293,4 +2293,10 @@
         <item quantity="one">%d contacto</item>
         <item quantity="other">%d contactos</item>
     </plurals>
+    <string name="forwarding_pending_verification">Verificación pendiente</string>
+    <string name="resend_verification_email">Reenviar correo de verificación</string>
+    <string name="forwarding_awaiting_verification">Esperando verificación: %1$s</string>
+    <string name="forwarding_verification_sent">Correo de verificación enviado a %1$s. El reenvío comenzará cuando se confirme.</string>
+    <string name="forwarding_internal_active">El reenvío está activo. Los destinos de Aster a Aster no necesitan verificación.</string>
+    <string name="forwarding_verification_resent">Correo de verificación reenviado a %1$s</string>
 </resources>

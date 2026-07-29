@@ -2285,4 +2285,10 @@
     <plurals name="contacts_count_plural">
         <item quantity="other">%d 位联系人</item>
     </plurals>
+    <string name="forwarding_pending_verification">等待验证</string>
+    <string name="resend_verification_email">重新发送验证邮件</string>
+    <string name="forwarding_awaiting_verification">等待验证：%1$s</string>
+    <string name="forwarding_verification_sent">验证邮件已发送至 %1$s。确认后即可开始转发。</string>
+    <string name="forwarding_internal_active">转发已启用。Aster 到 Aster 的目标无需验证。</string>
+    <string name="forwarding_verification_resent">验证邮件已重新发送至 %1$s</string>
 </resources>

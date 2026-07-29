@@ -2320,4 +2320,10 @@
         <item quantity="one">%d contact</item>
         <item quantity="other">%d contacts</item>
     </plurals>
+    <string name="forwarding_pending_verification">Vérification en attente</string>
+    <string name="resend_verification_email">Renvoyer l\'e-mail de vérification</string>
+    <string name="forwarding_awaiting_verification">En attente de vérification : %1$s</string>
+    <string name="forwarding_verification_sent">E-mail de vérification envoyé à %1$s. Le transfert démarre après confirmation.</string>
+    <string name="forwarding_internal_active">Le transfert est actif. Les destinations Aster vers Aster ne nécessitent pas de vérification.</string>
+    <string name="forwarding_verification_resent">E-mail de vérification renvoyé à %1$s</string>
 </resources>

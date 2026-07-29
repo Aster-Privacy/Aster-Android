@@ -2293,4 +2293,10 @@
         <item quantity="one">%d Kontakt</item>
         <item quantity="other">%d Kontakte</item>
     </plurals>
+    <string name="forwarding_pending_verification">Bestätigung ausstehend</string>
+    <string name="resend_verification_email">Bestätigungs-E-Mail erneut senden</string>
+    <string name="forwarding_awaiting_verification">Bestätigung ausstehend: %1$s</string>
+    <string name="forwarding_verification_sent">Bestätigungs-E-Mail an %1$s gesendet. Die Weiterleitung startet nach der Bestätigung.</string>
+    <string name="forwarding_internal_active">Die Weiterleitung ist aktiv. Ziele von Aster zu Aster benötigen keine Bestätigung.</string>
+    <string name="forwarding_verification_resent">Bestätigungs-E-Mail erneut an %1$s gesendet</string>
 </resources>

@@ -53,6 +53,7 @@ import org.astermail.android.api.auth.UserInfo
 import org.astermail.android.api.autoforward.AutoForwardApi
 import org.astermail.android.api.autoforward.CreateForwardingRuleRequest
 import org.astermail.android.api.autoforward.ForwardingRule
+import org.astermail.android.api.autoforward.ResendForwardingConfirmationRequest
 import org.astermail.android.api.autoforward.ToggleForwardingRuleRequest
 import org.astermail.android.api.developer.ApiKeyInfo
 import org.astermail.android.api.developer.CreateApiKeyRequest
@@ -165,6 +166,8 @@ data class SettingsUiState(
     val family_max_members: Int = 0,
     val ghost_aliases: List<GhostAlias> = emptyList(),
     val forwarding_rules: List<ForwardingRule> = emptyList(),
+    val forwarding_resending_address: String? = null,
+    val forwarding_notice: String? = null,
     val api_keys: List<ApiKeyInfo> = emptyList(),
     val webhooks: List<WebhookInfo> = emptyList(),
     val directories: List<AliasDirectory> = emptyList(),
@@ -2802,18 +2805,40 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    private fun forwarding_notice_for(rule: ForwardingRule?): String? {
+        if (rule == null) return null
+        val pending = rule.pending_destinations
+        if (pending.isNotEmpty()) {
+            return context.getString(
+                R.string.forwarding_verification_sent,
+                pending.joinToString(", ") { it.address },
+            )
+        }
+        if (rule.all_destinations_internal) {
+            return context.getString(R.string.forwarding_internal_active)
+        }
+        return null
+    }
+
+    fun clear_forwarding_notice() {
+        _state.update { s -> s.copy(forwarding_notice = null) }
+    }
+
     fun create_forwarding_rule(target: String, keep_copy: Boolean) {
         viewModelScope.launch {
             _state.value = _state.value.copy(save_status = SaveStatus.SAVING)
             try {
-                auto_forward_api.create_rule(
+                val created = auto_forward_api.create_rule(
                     CreateForwardingRuleRequest(
                         name = target.take(200),
                         forward_to = listOf(target),
                         keep_copy = keep_copy,
                     ),
                 )
-                _state.value = _state.value.copy(save_status = SaveStatus.SAVED)
+                _state.value = _state.value.copy(
+                    save_status = SaveStatus.SAVED,
+                    forwarding_notice = forwarding_notice_for(created),
+                )
                 load_forwarding_rules()
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
@@ -2836,13 +2861,47 @@ class SettingsViewModel @Inject constructor(
                         keep_copy = keep_copy,
                     ),
                 )
-                _state.value = _state.value.copy(save_status = SaveStatus.SAVED)
-                load_forwarding_rules()
+                val rules = auto_forward_api.list_rules().rules
+                _state.value = _state.value.copy(
+                    save_status = SaveStatus.SAVED,
+                    forwarding_rules = rules,
+                    forwarding_notice = forwarding_notice_for(rules.firstOrNull { it.id == rule_id }),
+                )
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     save_status = SaveStatus.ERROR,
                     error = t.message ?: context.getString(R.string.something_went_wrong),
                 )
+            }
+        }
+    }
+
+    fun resend_forwarding_confirmation(rule_id: String, address: String) {
+        if (_state.value.forwarding_resending_address != null) return
+        viewModelScope.launch {
+            _state.update { s -> s.copy(forwarding_resending_address = address, error = null) }
+            try {
+                auto_forward_api.resend_confirmation(
+                    ResendForwardingConfirmationRequest(id = rule_id, address = address),
+                )
+                val rules = auto_forward_api.list_rules().rules
+                _state.update { s ->
+                    s.copy(
+                        forwarding_resending_address = null,
+                        forwarding_rules = rules,
+                        forwarding_notice = context.getString(
+                            R.string.forwarding_verification_resent,
+                            address,
+                        ),
+                    )
+                }
+            } catch (t: Throwable) {
+                _state.update { s ->
+                    s.copy(
+                        forwarding_resending_address = null,
+                        error = t.message ?: context.getString(R.string.something_went_wrong),
+                    )
+                }
             }
         }
     }
