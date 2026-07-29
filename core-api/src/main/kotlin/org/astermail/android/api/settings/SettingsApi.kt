@@ -140,11 +140,14 @@ data class AliasInfo(
     val display_name_nonce: String? = null,
     val encrypted_note: String? = null,
     val note_nonce: String? = null,
+    val encrypted_websites: String? = null,
+    val websites_nonce: String? = null,
     val alias_address_hash: String = "",
     val domain: String = "",
     val is_enabled: Boolean = true,
     val is_random: Boolean = false,
     val never_inbox: Boolean = false,
+    val delivery_folder_token: String? = null,
     val profile_picture: String? = null,
     val created_at: String = "",
     val updated_at: String = "",
@@ -315,7 +318,11 @@ data class CreateAliasRequest(
 data class UpdateAliasRequest(
     val is_enabled: Boolean? = null,
     val never_inbox: Boolean? = null,
-    val display_name: String? = null,
+    val delivery_folder_token: String? = null,
+    val encrypted_display_name: String? = null,
+    val display_name_nonce: String? = null,
+    val encrypted_websites: String? = null,
+    val websites_nonce: String? = null,
 )
 
 @Serializable
@@ -462,6 +469,8 @@ interface SettingsApi {
     suspend fun create_alias(request: CreateAliasRequest): CreateAliasResponse
     suspend fun update_alias(alias_id: String, request: UpdateAliasRequest): Boolean
     suspend fun update_alias_note(alias_id: String, encrypted_note: String?, note_nonce: String?): Boolean
+    suspend fun update_alias_display_name(alias_id: String, encrypted_name: String?, name_nonce: String?): Boolean
+    suspend fun update_alias_websites(alias_id: String, encrypted_websites: String?, websites_nonce: String?): Boolean
     suspend fun list_all_domain_addresses(): AllDomainAddressesResponse
     suspend fun create_domain_address(domain_id: String, request: CreateDomainAddressRequest): CreateDomainAddressResponse
     suspend fun update_domain_address(domain_id: String, address_id: String, request: UpdateDomainAddressRequest)
@@ -662,6 +671,45 @@ class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
                 "encrypted_note" to (encrypted_note?.let { JsonPrimitive(it) } ?: JsonNull),
                 "note_nonce" to (note_nonce?.let { JsonPrimitive(it) } ?: JsonNull),
             ),
+        )
+        val response = client.http.patch("${client.base_url}/api/addresses/v1/aliases/$alias_id") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(body)
+        }
+        if (response.status.value !in 200..299) {
+            throw client.map_http_status(response.status.value, "")
+        }
+        return true
+    }
+
+    override suspend fun update_alias_display_name(
+        alias_id: String,
+        encrypted_name: String?,
+        name_nonce: String?,
+    ): Boolean = patch_alias_nullable_fields(
+        alias_id = alias_id,
+        fields = mapOf(
+            "encrypted_display_name" to encrypted_name,
+            "display_name_nonce" to name_nonce,
+        ),
+    )
+
+    override suspend fun update_alias_websites(
+        alias_id: String,
+        encrypted_websites: String?,
+        websites_nonce: String?,
+    ): Boolean = patch_alias_nullable_fields(
+        alias_id = alias_id,
+        fields = mapOf(
+            "encrypted_websites" to encrypted_websites,
+            "websites_nonce" to websites_nonce,
+        ),
+    )
+
+    private suspend fun patch_alias_nullable_fields(alias_id: String, fields: Map<String, String?>): Boolean {
+        val body = JsonObject(
+            fields.mapValues { (_, value) -> value?.let { JsonPrimitive(it) } ?: JsonNull },
         )
         val response = client.http.patch("${client.base_url}/api/addresses/v1/aliases/$alias_id") {
             contentType(ContentType.Application.Json)

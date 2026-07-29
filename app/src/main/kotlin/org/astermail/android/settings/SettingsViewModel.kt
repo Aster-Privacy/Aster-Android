@@ -61,6 +61,13 @@ import org.astermail.android.api.developer.DeveloperApi
 import org.astermail.android.api.developer.WebhookInfo
 import org.astermail.android.api.family.FamilyApi
 import org.astermail.android.api.family.ReservedAddress
+import org.astermail.android.api.aliases.AddPinRequest
+import org.astermail.android.api.aliases.AliasRuleActions
+import org.astermail.android.api.aliases.AliasRuleCondition
+import org.astermail.android.api.aliases.CreateAliasContactRequest
+import org.astermail.android.api.aliases.CreateAliasRuleRequest
+import org.astermail.android.api.aliases.SENDER_PIN_MODE_OFF
+import org.astermail.android.api.aliases.UpdateAliasRuleRequest
 import org.astermail.android.api.ghost.CreateGhostAliasRequest
 import org.astermail.android.api.ghost.GHOST_ALIAS_DOMAIN
 import org.astermail.android.api.ghost.GhostAlias
@@ -176,6 +183,8 @@ data class SettingsUiState(
     val deleted_aliases: List<DecryptedDeletedAlias> = emptyList(),
     val deleted_aliases_loading: Boolean = false,
     val alias_preferences: AliasPreferences? = null,
+    val expanded_alias_ids: Set<String> = emptySet(),
+    val alias_details: Map<String, AliasDetailState> = emptyMap(),
     val recovery_email_address: String? = null,
     val recovery_email_set: Boolean = false,
     val recovery_email_verified: Boolean = false,
@@ -247,6 +256,7 @@ class SettingsViewModel @Inject constructor(
     private val recovery_email_api: RecoveryEmailApi,
     private val security_api: SecurityApi,
     private val encryption_api: org.astermail.android.api.encryption.EncryptionApi,
+    private val alias_detail_api: org.astermail.android.api.aliases.AliasDetailApi,
     private val auth_repository: AuthRepository,
     private val session_key_store: SessionKeyStore,
     private val token_store: TokenStore,
@@ -1019,18 +1029,38 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch { create_alias_now(local_part, domain, display_name = display_name) }
     }
 
-    fun toggle_alias_never_inbox(alias_id: String) {
+    fun set_alias_delivery(alias_id: String, folder_token: String?, to_archive: Boolean) {
         val current = _state.value.aliases.firstOrNull { it.id == alias_id } ?: return
-        val new_value = !current.never_inbox
+        val next_token = if (to_archive) null else folder_token
         _state.update { s ->
-            s.copy(aliases = s.aliases.map { if (it.id == alias_id) it.copy(never_inbox = new_value) else it })
+            s.copy(
+                aliases = s.aliases.map {
+                    if (it.id == alias_id) {
+                        it.copy(never_inbox = to_archive, delivery_folder_token = next_token)
+                    } else it
+                },
+            )
         }
         viewModelScope.launch {
             try {
-                settings_api.update_alias(alias_id, UpdateAliasRequest(never_inbox = new_value))
+                val request = if (next_token != null) {
+                    UpdateAliasRequest(delivery_folder_token = next_token)
+                } else {
+                    UpdateAliasRequest(never_inbox = to_archive)
+                }
+                settings_api.update_alias(alias_id, request)
             } catch (_: Throwable) {
                 _state.update { s ->
-                    s.copy(aliases = s.aliases.map { if (it.id == alias_id) it.copy(never_inbox = current.never_inbox) else it })
+                    s.copy(
+                        aliases = s.aliases.map {
+                            if (it.id == alias_id) {
+                                it.copy(
+                                    never_inbox = current.never_inbox,
+                                    delivery_folder_token = current.delivery_folder_token,
+                                )
+                            } else it
+                        },
+                    )
                 }
                 _state.value = _state.value.copy(
                     action_result = context.getString(R.string.something_went_wrong),
@@ -1093,6 +1123,465 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     action_result = context.getString(R.string.something_went_wrong),
                 )
+            }
+        }
+    }
+
+    fun toggle_alias_expanded(alias_id: String) {
+        val expanded = _state.value.expanded_alias_ids.contains(alias_id)
+        set_alias_expanded(alias_id, !expanded)
+    }
+
+    fun set_alias_expanded(alias_id: String, expanded: Boolean) {
+        _state.update { s ->
+            s.copy(
+                expanded_alias_ids = if (expanded) {
+                    s.expanded_alias_ids + alias_id
+                } else {
+                    s.expanded_alias_ids - alias_id
+                },
+            )
+        }
+        if (expanded) load_alias_detail(alias_id)
+    }
+
+    fun load_alias_detail(alias_id: String, force: Boolean = false) {
+        val existing = _state.value.alias_details[alias_id]
+        if (!force && existing != null && (existing.loaded || existing.loading)) return
+        update_alias_detail(alias_id) { it.copy(loading = true) }
+        viewModelScope.launch {
+            val stats = fetch_alias_section { alias_detail_api.get_stats(alias_id) }
+            val pins = fetch_alias_section { alias_detail_api.list_pins(alias_id) }
+            val contacts = fetch_alias_section { alias_detail_api.list_contacts(alias_id) }
+            val log = fetch_alias_section { alias_detail_api.get_delivery_log(alias_id) }
+            val rules = fetch_alias_section { alias_detail_api.list_rules(alias_id) }
+            val decrypted_pins = withContext(default_dispatcher) {
+                pins.value?.pins.orEmpty().map { pin ->
+                    DecryptedAliasPin(
+                        id = pin.id,
+                        sender = decrypt_alias_text(pin.encrypted_sender, pin.sender_nonce)
+                            ?: context.getString(R.string.alias_sender_unknown),
+                        is_blocked = pin.is_blocked,
+                    )
+                }
+            }
+            val decrypted_contacts = withContext(default_dispatcher) {
+                contacts.value?.contacts.orEmpty().map { contact ->
+                    DecryptedAliasContact(
+                        id = contact.id,
+                        contact = decrypt_alias_text(contact.encrypted_contact, contact.contact_nonce)
+                            ?: context.getString(R.string.alias_contact_unknown),
+                        is_blocked = contact.is_blocked,
+                    )
+                }
+            }
+            update_alias_detail(alias_id) {
+                it.copy(
+                    loading = false,
+                    loaded = true,
+                    stats = stats.value,
+                    stats_locked = stats.locked,
+                    pin_mode = pins.value?.mode ?: SENDER_PIN_MODE_OFF,
+                    pins = decrypted_pins,
+                    pins_locked = pins.locked,
+                    contacts = decrypted_contacts,
+                    contacts_locked = contacts.locked,
+                    blocked_events = log.value?.events.orEmpty(),
+                    blocked_locked = log.locked,
+                    rules = rules.value?.rules.orEmpty(),
+                    rules_locked = rules.locked,
+                )
+            }
+        }
+    }
+
+    private data class AliasSectionResult<T>(val value: T?, val locked: Boolean)
+
+    private suspend fun <T> fetch_alias_section(block: suspend () -> T): AliasSectionResult<T> {
+        return try {
+            AliasSectionResult(block(), false)
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            AliasSectionResult(null, is_feature_locked_error(t))
+        }
+    }
+
+    private fun is_feature_locked_error(t: Throwable): Boolean =
+        t is ApiError.ForbiddenError || t is ApiError.PlanLimitExceeded
+
+    private fun update_alias_detail(alias_id: String, transform: (AliasDetailState) -> AliasDetailState) {
+        _state.update { s ->
+            val current = s.alias_details[alias_id] ?: AliasDetailState()
+            s.copy(alias_details = s.alias_details + (alias_id to transform(current)))
+        }
+    }
+
+    private fun decrypt_alias_text(ciphertext: String?, nonce: String?): String? {
+        if (ciphertext.isNullOrBlank() || nonce.isNullOrBlank()) return null
+        return try {
+            decrypt_alias_field(ciphertext, nonce)
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    private fun sha256_base64(text: String): String {
+        val normalized = text.lowercase().trim()
+        val digest = MessageDigest.getInstance("SHA-256").digest(normalized.toByteArray(Charsets.UTF_8))
+        return android.util.Base64.encodeToString(digest, android.util.Base64.NO_WRAP)
+    }
+
+    fun update_alias_display_name(alias_id: String, display_name: String) {
+        val current = _state.value.aliases.firstOrNull { it.id == alias_id } ?: return
+        val cleaned = sanitize_alias_text(display_name)
+        _state.update { s ->
+            s.copy(
+                aliases = s.aliases.map {
+                    if (it.id == alias_id) it.copy(encrypted_display_name = cleaned.ifBlank { null }) else it
+                },
+            )
+        }
+        viewModelScope.launch {
+            try {
+                if (cleaned.isBlank()) {
+                    settings_api.update_alias_display_name(alias_id, null, null)
+                } else {
+                    val (encrypted, nonce) = encrypt_alias_field(cleaned)
+                    settings_api.update_alias_display_name(alias_id, encrypted, nonce)
+                }
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.alias_display_name_updated),
+                )
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.update { s ->
+                    s.copy(
+                        aliases = s.aliases.map {
+                            if (it.id == alias_id) it.copy(encrypted_display_name = current.encrypted_display_name) else it
+                        },
+                    )
+                }
+                _state.value = _state.value.copy(action_result = user_facing_error(t))
+            }
+        }
+    }
+
+    fun update_alias_websites(alias_id: String, websites: String) {
+        val current = _state.value.aliases.firstOrNull { it.id == alias_id } ?: return
+        val cleaned = sanitize_alias_text(websites)
+        _state.update { s ->
+            s.copy(
+                aliases = s.aliases.map {
+                    if (it.id == alias_id) it.copy(encrypted_websites = cleaned.ifBlank { null }) else it
+                },
+            )
+        }
+        viewModelScope.launch {
+            try {
+                if (cleaned.isBlank()) {
+                    settings_api.update_alias_websites(alias_id, null, null)
+                } else {
+                    val (encrypted, nonce) = encrypt_alias_field(cleaned)
+                    settings_api.update_alias_websites(alias_id, encrypted, nonce)
+                }
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.alias_websites_updated),
+                )
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.update { s ->
+                    s.copy(
+                        aliases = s.aliases.map {
+                            if (it.id == alias_id) it.copy(encrypted_websites = current.encrypted_websites) else it
+                        },
+                    )
+                }
+                _state.value = _state.value.copy(action_result = user_facing_error(t))
+            }
+        }
+    }
+
+    private fun is_valid_email(email: String): Boolean {
+        val at = email.indexOf('@')
+        if (at <= 0 || at == email.length - 1) return false
+        val local = email.substring(0, at)
+        val domain = email.substring(at + 1)
+        if (local.isBlank() || domain.isBlank()) return false
+        if (email.any { it.isWhitespace() }) return false
+        return domain.contains('.')
+    }
+
+    private fun sanitize_alias_text(value: String): String =
+        value.replace(Regex("[\\x00-\\x08\\x0B-\\x1F\\x7F]"), "").trim().take(500)
+
+    fun set_alias_pin_mode(alias_id: String, mode: Int) {
+        val previous = _state.value.alias_details[alias_id]?.pin_mode ?: SENDER_PIN_MODE_OFF
+        if (previous == mode) return
+        update_alias_detail(alias_id) { it.copy(pin_mode = mode) }
+        viewModelScope.launch {
+            try {
+                alias_detail_api.set_pin_mode(alias_id, mode)
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                update_alias_detail(alias_id) { it.copy(pin_mode = previous) }
+                _state.value = _state.value.copy(action_result = user_facing_error(t))
+            }
+        }
+    }
+
+    fun add_alias_pin(alias_id: String, sender: String, is_blocked: Boolean = false) {
+        val cleaned = sanitize_alias_text(sender)
+        if (!is_valid_email(cleaned)) {
+            _state.value = _state.value.copy(
+                action_result = context.getString(R.string.alias_pin_invalid_sender),
+            )
+            return
+        }
+        update_alias_detail(alias_id) { it.copy(busy = true) }
+        viewModelScope.launch {
+            try {
+                val (encrypted, nonce) = encrypt_alias_field(cleaned)
+                alias_detail_api.add_pin(
+                    alias_id,
+                    AddPinRequest(
+                        sender_hash = sha256_base64(cleaned),
+                        encrypted_sender = encrypted,
+                        sender_nonce = nonce,
+                        is_blocked = is_blocked,
+                    ),
+                )
+                reload_alias_pins(alias_id)
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.alias_pin_added),
+                )
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.value = _state.value.copy(action_result = user_facing_error(t))
+            } finally {
+                update_alias_detail(alias_id) { it.copy(busy = false) }
+            }
+        }
+    }
+
+    fun delete_alias_pin(alias_id: String, pin_id: String) {
+        val previous = _state.value.alias_details[alias_id]?.pins.orEmpty()
+        update_alias_detail(alias_id) { it.copy(pins = it.pins.filterNot { pin -> pin.id == pin_id }) }
+        viewModelScope.launch {
+            try {
+                alias_detail_api.delete_pin(alias_id, pin_id)
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.alias_pin_removed),
+                )
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                update_alias_detail(alias_id) { it.copy(pins = previous) }
+                _state.value = _state.value.copy(action_result = user_facing_error(t))
+            }
+        }
+    }
+
+    private suspend fun reload_alias_pins(alias_id: String) {
+        val result = fetch_alias_section { alias_detail_api.list_pins(alias_id) }
+        val decrypted = withContext(default_dispatcher) {
+            result.value?.pins.orEmpty().map { pin ->
+                DecryptedAliasPin(
+                    id = pin.id,
+                    sender = decrypt_alias_text(pin.encrypted_sender, pin.sender_nonce)
+                        ?: context.getString(R.string.alias_sender_unknown),
+                    is_blocked = pin.is_blocked,
+                )
+            }
+        }
+        if (result.value != null) {
+            update_alias_detail(alias_id) { it.copy(pins = decrypted, pin_mode = result.value.mode) }
+        }
+    }
+
+    fun add_alias_contact(alias_id: String, contact_email: String) {
+        val cleaned = sanitize_alias_text(contact_email)
+        if (!is_valid_email(cleaned)) {
+            _state.value = _state.value.copy(
+                action_result = context.getString(R.string.alias_contact_invalid_email),
+            )
+            return
+        }
+        update_alias_detail(alias_id) { it.copy(busy = true) }
+        viewModelScope.launch {
+            try {
+                val contact_hash = sha256_base64(cleaned)
+                var last_error: Throwable? = null
+                var created = false
+                for (attempt in 0 until 5) {
+                    val reverse_local = generate_ghost_local_part()
+                    val (encrypted, nonce) = encrypt_alias_field(cleaned)
+                    try {
+                        alias_detail_api.create_contact(
+                            alias_id,
+                            CreateAliasContactRequest(
+                                alias_id = alias_id,
+                                contact_hash = contact_hash,
+                                reverse_alias_hash = sha256_base64("$reverse_local@$GHOST_ALIAS_DOMAIN"),
+                                encrypted_contact = encrypted,
+                                contact_nonce = nonce,
+                            ),
+                        )
+                        created = true
+                        break
+                    } catch (t: Throwable) {
+                        if (t is kotlinx.coroutines.CancellationException) throw t
+                        last_error = t
+                        val retryable = (t as? ApiError)?.message.orEmpty()
+                            .contains(Regex("in use|already|taken|exists|conflict|duplicate", RegexOption.IGNORE_CASE))
+                        if (!retryable) break
+                    }
+                }
+                if (created) {
+                    reload_alias_contacts(alias_id)
+                    _state.value = _state.value.copy(
+                        action_result = context.getString(R.string.alias_contact_added),
+                    )
+                } else {
+                    _state.value = _state.value.copy(
+                        action_result = last_error?.let { user_facing_error(it) }
+                            ?: context.getString(R.string.something_went_wrong),
+                    )
+                }
+            } finally {
+                update_alias_detail(alias_id) { it.copy(busy = false) }
+            }
+        }
+    }
+
+    fun set_alias_contact_blocked(alias_id: String, contact_id: String, is_blocked: Boolean) {
+        val previous = _state.value.alias_details[alias_id]?.contacts.orEmpty()
+        update_alias_detail(alias_id) { detail ->
+            detail.copy(
+                contacts = detail.contacts.map {
+                    if (it.id == contact_id) it.copy(is_blocked = is_blocked) else it
+                },
+            )
+        }
+        viewModelScope.launch {
+            try {
+                alias_detail_api.set_contact_blocked(alias_id, contact_id, is_blocked)
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                update_alias_detail(alias_id) { it.copy(contacts = previous) }
+                _state.value = _state.value.copy(action_result = user_facing_error(t))
+            }
+        }
+    }
+
+    fun delete_alias_contact(alias_id: String, contact_id: String) {
+        val previous = _state.value.alias_details[alias_id]?.contacts.orEmpty()
+        update_alias_detail(alias_id) { detail ->
+            detail.copy(contacts = detail.contacts.filterNot { it.id == contact_id })
+        }
+        viewModelScope.launch {
+            try {
+                alias_detail_api.delete_contact(alias_id, contact_id)
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.alias_contact_removed),
+                )
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                update_alias_detail(alias_id) { it.copy(contacts = previous) }
+                _state.value = _state.value.copy(action_result = user_facing_error(t))
+            }
+        }
+    }
+
+    private suspend fun reload_alias_contacts(alias_id: String) {
+        val result = fetch_alias_section { alias_detail_api.list_contacts(alias_id) }
+        if (result.value == null) return
+        val decrypted = withContext(default_dispatcher) {
+            result.value.contacts.map { contact ->
+                DecryptedAliasContact(
+                    id = contact.id,
+                    contact = decrypt_alias_text(contact.encrypted_contact, contact.contact_nonce)
+                        ?: context.getString(R.string.alias_contact_unknown),
+                    is_blocked = contact.is_blocked,
+                )
+            }
+        }
+        update_alias_detail(alias_id) { it.copy(contacts = decrypted) }
+    }
+
+    fun set_alias_rule_enabled(alias_id: String, rule_id: String, is_enabled: Boolean) {
+        val previous = _state.value.alias_details[alias_id]?.rules.orEmpty()
+        update_alias_detail(alias_id) { detail ->
+            detail.copy(
+                rules = detail.rules.map { if (it.id == rule_id) it.copy(is_enabled = is_enabled) else it },
+            )
+        }
+        viewModelScope.launch {
+            try {
+                alias_detail_api.update_rule(alias_id, rule_id, UpdateAliasRuleRequest(is_enabled = is_enabled))
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                update_alias_detail(alias_id) { it.copy(rules = previous) }
+                _state.value = _state.value.copy(action_result = user_facing_error(t))
+            }
+        }
+    }
+
+    fun delete_alias_rule(alias_id: String, rule_id: String) {
+        val previous = _state.value.alias_details[alias_id]?.rules.orEmpty()
+        update_alias_detail(alias_id) { detail ->
+            detail.copy(rules = detail.rules.filterNot { it.id == rule_id })
+        }
+        viewModelScope.launch {
+            try {
+                alias_detail_api.delete_rule(alias_id, rule_id)
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.alias_rule_removed),
+                )
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                update_alias_detail(alias_id) { it.copy(rules = previous) }
+                _state.value = _state.value.copy(action_result = user_facing_error(t))
+            }
+        }
+    }
+
+    fun create_alias_rule(
+        alias_id: String,
+        field: String,
+        operator: String,
+        value: String,
+        actions: AliasRuleActions,
+    ) {
+        val cleaned = sanitize_alias_text(value)
+        if (field != "all" && cleaned.isBlank()) {
+            _state.value = _state.value.copy(
+                action_result = context.getString(R.string.alias_rule_value_required),
+            )
+            return
+        }
+        update_alias_detail(alias_id) { it.copy(busy = true) }
+        viewModelScope.launch {
+            try {
+                alias_detail_api.create_rule(
+                    alias_id,
+                    CreateAliasRuleRequest(
+                        conditions = listOf(
+                            AliasRuleCondition(field = field, operator = operator, value = cleaned),
+                        ),
+                        actions = actions,
+                    ),
+                )
+                val result = fetch_alias_section { alias_detail_api.list_rules(alias_id) }
+                if (result.value != null) {
+                    update_alias_detail(alias_id) { it.copy(rules = result.value.rules) }
+                }
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.alias_rule_added),
+                )
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.value = _state.value.copy(action_result = user_facing_error(t))
+            } finally {
+                update_alias_detail(alias_id) { it.copy(busy = false) }
             }
         }
     }
@@ -2409,8 +2898,28 @@ class SettingsViewModel @Inject constructor(
         preferences_cache.write_signatures(key, raw)
     }
 
+    private fun apply_saved_default_signature(content: String) {
+        val target_id = default_signature_id ?: return
+        val current = _signatures.value
+        val updated = if (current.any { it.id == target_id }) {
+            current.map { if (it.id == target_id) it.copy(content = content) else it }
+        } else {
+            current + DecryptedSignature(
+                id = target_id,
+                name = context.getString(org.astermail.android.R.string.default_signature_name),
+                content = content,
+                is_default = true,
+                is_html = default_signature_is_html,
+                alias_id = null,
+                placement = null,
+            )
+        }
+        _signatures.value = updated
+        persist_cached_signatures(updated)
+    }
+
     fun load_signature() {
-        hydrate_cached_signatures()
+        if (_signatures.value.isEmpty()) hydrate_cached_signatures()
         viewModelScope.launch {
             try {
                 val list = signatures_api.list_signatures()
@@ -2500,7 +3009,6 @@ class SettingsViewModel @Inject constructor(
             try {
                 val name_enc = name?.let { encrypt_signature_field(it) }
                 val content_enc = content?.let { encrypt_signature_field(it) }
-                val effective_alias_id = if (clear_alias) null else alias_id
                 signatures_api.update_signature(
                     id,
                     org.astermail.android.api.signatures.UpdateSignatureRequest(
@@ -2509,8 +3017,8 @@ class SettingsViewModel @Inject constructor(
                         encrypted_content = content_enc?.ciphertext_b64,
                         content_nonce = content_enc?.nonce_b64,
                         is_html = is_html,
-                        alias_id = effective_alias_id,
-                        placement = placement,
+                        alias_id = org.astermail.android.api.signatures.signature_alias_field(alias_id, clear_alias),
+                        placement = org.astermail.android.api.signatures.signature_placement_field(placement, placement == null),
                     ),
                 )
                 _state.value = _state.value.copy(save_status = SaveStatus.SAVED)
@@ -2586,7 +3094,9 @@ class SettingsViewModel @Inject constructor(
                     default_signature_id = created.id
                 }
                 _signature_text.value = content
+                apply_saved_default_signature(content)
                 _state.value = _state.value.copy(save_status = SaveStatus.SAVED)
+                load_signature()
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     save_status = SaveStatus.ERROR,
@@ -3331,10 +3841,22 @@ class SettingsViewModel @Inject constructor(
         } else {
             null
         }
+        val enc_websites = alias.encrypted_websites
+        val websites_nonce = alias.websites_nonce
+        val websites = if (!enc_websites.isNullOrBlank() && !websites_nonce.isNullOrBlank()) {
+            try {
+                decrypt_alias_field(enc_websites, websites_nonce)
+            } catch (_: Throwable) {
+                null
+            }
+        } else {
+            null
+        }
         return alias.copy(
             encrypted_local_part = local_part,
             encrypted_display_name = display_name,
             encrypted_note = note,
+            encrypted_websites = websites,
         )
     }
 

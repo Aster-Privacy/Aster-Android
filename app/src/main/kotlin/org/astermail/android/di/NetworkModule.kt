@@ -32,6 +32,8 @@ import org.astermail.android.api.BuildConfig
 import org.astermail.android.api.TokenProvider
 import org.astermail.android.api.account.AccountApi
 import org.astermail.android.api.account.AccountApiImpl
+import org.astermail.android.api.aliases.AliasDetailApi
+import org.astermail.android.api.aliases.AliasDetailApiImpl
 import org.astermail.android.api.auth.AuthApi
 import org.astermail.android.api.auth.AuthApiImpl
 import org.astermail.android.api.billing.BillingApi
@@ -196,6 +198,10 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provide_settings_api(client: ApiClient): SettingsApi = SettingsApiImpl(client)
+
+    @Provides
+    @Singleton
+    fun provide_alias_detail_api(client: ApiClient): AliasDetailApi = AliasDetailApiImpl(client)
 
     @Provides
     @Singleton

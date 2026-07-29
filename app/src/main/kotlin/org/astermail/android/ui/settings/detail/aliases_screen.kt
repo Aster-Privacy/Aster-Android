@@ -75,6 +75,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.testTag
+import org.astermail.android.settings.AliasDetailState
+import org.astermail.android.ui.common.show_copied_toast
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -136,6 +139,7 @@ fun AliasesScreen(
     val catch_all_locked = plan_vm.is_feature_locked("has_catch_all") && !plan_state.is_loading
     val alias_directories_locked = plan_vm.is_feature_locked("max_alias_directories") && !plan_state.is_loading
     val alias_restore_locked = plan_vm.is_feature_locked("has_advanced_aliases") && !plan_state.is_loading
+    val alias_export_locked = plan_vm.is_feature_locked("has_advanced_aliases") && !plan_state.is_loading
 
     var selected_tab by remember { mutableStateOf(0) }
     var pending_delete_alias by remember { mutableStateOf<Pair<String, String>?>(null) }
@@ -156,6 +160,7 @@ fun AliasesScreen(
         vm.load_domains()
         vm.load_custom_domain_addresses()
         vm.load_deleted_aliases()
+        vm.load_labels(folder_type = "folder")
     }
 
     LaunchedEffect(open_create) {
@@ -204,6 +209,7 @@ fun AliasesScreen(
                     scope = scope,
                     on_show_create = { show_create_alias = true },
                     restore_locked = alias_restore_locked,
+                    export_locked = alias_export_locked,
                     on_upgrade = { on_open("billing") },
                 )
                 1 -> tab_scroll {
@@ -324,13 +330,16 @@ private fun aliases_tab(
     scope: kotlinx.coroutines.CoroutineScope,
     on_show_create: () -> Unit,
     restore_locked: Boolean = false,
+    export_locked: Boolean = false,
     on_upgrade: () -> Unit = {},
 ) {
     var pending_delete by remember { mutableStateOf<Pair<String, String>?>(null) }
     var pending_domain_address_delete by remember { mutableStateOf<Triple<String, String, String>?>(null) }
     var alias_query by remember { mutableStateOf("") }
+    var show_export by remember { mutableStateOf(false) }
     var note_editing by remember { mutableStateOf<Pair<String, String>?>(null) }
     val alias_load_settled = remember_load_settled(state.is_loading)
+    val always_expand_aliases = state.alias_preferences?.alias_always_expand == true
     val colors = AsterMaterial.colors
     val query = alias_query.trim()
     val visible_aliases = remember(state.aliases, query) {
@@ -367,8 +376,21 @@ private fun aliases_tab(
                         color = colors.text_tertiary,
                         fontSize = 13.sp,
                     )
-                    TextButton(onClick = on_show_create) {
-                        Text(stringResource(R.string.create), color = colors.accent_blue, fontSize = 14.sp)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        TextButton(
+                            onClick = {
+                                if (export_locked) on_upgrade() else show_export = true
+                            },
+                        ) {
+                            Text(
+                                stringResource(R.string.alias_export_csv),
+                                color = if (export_locked) colors.text_muted else colors.accent_blue,
+                                fontSize = 14.sp,
+                            )
+                        }
+                        TextButton(onClick = on_show_create) {
+                            Text(stringResource(R.string.create), color = colors.accent_blue, fontSize = 14.sp)
+                        }
                     }
                 }
                 v_gap(AsterSpacing.sm)
@@ -432,15 +454,28 @@ private fun aliases_tab(
                     items = visible_aliases,
                     key = { _, alias -> "alias_${alias.id}" },
                 ) { idx, alias ->
+                    val expanded = state.expanded_alias_ids.contains(alias.id)
+                    LaunchedEffect(alias.id, always_expand_aliases) {
+                        if (always_expand_aliases) vm.set_alias_expanded(alias.id, true)
+                    }
                     alias_list_row(
                         alias = alias,
                         idx = idx,
                         last_index = visible_aliases.lastIndex,
                         context = context,
                         on_toggle = { vm.toggle_alias(alias.id) },
-                        on_toggle_never_inbox = { vm.toggle_alias_never_inbox(alias.id) },
+                        delivery_folder_name = alias_delivery_folder_name(alias, state.labels),
                         on_delete = { pending_delete = alias.id to alias.address },
                         on_edit_note = { note_editing = alias.id to (alias.encrypted_note ?: "") },
+                        expanded = expanded,
+                        on_toggle_expanded = { vm.toggle_alias_expanded(alias.id) },
+                        panel_content = {
+                            alias_detail_panel(
+                                alias = alias,
+                                detail = state.alias_details[alias.id] ?: AliasDetailState(),
+                                vm = vm,
+                            )
+                        },
                     )
                 }
             }
@@ -478,6 +513,15 @@ private fun aliases_tab(
                     on_upgrade = on_upgrade,
                 )
             }
+        }
+
+        if (show_export && !export_locked) {
+            alias_export_dialog(
+                state = state,
+                on_dismiss = { show_export = false },
+                on_load_directories = { vm.load_directories() },
+                on_load_ghost_aliases = { vm.load_ghost_aliases() },
+            )
         }
 
         pending_delete?.let { (id, address) ->
@@ -575,7 +619,22 @@ private fun alias_toggle_chip(label: String, active: Boolean, on_click: () -> Un
 private fun copy_address(context: Context, address: String) {
     val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     cm.setPrimaryClip(ClipData.newPlainText("alias", address))
-    android.widget.Toast.makeText(context, context.getString(R.string.copied), android.widget.Toast.LENGTH_SHORT).show()
+    show_copied_toast(context, address)
+}
+
+@Composable
+internal fun alias_delivery_folder_name(
+    alias: org.astermail.android.api.settings.AliasInfo,
+    labels: List<org.astermail.android.api.labels.LabelItem>,
+): String? {
+    val archive_name = stringResource(R.string.folder_archive)
+    val token = alias.delivery_folder_token
+    if (token != null) {
+        return labels.firstOrNull {
+            it.label_token == token && !it.encrypted_name.isNullOrBlank()
+        }?.encrypted_name
+    }
+    return if (alias.never_inbox) archive_name else null
 }
 
 @Composable
@@ -587,7 +646,10 @@ internal fun alias_list_row(
     on_toggle: () -> Unit,
     on_delete: () -> Unit,
     on_edit_note: (() -> Unit)? = null,
-    on_toggle_never_inbox: (() -> Unit)? = null,
+    delivery_folder_name: String? = null,
+    expanded: Boolean = false,
+    on_toggle_expanded: (() -> Unit)? = null,
+    panel_content: (@Composable () -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
@@ -600,7 +662,9 @@ internal fun alias_list_row(
             .background(colors.bg_card)
             .border(1.dp, colors.border_secondary, shape)
             .combinedClickable(
-                onClick = { on_edit_note?.invoke() },
+                onClick = {
+                    if (on_toggle_expanded != null) on_toggle_expanded() else on_edit_note?.invoke()
+                },
                 onLongClick = {
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                     copy_address(context, alias.address)
@@ -638,10 +702,11 @@ internal fun alias_list_row(
                     horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
                 ) {
                     Text(
-                        text = if (alias.is_enabled) {
-                            stringResource(R.string.forwards_to_inbox)
-                        } else {
-                            stringResource(R.string.alias_status_disabled_badge)
+                        text = when {
+                            !alias.is_enabled -> stringResource(R.string.alias_status_disabled_badge)
+                            delivery_folder_name != null ->
+                                stringResource(R.string.forwards_to_folder, delivery_folder_name)
+                            else -> stringResource(R.string.forwards_to_inbox)
                         },
                         color = if (alias.is_enabled) colors.text_tertiary else colors.danger,
                         fontSize = 11.sp,
@@ -662,20 +727,6 @@ internal fun alias_list_row(
                         )
                     }
                 }
-                if (on_toggle_never_inbox != null) {
-                    Spacer(Modifier.height(6.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        alias_toggle_chip(
-                            label = stringResource(R.string.alias_never_inbox_chip),
-                            active = alias.never_inbox,
-                            on_click = on_toggle_never_inbox,
-                        )
-                        info_dialog_button(
-                            title = stringResource(R.string.alias_never_inbox_info_title),
-                            description = stringResource(R.string.alias_never_inbox_info_desc),
-                        )
-                    }
-                }
             }
             AsterSwitch(
                 checked = alias.is_enabled,
@@ -688,6 +739,21 @@ internal fun alias_list_row(
                 onClick = on_delete,
                 tint = colors.danger,
             )
+            if (on_toggle_expanded != null) {
+                AsterIconButton(
+                    icon = if (expanded) TablerIcons.ChevronUp else TablerIcons.ChevronDown,
+                    content_description = if (expanded) {
+                        stringResource(R.string.alias_collapse_settings)
+                    } else {
+                        stringResource(R.string.alias_expand_settings)
+                    },
+                    onClick = on_toggle_expanded,
+                    modifier = Modifier.testTag("alias_expand_${alias.id}"),
+                )
+            }
+        }
+        if (expanded && panel_content != null) {
+            panel_content()
         }
     }
 }
@@ -1195,7 +1261,7 @@ private fun directories_tab(
                                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                                     val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                     cm.setPrimaryClip(ClipData.newPlainText("directory", dir_address))
-                                    android.widget.Toast.makeText(context, context.getString(R.string.copied), android.widget.Toast.LENGTH_SHORT).show()
+                                    show_copied_toast(context, dir_address)
                                 },
                             ),
                     ) {
@@ -1346,7 +1412,7 @@ internal fun ghost_tab(
                                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                                 val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                 cm.setPrimaryClip(ClipData.newPlainText("ghost", ghost_address))
-                                android.widget.Toast.makeText(context, context.getString(R.string.copied), android.widget.Toast.LENGTH_SHORT).show()
+                                show_copied_toast(context, ghost_address)
                             },
                         )
                         .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),

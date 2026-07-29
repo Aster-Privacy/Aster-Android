@@ -100,6 +100,7 @@ class SettingsViewModelTest {
     private lateinit var recovery_email_api: org.astermail.android.api.recovery_email.RecoveryEmailApi
     private lateinit var security_api: org.astermail.android.api.security.SecurityApi
     private lateinit var encryption_api: org.astermail.android.api.encryption.EncryptionApi
+    private lateinit var alias_detail_api: org.astermail.android.api.aliases.AliasDetailApi
     private lateinit var auth_repository: AuthRepository
     private lateinit var session_key_store: SessionKeyStore
     private lateinit var token_store: TokenStore
@@ -188,6 +189,7 @@ class SettingsViewModelTest {
         recovery_email_api = mockk(relaxed = true)
         security_api = mockk(relaxed = true)
         encryption_api = mockk(relaxed = true)
+        alias_detail_api = mockk(relaxed = true)
         auth_repository = mockk(relaxed = true)
         session_key_store = mockk(relaxed = true)
         every { session_key_store.get_data_kek() } answers { test_data_kek.copyOf() }
@@ -232,6 +234,7 @@ class SettingsViewModelTest {
             recovery_email_api = recovery_email_api,
             security_api = security_api,
             encryption_api = encryption_api,
+            alias_detail_api = alias_detail_api,
             auth_repository = auth_repository,
             session_key_store = session_key_store,
             token_store = token_store,
@@ -1122,7 +1125,7 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `toggle_alias_never_inbox flips value and calls api`() = runTest {
+    fun `set_alias_delivery to archive sets never_inbox and calls api`() = runTest {
         val aliases = listOf(
             AliasInfo(id = "a1", encrypted_local_part = "alias1", domain = "astermail.org", never_inbox = false),
         )
@@ -1135,17 +1138,78 @@ class SettingsViewModelTest {
         vm.load_aliases()
         advanceUntilIdle()
 
-        vm.toggle_alias_never_inbox("a1")
+        vm.set_alias_delivery("a1", null, to_archive = true)
         advanceUntilIdle()
 
-        assertTrue(vm.state.value.aliases.single { it.id == "a1" }.never_inbox)
+        val updated = vm.state.value.aliases.single { it.id == "a1" }
+        assertTrue(updated.never_inbox)
+        assertEquals(null, updated.delivery_folder_token)
         coVerify {
             settings_api.update_alias("a1", org.astermail.android.api.settings.UpdateAliasRequest(never_inbox = true))
         }
     }
 
     @Test
-    fun `toggle_alias_never_inbox rolls back on api error`() = runTest {
+    fun `set_alias_delivery to folder sends token and clears never_inbox`() = runTest {
+        val aliases = listOf(
+            AliasInfo(id = "a1", encrypted_local_part = "alias1", domain = "astermail.org", never_inbox = true),
+        )
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(aliases)
+        every { session_key_store.get_identity_key() } returns null
+        coEvery {
+            settings_api.update_alias(
+                "a1",
+                org.astermail.android.api.settings.UpdateAliasRequest(delivery_folder_token = "dG9rZW4="),
+            )
+        } returns true
+
+        vm.load_aliases()
+        advanceUntilIdle()
+
+        vm.set_alias_delivery("a1", "dG9rZW4=", to_archive = false)
+        advanceUntilIdle()
+
+        val updated = vm.state.value.aliases.single { it.id == "a1" }
+        assertFalse(updated.never_inbox)
+        assertEquals("dG9rZW4=", updated.delivery_folder_token)
+        coVerify {
+            settings_api.update_alias(
+                "a1",
+                org.astermail.android.api.settings.UpdateAliasRequest(delivery_folder_token = "dG9rZW4="),
+            )
+        }
+    }
+
+    @Test
+    fun `set_alias_delivery to inbox clears token and never_inbox`() = runTest {
+        val aliases = listOf(
+            AliasInfo(
+                id = "a1",
+                encrypted_local_part = "alias1",
+                domain = "astermail.org",
+                never_inbox = false,
+                delivery_folder_token = "dG9rZW4=",
+            ),
+        )
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(aliases)
+        every { session_key_store.get_identity_key() } returns null
+        coEvery {
+            settings_api.update_alias("a1", org.astermail.android.api.settings.UpdateAliasRequest(never_inbox = false))
+        } returns true
+
+        vm.load_aliases()
+        advanceUntilIdle()
+
+        vm.set_alias_delivery("a1", null, to_archive = false)
+        advanceUntilIdle()
+
+        val updated = vm.state.value.aliases.single { it.id == "a1" }
+        assertFalse(updated.never_inbox)
+        assertEquals(null, updated.delivery_folder_token)
+    }
+
+    @Test
+    fun `set_alias_delivery rolls back on api error`() = runTest {
         val aliases = listOf(
             AliasInfo(id = "a1", encrypted_local_part = "alias1", domain = "astermail.org", never_inbox = false),
         )
@@ -1158,7 +1222,7 @@ class SettingsViewModelTest {
         vm.load_aliases()
         advanceUntilIdle()
 
-        vm.toggle_alias_never_inbox("a1")
+        vm.set_alias_delivery("a1", null, to_archive = true)
         advanceUntilIdle()
 
         assertFalse(vm.state.value.aliases.single { it.id == "a1" }.never_inbox)
@@ -1166,7 +1230,7 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `toggle_alias_never_inbox nonexistent id is harmless`() = runTest {
+    fun `set_alias_delivery nonexistent id is harmless`() = runTest {
         val aliases = listOf(
             AliasInfo(id = "a1", encrypted_local_part = "alias1", domain = "astermail.org", never_inbox = false),
         )
@@ -1176,7 +1240,7 @@ class SettingsViewModelTest {
         vm.load_aliases()
         advanceUntilIdle()
 
-        vm.toggle_alias_never_inbox("nonexistent")
+        vm.set_alias_delivery("nonexistent", null, to_archive = true)
         advanceUntilIdle()
 
         assertFalse(vm.state.value.aliases.single { it.id == "a1" }.never_inbox)
@@ -1585,6 +1649,7 @@ class SettingsViewModelTest {
             recovery_email_api = recovery_email_api,
             security_api = security_api,
             encryption_api = encryption_api,
+            alias_detail_api = alias_detail_api,
             auth_repository = auth_repository,
             session_key_store = session_key_store,
             token_store = token_store,
@@ -1624,6 +1689,7 @@ class SettingsViewModelTest {
             recovery_email_api = recovery_email_api,
             security_api = security_api,
             encryption_api = encryption_api,
+            alias_detail_api = alias_detail_api,
             auth_repository = auth_repository,
             session_key_store = session_key_store,
             token_store = token_store,
@@ -1696,6 +1762,7 @@ class SettingsViewModelTest {
             recovery_email_api = recovery_email_api,
             security_api = security_api,
             encryption_api = encryption_api,
+            alias_detail_api = alias_detail_api,
             auth_repository = auth_repository,
             session_key_store = session_key_store,
             token_store = token_store,
@@ -1764,6 +1831,7 @@ class SettingsViewModelTest {
             recovery_email_api = recovery_email_api,
             security_api = security_api,
             encryption_api = encryption_api,
+            alias_detail_api = alias_detail_api,
             auth_repository = auth_repository,
             session_key_store = session_key_store,
             token_store = token_store,
@@ -1811,6 +1879,7 @@ class SettingsViewModelTest {
             recovery_email_api = recovery_email_api,
             security_api = security_api,
             encryption_api = encryption_api,
+            alias_detail_api = alias_detail_api,
             auth_repository = auth_repository,
             session_key_store = session_key_store,
             token_store = token_store,
@@ -1867,6 +1936,7 @@ class SettingsViewModelTest {
             recovery_email_api = recovery_email_api,
             security_api = security_api,
             encryption_api = encryption_api,
+            alias_detail_api = alias_detail_api,
             auth_repository = auth_repository,
             session_key_store = session_key_store,
             token_store = token_store,
