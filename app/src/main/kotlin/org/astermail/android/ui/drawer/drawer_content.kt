@@ -990,7 +990,7 @@ private fun workspace_switcher_sheet(
     val sheet_state = rememberModalBottomSheetState()
     val copy_action = org.astermail.android.ui.common.remember_copy_action()
     val name_copied = stringResource(R.string.name_copied)
-    val email_copied = stringResource(R.string.email_copied)
+    val copy_toast_context = androidx.compose.ui.platform.LocalContext.current
     val name_clip_label = stringResource(R.string.display_name)
     val email_clip_label = stringResource(R.string.email)
 
@@ -1102,7 +1102,16 @@ private fun workspace_switcher_sheet(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
                                     onClick = { if (!is_current) on_switch(account) },
-                                    onLongClick = { copy_action(email_clip_label, account.email, email_copied) },
+                                    onLongClick = {
+                                        copy_action(
+                                            email_clip_label,
+                                            account.email,
+                                            org.astermail.android.ui.common.copied_toast_text(
+                                                copy_toast_context,
+                                                account.email,
+                                            ),
+                                        )
+                                    },
                                 )
                                 .padding(vertical = 2.dp),
                         )

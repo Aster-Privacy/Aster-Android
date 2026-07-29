@@ -135,15 +135,17 @@ class SearchSelectionDeleteTest {
             if (select_mode) {
                 search_select_bottom_bar(
                     selected_count = selected_ids.size,
-                    on_mark_read = {},
-                    on_archive = {},
-                    on_delete = {
-                        deleted_ids.addAll(selected_ids)
-                        items.removeAll { it.id in selected_ids.toSet() }
-                        remaining_ids.clear()
-                        remaining_ids.addAll(items.map { it.id })
-                        exit_select_mode()
+                    custom_actions = listOf("read", "archive", "trash"),
+                    on_action = { action ->
+                        if (action == "trash") {
+                            deleted_ids.addAll(selected_ids)
+                            items.removeAll { it.id in selected_ids.toSet() }
+                            remaining_ids.clear()
+                            remaining_ids.addAll(items.map { it.id })
+                            exit_select_mode()
+                        }
                     },
+                    on_more = {},
                 )
             }
         }
@@ -175,7 +177,7 @@ class SearchSelectionDeleteTest {
         long_press_row("m1")
 
         compose_rule.onNodeWithTag("search_select_bar").assertIsDisplayed()
-        compose_rule.onNodeWithTag("search_delete").assertIsDisplayed()
+        compose_rule.onNodeWithTag("search_sel_action_trash").assertIsDisplayed()
         assert_selected_count(1)
     }
 
@@ -204,7 +206,7 @@ class SearchSelectionDeleteTest {
         compose_rule.onNodeWithTag("search_row_m2").performClick()
         compose_rule.waitForIdle()
 
-        compose_rule.onNodeWithTag("search_delete").performClick()
+        compose_rule.onNodeWithTag("search_sel_action_trash").performClick()
         compose_rule.waitForIdle()
 
         assertEquals(listOf("m1", "m2"), deleted_ids.sorted())
@@ -225,7 +227,7 @@ class SearchSelectionDeleteTest {
         compose_rule.waitForIdle()
         assert_selected_count(12)
 
-        compose_rule.onNodeWithTag("search_delete").performClick()
+        compose_rule.onNodeWithTag("search_sel_action_trash").performClick()
         compose_rule.waitForIdle()
 
         assertEquals(12, deleted_ids.size)
@@ -243,6 +245,6 @@ class SearchSelectionDeleteTest {
         compose_rule.waitForIdle()
 
         compose_rule.onNodeWithTag("search_select_bar").assertDoesNotExist()
-        compose_rule.onNodeWithTag("search_delete").assertDoesNotExist()
+        compose_rule.onNodeWithTag("search_sel_action_trash").assertDoesNotExist()
     }
 }

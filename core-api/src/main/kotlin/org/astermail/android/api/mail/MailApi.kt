@@ -37,6 +37,8 @@ import java.net.URLEncoder
 import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
 
+private const val list_messages_timeout_millis = 45_000L
+
 private fun url_encode_path(value: String): String =
     URLEncoder.encode(value, "UTF-8").replace("+", "%20")
 
@@ -170,6 +172,10 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
         order: String?,
     ): MailItemsListResponse {
         val response = client.http.get("${client.base_url}$base/messages") {
+            timeout {
+                requestTimeoutMillis = list_messages_timeout_millis
+                socketTimeoutMillis = list_messages_timeout_millis
+            }
             limit?.let { parameter("limit", it) }
             cursor?.let { parameter("cursor", it) }
             offset?.let { parameter("offset", it) }

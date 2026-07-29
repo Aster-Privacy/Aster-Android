@@ -54,6 +54,7 @@ class SenderAttachmentLinkInstrumentedTest {
             send_api = mockk(relaxed = true),
             snooze_api = mockk(relaxed = true),
             labels_api = mockk(relaxed = true),
+            keys_api = mockk(relaxed = true),
             session_key_store = session_key_store,
             scheduled_api = mockk(relaxed = true),
             ratchet_decryptor = mockk(relaxed = true),

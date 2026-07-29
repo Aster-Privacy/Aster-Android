@@ -1383,7 +1383,7 @@ fun KidsReservedScreen(on_back: () -> Unit) {
     fun copy_to_clipboard(text: String, label: String) {
         val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         cm.setPrimaryClip(ClipData.newPlainText(label, text))
-        Toast.makeText(context, label, Toast.LENGTH_SHORT).show()
+        org.astermail.android.ui.common.show_copied_toast(context, text)
     }
 
     detail_scaffold(title = stringResource(R.string.kids_reserved_addresses), on_back = on_back) {

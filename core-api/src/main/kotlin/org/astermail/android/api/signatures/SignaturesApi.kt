@@ -33,6 +33,9 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
 import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
 
@@ -83,9 +86,21 @@ data class UpdateSignatureRequest(
     val encrypted_content: String? = null,
     val content_nonce: String? = null,
     val is_html: Boolean? = null,
-    val alias_id: String? = null,
-    val placement: Int? = null,
+    val alias_id: JsonElement? = null,
+    val placement: JsonElement? = null,
 )
+
+fun signature_alias_field(alias_id: String?, clear: Boolean): JsonElement? = when {
+    clear -> JsonNull
+    alias_id != null -> JsonPrimitive(alias_id)
+    else -> null
+}
+
+fun signature_placement_field(placement: Int?, clear: Boolean): JsonElement? = when {
+    clear -> JsonNull
+    placement != null -> JsonPrimitive(placement)
+    else -> null
+}
 
 @Serializable
 data class UpdateSignatureResponse(

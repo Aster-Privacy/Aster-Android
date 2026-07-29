@@ -213,7 +213,7 @@ fun ComposeScreen(
         haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
         val cm = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
         cm.setPrimaryClip(android.content.ClipData.newPlainText("email_address", address))
-        Toast.makeText(context, context.getString(R.string.copied), Toast.LENGTH_SHORT).show()
+        org.astermail.android.ui.common.show_copied_toast(context, address)
     }
 
     LaunchedEffect(Unit) {

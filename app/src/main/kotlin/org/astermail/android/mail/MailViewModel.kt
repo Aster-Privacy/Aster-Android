@@ -48,7 +48,7 @@ import org.astermail.android.notifications.MailPollingWorker
 import org.astermail.android.api.send.ExternalAttachmentPayload
 import org.astermail.android.ui.mail.MessageAttachment
 
-private const val INBOX_FETCH_BACKSTOP_MS = 24_000L
+private const val INBOX_FETCH_BACKSTOP_MS = 50_000L
 private const val WARM_CACHE_MIN_ITEMS = 8
 private const val BULK_ACTION_CONCURRENCY = 6
 private const val CARRIED_ITEM_STALE_MS = 20 * 60 * 1000L
@@ -541,7 +541,7 @@ class MailViewModel @Inject constructor(
             }
             if (result.isFailure &&
                 _inbox_state.value.current_folder == folder &&
-                !is_timeout_failure(result.exceptionOrNull())
+                !is_offline_failure(result.exceptionOrNull())
             ) {
                 kotlinx.coroutines.delay(500L)
                 result = runCatching {
@@ -2552,6 +2552,11 @@ class MailViewModel @Inject constructor(
         "spam" -> item.is_spam
         "archive" -> item.is_archived
         "all" -> !item.is_trashed
+        "sent" -> item.raw_item.item_type == "sent" && !item.is_trashed
+        "drafts" -> item.raw_item.item_type == "draft" && !item.is_trashed
+        "scheduled" -> item.raw_item.item_type == "scheduled" && !item.is_trashed
+        "outbox" -> item.raw_item.item_type == "outbox" && !item.is_trashed
+        "snoozed" -> !item.is_trashed
         else -> when {
             folder.startsWith("label:") -> {
                 val token = folder.removePrefix("label:")
@@ -2571,6 +2576,14 @@ class MailViewModel @Inject constructor(
         is io.ktor.client.plugins.HttpRequestTimeoutException -> true
         is io.ktor.client.network.sockets.ConnectTimeoutException -> true
         is java.net.SocketTimeoutException -> true
+        else -> false
+    }
+
+    private fun is_offline_failure(t: Throwable?): Boolean = when (t) {
+        null -> false
+        is io.ktor.client.network.sockets.ConnectTimeoutException -> true
+        is java.net.UnknownHostException -> true
+        is java.net.ConnectException -> true
         else -> false
     }
 

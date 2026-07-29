@@ -25,7 +25,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import org.astermail.android.R
 import org.astermail.android.ui.theme.local_accessibility
+
+private const val copied_value_max_length = 60
+
+fun copied_toast_text(context: Context, value: String): String {
+    val trimmed = value.trim()
+    if (trimmed.isEmpty()) return context.getString(R.string.copied)
+    val shown = if (trimmed.length > copied_value_max_length) {
+        trimmed.take(copied_value_max_length) + "…"
+    } else {
+        trimmed
+    }
+    return context.getString(R.string.copied_value, shown)
+}
+
+fun show_copied_toast(context: Context, value: String) {
+    Toast.makeText(context, copied_toast_text(context, value), Toast.LENGTH_SHORT).show()
+}
 
 @Composable
 fun remember_copy_action(): (label: String, value: String, toast: String) -> Unit {

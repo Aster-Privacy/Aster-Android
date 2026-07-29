@@ -59,6 +59,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -298,22 +299,39 @@ private fun star_button(is_starred: Boolean, on_toggle: () -> Unit, modifier: Mo
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
         label = "star_scale",
     )
-    Box(
-        modifier = modifier
-            .size(32.dp)
-            .graphicsLayer {
-                scaleX = star_scale.value
-                scaleY = star_scale.value
-            }
-            .combinedClickable(onClick = on_toggle, onLongClick = on_toggle),
-        contentAlignment = Alignment.Center,
+    val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
+    var tooltip_visible by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    val star_label = if (is_starred) stringResource(R.string.starred) else stringResource(R.string.not_starred)
+    org.astermail.android.ui.common.icon_tooltip_host(
+        text = star_label,
+        visible = tooltip_visible,
+        on_dismiss = { tooltip_visible = false },
     ) {
-        Icon(
-            imageVector = if (is_starred) Icons.Filled.Star else TablerIcons.Star,
-            contentDescription = if (is_starred) stringResource(R.string.starred) else stringResource(R.string.not_starred),
-            tint = tint,
-            modifier = Modifier.size(20.dp),
-        )
+        Box(
+            modifier = modifier
+                .size(32.dp)
+                .graphicsLayer {
+                    scaleX = star_scale.value
+                    scaleY = star_scale.value
+                }
+                .combinedClickable(
+                    onClick = on_toggle,
+                    onLongClick = {
+                        haptics.performHapticFeedback(
+                            androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress,
+                        )
+                        tooltip_visible = true
+                    },
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = if (is_starred) Icons.Filled.Star else TablerIcons.Star,
+                contentDescription = star_label,
+                tint = tint,
+                modifier = Modifier.size(20.dp),
+            )
+        }
     }
 }
 

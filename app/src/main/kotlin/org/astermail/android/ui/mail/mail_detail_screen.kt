@@ -903,14 +903,12 @@ fun MailDetailScreen(
                                     },
                                 ),
                         )
-                        AsterIconButton(
+                        org.astermail.android.ui.common.star_toggle_icon(
+                            is_starred = is_starred,
                             icon = if (is_starred) Icons.Filled.Star else TablerIcons.Star,
-                            content_description = if (is_starred) {
-                                stringResource(R.string.unstar)
-                            } else {
-                                stringResource(R.string.star)
-                            },
                             tint = if (is_starred) colors.accent_blue else colors.text_muted,
+                            icon_size = 22.dp,
+                            touch_size = 48.dp,
                             modifier = Modifier.testTag("detail_star"),
                             onClick = {
                                 haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
@@ -1502,7 +1500,7 @@ fun MailDetailScreen(
             on_copy = { address ->
                 val cm = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
                 cm.setPrimaryClip(android.content.ClipData.newPlainText("email_address", address))
-                show_toast(context.getString(R.string.copied))
+                show_toast(org.astermail.android.ui.common.copied_toast_text(context, address))
             },
             on_search_sender = { address -> on_navigate?.invoke("search:from:$address") },
             on_send_email = { address ->
@@ -1674,12 +1672,11 @@ private fun expanded_message(
     val colors = AsterMaterial.colors
     val context = LocalContext.current
     val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
-    val copied_label = stringResource(R.string.copied)
     val copy_email = { email: String ->
         haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
         val cm = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
         cm.setPrimaryClip(android.content.ClipData.newPlainText("email_address", email))
-        android.widget.Toast.makeText(context, copied_label, android.widget.Toast.LENGTH_SHORT).show()
+        org.astermail.android.ui.common.show_copied_toast(context, email)
     }
     var show_details by remember { mutableStateOf(false) }
     var addresses_expanded by remember(msg.id) { mutableStateOf(false) }
