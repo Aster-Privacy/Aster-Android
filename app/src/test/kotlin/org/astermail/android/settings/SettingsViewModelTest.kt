@@ -1505,7 +1505,7 @@ class SettingsViewModelTest {
             org.astermail.android.api.preferences.EncryptedPreferencesResponse()
         coEvery { preferences_api.get_preferences() } returns
             UserPreferences(conversation_grouping = false, swipe_right_action = "star")
-        vm.load_preferences()
+        vm.load_preferences(force = true)
         advanceUntilIdle()
         assertEquals(false, vm.state.value.preferences?.conversation_grouping)
         assertEquals("star", vm.state.value.preferences?.swipe_right_action)
@@ -1517,7 +1517,7 @@ class SettingsViewModelTest {
         every { session_key_store.get_identity_key() } returns null
         coEvery { preferences_api.get_preferences() } returns UserPreferences()
 
-        vm.load_preferences()
+        vm.load_preferences(force = true)
         advanceUntilIdle()
 
         assertEquals(false, vm.state.value.preferences?.conversation_grouping)
@@ -1864,7 +1864,7 @@ class SettingsViewModelTest {
     fun `load_preferences error sets error message`() = runTest {
         coEvery { preferences_api.get_encrypted_preferences() } throws RuntimeException("prefs error")
 
-        vm.load_preferences()
+        vm.load_preferences(force = true)
         advanceUntilIdle()
 
         assertFalse(vm.state.value.is_loading)

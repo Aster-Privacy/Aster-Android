@@ -222,6 +222,9 @@ private val cached_preferences_json = kotlinx.serialization.json.Json {
 
 private const val SUBSCRIPTION_TTL_MS = 300_000L
 private const val TAGS_TTL_MS = 60_000L
+private const val PREFERENCES_TTL_MS = 30_000L
+private const val PROFILE_TTL_MS = 60_000L
+private const val LIST_TTL_MS = 60_000L
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
@@ -271,6 +274,13 @@ class SettingsViewModel @Inject constructor(
     @Volatile private var default_signature_id: String? = null
     @Volatile private var default_signature_is_html: Boolean = false
     private var load_preferences_job: kotlinx.coroutines.Job? = null
+    private var last_preferences_load_ms = 0L
+    private var last_default_sender_load_ms = 0L
+    private var last_profile_load_ms = 0L
+    private var last_aliases_load_ms = 0L
+    private var last_domain_addresses_load_ms = 0L
+    private var last_storage_load_ms = 0L
+    private val last_labels_load_ms = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private var save_preferences_job: kotlinx.coroutines.Job? = null
     private var prefs_load_succeeded = false
     private var account_uses_encrypted_prefs = false
@@ -362,13 +372,23 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun load_profile() {
+    fun load_profile(force: Boolean = false) {
+        val now = System.currentTimeMillis()
+        if (!force &&
+            _state.value.user != null &&
+            last_profile_load_ms != 0L &&
+            now - last_profile_load_ms < PROFILE_TTL_MS
+        ) {
+            load_default_sender()
+            return
+        }
         viewModelScope.launch {
             _state.value = _state.value.copy(is_loading = true, error = null)
             try {
                 val user = auth_api.me()
+                last_profile_load_ms = System.currentTimeMillis()
                 _state.value = _state.value.copy(user = user, is_loading = false)
-                auth_repository.refresh_profile()
+                auth_repository.absorb_profile(user)
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_loading = false,
@@ -456,6 +476,9 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun load_default_sender() {
+        val now = System.currentTimeMillis()
+        if (now - last_default_sender_load_ms < PREFERENCES_TTL_MS) return
+        last_default_sender_load_ms = now
         viewModelScope.launch {
             try {
                 val response = preferences_api.get_default_sender()
@@ -593,6 +616,13 @@ class SettingsViewModel @Inject constructor(
         last_synced_preferences = null
         last_subscription_load_ms = 0L
         last_tags_load_ms = 0L
+        last_preferences_load_ms = 0L
+        last_default_sender_load_ms = 0L
+        last_profile_load_ms = 0L
+        last_aliases_load_ms = 0L
+        last_domain_addresses_load_ms = 0L
+        last_storage_load_ms = 0L
+        last_labels_load_ms.clear()
         _state.value = SettingsUiState()
         hydrate_cached_preferences()
     }
@@ -770,7 +800,10 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun load_aliases() {
+    fun load_aliases(force: Boolean = false) {
+        val now = System.currentTimeMillis()
+        if (!force && last_aliases_load_ms != 0L && now - last_aliases_load_ms < LIST_TTL_MS) return
+        last_aliases_load_ms = now
         viewModelScope.launch {
             _state.value = _state.value.copy(is_loading = true, error = null)
             try {
@@ -830,7 +863,10 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun load_custom_domain_addresses() {
+    fun load_custom_domain_addresses(force: Boolean = false) {
+        val now = System.currentTimeMillis()
+        if (!force && last_domain_addresses_load_ms != 0L && now - last_domain_addresses_load_ms < LIST_TTL_MS) return
+        last_domain_addresses_load_ms = now
         viewModelScope.launch {
             try {
                 val response = settings_api.list_all_domain_addresses()
@@ -893,7 +929,7 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     action_result = context.getString(R.string.alias_restored),
                 )
-                load_aliases()
+                load_aliases(force = true)
             } catch (_: Throwable) {
                 _state.value = _state.value.copy(
                     action_result = context.getString(R.string.failed_restore_alias),
@@ -1301,7 +1337,7 @@ class SettingsViewModel @Inject constructor(
                     captcha_token = captcha_token,
                 )
             )
-            load_aliases()
+            load_aliases(force = true)
             true
         } catch (t: Throwable) {
             _state.value = _state.value.copy(action_result = t.message ?: context.getString(R.string.something_went_wrong))
@@ -1399,7 +1435,10 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun load_storage() {
+    fun load_storage(force: Boolean = false) {
+        val now = System.currentTimeMillis()
+        if (!force && _state.value.storage != null && now - last_storage_load_ms < LIST_TTL_MS) return
+        last_storage_load_ms = now
         viewModelScope.launch {
             _state.value = _state.value.copy(is_loading = true, error = null)
             try {
@@ -1928,7 +1967,11 @@ class SettingsViewModel @Inject constructor(
         return session_key_store.get_recovery_codes()
     }
 
-    fun load_labels(folder_type: String? = null) {
+    fun load_labels(folder_type: String? = null, force: Boolean = false) {
+        val now = System.currentTimeMillis()
+        val labels_key = folder_type ?: "all"
+        if (!force && last_labels_load_ms[labels_key]?.let { now - it < LIST_TTL_MS } == true) return
+        last_labels_load_ms[labels_key] = now
         viewModelScope.launch {
             _state.value = _state.value.copy(is_loading = true, error = null)
             try {
@@ -1994,7 +2037,7 @@ class SettingsViewModel @Inject constructor(
             try {
                 val response = labels_api.create_label(request)
                 if (response.success) {
-                    load_labels()
+                    load_labels(force = true)
                 }
             } catch (_: Throwable) {
             }
@@ -2194,7 +2237,15 @@ class SettingsViewModel @Inject constructor(
         return key
     }
 
-    fun load_preferences() {
+    fun load_preferences(force: Boolean = false) {
+        val now = System.currentTimeMillis()
+        if (!force &&
+            _state.value.preferences != null &&
+            last_preferences_load_ms != 0L &&
+            now - last_preferences_load_ms < PREFERENCES_TTL_MS
+        ) {
+            return
+        }
         load_preferences_job?.cancel()
         load_preferences_job = viewModelScope.launch {
             _state.value = _state.value.copy(is_loading = true, error = null)
@@ -2222,6 +2273,8 @@ class SettingsViewModel @Inject constructor(
                     }
                     if (decrypted != null) {
                         prefs_load_succeeded = true
+                        last_preferences_load_ms = System.currentTimeMillis()
+                        last_preferences_load_ms = System.currentTimeMillis()
                         last_synced_preferences = decrypted
                         persist_cached_preferences(decrypted)
                         apply_preferences_to_theme_store(decrypted)
@@ -2234,6 +2287,8 @@ class SettingsViewModel @Inject constructor(
                         )
                     } else {
                         prefs_load_succeeded = true
+                        last_preferences_load_ms = System.currentTimeMillis()
+                        last_preferences_load_ms = System.currentTimeMillis()
                         val fallback = _state.value.preferences
                         _state.value = _state.value.copy(
                             preferences = fallback ?: UserPreferences(),
@@ -2245,6 +2300,7 @@ class SettingsViewModel @Inject constructor(
                 } else {
                     val prefs = load_plaintext_preferences()
                     prefs_load_succeeded = true
+                    last_preferences_load_ms = System.currentTimeMillis()
                     last_synced_preferences = prefs
                     persist_cached_preferences(prefs)
                     apply_preferences_to_theme_store(prefs)

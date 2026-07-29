@@ -1275,7 +1275,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         settings_vm.load_storage()
         settings_vm.load_profile()
         settings_vm.load_labels()
-        settings_vm.load_tags()
+        settings_vm.load_tags(force = false)
         settings_vm.load_aliases()
         settings_vm.load_custom_domain_addresses()
         settings_vm.load_preferences()

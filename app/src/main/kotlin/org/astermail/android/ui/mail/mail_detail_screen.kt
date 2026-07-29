@@ -440,7 +440,7 @@ fun MailDetailScreen(
 
     LaunchedEffect(Unit) {
         settings_vm.load_preferences()
-        settings_vm.load_tags()
+        settings_vm.load_tags(force = false)
         settings_vm.load_profile()
     }
 
