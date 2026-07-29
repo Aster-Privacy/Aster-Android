@@ -75,6 +75,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -845,7 +846,7 @@ fun LabelsScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                         Spacer(Modifier.width(AsterSpacing.md))
                         Column(Modifier.weight(1f)) {
                             Text(label_name, color = colors.text_primary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
-                            val count_text = l.item_count?.let { stringResource(R.string.messages_count, it) } ?: ""
+                            val count_text = l.item_count?.let { pluralStringResource(R.plurals.common_messages_count, it.toInt(), it) } ?: ""
                             if (count_text.isNotEmpty()) {
                                 Text(count_text, color = colors.text_tertiary, fontSize = 13.sp)
                             }
@@ -888,8 +889,40 @@ fun FoldersScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
 
     val folder_nodes = flatten_folder_tree(state.labels)
     val muted_tokens = state.preferences?.muted_folder_tokens ?: emptyList()
+    var show_create_folder by remember { mutableStateOf(false) }
+    val folders_context = LocalContext.current
+
+    LaunchedEffect(state.action_result) {
+        val msg = state.action_result ?: return@LaunchedEffect
+        android.widget.Toast.makeText(folders_context, msg, android.widget.Toast.LENGTH_SHORT).show()
+        vm.clear_action_result()
+    }
+
+    val folder_parent_options = folder_nodes
+        .filter { it.depth < org.astermail.android.folders.max_folder_depth }
+        .mapNotNull { node ->
+            val readable_name = node.label.encrypted_name?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+            org.astermail.android.ui.drawer.folder_parent_option(
+                token = node.label.label_token,
+                label = readable_name,
+                depth = node.depth,
+                path_label = org.astermail.android.folders.folder_path(state.labels, node.label.label_token)
+                    .filter { it.isNotBlank() }
+                    .joinToString(" · "),
+            )
+        }
 
     detail_scaffold(title = stringResource(R.string.folders), on_back = on_back) {
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            detail_row(
+                title = stringResource(R.string.create_folder),
+                subtitle = stringResource(R.string.create_folder_subtitle),
+                icon = TablerIcons.FolderPlus,
+                on_click = { show_create_folder = true },
+            )
+        }
+        v_gap(AsterSpacing.md)
+
         if (state.is_loading && folder_nodes.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
@@ -905,12 +938,12 @@ fun FoldersScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                 )
             }
         } else {
-            section_label(stringResource(R.string.folders_count, folder_nodes.size))
+            section_label(pluralStringResource(R.plurals.common_folders_count, folder_nodes.size, folder_nodes.size))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 folder_nodes.forEachIndexed { idx, node ->
                     val f = node.label
                     val folder_name = f.encrypted_name ?: f.label_token
-                    val count_text = f.item_count?.let { stringResource(R.string.messages_count, it) } ?: ""
+                    val count_text = f.item_count?.let { pluralStringResource(R.plurals.common_messages_count, it.toInt(), it) } ?: ""
                     val siblings = folder_sibling_group(state.labels, f.id)
                     val sibling_index = siblings.indexOfFirst { it.id == f.id }
                     val can_move_up = sibling_index > 0
@@ -1002,6 +1035,19 @@ fun FoldersScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
             }
         }
         v_gap(AsterSpacing.xxl)
+    }
+
+    if (show_create_folder) {
+        org.astermail.android.ui.drawer.create_folder_dialog(
+            title = stringResource(R.string.create_folder),
+            placeholder = stringResource(R.string.folder_name),
+            parent_options = folder_parent_options,
+            on_dismiss = { show_create_folder = false },
+            on_create = { name, parent_token ->
+                vm.create_folder(name = name, parent_token = parent_token)
+                show_create_folder = false
+            },
+        )
     }
 }
 

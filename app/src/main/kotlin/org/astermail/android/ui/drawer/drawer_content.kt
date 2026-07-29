@@ -729,7 +729,7 @@ fun DrawerContent(
 }
 
 @Composable
-private fun create_folder_dialog(
+internal fun create_folder_dialog(
     title: String,
     placeholder: String,
     parent_options: List<folder_parent_option>,
