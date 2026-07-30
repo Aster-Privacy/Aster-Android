@@ -1541,13 +1541,13 @@ fun InboxScreen(
     }
 }
 
-private data class quick_switch_folder(
+internal data class quick_switch_folder(
     val id: String,
     val label_res: Int,
     val icon: androidx.compose.ui.graphics.vector.ImageVector,
 )
 
-private val quick_switch_folders = listOf(
+internal val quick_switch_folders = listOf(
     quick_switch_folder("inbox", R.string.folder_inbox, TablerIcons.Inbox),
     quick_switch_folder("sent", R.string.folder_sent, TablerIcons.Send),
     quick_switch_folder("drafts", R.string.folder_drafts, TablerIcons.FileText),
@@ -1560,7 +1560,7 @@ private val quick_switch_folders = listOf(
 )
 
 @Composable
-private fun inbox_top_bar(
+internal fun inbox_top_bar(
     folder_title: String,
     unread_count: Int,
     on_open_drawer: () -> Unit,
