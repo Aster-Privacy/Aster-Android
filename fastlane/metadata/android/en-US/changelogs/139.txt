@@ -1,7 +1,7 @@
-Bug fixes and improvements:
-
-- Folder and label tags in your inbox have a cleaner, easier to read design
-- Select All now applies to every email in a folder, not just the ones on screen
-- Redesigned the theme colour picker, encryption settings and security settings
-- Images now load correctly inside expanded quoted replies
-- Fixed session names showing the platform twice on your devices list
+- Search is faster to use, with quick filter chips and an advanced search sheet
+- Your sidebar now has an expandable folder tree with icons and unread counts
+- All Mail is easier to reach, and locked folders stay locked
+- Cleaner, easier to read folder and label tags in your inbox
+- Select All now covers every email in a folder, not just what is on screen
+- Redesigned theme, encryption and security settings
+- Fixes for quoted-reply images, session names and reaction sender addresses
