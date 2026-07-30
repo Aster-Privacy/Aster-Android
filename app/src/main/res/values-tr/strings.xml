@@ -1516,6 +1516,9 @@
     <string name="email_copied">E-posta adresi kopyalandı</string>
     <string name="show_less">Daha az göster</string>
     <string name="show_n_more_aliases">%1$d diğer takma adı göster</string>
+    <string name="show_n_more_folders">%1$d diğer klasörü göster</string>
+    <string name="expand_folder">%1$s klasörünü genişlet</string>
+    <string name="collapse_folder">%1$s klasörünü daralt</string>
     <string name="badge_active">Aktif rozet</string>
     <string name="badge_none">Yok</string>
     <string name="badge_show_on_profile">Profilde göster</string>

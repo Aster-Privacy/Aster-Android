@@ -1516,6 +1516,9 @@
     <string name="email_copied">Indirizzo email copiato</string>
     <string name="show_less">Mostra meno</string>
     <string name="show_n_more_aliases">Mostra altri %1$d alias</string>
+    <string name="show_n_more_folders">Mostra altre %1$d cartelle</string>
+    <string name="expand_folder">Espandi %1$s</string>
+    <string name="collapse_folder">Comprimi %1$s</string>
     <string name="badge_active">Badge attivo</string>
     <string name="badge_none">Nessuno</string>
     <string name="badge_show_on_profile">Mostra nel profilo</string>

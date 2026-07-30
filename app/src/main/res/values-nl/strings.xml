@@ -1516,6 +1516,9 @@
     <string name="email_copied">E-mailadres gekopieerd</string>
     <string name="show_less">Minder weergeven</string>
     <string name="show_n_more_aliases">%1$d andere aliassen weergeven</string>
+    <string name="show_n_more_folders">%1$d andere mappen weergeven</string>
+    <string name="expand_folder">%1$s uitvouwen</string>
+    <string name="collapse_folder">%1$s samenvouwen</string>
     <string name="badge_active">Actieve badge</string>
     <string name="badge_none">Geen</string>
     <string name="badge_show_on_profile">Tonen op profiel</string>

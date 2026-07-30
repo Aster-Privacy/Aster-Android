@@ -1517,6 +1517,9 @@
     <string name="email_copied">E-Mail-Adresse kopiert</string>
     <string name="show_less">Weniger anzeigen</string>
     <string name="show_n_more_aliases">%1$d weitere Aliase anzeigen</string>
+    <string name="show_n_more_folders">%1$d weitere Ordner anzeigen</string>
+    <string name="expand_folder">%1$s erweitern</string>
+    <string name="collapse_folder">%1$s reduzieren</string>
     <string name="badge_active">Aktives Abzeichen</string>
     <string name="badge_none">Keine</string>
     <string name="badge_show_on_profile">Im Profil anzeigen</string>

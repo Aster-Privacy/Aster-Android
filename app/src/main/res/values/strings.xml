@@ -20,6 +20,9 @@
     <string name="sort_by">Sort by</string>
     <string name="show_less">Show less</string>
     <string name="show_n_more_aliases">Show %1$d more aliases</string>
+    <string name="show_n_more_folders">Show %1$d more folders</string>
+    <string name="expand_folder">Expand %1$s</string>
+    <string name="collapse_folder">Collapse %1$s</string>
     <string name="undo">Undo</string>
     <string name="yesterday">Yesterday</string>
 

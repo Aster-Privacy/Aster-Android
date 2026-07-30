@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.drawer
 
+import android.content.Context
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.ui.test.assert
@@ -38,7 +39,9 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import org.astermail.android.design.AsterTheme
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -49,10 +52,19 @@ class FolderNestingDrawerTest {
     @get:Rule
     val compose_rule = createComposeRule()
 
+    @Before
+    fun clear_sidebar_prefs() {
+        InstrumentationRegistry.getInstrumentation().targetContext
+            .getSharedPreferences("aster_sidebar", Context.MODE_PRIVATE)
+            .edit()
+            .clear()
+            .commit()
+    }
+
     private fun sample_folders() = listOf(
-        drawer_folder_item(id = "t1", label = "Test 1", icon = Icons.Outlined.Folder, count = 0, depth = 0),
+        drawer_folder_item(id = "t1", label = "Test 1", icon = Icons.Outlined.Folder, count = 0, depth = 0, has_children = true),
         drawer_folder_item(id = "apple", label = "Apple", icon = Icons.Outlined.Folder, count = 0, depth = 1),
-        drawer_folder_item(id = "boy", label = "Boy", icon = Icons.Outlined.Folder, count = 0, depth = 1),
+        drawer_folder_item(id = "boy", label = "Boy", icon = Icons.Outlined.Folder, count = 0, depth = 1, has_children = true),
         drawer_folder_item(id = "cat", label = "Cat", icon = Icons.Outlined.Folder, count = 2, depth = 2),
     )
 
@@ -79,12 +91,58 @@ class FolderNestingDrawerTest {
     }
 
     @Test
-    fun renders_nested_folder_rows() {
+    fun children_are_hidden_until_parent_is_expanded() {
         set_drawer_content()
         compose_rule.onNodeWithText("Test 1").performScrollTo().assertIsDisplayed()
+        compose_rule.onNodeWithText("Apple").assertDoesNotExist()
+        compose_rule.onNodeWithText("Boy").assertDoesNotExist()
+        compose_rule.onNodeWithText("Cat").assertDoesNotExist()
+    }
+
+    @Test
+    fun renders_nested_folder_rows_when_expanded() {
+        set_drawer_content()
+        compose_rule.onNodeWithTag("folder_expand_Test 1").performScrollTo().performClick()
         compose_rule.onNodeWithText("Apple").performScrollTo().assertIsDisplayed()
         compose_rule.onNodeWithText("Boy").performScrollTo().assertIsDisplayed()
+        compose_rule.onNodeWithText("Cat").assertDoesNotExist()
+
+        compose_rule.onNodeWithTag("folder_expand_Boy").performScrollTo().performClick()
         compose_rule.onNodeWithText("Cat").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun collapsing_a_parent_hides_its_descendants() {
+        set_drawer_content()
+        compose_rule.onNodeWithTag("folder_expand_Test 1").performScrollTo().performClick()
+        compose_rule.onNodeWithTag("folder_expand_Boy").performScrollTo().performClick()
+        compose_rule.onNodeWithText("Cat").performScrollTo().assertIsDisplayed()
+
+        compose_rule.onNodeWithTag("folder_expand_Test 1").performScrollTo().performClick()
+        compose_rule.onNodeWithText("Apple").assertDoesNotExist()
+        compose_rule.onNodeWithText("Boy").assertDoesNotExist()
+        compose_rule.onNodeWithText("Cat").assertDoesNotExist()
+    }
+
+    @Test
+    fun expanding_a_folder_does_not_navigate() {
+        var selected: String? = null
+        compose_rule.setContent {
+            AsterTheme {
+                DrawerContent(
+                    selected_id = "inbox",
+                    on_select = { selected = it },
+                    on_close = {},
+                    api_folder_items = sample_folders(),
+                    folder_parent_options = sample_parent_options(),
+                )
+            }
+        }
+
+        compose_rule.onNodeWithTag("folder_expand_Test 1").performScrollTo().performClick()
+        compose_rule.runOnIdle {
+            assert(selected == null)
+        }
     }
 
     @Test

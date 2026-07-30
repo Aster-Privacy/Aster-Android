@@ -1524,6 +1524,9 @@
     <string name="email_copied">تم نسخ عنوان البريد الإلكتروني</string>
     <string name="show_less">عرض أقل</string>
     <string name="show_n_more_aliases">عرض %1$d أسماء مستعارة إضافية</string>
+    <string name="show_n_more_folders">عرض %1$d مجلدات إضافية</string>
+    <string name="expand_folder">توسيع %1$s</string>
+    <string name="collapse_folder">طي %1$s</string>
     <string name="badge_active">الشارة النشطة</string>
     <string name="badge_none">بدون</string>
     <string name="badge_show_on_profile">عرض على الملف الشخصي</string>

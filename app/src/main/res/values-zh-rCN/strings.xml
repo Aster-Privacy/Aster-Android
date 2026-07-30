@@ -1514,6 +1514,9 @@
     <string name="email_copied">已复制邮箱地址</string>
     <string name="show_less">收起</string>
     <string name="show_n_more_aliases">显示另外 %1$d 个别名</string>
+    <string name="show_n_more_folders">显示另外 %1$d 个文件夹</string>
+    <string name="expand_folder">展开 %1$s</string>
+    <string name="collapse_folder">折叠 %1$s</string>
     <string name="badge_active">当前徽章</string>
     <string name="badge_none">无</string>
     <string name="badge_show_on_profile">显示在个人资料</string>

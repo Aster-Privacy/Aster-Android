@@ -30,6 +30,7 @@ data class folder_node(
     val depth: Int,
     val trail: List<Boolean> = emptyList(),
     val has_next: Boolean = false,
+    val has_children: Boolean = false,
 )
 
 fun is_custom_folder(label: LabelItem): Boolean =
@@ -58,8 +59,10 @@ fun flatten_folder_tree(labels: List<LabelItem>): List<folder_node> {
         sorted.forEachIndexed { index, child ->
             if (!visited.add(child.label_token)) return@forEachIndexed
             val has_next = index < sorted.lastIndex
-            result.add(folder_node(child, depth, trail, has_next))
-            if (depth < max_folder_depth) walk(child.label_token, depth + 1, trail + has_next)
+            val can_descend = depth < max_folder_depth
+            val has_children = can_descend && by_parent[child.label_token]?.isNotEmpty() == true
+            result.add(folder_node(child, depth, trail, has_next, has_children))
+            if (can_descend) walk(child.label_token, depth + 1, trail + has_next)
         }
     }
     walk(null, 0, emptyList())
