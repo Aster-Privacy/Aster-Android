@@ -1409,6 +1409,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
             depth = node.depth,
             trail = node.trail,
             has_next = node.has_next,
+            has_children = node.has_children,
         )
     }
 

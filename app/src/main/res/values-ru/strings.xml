@@ -1520,6 +1520,9 @@
     <string name="email_copied">Адрес электронной почты скопирован</string>
     <string name="show_less">Свернуть</string>
     <string name="show_n_more_aliases">Показать ещё %1$d псевдонимов</string>
+    <string name="show_n_more_folders">Показать ещё %1$d папок</string>
+    <string name="expand_folder">Развернуть %1$s</string>
+    <string name="collapse_folder">Свернуть %1$s</string>
     <string name="badge_active">Активный значок</string>
     <string name="badge_none">Нет</string>
     <string name="badge_show_on_profile">Показывать в профиле</string>

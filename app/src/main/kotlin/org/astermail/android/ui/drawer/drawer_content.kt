@@ -92,6 +92,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.astermail.android.ui.mail.SenderAvatar
 import org.astermail.android.ui.mail.avatar_colors_for
+import org.astermail.android.ui.mail.avatar_initial_style
 import org.astermail.android.ui.mail.initial_for
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
@@ -111,6 +112,7 @@ data class drawer_folder_item(
     val depth: Int = 0,
     val trail: List<Boolean> = emptyList(),
     val has_next: Boolean = false,
+    val has_children: Boolean = false,
 )
 
 data class folder_parent_option(
@@ -241,6 +243,7 @@ private const val key_more_collapsed = "more_collapsed"
 private const val key_folders_collapsed = "folders_collapsed"
 private const val key_labels_collapsed = "labels_collapsed"
 private const val key_aliases_collapsed = "aliases_collapsed"
+private const val key_expanded_folders = "expanded_folders"
 
 @Composable
 fun DrawerContent(
@@ -304,6 +307,10 @@ fun DrawerContent(
     }
     var aliases_show_all by remember { mutableStateOf(false) }
     val aliases_collapsed_count = 5
+    var folders_show_all by rememberSaveable { mutableStateOf(false) }
+    var expanded_folder_tokens by remember {
+        mutableStateOf<Set<String>>(sidebar_prefs.getStringSet(key_expanded_folders, emptySet())?.toSet().orEmpty())
+    }
     var prefs_synced by rememberSaveable { mutableStateOf(false) }
 
     androidx.compose.runtime.LaunchedEffect(preferences_loaded) {
@@ -482,7 +489,15 @@ fun DrawerContent(
                     if (folder_items.isEmpty()) {
                         empty_section_hint(stringResource(R.string.no_folders_yet))
                     } else {
-                        folder_items.forEach { item ->
+                        val root_count = root_folder_count(folder_items)
+                        val has_more_roots = root_count > folders_collapsed_root_count
+                        val visible_folders = visible_folder_items(
+                            items = folder_items,
+                            expanded_tokens = expanded_folder_tokens,
+                            max_root_count = if (folders_show_all) null else folders_collapsed_root_count,
+                        )
+                        val any_expandable = folder_items.any { it.has_children }
+                        visible_folders.forEach { item ->
                             drawer_row(
                                 icon = item.icon,
                                 label = item.label,
@@ -490,13 +505,33 @@ fun DrawerContent(
                                 is_unread_count = true,
                                 selected = item.id == selected_id,
                                 on_click = {
-                                    on_select(item.id)
                                     on_navigate_folder(item.id, item.label)
                                     on_close()
                                 },
                                 depth = item.depth,
                                 trail = item.trail,
                                 has_next = item.has_next,
+                                show_expand_slot = any_expandable,
+                                can_expand = item.has_children,
+                                expanded = item.id in expanded_folder_tokens,
+                                on_toggle_expand = {
+                                    val next = expanded_folder_tokens.toMutableSet()
+                                    if (!next.add(item.id)) next.remove(item.id)
+                                    expanded_folder_tokens = next
+                                    sidebar_prefs.edit().putStringSet(key_expanded_folders, next).apply()
+                                },
+                            )
+                        }
+                        if (has_more_roots) {
+                            val remaining = root_count - folders_collapsed_root_count
+                            show_more_row(
+                                text = if (folders_show_all) {
+                                    stringResource(R.string.show_less)
+                                } else {
+                                    stringResource(R.string.show_n_more_folders, remaining)
+                                },
+                                expanded = folders_show_all,
+                                on_click = { folders_show_all = !folders_show_all },
                             )
                         }
                     }
@@ -1039,8 +1074,7 @@ private fun workspace_switcher_sheet(
                         Text(
                             text = initial_for("", current_email),
                             color = av_fg,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            style = avatar_initial_style(13.sp),
                         )
                     }
                     Spacer(Modifier.width(AsterSpacing.md))
@@ -1355,6 +1389,48 @@ private fun tree_indent_guides(
 }
 
 @Composable
+private fun folder_expand_toggle(
+    can_expand: Boolean,
+    expanded: Boolean,
+    tint: Color,
+    label: String,
+    on_toggle: () -> Unit,
+) {
+    if (!can_expand) {
+        Spacer(Modifier.width(30.dp))
+        return
+    }
+    val rotation by animateFloatAsState(
+        targetValue = if (expanded) 0f else -90f,
+        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
+        label = "folder_chevron",
+    )
+    val description = if (expanded) {
+        stringResource(R.string.collapse_folder, label)
+    } else {
+        stringResource(R.string.expand_folder, label)
+    }
+    Box(
+        modifier = Modifier
+            .width(30.dp)
+            .height(44.dp)
+            .clip(RoundedCornerShape(999.dp))
+            .clickable(onClick = on_toggle)
+            .testTag("folder_expand_$label"),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = TablerIcons.ChevronDown,
+            contentDescription = description,
+            tint = tint,
+            modifier = Modifier
+                .size(17.dp)
+                .graphicsLayer { rotationZ = rotation },
+        )
+    }
+}
+
+@Composable
 private fun drawer_row(
     icon: ImageVector,
     label: String,
@@ -1366,6 +1442,10 @@ private fun drawer_row(
     depth: Int = 0,
     trail: List<Boolean> = emptyList(),
     has_next: Boolean = false,
+    show_expand_slot: Boolean = false,
+    can_expand: Boolean = false,
+    expanded: Boolean = false,
+    on_toggle_expand: () -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     val bg by animateColorAsState(
@@ -1401,6 +1481,15 @@ private fun drawer_row(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             tree_indent_guides(depth, trail, has_next)
+            if (show_expand_slot) {
+                folder_expand_toggle(
+                    can_expand = can_expand,
+                    expanded = expanded,
+                    tint = colors.text_muted,
+                    label = label,
+                    on_toggle = on_toggle_expand,
+                )
+            }
             Icon(
                 imageVector = icon,
                 contentDescription = null,

@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.drawer
 
+import android.content.Context
 import android.graphics.Bitmap
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Folder
@@ -43,6 +44,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.astermail.android.design.AsterTheme
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -54,6 +56,15 @@ class FolderNestingScreenshotTest {
 
     @get:Rule
     val compose_rule = createComposeRule()
+
+    @Before
+    fun clear_sidebar_prefs() {
+        InstrumentationRegistry.getInstrumentation().targetContext
+            .getSharedPreferences("aster_sidebar", Context.MODE_PRIVATE)
+            .edit()
+            .clear()
+            .commit()
+    }
 
     private fun save_screenshot(name: String, node: SemanticsNodeInteraction = compose_rule.onRoot()) {
         val bitmap = node.captureToImage().asAndroidBitmap()
@@ -73,9 +84,9 @@ class FolderNestingScreenshotTest {
                     on_select = {},
                     on_close = {},
                     api_folder_items = listOf(
-                        drawer_folder_item(id = "t1", label = "Test 1", icon = Icons.Outlined.Folder, count = 3, depth = 0),
+                        drawer_folder_item(id = "t1", label = "Test 1", icon = Icons.Outlined.Folder, count = 3, depth = 0, has_children = true),
                         drawer_folder_item(id = "apple", label = "Apple", icon = Icons.Outlined.Folder, count = 0, depth = 1, trail = listOf(true), has_next = true),
-                        drawer_folder_item(id = "boy", label = "Boy", icon = Icons.Outlined.Folder, count = 1, depth = 1, trail = listOf(true), has_next = false),
+                        drawer_folder_item(id = "boy", label = "Boy", icon = Icons.Outlined.Folder, count = 1, depth = 1, trail = listOf(true), has_next = false, has_children = true),
                         drawer_folder_item(id = "cat", label = "Cat", icon = Icons.Outlined.Folder, count = 0, depth = 2, trail = listOf(true, false), has_next = false),
                         drawer_folder_item(id = "zoo", label = "Zoo", icon = Icons.Outlined.Folder, count = 0, depth = 0),
                     ),
@@ -88,6 +99,10 @@ class FolderNestingScreenshotTest {
             }
         }
 
+        compose_rule.onNodeWithTag("folder_expand_Test 1").performScrollTo().performClick()
+        compose_rule.waitForIdle()
+        compose_rule.onNodeWithTag("folder_expand_Boy").performScrollTo().performClick()
+        compose_rule.waitForIdle()
         compose_rule.onNodeWithText("Zoo").performScrollTo()
         compose_rule.waitForIdle()
         save_screenshot("folder_drawer_nested")

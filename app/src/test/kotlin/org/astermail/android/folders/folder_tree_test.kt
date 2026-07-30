@@ -23,6 +23,7 @@ package org.astermail.android.folders
 
 import org.astermail.android.api.labels.LabelItem
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -200,5 +201,35 @@ class folder_tree_test {
         )
         assertEquals(setOf("child", "grandchild"), descendant_tokens(labels, "root"))
         assertTrue(descendant_tokens(labels, "unrelated").isEmpty())
+    }
+
+    @Test
+    fun marks_only_parents_as_having_children() {
+        val labels = listOf(
+            folder("root"),
+            folder("child", parent_token = "root"),
+            folder("grandchild", parent_token = "child"),
+            folder("leaf_root"),
+        )
+        val by_token = flatten_folder_tree(labels).associateBy { it.label.label_token }
+        assertTrue(by_token.getValue("root").has_children)
+        assertTrue(by_token.getValue("child").has_children)
+        assertFalse(by_token.getValue("grandchild").has_children)
+        assertFalse(by_token.getValue("leaf_root").has_children)
+    }
+
+    @Test
+    fun deepest_rendered_folder_is_not_marked_expandable() {
+        var labels = listOf(folder("d0"))
+        var parent = "d0"
+        repeat(max_folder_depth + 1) { index ->
+            val token = "d${index + 1}"
+            labels = labels + folder(token, parent_token = parent)
+            parent = token
+        }
+        val nodes = flatten_folder_tree(labels)
+        val deepest = nodes.maxByOrNull { it.depth }!!
+        assertEquals(max_folder_depth, deepest.depth)
+        assertFalse(deepest.has_children)
     }
 }

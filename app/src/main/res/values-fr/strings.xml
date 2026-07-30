@@ -1919,6 +1919,9 @@
     <string name="show_encryption_indicators_sub">Afficher les icônes de cadenas sur les e-mails chiffrés</string>
     <string name="show_less">Afficher moins</string>
     <string name="show_n_more_aliases">Afficher %1$d alias de plus</string>
+    <string name="show_n_more_folders">Afficher %1$d dossiers de plus</string>
+    <string name="expand_folder">Développer %1$s</string>
+    <string name="collapse_folder">Réduire %1$s</string>
     <string name="signature_alias_conflict">Cet alias a déjà une signature.</string>
     <string name="signature_apply_default">Par défaut (tous les alias)</string>
     <string name="signature_apply_to">Appliquer à</string>

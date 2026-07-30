@@ -1514,6 +1514,9 @@
     <string name="email_copied">이메일 주소가 복사되었습니다</string>
     <string name="show_less">간략히 보기</string>
     <string name="show_n_more_aliases">별칭 %1$d개 더 보기</string>
+    <string name="show_n_more_folders">폴더 %1$d개 더 보기</string>
+    <string name="expand_folder">%1$s 펼치기</string>
+    <string name="collapse_folder">%1$s 접기</string>
     <string name="badge_active">활성 배지</string>
     <string name="badge_none">없음</string>
     <string name="badge_show_on_profile">프로필에 표시</string>
