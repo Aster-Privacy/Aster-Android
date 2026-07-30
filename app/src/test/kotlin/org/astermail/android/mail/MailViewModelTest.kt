@@ -131,6 +131,29 @@ class MailViewModelTest {
     }
 
     @Test
+    fun `folder_supports_scope_selection follows the repository for label folders`() {
+        every { repository.folder_supports_bulk_scope("label:work_token") } returns true
+        every { repository.folder_supports_bulk_scope("drafts") } returns false
+
+        assertTrue(vm.folder_supports_scope_selection("label:work_token"))
+        assertFalse(vm.folder_supports_scope_selection("drafts"))
+    }
+
+    @Test
+    fun `mark_all_read_scope on a label folder uses the scope endpoint`() = runTest {
+        every { repository.folder_supports_bulk_scope("label:work_token") } returns true
+        coEvery { repository.mark_all_read_scope("label:work_token") } returns
+            Result.success(BulkScopeResponse(affected_count = 180))
+
+        vm.mark_all_read_scope("label:work_token")
+        advanceUntilIdle()
+
+        coVerify { repository.mark_all_read_scope("label:work_token") }
+        io.mockk.unmockkStatic(Dispatchers::class)
+        coVerify(exactly = 0) { repository.mark_read_bulk(any()) }
+    }
+
+    @Test
     fun `load_inbox sets loading then populates items`() = runTest {
         val page = fake_inbox_page(3)
         coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
@@ -1022,8 +1045,9 @@ class MailViewModelTest {
     @Test
     fun `load_inbox all folder calls fetch_inbox with all type`() = runTest {
         val page = fake_inbox_page(4)
-        coEvery { repository.fetch_inbox(any(), any(), item_type = eq("all"), any()) } returns
-            Result.success(page)
+        coEvery {
+            repository.fetch_inbox(any(), any(), item_type = eq("all"), any(), any(), any(), any(), any(), any(), any())
+        } returns Result.success(page)
 
         vm.load_inbox("all", force = true)
         advanceUntilIdle()
