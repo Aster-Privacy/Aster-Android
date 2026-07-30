@@ -103,6 +103,7 @@ import org.astermail.android.design.parse_hex_color_safe
 import androidx.compose.animation.core.tween
 import org.astermail.android.design.components.AsterDragHandle
 import org.astermail.android.storage.StoredAccount
+import org.astermail.android.ui.icons.all_mail_icon
 
 data class drawer_folder_item(
     val id: String,
@@ -349,7 +350,7 @@ fun DrawerContent(
     val label_contacts = stringResource(R.string.folder_contacts)
     val label_subscriptions = stringResource(R.string.folder_subscriptions)
 
-    val core_items = remember(categories_enabled, inbox_unread, drafts_count, spam_count, trash_count, label_inbox, label_sent, label_drafts, label_starred, label_archive, label_spam, label_trash) {
+    val core_items = remember(categories_enabled, inbox_unread, drafts_count, spam_count, trash_count, label_inbox, label_sent, label_drafts, label_starred, label_archive, label_spam, label_trash, label_all_mail) {
         listOfNotNull(
             if (categories_enabled) null else drawer_folder_item("inbox", label_inbox, TablerIcons.Inbox, inbox_unread),
             drawer_folder_item("sent", label_sent, TablerIcons.Send),
@@ -358,14 +359,14 @@ fun DrawerContent(
             drawer_folder_item("archive", label_archive, TablerIcons.Archive),
             drawer_folder_item("spam", label_spam, TablerIcons.AlertTriangle, spam_count),
             drawer_folder_item("trash", label_trash, TablerIcons.Trash, trash_count),
+            drawer_folder_item("all", label_all_mail, all_mail_icon),
         )
     }
 
-    val more_secondary = remember(label_scheduled, label_snoozed, label_all_mail, label_subscriptions) {
+    val more_secondary = remember(label_scheduled, label_snoozed, label_subscriptions) {
         listOf(
             drawer_folder_item("scheduled", label_scheduled, TablerIcons.Clock),
             drawer_folder_item("snoozed", label_snoozed, TablerIcons.BellMinus),
-            drawer_folder_item("all", label_all_mail, TablerIcons.Mail),
             drawer_folder_item("subscriptions", label_subscriptions, TablerIcons.News),
         )
     }

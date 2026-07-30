@@ -142,6 +142,7 @@ import org.astermail.android.mail.DEFAULT_SWIPE_RIGHT_ACTION
 import org.astermail.android.mail.MailViewModel
 import org.astermail.android.mail.normalize_swipe_action
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.ui.icons.all_mail_icon
 
 enum class InboxSortMode { newest, oldest, unread_first, starred_first }
 
@@ -1161,7 +1162,7 @@ fun InboxScreen(
                                     is_first = row_index == 0,
                                     is_last = row_index == visible_threads.lastIndex,
                                     is_pinned = thread.is_pinned,
-                                    on_click = { on_open_email(thread.newest.id) },
+                                    on_click = { on_open_email(thread_open_target_id(thread)) },
                                     on_long_click = {
                                         select_mode = true
                                         selected_ids.clear()
@@ -1557,6 +1558,7 @@ internal val quick_switch_folders = listOf(
     quick_switch_folder("snoozed", R.string.folder_snoozed, TablerIcons.BellMinus),
     quick_switch_folder("spam", R.string.folder_spam, TablerIcons.AlertTriangle),
     quick_switch_folder("trash", R.string.folder_trash, TablerIcons.Trash),
+    quick_switch_folder("all", R.string.folder_all_mail, all_mail_icon),
 )
 
 @Composable
