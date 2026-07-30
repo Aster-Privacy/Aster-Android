@@ -22,6 +22,14 @@
 package org.astermail.android.ui.mail
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.sp
 
 private val avatar_palette: List<Pair<Color, Color>> = listOf(
     Color(0xFF3B82F6) to Color.White,
@@ -48,3 +56,19 @@ fun initial_for(name: String, fallback_email: String): String {
     val first_char = source.first()
     return first_char.uppercaseChar().toString()
 }
+
+fun avatar_initial_font_size(size: Dp): TextUnit = (size.value * 0.4f).sp
+
+fun avatar_initial_style(font_size: TextUnit): TextStyle = TextStyle(
+    fontSize = font_size,
+    fontWeight = FontWeight.SemiBold,
+    lineHeight = font_size,
+    textAlign = TextAlign.Center,
+    platformStyle = PlatformTextStyle(includeFontPadding = false),
+    lineHeightStyle = LineHeightStyle(
+        alignment = LineHeightStyle.Alignment.Center,
+        trim = LineHeightStyle.Trim.Both,
+    ),
+)
+
+fun avatar_initial_style(size: Dp): TextStyle = avatar_initial_style(avatar_initial_font_size(size))

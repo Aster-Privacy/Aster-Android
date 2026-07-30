@@ -39,12 +39,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import org.astermail.android.storage.AccountStore
 import org.astermail.android.ui.mail.avatar_colors_for
+import org.astermail.android.ui.mail.avatar_initial_style
 import org.astermail.android.ui.mail.initial_for
 
 @Composable
@@ -73,8 +73,7 @@ fun current_user_avatar(
             Text(
                 text = initial_for(name, email),
                 color = fg,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = (size.value * 0.4f).sp,
+                style = avatar_initial_style(size),
             )
         }
         return

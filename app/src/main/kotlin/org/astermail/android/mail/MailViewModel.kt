@@ -147,7 +147,7 @@ class MailViewModel @Inject constructor(
             return
         }
         val direct = LinkedHashMap<String, MutableList<DecryptedReaction>>()
-        val unresolved = ArrayList<Pair<String, String>>()
+        val unresolved = ArrayList<Triple<String, String, Boolean>>()
         for (msg in messages) {
             for (summary in msg.raw_item.reactions.orEmpty()) {
                 val emoji = summary.emoji
@@ -157,18 +157,24 @@ class MailViewModel @Inject constructor(
                             reaction_mail_item_id = summary.reaction_mail_item_id,
                             emoji = emoji,
                             reactor_email = summary.reactor_email.orEmpty(),
+                            is_own = summary.is_own,
                         ),
                     )
                 } else {
-                    unresolved.add(msg.id to summary.reaction_mail_item_id)
+                    unresolved.add(
+                        Triple(msg.id, summary.reaction_mail_item_id, summary.is_own),
+                    )
                 }
             }
         }
         _message_reactions.value = direct.mapValues { it.value.toList() }
         if (unresolved.isEmpty()) return
         viewModelScope.launch(Dispatchers.IO) {
-            val resolved = unresolved.map { (message_id, reaction_id) ->
-                async { message_id to repository.resolve_reaction(reaction_id) }
+            val resolved = unresolved.map { (message_id, reaction_id, is_own) ->
+                async {
+                    message_id to repository.resolve_reaction(reaction_id)
+                        ?.copy(is_own = is_own)
+                }
             }.awaitAll()
             if (resolved.none { it.second != null }) return@launch
             val merged = LinkedHashMap<String, MutableList<DecryptedReaction>>()
@@ -184,12 +190,20 @@ class MailViewModel @Inject constructor(
         }
     }
 
-    fun send_reaction(message_id: String, emoji: String, on_result: (String?) -> Unit) {
+    fun send_reaction(
+        message_id: String,
+        emoji: String,
+        sender_email: String? = null,
+        sender_alias_hash: String? = null,
+        on_result: (String?) -> Unit,
+    ) {
         if (!reactions_enabled) return
         val state = _thread_state.value
         val message = state.messages.find { it.id == message_id } ?: return
         val our_email = repository.get_user_email().orEmpty()
-        val sender_is_self = message.sender_email.equals(our_email, ignoreCase = true)
+        val from_email = sender_email?.takeIf { it.isNotBlank() } ?: our_email
+        val sender_is_self = message.sender_email.equals(our_email, ignoreCase = true) ||
+            message.sender_email.equals(from_email, ignoreCase = true)
         val recipient = if (!sender_is_self) {
             message.sender_email
         } else {
@@ -202,11 +216,12 @@ class MailViewModel @Inject constructor(
         val optimistic = DecryptedReaction(
             reaction_mail_item_id = "pending_${message_id}_$emoji",
             emoji = emoji,
-            reactor_email = our_email,
+            reactor_email = from_email,
+            is_own = true,
         )
         _message_reactions.update { current ->
             val bucket = current[message_id].orEmpty()
-            if (bucket.any { it.emoji == emoji && it.reactor_email.equals(our_email, ignoreCase = true) }) {
+            if (bucket.any { it.emoji == emoji && (it.is_own || it.reactor_email.equals(our_email, ignoreCase = true)) }) {
                 current
             } else {
                 current + (message_id to (bucket + optimistic))
@@ -219,7 +234,12 @@ class MailViewModel @Inject constructor(
                 thread_token = state.item?.thread_token,
                 recipient = recipient,
                 emoji = emoji,
-                sender_email = our_email.ifBlank { null },
+                sender_email = from_email.ifBlank { null },
+                sender_alias_hash = sender_alias_hash,
+                reply_subject = message.subject,
+                in_reply_to = message.raw_headers
+                    .firstOrNull { it.first.equals("message-id", ignoreCase = true) }
+                    ?.second,
             )
             val error = result.exceptionOrNull()
             if (error != null) {

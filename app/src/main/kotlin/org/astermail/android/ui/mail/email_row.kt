@@ -206,27 +206,8 @@ fun EmailRow(
                 }
             }
             Spacer(Modifier.height(3.dp))
-            Text(
-                text = email.subject,
-                style = MaterialTheme.typography.bodyMedium,
-                color = subject_color,
-                fontSize = 15.sp,
-                fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Spacer(Modifier.height(3.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = email.preview,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = preview_color,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Normal,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
-                )
+            val has_preview = email.preview.isNotBlank()
+            val trailing_controls: @Composable () -> Unit = {
                 Spacer(Modifier.width(AsterSpacing.sm))
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -255,6 +236,35 @@ fun EmailRow(
                             on_toggle_star()
                         },
                     )
+                }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = email.subject.ifBlank { stringResource(R.string.inbox_no_subject) },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = subject_color,
+                    fontSize = 15.sp,
+                    fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                if (!has_preview) trailing_controls()
+            }
+            if (has_preview) {
+                Spacer(Modifier.height(3.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = email.preview,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = preview_color,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Normal,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
+                    )
+                    trailing_controls()
                 }
             }
             email.received_on?.let {
@@ -497,27 +507,8 @@ fun ThreadInboxRow(
                     base
                 }
             }
-            Text(
-                text = subject_text,
-                style = MaterialTheme.typography.bodyMedium,
-                color = subject_color,
-                fontSize = 15.sp,
-                fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Spacer(Modifier.height(3.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = email.preview,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = preview_color,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Normal,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
-                )
+            val has_preview = email.preview.isNotBlank()
+            val trailing_controls: @Composable () -> Unit = {
                 if (user_prefs?.show_message_size == true && email.size_bytes > 0) {
                     Spacer(Modifier.width(4.dp))
                     val size_str = remember(email.size_bytes) {
@@ -546,6 +537,35 @@ fun ThreadInboxRow(
                         on_toggle_star()
                     },
                 )
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = subject_text,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = subject_color,
+                    fontSize = 15.sp,
+                    fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                if (!has_preview) trailing_controls()
+            }
+            if (has_preview) {
+                Spacer(Modifier.height(3.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = email.preview,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = preview_color,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Normal,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
+                    )
+                    trailing_controls()
+                }
             }
             if (thread.label_colors.isNotEmpty() || attachment_chips.isNotEmpty() || email.received_on != null) {
                 Spacer(Modifier.height(4.dp))

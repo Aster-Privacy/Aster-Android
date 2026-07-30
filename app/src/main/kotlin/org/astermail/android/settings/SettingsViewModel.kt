@@ -2911,8 +2911,13 @@ class SettingsViewModel @Inject constructor(
         persist_cached_signatures(updated)
     }
 
+    fun ensure_signatures_hydrated(): Boolean {
+        if (_signatures.value.isNotEmpty()) return true
+        return hydrate_cached_signatures()
+    }
+
     fun load_signature() {
-        if (_signatures.value.isEmpty()) hydrate_cached_signatures()
+        ensure_signatures_hydrated()
         viewModelScope.launch {
             try {
                 val list = signatures_api.list_signatures()

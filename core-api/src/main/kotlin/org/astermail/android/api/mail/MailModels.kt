@@ -106,6 +106,7 @@ data class ReactionSummary(
     val source: String = "internal",
     val emoji: String? = null,
     val reactor_email: String? = null,
+    val is_own: Boolean = false,
     val created_at: String? = null,
 )
 

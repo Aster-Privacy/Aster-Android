@@ -128,6 +128,8 @@ data class ReactRequest(
     val sender_email: String? = null,
     val sender_alias_hash: String? = null,
     val sender_display_name: String? = null,
+    val reply_subject: String? = null,
+    val in_reply_to: String? = null,
 )
 
 @Serializable

@@ -27,7 +27,6 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -61,6 +60,7 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.lighten
 
 data class TopToastState(
     val message: String,
@@ -123,12 +123,12 @@ fun top_toast_overlay(
         ) {
             val s = last_state ?: return@AnimatedVisibility
             val shape = SquircleShape(999.dp)
+            val fill = if (colors.is_dark) colors.bg_card.lighten(0.12f) else colors.bg_card
             val row_modifier = Modifier
                 .padding(horizontal = 12.dp, vertical = 10.dp)
-                .shadow(10.dp, shape, clip = false)
+                .shadow(14.dp, shape, clip = false)
                 .clip(shape)
-                .background(colors.bg_card)
-                .border(1.dp, colors.border_primary, shape)
+                .background(fill)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,

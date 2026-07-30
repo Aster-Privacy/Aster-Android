@@ -1,4 +1,4 @@
-﻿//
+//
 // Aster Communications Inc.
 //
 // Copyright (c) 2026 Aster Communications Inc.
@@ -21,9 +21,6 @@ package org.astermail.android.ui.mail
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
-import android.annotation.SuppressLint
-import android.webkit.WebSettings
-import android.webkit.WebView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -43,9 +40,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -58,18 +53,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.delay
 import org.astermail.android.R
-import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.mail.MailViewModel
 
-@SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun pending_send_preview_screen(
     on_back: () -> Unit,
@@ -100,6 +97,7 @@ fun pending_send_preview_screen(
     val to_line = p.to.joinToString(", ")
     val cc_line = p.cc.joinToString(", ")
     val bcc_line = p.bcc.joinToString(", ")
+    val subject_text = p.subject.ifBlank { stringResource(R.string.no_subject) }
 
     Column(
         modifier = Modifier
@@ -108,30 +106,45 @@ fun pending_send_preview_screen(
             .statusBarsPadding(),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = AsterSpacing.xs, vertical = AsterSpacing.xs),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(44.dp)
                     .clip(CircleShape)
                     .clickable { on_back() },
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = TablerIcons.ArrowLeft,
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.back),
                     tint = colors.text_primary,
                 )
             }
-            Spacer(Modifier.width(8.dp))
-            Text(
-                text = p.subject.ifBlank { stringResource_no_subject() },
-                color = colors.text_primary,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
+            Spacer(Modifier.width(AsterSpacing.xs))
+            Row(
                 modifier = Modifier.weight(1f),
-            )
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                Icon(
+                    imageVector = TablerIcons.Lock,
+                    contentDescription = null,
+                    tint = colors.accent_blue,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = stringResource(R.string.end_to_end_encrypted),
+                    color = colors.accent_blue,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+            Spacer(Modifier.width(44.dp))
         }
 
         Column(
@@ -139,36 +152,63 @@ fun pending_send_preview_screen(
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
         ) {
+            Text(
+                text = subject_text,
+                color = colors.text_primary,
+                fontSize = 26.sp,
+                lineHeight = 32.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AsterSpacing.lg)
+                    .padding(top = AsterSpacing.sm, bottom = AsterSpacing.sm),
+            )
+            AsterDivider()
+            Spacer(Modifier.height(AsterSpacing.sm))
+
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
                 verticalAlignment = Alignment.Top,
             ) {
-                SenderAvatar(email = from_email, name = from_name, size = 40.dp)
-                Spacer(Modifier.width(12.dp))
+                SenderAvatar(email = from_email, name = from_name)
+                Spacer(Modifier.width(AsterSpacing.md))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = from_name,
                         color = colors.text_primary,
-                        fontSize = 15.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
+                    if (from_email.isNotBlank() && from_email != from_name) {
+                        Text(
+                            text = from_email,
+                            color = colors.text_muted,
+                            fontSize = 13.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                     if (to_line.isNotBlank()) {
                         Text(
-                            text = androidx.compose.ui.res.stringResource(R.string.to_recipients_inline, to_line),
+                            text = stringResource(R.string.to_recipients_inline, to_line),
                             color = colors.text_muted,
                             fontSize = 13.sp,
                         )
                     }
                     if (cc_line.isNotBlank()) {
                         Text(
-                            text = androidx.compose.ui.res.stringResource(R.string.cc_recipients_inline, cc_line),
+                            text = stringResource(R.string.cc_recipients_inline, cc_line),
                             color = colors.text_muted,
                             fontSize = 13.sp,
                         )
                     }
                     if (bcc_line.isNotBlank()) {
                         Text(
-                            text = androidx.compose.ui.res.stringResource(R.string.bcc_recipients_inline, bcc_line),
+                            text = stringResource(R.string.bcc_recipients_inline, bcc_line),
                             color = colors.text_muted,
                             fontSize = 13.sp,
                         )
@@ -176,64 +216,42 @@ fun pending_send_preview_screen(
                 }
             }
 
-            Box(
+            email_html_view(
+                html = p.body_html,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-            ) {
-                AndroidView(
-                    modifier = Modifier.fillMaxWidth(),
-                    factory = { ctx ->
-                        WebView(ctx).apply {
-                            settings.javaScriptEnabled = false
-                            settings.loadWithOverviewMode = true
-                            settings.useWideViewPort = false
-                            settings.defaultTextEncodingName = "UTF-8"
-                            settings.blockNetworkLoads = true
-                            settings.allowFileAccess = false
-                            settings.allowContentAccess = false
-                            setBackgroundColor(android.graphics.Color.TRANSPARENT)
-                        }
-                    },
-                    update = { wv ->
-                        wv.loadDataWithBaseURL(
-                            null,
-                            wrap_body_html(p.body_html),
-                            "text/html",
-                            "UTF-8",
-                            null,
-                        )
-                    },
-                    onRelease = { wv ->
-                        runCatching {
-                            wv.stopLoading()
-                            wv.loadUrl("about:blank")
-                            (wv.parent as? android.view.ViewGroup)?.removeView(wv)
-                            wv.destroy()
-                        }
-                    },
-                )
-            }
+                    .padding(horizontal = AsterSpacing.md),
+            )
 
             if (p.attachment_names.isNotEmpty()) {
                 Column(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     p.attachment_names.forEach { fname ->
-                        Box(
+                        Row(
                             modifier = Modifier
                                 .clip(SquircleShape(18.dp))
                                 .background(colors.dropdown_bg)
                                 .padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
+                            Icon(
+                                imageVector = TablerIcons.Paperclip,
+                                contentDescription = null,
+                                tint = colors.text_muted,
+                                modifier = Modifier.size(16.dp),
+                            )
+                            Spacer(Modifier.width(8.dp))
                             Text(text = fname, color = colors.text_primary, fontSize = 13.sp)
                         }
                     }
                 }
             }
 
-            Spacer(Modifier.height(80.dp))
+            Spacer(Modifier.height(AsterSpacing.lg))
         }
 
         Row(
@@ -241,7 +259,7 @@ fun pending_send_preview_screen(
                 .fillMaxWidth()
                 .background(colors.dropdown_bg)
                 .padding(WindowInsets.navigationBars.asPaddingValues())
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -252,44 +270,24 @@ fun pending_send_preview_screen(
             )
             Spacer(Modifier.width(8.dp))
             Text(
-                text = androidx.compose.ui.res.stringResource(
-                    R.string.sending_in_countdown,
-                    seconds_left,
-                ),
+                text = stringResource(R.string.sending_in_countdown, seconds_left),
                 color = colors.text_primary,
                 fontSize = 14.sp,
                 modifier = Modifier.weight(1f),
             )
             Text(
-                text = androidx.compose.ui.res.stringResource(R.string.undo),
+                text = stringResource(R.string.undo),
                 color = colors.accent_blue,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
-                    .clip(SquircleShape(8.dp))
+                    .clip(SquircleShape(10.dp))
                     .clickable {
                         p.undo()
                         on_back()
                     }
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
             )
         }
     }
-}
-
-@Composable
-private fun stringResource_no_subject(): String =
-    androidx.compose.ui.res.stringResource(R.string.no_subject)
-
-private fun wrap_body_html(body: String): String {
-    return """
-        <html><head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-          body { font-family: -apple-system, Roboto, sans-serif; font-size: 15px; color: #111; margin: 0; padding: 0; word-wrap: break-word; }
-          img { max-width: 100%; height: auto; }
-          a { color: #2563eb; }
-        </style>
-        </head><body>$body</body></html>
-    """.trimIndent()
 }
