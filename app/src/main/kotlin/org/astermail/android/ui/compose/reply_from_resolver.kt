@@ -34,6 +34,36 @@ fun compute_received_on_alias(
     return matches.firstOrNull { it.lowercase() != user_email.lowercase() } ?: matches.firstOrNull()
 }
 
+data class ReactionSenderIdentity(
+    val email: String,
+    val alias_hash: String?,
+)
+
+fun resolve_reaction_sender_identity(
+    own_recipient_addresses: List<String>,
+    message_sender_email: String,
+    is_own_message: Boolean,
+    alias_options: List<String>,
+    alias_hash_map: Map<String, String>,
+    user_email: String,
+): ReactionSenderIdentity {
+    val resolved = if (is_own_message) {
+        alias_options.firstOrNull { it.equals(message_sender_email.trim(), ignoreCase = true) }
+    } else {
+        compute_received_on_alias(own_recipient_addresses, alias_options, user_email)
+    }
+    val email = resolved?.takeIf { it.isNotBlank() } ?: user_email
+    if (email.equals(user_email, ignoreCase = true)) {
+        return ReactionSenderIdentity(user_email, null)
+    }
+    val hash = alias_hash_map.entries
+        .firstOrNull { it.key.equals(email, ignoreCase = true) }
+        ?.value
+        ?.takeIf { it.isNotBlank() }
+        ?: return ReactionSenderIdentity(user_email, null)
+    return ReactionSenderIdentity(email, hash)
+}
+
 fun reply_from_mismatch(
     mode: String?,
     received_on_alias: String?,

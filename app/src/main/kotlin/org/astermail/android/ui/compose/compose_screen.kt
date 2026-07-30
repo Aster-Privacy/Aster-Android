@@ -446,20 +446,33 @@ fun ComposeScreen(
             ""
         }
     }
+    val preloaded_signature = remember {
+        if (mode == "draft" || prefill.body.isNotBlank()) {
+            ""
+        } else {
+            settings_vm.ensure_signatures_hydrated()
+            settings_vm.signature_for(null)?.content.orEmpty()
+        }
+    }
     var body by remember {
         mutableStateOf(
-            if (prefill.body.isNotBlank()) prefill.body else share_body_prefix + initial_watermark,
+            when {
+                prefill.body.isNotBlank() -> prefill.body
+                preloaded_signature.isNotBlank() ->
+                    share_body_prefix + "\n\n" + preloaded_signature + initial_watermark
+                else -> share_body_prefix + initial_watermark
+            },
         )
     }
     var initial_to_chips by remember { mutableStateOf<List<String>>(emptyList()) }
     var initial_subject by remember { mutableStateOf("") }
-    var initial_body by remember { mutableStateOf("") }
+    var initial_body by remember { mutableStateOf(if (prefill.body.isNotBlank()) "" else body) }
     var initial_cc_chips by remember { mutableStateOf<List<String>>(emptyList()) }
     var initial_bcc_chips by remember { mutableStateOf<List<String>>(emptyList()) }
     val signature_loaded by settings_vm.signature_loaded.collectAsStateWithLifecycle()
     val signatures_list by settings_vm.signatures.collectAsStateWithLifecycle()
     var signature_applied by remember { mutableStateOf(false) }
-    var applied_signature by remember { mutableStateOf("") }
+    var applied_signature by remember { mutableStateOf(preloaded_signature) }
     val current_alias_id = remember(from_alias, settings_state.aliases, settings_state.custom_domain_addresses) {
         settings_state.aliases.firstOrNull { it.address == from_alias }?.id
             ?: settings_state.custom_domain_addresses.firstOrNull { it.address == from_alias }?.id
@@ -473,7 +486,12 @@ fun ComposeScreen(
         val watermark = if (show_branding) "\n\n${context.getString(R.string.compose_footer_secured_by_plain)}" else ""
         val new_body = share_body_prefix +
             if (resolved.isNotBlank()) "\n\n${resolved}${watermark}" else watermark
-        if (body == share_body_prefix + initial_watermark || body.isBlank()) {
+        val seeded_body = if (preloaded_signature.isNotBlank()) {
+            share_body_prefix + "\n\n" + preloaded_signature + initial_watermark
+        } else {
+            share_body_prefix + initial_watermark
+        }
+        if (body == seeded_body || body == share_body_prefix + initial_watermark || body.isBlank()) {
             body = new_body
             initial_body = new_body
         }
@@ -542,6 +560,7 @@ fun ComposeScreen(
     }
     val quoted_html = quoted_source?.first
     val quoted_meta = quoted_source?.second
+    var quoted_expanded by remember { mutableStateOf(false) }
     var is_sending by remember { mutableStateOf(false) }
     var sent by remember { mutableStateOf(false) }
     var send_error by remember { mutableStateOf<String?>(null) }
@@ -1029,15 +1048,15 @@ fun ComposeScreen(
 
         val quote_block = quoted_html?.let { qh ->
             val (from_addr, ts, subj) = quoted_meta ?: Triple("", "", "")
-            val header_label = if (mode == "forward") quote_forwarded_label else quote_original_label
-            val show_label = quote_show_template.format(header_label)
-            "<br><br><details><summary style=\"cursor:pointer;color:#6366f1;font-size:13px;padding:6px 0\">${escape_html(show_label)}</summary>" +
-                "<blockquote style=\"margin:8px 0 0;padding-left:12px;border-left:2px solid #ccc;color:#555;font-size:13px\">" +
+            "<br><div class=\"aster_quote gmail_quote\">" +
+                "<div class=\"aster_quote_attr gmail_attr\" style=\"color:#555;font-size:13px\">" +
                 "<div><b>${escape_html(quote_header_from)}</b> ${escape_html(from_addr)}</div>" +
-                "<div><b>${escape_html(quote_header_date)}</b> ${escape_html(ts)}</div>" +
+                "<div><b>${escape_html(quote_header_date)}</b> ${escape_html(format_quote_timestamp(ts))}</div>" +
                 "<div><b>${escape_html(quote_header_subject)}</b> ${escape_html(subj)}</div>" +
-                "<br>$qh" +
-                "</blockquote></details>"
+                "</div>" +
+                "<blockquote class=\"gmail_quote\" style=\"margin:8px 0 0;padding-left:12px;border-left:2px solid #ccc;color:#555;font-size:13px\">" +
+                qh +
+                "</blockquote></div>"
         }.orEmpty()
         val body_html = with_images + quote_block
 
@@ -1658,6 +1677,8 @@ fun ComposeScreen(
                         }
                     },
                     update = { et ->
+                        val target_min = ((if (quoted_html != null) 72 else 200) * et.resources.displayMetrics.density).toInt()
+                        if (et.minHeight != target_min) et.minHeight = target_min
                         val current = et.text?.toString().orEmpty()
                         if (current != body) {
                             val sel = et.selectionStart.coerceIn(0, body.length)
@@ -1669,9 +1690,108 @@ fun ComposeScreen(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .defaultMinSize(minHeight = 200.dp),
+                        .defaultMinSize(minHeight = if (quoted_html != null) 72.dp else 200.dp),
                 )
 
+            }
+
+            if (quoted_html != null) {
+                val quote_toggle_label = quote_show_template.format(
+                    if (mode == "forward") quote_forwarded_label else quote_original_label,
+                )
+                val quote_text_argb = colors.text_muted.toArgb()
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = AsterSpacing.lg),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .clip(SquircleShape(16.dp))
+                            .background(colors.bg_secondary)
+                            .clickable { quoted_expanded = !quoted_expanded }
+                            .semantics { contentDescription = quote_toggle_label }
+                            .padding(horizontal = 16.dp, vertical = 7.dp)
+                            .testTag("compose_quote_toggle"),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "•••",
+                            color = colors.text_muted,
+                            fontSize = 15.sp,
+                        )
+                    }
+                    AnimatedVisibility(
+                        visible = quoted_expanded,
+                        enter = androidx.compose.animation.expandVertically() + fadeIn(),
+                        exit = androidx.compose.animation.shrinkVertically() + fadeOut(),
+                    ) {
+                        val (quoted_from, quoted_ts, quoted_subject) = quoted_meta
+                            ?: Triple("", "", "")
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = AsterSpacing.sm, bottom = AsterSpacing.sm),
+                        ) {
+                            Text(
+                                text = "$quote_header_from $quoted_from",
+                                color = colors.text_muted,
+                                fontSize = 12.sp,
+                            )
+                            Text(
+                                text = "$quote_header_date ${format_quote_timestamp(quoted_ts)}",
+                                color = colors.text_muted,
+                                fontSize = 12.sp,
+                            )
+                            if (quoted_subject.isNotBlank()) {
+                                Text(
+                                    text = "$quote_header_subject $quoted_subject",
+                                    color = colors.text_muted,
+                                    fontSize = 12.sp,
+                                )
+                            }
+                            Spacer(Modifier.height(AsterSpacing.sm))
+                            androidx.compose.ui.viewinterop.AndroidView(
+                                factory = { ctx ->
+                                    android.widget.TextView(ctx).apply {
+                                        setTextColor(quote_text_argb)
+                                        textSize = 14f
+                                        setPadding(
+                                            (12 * resources.displayMetrics.density).toInt(),
+                                            0,
+                                            0,
+                                            0,
+                                        )
+                                        setTextIsSelectable(true)
+                                    }
+                                },
+                                update = { tv ->
+                                    tv.text = android.text.Html.fromHtml(
+                                        quoted_html,
+                                        android.text.Html.FROM_HTML_MODE_COMPACT,
+                                    ).toString().trim()
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+                    }
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(160.dp)
+                        .clickable(
+                            interactionSource = remember {
+                                androidx.compose.foundation.interaction.MutableInteractionSource()
+                            },
+                            indication = null,
+                        ) {
+                            body_editor_ref.value?.let { et ->
+                                et.requestFocus()
+                                et.setSelection(et.text?.length ?: 0)
+                            }
+                        },
+                )
             }
 
             Spacer(Modifier.height(AsterSpacing.lg))
@@ -3382,6 +3502,20 @@ private fun toggle_sheet_row(
 
 private fun escape_html(s: String): String =
     s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
+
+private fun format_quote_timestamp(raw: String): String {
+    val trimmed = raw.trim()
+    if (trimmed.isEmpty()) return ""
+    val instant = runCatching { java.time.OffsetDateTime.parse(trimmed).toInstant() }
+        .recoverCatching { java.time.Instant.parse(trimmed) }
+        .getOrNull() ?: return trimmed
+    return runCatching {
+        java.time.format.DateTimeFormatter
+            .ofPattern("EEE, MMM d, yyyy 'at' h:mm a")
+            .withZone(java.time.ZoneId.systemDefault())
+            .format(instant)
+    }.getOrDefault(trimmed)
+}
 
 private fun safe_href(raw: String): String? {
     val trimmed = raw.trim()

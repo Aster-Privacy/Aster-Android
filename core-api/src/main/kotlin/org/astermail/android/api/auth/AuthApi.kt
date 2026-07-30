@@ -86,7 +86,10 @@ data class TotpVerifyOutcome(
 )
 
 sealed interface LoginResult {
-    data class Success(val response: LoginResponse) : LoginResult
+    data class Success(
+        val response: LoginResponse,
+        val trusted_device_token: String? = null,
+    ) : LoginResult
     data class TotpRequired(val challenge: TotpChallengeResponse) : LoginResult
 }
 
@@ -249,9 +252,12 @@ class AuthApiImpl(private val client: ApiClient) : AuthApi {
         }
         val login_resp = client.json.decodeFromString<LoginResponse>(body_str)
         client.set_csrf(login_resp.csrf_token)
-        val refresh = login_resp.refresh_token
-            ?: parse_refresh_cookie(response.headers.getAll(HttpHeaders.SetCookie))
-        return LoginResult.Success(login_resp.copy(refresh_token = refresh))
+        val set_cookies = response.headers.getAll(HttpHeaders.SetCookie)
+        val refresh = login_resp.refresh_token ?: parse_refresh_cookie(set_cookies)
+        return LoginResult.Success(
+            response = login_resp.copy(refresh_token = refresh),
+            trusted_device_token = parse_trusted_device_cookie(set_cookies),
+        )
     }
 
     override suspend fun verify_totp_login(request: TotpLoginVerifyRequest): TotpVerifyOutcome {

@@ -41,7 +41,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -135,8 +134,7 @@ fun SenderAvatar(
                 Text(
                     text = initial_for(name, email),
                     color = fg_fb,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = (size.value * 0.4f).sp,
+                    style = avatar_initial_style(size),
                 )
             }
             val model = remember(profile_picture_url) { decode_avatar_model(profile_picture_url) }
@@ -196,8 +194,7 @@ fun SenderAvatar(
             Text(
                 text = initial_for(name, email),
                 color = fg,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = (size.value * 0.4f).sp,
+                style = avatar_initial_style(size),
             )
         }
         val request = remember(url) {
@@ -309,8 +306,7 @@ private fun AsterDomainAvatar(
                 Text(
                     text = initial_for(name, email),
                     color = Color.White,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = (size.value * 0.4f).sp,
+                    style = avatar_initial_style(size),
                 )
             }
             val model = remember(resolved_pic) { decode_avatar_model(resolved_pic) }
@@ -360,8 +356,7 @@ private fun initials_circle(
         Text(
             text = initial_for(name, email),
             color = fg,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = (size.value * 0.4f).sp,
+            style = avatar_initial_style(size),
         )
     }
 }
@@ -382,17 +377,19 @@ fun StackedAvatars(
         }
         return
     }
-    val take = list.take(max_visible)
-    val ring = (size.value * 0.08f).dp
-    val each_size = size
-    val step = size - (size.value * 0.34f).dp
-    val total_width = each_size + step * (take.size - 1)
-    Box(modifier = modifier.size(width = total_width, height = each_size)) {
+    val take = list.take(max_visible.coerceAtMost(3))
+    val ring = (size.value * 0.06f).dp
+    val each_size = if (take.size == 2) (size.value * 0.62f).dp else (size.value * 0.56f).dp
+    val alignments = when (take.size) {
+        2 -> listOf(Alignment.TopStart, Alignment.BottomEnd)
+        else -> listOf(Alignment.TopStart, Alignment.TopEnd, Alignment.BottomCenter)
+    }
+    Box(modifier = modifier.size(size)) {
         take.forEachIndexed { idx, (nm, em) ->
             androidx.compose.runtime.key(em.lowercase().ifBlank { nm.lowercase() }) {
                 Box(
                     modifier = Modifier
-                        .padding(start = step * idx)
+                        .align(alignments[idx])
                         .size(each_size)
                         .clip(CircleShape)
                         .background(AsterMaterial.colors.bg_primary),

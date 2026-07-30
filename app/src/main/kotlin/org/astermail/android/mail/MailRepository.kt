@@ -245,6 +245,7 @@ data class DecryptedReaction(
     val reaction_mail_item_id: String,
     val emoji: String,
     val reactor_email: String,
+    val is_own: Boolean = false,
 )
 
 data class ThreadMessageDecrypted(
@@ -2120,6 +2121,9 @@ class MailRepository @Inject constructor(
         recipient: String,
         emoji: String,
         sender_email: String? = null,
+        sender_alias_hash: String? = null,
+        reply_subject: String? = null,
+        in_reply_to: String? = null,
     ): Result<Unit> = runCatching {
         val from_addr = sender_email ?: session_key_store.get_user_email() ?: ""
         val payload = org.json.JSONObject().apply {
@@ -2177,6 +2181,9 @@ class MailRepository @Inject constructor(
                 envelope_nonce = envelope_nonce,
                 folder_token = sent_folder_token,
                 sender_email = from_addr.ifBlank { null },
+                sender_alias_hash = sender_alias_hash?.takeIf { it.isNotBlank() },
+                reply_subject = if (internal) null else reply_subject?.takeIf { it.isNotBlank() },
+                in_reply_to = if (internal) null else in_reply_to?.takeIf { it.isNotBlank() },
             ),
         )
         if (!response.success) {

@@ -462,6 +462,19 @@ fun MailDetailScreen(
         if (sender.isNotBlank() && GHOST_LOCAL_PATTERN.containsMatchIn(sender)) sender else null
     }
 
+    LaunchedEffect(reactions_enabled) {
+        if (reactions_enabled) {
+            settings_vm.load_aliases()
+            settings_vm.load_custom_domain_addresses()
+        }
+    }
+
+    LaunchedEffect(reactions_enabled, thread_ghost_email) {
+        if (reactions_enabled && !thread_ghost_email.isNullOrBlank()) {
+            settings_vm.load_ghost_aliases()
+        }
+    }
+
     val email = remember(email_id, api_item) {
         if (api_item != null) inbox_item_to_email(api_item) else null
     }
@@ -475,6 +488,52 @@ fun MailDetailScreen(
     val my_email = current_account?.email?.lowercase().orEmpty()
     val my_profile_pic = settings_state.user?.profile_picture?.takeIf { it.isNotBlank() }
         ?: current_account?.profile_picture?.takeIf { it.isNotBlank() }
+    val reaction_sender_options = remember(
+        my_email,
+        settings_state.aliases,
+        settings_state.custom_domain_addresses,
+        settings_state.ghost_aliases,
+    ) {
+        val options = mutableListOf<String>()
+        if (my_email.isNotBlank()) options.add(my_email)
+        settings_state.aliases
+            .filter { it.is_enabled && it.address.contains('@') }
+            .forEach { if (it.address !in options) options.add(it.address) }
+        settings_state.custom_domain_addresses
+            .filter { it.is_enabled && it.address.contains('@') }
+            .forEach { if (it.address !in options) options.add(it.address) }
+        settings_state.ghost_aliases
+            .filter { it.address.contains('@') }
+            .forEach { if (it.address !in options) options.add(it.address) }
+        options.toList()
+    }
+    val reaction_sender_hashes = remember(
+        settings_state.aliases,
+        settings_state.custom_domain_addresses,
+        settings_state.ghost_aliases,
+    ) {
+        val map = mutableMapOf<String, String>()
+        settings_state.aliases.forEach { map[it.address] = it.alias_address_hash }
+        settings_state.custom_domain_addresses.forEach { map[it.address] = it.local_part_hash }
+        settings_state.ghost_aliases.forEach { ghost ->
+            if (ghost.address.isNotBlank() && ghost.alias_address_hash.isNotBlank()) {
+                map[ghost.address] = ghost.alias_address_hash
+            }
+        }
+        map.toMap()
+    }
+    val reaction_identity_for: (String) -> org.astermail.android.ui.compose.ReactionSenderIdentity =
+        { message_id ->
+            val target = thread_state.messages.find { it.id == message_id }
+            org.astermail.android.ui.compose.resolve_reaction_sender_identity(
+                own_recipient_addresses = target?.let { it.to_addresses + it.cc_addresses }.orEmpty(),
+                message_sender_email = target?.sender_email.orEmpty(),
+                is_own_message = target?.raw_item?.item_type == "sent",
+                alias_options = reaction_sender_options,
+                alias_hash_map = reaction_sender_hashes,
+                user_email = my_email,
+            )
+        }
     var show_action_sheet by remember { mutableStateOf(false) }
     var show_topbar_menu by remember { mutableStateOf(false) }
     var show_message_details by remember { mutableStateOf(false) }
@@ -513,17 +572,15 @@ fun MailDetailScreen(
     val expanded_ids = remember(email_id) {
         mutableStateOf(emptySet<String>())
     }
-    val collapsed_ids = remember(email_id) {
-        mutableStateOf(emptySet<String>())
+    val seeded_last_id = remember(email_id) {
+        mutableStateOf<String?>(null)
     }
     LaunchedEffect(email_id, messages.size) {
         if (messages.isEmpty()) return@LaunchedEffect
-        if (expanded_ids.value.isNotEmpty()) return@LaunchedEffect
-        val initial = mutableSetOf(messages.last().id)
-        if (messages.size <= 4) {
-            messages.filter { !it.is_read }.takeLast(5).forEach { initial.add(it.id) }
-        }
-        expanded_ids.value = initial.toSet()
+        val last_id = messages.last().id
+        if (seeded_last_id.value == last_id) return@LaunchedEffect
+        seeded_last_id.value = last_id
+        expanded_ids.value = expanded_ids.value + last_id
     }
 
     fun show_toast(msg: String) {
@@ -997,7 +1054,6 @@ fun MailDetailScreen(
                     val is_last = idx == messages.size - 1
                     val is_last_message = idx == messages.size - 1
                     val is_expanded = messages.size <= 1 ||
-                        is_last_message ||
                         expanded_ids.value.contains(msg.id)
 
                     val is_hidden = hidden_count > 0 && idx >= 1 && idx < 1 + hidden_count
@@ -1075,8 +1131,7 @@ fun MailDetailScreen(
                             },
                             on_collapse = {
                                 anchor_toggle(msg.id)
-                                expanded_ids.value = expanded_ids.value.toMutableSet().apply { remove(msg.id) }
-                                collapsed_ids.value = collapsed_ids.value + msg.id
+                                expanded_ids.value = expanded_ids.value - msg.id
                             },
                             on_sender_tap = { email, name ->
                                 profile_sender = email to name
@@ -1115,12 +1170,18 @@ fun MailDetailScreen(
                             reactions = if (reactions_enabled) message_reactions[msg.id].orEmpty() else emptyList(),
                             on_react = { emoji ->
                                 haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                                mail_vm.send_reaction(msg.id, emoji) { error ->
+                                val identity = reaction_identity_for(msg.id)
+                                mail_vm.send_reaction(
+                                    message_id = msg.id,
+                                    emoji = emoji,
+                                    sender_email = identity.email,
+                                    sender_alias_hash = identity.alias_hash,
+                                ) { error ->
                                     if (error != null) show_toast(error)
                                 }
                             },
                             is_system = is_system_sender,
-                            can_collapse = messages.size > 1 && !is_last_message,
+                            can_collapse = messages.size > 1,
                         )
                     } else {
                         collapsed_message(
@@ -1131,8 +1192,7 @@ fun MailDetailScreen(
                             message_index = idx,
                             on_expand = {
                                 anchor_toggle(msg.id)
-                                expanded_ids.value = expanded_ids.value.toMutableSet().apply { add(msg.id) }
-                                collapsed_ids.value = collapsed_ids.value - msg.id
+                                expanded_ids.value = expanded_ids.value + msg.id
                             },
                         )
                     }
@@ -1173,7 +1233,13 @@ fun MailDetailScreen(
                         on_pick = { emoji ->
                             reaction_picker_open = false
                             haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                            mail_vm.send_reaction(latest_msg.id, emoji) { error ->
+                            val identity = reaction_identity_for(latest_msg.id)
+                            mail_vm.send_reaction(
+                                message_id = latest_msg.id,
+                                emoji = emoji,
+                                sender_email = identity.email,
+                                sender_alias_hash = identity.alias_hash,
+                            ) { error ->
                                 if (error != null) show_toast(error)
                             }
                         },
@@ -2369,7 +2435,7 @@ private fun reaction_chip_row(
                 Triple(
                     emoji,
                     list.size,
-                    list.any { it.reactor_email.equals(my_email, ignoreCase = true) },
+                    list.any { it.is_own || it.reactor_email.equals(my_email, ignoreCase = true) },
                 )
             }
             .sortedByDescending { it.second }
@@ -2414,10 +2480,10 @@ private fun reaction_chip_row(
         val reactors = reactions.filter { it.emoji == emoji }
         val you_label = stringResource(R.string.reaction_info_you, emoji)
         val others = reactors
-            .filterNot { it.reactor_email.equals(my_email, ignoreCase = true) }
+            .filterNot { it.is_own || it.reactor_email.equals(my_email, ignoreCase = true) }
             .map { it.reactor_email }
             .distinct()
-        val mine = reactors.any { it.reactor_email.equals(my_email, ignoreCase = true) }
+        val mine = reactors.any { it.is_own || it.reactor_email.equals(my_email, ignoreCase = true) }
         org.astermail.android.design.components.AsterAlertDialog(
             on_dismiss = { info_emoji = null },
             title = stringResource(R.string.reaction_info_title),
@@ -3731,9 +3797,10 @@ private fun is_safe_unsubscribe_url(url: String): Boolean {
 
 private const val FALLBACK_MEASURE_JS =
     "(function(){var m=document.getElementById('m');if(!m)return 0;" +
-        "if(document.documentElement.getAttribute('data-nl'))return Math.round(m.getBoundingClientRect().height);" +
+        "var sy=window.pageYOffset||document.documentElement.scrollTop||0;" +
+        "if(document.documentElement.getAttribute('data-nl'))return Math.ceil(m.getBoundingClientRect().bottom+sy);" +
         "var pb=parseFloat(window.getComputedStyle(document.body).paddingBottom)||0;" +
-        "return Math.ceil(m.getBoundingClientRect().bottom+pb)+4;})()"
+        "return Math.ceil(m.getBoundingClientRect().bottom+sy+pb)+4;})()"
 
 private class height_channel(private val on_height: (Int, Boolean) -> Unit) {
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
@@ -3965,7 +4032,7 @@ private fun translation_banner(
 }
 
 @Composable
-private fun email_html_view(
+internal fun email_html_view(
     html: String,
     modifier: Modifier = Modifier,
     allow_external: Boolean = false,
@@ -4089,7 +4156,7 @@ private fun email_html_view(
 
     val measure_js = """(function(){
         var el=document.getElementById('m');
-        if(el) console.log('ASTER_HEIGHT:'+(el.offsetHeight));
+        if(el) console.log('ASTER_HEIGHT:'+Math.ceil(el.getBoundingClientRect().bottom+(window.pageYOffset||0)));
     })()"""
 
     fun build_html(body: String): String {
@@ -4119,6 +4186,7 @@ private fun email_html_view(
         val white_page = is_dark && is_html_body && designed_light && !force_dark_emails
         val simple_dark = is_dark && is_html_body && !white_page
         val force_light = is_html_body && !simple_dark
+        val chip_dark = is_dark && !white_page
 
         val sys_font = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
         val body_style = when {
@@ -4127,7 +4195,7 @@ private fun email_html_view(
             is_html_body ->
                 "background-color:transparent;margin:0;padding:4px 16px 0 16px"
             else ->
-                "background-color:transparent;color:$fg_hex;margin:0;padding:4px 16px 0 16px;font-family:$sys_font;font-size:14px;line-height:1.6;word-wrap:break-word"
+                "background-color:transparent;color:$fg_hex;margin:0;padding:4px 16px 6px 16px;font-family:$sys_font;font-size:16px;line-height:1.55;word-wrap:break-word"
         }
 
         val dark_css = when {
@@ -4195,10 +4263,10 @@ $table_css
 .aster_quote,.gmail_quote,.protonmail_quote,.yahoo_quoted,.moz-cite-prefix{display:none}
 .aster-quoted-content .aster_quote,.aster-quoted-content .gmail_quote,.aster-quoted-content .protonmail_quote,.aster-quoted-content .yahoo_quoted,.aster-quoted-content .moz-cite-prefix,.aster-forwarded-content .aster_quote,.aster-forwarded-content .gmail_quote,.aster-forwarded-content .protonmail_quote{display:block;margin:0;padding:0}
 blockquote{margin:8px 0;padding-left:12px;border-left:2px solid $bq_border;color:$bq_color}
-.aster-quoted-wrapper{margin-top:8px}
-.aster-quote-toggle{display:inline-flex;align-items:center;justify-content:center;height:16px;padding:0 4px;border-radius:3px;border:1px solid rgba(128,128,128,0.25);background:rgba(128,128,128,0.08);color:rgba(100,100,100,0.7);cursor:pointer;font-size:8px;letter-spacing:1.5px;line-height:1;vertical-align:middle;user-select:none;-webkit-tap-highlight-color:transparent}
-.aster-quote-toggle:active,.aster-quote-toggle.aster-quote-expanded{background:rgba(128,128,128,0.2);border-color:rgba(128,128,128,0.45)}
-.aster-quoted-content{margin-top:8px;color:$bq_color;font-size:14px;line-height:20px}
+.aster-quoted-wrapper{margin-top:2px}
+.aster-quote-toggle{display:inline-flex;align-items:center;justify-content:center;min-height:26px;padding:0 14px;margin:0;border-radius:13px;border:none;outline:none;background:${if (chip_dark) "rgba(255,255,255,0.12)" else "rgba(0,0,0,0.08)"};color:${if (chip_dark) "rgba(255,255,255,0.65)" else "rgba(0,0,0,0.55)"};cursor:pointer;font-size:15px;letter-spacing:2px;line-height:1;vertical-align:middle;user-select:none;-webkit-tap-highlight-color:transparent}
+.aster-quote-toggle:active,.aster-quote-toggle.aster-quote-expanded{background:${if (chip_dark) "rgba(255,255,255,0.2)" else "rgba(0,0,0,0.16)"}}
+.aster-quoted-content{margin-top:8px;color:$bq_color;font-size:15px;line-height:21px}
 .aster-quoted-content .aster_quote_attr,.aster-quoted-content .gmail_attr{color:$bq_color;font-size:12px;margin-bottom:4px}
 .aster-quoted-content blockquote{margin:0;padding:0 0 0 12px;border-left:2px solid $bq_border2;color:$bq_color}
 .aster-quoted-content blockquote blockquote{border-left-color:$bq_border3}
@@ -4423,15 +4491,35 @@ $dark_css
   function measure_h(){
     var m=document.getElementById('m');
     if(!m)return 0;
-    if(document.documentElement.getAttribute('data-nl'))return aster_content_height();
+    var scroll_y=window.pageYOffset||document.documentElement.scrollTop||0;
+    var top_offset=Math.max(0,m.getBoundingClientRect().top+scroll_y);
+    if(document.documentElement.getAttribute('data-nl'))return Math.ceil(aster_content_height()+top_offset);
     var pb=parseFloat(window.getComputedStyle(document.body).paddingBottom)||0;
-    var raw=Math.ceil(m.getBoundingClientRect().bottom+pb)+4;
+    var raw=Math.ceil(m.getBoundingClientRect().bottom+scroll_y+pb)+4;
     var trimmed=aster_content_height();
-    if(trimmed>0&&trimmed<raw)return Math.ceil(trimmed+pb)+4;
+    if(trimmed>0&&trimmed+top_offset<raw)return Math.ceil(trimmed+top_offset+pb)+4;
     return raw;
   }
   function report_h(){if(document.getElementById('m'))console.log('ASTER_HEIGHT:'+measure_h())}
   function report_h_exact(){if(document.getElementById('m'))console.log('ASTER_HEIGHT_EXACT:'+measure_h())}
+  function schedule_h(){
+    report_h_exact();
+    requestAnimationFrame(function(){report_h_exact();requestAnimationFrame(report_h_exact)});
+    setTimeout(report_h_exact,120);
+    setTimeout(report_h_exact,400);
+    setTimeout(report_h_exact,1200);
+  }
+  function watch_media(root){
+    try{
+      var im=root.querySelectorAll('img');
+      for(var i=0;i<im.length;i++){
+        var g=im[i];
+        if(g.complete&&g.naturalWidth>0)continue;
+        g.addEventListener('load',schedule_h,{once:true});
+        g.addEventListener('error',schedule_h,{once:true});
+      }
+    }catch(_){}
+  }
   function aster_content_height(){
     var m=document.getElementById('m');
     if(!m)return 0;
@@ -4480,6 +4568,13 @@ $dark_css
         if(n.nodeType===3&&n.nodeValue&&n.nodeValue.trim().length>0){consider(r.bottom);break;}
       }
     }
+    try{
+      var caps=m.querySelectorAll('.aster-quote-toggle,details.aster-forwarded-collapse>summary');
+      for(var q=0;q<caps.length;q++){
+        var cr=caps[q].getBoundingClientRect();
+        if(cr.height>0&&cr.width>0)consider(cr.bottom);
+      }
+    }catch(_){}
     if(content<=0)return full;
     var trailing=full-content;
     if(trailing<=48)return full;
@@ -4718,13 +4813,36 @@ $dark_css
   setTimeout(aster_fit,300);
   setTimeout(aster_fit,1000);
   setTimeout(aster_fit,2500);
+  function is_blank_spacer(n){
+    if(!n)return false;
+    if(n.nodeType===3)return !(n.nodeValue||'').trim().length;
+    if(n.nodeType!==1)return false;
+    if(n.tagName==='BR')return true;
+    if(['DIV','P','SPAN'].indexOf(n.tagName)<0)return false;
+    if((n.textContent||'').trim().length)return false;
+    return !n.querySelector('img,hr,table,video,audio,iframe,object');
+  }
+  function trim_trailing_gap(node){
+    if(!node)return;
+    var prev=node.previousSibling;
+    while(is_blank_spacer(prev)){
+      var rm=prev;prev=prev.previousSibling;
+      if(rm.parentNode)rm.parentNode.removeChild(rm);
+    }
+    var next=node.nextSibling;
+    while(is_blank_spacer(next)){
+      var rn=next;next=next.nextSibling;
+      if(rn.parentNode)rn.parentNode.removeChild(rn);
+    }
+  }
   function make_toggle(content_el){
     var wrapper=document.createElement('div');wrapper.className='aster-quoted-wrapper';
     var btn=document.createElement('button');btn.className='aster-quote-toggle';btn.type='button';btn.textContent='•••';
     var cdiv=document.createElement('div');cdiv.className='aster-quoted-content';cdiv.style.display='none';
     content_el.parentNode.insertBefore(wrapper,content_el);cdiv.appendChild(content_el);
-    btn.addEventListener('click',function(){var h=cdiv.style.display==='none';cdiv.style.display=h?'':'none';btn.classList.toggle('aster-quote-expanded',h);report_h_exact()});
+    btn.addEventListener('click',function(){var h=cdiv.style.display==='none';cdiv.style.display=h?'':'none';btn.classList.toggle('aster-quote-expanded',h);if(h)watch_media(cdiv);schedule_h()});
     wrapper.appendChild(btn);wrapper.appendChild(cdiv);
+    trim_trailing_gap(wrapper);
   }
   var proton=body.querySelector('div.protonmail_quote');
   if(proton){
@@ -4740,21 +4858,42 @@ $dark_css
       meta.forEach(function(n){cdiv2.appendChild(n)});det.appendChild(cdiv2);body.appendChild(det);
     }
   }
+  try{
+    if(!body.querySelector('div.aster_quote,div.gmail_quote')){
+      var legacy=body.querySelector('details:not(.aster-forwarded-collapse)');
+      var legacy_bq=legacy?legacy.querySelector('blockquote'):null;
+      if(legacy_bq){
+        var legacy_wrap=document.createElement('div');legacy_wrap.className='aster_quote';
+        while(legacy_bq.firstChild)legacy_wrap.appendChild(legacy_bq.firstChild);
+        legacy.parentNode.replaceChild(legacy_wrap,legacy);
+      }
+    }
+  }catch(_){}
   if(!body.querySelector('details.aster-forwarded-collapse')){
     var gq=body.querySelector('div.aster_quote,div.gmail_quote');
     if(gq)make_toggle(gq);
   }
   if(!body.querySelector('.aster-quoted-wrapper')&&!body.querySelector('details.aster-forwarded-collapse')){
     var wrote_re=/(^|[\s> ])(On\s[^\n]{1,200}?\bwrote\s*:)/i;
+    var wm_re=/(^|[\s> ])(Secured by Aster Mail)/i;
     var walker=document.createTreeWalker(body,NodeFilter.SHOW_TEXT);
     var marker=null;
+    var wrote_node=null;var wrote_idx=-1;
     while(walker.nextNode()){
-      var nd=walker.currentNode;var txt=nd.nodeValue||'';var mm=wrote_re.exec(txt);
-      if(mm){
-        var on_idx=mm.index+(mm[1]?mm[1].length:0);
-        marker=(on_idx>0)?nd.splitText(on_idx):nd;
+      var nd=walker.currentNode;var txt=nd.nodeValue||'';
+      var wm=wm_re.exec(txt);
+      if(wm){
+        var wm_idx=wm.index+(wm[1]?wm[1].length:0);
+        marker=(wm_idx>0)?nd.splitText(wm_idx):nd;
         break;
       }
+      if(wrote_node===null){
+        var mm=wrote_re.exec(txt);
+        if(mm){wrote_node=nd;wrote_idx=mm.index+(mm[1]?mm[1].length:0);}
+      }
+    }
+    if(!marker&&wrote_node){
+      marker=(wrote_idx>0)?wrote_node.splitText(wrote_idx):wrote_node;
     }
     if(marker){
       var to_col=[];
@@ -4766,13 +4905,16 @@ $dark_css
         while(ns){var nxn=ns.nextSibling;to_col.push(ns);ns=nxn}
         anc=anc.parentNode;
       }
-      if(to_col.length>0){
+      var col_text='';
+      for(var ct=0;ct<to_col.length;ct++)col_text+=(to_col[ct].textContent||to_col[ct].nodeValue||'');
+      var has_quote_sig=/wrote\s*:|-{3,}\s*(?:Original|Forwarded)|Forwarded message|^\s*>/i.test(col_text);
+      if(to_col.length>0&&(has_quote_sig||col_text.replace(/\s+/g,' ').trim().length>60)){
         var w2=document.createElement('div');w2.className='aster-quoted-wrapper';
         var b2=document.createElement('button');b2.className='aster-quote-toggle';b2.type='button';b2.textContent='•••';
         var c2=document.createElement('div');c2.className='aster-quoted-content';c2.style.display='none';
         to_col.forEach(function(node){c2.appendChild(node)});
-        b2.addEventListener('click',function(){var h=c2.style.display==='none';c2.style.display=h?'':'none';b2.classList.toggle('aster-quote-expanded',h);report_h_exact()});
-        w2.appendChild(b2);w2.appendChild(c2);(document.getElementById('m')||body).appendChild(w2);
+        b2.addEventListener('click',function(){var h=c2.style.display==='none';c2.style.display=h?'':'none';b2.classList.toggle('aster-quote-expanded',h);if(h)watch_media(c2);schedule_h()});
+        w2.appendChild(b2);w2.appendChild(c2);(document.getElementById('m')||body).appendChild(w2);trim_trailing_gap(w2);
       }
     }
   }
@@ -4829,6 +4971,12 @@ $dark_css
     ev.stopPropagation();
     window.location.href='asterimg:'+encodeURIComponent(isrc);
   },true);
+  try{
+    var dts=document.querySelectorAll('details.aster-forwarded-collapse');
+    for(var d=0;d<dts.length;d++){
+      (function(el){el.addEventListener('toggle',function(){if(el.open)watch_media(el);schedule_h()})})(dts[d]);
+    }
+  }catch(_){}
   report_h_exact();
 })();
 </script></body></html>"""
@@ -4872,7 +5020,6 @@ $dark_css
                     measured_dp_ref[0] = new_dp.value
                     measured_scale_ref[0] = scale_ref[0]
                     if (zoom_last_ref[0] > 0f) zoom_base_ref[0] = zoom_last_ref[0]
-                    if (is_natural) body_height_cache.put(height_cache_key, new_dp.value)
                 }
             }
         }

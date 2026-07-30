@@ -208,6 +208,9 @@ class AuthRepository @Inject constructor(
                 )
             }
             is LoginResult.Success -> {
+                login_result.trusted_device_token?.takeIf { it.isNotBlank() }?.let { token ->
+                    trusted_device_store.put_token(normalized, token)
+                }
                 complete_login(login_result.response, password_bytes, password_hash_bytes, salt_bytes)
                 LoginOutcome.Success
             }

@@ -72,6 +72,7 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterTopBar
+import org.astermail.android.ui.mail.avatar_initial_style
 
 @Composable
 internal fun relative_time_label(iso: String?): String {
@@ -258,8 +259,7 @@ internal fun avatar_circle(seed: String, size_dp: Int = 60, image_url: String? =
             Text(
                 text = initial,
                 color = colors.avatar_text,
-                fontSize = (size_dp / 2.4).sp,
-                fontWeight = FontWeight.SemiBold,
+                style = avatar_initial_style((size_dp / 2.4).sp),
             )
         }
     }
