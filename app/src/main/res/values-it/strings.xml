@@ -1602,6 +1602,15 @@
     <string name="standard">Standard</string>
     <string name="react">Reagisci</string>
     <string name="add_reaction">Aggiungi reazione</string>
+    <string name="reactions_disabled">Le reazioni sono disattivate nelle tue impostazioni.</string>
+    <string name="cannot_react_own_message">Non puoi reagire a un tuo messaggio.</string>
+    <string name="cannot_react_draft">Non puoi reagire a una bozza o a un messaggio programmato.</string>
+    <string name="cannot_react_spam_or_trash">Non puoi reagire ai messaggi in Spam o Cestino.</string>
+    <string name="cannot_react_reply_to">Non puoi reagire a un messaggio con un indirizzo di risposta.</string>
+    <string name="cannot_react_too_many_recipients">Non puoi reagire a un messaggio con più di 20 destinatari.</string>
+    <string name="cannot_react_bcc">Non puoi reagire a un messaggio in cui eri in Ccn.</string>
+    <string name="cannot_react_too_many_emojis">Questo messaggio ha già il numero massimo di reazioni.</string>
+    <string name="cannot_react_no_recipient">Questo messaggio non ha un mittente a cui inviare la reazione.</string>
     <string name="reaction_failed">Impossibile inviare la reazione</string>
     <string name="copy_address">Copia indirizzo</string>
     <string name="sender_on_aster">Account Aster</string>
@@ -1687,8 +1696,6 @@
     <string name="standard_point_server">Il server di posta ricevente può leggere il contenuto</string>
     <string name="standard_point_storage">Viene archiviato cifrato appena arriva ad Aster</string>
     <string name="phishing_signal_authentication_failed">%1$s non ha superato l\'autenticazione del mittente</string>
-    <string name="sender_verified">Verificato</string>
-    <string name="sender_verified_description">Aster ha confermato che questo messaggio proviene davvero da %1$s.</string>
     <string name="sender_unverified_title">Impossibile verificare il mittente</string>
     <string name="sender_unverified_description">I controlli che dimostrano la provenienza da %1$s non sono stati superati. Fai attenzione a link, allegati e a qualsiasi richiesta.</string>
     <string name="sender_authentication">Controlli sul mittente</string>
@@ -2268,6 +2275,7 @@
     <string name="kids_reserved_addresses">Indirizzi riservati ai bambini</string>
     <string name="kids_reserved_subtitle">Riserva un indirizzo per tuo figlio. Condividi il link di attivazione così potrà completare la configurazione con una password sua.</string>
     <string name="kids_seats_used">%1$d di %2$d posti famiglia usati</string>
+    <string name="kids_seats_free">%1$d posti disponibili</string>
     <string name="kids_no_reservations">Ancora nessun indirizzo riservato. Riservane uno su astermail.org.</string>
     <string name="kids_reserve_on_web">Riserva sul web</string>
     <string name="kids_status_reserved">Riservato</string>

@@ -1599,6 +1599,15 @@
     <string name="standard">标准</string>
     <string name="react">回应</string>
     <string name="add_reaction">添加回应</string>
+    <string name="reactions_disabled">设置中已关闭回应功能。</string>
+    <string name="cannot_react_own_message">无法对自己发送的邮件进行回应。</string>
+    <string name="cannot_react_draft">无法对草稿或定时邮件进行回应。</string>
+    <string name="cannot_react_spam_or_trash">无法对垃圾邮件或回收站中的邮件进行回应。</string>
+    <string name="cannot_react_reply_to">无法对带有回复地址的邮件进行回应。</string>
+    <string name="cannot_react_too_many_recipients">无法对收件人超过 20 位的邮件进行回应。</string>
+    <string name="cannot_react_bcc">无法对你以密送身份收到的邮件进行回应。</string>
+    <string name="cannot_react_too_many_emojis">该邮件的回应数量已达上限。</string>
+    <string name="cannot_react_no_recipient">该邮件没有可发送回应的发件人。</string>
     <string name="reaction_failed">无法发送回应</string>
     <string name="copy_address">复制地址</string>
     <string name="sender_on_aster">Aster 账户</string>
@@ -1684,8 +1693,6 @@
     <string name="standard_point_server">接收方邮件服务器可以读取内容</string>
     <string name="standard_point_storage">到达 Aster 后即加密存储</string>
     <string name="phishing_signal_authentication_failed">%1$s 未通过发件人身份验证</string>
-    <string name="sender_verified">已验证</string>
-    <string name="sender_verified_description">Aster 已确认这封邮件确实来自 %1$s。</string>
     <string name="sender_unverified_title">无法验证发件人</string>
     <string name="sender_unverified_description">用于证明邮件来自 %1$s 的检查未通过。请谨慎对待其中的链接、附件以及任何要求你执行的操作。</string>
     <string name="sender_authentication">发件人检查</string>
@@ -2265,6 +2272,7 @@
     <string name="kids_reserved_addresses">为孩子预留的地址</string>
     <string name="kids_reserved_subtitle">为孩子预留一个地址。把认领链接发给他，他就能用自己的密码完成设置。</string>
     <string name="kids_seats_used">家庭名额已用 %1$d / %2$d</string>
+    <string name="kids_seats_free">剩余 %1$d 个名额</string>
     <string name="kids_no_reservations">还没有预留地址。请在 astermail.org 预留一个。</string>
     <string name="kids_reserve_on_web">在网页端预留</string>
     <string name="kids_status_reserved">已预留</string>

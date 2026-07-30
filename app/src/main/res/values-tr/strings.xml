@@ -1602,6 +1602,15 @@
     <string name="standard">Standart</string>
     <string name="react">Tepki ver</string>
     <string name="add_reaction">Tepki ekle</string>
+    <string name="reactions_disabled">Tepkiler ayarlarınızda kapalı.</string>
+    <string name="cannot_react_own_message">Kendi mesajınıza tepki veremezsiniz.</string>
+    <string name="cannot_react_draft">Taslak veya zamanlanmış bir mesaja tepki veremezsiniz.</string>
+    <string name="cannot_react_spam_or_trash">Spam veya Çöp Kutusu\'ndaki mesajlara tepki veremezsiniz.</string>
+    <string name="cannot_react_reply_to">Yanıt adresi olan bir mesaja tepki veremezsiniz.</string>
+    <string name="cannot_react_too_many_recipients">20\'den fazla alıcısı olan bir mesaja tepki veremezsiniz.</string>
+    <string name="cannot_react_bcc">Gizli kopyada olduğunuz bir mesaja tepki veremezsiniz.</string>
+    <string name="cannot_react_too_many_emojis">Bu mesaj zaten en fazla sayıda tepkiye sahip.</string>
+    <string name="cannot_react_no_recipient">Bu mesajın tepki gönderilecek bir göndereni yok.</string>
     <string name="reaction_failed">Tepki gönderilemedi</string>
     <string name="copy_address">Adresi kopyala</string>
     <string name="sender_on_aster">Aster hesabı</string>
@@ -1687,8 +1696,6 @@
     <string name="standard_point_server">Alıcı posta sunucusu içeriği okuyabilir</string>
     <string name="standard_point_storage">Aster\'a ulaştığında şifrelenerek saklanır</string>
     <string name="phishing_signal_authentication_failed">%1$s gönderen doğrulamasından geçemedi</string>
-    <string name="sender_verified">Doğrulandı</string>
-    <string name="sender_verified_description">Aster, bu mesajın gerçekten %1$s adresinden geldiğini doğruladı.</string>
     <string name="sender_unverified_title">Gönderen doğrulanamadı</string>
     <string name="sender_unverified_description">Mesajın %1$s adresinden geldiğini kanıtlayan kontroller geçilemedi. Bağlantılara, eklere ve istenen işlemlere dikkat edin.</string>
     <string name="sender_authentication">Gönderen kontrolleri</string>
@@ -2268,6 +2275,7 @@
     <string name="kids_reserved_addresses">Çocuklar için ayrılmış adresler</string>
     <string name="kids_reserved_subtitle">Çocuğun için bir adres ayır. Devralma bağlantısını paylaş ki kurulumu kendi parolasıyla tamamlasın.</string>
     <string name="kids_seats_used">%2$d aile yerinin %1$d tanesi dolu</string>
+    <string name="kids_seats_free">%1$d yer müsait</string>
     <string name="kids_no_reservations">Henüz ayrılmış adres yok. astermail.org üzerinden bir tane ayır.</string>
     <string name="kids_reserve_on_web">Web\'de ayır</string>
     <string name="kids_status_reserved">Ayrıldı</string>

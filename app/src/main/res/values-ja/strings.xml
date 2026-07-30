@@ -1599,6 +1599,15 @@
     <string name="standard">標準</string>
     <string name="react">リアクション</string>
     <string name="add_reaction">リアクションを追加</string>
+    <string name="reactions_disabled">設定でリアクションがオフになっています。</string>
+    <string name="cannot_react_own_message">自分のメッセージにはリアクションできません。</string>
+    <string name="cannot_react_draft">下書きや送信予定のメッセージにはリアクションできません。</string>
+    <string name="cannot_react_spam_or_trash">迷惑メールやゴミ箱のメッセージにはリアクションできません。</string>
+    <string name="cannot_react_reply_to">返信先アドレスがあるメッセージにはリアクションできません。</string>
+    <string name="cannot_react_too_many_recipients">受信者が20人を超えるメッセージにはリアクションできません。</string>
+    <string name="cannot_react_bcc">BCCで受け取ったメッセージにはリアクションできません。</string>
+    <string name="cannot_react_too_many_emojis">このメッセージはすでにリアクションの上限に達しています。</string>
+    <string name="cannot_react_no_recipient">このメッセージにはリアクションの送信先となる送信者がいません。</string>
     <string name="reaction_failed">リアクションを送信できませんでした</string>
     <string name="copy_address">アドレスをコピー</string>
     <string name="sender_on_aster">Asterアカウント</string>
@@ -1684,8 +1693,6 @@
     <string name="standard_point_server">受信側のメールサーバーは内容を読めます</string>
     <string name="standard_point_storage">Asterに届くと暗号化して保存されます</string>
     <string name="phishing_signal_authentication_failed">%1$sは送信者認証に合格しませんでした</string>
-    <string name="sender_verified">検証済み</string>
-    <string name="sender_verified_description">このメッセージが確かに%1$sから送信されたことをAsterが確認しました。</string>
     <string name="sender_unverified_title">送信者を検証できませんでした</string>
     <string name="sender_unverified_description">%1$sからの送信であることを証明する検査に合格しませんでした。リンクや添付ファイル、要求される操作に注意してください。</string>
     <string name="sender_authentication">送信者の検査</string>
@@ -2265,6 +2272,7 @@
     <string name="kids_reserved_addresses">子ども用に確保したアドレス</string>
     <string name="kids_reserved_subtitle">お子さま用のアドレスを確保できます。受け取りリンクを渡せば、本人のパスワードで設定を終えられます。</string>
     <string name="kids_seats_used">ファミリー枠 %2$d 件中 %1$d 件を使用</string>
+    <string name="kids_seats_free">空き %1$d 件</string>
     <string name="kids_no_reservations">確保したアドレスはまだありません。astermail.org で確保してください。</string>
     <string name="kids_reserve_on_web">ウェブで確保</string>
     <string name="kids_status_reserved">確保済み</string>

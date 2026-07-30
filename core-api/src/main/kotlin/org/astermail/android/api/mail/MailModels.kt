@@ -258,6 +258,7 @@ data class BulkScopeFilter(
     val is_spam: Boolean? = null,
     val is_starred: Boolean? = null,
     val is_snoozed: Boolean? = null,
+    val label_token: String? = null,
 )
 
 @Serializable

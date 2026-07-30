@@ -71,6 +71,8 @@ data class ThreadRow(
     val participants: List<Pair<String, String>> = emptyList(),
 )
 
+fun thread_open_target_id(thread: ThreadRow): String = thread.newest.id
+
 fun group_by_thread(emails: List<Email>): List<ThreadRow> {
     val seen_threads = mutableMapOf<String, MutableList<Email>>()
     for (e in emails) {

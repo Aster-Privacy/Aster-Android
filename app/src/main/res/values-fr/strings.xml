@@ -2088,6 +2088,15 @@
     <string name="compose_locked_message">Déverrouillez Aster pour continuer à écrire. Votre brouillon est en sécurité.</string>
     <string name="react">Réagir</string>
     <string name="add_reaction">Ajouter une réaction</string>
+    <string name="reactions_disabled">Les réactions sont désactivées dans vos paramètres.</string>
+    <string name="cannot_react_own_message">Vous ne pouvez pas réagir à votre propre message.</string>
+    <string name="cannot_react_draft">Vous ne pouvez pas réagir à un brouillon ou à un message programmé.</string>
+    <string name="cannot_react_spam_or_trash">Vous ne pouvez pas réagir aux messages dans Spam ou Corbeille.</string>
+    <string name="cannot_react_reply_to">Vous ne pouvez pas réagir à un message avec une adresse de réponse.</string>
+    <string name="cannot_react_too_many_recipients">Vous ne pouvez pas réagir à un message de plus de 20 destinataires.</string>
+    <string name="cannot_react_bcc">Vous ne pouvez pas réagir à un message où vous étiez en Cci.</string>
+    <string name="cannot_react_too_many_emojis">Ce message a déjà le nombre maximal de réactions.</string>
+    <string name="cannot_react_no_recipient">Ce message n\'a aucun expéditeur à qui envoyer la réaction.</string>
     <string name="reaction_failed">Impossible d\'envoyer la réaction</string>
     <string name="copy_address">Copier l\'adresse</string>
     <string name="sender_on_aster">Compte Aster</string>
@@ -2154,8 +2163,6 @@
     <string name="standard_point_server">Le serveur de messagerie destinataire peut lire le contenu</string>
     <string name="standard_point_storage">Stocké chiffré dès son arrivée chez Aster</string>
     <string name="phishing_signal_authentication_failed">%1$s n\'a pas passé l\'authentification de l\'expéditeur</string>
-    <string name="sender_verified">Vérifié</string>
-    <string name="sender_verified_description">Aster a confirmé que ce message vient bien de %1$s.</string>
     <string name="sender_unverified_title">Impossible de vérifier l\'expéditeur</string>
     <string name="sender_unverified_description">Les contrôles prouvant qu\'un message vient de %1$s ont échoué. Méfiez-vous des liens, des pièces jointes et de tout ce qui vous est demandé.</string>
     <string name="sender_authentication">Contrôles de l\'expéditeur</string>
@@ -2296,6 +2303,7 @@
     <string name="kids_reserved_addresses">Adresses réservées aux enfants</string>
     <string name="kids_reserved_subtitle">Réservez une adresse pour votre enfant. Partagez le lien d\'activation pour qu\'il termine la configuration avec son propre mot de passe.</string>
     <string name="kids_seats_used">%1$d place(s) famille utilisée(s) sur %2$d</string>
+    <string name="kids_seats_free">%1$d place(s) disponible(s)</string>
     <string name="kids_no_reservations">Aucune adresse réservée pour l\'instant. Réservez-en une sur astermail.org.</string>
     <string name="kids_reserve_on_web">Réserver sur le web</string>
     <string name="kids_status_reserved">Réservée</string>

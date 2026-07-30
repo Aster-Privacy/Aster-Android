@@ -1614,6 +1614,15 @@
     <string name="standard">قياسي</string>
     <string name="react">تفاعل</string>
     <string name="add_reaction">إضافة تفاعل</string>
+    <string name="reactions_disabled">التفاعلات معطلة في إعداداتك.</string>
+    <string name="cannot_react_own_message">لا يمكنك التفاعل مع رسالتك الخاصة.</string>
+    <string name="cannot_react_draft">لا يمكنك التفاعل مع مسودة أو رسالة مجدولة.</string>
+    <string name="cannot_react_spam_or_trash">لا يمكنك التفاعل مع الرسائل في البريد العشوائي أو المهملات.</string>
+    <string name="cannot_react_reply_to">لا يمكنك التفاعل مع رسالة تحتوي على عنوان رد.</string>
+    <string name="cannot_react_too_many_recipients">لا يمكنك التفاعل مع رسالة بها أكثر من 20 مستلمًا.</string>
+    <string name="cannot_react_bcc">لا يمكنك التفاعل مع رسالة كنت فيها ضمن نسخة مخفية.</string>
+    <string name="cannot_react_too_many_emojis">هذه الرسالة تحتوي بالفعل على الحد الأقصى من التفاعلات.</string>
+    <string name="cannot_react_no_recipient">لا يوجد مرسل لهذه الرسالة لإرسال التفاعل إليه.</string>
     <string name="reaction_failed">تعذّر إرسال التفاعل</string>
     <string name="copy_address">نسخ العنوان</string>
     <string name="sender_on_aster">حساب Aster</string>
@@ -1699,8 +1708,6 @@
     <string name="standard_point_server">يمكن لخادم البريد المستقبِل قراءة المحتوى</string>
     <string name="standard_point_storage">يُخزَّن مشفّرًا فور وصوله إلى Aster</string>
     <string name="phishing_signal_authentication_failed">لم يجتز %1$s مصادقة المرسل</string>
-    <string name="sender_verified">موثّق</string>
-    <string name="sender_verified_description">أكّد Aster أن هذه الرسالة جاءت فعلًا من %1$s.</string>
     <string name="sender_unverified_title">تعذّر التحقق من المرسل</string>
     <string name="sender_unverified_description">لم تنجح الفحوص التي تثبت أن الرسالة جاءت من %1$s. كن حذرًا مع الروابط والمرفقات وأي إجراء تطلبه.</string>
     <string name="sender_authentication">فحوص المرسل</string>
@@ -2280,6 +2287,7 @@
     <string name="kids_reserved_addresses">عناوين محجوزة للأطفال</string>
     <string name="kids_reserved_subtitle">احجز عنوانًا لطفلك. شارك رابط المطالبة ليكمل الإعداد بكلمة مرور خاصة به.</string>
     <string name="kids_seats_used">%1$d من %2$d مقاعد عائلية مستخدمة</string>
+    <string name="kids_seats_free">%1$d مقعد متاح</string>
     <string name="kids_no_reservations">لا توجد عناوين محجوزة بعد. احجز واحدًا على astermail.org.</string>
     <string name="kids_reserve_on_web">الحجز عبر الويب</string>
     <string name="kids_status_reserved">محجوز</string>

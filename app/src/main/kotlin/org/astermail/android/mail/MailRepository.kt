@@ -1092,7 +1092,7 @@ class MailRepository @Inject constructor(
 
     fun folder_supports_bulk_scope(folder: String): Boolean = when (folder) {
         "inbox", "sent", "starred", "trash", "spam", "archive", "snoozed" -> true
-        else -> false
+        else -> folder.startsWith("label:") && folder.length > "label:".length
     }
 
     private fun folder_to_bulk_scope(folder: String): org.astermail.android.api.mail.BulkScopeFilter {
@@ -1104,7 +1104,11 @@ class MailRepository @Inject constructor(
             "spam" -> BulkScopeFilter(is_spam = true)
             "archive" -> BulkScopeFilter(is_archived = true)
             "snoozed" -> BulkScopeFilter(is_snoozed = true)
-            else -> BulkScopeFilter()
+            else -> if (folder.startsWith("label:")) {
+                BulkScopeFilter(label_token = folder.removePrefix("label:"), is_trashed = false)
+            } else {
+                BulkScopeFilter()
+            }
         }
     }
 

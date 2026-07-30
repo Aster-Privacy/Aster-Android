@@ -192,13 +192,23 @@ fun EmailRow(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
+                if (email.has_attachment) {
+                    Icon(
+                        imageVector = TablerIcons.Paperclip,
+                        contentDescription = stringResource(R.string.has_attachment),
+                        tint = colors.text_tertiary,
+                        modifier = Modifier
+                            .padding(start = AsterSpacing.sm)
+                            .size(14.dp),
+                    )
+                }
                 Text(
                     text = relative_time,
                     style = MaterialTheme.typography.labelSmall,
                     color = if (is_unread) colors.text_primary else colors.text_muted,
                     fontSize = 13.sp,
                     fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
-                    modifier = Modifier.padding(start = AsterSpacing.sm),
+                    modifier = Modifier.padding(start = if (email.has_attachment) 4.dp else AsterSpacing.sm),
                 )
                 if (is_unread) {
                     Spacer(Modifier.width(6.dp))
@@ -218,14 +228,6 @@ fun EmailRow(
                             imageVector = TablerIcons.Pin,
                             contentDescription = stringResource(R.string.pinned),
                             tint = colors.accent_blue,
-                            modifier = Modifier.size(14.dp),
-                        )
-                    }
-                    if (email.has_attachment) {
-                        Icon(
-                            imageVector = TablerIcons.Paperclip,
-                            contentDescription = stringResource(R.string.has_attachment),
-                            tint = colors.text_tertiary,
                             modifier = Modifier.size(14.dp),
                         )
                     }
@@ -272,10 +274,10 @@ fun EmailRow(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.End),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Spacer(Modifier.weight(1f))
-                    alias_chip(it)
+                    alias_chip(it, modifier = Modifier.weight(1f, fill = false))
                 }
             }
         }
@@ -478,10 +480,9 @@ fun ThreadInboxRow(
                         contentDescription = stringResource(R.string.has_attachment),
                         tint = colors.text_tertiary,
                         modifier = Modifier
-                            .size(14.dp)
-                            .padding(end = 2.dp),
+                            .padding(start = AsterSpacing.sm)
+                            .size(14.dp),
                     )
-                    Spacer(Modifier.width(4.dp))
                 }
                 Text(
                     text = relative_time,
@@ -489,7 +490,7 @@ fun ThreadInboxRow(
                     color = if (is_unread) colors.text_primary else colors.text_muted,
                     fontSize = 13.sp,
                     fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
-                    modifier = Modifier.padding(start = AsterSpacing.sm),
+                    modifier = Modifier.padding(start = if (thread.has_attachment) 4.dp else AsterSpacing.sm),
                 )
                 if (is_unread) {
                     Spacer(Modifier.width(6.dp))
@@ -572,10 +573,12 @@ fun ThreadInboxRow(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.End),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Spacer(Modifier.weight(1f))
-                    email.received_on?.let { alias_chip(it) }
+                    email.received_on?.let {
+                        alias_chip(it, modifier = Modifier.weight(1f, fill = false))
+                    }
                     attachment_chips.forEach { chip ->
                         inbox_attachment_chip(chip)
                     }
@@ -667,11 +670,11 @@ private fun first_name(full: String): String {
 }
 
 @Composable
-private fun alias_chip(address: String) {
+private fun alias_chip(address: String, modifier: Modifier = Modifier) {
     val colors = AsterMaterial.colors
     val shape = SquircleShape(8.dp)
     Row(
-        modifier = Modifier
+        modifier = modifier
             .clip(shape)
             .border(1.dp, colors.border_primary, shape)
             .padding(horizontal = 8.dp, vertical = 3.dp),
@@ -690,8 +693,9 @@ private fun alias_chip(address: String) {
             color = colors.text_secondary,
             fontSize = 11.sp,
             fontWeight = FontWeight.Medium,
-            maxLines = 1,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false),
         )
     }
 }
@@ -738,7 +742,7 @@ private fun label_chip(color: Color, name: String, icon: String) {
     }
 }
 
-private fun material_icon_from_name(name: String) = when (name.trim()) {
+internal fun material_icon_from_name(name: String) = when (name.trim()) {
     "clock" -> TablerIcons.Clock
     "archive" -> TablerIcons.Archive
     "trash" -> TablerIcons.Trash

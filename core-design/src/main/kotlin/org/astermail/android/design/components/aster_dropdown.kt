@@ -190,6 +190,7 @@ fun aster_dropdown_item(
     enabled: Boolean = true,
     tint: Color? = null,
     test_tag: String? = null,
+    count: Int = 0,
 ) {
     val colors = AsterMaterial.colors
     val content_color = when {
@@ -227,6 +228,15 @@ fun aster_dropdown_item(
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
             modifier = Modifier.weight(1f),
         )
+        if (count > 0) {
+            Spacer(Modifier.width(AsterSpacing.sm))
+            Text(
+                text = count.toString(),
+                color = if (selected) colors.accent_blue else colors.text_secondary,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
         if (selected) {
             Spacer(Modifier.width(AsterSpacing.sm))
             Icon(
