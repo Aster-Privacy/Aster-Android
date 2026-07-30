@@ -70,3 +70,8 @@ fun requires_unlock(label: LabelItem): Boolean =
 
 fun protected_folder_tokens(labels: List<LabelItem>): Set<String> =
     labels.filter { requires_unlock(it) }.map { it.label_token }.toSet()
+
+fun locked_active_folder(labels: List<LabelItem>, active_token: String): LabelItem? {
+    if (active_token.isBlank()) return null
+    return labels.firstOrNull { it.label_token == active_token }?.takeIf { requires_unlock(it) }
+}
