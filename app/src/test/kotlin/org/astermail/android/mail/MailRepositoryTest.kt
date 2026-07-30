@@ -458,11 +458,11 @@ class MailRepositoryTest {
 
     @Test
     fun `fetch_inbox with label_token passes it to api`() = runTest {
-        coEvery { mail_api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), label_token = eq("lbl_abc"), any(), any(), any()) } returns
+        coEvery { mail_api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), label_token = eq("lbl_abc"), any(), any(), any()) } returns
             MailItemsListResponse(items = emptyList(), has_more = false, next_cursor = null, total = 0)
 
         repo.fetch_inbox(label_token = "lbl_abc")
-        coVerify { mail_api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), label_token = "lbl_abc", any(), any(), any()) }
+        coVerify { mail_api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), label_token = "lbl_abc", any(), any(), any()) }
     }
 
     @Test
