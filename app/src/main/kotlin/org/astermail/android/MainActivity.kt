@@ -1519,6 +1519,30 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         }
     }
 
+    val active_folder_token = if (filter_kind == "folder") filter_value else selected_folder
+    val locked_active_folder = androidx.compose.runtime.remember(
+        active_folder_token,
+        settings_state.labels,
+        lock_revision,
+    ) {
+        org.astermail.android.folders.locked_active_folder(settings_state.labels, active_folder_token)
+    }
+    val effective_filter_kind = if (locked_active_folder != null) null else filter_kind
+    val effective_selected_folder = if (locked_active_folder != null) "inbox" else selected_folder
+
+    androidx.compose.runtime.LaunchedEffect(locked_active_folder?.label_token) {
+        val label = locked_active_folder ?: return@LaunchedEffect
+        val readable_name = label.encrypted_name
+            ?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
+            ?: drawer_context.getString(R.string.folder_decrypt_failed)
+        filter_kind = null
+        filter_value = ""
+        filter_name = ""
+        selected_folder = "inbox"
+        unlock_error = null
+        pending_unlock_folder = label.label_token to readable_name
+    }
+
     ModalNavigationDrawer(
         drawerState = drawer_state,
         scrimColor = Color.Black.copy(alpha = 0.32f),
@@ -1688,10 +1712,10 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         },
     ) {
         val folder_key = when {
-            filter_kind != null -> "filter:$filter_kind:$filter_value"
-            selected_folder == "subscriptions" -> "subscriptions"
-            selected_folder == "contacts" -> "contacts"
-            else -> "inbox:$selected_folder"
+            effective_filter_kind != null -> "filter:$effective_filter_kind:$filter_value"
+            effective_selected_folder == "subscriptions" -> "subscriptions"
+            effective_selected_folder == "contacts" -> "contacts"
+            else -> "inbox:$effective_selected_folder"
         }
         val exit_context = LocalContext.current
         val exit_hint = stringResource(R.string.tap_again_to_exit)
@@ -1731,7 +1755,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         ) { active_key ->
             saveable_state_holder.SaveableStateProvider(active_key) {
                 when {
-                    filter_kind != null -> {
+                    effective_filter_kind != null -> {
                         BackHandler(enabled = !drawer_state.isOpen) {
                             saveable_state_holder.removeState("inbox:inbox")
                             inbox_scroll_top_token += 1
@@ -1740,7 +1764,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             filter_name = ""
                             selected_folder = "inbox"
                         }
-                        val effective_folder = when (filter_kind) {
+                        val effective_folder = when (effective_filter_kind) {
                             "label" -> "label:$filter_value"
                             "tag" -> "tag:$filter_value"
                             "folder" -> filter_value
@@ -1766,7 +1790,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             on_customize_toolbar = { nav_controller.navigate(routes.settings_detail("customize_toolbar")) },
                         )
                     }
-                    selected_folder == "subscriptions" -> {
+                    effective_selected_folder == "subscriptions" -> {
                         BackHandler(enabled = !drawer_state.isOpen) {
                             saveable_state_holder.removeState("inbox:inbox")
                             inbox_scroll_top_token += 1
@@ -1780,7 +1804,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             },
                         )
                     }
-                    selected_folder == "contacts" -> {
+                    effective_selected_folder == "contacts" -> {
                         BackHandler(enabled = !drawer_state.isOpen) {
                             saveable_state_holder.removeState("inbox:inbox")
                             inbox_scroll_top_token += 1
@@ -1795,7 +1819,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                     else -> {
                         BackHandler(
                             enabled = !drawer_state.isOpen &&
-                                (selected_folder != "inbox" || inbox_category != "primary"),
+                                (effective_selected_folder != "inbox" || inbox_category != "primary"),
                         ) {
                             saveable_state_holder.removeState("inbox:inbox")
                             inbox_scroll_top_token += 1
@@ -1804,12 +1828,12 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                         }
                         InboxScreen(
                             on_open_drawer = { scope.launch { drawer_state.open() } },
-                            on_open_search = { nav_controller.navigate(routes.search_for_folder(selected_folder)) },
+                            on_open_search = { nav_controller.navigate(routes.search_for_folder(effective_selected_folder)) },
                             on_compose = { drawer_context.startActivity(ComposeActivity.intent_for(drawer_context)) },
                             on_compose_draft = { id -> drawer_context.startActivity(ComposeActivity.intent_for(drawer_context, draft_id = id)) },
                             on_view_pending_send = { nav_controller.navigate(routes.pending_send_preview) },
                             on_open_email = { id ->
-                                if (selected_folder == "drafts") {
+                                if (effective_selected_folder == "drafts") {
                                     drawer_context.startActivity(ComposeActivity.intent_for(drawer_context, draft_id = id))
                                 } else {
                                     open_mail_detail(nav_controller, id)
@@ -1817,14 +1841,14 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             },
                             on_open_settings = { nav_controller.navigate(routes.settings) },
                             on_open_upgrade = { nav_controller.navigate(routes.settings_detail("billing")) },
-                            current_folder = selected_folder,
+                            current_folder = effective_selected_folder,
                             inbox_category = inbox_category,
-                            display_title = if (selected_folder == "inbox" && categories_enabled) category_titles[inbox_category] else null,
+                            display_title = if (effective_selected_folder == "inbox" && categories_enabled) category_titles[inbox_category] else null,
                             on_folder_change = { selected_folder = it },
                             custom_folders = quick_custom_folders,
                             on_custom_folder_change = { id, name -> request_custom_folder(id, name) },
                             on_customize_toolbar = { nav_controller.navigate(routes.settings_detail("customize_toolbar")) },
-                            scroll_top_token = if (selected_folder == "inbox") inbox_scroll_top_token else 0,
+                            scroll_top_token = if (effective_selected_folder == "inbox") inbox_scroll_top_token else 0,
                         )
                     }
                 }
