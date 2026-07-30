@@ -85,6 +85,9 @@ data class MailItem(
     val is_trashed: Boolean? = null,
     val is_spam: Boolean? = null,
     val is_read: Boolean? = null,
+    val is_archived: Boolean? = null,
+    val is_starred: Boolean? = null,
+    val is_pinned: Boolean? = null,
     val folders: List<MailItemFolder>? = null,
     val tag_tokens: List<String>? = null,
     val metadata: MailItemMetadata? = null,
@@ -309,4 +312,5 @@ data class SyncMailItemsResponse(
     val next_cursor: String? = null,
     val has_more: Boolean = false,
     val sync_token: String? = null,
+    val deleted_ids: List<String> = emptyList(),
 )
