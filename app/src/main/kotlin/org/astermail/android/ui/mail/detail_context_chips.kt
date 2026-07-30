@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -141,11 +142,14 @@ internal fun detail_folder_chip(data: detail_folder_chip_data, modifier: Modifie
         "warning" -> colors.warning
         else -> colors.accent_blue
     }
+    val shape = RoundedCornerShape(6.dp)
+    val background = chip_background(tint, colors.bg_primary, colors.is_dark)
+    val content = chip_content(tint, background, colors.is_dark)
     Row(
         modifier = modifier
             .testTag("detail_folder_chip")
-            .clip(SquircleShape(8.dp))
-            .background(tint.copy(alpha = 0.15f))
+            .clip(shape)
+            .background(background, shape)
             .padding(horizontal = 8.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -153,12 +157,12 @@ internal fun detail_folder_chip(data: detail_folder_chip_data, modifier: Modifie
         Icon(
             imageVector = data.icon,
             contentDescription = null,
-            tint = tint,
+            tint = content,
             modifier = Modifier.size(12.dp),
         )
         Text(
             text = data.name,
-            color = tint,
+            color = content,
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
             maxLines = 1,
@@ -178,11 +182,14 @@ internal fun detail_label_chip(tag: TagItem, modifier: Modifier = Modifier) {
     } else {
         null
     }
+    val shape = RoundedCornerShape(6.dp)
+    val background = chip_background(tag_color, colors.bg_primary, colors.is_dark)
+    val content = chip_content(tag_color, background, colors.is_dark)
     Row(
         modifier = modifier
             .testTag("detail_label_chip")
-            .clip(SquircleShape(8.dp))
-            .background(tag_color.copy(alpha = 0.15f))
+            .clip(shape)
+            .background(background, shape)
             .padding(horizontal = 8.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -191,20 +198,15 @@ internal fun detail_label_chip(tag: TagItem, modifier: Modifier = Modifier) {
             Icon(
                 imageVector = icon_vector,
                 contentDescription = null,
-                tint = tag_color,
+                tint = content,
                 modifier = Modifier.size(12.dp),
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .size(6.dp)
-                    .background(tag_color, shape = CircleShape),
             )
         }
         Text(
             text = tag.encrypted_name,
-            color = colors.text_primary,
+            color = content,
             fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.widthIn(max = 160.dp),

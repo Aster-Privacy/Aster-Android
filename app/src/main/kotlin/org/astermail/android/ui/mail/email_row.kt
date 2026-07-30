@@ -45,6 +45,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.rememberScrollState
@@ -552,9 +553,23 @@ fun ThreadInboxRow(
                 )
                 if (!has_preview) trailing_controls()
             }
+            val labels_inline = has_preview && thread.label_colors.size in 1..2
             if (has_preview) {
                 Spacer(Modifier.height(3.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    if (labels_inline) {
+                        thread.label_colors.indices.forEach { i ->
+                            label_chip(
+                                color = thread.label_colors[i],
+                                name = thread.label_names.getOrElse(i) { "" },
+                                icon = thread.label_icons.getOrElse(i) { "" },
+                                modifier = Modifier.widthIn(max = 120.dp),
+                            )
+                        }
+                    }
                     Text(
                         text = email.preview,
                         style = MaterialTheme.typography.bodySmall,
@@ -568,12 +583,15 @@ fun ThreadInboxRow(
                     trailing_controls()
                 }
             }
-            if (thread.label_colors.isNotEmpty() || attachment_chips.isNotEmpty() || email.received_on != null) {
+            if ((thread.label_colors.isNotEmpty() && !labels_inline) ||
+                attachment_chips.isNotEmpty() ||
+                email.received_on != null
+            ) {
                 Spacer(Modifier.height(4.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.End),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     email.received_on?.let {
@@ -582,12 +600,15 @@ fun ThreadInboxRow(
                     attachment_chips.forEach { chip ->
                         inbox_attachment_chip(chip)
                     }
-                    thread.label_colors.indices.forEach { i ->
-                        label_chip(
-                            color = thread.label_colors[i],
-                            name = thread.label_names.getOrElse(i) { "" },
-                            icon = thread.label_icons.getOrElse(i) { "" },
-                        )
+                    if (!labels_inline) {
+                        thread.label_colors.indices.forEach { i ->
+                            label_chip(
+                                color = thread.label_colors[i],
+                                name = thread.label_names.getOrElse(i) { "" },
+                                icon = thread.label_icons.getOrElse(i) { "" },
+                                modifier = Modifier.weight(1f, fill = false),
+                            )
+                        }
                     }
                 }
             }
@@ -672,14 +693,15 @@ private fun first_name(full: String): String {
 @Composable
 private fun alias_chip(address: String, modifier: Modifier = Modifier) {
     val colors = AsterMaterial.colors
-    val shape = SquircleShape(8.dp)
+    val shape = RoundedCornerShape(6.dp)
+    val background = chip_background(colors.text_tertiary, inbox_card_read_color(colors), colors.is_dark)
     Row(
         modifier = modifier
             .clip(shape)
-            .border(1.dp, colors.border_primary, shape)
-            .padding(horizontal = 8.dp, vertical = 3.dp),
+            .background(background, shape)
+            .padding(horizontal = 7.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(5.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Icon(
             imageVector = TablerIcons.At,
@@ -693,7 +715,8 @@ private fun alias_chip(address: String, modifier: Modifier = Modifier) {
             color = colors.text_secondary,
             fontSize = 11.sp,
             fontWeight = FontWeight.Medium,
-            maxLines = 2,
+            lineHeight = 14.sp,
+            maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f, fill = false),
         )
@@ -701,42 +724,47 @@ private fun alias_chip(address: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun label_chip(color: Color, name: String, icon: String) {
+private fun label_chip(color: Color, name: String, icon: String, modifier: Modifier = Modifier) {
     val colors = AsterMaterial.colors
     val icon_vector = if (icon.isNotBlank()) material_icon_from_name(icon) else null
     val has_name = name.isNotBlank()
-    val shape = SquircleShape(8.dp)
+    val shape = RoundedCornerShape(6.dp)
+    val surface = inbox_card_read_color(colors)
+    val background = chip_background(color, surface, colors.is_dark)
+    val content = chip_content(color, background, colors.is_dark)
     Row(
-        modifier = Modifier
+        modifier = modifier
             .clip(shape)
-            .border(1.dp, colors.border_primary, shape)
-            .padding(horizontal = 8.dp, vertical = 3.dp),
+            .background(background, shape)
+            .padding(horizontal = 7.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(5.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         if (icon_vector != null) {
             Icon(
                 imageVector = icon_vector,
                 contentDescription = null,
-                tint = color,
+                tint = content,
                 modifier = Modifier.size(11.dp),
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .size(7.dp)
-                    .background(color, shape = CircleShape),
             )
         }
         if (has_name) {
             Text(
                 text = name,
                 style = MaterialTheme.typography.labelSmall,
-                color = colors.text_secondary,
+                color = content,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Medium,
+                lineHeight = 14.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+        } else if (icon_vector == null) {
+            Box(
+                modifier = Modifier
+                    .size(7.dp)
+                    .background(content, shape = CircleShape),
             )
         }
     }
@@ -780,25 +808,30 @@ internal fun material_icon_from_name(name: String) = when (name.trim()) {
 private fun inbox_attachment_chip(chip: MailViewModel.InboxAttachmentChip) {
     val colors = AsterMaterial.colors
     val type_color = chip_type_color(chip.content_type)
+    val shape = RoundedCornerShape(6.dp)
+    val background = chip_background(type_color, inbox_card_read_color(colors), colors.is_dark)
+    val content = chip_content(type_color, background, colors.is_dark)
     Row(
         modifier = Modifier
-            .clip(SquircleShape(8.dp))
-            .background(type_color.copy(alpha = 0.1f))
-            .padding(horizontal = 6.dp, vertical = 3.dp),
+            .clip(shape)
+            .background(background, shape)
+            .padding(horizontal = 7.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Icon(
             imageVector = TablerIcons.Paperclip,
             contentDescription = null,
-            tint = type_color,
-            modifier = Modifier.size(12.dp),
+            tint = content,
+            modifier = Modifier.size(11.dp),
         )
         Text(
             text = chip.filename,
             style = MaterialTheme.typography.labelSmall,
-            color = colors.text_secondary,
+            color = content,
             fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            lineHeight = 14.sp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )

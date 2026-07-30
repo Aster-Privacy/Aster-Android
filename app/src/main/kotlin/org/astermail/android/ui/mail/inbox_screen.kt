@@ -349,6 +349,8 @@ fun InboxScreen(
     var sort_mode by remember { mutableStateOf(InboxSortMode.newest) }
     var select_mode by remember { mutableStateOf(false) }
     var select_all_active by remember { mutableStateOf(false) }
+    var pending_select_all_action by remember { mutableStateOf<String?>(null) }
+    var select_all_load_done by remember { mutableStateOf(false) }
     val selected_ids = remember { mutableStateListOf<String>() }
     var show_empty_trash_dialog by remember { mutableStateOf(false) }
     var show_selection_overflow by remember { mutableStateOf(false) }
@@ -499,7 +501,11 @@ fun InboxScreen(
         "scheduled" -> inbox_state.stats?.scheduled ?: 0
         "spam" -> inbox_state.stats?.spam ?: 0
         "trash" -> inbox_state.stats?.trash ?: 0
-        else -> if (current_folder.startsWith("label:")) inbox_state.total else 0
+        else -> if (current_folder.startsWith("label:") || current_folder.startsWith("tag:")) {
+            inbox_state.total
+        } else {
+            0
+        }
     }
     val visible_threads = threads
     val top_thread_key = visible_threads.firstOrNull()?.thread_id
@@ -528,11 +534,7 @@ fun InboxScreen(
     val scope_selection = select_all_active &&
         !categories_enabled &&
         mail_vm.folder_supports_scope_selection(current_folder)
-    val selection_count = if (scope_selection) {
-        maxOf(folder_total, selected_ids.size)
-    } else {
-        selected_ids.size
-    }
+    val selection_count = scope_selection_count(scope_selection, folder_total, selected_ids.size)
 
     LaunchedEffect(list_state, current_folder) {
         snapshotFlow {
@@ -602,6 +604,7 @@ fun InboxScreen(
     fun exit_select_mode() {
         select_mode = false
         select_all_active = false
+        pending_select_all_action = null
         selected_ids.clear()
     }
 
@@ -832,15 +835,45 @@ fun InboxScreen(
     fun run_selection_action(action_id: String) {
         val scope_action = scope_action_name(action_id)
         if (scope_selection && scope_action != null && mail_vm.action_supports_scope_selection(scope_action)) {
-            mail_vm.bulk_scope_action(current_folder, scope_action)
+            mail_vm.bulk_scope_action(current_folder, scope_action) {
+                select_mode = true
+                select_all_active = true
+                pending_select_all_action = action_id
+                select_all_load_done = false
+                mail_vm.load_all_remaining { select_all_load_done = true }
+            }
             exit_select_mode()
             return
         }
         if (select_all_active && inbox_state.has_more) {
-            mail_vm.load_all_remaining { apply_selection_action(action_id) }
+            pending_select_all_action = action_id
+            select_all_load_done = false
+            mail_vm.load_all_remaining { select_all_load_done = true }
             return
         }
         apply_selection_action(action_id)
+    }
+
+    LaunchedEffect(current_folder) { pending_select_all_action = null }
+
+    LaunchedEffect(
+        pending_select_all_action,
+        select_all_load_done,
+        inbox_state.is_loading,
+        inbox_state.is_loading_more,
+        visible_order_ids,
+        selected_ids.size,
+        emails.size,
+    ) {
+        val action = pending_select_all_action ?: return@LaunchedEffect
+        val s = inbox_state
+        if (!select_all_load_done) return@LaunchedEffect
+        if (s.current_folder != current_folder) return@LaunchedEffect
+        if (s.is_loading || s.is_loading_more) return@LaunchedEffect
+        if (emails.size < s.items.size) return@LaunchedEffect
+        if (selected_ids.size < visible_threads.size) return@LaunchedEffect
+        pending_select_all_action = null
+        apply_selection_action(action)
     }
 
     val density = LocalDensity.current
@@ -1780,6 +1813,12 @@ internal fun inbox_top_bar(
     }
 }
 
+internal fun scope_selection_count(
+    scope_selection: Boolean,
+    folder_total: Int,
+    selected_count: Int,
+): Int = if (scope_selection) maxOf(folder_total, selected_count) else selected_count
+
 @Composable
 private fun overflow_menu_item(
     label: String,
@@ -1842,12 +1881,13 @@ private fun select_mode_top_bar(
                 style = MaterialTheme.typography.titleMedium,
                 color = colors.text_primary,
                 fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
-            AsterIconButton(
-                icon = TablerIcons.Selector,
-                content_description = stringResource(R.string.select_all),
-                onClick = on_select_all,
+            org.astermail.android.ui.common.select_all_button(
+                on_click = on_select_all,
+                modifier = Modifier.testTag("select_all"),
             )
         }
         if (divider_alpha > 0f) {

@@ -453,6 +453,9 @@ fun MailDetailScreen(
         }
     }
     val api_item = thread_state.item
+    val all_thread_attachments = remember(api_messages) {
+        api_messages.flatMap { it.attachments }
+    }
 
     val thread_ghost_email = remember(thread_state.messages) {
         val latest_sent = thread_state.messages
@@ -1071,6 +1074,7 @@ fun MailDetailScreen(
                             msg = msg,
                             is_last = is_last,
                             message_index = idx,
+                            thread_attachments = all_thread_attachments,
                             my_email = my_email,
                             my_profile_pic = my_profile_pic,
                             show_top_divider = !is_after_indicator,
@@ -1722,6 +1726,7 @@ private fun expanded_message(
     msg: ThreadMessage,
     is_last: Boolean,
     message_index: Int = 0,
+    thread_attachments: List<MessageAttachment> = emptyList(),
     show_top_divider: Boolean = true,
     my_email: String = "",
     my_profile_pic: String? = null,
@@ -2083,9 +2088,13 @@ private fun expanded_message(
             initialValue = emptyMap<String, String>(),
             msg.body_html,
             msg.attachments,
+            thread_attachments,
         ) {
             value = withContext(kotlinx.coroutines.Dispatchers.Default) {
-                inline_image_data_uris(msg.body_html.orEmpty(), msg.attachments)
+                inline_image_data_uris(
+                    msg.body_html.orEmpty(),
+                    msg.attachments + thread_attachments,
+                )
             }
         }
 
