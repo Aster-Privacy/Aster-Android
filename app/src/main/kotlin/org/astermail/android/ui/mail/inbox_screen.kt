@@ -163,6 +163,7 @@ fun InboxScreen(
     on_folder_change: (String) -> Unit = {},
     custom_folders: List<Pair<String, String>> = emptyList(),
     on_custom_folder_change: (String, String) -> Unit = { _, _ -> },
+    folder_unread_counts: Map<String, Int> = emptyMap(),
     on_customize_toolbar: () -> Unit = {},
     scroll_top_token: Int = 0,
 ) {
@@ -498,7 +499,7 @@ fun InboxScreen(
         "scheduled" -> inbox_state.stats?.scheduled ?: 0
         "spam" -> inbox_state.stats?.spam ?: 0
         "trash" -> inbox_state.stats?.trash ?: 0
-        else -> 0
+        else -> if (current_folder.startsWith("label:")) inbox_state.total else 0
     }
     val visible_threads = threads
     val top_thread_key = visible_threads.firstOrNull()?.thread_id
@@ -1336,6 +1337,7 @@ fun InboxScreen(
                         on_folder_change = on_folder_change,
                         custom_folders = custom_folders,
                         on_custom_folder_change = on_custom_folder_change,
+                        folder_unread_counts = folder_unread_counts,
                     )
                 }
             }
@@ -1583,6 +1585,7 @@ internal fun inbox_top_bar(
     on_folder_change: (String) -> Unit = {},
     custom_folders: List<Pair<String, String>> = emptyList(),
     on_custom_folder_change: (String, String) -> Unit = { _, _ -> },
+    folder_unread_counts: Map<String, Int> = emptyMap(),
 ) {
     val colors = AsterMaterial.colors
     val divider_alpha by animateFloatAsState(
@@ -1683,6 +1686,7 @@ internal fun inbox_top_bar(
                             label = stringResource(entry.label_res),
                             icon = entry.icon,
                             selected = entry.id == current_folder,
+                            count = folder_unread_counts[entry.id] ?: 0,
                             on_click = {
                                 folder_menu_open = false
                                 if (entry.id != current_folder) on_folder_change(entry.id)
@@ -1696,6 +1700,7 @@ internal fun inbox_top_bar(
                                 label = name,
                                 icon = TablerIcons.Folder,
                                 selected = id == current_folder,
+                                count = folder_unread_counts[id] ?: 0,
                                 on_click = {
                                     folder_menu_open = false
                                     if (id != current_folder) on_custom_folder_change(id, name)

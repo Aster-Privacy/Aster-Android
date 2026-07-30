@@ -156,8 +156,8 @@ fun FilteredInboxScreen(
                             Box(modifier = Modifier.background(colors.bg_primary)) {
                                 ThreadInboxRow(
                                     thread = thread,
-                                    on_click = { on_open_email(thread.thread_id) },
-                                    on_long_click = { on_open_email(thread.thread_id) },
+                                    on_click = { on_open_email(thread_open_target_id(thread)) },
+                                    on_long_click = { on_open_email(thread_open_target_id(thread)) },
                                     on_toggle_star = { mail_vm.toggle_star(thread.newest.id) },
                                 )
                             }

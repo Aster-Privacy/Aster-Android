@@ -1608,6 +1608,15 @@
     <string name="standard">Стандартный</string>
     <string name="react">Реакция</string>
     <string name="add_reaction">Добавить реакцию</string>
+    <string name="reactions_disabled">Реакции отключены в ваших настройках.</string>
+    <string name="cannot_react_own_message">Нельзя реагировать на собственное письмо.</string>
+    <string name="cannot_react_draft">Нельзя реагировать на черновик или запланированное письмо.</string>
+    <string name="cannot_react_spam_or_trash">Нельзя реагировать на письма в Спаме или Корзине.</string>
+    <string name="cannot_react_reply_to">Нельзя реагировать на письмо с обратным адресом.</string>
+    <string name="cannot_react_too_many_recipients">Нельзя реагировать на письмо более чем с 20 получателями.</string>
+    <string name="cannot_react_bcc">Нельзя реагировать на письмо, где вы были в скрытой копии.</string>
+    <string name="cannot_react_too_many_emojis">У этого письма уже максимальное число реакций.</string>
+    <string name="cannot_react_no_recipient">У этого письма нет отправителя, которому можно отправить реакцию.</string>
     <string name="reaction_failed">Не удалось отправить реакцию</string>
     <string name="copy_address">Копировать адрес</string>
     <string name="sender_on_aster">Аккаунт Aster</string>
@@ -1693,8 +1702,6 @@
     <string name="standard_point_server">Принимающий почтовый сервер может прочитать содержимое</string>
     <string name="standard_point_storage">Сохраняется в зашифрованном виде сразу по прибытии в Aster</string>
     <string name="phishing_signal_authentication_failed">%1$s не прошёл проверку подлинности отправителя</string>
-    <string name="sender_verified">Проверен</string>
-    <string name="sender_verified_description">Aster подтвердил, что это сообщение действительно от %1$s.</string>
     <string name="sender_unverified_title">Не удалось проверить отправителя</string>
     <string name="sender_unverified_description">Проверки, подтверждающие отправку от %1$s, не пройдены. Будьте осторожны со ссылками, вложениями и любыми просьбами.</string>
     <string name="sender_authentication">Проверки отправителя</string>
@@ -2274,6 +2281,7 @@
     <string name="kids_reserved_addresses">Адреса, забронированные для детей</string>
     <string name="kids_reserved_subtitle">Забронируйте адрес для ребёнка. Передайте ссылку активации, чтобы он завершил настройку со своим паролем.</string>
     <string name="kids_seats_used">Занято мест: %1$d из %2$d</string>
+    <string name="kids_seats_free">доступно мест: %1$d</string>
     <string name="kids_no_reservations">Забронированных адресов пока нет. Забронируйте на astermail.org.</string>
     <string name="kids_reserve_on_web">Забронировать в вебе</string>
     <string name="kids_status_reserved">Забронирован</string>

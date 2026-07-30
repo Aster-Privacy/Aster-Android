@@ -1599,6 +1599,15 @@
     <string name="standard">표준</string>
     <string name="react">반응</string>
     <string name="add_reaction">반응 추가</string>
+    <string name="reactions_disabled">설정에서 반응이 꺼져 있습니다.</string>
+    <string name="cannot_react_own_message">본인이 보낸 메일에는 반응할 수 없습니다.</string>
+    <string name="cannot_react_draft">임시보관 또는 예약 메일에는 반응할 수 없습니다.</string>
+    <string name="cannot_react_spam_or_trash">스팸이나 휴지통의 메일에는 반응할 수 없습니다.</string>
+    <string name="cannot_react_reply_to">회신 주소가 있는 메일에는 반응할 수 없습니다.</string>
+    <string name="cannot_react_too_many_recipients">수신자가 20명을 넘는 메일에는 반응할 수 없습니다.</string>
+    <string name="cannot_react_bcc">숨은참조로 받은 메일에는 반응할 수 없습니다.</string>
+    <string name="cannot_react_too_many_emojis">이 메일은 이미 최대 개수의 반응이 있습니다.</string>
+    <string name="cannot_react_no_recipient">이 메일에는 반응을 보낼 발신자가 없습니다.</string>
     <string name="reaction_failed">반응을 보내지 못했습니다</string>
     <string name="copy_address">주소 복사</string>
     <string name="sender_on_aster">Aster 계정</string>
@@ -1684,8 +1693,6 @@
     <string name="standard_point_server">받는 메일 서버가 내용을 읽을 수 있습니다</string>
     <string name="standard_point_storage">Aster에 도착하면 암호화되어 저장됩니다</string>
     <string name="phishing_signal_authentication_failed">%1$s이(가) 발신자 인증을 통과하지 못했습니다</string>
-    <string name="sender_verified">확인됨</string>
-    <string name="sender_verified_description">이 메시지가 실제로 %1$s에서 왔음을 Aster가 확인했습니다.</string>
     <string name="sender_unverified_title">발신자를 확인할 수 없습니다</string>
     <string name="sender_unverified_description">%1$s에서 왔음을 증명하는 검사를 통과하지 못했습니다. 링크, 첨부파일, 요구하는 행동에 주의하세요.</string>
     <string name="sender_authentication">발신자 검사</string>
@@ -2265,6 +2272,7 @@
     <string name="kids_reserved_addresses">아이용으로 잡아 둔 주소</string>
     <string name="kids_reserved_subtitle">자녀를 위해 주소를 잡아 두세요. 등록 링크를 전달하면 아이가 자기 비밀번호로 설정을 마칠 수 있습니다.</string>
     <string name="kids_seats_used">가족 자리 %2$d개 중 %1$d개 사용</string>
+    <string name="kids_seats_free">%1$d개 사용 가능</string>
     <string name="kids_no_reservations">아직 잡아 둔 주소가 없습니다. astermail.org에서 하나 잡아 두세요.</string>
     <string name="kids_reserve_on_web">웹에서 잡아 두기</string>
     <string name="kids_status_reserved">예약됨</string>

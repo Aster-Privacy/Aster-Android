@@ -195,12 +195,30 @@ class MailViewModel @Inject constructor(
         emoji: String,
         sender_email: String? = null,
         sender_alias_hash: String? = null,
+        own_addresses: Set<String> = emptySet(),
         on_result: (String?) -> Unit,
     ) {
         if (!reactions_enabled) return
         val state = _thread_state.value
         val message = state.messages.find { it.id == message_id } ?: return
         val our_email = repository.get_user_email().orEmpty()
+        val restriction = reaction_restriction(
+            item_type = message.raw_item.item_type ?: "received",
+            sender_email = message.sender_email,
+            to_addresses = message.to_addresses,
+            cc_addresses = message.cc_addresses,
+            raw_headers = message.raw_headers,
+            reactions = _message_reactions.value[message_id].orEmpty(),
+            user_email = our_email,
+            is_spam = state.item?.is_spam == true,
+            is_trashed = state.item?.is_trashed == true,
+            reactions_enabled = true,
+            is_own_address = { address -> address in own_addresses },
+        )
+        if (restriction != null) {
+            on_result(context.getString(reaction_restriction_string(restriction)))
+            return
+        }
         val from_email = sender_email?.takeIf { it.isNotBlank() } ?: our_email
         val sender_is_self = message.sender_email.equals(our_email, ignoreCase = true) ||
             message.sender_email.equals(from_email, ignoreCase = true)

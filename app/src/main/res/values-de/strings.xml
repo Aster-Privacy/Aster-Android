@@ -1603,6 +1603,15 @@
     <string name="standard">Standard</string>
     <string name="react">Reagieren</string>
     <string name="add_reaction">Reaktion hinzufügen</string>
+    <string name="reactions_disabled">Reaktionen sind in deinen Einstellungen deaktiviert.</string>
+    <string name="cannot_react_own_message">Du kannst nicht auf deine eigene Nachricht reagieren.</string>
+    <string name="cannot_react_draft">Du kannst nicht auf einen Entwurf oder eine geplante Nachricht reagieren.</string>
+    <string name="cannot_react_spam_or_trash">Du kannst nicht auf Nachrichten in Spam oder Papierkorb reagieren.</string>
+    <string name="cannot_react_reply_to">Du kannst nicht auf eine Nachricht mit einer Antwortadresse reagieren.</string>
+    <string name="cannot_react_too_many_recipients">Du kannst nicht auf eine Nachricht mit mehr als 20 Empfängern reagieren.</string>
+    <string name="cannot_react_bcc">Du kannst nicht auf eine Nachricht reagieren, bei der du im BCC standest.</string>
+    <string name="cannot_react_too_many_emojis">Diese Nachricht hat bereits die maximale Anzahl an Reaktionen.</string>
+    <string name="cannot_react_no_recipient">Diese Nachricht hat keinen Absender, an den die Reaktion gesendet werden kann.</string>
     <string name="reaction_failed">Reaktion konnte nicht gesendet werden</string>
     <string name="copy_address">Adresse kopieren</string>
     <string name="sender_on_aster">Aster-Konto</string>
@@ -1688,8 +1697,6 @@
     <string name="standard_point_server">Der empfangende Mailserver kann den Inhalt lesen</string>
     <string name="standard_point_storage">Wird verschlüsselt gespeichert, sobald sie Aster erreicht</string>
     <string name="phishing_signal_authentication_failed">%1$s hat die Absenderprüfung nicht bestanden</string>
-    <string name="sender_verified">Verifiziert</string>
-    <string name="sender_verified_description">Aster hat bestätigt, dass diese Nachricht wirklich von %1$s stammt.</string>
     <string name="sender_unverified_title">Absender konnte nicht verifiziert werden</string>
     <string name="sender_unverified_description">Die Prüfungen, die belegen, dass eine Nachricht von %1$s stammt, sind fehlgeschlagen. Sei vorsichtig mit Links, Anhängen und allem, was verlangt wird.</string>
     <string name="sender_authentication">Absenderprüfungen</string>
@@ -2269,6 +2276,7 @@
     <string name="kids_reserved_addresses">Reservierte Adressen für Kinder</string>
     <string name="kids_reserved_subtitle">Reserviere eine Adresse für dein Kind. Teile den Einlöse-Link, damit es die Einrichtung mit eigenem Passwort abschließt.</string>
     <string name="kids_seats_used">%1$d von %2$d Familienplätzen belegt</string>
+    <string name="kids_seats_free">%1$d Plätze verfügbar</string>
     <string name="kids_no_reservations">Noch keine reservierten Adressen. Reserviere eine auf astermail.org.</string>
     <string name="kids_reserve_on_web">Im Web reservieren</string>
     <string name="kids_status_reserved">Reserviert</string>

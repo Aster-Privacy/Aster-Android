@@ -1436,6 +1436,17 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
             node.label.label_token to readable_name
         }
 
+    val quick_folder_counts = buildMap {
+        put("inbox", stats?.unread ?: 0)
+        put("drafts", stats?.drafts ?: 0)
+        put("spam", stats?.spam ?: 0)
+        put("trash", stats?.trash ?: 0)
+        folder_nodes.forEach { node ->
+            val unread = node.label.unread_count?.toInt() ?: 0
+            if (unread > 0) put(node.label.label_token, unread)
+        }
+    }
+
     val label_colors = listOf(
         Color(0xFF3B82F6),
         Color(0xFF22C55E),
@@ -1787,6 +1798,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             },
                             custom_folders = quick_custom_folders,
                             on_custom_folder_change = { id, name -> request_custom_folder(id, name) },
+                            folder_unread_counts = quick_folder_counts,
                             on_customize_toolbar = { nav_controller.navigate(routes.settings_detail("customize_toolbar")) },
                         )
                     }
@@ -1847,6 +1859,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             on_folder_change = { selected_folder = it },
                             custom_folders = quick_custom_folders,
                             on_custom_folder_change = { id, name -> request_custom_folder(id, name) },
+                            folder_unread_counts = quick_folder_counts,
                             on_customize_toolbar = { nav_controller.navigate(routes.settings_detail("customize_toolbar")) },
                             scroll_top_token = if (effective_selected_folder == "inbox") inbox_scroll_top_token else 0,
                         )

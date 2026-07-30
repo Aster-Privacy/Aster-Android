@@ -1602,6 +1602,15 @@
     <string name="standard">Standaard</string>
     <string name="react">Reageren</string>
     <string name="add_reaction">Reactie toevoegen</string>
+    <string name="reactions_disabled">Reacties zijn uitgeschakeld in je instellingen.</string>
+    <string name="cannot_react_own_message">Je kunt niet reageren op je eigen bericht.</string>
+    <string name="cannot_react_draft">Je kunt niet reageren op een concept of gepland bericht.</string>
+    <string name="cannot_react_spam_or_trash">Je kunt niet reageren op berichten in Spam of Prullenbak.</string>
+    <string name="cannot_react_reply_to">Je kunt niet reageren op een bericht met een antwoordadres.</string>
+    <string name="cannot_react_too_many_recipients">Je kunt niet reageren op een bericht met meer dan 20 ontvangers.</string>
+    <string name="cannot_react_bcc">Je kunt niet reageren op een bericht waarin je in BCC stond.</string>
+    <string name="cannot_react_too_many_emojis">Dit bericht heeft al het maximale aantal reacties.</string>
+    <string name="cannot_react_no_recipient">Dit bericht heeft geen afzender om de reactie naar te sturen.</string>
     <string name="reaction_failed">Reactie kon niet worden verzonden</string>
     <string name="copy_address">Adres kopiëren</string>
     <string name="sender_on_aster">Aster-account</string>
@@ -1687,8 +1696,6 @@
     <string name="standard_point_server">De ontvangende mailserver kan de inhoud lezen</string>
     <string name="standard_point_storage">Wordt versleuteld opgeslagen zodra het bij Aster aankomt</string>
     <string name="phishing_signal_authentication_failed">%1$s is niet door de afzendercontrole gekomen</string>
-    <string name="sender_verified">Geverifieerd</string>
-    <string name="sender_verified_description">Aster heeft bevestigd dat dit bericht echt van %1$s komt.</string>
     <string name="sender_unverified_title">Afzender kon niet worden geverifieerd</string>
     <string name="sender_unverified_description">De controles die aantonen dat een bericht van %1$s komt, zijn niet geslaagd. Wees voorzichtig met links, bijlagen en alles wat er wordt gevraagd.</string>
     <string name="sender_authentication">Afzendercontroles</string>
@@ -2268,6 +2275,7 @@
     <string name="kids_reserved_addresses">Gereserveerde adressen voor kinderen</string>
     <string name="kids_reserved_subtitle">Reserveer een adres voor je kind. Deel de activatielink zodat het de installatie met een eigen wachtwoord afrondt.</string>
     <string name="kids_seats_used">%1$d van %2$d gezinsplaatsen gebruikt</string>
+    <string name="kids_seats_free">%1$d plaatsen beschikbaar</string>
     <string name="kids_no_reservations">Nog geen gereserveerde adressen. Reserveer er een op astermail.org.</string>
     <string name="kids_reserve_on_web">Reserveren op het web</string>
     <string name="kids_status_reserved">Gereserveerd</string>

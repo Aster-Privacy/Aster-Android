@@ -1444,7 +1444,12 @@ fun KidsReservedScreen(on_back: () -> Unit) {
 
         if (state.family_max_members > 0) {
             Text(
-                text = stringResource(R.string.kids_seats_used, state.family_seats_used, state.family_max_members),
+                text = stringResource(R.string.kids_seats_used, state.family_seats_used, state.family_max_members) +
+                    " · " +
+                    stringResource(
+                        R.string.kids_seats_free,
+                        (state.family_max_members - state.family_seats_used).coerceAtLeast(0),
+                    ),
                 color = colors.text_tertiary,
                 fontSize = 12.sp,
                 modifier = androidx.compose.ui.Modifier.padding(bottom = AsterSpacing.sm),

@@ -308,6 +308,15 @@
     <string name="star">Star</string>
     <string name="react">React</string>
     <string name="add_reaction">Add reaction</string>
+    <string name="reactions_disabled">Reactions are turned off in your settings.</string>
+    <string name="cannot_react_own_message">You cannot react to your own message.</string>
+    <string name="cannot_react_draft">You cannot react to a draft or scheduled message.</string>
+    <string name="cannot_react_spam_or_trash">You cannot react to messages in Spam or Trash.</string>
+    <string name="cannot_react_reply_to">You cannot react to a message with a reply-to address.</string>
+    <string name="cannot_react_too_many_recipients">You cannot react to a message with more than 20 recipients.</string>
+    <string name="cannot_react_bcc">You cannot react to a message you were BCC\'d on.</string>
+    <string name="cannot_react_too_many_emojis">This message already has the maximum number of reactions.</string>
+    <string name="cannot_react_no_recipient">This message has no sender to send the reaction to.</string>
     <string name="reaction_failed">Could not send reaction</string>
     <string name="reaction_info_title">Reaction</string>
     <string name="reaction_info_you">You reacted with %1$s</string>
@@ -560,8 +569,6 @@
     <string name="standard_point_server">The receiving mail server can read the contents</string>
     <string name="standard_point_storage">Stored encrypted once it reaches Aster</string>
     <string name="phishing_signal_authentication_failed">%1$s did not pass sender authentication</string>
-    <string name="sender_verified">Verified</string>
-    <string name="sender_verified_description">Aster confirmed this message really came from %1$s.</string>
     <string name="sender_unverified_title">Sender could not be verified</string>
     <string name="sender_unverified_description">The checks that prove a message came from %1$s did not pass. Be careful with links, attachments and anything it asks you to do.</string>
     <string name="sender_authentication">Sender checks</string>
@@ -2261,6 +2268,7 @@
     <string name="kids_reserved_addresses">Reserved addresses for kids</string>
     <string name="kids_reserved_subtitle">Hold an address for your child. Share the claim link so they can finish setup with their own password.</string>
     <string name="kids_seats_used">%1$d of %2$d family seats used</string>
+    <string name="kids_seats_free">%1$d seat(s) available</string>
     <string name="kids_no_reservations">No reserved addresses yet. Reserve one on astermail.org.</string>
     <string name="kids_reserve_on_web">Reserve on web</string>
     <string name="kids_status_reserved">Reserved</string>
