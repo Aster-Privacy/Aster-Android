@@ -1541,16 +1541,22 @@ fun InboxScreen(
     }
 }
 
+private data class quick_switch_folder(
+    val id: String,
+    val label_res: Int,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+)
+
 private val quick_switch_folders = listOf(
-    "inbox" to R.string.folder_inbox,
-    "sent" to R.string.folder_sent,
-    "drafts" to R.string.folder_drafts,
-    "archive" to R.string.folder_archive,
-    "starred" to R.string.folder_starred,
-    "scheduled" to R.string.folder_scheduled,
-    "snoozed" to R.string.folder_snoozed,
-    "spam" to R.string.folder_spam,
-    "trash" to R.string.folder_trash,
+    quick_switch_folder("inbox", R.string.folder_inbox, TablerIcons.Inbox),
+    quick_switch_folder("sent", R.string.folder_sent, TablerIcons.Send),
+    quick_switch_folder("drafts", R.string.folder_drafts, TablerIcons.FileText),
+    quick_switch_folder("archive", R.string.folder_archive, TablerIcons.Archive),
+    quick_switch_folder("starred", R.string.folder_starred, TablerIcons.Star),
+    quick_switch_folder("scheduled", R.string.folder_scheduled, TablerIcons.Clock),
+    quick_switch_folder("snoozed", R.string.folder_snoozed, TablerIcons.BellMinus),
+    quick_switch_folder("spam", R.string.folder_spam, TablerIcons.AlertTriangle),
+    quick_switch_folder("trash", R.string.folder_trash, TablerIcons.Trash),
 )
 
 @Composable
@@ -1670,13 +1676,14 @@ private fun inbox_top_bar(
                     expanded = folder_menu_open,
                     on_dismiss = { folder_menu_open = false },
                 ) {
-                    quick_switch_folders.forEach { (id, label_res) ->
+                    quick_switch_folders.forEach { entry ->
                         aster_dropdown_item(
-                            label = stringResource(label_res),
-                            selected = id == current_folder,
+                            label = stringResource(entry.label_res),
+                            icon = entry.icon,
+                            selected = entry.id == current_folder,
                             on_click = {
                                 folder_menu_open = false
-                                if (id != current_folder) on_folder_change(id)
+                                if (entry.id != current_folder) on_folder_change(entry.id)
                             },
                         )
                     }
