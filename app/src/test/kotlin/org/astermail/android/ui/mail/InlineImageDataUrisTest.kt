@@ -149,6 +149,25 @@ class InlineImageDataUrisTest {
     }
 
     @Test
+    fun resolves_quoted_image_from_another_thread_message() {
+        val own = listOf(attachment("1", "reply_logo"))
+        val siblings = listOf(attachment("2", "<quoted_logo@aster>"))
+        val out = inline_image_data_uris(
+            """<img src="cid:quoted_logo@aster">""",
+            own + siblings,
+        )
+        assertEquals(mapOf("quoted_logo@aster" to "data:image/png;base64,B64_4"), out)
+    }
+
+    @Test
+    fun own_attachment_wins_over_a_sibling_with_the_same_content_id() {
+        val own = listOf(attachment("1", "shared", data = "abcd"))
+        val siblings = listOf(attachment("2", "shared", data = "abcdefgh"))
+        val out = inline_image_data_uris("""<img src="cid:shared">""", own + siblings)
+        assertEquals(mapOf("shared" to "data:image/png;base64,B64_4"), out)
+    }
+
+    @Test
     fun keeps_the_first_attachment_when_content_ids_collide() {
         val out = inline_image_data_uris(
             """<img src="cid:dup">""",

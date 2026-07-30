@@ -137,10 +137,10 @@ $table_css
 .aster_quote,.gmail_quote,.protonmail_quote,.yahoo_quoted,.moz-cite-prefix{display:none}
 .aster-quoted-content .aster_quote,.aster-quoted-content .gmail_quote,.aster-quoted-content .protonmail_quote,.aster-quoted-content .yahoo_quoted,.aster-quoted-content .moz-cite-prefix,.aster-forwarded-content .aster_quote,.aster-forwarded-content .gmail_quote,.aster-forwarded-content .protonmail_quote{display:block;margin:0;padding:0}
 blockquote{margin:8px 0;padding-left:12px;border-left:2px solid $bq_border;color:$bq_color}
-.aster-quoted-wrapper{margin-top:2px}
-.aster-quote-toggle{display:inline-flex;align-items:center;justify-content:center;min-height:26px;padding:0 14px;margin:0;border-radius:13px;border:none;outline:none;background:${if (chip_dark) "rgba(255,255,255,0.12)" else "rgba(0,0,0,0.08)"};color:${if (chip_dark) "rgba(255,255,255,0.65)" else "rgba(0,0,0,0.55)"};cursor:pointer;font-size:15px;letter-spacing:2px;line-height:1;vertical-align:middle;user-select:none;-webkit-tap-highlight-color:transparent}
+.aster-quoted-wrapper{margin-top:18px;margin-bottom:4px}
+.aster-quote-toggle{display:inline-flex;align-items:center;justify-content:center;min-height:28px;min-width:44px;padding:0 16px;margin:0;border-radius:14px;border:none;outline:none;background:${if (chip_dark) "rgba(255,255,255,0.12)" else "rgba(0,0,0,0.08)"};color:${if (chip_dark) "rgba(255,255,255,0.65)" else "rgba(0,0,0,0.55)"};cursor:pointer;font-size:15px;letter-spacing:2px;line-height:1;vertical-align:middle;user-select:none;-webkit-tap-highlight-color:transparent;transition:background 0.12s ease}
 .aster-quote-toggle:active,.aster-quote-toggle.aster-quote-expanded{background:${if (chip_dark) "rgba(255,255,255,0.2)" else "rgba(0,0,0,0.16)"}}
-.aster-quoted-content{margin-top:8px;color:$bq_color;font-size:15px;line-height:21px}
+.aster-quoted-content{margin-top:14px;padding-top:14px;border-top:1px solid $detail_border;color:$bq_color;font-size:15px;line-height:21px}
 .aster-quoted-content .aster_quote_attr,.aster-quoted-content .gmail_attr{color:$bq_color;font-size:12px;margin-bottom:4px}
 .aster-quoted-content blockquote{margin:0;padding:0 0 0 12px;border-left:2px solid $bq_border2;color:$bq_color}
 .aster-quoted-content blockquote blockquote{border-left-color:$bq_border3}
@@ -393,6 +393,20 @@ try{
     g.addEventListener('error',schedule_h,{once:true});
   }
 }catch(_){}
+  }
+  function reveal_quoted_media(root){
+try{
+  var marked=root.querySelectorAll('[data-aster-h]');
+  for(var i=0;i<marked.length;i++)marked[i].removeAttribute('data-aster-h');
+}catch(_){}
+var settle=function(){
+  try{if(window.__aster_relax)window.__aster_relax()}catch(_){}
+  try{if(window.__aster_collapse_images)window.__aster_collapse_images()}catch(_){}
+  schedule_h();
+};
+requestAnimationFrame(settle);
+setTimeout(settle,350);
+setTimeout(settle,1200);
   }
   function aster_content_height(){
 var m=document.getElementById('m');
@@ -717,7 +731,7 @@ var wrapper=document.createElement('div');wrapper.className='aster-quoted-wrappe
 var btn=document.createElement('button');btn.className='aster-quote-toggle';btn.type='button';btn.textContent='•••';
 var cdiv=document.createElement('div');cdiv.className='aster-quoted-content';cdiv.style.display='none';
 content_el.parentNode.insertBefore(wrapper,content_el);cdiv.appendChild(content_el);
-btn.addEventListener('click',function(){var h=cdiv.style.display==='none';cdiv.style.display=h?'':'none';btn.classList.toggle('aster-quote-expanded',h);if(h)watch_media(cdiv);schedule_h()});
+btn.addEventListener('click',function(){var h=cdiv.style.display==='none';cdiv.style.display=h?'':'none';btn.classList.toggle('aster-quote-expanded',h);if(h){watch_media(cdiv);reveal_quoted_media(cdiv)}schedule_h()});
 wrapper.appendChild(btn);wrapper.appendChild(cdiv);
 trim_trailing_gap(wrapper);
   }
@@ -790,7 +804,7 @@ if(marker){
     var b2=document.createElement('button');b2.className='aster-quote-toggle';b2.type='button';b2.textContent='•••';
     var c2=document.createElement('div');c2.className='aster-quoted-content';c2.style.display='none';
     to_col.forEach(function(node){c2.appendChild(node)});
-    b2.addEventListener('click',function(){var h=c2.style.display==='none';c2.style.display=h?'':'none';b2.classList.toggle('aster-quote-expanded',h);if(h)watch_media(c2);schedule_h()});
+    b2.addEventListener('click',function(){var h=c2.style.display==='none';c2.style.display=h?'':'none';b2.classList.toggle('aster-quote-expanded',h);if(h){watch_media(c2);reveal_quoted_media(c2)}schedule_h()});
     w2.appendChild(b2);w2.appendChild(c2);(document.getElementById('m')||body).appendChild(w2);trim_trailing_gap(w2);
   }
 }

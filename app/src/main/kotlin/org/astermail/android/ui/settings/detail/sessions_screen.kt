@@ -187,12 +187,8 @@ fun SessionsScreen(
 
 @Composable
 private fun parse_device_label(session: SessionInfo): String {
-    val device = session.device_type.takeIf { it.isNotBlank() }
-        ?.replaceFirstChar { it.uppercase() }
-    val browser = session.browser.takeIf { it.isNotBlank() }
-        ?.replaceFirstChar { it.uppercase() }
-    val parts = listOfNotNull(device, browser)
-    if (parts.isNotEmpty()) return parts.joinToString(" - ")
+    val name = org.astermail.android.ui.settings.device_display_name(session.browser, session.device_type)
+    if (name.isNotEmpty()) return name
     return if (session.os.isNotBlank()) stringResource(R.string.os_device, session.os)
     else stringResource(R.string.unknown_device)
 }
@@ -252,6 +248,9 @@ private fun session_row(
                     color = colors.text_primary,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
                 )
                 if (session.is_current) {
                     Spacer(Modifier.size(AsterSpacing.sm))
@@ -269,8 +268,8 @@ private fun session_row(
                     }
                 }
             }
-            val os = session.os
-            if (os.isNotBlank()) {
+            val os = org.astermail.android.ui.settings.device_display_platform(device_label, session.os)
+            if (os.isNotEmpty()) {
                 Text(text = os, color = colors.text_tertiary, fontSize = 13.sp)
             }
             Text(

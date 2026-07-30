@@ -1261,12 +1261,12 @@ internal fun search_select_top_bar(
             style = MaterialTheme.typography.titleMedium,
             color = colors.text_primary,
             fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f).testTag("search_selected_count"),
         )
-        AsterIconButton(
-            icon = TablerIcons.Selector,
-            content_description = stringResource(R.string.select_all),
-            onClick = on_select_all,
+        org.astermail.android.ui.common.select_all_button(
+            on_click = on_select_all,
             modifier = Modifier.testTag("search_select_all"),
         )
     }

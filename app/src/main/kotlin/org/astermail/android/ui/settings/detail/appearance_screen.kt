@@ -32,7 +32,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -42,7 +41,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.Composable
@@ -280,29 +278,40 @@ fun AppearanceScreen(
 
         v_gap(AsterSpacing.xxl)
         section_label(stringResource(R.string.color_theme))
-        (preset_swatch_ids + ColorThemeId.custom).chunked(2).forEach { row ->
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md)) {
-                row.forEach { id ->
-                    val is_locked = id == ColorThemeId.custom && !is_paid_plan
-                    val palette = if (id == ColorThemeId.custom) custom_preview_palette else (AsterColorThemes.palette_for(id) ?: custom_preview_palette)
-                    theme_mockup_card(
-                        label = stringResource(color_theme_label_res(id)),
-                        palette = palette,
-                        selected = color_theme == id,
-                        locked = is_locked,
-                        on_click = {
-                            if (is_locked) {
-                                show_custom_theme_upgrade = true
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(AsterSpacing.lg)) {
+                (preset_swatch_ids + ColorThemeId.custom).chunked(3).forEachIndexed { row_index, row ->
+                    if (row_index > 0) v_gap(AsterSpacing.lg)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md),
+                    ) {
+                        row.forEach { id ->
+                            val is_locked = id == ColorThemeId.custom && !is_paid_plan
+                            val palette = if (id == ColorThemeId.custom) {
+                                custom_preview_palette
                             } else {
-                                apply_color_theme(id)
+                                AsterColorThemes.palette_for(id) ?: custom_preview_palette
                             }
-                        },
-                        modifier = Modifier.weight(1f).testTag("swatch_${id.name}"),
-                    )
+                            theme_swatch(
+                                label = stringResource(color_theme_label_res(id)),
+                                palette = palette,
+                                selected = color_theme == id,
+                                locked = is_locked,
+                                on_click = {
+                                    if (is_locked) {
+                                        show_custom_theme_upgrade = true
+                                    } else {
+                                        apply_color_theme(id)
+                                    }
+                                },
+                                modifier = Modifier.weight(1f).testTag("swatch_${id.name}"),
+                            )
+                        }
+                        repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+                    }
                 }
-                if (row.size < 2) Spacer(Modifier.weight(1f))
             }
-            v_gap(AsterSpacing.md)
         }
 
         if (show_custom_theme_upgrade && !is_paid_plan) {
@@ -400,7 +409,7 @@ fun AppearanceScreen(
 }
 
 @Composable
-private fun theme_mockup_card(
+private fun theme_swatch(
     label: String,
     palette: ColorThemePalette,
     selected: Boolean,
@@ -415,203 +424,63 @@ private fun theme_mockup_card(
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(4f / 3f)
+                .size(66.dp)
                 .border(
-                    width = if (selected) 2.dp else 1.dp,
-                    color = if (selected) colors.accent_blue else palette.border_secondary,
-                    shape = RoundedCornerShape(12.dp),
+                    width = if (selected) 2.dp else 0.dp,
+                    color = if (selected) colors.accent_blue else Color.Transparent,
+                    shape = CircleShape,
                 )
-                .padding(2.dp),
+                .padding(5.dp),
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(palette.bg_primary),
+                    .clip(CircleShape)
+                    .background(palette.bg_primary)
+                    .border(1.dp, palette.border_secondary, CircleShape),
             ) {
-                theme_mockup_sidebar(palette, Modifier.fillMaxHeight().weight(0.32f))
-                theme_mockup_list(palette, Modifier.fillMaxHeight().weight(0.68f))
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(palette.bg_secondary),
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(palette.accent_color),
+                )
             }
-            if (selected) {
+            if (selected || locked) {
                 Box(
                     modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .offset(x = 6.dp, y = (-6).dp)
-                        .size(20.dp)
-                        .background(colors.accent_blue, CircleShape)
-                        .border(2.dp, colors.bg_primary, CircleShape),
+                        .align(Alignment.BottomEnd)
+                        .offset(x = 3.dp, y = 3.dp)
+                        .size(23.dp)
+                        .background(if (selected) colors.accent_blue else colors.bg_card, CircleShape)
+                        .border(2.dp, colors.bg_card, CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        imageVector = TablerIcons.Check,
+                        imageVector = if (selected) TablerIcons.Check else TablerIcons.Lock,
                         contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(11.dp),
-                    )
-                }
-            } else if (locked) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .offset(x = 6.dp, y = (-6).dp)
-                        .size(20.dp)
-                        .background(colors.bg_card, CircleShape)
-                        .border(1.dp, colors.border_primary, CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = TablerIcons.Lock,
-                        contentDescription = null,
-                        tint = colors.text_secondary,
-                        modifier = Modifier.size(11.dp),
+                        tint = if (selected) Color.White else colors.text_secondary,
+                        modifier = Modifier.size(14.dp),
                     )
                 }
             }
         }
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(8.dp))
         Text(
             text = label,
-            color = colors.text_secondary,
+            color = if (selected) colors.text_primary else colors.text_secondary,
             fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
             maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         )
-        Spacer(Modifier.height(2.dp))
-    }
-}
-
-@Composable
-private fun theme_mockup_sidebar(palette: ColorThemePalette, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .background(palette.bg_secondary)
-            .padding(4.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(6.dp).background(palette.accent_color, RoundedCornerShape(2.dp)))
-            Spacer(Modifier.width(2.dp))
-            Box(
-                Modifier
-                    .weight(1f)
-                    .height(2.dp)
-                    .background(palette.text_secondary, RoundedCornerShape(1.dp)),
-            )
-        }
-        Spacer(Modifier.height(4.dp))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp)
-                .background(palette.accent_color, RoundedCornerShape(3.dp)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Box(Modifier.size(3.dp).background(Color.White.copy(alpha = 0.85f), RoundedCornerShape(1.dp)))
-        }
-        Spacer(Modifier.height(4.dp))
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(7.dp)
-                .background(palette.bg_primary, RoundedCornerShape(2.dp))
-                .border(0.5.dp, palette.border_secondary, RoundedCornerShape(2.dp))
-                .padding(horizontal = 2.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(Modifier.size(2.dp).background(palette.text_primary, RoundedCornerShape(1.dp)))
-            Spacer(Modifier.width(1.dp))
-            Box(
-                Modifier
-                    .weight(1f)
-                    .height(1.5.dp)
-                    .background(palette.text_primary, RoundedCornerShape(1.dp)),
-            )
-            Box(Modifier.size(2.dp).background(palette.accent_color, CircleShape))
-        }
-        Spacer(Modifier.height(2.dp))
-        repeat(2) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(7.dp)
-                    .padding(horizontal = 2.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(Modifier.size(2.dp).background(palette.text_muted, RoundedCornerShape(1.dp)))
-                Spacer(Modifier.width(1.dp))
-                Box(
-                    Modifier
-                        .weight(1f)
-                        .height(1.5.dp)
-                        .background(palette.text_muted, RoundedCornerShape(1.dp)),
-                )
-            }
-        }
-        Spacer(Modifier.weight(1f))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(2.dp)
-                .background(Color.White.copy(alpha = 0.08f), RoundedCornerShape(1.dp)),
-        ) {
-            Box(
-                Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth(0.35f)
-                    .background(palette.accent_color, RoundedCornerShape(1.dp)),
-            )
-        }
-    }
-}
-
-@Composable
-private fun theme_mockup_list(palette: ColorThemePalette, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .background(palette.bg_primary)
-            .padding(4.dp),
-    ) {
-        val row_widths = listOf(0.55f to 0.85f, 0.42f to 0.7f, 0.5f to 0.78f)
-        row_widths.forEachIndexed { index, (subject_width, preview_width) ->
-            val is_first = index == 0
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(12.dp)
-                    .background(
-                        if (is_first) palette.bg_selected else Color.Transparent,
-                        RoundedCornerShape(3.dp),
-                    )
-                    .padding(horizontal = 3.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    Modifier
-                        .size(6.dp)
-                        .background(if (is_first) palette.accent_color else palette.avatar_bg, CircleShape),
-                )
-                Spacer(Modifier.width(3.dp))
-                Column(Modifier.weight(1f)) {
-                    Box(
-                        Modifier
-                            .fillMaxWidth(subject_width)
-                            .height(1.8.dp)
-                            .background(
-                                if (is_first) palette.text_primary else palette.text_secondary,
-                                RoundedCornerShape(1.dp),
-                            ),
-                    )
-                    Spacer(Modifier.height(1.5.dp))
-                    Box(
-                        Modifier
-                            .fillMaxWidth(preview_width)
-                            .height(1.2.dp)
-                            .background(palette.text_tertiary, RoundedCornerShape(1.dp)),
-                    )
-                }
-            }
-            Spacer(Modifier.height(2.dp))
-        }
     }
 }
 

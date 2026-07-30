@@ -59,6 +59,14 @@ class InlineCidImagesTest {
     }
 
     @Test
+    fun quoted_image_from_an_earlier_message_is_resolved() {
+        val html = """<p>reply</p><div class="aster_quote"><img src="cid:orig@aster"></div>"""
+        val out = resolve_inline_cids(html, mapOf("orig@aster" to "data:image/png;base64,QQQQ"))
+        assertTrue(out.contains("data:image/png;base64,QQQQ"))
+        assertFalse(out.contains("data:image/gif;base64,"))
+    }
+
+    @Test
     fun leaves_remote_and_data_sources_untouched() {
         val html = """<img src="https://cdn.example/a.png"><img src="data:image/png;base64,CCCC">"""
         val out = resolve_inline_cids(html, mapOf("x" to "data:image/png;base64,DDDD"))

@@ -248,7 +248,6 @@ fun SecurityScreen(
                     }
                 }
                 v_gap(AsterSpacing.sm)
-                // Custom progress bar - no stop indicator dot
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -287,7 +286,7 @@ fun SecurityScreen(
                         score_checklist_row(stringResource(R.string.block_tracking_pixels), prefs?.block_tracking_pixels == true, colors) { toggle { it.copy(block_tracking_pixels = it.block_tracking_pixels != true) } }
                         score_checklist_row(stringResource(R.string.block_remote_images), prefs?.block_external_images == true, colors) { toggle { it.copy(block_external_images = it.block_external_images != true) } }
                         score_checklist_row(stringResource(R.string.strip_exif), prefs?.strip_exif_on_compose == true, colors) { toggle { it.copy(strip_exif = it.strip_exif_on_compose != true, strip_exif_on_compose = it.strip_exif_on_compose != true) } }
-                        score_checklist_row(stringResource(R.string.check_read_receipts_off), prefs?.send_read_receipts == false, colors) { toggle { it.copy(send_read_receipts = it.send_read_receipts != false) } }
+                        score_checklist_row(stringResource(R.string.check_read_receipts_off), prefs?.send_read_receipts == false, colors) { toggle { it.copy(send_read_receipts = !it.send_read_receipts) } }
                     }
                 }
             }
@@ -475,7 +474,7 @@ fun SecurityScreen(
 
         v_gap(AsterSpacing.lg)
 
-        vanguard_section(vm = vm, lock_vm = lock_vm)
+        vanguard_section(vm = vm, lock_vm = lock_vm, on_upgrade = { on_open("billing") })
 
         v_gap(AsterSpacing.lg)
 
@@ -590,7 +589,11 @@ fun SecurityScreen(
 private enum class AppLockModal { setup, verify_to_change, change, disable }
 
 @Composable
-private fun vanguard_section(vm: SettingsViewModel, lock_vm: AppLockViewModel) {
+private fun vanguard_section(
+    vm: SettingsViewModel,
+    lock_vm: AppLockViewModel,
+    on_upgrade: () -> Unit,
+) {
     val colors = AsterMaterial.colors
     val state by vm.state.collectAsStateWithLifecycle()
     val store = lock_vm.store
@@ -663,7 +666,7 @@ private fun vanguard_section(vm: SettingsViewModel, lock_vm: AppLockViewModel) {
                         modifier = Modifier
                             .clip(SquircleShape(10.dp))
                             .background(colors.accent_blue)
-                            .clickable { }
+                            .clickable(onClick = on_upgrade)
                             .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.xs),
                     ) {
                         Text(
@@ -933,7 +936,8 @@ private fun trusted_device_row(
         Spacer(Modifier.width(AsterSpacing.md))
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = device.label.ifBlank { stringResource(R.string.trusted_device_default_label) },
+                text = org.astermail.android.ui.settings.clean_trusted_device_label(device.label)
+                    .ifBlank { stringResource(R.string.trusted_device_default_label) },
                 color = colors.text_primary,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,

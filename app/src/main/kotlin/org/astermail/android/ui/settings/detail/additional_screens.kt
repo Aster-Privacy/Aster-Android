@@ -174,8 +174,7 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
                         dt.contains("tablet") || dt.contains("ipad") -> TablerIcons.DeviceTablet
                         else -> TablerIcons.DeviceDesktop
                     }
-                    val name = (s.browser.takeIf { it.isNotBlank() } ?: s.device_type)
-                        .replaceFirstChar { c -> c.uppercase() }
+                    val name = org.astermail.android.ui.settings.device_display_name(s.browser, s.device_type)
                         .ifEmpty { stringResource(R.string.unknown_device) }
                     val last_seen = if (s.is_current) stringResource(R.string.active_now) else relative_time_label(s.last_active)
                     detail_row(

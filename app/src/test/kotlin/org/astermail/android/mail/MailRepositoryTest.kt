@@ -394,6 +394,46 @@ class MailRepositoryTest {
     }
 
     @Test
+    fun `custom tag folder supports bulk scope`() {
+        assertTrue(repo.folder_supports_bulk_scope("tag:work_token"))
+        assertFalse(repo.folder_supports_bulk_scope("tag:"))
+        assertFalse(repo.folder_supports_bulk_scope("routing:alias_token"))
+    }
+
+    @Test
+    fun `bulk_scope_action on a tag folder scopes by tag token and excludes trash`() = runTest {
+        coEvery { mail_api.bulk_action(any()) } returns BulkScopeResponse(affected_count = 86)
+
+        val result = repo.bulk_scope_action("tag:work_token", "archive")
+
+        assertEquals(86, result.getOrThrow().affected_count)
+        coVerify {
+            mail_api.bulk_action(
+                BulkScopeRequest(
+                    action = "archive",
+                    scope = BulkScopeFilter(tag_token = "work_token", is_trashed = false),
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun `mark_all_read_scope on a tag folder scopes by tag token`() = runTest {
+        coEvery { mail_api.bulk_action(any()) } returns BulkScopeResponse(affected_count = 9)
+
+        repo.mark_all_read_scope("tag:work_token")
+
+        coVerify {
+            mail_api.bulk_action(
+                BulkScopeRequest(
+                    action = "mark_read",
+                    scope = BulkScopeFilter(tag_token = "work_token", is_trashed = false),
+                ),
+            )
+        }
+    }
+
+    @Test
     fun `bulk_scope_action on a label folder scopes by label token and excludes trash`() = runTest {
         coEvery { mail_api.bulk_action(any()) } returns BulkScopeResponse(affected_count = 180)
 

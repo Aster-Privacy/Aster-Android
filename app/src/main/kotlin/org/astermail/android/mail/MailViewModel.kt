@@ -2020,8 +2020,9 @@ class MailViewModel @Inject constructor(
     fun action_supports_scope_selection(action: String): Boolean =
         repository.action_supports_bulk_scope(action)
 
-    fun bulk_scope_action(folder: String, action: String) {
-        val snapshot = _inbox_state.value.items
+    fun bulk_scope_action(folder: String, action: String, on_failure: (() -> Unit)? = null) {
+        val prior = _inbox_state.value
+        val snapshot = prior.items
         val removes = action != "mark_read" && action != "mark_unread"
         if (removes) {
             _inbox_state.update { it.copy(items = emptyList(), has_more = false, next_cursor = null) }
@@ -2038,8 +2039,18 @@ class MailViewModel @Inject constructor(
                     refresh()
                 },
                 onFailure = {
-                    _inbox_state.update { it.copy(items = snapshot) }
-                    emit_toast(context.getString(R.string.action_failed))
+                    _inbox_state.update {
+                        it.copy(
+                            items = snapshot,
+                            has_more = prior.has_more,
+                            next_cursor = prior.next_cursor,
+                        )
+                    }
+                    if (on_failure != null) {
+                        on_failure()
+                    } else {
+                        emit_toast(context.getString(R.string.action_failed))
+                    }
                 },
             )
         }
