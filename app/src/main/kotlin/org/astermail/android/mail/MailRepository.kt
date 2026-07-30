@@ -964,45 +964,70 @@ class MailRepository @Inject constructor(
         mail_api.remove_tag_from_item(item_id, tag_token)
     }
 
-    suspend fun archive(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<Unit> = runCatching {
-        mail_api.bulk_action(BulkScopeRequest(action = "archive", ids = item_ids))
+    private suspend fun patch_metadata_for_items(
+        item_ids: List<String>,
+        raw_items: List<MailItem?>,
+        updates: Map<String, Any>,
+    ) {
         item_ids.forEachIndexed { index, item_id ->
-            val raw_item = raw_items.getOrNull(index)
-            val request = build_metadata_patch(
-                raw_item,
-                mapOf(
-                    "is_archived" to true,
-                    "is_trashed" to false,
-                    "is_spam" to false,
-                ),
-            )
+            val raw_item = raw_items.getOrNull(index) ?: resolve_raw_item(item_id)
+            val request = build_metadata_patch(raw_item, updates)
             runCatching { mail_api.patch_metadata(item_id, request) }
         }
+    }
+
+    suspend fun archive(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<Unit> = runCatching {
+        mail_api.bulk_action(BulkScopeRequest(action = "archive", ids = item_ids))
+        patch_metadata_for_items(
+            item_ids,
+            raw_items,
+            mapOf(
+                "is_archived" to true,
+                "is_trashed" to false,
+                "is_spam" to false,
+            ),
+        )
         Unit
     }
 
     suspend fun trash(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<Unit> = runCatching {
         mail_api.bulk_action(BulkScopeRequest(action = "trash", ids = item_ids))
-        item_ids.forEachIndexed { index, item_id ->
-            val raw_item = raw_items.getOrNull(index) ?: return@forEachIndexed
-            val request = build_metadata_patch(
-                raw_item,
-                mapOf(
-                    "is_trashed" to true,
-                    "is_archived" to false,
-                ),
-            )
-            runCatching { mail_api.patch_metadata(item_id, request) }
-        }
+        patch_metadata_for_items(
+            item_ids,
+            raw_items,
+            mapOf(
+                "is_trashed" to true,
+                "is_archived" to false,
+            ),
+        )
         Unit
     }
 
     suspend fun mark_spam(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<Unit> = runCatching {
         mail_api.bulk_action(BulkScopeRequest(action = "mark_spam", ids = item_ids))
+        patch_metadata_for_items(
+            item_ids,
+            raw_items,
+            mapOf(
+                "is_spam" to true,
+                "is_trashed" to false,
+                "is_archived" to false,
+            ),
+        )
+        Unit
     }
 
     suspend fun unmark_spam(item_ids: List<String>): Result<BulkScopeResponse> = runCatching {
-        mail_api.bulk_action(BulkScopeRequest(action = "unmark_spam", ids = item_ids))
+        val response = mail_api.bulk_action(BulkScopeRequest(action = "unmark_spam", ids = item_ids))
+        patch_metadata_for_items(
+            item_ids,
+            emptyList(),
+            mapOf(
+                "is_spam" to false,
+                "is_trashed" to false,
+            ),
+        )
+        response
     }
 
     suspend fun report_spam_senders(sender_emails: List<String>) {
@@ -1044,19 +1069,21 @@ class MailRepository @Inject constructor(
 
     suspend fun unarchive(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<BulkScopeResponse> = runCatching {
         val response = mail_api.bulk_action(BulkScopeRequest(action = "unarchive", ids = item_ids))
-        item_ids.forEachIndexed { index, item_id ->
-            val raw_item = raw_items.getOrNull(index)
-            val request = build_metadata_patch(
-                raw_item,
-                mapOf("is_archived" to false),
-            )
-            runCatching { mail_api.patch_metadata(item_id, request) }
-        }
+        patch_metadata_for_items(item_ids, raw_items, mapOf("is_archived" to false))
         response
     }
 
     suspend fun restore_trash(item_ids: List<String>): Result<BulkScopeResponse> = runCatching {
-        mail_api.bulk_action(BulkScopeRequest(action = "restore_trash", ids = item_ids))
+        val response = mail_api.bulk_action(BulkScopeRequest(action = "restore_trash", ids = item_ids))
+        patch_metadata_for_items(
+            item_ids,
+            emptyList(),
+            mapOf(
+                "is_trashed" to false,
+                "is_spam" to false,
+            ),
+        )
+        response
     }
 
     suspend fun mark_read_bulk(item_ids: List<String>): Result<BulkScopeResponse> = runCatching {
@@ -1184,10 +1211,11 @@ class MailRepository @Inject constructor(
         val envelope = try_decrypt_envelope(item.encrypted_envelope, item.envelope_nonce, item.id)
         val enc_meta = item.encrypted_metadata
         val meta_nonce = item.metadata_nonce
-        val meta = item.metadata
+        val decrypted_meta = item.metadata
             ?: if (!enc_meta.isNullOrBlank() && !meta_nonce.isNullOrBlank()) {
                 decrypt_mail_metadata(enc_meta, meta_nonce)
             } else null
+        val meta = decrypted_meta?.let { merge_server_flags(it, item) }
         val forwarding = envelope?.let {
             org.astermail.android.ui.mail.resolve_forwarding_display(it.from_email, it.raw_headers)
         }
@@ -1201,13 +1229,13 @@ class MailRepository @Inject constructor(
             preview = envelope?.let { clean_preview(it.body_text, it.body_html) } ?: "",
             timestamp = item.message_ts ?: item.created_at ?: "",
             is_read = resolve_read_state(item.item_type, item.is_read, meta?.is_read) ||
-                ((item.is_trashed ?: meta?.is_trashed) == true),
-            is_starred = meta?.is_starred ?: false,
+                (meta?.is_trashed ?: item.is_trashed) == true,
+            is_starred = meta?.is_starred ?: item.is_starred ?: false,
             is_encrypted = item.encrypted_envelope != null,
             has_attachments = meta?.has_attachments ?: false,
-            is_trashed = item.is_trashed ?: meta?.is_trashed ?: false,
-            is_archived = meta?.is_archived ?: false,
-            is_spam = item.is_spam ?: meta?.is_spam ?: false,
+            is_trashed = meta?.is_trashed ?: item.is_trashed ?: false,
+            is_archived = meta?.is_archived ?: item.is_archived ?: false,
+            is_spam = meta?.is_spam ?: item.is_spam ?: false,
             labels = item.labels?.mapNotNull { it.folder_token } ?: emptyList(),
             tag_tokens = item.tag_tokens ?: emptyList(),
             category = if (envelope != null) {
@@ -1226,6 +1254,15 @@ class MailRepository @Inject constructor(
 
     suspend fun decrypt_single_thread_message(item: ThreadMessageItem): ThreadMessageDecrypted =
         withContext(Dispatchers.IO) { decrypt_thread_message(item) }
+
+    private fun merge_server_flags(meta: MailItemMetadata, item: MailItem): MailItemMetadata = meta.copy(
+        is_read = item.is_read ?: meta.is_read,
+        is_starred = meta.is_starred || (item.is_starred ?: false),
+        is_pinned = meta.is_pinned || (item.is_pinned ?: false),
+        is_trashed = meta.is_trashed || (item.is_trashed ?: false),
+        is_archived = meta.is_archived || (item.is_archived ?: false),
+        is_spam = meta.is_spam || (item.is_spam ?: false),
+    )
 
     private fun resolve_read_state(item_type: String?, server_is_read: Boolean?, meta_is_read: Boolean?): Boolean {
         val is_sent_type = item_type == "sent" || item_type == "draft" || item_type == "scheduled"
@@ -1532,19 +1569,20 @@ class MailRepository @Inject constructor(
             current_metadata = decrypt_mail_metadata(enc_meta, meta_nonce)
         }
         if (current_metadata == null) {
-            current_metadata = raw_item?.metadata ?: MailItemMetadata()
+            current_metadata = raw_item?.metadata
         }
 
-        val updated = current_metadata.copy(
-            is_read = (updates["is_read"] as? Boolean) ?: current_metadata.is_read,
-            is_starred = (updates["is_starred"] as? Boolean) ?: current_metadata.is_starred,
-            is_pinned = (updates["is_pinned"] as? Boolean) ?: current_metadata.is_pinned,
-            is_trashed = (updates["is_trashed"] as? Boolean) ?: current_metadata.is_trashed,
-            is_archived = (updates["is_archived"] as? Boolean) ?: current_metadata.is_archived,
-            is_spam = (updates["is_spam"] as? Boolean) ?: current_metadata.is_spam,
+        val base = current_metadata ?: MailItemMetadata()
+        val updated = base.copy(
+            is_read = (updates["is_read"] as? Boolean) ?: base.is_read,
+            is_starred = (updates["is_starred"] as? Boolean) ?: base.is_starred,
+            is_pinned = (updates["is_pinned"] as? Boolean) ?: base.is_pinned,
+            is_trashed = (updates["is_trashed"] as? Boolean) ?: base.is_trashed,
+            is_archived = (updates["is_archived"] as? Boolean) ?: base.is_archived,
+            is_spam = (updates["is_spam"] as? Boolean) ?: base.is_spam,
         )
 
-        val encrypted = encrypt_mail_metadata(updated)
+        val encrypted = if (current_metadata != null) encrypt_mail_metadata(updated) else null
 
         return PatchMetadataRequest(
             encrypted_metadata = encrypted?.first,
