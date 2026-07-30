@@ -55,6 +55,7 @@ class FolderSwitcherIconsTest {
         "Snoozed",
         "Spam",
         "Trash",
+        "All Mail",
     )
 
     private fun render_top_bar(selected_folder: String) {
@@ -96,6 +97,7 @@ class FolderSwitcherIconsTest {
                 .assertIsDisplayed()
         }
 
+        assertEquals(listOf("trash", "all"), quick_switch_folders.takeLast(2).map { it.id })
         assertEquals(expected_labels.size, quick_switch_folders.size)
         assertEquals(expected_labels.size, quick_switch_folders.map { it.icon.name }.distinct().size)
 
