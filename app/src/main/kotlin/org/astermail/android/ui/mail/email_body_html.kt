@@ -75,7 +75,7 @@ internal fun build_email_html(
     val body_font = if (dyslexia_font) sys_font else user_font
     val body_style = when {
         is_html_body && !has_newsletter_layout ->
-            "background-color:transparent;color:${if (simple_dark) "#e5e5e5" else "#111827"};margin:0;padding:4px 16px 0 16px;font-family:$body_font;font-size:14px;line-height:1.6;word-wrap:break-word"
+            "background-color:transparent;color:${if (simple_dark) "#e5e5e5" else if (white_page) "#111827" else fg_hex};margin:0;padding:4px 16px 0 16px;font-family:$body_font;font-size:14px;line-height:1.6;word-wrap:break-word"
         is_html_body ->
             "background-color:transparent;margin:0;padding:4px 16px 0 16px"
         else ->
@@ -136,7 +136,7 @@ html,body{background-color:#ffffff!important}
     } else {
         "script-src 'nonce-$csp_nonce'"
     }
-    val csp_meta = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; img-src https://app.astermail.org data:; style-src 'unsafe-inline'; font-src https://app.astermail.org https://mail-content.invalid data:; $script_src; base-uri 'none'; form-action 'none'; frame-src 'none'; object-src 'none'\">"
+    val csp_meta = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; img-src https://app.astermail.org https://mail-content.invalid data:; style-src 'unsafe-inline'; font-src https://app.astermail.org https://mail-content.invalid data:; $script_src; base-uri 'none'; form-action 'none'; frame-src 'none'; object-src 'none'\">"
 
     return """<!DOCTYPE html><html${if (has_newsletter_layout) " data-nl=\"1\"" else ""}${if (white_page) " data-white=\"1\"" else ""}${if (simple_dark) " data-dark=\"1\"" else ""}${if (force_dark_emails) " data-dark-force=\"1\"" else ""}${if (is_html_body && !simple_dark) " style=\"background-color:transparent\"" else ""}><head>
 $csp_meta

@@ -200,6 +200,7 @@ object EmailHtmlSanitizer {
             val src = img.attr("src")
             val lower = src.trim().lowercase()
             if (!lower.startsWith("http://") && !lower.startsWith("https://")) continue
+            if (lower.startsWith(INLINE_IMAGE_URL_PREFIX)) continue
             if (is_tracking_pixel(img)) {
                 img.remove()
                 continue

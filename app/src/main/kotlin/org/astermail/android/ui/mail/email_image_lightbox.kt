@@ -65,7 +65,22 @@ private const val LIGHTBOX_MIN_SCALE = 1f
 private const val LIGHTBOX_MAX_SCALE = 6f
 private const val LIGHTBOX_MAX_DATA_URI_CHARS = 16 * 1024 * 1024
 
+private const val LIGHTBOX_MAX_PIXELS = 4096
+
+private fun decode_sampled_bitmap(bytes: ByteArray): androidx.compose.ui.graphics.ImageBitmap? = try {
+    val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+    var sample = 1
+    val largest = maxOf(bounds.outWidth, bounds.outHeight)
+    while (largest / sample > LIGHTBOX_MAX_PIXELS) sample *= 2
+    val options = android.graphics.BitmapFactory.Options().apply { inSampleSize = sample }
+    android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)?.asImageBitmap()
+} catch (_: Throwable) {
+    null
+}
+
 private fun decode_data_uri_bitmap(src: String): androidx.compose.ui.graphics.ImageBitmap? {
+    InlineImageStore.entry_for_source(src)?.let { return decode_sampled_bitmap(it.bytes) }
     if (!src.startsWith("data:image/", ignoreCase = true)) return null
     if (src.length > LIGHTBOX_MAX_DATA_URI_CHARS) return null
     val comma = src.indexOf(',')
@@ -74,7 +89,7 @@ private fun decode_data_uri_bitmap(src: String): androidx.compose.ui.graphics.Im
     if (!header.contains(";base64", ignoreCase = true)) return null
     return try {
         val bytes = android.util.Base64.decode(src.substring(comma + 1), android.util.Base64.DEFAULT)
-        android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
+        decode_sampled_bitmap(bytes)
     } catch (_: Throwable) {
         null
     }
@@ -87,7 +102,17 @@ fun email_image_lightbox(
     on_dismiss: () -> Unit,
 ) {
     val context = LocalContext.current
-    val inline_bitmap = remember(src) { decode_data_uri_bitmap(src) }
+    val inline_bitmap by androidx.compose.runtime.produceState<androidx.compose.ui.graphics.ImageBitmap?>(
+        initialValue = null,
+        src,
+    ) {
+        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            decode_data_uri_bitmap(src)
+        }
+    }
+    val local_source = remember(src) {
+        src.startsWith("data:image/", ignoreCase = true) || InlineImageStore.entry_for_source(src) != null
+    }
     val request = remember(src, auth_header) {
         ImageRequest.Builder(context)
             .data(src)
@@ -156,13 +181,18 @@ fun email_image_lightbox(
                     translationY = offset_y,
                 )
 
-            if (inline_bitmap != null) {
-                androidx.compose.foundation.Image(
-                    bitmap = inline_bitmap,
-                    contentDescription = stringResource(R.string.image_lightbox_title),
-                    contentScale = ContentScale.Fit,
-                    modifier = image_modifier,
-                )
+            val decoded = inline_bitmap
+            if (local_source) {
+                if (decoded != null) {
+                    androidx.compose.foundation.Image(
+                        bitmap = decoded,
+                        contentDescription = stringResource(R.string.image_lightbox_title),
+                        contentScale = ContentScale.Fit,
+                        modifier = image_modifier,
+                    )
+                } else {
+                    CircularProgressIndicator(color = Color.White)
+                }
             } else {
                 androidx.compose.foundation.Image(
                     painter = painter,
