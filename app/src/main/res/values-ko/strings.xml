@@ -536,6 +536,8 @@
     <string name="font_subtitle">앱 전체에서 사용할 글꼴을 선택하세요</string>
     <string name="font_option_default">Aster Default</string>
     <string name="font_option_system">시스템 UI</string>
+    <string name="font_option_system_mono">시스템 고정폭</string>
+    <string name="font_preview_sample">다람쥐 헌 쳇바퀴에 123</string>
     <string name="font_option_inter">Inter</string>
     <string name="font_option_roboto">Roboto</string>
     <string name="font_option_nunito">Nunito</string>

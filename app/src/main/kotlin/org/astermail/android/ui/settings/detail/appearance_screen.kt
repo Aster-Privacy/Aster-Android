@@ -27,6 +27,8 @@ import compose.icons.tablericons.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +38,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -52,6 +55,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -71,6 +75,7 @@ import org.astermail.android.design.ColorThemePalette
 import org.astermail.android.design.AsterColorThemes
 import org.astermail.android.design.MaterialThemeGenerator
 import org.astermail.android.design.FONT_OPTIONS
+import org.astermail.android.design.preview_font_family_for
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
@@ -78,8 +83,7 @@ import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.UpgradeGate
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.storage.ThemeMode
-import org.astermail.android.ui.settings.mail_rules.pickers.options_picker
-import org.astermail.android.ui.settings.mail_rules.pickers.picker_item
+import org.astermail.android.ui.settings.mail_rules.pickers.base_sheet
 import org.astermail.android.ui.theme.ThemeViewModel
 
 private val quick_seed_colors = listOf(
@@ -98,6 +102,7 @@ private fun font_label_res(id: String): Int = when (id) {
     "nunito" -> R.string.font_option_nunito
     "merriweather" -> R.string.font_option_merriweather
     "lora" -> R.string.font_option_lora
+    "system_mono" -> R.string.font_option_system_mono
     "jetbrains_mono" -> R.string.font_option_jetbrains_mono
     "poppins" -> R.string.font_option_poppins
     "montserrat" -> R.string.font_option_montserrat
@@ -404,13 +409,72 @@ fun AppearanceScreen(
     }
 
     if (show_font_picker) {
-        options_picker(
+        base_sheet(
             on_dismiss = { show_font_picker = false },
             title = stringResource(R.string.pick_font),
-            items = FONT_OPTIONS.map { picker_item(id = it.id, label = stringResource(font_label_res(it.id))) },
-            selected_id = font_choice,
-            on_pick = { id -> apply_font(id) },
-        )
+        ) {
+            Column(
+                modifier = Modifier
+                    .heightIn(max = 480.dp)
+                    .verticalScroll(rememberScrollState()),
+            ) {
+                FONT_OPTIONS.forEach { option ->
+                    font_option_row(
+                        label = stringResource(font_label_res(option.id)),
+                        family = preview_font_family_for(option.id),
+                        selected = option.id == font_choice,
+                        on_click = {
+                            apply_font(option.id)
+                            show_font_picker = false
+                        },
+                        test_tag = "opt_${option.id}",
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun font_option_row(
+    label: String,
+    family: FontFamily,
+    selected: Boolean,
+    on_click: () -> Unit,
+    test_tag: String,
+) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = on_click)
+            .testTag(test_tag)
+            .padding(horizontal = AsterSpacing.lg, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                color = colors.text_primary,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                fontFamily = family,
+            )
+            Text(
+                text = stringResource(R.string.font_preview_sample),
+                color = colors.text_tertiary,
+                fontSize = 13.sp,
+                fontFamily = family,
+            )
+        }
+        if (selected) {
+            Icon(
+                imageVector = TablerIcons.Check,
+                contentDescription = null,
+                tint = colors.accent_blue,
+                modifier = Modifier.size(20.dp),
+            )
+        }
     }
 }
 

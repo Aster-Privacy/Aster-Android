@@ -48,7 +48,6 @@ compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling
 compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 tabler-icons = { group = "br.com.devsrsouza.compose.icons", name = "tabler-icons", version = "1.1.1" }
-compose-ui-text-google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts" }
 androidx-core-ktx-lib = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }

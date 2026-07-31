@@ -25,7 +25,6 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.compose.material.icons.extended)
     implementation(libs.tabler.icons)
-    implementation(libs.compose.ui.text.google.fonts)
     implementation(libs.androidx.core.ktx)
     testImplementation(libs.junit)
 }

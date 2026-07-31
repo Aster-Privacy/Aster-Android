@@ -564,6 +564,8 @@
     <string name="font_subtitle">Choisissez la police utilisée dans toute l\'application</string>
     <string name="font_option_default">Aster Default</string>
     <string name="font_option_system">UI système</string>
+    <string name="font_option_system_mono">Monospace système</string>
+    <string name="font_preview_sample">Portez ce vieux whisky 123</string>
     <string name="font_option_inter">Inter</string>
     <string name="font_option_roboto">Roboto</string>
     <string name="font_option_nunito">Nunito</string>

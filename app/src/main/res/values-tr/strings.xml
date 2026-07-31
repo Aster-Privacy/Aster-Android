@@ -536,6 +536,8 @@
     <string name="font_subtitle">Uygulama genelinde kullanılan yazı tipini seçin</string>
     <string name="font_option_default">Aster Default</string>
     <string name="font_option_system">Sistem arayüzü</string>
+    <string name="font_option_system_mono">Sistem eş aralıklı</string>
+    <string name="font_preview_sample">Pijamalı hasta yağız şoföre 123</string>
     <string name="font_option_inter">Inter</string>
     <string name="font_option_roboto">Roboto</string>
     <string name="font_option_nunito">Nunito</string>

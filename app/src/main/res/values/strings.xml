@@ -875,6 +875,8 @@
     <string name="font_subtitle">Choose the typeface used across the app</string>
     <string name="font_option_default">Aster Default</string>
     <string name="font_option_system">System UI</string>
+    <string name="font_option_system_mono">System Mono</string>
+    <string name="font_preview_sample">The quick brown fox jumps</string>
     <string name="font_option_inter">Inter</string>
     <string name="font_option_roboto">Roboto</string>
     <string name="font_option_nunito">Nunito</string>

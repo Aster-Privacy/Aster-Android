@@ -536,6 +536,8 @@
     <string name="font_subtitle">Escolha a fonte usada em todo o aplicativo</string>
     <string name="font_option_default">Aster Default</string>
     <string name="font_option_system">UI do sistema</string>
+    <string name="font_option_system_mono">Monoespaçada do sistema</string>
+    <string name="font_preview_sample">A rápida raposa salta 123</string>
     <string name="font_option_inter">Inter</string>
     <string name="font_option_roboto">Roboto</string>
     <string name="font_option_nunito">Nunito</string>

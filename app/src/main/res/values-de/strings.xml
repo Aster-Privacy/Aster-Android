@@ -537,6 +537,8 @@
     <string name="font_subtitle">Wähle die Schriftart, die in der ganzen App verwendet wird</string>
     <string name="font_option_default">Aster Default</string>
     <string name="font_option_system">System-UI</string>
+    <string name="font_option_system_mono">System-Monospace</string>
+    <string name="font_preview_sample">Franz jagt im Taxi quer</string>
     <string name="font_option_inter">Inter</string>
     <string name="font_option_roboto">Roboto</string>
     <string name="font_option_nunito">Nunito</string>

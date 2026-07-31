@@ -23,38 +23,12 @@ package org.astermail.android.design
 
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.googlefonts.Font as GoogleFontRef
-import androidx.compose.ui.text.googlefonts.GoogleFont
 import androidx.compose.ui.unit.sp
 
-private val space_grotesk_weights = listOf(
-    FontWeight.Normal,
-    FontWeight.Medium,
-    FontWeight.SemiBold,
-    FontWeight.Bold,
-)
-
-private val space_grotesk_font_provider = GoogleFont.Provider(
-    providerAuthority = "com.google.android.gms.fonts",
-    providerPackage = "com.google.android.gms",
-    certificates = R.array.com_google_android_gms_fonts_certs,
-)
-
-@OptIn(ExperimentalTextApi::class)
-val inter_family = FontFamily(
-    space_grotesk_weights.map { weight ->
-        GoogleFontRef(
-            GoogleFont("Space Grotesk"),
-            space_grotesk_font_provider,
-            weight = weight,
-        )
-    },
-)
+val inter_family: FontFamily = aster_default_family
 
 val local_dyslexia_font = compositionLocalOf<FontFamily?> { null }
 
