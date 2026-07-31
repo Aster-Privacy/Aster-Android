@@ -2437,7 +2437,7 @@ class MailViewModel @Inject constructor(
         }
     }
 
-    fun schedule_send_with_undo(
+    suspend fun schedule_send_with_undo(
         to: List<String>,
         cc: List<String>,
         bcc: List<String>,
@@ -2453,8 +2453,8 @@ class MailViewModel @Inject constructor(
         suppress_branding: Boolean? = null,
         undo_seconds: Int,
         draft_id: String? = null,
-    ) {
-        repository.schedule_send_with_undo(
+    ): Result<String> {
+        return repository.schedule_send_with_undo(
             to = to,
             cc = cc,
             bcc = bcc,
