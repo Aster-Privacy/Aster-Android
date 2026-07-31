@@ -180,6 +180,7 @@ dependencies {
     androidTestImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation(libs.okhttp.mockwebserver)
     debugImplementation("androidx.compose.ui:ui-test-manifest")
     "androidTestFullImplementation"("com.google.android.play:review:2.0.2")
     "androidTestFullImplementation"("androidx.test:core-ktx:1.6.1")

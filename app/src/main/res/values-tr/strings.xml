@@ -2433,4 +2433,16 @@
     <string name="advanced_has_words">Şu kelimeleri içeriyor</string>
     <string name="advanced_date_within">Tarih aralığı</string>
     <string name="advanced_search_scope">Şurada ara</string>
+    <string name="create_subfolder">Alt klasör oluştur</string>
+    <string name="rename_folder">Klasörü yeniden adlandır</string>
+    <string name="rename">Yeniden adlandır</string>
+    <string name="change_folder_color">Rengi değiştir</string>
+    <string name="folder_color">Klasör rengi</string>
+    <string name="move_folder_to">Şuraya taşı</string>
+    <string name="lock_folder">Klasörü kilitle</string>
+    <string name="remove_folder_lock">Kilidi kaldır</string>
+    <string name="lock_folder_message">\"%1$s\" için bir parola belirleyin. Bu klasörü açmak için gerekecek.</string>
+    <string name="remove_folder_lock_message">Kilidi kaldırmak için \"%1$s\" parolasını girin.</string>
+    <string name="failed_update_folder">Klasör güncellenemedi</string>
+    <string name="folder_actions">Klasör işlemleri</string>
 </resources>

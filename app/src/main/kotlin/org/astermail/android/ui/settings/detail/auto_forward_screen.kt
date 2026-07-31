@@ -62,13 +62,14 @@ import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.UpgradeGate
 import org.astermail.android.settings.SaveStatus
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.settings.shared_settings_view_model
 
 @Composable
 fun AutoForwardScreen(
     on_back: () -> Unit,
     on_open: (id: String) -> Unit = {},
 ) {
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
     val plan_vm: PlanLimitsViewModel = hiltViewModel()
     val plan_state by plan_vm.state.collectAsStateWithLifecycle()

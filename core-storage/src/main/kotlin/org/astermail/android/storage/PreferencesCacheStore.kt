@@ -60,15 +60,27 @@ class PreferencesCacheStore(context: Context? = null) {
         runCatching { prefs?.edit()?.putString(key, payload)?.apply() }
     }
 
+    fun read_alias_preferences(account_key: String?): String? {
+        val key = alias_entry_key(account_key) ?: return null
+        return runCatching { prefs?.getString(key, null) }.getOrNull()
+    }
+
+    fun write_alias_preferences(account_key: String?, payload: String) {
+        val key = alias_entry_key(account_key) ?: return
+        runCatching { prefs?.edit()?.putString(key, payload)?.apply() }
+    }
+
     fun clear(account_key: String?) {
         val key = entry_key(account_key) ?: return
         val badge_key = badge_entry_key(account_key)
         val signature_key = signature_entry_key(account_key)
+        val alias_key = alias_entry_key(account_key)
         runCatching {
             prefs?.edit()?.apply {
                 remove(key)
                 if (badge_key != null) remove(badge_key)
                 if (signature_key != null) remove(signature_key)
+                if (alias_key != null) remove(alias_key)
             }?.apply()
         }
     }
@@ -95,10 +107,17 @@ class PreferencesCacheStore(context: Context? = null) {
         return "$signature_key_prefix$id"
     }
 
+    private fun alias_entry_key(account_key: String?): String? {
+        val id = account_key?.trim().orEmpty()
+        if (id.isEmpty()) return null
+        return "$alias_key_prefix$id"
+    }
+
     private companion object {
         const val prefs_name = "aster_preferences_cache"
         const val key_prefix = "prefs_json_"
         const val badge_key_prefix = "badges_json_"
         const val signature_key_prefix = "signatures_json_"
+        const val alias_key_prefix = "alias_prefs_json_"
     }
 }

@@ -75,6 +75,7 @@ import org.astermail.android.ui.mail.selection_toolbar_slot_count
 import org.astermail.android.ui.mail.toolbar_action_by_id
 import org.astermail.android.ui.mail.toolbar_action_catalog
 import org.astermail.android.ui.mail.toolbar_slot_count
+import org.astermail.android.settings.shared_settings_view_model
 
 private data class editing_target(val kind: String, val index: Int)
 
@@ -82,7 +83,7 @@ private data class editing_target(val kind: String, val index: Int)
 @Composable
 fun CustomizeToolbarScreen(
     on_back: () -> Unit,
-    settings_vm: SettingsViewModel = hiltViewModel(),
+    settings_vm: SettingsViewModel = shared_settings_view_model(),
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current

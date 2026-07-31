@@ -84,6 +84,29 @@ internal fun collect_chip_people(items: List<InboxItem>, limit: Int = 200): List
         .take(limit)
 }
 
+internal fun collect_recipient_people(items: List<InboxItem>, limit: Int = 200): List<ChipPerson> {
+    val by_email = LinkedHashMap<String, ChipPerson>()
+
+    for (item in items) {
+        val addresses = item.to_addresses + listOfNotNull(item.received_on)
+
+        for (raw in addresses) {
+            val email = raw.trim().lowercase()
+
+            if (email.isEmpty() || !email.contains("@")) continue
+
+            val existing = by_email[email]
+
+            by_email[email] = existing?.copy(count = existing.count + 1)
+                ?: ChipPerson("", email, 1)
+        }
+    }
+
+    return by_email.values
+        .sortedWith(compareByDescending<ChipPerson> { it.count }.thenBy { it.email })
+        .take(limit)
+}
+
 internal fun operator_value(ops: List<SearchOperator>, key: String): String? =
     ops.firstOrNull { !it.negated && it.key == key }?.value
 

@@ -55,6 +55,9 @@ private const val CARRIED_ITEM_STALE_MS = 20 * 60 * 1000L
 private const val STATS_TTL_MS = 30_000L
 private const val STATS_DEBOUNCE_MS = 1_200L
 private const val DECRYPT_RETRY_TIMEOUT_MS = 20_000L
+private const val LOAD_ALL_MAX_PAGES = 5_000
+private const val LOAD_ALL_PAGE_WAIT_TICKS = 4_800
+private const val LOAD_ALL_MAX_STALLS = 3
 
 data class BatchActionState(
     val action_key: String,
@@ -311,6 +314,7 @@ class MailViewModel @Inject constructor(
     val emptying_spam_state: StateFlow<Boolean> = _emptying_spam.asStateFlow()
     private var silent_revalidate_job: Job? = null
     private var refresh_job: Job? = null
+    private var load_all_remaining_job: Job? = null
     private var account_generation = 0
     private val star_overrides = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
     private val pin_overrides = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
@@ -643,12 +647,10 @@ class MailViewModel @Inject constructor(
     }
 
     fun foreground_fallback_tick() {
-        val has_push = runCatching {
-            org.astermail.android.notifications.UnifiedPushState.endpoint(context) != null
-        }.getOrDefault(false)
-        if (foreground_check() && !has_push) {
-            silent_revalidate(_inbox_state.value.current_folder)
-        }
+        if (!foreground_check()) return
+        val s = _inbox_state.value
+        if (s.is_loading || s.is_loading_more) return
+        silent_revalidate(s.current_folder)
     }
 
     private fun silent_revalidate(folder: String) {
@@ -751,10 +753,12 @@ class MailViewModel @Inject constructor(
     }
 
     fun load_all_remaining(on_complete: (() -> Unit)? = null) {
-        viewModelScope.launch {
+        load_all_remaining_job?.cancel()
+        load_all_remaining_job = viewModelScope.launch {
             val started_folder = _inbox_state.value.current_folder
-            var guard = 0
-            while (guard < 200) {
+            var pages = 0
+            var stalls = 0
+            while (pages < LOAD_ALL_MAX_PAGES) {
                 val s = _inbox_state.value
                 if (s.current_folder != started_folder) return@launch
                 if (!s.has_more) break
@@ -766,13 +770,21 @@ class MailViewModel @Inject constructor(
                 val before_count = s.items.size
                 load_more()
                 var waited = 0
-                while (_inbox_state.value.is_loading_more && waited < 400) {
+                while (_inbox_state.value.is_loading_more && waited < LOAD_ALL_PAGE_WAIT_TICKS) {
+                    if (_inbox_state.value.current_folder != started_folder) return@launch
                     kotlinx.coroutines.delay(25)
                     waited++
                 }
                 val after = _inbox_state.value
-                if (after.next_cursor == before_cursor && after.items.size == before_count) break
-                guard++
+                if (after.current_folder != started_folder) return@launch
+                if (after.next_cursor == before_cursor && after.items.size == before_count) {
+                    stalls++
+                    if (stalls >= LOAD_ALL_MAX_STALLS) break
+                    kotlinx.coroutines.delay(500)
+                    continue
+                }
+                stalls = 0
+                pages++
             }
             if (_inbox_state.value.current_folder == started_folder) on_complete?.invoke()
         }
@@ -2273,17 +2285,21 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    fun seed_inbox_attachment_flags() {
+        if (inbox_attachment_seeded.getAndSet(true)) return
+        val gen = account_generation
+        viewModelScope.launch(Dispatchers.IO) {
+            val known = search_index_manager.known_attachment_ids()
+            if (gen == account_generation && known.isNotEmpty()) {
+                _inbox_attachment_ids.update { it + known }
+            }
+        }
+    }
+
     fun resolve_inbox_attachment_flags(item_ids: List<String>) {
         if (item_ids.isEmpty()) return
         val gen = account_generation
-        if (!inbox_attachment_seeded.getAndSet(true)) {
-            viewModelScope.launch(Dispatchers.IO) {
-                val known = search_index_manager.known_attachment_ids()
-                if (gen == account_generation && known.isNotEmpty()) {
-                    _inbox_attachment_ids.update { it + known }
-                }
-            }
-        }
+        seed_inbox_attachment_flags()
         val to_probe = item_ids.filter { inbox_attachment_probed.add(it) }
         if (to_probe.isEmpty()) return
         viewModelScope.launch(Dispatchers.IO) {
@@ -2420,6 +2436,7 @@ class MailViewModel @Inject constructor(
     }
 
     init {
+        seed_inbox_attachment_flags()
         viewModelScope.launch {
             repository.new_mail_events.collect {
                 if (foreground_check()) {
@@ -2706,6 +2723,7 @@ fun org.astermail.android.storage.search.DecryptedMailEntity.to_inbox_item(): In
     received_on = received_on,
     display_sender_name = display_sender_name,
     display_sender_email = display_sender_email,
+    to_addresses = to_addresses?.split(",")?.filter { it.isNotBlank() } ?: emptyList(),
     raw_item = org.astermail.android.api.mail.MailItem(id = id),
 )
 

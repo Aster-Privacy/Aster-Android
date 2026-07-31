@@ -68,6 +68,7 @@ import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.design.components.UpgradeGate
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.settings.shared_settings_view_model
 
 @Composable
 private fun switch_row(title: String, subtitle: String?, checked: Boolean, on_change: (Boolean) -> Unit) {
@@ -101,7 +102,7 @@ fun NotificationsScreen(
     on_back: () -> Unit,
     on_open: (id: String) -> Unit = {},
 ) {
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val plan_vm: PlanLimitsViewModel = hiltViewModel()
     val plan_state by plan_vm.state.collectAsStateWithLifecycle()
     val state by vm.state.collectAsStateWithLifecycle()

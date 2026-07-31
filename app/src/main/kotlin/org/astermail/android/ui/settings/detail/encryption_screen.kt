@@ -96,6 +96,7 @@ import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.storage.SessionKeyStore
 import java.security.MessageDigest
+import org.astermail.android.settings.shared_settings_view_model
 
 @EntryPoint
 @InstallIn(SingletonComponent::class)
@@ -119,7 +120,7 @@ fun EncryptionScreen(
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
 

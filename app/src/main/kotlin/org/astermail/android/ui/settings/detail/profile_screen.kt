@@ -88,6 +88,7 @@ import org.astermail.android.settings.SaveStatus
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.ui.common.resolve_primary_sender_email
 import org.astermail.android.ui.mail.SenderAvatar
+import org.astermail.android.settings.shared_settings_view_model
 
 @Composable
 fun ProfileScreen(
@@ -95,7 +96,7 @@ fun ProfileScreen(
     on_open: (id: String) -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()

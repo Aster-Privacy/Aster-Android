@@ -86,6 +86,7 @@ import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.settings.shared_settings_view_model
 
 private val LOCALE_CURRENCY_MAP = mapOf(
     "en_us" to "usd", "en_gb" to "gbp", "en_au" to "aud", "en_ca" to "cad", "en_in" to "inr",
@@ -270,7 +271,7 @@ fun SubscriptionsScreen(
     on_open: (id: String) -> Unit = {},
     scroll_to_addons: Boolean = false,
 ) {
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val billing_vm: BillingViewModel = hiltViewModel()
     val state by vm.state.collectAsStateWithLifecycle()
     val billing_state by billing_vm.state.collectAsStateWithLifecycle()

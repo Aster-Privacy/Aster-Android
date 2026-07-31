@@ -26,9 +26,12 @@ import compose.icons.tablericons.*
 
 import org.astermail.android.design.components.aster_dropdown_item
 import org.astermail.android.design.components.aster_dropdown_menu
+import org.astermail.android.design.components.aster_dropdown_divider
 import org.astermail.android.BuildConfig
 import android.content.Context
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -114,6 +117,24 @@ data class drawer_folder_item(
     val trail: List<Boolean> = emptyList(),
     val has_next: Boolean = false,
     val has_children: Boolean = false,
+    val label_id: String = "",
+    val color: String? = null,
+    val password_set: Boolean = false,
+    val muted: Boolean = false,
+    val can_move_up: Boolean = false,
+    val can_move_down: Boolean = false,
+    val can_have_children: Boolean = false,
+)
+
+data class folder_menu_actions(
+    val on_rename: (drawer_folder_item, String) -> Unit = { _, _ -> },
+    val on_recolor: (drawer_folder_item, String) -> Unit = { _, _ -> },
+    val on_move_to: (drawer_folder_item, String?) -> Unit = { _, _ -> },
+    val on_move_order: (drawer_folder_item, Int) -> Unit = { _, _ -> },
+    val on_toggle_mute: (drawer_folder_item) -> Unit = {},
+    val on_set_lock: (drawer_folder_item, String) -> Unit = { _, _ -> },
+    val on_remove_lock: (drawer_folder_item, String) -> Unit = { _, _ -> },
+    val on_delete: (drawer_folder_item) -> Unit = {},
 )
 
 data class folder_parent_option(
@@ -278,6 +299,7 @@ fun DrawerContent(
     on_create_label: (name: String, color: String, icon: String?) -> Unit = { _, _, _ -> },
     on_create_folder: (name: String, parent_token: String?) -> Unit = { _, _ -> },
     folder_parent_options: List<folder_parent_option> = emptyList(),
+    folder_actions: folder_menu_actions = folder_menu_actions(),
     on_logout: () -> Unit = {},
     initial_more_collapsed: Boolean = false,
     initial_folders_collapsed: Boolean = false,
@@ -332,6 +354,14 @@ fun DrawerContent(
 
     var show_create_folder by remember { mutableStateOf(false) }
     var show_create_label by remember { mutableStateOf(false) }
+    val haptics = LocalHapticFeedback.current
+    var pending_subfolder by remember { mutableStateOf<drawer_folder_item?>(null) }
+    var pending_rename by remember { mutableStateOf<drawer_folder_item?>(null) }
+    var pending_recolor by remember { mutableStateOf<drawer_folder_item?>(null) }
+    var pending_move by remember { mutableStateOf<drawer_folder_item?>(null) }
+    var pending_set_lock by remember { mutableStateOf<drawer_folder_item?>(null) }
+    var pending_remove_lock by remember { mutableStateOf<drawer_folder_item?>(null) }
+    var pending_delete by remember { mutableStateOf<drawer_folder_item?>(null) }
 
     val folder_items = api_folder_items.ifEmpty { default_folder_items }
     val label_items = api_label_items.ifEmpty { default_label_items }
@@ -499,29 +529,54 @@ fun DrawerContent(
                         )
                         val any_expandable = folder_items.any { it.has_children }
                         visible_folders.forEach { item ->
-                            drawer_row(
-                                icon = item.icon,
-                                label = item.label,
-                                count = item.count,
-                                is_unread_count = true,
-                                selected = item.id == selected_id,
-                                on_click = {
-                                    on_navigate_folder(item.id, item.label)
-                                    on_close()
-                                },
-                                depth = item.depth,
-                                trail = item.trail,
-                                has_next = item.has_next,
-                                show_expand_slot = any_expandable,
-                                can_expand = item.has_children,
-                                expanded = item.id in expanded_folder_tokens,
-                                on_toggle_expand = {
-                                    val next = expanded_folder_tokens.toMutableSet()
-                                    if (!next.add(item.id)) next.remove(item.id)
-                                    expanded_folder_tokens = next
-                                    sidebar_prefs.edit().putStringSet(key_expanded_folders, next).apply()
-                                },
-                            )
+                            Box {
+                                var menu_open by remember(item.id) { mutableStateOf(false) }
+                                drawer_row(
+                                    icon = item.icon,
+                                    label = item.label,
+                                    count = item.count,
+                                    is_unread_count = true,
+                                    selected = item.id == selected_id,
+                                    on_click = {
+                                        on_navigate_folder(item.id, item.label)
+                                        on_close()
+                                    },
+                                    depth = item.depth,
+                                    trail = item.trail,
+                                    has_next = item.has_next,
+                                    show_expand_slot = any_expandable,
+                                    can_expand = item.has_children,
+                                    expanded = item.id in expanded_folder_tokens,
+                                    on_toggle_expand = {
+                                        val next = expanded_folder_tokens.toMutableSet()
+                                        if (!next.add(item.id)) next.remove(item.id)
+                                        expanded_folder_tokens = next
+                                        sidebar_prefs.edit().putStringSet(key_expanded_folders, next).apply()
+                                    },
+                                    on_long_click = if (item.label_id.isBlank()) null else {
+                                        {
+                                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            menu_open = true
+                                        }
+                                    },
+                                )
+                                folder_actions_menu(
+                                    item = item,
+                                    expanded = menu_open,
+                                    on_dismiss = { menu_open = false },
+                                    on_create_subfolder = { pending_subfolder = item },
+                                    on_rename = { pending_rename = item },
+                                    on_recolor = { pending_recolor = item },
+                                    on_move_to = { pending_move = item },
+                                    on_lock = {
+                                        if (item.password_set) pending_remove_lock = item else pending_set_lock = item
+                                    },
+                                    on_toggle_mute = { folder_actions.on_toggle_mute(item) },
+                                    on_move_up = { folder_actions.on_move_order(item, -1) },
+                                    on_move_down = { folder_actions.on_move_order(item, 1) },
+                                    on_delete = { pending_delete = item },
+                                )
+                            }
                         }
                         if (has_more_roots) {
                             val remaining = root_count - folders_collapsed_root_count
@@ -762,6 +817,403 @@ fun DrawerContent(
         )
     }
 
+    pending_subfolder?.let { target ->
+        create_folder_dialog(
+            title = stringResource(R.string.create_subfolder),
+            placeholder = stringResource(R.string.folder_name),
+            parent_options = folder_parent_options,
+            initial_parent_token = target.id,
+            on_dismiss = { pending_subfolder = null },
+            on_create = { name, parent_token ->
+                on_create_folder(name, parent_token ?: target.id)
+                pending_subfolder = null
+            },
+        )
+    }
+
+    pending_rename?.let { target ->
+        folder_rename_dialog(
+            initial_name = target.label,
+            on_dismiss = { pending_rename = null },
+            on_confirm = { name ->
+                folder_actions.on_rename(target, name)
+                pending_rename = null
+            },
+        )
+    }
+
+    pending_recolor?.let { target ->
+        folder_color_dialog(
+            initial_color = target.color,
+            on_dismiss = { pending_recolor = null },
+            on_confirm = { color ->
+                folder_actions.on_recolor(target, color)
+                pending_recolor = null
+            },
+        )
+    }
+
+    pending_move?.let { target ->
+        folder_move_dialog(
+            target = target,
+            parent_options = folder_parent_options,
+            on_dismiss = { pending_move = null },
+            on_confirm = { parent_token ->
+                folder_actions.on_move_to(target, parent_token)
+                pending_move = null
+            },
+        )
+    }
+
+    pending_set_lock?.let { target ->
+        folder_password_dialog(
+            title = stringResource(R.string.lock_folder),
+            message = stringResource(R.string.lock_folder_message, target.label),
+            confirm_label = stringResource(R.string.save),
+            on_dismiss = { pending_set_lock = null },
+            on_confirm = { password ->
+                folder_actions.on_set_lock(target, password)
+                pending_set_lock = null
+            },
+        )
+    }
+
+    pending_remove_lock?.let { target ->
+        folder_password_dialog(
+            title = stringResource(R.string.remove_folder_lock),
+            message = stringResource(R.string.remove_folder_lock_message, target.label),
+            confirm_label = stringResource(R.string.remove_folder_lock),
+            on_dismiss = { pending_remove_lock = null },
+            on_confirm = { password ->
+                folder_actions.on_remove_lock(target, password)
+                pending_remove_lock = null
+            },
+        )
+    }
+
+    pending_delete?.let { target ->
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { pending_delete = null },
+            title = stringResource(R.string.delete_folder_confirm_title),
+            message = if (target.has_children) {
+                stringResource(R.string.delete_folder_confirm_subfolders, target.label)
+            } else {
+                stringResource(R.string.delete_folder_confirm_message, target.label)
+            },
+            footer = {
+                org.astermail.android.design.components.AsterDialogOutlineButton(
+                    label = stringResource(R.string.cancel),
+                    onClick = { pending_delete = null },
+                )
+                org.astermail.android.design.components.AsterDialogDestructiveButton(
+                    label = stringResource(R.string.delete),
+                    onClick = {
+                        folder_actions.on_delete(target)
+                        pending_delete = null
+                    },
+                )
+            },
+        )
+    }
+}
+
+@Composable
+private fun folder_actions_menu(
+    item: drawer_folder_item,
+    expanded: Boolean,
+    on_dismiss: () -> Unit,
+    on_create_subfolder: () -> Unit,
+    on_rename: () -> Unit,
+    on_recolor: () -> Unit,
+    on_move_to: () -> Unit,
+    on_lock: () -> Unit,
+    on_toggle_mute: () -> Unit,
+    on_move_up: () -> Unit,
+    on_move_down: () -> Unit,
+    on_delete: () -> Unit,
+) {
+    aster_dropdown_menu(
+        expanded = expanded,
+        on_dismiss = on_dismiss,
+        modifier = Modifier.testTag("folder_actions_menu"),
+    ) {
+        if (item.can_have_children) {
+            aster_dropdown_item(
+                label = stringResource(R.string.create_subfolder),
+                icon = TablerIcons.FolderPlus,
+                test_tag = "folder_action_create_subfolder",
+                on_click = {
+                    on_dismiss()
+                    on_create_subfolder()
+                },
+            )
+        }
+        aster_dropdown_item(
+            label = stringResource(
+                if (item.password_set) R.string.remove_folder_lock else R.string.lock_folder
+            ),
+            icon = if (item.password_set) TablerIcons.LockOpen else TablerIcons.Lock,
+            test_tag = "folder_action_lock",
+            on_click = {
+                on_dismiss()
+                on_lock()
+            },
+        )
+        aster_dropdown_item(
+            label = stringResource(R.string.rename),
+            icon = TablerIcons.Pencil,
+            test_tag = "folder_action_rename",
+            on_click = {
+                on_dismiss()
+                on_rename()
+            },
+        )
+        aster_dropdown_item(
+            label = stringResource(R.string.change_folder_color),
+            icon = TablerIcons.Palette,
+            test_tag = "folder_action_color",
+            on_click = {
+                on_dismiss()
+                on_recolor()
+            },
+        )
+        aster_dropdown_item(
+            label = stringResource(
+                if (item.muted) R.string.unmute_folder_notifications else R.string.mute_folder_notifications
+            ),
+            icon = if (item.muted) TablerIcons.Bell else TablerIcons.BellOff,
+            test_tag = "folder_action_mute",
+            on_click = {
+                on_dismiss()
+                on_toggle_mute()
+            },
+        )
+        aster_dropdown_item(
+            label = stringResource(R.string.move_folder_to),
+            icon = TablerIcons.Folder,
+            test_tag = "folder_action_move_to",
+            on_click = {
+                on_dismiss()
+                on_move_to()
+            },
+        )
+        aster_dropdown_item(
+            label = stringResource(R.string.move_folder_up),
+            icon = TablerIcons.ArrowUp,
+            enabled = item.can_move_up,
+            test_tag = "folder_action_move_up",
+            on_click = {
+                on_dismiss()
+                on_move_up()
+            },
+        )
+        aster_dropdown_item(
+            label = stringResource(R.string.move_folder_down),
+            icon = TablerIcons.ArrowDown,
+            enabled = item.can_move_down,
+            test_tag = "folder_action_move_down",
+            on_click = {
+                on_dismiss()
+                on_move_down()
+            },
+        )
+        aster_dropdown_divider()
+        aster_dropdown_item(
+            label = stringResource(R.string.delete),
+            icon = TablerIcons.Trash,
+            destructive = true,
+            test_tag = "folder_action_delete",
+            on_click = {
+                on_dismiss()
+                on_delete()
+            },
+        )
+    }
+}
+
+@Composable
+private fun folder_rename_dialog(
+    initial_name: String,
+    on_dismiss: () -> Unit,
+    on_confirm: (String) -> Unit,
+) {
+    var text_value by remember { mutableStateOf(initial_name) }
+    org.astermail.android.design.components.AsterAlertDialog(
+        on_dismiss = on_dismiss,
+        title = stringResource(R.string.rename_folder),
+        confirm_label = stringResource(R.string.save),
+        cancel_label = stringResource(R.string.cancel),
+        confirm_enabled = text_value.isNotBlank(),
+        on_confirm = { if (text_value.isNotBlank()) on_confirm(text_value.trim()) },
+        extra_content = {
+            org.astermail.android.design.components.AsterTextField(
+                value = text_value,
+                onValueChange = { text_value = it },
+                placeholder = stringResource(R.string.folder_name),
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth().testTag("folder_rename_input"),
+            )
+        },
+    )
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun folder_color_dialog(
+    initial_color: String?,
+    on_dismiss: () -> Unit,
+    on_confirm: (String) -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    var selected_color by remember { mutableStateOf(initial_color ?: default_label_color) }
+    org.astermail.android.design.components.AsterAlertDialog(
+        on_dismiss = on_dismiss,
+        title = stringResource(R.string.folder_color),
+        confirm_label = stringResource(R.string.save),
+        cancel_label = stringResource(R.string.cancel),
+        on_confirm = { on_confirm(selected_color) },
+        extra_content = {
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                label_color_presets.forEach { hex ->
+                    val swatch = parse_hex_color(hex)
+                    val is_selected = hex.equals(selected_color, ignoreCase = true)
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(swatch)
+                            .then(
+                                if (is_selected) {
+                                    Modifier.border(2.dp, colors.text_primary, CircleShape)
+                                } else {
+                                    Modifier.border(1.dp, colors.border_secondary, CircleShape)
+                                }
+                            )
+                            .clickable { selected_color = hex },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (is_selected) {
+                            Icon(
+                                imageVector = TablerIcons.Check,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(14.dp),
+                            )
+                        }
+                    }
+                }
+            }
+        },
+    )
+}
+
+@Composable
+private fun folder_move_dialog(
+    target: drawer_folder_item,
+    parent_options: List<folder_parent_option>,
+    on_dismiss: () -> Unit,
+    on_confirm: (String?) -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val none_label = stringResource(R.string.parent_folder_none)
+    val options = remember(parent_options, target.id) {
+        parent_options.filter { it.token != target.id }
+    }
+    var selected_parent by remember { mutableStateOf<folder_parent_option?>(null) }
+    var menu_open by remember { mutableStateOf(false) }
+
+    org.astermail.android.design.components.AsterAlertDialog(
+        on_dismiss = on_dismiss,
+        title = stringResource(R.string.move_folder_to),
+        confirm_label = stringResource(R.string.save),
+        cancel_label = stringResource(R.string.cancel),
+        on_confirm = { on_confirm(selected_parent?.token) },
+        extra_content = {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .border(1.dp, colors.border_secondary, RoundedCornerShape(8.dp))
+                        .clickable { menu_open = true }
+                        .testTag("folder_move_selector")
+                        .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = selected_parent?.label ?: none_label,
+                        color = colors.text_primary,
+                        fontSize = 15.sp,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Icon(
+                        imageVector = TablerIcons.ChevronDown,
+                        contentDescription = null,
+                        tint = colors.text_muted,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+                aster_dropdown_menu(
+                    expanded = menu_open,
+                    on_dismiss = { menu_open = false },
+                ) {
+                    aster_dropdown_item(
+                        label = none_label,
+                        selected = selected_parent == null,
+                        on_click = {
+                            selected_parent = null
+                            menu_open = false
+                        },
+                    )
+                    options.forEach { option ->
+                        aster_dropdown_item(
+                            label = " ".repeat(option.depth) + option.label,
+                            icon = TablerIcons.Folder,
+                            selected = selected_parent == option,
+                            on_click = {
+                                selected_parent = option
+                                menu_open = false
+                            },
+                        )
+                    }
+                }
+            }
+        },
+    )
+}
+
+@Composable
+private fun folder_password_dialog(
+    title: String,
+    message: String,
+    confirm_label: String,
+    on_dismiss: () -> Unit,
+    on_confirm: (String) -> Unit,
+) {
+    var password_value by remember { mutableStateOf("") }
+    org.astermail.android.design.components.AsterAlertDialog(
+        on_dismiss = on_dismiss,
+        title = title,
+        message = message,
+        confirm_label = confirm_label,
+        cancel_label = stringResource(R.string.cancel),
+        confirm_enabled = password_value.isNotBlank(),
+        on_confirm = { if (password_value.isNotBlank()) on_confirm(password_value) },
+        extra_content = {
+            org.astermail.android.design.components.AsterTextField(
+                value = password_value,
+                onValueChange = { password_value = it },
+                placeholder = stringResource(R.string.password),
+                singleLine = true,
+                visual_transformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth().testTag("folder_password_input"),
+            )
+        },
+    )
 }
 
 @Composable
@@ -771,10 +1223,13 @@ internal fun create_folder_dialog(
     parent_options: List<folder_parent_option>,
     on_dismiss: () -> Unit,
     on_create: (name: String, parent_token: String?) -> Unit,
+    initial_parent_token: String? = null,
 ) {
     val colors = AsterMaterial.colors
     var text_value by remember { mutableStateOf("") }
-    var selected_parent by remember { mutableStateOf<folder_parent_option?>(null) }
+    var selected_parent by remember {
+        mutableStateOf(parent_options.firstOrNull { it.token == initial_parent_token })
+    }
     var parent_menu_open by remember { mutableStateOf(false) }
     val none_label = stringResource(R.string.parent_folder_none)
 
@@ -1431,6 +1886,7 @@ private fun folder_expand_toggle(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun drawer_row(
     icon: ImageVector,
@@ -1447,6 +1903,7 @@ private fun drawer_row(
     can_expand: Boolean = false,
     expanded: Boolean = false,
     on_toggle_expand: () -> Unit = {},
+    on_long_click: (() -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
     val bg by animateColorAsState(
@@ -1471,7 +1928,13 @@ private fun drawer_row(
             .height(48.dp)
             .clip(RoundedCornerShape(999.dp))
             .background(bg)
-            .clickable(onClick = on_click)
+            .then(
+                if (on_long_click != null) {
+                    Modifier.combinedClickable(onClick = on_click, onLongClick = on_long_click)
+                } else {
+                    Modifier.clickable(onClick = on_click)
+                }
+            )
             .then(if (test_tag != null) Modifier.testTag(test_tag) else Modifier),
     ) {
         Row(

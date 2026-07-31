@@ -6,4 +6,7 @@
     <string name="inbox_no_subject">(无主题)</string>
     <string name="inbox_a11y_select_thread">选择该会话</string>
     <string name="inbox_a11y_deselect_thread">取消选择该会话</string>
+    <string name="selection_scope_offer">选择%2$s中的全部 %1$d 封</string>
+    <string name="selection_scope_offer_categories">选择%2$s中的全部 %1$d 封（含所有类别）</string>
+    <string name="selection_scope_confirmed">已选择%2$s中的全部 %1$d 封</string>
 </resources>

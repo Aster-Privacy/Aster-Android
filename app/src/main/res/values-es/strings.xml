@@ -2434,4 +2434,16 @@
     <string name="advanced_has_words">Contiene las palabras</string>
     <string name="advanced_date_within">Intervalo de fechas</string>
     <string name="advanced_search_scope">Buscar en</string>
+    <string name="create_subfolder">Crear subcarpeta</string>
+    <string name="rename_folder">Renombrar carpeta</string>
+    <string name="rename">Renombrar</string>
+    <string name="change_folder_color">Cambiar color</string>
+    <string name="folder_color">Color de carpeta</string>
+    <string name="move_folder_to">Mover a</string>
+    <string name="lock_folder">Bloquear carpeta</string>
+    <string name="remove_folder_lock">Quitar bloqueo</string>
+    <string name="lock_folder_message">Establece una contraseña para \"%1$s\". La necesitarás para abrir esta carpeta.</string>
+    <string name="remove_folder_lock_message">Introduce la contraseña de \"%1$s\" para quitar el bloqueo.</string>
+    <string name="failed_update_folder">No se pudo actualizar la carpeta</string>
+    <string name="folder_actions">Acciones de carpeta</string>
 </resources>

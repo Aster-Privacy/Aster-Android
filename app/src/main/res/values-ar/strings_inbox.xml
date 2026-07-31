@@ -6,4 +6,7 @@
     <string name="inbox_no_subject">(بدون موضوع)</string>
     <string name="inbox_a11y_select_thread">تحديد المحادثة</string>
     <string name="inbox_a11y_deselect_thread">إلغاء تحديد المحادثة</string>
+    <string name="selection_scope_offer">تحديد كل %1$d في %2$s</string>
+    <string name="selection_scope_offer_categories">تحديد كل %1$d في %2$s، بما في ذلك كل فئة</string>
+    <string name="selection_scope_confirmed">تم تحديد كل %1$d في %2$s</string>
 </resources>

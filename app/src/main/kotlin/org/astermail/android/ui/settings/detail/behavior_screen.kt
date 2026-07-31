@@ -77,6 +77,7 @@ import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.translation.language_display_name
 import org.astermail.android.translation.translation_language_codes
+import org.astermail.android.settings.shared_settings_view_model
 
 @Composable
 private fun behavior_option(label: String, selected: Boolean, on_click: () -> Unit) {
@@ -144,7 +145,7 @@ fun BehaviorScreen(
     on_back: () -> Unit,
     on_open: (id: String) -> Unit = {},
 ) {
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
     val prefs = state.preferences

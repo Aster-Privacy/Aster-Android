@@ -2426,4 +2426,16 @@
     <string name="advanced_has_words">包含字词</string>
     <string name="advanced_date_within">时间范围</string>
     <string name="advanced_search_scope">搜索范围</string>
+    <string name="create_subfolder">新建子文件夹</string>
+    <string name="rename_folder">重命名文件夹</string>
+    <string name="rename">重命名</string>
+    <string name="change_folder_color">更改颜色</string>
+    <string name="folder_color">文件夹颜色</string>
+    <string name="move_folder_to">移动到</string>
+    <string name="lock_folder">锁定文件夹</string>
+    <string name="remove_folder_lock">移除锁定</string>
+    <string name="lock_folder_message">为 \"%1$s\" 设置密码。打开此文件夹时需要输入。</string>
+    <string name="remove_folder_lock_message">输入 \"%1$s\" 的密码以移除锁定。</string>
+    <string name="failed_update_folder">无法更新文件夹</string>
+    <string name="folder_actions">文件夹操作</string>
 </resources>

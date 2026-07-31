@@ -72,6 +72,7 @@ import org.astermail.android.mail.SWIPE_ACTION_STAR
 import org.astermail.android.mail.SWIPE_ACTION_TOGGLE_READ
 import org.astermail.android.mail.normalize_swipe_action
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.settings.shared_settings_view_model
 
 private data class SwipeActionOption(
     val id: String,
@@ -82,7 +83,7 @@ private data class SwipeActionOption(
 
 @Composable
 fun SwipeActionsScreen(on_back: () -> Unit) {
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
     val prefs = state.preferences

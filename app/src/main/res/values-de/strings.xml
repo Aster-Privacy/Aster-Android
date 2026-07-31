@@ -2434,4 +2434,16 @@
     <string name="advanced_has_words">Enthält die Wörter</string>
     <string name="advanced_date_within">Zeitraum</string>
     <string name="advanced_search_scope">Suchen in</string>
+    <string name="create_subfolder">Unterordner erstellen</string>
+    <string name="rename_folder">Ordner umbenennen</string>
+    <string name="rename">Umbenennen</string>
+    <string name="change_folder_color">Farbe ändern</string>
+    <string name="folder_color">Ordnerfarbe</string>
+    <string name="move_folder_to">Verschieben nach</string>
+    <string name="lock_folder">Ordner sperren</string>
+    <string name="remove_folder_lock">Sperre entfernen</string>
+    <string name="lock_folder_message">Legen Sie ein Passwort für \"%1$s\" fest. Sie benötigen es, um diesen Ordner zu öffnen.</string>
+    <string name="remove_folder_lock_message">Geben Sie das Passwort für \"%1$s\" ein, um die Sperre zu entfernen.</string>
+    <string name="failed_update_folder">Ordner konnte nicht aktualisiert werden</string>
+    <string name="folder_actions">Ordneraktionen</string>
 </resources>

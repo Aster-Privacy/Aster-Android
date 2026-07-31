@@ -46,6 +46,24 @@ fun resolve_inbox_received_on(
     return if (primary != null && delivered == primary) null else delivered
 }
 
+fun collect_recipient_addresses(
+    to: List<Pair<String, String>>,
+    cc: List<Pair<String, String>>,
+    raw_headers: List<Pair<String, String>>,
+): List<String> {
+    val collected = LinkedHashSet<String>()
+    for (entry in to + cc) {
+        val address = entry.second.ifBlank { entry.first }
+            .trim()
+            .trimStart('<')
+            .trimEnd('>')
+            .lowercase()
+        if (address.contains("@") && address.length > 2) collected.add(address)
+    }
+    extract_delivered_to(raw_headers)?.let { collected.add(it) }
+    return collected.toList()
+}
+
 fun resolve_received_on_address(
     raw_headers: List<Pair<String, String>>,
     visible_addresses: List<String>,

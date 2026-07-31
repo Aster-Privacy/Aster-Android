@@ -85,6 +85,7 @@ import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.storage.ThemeMode
 import org.astermail.android.ui.settings.mail_rules.pickers.base_sheet
 import org.astermail.android.ui.theme.ThemeViewModel
+import org.astermail.android.settings.shared_settings_view_model
 
 private val quick_seed_colors = listOf(
     "#3b82f6", "#a855f7", "#22c55e", "#f43f5e", "#f97316",
@@ -151,7 +152,7 @@ fun AppearanceScreen(
     on_open: (id: String) -> Unit = {},
 ) {
     val vm: ThemeViewModel = hiltViewModel()
-    val settings_vm: SettingsViewModel = hiltViewModel()
+    val settings_vm: SettingsViewModel = shared_settings_view_model()
     val plan_vm: PlanLimitsViewModel = hiltViewModel()
     val mode by vm.theme_mode.collectAsStateWithLifecycle()
     val color_theme_key by vm.color_theme.collectAsStateWithLifecycle()
@@ -506,8 +507,7 @@ private fun theme_swatch(
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(CircleShape)
-                    .background(palette.bg_primary)
-                    .border(1.dp, palette.border_secondary, CircleShape),
+                    .background(palette.bg_primary),
             ) {
                 Box(
                     modifier = Modifier

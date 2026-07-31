@@ -41,7 +41,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import compose.icons.TablerIcons
-import compose.icons.tablericons.ListCheck
+import compose.icons.tablericons.Square
+import compose.icons.tablericons.SquareCheck
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
@@ -50,9 +51,10 @@ import org.astermail.android.design.AsterSpacing
 fun select_all_button(
     on_click: () -> Unit,
     modifier: Modifier = Modifier,
+    all_selected: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
-    val label = stringResource(R.string.select_all)
+    val label = stringResource(if (all_selected) R.string.deselect_all else R.string.select_all)
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(999.dp))
@@ -63,7 +65,7 @@ fun select_all_button(
         horizontalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
     ) {
         Icon(
-            imageVector = TablerIcons.ListCheck,
+            imageVector = if (all_selected) TablerIcons.SquareCheck else TablerIcons.Square,
             contentDescription = null,
             tint = colors.accent_blue,
             modifier = Modifier.size(20.dp),

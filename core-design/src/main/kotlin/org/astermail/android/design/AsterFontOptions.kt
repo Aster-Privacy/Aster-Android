@@ -70,7 +70,7 @@ private fun static_family(@FontRes regular: Int, @FontRes bold: Int): FontFamily
     Font(bold, FontWeight.Bold),
 )
 
-val aster_default_family: FontFamily by lazy { variable_family(R.font.font_space_grotesk) }
+val aster_default_family: FontFamily = FontFamily.Default
 
 private val local_families: Map<String, Lazy<FontFamily>> = mapOf(
     "inter" to lazy { variable_family(R.font.font_inter) },

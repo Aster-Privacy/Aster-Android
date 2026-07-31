@@ -69,13 +69,14 @@ import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.settings.shared_settings_view_model
 
 @Composable
 fun SessionsScreen(
     on_back: () -> Unit,
     on_open: (id: String) -> Unit = {},
 ) {
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
     val context = LocalContext.current

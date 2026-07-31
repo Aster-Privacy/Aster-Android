@@ -6,4 +6,7 @@
     <string name="inbox_no_subject">(no subject)</string>
     <string name="inbox_a11y_select_thread">Select conversation</string>
     <string name="inbox_a11y_deselect_thread">Deselect conversation</string>
+    <string name="selection_scope_offer">Select all %1$d in %2$s</string>
+    <string name="selection_scope_offer_categories">Select all %1$d in %2$s, including every category</string>
+    <string name="selection_scope_confirmed">All %1$d in %2$s are selected</string>
 </resources>

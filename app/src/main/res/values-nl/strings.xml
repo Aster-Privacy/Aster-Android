@@ -2433,4 +2433,16 @@
     <string name="advanced_has_words">Bevat de woorden</string>
     <string name="advanced_date_within">Periode</string>
     <string name="advanced_search_scope">Zoeken in</string>
+    <string name="create_subfolder">Submap maken</string>
+    <string name="rename_folder">Map hernoemen</string>
+    <string name="rename">Hernoemen</string>
+    <string name="change_folder_color">Kleur wijzigen</string>
+    <string name="folder_color">Mapkleur</string>
+    <string name="move_folder_to">Verplaatsen naar</string>
+    <string name="lock_folder">Map vergrendelen</string>
+    <string name="remove_folder_lock">Vergrendeling verwijderen</string>
+    <string name="lock_folder_message">Stel een wachtwoord in voor \"%1$s\". Je hebt het nodig om deze map te openen.</string>
+    <string name="remove_folder_lock_message">Voer het wachtwoord van \"%1$s\" in om de vergrendeling te verwijderen.</string>
+    <string name="failed_update_folder">Kan map niet bijwerken</string>
+    <string name="folder_actions">Mapacties</string>
 </resources>

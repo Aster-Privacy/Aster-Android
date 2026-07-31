@@ -65,6 +65,7 @@ import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.ui.theme.ThemeViewModel
+import org.astermail.android.settings.shared_settings_view_model
 
 @Composable
 private fun access_option_row(label: String, selected: Boolean, on_click: () -> Unit) {
@@ -124,7 +125,7 @@ fun AccessibilityScreen(
     on_back: () -> Unit,
     on_open: (id: String) -> Unit = {},
 ) {
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val theme_vm: ThemeViewModel = hiltViewModel()
     val state by vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors

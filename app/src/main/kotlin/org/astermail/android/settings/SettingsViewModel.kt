@@ -79,6 +79,9 @@ import org.astermail.android.api.labels.LabelItem
 import org.astermail.android.api.labels.ReferralHistoryItem
 import org.astermail.android.api.labels.ReferralInfoResponse
 import org.astermail.android.api.labels.ReorderLabelEntry
+import org.astermail.android.api.labels.RemoveFolderPasswordRequest
+import org.astermail.android.api.labels.SetFolderPasswordRequest
+import org.astermail.android.api.labels.UpdateLabelRequest
 import org.astermail.android.api.labels.VerifyFolderPasswordRequest
 import org.astermail.android.folders.folder_sibling_group
 import org.astermail.android.api.tags.CreateTagRequest
@@ -619,6 +622,12 @@ class SettingsViewModel @Inject constructor(
 
     fun reset_save_status() {
         _state.value = _state.value.copy(save_status = SaveStatus.IDLE)
+    }
+
+    fun reset_transient_state() {
+        val current = _state.value
+        if (current.error == null && current.action_result == null && current.save_status == SaveStatus.IDLE) return
+        _state.value = current.copy(error = null, action_result = null, save_status = SaveStatus.IDLE)
     }
 
     fun reset_for_account_switch() {
@@ -1776,14 +1785,33 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun load_alias_preferences() {
+        hydrate_cached_alias_preferences()
         viewModelScope.launch {
             try {
                 val prefs = settings_api.get_alias_preferences()
                 _state.value = _state.value.copy(alias_preferences = prefs)
+                persist_cached_alias_preferences(prefs)
             } catch (t: Throwable) {
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_alias_preferences", t)
             }
         }
+    }
+
+    private fun hydrate_cached_alias_preferences() {
+        if (_state.value.alias_preferences != null) return
+        val raw = preferences_cache.read_alias_preferences(cache_account_key()) ?: return
+        val cached = runCatching {
+            cached_preferences_json.decodeFromString(AliasPreferences.serializer(), raw)
+        }.getOrNull() ?: return
+        _state.value = _state.value.copy(alias_preferences = cached)
+    }
+
+    private fun persist_cached_alias_preferences(prefs: AliasPreferences) {
+        val key = cache_account_key() ?: return
+        val raw = runCatching {
+            cached_preferences_json.encodeToString(AliasPreferences.serializer(), prefs)
+        }.getOrNull() ?: return
+        preferences_cache.write_alias_preferences(key, raw)
     }
 
     fun update_alias_preference(update: UpdateAliasPreferencesRequest) {
@@ -1803,11 +1831,13 @@ class SettingsViewModel @Inject constructor(
             alias_disabled_response = update.alias_disabled_response,
             alias_delete_action = update.alias_delete_action,
         )) }
+        _state.value.alias_preferences?.let { persist_cached_alias_preferences(it) }
         viewModelScope.launch {
             try {
                 settings_api.update_alias_preferences(update)
             } catch (_: Throwable) {
                 _state.update { it.copy(alias_preferences = previous) }
+                previous?.let { persist_cached_alias_preferences(it) }
                 _state.value = _state.value.copy(action_result = context.getString(R.string.something_went_wrong))
             }
         }
@@ -2697,6 +2727,138 @@ class SettingsViewModel @Inject constructor(
                     action_result = context.getString(R.string.failed_create_folder),
                 )
             }
+        }
+    }
+
+    fun rename_folder(label_id: String, name: String) {
+        val trimmed = name.trim()
+        if (trimmed.isBlank()) return
+        viewModelScope.launch {
+            val previous = _state.value.labels
+            _state.value = _state.value.copy(
+                labels = previous.map { if (it.id == label_id) it.copy(encrypted_name = trimmed) else it },
+            )
+            try {
+                val identity_key = session_key_store.get_identity_key() ?: throw IllegalStateException("no identity key")
+                val name_field = encrypt_field_with_version(trimmed, identity_key, FOLDER_VERSION_CURRENT)
+                labels_api.update_label(
+                    label_id,
+                    UpdateLabelRequest(
+                        encrypted_name = name_field.ciphertext_b64,
+                        name_nonce = name_field.nonce_b64,
+                    ),
+                )
+            } catch (_: Throwable) {
+                _state.value = _state.value.copy(
+                    labels = previous,
+                    action_result = context.getString(R.string.failed_update_folder),
+                )
+            }
+        }
+    }
+
+    fun recolor_folder(label_id: String, color: String) {
+        viewModelScope.launch {
+            val previous = _state.value.labels
+            _state.value = _state.value.copy(
+                labels = previous.map { if (it.id == label_id) it.copy(encrypted_color = color) else it },
+            )
+            try {
+                val identity_key = session_key_store.get_identity_key() ?: throw IllegalStateException("no identity key")
+                val color_field = encrypt_field_with_version(color, identity_key, FOLDER_VERSION_CURRENT)
+                labels_api.update_label(
+                    label_id,
+                    UpdateLabelRequest(
+                        encrypted_color = color_field.ciphertext_b64,
+                        color_nonce = color_field.nonce_b64,
+                    ),
+                )
+            } catch (_: Throwable) {
+                _state.value = _state.value.copy(
+                    labels = previous,
+                    action_result = context.getString(R.string.failed_update_folder),
+                )
+            }
+        }
+    }
+
+    fun set_folder_parent(label_id: String, parent_token: String?) {
+        viewModelScope.launch {
+            val previous = _state.value.labels
+            _state.value = _state.value.copy(
+                labels = previous.map { if (it.id == label_id) it.copy(parent_token = parent_token) else it },
+            )
+            try {
+                labels_api.update_label(
+                    label_id,
+                    UpdateLabelRequest(parent_token = parent_token.orEmpty()),
+                )
+                load_labels(force = true)
+            } catch (_: Throwable) {
+                _state.value = _state.value.copy(
+                    labels = previous,
+                    action_result = context.getString(R.string.failed_update_folder),
+                )
+            }
+        }
+    }
+
+    fun set_folder_lock(label_id: String, password: String, on_result: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val ok = try {
+                val material = withContext(Dispatchers.Default) {
+                    org.astermail.android.folders.prepare_folder_password(password)
+                }
+                labels_api.set_folder_password(
+                    label_id,
+                    SetFolderPasswordRequest(
+                        password_hash = material.password_hash,
+                        password_salt = material.password_salt,
+                        encrypted_folder_key = material.encrypted_folder_key,
+                        folder_key_nonce = material.folder_key_nonce,
+                    ),
+                )
+                true
+            } catch (_: Throwable) {
+                false
+            }
+            if (ok) {
+                org.astermail.android.folders.folder_lock_store.mark_unlocked(label_id)
+                load_labels(force = true)
+            } else {
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.failed_update_folder),
+                )
+            }
+            on_result(ok)
+        }
+    }
+
+    fun remove_folder_lock(label_id: String, password: String, on_result: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val ok = try {
+                val salt = _state.value.labels.firstOrNull { it.id == label_id }?.password_salt
+                    ?: labels_api.get_label(label_id).password_salt
+                if (salt.isNullOrBlank()) {
+                    false
+                } else {
+                    val password_hash = withContext(Dispatchers.Default) {
+                        org.astermail.android.folders.derive_folder_auth_hash(password, salt)
+                    }
+                    labels_api.remove_folder_password(
+                        label_id,
+                        RemoveFolderPasswordRequest(password_hash = password_hash),
+                    )
+                    true
+                }
+            } catch (_: Throwable) {
+                false
+            }
+            if (ok) {
+                org.astermail.android.folders.folder_lock_store.mark_unlocked(label_id)
+                load_labels(force = true)
+            }
+            on_result(ok)
         }
     }
 

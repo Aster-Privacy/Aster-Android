@@ -112,6 +112,7 @@ import org.astermail.android.settings.DecryptedDeletedAlias
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.ui.auth.TurnstileWidget
 import org.astermail.android.util.generate_random_local_part
+import org.astermail.android.settings.shared_settings_view_model
 
 @Composable
 private fun tab_labels_computed(): List<String> = listOf(
@@ -128,7 +129,7 @@ fun AliasesScreen(
     on_open: (id: String) -> Unit = {},
     open_create: Boolean = false,
 ) {
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
     val plan_vm: PlanLimitsViewModel = hiltViewModel()
     val plan_state by plan_vm.state.collectAsStateWithLifecycle()
@@ -161,6 +162,7 @@ fun AliasesScreen(
         vm.load_custom_domain_addresses()
         vm.load_deleted_aliases()
         vm.load_labels(folder_type = "folder")
+        vm.load_alias_preferences()
     }
 
     LaunchedEffect(open_create) {
@@ -356,6 +358,56 @@ private fun aliases_tab(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
+      Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(colors.bg_primary)
+                .padding(
+                    start = AsterSpacing.lg,
+                    end = AsterSpacing.lg,
+                    top = AsterSpacing.sm,
+                    bottom = AsterSpacing.sm,
+                ),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.aliases_count, state.aliases.size),
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(
+                        onClick = {
+                            if (export_locked) on_upgrade() else show_export = true
+                        },
+                    ) {
+                        Text(
+                            stringResource(R.string.alias_export_csv),
+                            color = if (export_locked) colors.text_muted else colors.accent_blue,
+                            fontSize = 14.sp,
+                        )
+                    }
+                    TextButton(onClick = on_show_create) {
+                        Text(stringResource(R.string.create), color = colors.accent_blue, fontSize = 14.sp)
+                    }
+                }
+            }
+            if (state.aliases.isNotEmpty() || state.custom_domain_addresses.isNotEmpty()) {
+                v_gap(AsterSpacing.xs)
+                org.astermail.android.ui.common.list_search_bar(
+                    query = alias_query,
+                    on_query_change = { alias_query = it },
+                    placeholder = stringResource(R.string.search_aliases),
+                    test_tag = "alias_search_bar",
+                )
+            }
+        }
+        AsterDivider(modifier = Modifier.fillMaxWidth())
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
@@ -365,71 +417,6 @@ private fun aliases_tab(
                 bottom = AsterSpacing.lg,
             ),
         ) {
-            item(key = "alias_header") {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(R.string.aliases_count, state.aliases.size),
-                        color = colors.text_tertiary,
-                        fontSize = 13.sp,
-                    )
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        TextButton(
-                            onClick = {
-                                if (export_locked) on_upgrade() else show_export = true
-                            },
-                        ) {
-                            Text(
-                                stringResource(R.string.alias_export_csv),
-                                color = if (export_locked) colors.text_muted else colors.accent_blue,
-                                fontSize = 14.sp,
-                            )
-                        }
-                        TextButton(onClick = on_show_create) {
-                            Text(stringResource(R.string.create), color = colors.accent_blue, fontSize = 14.sp)
-                        }
-                    }
-                }
-                v_gap(AsterSpacing.sm)
-            }
-
-            if (state.aliases.isNotEmpty() || state.custom_domain_addresses.isNotEmpty()) {
-                item(key = "alias_search") {
-                    AsterTextField(
-                        value = alias_query,
-                        onValueChange = { alias_query = it },
-                        placeholder = stringResource(R.string.search_aliases),
-                        leading_icon = {
-                            Icon(
-                                imageVector = TablerIcons.Search,
-                                contentDescription = null,
-                                tint = colors.text_muted,
-                                modifier = Modifier.size(18.dp),
-                            )
-                        },
-                        trailing_icon = if (alias_query.isEmpty()) {
-                            null
-                        } else {
-                            {
-                                Icon(
-                                    imageVector = TablerIcons.X,
-                                    contentDescription = stringResource(R.string.clear),
-                                    tint = colors.text_muted,
-                                    modifier = Modifier
-                                        .size(18.dp)
-                                        .clickable { alias_query = "" },
-                                )
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    v_gap(AsterSpacing.sm)
-                }
-            }
-
             if (state.aliases.isEmpty() && (state.is_loading || !alias_load_settled)) {
                 item(key = "alias_loading") {
                     skeleton_card_list(rows = 5, leading_circle = true, trailing_width = 44.dp)
@@ -514,6 +501,7 @@ private fun aliases_tab(
                 )
             }
         }
+      }
 
         if (show_export && !export_locked) {
             alias_export_dialog(

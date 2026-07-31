@@ -30,14 +30,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,6 +54,9 @@ import java.util.Date
 import java.util.Locale
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
@@ -169,7 +171,9 @@ fun alias_export_dialog(
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var confirming by remember { mutableStateOf(false) }
+    var exporting by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var selected by remember {
         mutableStateOf(setOf(AliasExportSource.Aliases))
@@ -204,20 +208,22 @@ fun alias_export_dialog(
         on_confirm = {
             if (!confirming) {
                 confirming = true
-            } else {
-                runCatching {
-                    val ordered = SOURCE_ORDER.filter { effective.contains(it) }
-                    share_export_archive(context, write_export_archive(context, state, ordered))
-                }.onFailure {
-                    error = context.getString(R.string.alias_export_failed)
-                }.onSuccess { on_dismiss() }
+            } else if (!exporting) {
+                exporting = true
+                val ordered = SOURCE_ORDER.filter { effective.contains(it) }
+                scope.launch {
+                    val archive = withContext(Dispatchers.IO) {
+                        runCatching { write_export_archive(context, state, ordered) }
+                    }
+                    val shared = archive.mapCatching { share_export_archive(context, it) }
+                    exporting = false
+                    if (shared.isSuccess) on_dismiss() else error = context.getString(R.string.alias_export_failed)
+                }
             }
         },
         extra_content = {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
+                modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
             ) {
                 if (!confirming) {

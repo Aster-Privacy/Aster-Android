@@ -77,6 +77,7 @@ import org.astermail.android.settings.SettingsViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.ui.common.current_user_avatar
 import org.astermail.android.ui.mail.search_field_bg_color
+import org.astermail.android.settings.shared_settings_view_model
 
 data class settings_row_item(
     val id: String,
@@ -140,7 +141,7 @@ fun SettingsScreen(
     on_open: (String) -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val settings_vm: SettingsViewModel = hiltViewModel()
+    val settings_vm: SettingsViewModel = shared_settings_view_model()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) {
         if (settings_state.user == null) settings_vm.load_profile()

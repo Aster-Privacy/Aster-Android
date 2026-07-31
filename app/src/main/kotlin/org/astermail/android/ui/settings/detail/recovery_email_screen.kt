@@ -60,10 +60,11 @@ import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.DialogConfirmStyle
 import org.astermail.android.settings.SaveStatus
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.settings.shared_settings_view_model
 
 @Composable
 fun RecoveryEmailScreen(on_back: () -> Unit) {
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
     val context = LocalContext.current

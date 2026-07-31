@@ -85,6 +85,7 @@ import org.astermail.android.security.AppLockViewModel
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.ui.security.AppLockSetupSheet
 import org.astermail.android.ui.security.AppLockVerifySheet
+import org.astermail.android.settings.shared_settings_view_model
 
 private fun format_audit_event(type: String): String = type
     .replace("_", " ")
@@ -108,7 +109,7 @@ fun SecurityScreen(
     on_back: () -> Unit,
     on_open: (id: String) -> Unit = {},
 ) {
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
     val context = LocalContext.current

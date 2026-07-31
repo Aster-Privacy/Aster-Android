@@ -70,6 +70,7 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.settings.shared_settings_view_model
 
 @Composable
 private fun category_chip(label: String, icon: ImageVector, selected: Boolean, on_click: () -> Unit) {
@@ -107,7 +108,7 @@ fun FeedbackScreen(
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val scope = rememberCoroutineScope()
     var category by remember { mutableStateOf("general") }
     var message by remember { mutableStateOf("") }

@@ -2433,4 +2433,16 @@
     <string name="advanced_has_words">Contém as palavras</string>
     <string name="advanced_date_within">Intervalo de datas</string>
     <string name="advanced_search_scope">Pesquisar em</string>
+    <string name="create_subfolder">Criar subpasta</string>
+    <string name="rename_folder">Renomear pasta</string>
+    <string name="rename">Renomear</string>
+    <string name="change_folder_color">Alterar cor</string>
+    <string name="folder_color">Cor da pasta</string>
+    <string name="move_folder_to">Mover para</string>
+    <string name="lock_folder">Bloquear pasta</string>
+    <string name="remove_folder_lock">Remover bloqueio</string>
+    <string name="lock_folder_message">Defina uma senha para \"%1$s\". Você precisará dela para abrir esta pasta.</string>
+    <string name="remove_folder_lock_message">Digite a senha de \"%1$s\" para remover o bloqueio.</string>
+    <string name="failed_update_folder">Não foi possível atualizar a pasta</string>
+    <string name="folder_actions">Ações da pasta</string>
 </resources>

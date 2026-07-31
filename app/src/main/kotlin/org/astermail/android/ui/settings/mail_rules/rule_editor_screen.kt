@@ -96,6 +96,7 @@ import org.astermail.android.ui.settings.mail_rules.pickers.options_picker
 import org.astermail.android.ui.settings.mail_rules.pickers.picker_item
 import org.astermail.android.ui.settings.mail_rules.pickers.snooze_picker
 import org.astermail.android.ui.settings.mail_rules.pickers.text_value_picker
+import org.astermail.android.settings.shared_settings_view_model
 
 private sealed class active_sheet {
     data object none : active_sheet()
@@ -116,7 +117,7 @@ fun RuleEditorScreen(
 ) {
     val vm: MailRulesViewModel = hiltViewModel()
     val state by vm.state.collectAsStateWithLifecycle()
-    val settings_vm: SettingsViewModel = hiltViewModel()
+    val settings_vm: SettingsViewModel = shared_settings_view_model()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
 
