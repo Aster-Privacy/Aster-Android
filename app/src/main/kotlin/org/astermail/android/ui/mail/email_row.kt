@@ -358,7 +358,6 @@ fun ThreadInboxRow(
     modifier: Modifier = Modifier,
     is_selected: Boolean = false,
     is_pinned: Boolean = false,
-    attachment_chips: List<MailViewModel.InboxAttachmentChip> = emptyList(),
     haptic_enabled: Boolean = true,
     is_first: Boolean = true,
     is_last: Boolean = true,
@@ -584,7 +583,6 @@ fun ThreadInboxRow(
                 }
             }
             if ((thread.label_colors.isNotEmpty() && !labels_inline) ||
-                attachment_chips.isNotEmpty() ||
                 email.received_on != null
             ) {
                 Spacer(Modifier.height(4.dp))
@@ -596,9 +594,6 @@ fun ThreadInboxRow(
                 ) {
                     email.received_on?.let {
                         alias_chip(it, modifier = Modifier.weight(1f, fill = false))
-                    }
-                    attachment_chips.forEach { chip ->
-                        inbox_attachment_chip(chip)
                     }
                     if (!labels_inline) {
                         thread.label_colors.indices.forEach { i ->
@@ -802,57 +797,6 @@ internal fun material_icon_from_name(name: String) = when (name.trim()) {
     "info" -> TablerIcons.InfoCircle
     "eye-slash" -> TablerIcons.EyeOff
     else -> null
-}
-
-@Composable
-private fun inbox_attachment_chip(chip: MailViewModel.InboxAttachmentChip) {
-    val colors = AsterMaterial.colors
-    val type_color = chip_type_color(chip.content_type)
-    val shape = RoundedCornerShape(6.dp)
-    val background = chip_background(type_color, inbox_card_read_color(colors), colors.is_dark)
-    val content = chip_content(type_color, background, colors.is_dark)
-    Row(
-        modifier = Modifier
-            .clip(shape)
-            .background(background, shape)
-            .padding(horizontal = 7.dp, vertical = 2.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Icon(
-            imageVector = TablerIcons.Paperclip,
-            contentDescription = null,
-            tint = content,
-            modifier = Modifier.size(11.dp),
-        )
-        Text(
-            text = chip.filename,
-            style = MaterialTheme.typography.labelSmall,
-            color = content,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Medium,
-            lineHeight = 14.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-}
-
-private fun chip_type_color(content_type: String): Color {
-    return when {
-        content_type == "application/pdf" -> Color(0xFFEA4335)
-        content_type.startsWith("image/") -> Color(0xFFA855F7)
-        content_type.startsWith("video/") -> Color(0xFFEC4899)
-        content_type.startsWith("audio/") -> Color(0xFF0EA5E9)
-        content_type.contains("spreadsheet") || content_type.contains("excel") ||
-            content_type == "text/csv" -> Color(0xFF34A853)
-        content_type.contains("presentation") || content_type.contains("powerpoint") -> Color(0xFFF97316)
-        content_type.contains("word") || content_type.contains("document") -> Color(0xFF4285F4)
-        content_type.contains("zip") || content_type.contains("gzip") ||
-            content_type.contains("tar") -> Color(0xFF8B5CF6)
-        content_type.startsWith("text/") -> Color(0xFF3B82F6)
-        else -> Color(0xFF6B7280)
-    }
 }
 
 @Composable

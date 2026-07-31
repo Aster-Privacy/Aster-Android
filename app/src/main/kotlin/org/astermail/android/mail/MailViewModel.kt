@@ -122,13 +122,14 @@ class MailViewModel @Inject constructor(
     private val _search_state = MutableStateFlow(SearchUiState())
     val search_state: StateFlow<SearchUiState> = _search_state.asStateFlow()
 
-    data class InboxAttachmentChip(
-        val filename: String,
-        val content_type: String,
-    )
+    private val _inbox_attachment_ids = MutableStateFlow<Set<String>>(emptySet())
+    val inbox_attachment_ids: StateFlow<Set<String>> = _inbox_attachment_ids.asStateFlow()
 
-    private val _inbox_attachment_chips = MutableStateFlow<Map<String, List<InboxAttachmentChip>>>(emptyMap())
-    val inbox_attachment_chips: StateFlow<Map<String, List<InboxAttachmentChip>>> = _inbox_attachment_chips.asStateFlow()
+    private val inbox_attachment_probed = java.util.Collections.newSetFromMap(
+        java.util.concurrent.ConcurrentHashMap<String, Boolean>(),
+    )
+    private val inbox_attachment_seeded = java.util.concurrent.atomic.AtomicBoolean(false)
+    private val inbox_attachment_probe_retries = 4
 
     private val _message_reactions = MutableStateFlow<Map<String, List<DecryptedReaction>>>(emptyMap())
     val message_reactions: StateFlow<Map<String, List<DecryptedReaction>>> = _message_reactions.asStateFlow()
@@ -384,7 +385,9 @@ class MailViewModel @Inject constructor(
         _inbox_state.value = InboxUiState()
         _thread_state.value = ThreadUiState()
         _search_state.value = SearchUiState()
-        _inbox_attachment_chips.value = emptyMap()
+        _inbox_attachment_ids.value = emptySet()
+        inbox_attachment_probed.clear()
+        inbox_attachment_seeded.set(false)
         _thread_participants.value = emptyMap()
         repository.clear_caches()
         runCatching { AsterProfileResolverHolder.shared?.clear() }
@@ -2270,25 +2273,40 @@ class MailViewModel @Inject constructor(
         }
     }
 
-    fun load_inbox_attachment_chips(item_ids: List<String>) {
-        val already_loaded = _inbox_attachment_chips.value
-        val to_load = item_ids.filter { it !in already_loaded }
-        if (to_load.isEmpty()) return
-        viewModelScope.launch(Dispatchers.IO) {
-            val with_attachments = repository.find_messages_with_attachments(to_load)
-            if (with_attachments.isEmpty()) return@launch
-            val chips = with_attachments.map { id ->
-                async {
-                    val atts = repository.fetch_attachments_for_message(id)
-                    id to atts.take(3).map { att ->
-                        InboxAttachmentChip(
-                            filename = att.filename,
-                            content_type = att.content_type,
-                        )
-                    }
+    fun resolve_inbox_attachment_flags(item_ids: List<String>) {
+        if (item_ids.isEmpty()) return
+        val gen = account_generation
+        if (!inbox_attachment_seeded.getAndSet(true)) {
+            viewModelScope.launch(Dispatchers.IO) {
+                val known = search_index_manager.known_attachment_ids()
+                if (gen == account_generation && known.isNotEmpty()) {
+                    _inbox_attachment_ids.update { it + known }
                 }
-            }.awaitAll().toMap().filter { it.value.isNotEmpty() }
-            _inbox_attachment_chips.update { it + chips }
+            }
+        }
+        val to_probe = item_ids.filter { inbox_attachment_probed.add(it) }
+        if (to_probe.isEmpty()) return
+        viewModelScope.launch(Dispatchers.IO) {
+            var pending = to_probe
+            var backoff_ms = 1_500L
+            var attempt = 0
+            while (pending.isNotEmpty() && attempt < inbox_attachment_probe_retries) {
+                val result = try {
+                    search_index_manager.probe_attachment_ids(pending)
+                } catch (t: kotlin.coroutines.cancellation.CancellationException) {
+                    throw t
+                } catch (_: Throwable) {
+                    SearchIndexManager.AttachmentProbeResult(emptySet(), pending)
+                }
+                if (gen != account_generation) return@launch
+                if (result.found.isNotEmpty()) _inbox_attachment_ids.update { it + result.found }
+                pending = result.failed
+                if (pending.isEmpty()) return@launch
+                attempt++
+                delay(backoff_ms)
+                backoff_ms *= 2
+            }
+            inbox_attachment_probed.removeAll(pending.toSet())
         }
     }
 

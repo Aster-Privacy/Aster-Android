@@ -1708,13 +1708,19 @@ class MailRepository @Inject constructor(
         session_key_b64: String,
     ): ByteArray = decrypt_attachment_bytes(encrypted_data_b64, data_nonce_b64, session_key_b64)
 
-    suspend fun find_messages_with_attachments(mail_item_ids: List<String>): List<String> {
+    suspend fun probe_messages_with_attachments(mail_item_ids: List<String>): Result<List<String>> {
         return try {
             val response = mail_api.batch_attachment_meta(mail_item_ids)
-            response.items.filter { it.value.isNotEmpty() }.keys.toList()
-        } catch (_: Throwable) {
-            emptyList()
+            Result.success(response.items.filter { it.value.isNotEmpty() }.keys.toList())
+        } catch (t: kotlin.coroutines.cancellation.CancellationException) {
+            throw t
+        } catch (t: Throwable) {
+            Result.failure(t)
         }
+    }
+
+    suspend fun find_messages_with_attachments(mail_item_ids: List<String>): List<String> {
+        return probe_messages_with_attachments(mail_item_ids).getOrDefault(emptyList())
     }
 
     suspend fun fetch_attachments_for_message(

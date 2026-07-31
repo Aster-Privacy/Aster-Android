@@ -211,14 +211,37 @@ class SearchIndexManager @Inject constructor(
         }
     }
 
-    suspend fun resolve_attachment_ids(ids: List<String>): Set<String> {
-        if (ids.isEmpty()) return emptySet()
-        val found = HashSet<String>()
-        for (batch in ids.chunked(attachment_probe_batch)) {
-            found.addAll(repository.find_messages_with_attachments(batch))
+    data class AttachmentProbeResult(
+        val found: Set<String>,
+        val failed: List<String>,
+    )
+
+    suspend fun known_attachment_ids(): Set<String> {
+        return try {
+            dao.ids_with_attachments().toSet()
+        } catch (_: Throwable) {
+            emptySet()
         }
-        if (found.isNotEmpty()) dao.mark_has_attachments(found.toList())
-        return found
+    }
+
+    suspend fun probe_attachment_ids(ids: List<String>): AttachmentProbeResult {
+        if (ids.isEmpty()) return AttachmentProbeResult(emptySet(), emptyList())
+        val found = HashSet<String>()
+        val failed = ArrayList<String>()
+        for (batch in ids.chunked(attachment_probe_batch)) {
+            repository.probe_messages_with_attachments(batch).fold(
+                onSuccess = { found.addAll(it) },
+                onFailure = { failed.addAll(batch) },
+            )
+        }
+        if (found.isNotEmpty()) {
+            runCatching { dao.mark_has_attachments(found.toList()) }
+        }
+        return AttachmentProbeResult(found, failed)
+    }
+
+    suspend fun resolve_attachment_ids(ids: List<String>): Set<String> {
+        return probe_attachment_ids(ids).found
     }
 
     private suspend fun enrich_attachment_flags(my_epoch: Int) {
