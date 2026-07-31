@@ -45,6 +45,8 @@ import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.astermail.android.MainActivity
 import org.astermail.android.R
 import org.astermail.android.api.ApiClient
@@ -180,6 +182,12 @@ class MailPollingWorker(
     }
 
     private suspend fun notify_for_new_mail(arrived: Int) {
+        notify_lock.withLock {
+            notify_for_new_mail_locked(arrived)
+        }
+    }
+
+    private suspend fun notify_for_new_mail_locked(arrived: Int) {
         if (!is_notify_new_email(context)) return
         val entry = try {
             EntryPointAccessors.fromApplication(
@@ -242,7 +250,10 @@ class MailPollingWorker(
                     ?: candidate?.sender_name?.takeIf { it.isNotBlank() }
                     ?: candidate?.sender_email
                 )?.trim()
-            if (candidate != null && !candidate_sender.isNullOrBlank()) {
+            if (candidate != null &&
+                !candidate_sender.isNullOrBlank() &&
+                claim_item_notification(context, candidate.id)
+            ) {
                 newest = candidate
                 sender = candidate_sender
             }
@@ -256,7 +267,6 @@ class MailPollingWorker(
         }
         val subject = fresh.subject.trim()
         val message_id = message_notification_id(fresh.id.hashCode())
-        mark_item_notified(context, fresh.id)
         show_message(
             context = context,
             sender = sender!!,
@@ -300,6 +310,10 @@ class MailPollingWorker(
         private const val KEY_QUIET_HOURS_END = "quiet_hours_end"
         private const val KEY_LAST_WORK_START_MS = "last_work_start_ms"
         private const val WORKER_IN_FLIGHT_GRACE_MS = 90_000L
+        private const val KEY_LAST_GENERIC_COUNT = "last_generic_notify_count"
+        private const val KEY_LAST_GENERIC_MS = "last_generic_notify_ms"
+        private const val GENERIC_NOTIFY_COOLDOWN_MS = 60_000L
+        private val notify_lock = Mutex()
         private const val SENDER_MAX_LENGTH = 80
         private const val SUBJECT_MAX_LENGTH = 120
 
@@ -525,8 +539,18 @@ class MailPollingWorker(
             }
         }
 
+        @Synchronized
         fun show_generic(context: Context, unread_count: Int) {
             if (!can_post(context)) return
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val now = System.currentTimeMillis()
+            val repeat_of_last = prefs.getInt(KEY_LAST_GENERIC_COUNT, -1) == unread_count &&
+                now - prefs.getLong(KEY_LAST_GENERIC_MS, 0L) < GENERIC_NOTIFY_COOLDOWN_MS
+            if (repeat_of_last) return
+            prefs.edit()
+                .putInt(KEY_LAST_GENERIC_COUNT, unread_count)
+                .putLong(KEY_LAST_GENERIC_MS, now)
+                .commit()
             val text = context.resources.getQuantityString(
                 R.plurals.new_mail_notification, unread_count, unread_count,
             )
@@ -688,6 +712,7 @@ class MailPollingWorker(
             }
         }
 
+        @Synchronized
         fun was_item_notified(context: Context, item_id: String): Boolean {
             if (item_id.isBlank()) return false
             val stored = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -695,6 +720,21 @@ class MailPollingWorker(
             return stored.split('\n').contains(item_id)
         }
 
+        @Synchronized
+        fun claim_item_notification(context: Context, item_id: String): Boolean {
+            if (item_id.isBlank()) return false
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val stored = prefs.getString(KEY_NOTIFIED_ITEM_IDS, "") ?: ""
+            val ids = stored.split('\n').filter { it.isNotBlank() }
+            if (ids.contains(item_id)) return false
+            val updated = ids.toMutableList()
+            updated.add(item_id)
+            while (updated.size > NOTIFIED_ITEM_IDS_MAX) updated.removeAt(0)
+            prefs.edit().putString(KEY_NOTIFIED_ITEM_IDS, updated.joinToString("\n")).commit()
+            return true
+        }
+
+        @Synchronized
         fun mark_item_notified(context: Context, item_id: String) {
             if (item_id.isBlank()) return
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
