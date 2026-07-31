@@ -90,9 +90,17 @@ class AsterApplication : Application(), ImageLoaderFactory {
         val api_host = runCatching { java.net.URI(ApiBuildConfig.API_BASE_URL).host.orEmpty() }
             .getOrDefault("")
 
+        val image_dispatcher = okhttp3.Dispatcher().apply {
+            maxRequests = 32
+            maxRequestsPerHost = 16
+        }
+
         val ok_http = OkHttpClient.Builder()
             .dns(org.astermail.android.api.DualStackDns)
+            .dispatcher(image_dispatcher)
             .connectTimeout(java.time.Duration.ofMillis(4_000))
+            .readTimeout(java.time.Duration.ofSeconds(20))
+            .callTimeout(java.time.Duration.ofSeconds(25))
             .addInterceptor(bearer_interceptor(token_store, api_host))
             .addInterceptor(lockdown_interceptor(api_host))
             .build()

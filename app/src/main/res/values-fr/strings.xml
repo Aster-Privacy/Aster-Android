@@ -2461,4 +2461,16 @@
     <string name="advanced_has_words">Contient les mots</string>
     <string name="advanced_date_within">Période</string>
     <string name="advanced_search_scope">Rechercher dans</string>
+    <string name="create_subfolder">Créer un sous-dossier</string>
+    <string name="rename_folder">Renommer le dossier</string>
+    <string name="rename">Renommer</string>
+    <string name="change_folder_color">Changer la couleur</string>
+    <string name="folder_color">Couleur du dossier</string>
+    <string name="move_folder_to">Déplacer vers</string>
+    <string name="lock_folder">Verrouiller le dossier</string>
+    <string name="remove_folder_lock">Retirer le verrou</string>
+    <string name="lock_folder_message">Définissez un mot de passe pour \"%1$s\". Il sera nécessaire pour ouvrir ce dossier.</string>
+    <string name="remove_folder_lock_message">Saisissez le mot de passe de \"%1$s\" pour retirer le verrou.</string>
+    <string name="failed_update_folder">Impossible de mettre à jour le dossier</string>
+    <string name="folder_actions">Actions du dossier</string>
 </resources>

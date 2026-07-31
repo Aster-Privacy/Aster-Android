@@ -2426,4 +2426,16 @@
     <string name="advanced_has_words">次のキーワードを含む</string>
     <string name="advanced_date_within">期間</string>
     <string name="advanced_search_scope">検索対象</string>
+    <string name="create_subfolder">サブフォルダを作成</string>
+    <string name="rename_folder">フォルダ名を変更</string>
+    <string name="rename">名前を変更</string>
+    <string name="change_folder_color">色を変更</string>
+    <string name="folder_color">フォルダの色</string>
+    <string name="move_folder_to">移動先</string>
+    <string name="lock_folder">フォルダをロック</string>
+    <string name="remove_folder_lock">ロックを解除</string>
+    <string name="lock_folder_message">\"%1$s\" のパスワードを設定します。このフォルダを開くときに必要です。</string>
+    <string name="remove_folder_lock_message">ロックを解除するには \"%1$s\" のパスワードを入力してください。</string>
+    <string name="failed_update_folder">フォルダを更新できませんでした</string>
+    <string name="folder_actions">フォルダの操作</string>
 </resources>

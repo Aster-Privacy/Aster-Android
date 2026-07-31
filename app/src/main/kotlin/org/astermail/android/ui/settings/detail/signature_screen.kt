@@ -64,6 +64,7 @@ import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.settings.DecryptedSignature
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.settings.shared_settings_view_model
 
 @Composable
 fun SignatureScreen(
@@ -71,7 +72,7 @@ fun SignatureScreen(
     on_open: (id: String) -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val plan_vm: PlanLimitsViewModel = hiltViewModel()
     val signatures by vm.signatures.collectAsStateWithLifecycle()
     val state by vm.state.collectAsStateWithLifecycle()

@@ -157,6 +157,19 @@ data class VerifyFolderPasswordRequest(
 )
 
 @Serializable
+data class SetFolderPasswordRequest(
+    val password_hash: String,
+    val password_salt: String,
+    val encrypted_folder_key: String,
+    val folder_key_nonce: String,
+)
+
+@Serializable
+data class RemoveFolderPasswordRequest(
+    val password_hash: String,
+)
+
+@Serializable
 data class VerifyFolderPasswordResponse(
     val verified: Boolean = false,
     val encrypted_folder_key: String? = null,
@@ -167,6 +180,8 @@ interface LabelsApi {
     suspend fun list_labels(include_counts: Boolean = true, folder_type: String? = null): LabelsListResponse
     suspend fun get_label(label_id: String): LabelItem
     suspend fun verify_folder_password(label_id: String, request: VerifyFolderPasswordRequest): VerifyFolderPasswordResponse
+    suspend fun set_folder_password(label_id: String, request: SetFolderPasswordRequest)
+    suspend fun remove_folder_password(label_id: String, request: RemoveFolderPasswordRequest)
     suspend fun create_label(request: CreateLabelRequest): CreateLabelResponse
     suspend fun update_label(label_id: String, request: UpdateLabelRequest)
     suspend fun bulk_reorder_labels(request: BulkReorderLabelsRequest): BulkReorderLabelsResponse
@@ -202,6 +217,30 @@ class LabelsApiImpl(private val client: ApiClient) : LabelsApi {
             setBody(request)
         }
         return decode_or_throw(response)
+    }
+
+    override suspend fun set_folder_password(label_id: String, request: SetFolderPasswordRequest) {
+        val response = client.http.post("${client.base_url}$labels_base/$label_id/password") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        if (response.status.value !in 200..299) {
+            val body = try { response.body<String>() } catch (_: Throwable) { "" }
+            throw client.map_http_status(response.status.value, body)
+        }
+    }
+
+    override suspend fun remove_folder_password(label_id: String, request: RemoveFolderPasswordRequest) {
+        val response = client.http.delete("${client.base_url}$labels_base/$label_id/password") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        if (response.status.value !in 200..299) {
+            val body = try { response.body<String>() } catch (_: Throwable) { "" }
+            throw client.map_http_status(response.status.value, body)
+        }
     }
 
     override suspend fun create_label(request: CreateLabelRequest): CreateLabelResponse {

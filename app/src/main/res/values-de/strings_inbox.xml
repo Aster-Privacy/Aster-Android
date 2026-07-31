@@ -6,4 +6,7 @@
     <string name="inbox_no_subject">(kein Betreff)</string>
     <string name="inbox_a11y_select_thread">Konversation auswählen</string>
     <string name="inbox_a11y_deselect_thread">Auswahl der Konversation aufheben</string>
+    <string name="selection_scope_offer">Alle %1$d in %2$s auswählen</string>
+    <string name="selection_scope_offer_categories">Alle %1$d in %2$s auswählen, einschließlich aller Kategorien</string>
+    <string name="selection_scope_confirmed">Alle %1$d in %2$s sind ausgewählt</string>
 </resources>

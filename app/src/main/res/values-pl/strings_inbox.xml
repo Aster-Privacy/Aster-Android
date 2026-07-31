@@ -6,4 +6,7 @@
     <string name="inbox_no_subject">(bez tematu)</string>
     <string name="inbox_a11y_select_thread">Zaznacz rozmowę</string>
     <string name="inbox_a11y_deselect_thread">Odznacz rozmowę</string>
+    <string name="selection_scope_offer">Zaznacz wszystkie %1$d w %2$s</string>
+    <string name="selection_scope_offer_categories">Zaznacz wszystkie %1$d w %2$s, w tym wszystkie kategorie</string>
+    <string name="selection_scope_confirmed">Zaznaczono wszystkie %1$d w %2$s</string>
 </resources>

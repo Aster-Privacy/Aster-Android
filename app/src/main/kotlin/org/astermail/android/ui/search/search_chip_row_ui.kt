@@ -259,6 +259,7 @@ private fun format_picker_date(year: Int, month: Int, day: Int): String {
 internal fun search_chip_row(
     operators: List<SearchOperator>,
     people: List<ChipPerson>,
+    recipient_people: List<ChipPerson>,
     on_operators_change: (List<SearchOperator>) -> Unit,
     on_advanced_click: () -> Unit,
 ) {
@@ -467,7 +468,7 @@ internal fun search_chip_row(
     if (open_sheet != null) {
         person_picker_sheet(
             title = if (open_sheet == "from") from_label else to_label,
-            people = people,
+            people = if (open_sheet == "from") people else recipient_people,
             current = if (open_sheet == "from") from_value else to_value,
             on_apply = { value ->
                 person_sheet = null

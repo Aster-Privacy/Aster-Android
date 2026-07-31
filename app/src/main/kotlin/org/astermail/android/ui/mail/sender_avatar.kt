@@ -55,7 +55,6 @@ import kotlinx.coroutines.flow.map
 import org.astermail.android.R
 import org.astermail.android.api.BuildConfig as ApiBuildConfig
 import org.astermail.android.api.auth.PublicProfile
-import org.astermail.android.design.AsterMaterial
 import org.astermail.android.mail.AsterProfileResolverHolder
 import org.astermail.android.mail.is_aster_domain
 
@@ -88,19 +87,35 @@ fun get_root_domain(domain: String): String {
 fun get_favicon_url(domain: String): String = "$FAVICON_BASE$domain"
 
 private const val FAVICON_MISS_TTL_MS = 30L * 60L * 1000L
+private const val FAVICON_TRANSIENT_TTL_MS = 20L * 1000L
+private const val FAVICON_MAX_ATTEMPTS = 3
+private const val FAVICON_RETRY_BASE_DELAY_MS = 700L
 
-private val favicon_missed_at = java.util.concurrent.ConcurrentHashMap<String, Long>()
+private val favicon_blocked_until = java.util.concurrent.ConcurrentHashMap<String, Long>()
 
 private fun favicon_recently_missed(root_domain: String): Boolean {
-    val missed_at = favicon_missed_at[root_domain] ?: return false
-    if (System.currentTimeMillis() - missed_at < FAVICON_MISS_TTL_MS) return true
-    favicon_missed_at.remove(root_domain)
+    val blocked_until = favicon_blocked_until[root_domain] ?: return false
+    if (System.currentTimeMillis() < blocked_until) return true
+    favicon_blocked_until.remove(root_domain)
     return false
 }
 
-private fun mark_favicon_missed(root_domain: String) {
-    favicon_missed_at[root_domain] = System.currentTimeMillis()
+private fun mark_favicon_missed(root_domain: String, ttl_ms: Long) {
+    favicon_blocked_until[root_domain] = System.currentTimeMillis() + ttl_ms
 }
+
+private fun clear_favicon_miss(root_domain: String) {
+    favicon_blocked_until.remove(root_domain)
+}
+
+private fun http_status_of(error: Throwable?): Int? =
+    (error as? coil.network.HttpException)?.response?.code
+
+internal fun is_definitive_favicon_miss(error: Throwable?): Boolean =
+    http_status_of(error).let { it == 404 || it == 410 }
+
+internal fun is_cancelled_favicon_load(error: Throwable?): Boolean =
+    error is java.util.concurrent.CancellationException
 
 internal fun decode_avatar_model(url: String): Any {
     if (!url.startsWith("data:")) return url
@@ -186,6 +201,15 @@ fun SenderAvatar(
 
     val url = remember(root_domain) { "$FAVICON_BASE$root_domain" }
     var loaded by remember(url) { mutableStateOf(false) }
+    var attempt by remember(url) { mutableStateOf(0) }
+    var pending_attempt by remember(url) { mutableStateOf(0) }
+
+    LaunchedEffect(url, pending_attempt) {
+        if (pending_attempt <= attempt) return@LaunchedEffect
+        kotlinx.coroutines.delay(FAVICON_RETRY_BASE_DELAY_MS * pending_attempt)
+        attempt = pending_attempt
+    }
+
     Box(
         modifier = modifier.size(size).clip(CircleShape).background(if (loaded) Color.White else bg),
         contentAlignment = Alignment.Center,
@@ -197,12 +221,13 @@ fun SenderAvatar(
                 style = avatar_initial_style(size),
             )
         }
-        val request = remember(url) {
+        val request = remember(url, attempt) {
             ImageRequest.Builder(context)
                 .data(url)
                 .memoryCacheKey(url)
                 .placeholderMemoryCacheKey(url)
                 .diskCacheKey("favicon:$root_domain")
+                .setParameter("retry_attempt", attempt, memoryCacheKey = null)
                 .crossfade(false)
                 .build()
         }
@@ -212,7 +237,16 @@ fun SenderAvatar(
             contentScale = ContentScale.Crop,
             onState = { state ->
                 loaded = state is coil.compose.AsyncImagePainter.State.Success
-                if (state is coil.compose.AsyncImagePainter.State.Error) mark_favicon_missed(root_domain)
+                if (loaded) clear_favicon_miss(root_domain)
+                if (state is coil.compose.AsyncImagePainter.State.Error) {
+                    val error = state.result.throwable
+                    when {
+                        is_cancelled_favicon_load(error) -> Unit
+                        is_definitive_favicon_miss(error) -> mark_favicon_missed(root_domain, FAVICON_MISS_TTL_MS)
+                        pending_attempt < FAVICON_MAX_ATTEMPTS -> pending_attempt += 1
+                        else -> mark_favicon_missed(root_domain, FAVICON_TRANSIENT_TTL_MS)
+                    }
+                }
             },
             modifier = Modifier.size(size).clip(CircleShape),
         )
@@ -378,29 +412,20 @@ fun StackedAvatars(
         return
     }
     val take = list.take(max_visible.coerceAtMost(3))
-    val ring = (size.value * 0.06f).dp
-    val each_size = if (take.size == 2) (size.value * 0.62f).dp else (size.value * 0.56f).dp
+    val each_size = if (take.size == 2) (size.value * 0.66f).dp else (size.value * 0.48f).dp
     val alignments = when (take.size) {
         2 -> listOf(Alignment.TopStart, Alignment.BottomEnd)
         else -> listOf(Alignment.TopStart, Alignment.TopEnd, Alignment.BottomCenter)
     }
-    Box(modifier = modifier.size(size)) {
+    Box(modifier = modifier.size(width = size, height = (size.value * 1.25f).dp)) {
         take.forEachIndexed { idx, (nm, em) ->
             androidx.compose.runtime.key(em.lowercase().ifBlank { nm.lowercase() }) {
-                Box(
-                    modifier = Modifier
-                        .align(alignments[idx])
-                        .size(each_size)
-                        .clip(CircleShape)
-                        .background(AsterMaterial.colors.bg_primary),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    SenderAvatar(
-                        email = em,
-                        name = nm,
-                        size = each_size - ring * 2,
-                    )
-                }
+                SenderAvatar(
+                    email = em,
+                    name = nm,
+                    size = each_size,
+                    modifier = Modifier.align(alignments[idx]),
+                )
             }
         }
     }

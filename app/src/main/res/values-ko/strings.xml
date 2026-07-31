@@ -2426,4 +2426,16 @@
     <string name="advanced_has_words">다음 단어 포함</string>
     <string name="advanced_date_within">기간</string>
     <string name="advanced_search_scope">검색 범위</string>
+    <string name="create_subfolder">하위 폴더 만들기</string>
+    <string name="rename_folder">폴더 이름 바꾸기</string>
+    <string name="rename">이름 바꾸기</string>
+    <string name="change_folder_color">색상 변경</string>
+    <string name="folder_color">폴더 색상</string>
+    <string name="move_folder_to">이동 위치</string>
+    <string name="lock_folder">폴더 잠금</string>
+    <string name="remove_folder_lock">잠금 해제</string>
+    <string name="lock_folder_message">\"%1$s\"의 비밀번호를 설정하세요. 이 폴더를 열 때 필요합니다.</string>
+    <string name="remove_folder_lock_message">잠금을 해제하려면 \"%1$s\"의 비밀번호를 입력하세요.</string>
+    <string name="failed_update_folder">폴더를 업데이트하지 못했습니다</string>
+    <string name="folder_actions">폴더 작업</string>
 </resources>

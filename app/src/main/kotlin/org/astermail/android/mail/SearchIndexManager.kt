@@ -274,6 +274,7 @@ class SearchIndexManager @Inject constructor(
                 received_on = item.received_on,
                 display_sender_name = item.display_sender_name,
                 display_sender_email = item.display_sender_email,
+                to_addresses = item.to_addresses.joinToString(",").ifBlank { null },
             )
         }
         mutex.withLock {

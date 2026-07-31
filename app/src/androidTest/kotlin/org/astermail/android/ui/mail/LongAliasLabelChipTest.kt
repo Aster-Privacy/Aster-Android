@@ -105,7 +105,7 @@ class LongAliasLabelChipTest {
     }
 
     @Test
-    fun alias_chip_wraps_instead_of_pushing_the_label_out() {
+    fun alias_chip_sits_to_the_right_of_the_subject() {
         compose_rule.setContent {
             Box(modifier = Modifier.width(360.dp)) {
                 ThreadInboxRow(
@@ -119,17 +119,21 @@ class LongAliasLabelChipTest {
 
         compose_rule.waitForIdle()
 
+        val root_right = compose_rule.onRoot().getUnclippedBoundsInRoot().right
         val alias_bounds = compose_rule.onNodeWithText(long_alias, useUnmergedTree = true).getUnclippedBoundsInRoot()
-        val label_bounds = compose_rule.onNodeWithText(label_name, useUnmergedTree = true).getUnclippedBoundsInRoot()
+        val subject_bounds = compose_rule.onNodeWithText("Welcome", useUnmergedTree = true).getUnclippedBoundsInRoot()
 
         assertTrue(
-            "alias right ${alias_bounds.right} overlaps label left ${label_bounds.left}",
-            alias_bounds.right <= label_bounds.left,
+            "alias left ${alias_bounds.left} is not right of subject right ${subject_bounds.right}",
+            alias_bounds.left >= subject_bounds.right,
         )
-        val alias_height = alias_bounds.bottom - alias_bounds.top
         assertTrue(
-            "alias height $alias_height did not wrap to a second line",
-            alias_height > 18.dp,
+            "alias top ${alias_bounds.top} is below the subject line ${subject_bounds.bottom}",
+            alias_bounds.top < subject_bounds.bottom,
+        )
+        assertTrue(
+            "alias right ${alias_bounds.right} exceeds root right $root_right",
+            alias_bounds.right <= root_right,
         )
     }
 }

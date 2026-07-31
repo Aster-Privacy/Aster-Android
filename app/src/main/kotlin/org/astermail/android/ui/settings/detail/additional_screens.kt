@@ -96,6 +96,7 @@ import org.astermail.android.design.components.UpgradeGate
 import org.astermail.android.folders.flatten_folder_tree
 import org.astermail.android.folders.folder_sibling_group
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.settings.shared_settings_view_model
 
 @Composable
 private fun toggle_row(title: String, subtitle: String?, checked: Boolean, on_change: (Boolean) -> Unit) {
@@ -143,7 +144,7 @@ private fun text_area(value: String, placeholder: String, on_change: (String) ->
 
 @Composable
 fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
 
@@ -204,7 +205,7 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
 
 @Composable
 fun GhostAliasesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -231,7 +232,7 @@ fun GhostAliasesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) 
 
 @Composable
 fun ReferralScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
     val context = LocalContext.current
@@ -703,7 +704,7 @@ private fun referral_step(index: Int, text: String) {
 
 @Composable
 fun DeveloperScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
     val prefs = state.preferences
@@ -808,7 +809,7 @@ fun DeveloperScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
 fun LabelsScreen(
     on_back: () -> Unit,
     on_open: (id: String) -> Unit = {},
-    vm: SettingsViewModel = hiltViewModel(),
+    vm: SettingsViewModel = shared_settings_view_model(),
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
@@ -900,7 +901,7 @@ fun LabelsScreen(
 fun FoldersScreen(
     on_back: () -> Unit,
     on_open: (id: String) -> Unit = {},
-    vm: SettingsViewModel = hiltViewModel(),
+    vm: SettingsViewModel = shared_settings_view_model(),
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
@@ -1105,7 +1106,7 @@ private fun delete_folder_confirm_body(folder_name: String, has_subfolders: Bool
 
 @Composable
 fun PrivacyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
     val context = LocalContext.current
@@ -1207,7 +1208,7 @@ fun PrivacyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
 
 @Composable
 fun ApiKeysScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
     val context = LocalContext.current
@@ -1283,7 +1284,7 @@ fun ApiKeysScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
 
 @Composable
 fun IntegrationsScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
     val prefs = state.preferences
@@ -1353,7 +1354,7 @@ fun IntegrationsScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) 
 
 @Composable
 fun FamilyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
     val context = LocalContext.current
@@ -1424,7 +1425,7 @@ fun FamilyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
 
 @Composable
 fun KidsReservedScreen(on_back: () -> Unit) {
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
     val context = LocalContext.current
@@ -1574,7 +1575,7 @@ fun KidsReservedScreen(on_back: () -> Unit) {
 
 @Composable
 fun LanguageScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
     val prefs = state.preferences

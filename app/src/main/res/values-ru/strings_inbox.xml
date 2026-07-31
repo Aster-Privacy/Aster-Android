@@ -6,4 +6,7 @@
     <string name="inbox_no_subject">(без темы)</string>
     <string name="inbox_a11y_select_thread">Выбрать переписку</string>
     <string name="inbox_a11y_deselect_thread">Снять выбор с переписки</string>
+    <string name="selection_scope_offer">Выбрать все %1$d в %2$s</string>
+    <string name="selection_scope_offer_categories">Выбрать все %1$d в %2$s, включая все категории</string>
+    <string name="selection_scope_confirmed">Выбрано все %1$d в %2$s</string>
 </resources>

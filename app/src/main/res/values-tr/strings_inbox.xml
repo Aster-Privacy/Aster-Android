@@ -6,4 +6,7 @@
     <string name="inbox_no_subject">(konu yok)</string>
     <string name="inbox_a11y_select_thread">Yazışmayı seç</string>
     <string name="inbox_a11y_deselect_thread">Yazışma seçimini kaldır</string>
+    <string name="selection_scope_offer">%2$s içindeki %1$d ögenin tümünü seç</string>
+    <string name="selection_scope_offer_categories">%2$s içindeki %1$d ögenin tümünü seç (tüm kategoriler dahil)</string>
+    <string name="selection_scope_confirmed">%2$s içindeki %1$d ögenin tümü seçildi</string>
 </resources>

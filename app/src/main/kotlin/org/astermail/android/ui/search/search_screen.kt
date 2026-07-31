@@ -213,7 +213,8 @@ private fun evaluate_operator(item: InboxItem, op: SearchOperator): Boolean {
             item.sender_email.contains(op.value, ignoreCase = true) ||
             item.display_sender_name?.contains(op.value, ignoreCase = true) == true ||
             item.display_sender_email?.contains(op.value, ignoreCase = true) == true
-        "to" -> item.sender_email.contains(op.value, ignoreCase = true)
+        "to" -> item.to_addresses.any { it.contains(op.value, ignoreCase = true) } ||
+            item.received_on?.contains(op.value, ignoreCase = true) == true
         "subject" -> item.subject.contains(op.value, ignoreCase = true)
         "has" -> when (op.value) {
             "attachment", "attachments" -> item.has_attachments
@@ -317,7 +318,7 @@ fun SearchScreen(
 ) {
     val colors = AsterMaterial.colors
     val mail_vm: MailViewModel = hiltViewModel()
-    val settings_vm: org.astermail.android.settings.SettingsViewModel = hiltViewModel()
+    val settings_vm: org.astermail.android.settings.SettingsViewModel = org.astermail.android.settings.shared_settings_view_model()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
     val context_for_prefs = androidx.compose.ui.platform.LocalContext.current
     val search_state by mail_vm.search_state.collectAsStateWithLifecycle()
@@ -463,6 +464,9 @@ fun SearchScreen(
     val chip_people = remember(search_state.all_items) {
         collect_chip_people(search_state.all_items)
     }
+    val chip_recipients = remember(search_state.all_items) {
+        collect_recipient_people(search_state.all_items)
+    }
     val custom_chips = remember(operator_chips) {
         operator_chips.filterNot { is_quick_operator(it) }
     }
@@ -554,9 +558,15 @@ fun SearchScreen(
                 selected_count = selected_ids.size,
                 on_close = ::exit_select_mode,
                 on_select_all = {
+                    val all_selected = filtered.isNotEmpty() && selected_ids.size >= filtered.size
                     selected_ids.clear()
-                    selected_ids.addAll(filtered.map { it.id })
+                    if (all_selected) {
+                        exit_select_mode()
+                    } else {
+                        selected_ids.addAll(filtered.map { it.id })
+                    }
                 },
+                all_selected = filtered.isNotEmpty() && selected_ids.size >= filtered.size,
             )
         } else {
             search_input_bar(
@@ -576,6 +586,7 @@ fun SearchScreen(
             search_chip_row(
                 operators = operator_chips,
                 people = chip_people,
+                recipient_people = chip_recipients,
                 on_operators_change = { operator_chips = it },
                 on_advanced_click = { advanced_open = true },
             )
@@ -1235,6 +1246,7 @@ internal fun search_select_top_bar(
     selected_count: Int,
     on_close: () -> Unit,
     on_select_all: () -> Unit,
+    all_selected: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
     Row(
@@ -1268,6 +1280,7 @@ internal fun search_select_top_bar(
         org.astermail.android.ui.common.select_all_button(
             on_click = on_select_all,
             modifier = Modifier.testTag("search_select_all"),
+            all_selected = all_selected,
         )
     }
 }

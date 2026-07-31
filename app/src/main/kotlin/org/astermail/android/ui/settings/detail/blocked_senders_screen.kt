@@ -64,6 +64,7 @@ import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.ui.mail.SenderAvatar
+import org.astermail.android.settings.shared_settings_view_model
 
 @Composable
 private fun blocked_sender_row(
@@ -137,7 +138,7 @@ fun BlockedSendersScreen(
     on_back: () -> Unit,
     on_open: (id: String) -> Unit = {},
 ) {
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
     var show_add_dialog by remember { mutableStateOf(false) }

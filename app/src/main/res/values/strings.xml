@@ -520,7 +520,7 @@
     <string name="risky">Risky</string>
     <string name="scan_inbox">Scan inbox</string>
     <string name="search_senders">Search senders</string>
-    <string name="deselect_all">Deselect all</string>
+    <string name="deselect_all">Unselect all</string>
     <string name="count_selected">%1$d selected</string>
     <string name="unsubscribe_selected">Unsubscribe (%1$d)</string>
     <string name="reactivate_selected">Reactivate (%1$d)</string>
@@ -720,6 +720,18 @@
     <string name="parent_folder_none">None</string>
     <string name="move_folder_up">Move up</string>
     <string name="move_folder_down">Move down</string>
+    <string name="create_subfolder">Create subfolder</string>
+    <string name="rename_folder">Rename folder</string>
+    <string name="rename">Rename</string>
+    <string name="change_folder_color">Change color</string>
+    <string name="folder_color">Folder color</string>
+    <string name="move_folder_to">Move to</string>
+    <string name="lock_folder">Lock folder</string>
+    <string name="remove_folder_lock">Remove lock</string>
+    <string name="lock_folder_message">Set a password for \"%1$s\". You will need it to open this folder.</string>
+    <string name="remove_folder_lock_message">Enter the password for \"%1$s\" to remove its lock.</string>
+    <string name="failed_update_folder">Could not update folder</string>
+    <string name="folder_actions">Folder actions</string>
     <string name="create_label">Create Label</string>
     <string name="label_name">Label name</string>
     <string name="create_alias">Create Alias</string>

@@ -239,56 +239,12 @@ fun ContactsScreen(
                 .fillMaxWidth()
                 .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(44.dp)
-                    .clip(SquircleShape(18.dp))
-                    .background(colors.input_bg)
-                    .padding(horizontal = AsterSpacing.md),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    imageVector = TablerIcons.Search,
-                    contentDescription = null,
-                    tint = colors.text_muted,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(Modifier.width(AsterSpacing.sm))
-                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                    if (query.isEmpty()) {
-                        Text(
-                            text = stringResource(R.string.search_contacts),
-                            color = colors.text_muted,
-                            fontSize = 14.sp,
-                        )
-                    }
-                    BasicTextField(
-                        value = query,
-                        onValueChange = { query = it },
-                        singleLine = true,
-                        textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.text_primary),
-                        cursorBrush = SolidColor(colors.accent_blue),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                if (query.isNotEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .size(24.dp)
-                            .clip(CircleShape)
-                            .clickable { query = "" },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = TablerIcons.X,
-                            contentDescription = stringResource(R.string.clear),
-                            tint = colors.text_muted,
-                            modifier = Modifier.size(14.dp),
-                        )
-                    }
-                }
-            }
+            org.astermail.android.ui.common.list_search_bar(
+                query = query,
+                on_query_change = { query = it },
+                placeholder = stringResource(R.string.search_contacts),
+                test_tag = "contact_search_bar",
+            )
         }
 
         Row(

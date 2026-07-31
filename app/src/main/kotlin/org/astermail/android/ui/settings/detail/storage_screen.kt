@@ -66,6 +66,7 @@ import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.DialogConfirmStyle
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.settings.shared_settings_view_model
 
 internal fun format_bytes(bytes: Long): String {
     if (bytes < 1024) return "$bytes B"
@@ -85,7 +86,7 @@ fun StorageScreen(
     on_open: (id: String) -> Unit = {},
     on_open_folder: (folder_id: String, folder_name: String) -> Unit = { _, _ -> },
 ) {
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
     val mail_vm: org.astermail.android.mail.MailViewModel = hiltViewModel()
     val inbox_state by mail_vm.inbox_state.collectAsStateWithLifecycle()

@@ -21,14 +21,19 @@
 
 package org.astermail.android.folders
 
+import java.security.SecureRandom
 import java.util.Base64
+import javax.crypto.Cipher
 import javax.crypto.Mac
+import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 private const val pbkdf2_iterations_legacy = 100000
 private const val pbkdf2_iterations = 310000
 private const val salt_bytes_legacy = 16
+private const val salt_bytes = 32
 private const val auth_key_context = "astermail-folder-auth-v1"
+private const val encrypt_key_context = "astermail-folder-encrypt-v1"
 
 private fun hkdf_sha256(ikm: ByteArray, info: String, length: Int): ByteArray {
     val mac = Mac.getInstance("HmacSHA256")
@@ -78,6 +83,43 @@ private fun pbkdf2_hmac_sha256(password: ByteArray, salt: ByteArray, iterations:
         block++
     }
     return out
+}
+
+data class folder_password_material(
+    val password_hash: String,
+    val password_salt: String,
+    val encrypted_folder_key: String,
+    val folder_key_nonce: String,
+)
+
+fun prepare_folder_password(password: String): folder_password_material {
+    val random = SecureRandom()
+    val salt = ByteArray(salt_bytes).also { random.nextBytes(it) }
+    val password_bytes = password.toByteArray(Charsets.UTF_8)
+    val derived = pbkdf2_hmac_sha256(password_bytes, salt, pbkdf2_iterations, 32)
+    password_bytes.fill(0)
+
+    val auth_key = hkdf_sha256(derived, auth_key_context, 32)
+    val encryption_key = hkdf_sha256(derived, encrypt_key_context, 32)
+    derived.fill(0)
+
+    val folder_key = ByteArray(32).also { random.nextBytes(it) }
+    val nonce = ByteArray(12).also { random.nextBytes(it) }
+    val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+    cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(encryption_key, "AES"), GCMParameterSpec(128, nonce))
+    val encrypted = cipher.doFinal(folder_key)
+    folder_key.fill(0)
+    encryption_key.fill(0)
+
+    val encoder = Base64.getEncoder()
+    val material = folder_password_material(
+        password_hash = encoder.encodeToString(auth_key),
+        password_salt = encoder.encodeToString(salt),
+        encrypted_folder_key = encoder.encodeToString(encrypted),
+        folder_key_nonce = encoder.encodeToString(nonce),
+    )
+    auth_key.fill(0)
+    return material
 }
 
 fun derive_folder_auth_hash(password: String, salt_base64: String): String {

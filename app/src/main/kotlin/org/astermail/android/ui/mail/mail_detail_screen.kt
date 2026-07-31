@@ -25,12 +25,19 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.AlertTriangle
 import compose.icons.tablericons.*
 
+import org.astermail.android.design.components.aster_dropdown_divider
 import org.astermail.android.design.components.aster_dropdown_item
 import org.astermail.android.design.components.aster_dropdown_menu
 import org.astermail.android.BuildConfig
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -111,6 +118,17 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.TextUnit
@@ -155,6 +173,7 @@ import org.astermail.android.mail.DecryptedReaction
 import org.astermail.android.mail.MailViewModel
 import org.astermail.android.mail.body_starts_with
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.settings.shared_settings_view_model
 
 private val placeholder_body_height = 140.dp
 
@@ -396,7 +415,7 @@ fun MailDetailScreen(
     on_previous: (() -> Unit)? = null,
     on_navigate: ((String) -> Unit)? = null,
     mail_vm: MailViewModel = hiltViewModel(),
-    settings_vm: SettingsViewModel = hiltViewModel(),
+    settings_vm: SettingsViewModel = shared_settings_view_model(),
 ) {
     val colors = AsterMaterial.colors
     val density = LocalDensity.current
@@ -1413,9 +1432,10 @@ fun MailDetailScreen(
         }
     }
 
-    if (show_action_sheet) {
+    run {
         val target = action_target_id ?: messages.lastOrNull()?.id.orEmpty()
         action_menu_sheet(
+            expanded = show_action_sheet,
             on_close = { show_action_sheet = false },
             on_reply = { show_action_sheet = false; on_reply(target, thread_ghost_email) },
             on_reply_all = { show_action_sheet = false; on_reply_all(target, thread_ghost_email) },
@@ -3370,9 +3390,18 @@ private fun action_chip(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+private object action_menu_position_provider : PopupPositionProvider {
+    override fun calculatePosition(
+        anchorBounds: IntRect,
+        windowSize: IntSize,
+        layoutDirection: LayoutDirection,
+        popupContentSize: IntSize,
+    ): IntOffset = IntOffset.Zero
+}
+
 @Composable
-private fun action_menu_sheet(
+internal fun action_menu_sheet(
+    expanded: Boolean,
     on_close: () -> Unit,
     on_reply: () -> Unit,
     on_reply_all: () -> Unit,
@@ -3389,44 +3418,109 @@ private fun action_menu_sheet(
     on_customize_toolbar: () -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
-    val state = rememberModalBottomSheetState()
-    ModalBottomSheet(
+    val visible_state = remember { MutableTransitionState(false) }
+    visible_state.targetState = expanded
+    if (!visible_state.currentState && !visible_state.targetState) return
+
+    val shape = SquircleShape(18.dp)
+    val scrim_interaction = remember { MutableInteractionSource() }
+    Popup(
+        popupPositionProvider = action_menu_position_provider,
         onDismissRequest = on_close,
-        sheetState = state,
-        containerColor = colors.bg_card,
-        tonalElevation = 0.dp,
-        dragHandle = { AsterDragHandle() },
+        properties = PopupProperties(focusable = true),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(top = AsterSpacing.xs),
-        ) {
-            sheet_row(stringResource(R.string.reply), colors.text_primary, TablerIcons.ArrowBackUp, on_reply)
-            sheet_row(stringResource(R.string.reply_all), colors.text_primary, TablerIcons.ArrowsLeft, on_reply_all)
-            sheet_row(stringResource(R.string.forward), colors.text_primary, TablerIcons.MailForward, on_forward)
-            AsterDivider()
-            sheet_row(
-                if (is_starred) stringResource(R.string.unstar) else stringResource(R.string.star),
-                colors.text_primary,
-                TablerIcons.Star,
-                on_star,
-            )
-            sheet_row(stringResource(R.string.mark_as_unread), colors.text_primary, TablerIcons.Mail, on_mark_unread)
-            sheet_row(stringResource(R.string.label), colors.text_primary, TablerIcons.Tag, on_label)
-            sheet_row(stringResource(R.string.snooze), colors.text_primary, TablerIcons.Moon, on_snooze)
-            AsterDivider()
-            sheet_row(stringResource(R.string.swipe_archive), colors.text_primary, TablerIcons.Archive, on_archive)
-            if (is_spam) {
-                sheet_row(stringResource(R.string.swipe_not_spam), colors.accent_blue, TablerIcons.ShieldCheck, on_spam)
-            } else {
-                sheet_row(stringResource(R.string.report_spam), colors.danger, TablerIcons.AlertTriangle, on_spam)
+        Box(modifier = Modifier.fillMaxSize()) {
+            AnimatedVisibility(
+                visibleState = visible_state,
+                enter = fadeIn(animationSpec = tween(120)),
+                exit = fadeOut(animationSpec = tween(120)),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.28f))
+                        .clickable(
+                            interactionSource = scrim_interaction,
+                            indication = null,
+                            onClick = on_close,
+                        ),
+                )
             }
-            sheet_row(stringResource(R.string.move_to_trash), colors.danger, TablerIcons.Trash, on_trash)
-            AsterDivider()
-            sheet_row(stringResource(R.string.customize_toolbar), colors.text_secondary, TablerIcons.Adjustments, on_customize_toolbar)
-            Spacer(Modifier.height(AsterSpacing.md))
+            AnimatedVisibility(
+                visibleState = visible_state,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .navigationBarsPadding()
+                    .padding(end = AsterSpacing.sm, bottom = AsterSpacing.sm),
+                enter = fadeIn(animationSpec = tween(120, easing = LinearOutSlowInEasing)) +
+                    scaleIn(
+                        animationSpec = tween(190, easing = FastOutSlowInEasing),
+                        initialScale = 0.88f,
+                        transformOrigin = TransformOrigin(1f, 1f),
+                    ),
+                exit = fadeOut(animationSpec = tween(110)) +
+                    scaleOut(
+                        animationSpec = tween(130, easing = FastOutLinearInEasing),
+                        targetScale = 0.94f,
+                        transformOrigin = TransformOrigin(1f, 1f),
+                    ),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .testTag("action_menu")
+                        .shadow(18.dp, shape, clip = false)
+                        .clip(shape)
+                        .background(colors.dropdown_bg)
+                        .border(1.dp, colors.border_primary, shape)
+                        .widthIn(min = 240.dp, max = 320.dp)
+                        .heightIn(max = 460.dp)
+                        .verticalScroll(rememberScrollState())
+                        .padding(vertical = 6.dp),
+                ) {
+                    aster_dropdown_item(stringResource(R.string.reply), on_reply, icon = TablerIcons.ArrowBackUp)
+                    aster_dropdown_item(stringResource(R.string.reply_all), on_reply_all, icon = TablerIcons.ArrowsLeft)
+                    aster_dropdown_item(stringResource(R.string.forward), on_forward, icon = TablerIcons.MailForward)
+                    aster_dropdown_divider()
+                    aster_dropdown_item(
+                        if (is_starred) stringResource(R.string.unstar) else stringResource(R.string.star),
+                        on_star,
+                        icon = TablerIcons.Star,
+                    )
+                    aster_dropdown_item(stringResource(R.string.mark_as_unread), on_mark_unread, icon = TablerIcons.Mail)
+                    aster_dropdown_item(stringResource(R.string.label), on_label, icon = TablerIcons.Tag)
+                    aster_dropdown_item(stringResource(R.string.snooze), on_snooze, icon = TablerIcons.Moon)
+                    aster_dropdown_divider()
+                    aster_dropdown_item(stringResource(R.string.swipe_archive), on_archive, icon = TablerIcons.Archive)
+                    if (is_spam) {
+                        aster_dropdown_item(
+                            stringResource(R.string.swipe_not_spam),
+                            on_spam,
+                            icon = TablerIcons.ShieldCheck,
+                            tint = colors.accent_blue,
+                        )
+                    } else {
+                        aster_dropdown_item(
+                            stringResource(R.string.report_spam),
+                            on_spam,
+                            icon = TablerIcons.AlertTriangle,
+                            destructive = true,
+                        )
+                    }
+                    aster_dropdown_item(
+                        stringResource(R.string.move_to_trash),
+                        on_trash,
+                        icon = TablerIcons.Trash,
+                        destructive = true,
+                    )
+                    aster_dropdown_divider()
+                    aster_dropdown_item(
+                        stringResource(R.string.customize_toolbar),
+                        on_customize_toolbar,
+                        icon = TablerIcons.Adjustments,
+                        tint = colors.text_secondary,
+                    )
+                }
+            }
         }
     }
 }
@@ -3888,6 +3982,8 @@ private var email_image_client_instance: okhttp3.OkHttpClient? = null
 
 internal const val EMAIL_FONT_PATH = "/__aster_font/opendyslexic.otf"
 
+internal const val EMAIL_USER_FONT_PREFIX = "/__aster_email_font/"
+
 private fun is_zoomable_image_src(src: String): Boolean {
     if (src.isBlank() || src.length > 8192) return false
     if (src.startsWith("data:image/", ignoreCase = true)) return true
@@ -3897,6 +3993,33 @@ private fun is_zoomable_image_src(src: String): Boolean {
     } catch (_: Throwable) {
         false
     }
+}
+
+private fun email_user_font_response(
+    context: android.content.Context,
+    path: String,
+): android.webkit.WebResourceResponse? = try {
+    val name = path.removePrefix(EMAIL_USER_FONT_PREFIX).removeSuffix(".ttf")
+    val parts = name.split("__")
+    val resource = if (parts.size == 2) {
+        org.astermail.android.design.email_font_resource_for(parts[0], parts[1])
+    } else {
+        null
+    }
+    if (resource == null) {
+        null
+    } else {
+        android.webkit.WebResourceResponse(
+            "font/ttf",
+            null,
+            200,
+            "OK",
+            mapOf("Cache-Control" to "max-age=86400"),
+            context.resources.openRawResource(resource),
+        )
+    }
+} catch (_: Throwable) {
+    null
 }
 
 private fun email_font_response(context: android.content.Context): android.webkit.WebResourceResponse? = try {
@@ -4074,7 +4197,7 @@ internal fun email_html_view(
 
     val screen_width_dp = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp
 
-    val settings_vm: SettingsViewModel = hiltViewModel()
+    val settings_vm: SettingsViewModel = shared_settings_view_model()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
     val text_zoom = when (settings_state.preferences?.font_size_scale) {
         "small" -> 85
@@ -4087,6 +4210,10 @@ internal fun email_html_view(
     val image_failed_label = stringResource(R.string.image_failed_placeholder)
     val force_dark_emails = is_dark && settings_state.preferences?.force_dark_emails == true
     val dyslexia_font = settings_state.preferences?.dyslexia_font == true
+    val email_font_id = org.astermail.android.design.resolve_email_font_id(
+        settings_state.preferences?.email_font_choice,
+        settings_state.preferences?.font_choice,
+    )
 
     val translate_mode = settings_state.preferences?.translate_incoming ?: "off"
     val translate_langs = settings_state.preferences?.translate_languages ?: emptyList()
@@ -4163,8 +4290,9 @@ internal fun email_html_view(
 
     val inline_sig = remember(inline_images) { inline_images.keys.sorted().joinToString(",").hashCode() }
     val html_hash = remember(html, inline_sig) { html.hashCode() * 31 + inline_sig }
-    val height_cache_key = remember(html_hash, allow_external, screen_width_dp, text_zoom, dyslexia_font) {
-        html_cache.height_key(html_hash, allow_external, screen_width_dp, text_zoom) * 31L + (if (dyslexia_font) 1L else 0L)
+    val height_cache_key = remember(html_hash, allow_external, screen_width_dp, text_zoom, dyslexia_font, email_font_id) {
+        (html_cache.height_key(html_hash, allow_external, screen_width_dp, text_zoom) * 31L + (if (dyslexia_font) 1L else 0L)) *
+            31L + email_font_id.hashCode().toLong()
     }
     val cached_height = remember(height_cache_key) { body_height_cache.get(height_cache_key) }
     var content_height_dp by remember(height_cache_key) { mutableStateOf((cached_height ?: 0f).dp) }
@@ -4192,11 +4320,13 @@ internal fun email_html_view(
         force_dark_emails = force_dark_emails,
         dyslexia_font = dyslexia_font,
         translate_mode = translate_mode,
+        email_font_id = email_font_id,
+        text_zoom = text_zoom,
     )
 
     val translate_active = translate_mode != "off"
-    val cache_key = remember(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active, dyslexia_font) { html_cache.key(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active) * 31L + (if (dyslexia_font) 1L else 0L) }
-    var prebuilt_html by remember(html_hash, allow_external, translate_active, dyslexia_font) { mutableStateOf<String?>(html_cache.get(cache_key)) }
+    val cache_key = remember(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom) { ((html_cache.key(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active) * 31L + (if (dyslexia_font) 1L else 0L)) * 31L + email_font_id.hashCode().toLong()) * 31L + text_zoom.toLong() }
+    var prebuilt_html by remember(html_hash, allow_external, translate_active, dyslexia_font, email_font_id, text_zoom) { mutableStateOf<String?>(html_cache.get(cache_key)) }
     var loaded_built by remember { mutableStateOf("") }
     var loaded_external by remember { mutableStateOf(false) }
     val scale_ref = remember { floatArrayOf(1f) }
@@ -4254,7 +4384,7 @@ internal fun email_html_view(
         return proxy_external_urls(cid_normalized, proxy_base)
     }
 
-    LaunchedEffect(html, inline_sig, allow_external, bg_hex, force_dark_emails, translate_active, dyslexia_font) {
+    LaunchedEffect(html, inline_sig, allow_external, bg_hex, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom) {
         scale_ref[0] = 1f
         zoom_scale_ref[0] = 1f
         measured_dp_ref[0] = 0f
@@ -4415,6 +4545,15 @@ internal fun email_html_view(
                 val req_uri = request?.url ?: return null
                 val url = req_uri.toString()
                 if (req_uri.host == org.astermail.android.translation.TranslationAssets.CONTENT_HOST) {
+                    val user_font_path = req_uri.path
+                    if (user_font_path != null && user_font_path.startsWith(EMAIL_USER_FONT_PREFIX)) {
+                        val user_font_ctx = view?.context
+                        if (user_font_ctx != null) {
+                            val user_font_response = email_user_font_response(user_font_ctx, user_font_path)
+                            if (user_font_response != null) return user_font_response
+                        }
+                        return null
+                    }
                     if (req_uri.path == EMAIL_FONT_PATH) {
                         val font_ctx = view?.context
                         if (font_ctx != null) {
@@ -5438,88 +5577,18 @@ private fun detail_menu_divider() {
 }
 
 @Composable
-private fun encryption_info_point(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String, tint: androidx.compose.ui.graphics.Color) {
-    val colors = AsterMaterial.colors
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Box(
-            modifier = Modifier
-                .size(28.dp)
-                .clip(SquircleShape(10.dp))
-                .background(tint.copy(alpha = 0.14f)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = tint,
-                modifier = Modifier.size(16.dp),
-            )
-        }
-        Text(
-            text = text,
-            color = colors.text_secondary,
-            fontSize = 13.sp,
-            lineHeight = 18.sp,
-            modifier = Modifier.padding(top = 4.dp),
-        )
-    }
-}
-
-@Composable
 private fun encryption_info_body(is_encrypted: Boolean) {
     val colors = AsterMaterial.colors
-    val tint = if (is_encrypted) colors.accent_blue else colors.warning
-    Column(
+    Text(
+        text = if (is_encrypted)
+            stringResource(R.string.e2e_recipient_description)
+        else
+            stringResource(R.string.transit_recipient_description),
+        color = colors.text_secondary,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(AsterSpacing.md),
-    ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(SquircleShape(18.dp))
-                .background(tint.copy(alpha = 0.14f))
-                .border(1.dp, tint.copy(alpha = 0.4f), SquircleShape(18.dp)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = if (is_encrypted) TablerIcons.ShieldLock else TablerIcons.LockOpen,
-                contentDescription = null,
-                tint = tint,
-                modifier = Modifier.size(24.dp),
-            )
-        }
-        Text(
-            text = if (is_encrypted)
-                stringResource(R.string.e2e_recipient_description)
-            else
-                stringResource(R.string.transit_recipient_description),
-            color = colors.text_secondary,
-            fontSize = 14.sp,
-            lineHeight = 20.sp,
-        )
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(SquircleShape(16.dp))
-                .background(colors.bg_tertiary)
-                .padding(AsterSpacing.md),
-            verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-        ) {
-            if (is_encrypted) {
-                encryption_info_point(TablerIcons.DeviceMobile, stringResource(R.string.e2e_point_device), tint)
-                encryption_info_point(TablerIcons.Key, stringResource(R.string.e2e_point_keys), tint)
-                encryption_info_point(TablerIcons.Atom, stringResource(R.string.e2e_point_quantum), tint)
-            } else {
-                encryption_info_point(TablerIcons.Lock, stringResource(R.string.standard_point_tls), tint)
-                encryption_info_point(TablerIcons.Server, stringResource(R.string.standard_point_server), tint)
-                encryption_info_point(TablerIcons.Database, stringResource(R.string.standard_point_storage), tint)
-            }
-        }
-    }
+    )
 }
 
 @Composable

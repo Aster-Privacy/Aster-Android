@@ -503,7 +503,7 @@ private fun AsterNavHost() {
                 auth_gate.auth_repository.handle_unauthorized_signal()
             }
         }
-        val preferences_sync_vm: org.astermail.android.settings.SettingsViewModel = hiltViewModel()
+        val preferences_sync_vm: org.astermail.android.settings.SettingsViewModel = org.astermail.android.settings.shared_settings_view_model()
         androidx.compose.runtime.LaunchedEffect(is_signed_in_state) {
             preferences_sync_vm.load_preferences()
         }
@@ -1258,7 +1258,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     val inbox_state by mail_vm.inbox_state.collectAsStateWithLifecycle()
     val stats = inbox_state.stats
 
-    val settings_vm: org.astermail.android.settings.SettingsViewModel = hiltViewModel()
+    val settings_vm: org.astermail.android.settings.SettingsViewModel = org.astermail.android.settings.shared_settings_view_model()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
 
     val accounts_vm: org.astermail.android.accounts.AccountsViewModel = hiltViewModel()
@@ -1398,9 +1398,13 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
 
     val folder_nodes = org.astermail.android.folders.flatten_folder_tree(settings_state.labels)
 
+    val muted_folder_tokens = settings_state.preferences?.muted_folder_tokens.orEmpty()
+
     val api_folders = folder_nodes.map { node ->
         val label = node.label
         val readable_name = label.encrypted_name?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
+        val siblings = org.astermail.android.folders.folder_sibling_group(settings_state.labels, label.id)
+        val sibling_index = siblings.indexOfFirst { it.id == label.id }
         drawer_folder_item(
             id = label.label_token,
             label = readable_name ?: drawer_context.getString(R.string.folder_decrypt_failed),
@@ -1410,6 +1414,13 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
             trail = node.trail,
             has_next = node.has_next,
             has_children = node.has_children,
+            label_id = label.id,
+            color = label.encrypted_color?.takeIf { it.startsWith("#") },
+            password_set = label.password_set || label.is_password_protected,
+            muted = label.label_token in muted_folder_tokens,
+            can_move_up = sibling_index > 0,
+            can_move_down = sibling_index >= 0 && sibling_index < siblings.lastIndex,
+            can_have_children = node.depth < org.astermail.android.folders.max_folder_depth,
         )
     }
 
@@ -1684,6 +1695,16 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                     )
                 },
                 folder_parent_options = folder_parent_options,
+                folder_actions = org.astermail.android.ui.drawer.folder_menu_actions(
+                    on_rename = { item, name -> settings_vm.rename_folder(item.label_id, name) },
+                    on_recolor = { item, color -> settings_vm.recolor_folder(item.label_id, color) },
+                    on_move_to = { item, parent_token -> settings_vm.set_folder_parent(item.label_id, parent_token) },
+                    on_move_order = { item, direction -> settings_vm.move_folder(item.label_id, direction) },
+                    on_toggle_mute = { item -> settings_vm.toggle_folder_notifications(item.id) },
+                    on_set_lock = { item, password -> settings_vm.set_folder_lock(item.label_id, password) {} },
+                    on_remove_lock = { item, password -> settings_vm.remove_folder_lock(item.label_id, password) {} },
+                    on_delete = { item -> settings_vm.delete_label(item.label_id) },
+                ),
                 on_logout = {
                     settings_vm.logout { switched_account ->
                         accounts_vm.refresh()

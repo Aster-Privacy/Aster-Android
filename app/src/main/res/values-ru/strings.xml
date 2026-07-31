@@ -2447,4 +2447,16 @@
     <string name="advanced_has_words">Содержит слова</string>
     <string name="advanced_date_within">Диапазон даты</string>
     <string name="advanced_search_scope">Искать в</string>
+    <string name="create_subfolder">Создать подпапку</string>
+    <string name="rename_folder">Переименовать папку</string>
+    <string name="rename">Переименовать</string>
+    <string name="change_folder_color">Изменить цвет</string>
+    <string name="folder_color">Цвет папки</string>
+    <string name="move_folder_to">Переместить в</string>
+    <string name="lock_folder">Заблокировать папку</string>
+    <string name="remove_folder_lock">Снять блокировку</string>
+    <string name="lock_folder_message">Задайте пароль для \"%1$s\". Он потребуется для открытия этой папки.</string>
+    <string name="remove_folder_lock_message">Введите пароль от \"%1$s\", чтобы снять блокировку.</string>
+    <string name="failed_update_folder">Не удалось обновить папку</string>
+    <string name="folder_actions">Действия с папкой</string>
 </resources>

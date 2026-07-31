@@ -7,7 +7,6 @@ weight range 400-700.
 
 | File | Family | Copyright |
 |---|---|---|
-| font_space_grotesk.ttf | Space Grotesk | Copyright (c) 2020 Florian Karsten |
 | font_inter.ttf | Inter | Copyright (c) 2016 The Inter Project Authors |
 | font_roboto.ttf | Roboto | Copyright (c) 2011 Google Inc. |
 | font_nunito.ttf | Nunito | Copyright (c) 2014 The Nunito Project Authors |

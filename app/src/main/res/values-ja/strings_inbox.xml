@@ -6,4 +6,7 @@
     <string name="inbox_no_subject">(件名なし)</string>
     <string name="inbox_a11y_select_thread">スレッドを選択</string>
     <string name="inbox_a11y_deselect_thread">スレッドの選択を解除</string>
+    <string name="selection_scope_offer">%2$s の %1$d 件すべてを選択</string>
+    <string name="selection_scope_offer_categories">%2$s の %1$d 件すべてを選択（すべてのカテゴリを含む）</string>
+    <string name="selection_scope_confirmed">%2$s の %1$d 件すべてを選択中</string>
 </resources>

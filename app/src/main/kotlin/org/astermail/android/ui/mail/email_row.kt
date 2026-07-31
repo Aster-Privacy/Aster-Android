@@ -540,16 +540,25 @@ fun ThreadInboxRow(
                 )
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = subject_text,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = subject_color,
-                    fontSize = 15.sp,
-                    fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                Row(
                     modifier = Modifier.weight(1f),
-                )
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = subject_text,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = subject_color,
+                        fontSize = 15.sp,
+                        fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    email.received_on?.let {
+                        Spacer(Modifier.width(6.dp))
+                        alias_chip(it, modifier = Modifier.widthIn(max = 148.dp))
+                    }
+                }
                 if (!has_preview) trailing_controls()
             }
             val labels_inline = has_preview && thread.label_colors.size in 1..2
@@ -582,9 +591,7 @@ fun ThreadInboxRow(
                     trailing_controls()
                 }
             }
-            if ((thread.label_colors.isNotEmpty() && !labels_inline) ||
-                email.received_on != null
-            ) {
+            if (thread.label_colors.isNotEmpty() && !labels_inline) {
                 Spacer(Modifier.height(4.dp))
                 Row(
                     modifier = Modifier
@@ -592,18 +599,13 @@ fun ThreadInboxRow(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    email.received_on?.let {
-                        alias_chip(it, modifier = Modifier.weight(1f, fill = false))
-                    }
-                    if (!labels_inline) {
-                        thread.label_colors.indices.forEach { i ->
-                            label_chip(
-                                color = thread.label_colors[i],
-                                name = thread.label_names.getOrElse(i) { "" },
-                                icon = thread.label_icons.getOrElse(i) { "" },
-                                modifier = Modifier.weight(1f, fill = false),
-                            )
-                        }
+                    thread.label_colors.indices.forEach { i ->
+                        label_chip(
+                            color = thread.label_colors[i],
+                            name = thread.label_names.getOrElse(i) { "" },
+                            icon = thread.label_icons.getOrElse(i) { "" },
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
                     }
                 }
             }

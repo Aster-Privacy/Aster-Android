@@ -55,13 +55,6 @@ class SelectionToolbarTest {
         var show_overflow by remember { mutableStateOf(false) }
         select_mode_bottom_bar(
             selected_count = 2,
-            on_delete = { direct_calls.add("delete") },
-            on_restore = { direct_calls.add("restore") },
-            on_unarchive = { direct_calls.add("unarchive") },
-            on_unmark_spam = { direct_calls.add("unmark_spam") },
-            on_mark_spam = { direct_calls.add("mark_spam") },
-            on_delete_permanent = { direct_calls.add("delete_permanent") },
-            on_mark_read = { direct_calls.add("mark_read") },
             custom_actions = custom_actions,
             on_action = { dispatched.add(it) },
             on_more = { show_overflow = true },
@@ -175,13 +168,38 @@ class SelectionToolbarTest {
     }
 
     @Test
-    fun trash_folder_mark_read_uses_direct_callback() {
+    fun trash_folder_actions_route_through_the_selection_dispatcher() {
         set_harness(default_actions, folder = "trash")
 
         compose_rule.onNodeWithTag("mark_read").performClick()
+        compose_rule.onNodeWithTag("sel_action_restore").performClick()
+        compose_rule.onNodeWithTag("sel_action_delete_permanent").performClick()
         compose_rule.waitForIdle()
 
-        assertEquals(listOf("mark_read"), direct_calls)
-        assertTrue(dispatched.isEmpty())
+        assertEquals(listOf("read", "restore", "delete_permanent"), dispatched)
+        assertTrue(direct_calls.isEmpty())
+    }
+
+    @Test
+    fun spam_folder_actions_route_through_the_selection_dispatcher() {
+        set_harness(default_actions, folder = "spam")
+
+        compose_rule.onNodeWithTag("sel_action_not_spam").performClick()
+        compose_rule.onNodeWithTag("sel_action_trash").performClick()
+        compose_rule.waitForIdle()
+
+        assertEquals(listOf("not_spam", "trash"), dispatched)
+    }
+
+    @Test
+    fun archive_folder_actions_route_through_the_selection_dispatcher() {
+        set_harness(default_actions, folder = "archive")
+
+        compose_rule.onNodeWithTag("sel_action_unarchive").performClick()
+        compose_rule.onNodeWithTag("sel_action_spam").performClick()
+        compose_rule.onNodeWithTag("sel_action_trash").performClick()
+        compose_rule.waitForIdle()
+
+        assertEquals(listOf("unarchive", "spam", "trash"), dispatched)
     }
 }

@@ -72,6 +72,7 @@ import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.settings.shared_settings_view_model
 
 @Composable
 fun RecoveryKeyViewScreen(
@@ -80,7 +81,7 @@ fun RecoveryKeyViewScreen(
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
-    val vm: SettingsViewModel = hiltViewModel()
+    val vm: SettingsViewModel = shared_settings_view_model()
     val scope = rememberCoroutineScope()
     var password by remember { mutableStateOf("") }
     var unlocked by remember { mutableStateOf(false) }

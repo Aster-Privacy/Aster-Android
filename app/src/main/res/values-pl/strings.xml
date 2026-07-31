@@ -2447,4 +2447,16 @@
     <string name="advanced_has_words">Zawiera słowa</string>
     <string name="advanced_date_within">Zakres dat</string>
     <string name="advanced_search_scope">Szukaj w</string>
+    <string name="create_subfolder">Utwórz podfolder</string>
+    <string name="rename_folder">Zmień nazwę folderu</string>
+    <string name="rename">Zmień nazwę</string>
+    <string name="change_folder_color">Zmień kolor</string>
+    <string name="folder_color">Kolor folderu</string>
+    <string name="move_folder_to">Przenieś do</string>
+    <string name="lock_folder">Zablokuj folder</string>
+    <string name="remove_folder_lock">Usuń blokadę</string>
+    <string name="lock_folder_message">Ustaw hasło dla \"%1$s\". Będzie potrzebne do otwarcia tego folderu.</string>
+    <string name="remove_folder_lock_message">Wprowadź hasło do \"%1$s\", aby usunąć blokadę.</string>
+    <string name="failed_update_folder">Nie udało się zaktualizować folderu</string>
+    <string name="folder_actions">Akcje folderu</string>
 </resources>

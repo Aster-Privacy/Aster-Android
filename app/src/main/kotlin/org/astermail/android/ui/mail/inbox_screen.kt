@@ -121,8 +121,10 @@ import androidx.compose.ui.platform.LocalContext
 import coil.imageLoader
 import coil.request.ImageRequest
 import androidx.hilt.navigation.compose.hiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -143,6 +145,7 @@ import org.astermail.android.mail.MailViewModel
 import org.astermail.android.mail.normalize_swipe_action
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.ui.icons.all_mail_icon
+import org.astermail.android.settings.shared_settings_view_model
 
 enum class InboxSortMode { newest, oldest, unread_first, starred_first }
 
@@ -172,7 +175,7 @@ fun InboxScreen(
     val list_state = rememberLazyListState()
     val scope = rememberCoroutineScope()
     val mail_vm: MailViewModel = hiltViewModel()
-    val settings_vm: SettingsViewModel = hiltViewModel()
+    val settings_vm: SettingsViewModel = shared_settings_view_model()
     val inbox_state by mail_vm.inbox_state.collectAsStateWithLifecycle()
     val attachment_ids by mail_vm.inbox_attachment_ids.collectAsStateWithLifecycle()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
@@ -333,21 +336,37 @@ fun InboxScreen(
     val emails = remember { mutableStateListOf<Email>() }
     val previous_api_emails = remember { mutableMapOf<String, Email>() }
     LaunchedEffect(api_emails) {
-        val by_id = emails.associateBy { it.id }
-        val merged = api_emails.map { server ->
-            val local = by_id[server.id] ?: return@map server
-            val previous = previous_api_emails[server.id] ?: return@map server
-            server.copy(
-                is_read = if (previous.is_read == server.is_read) local.is_read else server.is_read,
-                is_starred = if (previous.is_starred == server.is_starred) local.is_starred else server.is_starred,
-                is_pinned = if (previous.is_pinned == server.is_pinned) local.is_pinned else server.is_pinned,
-            )
+        val current = emails.toList()
+        val merged = withContext(Dispatchers.Default) {
+            val by_id = current.associateBy { it.id }
+            api_emails.map { server ->
+                val local = by_id[server.id] ?: return@map server
+                val previous = previous_api_emails[server.id] ?: return@map server
+                server.copy(
+                    is_read = if (previous.is_read == server.is_read) local.is_read else server.is_read,
+                    is_starred = if (previous.is_starred == server.is_starred) local.is_starred else server.is_starred,
+                    is_pinned = if (previous.is_pinned == server.is_pinned) local.is_pinned else server.is_pinned,
+                )
+            }
         }
         previous_api_emails.clear()
         api_emails.forEach { previous_api_emails[it.id] = it }
         if (merged != emails.toList()) {
-            emails.clear()
-            emails.addAll(merged)
+            if (merged.size == emails.size) {
+                merged.forEachIndexed { index, item ->
+                    if (emails[index] != item) emails[index] = item
+                }
+            } else {
+                val shared = minOf(merged.size, emails.size)
+                for (index in 0 until shared) {
+                    if (emails[index] != merged[index]) emails[index] = merged[index]
+                }
+                if (merged.size > emails.size) {
+                    emails.addAll(merged.subList(shared, merged.size))
+                } else {
+                    while (emails.size > merged.size) emails.removeAt(emails.size - 1)
+                }
+            }
         }
     }
     val is_refreshing = inbox_state.is_refreshing
@@ -355,9 +374,8 @@ fun InboxScreen(
     var sort_mode by remember { mutableStateOf(InboxSortMode.newest) }
     var select_mode by remember { mutableStateOf(false) }
     var select_all_active by remember { mutableStateOf(false) }
-    var pending_select_all_action by remember { mutableStateOf<String?>(null) }
-    var select_all_load_done by remember { mutableStateOf(false) }
     var select_all_loading by remember { mutableStateOf(false) }
+    var scope_selection_confirmed by remember { mutableStateOf(false) }
     val selected_ids = remember { mutableStateListOf<String>() }
     var show_empty_trash_dialog by remember { mutableStateOf(false) }
     var show_selection_overflow by remember { mutableStateOf(false) }
@@ -539,9 +557,15 @@ fun InboxScreen(
     }
 
     val scope_selection = select_all_active &&
-        !categories_enabled &&
+        scope_selection_confirmed &&
         mail_vm.folder_supports_scope_selection(current_folder)
     val selection_count = scope_selection_count(scope_selection, folder_total, selected_ids.size)
+    val can_offer_scope_selection = select_mode &&
+        select_all_active &&
+        !scope_selection_confirmed &&
+        inbox_state.has_more &&
+        folder_total > selected_ids.size &&
+        mail_vm.folder_supports_scope_selection(current_folder)
 
     LaunchedEffect(list_state, current_folder) {
         snapshotFlow {
@@ -605,10 +629,21 @@ fun InboxScreen(
         select_mode = true
         selected_ids.clear()
         selected_ids.addAll(visible_threads.map { it.thread_id })
-        select_all_active = inbox_state.has_more
-        if (inbox_state.has_more) {
-            select_all_loading = true
-            mail_vm.load_all_remaining { select_all_loading = false }
+        select_all_active = true
+        select_all_loading = false
+        scope_selection_confirmed = false
+    }
+
+    fun toggle_select_all() {
+        val all_selected = visible_threads.isNotEmpty() && selected_ids.size >= visible_threads.size
+        if (select_all_active || all_selected) {
+            select_mode = false
+            select_all_active = false
+            select_all_loading = false
+            scope_selection_confirmed = false
+            selected_ids.clear()
+        } else {
+            select_all()
         }
     }
 
@@ -616,7 +651,7 @@ fun InboxScreen(
         select_mode = false
         select_all_active = false
         select_all_loading = false
-        pending_select_all_action = null
+        scope_selection_confirmed = false
         selected_ids.clear()
     }
 
@@ -624,6 +659,7 @@ fun InboxScreen(
 
     fun toggle_selection(id: String) {
         select_all_active = false
+        scope_selection_confirmed = false
         if (selected_ids.contains(id)) selected_ids.remove(id) else selected_ids.add(id)
         if (selected_ids.isEmpty()) select_mode = false
     }
@@ -669,6 +705,7 @@ fun InboxScreen(
             selected_ids.clear()
             selected_ids.addAll(target)
             select_all_active = false
+            scope_selection_confirmed = false
         }
     }
 
@@ -824,6 +861,9 @@ fun InboxScreen(
         "trash" -> "trash"
         "archive" -> "archive"
         "spam" -> "mark_spam"
+        "not_spam" -> "unmark_spam"
+        "restore" -> "restore_trash"
+        "unarchive" -> "unarchive"
         else -> null
     }
 
@@ -833,6 +873,10 @@ fun InboxScreen(
             "unread" -> mark_unread_selected()
             "trash" -> delete_selected()
             "archive" -> archive_selected()
+            "not_spam" -> unmark_spam_selected()
+            "restore" -> restore_selected()
+            "unarchive" -> unarchive_selected()
+            "delete_permanent" -> delete_permanent_selected()
             "folder" -> {
                 if (settings_state.labels.isEmpty()) settings_vm.load_labels()
                 show_bulk_folder_sheet = true
@@ -847,48 +891,16 @@ fun InboxScreen(
     fun run_selection_action(action_id: String) {
         val scope_action = scope_action_name(action_id)
         if (scope_selection && scope_action != null && mail_vm.action_supports_scope_selection(scope_action)) {
-            mail_vm.bulk_scope_action(current_folder, scope_action) {
-                select_mode = true
-                select_all_active = true
-                pending_select_all_action = action_id
-                select_all_load_done = false
-                mail_vm.load_all_remaining { select_all_load_done = true }
-            }
+            mail_vm.bulk_scope_action(current_folder, scope_action, null)
             exit_select_mode()
-            return
-        }
-        if (select_all_active && inbox_state.has_more) {
-            pending_select_all_action = action_id
-            select_all_load_done = false
-            mail_vm.load_all_remaining { select_all_load_done = true }
             return
         }
         apply_selection_action(action_id)
     }
 
     LaunchedEffect(current_folder) {
-        pending_select_all_action = null
         select_all_loading = false
-    }
-
-    LaunchedEffect(
-        pending_select_all_action,
-        select_all_load_done,
-        inbox_state.is_loading,
-        inbox_state.is_loading_more,
-        visible_order_ids,
-        selected_ids.size,
-        emails.size,
-    ) {
-        val action = pending_select_all_action ?: return@LaunchedEffect
-        val s = inbox_state
-        if (!select_all_load_done) return@LaunchedEffect
-        if (s.current_folder != current_folder) return@LaunchedEffect
-        if (s.is_loading || s.is_loading_more) return@LaunchedEffect
-        if (emails.size < s.items.size) return@LaunchedEffect
-        if (selected_ids.size < visible_threads.size) return@LaunchedEffect
-        pending_select_all_action = null
-        apply_selection_action(action)
+        scope_selection_confirmed = false
     }
 
     val density = LocalDensity.current
@@ -902,16 +914,19 @@ fun InboxScreen(
     val header_offset_px = remember { mutableFloatStateOf(0f) }
     var header_hidden by remember { mutableStateOf(false) }
     val header_height_dp = with(density) { header_height_px.toDp() }
-    val header_nested_scroll = remember(header_offset_px, list_state) {
+    val pull_state = androidx.compose.material3.pulltorefresh.rememberPullToRefreshState()
+    val header_nested_scroll = remember(header_offset_px, pull_state) {
         object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource,
+            ): Offset {
                 val limit = header_height_px.toFloat()
                 if (limit == 0f) return Offset.Zero
-                val can_collapse = list_state.canScrollForward ||
-                    list_state.canScrollBackward ||
-                    header_offset_px.floatValue != 0f
-                if (!can_collapse) return Offset.Zero
-                val next = (header_offset_px.floatValue + available.y).coerceIn(-limit, 0f)
+                if (pull_state.distanceFraction > 0f) return Offset.Zero
+                if (consumed.y == 0f) return Offset.Zero
+                val next = (header_offset_px.floatValue + consumed.y).coerceIn(-limit, 0f)
                 if (next != header_offset_px.floatValue) header_offset_px.floatValue = next
                 val hidden = if (header_hidden) next <= -limit * 0.15f else next <= -limit * 0.6f
                 if (hidden != header_hidden) header_hidden = hidden
@@ -944,7 +959,9 @@ fun InboxScreen(
     }
     LaunchedEffect(list_state) {
         snapshotFlow {
-            list_state.firstVisibleItemIndex == 0 && list_state.firstVisibleItemScrollOffset == 0
+            list_state.firstVisibleItemIndex == 0 &&
+                list_state.firstVisibleItemScrollOffset == 0 &&
+                header_offset_px.floatValue != 0f
         }.distinctUntilChanged().collect { at_top ->
             if (at_top) {
                 header_offset_px.floatValue = 0f
@@ -961,7 +978,6 @@ fun InboxScreen(
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
 
-            val pull_state = androidx.compose.material3.pulltorefresh.rememberPullToRefreshState()
             val at_list_top by remember(list_state) {
                 derivedStateOf { !list_state.canScrollBackward }
             }
@@ -1347,17 +1363,12 @@ fun InboxScreen(
                     select_mode_top_bar(
                         selected_count = selection_count,
                         on_close = ::exit_select_mode,
-                        on_select_all = ::select_all,
-                        on_archive = ::archive_selected,
-                        on_delete = ::delete_selected,
-                        on_restore = ::restore_selected,
-                        on_unarchive = ::unarchive_selected,
-                        on_unmark_spam = ::unmark_spam_selected,
-                        on_delete_permanent = ::delete_permanent_selected,
-                        on_mark_read = ::mark_read_selected,
+                        on_select_all = ::toggle_select_all,
                         show_divider = scrolled_elevation,
                         current_folder = current_folder,
                         counting = select_all_loading,
+                        all_selected = select_all_active ||
+                            (visible_threads.isNotEmpty() && selection_count >= visible_threads.size),
                     )
                 } else {
                     inbox_top_bar(
@@ -1388,6 +1399,14 @@ fun InboxScreen(
                     )
                 }
             }
+            scope_selection_banner(
+                offered = can_offer_scope_selection,
+                confirmed = scope_selection,
+                folder_total = folder_total,
+                folder_name = display_title ?: folder_display_name(current_folder),
+                crosses_categories = categories_enabled,
+                on_confirm = { scope_selection_confirmed = true },
+            )
           }
         }
 
@@ -1422,13 +1441,6 @@ fun InboxScreen(
         ) {
             select_mode_bottom_bar(
                 selected_count = selection_count,
-                on_delete = ::delete_selected,
-                on_restore = ::restore_selected,
-                on_unarchive = ::unarchive_selected,
-                on_unmark_spam = ::unmark_spam_selected,
-                on_mark_spam = ::mark_spam_selected,
-                on_delete_permanent = ::delete_permanent_selected,
-                on_mark_read = ::mark_read_selected,
                 custom_actions = selection_toolbar_slots,
                 on_action = ::run_selection_action,
                 on_more = { show_selection_overflow = true },
@@ -1860,16 +1872,10 @@ private fun select_mode_top_bar(
     selected_count: Int,
     on_close: () -> Unit,
     on_select_all: () -> Unit,
-    on_archive: () -> Unit,
-    on_delete: () -> Unit,
-    on_restore: () -> Unit,
-    on_unarchive: () -> Unit,
-    on_unmark_spam: () -> Unit,
-    on_delete_permanent: () -> Unit,
-    on_mark_read: () -> Unit,
     show_divider: Boolean,
     current_folder: String = "inbox",
     counting: Boolean = false,
+    all_selected: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
     val divider_alpha by animateFloatAsState(
@@ -1911,6 +1917,7 @@ private fun select_mode_top_bar(
             org.astermail.android.ui.common.select_all_button(
                 on_click = on_select_all,
                 modifier = Modifier.testTag("select_all"),
+                all_selected = all_selected,
             )
         }
         if (divider_alpha > 0f) {
@@ -1920,15 +1927,48 @@ private fun select_mode_top_bar(
 }
 
 @Composable
+internal fun scope_selection_banner(
+    offered: Boolean,
+    confirmed: Boolean,
+    folder_total: Int,
+    folder_name: String,
+    crosses_categories: Boolean,
+    on_confirm: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (!offered && !confirmed) return
+    val colors = AsterMaterial.colors
+    Column(modifier = modifier.fillMaxWidth().background(colors.bg_secondary)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(if (offered) Modifier.clickable(onClick = on_confirm) else Modifier)
+                .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm)
+                .testTag(if (confirmed) "scope_selection_confirmed" else "scope_selection_offer"),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Text(
+                text = when {
+                    confirmed -> stringResource(R.string.selection_scope_confirmed, folder_total, folder_name)
+                    crosses_categories -> stringResource(R.string.selection_scope_offer_categories, folder_total, folder_name)
+                    else -> stringResource(R.string.selection_scope_offer, folder_total, folder_name)
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = if (confirmed) colors.text_secondary else colors.accent_blue,
+                fontWeight = if (confirmed) FontWeight.Normal else FontWeight.SemiBold,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        AsterDivider(modifier = Modifier.fillMaxWidth())
+    }
+}
+
+@Composable
 internal fun select_mode_bottom_bar(
     selected_count: Int,
-    on_delete: () -> Unit,
-    on_restore: () -> Unit,
-    on_unarchive: () -> Unit,
-    on_unmark_spam: () -> Unit,
-    on_mark_spam: () -> Unit,
-    on_delete_permanent: () -> Unit,
-    on_mark_read: () -> Unit,
     custom_actions: List<String>,
     on_action: (String) -> Unit,
     on_more: () -> Unit,
@@ -1959,21 +1999,23 @@ internal fun select_mode_bottom_bar(
                             icon = TablerIcons.MailOpened,
                             label = stringResource(R.string.mark_read_action),
                             enabled = enabled,
-                            onClick = on_mark_read,
+                            onClick = { on_action("read") },
                             test_tag = "mark_read",
                         )
                         bottom_select_action(
                             icon = TablerIcons.Inbox,
                             label = stringResource(R.string.swipe_restore),
                             enabled = enabled,
-                            onClick = on_restore,
+                            onClick = { on_action("restore") },
+                            test_tag = "sel_action_restore",
                         )
                         bottom_select_action(
                             icon = TablerIcons.TrashOff,
                             label = stringResource(R.string.swipe_delete_forever),
                             enabled = enabled,
-                            onClick = on_delete_permanent,
+                            onClick = { on_action("delete_permanent") },
                             tint = colors.danger,
+                            test_tag = "sel_action_delete_permanent",
                         )
                     }
                     "archive" -> {
@@ -1981,27 +2023,30 @@ internal fun select_mode_bottom_bar(
                             icon = TablerIcons.MailOpened,
                             label = stringResource(R.string.mark_read_action),
                             enabled = enabled,
-                            onClick = on_mark_read,
+                            onClick = { on_action("read") },
                             test_tag = "mark_read",
                         )
                         bottom_select_action(
                             icon = TablerIcons.Inbox,
                             label = stringResource(R.string.swipe_restore),
                             enabled = enabled,
-                            onClick = on_unarchive,
+                            onClick = { on_action("unarchive") },
+                            test_tag = "sel_action_unarchive",
                         )
                         bottom_select_action(
                             icon = TablerIcons.Ban,
                             label = stringResource(R.string.report_spam),
                             enabled = enabled,
-                            onClick = on_mark_spam,
+                            onClick = { on_action("spam") },
+                            test_tag = "sel_action_spam",
                         )
                         bottom_select_action(
                             icon = TablerIcons.Trash,
                             label = stringResource(R.string.delete_action),
                             enabled = enabled,
-                            onClick = on_delete,
+                            onClick = { on_action("trash") },
                             tint = colors.danger,
+                            test_tag = "sel_action_trash",
                         )
                     }
                     "spam" -> {
@@ -2009,21 +2054,23 @@ internal fun select_mode_bottom_bar(
                             icon = TablerIcons.MailOpened,
                             label = stringResource(R.string.mark_read_action),
                             enabled = enabled,
-                            onClick = on_mark_read,
+                            onClick = { on_action("read") },
                             test_tag = "mark_read",
                         )
                         bottom_select_action(
                             icon = TablerIcons.Inbox,
                             label = stringResource(R.string.swipe_not_spam),
                             enabled = enabled,
-                            onClick = on_unmark_spam,
+                            onClick = { on_action("not_spam") },
+                            test_tag = "sel_action_not_spam",
                         )
                         bottom_select_action(
                             icon = TablerIcons.Trash,
                             label = stringResource(R.string.delete_action),
                             enabled = enabled,
-                            onClick = on_delete,
+                            onClick = { on_action("trash") },
                             tint = colors.danger,
+                            test_tag = "sel_action_trash",
                         )
                     }
                     else -> {

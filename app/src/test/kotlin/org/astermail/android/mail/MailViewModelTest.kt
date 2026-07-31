@@ -355,6 +355,153 @@ class MailViewModelTest {
     }
 
     @Test
+    fun `load_all_remaining loads every page of a ten thousand item custom folder`() = runTest {
+        val page_size = 50
+        val total = 10_000
+        fun mk(i: Int) = InboxItem(
+            id = "id_$i", thread_token = "t$i", thread_message_count = 1,
+            sender_name = "S$i", sender_email = "s$i@x.com",
+            subject = "Sub$i", preview = "P$i", timestamp = "2026-04-26T10:00:00Z",
+            is_read = false, is_starred = false, is_encrypted = true,
+            has_attachments = false, is_trashed = false, is_archived = false,
+            is_spam = false, labels = emptyList(), raw_item = mockk(relaxed = true),
+        )
+        fun page_at(offset: Int): InboxPage {
+            val items = (offset until minOf(offset + page_size, total)).map { mk(it) }
+            val next = offset + page_size
+            return InboxPage(
+                items = items,
+                has_more = next < total,
+                next_cursor = if (next < total) next.toString() else null,
+                total = total,
+            )
+        }
+
+        coEvery {
+            repository.fetch_inbox(
+                any(), any(), any(), label_token = eq("big_folder"), any(),
+                any(), any(), any(), any(), any(),
+            )
+        } answers {
+            val offset = arg<Int?>(5) ?: 0
+            Result.success(page_at(offset))
+        }
+
+        vm.load_inbox("label:big_folder", force = true)
+        advanceUntilIdle()
+        assertEquals(page_size, vm.inbox_state.value.items.size)
+
+        var done = false
+        vm.load_all_remaining { done = true }
+        advanceUntilIdle()
+
+        val state = vm.inbox_state.value
+        assertTrue(done)
+        assertEquals(total, state.items.size)
+        assertFalse(state.has_more)
+        assertNull(state.next_cursor)
+    }
+
+    @Test
+    fun `load_all_remaining loads past the old two hundred page ceiling`() = runTest {
+        val page_size = 50
+        val total = 25_000
+        fun mk(i: Int) = InboxItem(
+            id = "id_$i", thread_token = "t$i", thread_message_count = 1,
+            sender_name = "S$i", sender_email = "s$i@x.com",
+            subject = "Sub$i", preview = "P$i", timestamp = "2026-04-26T10:00:00Z",
+            is_read = false, is_starred = false, is_encrypted = true,
+            has_attachments = false, is_trashed = false, is_archived = false,
+            is_spam = false, labels = emptyList(), raw_item = mockk(relaxed = true),
+        )
+        fun page_at(offset: Int): InboxPage {
+            val items = (offset until minOf(offset + page_size, total)).map { mk(it) }
+            val next = offset + page_size
+            return InboxPage(
+                items = items,
+                has_more = next < total,
+                next_cursor = if (next < total) next.toString() else null,
+                total = total,
+            )
+        }
+
+        coEvery {
+            repository.fetch_inbox(
+                any(), any(), any(), label_token = eq("huge_folder"), any(),
+                any(), any(), any(), any(), any(),
+            )
+        } answers {
+            val offset = arg<Int?>(5) ?: 0
+            Result.success(page_at(offset))
+        }
+
+        vm.load_inbox("label:huge_folder", force = true)
+        advanceUntilIdle()
+
+        var done = false
+        vm.load_all_remaining { done = true }
+        advanceUntilIdle()
+
+        val state = vm.inbox_state.value
+        assertTrue(done)
+        assertEquals(total, state.items.size)
+        assertFalse(state.has_more)
+    }
+
+    @Test
+    fun `load_all_remaining retries a transient page failure instead of stopping`() = runTest {
+        val page_size = 50
+        val total = 300
+        var failures = 0
+        fun mk(i: Int) = InboxItem(
+            id = "id_$i", thread_token = "t$i", thread_message_count = 1,
+            sender_name = "S$i", sender_email = "s$i@x.com",
+            subject = "Sub$i", preview = "P$i", timestamp = "2026-04-26T10:00:00Z",
+            is_read = false, is_starred = false, is_encrypted = true,
+            has_attachments = false, is_trashed = false, is_archived = false,
+            is_spam = false, labels = emptyList(), raw_item = mockk(relaxed = true),
+        )
+        fun page_at(offset: Int): InboxPage {
+            val items = (offset until minOf(offset + page_size, total)).map { mk(it) }
+            val next = offset + page_size
+            return InboxPage(
+                items = items,
+                has_more = next < total,
+                next_cursor = if (next < total) next.toString() else null,
+                total = total,
+            )
+        }
+
+        coEvery {
+            repository.fetch_inbox(
+                any(), any(), any(), label_token = eq("flaky_folder"), any(),
+                any(), any(), any(), any(), any(),
+            )
+        } answers {
+            val offset = arg<Int?>(5) ?: 0
+            if (offset == 100 && failures < 2) {
+                failures++
+                Result.failure(RuntimeException("network"))
+            } else {
+                Result.success(page_at(offset))
+            }
+        }
+
+        vm.load_inbox("label:flaky_folder", force = true)
+        advanceUntilIdle()
+
+        var done = false
+        vm.load_all_remaining { done = true }
+        advanceUntilIdle()
+
+        val state = vm.inbox_state.value
+        assertTrue(done)
+        assertEquals(2, failures)
+        assertEquals(total, state.items.size)
+        assertFalse(state.has_more)
+    }
+
+    @Test
     fun `load_more does nothing when no more pages`() = runTest {
         val page = fake_inbox_page(2, has_more = false)
         coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)

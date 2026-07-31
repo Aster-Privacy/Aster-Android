@@ -6,4 +6,7 @@
     <string name="inbox_no_subject">(제목 없음)</string>
     <string name="inbox_a11y_select_thread">대화 선택</string>
     <string name="inbox_a11y_deselect_thread">대화 선택 해제</string>
+    <string name="selection_scope_offer">%2$s의 %1$d개 모두 선택</string>
+    <string name="selection_scope_offer_categories">%2$s의 %1$d개 모두 선택 (모든 카테고리 포함)</string>
+    <string name="selection_scope_confirmed">%2$s의 %1$d개가 모두 선택됨</string>
 </resources>

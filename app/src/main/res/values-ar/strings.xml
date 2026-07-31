@@ -2461,4 +2461,16 @@
     <string name="advanced_has_words">يحتوي على الكلمات</string>
     <string name="advanced_date_within">نطاق التاريخ</string>
     <string name="advanced_search_scope">البحث في</string>
+    <string name="create_subfolder">إنشاء مجلد فرعي</string>
+    <string name="rename_folder">إعادة تسمية المجلد</string>
+    <string name="rename">إعادة تسمية</string>
+    <string name="change_folder_color">تغيير اللون</string>
+    <string name="folder_color">لون المجلد</string>
+    <string name="move_folder_to">نقل إلى</string>
+    <string name="lock_folder">قفل المجلد</string>
+    <string name="remove_folder_lock">إزالة القفل</string>
+    <string name="lock_folder_message">عيّن كلمة مرور لـ \"%1$s\". ستحتاج إليها لفتح هذا المجلد.</string>
+    <string name="remove_folder_lock_message">أدخل كلمة مرور \"%1$s\" لإزالة القفل.</string>
+    <string name="failed_update_folder">تعذّر تحديث المجلد</string>
+    <string name="folder_actions">إجراءات المجلد</string>
 </resources>
