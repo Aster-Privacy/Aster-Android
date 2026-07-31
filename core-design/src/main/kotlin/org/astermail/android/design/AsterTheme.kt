@@ -174,14 +174,10 @@ fun AsterTheme(
         built
     }
 
-    val downloadable_fonts = remember(context) { downloadable_fonts_available(context) }
-    val chosen_font = remember(font_choice, downloadable_fonts) {
-        font_family_for(font_choice, downloadable_fonts)
-    }
-    val fallback_font = if (downloadable_fonts) inter_family else FontFamily.Default
-    val active_font = dyslexia_font ?: chosen_font ?: fallback_font
-    val typography = remember(active_font, text_spacing, dyslexia_font, chosen_font, downloadable_fonts) {
-        if (dyslexia_font != null || chosen_font != null || text_spacing || !downloadable_fonts) {
+    val chosen_font = remember(font_choice) { font_family_for(font_choice) }
+    val active_font = dyslexia_font ?: chosen_font ?: aster_default_family
+    val typography = remember(active_font, text_spacing, dyslexia_font, chosen_font) {
+        if (dyslexia_font != null || chosen_font != null || text_spacing) {
             build_typography(active_font, text_spacing)
         } else {
             aster_typography

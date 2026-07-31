@@ -19,76 +19,123 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 //
 
-@file:OptIn(ExperimentalTextApi::class)
-
 package org.astermail.android.design
 
-import android.content.Context
-import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.annotation.FontRes
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.googlefonts.Font
-import androidx.compose.ui.text.googlefonts.GoogleFont
-import androidx.compose.ui.text.googlefonts.isAvailableOnDevice
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontVariation
+import androidx.compose.ui.text.font.FontWeight
 
-data class FontOption(val id: String, val label: String, val google_font_name: String?)
+data class FontOption(val id: String, val label: String)
 
 const val DEFAULT_FONT_ID = "default"
 
-internal val google_font_provider = GoogleFont.Provider(
-    providerAuthority = "com.google.android.gms.fonts",
-    providerPackage = "com.google.android.gms",
-    certificates = R.array.com_google_android_gms_fonts_certs,
+private val ui_weights = listOf(
+    FontWeight.Normal,
+    FontWeight.Medium,
+    FontWeight.SemiBold,
+    FontWeight.Bold,
+)
+
+@OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
+private fun variable_family(@FontRes resource: Int): FontFamily = FontFamily(
+    ui_weights.map { weight ->
+        Font(
+            resId = resource,
+            weight = weight,
+            style = FontStyle.Normal,
+            variationSettings = FontVariation.Settings(weight, FontStyle.Normal),
+        )
+    },
+)
+
+private fun static_family(
+    @FontRes regular: Int,
+    @FontRes medium: Int,
+    @FontRes semibold: Int,
+    @FontRes bold: Int,
+): FontFamily = FontFamily(
+    Font(regular, FontWeight.Normal),
+    Font(medium, FontWeight.Medium),
+    Font(semibold, FontWeight.SemiBold),
+    Font(bold, FontWeight.Bold),
+)
+
+private fun static_family(@FontRes regular: Int, @FontRes bold: Int): FontFamily = FontFamily(
+    Font(regular, FontWeight.Normal),
+    Font(bold, FontWeight.Medium),
+    Font(bold, FontWeight.SemiBold),
+    Font(bold, FontWeight.Bold),
+)
+
+val aster_default_family: FontFamily by lazy { variable_family(R.font.font_space_grotesk) }
+
+private val local_families: Map<String, Lazy<FontFamily>> = mapOf(
+    "inter" to lazy { variable_family(R.font.font_inter) },
+    "roboto" to lazy { variable_family(R.font.font_roboto) },
+    "nunito" to lazy { variable_family(R.font.font_nunito) },
+    "merriweather" to lazy { variable_family(R.font.font_merriweather) },
+    "lora" to lazy { variable_family(R.font.font_lora) },
+    "jetbrains_mono" to lazy { variable_family(R.font.font_jetbrains_mono) },
+    "montserrat" to lazy { variable_family(R.font.font_montserrat) },
+    "work_sans" to lazy { variable_family(R.font.font_work_sans) },
+    "ibm_plex_sans" to lazy { variable_family(R.font.font_ibm_plex_sans) },
+    "playfair_display" to lazy { variable_family(R.font.font_playfair_display) },
+    "libre_baskerville" to lazy { variable_family(R.font.font_libre_baskerville) },
+    "raleway" to lazy { variable_family(R.font.font_raleway) },
+    "poppins" to lazy {
+        static_family(
+            R.font.font_poppins_regular,
+            R.font.font_poppins_medium,
+            R.font.font_poppins_semibold,
+            R.font.font_poppins_bold,
+        )
+    },
+    "ibm_plex_mono" to lazy {
+        static_family(
+            R.font.font_ibm_plex_mono_regular,
+            R.font.font_ibm_plex_mono_medium,
+            R.font.font_ibm_plex_mono_semibold,
+            R.font.font_ibm_plex_mono_bold,
+        )
+    },
+    "space_mono" to lazy { static_family(R.font.font_space_mono_regular, R.font.font_space_mono_bold) },
+    "pt_serif" to lazy { static_family(R.font.font_pt_serif_regular, R.font.font_pt_serif_bold) },
 )
 
 val FONT_OPTIONS = listOf(
-    FontOption("default", "Aster Default", null),
-    FontOption("system", "System UI", null),
-    FontOption("inter", "Inter", "Inter"),
-    FontOption("roboto", "Roboto", "Roboto"),
-    FontOption("nunito", "Nunito", "Nunito"),
-    FontOption("merriweather", "Merriweather", "Merriweather"),
-    FontOption("lora", "Lora", "Lora"),
-    FontOption("jetbrains_mono", "JetBrains Mono", "JetBrains Mono"),
-    FontOption("poppins", "Poppins", "Poppins"),
-    FontOption("montserrat", "Montserrat", "Montserrat"),
-    FontOption("work_sans", "Work Sans", "Work Sans"),
-    FontOption("ibm_plex_sans", "IBM Plex Sans", "IBM Plex Sans"),
-    FontOption("ibm_plex_mono", "IBM Plex Mono", "IBM Plex Mono"),
-    FontOption("space_mono", "Space Mono", "Space Mono"),
-    FontOption("playfair_display", "Playfair Display", "Playfair Display"),
-    FontOption("libre_baskerville", "Libre Baskerville", "Libre Baskerville"),
-    FontOption("pt_serif", "PT Serif", "PT Serif"),
-    FontOption("raleway", "Raleway", "Raleway"),
+    FontOption("default", "Aster Default"),
+    FontOption("system", "System UI"),
+    FontOption("inter", "Inter"),
+    FontOption("roboto", "Roboto"),
+    FontOption("nunito", "Nunito"),
+    FontOption("merriweather", "Merriweather"),
+    FontOption("lora", "Lora"),
+    FontOption("system_mono", "System Mono"),
+    FontOption("jetbrains_mono", "JetBrains Mono"),
+    FontOption("poppins", "Poppins"),
+    FontOption("montserrat", "Montserrat"),
+    FontOption("work_sans", "Work Sans"),
+    FontOption("ibm_plex_sans", "IBM Plex Sans"),
+    FontOption("ibm_plex_mono", "IBM Plex Mono"),
+    FontOption("space_mono", "Space Mono"),
+    FontOption("playfair_display", "Playfair Display"),
+    FontOption("libre_baskerville", "Libre Baskerville"),
+    FontOption("pt_serif", "PT Serif"),
+    FontOption("raleway", "Raleway"),
 )
 
 private val FONT_OPTIONS_BY_ID = FONT_OPTIONS.associateBy { it.id }
 
 fun is_valid_font_id(id: String): Boolean = FONT_OPTIONS_BY_ID.containsKey(id)
 
-@Volatile
-private var downloadable_fonts_supported: Boolean? = null
-
-fun downloadable_fonts_available(context: Context): Boolean {
-    downloadable_fonts_supported?.let { return it }
-    val supported = runCatching {
-        google_font_provider.isAvailableOnDevice(context.applicationContext)
-    }.getOrDefault(false)
-    downloadable_fonts_supported = supported
-    return supported
+fun font_family_for(id: String?): FontFamily? = when (val resolved = id ?: DEFAULT_FONT_ID) {
+    "default" -> null
+    "system" -> FontFamily.Default
+    "system_mono" -> FontFamily.Monospace
+    else -> local_families[resolved]?.value
 }
 
-fun font_family_for(id: String?, downloadable_allowed: Boolean = true): FontFamily? {
-    val option = FONT_OPTIONS_BY_ID[id ?: DEFAULT_FONT_ID] ?: return null
-    return when {
-        option.id == "default" -> null
-        option.id == "system" -> FontFamily.Default
-        option.google_font_name != null -> {
-            if (!downloadable_allowed) {
-                FontFamily.Default
-            } else {
-                FontFamily(Font(GoogleFont(option.google_font_name), google_font_provider))
-            }
-        }
-        else -> null
-    }
-}
+fun preview_font_family_for(id: String): FontFamily = font_family_for(id) ?: aster_default_family
