@@ -101,8 +101,8 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
     } else {
         MailPollingWorker.message_notification_id(System.currentTimeMillis().toInt())
     }
-    if (item_id.isNotBlank()) {
-        MailPollingWorker.mark_item_notified(context, item_id)
+    if (!MailPollingWorker.claim_item_notification(context, item_id)) {
+        return PushResult.Ignore
     }
     MailPollingWorker.show_message(
         context = context,
