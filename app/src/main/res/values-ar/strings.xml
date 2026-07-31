@@ -507,6 +507,7 @@
     <string name="theme_light_subtitle">السمة الفاتحة دائماً</string>
     <string name="theme_dark">داكن</string>
     <string name="theme_dark_subtitle">السمة الداكنة دائماً</string>
+    <string name="theme_aster_blue_subtitle">أزرق Aster المميز</string>
     <string name="color_theme">سمة الألوان</string>
     <string name="color_theme_default">Aster Default</string>
     <string name="color_theme_custom">سمة مخصصة</string>

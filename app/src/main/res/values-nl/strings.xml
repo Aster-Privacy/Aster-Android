@@ -507,6 +507,7 @@
     <string name="theme_light_subtitle">Altijd licht thema</string>
     <string name="theme_dark">Donker</string>
     <string name="theme_dark_subtitle">Altijd donker thema</string>
+    <string name="theme_aster_blue_subtitle">Het kenmerkende blauw van Aster</string>
     <string name="color_theme">Kleurthema</string>
     <string name="color_theme_default">Aster Default</string>
     <string name="color_theme_custom">Aangepast thema</string>

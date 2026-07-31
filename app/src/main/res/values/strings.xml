@@ -844,6 +844,7 @@
     <string name="theme_light_subtitle">Always light theme</string>
     <string name="theme_dark">Dark</string>
     <string name="theme_dark_subtitle">Always dark theme</string>
+    <string name="theme_aster_blue_subtitle">Aster\'s signature blue</string>
     <string name="theme_dynamic">Wallpaper colors</string>
     <string name="theme_dynamic_subtitle">Match your device colors</string>
     <string name="color_theme">Color theme</string>

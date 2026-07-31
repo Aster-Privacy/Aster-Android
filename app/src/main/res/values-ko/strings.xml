@@ -507,6 +507,7 @@
     <string name="theme_light_subtitle">항상 라이트 테마</string>
     <string name="theme_dark">다크</string>
     <string name="theme_dark_subtitle">항상 다크 테마</string>
+    <string name="theme_aster_blue_subtitle">Aster 시그니처 블루</string>
     <string name="color_theme">색상 테마</string>
     <string name="color_theme_default">Aster Default</string>
     <string name="color_theme_custom">사용자 지정 테마</string>

@@ -507,6 +507,7 @@
     <string name="theme_light_subtitle">Her zaman açık tema</string>
     <string name="theme_dark">Koyu</string>
     <string name="theme_dark_subtitle">Her zaman koyu tema</string>
+    <string name="theme_aster_blue_subtitle">Aster\'in imza mavisi</string>
     <string name="color_theme">Renk teması</string>
     <string name="color_theme_default">Aster Default</string>
     <string name="color_theme_custom">Özel tema</string>

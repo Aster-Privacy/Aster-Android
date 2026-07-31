@@ -507,6 +507,7 @@
     <string name="theme_light_subtitle">Sempre tema claro</string>
     <string name="theme_dark">Escuro</string>
     <string name="theme_dark_subtitle">Sempre tema escuro</string>
+    <string name="theme_aster_blue_subtitle">O azul característico da Aster</string>
     <string name="color_theme">Tema de cor</string>
     <string name="color_theme_default">Aster Default</string>
     <string name="color_theme_custom">Tema personalizado</string>

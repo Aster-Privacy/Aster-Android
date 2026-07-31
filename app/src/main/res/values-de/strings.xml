@@ -508,6 +508,7 @@
     <string name="theme_light_subtitle">Immer helles Design</string>
     <string name="theme_dark">Dunkel</string>
     <string name="theme_dark_subtitle">Immer dunkles Design</string>
+    <string name="theme_aster_blue_subtitle">Asters charakteristisches Blau</string>
     <string name="color_theme">Farbthema</string>
     <string name="color_theme_default">Aster Default</string>
     <string name="color_theme_custom">Eigenes Design</string>

@@ -39,6 +39,8 @@ internal val settings_search_index: List<settings_index_entry> = listOf(
     settings_index_entry("appearance", R.string.settings_appearance, R.string.theme_light_subtitle, false),
     settings_index_entry("appearance", R.string.settings_appearance, R.string.theme_dark, false),
     settings_index_entry("appearance", R.string.settings_appearance, R.string.theme_dark_subtitle, false),
+    settings_index_entry("appearance", R.string.settings_appearance, R.string.color_theme_aster_blue, false),
+    settings_index_entry("appearance", R.string.settings_appearance, R.string.theme_aster_blue_subtitle, false),
     settings_index_entry("appearance", R.string.settings_appearance, R.string.theme_dynamic, false),
     settings_index_entry("appearance", R.string.settings_appearance, R.string.theme_dynamic_subtitle, false),
     settings_index_entry("appearance", R.string.settings_appearance, R.string.color_theme, false),
