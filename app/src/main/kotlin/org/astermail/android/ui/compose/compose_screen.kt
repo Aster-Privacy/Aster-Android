@@ -284,6 +284,25 @@ fun ComposeScreen(
         map.toMap()
     }
 
+    val alias_display_name_map = remember(settings_state.aliases) {
+        val map = mutableMapOf<String, String>()
+        settings_state.aliases.forEach { alias ->
+            val name = alias.encrypted_display_name?.trim().orEmpty()
+            if (alias.address.isNotBlank() && name.isNotBlank()) {
+                map[alias.address] = name
+            }
+        }
+        map.toMap()
+    }
+
+    val resolve_sender_display_name: (String) -> String? = { from ->
+        if (from == user_email) {
+            settings_state.user?.display_name?.trim()?.takeIf { it.isNotBlank() }
+        } else {
+            alias_display_name_map[from]
+        }
+    }
+
     val primary_sender_email = remember(
         settings_state.default_sender_id,
         user_email,
@@ -1093,7 +1112,7 @@ fun ComposeScreen(
             return
         }
         scope.launch {
-            val display_name = settings_state.user?.display_name
+            val display_name = resolve_sender_display_name(snapshot_from)
             val resolved_thread_token = if (!reply_to.isNullOrBlank() && (mode == "reply" || mode == "reply_all")) {
                 mail_vm.get_or_create_thread_token(reply_to, thread_state.item?.thread_token)
             } else {
@@ -1189,7 +1208,7 @@ fun ComposeScreen(
                     subject = snap_subject,
                     body_html = body_html,
                     sender_email = snap_from,
-                    sender_display_name = settings_state.user?.display_name,
+                    sender_display_name = resolve_sender_display_name(snap_from),
                     scheduled_at = scheduled_at,
                     sender_alias_hash = if (snap_from != user_email) alias_hash_map[snap_from]?.takeIf { it.isNotBlank() } else null,
                 )
@@ -1221,7 +1240,7 @@ fun ComposeScreen(
                     subject = snap_subject,
                     body_html = body_html,
                     sender_email = snap_from,
-                    sender_display_name = settings_state.user?.display_name,
+                    sender_display_name = resolve_sender_display_name(snap_from),
                     thread_token = resolved_thread_token,
                     expires_at = expires_at_iso,
                     expiry_password = expiry_password,
