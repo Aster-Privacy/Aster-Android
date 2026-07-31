@@ -323,6 +323,7 @@ internal fun proxy_external_urls(html: String, proxy_base: String): String {
             .trim()
         val absolute = if (url.startsWith("//")) "https:$url" else url
         if (absolute.startsWith(proxy_base)) return absolute
+        if (absolute.startsWith(INLINE_IMAGE_URL_PREFIX)) return absolute
         return proxy_base + java.net.URLEncoder.encode(absolute, "UTF-8")
     }
     val unquoted_replaced = PROXY_UNQUOTED_SRC_PATTERN.replace(html) { match ->
@@ -355,8 +356,8 @@ internal fun proxy_external_urls(html: String, proxy_base: String): String {
     }
 }
 
-private const val INLINE_IMAGE_MAX_BYTES = 4 * 1024 * 1024
-private const val INLINE_IMAGE_TOTAL_BUDGET_BYTES = 12 * 1024 * 1024
+private const val INLINE_IMAGE_MAX_BYTES = 16 * 1024 * 1024
+private const val INLINE_IMAGE_TOTAL_BUDGET_BYTES = 32 * 1024 * 1024
 private const val TRANSPARENT_PIXEL_DATA_URI =
     "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
 
@@ -370,7 +371,7 @@ internal fun resolve_inline_cids(html: String, inline_images: Map<String, String
         "${match.groupValues[1]}$resolved${match.groupValues[3]}"
     }
 
-internal fun inline_image_data_uris(
+internal fun inline_image_sources(
     body_html: String,
     attachments: List<MessageAttachment>,
 ): Map<String, String> {
@@ -394,8 +395,9 @@ internal fun inline_image_data_uris(
         }.getOrNull() ?: continue
         if (bytes.isEmpty() || bytes.size > INLINE_IMAGE_MAX_BYTES || bytes.size > budget) continue
         budget -= bytes.size
-        val encoded = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
-        resolved[cid] = "data:${att.content_type};base64,$encoded"
+        val key = InlineImageStore.content_key(cid, bytes)
+        InlineImageStore.put(key, att.content_type, bytes)
+        resolved[cid] = InlineImageStore.url_for(key)
     }
     return resolved
 }
@@ -1742,7 +1744,7 @@ fun MailDetailScreen(
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
-private fun expanded_message(
+internal fun expanded_message(
     msg: ThreadMessage,
     is_last: Boolean,
     message_index: Int = 0,
@@ -1777,6 +1779,7 @@ private fun expanded_message(
     on_react: (String) -> Unit = {},
     is_system: Boolean = false,
     can_collapse: Boolean = true,
+    show_header_reply: Boolean = true,
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
@@ -1912,19 +1915,21 @@ private fun expanded_message(
                     maxLines = 1,
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .clickable(onClick = on_reply),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = TablerIcons.ArrowBackUp,
-                            contentDescription = stringResource(R.string.reply),
-                            tint = colors.text_secondary,
-                            modifier = Modifier.size(22.dp),
-                        )
+                    if (show_header_reply) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .clickable(onClick = on_reply),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = TablerIcons.ArrowBackUp,
+                                contentDescription = stringResource(R.string.reply),
+                                tint = colors.text_secondary,
+                                modifier = Modifier.size(22.dp),
+                            )
+                        }
                     }
                     Box(
                         modifier = Modifier
@@ -2111,7 +2116,7 @@ private fun expanded_message(
             thread_attachments,
         ) {
             value = withContext(kotlinx.coroutines.Dispatchers.Default) {
-                inline_image_data_uris(
+                inline_image_sources(
                     msg.body_html.orEmpty(),
                     msg.attachments + thread_attachments,
                 )
@@ -2562,7 +2567,7 @@ private val REPLY_ACTION_LABEL_MAX = 14.sp
 private val REPLY_ACTION_LABEL_MIN = 9.sp
 
 @Composable
-private fun reply_action_button(
+internal fun reply_action_button(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     bg: androidx.compose.ui.graphics.Color,
@@ -3987,6 +3992,7 @@ internal const val EMAIL_USER_FONT_PREFIX = "/__aster_email_font/"
 private fun is_zoomable_image_src(src: String): Boolean {
     if (src.isBlank() || src.length > 8192) return false
     if (src.startsWith("data:image/", ignoreCase = true)) return true
+    if (src.startsWith(INLINE_IMAGE_URL_PREFIX)) return true
     return try {
         val parsed = android.net.Uri.parse(src)
         parsed.scheme.equals("https", ignoreCase = true) && parsed.host == "app.astermail.org"
@@ -4545,6 +4551,18 @@ internal fun email_html_view(
                 val req_uri = request?.url ?: return null
                 val url = req_uri.toString()
                 if (req_uri.host == org.astermail.android.translation.TranslationAssets.CONTENT_HOST) {
+                    val inline_key = InlineImageStore.key_for_path(req_uri.path)
+                    if (inline_key != null) {
+                        val inline_entry = InlineImageStore.get(inline_key) ?: return null
+                        return android.webkit.WebResourceResponse(
+                            inline_entry.content_type,
+                            null,
+                            200,
+                            "OK",
+                            mapOf("Cache-Control" to "no-store", "Access-Control-Allow-Origin" to "*"),
+                            java.io.ByteArrayInputStream(inline_entry.bytes),
+                        )
+                    }
                     val user_font_path = req_uri.path
                     if (user_font_path != null && user_font_path.startsWith(EMAIL_USER_FONT_PREFIX)) {
                         val user_font_ctx = view?.context
@@ -5577,7 +5595,7 @@ private fun detail_menu_divider() {
 }
 
 @Composable
-private fun encryption_info_body(is_encrypted: Boolean) {
+internal fun encryption_info_body(is_encrypted: Boolean) {
     val colors = AsterMaterial.colors
     Text(
         text = if (is_encrypted)
