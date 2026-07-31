@@ -88,6 +88,9 @@ interface DecryptedMailDao {
     @Query("SELECT id FROM decrypted_mail_cache WHERE has_attachments = 0")
     suspend fun ids_without_attachments(): List<String>
 
+    @Query("SELECT id FROM decrypted_mail_cache WHERE has_attachments = 1")
+    suspend fun ids_with_attachments(): List<String>
+
     @Query("DELETE FROM decrypted_mail_cache WHERE id IN (:ids)")
     suspend fun remove_items(ids: List<String>)
 }

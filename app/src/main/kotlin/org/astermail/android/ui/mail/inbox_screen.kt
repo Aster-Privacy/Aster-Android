@@ -174,7 +174,7 @@ fun InboxScreen(
     val mail_vm: MailViewModel = hiltViewModel()
     val settings_vm: SettingsViewModel = hiltViewModel()
     val inbox_state by mail_vm.inbox_state.collectAsStateWithLifecycle()
-    val attachment_chips by mail_vm.inbox_attachment_chips.collectAsStateWithLifecycle()
+    val attachment_ids by mail_vm.inbox_attachment_ids.collectAsStateWithLifecycle()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
     val haptic_enabled = settings_state.preferences?.haptic_enabled ?: true
     val context_for_prefs = LocalContext.current
@@ -313,16 +313,21 @@ fun InboxScreen(
     }
 
     val attachment_ids_key = remember(inbox_state.items) {
-        inbox_state.items.filter { it.has_attachments }.map { it.id }
+        inbox_state.items.filterNot { it.has_attachments }.map { it.id }
     }
     LaunchedEffect(attachment_ids_key) {
         if (attachment_ids_key.isNotEmpty()) {
-            mail_vm.load_inbox_attachment_chips(attachment_ids_key)
+            mail_vm.resolve_inbox_attachment_flags(attachment_ids_key)
         }
     }
 
-    val api_emails = remember(inbox_state.items, settings_state.tags) {
-        inbox_state.items.map { inbox_item_to_email(it, settings_state.tags) }
+    val api_emails = remember(inbox_state.items, settings_state.tags, attachment_ids) {
+        inbox_state.items.map {
+            inbox_item_to_email(
+                if (!it.has_attachments && it.id in attachment_ids) it.copy(has_attachments = true) else it,
+                settings_state.tags,
+            )
+        }
     }
     val emails = remember { mutableStateListOf<Email>() }
     val previous_api_emails = remember { mutableMapOf<String, Email>() }
@@ -1189,7 +1194,6 @@ fun InboxScreen(
                                             }
                                         },
                                         is_selected = is_selected,
-                                        attachment_chips = attachment_chips[thread.newest.id].orEmpty(),
                                         haptic_enabled = haptic_enabled,
                                         is_first = row_index == 0,
                                         is_last = row_index == visible_threads.lastIndex,
@@ -1218,7 +1222,6 @@ fun InboxScreen(
                                             mail_vm.toggle_star(thread.newest.id)
                                         }
                                     },
-                                    attachment_chips = attachment_chips[thread.newest.id].orEmpty(),
                                     swipe_start_action = swipe_config.start_action,
                                     swipe_end_action = swipe_config.end_action,
                                     swipe_start_label = swipe_config.start_label,
@@ -2192,7 +2195,6 @@ private fun swipeable_thread_row(
     swipe_start_color: Color = AsterMaterial.colors.accent_blue,
     swipe_end_color: Color = AsterMaterial.colors.danger,
     modifier: Modifier = Modifier,
-    attachment_chips: List<MailViewModel.InboxAttachmentChip> = emptyList(),
     haptic_enabled: Boolean = true,
     is_first: Boolean = true,
     is_last: Boolean = true,
@@ -2305,7 +2307,6 @@ private fun swipeable_thread_row(
                     on_long_click = on_long_click,
                     on_toggle_star = on_toggle_star,
                     is_pinned = is_pinned,
-                    attachment_chips = attachment_chips,
                     haptic_enabled = haptic_enabled,
                     is_first = is_first,
                     is_last = is_last,
