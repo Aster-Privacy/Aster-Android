@@ -311,7 +311,7 @@
     <string name="subject">제목</string>
     <string name="compose_email">이메일 작성</string>
     <string name="secured_by">보안 제공:</string>
-    <string name="sending_in_countdown">%d초 후 전송...</string>
+    <string name="sending_in_countdown">%d초 후 전송</string>
     <string name="view_message">메시지 보기</string>
     <string name="undo">실행 취소</string>
     <string name="discard_draft">임시 보관함을 삭제하시겠습니까?</string>

@@ -311,7 +311,7 @@
     <string name="subject">Temat</string>
     <string name="compose_email">Napisz e-mail</string>
     <string name="secured_by">Zabezpieczone przez</string>
-    <string name="sending_in_countdown">Wysyłanie za %d...</string>
+    <string name="sending_in_countdown">Wysyłanie za %d s</string>
     <string name="view_message">Zobacz wiadomość</string>
     <string name="undo">Cofnij</string>
     <string name="discard_draft">Odrzucić szkic?</string>

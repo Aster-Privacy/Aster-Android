@@ -311,7 +311,7 @@
     <string name="subject">Тема</string>
     <string name="compose_email">Написать письмо</string>
     <string name="secured_by">Защищено</string>
-    <string name="sending_in_countdown">Отправка через %d...</string>
+    <string name="sending_in_countdown">Отправка через %d с</string>
     <string name="view_message">Показать сообщение</string>
     <string name="undo">Отменить</string>
     <string name="discard_draft">Удалить черновик?</string>

@@ -16,6 +16,9 @@
 
 package org.astermail.android.ui.mail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Mail
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -61,6 +64,7 @@ fun undo_send_toast(on_view: () -> Unit, undo_vm: UndoSendViewModel = hiltViewMo
                     undo_label = context.getString(R.string.undo),
                     on_undo = { p.undo() },
                     secondary_label = context.getString(R.string.view_message),
+                    secondary_icon = TablerIcons.Mail,
                     on_secondary = on_view,
                     on_tap = on_view,
                     show_close = true,

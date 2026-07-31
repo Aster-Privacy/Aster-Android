@@ -548,7 +548,7 @@
     <string name="subject">Subject</string>
     <string name="compose_email">Compose email</string>
     <string name="secured_by">Secured by</string>
-    <string name="sending_in_countdown">Sending in %d...</string>
+    <string name="sending_in_countdown">Sending in %ds</string>
     <string name="to_recipients_inline">to %1$s</string>
     <string name="cc_recipients_inline">cc %1$s</string>
     <string name="bcc_recipients_inline">bcc %1$s</string>

@@ -311,7 +311,7 @@
     <string name="subject">件名</string>
     <string name="compose_email">メールを作成</string>
     <string name="secured_by">セキュリティ提供元:</string>
-    <string name="sending_in_countdown">%d秒後に送信...</string>
+    <string name="sending_in_countdown">%d秒後に送信</string>
     <string name="view_message">メッセージを表示</string>
     <string name="undo">元に戻す</string>
     <string name="discard_draft">下書きを破棄しますか？</string>

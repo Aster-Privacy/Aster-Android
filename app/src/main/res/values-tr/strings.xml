@@ -311,7 +311,7 @@
     <string name="subject">Konu</string>
     <string name="compose_email">E-posta oluştur</string>
     <string name="secured_by">Tarafından korunuyor</string>
-    <string name="sending_in_countdown">%d saniye sonra gönderilecek...</string>
+    <string name="sending_in_countdown">%d sn sonra gönderilecek</string>
     <string name="view_message">Mesajı görüntüle</string>
     <string name="undo">Geri al</string>
     <string name="discard_draft">Taslak silinsin mi?</string>

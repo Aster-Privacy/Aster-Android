@@ -311,7 +311,7 @@
     <string name="subject">主题</string>
     <string name="compose_email">撰写邮件</string>
     <string name="secured_by">安全保障：</string>
-    <string name="sending_in_countdown">%d 秒后发送...</string>
+    <string name="sending_in_countdown">%d 秒后发送</string>
     <string name="view_message">查看邮件</string>
     <string name="undo">撤销</string>
     <string name="discard_draft">丢弃草稿？</string>

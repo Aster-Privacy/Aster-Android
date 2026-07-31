@@ -311,7 +311,7 @@
     <string name="subject">Onderwerp</string>
     <string name="compose_email">E-mail opstellen</string>
     <string name="secured_by">Beveiligd door</string>
-    <string name="sending_in_countdown">Verzenden over %d...</string>
+    <string name="sending_in_countdown">Verzenden over %d s</string>
     <string name="view_message">Bericht bekijken</string>
     <string name="undo">Ongedaan maken</string>
     <string name="discard_draft">Concept verwijderen?</string>

@@ -312,7 +312,7 @@
     <string name="subject">Asunto</string>
     <string name="compose_email">Redactar correo</string>
     <string name="secured_by">Protegido por</string>
-    <string name="sending_in_countdown">Enviando en %d...</string>
+    <string name="sending_in_countdown">Enviando en %d s</string>
     <string name="view_message">Ver mensaje</string>
     <string name="undo">Deshacer</string>
     <string name="discard_draft">¿Descartar borrador?</string>
