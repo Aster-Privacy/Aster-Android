@@ -1551,7 +1551,6 @@
         <item quantity="other">%d chaves de acesso registadas</item>
     </plurals>
     <string name="archive">Arquivar</string>
-    <string name="share_target_label">Escrever e-mail</string>
     <string name="share_attachment_failed">Não foi possível anexar alguns ficheiros</string>
     <string name="accept">Aceitar</string>
     <string name="expiry_password_label">Proteger com senha (opcional)</string>

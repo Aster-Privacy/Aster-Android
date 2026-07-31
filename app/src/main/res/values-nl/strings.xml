@@ -1551,7 +1551,6 @@
         <item quantity="other">%d passkeys geregistreerd</item>
     </plurals>
     <string name="archive">Archiveren</string>
-    <string name="share_target_label">E-mail opstellen</string>
     <string name="share_attachment_failed">Sommige bestanden konden niet worden bijgevoegd</string>
     <string name="accept">Accepteren</string>
     <string name="expiry_password_label">Beveiligen met wachtwoord (optioneel)</string>

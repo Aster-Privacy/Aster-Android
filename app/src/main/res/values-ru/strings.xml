@@ -1557,7 +1557,6 @@
         <item quantity="other">%d ключа доступа</item>
     </plurals>
     <string name="archive">В архив</string>
-    <string name="share_target_label">Написать письмо</string>
     <string name="share_attachment_failed">Не удалось прикрепить некоторые файлы</string>
     <string name="accept">Принять</string>
     <string name="expiry_password_label">Защитить паролем (необязательно)</string>

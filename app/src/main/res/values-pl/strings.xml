@@ -1557,7 +1557,6 @@
         <item quantity="other">%d klucza dostępu</item>
     </plurals>
     <string name="archive">Archiwizuj</string>
-    <string name="share_target_label">Napisz wiadomość</string>
     <string name="share_attachment_failed">Nie udało się załączyć niektórych plików</string>
     <string name="accept">Akceptuj</string>
     <string name="expiry_password_label">Chroń hasłem (opcjonalnie)</string>

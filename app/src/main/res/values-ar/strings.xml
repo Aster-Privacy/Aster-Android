@@ -1563,7 +1563,6 @@
         <item quantity="other">%d مفتاح مرور مُسجّل</item>
     </plurals>
     <string name="archive">أرشفة</string>
-    <string name="share_target_label">إنشاء رسالة</string>
     <string name="share_attachment_failed">تعذّر إرفاق بعض الملفات</string>
     <string name="accept">قبول</string>
     <string name="expiry_password_label">حماية بكلمة مرور (اختياري)</string>

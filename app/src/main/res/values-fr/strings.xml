@@ -2076,7 +2076,6 @@
         <item quantity="one">%d clé d\'accès enregistrée</item>
         <item quantity="other">%d clés d\'accès enregistrées</item>
     </plurals>
-    <string name="share_target_label">Rédiger un e-mail</string>
     <string name="share_attachment_failed">Certains fichiers n\'ont pas pu être joints</string>
     <string name="accept">Accepter</string>
     <string name="expiry_password_label">Protéger par mot de passe (facultatif)</string>

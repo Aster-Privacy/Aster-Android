@@ -2446,7 +2446,6 @@
     <string name="alias_contact_blocked">Blocked</string>
     <string name="alias_contact_unknown">Unknown contact</string>
     <string name="alias_feature_locked">Upgrade your plan to use this</string>
-    <string name="share_target_label">Compose email</string>
     <string name="share_attachment_failed">Some files could not be attached</string>
     <string name="alias_export_title">Export aliases</string>
     <string name="alias_export_description">Choose what to include. The file is generated on your device and never sent to our servers.</string>

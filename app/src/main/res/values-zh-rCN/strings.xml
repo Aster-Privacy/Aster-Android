@@ -1548,7 +1548,6 @@
         <item quantity="other">已注册 %d 个通行密钥</item>
     </plurals>
     <string name="archive">归档</string>
-    <string name="share_target_label">写邮件</string>
     <string name="share_attachment_failed">部分文件无法添加为附件</string>
     <string name="accept">接受</string>
     <string name="expiry_password_label">密码保护（可选）</string>

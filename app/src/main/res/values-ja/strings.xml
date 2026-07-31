@@ -1548,7 +1548,6 @@
         <item quantity="other">パスキー %d 件登録済み</item>
     </plurals>
     <string name="archive">アーカイブ</string>
-    <string name="share_target_label">メールを作成</string>
     <string name="share_attachment_failed">一部のファイルを添付できませんでした</string>
     <string name="accept">承認</string>
     <string name="expiry_password_label">パスワードで保護（任意）</string>
