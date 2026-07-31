@@ -480,7 +480,7 @@ private fun font_option_row(
 }
 
 @Composable
-private fun theme_swatch(
+internal fun theme_swatch(
     label: String,
     palette: ColorThemePalette,
     selected: Boolean,

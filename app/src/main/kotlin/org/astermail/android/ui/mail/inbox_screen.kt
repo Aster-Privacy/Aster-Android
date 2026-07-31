@@ -149,6 +149,56 @@ import org.astermail.android.settings.shared_settings_view_model
 
 enum class InboxSortMode { newest, oldest, unread_first, starred_first }
 
+data class ThreadRowResult(
+    val rows: List<ThreadRow>,
+    val participants: Map<String, List<Pair<String, String>>>,
+)
+
+fun build_thread_rows(
+    emails: List<Email>,
+    categories_enabled: Boolean,
+    active_category: String,
+    active_tabs: List<String>,
+    sort_mode: InboxSortMode,
+    cached_participants: Map<String, List<Pair<String, String>>>,
+    sticky_participants: Map<String, List<Pair<String, String>>>,
+): ThreadRowResult {
+    val source = if (categories_enabled) {
+        emails.filter {
+            org.astermail.android.mail.category_for_tab(it.category, active_tabs) == active_category
+        }
+    } else {
+        emails
+    }
+    val grouped_raw = group_by_thread(source)
+    val resolved = HashMap<String, List<Pair<String, String>>>(grouped_raw.size)
+    val grouped = grouped_raw.map { row ->
+        val candidates = listOfNotNull(
+            cached_participants[row.thread_id],
+            sticky_participants[row.thread_id],
+            row.participants,
+        )
+        val merged = candidates.maxByOrNull { it.size } ?: row.participants
+        resolved[row.thread_id] = merged
+        if (merged === row.participants) row else row.copy(participants = merged)
+    }
+    val sorted = when (sort_mode) {
+        InboxSortMode.newest -> grouped.sortedWith(
+            compareByDescending<ThreadRow> { it.is_pinned }.thenByDescending { it.newest.received_at },
+        )
+        InboxSortMode.oldest -> grouped.sortedWith(
+            compareByDescending<ThreadRow> { it.is_pinned }.thenBy { it.newest.received_at },
+        )
+        InboxSortMode.unread_first -> grouped.sortedWith(
+            compareByDescending<ThreadRow> { it.is_pinned }.thenByDescending { it.has_unread }.thenByDescending { it.newest.received_at },
+        )
+        InboxSortMode.starred_first -> grouped.sortedWith(
+            compareByDescending<ThreadRow> { it.is_pinned }.thenByDescending { it.is_starred }.thenByDescending { it.newest.received_at },
+        )
+    }
+    return ThreadRowResult(sorted, resolved)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InboxScreen(
@@ -435,41 +485,37 @@ fun InboxScreen(
             )
         }
     }
-    val category_source = remember(emails_fingerprint, categories_enabled, active_category, active_tabs) {
-        if (categories_enabled) {
-            emails.filter {
-                org.astermail.android.mail.category_for_tab(it.category, active_tabs) == active_category
-            }
-        } else {
-            emails.toList()
+    var threads by remember { mutableStateOf<List<ThreadRow>>(emptyList()) }
+    var threads_folder by remember { mutableStateOf(current_folder) }
+    LaunchedEffect(
+        current_folder,
+        emails_fingerprint,
+        categories_enabled,
+        active_category,
+        active_tabs,
+        sort_mode,
+        cached_participants,
+    ) {
+        if (threads_folder != current_folder) {
+            threads = emptyList()
+            threads_folder = current_folder
         }
-    }
-    val threads = androidx.compose.runtime.remember(emails_fingerprint, categories_enabled, active_category, sort_mode, cached_participants) {
-        val grouped_raw = group_by_thread(category_source)
-        val live_ids = grouped_raw.map { it.thread_id }.toHashSet()
-        sticky_participants.keys.retainAll(live_ids)
-        val grouped = grouped_raw.map { row ->
-            val from_cache = cached_participants[row.thread_id]
-            val existing = sticky_participants[row.thread_id]
-            val candidates = listOfNotNull(from_cache, existing, row.participants)
-            val merged = candidates.maxByOrNull { it.size } ?: row.participants
-            sticky_participants[row.thread_id] = merged
-            if (merged === row.participants) row else row.copy(participants = merged)
-        }
-        when (sort_mode) {
-            InboxSortMode.newest -> grouped.sortedWith(
-                compareByDescending<ThreadRow> { it.is_pinned }.thenByDescending { it.newest.received_at },
-            )
-            InboxSortMode.oldest -> grouped.sortedWith(
-                compareByDescending<ThreadRow> { it.is_pinned }.thenBy { it.newest.received_at },
-            )
-            InboxSortMode.unread_first -> grouped.sortedWith(
-                compareByDescending<ThreadRow> { it.is_pinned }.thenByDescending { it.has_unread }.thenByDescending { it.newest.received_at },
-            )
-            InboxSortMode.starred_first -> grouped.sortedWith(
-                compareByDescending<ThreadRow> { it.is_pinned }.thenByDescending { it.is_starred }.thenByDescending { it.newest.received_at },
+        val snapshot = emails.toList()
+        val sticky_snapshot = HashMap(sticky_participants)
+        val computed = withContext(Dispatchers.Default) {
+            build_thread_rows(
+                emails = snapshot,
+                categories_enabled = categories_enabled,
+                active_category = active_category,
+                active_tabs = active_tabs,
+                sort_mode = sort_mode,
+                cached_participants = cached_participants,
+                sticky_participants = sticky_snapshot,
             )
         }
+        sticky_participants.keys.retainAll(computed.participants.keys)
+        sticky_participants.putAll(computed.participants)
+        threads = computed.rows
     }
 
     LaunchedEffect(sort_mode) {
