@@ -4551,17 +4551,8 @@ internal fun email_html_view(
                 val req_uri = request?.url ?: return null
                 val url = req_uri.toString()
                 if (req_uri.host == org.astermail.android.translation.TranslationAssets.CONTENT_HOST) {
-                    val inline_key = InlineImageStore.key_for_path(req_uri.path)
-                    if (inline_key != null) {
-                        val inline_entry = InlineImageStore.get(inline_key) ?: return null
-                        return android.webkit.WebResourceResponse(
-                            inline_entry.content_type,
-                            null,
-                            200,
-                            "OK",
-                            mapOf("Cache-Control" to "no-store", "Access-Control-Allow-Origin" to "*"),
-                            java.io.ByteArrayInputStream(inline_entry.bytes),
-                        )
+                    if (InlineImageStore.key_for_path(req_uri.path) != null) {
+                        return inline_image_response(req_uri.path)
                     }
                     val user_font_path = req_uri.path
                     if (user_font_path != null && user_font_path.startsWith(EMAIL_USER_FONT_PREFIX)) {

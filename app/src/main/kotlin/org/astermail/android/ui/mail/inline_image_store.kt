@@ -75,3 +75,16 @@ internal object InlineImageStore {
         return digest.digest().take(16).joinToString("") { byte -> "%02x".format(byte) }
     }
 }
+
+internal fun inline_image_response(path: String?): android.webkit.WebResourceResponse? {
+    val key = InlineImageStore.key_for_path(path) ?: return null
+    val entry = InlineImageStore.get(key) ?: return null
+    return android.webkit.WebResourceResponse(
+        entry.content_type,
+        null,
+        200,
+        "OK",
+        mapOf("Cache-Control" to "no-store", "Access-Control-Allow-Origin" to "*"),
+        java.io.ByteArrayInputStream(entry.bytes),
+    )
+}
