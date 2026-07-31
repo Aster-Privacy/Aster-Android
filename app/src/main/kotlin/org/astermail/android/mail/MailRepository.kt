@@ -333,6 +333,8 @@ class MailRepository @Inject constructor(
         val sender_email: String?,
         val sender_display_name: String?,
         val attachment_names: List<String>,
+        val attachment_types: List<String>,
+        val attachment_sizes: List<Long>,
         val undo: () -> Unit,
     )
 
@@ -427,6 +429,8 @@ class MailRepository @Inject constructor(
             sender_email = sender_email,
             sender_display_name = sender_display_name,
             attachment_names = attachments.map { it.filename },
+            attachment_types = attachments.map { it.content_type },
+            attachment_sizes = attachments.map { it.size_bytes },
             undo = { undo_pending_send(pending_id) },
         )
         val persisted = app_scope.async {

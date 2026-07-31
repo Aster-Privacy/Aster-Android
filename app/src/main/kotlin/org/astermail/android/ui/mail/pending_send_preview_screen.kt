@@ -15,6 +15,9 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Affero General Public License for more details.
 //
+// You should have received a copy of the GNU Affero General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
+//
 
 package org.astermail.android.ui.mail
 
@@ -38,9 +41,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -53,6 +54,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -64,7 +66,7 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
-import org.astermail.android.design.components.AsterDivider
+import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.mail.MailViewModel
 
 @Composable
@@ -92,12 +94,34 @@ fun pending_send_preview_screen(
     val remaining_ms = (p.started_at_ms + p.duration_ms) - now_ms
     val seconds_left = (((remaining_ms + 999) / 1000).toInt()).coerceAtLeast(0)
 
-    val from_email = p.sender_email ?: ""
+    val from_email = p.sender_email.orEmpty()
     val from_name = p.sender_display_name?.takeIf { it.isNotBlank() } ?: from_email
     val to_line = p.to.joinToString(", ")
-    val cc_line = p.cc.joinToString(", ")
-    val bcc_line = p.bcc.joinToString(", ")
     val subject_text = p.subject.ifBlank { stringResource(R.string.no_subject) }
+
+    val message = remember(p.started_at_ms, p.body_html) {
+        ThreadMessage(
+            id = "pending_send_${p.started_at_ms}",
+            sender_name = from_name,
+            sender_email = from_email,
+            to_label = to_line,
+            to_addresses = p.to,
+            cc_addresses = p.cc,
+            timestamp = p.started_at_ms,
+            body = "",
+            body_html = p.body_html,
+            is_encrypted = true,
+            item_type = "sent",
+            attachments = p.attachment_names.mapIndexed { index, filename ->
+                MessageAttachment(
+                    id = "pending_attachment_$index",
+                    filename = filename,
+                    content_type = p.attachment_types.getOrElse(index) { "application/octet-stream" },
+                    size_bytes = p.attachment_sizes.getOrElse(index) { 0L },
+                )
+            },
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -105,189 +129,119 @@ fun pending_send_preview_screen(
             .background(colors.bg_primary)
             .statusBarsPadding(),
     ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+        ) {
+            AsterIconButton(
+                icon = TablerIcons.ArrowLeft,
+                content_description = stringResource(R.string.back),
+                onClick = on_back,
+                modifier = Modifier.align(Alignment.CenterStart),
+            )
+            Row(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .clip(SquircleShape(999.dp))
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Icon(
+                    imageVector = TablerIcons.Clock,
+                    contentDescription = null,
+                    tint = colors.accent_blue,
+                    modifier = Modifier.size(16.dp),
+                )
+                Text(
+                    text = stringResource(R.string.sending_in_countdown, seconds_left),
+                    color = colors.accent_blue,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+
+        LazyColumn(modifier = Modifier.weight(1f)) {
+            item(key = "subject_header") {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = AsterSpacing.lg, end = AsterSpacing.lg)
+                        .padding(top = AsterSpacing.sm, bottom = AsterSpacing.sm),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = subject_text,
+                        color = colors.text_primary,
+                        fontSize = 26.sp,
+                        lineHeight = 32.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+            item(key = "pending_message") {
+                expanded_message(
+                    msg = message,
+                    is_last = true,
+                    can_collapse = false,
+                    show_header_reply = false,
+                    on_collapse = {},
+                    on_reply = {},
+                    on_reply_all = {},
+                    on_forward = {},
+                    on_more = {},
+                )
+            }
+            item(key = "pending_footer") {
+                Spacer(Modifier.height(AsterSpacing.lg))
+            }
+        }
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = AsterSpacing.xs, vertical = AsterSpacing.xs),
+                .background(colors.bg_primary)
+                .padding(WindowInsets.navigationBars.asPaddingValues()),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .clickable { on_back() },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = TablerIcons.ArrowLeft,
-                    contentDescription = stringResource(R.string.back),
-                    tint = colors.text_primary,
-                )
-            }
-            Spacer(Modifier.width(AsterSpacing.xs))
-            Row(
-                modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                Icon(
-                    imageVector = TablerIcons.Lock,
-                    contentDescription = null,
-                    tint = colors.accent_blue,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(Modifier.width(6.dp))
-                Text(
-                    text = stringResource(R.string.end_to_end_encrypted),
-                    color = colors.accent_blue,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-            Spacer(Modifier.width(44.dp))
-        }
-
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState()),
-        ) {
-            Text(
-                text = subject_text,
-                color = colors.text_primary,
-                fontSize = 26.sp,
-                lineHeight = 32.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = AsterSpacing.lg)
-                    .padding(top = AsterSpacing.sm, bottom = AsterSpacing.sm),
-            )
-            AsterDivider()
-            Spacer(Modifier.height(AsterSpacing.sm))
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
-                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                SenderAvatar(email = from_email, name = from_name)
-                Spacer(Modifier.width(AsterSpacing.md))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = from_name,
-                        color = colors.text_primary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    if (from_email.isNotBlank() && from_email != from_name) {
-                        Text(
-                            text = from_email,
-                            color = colors.text_muted,
-                            fontSize = 13.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                    if (to_line.isNotBlank()) {
-                        Text(
-                            text = stringResource(R.string.to_recipients_inline, to_line),
-                            color = colors.text_muted,
-                            fontSize = 13.sp,
-                        )
-                    }
-                    if (cc_line.isNotBlank()) {
-                        Text(
-                            text = stringResource(R.string.cc_recipients_inline, cc_line),
-                            color = colors.text_muted,
-                            fontSize = 13.sp,
-                        )
-                    }
-                    if (bcc_line.isNotBlank()) {
-                        Text(
-                            text = stringResource(R.string.bcc_recipients_inline, bcc_line),
-                            color = colors.text_muted,
-                            fontSize = 13.sp,
-                        )
-                    }
-                }
-            }
-
-            email_html_view(
-                html = p.body_html,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = AsterSpacing.md),
-            )
-
-            if (p.attachment_names.isNotEmpty()) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    p.attachment_names.forEach { fname ->
-                        Row(
-                            modifier = Modifier
-                                .clip(SquircleShape(18.dp))
-                                .background(colors.dropdown_bg)
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Icon(
-                                imageVector = TablerIcons.Paperclip,
-                                contentDescription = null,
-                                tint = colors.text_muted,
-                                modifier = Modifier.size(16.dp),
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(text = fname, color = colors.text_primary, fontSize = 13.sp)
-                        }
-                    }
-                }
-            }
-
-            Spacer(Modifier.height(AsterSpacing.lg))
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(colors.dropdown_bg)
-                .padding(WindowInsets.navigationBars.asPaddingValues())
-                .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = TablerIcons.Clock,
-                contentDescription = null,
-                tint = colors.text_muted,
-                modifier = Modifier.size(18.dp),
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(
-                text = stringResource(R.string.sending_in_countdown, seconds_left),
-                color = colors.text_primary,
-                fontSize = 14.sp,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                text = stringResource(R.string.undo),
-                color = colors.accent_blue,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier
-                    .clip(SquircleShape(10.dp))
-                    .clickable {
+                reply_action_button(
+                    icon = TablerIcons.ArrowBackUp,
+                    label = stringResource(R.string.undo),
+                    bg = colors.accent_blue,
+                    fg = Color.White,
+                    label_size = 14.sp,
+                    on_label_overflow = {},
+                    on_click = {
                         p.undo()
                         on_back()
-                    }
-                    .padding(horizontal = 14.dp, vertical = 8.dp),
-            )
+                    },
+                    modifier = Modifier.weight(1f),
+                )
+                reply_action_button(
+                    icon = TablerIcons.Check,
+                    label = stringResource(R.string.done),
+                    bg = Color.Transparent,
+                    fg = colors.text_primary,
+                    label_size = 14.sp,
+                    on_label_overflow = {},
+                    on_click = on_back,
+                    modifier = Modifier.weight(1f),
+                )
+            }
         }
     }
 }

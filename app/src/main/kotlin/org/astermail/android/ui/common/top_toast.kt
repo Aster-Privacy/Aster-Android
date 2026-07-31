@@ -67,6 +67,7 @@ data class TopToastState(
     val undo_label: String? = null,
     val on_undo: (() -> Unit)? = null,
     val secondary_label: String? = null,
+    val secondary_icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
     val on_secondary: (() -> Unit)? = null,
     val on_tap: (() -> Unit)? = null,
     val show_close: Boolean = false,
@@ -96,6 +97,27 @@ private fun toast_action(
             .background(colors.accent_blue.copy(alpha = 0.12f))
             .clickable(enabled = enabled, onClick = on_click)
             .padding(horizontal = 12.dp, vertical = 6.dp),
+    )
+}
+
+@Composable
+private fun toast_icon_action(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    on_click: () -> Unit,
+    enabled: Boolean = true,
+) {
+    val colors = AsterMaterial.colors
+    Icon(
+        imageVector = icon,
+        contentDescription = label,
+        tint = colors.accent_blue,
+        modifier = Modifier
+            .clip(SquircleShape(999.dp))
+            .background(colors.accent_blue.copy(alpha = 0.12f))
+            .clickable(enabled = enabled, onClick = on_click)
+            .padding(7.dp)
+            .size(18.dp),
     )
 }
 
@@ -156,12 +178,12 @@ fun top_toast_overlay(
                     color = colors.text_primary,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
-                    maxLines = 2,
+                    maxLines = if (s.secondary_label == null && s.undo_label == null) 2 else 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false),
                 )
                 if (s.undo_label != null && s.on_undo != null) {
-                    Spacer(Modifier.width(12.dp))
+                    Spacer(Modifier.width(10.dp))
                     toast_action(
                         label = s.undo_label,
                         on_click = {
@@ -171,17 +193,27 @@ fun top_toast_overlay(
                     )
                 }
                 if (s.secondary_label != null) {
-                    Spacer(Modifier.width(8.dp))
-                    toast_action(
-                        label = s.secondary_label,
-                        enabled = s.on_secondary != null,
-                        on_click = {
-                            s.on_secondary?.invoke()
-                            on_dismiss()
-                        },
-                    )
+                    Spacer(Modifier.width(6.dp))
+                    val secondary_click = {
+                        s.on_secondary?.invoke()
+                        on_dismiss()
+                    }
+                    if (s.secondary_icon != null) {
+                        toast_icon_action(
+                            icon = s.secondary_icon,
+                            label = s.secondary_label,
+                            enabled = s.on_secondary != null,
+                            on_click = secondary_click,
+                        )
+                    } else {
+                        toast_action(
+                            label = s.secondary_label,
+                            enabled = s.on_secondary != null,
+                            on_click = secondary_click,
+                        )
+                    }
                 }
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(4.dp))
                 Icon(
                     imageVector = TablerIcons.X,
                     contentDescription = null,

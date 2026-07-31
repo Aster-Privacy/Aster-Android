@@ -311,7 +311,7 @@
     <string name="subject">الموضوع</string>
     <string name="compose_email">كتابة بريد</string>
     <string name="secured_by">مؤمن بواسطة</string>
-    <string name="sending_in_countdown">الإرسال خلال %d...</string>
+    <string name="sending_in_countdown">الإرسال خلال %d ث</string>
     <string name="view_message">عرض الرسالة</string>
     <string name="undo">تراجع</string>
     <string name="discard_draft">تجاهل المسودة؟</string>

@@ -331,7 +331,7 @@
     <string name="subject">Objet</string>
     <string name="compose_email">Rédiger un e-mail</string>
     <string name="secured_by">Sécurisé par</string>
-    <string name="sending_in_countdown">Envoi dans %d...</string>
+    <string name="sending_in_countdown">Envoi dans %d s</string>
     <string name="view_message">Voir le message</string>
     <string name="undo">Annuler</string>
     <string name="discard_draft">Supprimer le brouillon ?</string>
