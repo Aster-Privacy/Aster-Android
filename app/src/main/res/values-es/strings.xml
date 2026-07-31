@@ -1552,7 +1552,6 @@
         <item quantity="other">%d claves de acceso registradas</item>
     </plurals>
     <string name="archive">Archivar</string>
-    <string name="share_target_label">Redactar correo</string>
     <string name="share_attachment_failed">No se pudieron adjuntar algunos archivos</string>
     <string name="accept">Aceptar</string>
     <string name="expiry_password_label">Proteger con contraseña (opcional)</string>

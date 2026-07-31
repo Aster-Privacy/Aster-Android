@@ -1551,7 +1551,6 @@
         <item quantity="other">%d passkey registrate</item>
     </plurals>
     <string name="archive">Archivia</string>
-    <string name="share_target_label">Scrivi email</string>
     <string name="share_attachment_failed">Non è stato possibile allegare alcuni file</string>
     <string name="accept">Accetta</string>
     <string name="expiry_password_label">Proteggi con password (facoltativo)</string>

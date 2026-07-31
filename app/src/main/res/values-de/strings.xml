@@ -1552,7 +1552,6 @@
         <item quantity="other">%d Passkeys registriert</item>
     </plurals>
     <string name="archive">Archivieren</string>
-    <string name="share_target_label">E-Mail verfassen</string>
     <string name="share_attachment_failed">Einige Dateien konnten nicht angehängt werden</string>
     <string name="accept">Annehmen</string>
     <string name="expiry_password_label">Mit Passwort schützen (optional)</string>

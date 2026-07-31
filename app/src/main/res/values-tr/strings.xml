@@ -1551,7 +1551,6 @@
         <item quantity="other">%d geçiş anahtarı kayıtlı</item>
     </plurals>
     <string name="archive">Arşivle</string>
-    <string name="share_target_label">E-posta oluştur</string>
     <string name="share_attachment_failed">Bazı dosyalar eklenemedi</string>
     <string name="accept">Kabul et</string>
     <string name="expiry_password_label">Parolayla koru (isteğe bağlı)</string>
