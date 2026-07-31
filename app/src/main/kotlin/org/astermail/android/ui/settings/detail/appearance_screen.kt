@@ -136,7 +136,7 @@ private fun color_theme_label_res(id: ColorThemeId): Int = when (id) {
 private val preset_swatch_ids = listOf(
     ColorThemeId.purple, ColorThemeId.green, ColorThemeId.rose, ColorThemeId.orange,
     ColorThemeId.teal, ColorThemeId.indigo, ColorThemeId.amber, ColorThemeId.cyan,
-    ColorThemeId.slate, ColorThemeId.aster_blue, ColorThemeId.lime, ColorThemeId.fuchsia,
+    ColorThemeId.slate, ColorThemeId.lime, ColorThemeId.fuchsia,
     ColorThemeId.emerald, ColorThemeId.pink, ColorThemeId.black,
 )
 
@@ -266,6 +266,12 @@ fun AppearanceScreen(
                 stringResource(R.string.theme_dark_subtitle),
                 mode == ThemeMode.dark && color_theme == ColorThemeId.default,
             ) { apply(ThemeMode.dark, "dark") }
+            AsterDivider(modifier = Modifier)
+            theme_option_row(
+                stringResource(R.string.color_theme_aster_blue),
+                stringResource(R.string.theme_aster_blue_subtitle),
+                color_theme == ColorThemeId.aster_blue,
+            ) { apply_color_theme(ColorThemeId.aster_blue) }
             if (dynamic_color_supported) {
                 AsterDivider(modifier = Modifier)
                 theme_option_row(

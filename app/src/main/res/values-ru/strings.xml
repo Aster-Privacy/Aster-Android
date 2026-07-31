@@ -507,6 +507,7 @@
     <string name="theme_light_subtitle">Всегда светлая тема</string>
     <string name="theme_dark">Тёмная</string>
     <string name="theme_dark_subtitle">Всегда тёмная тема</string>
+    <string name="theme_aster_blue_subtitle">Фирменный синий Aster</string>
     <string name="color_theme">Цветовая тема</string>
     <string name="color_theme_default">Aster Default</string>
     <string name="color_theme_custom">Своя тема</string>

@@ -507,6 +507,7 @@
     <string name="theme_light_subtitle">始终使用浅色主题</string>
     <string name="theme_dark">深色</string>
     <string name="theme_dark_subtitle">始终使用深色主题</string>
+    <string name="theme_aster_blue_subtitle">Aster 标志性蓝色</string>
     <string name="color_theme">颜色主题</string>
     <string name="color_theme_default">Aster Default</string>
     <string name="color_theme_custom">自定义主题</string>

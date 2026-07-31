@@ -507,6 +507,7 @@
     <string name="theme_light_subtitle">Zawsze jasny motyw</string>
     <string name="theme_dark">Ciemny</string>
     <string name="theme_dark_subtitle">Zawsze ciemny motyw</string>
+    <string name="theme_aster_blue_subtitle">Charakterystyczny błękit Aster</string>
     <string name="color_theme">Motyw kolorystyczny</string>
     <string name="color_theme_default">Aster Default</string>
     <string name="color_theme_custom">Motyw niestandardowy</string>
