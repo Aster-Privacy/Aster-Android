@@ -351,6 +351,7 @@ fun InboxScreen(
     var select_all_active by remember { mutableStateOf(false) }
     var pending_select_all_action by remember { mutableStateOf<String?>(null) }
     var select_all_load_done by remember { mutableStateOf(false) }
+    var select_all_loading by remember { mutableStateOf(false) }
     val selected_ids = remember { mutableStateListOf<String>() }
     var show_empty_trash_dialog by remember { mutableStateOf(false) }
     var show_selection_overflow by remember { mutableStateOf(false) }
@@ -599,11 +600,16 @@ fun InboxScreen(
         selected_ids.clear()
         selected_ids.addAll(visible_threads.map { it.thread_id })
         select_all_active = inbox_state.has_more
+        if (inbox_state.has_more) {
+            select_all_loading = true
+            mail_vm.load_all_remaining { select_all_loading = false }
+        }
     }
 
     fun exit_select_mode() {
         select_mode = false
         select_all_active = false
+        select_all_loading = false
         pending_select_all_action = null
         selected_ids.clear()
     }
@@ -854,7 +860,10 @@ fun InboxScreen(
         apply_selection_action(action_id)
     }
 
-    LaunchedEffect(current_folder) { pending_select_all_action = null }
+    LaunchedEffect(current_folder) {
+        pending_select_all_action = null
+        select_all_loading = false
+    }
 
     LaunchedEffect(
         pending_select_all_action,
@@ -1344,6 +1353,7 @@ fun InboxScreen(
                         on_mark_read = ::mark_read_selected,
                         show_divider = scrolled_elevation,
                         current_folder = current_folder,
+                        counting = select_all_loading,
                     )
                 } else {
                     inbox_top_bar(
@@ -1855,6 +1865,7 @@ private fun select_mode_top_bar(
     on_mark_read: () -> Unit,
     show_divider: Boolean,
     current_folder: String = "inbox",
+    counting: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
     val divider_alpha by animateFloatAsState(
@@ -1885,6 +1896,14 @@ private fun select_mode_top_bar(
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
+            if (counting) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp).testTag("select_all_progress"),
+                    strokeWidth = 2.dp,
+                    color = colors.accent_blue,
+                )
+                Spacer(Modifier.width(AsterSpacing.xs))
+            }
             org.astermail.android.ui.common.select_all_button(
                 on_click = on_select_all,
                 modifier = Modifier.testTag("select_all"),

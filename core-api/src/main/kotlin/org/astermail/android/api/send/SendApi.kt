@@ -28,9 +28,15 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
+import io.ktor.http.content.OutgoingContent
 import io.ktor.http.contentType
+import io.ktor.utils.io.ByteWriteChannel
+import io.ktor.utils.io.writeFully
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToStream
 import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
 
@@ -145,34 +151,65 @@ interface SendApi {
     suspend fun react(request: ReactRequest): ReactResponse
 }
 
+private class StreamedJsonContent(private val file: java.io.File) : OutgoingContent.WriteChannelContent() {
+    override val contentType: ContentType = ContentType.Application.Json
+    override val contentLength: Long = file.length()
+
+    override suspend fun writeTo(channel: ByteWriteChannel) {
+        val buffer = ByteArray(64 * 1024)
+        java.io.FileInputStream(file).use { input ->
+            while (true) {
+                val read = input.read(buffer)
+                if (read <= 0) break
+                channel.writeFully(buffer, 0, read)
+            }
+        }
+        channel.flush()
+    }
+}
+
 class SendApiImpl(private val client: ApiClient) : SendApi {
     private val base = "/api/mail/v1/send"
     private val send_timeout_ms = 60_000L
 
-    override suspend fun send_simple(request: SimpleSendRequest): SimpleSendResponse {
-        val response = client.http.post("${client.base_url}$base") {
-            timeout {
-                requestTimeoutMillis = send_timeout_ms
-                socketTimeoutMillis = send_timeout_ms
+    @OptIn(ExperimentalSerializationApi::class)
+    private inline fun <reified T> encode_to_temp_file(json: Json, value: T): java.io.File {
+        val file = java.io.File.createTempFile("aster_send_", ".json")
+        try {
+            java.io.BufferedOutputStream(java.io.FileOutputStream(file), 64 * 1024).use { out ->
+                json.encodeToStream(value, out)
             }
-            contentType(ContentType.Application.Json)
-            client.get_csrf()?.let { header("X-CSRF-Token", it) }
-            setBody(request)
+        } catch (t: Throwable) {
+            file.delete()
+            throw t
         }
-        return decode_or_throw(response)
+        return file
+    }
+
+    private suspend inline fun <reified Req, reified Res> post_streamed(url: String, request: Req): Res {
+        val file = encode_to_temp_file(client.json, request)
+        try {
+            val response = client.http.post(url) {
+                timeout {
+                    requestTimeoutMillis = send_timeout_ms
+                    socketTimeoutMillis = send_timeout_ms
+                }
+                contentType(ContentType.Application.Json)
+                client.get_csrf()?.let { header("X-CSRF-Token", it) }
+                setBody(StreamedJsonContent(file))
+            }
+            return decode_or_throw(response)
+        } finally {
+            file.delete()
+        }
+    }
+
+    override suspend fun send_simple(request: SimpleSendRequest): SimpleSendResponse {
+        return post_streamed("${client.base_url}$base", request)
     }
 
     override suspend fun send_external(request: ExternalSendRequest): ExternalSendResponse {
-        val response = client.http.post("${client.base_url}$base/external") {
-            timeout {
-                requestTimeoutMillis = send_timeout_ms
-                socketTimeoutMillis = send_timeout_ms
-            }
-            contentType(ContentType.Application.Json)
-            client.get_csrf()?.let { header("X-CSRF-Token", it) }
-            setBody(request)
-        }
-        return decode_or_throw(response)
+        return post_streamed("${client.base_url}$base/external", request)
     }
 
     override suspend fun react(request: ReactRequest): ReactResponse {

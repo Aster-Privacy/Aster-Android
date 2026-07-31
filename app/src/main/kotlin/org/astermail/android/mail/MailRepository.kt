@@ -80,6 +80,7 @@ enum class PendingSendOutcome { SENT, GONE, RETRY, FAILED }
 class TransientSendException : Exception("send retry pending")
 
 private const val SEND_RETRY_QUIET_ATTEMPTS = 2
+private const val SEND_RETRY_MAX_ATTEMPTS = 8
 private const val STATUS_PENDING = "pending"
 private const val STATUS_FAILED = "failed"
 private const val SENDING_CLAIM_STALE_MS = 5 * 60 * 1000L
@@ -599,7 +600,7 @@ class MailRepository @Inject constructor(
             PendingSendOutcome.SENT
         } else {
             val err = result.exceptionOrNull()
-            if (is_permanent_send_failure(err)) {
+            if (is_permanent_send_failure(err) || attempt >= SEND_RETRY_MAX_ATTEMPTS) {
                 _send_problem.value = true
                 _send_result_events.tryEmit(Result.failure(err ?: IllegalStateException("send rejected")))
                 runCatching { pending_send_dao.mark_failed(pending_id) }
@@ -620,6 +621,7 @@ class MailRepository @Inject constructor(
         var depth = 0
         while (cause != null && depth < 6) {
             if (cause is org.astermail.android.mail.ratchet.RatchetEncryptionException) return true
+            if (cause is OutOfMemoryError) return true
             cause = cause.cause
             depth++
         }

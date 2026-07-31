@@ -127,9 +127,11 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -925,7 +927,7 @@ fun ComposeScreen(
     androidx.compose.runtime.DisposableEffect(lifecycle_owner_for_draft) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
             if (event == androidx.lifecycle.Lifecycle.Event.ON_PAUSE) {
-                if (!sent && !is_sending && (subject.isNotBlank() || body.isNotBlank() || to_chips.isNotEmpty())) {
+                if (!sent && (subject.isNotBlank() || body.isNotBlank() || to_chips.isNotEmpty())) {
                     draft_save_job?.cancel()
                     mail_vm.save_draft_and_finish(
                         subject = subject,
@@ -964,7 +966,7 @@ fun ComposeScreen(
         return render_spanned_html(editable)
     }
 
-    fun prepare_send_data(): Triple<String, List<org.astermail.android.api.send.ExternalAttachmentPayload>, Boolean> {
+    suspend fun prepare_send_data(): Triple<String, List<org.astermail.android.api.send.ExternalAttachmentPayload>, Boolean> {
         val raw_formatted_body = get_body_with_formatting()
         val strip_branding = settings_state.preferences?.show_aster_branding == false
         val branding_footer_kept = !strip_branding && raw_formatted_body.contains(footer_secured_by_plain)
@@ -983,16 +985,19 @@ fun ComposeScreen(
             return result.data
         }
 
-        val image_html_for = mutableMapOf<Int, String>()
-        inline_images.forEachIndexed { idx, img ->
-            val raw_bytes = try {
-                context.contentResolver.openInputStream(img.uri)?.use { it.readBytes() }
-            } catch (_: Throwable) {
-                null
-            } ?: return@forEachIndexed
-            val bytes = apply_metadata_strip(raw_bytes, img)
-            val b64 = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
-            image_html_for[idx] = "<img src=\"data:${img.mime_type};base64,$b64\" alt=\"${img.name}\" style=\"max-width:100%;height:auto;\" />"
+        val image_html_for = withContext(Dispatchers.IO) {
+            val encoded = mutableMapOf<Int, String>()
+            inline_images.forEachIndexed { idx, img ->
+                val raw_bytes = try {
+                    context.contentResolver.openInputStream(img.uri)?.use { it.readBytes() }
+                } catch (_: Throwable) {
+                    null
+                } ?: return@forEachIndexed
+                val bytes = apply_metadata_strip(raw_bytes, img)
+                val b64 = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+                encoded[idx] = "<img src=\"data:${img.mime_type};base64,$b64\" alt=\"${img.name}\" style=\"max-width:100%;height:auto;\" />"
+            }
+            encoded
         }
         val tokenized = StringBuilder()
         var marker_idx = 0
@@ -1020,19 +1025,26 @@ fun ComposeScreen(
         }
         with_images = with_images.replace(Regex("\\[\\[ASTER_IMG_\\d+]]"), "")
 
-        val attachment_payloads = attachments.map { att ->
-            val raw_bytes = try {
-                context.contentResolver.openInputStream(att.uri)?.use { it.readBytes() }
-            } catch (t: Throwable) {
-                throw AttachmentEncodeException(att.name, t)
-            } ?: throw AttachmentEncodeException(att.name, null)
-            val bytes = apply_metadata_strip(raw_bytes, att)
-            org.astermail.android.api.send.ExternalAttachmentPayload(
-                data = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP),
-                filename = att.name,
-                content_type = att.mime_type,
-                size_bytes = bytes.size.toLong(),
-            )
+        val attachment_payloads = withContext(Dispatchers.IO) {
+            attachments.map { att ->
+                val raw_bytes = try {
+                    context.contentResolver.openInputStream(att.uri)?.use { it.readBytes() }
+                } catch (t: Throwable) {
+                    throw AttachmentEncodeException(att.name, t)
+                } ?: throw AttachmentEncodeException(att.name, null)
+                val bytes = apply_metadata_strip(raw_bytes, att)
+                val encoded = try {
+                    android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+                } catch (t: OutOfMemoryError) {
+                    throw AttachmentEncodeException(att.name, t)
+                }
+                org.astermail.android.api.send.ExternalAttachmentPayload(
+                    data = encoded,
+                    filename = att.name,
+                    content_type = att.mime_type,
+                    size_bytes = bytes.size.toLong(),
+                )
+            }
         }
 
         if (unstripped_names.isNotEmpty()) {
@@ -1140,66 +1152,69 @@ fun ComposeScreen(
         is_sending = true
         send_error = null
 
-        val (body_html, attachment_payloads, suppress_branding) = try {
-            prepare_send_data()
-        } catch (e: AttachmentEncodeException) {
-            is_sending = false
-            send_lock.set(false)
-            send_error = context.getString(R.string.compose_attachment_read_failed, e.filename)
-            return
-        }
-
-        if (scheduled_send) {
-            if (attachment_payloads.isNotEmpty()) {
-                is_sending = false
-                send_lock.set(false)
-                send_error = context.getString(R.string.scheduled_send_no_attachments)
-                return
-            }
-            scope.launch {
-                val scheduled_at = scheduled_at_iso ?: java.time.Instant.now().plus(java.time.Duration.ofHours(1)).toString()
-                val result = mail_vm.schedule_email(
-                    to = to_chips,
-                    cc = cc_chips,
-                    bcc = bcc_chips,
-                    subject = subject,
-                    body_html = body_html,
-                    sender_email = from_alias,
-                    sender_display_name = settings_state.user?.display_name,
-                    scheduled_at = scheduled_at,
-                    sender_alias_hash = if (from_alias != user_email) alias_hash_map[from_alias]?.takeIf { it.isNotBlank() } else null,
-                )
-                result.fold(
-                    onSuccess = {
-                        is_sending = false
-                        send_lock.set(false)
-                        sent = true
-                        on_sent()
-                    },
-                    onFailure = { t ->
-                        is_sending = false
-                        send_lock.set(false)
-                        send_error = org.astermail.android.api.user_facing_error(t, context.getString(R.string.save_failed))
-                    },
-                )
-            }
-            return
-        }
-
         val snap_to = to_chips.toList()
         val snap_cc = cc_chips.toList()
         val snap_bcc = bcc_chips.toList()
         val snap_subject = subject
         val snap_from = from_alias
-        if (undo_send_enabled) {
-            draft_save_job?.cancel()
-            scope.launch {
+
+        scope.launch {
+            val prepared = try {
+                prepare_send_data()
+            } catch (e: AttachmentEncodeException) {
+                is_sending = false
+                send_lock.set(false)
+                send_error = context.getString(R.string.compose_attachment_read_failed, e.filename)
+                return@launch
+            } catch (e: OutOfMemoryError) {
+                is_sending = false
+                send_lock.set(false)
+                send_error = context.getString(R.string.attachment_total_too_large)
+                return@launch
+            }
+            val (body_html, attachment_payloads, suppress_branding) = prepared
+
+            if (scheduled_send) {
+                if (attachment_payloads.isNotEmpty()) {
+                    is_sending = false
+                    send_lock.set(false)
+                    send_error = context.getString(R.string.scheduled_send_no_attachments)
+                    return@launch
+                }
+                val scheduled_at = scheduled_at_iso ?: java.time.Instant.now().plus(java.time.Duration.ofHours(1)).toString()
+                val result = mail_vm.schedule_email(
+                    to = snap_to,
+                    cc = snap_cc,
+                    bcc = snap_bcc,
+                    subject = snap_subject,
+                    body_html = body_html,
+                    sender_email = snap_from,
+                    sender_display_name = settings_state.user?.display_name,
+                    scheduled_at = scheduled_at,
+                    sender_alias_hash = if (snap_from != user_email) alias_hash_map[snap_from]?.takeIf { it.isNotBlank() } else null,
+                )
+                is_sending = false
+                send_lock.set(false)
+                result.fold(
+                    onSuccess = {
+                        sent = true
+                        on_sent()
+                    },
+                    onFailure = { t ->
+                        send_error = org.astermail.android.api.user_facing_error(t, context.getString(R.string.save_failed))
+                    },
+                )
+                return@launch
+            }
+
+            if (undo_send_enabled) {
+                draft_save_job?.cancel()
                 val resolved_thread_token = if (!reply_to.isNullOrBlank() && (mode == "reply" || mode == "reply_all")) {
-                    mail_vm.get_or_create_thread_token(reply_to, thread_state.item?.thread_token)
+                    runCatching { mail_vm.get_or_create_thread_token(reply_to, thread_state.item?.thread_token) }.getOrNull()
                 } else {
                     null
                 }
-                mail_vm.schedule_send_with_undo(
+                val result = mail_vm.schedule_send_with_undo(
                     to = snap_to,
                     cc = snap_cc,
                     bcc = snap_bcc,
@@ -1218,11 +1233,18 @@ fun ComposeScreen(
                 )
                 is_sending = false
                 send_lock.set(false)
-                sent = true
-                on_sent()
+                result.fold(
+                    onSuccess = {
+                        sent = true
+                        on_sent()
+                    },
+                    onFailure = { t ->
+                        send_error = org.astermail.android.api.user_facing_error(t, context.getString(R.string.save_failed))
+                    },
+                )
+            } else {
+                execute_send(body_html, attachment_payloads, snap_to, snap_cc, snap_bcc, snap_subject, snap_from, suppress_branding)
             }
-        } else {
-            execute_send(body_html, attachment_payloads, snap_to, snap_cc, snap_bcc, snap_subject, snap_from, suppress_branding)
         }
     }
 
