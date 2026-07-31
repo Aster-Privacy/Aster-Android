@@ -39,6 +39,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.astermail.android.api.mail.BulkScopeFilter
@@ -85,6 +86,8 @@ private const val SENDING_CLAIM_STALE_MS = 5 * 60 * 1000L
 private const val RATCHET_UNDECRYPTABLE_TTL_MS = 10L * 60L * 1000L
 private const val OUTBOX_FILE_REF_PREFIX = "@file:"
 private const val EMPTY_ATTACHMENTS_JSON = "[]"
+private const val METADATA_PATCH_ATTEMPTS = 3
+private const val METADATA_PATCH_RETRY_DELAY_MS = 400L
 
 data class DecryptedEnvelope(
     val subject: String,
@@ -391,7 +394,7 @@ class MailRepository @Inject constructor(
         app_scope.launch { runCatching { reconcile_pending_sends() } }
     }
 
-    fun schedule_send_with_undo(
+    suspend fun schedule_send_with_undo(
         to: List<String>,
         cc: List<String>,
         bcc: List<String>,
@@ -407,7 +410,7 @@ class MailRepository @Inject constructor(
         suppress_branding: Boolean? = null,
         undo_seconds: Int,
         draft_id: String? = null,
-    ) {
+    ): Result<String> {
         val delay_ms = undo_seconds.coerceAtLeast(1) * 1000L
         val pending_id = java.util.UUID.randomUUID().toString()
         val pending = PendingUndoSend(
@@ -424,12 +427,7 @@ class MailRepository @Inject constructor(
             attachment_names = attachments.map { it.filename },
             undo = { undo_pending_send(pending_id) },
         )
-        _pending_undo_send.value = pending
-        app_scope.launch {
-            kotlinx.coroutines.delay(delay_ms)
-            _pending_undo_send.compareAndSet(pending, null)
-        }
-        app_scope.launch {
+        val persisted = app_scope.async {
             runCatching {
                 persist_and_schedule_undo_send(
                     pending_id = pending_id,
@@ -451,6 +449,18 @@ class MailRepository @Inject constructor(
                 )
             }
         }
+        val result = persisted.await()
+        if (result.isFailure) {
+            delete_outbox_attachments(pending_id)
+            runCatching { pending_send_dao.delete_by_id(pending_id) }
+            return result
+        }
+        _pending_undo_send.value = pending
+        app_scope.launch {
+            kotlinx.coroutines.delay(delay_ms)
+            _pending_undo_send.compareAndSet(pending, null)
+        }
+        return result
     }
 
     suspend fun persist_and_schedule_undo_send(
@@ -964,15 +974,33 @@ class MailRepository @Inject constructor(
         mail_api.remove_tag_from_item(item_id, tag_token)
     }
 
+    private suspend fun patch_metadata_with_retry(
+        item_id: String,
+        request: PatchMetadataRequest,
+    ): Boolean {
+        repeat(METADATA_PATCH_ATTEMPTS) { attempt ->
+            if (runCatching { mail_api.patch_metadata(item_id, request) }.isSuccess) return true
+            if (attempt < METADATA_PATCH_ATTEMPTS - 1) {
+                delay(METADATA_PATCH_RETRY_DELAY_MS * (attempt + 1))
+            }
+        }
+        return false
+    }
+
     private suspend fun patch_metadata_for_items(
         item_ids: List<String>,
         raw_items: List<MailItem?>,
         updates: Map<String, Any>,
+        require_patch: Boolean = false,
     ) {
+        var failures = 0
         item_ids.forEachIndexed { index, item_id ->
             val raw_item = raw_items.getOrNull(index) ?: resolve_raw_item(item_id)
             val request = build_metadata_patch(raw_item, updates)
-            runCatching { mail_api.patch_metadata(item_id, request) }
+            if (!patch_metadata_with_retry(item_id, request)) failures++
+        }
+        if (require_patch && failures > 0) {
+            throw IllegalStateException("metadata patch failed for $failures of ${item_ids.size} items")
         }
     }
 
@@ -1026,6 +1054,7 @@ class MailRepository @Inject constructor(
                 "is_spam" to false,
                 "is_trashed" to false,
             ),
+            require_patch = true,
         )
         response
     }
@@ -1069,7 +1098,12 @@ class MailRepository @Inject constructor(
 
     suspend fun unarchive(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<BulkScopeResponse> = runCatching {
         val response = mail_api.bulk_action(BulkScopeRequest(action = "unarchive", ids = item_ids))
-        patch_metadata_for_items(item_ids, raw_items, mapOf("is_archived" to false))
+        patch_metadata_for_items(
+            item_ids,
+            raw_items,
+            mapOf("is_archived" to false),
+            require_patch = true,
+        )
         response
     }
 
@@ -1082,6 +1116,7 @@ class MailRepository @Inject constructor(
                 "is_trashed" to false,
                 "is_spam" to false,
             ),
+            require_patch = true,
         )
         response
     }
