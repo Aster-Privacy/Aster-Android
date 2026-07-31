@@ -300,6 +300,7 @@ fun InboxScreen(
                 settings_vm.load_preferences()
                 settings_vm.load_tags()
                 mail_vm.load_inbox(current_folder, force = true)
+                mail_vm.load_stats(force = true)
             }
         }
         lifecycle_owner.lifecycle.addObserver(observer)
