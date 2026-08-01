@@ -124,7 +124,8 @@ fun RegisterUsernameStep(
         AsterTextField(
             value = state.username.value,
             onValueChange = { input ->
-                state.username.value = input.filter { it in 'a'..'z' || it in 'A'..'Z' || it in '0'..'9' }
+                val filtered = input.filter { it in 'a'..'z' || it in 'A'..'Z' || it in '0'..'9' || it == '.' }
+                state.username.value = filtered.replace(Regex("\\.{2,}"), ".").trimStart('.')
             },
             label = stringResource(R.string.username),
             placeholder = stringResource(R.string.username_placeholder),

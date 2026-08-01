@@ -135,7 +135,7 @@ fun RegisterScreen(
                         error_message = error_message,
                         is_loading = is_loading,
                         on_next = {
-                            val full_email = "${state.username.value.trim()}@${state.email_domain.value}"
+                            val full_email = "${state.username.value.trim().trim('.')}@${state.email_domain.value}"
                             state.step.value = RegisterStep.generating
                             view_model.submit_register(
                                 full_email,
