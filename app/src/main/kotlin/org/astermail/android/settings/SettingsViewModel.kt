@@ -4133,7 +4133,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun compute_domain_address_routing_hash(local_part: String, domain: String): String {
-        val data = "${local_part.lowercase()}@${domain.lowercase()}".toByteArray(Charsets.UTF_8)
+        val data = "${normalize_alias_local_part(local_part)}@${domain.lowercase()}".toByteArray(Charsets.UTF_8)
         val hash = MessageDigest.getInstance("SHA-256").digest(data)
         return android.util.Base64.encodeToString(hash, android.util.Base64.NO_WRAP)
     }
