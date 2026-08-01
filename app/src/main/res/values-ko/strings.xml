@@ -2440,4 +2440,6 @@
     <string name="remove_folder_lock_message">잠금을 해제하려면 \"%1$s\"의 비밀번호를 입력하세요.</string>
     <string name="failed_update_folder">폴더를 업데이트하지 못했습니다</string>
     <string name="folder_actions">폴더 작업</string>
+    <string name="include_spam">스팸 포함</string>
+    <string name="include_trash">휴지통 포함</string>
 </resources>

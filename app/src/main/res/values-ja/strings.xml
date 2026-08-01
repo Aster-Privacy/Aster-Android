@@ -2440,4 +2440,6 @@
     <string name="remove_folder_lock_message">ロックを解除するには \"%1$s\" のパスワードを入力してください。</string>
     <string name="failed_update_folder">フォルダを更新できませんでした</string>
     <string name="folder_actions">フォルダの操作</string>
+    <string name="include_spam">迷惑メールを含む</string>
+    <string name="include_trash">ゴミ箱を含む</string>
 </resources>

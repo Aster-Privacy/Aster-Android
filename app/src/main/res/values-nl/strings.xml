@@ -2447,4 +2447,6 @@
     <string name="remove_folder_lock_message">Voer het wachtwoord van \"%1$s\" in om de vergrendeling te verwijderen.</string>
     <string name="failed_update_folder">Kan map niet bijwerken</string>
     <string name="folder_actions">Mapacties</string>
+    <string name="include_spam">Spam opnemen</string>
+    <string name="include_trash">Prullenbak opnemen</string>
 </resources>

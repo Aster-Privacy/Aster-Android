@@ -67,6 +67,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -142,6 +143,8 @@ import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.mail.DEFAULT_SWIPE_LEFT_ACTION
 import org.astermail.android.mail.DEFAULT_SWIPE_RIGHT_ACTION
 import org.astermail.android.mail.MailViewModel
+import org.astermail.android.mail.all_mail_folder
+import org.astermail.android.mail.is_all_mail_folder
 import org.astermail.android.mail.normalize_swipe_action
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.ui.icons.all_mail_icon
@@ -214,11 +217,14 @@ fun InboxScreen(
     display_title: String? = null,
     inbox_category: String = "primary",
     on_folder_change: (String) -> Unit = {},
-    custom_folders: List<Pair<String, String>> = emptyList(),
+    custom_folders: List<quick_folder_node> = emptyList(),
     on_custom_folder_change: (String, String) -> Unit = { _, _ -> },
     folder_unread_counts: Map<String, Int> = emptyMap(),
     on_customize_toolbar: () -> Unit = {},
     scroll_top_token: Int = 0,
+    all_mail_include_spam: Boolean = false,
+    all_mail_include_trash: Boolean = false,
+    on_all_mail_scope_change: (Boolean, Boolean) -> Unit = { _, _ -> },
 ) {
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
@@ -1470,6 +1476,9 @@ fun InboxScreen(
                         custom_folders = custom_folders,
                         on_custom_folder_change = on_custom_folder_change,
                         folder_unread_counts = folder_unread_counts,
+                        all_mail_include_spam = all_mail_include_spam,
+                        all_mail_include_trash = all_mail_include_trash,
+                        on_all_mail_scope_change = on_all_mail_scope_change,
                     )
                 }
             }
@@ -1696,6 +1705,127 @@ internal val quick_switch_folders = listOf(
     quick_switch_folder("all", R.string.folder_all_mail, all_mail_icon),
 )
 
+data class quick_folder_node(
+    val id: String,
+    val name: String,
+    val depth: Int,
+    val has_children: Boolean,
+    val parent_id: String?,
+)
+
+private fun folder_ancestor_ids(nodes: List<quick_folder_node>, id: String?): Set<String> {
+    if (id == null) return emptySet()
+    val by_id = nodes.associateBy { it.id }
+    val result = mutableSetOf<String>()
+    var current = by_id[id]?.parent_id
+    while (current != null && result.add(current)) {
+        current = by_id[current]?.parent_id
+    }
+    return result
+}
+
+@Composable
+private fun folder_tree_dropdown_items(
+    nodes: List<quick_folder_node>,
+    current_folder: String,
+    folder_unread_counts: Map<String, Int>,
+    on_select: (String, String) -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val expanded = remember(nodes, current_folder) {
+        mutableStateListOf<String>().apply { addAll(folder_ancestor_ids(nodes, current_folder)) }
+    }
+    val by_id = remember(nodes) { nodes.associateBy { it.id } }
+    val visible = nodes.filter { node ->
+        var parent = node.parent_id
+        var shown = true
+        while (parent != null) {
+            if (parent !in expanded) {
+                shown = false
+                break
+            }
+            parent = by_id[parent]?.parent_id
+        }
+        shown
+    }
+    visible.forEach { node ->
+        val is_expanded = node.id in expanded
+        aster_dropdown_item(
+            label = node.name,
+            icon = TablerIcons.Folder,
+            selected = node.id == current_folder,
+            count = folder_unread_counts[node.id] ?: 0,
+            indent = (node.depth * 14).dp,
+            leading = {
+                if (node.has_children) {
+                    Box(
+                        modifier = Modifier
+                            .size(22.dp)
+                            .clip(SquircleShape(8.dp))
+                            .clickable {
+                                if (is_expanded) expanded.remove(node.id) else expanded.add(node.id)
+                            },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = if (is_expanded) TablerIcons.ChevronDown else TablerIcons.ChevronRight,
+                            contentDescription = stringResource(
+                                if (is_expanded) R.string.collapse_folder else R.string.expand_folder,
+                                node.name,
+                            ),
+                            tint = colors.text_muted,
+                            modifier = Modifier.size(16.dp),
+                        )
+                    }
+                } else {
+                    Spacer(Modifier.width(22.dp))
+                }
+            },
+            on_click = { on_select(node.id, node.name) },
+        )
+    }
+}
+
+@Composable
+private fun all_mail_scope_chip(
+    label: String,
+    active: Boolean,
+    on_click: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier
+            .clip(SquircleShape(14.dp))
+            .background(if (active) colors.accent_blue.copy(alpha = 0.16f) else Color.Transparent)
+            .border(
+                1.dp,
+                if (active) colors.accent_blue.copy(alpha = 0.5f) else colors.border_primary,
+                SquircleShape(14.dp),
+            )
+            .clickable(onClick = on_click)
+            .padding(horizontal = 10.dp, vertical = 5.dp)
+            .testTag("all_mail_chip_$label"),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (active) {
+            Icon(
+                imageVector = TablerIcons.Check,
+                contentDescription = null,
+                tint = colors.accent_blue,
+                modifier = Modifier.size(14.dp),
+            )
+            Spacer(Modifier.width(4.dp))
+        }
+        Text(
+            text = label,
+            color = if (active) colors.accent_blue else colors.text_secondary,
+            fontSize = 13.sp,
+            fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium,
+            maxLines = 1,
+        )
+    }
+}
+
 @Composable
 internal fun inbox_top_bar(
     folder_title: String,
@@ -1716,9 +1846,12 @@ internal fun inbox_top_bar(
     show_divider: Boolean,
     current_folder: String = "inbox",
     on_folder_change: (String) -> Unit = {},
-    custom_folders: List<Pair<String, String>> = emptyList(),
+    custom_folders: List<quick_folder_node> = emptyList(),
     on_custom_folder_change: (String, String) -> Unit = { _, _ -> },
     folder_unread_counts: Map<String, Int> = emptyMap(),
+    all_mail_include_spam: Boolean = false,
+    all_mail_include_trash: Boolean = false,
+    on_all_mail_scope_change: (Boolean, Boolean) -> Unit = { _, _ -> },
 ) {
     val colors = AsterMaterial.colors
     val divider_alpha by animateFloatAsState(
@@ -1815,35 +1948,58 @@ internal fun inbox_top_bar(
                     on_dismiss = { folder_menu_open = false },
                 ) {
                     quick_switch_folders.forEach { entry ->
+                        val entry_selected = if (entry.id == all_mail_folder) {
+                            is_all_mail_folder(current_folder)
+                        } else {
+                            entry.id == current_folder
+                        }
                         aster_dropdown_item(
                             label = stringResource(entry.label_res),
                             icon = entry.icon,
-                            selected = entry.id == current_folder,
+                            selected = entry_selected,
                             count = folder_unread_counts[entry.id] ?: 0,
                             on_click = {
                                 folder_menu_open = false
-                                if (entry.id != current_folder) on_folder_change(entry.id)
+                                if (!entry_selected) on_folder_change(entry.id)
                             },
                         )
                     }
                     if (custom_folders.isNotEmpty()) {
                         aster_dropdown_divider()
-                        custom_folders.forEach { (id, name) ->
-                            aster_dropdown_item(
-                                label = name,
-                                icon = TablerIcons.Folder,
-                                selected = id == current_folder,
-                                count = folder_unread_counts[id] ?: 0,
-                                on_click = {
-                                    folder_menu_open = false
-                                    if (id != current_folder) on_custom_folder_change(id, name)
-                                },
-                            )
-                        }
+                        folder_tree_dropdown_items(
+                            nodes = custom_folders,
+                            current_folder = current_folder,
+                            folder_unread_counts = folder_unread_counts,
+                            on_select = { id, name ->
+                                folder_menu_open = false
+                                if (id != current_folder) on_custom_folder_change(id, name)
+                            },
+                        )
                     }
                 }
             }
-            Spacer(Modifier.weight(1f))
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .horizontalScroll(rememberScrollState()),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (is_all_mail_folder(current_folder)) {
+                    Spacer(Modifier.width(AsterSpacing.sm))
+                    all_mail_scope_chip(
+                        label = stringResource(R.string.include_spam),
+                        active = all_mail_include_spam,
+                        on_click = { on_all_mail_scope_change(!all_mail_include_spam, all_mail_include_trash) },
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    all_mail_scope_chip(
+                        label = stringResource(R.string.include_trash),
+                        active = all_mail_include_trash,
+                        on_click = { on_all_mail_scope_change(all_mail_include_spam, !all_mail_include_trash) },
+                    )
+                    Spacer(Modifier.width(AsterSpacing.sm))
+                }
+            }
             debug_build_pill_inline()
             Box {
                 AsterIconButton(

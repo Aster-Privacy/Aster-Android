@@ -76,7 +76,10 @@ class FolderSwitcherCountsTest {
                         show_divider = true,
                         current_folder = "inbox",
                         on_folder_change = {},
-                        custom_folders = listOf("f1" to "Receipts", "f2" to "My Feed"),
+                        custom_folders = listOf(
+                            quick_folder_node("f1", "Receipts", 0, false, null),
+                            quick_folder_node("f2", "My Feed", 0, false, null),
+                        ),
                         folder_unread_counts = counts,
                     )
                 }

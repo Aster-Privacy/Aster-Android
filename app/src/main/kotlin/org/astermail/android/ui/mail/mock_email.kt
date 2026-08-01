@@ -598,6 +598,9 @@ val mock_inbox_extended: List<Email> = buildList {
 
 @Composable
 fun folder_display_name(folder_id: String): String {
+    if (org.astermail.android.mail.is_all_mail_folder(folder_id)) {
+        return stringResource(R.string.folder_all_mail)
+    }
     return when (folder_id) {
         "inbox" -> stringResource(R.string.folder_inbox)
         "sent" -> stringResource(R.string.folder_sent)

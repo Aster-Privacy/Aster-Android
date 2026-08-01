@@ -2475,4 +2475,6 @@
     <string name="remove_folder_lock_message">أدخل كلمة مرور \"%1$s\" لإزالة القفل.</string>
     <string name="failed_update_folder">تعذّر تحديث المجلد</string>
     <string name="folder_actions">إجراءات المجلد</string>
+    <string name="include_spam">تضمين البريد العشوائي</string>
+    <string name="include_trash">تضمين المهملات</string>
 </resources>

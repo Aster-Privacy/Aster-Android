@@ -148,6 +148,7 @@ import org.astermail.android.ui.settings.detail.SwipeActionsScreen
 import org.astermail.android.ui.settings.detail.CustomizeToolbarScreen
 import org.astermail.android.ui.settings.detail.BillingScreen
 import org.astermail.android.ui.settings.detail.SubscriptionsScreen
+import org.astermail.android.ui.settings.detail.crypto_invoice_screen
 import org.astermail.android.ui.settings.detail.FeaturesScreen
 import org.astermail.android.ui.settings.detail.AllowListScreen
 import org.astermail.android.ui.settings.detail.BlockedSendersScreen
@@ -333,6 +334,12 @@ private object routes {
         return "recovery_key/$encoded"
     }
     const val mail_detail = "mail_detail/{email_id}"
+    const val crypto_invoice = "crypto_invoice/{invoice_id}"
+
+    fun crypto_invoice_for(invoice_id: String): String {
+        val encoded = java.net.URLEncoder.encode(invoice_id, "UTF-8")
+        return "crypto_invoice/$encoded"
+    }
     const val folder_filter = "folder/{folder_id}/{folder_name}"
     const val label_filter = "label/{label_id}/{label_name}"
     const val alias_filter = "alias/{alias_id}/{alias_name}"
@@ -1147,11 +1154,45 @@ private fun AsterNavHost() {
         composable(routes.settings_detail("customize_toolbar")) {
             CustomizeToolbarScreen(on_back = { back(); Unit })
         }
+        val open_crypto_invoice: (String) -> Unit = { id ->
+            nav_controller.navigate(routes.crypto_invoice_for(id)) { launchSingleTop = true }
+        }
         composable(routes.settings_detail("billing")) {
-            SubscriptionsScreen(on_back = { back(); Unit }, on_open = open_detail)
+            SubscriptionsScreen(
+                on_back = { back(); Unit },
+                on_open = open_detail,
+                on_open_crypto_invoice = open_crypto_invoice,
+            )
         }
         composable(routes.settings_detail("billing_addons")) {
-            SubscriptionsScreen(on_back = { back(); Unit }, on_open = open_detail, scroll_to_addons = true)
+            SubscriptionsScreen(
+                on_back = { back(); Unit },
+                on_open = open_detail,
+                scroll_to_addons = true,
+                on_open_crypto_invoice = open_crypto_invoice,
+            )
+        }
+        composable(
+            route = routes.crypto_invoice,
+            arguments = listOf(navArgument("invoice_id") { type = NavType.StringType }),
+        ) { entry ->
+            val invoice_id = entry.arguments?.getString("invoice_id").orEmpty()
+            crypto_invoice_screen(
+                invoice_id = invoice_id,
+                on_back = { back(); Unit },
+                on_go_to_inbox = {
+                    nav_controller.navigate(routes.inbox) {
+                        popUpTo(routes.inbox) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                on_view_billing = {
+                    nav_controller.navigate(routes.settings_detail("billing")) {
+                        popUpTo(routes.crypto_invoice) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+            )
         }
         composable(routes.settings_detail("features")) {
             FeaturesScreen(on_back = { back(); Unit })
@@ -1250,6 +1291,8 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     var selected_folder by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("inbox") }
     var inbox_category by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("primary") }
     var filter_kind by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
+    var all_mail_include_spam by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    var all_mail_include_trash by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var filter_value by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
     var filter_name by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
     val colors = AsterMaterial.colors
@@ -1444,7 +1487,13 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         .mapNotNull { node ->
             val readable_name = node.label.encrypted_name?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
                 ?: return@mapNotNull null
-            node.label.label_token to readable_name
+            org.astermail.android.ui.mail.quick_folder_node(
+                id = node.label.label_token,
+                name = readable_name,
+                depth = node.depth,
+                has_children = node.has_children,
+                parent_id = node.label.parent_token?.takeIf { it.isNotBlank() },
+            )
         }
 
     val quick_folder_counts = buildMap {
@@ -1551,6 +1600,11 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     }
     val effective_filter_kind = if (locked_active_folder != null) null else filter_kind
     val effective_selected_folder = if (locked_active_folder != null) "inbox" else selected_folder
+    val effective_mail_folder = if (effective_selected_folder == org.astermail.android.mail.all_mail_folder) {
+        org.astermail.android.mail.all_mail_folder_id(all_mail_include_spam, all_mail_include_trash)
+    } else {
+        effective_selected_folder
+    }
 
     androidx.compose.runtime.LaunchedEffect(locked_active_folder?.label_token) {
         val label = locked_active_folder ?: return@LaunchedEffect
@@ -1619,10 +1673,13 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                     selected_folder = id
                     scope.launch { drawer_state.close() }
                 },
-                on_navigate_alias = { _, name, routing_token ->
+                on_navigate_alias = { id, name, routing_token ->
                     scope.launch { drawer_state.close() }
                     if (routing_token != null) {
-                        nav_controller.navigate(routes.alias_filter_for(routing_token, name))
+                        filter_kind = "alias"
+                        filter_value = routing_token
+                        filter_name = name
+                        selected_folder = id
                     } else {
                         nav_controller.navigate(routes.search_for("to:$name"))
                     }
@@ -1796,12 +1853,10 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             filter_name = ""
                             selected_folder = "inbox"
                         }
-                        val effective_folder = when (effective_filter_kind) {
-                            "label" -> "label:$filter_value"
-                            "tag" -> "tag:$filter_value"
-                            "folder" -> filter_value
-                            else -> "inbox"
-                        }
+                        val effective_folder = org.astermail.android.mail.mail_folder_for_filter(
+                            effective_filter_kind,
+                            filter_value,
+                        )
                         InboxScreen(
                             on_open_drawer = { scope.launch { drawer_state.open() } },
                             on_open_search = { nav_controller.navigate(routes.search_for_folder(effective_folder)) },
@@ -1874,7 +1929,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             },
                             on_open_settings = { nav_controller.navigate(routes.settings) },
                             on_open_upgrade = { nav_controller.navigate(routes.settings_detail("billing")) },
-                            current_folder = effective_selected_folder,
+                            current_folder = effective_mail_folder,
                             inbox_category = inbox_category,
                             display_title = if (effective_selected_folder == "inbox" && categories_enabled) category_titles[inbox_category] else null,
                             on_folder_change = { selected_folder = it },
@@ -1883,6 +1938,12 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             folder_unread_counts = quick_folder_counts,
                             on_customize_toolbar = { nav_controller.navigate(routes.settings_detail("customize_toolbar")) },
                             scroll_top_token = if (effective_selected_folder == "inbox") inbox_scroll_top_token else 0,
+                            all_mail_include_spam = all_mail_include_spam,
+                            all_mail_include_trash = all_mail_include_trash,
+                            on_all_mail_scope_change = { spam, trash ->
+                                all_mail_include_spam = spam
+                                all_mail_include_trash = trash
+                            },
                         )
                     }
                 }

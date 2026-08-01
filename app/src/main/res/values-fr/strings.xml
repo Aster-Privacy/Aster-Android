@@ -2475,4 +2475,6 @@
     <string name="remove_folder_lock_message">Saisissez le mot de passe de \"%1$s\" pour retirer le verrou.</string>
     <string name="failed_update_folder">Impossible de mettre à jour le dossier</string>
     <string name="folder_actions">Actions du dossier</string>
+    <string name="include_spam">Inclure les spams</string>
+    <string name="include_trash">Inclure la corbeille</string>
 </resources>
