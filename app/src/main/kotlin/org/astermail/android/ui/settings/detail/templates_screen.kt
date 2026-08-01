@@ -24,6 +24,7 @@ package org.astermail.android.ui.settings.detail
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -45,10 +46,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -62,7 +67,10 @@ import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterGhostButton
+import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterSecondaryButton
+import org.astermail.android.design.components.DialogConfirmStyle
+import org.astermail.android.templates.DecryptedTemplate
 import org.astermail.android.templates.TemplatesViewModel
 
 @Composable
@@ -76,8 +84,11 @@ fun TemplatesScreen(
 
     LaunchedEffect(Unit) { vm.load() }
 
+    var pending_delete by remember { mutableStateOf<DecryptedTemplate?>(null) }
+
     val draft = state.draft
     if (draft != null) {
+        BackHandler { vm.cancel_edit() }
         template_editor(
             title = if (draft.id.isBlank()) stringResource(R.string.new_template) else stringResource(R.string.edit_template),
             name = draft.name,
@@ -145,9 +156,9 @@ fun TemplatesScreen(
                     template_row(
                         name = item.name,
                         category = item.category,
-                        preview = item.content.take(120),
+                        preview = template_preview(item.content),
                         on_edit = { vm.start_edit(item.id) },
-                        on_delete = { vm.delete(item.id) },
+                        on_delete = { pending_delete = item },
                     )
                     if (index < state.items.lastIndex) AsterDivider()
                 }
@@ -155,6 +166,34 @@ fun TemplatesScreen(
         }
         v_gap(AsterSpacing.xxl)
     }
+
+    val doomed = pending_delete
+    if (doomed != null) {
+        AsterAlertDialog(
+            on_dismiss = { pending_delete = null },
+            title = stringResource(R.string.delete_template_title),
+            message = stringResource(R.string.delete_template_message),
+            confirm_label = stringResource(R.string.delete),
+            cancel_label = stringResource(R.string.cancel),
+            confirm_style = DialogConfirmStyle.destructive,
+            on_confirm = {
+                vm.delete(doomed.id)
+                pending_delete = null
+            },
+        )
+    }
+}
+
+private fun template_preview(content: String): String {
+    val without_tags = content.replace(Regex("<[^>]+>"), " ")
+    val decoded = without_tags
+        .replace("&nbsp;", " ")
+        .replace("&amp;", "&")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", "\"")
+        .replace("&#39;", "'")
+    return decoded.replace(Regex("\\s+"), " ").trim().take(120)
 }
 
 @Composable
@@ -174,26 +213,36 @@ private fun template_row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = name.ifBlank { stringResource(R.string.unnamed_template) },
-                color = colors.text_primary,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-            if (category.isNotBlank()) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = category,
-                    color = colors.accent_blue,
-                    fontSize = 12.sp,
+                    text = name.ifBlank { stringResource(R.string.unnamed_template) },
+                    color = colors.text_primary,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                Spacer(Modifier.size(AsterSpacing.sm))
+                Text(
+                    text = category.ifBlank { stringResource(R.string.template_category_general) },
+                    color = colors.text_muted,
+                    fontSize = 10.sp,
                     fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    modifier = Modifier
+                        .background(colors.bg_tertiary, RoundedCornerShape(999.dp))
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
                 )
             }
             if (preview.isNotBlank()) {
+                Spacer(Modifier.size(2.dp))
                 Text(
                     text = preview,
                     color = colors.text_tertiary,
                     fontSize = 13.sp,
                     maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
@@ -260,6 +309,12 @@ private fun template_editor(
             placeholder = stringResource(R.string.template_content_placeholder),
             on_change = on_content_change,
             min_height = 220.dp,
+        )
+        Spacer(Modifier.size(AsterSpacing.xs))
+        Text(
+            text = stringResource(R.string.template_placeholders_hint),
+            color = colors.text_muted,
+            fontSize = 12.sp,
         )
         v_gap(AsterSpacing.lg)
         AsterSecondaryButton(label = stringResource(R.string.cancel), onClick = on_back)
