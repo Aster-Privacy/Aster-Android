@@ -2037,6 +2037,8 @@
     <string name="auto_delete_spam_14">14 dniach</string>
     <string name="auto_delete_spam_30">30 dniach</string>
     <string name="auto_delete_spam_never">Nigdy (zachowuj na stałe)</string>
+    <string name="emails_per_page">Wiadomości na stronę</string>
+    <string name="emails_per_page_subtitle">Liczba wiadomości wczytywanych na stronę w Odebranych, Archiwum i innych folderach</string>
     <string name="section_protected_folders">Foldery chronione</string>
     <string name="folder_lock_mode">Tryb blokady folderu</string>
     <string name="folder_lock_session">Odblokowany na czas sesji</string>

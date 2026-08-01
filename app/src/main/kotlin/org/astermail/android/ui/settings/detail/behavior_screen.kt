@@ -169,6 +169,7 @@ fun BehaviorScreen(
     val custom_category_limit =
         plan_state.limits?.limits?.get("max_custom_categories")?.limit ?: -1
     var conversation_order by remember(prefs_loaded) { mutableStateOf(prefs?.conversation_order ?: "newest") }
+    var inbox_page_size by remember(prefs_loaded) { mutableIntStateOf(prefs?.inbox_page_size ?: 30) }
     var show_message_size by remember(prefs_loaded) { mutableStateOf(prefs?.show_message_size ?: false) }
     var force_dark_emails by remember(prefs_loaded) { mutableStateOf(prefs?.force_dark_emails ?: false) }
     var default_reply by remember(prefs_loaded) { mutableStateOf(prefs?.default_reply_behavior ?: "reply") }
@@ -203,6 +204,7 @@ fun BehaviorScreen(
                 enabled_categories = prefs.enabled_categories
                 custom_categories = prefs.custom_categories
                 conversation_order = prefs.conversation_order
+                inbox_page_size = prefs.inbox_page_size
                 show_message_size = prefs.show_message_size
                 force_dark_emails = prefs.force_dark_emails
                 default_reply = prefs.default_reply_behavior
@@ -237,6 +239,7 @@ fun BehaviorScreen(
                 enabled_categories = enabled_categories,
                 custom_categories = org.astermail.android.mail.sanitize_custom_categories(custom_categories),
                 conversation_order = conversation_order,
+                inbox_page_size = inbox_page_size.coerceIn(10, 100),
                 show_message_size = show_message_size,
                 force_dark_emails = force_dark_emails,
                 default_reply_behavior = default_reply,
@@ -353,6 +356,26 @@ fun BehaviorScreen(
                     checked = force_dark_emails,
                     on_change = { force_dark_emails = it; save_trigger++ },
                 )
+            }
+            v_gap(AsterSpacing.md)
+            AsterCard(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = stringResource(R.string.emails_per_page),
+                    color = colors.text_primary,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),
+                )
+                Text(
+                    text = stringResource(R.string.emails_per_page_subtitle),
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(start = AsterSpacing.lg, end = AsterSpacing.lg, bottom = 4.dp),
+                )
+                listOf(10, 20, 30, 50, 100).forEachIndexed { i, n ->
+                    behavior_option("$n", inbox_page_size == n) { inbox_page_size = n; save_trigger++ }
+                    if (i < 4) AsterDivider(modifier = Modifier)
+                }
             }
 
             if (inbox_categories) {

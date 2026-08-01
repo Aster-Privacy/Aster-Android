@@ -2031,6 +2031,8 @@
     <string name="auto_delete_spam_14">14 dias</string>
     <string name="auto_delete_spam_30">30 dias</string>
     <string name="auto_delete_spam_never">Nunca (guardar sempre)</string>
+    <string name="emails_per_page">E-mails por página</string>
+    <string name="emails_per_page_subtitle">Número de e-mails carregados por página na Caixa de entrada, Arquivo e outras pastas</string>
     <string name="section_protected_folders">Pastas protegidas</string>
     <string name="folder_lock_mode">Modo de bloqueio da pasta</string>
     <string name="folder_lock_session">Desbloqueada durante a sessão</string>

@@ -2043,6 +2043,8 @@
     <string name="auto_delete_spam_14">14 يومًا</string>
     <string name="auto_delete_spam_30">30 يومًا</string>
     <string name="auto_delete_spam_never">أبدًا (الاحتفاظ دائمًا)</string>
+    <string name="emails_per_page">عدد الرسائل في الصفحة</string>
+    <string name="emails_per_page_subtitle">عدد الرسائل التي يتم تحميلها في كل صفحة في البريد الوارد والأرشيف والمجلدات الأخرى</string>
     <string name="section_protected_folders">المجلدات المحمية</string>
     <string name="folder_lock_mode">وضع قفل المجلد</string>
     <string name="folder_lock_session">مفتوح طوال الجلسة</string>

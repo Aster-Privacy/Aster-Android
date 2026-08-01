@@ -307,6 +307,7 @@ class MailViewModel @Inject constructor(
     private val item_last_confirmed = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val pending_removed_ids = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
     private var list_order: String? = null
+    private var page_size: Int = 50
     private var inbox_load_job: Job? = null
     private var last_stats_load_ms = 0L
     private var stats_job: Job? = null
@@ -507,6 +508,26 @@ class MailViewModel @Inject constructor(
     fun set_list_order(order: String?) {
         if (list_order == order) return
         list_order = order
+        val folder = _inbox_state.value.current_folder
+        inbox_load_job?.cancel()
+        silent_revalidate_job?.cancel()
+        folder_cache.clear()
+        folder_cache_time.clear()
+        _inbox_state.value = _inbox_state.value.copy(
+            items = emptyList(),
+            is_loading = true,
+            initial = true,
+            error = null,
+            has_more = false,
+            next_cursor = null,
+        )
+        load_inbox(folder, force = true)
+    }
+
+    fun set_page_size(size: Int) {
+        val clamped = size.coerceIn(10, 100)
+        if (page_size == clamped) return
+        page_size = clamped
         val folder = _inbox_state.value.current_folder
         inbox_load_job?.cancel()
         silent_revalidate_job?.cancel()
@@ -2699,7 +2720,7 @@ class MailViewModel @Inject constructor(
     private suspend fun fetch_for_folder(
         folder: String,
         cursor: String? = null,
-        limit: Int = 50,
+        limit: Int = page_size,
     ): Result<InboxPage> = when (folder) {
         "inbox" -> repository.fetch_inbox(limit = limit, cursor = cursor, order = list_order)
         "sent" -> repository.fetch_sent(limit = limit, cursor = cursor, order = list_order)

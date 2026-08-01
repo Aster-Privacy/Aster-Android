@@ -509,6 +509,7 @@ internal val settings_search_index: List<settings_index_entry> = listOf(
     settings_index_entry("behavior", R.string.settings_behavior, R.string.show_message_size_subtitle, false),
     settings_index_entry("behavior", R.string.settings_behavior, R.string.force_dark_emails, false),
     settings_index_entry("behavior", R.string.settings_behavior, R.string.force_dark_emails_subtitle, false),
+    settings_index_entry("behavior", R.string.settings_behavior, R.string.emails_per_page, false),
     settings_index_entry("behavior", R.string.settings_behavior, R.string.section_translation, false),
     settings_index_entry("behavior", R.string.settings_behavior, R.string.translate_incoming_label, false),
     settings_index_entry("behavior", R.string.settings_behavior, R.string.translate_incoming_subtitle, false),

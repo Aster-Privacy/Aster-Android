@@ -2028,6 +2028,8 @@
     <string name="auto_delete_spam_14">14 天</string>
     <string name="auto_delete_spam_30">30 天</string>
     <string name="auto_delete_spam_never">从不（一直保留）</string>
+    <string name="emails_per_page">每页邮件数</string>
+    <string name="emails_per_page_subtitle">收件箱、归档和其他文件夹中每页加载的邮件数量</string>
     <string name="section_protected_folders">受保护的文件夹</string>
     <string name="folder_lock_mode">文件夹锁定方式</string>
     <string name="folder_lock_session">本次会话内保持解锁</string>
