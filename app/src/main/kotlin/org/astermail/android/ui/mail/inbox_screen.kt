@@ -39,7 +39,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import kotlin.math.abs
+import kotlin.math.sign
 import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
@@ -50,6 +52,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
@@ -82,11 +85,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.pullToRefresh
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -2449,12 +2449,6 @@ private fun overflow_sheet_row(
     }
 }
 
-private fun is_removing_swipe_action(action: String): Boolean = action in setOf(
-    "archive", "trash", "spam", "move_to_inbox", "unarchive",
-    "restore_trash", "unmark_spam", "delete_permanent",
-)
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun swipeable_thread_row(
     thread: ThreadRow,
@@ -2479,119 +2473,38 @@ private fun swipeable_thread_row(
     user_prefs: org.astermail.android.api.preferences.UserPreferences? = null,
     list_scrolling: () -> Boolean = { false },
 ) {
-    val colors = AsterMaterial.colors
-    var gesture_is_horizontal by remember { mutableStateOf(true) }
-    var is_dismissed by remember { mutableStateOf(false) }
-    val dismiss_state = rememberSwipeToDismissBoxState(
-        confirmValueChange = { value ->
-            when (value) {
-                SwipeToDismissBoxValue.StartToEnd -> {
-                    val removing = is_removing_swipe_action(swipe_start_action)
-                    if (removing) is_dismissed = true
-                    on_swipe_start()
-                    removing
-                }
-                SwipeToDismissBoxValue.EndToStart -> {
-                    val removing = is_removing_swipe_action(swipe_end_action)
-                    if (removing) is_dismissed = true
-                    on_swipe_end()
-                    removing
-                }
-                SwipeToDismissBoxValue.Settled -> false
-            }
-        },
-        positionalThreshold = { total_distance -> total_distance * 0.55f },
-    )
-
-    Box(
-        modifier = modifier.pointerInput(Unit) {
-            awaitEachGesture {
-                awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-                val swipe_allowed = !list_scrolling()
-                gesture_is_horizontal = swipe_allowed
-                var dx = 0f
-                var dy = 0f
-                while (true) {
-                    val event = awaitPointerEvent(PointerEventPass.Initial)
-                    val change = event.changes.firstOrNull() ?: break
-                    if (!change.pressed) { gesture_is_horizontal = true; break }
-                    val delta = change.position - change.previousPosition
-                    dx += kotlin.math.abs(delta.x)
-                    dy += kotlin.math.abs(delta.y)
-                    if (dx + dy > viewConfiguration.touchSlop) {
-                        gesture_is_horizontal = swipe_allowed && dx > dy * 2.5f
-                        break
-                    }
-                }
-            }
-        },
+    swipe_action_row(
+        start_action = swipe_start_action,
+        end_action = swipe_end_action,
+        start_label = swipe_start_label,
+        end_label = swipe_end_label,
+        start_icon = swipe_start_icon,
+        end_icon = swipe_end_icon,
+        start_color = swipe_start_color,
+        end_color = swipe_end_color,
+        on_swipe_start = on_swipe_start,
+        on_swipe_end = on_swipe_end,
+        modifier = modifier,
+        background_shape = inbox_group_shape(is_first, is_last),
+        background_padding = PaddingValues(
+            start = inbox_card_horizontal_margin,
+            end = inbox_card_horizontal_margin,
+            bottom = if (is_last) 0.dp else inbox_group_split,
+        ),
+        haptic_enabled = haptic_enabled,
+        list_scrolling = list_scrolling,
     ) {
-        SwipeToDismissBox(
-            state = dismiss_state,
-            modifier = Modifier,
-            gesturesEnabled = gesture_is_horizontal && !is_dismissed,
-            enableDismissFromStartToEnd = swipe_start_action != "none",
-            enableDismissFromEndToStart = swipe_end_action != "none",
-            backgroundContent = {
-                val direction = dismiss_state.dismissDirection
-                val (bg, align, icon, label) = when (direction) {
-                    SwipeToDismissBoxValue.StartToEnd -> Quad(
-                        swipe_start_color, Alignment.CenterStart, swipe_start_icon, swipe_start_label,
-                    )
-                    SwipeToDismissBoxValue.EndToStart -> Quad(
-                        swipe_end_color, Alignment.CenterEnd, swipe_end_icon, swipe_end_label,
-                    )
-                    SwipeToDismissBoxValue.Settled -> Quad(
-                        Color.Transparent, Alignment.CenterStart, swipe_start_icon, "",
-                    )
-                }
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(
-                            start = inbox_card_horizontal_margin,
-                            end = inbox_card_horizontal_margin,
-                            bottom = if (is_last) 0.dp else inbox_group_split,
-                        )
-                        .clip(inbox_group_shape(is_first, is_last))
-                        .background(bg)
-                        .padding(horizontal = AsterSpacing.xl),
-                    contentAlignment = align,
-                ) {
-                    if (direction != SwipeToDismissBoxValue.Settled) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = icon,
-                                contentDescription = label,
-                                tint = Color.White,
-                                modifier = Modifier.size(22.dp),
-                            )
-                            Spacer(Modifier.width(AsterSpacing.sm))
-                            Text(
-                                text = label,
-                                color = Color.White,
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                        }
-                    }
-                }
-            },
-        ) {
-            Box {
-                ThreadInboxRow(
-                    thread = thread,
-                    on_click = on_click,
-                    on_long_click = on_long_click,
-                    on_toggle_star = on_toggle_star,
-                    is_pinned = is_pinned,
-                    haptic_enabled = haptic_enabled,
-                    is_first = is_first,
-                    is_last = is_last,
-                    user_prefs = user_prefs,
-                )
-            }
-        }
+        ThreadInboxRow(
+            thread = thread,
+            on_click = on_click,
+            on_long_click = on_long_click,
+            on_toggle_star = on_toggle_star,
+            is_pinned = is_pinned,
+            haptic_enabled = haptic_enabled,
+            is_first = is_first,
+            is_last = is_last,
+            user_prefs = user_prefs,
+        )
     }
 }
 
