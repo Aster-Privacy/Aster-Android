@@ -246,6 +246,48 @@ data class PatchMetadataResponse(
 )
 
 @Serializable
+data class BulkLabelRequest(
+    val ids: List<String>,
+    val label_token: String,
+)
+
+@Serializable
+data class BulkTagRequest(
+    val ids: List<String>,
+    val tag_token: String,
+)
+
+@Serializable
+data class BulkLabelResponse(
+    val status: String = "",
+    val affected: Int = 0,
+)
+
+@Serializable
+data class BulkPatchMetadataItem(
+    val id: String,
+    val encrypted_metadata: String? = null,
+    val metadata_nonce: String? = null,
+    val is_read: Boolean? = null,
+    val is_starred: Boolean? = null,
+    val is_pinned: Boolean? = null,
+    val is_trashed: Boolean? = null,
+    val is_archived: Boolean? = null,
+    val is_spam: Boolean? = null,
+)
+
+@Serializable
+data class BulkPatchMetadataRequest(
+    val items: List<BulkPatchMetadataItem>,
+)
+
+@Serializable
+data class BulkPatchMetadataResponse(
+    val success: Boolean = false,
+    val updated_count: Int = 0,
+)
+
+@Serializable
 data class BulkScopeRequest(
     val action: String,
     val ids: List<String>? = null,

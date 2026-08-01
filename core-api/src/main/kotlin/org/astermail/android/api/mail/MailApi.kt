@@ -82,6 +82,16 @@ interface MailApi {
 
     suspend fun bulk_action(request: BulkScopeRequest): BulkScopeResponse
 
+    suspend fun bulk_patch_metadata(request: BulkPatchMetadataRequest): BulkPatchMetadataResponse
+
+    suspend fun bulk_add_label(request: BulkLabelRequest): BulkLabelResponse
+
+    suspend fun bulk_remove_label(request: BulkLabelRequest): BulkLabelResponse
+
+    suspend fun bulk_add_tag(request: BulkTagRequest): BulkLabelResponse
+
+    suspend fun bulk_remove_tag(request: BulkTagRequest): BulkLabelResponse
+
     suspend fun report_spam_sender(request: SpamSenderRequest): SpamSenderResponse
 
     suspend fun remove_spam_sender(sender_hash: String, sender_domain_hash: String?): SpamSenderResponse
@@ -277,6 +287,47 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
 
     override suspend fun bulk_action(request: BulkScopeRequest): BulkScopeResponse {
         val response = client.http.post("${client.base_url}$base/messages/bulk/scope") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun bulk_patch_metadata(
+        request: BulkPatchMetadataRequest,
+    ): BulkPatchMetadataResponse {
+        val response = client.http.put("${client.base_url}$base/messages/bulk/metadata") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun bulk_add_label(request: BulkLabelRequest): BulkLabelResponse =
+        post_bulk_label("${client.base_url}$base/messages/bulk/labels", request)
+
+    override suspend fun bulk_remove_label(request: BulkLabelRequest): BulkLabelResponse =
+        post_bulk_label("${client.base_url}$base/messages/bulk/labels/remove", request)
+
+    override suspend fun bulk_add_tag(request: BulkTagRequest): BulkLabelResponse =
+        post_bulk_tag("${client.base_url}$base/messages/bulk/tags", request)
+
+    override suspend fun bulk_remove_tag(request: BulkTagRequest): BulkLabelResponse =
+        post_bulk_tag("${client.base_url}$base/messages/bulk/tags/remove", request)
+
+    private suspend fun post_bulk_label(url: String, request: BulkLabelRequest): BulkLabelResponse {
+        val response = client.http.post(url) {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    private suspend fun post_bulk_tag(url: String, request: BulkTagRequest): BulkLabelResponse {
+        val response = client.http.post(url) {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)

@@ -30,6 +30,10 @@ import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
+import org.astermail.android.api.mail.BulkLabelRequest
+import org.astermail.android.api.mail.BulkLabelResponse
+import org.astermail.android.api.mail.BulkPatchMetadataRequest
+import org.astermail.android.api.mail.BulkPatchMetadataResponse
 import org.astermail.android.api.mail.BulkScopeFilter
 import org.astermail.android.api.mail.BulkScopeRequest
 import org.astermail.android.api.mail.BulkScopeResponse
@@ -415,6 +419,130 @@ class MailRepositoryTest {
                 ),
             )
         }
+    }
+
+    @Test
+    fun `archive sends one batched metadata request instead of one per item`() = runTest {
+        coEvery { mail_api.bulk_action(any()) } returns BulkScopeResponse(affected_count = 3)
+        val captured = slot<BulkPatchMetadataRequest>()
+        coEvery { mail_api.bulk_patch_metadata(capture(captured)) } returns
+            BulkPatchMetadataResponse(success = true, updated_count = 3)
+
+        repo.archive(listOf("a", "b", "c"))
+
+        coVerify(exactly = 1) { mail_api.bulk_patch_metadata(any()) }
+        coVerify(exactly = 0) { mail_api.patch_metadata(any(), any()) }
+        assertEquals(listOf("a", "b", "c"), captured.captured.items.map { it.id })
+        assertTrue(captured.captured.items.all { it.is_archived == true })
+    }
+
+    @Test
+    fun `batched metadata splits into chunks of one hundred`() = runTest {
+        coEvery { mail_api.bulk_action(any()) } returns BulkScopeResponse(affected_count = 250)
+        val captured = mutableListOf<BulkPatchMetadataRequest>()
+        coEvery { mail_api.bulk_patch_metadata(capture(captured)) } returns
+            BulkPatchMetadataResponse(success = true, updated_count = 100)
+
+        repo.archive((1..250).map { "item_$it" })
+
+        assertEquals(listOf(100, 100, 50), captured.map { it.items.size })
+    }
+
+    @Test
+    fun `a failed metadata batch falls back to per item patches`() = runTest {
+        coEvery { mail_api.bulk_action(any()) } returns BulkScopeResponse(affected_count = 2)
+        coEvery { mail_api.bulk_patch_metadata(any()) } throws RuntimeException("batch rejected")
+
+        val result = repo.unarchive(listOf("a", "b"))
+
+        assertTrue(result.isSuccess)
+        coVerify(exactly = 1) { mail_api.patch_metadata("a", any()) }
+        coVerify(exactly = 1) { mail_api.patch_metadata("b", any()) }
+    }
+
+    @Test
+    fun `unarchive fails when both the batch and the per item fallback fail`() = runTest {
+        coEvery { mail_api.bulk_action(any()) } returns BulkScopeResponse(affected_count = 2)
+        coEvery { mail_api.bulk_patch_metadata(any()) } throws RuntimeException("batch rejected")
+        coEvery { mail_api.patch_metadata(any(), any()) } throws RuntimeException("patch rejected")
+
+        val result = repo.unarchive(listOf("a", "b"))
+
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `star_bulk batches the metadata patch for every selected item`() = runTest {
+        val captured = slot<BulkPatchMetadataRequest>()
+        coEvery { mail_api.bulk_patch_metadata(capture(captured)) } returns
+            BulkPatchMetadataResponse(success = true, updated_count = 2)
+
+        val result = repo.star_bulk(listOf("a", "b"), true)
+
+        assertTrue(result.isSuccess)
+        coVerify(exactly = 0) { mail_api.patch_metadata(any(), any()) }
+        assertTrue(captured.captured.items.all { it.is_starred == true })
+    }
+
+    @Test
+    fun `star_scope sends the star action scoped to the folder`() = runTest {
+        coEvery { mail_api.bulk_action(any()) } returns BulkScopeResponse(affected_count = 4200)
+
+        val result = repo.star_scope("inbox", true)
+
+        assertEquals(4200, result.getOrThrow().affected_count)
+        coVerify {
+            mail_api.bulk_action(
+                BulkScopeRequest(action = "star", scope = BulkScopeFilter(item_type = "received")),
+            )
+        }
+    }
+
+    @Test
+    fun `star_scope sends the unstar action when clearing stars`() = runTest {
+        coEvery { mail_api.bulk_action(any()) } returns BulkScopeResponse(affected_count = 12)
+
+        repo.star_scope("starred", false)
+
+        coVerify {
+            mail_api.bulk_action(
+                BulkScopeRequest(action = "unstar", scope = BulkScopeFilter(is_starred = true)),
+            )
+        }
+    }
+
+    @Test
+    fun `add_label_bulk chunks ids and reports no failures on success`() = runTest {
+        val captured = mutableListOf<BulkLabelRequest>()
+        coEvery { mail_api.bulk_add_label(capture(captured)) } returns BulkLabelResponse("ok", 100)
+
+        val failed = repo.add_label_bulk((1..150).map { "item_$it" }, "work_token")
+
+        assertTrue(failed.isEmpty())
+        assertEquals(listOf(100, 50), captured.map { it.ids.size })
+        assertTrue(captured.all { it.label_token == "work_token" })
+    }
+
+    @Test
+    fun `add_label_bulk falls back per item and reports the ids that failed`() = runTest {
+        coEvery { mail_api.bulk_add_label(any()) } throws RuntimeException("bulk unavailable")
+        coEvery { mail_api.add_label_to_item("b", any()) } throws RuntimeException("nope")
+
+        val failed = repo.add_label_bulk(listOf("a", "b"), "work_token")
+
+        assertEquals(setOf("b"), failed)
+        coVerify(exactly = 1) { mail_api.add_label_to_item("a", "work_token") }
+    }
+
+    @Test
+    fun `add_tag_bulk falls back per item and reports the ids that failed`() = runTest {
+        coEvery { mail_api.bulk_add_tag(any()) } throws RuntimeException("bulk unavailable")
+        coEvery { mail_api.add_tag_to_item("y", any()) } throws RuntimeException("nope")
+
+        val failed = repo.add_tag_bulk(listOf("x", "y"), "tag_token")
+
+        assertEquals(setOf("y"), failed)
+        coVerify(exactly = 1) { mail_api.add_tag_to_item("x", "tag_token") }
     }
 
     @Test

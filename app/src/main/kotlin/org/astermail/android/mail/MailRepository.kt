@@ -42,9 +42,13 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.astermail.android.api.mail.BulkLabelRequest
+import org.astermail.android.api.mail.BulkPatchMetadataItem
+import org.astermail.android.api.mail.BulkPatchMetadataRequest
 import org.astermail.android.api.mail.BulkScopeFilter
 import org.astermail.android.api.mail.BulkScopeRequest
 import org.astermail.android.api.mail.BulkScopeResponse
+import org.astermail.android.api.mail.BulkTagRequest
 import org.astermail.android.api.mail.CreateAttachmentRequestBody
 import org.astermail.android.api.mail.CreateMailItemRequest
 import org.astermail.android.api.mail.MailApi
@@ -89,6 +93,8 @@ private const val OUTBOX_FILE_REF_PREFIX = "@file:"
 private const val EMPTY_ATTACHMENTS_JSON = "[]"
 private const val METADATA_PATCH_ATTEMPTS = 3
 private const val METADATA_PATCH_RETRY_DELAY_MS = 400L
+private const val METADATA_PATCH_BATCH_SIZE = 100
+private const val METADATA_RESOLVE_CONCURRENCY = 8
 
 data class DecryptedEnvelope(
     val subject: String,
@@ -981,6 +987,52 @@ class MailRepository @Inject constructor(
         mail_api.remove_tag_from_item(item_id, tag_token)
     }
 
+    private suspend fun bulk_membership(
+        item_ids: List<String>,
+        per_item: suspend (String) -> Unit,
+        per_chunk: suspend (List<String>) -> Unit,
+    ): Set<String> {
+        val failed = mutableSetOf<String>()
+        item_ids.chunked(METADATA_PATCH_BATCH_SIZE).forEach { chunk ->
+            if (runCatching { per_chunk(chunk) }.isSuccess) return@forEach
+            chunk.forEach { item_id ->
+                if (runCatching { per_item(item_id) }.isFailure) failed.add(item_id)
+            }
+        }
+        return failed
+    }
+
+    suspend fun add_label_bulk(item_ids: List<String>, label_token: String): Set<String> =
+        bulk_membership(
+            item_ids,
+            per_item = { mail_api.add_label_to_item(it, label_token) },
+            per_chunk = { mail_api.bulk_add_label(BulkLabelRequest(ids = it, label_token = label_token)) },
+        )
+
+    suspend fun add_tag_bulk(item_ids: List<String>, tag_token: String): Set<String> =
+        bulk_membership(
+            item_ids,
+            per_item = { mail_api.add_tag_to_item(it, tag_token) },
+            per_chunk = { mail_api.bulk_add_tag(BulkTagRequest(ids = it, tag_token = tag_token)) },
+        )
+
+    suspend fun star_bulk(
+        item_ids: List<String>,
+        is_starred: Boolean,
+        raw_items: List<MailItem?> = emptyList(),
+    ): Result<Unit> = runCatching {
+        patch_metadata_for_items(item_ids, raw_items, mapOf("is_starred" to is_starred), require_patch = true)
+    }
+
+    suspend fun star_scope(folder: String, is_starred: Boolean): Result<BulkScopeResponse> = runCatching {
+        mail_api.bulk_action(
+            BulkScopeRequest(
+                action = if (is_starred) "star" else "unstar",
+                scope = folder_to_bulk_scope(folder),
+            ),
+        )
+    }
+
     private suspend fun patch_metadata_with_retry(
         item_id: String,
         request: PatchMetadataRequest,
@@ -994,17 +1046,67 @@ class MailRepository @Inject constructor(
         return false
     }
 
+    private suspend fun resolve_raw_items(
+        item_ids: List<String>,
+        raw_items: List<MailItem?>,
+    ): List<MailItem?> {
+        val resolved = arrayOfNulls<MailItem>(item_ids.size)
+        val missing = mutableListOf<Int>()
+        item_ids.indices.forEach { index ->
+            val known = raw_items.getOrNull(index)
+            if (known != null) resolved[index] = known else missing.add(index)
+        }
+        missing.chunked(METADATA_RESOLVE_CONCURRENCY).forEach { chunk ->
+            coroutineScope {
+                chunk.map { index ->
+                    async(Dispatchers.IO) { index to resolve_raw_item(item_ids[index]) }
+                }.awaitAll()
+            }.forEach { (index, item) -> resolved[index] = item }
+        }
+        return resolved.toList()
+    }
+
+    private suspend fun bulk_patch_with_retry(items: List<BulkPatchMetadataItem>): Boolean {
+        repeat(METADATA_PATCH_ATTEMPTS) { attempt ->
+            val result = runCatching { mail_api.bulk_patch_metadata(BulkPatchMetadataRequest(items)) }
+            if (result.isSuccess) return true
+            if (attempt < METADATA_PATCH_ATTEMPTS - 1) {
+                delay(METADATA_PATCH_RETRY_DELAY_MS * (attempt + 1))
+            }
+        }
+        return false
+    }
+
     private suspend fun patch_metadata_for_items(
         item_ids: List<String>,
         raw_items: List<MailItem?>,
         updates: Map<String, Any>,
         require_patch: Boolean = false,
     ) {
+        if (item_ids.isEmpty()) return
+        val resolved = resolve_raw_items(item_ids, raw_items)
+        val requests = item_ids.mapIndexed { index, item_id ->
+            item_id to build_metadata_patch(resolved.getOrNull(index), updates)
+        }
         var failures = 0
-        item_ids.forEachIndexed { index, item_id ->
-            val raw_item = raw_items.getOrNull(index) ?: resolve_raw_item(item_id)
-            val request = build_metadata_patch(raw_item, updates)
-            if (!patch_metadata_with_retry(item_id, request)) failures++
+        requests.chunked(METADATA_PATCH_BATCH_SIZE).forEach { chunk ->
+            val batch = chunk.map { (item_id, request) ->
+                BulkPatchMetadataItem(
+                    id = item_id,
+                    encrypted_metadata = request.encrypted_metadata,
+                    metadata_nonce = request.metadata_nonce,
+                    is_read = request.is_read,
+                    is_starred = request.is_starred,
+                    is_pinned = request.is_pinned,
+                    is_trashed = request.is_trashed,
+                    is_archived = request.is_archived,
+                    is_spam = request.is_spam,
+                )
+            }
+            if (bulk_patch_with_retry(batch)) return@forEach
+            chunk.forEach { (item_id, request) ->
+                if (!patch_metadata_with_retry(item_id, request)) failures++
+            }
         }
         if (require_patch && failures > 0) {
             throw IllegalStateException("metadata patch failed for $failures of ${item_ids.size} items")
