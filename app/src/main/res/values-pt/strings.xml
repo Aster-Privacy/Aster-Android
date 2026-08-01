@@ -780,7 +780,7 @@
     <string name="how_it_works">Como funciona</string>
     <string name="referral_step_1">Compartilhe seu link de indicação com quem você acha que gostaria do Aster.</string>
     <string name="referral_step_2">Eles se cadastram com seu link e assinam um plano pago.</string>
-    <string name="referral_step_3">Vocês dois ganham $10 em crédito Aster, aplicado na próxima renovação.</string>
+    <string name="referral_step_3">Você ganha uma parte de cada pagamento, creditada automaticamente no seu saldo.</string>
     <string name="rewards">Recompensas</string>
     <string name="reward_amount">$10 para você, $10 para seu amigo quando ele se cadastrar no Aster.</string>
     <string name="reward_recurring">Você também recebe 5% de cada pagamento que eles fizerem enquanto estiverem inscritos.</string>
@@ -792,6 +792,9 @@
     <string name="referral_history_empty_hint">Os amigos que você convidar aparecerão aqui.</string>
     <string name="referral_commission_info">Você também ganha %1$d%% de cada pagamento enquanto eles continuarem assinantes.</string>
     <string name="referral_max_credits">%1$s de %2$s em crédito de indicação obtido</string>
+    <string name="referral_program_description">Convide amigos para o Aster e ganhe crédito em cada pagamento que eles fizerem.</string>
+    <string name="referral_reward_info">Seu amigo ganha um desconto no primeiro pagamento e você ganha em cada pagamento que ele fizer.</string>
+    <string name="referral_gauge_earned_label">Ganho</string>
 
     <string name="billing">Faturamento</string>
     <string name="billing_load_error">Não foi possível carregar informações de faturamento. Verifique sua conexão e tente novamente.</string>
@@ -896,6 +899,11 @@
     <string name="template_category_placeholder">Suporte</string>
     <string name="template_content">Conteúdo</string>
     <string name="template_content_placeholder">Digite o corpo do seu modelo...</string>
+    <string name="template_content_required">Adicione conteúdo a este modelo.</string>
+    <string name="template_placeholders_hint">Use marcadores como [Nome], [Data], etc. para personalizar ao usar.</string>
+    <string name="template_category_general">Geral</string>
+    <string name="delete_template_title">Excluir modelo</string>
+    <string name="delete_template_message">Tem certeza de que deseja excluir este modelo? Esta ação não pode ser desfeita.</string>
     <string name="unnamed_template">(sem nome)</string>
     <string name="unnamed_folder">(sem nome)</string>
     <string name="new_label">Novo</string>

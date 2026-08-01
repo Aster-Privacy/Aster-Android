@@ -780,7 +780,7 @@
     <string name="how_it_works">كيف يعمل</string>
     <string name="referral_step_1">شارك رابط الإحالة مع أي شخص تعتقد أنه سيحب Aster.</string>
     <string name="referral_step_2">يسجلون باستخدام رابطك ويشتركون في خطة مدفوعة.</string>
-    <string name="referral_step_3">يحصل كلٌّ منكما على $10 من رصيد Aster، يُطبَّق على تجديدك التالي.</string>
+    <string name="referral_step_3">تكسب حصة من كل دفعة يقوم بها، تُضاف تلقائيًا إلى رصيدك.</string>
     <string name="rewards">المكافآت</string>
     <string name="reward_amount">$10 لك، $10 لصديقك عندما يسجل في Aster.</string>
     <string name="reward_recurring">تحصل أيضاً على 5% من كل دفعة يقومون بها طوال فترة اشتراكهم.</string>
@@ -792,6 +792,9 @@
     <string name="referral_history_empty_hint">سيظهر هنا الأصدقاء الذين تدعوهم.</string>
     <string name="referral_commission_info">تحصل أيضًا على %1$d%% من كل دفعة يقومون بها ما داموا مشتركين.</string>
     <string name="referral_max_credits">تم كسب %1$s من %2$s من رصيد الإحالات</string>
+    <string name="referral_program_description">ادعُ أصدقاءك إلى Aster واكسب رصيدًا من كل دفعة يقومون بها.</string>
+    <string name="referral_reward_info">يحصل صديقك على خصم على أول دفعة، وتكسب أنت من كل دفعة يقوم بها.</string>
+    <string name="referral_gauge_earned_label">المكتسب</string>
 
     <string name="billing">الفوترة</string>
     <string name="billing_load_error">تعذر تحميل معلومات الفوترة. يرجى التحقق من اتصالك والمحاولة مرة أخرى.</string>
@@ -896,6 +899,11 @@
     <string name="template_category_placeholder">دعم</string>
     <string name="template_content">المحتوى</string>
     <string name="template_content_placeholder">اكتب نص القالب...</string>
+    <string name="template_content_required">أضف محتوى لهذا القالب.</string>
+    <string name="template_placeholders_hint">استخدم العناصر النائبة مثل [الاسم]، [التاريخ]، إلخ. للتخصيص عند الاستخدام.</string>
+    <string name="template_category_general">عام</string>
+    <string name="delete_template_title">حذف القالب</string>
+    <string name="delete_template_message">هل أنت متأكد أنك تريد حذف هذا القالب؟ لا يمكن التراجع عن هذا الإجراء.</string>
     <string name="unnamed_template">(بدون اسم)</string>
     <string name="unnamed_folder">(بدون اسم)</string>
     <string name="new_label">جديد</string>

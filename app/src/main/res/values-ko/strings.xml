@@ -780,7 +780,7 @@
     <string name="how_it_works">사용 방법</string>
     <string name="referral_step_1">Aster를 좋아할 만한 사람에게 추천 링크를 공유하세요.</string>
     <string name="referral_step_2">상대방이 링크를 통해 가입하고 유료 플랜을 구독합니다.</string>
-    <string name="referral_step_3">나와 친구 모두 $10의 Aster 크레딧을 받아 다음 갱신에 적용됩니다.</string>
+    <string name="referral_step_3">친구가 결제할 때마다 일정 비율을 적립받으며, 잔액에 자동으로 반영됩니다.</string>
     <string name="rewards">보상</string>
     <string name="reward_amount">친구가 Aster에 가입하면 나에게 $10, 친구에게 $10.</string>
     <string name="reward_recurring">또한 친구가 구독하는 동안 모든 결제의 5%를 받습니다.</string>
@@ -792,6 +792,9 @@
     <string name="referral_history_empty_hint">초대한 친구가 여기에 표시됩니다.</string>
     <string name="referral_commission_info">구독을 유지하는 동안 결제 금액의 %1$d%%도 함께 받습니다.</string>
     <string name="referral_max_credits">추천 크레딧 %2$s 중 %1$s 적립</string>
+    <string name="referral_program_description">친구를 Aster에 초대하고 친구가 결제할 때마다 크레딧을 적립하세요.</string>
+    <string name="referral_reward_info">친구는 첫 결제에 할인을 받고, 회원님은 친구의 모든 결제에서 수익을 얻습니다.</string>
+    <string name="referral_gauge_earned_label">적립액</string>
 
     <string name="billing">청구</string>
     <string name="billing_load_error">청구 정보를 불러올 수 없습니다. 연결을 확인하고 다시 시도하세요.</string>
@@ -896,6 +899,11 @@
     <string name="template_category_placeholder">지원</string>
     <string name="template_content">내용</string>
     <string name="template_content_placeholder">템플릿 본문을 입력하세요...</string>
+    <string name="template_content_required">이 템플릿의 내용을 입력하세요.</string>
+    <string name="template_placeholders_hint">사용 시 맞춤화를 위해 [이름], [날짜] 등의 자리 표시자를 사용하세요.</string>
+    <string name="template_category_general">일반</string>
+    <string name="delete_template_title">템플릿 삭제</string>
+    <string name="delete_template_message">이 템플릿을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.</string>
     <string name="unnamed_template">(이름 없음)</string>
     <string name="unnamed_folder">(이름 없음)</string>
     <string name="new_label">새로 만들기</string>

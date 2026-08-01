@@ -780,7 +780,7 @@
     <string name="how_it_works">Jak to działa</string>
     <string name="referral_step_1">Udostępnij swój link polecający osobom, które mogą polubić Aster.</string>
     <string name="referral_step_2">Rejestrują się przez Twój link i wykupują płatny plan.</string>
-    <string name="referral_step_3">Oboje otrzymacie po $10 środków Aster, które zostaną naliczone przy następnym odnowieniu.</string>
+    <string name="referral_step_3">Zarabiasz część każdej płatności, automatycznie doliczaną do Twojego salda.</string>
     <string name="rewards">Nagrody</string>
     <string name="reward_amount">$10 dla Ciebie, $10 dla znajomego, gdy zarejestruje się w Aster.</string>
     <string name="reward_recurring">Dostajesz też 5% od każdej ich płatności tak długo, jak są subskrybentami.</string>
@@ -792,6 +792,9 @@
     <string name="referral_history_empty_hint">Zaproszeni znajomi pojawią się tutaj.</string>
     <string name="referral_commission_info">Zarabiasz też %1$d%% każdej płatności, dopóki mają subskrypcję.</string>
     <string name="referral_max_credits">Zdobyto %1$s z %2$s środków za polecenia</string>
+    <string name="referral_program_description">Zaproś znajomych do Aster i zdobywaj kredyty z każdej ich płatności.</string>
+    <string name="referral_reward_info">Twój znajomy otrzyma zniżkę na pierwszą płatność, a Ty zarabiasz na każdej jego płatności.</string>
+    <string name="referral_gauge_earned_label">Zarobione</string>
 
     <string name="billing">Rozliczenia</string>
     <string name="billing_load_error">Nie udało się załadować informacji o rozliczeniach. Sprawdź połączenie i spróbuj ponownie.</string>
@@ -896,6 +899,11 @@
     <string name="template_category_placeholder">Wsparcie</string>
     <string name="template_content">Treść</string>
     <string name="template_content_placeholder">Wpisz treść szablonu...</string>
+    <string name="template_content_required">Dodaj treść do tego szablonu.</string>
+    <string name="template_placeholders_hint">Używaj symboli zastępczych jak [Imię], [Data], itp. do dostosowywania podczas użycia.</string>
+    <string name="template_category_general">Ogólne</string>
+    <string name="delete_template_title">Usuń szablon</string>
+    <string name="delete_template_message">Czy na pewno chcesz usunąć ten szablon? Tej operacji nie można cofnąć.</string>
     <string name="unnamed_template">(bez nazwy)</string>
     <string name="unnamed_folder">(bez nazwy)</string>
     <string name="new_label">Nowy</string>

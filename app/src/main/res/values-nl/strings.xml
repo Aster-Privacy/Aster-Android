@@ -780,7 +780,7 @@
     <string name="how_it_works">Hoe het werkt</string>
     <string name="referral_step_1">Deel je verwijzingslink met iedereen waarvan je denkt dat die Aster leuk vindt.</string>
     <string name="referral_step_2">Ze melden zich aan met je link en nemen een betaald abonnement.</string>
-    <string name="referral_step_3">Jullie verdienen allebei $10 aan Aster-tegoed, toegepast op je volgende verlenging.</string>
+    <string name="referral_step_3">Je verdient een deel van elke betaling, automatisch bijgeschreven op je saldo.</string>
     <string name="rewards">Beloningen</string>
     <string name="reward_amount">$10 voor jou, $10 voor je vriend wanneer hij zich aanmeldt bij Aster.</string>
     <string name="reward_recurring">Je krijgt ook 5% van elke betaling die ze doen zolang ze geabonneerd zijn.</string>
@@ -792,6 +792,9 @@
     <string name="referral_history_empty_hint">Vrienden die je uitnodigt verschijnen hier.</string>
     <string name="referral_commission_info">Je verdient ook %1$d%% van elke betaling zolang ze geabonneerd blijven.</string>
     <string name="referral_max_credits">%1$s van %2$s aan verwijzingstegoed verdiend</string>
+    <string name="referral_program_description">Nodig vrienden uit voor Aster en verdien tegoed op elke betaling die ze doen.</string>
+    <string name="referral_reward_info">Je vriend krijgt korting op de eerste betaling en jij verdient aan elke betaling die hij doet.</string>
+    <string name="referral_gauge_earned_label">Verdiend</string>
 
     <string name="billing">Facturering</string>
     <string name="billing_load_error">Kon factureringsgegevens niet laden. Controleer je verbinding en probeer opnieuw.</string>
@@ -896,6 +899,11 @@
     <string name="template_category_placeholder">Ondersteuning</string>
     <string name="template_content">Inhoud</string>
     <string name="template_content_placeholder">Typ de inhoud van je sjabloon...</string>
+    <string name="template_content_required">Voeg inhoud toe aan dit sjabloon.</string>
+    <string name="template_placeholders_hint">Gebruik plaatshouders zoals [Naam], [Datum], enz. om aan te passen bij gebruik.</string>
+    <string name="template_category_general">Algemeen</string>
+    <string name="delete_template_title">Sjabloon verwijderen</string>
+    <string name="delete_template_message">Weet je zeker dat je dit sjabloon wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.</string>
     <string name="unnamed_template">(naamloos)</string>
     <string name="unnamed_folder">(naamloos)</string>
     <string name="new_label">Nieuw</string>

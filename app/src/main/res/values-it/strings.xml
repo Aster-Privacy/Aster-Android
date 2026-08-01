@@ -780,7 +780,7 @@
     <string name="how_it_works">Come funziona</string>
     <string name="referral_step_1">Condividi il tuo link di invito con chiunque pensi possa apprezzare Aster.</string>
     <string name="referral_step_2">Si registrano con il tuo link e si abbonano a un piano a pagamento.</string>
-    <string name="referral_step_3">Entrambi guadagnate $10 di credito Aster, applicato al prossimo rinnovo.</string>
+    <string name="referral_step_3">Guadagni una quota di ogni pagamento, accreditata automaticamente sul tuo saldo.</string>
     <string name="rewards">Ricompense</string>
     <string name="reward_amount">$10 per te, $10 per il tuo amico quando si registra ad Aster.</string>
     <string name="reward_recurring">Ricevi anche il 5% di ogni pagamento che effettuano finche sono abbonati.</string>
@@ -792,6 +792,9 @@
     <string name="referral_history_empty_hint">Gli amici che inviti compariranno qui.</string>
     <string name="referral_commission_info">Guadagni anche il %1$d%% di ogni pagamento finché restano abbonati.</string>
     <string name="referral_max_credits">%1$s di %2$s di credito inviti guadagnato</string>
+    <string name="referral_program_description">Invita amici su Aster e guadagna credito su ogni pagamento che effettuano.</string>
+    <string name="referral_reward_info">Il tuo amico ottiene uno sconto sul primo pagamento e tu guadagni su ogni suo pagamento.</string>
+    <string name="referral_gauge_earned_label">Guadagnato</string>
 
     <string name="billing">Fatturazione</string>
     <string name="billing_load_error">Impossibile caricare le informazioni di fatturazione. Controlla la connessione e riprova.</string>
@@ -896,6 +899,11 @@
     <string name="template_category_placeholder">Supporto</string>
     <string name="template_content">Contenuto</string>
     <string name="template_content_placeholder">Scrivi il corpo del tuo modello...</string>
+    <string name="template_content_required">Aggiungi del contenuto a questo modello.</string>
+    <string name="template_placeholders_hint">Usa segnaposto come [Nome], [Data], ecc. per personalizzare durante l\'uso.</string>
+    <string name="template_category_general">Generale</string>
+    <string name="delete_template_title">Elimina modello</string>
+    <string name="delete_template_message">Sei sicuro di voler eliminare questo modello? Questa azione non può essere annullata.</string>
     <string name="unnamed_template">(senza nome)</string>
     <string name="unnamed_folder">(senza nome)</string>
     <string name="new_label">Nuovo</string>

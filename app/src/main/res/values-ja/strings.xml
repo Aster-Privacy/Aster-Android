@@ -780,7 +780,7 @@
     <string name="how_it_works">仕組み</string>
     <string name="referral_step_1">Asterを気に入りそうな人に紹介リンクを共有しましょう。</string>
     <string name="referral_step_2">あなたのリンクでサインアップし、有料プランに登録します。</string>
-    <string name="referral_step_3">あなたと友達の両方に$10のAsterクレジットが付与され、次回の更新時に適用されます。</string>
+    <string name="referral_step_3">相手が支払うたびに報酬を獲得し、自動的に残高に加算されます。</string>
     <string name="rewards">報酬</string>
     <string name="reward_amount">友達がAsterに登録すると、あなたに$10、友達に$10。</string>
     <string name="reward_recurring">さらに、友達が購読している間のすべての支払いの5%を獲得できます。</string>
@@ -792,6 +792,9 @@
     <string name="referral_history_empty_hint">招待した友達がここに表示されます。</string>
     <string name="referral_commission_info">相手が購読を続ける間、支払い額の %1$d%% も獲得できます。</string>
     <string name="referral_max_credits">紹介クレジット %2$s のうち %1$s を獲得</string>
+    <string name="referral_program_description">友達をAsterに招待して、友達が支払うたびにクレジットを獲得できます。</string>
+    <string name="referral_reward_info">友達は初回のお支払いが割引になり、あなたは友達のすべてのお支払いから収益を得られます。</string>
+    <string name="referral_gauge_earned_label">獲得額</string>
 
     <string name="billing">請求</string>
     <string name="billing_load_error">請求情報を読み込めませんでした。接続を確認してもう一度お試しください。</string>
@@ -896,6 +899,11 @@
     <string name="template_category_placeholder">サポート</string>
     <string name="template_content">内容</string>
     <string name="template_content_placeholder">テンプレートの本文を入力...</string>
+    <string name="template_content_required">このテンプレートの内容を入力してください。</string>
+    <string name="template_placeholders_hint">使用時にカスタマイズするために[名前]、[日付]などのプレースホルダーを使用できます。</string>
+    <string name="template_category_general">一般</string>
+    <string name="delete_template_title">テンプレートを削除</string>
+    <string name="delete_template_message">このテンプレートを削除してもよろしいですか？この操作は元に戻せません。</string>
     <string name="unnamed_template">(名前なし)</string>
     <string name="unnamed_folder">(名前なし)</string>
     <string name="new_label">新規</string>
