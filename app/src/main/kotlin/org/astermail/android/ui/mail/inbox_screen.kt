@@ -884,20 +884,32 @@ fun InboxScreen(
         exit_select_mode()
     }
 
+    fun notify_if_scope_incomplete(applied: Int) {
+        if (scope_selection && folder_total > applied) {
+            mail_vm.notify_partial_scope_selection(applied, folder_total)
+        }
+    }
+
     fun snooze_selected(iso: String, label: String) {
         val to_remove = selected_ids.toSet()
-        mail_vm.snooze_bulk(selected_email_ids(), iso, label)
+        val ids = selected_email_ids()
+        notify_if_scope_incomplete(ids.size)
+        mail_vm.snooze_bulk(ids, iso, label)
         emails.removeAll { it.thread_id in to_remove }
         exit_select_mode()
     }
 
     fun move_selected_to_folder(label_token: String, display_name: String) {
-        mail_vm.apply_label_bulk(selected_email_ids(), label_token, display_name)
+        val ids = selected_email_ids()
+        notify_if_scope_incomplete(ids.size)
+        mail_vm.apply_label_bulk(ids, label_token, display_name)
         exit_select_mode()
     }
 
     fun label_selected(tag_token: String, display_name: String) {
-        mail_vm.apply_tag_bulk(selected_email_ids(), tag_token, display_name)
+        val ids = selected_email_ids()
+        notify_if_scope_incomplete(ids.size)
+        mail_vm.apply_tag_bulk(ids, tag_token, display_name)
         exit_select_mode()
     }
 
@@ -935,6 +947,17 @@ fun InboxScreen(
     }
 
     fun run_selection_action(action_id: String) {
+        if (scope_selection && action_id == "star") {
+            val thread_ids = selected_ids.toSet()
+            mail_vm.star_scope(current_folder, emails.any { it.thread_id in thread_ids && !it.is_starred })
+            exit_select_mode()
+            return
+        }
+        if (scope_selection && action_id == "delete_permanent" && current_folder == "trash") {
+            mail_vm.empty_trash()
+            exit_select_mode()
+            return
+        }
         val scope_action = scope_action_name(action_id)
         if (scope_selection && scope_action != null && mail_vm.action_supports_scope_selection(scope_action)) {
             mail_vm.bulk_scope_action(current_folder, scope_action, null)

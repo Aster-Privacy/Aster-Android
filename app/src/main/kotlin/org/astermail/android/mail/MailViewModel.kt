@@ -1378,9 +1378,7 @@ class MailViewModel @Inject constructor(
             },
         )
         viewModelScope.launch {
-            val failed_ids = run_bulk_action(ids) { id ->
-                repository.add_label_to_item(id, label_token).isSuccess
-            }
+            val failed_ids = repository.add_label_bulk(ids, label_token)
             invalidate_caches(listOf("label:$label_token"))
             if (failed_ids.isEmpty()) {
                 emit_toast(context.getString(R.string.added_to_label, display_name))
@@ -1413,9 +1411,7 @@ class MailViewModel @Inject constructor(
             },
         )
         viewModelScope.launch {
-            val failed_ids = run_bulk_action(ids) { id ->
-                repository.add_tag_to_item(id, tag_token).isSuccess
-            }
+            val failed_ids = repository.add_tag_bulk(ids, tag_token)
             invalidate_caches(listOf("tag:$tag_token"))
             if (failed_ids.isEmpty()) {
                 emit_toast(context.getString(R.string.added_to_label, display_name))
@@ -1459,10 +1455,8 @@ class MailViewModel @Inject constructor(
         if (new_starred) invalidate_caches(listOf("starred"))
         val raw_by_id = targets.associate { it.id to it.raw_item }
         viewModelScope.launch {
-            val failed_ids = run_bulk_action(ids) { id ->
-                repository.toggle_star(id, new_starred, raw_by_id[id]).isSuccess
-            }
-            if (failed_ids.isNotEmpty()) {
+            val failed = repository.star_bulk(ids, new_starred, ids.map { raw_by_id[it] }).isFailure
+            if (failed) {
                 emit_toast(context.getString(R.string.failed_to_update_selection))
             } else {
                 emit_toast(
@@ -2066,6 +2060,46 @@ class MailViewModel @Inject constructor(
                     } else {
                         emit_toast(context.getString(R.string.action_failed))
                     }
+                },
+            )
+        }
+    }
+
+    fun notify_partial_scope_selection(applied: Int, total: Int) {
+        emit_toast(context.getString(R.string.applied_to_loaded_only, applied, total))
+    }
+
+    fun star_scope(folder: String, is_starred: Boolean) {
+        val prior = _inbox_state.value
+        val snapshot = prior.items
+        val removes = folder == "starred" && !is_starred
+        if (removes) {
+            _inbox_state.update { it.copy(items = emptyList(), has_more = false, next_cursor = null) }
+        } else {
+            _inbox_state.update { s -> s.copy(items = s.items.map { it.copy(is_starred = is_starred) }) }
+            snapshot.forEach { star_overrides[it.id] = is_starred }
+        }
+        viewModelScope.launch {
+            repository.star_scope(folder, is_starred).fold(
+                onSuccess = { response ->
+                    invalidate_caches(listOf(folder, "starred"))
+                    load_stats(force = true)
+                    refresh()
+                    emit_toast(
+                        if (is_starred) context.getString(R.string.starred_count, response.affected_count)
+                        else context.getString(R.string.unstarred_count, response.affected_count),
+                    )
+                },
+                onFailure = {
+                    snapshot.forEach { star_overrides.remove(it.id) }
+                    _inbox_state.update {
+                        it.copy(
+                            items = snapshot,
+                            has_more = prior.has_more,
+                            next_cursor = prior.next_cursor,
+                        )
+                    }
+                    emit_toast(context.getString(R.string.failed_to_update_selection))
                 },
             )
         }

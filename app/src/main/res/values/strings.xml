@@ -470,6 +470,7 @@
     <string name="starred_count">Starred %d conversation(s)</string>
     <string name="unstarred_count">Unstarred %d conversation(s)</string>
     <string name="failed_to_update_selection">Failed to update some conversations</string>
+    <string name="applied_to_loaded_only">Applied to %1$d of %2$d - this action only covers loaded messages</string>
     <string name="failed_mark_read">Failed to mark as read</string>
     <string name="all_marked_read">All marked as read</string>
     <string name="failed_mark_all_read">Failed to mark all as read</string>
