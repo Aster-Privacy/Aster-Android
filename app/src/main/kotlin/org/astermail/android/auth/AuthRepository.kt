@@ -25,7 +25,10 @@ import org.astermail.android.BuildConfig
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.astermail.android.R
+import java.io.ByteArrayOutputStream
+import java.math.BigInteger
 import java.security.SecureRandom
+import java.util.Locale
 import javax.crypto.Cipher
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.GCMParameterSpec
@@ -34,6 +37,7 @@ import javax.crypto.spec.SecretKeySpec
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,6 +46,7 @@ import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
 import org.astermail.android.api.auth.Argon2Params
 import org.astermail.android.api.auth.AuthApi
+import org.astermail.android.api.auth.ClientPgpKeyData
 import org.astermail.android.api.auth.DeleteAccountRequest
 import org.astermail.android.api.auth.LoginRequest
 import org.astermail.android.api.auth.LoginResponse
@@ -55,6 +60,7 @@ import org.astermail.android.api.settings.ChangePasswordRequest
 import org.astermail.android.api.settings.SettingsApi
 import org.astermail.android.crypto.CryptoNative
 import org.astermail.android.crypto.PgpKeyGenerator
+import org.bouncycastle.bcpg.ArmoredOutputStream
 import org.astermail.android.storage.AccountStore
 import org.astermail.android.storage.SessionKeyStore
 import org.astermail.android.storage.SessionSnapshotStore
@@ -89,6 +95,7 @@ class AuthRepository @Inject constructor(
     private val auth_api: AuthApi,
     private val recovery_api: RecoveryApi,
     private val settings_api: SettingsApi,
+    private val encryption_api: org.astermail.android.api.encryption.EncryptionApi,
     private val api_client: ApiClient,
     private val token_store: TokenStore,
     private val session_key_store: SessionKeyStore,
@@ -106,6 +113,12 @@ class AuthRepository @Inject constructor(
 
     private val unauthorized_check_running = java.util.concurrent.atomic.AtomicBoolean(false)
     @Volatile private var last_unauthorized_check_ms = 0L
+
+    private val background_scope = kotlinx.coroutines.CoroutineScope(
+        kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO,
+    )
+    private val pgp_publish_attempted_user_ids =
+        java.util.Collections.synchronizedSet(mutableSetOf<String>())
 
     suspend fun handle_unauthorized_signal() {
         if (!_is_signed_in.value) return
@@ -320,6 +333,7 @@ class AuthRepository @Inject constructor(
         _is_signed_in.value = true
         runCatching { UnifiedPushState.clear_backend_registration(context) }
         runCatching { UnifiedPushState.try_register(context) }
+        background_scope.launch { runCatching { ensure_pgp_key_published() } }
     }
 
     suspend fun register(email: String, password: String, captcha_token: String? = null): Result<RegisterSuccess> = runCatching {
@@ -371,6 +385,20 @@ class AuthRepository @Inject constructor(
         raw_password_bytes.fill(0)
         vault_plaintext.fill(0)
 
+        val client_pgp_key = pgp_keys?.let { keys ->
+            runCatching {
+                val (encrypted_private_key, private_key_nonce) =
+                    encrypt_pgp_private_key_for_server(keys.armored_private_key, password)
+                ClientPgpKeyData(
+                    fingerprint = keys.fingerprint.uppercase(),
+                    key_id = keys.key_id.uppercase(),
+                    public_key_armored = keys.armored_public_key,
+                    encrypted_private_key = encrypted_private_key,
+                    private_key_nonce = private_key_nonce,
+                )
+            }.getOrNull()
+        }
+
         val register_resp = auth_api.register(
             RegisterRequest(
                 username = username,
@@ -387,6 +415,7 @@ class AuthRepository @Inject constructor(
                 email_domain = email_domain,
                 remember_me = true,
                 captcha_token = captcha_token,
+                pgp_key = client_pgp_key,
             ),
         )
 
@@ -899,6 +928,85 @@ class AuthRepository @Inject constructor(
         return obj.toString()
     }
 
+    private suspend fun ensure_pgp_key_published() {
+        val user_id = session_key_store.get_user_id() ?: return
+        if (!pgp_publish_attempted_user_ids.add(user_id)) return
+
+        val identity_key = session_key_store.get_identity_key() ?: return
+        if (!identity_key.trimStart().startsWith("-----BEGIN PGP PRIVATE KEY")) return
+
+        val passphrase_bytes = session_key_store.get_passphrase() ?: return
+
+        try {
+            encryption_api.get_pgp_key_info()
+            return
+        } catch (_: org.astermail.android.api.ApiError.NotFoundError) {
+        } catch (_: Throwable) {
+            return
+        }
+
+        val secret_ring = org.bouncycastle.openpgp.PGPSecretKeyRing(
+            org.bouncycastle.openpgp.PGPUtil.getDecoderStream(identity_key.byteInputStream()),
+            org.bouncycastle.openpgp.operator.bc.BcKeyFingerprintCalculator(),
+        )
+
+        val public_out = ByteArrayOutputStream()
+        ArmoredOutputStream(public_out).use { armored ->
+            secret_ring.publicKeys.forEach { it.encode(armored) }
+        }
+
+        val master_public = secret_ring.publicKey
+        val fingerprint = String.format(
+            Locale.US,
+            "%040X",
+            BigInteger(1, master_public.fingerprint),
+        )
+        val key_id = String.format(Locale.US, "%016X", master_public.keyID)
+
+        val (encrypted_private_key, private_key_nonce) =
+            encrypt_pgp_private_key_for_server(
+                identity_key,
+                String(passphrase_bytes, Charsets.UTF_8),
+            )
+
+        encryption_api.republish_pgp_key(
+            org.astermail.android.api.encryption.RepublishPgpKeyRequest(
+                fingerprint = fingerprint,
+                key_id = key_id,
+                public_key_armored = public_out.toString(Charsets.UTF_8.name()),
+                encrypted_private_key = encrypted_private_key,
+                private_key_nonce = private_key_nonce,
+            ),
+        )
+    }
+
+    private fun encrypt_pgp_private_key_for_server(
+        armored_private_key: String,
+        password: String,
+    ): Pair<String, String> {
+        val rng = SecureRandom()
+        val salt = ByteArray(16).also { rng.nextBytes(it) }
+        val nonce = ByteArray(12).also { rng.nextBytes(it) }
+
+        val password_chars = password.toCharArray()
+        val key_spec = PBEKeySpec(password_chars, salt, pgp_private_key_pbkdf2_iterations, 256)
+        password_chars.fill(' ')
+        val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+        val derived = factory.generateSecret(key_spec).encoded
+        key_spec.clearPassword()
+
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(
+            Cipher.ENCRYPT_MODE,
+            SecretKeySpec(derived, "AES"),
+            GCMParameterSpec(128, nonce),
+        )
+        derived.fill(0)
+        val ciphertext = cipher.doFinal(armored_private_key.toByteArray(Charsets.UTF_8))
+
+        return base64_encode(salt + ciphertext) to base64_encode(nonce)
+    }
+
     private fun decrypt_vault_aes_gcm(
         encrypted_vault_b64: String,
         vault_nonce_b64: String,
@@ -1001,6 +1109,7 @@ class AuthRepository @Inject constructor(
     companion object {
         private const val pbkdf2_iterations = 310000
         private const val vault_pbkdf2_iterations = 310000
+        private const val pgp_private_key_pbkdf2_iterations = 310000
         private const val HKDF_INFO = "Aster Mail_Recovery_Vault_v1"
     }
 }

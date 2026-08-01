@@ -116,6 +116,23 @@ data class EncryptionSaltResponse(
     val totp_required: Boolean = false,
 )
 
+@Serializable
+data class RepublishPgpKeyRequest(
+    val fingerprint: String,
+    val key_id: String,
+    val public_key_armored: String,
+    val encrypted_private_key: String,
+    val private_key_nonce: String,
+    val algorithm: String = "ecc_curve25519",
+    val key_size: Int = 256,
+)
+
+@Serializable
+data class RepublishPgpKeyResponse(
+    val fingerprint: String = "",
+    val success: Boolean = false,
+)
+
 interface EncryptionApi {
     suspend fun get_pgp_key_info(): PgpKeyInfo
     suspend fun get_recovery_codes_status(): RecoveryCodesStatus
@@ -130,6 +147,7 @@ interface EncryptionApi {
     suspend fun publish_to_wkd(): PublishKeyResponse
     suspend fun unpublish_from_wkd(): PublishKeyResponse
     suspend fun publish_to_keyserver(): PublishKeyResponse
+    suspend fun republish_pgp_key(request: RepublishPgpKeyRequest): RepublishPgpKeyResponse
 }
 
 class EncryptionApiImpl(private val client: ApiClient) : EncryptionApi {
@@ -213,6 +231,15 @@ class EncryptionApiImpl(private val client: ApiClient) : EncryptionApi {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(emptyMap<String, String>())
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun republish_pgp_key(request: RepublishPgpKeyRequest): RepublishPgpKeyResponse {
+        val response = client.http.post("${client.base_url}$crypto_base/keys/pgp/republish") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
         }
         return decode_or_throw(response)
     }

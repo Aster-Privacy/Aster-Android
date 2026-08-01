@@ -115,8 +115,10 @@ data class ClientPgpKeyData(
     val fingerprint: String,
     val key_id: String,
     val public_key_armored: String,
-    val algorithm: String = "RSA-4096",
-    val key_size: Int = 4096,
+    val encrypted_private_key: String,
+    val private_key_nonce: String,
+    val algorithm: String = "ecc_curve25519",
+    val key_size: Int = 256,
 )
 
 @OptIn(ExperimentalSerializationApi::class)
