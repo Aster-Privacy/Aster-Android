@@ -67,6 +67,10 @@ data class BillingUiState(
     val portal_url: String? = null,
     val awaiting_checkout: Boolean = false,
     val awaiting_portal: Boolean = false,
+    val crypto_native_enabled: Boolean = false,
+    val crypto_native_coins: List<org.astermail.android.api.billing.CryptoNativeCoin> = emptyList(),
+    val pending_crypto_invoices: List<org.astermail.android.api.billing.CryptoNativePendingInvoice> = emptyList(),
+    val created_crypto_invoice_id: String? = null,
 )
 
 @HiltViewModel
@@ -85,6 +89,8 @@ class BillingViewModel @Inject constructor(
     val review_request: SharedFlow<Unit> = _review_request.asSharedFlow()
 
     private var paid_before_checkout = false
+
+    private var pending_crypto_invoices_in_flight = false
 
     private fun is_active_paid(sub: SubscriptionResponse?): Boolean {
         if (sub == null) return false
@@ -302,6 +308,72 @@ class BillingViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    fun load_crypto_native_coins() {
+        if (_state.value.crypto_native_coins.isNotEmpty()) return
+        viewModelScope.launch {
+            try {
+                val response = billing_api.get_crypto_native_coins()
+                _state.value = _state.value.copy(
+                    crypto_native_enabled = response.enabled,
+                    crypto_native_coins = response.coins,
+                )
+            } catch (t: Throwable) {
+                _state.value = _state.value.copy(crypto_native_enabled = false, crypto_native_coins = emptyList())
+            }
+        }
+    }
+
+    fun load_pending_crypto_invoices() {
+        if (pending_crypto_invoices_in_flight) return
+        pending_crypto_invoices_in_flight = true
+        viewModelScope.launch {
+            try {
+                val response = billing_api.list_pending_crypto_invoices()
+                _state.value = _state.value.copy(pending_crypto_invoices = response.invoices)
+            } catch (t: Throwable) {
+                _state.value = _state.value.copy(pending_crypto_invoices = emptyList())
+            } finally {
+                pending_crypto_invoices_in_flight = false
+            }
+        }
+    }
+
+    fun create_crypto_native_invoice(plan_code: String, term_months: Int, currency: String, chain: String) {
+        if (_state.value.is_acting) return
+        viewModelScope.launch {
+            _state.value = _state.value.copy(
+                is_acting = true,
+                acting_action = "crypto_native_$plan_code",
+                error = null,
+                created_crypto_invoice_id = null,
+            )
+            try {
+                val response = billing_api.create_crypto_native_invoice(
+                    org.astermail.android.api.billing.CreateCryptoNativeInvoiceRequest(
+                        plan_code = plan_code,
+                        term_months = term_months,
+                        currency = currency,
+                        chain = chain,
+                    )
+                )
+                _state.value = _state.value.copy(
+                    is_acting = false,
+                    acting_action = null,
+                    created_crypto_invoice_id = response.id,
+                )
+            } catch (t: Throwable) {
+                _state.value = _state.value.copy(
+                    is_acting = false, acting_action = null,
+                    error = org.astermail.android.api.user_facing_error(t, ctx.getString(R.string.could_not_start_checkout)),
+                )
+            }
+        }
+    }
+
+    fun consume_created_crypto_invoice() {
+        _state.value = _state.value.copy(created_crypto_invoice_id = null)
     }
 
     fun load_storage_addons() {

@@ -30,6 +30,7 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import io.ktor.http.encodeURLPathPart
 import kotlinx.serialization.Serializable
 import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
@@ -273,6 +274,96 @@ data class CryptoAddonCheckoutRequest(
     val term_months: Int,
 )
 
+@Serializable
+data class CryptoNativeCoin(
+    val currency: String = "",
+    val chain: String = "",
+    val display_name: String = "",
+    val decimals: Int = 0,
+    val recommended: Boolean = false,
+)
+
+@Serializable
+data class CryptoNativeCoinsResponse(
+    val enabled: Boolean = false,
+    val coins: List<CryptoNativeCoin> = emptyList(),
+)
+
+@Serializable
+data class CreateCryptoNativeInvoiceRequest(
+    val plan_code: String,
+    val term_months: Int,
+    val currency: String,
+    val chain: String,
+)
+
+@Serializable
+data class CryptoNativeInvoiceResponse(
+    val id: String = "",
+    val currency: String = "",
+    val chain: String = "",
+    val display_name: String = "",
+    val address: String = "",
+    val amount_atomic: String = "0",
+    val amount_decimal: String = "0",
+    val decimals: Int = 0,
+    val usd_cents: Long = 0,
+    val rate_locked_usd: String = "0",
+    val payment_uri: String = "",
+    val min_confirmations: Int = 0,
+    val status: String = "",
+    val expires_at: String = "",
+    val created_at: String = "",
+)
+
+@Serializable
+data class CryptoNativeInvoiceStatus(
+    val id: String = "",
+    val currency: String = "",
+    val chain: String = "",
+    val display_name: String = "",
+    val address: String = "",
+    val amount_atomic: String = "0",
+    val amount_decimal: String = "0",
+    val amount_received_atomic: String = "0",
+    val amount_received_decimal: String = "0",
+    val decimals: Int = 0,
+    val usd_cents: Long = 0,
+    val status: String = "",
+    val confirmations: Int = 0,
+    val min_confirmations: Int = 0,
+    val txids: List<String> = emptyList(),
+    val payment_uri: String = "",
+    val expires_at: String = "",
+    val watch_until: String = "",
+    val created_at: String = "",
+    val completed_at: String? = null,
+)
+
+@Serializable
+data class CryptoNativeCancelResponse(
+    val id: String = "",
+    val status: String = "",
+)
+
+@Serializable
+data class CryptoNativePendingInvoice(
+    val id: String = "",
+    val currency: String = "",
+    val chain: String = "",
+    val display_name: String = "",
+    val status: String = "",
+    val usd_cents: Long = 0,
+    val amount_decimal: String = "0",
+    val expires_at: String = "",
+    val created_at: String = "",
+)
+
+@Serializable
+data class CryptoNativePendingInvoicesResponse(
+    val invoices: List<CryptoNativePendingInvoice> = emptyList(),
+)
+
 interface BillingApi {
     suspend fun get_subscription(): SubscriptionResponse
     suspend fun get_available_plans(): AvailablePlansResponse
@@ -290,6 +381,11 @@ interface BillingApi {
     suspend fun purchase_storage_addon(request: PurchaseAddonRequest): PurchaseAddonResponse
     suspend fun create_crypto_checkout_session(request: CryptoCheckoutRequest): CheckoutSessionResponse
     suspend fun purchase_storage_addon_crypto(request: CryptoAddonCheckoutRequest): PurchaseAddonResponse
+    suspend fun get_crypto_native_coins(): CryptoNativeCoinsResponse
+    suspend fun create_crypto_native_invoice(request: CreateCryptoNativeInvoiceRequest): CryptoNativeInvoiceResponse
+    suspend fun get_crypto_native_invoice(invoice_id: String): CryptoNativeInvoiceStatus
+    suspend fun cancel_crypto_native_invoice(invoice_id: String): CryptoNativeCancelResponse
+    suspend fun list_pending_crypto_invoices(): CryptoNativePendingInvoicesResponse
 }
 
 class BillingApiImpl(private val client: ApiClient) : BillingApi {
@@ -407,6 +503,38 @@ class BillingApiImpl(private val client: ApiClient) : BillingApi {
         }
         return decode_or_throw(response)
     }
+
+    override suspend fun get_crypto_native_coins(): CryptoNativeCoinsResponse =
+        decode_or_throw(client.http.get("${client.base_url}$base/crypto-native/coins"))
+
+    override suspend fun create_crypto_native_invoice(request: CreateCryptoNativeInvoiceRequest): CryptoNativeInvoiceResponse {
+        val response = client.http.post("${client.base_url}$base/crypto-native/invoice") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun get_crypto_native_invoice(invoice_id: String): CryptoNativeInvoiceStatus =
+        decode_or_throw(
+            client.http.get(
+                "${client.base_url}$base/crypto-native/invoice/${invoice_id.encodeURLPathPart()}",
+            ),
+        )
+
+    override suspend fun cancel_crypto_native_invoice(invoice_id: String): CryptoNativeCancelResponse {
+        val encoded_id = invoice_id.encodeURLPathPart()
+        val response = client.http.post("${client.base_url}$base/crypto-native/invoice/$encoded_id/cancel") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(emptyMap<String, String>())
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun list_pending_crypto_invoices(): CryptoNativePendingInvoicesResponse =
+        decode_or_throw(client.http.get("${client.base_url}$base/crypto-native/invoices/pending"))
 
     private suspend inline fun <reified T> decode_or_throw(response: HttpResponse): T {
         if (response.status.value !in 200..299) {
