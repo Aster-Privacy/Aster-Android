@@ -116,11 +116,20 @@ class TemplatesViewModel @Inject constructor(
     }
 
     fun save_draft() {
-        val draft = _state.value.draft ?: return
-        if (draft.name.isBlank()) {
+        val current = _state.value.draft ?: return
+        if (current.name.isBlank()) {
             _state.value = _state.value.copy(error = context.getString(R.string.name_cannot_be_empty))
             return
         }
+        if (current.content.isBlank()) {
+            _state.value = _state.value.copy(error = context.getString(R.string.template_content_required))
+            return
+        }
+        val draft = current.copy(
+            name = current.name.trim(),
+            category = current.category.trim().ifBlank { context.getString(R.string.template_category_general) },
+            content = current.content.trim(),
+        )
         viewModelScope.launch {
             _state.value = _state.value.copy(is_saving = true, error = null)
             val outcome = runCatching {

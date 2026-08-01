@@ -26,7 +26,10 @@ import compose.icons.tablericons.*
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -188,7 +191,13 @@ fun CustomizeToolbarScreen(
             containerColor = colors.bg_secondary,
             dragHandle = { AsterDragHandle() },
         ) {
-            Column(modifier = Modifier.padding(bottom = AsterSpacing.lg)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .navigationBarsPadding()
+                    .padding(bottom = AsterSpacing.lg),
+            ) {
                 Text(
                     text = stringResource(R.string.choose_action),
                     color = colors.text_primary,
@@ -228,12 +237,12 @@ fun CustomizeToolbarScreen(
                             modifier = Modifier.weight(1f),
                         )
                         if (is_current) {
-                            Box(
-                                modifier = Modifier.size(18.dp).background(colors.accent_blue, CircleShape),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text("✓", color = androidx.compose.ui.graphics.Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                            }
+                            Icon(
+                                imageVector = TablerIcons.Check,
+                                contentDescription = null,
+                                tint = colors.accent_blue,
+                                modifier = Modifier.size(20.dp),
+                            )
                         }
                     }
                     if (i < catalog.lastIndex) AsterDivider(modifier = Modifier)

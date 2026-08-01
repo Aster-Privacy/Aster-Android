@@ -2037,10 +2037,12 @@ fun ComposeScreen(
             on_close = { show_template_sheet = false },
             on_pick = { tpl ->
                 show_template_sheet = false
-                val current = body
-                val needs_break = current.isNotBlank() && !current.endsWith("\n")
-                val prefix = if (needs_break) "\n\n" else ""
-                body = current + prefix + tpl.content
+                body = insert_template_body(
+                    body = body,
+                    template = tpl.content,
+                    signature = applied_signature,
+                    watermark = context.getString(R.string.compose_footer_secured_by_plain),
+                )
                 Toast.makeText(context, context.getString(R.string.template_inserted), Toast.LENGTH_SHORT).show()
             },
         )
@@ -3097,6 +3099,12 @@ private fun TemplatePickerSheet(
                     )
                 }
                 else -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 420.dp)
+                            .verticalScroll(rememberScrollState()),
+                    ) {
                     items.forEach { tpl ->
                         Row(
                             modifier = Modifier
@@ -3135,6 +3143,7 @@ private fun TemplatePickerSheet(
                                 }
                             }
                         }
+                    }
                     }
                 }
             }
@@ -3699,6 +3708,25 @@ private val WATERMARK_LINE_RE = Regex("(?i)\\bSecured by Aster Mail\\b\\s*")
 private fun strip_watermarks(text: String): String {
     val cleaned = WATERMARK_LINE_RE.replace(text, "\n")
     return cleaned.replace(Regex("\\n{3,}"), "\n\n").trim()
+}
+
+internal fun insert_template_body(
+    body: String,
+    template: String,
+    signature: String,
+    watermark: String,
+): String {
+    if (template.isBlank()) return body
+    val watermark_suffix = "\n\n$watermark"
+    val has_watermark = body.endsWith(watermark_suffix)
+    val without_watermark = if (has_watermark) body.dropLast(watermark_suffix.length) else body
+    val has_signature = signature.isNotBlank() && without_watermark.endsWith(signature)
+    val core = if (has_signature) without_watermark.dropLast(signature.length) else without_watermark
+    val trimmed_core = core.trimEnd('\n', ' ')
+    val separator = if (trimmed_core.isBlank()) "" else "\n\n"
+    val signature_block = if (has_signature) "\n\n$signature" else ""
+    val watermark_block = if (has_watermark) watermark_suffix else ""
+    return trimmed_core + separator + template.trim() + signature_block + watermark_block
 }
 
 private fun build_quoted_body(

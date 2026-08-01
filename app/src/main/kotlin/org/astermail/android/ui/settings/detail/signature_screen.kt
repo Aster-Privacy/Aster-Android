@@ -32,7 +32,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Icon
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Check
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Text
@@ -386,7 +390,12 @@ private fun dropdown_row(
         )
         if (selected) {
             Spacer(Modifier.width(AsterSpacing.sm))
-            Text(text = "✓", color = colors.accent_blue, fontSize = 16.sp)
+            Icon(
+                imageVector = TablerIcons.Check,
+                contentDescription = null,
+                tint = colors.accent_blue,
+                modifier = Modifier.size(18.dp),
+            )
         }
     }
 }
