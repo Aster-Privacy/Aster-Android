@@ -822,7 +822,7 @@
     <string name="how_it_works">Comment ça marche</string>
     <string name="referral_step_1">Partagez votre lien de parrainage avec toute personne susceptible d\'aimer Aster.</string>
     <string name="referral_step_2">Elle s\'inscrit via votre lien et souscrit à un forfait payant.</string>
-    <string name="referral_step_3">Vous gagnez tous les deux $10 de crédit Aster, appliqués à votre prochain renouvellement.</string>
+    <string name="referral_step_3">Vous gagnez une part de chaque paiement, créditée automatiquement sur votre solde.</string>
     <string name="rewards">Récompenses</string>
     <string name="reward_amount">$10 pour vous, $10 pour votre ami lorsqu\'il s\'inscrit sur Aster.</string>
     <string name="reward_recurring">Vous recevez également 5 % de chaque paiement qu\'il effectue tant qu\'il est abonné.</string>
@@ -834,6 +834,9 @@
     <string name="referral_history_empty_hint">Les amis que vous invitez apparaîtront ici.</string>
     <string name="referral_commission_info">Vous gagnez aussi %1$d%% de chaque paiement tant qu’ils restent abonnés.</string>
     <string name="referral_max_credits">%1$s sur %2$s de crédit de parrainage gagné</string>
+    <string name="referral_program_description">Invitez vos amis sur Aster et gagnez du crédit sur chacun de leurs paiements.</string>
+    <string name="referral_reward_info">Votre ami bénéficie d\'une réduction sur son premier paiement et vous gagnez sur chacun de ses paiements.</string>
+    <string name="referral_gauge_earned_label">Gagné</string>
 
     <!-- Billing -->
     <string name="billing">Facturation</string>
@@ -944,6 +947,11 @@
     <string name="template_category_placeholder">Support</string>
     <string name="template_content">Contenu</string>
     <string name="template_content_placeholder">Saisissez le corps de votre modèle…</string>
+    <string name="template_content_required">Ajoutez du contenu à ce modèle.</string>
+    <string name="template_placeholders_hint">Utilisez des espaces réservés comme [Nom], [Date], etc. pour personnaliser lors de l\'utilisation.</string>
+    <string name="template_category_general">Général</string>
+    <string name="delete_template_title">Supprimer le modèle</string>
+    <string name="delete_template_message">Êtes-vous sûr de vouloir supprimer ce modèle ? Cette action est irréversible.</string>
     <string name="unnamed_template">(sans nom)</string>
     <string name="unnamed_folder">(sans nom)</string>
     <string name="new_label">Nouveau</string>

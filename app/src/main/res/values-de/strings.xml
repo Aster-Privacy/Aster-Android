@@ -781,7 +781,7 @@
     <string name="how_it_works">So funktioniert es</string>
     <string name="referral_step_1">Teilen Sie Ihren Empfehlungslink mit jedem, der Aster gefallen könnte.</string>
     <string name="referral_step_2">Die Person meldet sich über Ihren Link an und abonniert einen bezahlten Plan.</string>
-    <string name="referral_step_3">Sie beide erhalten $10 Aster-Guthaben, das auf Ihre nächste Verlängerung angerechnet wird.</string>
+    <string name="referral_step_3">Du verdienst einen Anteil an jeder Zahlung, automatisch deinem Guthaben gutgeschrieben.</string>
     <string name="rewards">Belohnungen</string>
     <string name="reward_amount">$10 für Sie, $10 für Ihren Freund, wenn er sich bei Aster registriert.</string>
     <string name="reward_recurring">Sie erhalten außerdem 5 % jeder Zahlung, die er leistet, solange er abonniert ist.</string>
@@ -793,6 +793,9 @@
     <string name="referral_history_empty_hint">Eingeladene Freunde erscheinen hier.</string>
     <string name="referral_commission_info">Du erhältst außerdem %1$d%% jeder Zahlung, solange das Abo läuft.</string>
     <string name="referral_max_credits">%1$s von %2$s Empfehlungsguthaben verdient</string>
+    <string name="referral_program_description">Laden Sie Freunde zu Aster ein und verdienen Sie Guthaben aus jeder Zahlung, die sie leisten.</string>
+    <string name="referral_reward_info">Ihr Freund erhält einen Rabatt auf die erste Zahlung, und Sie verdienen an jeder seiner Zahlungen.</string>
+    <string name="referral_gauge_earned_label">Verdient</string>
 
     <string name="billing">Abrechnung</string>
     <string name="billing_load_error">Abrechnungsinformationen konnten nicht geladen werden. Bitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.</string>
@@ -897,6 +900,11 @@
     <string name="template_category_placeholder">Support</string>
     <string name="template_content">Inhalt</string>
     <string name="template_content_placeholder">Geben Sie den Text Ihrer Vorlage ein…</string>
+    <string name="template_content_required">Fügen Sie Inhalt für diese Vorlage hinzu.</string>
+    <string name="template_placeholders_hint">Verwenden Sie Platzhalter wie [Name], [Datum] usw. zur Anpassung bei der Verwendung.</string>
+    <string name="template_category_general">Allgemein</string>
+    <string name="delete_template_title">Vorlage löschen</string>
+    <string name="delete_template_message">Sind Sie sicher, dass Sie diese Vorlage löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.</string>
     <string name="unnamed_template">(unbenannt)</string>
     <string name="unnamed_folder">(unbenannt)</string>
     <string name="new_label">Neu</string>

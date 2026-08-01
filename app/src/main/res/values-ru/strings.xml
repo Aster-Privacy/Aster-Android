@@ -780,7 +780,7 @@
     <string name="how_it_works">Как это работает</string>
     <string name="referral_step_1">Поделитесь реферальной ссылкой с тем, кому понравится Aster.</string>
     <string name="referral_step_2">Они регистрируются по вашей ссылке и оформляют платную подписку.</string>
-    <string name="referral_step_3">Вы оба получаете по $10 бонусов Aster, которые применяются к следующему продлению.</string>
+    <string name="referral_step_3">Вы получаете долю с каждого его платежа, она автоматически зачисляется на ваш баланс.</string>
     <string name="rewards">Награды</string>
     <string name="reward_amount">$10 вам и $10 вашему другу, когда он зарегистрируется в Aster.</string>
     <string name="reward_recurring">Вы также получаете 5% от каждого их платежа, пока они подписаны.</string>
@@ -792,6 +792,9 @@
     <string name="referral_history_empty_hint">Приглашённые друзья появятся здесь.</string>
     <string name="referral_commission_info">Вы также получаете %1$d%% от каждого платежа, пока они подписаны.</string>
     <string name="referral_max_credits">Начислено %1$s из %2$s реферального баланса</string>
+    <string name="referral_program_description">Приглашайте друзей в Aster и получайте кредиты с каждого их платежа.</string>
+    <string name="referral_reward_info">Ваш друг получает скидку на первый платёж, а вы зарабатываете с каждого его платежа.</string>
+    <string name="referral_gauge_earned_label">Заработано</string>
 
     <string name="billing">Оплата</string>
     <string name="billing_load_error">Не удалось загрузить информацию об оплате. Проверьте подключение и попробуйте снова.</string>
@@ -896,6 +899,11 @@
     <string name="template_category_placeholder">Поддержка</string>
     <string name="template_content">Содержимое</string>
     <string name="template_content_placeholder">Введите текст шаблона...</string>
+    <string name="template_content_required">Добавьте содержимое шаблона.</string>
+    <string name="template_placeholders_hint">Используйте заполнители, такие как [Имя], [Дата] и т. д., для настройки при использовании.</string>
+    <string name="template_category_general">Общие</string>
+    <string name="delete_template_title">Удалить шаблон</string>
+    <string name="delete_template_message">Вы уверены, что хотите удалить этот шаблон? Это действие нельзя отменить.</string>
     <string name="unnamed_template">(без названия)</string>
     <string name="unnamed_folder">(без названия)</string>
     <string name="new_label">Новый</string>

@@ -780,7 +780,7 @@
     <string name="how_it_works">Nasıl çalışır</string>
     <string name="referral_step_1">Tavsiye bağlantınızı Aster\'i beğeneceğini düşündüğünüz herkesle paylaşın.</string>
     <string name="referral_step_2">Bağlantınızla kaydolurlar ve ücretli plana abone olurlar.</string>
-    <string name="referral_step_3">İkiniz de $10 Aster kredisi kazanırsınız ve bir sonraki yenilemenize uygulanır.</string>
+    <string name="referral_step_3">Yaptığı her ödemeden pay kazanırsın, bakiyene otomatik olarak eklenir.</string>
     <string name="rewards">Ödüller</string>
     <string name="reward_amount">Arkadaşınız Aster\'e kaydolduğunda size $10, arkadaşınıza $10.</string>
     <string name="reward_recurring">Ayrıca abonelikleri sürdükçe yaptıkları her ödemenin %5\'ini alırsınız.</string>
@@ -792,6 +792,9 @@
     <string name="referral_history_empty_hint">Davet ettiğin arkadaşlar burada görünür.</string>
     <string name="referral_commission_info">Aboneliği sürdükleri sürece her ödemenin %1$d%% kadarını da kazanırsın.</string>
     <string name="referral_max_credits">%2$s davet kredisinin %1$s kadarı kazanıldı</string>
+    <string name="referral_program_description">Arkadaşlarınızı Aster\'e davet edin ve yaptıkları her ödemeden kredi kazanın.</string>
+    <string name="referral_reward_info">Arkadaşınız ilk ödemesinde indirim alır, siz de yaptığı her ödemeden kazanırsınız.</string>
+    <string name="referral_gauge_earned_label">Kazanılan</string>
 
     <string name="billing">Faturalandırma</string>
     <string name="billing_load_error">Faturalandırma bilgileri yüklenemedi. Bağlantınızı kontrol edip tekrar deneyin.</string>
@@ -896,6 +899,11 @@
     <string name="template_category_placeholder">Destek</string>
     <string name="template_content">İçerik</string>
     <string name="template_content_placeholder">Şablon içeriğini yazın...</string>
+    <string name="template_content_required">Bu şablona içerik ekleyin.</string>
+    <string name="template_placeholders_hint">Kullanırken özelleştirmek için [İsim], [Tarih] gibi yer tutucular kullanın.</string>
+    <string name="template_category_general">Genel</string>
+    <string name="delete_template_title">Şablonu Sil</string>
+    <string name="delete_template_message">Bu şablonu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</string>
     <string name="unnamed_template">(adsız)</string>
     <string name="unnamed_folder">(adsız)</string>
     <string name="new_label">Yeni</string>

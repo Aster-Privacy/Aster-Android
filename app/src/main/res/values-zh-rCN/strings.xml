@@ -780,7 +780,7 @@
     <string name="how_it_works">如何运作</string>
     <string name="referral_step_1">将您的推荐链接分享给可能喜欢 Aster 的人。</string>
     <string name="referral_step_2">他们通过您的链接注册并订阅付费方案。</string>
-    <string name="referral_step_3">您和好友各获得 $10 Aster 积分，将在下次续费时抵扣。</string>
+    <string name="referral_step_3">对方每次付款你都能获得分成，自动计入你的余额。</string>
     <string name="rewards">奖励</string>
     <string name="reward_amount">好友注册 Aster 后，您获得 $10，好友获得 $10。</string>
     <string name="reward_recurring">此外，好友订阅期间每次付款您可获得 5%。</string>
@@ -792,6 +792,9 @@
     <string name="referral_history_empty_hint">你邀请的好友会显示在这里。</string>
     <string name="referral_commission_info">只要他们保持订阅，你还能获得每笔付款的 %1$d%%。</string>
     <string name="referral_max_credits">已获得 %2$s 推荐赠金中的 %1$s</string>
+    <string name="referral_program_description">邀请朋友使用 Aster，他们每次付款您都能获得积分。</string>
+    <string name="referral_reward_info">您的朋友首次付款可享折扣，而您可从他们的每笔付款中获得收益。</string>
+    <string name="referral_gauge_earned_label">已获得</string>
 
     <string name="billing">账单</string>
     <string name="billing_load_error">无法加载账单信息。请检查网络连接后重试。</string>
@@ -896,6 +899,11 @@
     <string name="template_category_placeholder">客服</string>
     <string name="template_content">内容</string>
     <string name="template_content_placeholder">输入模板正文...</string>
+    <string name="template_content_required">请为此模板添加内容。</string>
+    <string name="template_placeholders_hint">使用占位符如 [姓名]、[日期] 等，在使用时进行自定义。</string>
+    <string name="template_category_general">通用</string>
+    <string name="delete_template_title">删除模板</string>
+    <string name="delete_template_message">确定要删除此模板吗？此操作无法撤销。</string>
     <string name="unnamed_template">（未命名）</string>
     <string name="unnamed_folder">（未命名）</string>
     <string name="new_label">新建</string>

@@ -1171,7 +1171,7 @@
     <string name="how_it_works">How it works</string>
     <string name="referral_step_1">Share your referral link with anyone you think would like Aster.</string>
     <string name="referral_step_2">They sign up with your link and subscribe to a paid plan.</string>
-    <string name="referral_step_3">You both earn $10 in Aster credit, applied to your next renewal.</string>
+    <string name="referral_step_3">You earn a share of every payment they make, credited automatically to your balance.</string>
     <string name="rewards">Rewards</string>
     <string name="reward_amount">$10 for you, $10 for your friend when they sign up for Aster.</string>
     <string name="credits_title">Credits</string>
@@ -1194,6 +1194,9 @@
     <string name="referral_history_empty_hint">Friends you invite will show up here.</string>
     <string name="referral_commission_info">You also earn %1$d%% of every payment they make while they stay subscribed.</string>
     <string name="referral_max_credits">%1$s of %2$s in referral credit earned</string>
+    <string name="referral_program_description">Invite friends to Aster and earn credit on every payment they make.</string>
+    <string name="referral_reward_info">Your friend gets a discount on their first payment, and you earn on every payment they make.</string>
+    <string name="referral_gauge_earned_label">Earned</string>
 
     <!-- Billing -->
     <string name="billing">Billing</string>
@@ -1319,6 +1322,11 @@
     <string name="template_category_placeholder">Support</string>
     <string name="template_content">Content</string>
     <string name="template_content_placeholder">Type your template body…</string>
+    <string name="template_content_required">Add some content for this template.</string>
+    <string name="template_placeholders_hint">Use placeholders like [Name], [Date], etc. to customize when using.</string>
+    <string name="template_category_general">General</string>
+    <string name="delete_template_title">Delete template</string>
+    <string name="delete_template_message">Are you sure you want to delete this template? This action cannot be undone.</string>
     <string name="unnamed_template">(unnamed)</string>
     <string name="unnamed_folder">(unnamed)</string>
     <string name="new_label">New</string>
@@ -2214,7 +2222,52 @@
     <string name="crypto_term_3_months">3 months</string>
     <string name="crypto_term_6_months">6 months</string>
     <string name="crypto_term_12_months">12 months</string>
+    <string name="crypto_term_24_months">24 months</string>
     <string name="action_continue">Continue</string>
+
+    <!-- Crypto native payment screen -->
+    <string name="crypto_native_invoice_screen_title">Crypto payment</string>
+    <string name="crypto_native_choose_coin">Choose a coin</string>
+    <string name="crypto_native_recommended">Recommended</string>
+    <string name="crypto_native_coin_on_chain">on %1$s</string>
+    <string name="crypto_native_status_awaiting">Awaiting payment</string>
+    <string name="crypto_native_status_detected">Payment detected</string>
+    <string name="crypto_native_status_confirming_short">Confirming</string>
+    <string name="crypto_native_status_confirming">%1$d of %2$d confirmations</string>
+    <string name="crypto_native_status_credited">Plan credited</string>
+    <string name="crypto_native_usd_value_label">Amount due</string>
+    <string name="crypto_native_expires_in">Expires in %1$s</string>
+    <string name="crypto_native_view_billing">View billing</string>
+    <string name="crypto_native_go_to_inbox">Go to inbox</string>
+    <string name="crypto_native_copied">Copied to clipboard</string>
+    <string name="crypto_native_copy_action">Copy</string>
+    <string name="crypto_native_cancel_invoice">Cancel payment</string>
+    <string name="crypto_native_cancel_failed">Could not cancel this payment. Please try again.</string>
+    <string name="crypto_native_paid_title">Payment complete</string>
+    <string name="crypto_native_paid_body">Your plan is now active. Thank you for supporting private email.</string>
+    <string name="crypto_native_cancelled_title">Payment cancelled</string>
+    <string name="crypto_native_cancelled_body">This payment was cancelled. You can start a new one any time from billing.</string>
+    <string name="crypto_native_expired_title">Payment expired</string>
+    <string name="crypto_native_expired_body">This payment window has closed. Start a new payment from billing to continue.</string>
+    <string name="crypto_native_not_found">Payment not found</string>
+    <string name="crypto_native_not_found_body">We could not load this payment. It may have expired or been removed.</string>
+    <string name="crypto_native_unavailable">Could not load payment</string>
+    <string name="crypto_native_unavailable_body">We could not reach the server. Check your connection and try again. Your payment has not been affected.</string>
+    <string name="crypto_native_manual_review">Under review</string>
+    <string name="crypto_native_manual_review_body">This payment needs a quick manual review. It usually clears within a few hours and your plan is credited automatically.</string>
+    <string name="crypto_native_transaction">Transaction</string>
+    <string name="crypto_native_refund_notice">Overpayments within 2x are credited to your account balance automatically. Contact support if anything looks wrong.</string>
+    <string name="crypto_native_underpaid_body">We received %1$s but expected %2$s %3$s. Send the remaining amount to the same address to finish.</string>
+    <string name="crypto_native_invoice_title">Pay with %1$s</string>
+    <string name="crypto_native_awaiting_body">Scan the code or copy the details into your wallet. This page updates automatically.</string>
+    <string name="crypto_native_rate_locked">Rate locked when this payment was created.</string>
+    <string name="crypto_native_send_exactly">Send exactly</string>
+    <string name="crypto_native_to_address">To this address</string>
+    <string name="crypto_native_open_wallet">Open in wallet</string>
+    <string name="crypto_native_no_wallet_app">No compatible wallet app found.</string>
+    <string name="crypto_native_network_warning">Only send %1$s on the %2$s network. Funds sent on any other network cannot be recovered.</string>
+    <string name="crypto_native_pending_banner">You have a crypto payment in progress</string>
+    <string name="crypto_native_pending_banner_action">Resume payment</string>
 
     <!-- Vanguard -->
     <string name="section_vanguard">Aster Vanguard</string>

@@ -781,7 +781,7 @@
     <string name="how_it_works">Cómo funciona</string>
     <string name="referral_step_1">Comparte tu enlace de referido con cualquier persona que pueda gustarle Aster.</string>
     <string name="referral_step_2">Se registra con tu enlace y se suscribe a un plan de pago.</string>
-    <string name="referral_step_3">Ambos ganan $10 en crédito de Aster, aplicado a su próxima renovación.</string>
+    <string name="referral_step_3">Ganas una parte de cada pago que haga, acreditada automáticamente a tu saldo.</string>
     <string name="rewards">Recompensas</string>
     <string name="reward_amount">$10 para ti, $10 para tu amigo cuando se registre en Aster.</string>
     <string name="reward_recurring">También recibes el 5% de cada pago que realice mientras esté suscrito.</string>
@@ -793,6 +793,9 @@
     <string name="referral_history_empty_hint">Los amigos que invites aparecerán aquí.</string>
     <string name="referral_commission_info">También ganas el %1$d%% de cada pago que hagan mientras sigan suscritos.</string>
     <string name="referral_max_credits">%1$s de %2$s en crédito por referidos ganado</string>
+    <string name="referral_program_description">Invita amigos a Aster y gana crédito por cada pago que hagan.</string>
+    <string name="referral_reward_info">Tu amigo obtiene un descuento en su primer pago y tú ganas con cada pago que haga.</string>
+    <string name="referral_gauge_earned_label">Ganado</string>
 
     <string name="billing">Facturación</string>
     <string name="billing_load_error">No se pudo cargar la información de facturación. Verifica tu conexión e inténtalo de nuevo.</string>
@@ -897,6 +900,11 @@
     <string name="template_category_placeholder">Soporte</string>
     <string name="template_content">Contenido</string>
     <string name="template_content_placeholder">Escribe el cuerpo de tu plantilla…</string>
+    <string name="template_content_required">Añade contenido para esta plantilla.</string>
+    <string name="template_placeholders_hint">Usa marcadores de posición como [Nombre], [Fecha], etc. para personalizar al usar.</string>
+    <string name="template_category_general">General</string>
+    <string name="delete_template_title">Eliminar plantilla</string>
+    <string name="delete_template_message">¿Estás seguro de que deseas eliminar esta plantilla? Esta acción no se puede deshacer.</string>
     <string name="unnamed_template">(sin nombre)</string>
     <string name="unnamed_folder">(sin nombre)</string>
     <string name="new_label">Nuevo</string>
