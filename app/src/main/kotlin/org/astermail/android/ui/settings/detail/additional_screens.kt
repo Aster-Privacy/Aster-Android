@@ -30,6 +30,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -39,9 +40,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -64,15 +68,27 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.pluralStringResource
@@ -93,6 +109,8 @@ import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.UpgradeGate
+import org.astermail.android.design.darken
+import org.astermail.android.design.lighten
 import org.astermail.android.folders.flatten_folder_tree
 import org.astermail.android.folders.folder_sibling_group
 import org.astermail.android.settings.SettingsViewModel
@@ -279,113 +297,49 @@ fun ReferralScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                 CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
             }
         } else {
+            val commission_percent =
+                if (referral.commission_percent > 0) referral.commission_percent else 10
+
             referral_hero(
                 link = link,
-                earned_label = format_cents(earned_cents),
+                earned_cents = earned_cents,
                 on_copy = copy_link,
                 on_share = share_link,
             )
 
-            v_gap(AsterSpacing.lg)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-            ) {
-                referral_stat_card(
-                    modifier = Modifier.weight(1f),
-                    icon = TablerIcons.Users,
-                    label = stringResource(R.string.total_referrals),
-                    value = referral.total_referrals.toString(),
-                    accent = colors.text_secondary,
-                )
-                referral_stat_card(
-                    modifier = Modifier.weight(1f),
-                    icon = TablerIcons.Clock,
-                    label = stringResource(R.string.pending),
-                    value = referral.pending_referrals.toString(),
-                    accent = colors.warning,
-                )
-                referral_stat_card(
-                    modifier = Modifier.weight(1f),
-                    icon = TablerIcons.Check,
-                    label = stringResource(R.string.completed),
-                    value = referral.completed_referrals.toString(),
-                    accent = colors.success,
-                )
-            }
-
-            v_gap(AsterSpacing.lg)
-            section_label(stringResource(R.string.rewards))
-            v_gap(AsterSpacing.sm)
-            AsterCard(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(AsterSpacing.lg)) {
-                    Text(
-                        text = stringResource(R.string.reward_amount),
-                        color = colors.text_secondary,
-                        fontSize = 13.sp,
-                    )
-                    Spacer(Modifier.height(AsterSpacing.xs))
-                    Text(
-                        text = stringResource(
-                            R.string.referral_commission_info,
-                            if (referral.commission_percent > 0) referral.commission_percent else 5,
-                        ),
-                        color = colors.text_secondary,
-                        fontSize = 13.sp,
-                    )
-                    if (max_credits_cents > 0) {
-                        Spacer(Modifier.height(AsterSpacing.md))
-                        referral_progress(
-                            earned_cents = earned_cents,
-                            max_cents = max_credits_cents,
-                        )
-                    }
-                }
-            }
+            v_gap(AsterSpacing.md)
+            referral_stats_row(
+                total = referral.total_referrals,
+                pending = referral.pending_referrals,
+                completed = referral.completed_referrals,
+            )
 
             v_gap(AsterSpacing.lg)
             section_label(stringResource(R.string.how_it_works))
-            v_gap(AsterSpacing.sm)
-            AsterCard(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(AsterSpacing.lg)) {
-                    referral_step(index = 1, text = stringResource(R.string.referral_step_1))
-                    referral_step(index = 2, text = stringResource(R.string.referral_step_2))
-                    referral_step(index = 3, text = stringResource(R.string.referral_step_3))
-                }
-            }
+            v_gap(AsterSpacing.xs)
+            referral_steps_card()
+
+            v_gap(AsterSpacing.lg)
+            section_label(stringResource(R.string.rewards))
+            v_gap(AsterSpacing.xs)
+            referral_rewards_card(
+                commission_percent = commission_percent,
+                earned_cents = earned_cents,
+                max_cents = max_credits_cents,
+            )
 
             v_gap(AsterSpacing.lg)
             section_label(stringResource(R.string.referral_history))
-            v_gap(AsterSpacing.sm)
+            v_gap(AsterSpacing.xs)
             if (history.isEmpty()) {
-                AsterCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = AsterSpacing.xl),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        androidx.compose.material3.Icon(
-                            imageVector = TablerIcons.Users,
-                            contentDescription = null,
-                            tint = colors.text_muted,
-                            modifier = Modifier.size(26.dp),
-                        )
-                        Spacer(Modifier.height(AsterSpacing.sm))
-                        Text(
-                            text = stringResource(R.string.no_referrals_yet),
-                            color = colors.text_secondary,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                        )
-                        Spacer(Modifier.height(2.dp))
-                        Text(
-                            text = stringResource(R.string.referral_history_empty_hint),
-                            color = colors.text_muted,
-                            fontSize = 12.sp,
-                        )
-                    }
-                }
+                referral_empty_history()
             } else {
-                AsterCard(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(SquircleShape(AsterRadius.xl))
+                        .border(1.dp, colors.border_secondary, SquircleShape(AsterRadius.xl)),
+                ) {
                     history.forEachIndexed { index, item ->
                         if (index > 0) AsterDivider()
                         referral_history_row(item)
@@ -400,110 +354,146 @@ fun ReferralScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
 @Composable
 private fun referral_hero(
     link: String,
-    earned_label: String,
+    earned_cents: Long,
     on_copy: () -> Unit,
     on_share: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val shape = SquircleShape(20.dp)
-    Column(
+    val accent = colors.accent_blue.darken(0.12f)
+    val graphic = ImageBitmap.imageResource(R.drawable.referral_decentralized)
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(shape)
-            .background(
-                Brush.linearGradient(
-                    listOf(
-                        colors.accent_blue,
-                        colors.accent_blue.copy(alpha = 0.78f),
-                    ),
-                ),
-            )
-            .padding(AsterSpacing.lg),
+            .clip(SquircleShape(AsterRadius.xxl))
+            .background(accent),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        Canvas(modifier = Modifier.matchParentSize()) {
+            if (size.width <= 0f || size.height <= 0f) return@Canvas
+            val region_left = size.width * 0.45f
+            val region_width = size.width - region_left
+            val scale = maxOf(region_width / graphic.width, size.height / graphic.height)
+            val draw_width = (graphic.width * scale).toInt()
+            val draw_height = (graphic.height * scale).toInt()
+            val region = Rect(Offset(region_left, 0f), androidx.compose.ui.geometry.Size(region_width, size.height))
+            drawIntoCanvas { canvas ->
+                val paint = Paint().apply { blendMode = BlendMode.Screen }
+                canvas.saveLayer(region, paint)
+                drawImage(
+                    image = graphic,
+                    dstOffset = IntOffset(
+                        (region_left + (region_width - draw_width) / 2f).toInt(),
+                        ((size.height - draw_height) / 2f).toInt(),
+                    ),
+                    dstSize = IntSize(draw_width, draw_height),
+                    alpha = 0.60f,
+                )
+                drawRect(
+                    brush = Brush.horizontalGradient(
+                        0.0f to Color.Transparent,
+                        0.35f to Color.Black,
+                        0.90f to Color.Black,
+                        1.0f to Color.Transparent,
+                        startX = region_left,
+                        endX = size.width,
+                    ),
+                    topLeft = region.topLeft,
+                    size = region.size,
+                    blendMode = BlendMode.DstIn,
+                )
+                canvas.restore()
+            }
+        }
+        Column(modifier = Modifier.padding(AsterSpacing.xl)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = stringResource(R.string.your_referral_link),
                 color = Color.White,
-                fontSize = 18.sp,
+                fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.weight(1f),
             )
-            Box(
+            Spacer(Modifier.width(AsterSpacing.sm))
+            Text(
+                text = format_cents(earned_cents) + " " + stringResource(R.string.total_earned),
+                color = Color.White,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.18f))
-                    .padding(horizontal = AsterSpacing.sm, vertical = 4.dp),
-            ) {
-                Text(
-                    text = earned_label + " " + stringResource(R.string.total_earned),
-                    color = Color.White,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
+                    .clip(RoundedCornerShape(AsterRadius.pill))
+                    .background(Color.White.copy(alpha = 0.15f))
+                    .padding(horizontal = 10.dp, vertical = 4.dp),
+            )
         }
-        Spacer(Modifier.height(AsterSpacing.xs))
+        Spacer(Modifier.height(6.dp))
         Text(
-            text = stringResource(R.string.invite_description),
-            color = Color.White.copy(alpha = 0.82f),
+            text = stringResource(R.string.referral_program_description),
+            color = Color.White.copy(alpha = 0.70f),
             fontSize = 13.sp,
+            lineHeight = 18.sp,
         )
-        Spacer(Modifier.height(AsterSpacing.md))
-        Box(
+        Spacer(Modifier.height(AsterSpacing.lg))
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color.Black.copy(alpha = 0.22f))
-                .padding(horizontal = AsterSpacing.md, vertical = 10.dp),
+                .height(38.dp)
+                .clip(RoundedCornerShape(AsterRadius.md))
+                .background(Color.Black.copy(alpha = 0.20f))
+                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(AsterRadius.md))
+                .clickable(onClick = on_copy)
+                .padding(horizontal = AsterSpacing.md),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            SelectionContainer {
-                Text(
-                    text = link.ifEmpty { stringResource(R.string.no_link_available) },
-                    color = Color.White,
-                    fontSize = 12.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+            androidx.compose.material3.Icon(
+                imageVector = TablerIcons.Gift,
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.60f),
+                modifier = Modifier.size(15.dp),
+            )
+            Spacer(Modifier.width(AsterSpacing.sm))
+            Text(
+                text = link.ifEmpty { stringResource(R.string.no_link_available) },
+                color = Color.White,
+                fontSize = 12.sp,
+                fontFamily = FontFamily.Monospace,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
         Spacer(Modifier.height(AsterSpacing.sm))
         Row(horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
-            hero_action(
-                label = stringResource(R.string.copy_link),
-                icon = TablerIcons.Copy,
-                filled = true,
+            referral_hero_button(
                 modifier = Modifier.weight(1f),
+                icon = TablerIcons.Copy,
+                label = stringResource(R.string.copy_link),
+                accent = accent,
                 on_click = on_copy,
             )
-            hero_action(
-                label = stringResource(R.string.share_link),
-                icon = TablerIcons.Send,
-                filled = false,
+            referral_hero_button(
                 modifier = Modifier.weight(1f),
+                icon = TablerIcons.Send,
+                label = stringResource(R.string.share_link),
+                accent = accent,
                 on_click = on_share,
             )
+        }
         }
     }
 }
 
 @Composable
-private fun hero_action(
-    label: String,
-    icon: ImageVector,
-    filled: Boolean,
+private fun referral_hero_button(
     modifier: Modifier = Modifier,
+    icon: ImageVector,
+    label: String,
+    accent: Color,
     on_click: () -> Unit,
 ) {
-    val colors = AsterMaterial.colors
-    val shape = RoundedCornerShape(12.dp)
+    val ink = accent.darken(0.42f)
     Row(
         modifier = modifier
-            .height(40.dp)
-            .clip(shape)
-            .background(if (filled) Color.White else Color.White.copy(alpha = 0.18f))
+            .height(38.dp)
+            .clip(RoundedCornerShape(AsterRadius.md))
+            .background(Color.White)
             .clickable(onClick = on_click),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
@@ -511,13 +501,13 @@ private fun hero_action(
         androidx.compose.material3.Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = if (filled) colors.accent_blue else Color.White,
-            modifier = Modifier.size(16.dp),
+            tint = ink,
+            modifier = Modifier.size(15.dp),
         )
         Spacer(Modifier.width(6.dp))
         Text(
             text = label,
-            color = if (filled) colors.accent_blue else Color.White,
+            color = ink,
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
@@ -527,32 +517,289 @@ private fun hero_action(
 }
 
 @Composable
-private fun referral_progress(earned_cents: Long, max_cents: Long) {
+private fun referral_stats_row(total: Long, pending: Long, completed: Long) {
     val colors = AsterMaterial.colors
-    val fraction = if (max_cents <= 0L) 0f else (earned_cents.toFloat() / max_cents.toFloat()).coerceIn(0f, 1f)
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp)
-                .clip(CircleShape)
-                .background(colors.bg_secondary),
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(fraction)
-                    .height(8.dp)
-                    .clip(CircleShape)
-                    .background(colors.accent_blue),
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+    ) {
+        referral_stat_ring(
+            modifier = Modifier.weight(1f),
+            value = total,
+            max = total,
+            accent = colors.text_secondary,
+            icon = TablerIcons.Users,
+            label = stringResource(R.string.total_referrals),
+        )
+        referral_stat_ring(
+            modifier = Modifier.weight(1f),
+            value = pending,
+            max = total,
+            accent = colors.warning,
+            icon = TablerIcons.Clock,
+            label = stringResource(R.string.pending),
+        )
+        referral_stat_ring(
+            modifier = Modifier.weight(1f),
+            value = completed,
+            max = total,
+            accent = colors.success,
+            icon = TablerIcons.Check,
+            label = stringResource(R.string.completed),
+        )
+    }
+}
+
+@Composable
+private fun referral_stat_ring(
+    modifier: Modifier = Modifier,
+    value: Long,
+    max: Long,
+    accent: Color,
+    icon: ImageVector,
+    label: String,
+) {
+    val colors = AsterMaterial.colors
+    val ratio = when {
+        max > 0L -> (value.toFloat() / max.toFloat()).coerceIn(0f, 1f)
+        value > 0L -> 1f
+        else -> 0f
+    }
+    Column(
+        modifier = modifier
+            .clip(SquircleShape(AsterRadius.xl))
+            .border(1.dp, colors.border_secondary, SquircleShape(AsterRadius.xl))
+            .padding(vertical = AsterSpacing.md, horizontal = AsterSpacing.xs),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(modifier = Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+            val track = colors.border_secondary
+            Canvas(modifier = Modifier.size(44.dp)) {
+                val stroke = 4.dp.toPx()
+                val inset = stroke / 2f
+                val arc_size = androidx.compose.ui.geometry.Size(
+                    size.width - stroke,
+                    size.height - stroke,
+                )
+                drawArc(
+                    color = track,
+                    startAngle = 0f,
+                    sweepAngle = 360f,
+                    useCenter = false,
+                    topLeft = Offset(inset, inset),
+                    size = arc_size,
+                    style = Stroke(width = stroke),
+                )
+                if (ratio > 0f) {
+                    drawArc(
+                        color = accent,
+                        startAngle = -90f,
+                        sweepAngle = 360f * ratio,
+                        useCenter = false,
+                        topLeft = Offset(inset, inset),
+                        size = arc_size,
+                        style = Stroke(width = stroke, cap = StrokeCap.Round),
+                    )
+                }
+            }
+            androidx.compose.material3.Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier.size(16.dp),
             )
         }
-        Spacer(Modifier.height(AsterSpacing.xs))
+        Spacer(Modifier.height(AsterSpacing.sm))
         Text(
-            text = stringResource(
-                R.string.referral_max_credits,
-                format_cents(earned_cents),
-                format_cents(max_cents),
-            ),
+            text = value.toString(),
+            color = accent,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+        )
+        Spacer(Modifier.height(1.dp))
+        Text(
+            text = label,
+            color = colors.text_muted,
+            fontSize = 10.5.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun referral_steps_card() {
+    val colors = AsterMaterial.colors
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(SquircleShape(AsterRadius.lg))
+            .background(colors.bg_tertiary)
+            .border(1.dp, colors.border_secondary, SquircleShape(AsterRadius.lg))
+            .padding(AsterSpacing.md),
+        verticalArrangement = Arrangement.spacedBy(AsterSpacing.md),
+    ) {
+        referral_step_row(1, stringResource(R.string.referral_step_1))
+        referral_step_row(2, stringResource(R.string.referral_step_2))
+        referral_step_row(3, stringResource(R.string.referral_step_3))
+    }
+}
+
+@Composable
+private fun referral_step_row(number: Int, body: String) {
+    val colors = AsterMaterial.colors
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+        Box(
+            modifier = Modifier
+                .size(24.dp)
+                .border(1.5.dp, colors.accent_blue.copy(alpha = 0.55f), CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = number.toString(),
+                color = colors.accent_blue,
+                fontSize = 12.sp,
+                lineHeight = 12.sp,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+        Spacer(Modifier.width(AsterSpacing.md))
+        Text(
+            text = body,
+            color = colors.text_secondary,
+            fontSize = 13.sp,
+            lineHeight = 18.sp,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun referral_rewards_card(
+    commission_percent: Int,
+    earned_cents: Long,
+    max_cents: Long,
+) {
+    val colors = AsterMaterial.colors
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(SquircleShape(AsterRadius.lg))
+            .background(colors.bg_tertiary)
+            .border(1.dp, colors.border_secondary, SquircleShape(AsterRadius.lg))
+            .padding(AsterSpacing.lg),
+        verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+    ) {
+        Text(
+            text = stringResource(R.string.referral_reward_info),
+            color = colors.text_secondary,
+            fontSize = 13.sp,
+            lineHeight = 18.sp,
+        )
+        Text(
+            text = stringResource(R.string.referral_commission_info, commission_percent),
+            color = colors.text_secondary,
+            fontSize = 13.sp,
+            lineHeight = 18.sp,
+        )
+        if (max_cents > 0L) {
+            Spacer(Modifier.height(AsterSpacing.xs))
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                referral_semicircle_gauge(
+                    percent = (earned_cents.toFloat() / max_cents.toFloat()) * 100f,
+                    bottom_label = stringResource(R.string.referral_gauge_earned_label),
+                )
+                Spacer(Modifier.height(AsterSpacing.sm))
+                Text(
+                    text = stringResource(
+                        R.string.referral_max_credits,
+                        format_cents(earned_cents),
+                        format_cents(max_cents),
+                    ),
+                    color = colors.text_muted,
+                    fontSize = 11.sp,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun referral_semicircle_gauge(percent: Float, bottom_label: String) {
+    val colors = AsterMaterial.colors
+    val clamped = percent.coerceIn(0f, 100f)
+    val track = colors.border_secondary
+    val accent = colors.accent_blue
+    Box(
+        modifier = Modifier.width(180.dp).height(96.dp),
+        contentAlignment = Alignment.BottomCenter,
+    ) {
+        Canvas(modifier = Modifier.fillMaxWidth().height(96.dp)) {
+            val stroke = 14.dp.toPx()
+            val diameter = size.width - stroke
+            val arc_size = androidx.compose.ui.geometry.Size(diameter, diameter)
+            val top_left = Offset(stroke / 2f, stroke / 2f)
+            drawArc(
+                color = track,
+                startAngle = 180f,
+                sweepAngle = 180f,
+                useCenter = false,
+                topLeft = top_left,
+                size = arc_size,
+                style = Stroke(width = stroke, cap = StrokeCap.Round),
+            )
+            if (clamped > 0f) {
+                drawArc(
+                    color = accent,
+                    startAngle = 180f,
+                    sweepAngle = 180f * (clamped / 100f),
+                    useCenter = false,
+                    topLeft = top_left,
+                    size = arc_size,
+                    style = Stroke(width = stroke, cap = StrokeCap.Round),
+                )
+            }
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = kotlin.math.round(clamped).toInt().toString() + "%",
+                color = colors.text_primary,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = bottom_label,
+                color = colors.text_muted,
+                fontSize = 11.sp,
+            )
+        }
+    }
+}
+
+@Composable
+private fun referral_empty_history() {
+    val colors = AsterMaterial.colors
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(SquircleShape(AsterRadius.xl))
+            .border(1.dp, colors.border_secondary, SquircleShape(AsterRadius.xl))
+            .padding(vertical = AsterSpacing.xxl),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        androidx.compose.material3.Icon(
+            imageVector = TablerIcons.Users,
+            contentDescription = null,
+            tint = colors.text_muted,
+            modifier = Modifier.size(30.dp),
+        )
+        Spacer(Modifier.height(AsterSpacing.sm))
+        Text(
+            text = stringResource(R.string.no_referrals_yet),
             color = colors.text_muted,
             fontSize = 12.sp,
         )
@@ -563,6 +810,7 @@ private fun referral_progress(earned_cents: Long, max_cents: Long) {
 private fun referral_history_row(item: org.astermail.android.api.labels.ReferralHistoryItem) {
     val colors = AsterMaterial.colors
     val is_completed = item.status == "completed"
+    val status_color = if (is_completed) colors.success else colors.warning
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -574,36 +822,38 @@ private fun referral_history_row(item: org.astermail.android.api.labels.Referral
                 text = item.referee_email_masked,
                 color = colors.text_primary,
                 fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             val date_label = format_referral_date(item.created_at)
             if (date_label.isNotEmpty()) {
                 Spacer(Modifier.height(2.dp))
-                Text(text = date_label, color = colors.text_muted, fontSize = 12.sp)
+                Text(
+                    text = date_label,
+                    color = colors.text_muted,
+                    fontSize = 11.5.sp,
+                )
             }
         }
         Spacer(Modifier.width(AsterSpacing.sm))
-        Box(
+        Text(
+            text = stringResource(if (is_completed) R.string.completed else R.string.pending),
+            color = status_color,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
             modifier = Modifier
-                .clip(CircleShape)
-                .background((if (is_completed) colors.success else colors.warning).copy(alpha = 0.15f))
-                .padding(horizontal = AsterSpacing.sm, vertical = 3.dp),
-        ) {
-            Text(
-                text = stringResource(if (is_completed) R.string.completed else R.string.pending),
-                color = if (is_completed) colors.success else colors.warning,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium,
-            )
-        }
+                .clip(RoundedCornerShape(AsterRadius.pill))
+                .background(status_color.copy(alpha = 0.15f))
+                .padding(horizontal = 8.dp, vertical = 3.dp),
+        )
         if (item.referrer_credit_cents > 0) {
             Spacer(Modifier.width(AsterSpacing.sm))
             Text(
                 text = "+" + format_cents(item.referrer_credit_cents),
                 color = colors.success,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.5.sp,
+                fontWeight = FontWeight.Medium,
             )
         }
     }
@@ -626,80 +876,6 @@ private fun format_cents(cents: Long): String {
     val dollars = cents / 100
     val rem = (cents % 100).toInt()
     return "$" + dollars.toString() + "." + rem.toString().padStart(2, '0')
-}
-
-@Composable
-private fun referral_stat_card(
-    modifier: Modifier = Modifier,
-    icon: ImageVector,
-    label: String,
-    value: String,
-    accent: Color,
-) {
-    val colors = AsterMaterial.colors
-    Column(
-        modifier = modifier
-            .clip(SquircleShape(14.dp))
-            .background(colors.bg_card)
-            .border(1.dp, colors.border_secondary, SquircleShape(14.dp))
-            .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.md),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        androidx.compose.material3.Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = accent,
-            modifier = Modifier.size(18.dp),
-        )
-        Spacer(Modifier.height(AsterSpacing.xs))
-        Text(
-            text = value,
-            color = colors.text_primary,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold,
-        )
-        Spacer(Modifier.height(2.dp))
-        Text(
-            text = label,
-            color = colors.text_muted,
-            fontSize = 11.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-}
-
-@Composable
-private fun referral_step(index: Int, text: String) {
-    val colors = AsterMaterial.colors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = AsterSpacing.xs),
-        verticalAlignment = Alignment.Top,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(22.dp)
-                .clip(CircleShape)
-                .background(colors.accent_blue.copy(alpha = 0.15f)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = index.toString(),
-                color = colors.accent_blue,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
-        Spacer(Modifier.width(AsterSpacing.md))
-        Text(
-            text = text,
-            color = colors.text_secondary,
-            fontSize = 13.sp,
-            modifier = Modifier.padding(top = 2.dp),
-        )
-    }
 }
 
 @Composable
