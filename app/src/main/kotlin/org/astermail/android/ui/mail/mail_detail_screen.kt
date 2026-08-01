@@ -1291,8 +1291,24 @@ fun MailDetailScreen(
                 reply_action_row(
                     on_reply = { on_reply(latest_msg.id, thread_ghost_email) },
                     on_forward = { on_forward(latest_msg.id, thread_ghost_email) },
-                    show_react = latest_restriction == null,
-                    on_react = { reaction_picker_open = !reaction_picker_open },
+                    show_react = latest_restriction == null ||
+                        (
+                            latest_restriction != org.astermail.android.mail.ReactionRestriction.disabled &&
+                                latest_restriction != org.astermail.android.mail.ReactionRestriction.own_message
+                            ),
+                    react_enabled = latest_restriction == null,
+                    on_react = {
+                        val blocked = reaction_restriction_for(latest_msg)
+                        if (blocked != null) {
+                            show_toast(
+                                context.getString(
+                                    org.astermail.android.mail.reaction_restriction_string(blocked),
+                                ),
+                            )
+                        } else {
+                            reaction_picker_open = !reaction_picker_open
+                        }
+                    },
                 )
                 val thread_draft_token = thread_state.item?.thread_token
                 if (!thread_draft_token.isNullOrBlank()) {
@@ -2321,6 +2337,7 @@ private fun reply_action_row(
     on_reply: () -> Unit,
     on_forward: () -> Unit,
     show_react: Boolean = false,
+    react_enabled: Boolean = true,
     on_react: () -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
@@ -2359,11 +2376,16 @@ private fun reply_action_row(
             modifier = Modifier.weight(1f),
         )
         if (show_react) {
+            val react_alpha = if (react_enabled) 1f else 0.4f
             Box(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(SquircleShape(999.dp))
-                    .border(1.dp, colors.text_secondary.copy(alpha = 0.35f), SquircleShape(999.dp))
+                    .border(
+                        1.dp,
+                        colors.text_secondary.copy(alpha = 0.35f * react_alpha),
+                        SquircleShape(999.dp),
+                    )
                     .clickable(onClick = on_react)
                     .testTag("detail_react"),
                 contentAlignment = Alignment.Center,
@@ -2371,7 +2393,7 @@ private fun reply_action_row(
                 Icon(
                     imageVector = TablerIcons.MoodSmile,
                     contentDescription = stringResource(R.string.add_reaction),
-                    tint = colors.text_secondary,
+                    tint = colors.text_secondary.copy(alpha = react_alpha),
                     modifier = Modifier.size(20.dp),
                 )
             }
