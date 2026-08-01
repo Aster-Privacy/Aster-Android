@@ -626,6 +626,36 @@ internal fun alias_delivery_folder_name(
 }
 
 @Composable
+private fun alias_meta_row(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    text: String,
+    color: Color,
+    max_lines: Int = 1,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = color,
+            modifier = Modifier
+                .padding(top = 1.dp)
+                .size(13.dp),
+        )
+        Text(
+            text = text,
+            color = color,
+            fontSize = 12.sp,
+            maxLines = max_lines,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
 internal fun alias_list_row(
     alias: org.astermail.android.api.settings.AliasInfo,
     idx: Int,
@@ -675,46 +705,38 @@ internal fun alias_list_row(
                 )
                 val display_name_val = alias.encrypted_display_name
                 if (!display_name_val.isNullOrBlank()) {
-                    Spacer(Modifier.height(2.dp))
-                    Text(
+                    Spacer(Modifier.height(3.dp))
+                    alias_meta_row(
+                        icon = TablerIcons.Id,
                         text = display_name_val,
                         color = colors.text_secondary,
-                        fontSize = 12.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                if (on_edit_note != null) {
+                    Spacer(Modifier.height(3.dp))
+                    alias_meta_row(
+                        icon = TablerIcons.Edit,
+                        text = if (note_val.isNullOrBlank()) {
+                            stringResource(R.string.alias_note_add)
+                        } else {
+                            note_val
+                        },
+                        color = if (note_val.isNullOrBlank()) colors.text_muted else colors.text_tertiary,
+                        max_lines = 3,
                     )
                 }
                 Spacer(Modifier.height(4.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-                ) {
-                    Text(
-                        text = when {
-                            !alias.is_enabled -> stringResource(R.string.alias_status_disabled_badge)
-                            delivery_folder_name != null ->
-                                stringResource(R.string.forwards_to_folder, delivery_folder_name)
-                            else -> stringResource(R.string.forwards_to_inbox)
-                        },
-                        color = if (alias.is_enabled) colors.text_tertiary else colors.danger,
-                        fontSize = 11.sp,
-                        maxLines = 1,
-                    )
-                    if (on_edit_note != null) {
-                        Text(text = "·", color = colors.text_muted, fontSize = 11.sp)
-                        Text(
-                            text = if (note_val.isNullOrBlank()) {
-                                stringResource(R.string.alias_note_add)
-                            } else {
-                                note_val
-                            },
-                            color = if (note_val.isNullOrBlank()) colors.text_muted else colors.text_tertiary,
-                            fontSize = 11.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                }
+                Text(
+                    text = when {
+                        !alias.is_enabled -> stringResource(R.string.alias_status_disabled_badge)
+                        delivery_folder_name != null ->
+                            stringResource(R.string.forwards_to_folder, delivery_folder_name)
+                        else -> stringResource(R.string.forwards_to_inbox)
+                    },
+                    color = if (alias.is_enabled) colors.text_tertiary else colors.danger,
+                    fontSize = 11.sp,
+                    maxLines = 1,
+                )
             }
             AsterSwitch(
                 checked = alias.is_enabled,
