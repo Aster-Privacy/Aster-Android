@@ -1,0 +1,7 @@
+Bug fixes and improvements:
+
+- Fixed duplicate notifications for the same email
+- People you email are now saved to your contacts automatically (can be turned off in Settings)
+- You can now use dots in usernames and email addresses
+- Aliases now show their own display name when sending
+- New customizable selection toolbars with more bulk actions
