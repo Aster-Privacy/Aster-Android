@@ -1,0 +1,7 @@
+Bug fixes and improvements:
+
+- New All Mail folder that shows everything in one place, with optional Include Spam and Include Trash
+- Aliases now open the full mail view with search, sorting and bulk selection
+- Folders with subfolders can now be expanded and collapsed from the folder menu at the top
+- You can choose how many emails load per page in Settings
+- When you cannot react to a message, the button now explains why instead of disappearing
