@@ -1,0 +1,7 @@
+Bug fixes and improvements:
+
+- Scrolling the inbox no longer triggers swipe actions by accident
+- Referral screen redesigned to match the web, with clearer rewards and steps
+- Fixed the check mark and layout when customizing the toolbar actions
+- Templates are easier to create, edit and delete, with clearer errors
+- New accounts now set up their encryption key correctly at sign up
