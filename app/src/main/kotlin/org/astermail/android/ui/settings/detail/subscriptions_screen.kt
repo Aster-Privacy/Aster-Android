@@ -270,6 +270,7 @@ fun SubscriptionsScreen(
     on_back: () -> Unit,
     on_open: (id: String) -> Unit = {},
     scroll_to_addons: Boolean = false,
+    on_open_crypto_invoice: (id: String) -> Unit = {},
 ) {
     val vm: SettingsViewModel = shared_settings_view_model()
     val billing_vm: BillingViewModel = hiltViewModel()
@@ -281,6 +282,14 @@ fun SubscriptionsScreen(
     LaunchedEffect(Unit) {
         vm.load_subscription()
         billing_vm.load_storage_addons()
+        billing_vm.load_crypto_native_coins()
+        billing_vm.load_pending_crypto_invoices()
+    }
+
+    LaunchedEffect(billing_state.created_crypto_invoice_id) {
+        val id = billing_state.created_crypto_invoice_id ?: return@LaunchedEffect
+        billing_vm.consume_created_crypto_invoice()
+        on_open_crypto_invoice(id)
     }
 
     LaunchedEffect(billing_state.error) {
@@ -310,7 +319,10 @@ fun SubscriptionsScreen(
     val lifecycle_owner = LocalLifecycleOwner.current
     DisposableEffect(lifecycle_owner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) billing_vm.on_resume()
+            if (event == Lifecycle.Event.ON_RESUME) {
+                billing_vm.on_resume()
+                billing_vm.load_pending_crypto_invoices()
+            }
         }
         lifecycle_owner.lifecycle.addObserver(observer)
         onDispose { lifecycle_owner.lifecycle.removeObserver(observer) }
@@ -326,11 +338,12 @@ fun SubscriptionsScreen(
         }
     }
 
-    // Payment method + crypto term picker state
     var pending_plan_code by remember { mutableStateOf<String?>(null) }
     var pending_addon_id by remember { mutableStateOf<String?>(null) }
     var show_payment_picker by remember { mutableStateOf(false) }
     var show_crypto_terms by remember { mutableStateOf(false) }
+    var show_crypto_coins by remember { mutableStateOf(false) }
+    var pending_term_months by remember { mutableStateOf(1) }
 
     val sub = state.subscription
     val current_code = sub?.plan?.code ?: plan_code_of(sub?.effective_plan_name)
@@ -414,6 +427,15 @@ fun SubscriptionsScreen(
                 }
             }
         }
+        val pending_invoice = billing_state.pending_crypto_invoices.firstOrNull()
+        if (pending_invoice != null) {
+            v_gap(AsterSpacing.lg)
+            crypto_resume_card(
+                invoice = pending_invoice,
+                on_resume = { on_open_crypto_invoice(pending_invoice.id) },
+            )
+        }
+
         v_gap(AsterSpacing.lg)
         section_label(stringResource(R.string.plan_includes))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
@@ -543,7 +565,6 @@ fun SubscriptionsScreen(
         v_gap(AsterSpacing.xxl)
     }
 
-    // Payment method picker
     if (show_payment_picker) {
         payment_method_dialog(
             title = pending_plan_code?.let { code ->
@@ -563,16 +584,76 @@ fun SubscriptionsScreen(
         )
     }
 
-    // Crypto term picker
     if (show_crypto_terms) {
         crypto_term_dialog(
             on_dismiss = { show_crypto_terms = false },
             on_confirm = { term ->
                 show_crypto_terms = false
-                pending_plan_code?.let { billing_vm.start_crypto_checkout(it, term) }
-                    ?: pending_addon_id?.let { billing_vm.purchase_addon_crypto(it, term) }
+                pending_term_months = term
+                val plan_code = pending_plan_code
+                val use_native = plan_code != null &&
+                    billing_state.crypto_native_enabled &&
+                    billing_state.crypto_native_coins.isNotEmpty()
+                when {
+                    use_native -> show_crypto_coins = true
+                    plan_code != null -> billing_vm.start_crypto_checkout(plan_code, term)
+                    else -> pending_addon_id?.let { billing_vm.purchase_addon_crypto(it, term) }
+                }
             },
         )
+    }
+
+    if (show_crypto_coins) {
+        crypto_coin_dialog(
+            coins = billing_state.crypto_native_coins,
+            on_dismiss = { show_crypto_coins = false },
+            on_select = { coin ->
+                show_crypto_coins = false
+                pending_plan_code?.let {
+                    billing_vm.create_crypto_native_invoice(it, pending_term_months, coin.currency, coin.chain)
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun crypto_resume_card(
+    invoice: org.astermail.android.api.billing.CryptoNativePendingInvoice,
+    on_resume: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val coin_label = invoice.display_name.ifBlank { invoice.currency.uppercase() }
+    AsterCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(AsterSpacing.lg)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = TablerIcons.Clock,
+                    contentDescription = null,
+                    tint = colors.accent_blue,
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(Modifier.width(AsterSpacing.md))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.crypto_native_pending_banner),
+                        color = colors.text_primary,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        text = stringResource(R.string.crypto_native_invoice_title, coin_label),
+                        color = colors.text_tertiary,
+                        fontSize = 12.sp,
+                    )
+                }
+            }
+            Spacer(Modifier.height(AsterSpacing.md))
+            AsterButton(
+                label = stringResource(R.string.crypto_native_pending_banner_action),
+                onClick = on_resume,
+            )
+        }
     }
 }
 
@@ -651,6 +732,7 @@ private fun crypto_term_dialog(
         3 to stringResource(R.string.crypto_term_3_months),
         6 to stringResource(R.string.crypto_term_6_months),
         12 to stringResource(R.string.crypto_term_12_months),
+        24 to stringResource(R.string.crypto_term_24_months),
     )
 
     org.astermail.android.design.components.AsterDialog(
@@ -692,6 +774,72 @@ private fun crypto_term_dialog(
             org.astermail.android.design.components.AsterDialogPrimaryButton(
                 label = stringResource(R.string.action_continue),
                 onClick = { on_confirm(selected_term) },
+            )
+        },
+    )
+}
+
+@Composable
+private fun crypto_coin_dialog(
+    coins: List<org.astermail.android.api.billing.CryptoNativeCoin>,
+    on_dismiss: () -> Unit,
+    on_select: (org.astermail.android.api.billing.CryptoNativeCoin) -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val ordered = remember(coins) { coins.sortedByDescending { it.recommended } }
+
+    org.astermail.android.design.components.AsterDialog(
+        on_dismiss = on_dismiss,
+        title = stringResource(R.string.crypto_native_choose_coin),
+        body = {
+            Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
+                ordered.forEach { coin ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(SquircleShape(14.dp))
+                            .background(colors.bg_secondary)
+                            .border(1.dp, colors.border_secondary, SquircleShape(14.dp))
+                            .clickable { on_select(coin) }
+                            .padding(AsterSpacing.md),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md),
+                    ) {
+                        Icon(
+                            imageVector = TablerIcons.CurrencyBitcoin,
+                            contentDescription = null,
+                            tint = colors.text_tertiary,
+                            modifier = Modifier.size(22.dp),
+                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                coin.display_name,
+                                color = colors.text_primary,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                            )
+                            Text(
+                                stringResource(R.string.crypto_native_coin_on_chain, coin.chain),
+                                color = colors.text_tertiary,
+                                fontSize = 12.sp,
+                            )
+                        }
+                        if (coin.recommended) {
+                            Text(
+                                stringResource(R.string.crypto_native_recommended),
+                                color = colors.accent_blue,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        footer = {
+            org.astermail.android.design.components.AsterDialogOutlineButton(
+                label = stringResource(R.string.cancel),
+                onClick = on_dismiss,
             )
         },
     )
