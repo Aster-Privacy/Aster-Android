@@ -1177,6 +1177,16 @@ fun ComposeScreen(
         val snap_subject = subject
         val snap_from = from_alias
 
+        if (settings_state.preferences?.auto_save_recent_recipients != false) {
+            contacts_vm.auto_save_recipients(
+                recipients = snap_to + snap_cc + snap_bcc,
+                own_addresses = buildSet {
+                    if (user_email.isNotBlank()) add(user_email)
+                    addAll(alias_hash_map.keys)
+                },
+            )
+        }
+
         scope.launch {
             val prepared = try {
                 prepare_send_data()

@@ -279,6 +279,40 @@ class ContactsViewModel @Inject constructor(
         return contacts.values.toList()
     }
 
+    private val auto_save_in_flight = java.util.Collections.synchronizedSet(mutableSetOf<String>())
+
+    fun auto_save_recipients(recipients: List<String>, own_addresses: Set<String>) {
+        val own = own_addresses.map { it.lowercase().trim() }.toSet()
+        val targets = recipients
+            .map { it.lowercase().trim() }
+            .filter { it.matches(Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) }
+            .filterNot { it in own }
+            .distinct()
+        if (targets.isEmpty()) return
+        viewModelScope.launch(Dispatchers.IO) {
+            for (email in targets) {
+                if (!auto_save_in_flight.add(email)) continue
+                try {
+                    val existing = repository.search_contacts(email, "email", 1).getOrNull() ?: continue
+                    if (existing.isNotEmpty()) continue
+                    val local_part = email.substringBefore("@")
+                    val derived_name = local_part.split(".").filter { it.isNotBlank() }
+                        .joinToString(" ") { part -> part.replaceFirstChar { ch -> ch.uppercase() } }
+                    repository.create_contact(
+                        Contact(
+                            id = "",
+                            name = derived_name.ifBlank { local_part },
+                            email = email,
+                        ),
+                    )
+                } catch (_: Exception) {
+                } finally {
+                    auto_save_in_flight.remove(email)
+                }
+            }
+        }
+    }
+
     fun clear_sync_message() {
         _state.value = _state.value.copy(sync_message = null)
     }
