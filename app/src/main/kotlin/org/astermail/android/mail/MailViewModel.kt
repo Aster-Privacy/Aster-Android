@@ -1591,7 +1591,7 @@ class MailViewModel @Inject constructor(
         pending_removed_ids.addAll(item_ids)
         val affected_label_caches = removed_items.flatMap { it.labels }.map { "label:$it" }
         val affected_tag_caches = removed_items.flatMap { it.tag_tokens }.map { "tag:$it" }
-        invalidate_caches(listOf("archive", "inbox", "all") + affected_label_caches + affected_tag_caches)
+        invalidate_caches(listOf("archive", "inbox") + all_mail_folder_ids + affected_label_caches + affected_tag_caches)
         viewModelScope.launch {
             try {
                 repository.archive(item_ids, raw_items).fold(
@@ -2731,15 +2731,15 @@ class MailViewModel @Inject constructor(
         "archive" -> repository.fetch_archive(limit = limit, cursor = cursor, order = list_order)
         "scheduled" -> repository.fetch_scheduled(limit = limit, cursor = cursor, order = list_order)
         "snoozed" -> repository.fetch_snoozed(limit = limit, cursor = cursor, order = list_order)
-        "all" -> repository.fetch_inbox(
-            limit = limit,
-            cursor = cursor,
-            item_type = "all",
-            order = list_order,
-            include_spam = false,
-            include_trash = false,
-        )
         else -> when {
+            is_all_mail_folder(folder) -> repository.fetch_inbox(
+                limit = limit,
+                cursor = cursor,
+                item_type = "all",
+                order = list_order,
+                include_spam = all_mail_includes_spam(folder),
+                include_trash = all_mail_includes_trash(folder),
+            )
             folder.startsWith("label:") -> {
                 val label_token = folder.removePrefix("label:")
                 repository.fetch_inbox(limit = limit, item_type = null, label_token = label_token, offset = cursor?.toIntOrNull(), order = list_order)
@@ -2788,13 +2788,15 @@ internal fun folder_matches_item(folder: String, item: InboxItem): Boolean = whe
     "trash" -> item.is_trashed
     "spam" -> item.is_spam
     "archive" -> item.is_archived
-    "all" -> !item.is_trashed && !item.is_spam
     "sent" -> item.raw_item.item_type == "sent" && !item.is_trashed
     "drafts" -> item.raw_item.item_type == "draft" && !item.is_trashed
     "scheduled" -> item.raw_item.item_type == "scheduled" && !item.is_trashed
     "outbox" -> item.raw_item.item_type == "outbox" && !item.is_trashed
     "snoozed" -> !item.is_trashed
     else -> when {
+        is_all_mail_folder(folder) ->
+            (all_mail_includes_trash(folder) || !item.is_trashed) &&
+                (all_mail_includes_spam(folder) || !item.is_spam)
         folder.startsWith("label:") -> {
             val token = folder.removePrefix("label:")
             item.labels.contains(token) && !item.is_trashed

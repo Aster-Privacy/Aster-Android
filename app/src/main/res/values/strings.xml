@@ -2499,4 +2499,6 @@
     <string name="advanced_has_words">Has the words</string>
     <string name="advanced_date_within">Date within</string>
     <string name="advanced_search_scope">Search in</string>
+    <string name="include_spam">Include Spam</string>
+    <string name="include_trash">Include Trash</string>
 </resources>

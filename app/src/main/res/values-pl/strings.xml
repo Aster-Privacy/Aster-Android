@@ -2461,4 +2461,6 @@
     <string name="remove_folder_lock_message">Wprowadź hasło do \"%1$s\", aby usunąć blokadę.</string>
     <string name="failed_update_folder">Nie udało się zaktualizować folderu</string>
     <string name="folder_actions">Akcje folderu</string>
+    <string name="include_spam">Uwzględnij spam</string>
+    <string name="include_trash">Uwzględnij kosz</string>
 </resources>

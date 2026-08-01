@@ -2447,4 +2447,6 @@
     <string name="remove_folder_lock_message">Inserisci la password di \"%1$s\" per rimuovere il blocco.</string>
     <string name="failed_update_folder">Impossibile aggiornare la cartella</string>
     <string name="folder_actions">Azioni cartella</string>
+    <string name="include_spam">Includi spam</string>
+    <string name="include_trash">Includi cestino</string>
 </resources>

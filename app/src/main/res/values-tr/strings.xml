@@ -2447,4 +2447,6 @@
     <string name="remove_folder_lock_message">Kilidi kaldırmak için \"%1$s\" parolasını girin.</string>
     <string name="failed_update_folder">Klasör güncellenemedi</string>
     <string name="folder_actions">Klasör işlemleri</string>
+    <string name="include_spam">Spam dahil et</string>
+    <string name="include_trash">Çöp kutusunu dahil et</string>
 </resources>

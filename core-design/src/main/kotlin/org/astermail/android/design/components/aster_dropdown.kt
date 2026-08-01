@@ -191,6 +191,8 @@ fun aster_dropdown_item(
     tint: Color? = null,
     test_tag: String? = null,
     count: Int = 0,
+    indent: androidx.compose.ui.unit.Dp = 0.dp,
+    leading: (@Composable () -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
     val content_color = when {
@@ -207,11 +209,16 @@ fun aster_dropdown_item(
             .clip(SquircleShape(12.dp))
             .background(if (selected) colors.accent_blue.copy(alpha = 0.16f) else Color.Transparent)
             .clickable(enabled = enabled, onClick = on_click)
-            .padding(horizontal = AsterSpacing.md, vertical = 10.dp)
+            .padding(start = AsterSpacing.md + indent, end = AsterSpacing.md)
+            .padding(vertical = 10.dp)
             .then(if (test_tag != null) Modifier.testTag(test_tag) else Modifier),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start,
     ) {
+        if (leading != null) {
+            leading()
+            Spacer(Modifier.width(4.dp))
+        }
         if (icon != null) {
             Icon(
                 imageVector = icon,

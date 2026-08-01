@@ -2448,4 +2448,6 @@
     <string name="remove_folder_lock_message">Introduce la contraseña de \"%1$s\" para quitar el bloqueo.</string>
     <string name="failed_update_folder">No se pudo actualizar la carpeta</string>
     <string name="folder_actions">Acciones de carpeta</string>
+    <string name="include_spam">Incluir spam</string>
+    <string name="include_trash">Incluir papelera</string>
 </resources>

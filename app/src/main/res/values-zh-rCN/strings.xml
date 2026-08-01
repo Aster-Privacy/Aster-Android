@@ -2440,4 +2440,6 @@
     <string name="remove_folder_lock_message">输入 \"%1$s\" 的密码以移除锁定。</string>
     <string name="failed_update_folder">无法更新文件夹</string>
     <string name="folder_actions">文件夹操作</string>
+    <string name="include_spam">包含垃圾邮件</string>
+    <string name="include_trash">包含回收站</string>
 </resources>
