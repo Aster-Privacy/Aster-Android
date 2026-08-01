@@ -2028,6 +2028,8 @@
     <string name="auto_delete_spam_14">14일</string>
     <string name="auto_delete_spam_30">30일</string>
     <string name="auto_delete_spam_never">삭제 안 함 (계속 보관)</string>
+    <string name="emails_per_page">페이지당 이메일 수</string>
+    <string name="emails_per_page_subtitle">받은편지함, 보관함 및 기타 폴더에서 페이지당 불러오는 이메일 수</string>
     <string name="section_protected_folders">보호된 폴더</string>
     <string name="folder_lock_mode">폴더 잠금 방식</string>
     <string name="folder_lock_session">세션 동안 잠금 해제</string>

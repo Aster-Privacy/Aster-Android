@@ -2028,6 +2028,8 @@
     <string name="auto_delete_spam_14">14 日</string>
     <string name="auto_delete_spam_30">30 日</string>
     <string name="auto_delete_spam_never">削除しない（ずっと保持）</string>
+    <string name="emails_per_page">1ページあたりのメール数</string>
+    <string name="emails_per_page_subtitle">受信トレイ、アーカイブ、その他のフォルダーで1ページに読み込むメール数</string>
     <string name="section_protected_folders">保護されたフォルダー</string>
     <string name="folder_lock_mode">フォルダーのロック方式</string>
     <string name="folder_lock_session">セッション中は解除</string>

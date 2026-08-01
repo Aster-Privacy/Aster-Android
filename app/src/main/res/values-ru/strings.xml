@@ -2037,6 +2037,8 @@
     <string name="auto_delete_spam_14">14 дней</string>
     <string name="auto_delete_spam_30">30 дней</string>
     <string name="auto_delete_spam_never">Никогда (хранить всегда)</string>
+    <string name="emails_per_page">Писем на странице</string>
+    <string name="emails_per_page_subtitle">Количество писем, загружаемых на странице во Входящих, Архиве и других папках</string>
     <string name="section_protected_folders">Защищённые папки</string>
     <string name="folder_lock_mode">Режим блокировки папки</string>
     <string name="folder_lock_session">Разблокирована на время сеанса</string>

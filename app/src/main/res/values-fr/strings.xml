@@ -1417,6 +1417,8 @@
     <string name="auto_delete_spam_14">14 jours</string>
     <string name="auto_delete_spam_30">30 jours</string>
     <string name="auto_delete_spam_never">Jamais (conserver toujours)</string>
+    <string name="emails_per_page">E-mails par page</string>
+    <string name="emails_per_page_subtitle">Nombre d\'e-mails chargés par page dans la boîte de réception, les archives et les autres dossiers</string>
     <string name="section_protected_folders">Dossiers protégés</string>
     <string name="folder_lock_mode">Mode de verrouillage des dossiers</string>
     <string name="folder_lock_session">Déverrouillé pour la session</string>

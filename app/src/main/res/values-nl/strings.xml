@@ -2031,6 +2031,8 @@
     <string name="auto_delete_spam_14">14 dagen</string>
     <string name="auto_delete_spam_30">30 dagen</string>
     <string name="auto_delete_spam_never">Nooit (altijd bewaren)</string>
+    <string name="emails_per_page">E-mails per pagina</string>
+    <string name="emails_per_page_subtitle">Aantal e-mails dat per pagina wordt geladen in Postvak IN, Archief en andere mappen</string>
     <string name="section_protected_folders">Beveiligde mappen</string>
     <string name="folder_lock_mode">Vergrendelmodus voor mappen</string>
     <string name="folder_lock_session">Ontgrendeld tijdens de sessie</string>

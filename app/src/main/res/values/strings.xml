@@ -2007,6 +2007,8 @@
     <string name="auto_delete_spam_14">14 days</string>
     <string name="auto_delete_spam_30">30 days</string>
     <string name="auto_delete_spam_never">Never (keep forever)</string>
+    <string name="emails_per_page">Emails per page</string>
+    <string name="emails_per_page_subtitle">Number of emails loaded per page in Inbox, Archive, and other folders</string>
     <string name="section_protected_folders">Protected Folders</string>
     <string name="folder_lock_mode">Folder lock mode</string>
     <string name="folder_lock_session">Unlocked for session</string>

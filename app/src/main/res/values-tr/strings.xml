@@ -2031,6 +2031,8 @@
     <string name="auto_delete_spam_14">14 gün sonra</string>
     <string name="auto_delete_spam_30">30 gün sonra</string>
     <string name="auto_delete_spam_never">Hiçbir zaman (hep sakla)</string>
+    <string name="emails_per_page">Sayfa başına e-posta</string>
+    <string name="emails_per_page_subtitle">Gelen kutusu, arşiv ve diğer klasörlerde sayfa başına yüklenen e-posta sayısı</string>
     <string name="section_protected_folders">Korumalı klasörler</string>
     <string name="folder_lock_mode">Klasör kilit biçimi</string>
     <string name="folder_lock_session">Oturum boyunca açık</string>

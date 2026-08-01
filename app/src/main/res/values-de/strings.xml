@@ -2032,6 +2032,8 @@
     <string name="auto_delete_spam_14">14 Tagen</string>
     <string name="auto_delete_spam_30">30 Tagen</string>
     <string name="auto_delete_spam_never">Nie (dauerhaft behalten)</string>
+    <string name="emails_per_page">E-Mails pro Seite</string>
+    <string name="emails_per_page_subtitle">Anzahl der pro Seite geladenen E-Mails im Posteingang, Archiv und anderen Ordnern</string>
     <string name="section_protected_folders">Geschützte Ordner</string>
     <string name="folder_lock_mode">Sperrmodus für Ordner</string>
     <string name="folder_lock_session">Für die Sitzung entsperrt</string>

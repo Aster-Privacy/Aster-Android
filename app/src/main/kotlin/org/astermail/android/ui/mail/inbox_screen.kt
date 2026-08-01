@@ -522,6 +522,11 @@ fun InboxScreen(
         mail_vm.set_list_order(if (sort_mode == InboxSortMode.oldest) "asc" else null)
     }
 
+    LaunchedEffect(settings_state.preferences?.inbox_page_size) {
+        val prefs_page_size = settings_state.preferences?.inbox_page_size ?: return@LaunchedEffect
+        mail_vm.set_page_size(prefs_page_size.coerceIn(10, 100))
+    }
+
     var last_scroll_reset_key by rememberSaveable { mutableStateOf("") }
     var pending_scroll_reset by remember { mutableStateOf(false) }
     LaunchedEffect(sort_mode, current_folder) {
