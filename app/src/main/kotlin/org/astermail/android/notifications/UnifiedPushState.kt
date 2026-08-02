@@ -27,6 +27,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import io.ktor.client.call.body
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
@@ -54,6 +55,7 @@ object UnifiedPushState {
     private const val KEY_LAST_SUBSCRIBE_ATTEMPT_AT = "last_subscribe_attempt_at"
     private const val KEY_VAPID_PUBLIC_KEY = "vapid_public_key"
     private const val KEY_VAPID_FETCHED_AT = "vapid_fetched_at"
+    private const val KEY_DEVICE_ID = "push_device_id"
     private const val RESUBSCRIBE_INTERVAL_MS = 24L * 60L * 60L * 1000L
     private const val REGISTER_COOLDOWN_MS = 15L * 60L * 1000L
     private const val SUBSCRIBE_COOLDOWN_MS = 5L * 60L * 1000L
@@ -66,6 +68,12 @@ object UnifiedPushState {
         val p256dh: String,
         val auth: String,
         val user_agent: String?,
+        val device_id: String?,
+    )
+
+    @Serializable
+    private data class UnsubscribeRequest(
+        val endpoint: String,
     )
 
     @Serializable
@@ -214,6 +222,15 @@ object UnifiedPushState {
         post_subscription(context, endpoint_url, p256dh, auth)
     }
 
+    private fun device_id(context: Context): String {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val existing = prefs.getString(KEY_DEVICE_ID, null)
+        if (!existing.isNullOrBlank()) return existing
+        val generated = java.util.UUID.randomUUID().toString()
+        prefs.edit().putString(KEY_DEVICE_ID, generated).apply()
+        return generated
+    }
+
     private fun post_subscription(
         context: Context,
         endpoint_url: String,
@@ -222,6 +239,7 @@ object UnifiedPushState {
     ) {
         if (cooldown_active(context, KEY_LAST_SUBSCRIBE_ATTEMPT_AT, SUBSCRIBE_COOLDOWN_MS)) return
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val previous_endpoint = prefs.getString(KEY_REGISTERED_ENDPOINT, null)
         scope.launch {
             runCatching {
                 val client = EntryPointAccessors.fromApplication(
@@ -233,6 +251,7 @@ object UnifiedPushState {
                     p256dh = p256dh,
                     auth = auth,
                     user_agent = "Aster-Android",
+                    device_id = device_id(context),
                 )
                 val response = client.http.post("${client.base_url}/api/sync/v1/web-push/subscribe") {
                     contentType(ContentType.Application.Json)
@@ -245,6 +264,14 @@ object UnifiedPushState {
                         .putString(KEY_REGISTERED_AUTH, auth)
                         .putLong(KEY_LAST_SUBSCRIBED_AT, System.currentTimeMillis())
                         .apply()
+                    if (!previous_endpoint.isNullOrBlank() && previous_endpoint != endpoint_url) {
+                        runCatching {
+                            client.http.delete("${client.base_url}/api/sync/v1/web-push/subscribe") {
+                                contentType(ContentType.Application.Json)
+                                setBody(UnsubscribeRequest(endpoint = previous_endpoint))
+                            }
+                        }
+                    }
                 }
             }
         }
