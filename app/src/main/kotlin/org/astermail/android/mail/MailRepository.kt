@@ -198,15 +198,15 @@ private fun scan_bundle_payload(payload: String): SubjectBundle? {
     return SubjectBundle(subject, body)
 }
 
-internal fun extract_subject_bundle(body: String): SubjectBundle {
-    if (body.isEmpty()) return SubjectBundle(null, body)
+private const val MAX_SUBJECT_BUNDLE_DEPTH = 8
 
-    val prefix_index = body.indexOf(ASTER_SUBJECT_BUNDLE_PREFIX)
-    if (prefix_index == -1 || !is_body_framing_only(body.substring(0, prefix_index))) {
-        return SubjectBundle(null, body)
+private fun unwrap_subject_bundle_layer(text: String): SubjectBundle? {
+    val prefix_index = text.indexOf(ASTER_SUBJECT_BUNDLE_PREFIX)
+    if (prefix_index == -1 || !is_body_framing_only(text.substring(0, prefix_index))) {
+        return null
     }
 
-    val payload = body.substring(prefix_index + ASTER_SUBJECT_BUNDLE_PREFIX.length)
+    val payload = text.substring(prefix_index + ASTER_SUBJECT_BUNDLE_PREFIX.length)
     try {
         val obj = org.json.JSONObject(payload)
         val s = obj.opt("s")
@@ -217,6 +217,24 @@ internal fun extract_subject_bundle(body: String): SubjectBundle {
     } catch (_: Throwable) {
     }
     return scan_bundle_payload(payload) ?: SubjectBundle(null, payload)
+}
+
+internal fun extract_subject_bundle(body: String): SubjectBundle {
+    if (body.isEmpty()) return SubjectBundle(null, body)
+
+    var subject: String? = null
+    var current = body
+    var unwrapped = false
+
+    for (depth in 0 until MAX_SUBJECT_BUNDLE_DEPTH) {
+        val layer = unwrap_subject_bundle_layer(current) ?: break
+        if (subject.isNullOrEmpty()) subject = layer.subject
+        current = layer.body
+        unwrapped = true
+    }
+
+    if (!unwrapped) return SubjectBundle(null, body)
+    return SubjectBundle(subject, current)
 }
 
 data class InboxItem(
@@ -2146,6 +2164,17 @@ class MailRepository @Inject constructor(
             resolved_subject = bundle.subject
         }
 
+        val html = body_html
+        if (html != null && html.contains(ASTER_SUBJECT_BUNDLE_PREFIX)) {
+            val html_bundle = extract_subject_bundle(html)
+            if (html_bundle.body != html) {
+                body_html = html_bundle.body.ifBlank { null }
+                if (html_bundle.subject != null && resolved_subject.isBlank()) {
+                    resolved_subject = html_bundle.subject
+                }
+            }
+        }
+
         return if (
             body_text != envelope.body_text ||
             body_html != envelope.body_html ||
@@ -2268,9 +2297,10 @@ class MailRepository @Inject constructor(
                 if (from_addr.isBlank() || !session_key_store.has_ratchet_keys()) {
                     throw IllegalStateException(context.getString(R.string.e2e_keys_not_ready))
                 }
+                val existing_bundle = extract_subject_bundle(body_html)
                 val wrapped = ASTER_SUBJECT_BUNDLE_PREFIX + org.json.JSONObject().apply {
-                    put("s", subject)
-                    put("b", body_html)
+                    put("s", subject.ifBlank { existing_bundle.subject.orEmpty() })
+                    put("b", existing_bundle.body)
                 }.toString()
                 val encrypted = try {
                     ratchet_encryptor.encrypt_envelope(from_addr, internal_recipients, wrapped)
