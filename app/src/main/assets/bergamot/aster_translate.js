@@ -28,6 +28,7 @@ const TRANSLATED_MARKER_ATTR = "data-aster-translated";
 const MIN_DETECTION_LENGTH = 40;
 const MIN_DETECTION_CONFIDENCE = 0.85;
 const MIN_STOPWORD_HIT_RATE = 0.04;
+const MIN_STOPWORD_HITS = 2;
 const SCRIPT_CONFIDENCE = 0.95;
 const SCRIPT_SHARE_THRESHOLD = 0.1;
 const MIN_TRANSLATABLE_LENGTH = 2;
@@ -153,6 +154,7 @@ function detect_by_stopwords(text) {
     }
   });
   if (!top_language || top_hits / tokens.length < MIN_STOPWORD_HIT_RATE) return null;
+  if (top_hits < MIN_STOPWORD_HITS) return null;
   return { language: top_language, confidence: top_hits / (top_hits + second_hits) };
 }
 
