@@ -39,13 +39,71 @@ import org.astermail.android.R
 import org.astermail.android.api.ApiError
 import org.astermail.android.api.billing.BillingApi
 import org.astermail.android.api.billing.CryptoNativeInvoiceStatus
+import org.astermail.android.api.billing.CryptoNativePendingInvoice
 
 enum class CryptoInvoiceLoadError { none, not_found, unavailable }
+
+val crypto_invoice_terminal_statuses = setOf("paid", "expired", "cancelled")
+
+val crypto_invoice_resumable_statuses =
+    setOf("pending", "detected", "confirming", "underpaid", "manual_review")
+
+object resolved_crypto_invoices {
+    private const val MAX_ENTRIES = 64
+
+    private val lock = Any()
+
+    private val resolved_keys = bounded_map<Boolean>()
+
+    private val last_seen_created_at = bounded_map<String>()
+
+    fun observe(id: String, created_at: String) {
+        if (id.isBlank() || created_at.isBlank()) return
+        synchronized(lock) { last_seen_created_at[id] = created_at }
+    }
+
+    fun mark(id: String, created_at: String) {
+        if (id.isBlank()) return
+        synchronized(lock) {
+            val stamp = created_at.ifBlank { last_seen_created_at[id].orEmpty() }
+            if (stamp.isNotBlank()) resolved_keys[key_of(id, stamp)] = true
+        }
+    }
+
+    fun is_resolved(id: String, created_at: String): Boolean {
+        if (id.isBlank() || created_at.isBlank()) return false
+        return synchronized(lock) { resolved_keys.containsKey(key_of(id, created_at)) }
+    }
+
+    private fun key_of(id: String, created_at: String): String = "$id|$created_at"
+
+    private fun <V> bounded_map(): LinkedHashMap<String, V> =
+        object : LinkedHashMap<String, V>(16, 0.75f, false) {
+            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, V>): Boolean =
+                size > MAX_ENTRIES
+        }
+}
+
+fun parse_crypto_timestamp_millis(value: String): Long? {
+    if (value.isBlank()) return null
+    return runCatching { java.time.OffsetDateTime.parse(value).toInstant().toEpochMilli() }.getOrNull()
+        ?: runCatching { java.time.Instant.parse(value).toEpochMilli() }.getOrNull()
+}
+
+fun is_resumable_crypto_invoice(invoice: CryptoNativePendingInvoice, now_ms: Long): Boolean {
+    if (resolved_crypto_invoices.is_resolved(invoice.id, invoice.created_at)) return false
+    if (invoice.status !in crypto_invoice_resumable_statuses) return false
+    if (invoice.status != "pending") return true
+    val expires_ms = parse_crypto_timestamp_millis(invoice.expires_at) ?: return true
+    return expires_ms > now_ms
+}
 
 data class CryptoInvoiceUiState(
     val invoice: CryptoNativeInvoiceStatus? = null,
     val is_loading: Boolean = true,
     val load_error: CryptoInvoiceLoadError = CryptoInvoiceLoadError.none,
+    val is_connection_lost: Boolean = false,
+    val clock_skew_ms: Long = 0,
     val is_cancelling: Boolean = false,
     val cancel_error: String? = null,
     val poll_token: Int = 0,
@@ -79,7 +137,10 @@ class CryptoInvoiceViewModel @Inject constructor(
             val invoice = fetch()
             if (invoice == null) {
                 if (_state.value.load_error == CryptoInvoiceLoadError.not_found) return
-                if (consecutive_failures >= MAX_CONSECUTIVE_FAILURES) return
+                if (consecutive_failures >= MAX_CONSECUTIVE_FAILURES) {
+                    _state.update { it.copy(is_connection_lost = it.invoice != null) }
+                    return
+                }
                 delay(failure_delay_ms())
                 continue
             }
@@ -95,6 +156,7 @@ class CryptoInvoiceViewModel @Inject constructor(
             it.copy(
                 is_loading = it.invoice == null,
                 load_error = CryptoInvoiceLoadError.none,
+                is_connection_lost = false,
                 poll_token = it.poll_token + 1,
             )
         }
@@ -105,8 +167,16 @@ class CryptoInvoiceViewModel @Inject constructor(
         return try {
             val invoice = billing_api.get_crypto_native_invoice(id)
             consecutive_failures = 0
+            resolved_crypto_invoices.observe(id, invoice.created_at)
+            if (is_terminal(invoice.status)) resolved_crypto_invoices.mark(id, invoice.created_at)
             _state.update {
-                it.copy(invoice = invoice, is_loading = false, load_error = CryptoInvoiceLoadError.none)
+                it.copy(
+                    invoice = invoice,
+                    is_loading = false,
+                    load_error = CryptoInvoiceLoadError.none,
+                    is_connection_lost = false,
+                    clock_skew_ms = skew_of(invoice.server_time) ?: it.clock_skew_ms,
+                )
             }
             invoice
         } catch (t: CancellationException) {
@@ -115,6 +185,7 @@ class CryptoInvoiceViewModel @Inject constructor(
             if (BuildConfig.DEBUG) android.util.Log.w("CryptoInvoiceVM", "fetch failed", t)
             consecutive_failures += 1
             val is_definitive = t is ApiError.NotFoundError || t is ApiError.ForbiddenError
+            if (is_definitive) resolved_crypto_invoices.mark(id, created_at_of(id))
             _state.update {
                 when {
                     is_definitive -> it.copy(
@@ -132,7 +203,18 @@ class CryptoInvoiceViewModel @Inject constructor(
         }
     }
 
-    private fun is_terminal(status: String?): Boolean = status != null && status in TERMINAL_STATUSES
+    private fun created_at_of(id: String): String {
+        val invoice = _state.value.invoice ?: return ""
+        return if (invoice.id == id) invoice.created_at else ""
+    }
+
+    private fun skew_of(server_time: String): Long? {
+        val server_ms = parse_crypto_timestamp_millis(server_time) ?: return null
+        return System.currentTimeMillis() - server_ms
+    }
+
+    private fun is_terminal(status: String?): Boolean =
+        status != null && status in crypto_invoice_terminal_statuses
 
     private fun poll_delay_ms(status: String, session_elapsed_ms: Long): Long = when {
         status == "manual_review" -> MANUAL_REVIEW_INTERVAL_MS
@@ -152,28 +234,36 @@ class CryptoInvoiceViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val result = billing_api.cancel_crypto_native_invoice(id)
+                resolved_crypto_invoices.mark(id, created_at_of(id))
                 _state.update {
                     it.copy(
                         is_cancelling = false,
                         invoice = it.invoice?.copy(status = result.status),
                     )
                 }
+            } catch (t: CancellationException) {
+                throw t
             } catch (t: Throwable) {
-                _state.update {
-                    it.copy(
-                        is_cancelling = false,
-                        cancel_error = org.astermail.android.api.user_facing_error(
-                            t,
-                            ctx.getString(R.string.crypto_native_cancel_failed),
-                        ),
-                    )
-                }
+                val message = cancel_error_message(t)
+                _state.update { it.copy(is_cancelling = false, cancel_error = message) }
+                fetch()
             }
         }
     }
 
     fun clear_cancel_error() {
         _state.update { it.copy(cancel_error = null) }
+    }
+
+    private fun cancel_error_message(t: Throwable): String {
+        val detail = (t as? ApiError.UnknownError)?.detail.orEmpty()
+        if (detail.contains("already been received", ignoreCase = true)) {
+            return ctx.getString(R.string.crypto_native_cancel_has_payment)
+        }
+        if (detail.contains("only a pending invoice", ignoreCase = true)) {
+            return ctx.getString(R.string.crypto_native_cancel_not_pending)
+        }
+        return ctx.getString(R.string.crypto_native_cancel_failed)
     }
 
     companion object {
@@ -184,6 +274,5 @@ class CryptoInvoiceViewModel @Inject constructor(
         private const val FAILURE_BASE_DELAY_MS = 6_000L
         private const val MAX_FAILURE_DELAY_MS = 60_000L
         private const val MAX_CONSECUTIVE_FAILURES = 5
-        private val TERMINAL_STATUSES = setOf("paid", "expired", "cancelled")
     }
 }

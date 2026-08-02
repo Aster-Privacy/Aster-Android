@@ -76,6 +76,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import org.astermail.android.R
 import org.astermail.android.billing.BillingViewModel
 import org.astermail.android.billing.PlayReview
+import org.astermail.android.billing.is_resumable_crypto_invoice
 import java.util.Locale
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
@@ -427,7 +428,9 @@ fun SubscriptionsScreen(
                 }
             }
         }
-        val pending_invoice = billing_state.pending_crypto_invoices.firstOrNull()
+        val pending_invoice = billing_state.pending_crypto_invoices.firstOrNull {
+            is_resumable_crypto_invoice(it, System.currentTimeMillis())
+        }
         if (pending_invoice != null) {
             v_gap(AsterSpacing.lg)
             crypto_resume_card(

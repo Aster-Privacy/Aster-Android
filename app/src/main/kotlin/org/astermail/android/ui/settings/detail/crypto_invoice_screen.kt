@@ -76,6 +76,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
+import java.math.BigDecimal
+import java.math.BigInteger
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.util.Locale
@@ -109,8 +111,8 @@ private fun pretty_chain(chain: String): String {
     }
 }
 
-private fun format_countdown(remaining_ms: Long): String {
-    if (remaining_ms <= 0) return "0:00"
+private fun format_countdown(remaining_ms: Long, zero_label: String): String {
+    if (remaining_ms <= 0) return zero_label
     val total_seconds = remaining_ms / 1000
     val hours = total_seconds / 3600
     val minutes = (total_seconds % 3600) / 60
@@ -133,9 +135,43 @@ private fun parse_iso_millis(value: String): Long? {
         ?: runCatching { Instant.parse(value).toEpochMilli() }.getOrNull()
 }
 
-private fun format_usd(cents: Long): String {
-    return String.format(Locale.US, "$%,.2f", cents / 100.0)
+private fun format_usd_amount(cents: Long): String {
+    return String.format(Locale.US, "%,.2f", cents / 100.0)
 }
+
+private fun atomic_or_null(value: String): BigInteger? =
+    runCatching { BigInteger(value.trim()) }.getOrNull()
+
+private fun received_atomic_of(invoice: CryptoNativeInvoiceStatus): BigInteger =
+    atomic_or_null(invoice.amount_received_atomic) ?: BigInteger.ZERO
+
+private fun due_atomic_of(invoice: CryptoNativeInvoiceStatus): BigInteger? {
+    atomic_or_null(invoice.amount_due_atomic)?.let { return it.max(BigInteger.ZERO) }
+    val expected = atomic_or_null(invoice.amount_atomic) ?: return null
+    return (expected - received_atomic_of(invoice)).max(BigInteger.ZERO)
+}
+
+private fun format_atomic_decimal(value: BigInteger, decimals: Int): String =
+    BigDecimal(value)
+        .movePointLeft(decimals.coerceAtLeast(0))
+        .stripTrailingZeros()
+        .toPlainString()
+
+private fun due_decimal_of(invoice: CryptoNativeInvoiceStatus): String {
+    if (invoice.amount_due_decimal.isNotBlank()) return invoice.amount_due_decimal
+    val due = due_atomic_of(invoice) ?: return invoice.amount_decimal
+    return format_atomic_decimal(due, invoice.decimals)
+}
+
+private fun is_awaiting_funds_status(status: String): Boolean =
+    status == "pending" || status == "detected" || status == "underpaid"
+
+private fun is_quote_lapsed(invoice: CryptoNativeInvoiceStatus, corrected_now_ms: Long): Boolean {
+    if (!is_awaiting_funds_status(invoice.status)) return false
+    val deadline_ms = parse_iso_millis(invoice.expires_at) ?: return false
+    return deadline_ms - corrected_now_ms <= 0
+}
+
 @Composable
 internal fun crypto_invoice_screen(
     invoice_id: String,
@@ -160,6 +196,10 @@ internal fun crypto_invoice_screen(
         }
     }
     val invoice = state.invoice
+    val corrected_now_ms = now_ms - state.clock_skew_ms
+    val quote_lapsed_unfunded = invoice != null &&
+        is_quote_lapsed(invoice, corrected_now_ms) &&
+        received_atomic_of(invoice).signum() == 0
 
     Column(Modifier.fillMaxSize().background(colors.bg_primary).systemBarsPadding()) {
         AsterTopBar(title = stringResource(R.string.crypto_native_invoice_screen_title), on_back = on_back)
@@ -209,11 +249,12 @@ internal fun crypto_invoice_screen(
                     secondary_label = stringResource(R.string.crypto_native_view_billing),
                     on_secondary = on_view_billing,
                 )
-                invoice.status == "expired" -> crypto_outcome_view(
+                invoice.status == "expired" || quote_lapsed_unfunded -> crypto_outcome_view(
                     icon = TablerIcons.Clock,
                     tint = colors.text_secondary,
                     title = stringResource(R.string.crypto_native_expired_title),
                     body = stringResource(R.string.crypto_native_expired_body),
+                    notice = stringResource(R.string.crypto_native_expired_do_not_send),
                     primary_label = null,
                     on_primary = null,
                     secondary_label = stringResource(R.string.crypto_native_view_billing),
@@ -221,9 +262,11 @@ internal fun crypto_invoice_screen(
                 )
                 else -> crypto_active_view(
                     invoice = invoice,
-                    now_ms = now_ms,
+                    corrected_now_ms = corrected_now_ms,
                     is_cancelling = state.is_cancelling,
                     cancel_error = state.cancel_error,
+                    is_connection_lost = state.is_connection_lost,
+                    on_retry = { vm.refresh() },
                     on_cancel = { vm.cancel() },
                     on_view_billing = on_view_billing,
                 )
@@ -234,31 +277,80 @@ internal fun crypto_invoice_screen(
 @Composable
 private fun crypto_active_view(
     invoice: CryptoNativeInvoiceStatus,
-    now_ms: Long,
+    corrected_now_ms: Long,
     is_cancelling: Boolean,
     cancel_error: String?,
+    is_connection_lost: Boolean,
+    on_retry: () -> Unit,
     on_cancel: () -> Unit,
     on_view_billing: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val is_awaiting_funds = invoice.status == "pending" || invoice.status == "underpaid"
+    val is_awaiting_funds = is_awaiting_funds_status(invoice.status)
+    val deadline_ms = parse_iso_millis(invoice.expires_at)
+    val remaining_ms = deadline_ms?.minus(corrected_now_ms)
+    val quote_lapsed = is_awaiting_funds && remaining_ms != null && remaining_ms <= 0
+    val due_atomic = due_atomic_of(invoice)
+    val has_outstanding_balance =
+        is_awaiting_funds && !quote_lapsed && (due_atomic == null || due_atomic.signum() > 0)
+    val has_received_funds = received_atomic_of(invoice).signum() > 0
+    val is_active_payment = is_awaiting_funds && !quote_lapsed
+    val due_decimal = due_decimal_of(invoice)
 
     Column(Modifier.fillMaxWidth()) {
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.fillMaxWidth().padding(AsterSpacing.lg)) {
-                Text(stringResource(R.string.crypto_native_invoice_title, invoice.display_name), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = colors.text_primary)
+                Text(
+                    if (has_outstanding_balance) {
+                        stringResource(R.string.crypto_native_invoice_title, invoice.display_name)
+                    } else {
+                        stringResource(R.string.crypto_native_received_title)
+                    },
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.text_primary,
+                )
                 Spacer(Modifier.height(AsterSpacing.xs))
-                Text(stringResource(R.string.crypto_native_awaiting_body), fontSize = 13.sp, color = colors.text_secondary, lineHeight = 18.sp)
-                Spacer(Modifier.height(AsterSpacing.lg))
-                crypto_qr_box(invoice.payment_uri)
-                Spacer(Modifier.height(AsterSpacing.lg))
-                crypto_detail_row(stringResource(R.string.crypto_native_send_exactly), invoice.amount_decimal + " " + invoice.currency)
-                Spacer(Modifier.height(AsterSpacing.md))
-                crypto_detail_row(stringResource(R.string.crypto_native_to_address), invoice.address, monospace = true)
-                Spacer(Modifier.height(AsterSpacing.lg))
-                crypto_wallet_button(invoice.payment_uri)
-                Spacer(Modifier.height(AsterSpacing.md))
-                crypto_notice_box(TablerIcons.AlertTriangle, colors.warning, null, stringResource(R.string.crypto_native_network_warning, invoice.currency, pretty_chain(invoice.chain)))
+                Text(
+                    if (has_outstanding_balance) {
+                        stringResource(R.string.crypto_native_awaiting_body)
+                    } else {
+                        stringResource(R.string.crypto_native_received_body)
+                    },
+                    fontSize = 13.sp,
+                    color = colors.text_secondary,
+                    lineHeight = 18.sp,
+                )
+                if (has_outstanding_balance) {
+                    Spacer(Modifier.height(AsterSpacing.lg))
+                    crypto_qr_box(invoice.payment_uri)
+                    Spacer(Modifier.height(AsterSpacing.lg))
+                    crypto_detail_row(
+                        if (invoice.status == "underpaid") {
+                            stringResource(R.string.crypto_native_send_remaining)
+                        } else {
+                            stringResource(R.string.crypto_native_send_exactly)
+                        },
+                        due_decimal + " " + invoice.currency,
+                    )
+                    Spacer(Modifier.height(AsterSpacing.md))
+                    crypto_detail_row(stringResource(R.string.crypto_native_to_address), invoice.address, monospace = true)
+                    Spacer(Modifier.height(AsterSpacing.lg))
+                    crypto_wallet_button(invoice.payment_uri)
+                }
+                if (has_outstanding_balance || quote_lapsed) {
+                    Spacer(Modifier.height(if (has_outstanding_balance) AsterSpacing.md else AsterSpacing.lg))
+                    crypto_notice_box(
+                        TablerIcons.AlertTriangle,
+                        colors.warning,
+                        null,
+                        if (quote_lapsed) {
+                            stringResource(R.string.crypto_native_expired_do_not_send)
+                        } else {
+                            stringResource(R.string.crypto_native_network_warning, invoice.currency, pretty_chain(invoice.chain))
+                        },
+                    )
+                }
             }
         }
 
@@ -266,21 +358,47 @@ private fun crypto_active_view(
 
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.fillMaxWidth().padding(AsterSpacing.lg)) {
-                Text(stringResource(R.string.crypto_native_usd_value_label), fontSize = 12.sp, color = colors.text_tertiary)
+                Text(
+                    if (has_received_funds) {
+                        stringResource(R.string.crypto_native_usd_total_label)
+                    } else {
+                        stringResource(R.string.crypto_native_usd_value_label)
+                    },
+                    fontSize = 12.sp,
+                    color = colors.text_tertiary,
+                )
                 Spacer(Modifier.height(AsterSpacing.xs))
-                Text(format_usd(invoice.usd_cents), fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = colors.text_primary)
+                Text(
+                    stringResource(R.string.crypto_native_usd_amount, format_usd_amount(invoice.usd_cents)),
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.text_primary,
+                )
                 Spacer(Modifier.height(AsterSpacing.xs))
                 Text(stringResource(R.string.crypto_native_rate_locked), fontSize = 11.sp, color = colors.text_muted, lineHeight = 16.sp)
-                val deadline_ms = parse_iso_millis(invoice.expires_at)
-                if (is_awaiting_funds && deadline_ms != null) {
+                if (is_active_payment && remaining_ms != null) {
                     Spacer(Modifier.height(AsterSpacing.md))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(TablerIcons.Clock, contentDescription = null, tint = colors.text_secondary, modifier = Modifier.size(14.dp))
                         Spacer(Modifier.width(AsterSpacing.xs))
-                        Text(stringResource(R.string.crypto_native_expires_in, format_countdown(deadline_ms - now_ms)), fontSize = 12.sp, color = colors.text_secondary)
+                        Text(
+                            stringResource(
+                                R.string.crypto_native_expires_in,
+                                format_countdown(remaining_ms, stringResource(R.string.crypto_native_countdown_zero)),
+                            ),
+                            fontSize = 12.sp,
+                            color = colors.text_secondary,
+                        )
                     }
                 }
             }
+        }
+
+        if (is_connection_lost) {
+            Spacer(Modifier.height(AsterSpacing.lg))
+            crypto_notice_box(TablerIcons.CloudOff, colors.text_secondary, null, stringResource(R.string.crypto_native_connection_lost))
+            Spacer(Modifier.height(AsterSpacing.md))
+            AsterSecondaryButton(label = stringResource(R.string.retry), onClick = on_retry, modifier = Modifier.fillMaxWidth())
         }
 
         Spacer(Modifier.height(AsterSpacing.lg))
@@ -293,7 +411,18 @@ private fun crypto_active_view(
 
         if (invoice.status == "underpaid") {
             Spacer(Modifier.height(AsterSpacing.lg))
-            crypto_notice_box(TablerIcons.AlertTriangle, colors.warning, null, stringResource(R.string.crypto_native_underpaid_body, invoice.amount_received_decimal, invoice.amount_decimal, invoice.currency))
+            crypto_notice_box(
+                TablerIcons.AlertTriangle,
+                colors.warning,
+                null,
+                stringResource(
+                    R.string.crypto_native_underpaid_body,
+                    invoice.amount_received_decimal,
+                    invoice.amount_decimal,
+                    invoice.currency,
+                    due_decimal,
+                ),
+            )
         }
 
         if (invoice.status == "manual_review") {
@@ -358,6 +487,7 @@ private fun crypto_outcome_view(
     on_primary: (() -> Unit)?,
     secondary_label: String,
     on_secondary: () -> Unit,
+    notice: String? = null,
 ) {
     val colors = AsterMaterial.colors
     Column(
@@ -388,6 +518,10 @@ private fun crypto_outcome_view(
             textAlign = TextAlign.Center,
             lineHeight = 20.sp,
         )
+        if (!notice.isNullOrBlank()) {
+            Spacer(Modifier.height(AsterSpacing.lg))
+            crypto_notice_box(TablerIcons.AlertTriangle, colors.warning, null, notice)
+        }
         Spacer(Modifier.height(AsterSpacing.xxl))
         if (primary_label != null && on_primary != null) {
             AsterButton(
@@ -418,6 +552,7 @@ private fun crypto_progress_stepper(status: String, confirmations: Int, min_conf
         "confirming" -> 2
         "paid" -> 3
         "underpaid" -> 1
+        "manual_review" -> 1
         else -> 0
     }
     Column(modifier = Modifier.fillMaxWidth()) {

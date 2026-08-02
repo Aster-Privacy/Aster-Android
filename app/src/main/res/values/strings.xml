@@ -2257,17 +2257,27 @@
     <string name="crypto_native_manual_review_body">This payment needs a quick manual review. It usually clears within a few hours and your plan is credited automatically.</string>
     <string name="crypto_native_transaction">Transaction</string>
     <string name="crypto_native_refund_notice">Overpayments within 2x are credited to your account balance automatically. Contact support if anything looks wrong.</string>
-    <string name="crypto_native_underpaid_body">We received %1$s but expected %2$s %3$s. Send the remaining amount to the same address to finish.</string>
+    <string name="crypto_native_underpaid_body">We received %1$s of %2$s %3$s. Send the remaining %4$s %3$s to the same address to finish this payment.</string>
     <string name="crypto_native_invoice_title">Pay with %1$s</string>
     <string name="crypto_native_awaiting_body">Scan the code or copy the details into your wallet. This page updates automatically.</string>
     <string name="crypto_native_rate_locked">Rate locked when this payment was created.</string>
     <string name="crypto_native_send_exactly">Send exactly</string>
+    <string name="crypto_native_send_remaining">Send the remaining</string>
     <string name="crypto_native_to_address">To this address</string>
     <string name="crypto_native_open_wallet">Open in wallet</string>
     <string name="crypto_native_no_wallet_app">No compatible wallet app found.</string>
     <string name="crypto_native_network_warning">Only send %1$s on the %2$s network. Funds sent on any other network cannot be recovered.</string>
     <string name="crypto_native_pending_banner">You have a crypto payment in progress</string>
     <string name="crypto_native_pending_banner_action">Resume payment</string>
+    <string name="crypto_native_received_title">Payment received</string>
+    <string name="crypto_native_received_body">The full amount has been received and is being processed. No further payment is needed.</string>
+    <string name="crypto_native_usd_total_label">Payment total</string>
+    <string name="crypto_native_expired_do_not_send">Do not send to the address on this payment. Funds sent now need a manual review before they can be credited.</string>
+    <string name="crypto_native_connection_lost">Connection lost. Check your network and try again.</string>
+    <string name="crypto_native_cancel_has_payment">This payment has already received funds, so it can no longer be cancelled.</string>
+    <string name="crypto_native_cancel_not_pending">This payment is no longer waiting for funds, so it can no longer be cancelled.</string>
+    <string name="crypto_native_countdown_zero">0:00</string>
+    <string name="crypto_native_usd_amount">$%1$s</string>
 
     <!-- Vanguard -->
     <string name="section_vanguard">Aster Vanguard</string>
