@@ -207,6 +207,24 @@ class SubjectBundleTest {
     }
 
     @Test
+    fun unwraps_a_double_wrapped_bundle_and_keeps_the_inner_subject() {
+        val inner = encode_bundle("AsterMail not allowed", "<div>Hi there</div>")
+        val result = extract_subject_bundle(encode_bundle("", inner))
+        assertEquals("AsterMail not allowed", result.subject)
+        assertEquals("<div>Hi there</div>", result.body)
+        assertTrue(!result.body.contains(ASTER_SUBJECT_BUNDLE_PREFIX))
+    }
+
+    @Test
+    fun unwraps_deeply_nested_bundles() {
+        var encoded = encode_bundle("deep subject", "final body")
+        repeat(4) { encoded = encode_bundle("", encoded) }
+        val result = extract_subject_bundle(encoded)
+        assertEquals("deep subject", result.subject)
+        assertEquals("final body", result.body)
+    }
+
+    @Test
     fun round_trips_the_android_send_wrap_format() {
         val wrapped = ASTER_SUBJECT_BUNDLE_PREFIX + JSONObject().apply {
             put("s", "Question")
