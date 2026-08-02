@@ -234,4 +234,63 @@ class SubjectBundleTest {
         assertEquals("Question", result.subject)
         assertEquals("<p>Hi, I'm new here 👋</p>", result.body)
     }
+
+    private fun encode_legacy_bundle(subject: String, body: String): String {
+        return ASTER_SUBJECT_BUNDLE_MARKER + JSONObject().apply {
+            put("s", subject)
+            put("b", body)
+        }.toString()
+    }
+
+    @Test
+    fun send_wrap_uses_the_delimited_marker() {
+        val encoded = encode_bundle("Question", "body")
+        assertTrue(encoded.startsWith("\u0001" + ASTER_SUBJECT_BUNDLE_MARKER + "\u0001"))
+    }
+
+    @Test
+    fun decodes_an_undelimited_bundle_from_an_older_client() {
+        val result = extract_subject_bundle(encode_legacy_bundle("Quarterly report", "<p>review</p>"))
+        assertEquals("Quarterly report", result.subject)
+        assertEquals("<p>review</p>", result.body)
+        assertTrue(!result.body.contains(ASTER_SUBJECT_BUNDLE_MARKER))
+    }
+
+    @Test
+    fun decodes_an_undelimited_bundle_nested_in_a_delimited_one() {
+        val inner = encode_legacy_bundle("inner subject", "inner body")
+        val result = extract_subject_bundle(encode_bundle("", inner))
+        assertEquals("inner subject", result.subject)
+        assertEquals("inner body", result.body)
+    }
+
+    @Test
+    fun decodes_a_delimited_bundle_nested_in_an_undelimited_one() {
+        val inner = encode_bundle("inner subject", "inner body")
+        val result = extract_subject_bundle(encode_legacy_bundle("", inner))
+        assertEquals("inner subject", result.subject)
+        assertEquals("inner body", result.body)
+    }
+
+    @Test
+    fun decodes_a_delimited_bundle_framed_by_control_characters() {
+        val result = extract_subject_bundle("\u0000\ufeff" + encode_bundle("Hi", "there"))
+        assertEquals("Hi", result.subject)
+        assertEquals("there", result.body)
+    }
+
+    @Test
+    fun recovers_a_truncated_undelimited_payload() {
+        val truncated = ASTER_SUBJECT_BUNDLE_MARKER + "{\"s\":\"Re: \",\"b\":\"<p>Thanks!</p>"
+        val result = extract_subject_bundle(truncated)
+        assertEquals("Re: ", result.subject)
+        assertEquals("<p>Thanks!</p>", result.body)
+    }
+
+    @Test
+    fun leaves_plain_text_without_a_marker_untouched() {
+        val result = extract_subject_bundle("just a normal message")
+        assertNull(result.subject)
+        assertEquals("just a normal message", result.body)
+    }
 }

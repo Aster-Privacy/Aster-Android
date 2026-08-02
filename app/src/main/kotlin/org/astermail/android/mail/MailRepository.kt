@@ -111,7 +111,12 @@ data class DecryptedEnvelope(
     val is_undecryptable: Boolean = false,
 )
 
-const val ASTER_SUBJECT_BUNDLE_PREFIX = "ASTER_BUNDLE_V2"
+const val ASTER_SUBJECT_BUNDLE_MARKER = "ASTER_BUNDLE_V2"
+
+const val BUNDLE_MARKER_DELIMITER = '\u0001'
+
+const val ASTER_SUBJECT_BUNDLE_PREFIX =
+    "$BUNDLE_MARKER_DELIMITER$ASTER_SUBJECT_BUNDLE_MARKER$BUNDLE_MARKER_DELIMITER"
 
 val ASTER_INTERNAL_DOMAINS = listOf("astermail.org", "aster.cx", "gs-cloud.space")
 
@@ -201,12 +206,22 @@ private fun scan_bundle_payload(payload: String): SubjectBundle? {
 private const val MAX_SUBJECT_BUNDLE_DEPTH = 8
 
 private fun unwrap_subject_bundle_layer(text: String): SubjectBundle? {
-    val prefix_index = text.indexOf(ASTER_SUBJECT_BUNDLE_PREFIX)
-    if (prefix_index == -1 || !is_body_framing_only(text.substring(0, prefix_index))) {
-        return null
+    val marker_index = text.indexOf(ASTER_SUBJECT_BUNDLE_MARKER)
+    if (marker_index == -1) return null
+
+    val start_index = if (marker_index > 0 && text[marker_index - 1] == BUNDLE_MARKER_DELIMITER) {
+        marker_index - 1
+    } else {
+        marker_index
+    }
+    if (!is_body_framing_only(text.substring(0, start_index))) return null
+
+    var payload_index = marker_index + ASTER_SUBJECT_BUNDLE_MARKER.length
+    if (payload_index < text.length && text[payload_index] == BUNDLE_MARKER_DELIMITER) {
+        payload_index += 1
     }
 
-    val payload = text.substring(prefix_index + ASTER_SUBJECT_BUNDLE_PREFIX.length)
+    val payload = text.substring(payload_index)
     try {
         val obj = org.json.JSONObject(payload)
         val s = obj.opt("s")
@@ -2165,7 +2180,7 @@ class MailRepository @Inject constructor(
         }
 
         val html = body_html
-        if (html != null && html.contains(ASTER_SUBJECT_BUNDLE_PREFIX)) {
+        if (html != null && html.contains(ASTER_SUBJECT_BUNDLE_MARKER)) {
             val html_bundle = extract_subject_bundle(html)
             if (html_bundle.body != html) {
                 body_html = html_bundle.body.ifBlank { null }
