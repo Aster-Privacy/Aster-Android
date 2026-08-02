@@ -331,7 +331,13 @@ class BillingViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val response = billing_api.list_pending_crypto_invoices()
-                _state.value = _state.value.copy(pending_crypto_invoices = response.invoices)
+                val now_ms = System.currentTimeMillis()
+                response.invoices.forEach { resolved_crypto_invoices.observe(it.id, it.created_at) }
+                _state.value = _state.value.copy(
+                    pending_crypto_invoices = response.invoices.filter {
+                        is_resumable_crypto_invoice(it, now_ms)
+                    },
+                )
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(pending_crypto_invoices = emptyList())
             } finally {

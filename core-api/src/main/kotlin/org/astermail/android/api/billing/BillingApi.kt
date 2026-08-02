@@ -327,6 +327,8 @@ data class CryptoNativeInvoiceStatus(
     val amount_decimal: String = "0",
     val amount_received_atomic: String = "0",
     val amount_received_decimal: String = "0",
+    val amount_due_atomic: String = "",
+    val amount_due_decimal: String = "",
     val decimals: Int = 0,
     val usd_cents: Long = 0,
     val status: String = "",
@@ -338,6 +340,7 @@ data class CryptoNativeInvoiceStatus(
     val watch_until: String = "",
     val created_at: String = "",
     val completed_at: String? = null,
+    val server_time: String = "",
 )
 
 @Serializable
