@@ -192,9 +192,14 @@ object CryptoNative {
         return out
     }
 
-    fun hash_email(email: String): String {
-        val normalized = email.lowercase().trim().toByteArray(Charsets.UTF_8)
-        val digest = MessageDigest.getInstance("SHA-256").digest(normalized)
+    fun hash_email(email: String): String =
+        sha256_base64(normalize_address_ignoring_dots(email))
+
+    fun hash_email_keeping_dots(email: String): String =
+        sha256_base64(email.lowercase().trim())
+
+    private fun sha256_base64(value: String): String {
+        val digest = MessageDigest.getInstance("SHA-256").digest(value.toByteArray(Charsets.UTF_8))
         return Base64.encodeToString(digest, Base64.NO_WRAP)
     }
 

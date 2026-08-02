@@ -44,6 +44,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.astermail.android.R
 import org.astermail.android.api.mail.MailUserStatsResponse
+import org.astermail.android.crypto.same_address_ignoring_dots
 import org.astermail.android.notifications.MailPollingWorker
 import org.astermail.android.api.send.ExternalAttachmentPayload
 import org.astermail.android.ui.mail.MessageAttachment
@@ -224,8 +225,8 @@ class MailViewModel @Inject constructor(
             return
         }
         val from_email = sender_email?.takeIf { it.isNotBlank() } ?: our_email
-        val sender_is_self = message.sender_email.equals(our_email, ignoreCase = true) ||
-            message.sender_email.equals(from_email, ignoreCase = true)
+        val sender_is_self = same_address_ignoring_dots(message.sender_email, our_email) ||
+            same_address_ignoring_dots(message.sender_email, from_email)
         val recipient = if (!sender_is_self) {
             message.sender_email
         } else {
