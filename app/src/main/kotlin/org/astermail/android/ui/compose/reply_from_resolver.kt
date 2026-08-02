@@ -21,6 +21,8 @@
 
 package org.astermail.android.ui.compose
 
+import org.astermail.android.crypto.same_address_ignoring_dots
+
 fun compute_received_on_alias(
     recipient_addresses: List<String>,
     alias_options: List<String>,
@@ -31,7 +33,8 @@ fun compute_received_on_alias(
         .map { it.trim() }
         .filter { it.isNotBlank() }
         .mapNotNull { options_by_lower[it.lowercase()] }
-    return matches.firstOrNull { it.lowercase() != user_email.lowercase() } ?: matches.firstOrNull()
+    return matches.firstOrNull { !same_address_ignoring_dots(it, user_email) }
+        ?: matches.firstOrNull()
 }
 
 data class ReactionSenderIdentity(
@@ -53,7 +56,7 @@ fun resolve_reaction_sender_identity(
         compute_received_on_alias(own_recipient_addresses, alias_options, user_email)
     }
     val email = resolved?.takeIf { it.isNotBlank() } ?: user_email
-    if (email.equals(user_email, ignoreCase = true)) {
+    if (same_address_ignoring_dots(email, user_email)) {
         return ReactionSenderIdentity(user_email, null)
     }
     val hash = alias_hash_map.entries

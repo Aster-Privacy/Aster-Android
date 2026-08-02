@@ -183,8 +183,14 @@ class AuthRepository @Inject constructor(
     suspend fun login(email: String, password: String, captcha_token: String? = null): Result<LoginOutcome> = runCatching {
         val normalized = normalize_email(email)
         val trusted_token = trusted_device_store.get_token(normalized)
-        val user_hash = CryptoNative.hash_email(normalized)
-        val salt_resp = auth_api.get_user_salt(user_hash)
+        val dotless_hash = CryptoNative.hash_email(normalized)
+        val dotted_hash = CryptoNative.hash_email_keeping_dots(normalized)
+        val (user_hash, salt_resp) = runCatching {
+            dotless_hash to auth_api.get_user_salt(dotless_hash)
+        }.getOrElse { error ->
+            if (dotted_hash == dotless_hash) throw error
+            dotted_hash to auth_api.get_user_salt(dotted_hash)
+        }
         val salt_bytes = base64_decode(salt_resp.salt)
         val password_bytes = password.toByteArray(Charsets.UTF_8)
         val password_hash_bytes = CryptoNative.derive_pbkdf2_hash(
