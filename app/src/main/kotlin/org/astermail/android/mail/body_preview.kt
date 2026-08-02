@@ -24,7 +24,7 @@ package org.astermail.android.mail
 const val PREVIEW_MAX_LENGTH = 140
 
 private val CIPHERTEXT_MARKERS = listOf(
-    ASTER_SUBJECT_BUNDLE_PREFIX,
+    ASTER_SUBJECT_BUNDLE_MARKER,
     "ASTER_RATCHET_UNDECRYPTABLE",
     "-----BEGIN PGP",
     "\"double_ratchet_v1\"",
