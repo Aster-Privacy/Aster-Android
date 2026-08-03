@@ -128,6 +128,8 @@ fun AliasesScreen(
     on_back: () -> Unit,
     on_open: (id: String) -> Unit = {},
     open_create: Boolean = false,
+    on_open_buy_domain: () -> Unit = {},
+    on_open_domain_order: (String) -> Unit = {},
 ) {
     val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
