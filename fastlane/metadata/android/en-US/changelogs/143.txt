@@ -1,0 +1,8 @@
+Bug fixes and improvements:
+
+- Fixed duplicate notifications arriving for a single new email
+- Buy a custom domain directly from the app, with guided setup and progress
+- Choose compact or comfortable mail list density, synced with the web
+- Replies you just sent stay visible in the thread without scroll jumps
+- Search index downloads show progress and can be paused and resumed
+- Short messages are no longer mislabeled as a foreign language
