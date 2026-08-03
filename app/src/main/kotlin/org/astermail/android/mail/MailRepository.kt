@@ -384,6 +384,10 @@ class MailRepository @Inject constructor(
     val pending_undo_send: kotlinx.coroutines.flow.StateFlow<PendingUndoSend?> = _pending_undo_send
     private val _send_result_events = kotlinx.coroutines.flow.MutableSharedFlow<Result<Unit>>(extraBufferCapacity = 8)
     val send_result_events: kotlinx.coroutines.flow.SharedFlow<Result<Unit>> = _send_result_events
+
+    fun notify_send_success() {
+        _send_result_events.tryEmit(Result.success(Unit))
+    }
     private val _send_problem = kotlinx.coroutines.flow.MutableStateFlow(false)
     val send_problem: kotlinx.coroutines.flow.StateFlow<Boolean> = _send_problem
     private val _failed_send_count = kotlinx.coroutines.flow.MutableStateFlow(0)

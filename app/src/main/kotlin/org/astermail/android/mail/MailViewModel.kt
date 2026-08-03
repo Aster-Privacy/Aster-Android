@@ -56,6 +56,7 @@ private const val CARRIED_ITEM_STALE_MS = 20 * 60 * 1000L
 private const val STATS_TTL_MS = 30_000L
 private const val STATS_DEBOUNCE_MS = 1_200L
 private const val DECRYPT_RETRY_TIMEOUT_MS = 20_000L
+private const val SEND_GUARD_WINDOW_MS = 30_000L
 private const val LOAD_ALL_MAX_PAGES = 5_000
 private const val LOAD_ALL_PAGE_WAIT_TICKS = 4_800
 private const val LOAD_ALL_MAX_STALLS = 3
@@ -890,8 +891,27 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    @Volatile
+    private var send_guard_until = 0L
+
     fun refresh_current_thread() {
         _thread_state.value.item?.id?.let { load_thread(it) }
+    }
+
+    private fun refresh_thread_after_send() {
+        send_guard_until = System.currentTimeMillis() + SEND_GUARD_WINDOW_MS
+        if (_thread_state.value.item == null) return
+        viewModelScope.launch {
+            val before_ids = _thread_state.value.messages.map { it.id }.toSet()
+            refresh_current_thread()
+            repeat(3) { attempt ->
+                kotlinx.coroutines.delay(if (attempt == 0) 1_500L else 4_000L)
+                val cur = _thread_state.value
+                if (cur.item == null) return@launch
+                if (cur.messages.any { it.id !in before_ids }) return@launch
+                refresh_current_thread()
+            }
+        }
     }
 
     fun load_thread(item_id: String) {
@@ -933,9 +953,19 @@ class MailViewModel @Inject constructor(
                 val result = withTimeoutOrNull(15_000) {
                     repository.fetch_thread(thread_token)
                 } ?: Result.failure(Exception(context.getString(R.string.something_went_wrong)))
+                val previous = if (cur_thread.item?.id == item_id) cur_thread.messages else emptyList()
                 result.fold(
                     onSuccess = { messages ->
-                        val resolved = if (messages.isEmpty()) fallback else messages
+                        val base = if (messages.isEmpty()) previous.ifEmpty { fallback } else messages
+                        val resolved = if (
+                            previous.isNotEmpty() &&
+                            System.currentTimeMillis() < send_guard_until
+                        ) {
+                            val server_ids = base.map { it.id }.toSet()
+                            base + previous.filter { it.id !in server_ids }
+                        } else {
+                            base
+                        }
                         _thread_state.value = ThreadUiState(
                             messages = resolved,
                             item = item,
@@ -945,13 +975,14 @@ class MailViewModel @Inject constructor(
                         load_reactions(resolved)
                     },
                     onFailure = { t ->
+                        val kept = previous.ifEmpty { fallback }
                         _thread_state.value = ThreadUiState(
-                            messages = fallback,
+                            messages = kept,
                             error = org.astermail.android.api.user_facing_error(t, context.getString(R.string.something_went_wrong)),
                             item = item,
                         )
-                        cache_thread_participants(thread_token, fallback)
-                        load_attachments_for_thread(fallback)
+                        cache_thread_participants(thread_token, kept)
+                        load_attachments_for_thread(kept)
                     },
                 )
             } else if (item != null) {
@@ -2467,8 +2498,9 @@ class MailViewModel @Inject constructor(
             sender_alias_hash = sender_alias_hash,
             suppress_branding = suppress_branding,
         )
-        if (result.isSuccess) {
+        if (result.isSuccess && result.getOrNull()?.success == true) {
             invalidate_caches(listOf("sent", "drafts"))
+            repository.notify_send_success()
         }
         return result
     }
@@ -2514,7 +2546,7 @@ class MailViewModel @Inject constructor(
                             }
                         }
                     }
-                    refresh_current_thread()
+                    refresh_thread_after_send()
                 } else {
                     emit_toast(
                         if (result.exceptionOrNull() is TransientSendException) {
