@@ -78,6 +78,8 @@ import org.astermail.android.api.ratchet.RatchetApi
 import org.astermail.android.api.ratchet.RatchetApiImpl
 import org.astermail.android.api.mail.MailApi
 import org.astermail.android.api.mail.MailApiImpl
+import org.astermail.android.api.domains.DomainPurchaseApi
+import org.astermail.android.api.domains.DomainPurchaseApiImpl
 import org.astermail.android.api.preferences.PreferencesApi
 import org.astermail.android.api.preferences.PreferencesApiImpl
 import org.astermail.android.api.settings.SettingsApi
@@ -198,6 +200,10 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provide_settings_api(client: ApiClient): SettingsApi = SettingsApiImpl(client)
+
+    @Provides
+    @Singleton
+    fun provide_domain_purchase_api(client: ApiClient): DomainPurchaseApi = DomainPurchaseApiImpl(client)
 
     @Provides
     @Singleton
