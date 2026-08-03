@@ -2539,4 +2539,9 @@
     <string name="folder_actions">Actions du dossier</string>
     <string name="include_spam">Inclure les spams</string>
     <string name="include_trash">Inclure la corbeille</string>
+    <string name="mail_list_density">Densité de la liste des e-mails</string>
+    <string name="density_compact">Compacte</string>
+    <string name="density_compact_subtitle">Lignes plus serrées pour afficher plus d\'e-mails</string>
+    <string name="density_comfortable">Confortable</string>
+    <string name="density_comfortable_subtitle">Plus d\'espace autour de chaque e-mail</string>
 </resources>

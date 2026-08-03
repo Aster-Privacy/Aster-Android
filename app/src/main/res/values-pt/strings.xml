@@ -2511,4 +2511,9 @@
     <string name="folder_actions">Ações da pasta</string>
     <string name="include_spam">Incluir spam</string>
     <string name="include_trash">Incluir lixeira</string>
+    <string name="mail_list_density">Densidade da lista de e-mails</string>
+    <string name="density_compact">Compacta</string>
+    <string name="density_compact_subtitle">Linhas mais estreitas para exibir mais e-mails</string>
+    <string name="density_comfortable">Confortável</string>
+    <string name="density_comfortable_subtitle">Mais espaço ao redor de cada e-mail</string>
 </resources>

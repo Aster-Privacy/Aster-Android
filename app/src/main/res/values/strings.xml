@@ -2564,4 +2564,9 @@
     <string name="advanced_search_scope">Search in</string>
     <string name="include_spam">Include Spam</string>
     <string name="include_trash">Include Trash</string>
+    <string name="mail_list_density">Mail list density</string>
+    <string name="density_compact">Compact</string>
+    <string name="density_compact_subtitle">Tighter rows to fit more emails on screen</string>
+    <string name="density_comfortable">Comfortable</string>
+    <string name="density_comfortable_subtitle">More breathing room around each email</string>
 </resources>

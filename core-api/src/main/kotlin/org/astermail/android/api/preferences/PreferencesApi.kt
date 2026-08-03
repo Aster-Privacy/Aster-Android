@@ -135,6 +135,7 @@ data class UserPreferences(
     val inbox_page_size: Int = 30,
     val reactions_enabled: Boolean = true,
     val email_font_choice: String = "match_app",
+    val mail_list_density: String = "compact",
 )
 
 @Serializable

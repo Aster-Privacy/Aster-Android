@@ -2504,4 +2504,9 @@
     <string name="folder_actions">フォルダの操作</string>
     <string name="include_spam">迷惑メールを含む</string>
     <string name="include_trash">ゴミ箱を含む</string>
+    <string name="mail_list_density">メールリストの密度</string>
+    <string name="density_compact">コンパクト</string>
+    <string name="density_compact_subtitle">行間を詰めてより多くのメールを表示</string>
+    <string name="density_comfortable">ゆったり</string>
+    <string name="density_comfortable_subtitle">各メールの周囲に余白を追加</string>
 </resources>

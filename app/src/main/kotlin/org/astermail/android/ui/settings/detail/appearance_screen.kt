@@ -236,6 +236,13 @@ fun AppearanceScreen(
         }
     }
 
+    fun apply_density(value: String) {
+        val base = prefs ?: return
+        if (base.mail_list_density != value) {
+            settings_vm.save_preferences(base.copy(mail_list_density = value))
+        }
+    }
+
     fun apply_font(id: String) {
         remote_prefs_adopted = true
         vm.set_font_choice(id)
@@ -405,6 +412,22 @@ fun AppearanceScreen(
                 subtitle = stringResource(font_label_res(font_choice)),
                 on_click = { show_font_picker = true },
             )
+        }
+
+        v_gap(AsterSpacing.xxl)
+        section_label(stringResource(R.string.mail_list_density))
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            theme_option_row(
+                stringResource(R.string.density_compact),
+                stringResource(R.string.density_compact_subtitle),
+                (prefs?.mail_list_density ?: "compact") != "comfortable",
+            ) { apply_density("compact") }
+            AsterDivider(modifier = Modifier)
+            theme_option_row(
+                stringResource(R.string.density_comfortable),
+                stringResource(R.string.density_comfortable_subtitle),
+                prefs?.mail_list_density == "comfortable",
+            ) { apply_density("comfortable") }
         }
         v_gap(AsterSpacing.xxl)
     }

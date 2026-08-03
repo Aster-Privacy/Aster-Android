@@ -105,9 +105,11 @@ fun EmailRow(
     is_first: Boolean = true,
     is_last: Boolean = true,
     is_selected: Boolean = false,
+    list_density: String? = null,
 ) {
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
+    val metrics = remember(list_density) { inbox_row_metrics(list_density) }
     val is_unread = !email.is_read
     val sender_color = if (is_unread) colors.text_primary else colors.text_secondary
     val subject_color = if (is_unread) colors.text_primary else colors.text_secondary
@@ -147,19 +149,19 @@ fun EmailRow(
                     on_long_click()
                 },
             )
-            .defaultMinSize(minHeight = 88.dp)
+            .defaultMinSize(minHeight = metrics.min_height)
             .padding(
                 start = inbox_card_content_padding,
                 end = inbox_card_content_padding,
-                top = AsterSpacing.md,
-                bottom = AsterSpacing.md,
+                top = metrics.vertical_padding,
+                bottom = metrics.vertical_padding,
             ),
         verticalAlignment = Alignment.Top,
     ) {
         if (is_selected) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
+                    .size(metrics.avatar_size)
                     .clip(CircleShape)
                     .background(colors.accent_blue),
                 contentAlignment = Alignment.Center,
@@ -175,7 +177,7 @@ fun EmailRow(
             SenderAvatar(
                 email = displayed_sender_email(email.display_sender_email, email.sender_email),
                 name = displayed_sender_name(email.display_sender_name, email.sender_name),
-                size = 44.dp,
+                size = metrics.avatar_size,
             )
         }
 
@@ -216,7 +218,7 @@ fun EmailRow(
                     unread_dot()
                 }
             }
-            Spacer(Modifier.height(3.dp))
+            Spacer(Modifier.height(metrics.line_gap))
             val has_preview = email.preview.isNotBlank()
             val trailing_controls: @Composable () -> Unit = {
                 Spacer(Modifier.width(AsterSpacing.sm))
@@ -255,7 +257,7 @@ fun EmailRow(
                 if (!has_preview) trailing_controls()
             }
             if (has_preview) {
-                Spacer(Modifier.height(3.dp))
+                Spacer(Modifier.height(metrics.line_gap))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = email.preview,
@@ -366,6 +368,7 @@ fun ThreadInboxRow(
     val email = thread.newest
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
+    val metrics = remember(user_prefs?.mail_list_density) { inbox_row_metrics(user_prefs?.mail_list_density) }
     val is_unread = thread.has_unread
     val sender_color = if (is_unread) colors.text_primary else colors.text_secondary
     val subject_color = if (is_unread) colors.text_primary else colors.text_secondary
@@ -409,19 +412,19 @@ fun ThreadInboxRow(
                     on_long_click()
                 },
             )
-            .defaultMinSize(minHeight = 88.dp)
+            .defaultMinSize(minHeight = metrics.min_height)
             .padding(
                 start = inbox_card_content_padding,
                 end = inbox_card_content_padding,
-                top = AsterSpacing.md,
-                bottom = AsterSpacing.md,
+                top = metrics.vertical_padding,
+                bottom = metrics.vertical_padding,
             ),
         verticalAlignment = Alignment.Top,
     ) {
         if (is_selected) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
+                    .size(metrics.avatar_size)
                     .clip(CircleShape)
                     .background(colors.accent_blue),
                 contentAlignment = Alignment.Center,
@@ -445,7 +448,7 @@ fun ThreadInboxRow(
                     )
                 }
             }
-            StackedAvatars(participants = participants, size = 44.dp)
+            StackedAvatars(participants = participants, size = metrics.avatar_size)
         }
         Spacer(Modifier.width(AsterSpacing.md))
         Column(modifier = Modifier.weight(1f)) {
@@ -497,7 +500,7 @@ fun ThreadInboxRow(
                     unread_dot()
                 }
             }
-            Spacer(Modifier.height(3.dp))
+            Spacer(Modifier.height(metrics.line_gap))
             val no_subject_label = stringResource(R.string.inbox_no_subject)
             val row_context = LocalContext.current
             val subject_text = remember(email.subject, thread.message_count, no_subject_label, row_context) {
@@ -563,7 +566,7 @@ fun ThreadInboxRow(
             }
             val labels_inline = has_preview && thread.label_colors.size in 1..2
             if (has_preview) {
-                Spacer(Modifier.height(3.dp))
+                Spacer(Modifier.height(metrics.line_gap))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -613,6 +616,30 @@ fun ThreadInboxRow(
     }
     }
 }
+
+internal data class InboxRowMetrics(
+    val min_height: androidx.compose.ui.unit.Dp,
+    val vertical_padding: androidx.compose.ui.unit.Dp,
+    val avatar_size: androidx.compose.ui.unit.Dp,
+    val line_gap: androidx.compose.ui.unit.Dp,
+)
+
+internal fun inbox_row_metrics(density: String?): InboxRowMetrics =
+    if (density == "comfortable") {
+        InboxRowMetrics(
+            min_height = 88.dp,
+            vertical_padding = AsterSpacing.md,
+            avatar_size = 44.dp,
+            line_gap = 3.dp,
+        )
+    } else {
+        InboxRowMetrics(
+            min_height = 72.dp,
+            vertical_padding = AsterSpacing.sm,
+            avatar_size = 40.dp,
+            line_gap = 2.dp,
+        )
+    }
 
 internal val inbox_card_horizontal_margin = 10.dp
 internal val inbox_card_vertical_gap = 0.dp

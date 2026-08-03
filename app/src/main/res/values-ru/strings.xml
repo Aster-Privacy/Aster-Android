@@ -2525,4 +2525,9 @@
     <string name="folder_actions">Действия с папкой</string>
     <string name="include_spam">Включить спам</string>
     <string name="include_trash">Включить корзину</string>
+    <string name="mail_list_density">Плотность списка писем</string>
+    <string name="density_compact">Компактный</string>
+    <string name="density_compact_subtitle">Более узкие строки, чтобы уместить больше писем</string>
+    <string name="density_comfortable">Просторный</string>
+    <string name="density_comfortable_subtitle">Больше пространства вокруг каждого письма</string>
 </resources>

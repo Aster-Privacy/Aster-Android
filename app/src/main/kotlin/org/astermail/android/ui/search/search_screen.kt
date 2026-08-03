@@ -1095,6 +1095,8 @@ internal fun search_results_list(
     val selected_set = selected_ids.toSet()
     val list_state = rememberLazyListState()
     val haptics = LocalHapticFeedback.current
+    val settings_vm = org.astermail.android.settings.shared_settings_view_model()
+    val settings_state by settings_vm.state.collectAsStateWithLifecycle()
     val live_select_mode by rememberUpdatedState(select_mode)
     val live_selected_set by rememberUpdatedState(selected_set)
     val live_items by rememberUpdatedState(items)
@@ -1230,6 +1232,7 @@ internal fun search_results_list(
                 is_first = index == 0,
                 is_last = index == items.lastIndex,
                 is_selected = is_selected,
+                list_density = settings_state.preferences?.mail_list_density,
             )
         }
     }
