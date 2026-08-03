@@ -609,9 +609,24 @@ fun MailDetailScreen(
     var bottom_bar_height by remember { mutableStateOf(132.dp) }
 
     val visible_tail_count = 2
-    val hidden_count = remember(messages.size, hidden_group_revealed) {
-        if (hidden_group_revealed || messages.size <= visible_tail_count + 2) 0
-        else messages.size - 1 - visible_tail_count
+    val hidden_seed_ids = remember(email_id) { mutableStateOf<Set<String>?>(null) }
+    LaunchedEffect(email_id, messages.size) {
+        if (hidden_seed_ids.value != null || messages.size <= 1) return@LaunchedEffect
+        hidden_seed_ids.value = if (messages.size <= visible_tail_count + 2) {
+            emptySet()
+        } else {
+            messages.subList(1, messages.size - visible_tail_count).map { it.id }.toSet()
+        }
+    }
+    val hidden_id_set = remember(messages, hidden_group_revealed, hidden_seed_ids.value) {
+        if (hidden_group_revealed) emptySet()
+        else {
+            val seed = hidden_seed_ids.value ?: emptySet()
+            messages.asSequence().map { it.id }.filter { it in seed }.toSet()
+        }
+    }
+    val first_hidden_idx = remember(messages, hidden_id_set) {
+        messages.indexOfFirst { it.id in hidden_id_set }
     }
 
     val expanded_ids = remember(email_id) {
@@ -1074,13 +1089,14 @@ fun MailDetailScreen(
                     val is_expanded = messages.size <= 1 ||
                         expanded_ids.value.contains(msg.id)
 
-                    val is_hidden = hidden_count > 0 && idx >= 1 && idx < 1 + hidden_count
-                    val is_after_indicator = hidden_count > 0 && idx == 1 + hidden_count
+                    val is_hidden = msg.id in hidden_id_set
+                    val is_after_indicator = hidden_id_set.isNotEmpty() &&
+                        idx > 0 && messages[idx - 1].id in hidden_id_set
 
                     if (is_hidden) {
-                        if (idx == 1) {
+                        if (idx == first_hidden_idx) {
                             hidden_group_indicator(
-                                count = hidden_count,
+                                count = hidden_id_set.size,
                                 on_reveal = { hidden_group_revealed = true },
                             )
                         }
@@ -4325,7 +4341,7 @@ internal fun email_html_view(
     val cached_height = remember(height_cache_key) { body_height_cache.get(height_cache_key) }
     var content_height_dp by remember(height_cache_key) { mutableStateOf((cached_height ?: 0f).dp) }
     var has_measured by remember(height_cache_key) { mutableStateOf(cached_height != null) }
-    val page_painted = remember { mutableStateOf(false) }
+    val page_painted = remember { mutableStateOf(cached_height != null) }
 
     LaunchedEffect(height_cache_key, page_painted.value) {
         if (page_painted.value) return@LaunchedEffect
@@ -4811,7 +4827,7 @@ internal fun email_html_view(
                     android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
                 if (loaded_built != built || loaded_external != allow_external) {
                     if (loaded_built != built && body_height_cache.get(height_cache_key) == null) has_measured = false
-                    page_painted.value = false
+                    if (body_height_cache.get(height_cache_key) == null) page_painted.value = false
                     web_view.setBackgroundColor(
                         if (wants_white_page) android.graphics.Color.WHITE else android.graphics.Color.TRANSPARENT,
                     )
