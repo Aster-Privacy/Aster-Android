@@ -165,6 +165,7 @@ fun build_thread_rows(
     sort_mode: InboxSortMode,
     cached_participants: Map<String, List<Pair<String, String>>>,
     sticky_participants: Map<String, List<Pair<String, String>>>,
+    grouping_enabled: Boolean = true,
 ): ThreadRowResult {
     val source = if (categories_enabled) {
         emails.filter {
@@ -173,7 +174,7 @@ fun build_thread_rows(
     } else {
         emails
     }
-    val grouped_raw = group_by_thread(source)
+    val grouped_raw = if (grouping_enabled) group_by_thread(source) else flat_thread_rows(source)
     val resolved = HashMap<String, List<Pair<String, String>>>(grouped_raw.size)
     val grouped = grouped_raw.map { row ->
         val candidates = listOfNotNull(
@@ -552,6 +553,7 @@ fun InboxScreen(
     }
     var threads by remember { mutableStateOf<List<ThreadRow>>(emptyList()) }
     var threads_folder by remember { mutableStateOf(current_folder) }
+    val grouping_enabled = settings_state.preferences?.conversation_grouping != false
     LaunchedEffect(
         current_folder,
         emails_fingerprint,
@@ -560,6 +562,7 @@ fun InboxScreen(
         active_tabs,
         sort_mode,
         cached_participants,
+        grouping_enabled,
     ) {
         if (threads_folder != current_folder) {
             threads = emptyList()
@@ -576,6 +579,7 @@ fun InboxScreen(
                 sort_mode = sort_mode,
                 cached_participants = cached_participants,
                 sticky_participants = sticky_snapshot,
+                grouping_enabled = grouping_enabled,
             )
         }
         sticky_participants.keys.retainAll(computed.participants.keys)
@@ -848,7 +852,7 @@ fun InboxScreen(
 
     fun selected_email_ids(): List<String> {
         val thread_ids = selected_ids.toSet()
-        return emails.filter { it.thread_id in thread_ids }.map { it.id }
+        return emails.filter { (it.thread_id in thread_ids || it.id in thread_ids) }.map { it.id }
     }
 
     fun archive_selected() {
@@ -856,7 +860,7 @@ fun InboxScreen(
         val thread_count = selected_ids.size
         val to_remove = selected_ids.toSet()
         mail_vm.archive(ids, thread_count)
-        emails.removeAll { it.thread_id in to_remove }
+        emails.removeAll { (it.thread_id in to_remove || it.id in to_remove) }
         exit_select_mode()
     }
 
@@ -865,7 +869,7 @@ fun InboxScreen(
         val thread_count = selected_ids.size
         val to_remove = selected_ids.toSet()
         mail_vm.trash(ids, thread_count)
-        emails.removeAll { it.thread_id in to_remove }
+        emails.removeAll { (it.thread_id in to_remove || it.id in to_remove) }
         exit_select_mode()
     }
 
@@ -873,7 +877,7 @@ fun InboxScreen(
         val ids = selected_email_ids()
         val to_remove = selected_ids.toSet()
         mail_vm.restore_trash(ids)
-        emails.removeAll { it.thread_id in to_remove }
+        emails.removeAll { (it.thread_id in to_remove || it.id in to_remove) }
         exit_select_mode()
     }
 
@@ -881,7 +885,7 @@ fun InboxScreen(
         val ids = selected_email_ids()
         val to_remove = selected_ids.toSet()
         mail_vm.unarchive(ids)
-        emails.removeAll { it.thread_id in to_remove }
+        emails.removeAll { (it.thread_id in to_remove || it.id in to_remove) }
         exit_select_mode()
     }
 
@@ -889,7 +893,7 @@ fun InboxScreen(
         val ids = selected_email_ids()
         val to_remove = selected_ids.toSet()
         mail_vm.unmark_spam(ids)
-        emails.removeAll { it.thread_id in to_remove }
+        emails.removeAll { (it.thread_id in to_remove || it.id in to_remove) }
         exit_select_mode()
     }
 
@@ -898,7 +902,7 @@ fun InboxScreen(
         val thread_count = selected_ids.size
         val to_remove = selected_ids.toSet()
         mail_vm.mark_spam(ids, thread_count)
-        emails.removeAll { it.thread_id in to_remove }
+        emails.removeAll { (it.thread_id in to_remove || it.id in to_remove) }
         exit_select_mode()
     }
 
@@ -906,20 +910,20 @@ fun InboxScreen(
         val ids = selected_email_ids()
         val to_remove = selected_ids.toSet()
         ids.forEach { mail_vm.delete_permanent(it) }
-        emails.removeAll { it.thread_id in to_remove }
+        emails.removeAll { (it.thread_id in to_remove || it.id in to_remove) }
         exit_select_mode()
     }
 
     fun mark_read_selected() {
         val thread_ids = selected_ids.toSet()
         val email_ids = emails
-            .filter { it.thread_id in thread_ids && !it.is_read }
+            .filter { (it.thread_id in thread_ids || it.id in thread_ids) && !it.is_read }
             .map { it.id }
         if (email_ids.isNotEmpty()) {
             mail_vm.mark_read_bulk(email_ids)
         }
         for (i in emails.indices) {
-            if (emails[i].thread_id in thread_ids && !emails[i].is_read) {
+            if ((emails[i].thread_id in thread_ids || emails[i].id in thread_ids) && !emails[i].is_read) {
                 emails[i] = emails[i].copy(is_read = true)
             }
         }
@@ -929,13 +933,13 @@ fun InboxScreen(
     fun mark_unread_selected() {
         val thread_ids = selected_ids.toSet()
         val email_ids = emails
-            .filter { it.thread_id in thread_ids && it.is_read }
+            .filter { (it.thread_id in thread_ids || it.id in thread_ids) && it.is_read }
             .map { it.id }
         if (email_ids.isNotEmpty()) {
             mail_vm.mark_unread_bulk(email_ids)
         }
         for (i in emails.indices) {
-            if (emails[i].thread_id in thread_ids && emails[i].is_read) {
+            if ((emails[i].thread_id in thread_ids || emails[i].id in thread_ids) && emails[i].is_read) {
                 emails[i] = emails[i].copy(is_read = false)
             }
         }
@@ -944,10 +948,10 @@ fun InboxScreen(
 
     fun star_selected() {
         val thread_ids = selected_ids.toSet()
-        val new_starred = emails.any { it.thread_id in thread_ids && !it.is_starred }
+        val new_starred = emails.any { (it.thread_id in thread_ids || it.id in thread_ids) && !it.is_starred }
         mail_vm.star_bulk(selected_email_ids())
         for (i in emails.indices) {
-            if (emails[i].thread_id in thread_ids && emails[i].is_starred != new_starred) {
+            if ((emails[i].thread_id in thread_ids || emails[i].id in thread_ids) && emails[i].is_starred != new_starred) {
                 emails[i] = emails[i].copy(is_starred = new_starred)
             }
         }
@@ -965,7 +969,7 @@ fun InboxScreen(
         val ids = selected_email_ids()
         notify_if_scope_incomplete(ids.size)
         mail_vm.snooze_bulk(ids, iso, label)
-        emails.removeAll { it.thread_id in to_remove }
+        emails.removeAll { (it.thread_id in to_remove || it.id in to_remove) }
         exit_select_mode()
     }
 
@@ -1019,7 +1023,7 @@ fun InboxScreen(
     fun run_selection_action(action_id: String) {
         if (scope_selection && action_id == "star") {
             val thread_ids = selected_ids.toSet()
-            mail_vm.star_scope(current_folder, emails.any { it.thread_id in thread_ids && !it.is_starred })
+            mail_vm.star_scope(current_folder, emails.any { (it.thread_id in thread_ids || it.id in thread_ids) && !it.is_starred })
             exit_select_mode()
             return
         }
@@ -1343,7 +1347,7 @@ fun InboxScreen(
                                         on_click = { toggle_selection(thread.thread_id) },
                                         on_long_click = { toggle_selection(thread.thread_id) },
                                         on_toggle_star = {
-                                            val idx = emails.indexOfFirst { it.thread_id == thread.thread_id }
+                                            val idx = emails.indexOfFirst { (it.thread_id == thread.thread_id || it.id == thread.thread_id) }
                                             if (idx >= 0) {
                                                 emails[idx] = emails[idx].copy(is_starred = !emails[idx].is_starred)
                                                 mail_vm.toggle_star(thread.newest.id)
@@ -1372,7 +1376,7 @@ fun InboxScreen(
                                         selected_ids.add(thread.thread_id)
                                     },
                                     on_toggle_star = {
-                                        val idx = emails.indexOfFirst { it.thread_id == thread.thread_id }
+                                        val idx = emails.indexOfFirst { (it.thread_id == thread.thread_id || it.id == thread.thread_id) }
                                         if (idx >= 0) {
                                             emails[idx] = emails[idx].copy(is_starred = !emails[idx].is_starred)
                                             mail_vm.toggle_star(thread.newest.id)
@@ -1388,7 +1392,7 @@ fun InboxScreen(
                                     swipe_end_color = swipe_action_color(swipe_config.end_action, colors),
                                     on_swipe_start = {
                                         if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        val ids = emails.filter { it.thread_id == thread.thread_id }.map { it.id }
+                                        val ids = emails.filter { (it.thread_id == thread.thread_id || it.id == thread.thread_id) }.map { it.id }
                                         val prefs = settings_state.preferences
                                         val needs_confirm = (swipe_config.start_action == "archive" && prefs?.confirm_archive == true) ||
                                             (swipe_config.start_action == "delete" && prefs?.confirm_delete == true) ||
@@ -1408,7 +1412,7 @@ fun InboxScreen(
                                     },
                                     on_swipe_end = {
                                         if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        val ids = emails.filter { it.thread_id == thread.thread_id }.map { it.id }
+                                        val ids = emails.filter { (it.thread_id == thread.thread_id || it.id == thread.thread_id) }.map { it.id }
                                         val prefs = settings_state.preferences
                                         val needs_confirm = (swipe_config.end_action == "archive" && prefs?.confirm_archive == true) ||
                                             (swipe_config.end_action == "delete" && prefs?.confirm_delete == true) ||
@@ -2621,22 +2625,22 @@ private fun execute_swipe_action(
         "archive" -> {
             if (current_folder == "archive") return
             mail_vm.archive(ids, 1)
-            emails.removeAll { it.thread_id == thread_id }
+            emails.removeAll { (it.thread_id == thread_id || it.id == thread_id) }
         }
         "delete", "trash" -> {
             if (current_folder == "trash") return
             mail_vm.trash(ids, 1)
-            emails.removeAll { it.thread_id == thread_id }
+            emails.removeAll { (it.thread_id == thread_id || it.id == thread_id) }
         }
         "toggle_read" -> {
-            val was_read = emails.filter { it.thread_id == thread_id }.all { it.is_read }
+            val was_read = emails.filter { (it.thread_id == thread_id || it.id == thread_id) }.all { it.is_read }
             if (was_read) {
                 ids.forEach { mail_vm.mark_unread(it) }
             } else {
                 mail_vm.mark_read_bulk(ids)
             }
             for (i in emails.indices) {
-                if (emails[i].thread_id == thread_id) {
+                if ((emails[i].thread_id == thread_id || emails[i].id == thread_id)) {
                     emails[i] = emails[i].copy(is_read = !was_read)
                 }
             }
@@ -2645,7 +2649,7 @@ private fun execute_swipe_action(
         "star" -> {
             ids.forEach { mail_vm.toggle_star(it) }
             for (i in emails.indices) {
-                if (emails[i].thread_id == thread_id) {
+                if ((emails[i].thread_id == thread_id || emails[i].id == thread_id)) {
                     emails[i] = emails[i].copy(is_starred = !emails[i].is_starred)
                 }
             }
@@ -2653,28 +2657,28 @@ private fun execute_swipe_action(
         "spam" -> {
             if (current_folder == "spam") return
             mail_vm.mark_spam(ids, 1)
-            emails.removeAll { it.thread_id == thread_id }
+            emails.removeAll { (it.thread_id == thread_id || it.id == thread_id) }
         }
         "move_to_inbox" -> {
             if (current_folder == "inbox") return
             mail_vm.unarchive(ids)
-            emails.removeAll { it.thread_id == thread_id }
+            emails.removeAll { (it.thread_id == thread_id || it.id == thread_id) }
         }
         "unarchive" -> {
             mail_vm.unarchive(ids)
-            emails.removeAll { it.thread_id == thread_id }
+            emails.removeAll { (it.thread_id == thread_id || it.id == thread_id) }
         }
         "restore_trash" -> {
             mail_vm.restore_trash(ids)
-            emails.removeAll { it.thread_id == thread_id }
+            emails.removeAll { (it.thread_id == thread_id || it.id == thread_id) }
         }
         "unmark_spam" -> {
             mail_vm.unmark_spam(ids)
-            emails.removeAll { it.thread_id == thread_id }
+            emails.removeAll { (it.thread_id == thread_id || it.id == thread_id) }
         }
         "delete_permanent" -> {
             ids.forEach { mail_vm.delete_permanent(it) }
-            emails.removeAll { it.thread_id == thread_id }
+            emails.removeAll { (it.thread_id == thread_id || it.id == thread_id) }
         }
     }
 }

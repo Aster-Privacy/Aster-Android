@@ -113,8 +113,10 @@ fun FilteredInboxScreen(
     val filtered_emails = remember(inbox_state.items, filter_type, filter_value) {
         inbox_state.items.map { inbox_item_to_email(it) }
     }
-    val threads = remember(filtered_emails) {
-        group_by_thread(filtered_emails).sortedByDescending { it.newest.received_at }
+    val grouping_enabled = settings_state.preferences?.conversation_grouping != false
+    val threads = remember(filtered_emails, grouping_enabled) {
+        val rows = if (grouping_enabled) group_by_thread(filtered_emails) else flat_thread_rows(filtered_emails)
+        rows.sortedByDescending { it.newest.received_at }
     }
 
     Box(

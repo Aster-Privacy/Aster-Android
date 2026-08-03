@@ -124,6 +124,13 @@ class MailViewModel @Inject constructor(
         repository.set_custom_categories(rules)
     }
 
+    fun set_conversation_grouping(enabled: Boolean) {
+        if (!repository.set_conversation_grouping(enabled)) return
+        folder_cache.clear()
+        folder_cache_time.clear()
+        refresh()
+    }
+
     private val _search_state = MutableStateFlow(SearchUiState())
     val search_state: StateFlow<SearchUiState> = _search_state.asStateFlow()
 
@@ -641,7 +648,7 @@ class MailViewModel @Inject constructor(
                         initial = false,
                         has_more = page.has_more,
                         next_cursor = page.next_cursor,
-                        total = page.total,
+                        total = page.total ?: _inbox_state.value.total,
                     )
                     folder_cache[folder] = _inbox_state.value
                     folder_cache_time[folder] = System.currentTimeMillis()
@@ -699,7 +706,7 @@ class MailViewModel @Inject constructor(
                     error = null,
                     has_more = page.has_more,
                     next_cursor = page.next_cursor,
-                    total = page.total,
+                    total = page.total ?: _inbox_state.value.total,
                 )
                 folder_cache[folder] = _inbox_state.value
                 folder_cache_time[folder] = System.currentTimeMillis()
@@ -2466,7 +2473,7 @@ class MailViewModel @Inject constructor(
                         error = null,
                         has_more = page.has_more,
                         next_cursor = page.next_cursor,
-                        total = page.total,
+                        total = page.total ?: _inbox_state.value.total,
                     )
                     folder_cache[folder] = _inbox_state.value
                     folder_cache_time[folder] = System.currentTimeMillis()

@@ -339,6 +339,18 @@ class MailRepository @Inject constructor(
         custom_categories = sanitize_custom_categories(rules)
     }
 
+    @Volatile
+    private var conversation_grouping: Boolean = true
+
+    val is_conversation_grouping_enabled: Boolean
+        get() = conversation_grouping
+
+    fun set_conversation_grouping(enabled: Boolean): Boolean {
+        if (conversation_grouping == enabled) return false
+        conversation_grouping = enabled
+        return true
+    }
+
     private val pbkdf2_key_cache = java.util.concurrent.ConcurrentHashMap<String, ByteArray>()
     private val identity_key_cache = java.util.concurrent.ConcurrentHashMap<String, ByteArray>()
     private val ratchet_undecryptable_at = java.util.concurrent.ConcurrentHashMap<String, Long>()
@@ -773,6 +785,8 @@ class MailRepository @Inject constructor(
             include_trash = include_trash,
             routing_token = routing_token,
             order = order,
+            group_by_thread = conversation_grouping,
+            skip_total = if (cursor != null || (offset ?: 0) > 0) true else null,
         )
         val filtered_raw = if (is_received) {
             val now_iso = java.time.Instant.now().toString()
@@ -791,7 +805,7 @@ class MailRepository @Inject constructor(
             items = items,
             has_more = response.has_more,
             next_cursor = next_cursor,
-            total = response.total,
+            total = response.total.takeIf { it >= 0 },
         )
     }
 
@@ -812,36 +826,36 @@ class MailRepository @Inject constructor(
     }
 
     suspend fun fetch_starred(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
-        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_starred = true, order = order)
+        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_starred = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping)
         val items = decrypt_items_parallel(response.items)
-        InboxPage(items, response.has_more, response.next_cursor, response.total)
+        InboxPage(items, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 })
     }
 
     suspend fun fetch_trash(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
-        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_trashed = true, order = order)
+        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_trashed = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping)
         val items = decrypt_items_parallel(response.items)
-        InboxPage(items, response.has_more, response.next_cursor, response.total)
+        InboxPage(items, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 })
     }
 
     suspend fun fetch_spam(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
-        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_spam = true, order = order)
+        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_spam = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping)
         val items = decrypt_items_parallel(response.items)
-        InboxPage(items, response.has_more, response.next_cursor, response.total)
+        InboxPage(items, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 })
     }
 
     suspend fun fetch_archive(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
-        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_archived = true, order = order)
+        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_archived = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping)
         val items = decrypt_items_parallel(response.items)
-        InboxPage(items, response.has_more, response.next_cursor, response.total)
+        InboxPage(items, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 })
     }
 
     suspend fun fetch_scheduled(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> =
         fetch_inbox(limit, cursor, "scheduled", order = order)
 
     suspend fun fetch_snoozed(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
-        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_snoozed = true, order = order)
+        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_snoozed = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping)
         val items = decrypt_items_parallel(response.items)
-        InboxPage(items, response.has_more, response.next_cursor, response.total)
+        InboxPage(items, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 })
     }
 
     suspend fun fetch_thread_draft(thread_token: String): InboxItem? {
@@ -2876,5 +2890,5 @@ data class InboxPage(
     val items: List<InboxItem>,
     val has_more: Boolean,
     val next_cursor: String?,
-    val total: Int,
+    val total: Int?,
 )

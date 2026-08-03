@@ -56,6 +56,7 @@ class BuildThreadRowsTest {
         sort_mode: InboxSortMode = InboxSortMode.newest,
         cached: Map<String, List<Pair<String, String>>> = emptyMap(),
         sticky: Map<String, List<Pair<String, String>>> = emptyMap(),
+        grouping_enabled: Boolean = true,
     ) = build_thread_rows(
         emails = emails,
         categories_enabled = categories_enabled,
@@ -64,7 +65,29 @@ class BuildThreadRowsTest {
         sort_mode = sort_mode,
         cached_participants = cached,
         sticky_participants = sticky,
+        grouping_enabled = grouping_enabled,
     )
+
+    private fun threaded(id: String, thread: String, received_at: Long) =
+        email(id, received_at).copy(thread_id = thread)
+
+    @Test
+    fun grouping_disabled_keeps_one_row_per_message() {
+        val emails = listOf(
+            threaded("a", "t1", 300),
+            threaded("b", "t1", 200),
+            threaded("c", "t2", 100),
+        )
+
+        val grouped = build(emails).rows
+        assertEquals(listOf("t1", "t2"), grouped.map { it.thread_id })
+        assertEquals(2, grouped.first().message_count)
+
+        val flat = build(emails, grouping_enabled = false).rows
+        assertEquals(listOf("a", "b", "c"), flat.map { it.thread_id })
+        assertTrue(flat.all { it.message_count == 1 })
+        assertEquals(listOf("a", "b", "c"), flat.map { thread_open_target_id(it) })
+    }
 
     @Test
     fun newest_first_keeps_pinned_threads_on_top() {
