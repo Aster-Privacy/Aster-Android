@@ -117,7 +117,10 @@ class NotificationClearOnReadTest {
 
         post_and_await("Alice", "Only subject", "preview", id_a)
         assertTrue(id_a in active_ids())
-        assertTrue(MailPollingWorker.SUMMARY_NOTIFICATION_ID in active_ids())
+        assertFalse(
+            "a single message must not post a group summary",
+            MailPollingWorker.SUMMARY_NOTIFICATION_ID in active_ids(),
+        )
 
         MailPollingWorker.cancel_message_notification(context, item_a)
 
