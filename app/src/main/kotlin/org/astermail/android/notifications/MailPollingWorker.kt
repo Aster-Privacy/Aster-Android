@@ -587,7 +587,7 @@ class MailPollingWorker(
                 .build()
             val manager = NotificationManagerCompat.from(context)
             manager.notify(NOTIFICATION_ID, notification)
-            post_group_summary(context, manager)
+            post_group_summary(context, manager, NOTIFICATION_ID)
         }
 
         fun show_message(
@@ -654,7 +654,7 @@ class MailPollingWorker(
                 .putLong(KEY_LAST_MESSAGE_NOTIFY_MS, System.currentTimeMillis())
                 .commit()
             manager.notify(message_id, builder.build())
-            post_group_summary(context, manager)
+            post_group_summary(context, manager, message_id)
         }
 
         private fun add_message_actions(
@@ -702,18 +702,21 @@ class MailPollingWorker(
 
         private const val ACTION_REQUEST_STRIDE = 8
 
-        private fun active_mail_notification_count(context: Context): Int {
+        private fun active_mail_notification_count(context: Context, just_posted_id: Int): Int {
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-                ?: return 0
+                ?: return if (just_posted_id == 0) 0 else 1
             return runCatching {
-                manager.activeNotifications.count {
-                    it.id >= MESSAGE_ID_BASE || it.id == NOTIFICATION_ID
-                }
-            }.getOrDefault(0)
+                val ids = manager.activeNotifications
+                    .map { it.id }
+                    .filter { it >= MESSAGE_ID_BASE || it == NOTIFICATION_ID }
+                    .toMutableSet()
+                if (just_posted_id != 0) ids.add(just_posted_id)
+                ids.size
+            }.getOrDefault(if (just_posted_id == 0) 0 else 1)
         }
 
-        private fun post_group_summary(context: Context, manager: NotificationManagerCompat) {
-            if (!should_post_group_summary(active_mail_notification_count(context))) {
+        private fun post_group_summary(context: Context, manager: NotificationManagerCompat, just_posted_id: Int) {
+            if (!should_post_group_summary(active_mail_notification_count(context, just_posted_id))) {
                 manager.cancel(SUMMARY_NOTIFICATION_ID)
                 return
             }
