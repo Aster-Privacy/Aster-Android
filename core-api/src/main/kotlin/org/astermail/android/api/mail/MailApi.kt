@@ -60,6 +60,8 @@ interface MailApi {
         is_snoozed: Boolean? = null,
         routing_token: String? = null,
         order: String? = null,
+        skip_total: Boolean? = null,
+        include_envelope: Boolean? = null,
     ): MailItemsListResponse
 
     suspend fun get_message(item_id: String): MailItem
@@ -184,6 +186,8 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
         is_snoozed: Boolean?,
         routing_token: String?,
         order: String?,
+        skip_total: Boolean?,
+        include_envelope: Boolean?,
     ): MailItemsListResponse {
         val response = client.http.get("${client.base_url}$base/messages") {
             timeout {
@@ -206,6 +210,8 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
             is_snoozed?.let { parameter("is_snoozed", it) }
             routing_token?.let { parameter("routing_token", it) }
             order?.let { parameter("order", it) }
+            skip_total?.let { parameter("skip_total", it) }
+            include_envelope?.let { parameter("include_envelope", it) }
         }
         return decode_or_throw(response)
     }

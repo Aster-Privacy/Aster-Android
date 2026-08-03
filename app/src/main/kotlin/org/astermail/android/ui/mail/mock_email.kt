@@ -135,6 +135,28 @@ fun group_by_thread(emails: List<Email>): List<ThreadRow> {
     return combined
 }
 
+fun flat_thread_rows(emails: List<Email>): List<ThreadRow> = emails.map { e ->
+    ThreadRow(
+        thread_id = e.id,
+        newest = e,
+        message_count = 1,
+        has_unread = !e.is_read,
+        has_encrypted = e.is_encrypted,
+        total_trackers = e.trackers_blocked,
+        has_attachment = e.has_attachment,
+        is_starred = e.is_starred,
+        is_pinned = e.is_pinned,
+        label_colors = e.label_colors,
+        label_names = e.label_names,
+        label_icons = e.label_icons,
+        participants = listOf(
+            displayed_sender_name(e.display_sender_name, e.sender_name) to
+                displayed_sender_email(e.display_sender_email, e.sender_email),
+        ),
+        folder_chip = e.folder_chip,
+    )
+}
+
 data class MessageAttachment(
     val id: String,
     val filename: String,
