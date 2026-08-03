@@ -467,13 +467,19 @@ fun ComposeScreen(
             ""
         }
     }
-    val preloaded_signature = remember {
+    val preloaded_signature_obj = remember {
         if (mode == "draft" || prefill.body.isNotBlank()) {
-            ""
+            null
         } else {
             settings_vm.ensure_signatures_hydrated()
-            settings_vm.signature_for(null)?.content.orEmpty()
+            settings_vm.signature_for(null)
         }
+    }
+    val preloaded_signature = remember {
+        preloaded_signature_obj?.takeIf { !it.is_html }?.content.orEmpty()
+    }
+    var signature_html by remember {
+        mutableStateOf(preloaded_signature_obj?.takeIf { it.is_html }?.content.orEmpty())
     }
     var body by remember {
         mutableStateOf(
@@ -485,6 +491,12 @@ fun ComposeScreen(
             },
         )
     }
+    fun draft_body_with_signature(): String =
+        if (signature_html.isNotBlank()) {
+            body + "<br><br><div class=\"aster_signature\">" + signature_html + "</div>"
+        } else {
+            body
+        }
     var initial_to_chips by remember { mutableStateOf<List<String>>(emptyList()) }
     var initial_subject by remember { mutableStateOf("") }
     var initial_body by remember { mutableStateOf(if (prefill.body.isNotBlank()) "" else body) }
@@ -502,7 +514,8 @@ fun ComposeScreen(
         if (!signature_loaded || signature_applied) return@LaunchedEffect
         if (mode == "draft") { signature_applied = true; return@LaunchedEffect }
         if (prefill.body.isNotBlank()) { signature_applied = true; return@LaunchedEffect }
-        val resolved = settings_vm.signature_for(current_alias_id)?.content.orEmpty()
+        val resolved_sig = settings_vm.signature_for(current_alias_id)
+        val resolved = resolved_sig?.takeIf { !it.is_html }?.content.orEmpty()
         val show_branding = settings_state.preferences?.show_aster_branding == true
         val watermark = if (show_branding) "\n\n${context.getString(R.string.compose_footer_secured_by_plain)}" else ""
         val new_body = share_body_prefix +
@@ -516,6 +529,7 @@ fun ComposeScreen(
             body = new_body
             initial_body = new_body
         }
+        signature_html = resolved_sig?.takeIf { it.is_html }?.content.orEmpty()
         applied_signature = resolved
         signature_applied = true
     }
@@ -523,13 +537,15 @@ fun ComposeScreen(
         if (!signature_applied) return@LaunchedEffect
         if (mode == "draft") return@LaunchedEffect
         if (manual_signature_id != "auto") return@LaunchedEffect
-        val resolved = settings_vm.signature_for(current_alias_id)?.content.orEmpty()
-        if (resolved == applied_signature) return@LaunchedEffect
+        val resolved_sig = settings_vm.signature_for(current_alias_id)
+        val resolved = resolved_sig?.takeIf { !it.is_html }?.content.orEmpty()
+        val resolved_html = resolved_sig?.takeIf { it.is_html }?.content.orEmpty()
+        if (resolved == applied_signature && resolved_html == signature_html) return@LaunchedEffect
+        signature_html = resolved_html
         val watermark = context.getString(R.string.compose_footer_secured_by_plain)
         val watermark_suffix = "\n\n${watermark}"
         val kept_suffix = if (body.endsWith(watermark_suffix)) watermark_suffix else ""
         val core = body.substring(0, body.length - kept_suffix.length)
-        if (applied_signature.isBlank() && resolved.isBlank()) return@LaunchedEffect
         val new_core = if (applied_signature.isNotBlank() && core.endsWith(applied_signature)) {
             val before = core.substring(0, core.length - applied_signature.length)
             if (resolved.isNotBlank()) before + resolved else before.trimEnd('\n')
@@ -777,7 +793,7 @@ fun ComposeScreen(
             draft_status = context.getString(R.string.saving)
             val result = mail_vm.save_draft(
                 subject = subject,
-                body_html = body,
+                body_html = draft_body_with_signature(),
                 sender_email = from_alias,
                 to = to_chips,
                 cc = cc_chips,
@@ -950,7 +966,7 @@ fun ComposeScreen(
                     draft_save_job?.cancel()
                     mail_vm.save_draft_and_finish(
                         subject = subject,
-                        body_html = body,
+                        body_html = draft_body_with_signature(),
                         sender_email = from_alias,
                         to = to_chips,
                         cc = cc_chips,
@@ -1089,7 +1105,12 @@ fun ComposeScreen(
                 qh +
                 "</blockquote></div>"
         }.orEmpty()
-        val body_html = with_images + quote_block
+        val signature_block = if (signature_html.isNotBlank()) {
+            "<br><br><div class=\"aster_signature\">" + signature_html + "</div>"
+        } else {
+            ""
+        }
+        val body_html = with_images + signature_block + quote_block
 
         return Triple(body_html, attachment_payloads, !branding_footer_kept)
     }
@@ -1749,6 +1770,10 @@ fun ComposeScreen(
 
             }
 
+            if (signature_html.isNotBlank()) {
+                signature_preview_card(html = signature_html)
+            }
+
             if (quoted_html != null) {
                 val quote_toggle_label = quote_show_template.format(
                     if (mode == "forward") quote_forwarded_label else quote_original_label,
@@ -2058,20 +2083,21 @@ fun ComposeScreen(
             on_close = { show_signature_sheet = false },
             on_pick = { picked_id ->
                 show_signature_sheet = false
-                val new_content = if (picked_id == null) ""
-                    else signatures_list.firstOrNull { it.id == picked_id }?.content.orEmpty()
+                val picked = if (picked_id == null) null
+                    else signatures_list.firstOrNull { it.id == picked_id }
+                val new_content = picked?.takeIf { !it.is_html }?.content.orEmpty()
+                signature_html = picked?.takeIf { it.is_html }?.content.orEmpty()
                 val watermark = context.getString(R.string.compose_footer_secured_by_plain)
                 val watermark_suffix = "\n\n${watermark}"
-                if (body.endsWith(watermark_suffix)) {
-                    val core = body.substring(0, body.length - watermark_suffix.length)
-                    val new_core = if (applied_signature.isNotBlank() && core.endsWith(applied_signature)) {
-                        val before = core.substring(0, core.length - applied_signature.length)
-                        if (new_content.isNotBlank()) before + new_content else before.trimEnd('\n')
-                    } else if (applied_signature.isBlank() && new_content.isNotBlank()) {
-                        "${core}\n\n${new_content}"
-                    } else core
-                    body = new_core + watermark_suffix
-                }
+                val kept_suffix = if (body.endsWith(watermark_suffix)) watermark_suffix else ""
+                val core = body.substring(0, body.length - kept_suffix.length)
+                val new_core = if (applied_signature.isNotBlank() && core.endsWith(applied_signature)) {
+                    val before = core.substring(0, core.length - applied_signature.length)
+                    if (new_content.isNotBlank()) before + new_content else before.trimEnd('\n')
+                } else if (applied_signature.isBlank() && new_content.isNotBlank()) {
+                    "${core}\n\n${new_content}"
+                } else core
+                body = new_core + kept_suffix
                 applied_signature = new_content
                 manual_signature_id = picked_id
             },
@@ -2284,7 +2310,7 @@ fun ComposeScreen(
                                 draft_save_job?.cancel()
                                 mail_vm.save_draft_and_finish(
                                     subject = subject,
-                                    body_html = body,
+                                    body_html = draft_body_with_signature(),
                                     sender_email = from_alias,
                                     to = to_chips,
                                     cc = cc_chips,
@@ -3155,6 +3181,57 @@ private fun TemplatePickerSheet(
     }
 }
 
+@Composable
+internal fun signature_preview_card(html: String) {
+    val colors = AsterMaterial.colors
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
+    ) {
+        Text(
+            text = stringResource(R.string.signature),
+            color = colors.text_muted,
+            fontSize = 12.sp,
+        )
+        Spacer(Modifier.height(6.dp))
+        signature_html_web_preview(
+            html = html,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(SquircleShape(16.dp))
+                .height(160.dp),
+        )
+    }
+}
+
+@Composable
+internal fun signature_html_web_preview(html: String, modifier: Modifier = Modifier) {
+    androidx.compose.ui.viewinterop.AndroidView(
+        factory = { ctx ->
+            android.webkit.WebView(ctx).apply {
+                settings.javaScriptEnabled = false
+                settings.allowFileAccess = false
+                settings.allowContentAccess = false
+                isVerticalScrollBarEnabled = false
+                isHorizontalScrollBarEnabled = false
+                setBackgroundColor(android.graphics.Color.WHITE)
+            }
+        },
+        update = { wv ->
+            val doc = "<!DOCTYPE html><html><head>" +
+                "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">" +
+                "<style>body{margin:10px;font-family:sans-serif;font-size:14px;color:#222222;background:#ffffff;}img{max-width:100%;height:auto;}</style>" +
+                "</head><body>" + html + "</body></html>"
+            if (wv.tag != html) {
+                wv.tag = html
+                wv.loadDataWithBaseURL(null, doc, "text/html", "utf-8", null)
+            }
+        },
+        modifier = modifier,
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SignaturePickerSheet(
@@ -3235,9 +3312,16 @@ private fun SignaturePickerSheet(
                             fontWeight = if (is_selected) FontWeight.SemiBold else FontWeight.Medium,
                             maxLines = 1,
                         )
-                        if (sig.content.isNotBlank()) {
+                        val preview_line = remember(sig.id, sig.content, sig.is_html) {
+                            if (sig.is_html) {
+                                org.astermail.android.mail.strip_body_html(sig.content)
+                            } else {
+                                sig.content.lineSequence().firstOrNull { it.isNotBlank() }.orEmpty()
+                            }
+                        }
+                        if (preview_line.isNotBlank()) {
                             Text(
-                                text = sig.content.lineSequence().firstOrNull { it.isNotBlank() }.orEmpty(),
+                                text = preview_line,
                                 color = colors.text_muted,
                                 fontSize = 12.sp,
                                 maxLines = 1,

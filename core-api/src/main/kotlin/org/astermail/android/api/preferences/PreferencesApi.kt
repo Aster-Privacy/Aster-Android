@@ -132,7 +132,7 @@ data class UserPreferences(
     val translate_languages: List<String> = emptyList(),
     val translate_never_languages: List<String> = emptyList(),
     val muted_folder_tokens: List<String> = emptyList(),
-    val inbox_page_size: Int = 30,
+    val inbox_page_size: Int = 50,
     val reactions_enabled: Boolean = true,
     val email_font_choice: String = "match_app",
     val mail_list_density: String = "compact",

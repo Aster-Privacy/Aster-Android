@@ -1809,6 +1809,8 @@
     <string name="signature_placement_below">Sotto il testo citato</string>
     <string name="signature_placement_inherit">Eredita l’impostazione globale</string>
     <string name="signature_alias_conflict">Questo alias ha già una firma.</string>
+    <string name="signature_rich_preview_note">Questa firma ha una formattazione avanzata e verrà inviata esattamente come mostrata.</string>
+    <string name="signature_edit_as_plain">Modifica come testo semplice</string>
     <string name="signature_placement">Posizione</string>
     <string name="add_signature">Aggiungi firma</string>
     <string name="delete_signature">Elimina firma</string>

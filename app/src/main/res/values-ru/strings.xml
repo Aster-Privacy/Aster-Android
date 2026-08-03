@@ -1815,6 +1815,8 @@
     <string name="signature_placement_below">Под цитируемым текстом</string>
     <string name="signature_placement_inherit">Использовать общую настройку</string>
     <string name="signature_alias_conflict">У этого псевдонима уже есть подпись.</string>
+    <string name="signature_rich_preview_note">Эта подпись содержит форматирование и будет отправлена точно так, как показано.</string>
+    <string name="signature_edit_as_plain">Редактировать как обычный текст</string>
     <string name="signature_placement">Расположение</string>
     <string name="add_signature">Добавить подпись</string>
     <string name="delete_signature">Удалить подпись</string>

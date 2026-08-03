@@ -1809,6 +1809,8 @@
     <string name="signature_placement_below">Abaixo do texto citado</string>
     <string name="signature_placement_inherit">Herdar a configuração geral</string>
     <string name="signature_alias_conflict">Este alias já tem uma assinatura.</string>
+    <string name="signature_rich_preview_note">Esta assinatura tem formatação avançada e será enviada exatamente como mostrada.</string>
+    <string name="signature_edit_as_plain">Editar como texto simples</string>
     <string name="signature_placement">Posição</string>
     <string name="add_signature">Adicionar assinatura</string>
     <string name="delete_signature">Excluir assinatura</string>

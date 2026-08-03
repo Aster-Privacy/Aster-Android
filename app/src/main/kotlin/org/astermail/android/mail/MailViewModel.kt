@@ -969,6 +969,7 @@ class MailViewModel @Inject constructor(
                         _thread_state.value = ThreadUiState(
                             messages = resolved,
                             item = item,
+                            attachments = if (cur_thread.item?.id == item_id) cur_thread.attachments else emptyMap(),
                         )
                         cache_thread_participants(thread_token, resolved)
                         load_attachments_for_thread(resolved)
@@ -980,6 +981,7 @@ class MailViewModel @Inject constructor(
                             messages = kept,
                             error = org.astermail.android.api.user_facing_error(t, context.getString(R.string.something_went_wrong)),
                             item = item,
+                            attachments = if (cur_thread.item?.id == item_id) cur_thread.attachments else emptyMap(),
                         )
                         cache_thread_participants(thread_token, kept)
                         load_attachments_for_thread(kept)
@@ -990,6 +992,7 @@ class MailViewModel @Inject constructor(
                 _thread_state.value = ThreadUiState(
                     messages = msgs,
                     item = item,
+                    attachments = if (cur_thread.item?.id == item_id) cur_thread.attachments else emptyMap(),
                 )
                 load_attachments_for_thread(msgs)
                 load_reactions(msgs)
@@ -1035,13 +1038,25 @@ class MailViewModel @Inject constructor(
     private fun load_attachments_for_thread(messages: List<ThreadMessageDecrypted>) {
         val ids = messages.map { it.id }
         if (ids.isEmpty()) return
+        val expected_ids = ids.toSet()
         viewModelScope.launch(Dispatchers.IO) {
-            val ids_with_attachments = repository.find_messages_with_attachments(ids)
-            if (ids_with_attachments.isEmpty()) return@launch
-            val results = ids_with_attachments.map { id ->
+            val metas = repository.fetch_attachment_metas_for_messages(ids)
+            if (metas.isEmpty()) return@launch
+            _thread_state.update { state ->
+                if (state.messages.none { it.id in expected_ids }) return@update state
+                val fresh = metas.filterKeys { k ->
+                    state.attachments[k].orEmpty().none { a -> a.encrypted_data != null }
+                }
+                state.copy(attachments = state.attachments + fresh)
+            }
+            val results = metas.keys.map { id ->
                 async { id to repository.fetch_attachments_for_message(id) }
             }.awaitAll().toMap().filter { it.value.isNotEmpty() }
-            _thread_state.update { it.copy(attachments = it.attachments + results) }
+            if (results.isEmpty()) return@launch
+            _thread_state.update { state ->
+                if (state.messages.none { it.id in expected_ids }) return@update state
+                state.copy(attachments = state.attachments + results)
+            }
         }
     }
 

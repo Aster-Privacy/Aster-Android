@@ -169,7 +169,7 @@ fun BehaviorScreen(
     val custom_category_limit =
         plan_state.limits?.limits?.get("max_custom_categories")?.limit ?: -1
     var conversation_order by remember(prefs_loaded) { mutableStateOf(prefs?.conversation_order ?: "newest") }
-    var inbox_page_size by remember(prefs_loaded) { mutableIntStateOf(prefs?.inbox_page_size ?: 30) }
+    var inbox_page_size by remember(prefs_loaded) { mutableIntStateOf(prefs?.inbox_page_size ?: 50) }
     var show_message_size by remember(prefs_loaded) { mutableStateOf(prefs?.show_message_size ?: false) }
     var force_dark_emails by remember(prefs_loaded) { mutableStateOf(prefs?.force_dark_emails ?: false) }
     var default_reply by remember(prefs_loaded) { mutableStateOf(prefs?.default_reply_behavior ?: "reply") }

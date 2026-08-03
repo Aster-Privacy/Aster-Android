@@ -1870,6 +1870,33 @@ class MailRepository @Inject constructor(
         return probe_messages_with_attachments(mail_item_ids).getOrDefault(emptyList())
     }
 
+    suspend fun fetch_attachment_metas_for_messages(
+        mail_item_ids: List<String>,
+    ): Map<String, List<org.astermail.android.ui.mail.MessageAttachment>> {
+        return try {
+            val response = mail_api.batch_attachment_meta(mail_item_ids)
+            response.items.mapValues { (_, items) ->
+                items.mapNotNull { att ->
+                    val meta = decrypt_attachment_meta(att.encrypted_meta, att.meta_nonce)
+                    if (meta != null) {
+                        org.astermail.android.ui.mail.MessageAttachment(
+                            id = att.id,
+                            filename = meta.filename,
+                            content_type = meta.content_type,
+                            size_bytes = att.size_bytes,
+                            session_key = meta.session_key,
+                            content_id = meta.content_id,
+                        )
+                    } else null
+                }
+            }.filterValues { it.isNotEmpty() }
+        } catch (t: kotlin.coroutines.cancellation.CancellationException) {
+            throw t
+        } catch (_: Throwable) {
+            emptyMap()
+        }
+    }
+
     suspend fun fetch_attachments_for_message(
         mail_item_id: String,
     ): List<org.astermail.android.ui.mail.MessageAttachment> {

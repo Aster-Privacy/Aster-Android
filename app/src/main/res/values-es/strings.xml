@@ -1810,6 +1810,8 @@
     <string name="signature_placement_below">Debajo del texto citado</string>
     <string name="signature_placement_inherit">Heredar el ajuste global</string>
     <string name="signature_alias_conflict">Este alias ya tiene una firma.</string>
+    <string name="signature_rich_preview_note">Esta firma tiene formato enriquecido y se enviará exactamente como se muestra.</string>
+    <string name="signature_edit_as_plain">Editar como texto sin formato</string>
     <string name="signature_placement">Posición</string>
     <string name="add_signature">Añadir firma</string>
     <string name="delete_signature">Eliminar firma</string>
