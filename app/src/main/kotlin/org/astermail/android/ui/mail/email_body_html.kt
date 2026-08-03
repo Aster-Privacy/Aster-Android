@@ -150,7 +150,7 @@ body{height:auto!important;min-height:0!important;margin:0;overflow-x:hidden;ove
 img{max-width:100%!important;height:auto!important}
 img:not([data-blocked='true']):not(.blocked-image){cursor:zoom-in;-webkit-tap-highlight-color:rgba(128,128,128,0.22)}
 a img{cursor:pointer}
-a{color:$link_hex;text-decoration:underline}
+a{color:$link_hex;text-decoration:underline;-webkit-tap-highlight-color:transparent}
 pre,code{overflow-x:auto;max-width:100%}
 .blocked-image{display:inline-block;padding:4px 8px;border-radius:4px;font-size:12px;background-color:${if (simple_dark) "#1f1f1f" else "#f3f4f6"};color:#9ca3af${if (simple_dark) "!important" else ""};border:1px dashed ${if (simple_dark) "#374151" else "#e5e7eb"}}
 $table_css
