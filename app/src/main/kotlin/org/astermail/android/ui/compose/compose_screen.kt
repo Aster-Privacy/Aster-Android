@@ -1391,11 +1391,14 @@ fun ComposeScreen(
             androidx.compose.animation.Crossfade(targetState = is_sending, label = "send_state") { sending ->
                 if (sending) {
                     Box(
-                        modifier = Modifier.size(40.dp),
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(colors.accent_blue),
                         contentAlignment = Alignment.Center,
                     ) {
                         CircularProgressIndicator(
-                            color = colors.accent_blue,
+                            color = Color.White,
                             modifier = Modifier.size(20.dp),
                             strokeWidth = 2.dp,
                         )
