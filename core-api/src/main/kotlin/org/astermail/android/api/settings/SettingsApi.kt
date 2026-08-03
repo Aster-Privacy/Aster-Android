@@ -175,6 +175,8 @@ data class CustomDomainAddressInfo(
     val encrypted_local_part: String = "",
     val local_part_nonce: String = "",
     val local_part_hash: String = "",
+    val encrypted_display_name: String? = null,
+    val display_name_nonce: String? = null,
     val is_enabled: Boolean = true,
     val decryption_failed: Boolean = false,
 ) {

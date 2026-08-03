@@ -381,11 +381,70 @@ fun InboxScreen(
         }
     }
 
-    val api_emails = remember(inbox_state.items, settings_state.tags, attachment_ids) {
+    val is_all_mail_view = is_all_mail_folder(current_folder)
+    val system_folder_chip_names = mapOf(
+        "inbox" to folder_display_name("inbox"),
+        "sent" to folder_display_name("sent"),
+        "drafts" to folder_display_name("drafts"),
+        "archive" to folder_display_name("archive"),
+        "scheduled" to folder_display_name("scheduled"),
+        "trash" to stringResource(R.string.folder_trash),
+        "spam" to stringResource(R.string.folder_spam),
+    )
+    val all_mail_folder_chip: ((org.astermail.android.mail.InboxItem) -> list_folder_chip?)? =
+        if (!is_all_mail_view) null else { item ->
+            val neutral = Color(0xFF64748B)
+            when {
+                item.is_trashed -> list_folder_chip(
+                    name = system_folder_chip_names.getValue("trash"),
+                    icon = "trash",
+                    color = Color(0xFFEF4444),
+                )
+                item.is_spam -> list_folder_chip(
+                    name = system_folder_chip_names.getValue("spam"),
+                    icon = "warning",
+                    color = Color(0xFFF59E0B),
+                )
+                else -> {
+                    val custom = settings_state.labels.firstOrNull { label ->
+                        label.folder_type == "folder" &&
+                            label.label_token in item.labels &&
+                            !label.encrypted_name.isNullOrBlank() &&
+                            !org.astermail.android.looks_encrypted(label.encrypted_name)
+                    }
+                    if (custom != null) {
+                        list_folder_chip(
+                            name = custom.encrypted_name.orEmpty(),
+                            icon = if (org.astermail.android.folders.is_folder_protected(custom)) "lock" else "folder",
+                            color = custom.encrypted_color
+                                ?.takeIf { it.startsWith("#") }
+                                ?.let { org.astermail.android.design.parse_hex_color_safe(it) }
+                                ?: neutral,
+                        )
+                    } else {
+                        val folder_id = detail_system_folder_id(item)
+                        val icon = when (folder_id) {
+                            "sent" -> "send"
+                            "drafts" -> "draft"
+                            "archive" -> "archive"
+                            "scheduled" -> "clock"
+                            else -> "inbox"
+                        }
+                        list_folder_chip(
+                            name = system_folder_chip_names[folder_id] ?: folder_id,
+                            icon = icon,
+                            color = neutral,
+                        )
+                    }
+                }
+            }
+        }
+    val api_emails = remember(inbox_state.items, settings_state.tags, attachment_ids, settings_state.labels, current_folder) {
         inbox_state.items.map {
             inbox_item_to_email(
                 if (!it.has_attachments && it.id in attachment_ids) it.copy(has_attachments = true) else it,
                 settings_state.tags,
+                folder_chip = all_mail_folder_chip?.invoke(it),
             )
         }
     }

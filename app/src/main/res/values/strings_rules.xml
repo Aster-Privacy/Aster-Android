@@ -96,4 +96,6 @@
     <string name="category_match_keywords_placeholder">newsletter, digest</string>
     <string name="category_match_keywords_help">Comma-separated words. If any appear in the subject line, the email goes into this category.</string>
     <string name="category_tutorial_text">Tip: a custom category matches if the sender domain OR the subject contains any of your keywords. Custom categories are checked before built-in ones, so they always take priority.</string>
+    <string name="rules_create_first_folder_hint">Create a folder and this rule can move matching emails into it.</string>
+    <string name="rules_create_first_label_hint">Create a label and this rule can apply it to matching emails.</string>
 </resources>

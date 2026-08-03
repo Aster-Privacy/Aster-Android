@@ -416,6 +416,53 @@ fun SecurityScreen(
                 }
             } else {
                 detail_row(
+                    title = stringResource(R.string.tracking_protection_enabled),
+                    subtitle = stringResource(R.string.tracking_protection_enabled_subtitle),
+                    icon = TablerIcons.ShieldCheck,
+                    trailing = {
+                        AsterSwitch(
+                            checked = prefs.block_external_content != false,
+                            onCheckedChange = { v ->
+                                toggle {
+                                    if (v) it.copy(block_external_content = true, block_tracking_pixels = true)
+                                    else it.copy(block_external_content = false)
+                                }
+                            },
+                        )
+                    },
+                )
+                if (prefs.block_external_content != false) {
+                    AsterDivider()
+                    detail_row(
+                        title = stringResource(R.string.block_tracking_pixels),
+                        subtitle = stringResource(R.string.block_tracking_pixels_subtitle_security),
+                        icon = TablerIcons.Target,
+                        info_title = stringResource(R.string.block_tracking_pixels_info_title),
+                        info_description = stringResource(R.string.block_tracking_pixels_info_desc),
+                        trailing = {
+                            AsterSwitch(
+                                checked = prefs.block_tracking_pixels != false,
+                                onCheckedChange = { v -> toggle { it.copy(block_tracking_pixels = v) } },
+                            )
+                        },
+                    )
+                    AsterDivider()
+                    detail_row(
+                        title = stringResource(R.string.block_tracking_links),
+                        subtitle = stringResource(R.string.block_tracking_links_subtitle),
+                        icon = TablerIcons.Shield,
+                        info_title = stringResource(R.string.block_tracking_links_info_title),
+                        info_description = stringResource(R.string.block_tracking_links_info_desc),
+                        trailing = {
+                            AsterSwitch(
+                                checked = prefs.block_tracking_links != false,
+                                onCheckedChange = { v -> toggle { it.copy(block_tracking_links = v) } },
+                            )
+                        },
+                    )
+                }
+                AsterDivider()
+                detail_row(
                     title = stringResource(R.string.block_remote_images),
                     subtitle = stringResource(R.string.block_remote_images_subtitle_security),
                     icon = TablerIcons.PhotoOff,
@@ -430,29 +477,39 @@ fun SecurityScreen(
                 )
                 AsterDivider()
                 detail_row(
-                    title = stringResource(R.string.block_tracking_pixels),
-                    subtitle = stringResource(R.string.block_tracking_pixels_subtitle_security),
-                    icon = TablerIcons.Target,
-                    info_title = stringResource(R.string.block_tracking_pixels_info_title),
-                    info_description = stringResource(R.string.block_tracking_pixels_info_desc),
+                    title = stringResource(R.string.block_remote_fonts),
+                    subtitle = stringResource(R.string.block_remote_fonts_subtitle),
+                    icon = TablerIcons.Typography,
                     trailing = {
                         AsterSwitch(
-                            checked = prefs.block_tracking_pixels != false,
-                            onCheckedChange = { v -> toggle { it.copy(block_tracking_pixels = v) } },
+                            checked = prefs.block_remote_fonts != false,
+                            onCheckedChange = { v -> toggle { it.copy(block_remote_fonts = v) } },
                         )
                     },
                 )
                 AsterDivider()
                 detail_row(
-                    title = stringResource(R.string.block_tracking_links),
-                    subtitle = stringResource(R.string.block_tracking_links_subtitle),
-                    icon = TablerIcons.Shield,
-                    info_title = stringResource(R.string.block_tracking_links_info_title),
-                    info_description = stringResource(R.string.block_tracking_links_info_desc),
+                    title = stringResource(R.string.block_remote_css),
+                    subtitle = stringResource(R.string.block_remote_css_subtitle),
+                    icon = TablerIcons.Palette,
                     trailing = {
                         AsterSwitch(
-                            checked = prefs.block_tracking_links != false,
-                            onCheckedChange = { v -> toggle { it.copy(block_tracking_links = v) } },
+                            checked = prefs.block_remote_css != false,
+                            onCheckedChange = { v -> toggle { it.copy(block_remote_css = v) } },
+                        )
+                    },
+                )
+                AsterDivider()
+                detail_row(
+                    title = stringResource(R.string.block_html_rendering),
+                    subtitle = stringResource(R.string.block_html_rendering_subtitle),
+                    icon = TablerIcons.Code,
+                    trailing = {
+                        AsterSwitch(
+                            checked = prefs.html_rendering_mode == "plain_text",
+                            onCheckedChange = { v ->
+                                toggle { it.copy(html_rendering_mode = if (v) "plain_text" else "html") }
+                            },
                         )
                     },
                 )

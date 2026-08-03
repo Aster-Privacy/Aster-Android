@@ -590,8 +590,8 @@
     <string name="images_tracking">Görseller ve izleme</string>
     <string name="block_remote_images">Uzak görselleri engelle</string>
     <string name="block_remote_images_subtitle">IP adresinizi gönderenlerden koruyun</string>
-    <string name="block_tracking_pixels">İzleme piksellerini engelle</string>
-    <string name="block_tracking_links">İzleme bağlantılarını engelle</string>
+    <string name="block_tracking_pixels">Casus pikselleri engelle</string>
+    <string name="block_tracking_links">İzleme bağlantılarını temizle</string>
     <string name="sending">Gönderim</string>
     <string name="send">Gönder</string>
     <string name="auto_save_recipients">Alıcıları kişilere otomatik kaydet</string>
@@ -1060,8 +1060,8 @@
     <string name="send_read_receipts">Okundu bilgisi gönder</string>
     <string name="send_read_receipts_subtitle">Gönderenlerin e-postalarını okuduğunuzu bilmesini sağlayın</string>
     <string name="protection">Koruma</string>
-    <string name="warn_suspicious_links">Şüpheli bağlantılarda uyar</string>
-    <string name="strip_exif">Eklerden EXIF kaldır</string>
+    <string name="warn_suspicious_links">Harici bağlantı uyarıları</string>
+    <string name="strip_exif">Görsel meta verilerini kaldır</string>
     <string name="strip_exif_subtitle">Konum ve cihaz meta verilerini kaldır</string>
     <string name="ghost_mode">Hayalet modu</string>
     <string name="ghost_mode_subtitle">Çevrimiçi durumunu ve yazma göstergesini gizle</string>
@@ -2589,4 +2589,16 @@
     <string name="domain_purchase_create_first_address">İlk adresini oluştur</string>
     <string name="domain_purchase_please_wait">Bu yalnızca bir dakika sürer. Lütfen uygulamayı açık tutun.</string>
     <string name="domain_purchase_warmup_note">Yeni alan adlarının gönderim itibarı oluşturması biraz zaman alır. İlk iletilerinizin bir kısmı spam klasörüne düşebilir.</string>
+    <string name="rename_label">Etiketi yeniden adlandır</string>
+    <string name="change_label_color">Rengi değiştir</string>
+    <string name="change_label_icon">Simgeyi değiştir</string>
+    <string name="failed_update_label">Etiket güncellenemedi</string>
+    <string name="tracking_protection_enabled">İzleme korumasını etkinleştir</string>
+    <string name="tracking_protection_enabled_subtitle">Gizliliğinizi korumak için e-postalara gömülü izleme öğelerini engeller</string>
+    <string name="block_remote_fonts">Uzak yazı tiplerini engelle</string>
+    <string name="block_remote_fonts_subtitle">E-postaların harici sunuculardan yazı tipi yüklemesini önler</string>
+    <string name="block_remote_css">Uzak CSS engelle</string>
+    <string name="block_remote_css_subtitle">E-postaların harici sunuculardan stil sayfası yüklemesini önler</string>
+    <string name="block_html_rendering">HTML görüntülemeyi engelle</string>
+    <string name="block_html_rendering_subtitle">Gelen e-postaları düz metin olarak göstererek izlemeyi ve görsel oltalamayı önler</string>
 </resources>

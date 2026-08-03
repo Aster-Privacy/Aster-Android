@@ -96,4 +96,6 @@
     <string name="category_match_keywords_placeholder">newsletter, digest</string>
     <string name="category_match_keywords_help">키워드는 쉼표로 구분하세요. 제목과 보낸 사람 이름에서 찾습니다.</string>
     <string name="category_tutorial_text">입력한 도메인이나 키워드 중 하나라도 맞으면 그 메일은 내 카테고리로 들어갑니다. 내 카테고리가 기본 카테고리보다 우선하며, 분류는 모두 기기 안에서 이루어집니다.</string>
+    <string name="rules_create_first_folder_hint">폴더를 만들면 이 규칙으로 일치하는 메일을 옮길 수 있습니다.</string>
+    <string name="rules_create_first_label_hint">라벨을 만들면 이 규칙으로 일치하는 메일에 적용할 수 있습니다.</string>
 </resources>

@@ -96,4 +96,6 @@
     <string name="category_match_keywords_placeholder">newsletter, digest</string>
     <string name="category_match_keywords_help">Separe as palavras por vírgula. Elas são procuradas no assunto e no nome do remetente.</string>
     <string name="category_tutorial_text">Um e-mail entra na sua categoria assim que combina com algum dos domínios ou palavras-chave. As categorias personalizadas têm prioridade sobre as prontas e toda a comparação acontece no seu aparelho.</string>
+    <string name="rules_create_first_folder_hint">Crie uma pasta e esta regra poderá mover os e-mails correspondentes para ela.</string>
+    <string name="rules_create_first_label_hint">Crie uma etiqueta e esta regra poderá aplicá-la aos e-mails correspondentes.</string>
 </resources>

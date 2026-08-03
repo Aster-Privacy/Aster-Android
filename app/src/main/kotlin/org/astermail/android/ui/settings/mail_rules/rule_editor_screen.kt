@@ -78,6 +78,16 @@ import org.astermail.android.api.mail_rules.ReadState
 import org.astermail.android.api.mail_rules.TextOp
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.parse_hex_color_safe
+import org.astermail.android.folders.flatten_folder_tree
+import org.astermail.android.folders.folder_path
+import org.astermail.android.folders.is_custom_folder
+import org.astermail.android.folders.is_folder_protected
+import org.astermail.android.folders.max_folder_depth
+import org.astermail.android.ui.drawer.create_folder_dialog
+import org.astermail.android.ui.drawer.create_label_dialog
+import org.astermail.android.ui.drawer.folder_parent_option
+import org.astermail.android.ui.drawer.resolve_label_icon
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterTextField
@@ -144,25 +154,66 @@ fun RuleEditorScreen(
     }
 
     var sheet: active_sheet by remember { mutableStateOf(active_sheet.none) }
+    var create_target by remember { mutableStateOf<String?>(null) }
     var pending_field: field_id? by remember { mutableStateOf(null) }
     var auto_advance by remember { mutableStateOf(false) }
     var is_saving by remember { mutableStateOf(false) }
     var save_error by remember { mutableStateOf<Int?>(null) }
 
     val folders = remember(settings_state.labels) {
-        settings_state.labels
-            .filter { it.folder_type == "folder" || it.folder_type == "custom" }
-            .filter { !it.encrypted_name.isNullOrBlank() }
-            .map { picker_item(it.label_token, it.encrypted_name.orEmpty()) }
+        flatten_folder_tree(settings_state.labels)
+            .filter { !it.label.encrypted_name.isNullOrBlank() }
+            .map { node ->
+                picker_item(
+                    id = node.label.label_token,
+                    label = node.label.encrypted_name.orEmpty(),
+                    icon = if (is_folder_protected(node.label)) TablerIcons.Lock else TablerIcons.Folder,
+                    icon_tint = node.label.encrypted_color
+                        ?.takeIf { it.startsWith("#") }
+                        ?.let { parse_hex_color_safe(it) },
+                    depth = node.depth,
+                )
+            }
     }
     val labels = remember(settings_state.labels, settings_state.tags) {
-        val from_labels = settings_state.labels
-            .filter { it.folder_type == "label" && !it.encrypted_name.isNullOrBlank() }
-            .map { picker_item(it.label_token, it.encrypted_name.orEmpty()) }
         val from_tags = settings_state.tags
             .filter { it.encrypted_name.isNotBlank() }
-            .map { picker_item(it.tag_token, it.encrypted_name) }
-        from_labels + from_tags
+            .mapIndexed { idx, tag ->
+                picker_item(
+                    id = tag.tag_token,
+                    label = tag.encrypted_name,
+                    icon = resolve_label_icon(tag.encrypted_icon?.takeIf { it.isNotBlank() }),
+                    icon_tint = tag.encrypted_color?.let { parse_hex_color_safe(it) }
+                        ?: rules_label_palette[idx % rules_label_palette.size],
+                )
+            }
+        val from_labels = settings_state.labels
+            .filter { it.folder_type == "label" && !it.encrypted_name.isNullOrBlank() }
+            .mapIndexed { idx, label ->
+                picker_item(
+                    id = label.label_token,
+                    label = label.encrypted_name.orEmpty(),
+                    icon = TablerIcons.Tag,
+                    icon_tint = rules_label_palette[(from_tags.size + idx) % rules_label_palette.size],
+                )
+            }
+        from_tags + from_labels
+    }
+    val folder_parent_options = remember(settings_state.labels) {
+        flatten_folder_tree(settings_state.labels)
+            .filter { it.depth < max_folder_depth }
+            .mapNotNull { node ->
+                val readable_name = node.label.encrypted_name?.takeIf { it.isNotBlank() }
+                    ?: return@mapNotNull null
+                folder_parent_option(
+                    token = node.label.label_token,
+                    label = readable_name,
+                    depth = node.depth,
+                    path_label = folder_path(settings_state.labels, node.label.label_token)
+                        .filter { it.isNotBlank() }
+                        .joinToString(" · "),
+                )
+            }
     }
 
     val is_read_only = existing != null && rule_is_advanced(existing)
@@ -457,6 +508,8 @@ fun RuleEditorScreen(
             labels = labels,
             on_dismiss = { sheet = active_sheet.none },
             on_set = { updated -> actions[s.action_index] = updated },
+            on_create_folder = { create_target = "folder" },
+            on_create_label = { create_target = "label" },
         )
         active_sheet.pick_color -> color_picker(
             on_dismiss = { sheet = active_sheet.none },
@@ -475,7 +528,45 @@ fun RuleEditorScreen(
             on_pick = { match_mode = if (it == "all") MatchMode.ALL else MatchMode.ANY },
         )
     }
+
+    when (create_target) {
+        "folder" -> create_folder_dialog(
+            title = stringResource(R.string.create_folder),
+            placeholder = stringResource(R.string.folder_name),
+            parent_options = folder_parent_options,
+            on_dismiss = { create_target = null },
+            on_create = { folder_name, parent_token ->
+                val sibling_count = settings_state.labels.count {
+                    is_custom_folder(it) && it.parent_token.orEmpty() == parent_token.orEmpty()
+                }
+                settings_vm.create_folder(
+                    name = folder_name,
+                    sort_order = sibling_count,
+                    parent_token = parent_token,
+                )
+                create_target = null
+            },
+        )
+        "label" -> create_label_dialog(
+            on_dismiss = { create_target = null },
+            on_create = { label_name, label_color, label_icon ->
+                settings_vm.create_tag(name = label_name, color = label_color, icon = label_icon)
+                create_target = null
+            },
+        )
+    }
 }
+
+private val rules_label_palette = listOf(
+    Color(0xFF3B82F6),
+    Color(0xFF22C55E),
+    Color(0xFFF59E0B),
+    Color(0xFFA855F7),
+    Color(0xFFEC4899),
+    Color(0xFF14B8A6),
+    Color(0xFFF97316),
+    Color(0xFF6366F1),
+)
 
 private fun parse_hex(hex: String): Color = try {
     Color(android.graphics.Color.parseColor(hex))
@@ -984,6 +1075,8 @@ private fun action_target_picker(
     labels: List<picker_item>,
     on_dismiss: () -> Unit,
     on_set: (Action) -> Unit,
+    on_create_folder: (() -> Unit)? = null,
+    on_create_label: (() -> Unit)? = null,
 ) {
     when (action) {
         is Action.MoveTo -> folder_picker(
@@ -991,12 +1084,14 @@ private fun action_target_picker(
             folders = folders,
             selected_token = action.folder_token.takeIf { it.isNotBlank() },
             on_pick = { id, _ -> on_set(action.copy(folder_token = id)) },
+            on_create = on_create_folder,
         )
         is Action.ApplyLabels -> label_multi_picker(
             on_dismiss = on_dismiss,
             labels = labels,
             selected_tokens = action.label_tokens,
             on_confirm = { on_set(action.copy(label_tokens = it)) },
+            on_create = on_create_label,
         )
         is Action.MarkAs -> options_picker(
             on_dismiss = on_dismiss,

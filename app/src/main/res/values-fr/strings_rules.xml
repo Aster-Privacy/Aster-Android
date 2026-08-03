@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="rules_section_sender">Expéditeur</string>
     <string name="rules_section_recipients">Destinataires</string>
@@ -96,4 +96,6 @@
     <string name="category_match_keywords_placeholder">newsletter, digest</string>
     <string name="category_match_keywords_help">Séparez les mots par une virgule. Ils sont recherchés dans l\'objet et le nom de l\'expéditeur.</string>
     <string name="category_tutorial_text">Un message rejoint votre catégorie dès qu\'il correspond à l\'un de vos domaines ou mots-clés. Les catégories personnalisées passent avant celles fournies, et toute la correspondance se fait sur votre appareil.</string>
+    <string name="rules_create_first_folder_hint">Créez un dossier et cette règle pourra y déplacer les e-mails correspondants.</string>
+    <string name="rules_create_first_label_hint">Créez un libellé et cette règle pourra l\'appliquer aux e-mails correspondants.</string>
 </resources>

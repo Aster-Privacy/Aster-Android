@@ -63,7 +63,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextAlign
 import androidx.annotation.StringRes
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -95,6 +97,9 @@ data class picker_item(
     val id: String,
     val label: String,
     val sublabel: String? = null,
+    val icon: ImageVector? = null,
+    val icon_tint: Color? = null,
+    val depth: Int = 0,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -139,6 +144,9 @@ fun row_select(
     selected: Boolean,
     on_click: () -> Unit,
     test_tag: String? = null,
+    icon: ImageVector? = null,
+    icon_tint: Color? = null,
+    depth: Int = 0,
 ) {
     val colors = AsterMaterial.colors
     Row(
@@ -146,9 +154,19 @@ fun row_select(
             .fillMaxWidth()
             .clickable(onClick = on_click)
             .then(if (test_tag != null) Modifier.testTag(test_tag) else Modifier)
-            .padding(horizontal = AsterSpacing.lg, vertical = 12.dp),
+            .padding(horizontal = AsterSpacing.lg, vertical = 12.dp)
+            .padding(start = (depth * 16).dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = icon_tint ?: colors.text_secondary,
+                modifier = Modifier.size(18.dp),
+            )
+            Spacer(Modifier.width(AsterSpacing.md))
+        }
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = label,
@@ -630,24 +648,91 @@ fun color_picker(
 }
 
 @Composable
+private fun row_create(
+    label: String,
+    test_tag: String,
+    on_click: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = on_click)
+            .testTag(test_tag)
+            .padding(horizontal = AsterSpacing.lg, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = TablerIcons.Plus,
+            contentDescription = null,
+            tint = colors.accent_blue,
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(Modifier.width(AsterSpacing.md))
+        Text(
+            text = label,
+            color = colors.accent_blue,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Medium,
+        )
+    }
+}
+
+@Composable
+private fun picker_empty_state(
+    title: String,
+    hint: String,
+    create_label: String?,
+    create_test_tag: String,
+    on_create: (() -> Unit)?,
+) {
+    val colors = AsterMaterial.colors
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xl),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = title,
+            color = colors.text_primary,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Spacer(Modifier.height(AsterSpacing.xs))
+        Text(
+            text = hint,
+            color = colors.text_tertiary,
+            fontSize = 13.sp,
+            textAlign = TextAlign.Center,
+        )
+        if (on_create != null && create_label != null) {
+            Spacer(Modifier.height(AsterSpacing.lg))
+            Box(modifier = Modifier.testTag(create_test_tag)) {
+                AsterButton(
+                    label = create_label,
+                    onClick = on_create,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun folder_picker(
     on_dismiss: () -> Unit,
     folders: List<picker_item>,
     selected_token: String?,
     on_pick: (String, String) -> Unit,
+    on_create: (() -> Unit)? = null,
 ) {
     base_sheet(on_dismiss = on_dismiss, title = stringResource(R.string.mail_rules_pick_folder)) {
         if (folders.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(AsterSpacing.lg),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = stringResource(R.string.mail_rules_no_folders),
-                    color = AsterMaterial.colors.text_tertiary,
-                    fontSize = 13.sp,
-                )
-            }
+            picker_empty_state(
+                title = stringResource(R.string.mail_rules_no_folders),
+                hint = stringResource(R.string.rules_create_first_folder_hint),
+                create_label = stringResource(R.string.create_folder),
+                create_test_tag = "picker_create_folder",
+                on_create = on_create,
+            )
         } else {
             LazyColumn(modifier = Modifier.heightIn(max = 480.dp)) {
                 items(folders) { f ->
@@ -656,7 +741,19 @@ fun folder_picker(
                         selected = f.id == selected_token,
                         on_click = { on_pick(f.id, f.label); on_dismiss() },
                         test_tag = "folder_${f.label}",
+                        icon = f.icon,
+                        icon_tint = f.icon_tint,
+                        depth = f.depth,
                     )
+                }
+                if (on_create != null) {
+                    item {
+                        row_create(
+                            label = stringResource(R.string.create_folder),
+                            test_tag = "picker_create_folder",
+                            on_click = on_create,
+                        )
+                    }
                 }
             }
         }
@@ -669,20 +766,18 @@ fun label_multi_picker(
     labels: List<picker_item>,
     selected_tokens: List<String>,
     on_confirm: (List<String>) -> Unit,
+    on_create: (() -> Unit)? = null,
 ) {
     var selected by remember { mutableStateOf(selected_tokens.toSet()) }
     base_sheet(on_dismiss = on_dismiss, title = stringResource(R.string.mail_rules_pick_labels)) {
         if (labels.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(AsterSpacing.lg),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = stringResource(R.string.rules_no_labels),
-                    color = AsterMaterial.colors.text_tertiary,
-                    fontSize = 13.sp,
-                )
-            }
+            picker_empty_state(
+                title = stringResource(R.string.rules_no_labels),
+                hint = stringResource(R.string.rules_create_first_label_hint),
+                create_label = stringResource(R.string.create_label),
+                create_test_tag = "picker_create_label",
+                on_create = on_create,
+            )
         } else {
             Column(modifier = Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState())) {
                 labels.forEach { l ->
@@ -692,6 +787,16 @@ fun label_multi_picker(
                         on_click = {
                             selected = if (l.id in selected) selected - l.id else selected + l.id
                         },
+                        test_tag = "rule_label_${l.label}",
+                        icon = l.icon,
+                        icon_tint = l.icon_tint,
+                    )
+                }
+                if (on_create != null) {
+                    row_create(
+                        label = stringResource(R.string.create_label),
+                        test_tag = "picker_create_label",
+                        on_click = on_create,
                     )
                 }
                 Spacer(Modifier.height(AsterSpacing.md))

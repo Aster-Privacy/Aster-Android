@@ -590,8 +590,8 @@
     <string name="images_tracking">Immagini e tracciamento</string>
     <string name="block_remote_images">Blocca immagini remote</string>
     <string name="block_remote_images_subtitle">Proteggi il tuo IP dai mittenti</string>
-    <string name="block_tracking_pixels">Blocca pixel di tracciamento</string>
-    <string name="block_tracking_links">Blocca link di tracciamento</string>
+    <string name="block_tracking_pixels">Blocca pixel spia</string>
+    <string name="block_tracking_links">Pulisci link di tracciamento</string>
     <string name="sending">Invio</string>
     <string name="send">Invia</string>
     <string name="auto_save_recipients">Salva automaticamente destinatari nei contatti</string>
@@ -1060,8 +1060,8 @@
     <string name="send_read_receipts">Invia conferme di lettura</string>
     <string name="send_read_receipts_subtitle">Fai sapere ai mittenti che hai letto la loro posta</string>
     <string name="protection">Protezione</string>
-    <string name="warn_suspicious_links">Avvisa su link sospetti</string>
-    <string name="strip_exif">Rimuovi EXIF dagli allegati</string>
+    <string name="warn_suspicious_links">Avvisi per link esterni</string>
+    <string name="strip_exif">Rimuovi metadati immagini</string>
     <string name="strip_exif_subtitle">Rimuovi metadati di posizione e dispositivo</string>
     <string name="ghost_mode">Modalità fantasma</string>
     <string name="ghost_mode_subtitle">Nascondi stato online e indicatori di digitazione</string>
@@ -2589,4 +2589,16 @@
     <string name="domain_purchase_create_first_address">Crea il tuo primo indirizzo</string>
     <string name="domain_purchase_please_wait">Ci vuole solo un momento. Tieni l\'app aperta.</string>
     <string name="domain_purchase_warmup_note">I domini appena registrati richiedono un po\' di tempo per costruire una reputazione di invio. Alcuni dei primi messaggi potrebbero finire nello spam.</string>
+    <string name="rename_label">Rinomina etichetta</string>
+    <string name="change_label_color">Cambia colore</string>
+    <string name="change_label_icon">Cambia icona</string>
+    <string name="failed_update_label">Impossibile aggiornare l’etichetta</string>
+    <string name="tracking_protection_enabled">Attiva protezione dal tracciamento</string>
+    <string name="tracking_protection_enabled_subtitle">Blocca gli elementi di tracciamento incorporati nelle email per proteggere la tua privacy</string>
+    <string name="block_remote_fonts">Blocca font remoti</string>
+    <string name="block_remote_fonts_subtitle">Impedisce alle email di caricare font da server esterni</string>
+    <string name="block_remote_css">Blocca CSS remoto</string>
+    <string name="block_remote_css_subtitle">Impedisce alle email di caricare fogli di stile da server esterni</string>
+    <string name="block_html_rendering">Blocca rendering HTML</string>
+    <string name="block_html_rendering_subtitle">Mostra le email in arrivo come testo semplice per prevenire tracciamento e phishing visivo</string>
 </resources>

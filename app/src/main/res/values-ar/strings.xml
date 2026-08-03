@@ -590,8 +590,8 @@
     <string name="images_tracking">الصور والتتبع</string>
     <string name="block_remote_images">حظر الصور البعيدة</string>
     <string name="block_remote_images_subtitle">حماية عنوان IP الخاص بك من المرسلين</string>
-    <string name="block_tracking_pixels">حظر بكسلات التتبع</string>
-    <string name="block_tracking_links">حظر روابط التتبع</string>
+    <string name="block_tracking_pixels">حظر بكسلات التجسس</string>
+    <string name="block_tracking_links">تنظيف روابط التتبع</string>
     <string name="sending">الإرسال</string>
     <string name="send">إرسال</string>
     <string name="auto_save_recipients">حفظ المستلمين تلقائياً في جهات الاتصال</string>
@@ -1060,8 +1060,8 @@
     <string name="send_read_receipts">إرسال إيصالات القراءة</string>
     <string name="send_read_receipts_subtitle">إعلام المرسلين بأنك قرأت بريدهم</string>
     <string name="protection">الحماية</string>
-    <string name="warn_suspicious_links">التحذير من الروابط المشبوهة</string>
-    <string name="strip_exif">إزالة EXIF من المرفقات</string>
+    <string name="warn_suspicious_links">تحذيرات الروابط الخارجية</string>
+    <string name="strip_exif">إزالة البيانات الوصفية للصور</string>
     <string name="strip_exif_subtitle">إزالة بيانات الموقع والجهاز</string>
     <string name="ghost_mode">الوضع الشبحي</string>
     <string name="ghost_mode_subtitle">إخفاء حالة الاتصال ومؤشرات الكتابة</string>
@@ -2617,4 +2617,16 @@
     <string name="domain_purchase_create_first_address">أنشئ عنوانك الأول</string>
     <string name="domain_purchase_please_wait">لن يستغرق هذا سوى لحظات. يرجى إبقاء التطبيق مفتوحًا.</string>
     <string name="domain_purchase_warmup_note">تحتاج النطاقات الجديدة بعض الوقت لبناء سمعة إرسال. قد تصل بعض رسائلك الأولى إلى البريد غير المرغوب فيه خلال هذه الفترة.</string>
+    <string name="rename_label">إعادة تسمية التصنيف</string>
+    <string name="change_label_color">تغيير اللون</string>
+    <string name="change_label_icon">تغيير الأيقونة</string>
+    <string name="failed_update_label">تعذر تحديث التصنيف</string>
+    <string name="tracking_protection_enabled">تفعيل الحماية من التتبع</string>
+    <string name="tracking_protection_enabled_subtitle">يحظر عناصر التتبع المضمنة في الرسائل لحماية خصوصيتك</string>
+    <string name="block_remote_fonts">حظر الخطوط الخارجية</string>
+    <string name="block_remote_fonts_subtitle">يمنع الرسائل من تحميل الخطوط من خوادم خارجية</string>
+    <string name="block_remote_css">حظر CSS الخارجي</string>
+    <string name="block_remote_css_subtitle">يمنع الرسائل من تحميل أوراق الأنماط من خوادم خارجية</string>
+    <string name="block_html_rendering">حظر عرض HTML</string>
+    <string name="block_html_rendering_subtitle">يعرض الرسائل الواردة كنص عادي لمنع التتبع والتصيد البصري</string>
 </resources>

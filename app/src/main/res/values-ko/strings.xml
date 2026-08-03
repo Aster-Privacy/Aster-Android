@@ -590,8 +590,8 @@
     <string name="images_tracking">이미지 및 추적</string>
     <string name="block_remote_images">원격 이미지 차단</string>
     <string name="block_remote_images_subtitle">발신자로부터 IP 주소 보호</string>
-    <string name="block_tracking_pixels">추적 픽셀 차단</string>
-    <string name="block_tracking_links">추적 링크 차단</string>
+    <string name="block_tracking_pixels">스파이 픽셀 차단</string>
+    <string name="block_tracking_links">추적 링크 정리</string>
     <string name="sending">전송</string>
     <string name="send">보내기</string>
     <string name="auto_save_recipients">수신자를 연락처에 자동 저장</string>
@@ -1060,8 +1060,8 @@
     <string name="send_read_receipts">수신 확인 보내기</string>
     <string name="send_read_receipts_subtitle">발신자에게 메일을 읽었음을 알림</string>
     <string name="protection">보호</string>
-    <string name="warn_suspicious_links">의심스러운 링크 경고</string>
-    <string name="strip_exif">첨부 파일에서 EXIF 제거</string>
+    <string name="warn_suspicious_links">외부 링크 경고</string>
+    <string name="strip_exif">이미지 메타데이터 제거</string>
     <string name="strip_exif_subtitle">위치 및 기기 메타데이터 제거</string>
     <string name="ghost_mode">고스트 모드</string>
     <string name="ghost_mode_subtitle">온라인 상태 및 입력 표시 숨기기</string>
@@ -2582,4 +2582,16 @@
     <string name="domain_purchase_create_first_address">첫 주소 만들기</string>
     <string name="domain_purchase_please_wait">잠시만 기다려 주세요. 앱을 열어 두세요.</string>
     <string name="domain_purchase_warmup_note">새 도메인은 발신 평판을 쌓는 데 시간이 걸립니다. 초기에는 일부 메일이 스팸으로 분류될 수 있습니다.</string>
+    <string name="rename_label">라벨 이름 변경</string>
+    <string name="change_label_color">색상 변경</string>
+    <string name="change_label_icon">아이콘 변경</string>
+    <string name="failed_update_label">라벨을 업데이트할 수 없습니다</string>
+    <string name="tracking_protection_enabled">추적 보호 사용</string>
+    <string name="tracking_protection_enabled_subtitle">메일에 삽입된 추적 요소를 차단하여 개인정보를 보호합니다</string>
+    <string name="block_remote_fonts">원격 글꼴 차단</string>
+    <string name="block_remote_fonts_subtitle">메일이 외부 서버에서 글꼴을 불러오지 못하게 합니다</string>
+    <string name="block_remote_css">원격 CSS 차단</string>
+    <string name="block_remote_css_subtitle">메일이 외부 서버에서 스타일시트를 불러오지 못하게 합니다</string>
+    <string name="block_html_rendering">HTML 렌더링 차단</string>
+    <string name="block_html_rendering_subtitle">수신 메일을 일반 텍스트로 표시하여 추적과 시각적 피싱을 방지합니다</string>
 </resources>

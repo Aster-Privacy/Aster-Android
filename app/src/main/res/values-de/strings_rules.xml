@@ -96,4 +96,6 @@
     <string name="category_match_keywords_placeholder">newsletter, digest</string>
     <string name="category_match_keywords_help">Stichwörter mit Komma trennen. Gesucht wird im Betreff und im Absendernamen.</string>
     <string name="category_tutorial_text">Eine Mail landet in deiner Kategorie, sobald sie zu einer deiner Domains oder zu einem Stichwort passt. Eigene Kategorien haben Vorrang vor den vorgegebenen, und die Zuordnung passiert komplett auf deinem Gerät.</string>
+    <string name="rules_create_first_folder_hint">Erstelle einen Ordner, und diese Regel kann passende E-Mails dorthin verschieben.</string>
+    <string name="rules_create_first_label_hint">Erstelle ein Label, und diese Regel kann es passenden E-Mails zuweisen.</string>
 </resources>

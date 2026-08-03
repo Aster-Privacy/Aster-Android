@@ -1551,9 +1551,10 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     )
 
     val api_labels = run {
-        val from_tags = settings_state.tags
+        val visible_tags = settings_state.tags
             .filter { it.encrypted_name.isNotBlank() }
             .filter { !looks_encrypted(it.encrypted_name) }
+        val from_tags = visible_tags
             .mapIndexed { idx, tag ->
                 val color = parse_hex_color_safe(tag.encrypted_color)
                     ?: label_colors[idx % label_colors.size]
@@ -1563,19 +1564,33 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                     label = tag.encrypted_name,
                     color = color,
                     icon = icon,
+                    api_id = tag.id,
+                    kind = "tag",
+                    color_hex = tag.encrypted_color?.takeIf { it.startsWith("#") },
+                    can_move_up = idx > 0,
+                    can_move_down = idx < visible_tags.lastIndex,
                 )
             }
-        val from_labels = settings_state.labels
+        val visible_labels = settings_state.labels
             .filter { it.folder_type == "label" }
             .filter { !it.encrypted_name.isNullOrBlank() }
             .filter { !looks_encrypted(it.encrypted_name) }
+        val from_labels = visible_labels
             .mapIndexed { idx, label ->
-                val color = label_colors[(from_tags.size + idx) % label_colors.size]
+                val own_color = label.encrypted_color?.takeIf { it.startsWith("#") }
+                val color = own_color?.let { parse_hex_color_safe(it) }
+                    ?: label_colors[(from_tags.size + idx) % label_colors.size]
+                val icon = label.encrypted_icon?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
                 drawer_label_item(
                     id = "label:${label.label_token}",
                     label = label.encrypted_name.orEmpty(),
                     color = color,
-                    icon = null,
+                    icon = icon,
+                    api_id = label.id,
+                    kind = "label",
+                    color_hex = own_color,
+                    can_move_up = idx > 0,
+                    can_move_down = idx < visible_labels.lastIndex,
                 )
             }
         from_tags + from_labels
@@ -1793,6 +1808,28 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                     on_set_lock = { item, password -> settings_vm.set_folder_lock(item.label_id, password) {} },
                     on_remove_lock = { item, password -> settings_vm.remove_folder_lock(item.label_id, password) {} },
                     on_delete = { item -> settings_vm.delete_label(item.label_id) },
+                ),
+                label_actions = org.astermail.android.ui.drawer.label_menu_actions(
+                    on_rename = { item, name ->
+                        if (item.kind == "tag") settings_vm.rename_tag(item.api_id, name)
+                        else settings_vm.rename_folder(item.api_id, name)
+                    },
+                    on_recolor = { item, color ->
+                        if (item.kind == "tag") settings_vm.recolor_tag(item.api_id, color)
+                        else settings_vm.recolor_folder(item.api_id, color)
+                    },
+                    on_set_icon = { item, icon ->
+                        if (item.kind == "tag") settings_vm.set_tag_icon(item.api_id, icon)
+                        else settings_vm.set_label_icon(item.api_id, icon)
+                    },
+                    on_move_order = { item, direction ->
+                        if (item.kind == "tag") settings_vm.move_tag(item.api_id, direction)
+                        else settings_vm.move_label_row(item.api_id, direction)
+                    },
+                    on_delete = { item ->
+                        if (item.kind == "tag") settings_vm.delete_tag(item.api_id)
+                        else settings_vm.delete_label(item.api_id)
+                    },
                 ),
                 on_logout = {
                     settings_vm.logout { switched_account ->

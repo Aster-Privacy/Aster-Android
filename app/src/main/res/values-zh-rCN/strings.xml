@@ -590,8 +590,8 @@
     <string name="images_tracking">图片和跟踪</string>
     <string name="block_remote_images">拦截远程图片</string>
     <string name="block_remote_images_subtitle">保护您的 IP 不被发件人获取</string>
-    <string name="block_tracking_pixels">拦截跟踪像素</string>
-    <string name="block_tracking_links">拦截跟踪链接</string>
+    <string name="block_tracking_pixels">阻止间谍像素</string>
+    <string name="block_tracking_links">清理跟踪链接</string>
     <string name="sending">发送</string>
     <string name="send">发送</string>
     <string name="auto_save_recipients">自动将收件人保存到联系人</string>
@@ -1060,8 +1060,8 @@
     <string name="send_read_receipts">发送已读回执</string>
     <string name="send_read_receipts_subtitle">让发件人知道您已阅读邮件</string>
     <string name="protection">保护</string>
-    <string name="warn_suspicious_links">对可疑链接发出警告</string>
-    <string name="strip_exif">移除附件中的 EXIF</string>
+    <string name="warn_suspicious_links">外部链接警告</string>
+    <string name="strip_exif">移除图片元数据</string>
     <string name="strip_exif_subtitle">移除位置和设备元数据</string>
     <string name="ghost_mode">幽灵模式</string>
     <string name="ghost_mode_subtitle">隐藏在线状态和输入指示器</string>
@@ -2582,4 +2582,16 @@
     <string name="domain_purchase_create_first_address">创建你的第一个地址</string>
     <string name="domain_purchase_please_wait">这只需片刻，请保持应用打开。</string>
     <string name="domain_purchase_warmup_note">全新域名需要一段时间建立发信信誉。在此期间，你最初的部分邮件可能会进入垃圾邮件。</string>
+    <string name="rename_label">重命名标签</string>
+    <string name="change_label_color">更改颜色</string>
+    <string name="change_label_icon">更改图标</string>
+    <string name="failed_update_label">无法更新标签</string>
+    <string name="tracking_protection_enabled">启用跟踪保护</string>
+    <string name="tracking_protection_enabled_subtitle">阻止邮件中嵌入的跟踪元素，保护您的隐私</string>
+    <string name="block_remote_fonts">阻止远程字体</string>
+    <string name="block_remote_fonts_subtitle">阻止邮件从外部服务器加载字体</string>
+    <string name="block_remote_css">阻止远程 CSS</string>
+    <string name="block_remote_css_subtitle">阻止邮件从外部服务器加载样式表</string>
+    <string name="block_html_rendering">阻止 HTML 渲染</string>
+    <string name="block_html_rendering_subtitle">以纯文本显示收到的邮件，防止跟踪和视觉钓鱼</string>
 </resources>
