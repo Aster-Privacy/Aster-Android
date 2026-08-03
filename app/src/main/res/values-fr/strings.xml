@@ -620,8 +620,8 @@
     <string name="images_tracking">Images &amp; suivi</string>
     <string name="block_remote_images">Bloquer les images distantes</string>
     <string name="block_remote_images_subtitle">Protégez votre IP des expéditeurs</string>
-    <string name="block_tracking_pixels">Bloquer les pixels de suivi</string>
-    <string name="block_tracking_links">Bloquer les liens de suivi</string>
+    <string name="block_tracking_pixels">Bloquer les pixels espions</string>
+    <string name="block_tracking_links">Nettoyer les liens de pistage</string>
     <string name="sending">Envoi</string>
     <string name="send">Envoyer</string>
     <string name="auto_save_recipients">Enregistrer automatiquement les destinataires dans les contacts</string>
@@ -1114,7 +1114,7 @@
     <string name="load_remote_images_subtitle">Désactivé est plus confidentiel</string>
     <string name="send_read_receipts">Envoyer les accusés de réception</string>
     <string name="protection">Protection</string>
-    <string name="warn_suspicious_links">Avertir en cas de liens suspects</string>
+    <string name="warn_suspicious_links">Avertissements de liens externes</string>
 
     <string name="ghost_mode">Mode fantôme</string>
     <string name="ghost_mode_subtitle">Masquer le statut en ligne et les indicateurs de saisie</string>
@@ -1464,7 +1464,7 @@
     <string name="warn_suspicious_links_info_title">Avertissements de liens externes</string>
     <string name="warn_suspicious_links_info_desc">Affiche un avertissement avant d\'ouvrir tout lien sortant d\'Aster. Vous aide à repérer les tentatives de phishing avant de cliquer.</string>
     <string name="section_privacy_security">Confidentialité</string>
-    <string name="strip_exif">Supprimer les métadonnées EXIF à la rédaction</string>
+    <string name="strip_exif">Supprimer les métadonnées des images</string>
     <string name="strip_exif_subtitle">Supprimer les métadonnées de localisation et d\'appareil des images envoyées</string>
     <string name="strip_exif_info_title">Que sont les métadonnées d\'image ?</string>
     <string name="strip_exif_info_desc">Les photos prises sur téléphones et appareils photo intègrent des données cachées - coordonnées GPS, modèle d\'appareil, horodatage et informations d\'objectif. Quand vous envoyez une image, ces données voyagent avec elle. Aster les supprime avant l\'envoi pour que les destinataires ne voient que les pixels.</string>
@@ -2617,4 +2617,16 @@
     <string name="domain_purchase_create_first_address">Créez votre première adresse</string>
     <string name="domain_purchase_please_wait">Cela ne prend qu\'un instant. Gardez l\'application ouverte.</string>
     <string name="domain_purchase_warmup_note">Les nouveaux domaines mettent un peu de temps à bâtir une réputation d\'envoi. Certains de vos premiers messages peuvent arriver en spam pendant cette période.</string>
+    <string name="rename_label">Renommer le libellé</string>
+    <string name="change_label_color">Changer la couleur</string>
+    <string name="change_label_icon">Changer l’icône</string>
+    <string name="failed_update_label">Impossible de mettre à jour le libellé</string>
+    <string name="tracking_protection_enabled">Activer la protection contre le pistage</string>
+    <string name="tracking_protection_enabled_subtitle">Bloque les éléments de pistage intégrés aux e-mails pour protéger votre vie privée</string>
+    <string name="block_remote_fonts">Bloquer les polices distantes</string>
+    <string name="block_remote_fonts_subtitle">Empêche les e-mails de charger des polices depuis des serveurs externes</string>
+    <string name="block_remote_css">Bloquer le CSS distant</string>
+    <string name="block_remote_css_subtitle">Empêche les e-mails de charger des feuilles de style depuis des serveurs externes</string>
+    <string name="block_html_rendering">Bloquer le rendu HTML</string>
+    <string name="block_html_rendering_subtitle">Affiche les e-mails entrants en texte brut pour éviter le pistage et le phishing visuel</string>
 </resources>

@@ -590,8 +590,8 @@
     <string name="images_tracking">画像とトラッキング</string>
     <string name="block_remote_images">リモート画像をブロック</string>
     <string name="block_remote_images_subtitle">送信者からIPアドレスを保護</string>
-    <string name="block_tracking_pixels">トラッキングピクセルをブロック</string>
-    <string name="block_tracking_links">トラッキングリンクをブロック</string>
+    <string name="block_tracking_pixels">スパイピクセルをブロック</string>
+    <string name="block_tracking_links">トラッキングリンクをクリーン化</string>
     <string name="sending">送信</string>
     <string name="send">送信</string>
     <string name="auto_save_recipients">受信者を連絡先に自動保存</string>
@@ -1060,8 +1060,8 @@
     <string name="send_read_receipts">開封確認を送信</string>
     <string name="send_read_receipts_subtitle">送信者にメールを読んだことを知らせる</string>
     <string name="protection">保護</string>
-    <string name="warn_suspicious_links">不審なリンクを警告</string>
-    <string name="strip_exif">添付ファイルからEXIFを削除</string>
+    <string name="warn_suspicious_links">外部リンクの警告</string>
+    <string name="strip_exif">画像メタデータを削除</string>
     <string name="strip_exif_subtitle">位置情報とデバイスのメタデータを削除</string>
     <string name="ghost_mode">ゴーストモード</string>
     <string name="ghost_mode_subtitle">オンラインステータスと入力中インジケーターを非表示</string>
@@ -2582,4 +2582,16 @@
     <string name="domain_purchase_create_first_address">最初のアドレスを作成</string>
     <string name="domain_purchase_please_wait">少々お待ちください。アプリを開いたままにしてください。</string>
     <string name="domain_purchase_warmup_note">新しいドメインは送信レピュテーションの構築に時間がかかります。最初のうちは一部のメールが迷惑メールに入ることがあります。</string>
+    <string name="rename_label">ラベル名を変更</string>
+    <string name="change_label_color">色を変更</string>
+    <string name="change_label_icon">アイコンを変更</string>
+    <string name="failed_update_label">ラベルを更新できませんでした</string>
+    <string name="tracking_protection_enabled">トラッキング保護を有効にする</string>
+    <string name="tracking_protection_enabled_subtitle">メールに埋め込まれたトラッキング要素をブロックしてプライバシーを保護します</string>
+    <string name="block_remote_fonts">リモートフォントをブロック</string>
+    <string name="block_remote_fonts_subtitle">メールが外部サーバーからフォントを読み込むのを防ぎます</string>
+    <string name="block_remote_css">リモートCSSをブロック</string>
+    <string name="block_remote_css_subtitle">メールが外部サーバーからスタイルシートを読み込むのを防ぎます</string>
+    <string name="block_html_rendering">HTML表示をブロック</string>
+    <string name="block_html_rendering_subtitle">受信メールをプレーンテキストで表示し、トラッキングや視覚的フィッシングを防ぎます</string>
 </resources>

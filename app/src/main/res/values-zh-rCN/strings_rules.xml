@@ -96,4 +96,6 @@
     <string name="category_match_keywords_placeholder">newsletter, digest</string>
     <string name="category_match_keywords_help">多个关键词用逗号分隔，会在主题和发件人名称中查找。</string>
     <string name="category_tutorial_text">只要邮件符合你填写的任一域名或关键词，就会归入你的分类。自定义分类优先于内置分类，全部匹配都在本机完成。</string>
+    <string name="rules_create_first_folder_hint">创建一个文件夹，此规则即可将匹配的邮件移入其中。</string>
+    <string name="rules_create_first_label_hint">创建一个标签，此规则即可将其应用到匹配的邮件。</string>
 </resources>

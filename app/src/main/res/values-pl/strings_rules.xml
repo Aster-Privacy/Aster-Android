@@ -96,4 +96,6 @@
     <string name="category_match_keywords_placeholder">newsletter, digest</string>
     <string name="category_match_keywords_help">Oddziel słowa przecinkami. Szukamy ich w temacie i w nazwie nadawcy.</string>
     <string name="category_tutorial_text">Wiadomość trafia do twojej kategorii, gdy pasuje do dowolnej podanej domeny albo słowa kluczowego. Własne kategorie mają pierwszeństwo przed wbudowanymi, a całe dopasowanie odbywa się na twoim urządzeniu.</string>
+    <string name="rules_create_first_folder_hint">Utwórz folder, a ta reguła będzie mogła przenosić do niego pasujące wiadomości.</string>
+    <string name="rules_create_first_label_hint">Utwórz etykietę, a ta reguła będzie mogła stosować ją do pasujących wiadomości.</string>
 </resources>

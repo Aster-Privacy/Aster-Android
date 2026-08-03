@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="rules_section_sender">Mittente</string>
     <string name="rules_section_recipients">Destinatari</string>
@@ -96,4 +96,6 @@
     <string name="category_match_keywords_placeholder">newsletter, digest</string>
     <string name="category_match_keywords_help">Separa le parole con una virgola. Vengono cercate nell\'oggetto e nel nome del mittente.</string>
     <string name="category_tutorial_text">Un\'email finisce nella tua categoria appena corrisponde a uno dei domini o a una delle parole chiave. Le categorie personali hanno la precedenza su quelle predefinite e tutto l\'abbinamento avviene sul tuo dispositivo.</string>
+    <string name="rules_create_first_folder_hint">Crea una cartella e questa regola potrà spostarci le email corrispondenti.</string>
+    <string name="rules_create_first_label_hint">Crea un\'etichetta e questa regola potrà applicarla alle email corrispondenti.</string>
 </resources>

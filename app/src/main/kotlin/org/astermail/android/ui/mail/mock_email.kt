@@ -53,6 +53,13 @@ data class Email(
     val received_on: String? = null,
     val display_sender_name: String? = null,
     val display_sender_email: String? = null,
+    val folder_chip: list_folder_chip? = null,
+)
+
+data class list_folder_chip(
+    val name: String,
+    val icon: String,
+    val color: Color,
 )
 
 data class ThreadRow(
@@ -69,6 +76,7 @@ data class ThreadRow(
     val label_names: List<String> = emptyList(),
     val label_icons: List<String> = emptyList(),
     val participants: List<Pair<String, String>> = emptyList(),
+    val folder_chip: list_folder_chip? = null,
 )
 
 fun thread_open_target_id(thread: ThreadRow): String = thread.newest.id
@@ -120,6 +128,7 @@ fun group_by_thread(emails: List<Email>): List<ThreadRow> {
                 label_names = names,
                 label_icons = icons,
                 participants = distinct_participants,
+                folder_chip = newest.folder_chip,
             ),
         )
     }
@@ -1070,6 +1079,7 @@ private fun parse_iso_timestamp(raw: String): Long = try {
 fun inbox_item_to_email(
     item: org.astermail.android.mail.InboxItem,
     tags: List<org.astermail.android.api.tags.TagItem> = emptyList(),
+    folder_chip: list_folder_chip? = null,
 ): Email {
     val ts = parse_iso_timestamp(item.timestamp)
     val display_name = item.sender_name.ifBlank {
@@ -1102,6 +1112,7 @@ fun inbox_item_to_email(
         received_on = item.received_on,
         display_sender_name = item.display_sender_name,
         display_sender_email = item.display_sender_email,
+        folder_chip = folder_chip,
     )
 }
 

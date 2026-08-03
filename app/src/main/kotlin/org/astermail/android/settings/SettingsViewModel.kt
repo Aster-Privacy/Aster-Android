@@ -901,7 +901,16 @@ class SettingsViewModel @Inject constructor(
                     } catch (_: Throwable) {
                         return@map addr.copy(encrypted_local_part = "", decryption_failed = true)
                     }
-                    addr.copy(encrypted_local_part = local_part)
+                    val display_name = addr.encrypted_display_name
+                        ?.takeIf { it.isNotBlank() && !addr.display_name_nonce.isNullOrBlank() }
+                        ?.let {
+                            try {
+                                decrypt_alias_field(it, addr.display_name_nonce.orEmpty())
+                            } catch (_: Throwable) {
+                                null
+                            }
+                        }
+                    addr.copy(encrypted_local_part = local_part, encrypted_display_name = display_name)
                 }
                 _state.value = _state.value.copy(custom_domain_addresses = decrypted)
             } catch (t: Throwable) {
@@ -2905,6 +2914,166 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun rename_tag(tag_id: String, name: String) {
+        val trimmed = name.trim()
+        if (trimmed.isBlank()) return
+        viewModelScope.launch {
+            val previous = _state.value.tags
+            _state.value = _state.value.copy(
+                tags = previous.map { if (it.id == tag_id) it.copy(encrypted_name = trimmed) else it },
+            )
+            try {
+                val identity_key = session_key_store.get_identity_key() ?: throw IllegalStateException("no identity key")
+                val name_field = encrypt_field_with_version(trimmed, identity_key, TAG_VERSION_CURRENT)
+                tags_api.update_tag(
+                    tag_id,
+                    UpdateTagRequest(
+                        encrypted_name = name_field.ciphertext_b64,
+                        name_nonce = name_field.nonce_b64,
+                    ),
+                )
+            } catch (_: Throwable) {
+                _state.value = _state.value.copy(
+                    tags = previous,
+                    action_result = context.getString(R.string.failed_update_label),
+                )
+            }
+        }
+    }
+
+    fun recolor_tag(tag_id: String, color: String) {
+        viewModelScope.launch {
+            val previous = _state.value.tags
+            _state.value = _state.value.copy(
+                tags = previous.map { if (it.id == tag_id) it.copy(encrypted_color = color) else it },
+            )
+            try {
+                val identity_key = session_key_store.get_identity_key() ?: throw IllegalStateException("no identity key")
+                val color_field = encrypt_field_with_version(color, identity_key, TAG_VERSION_CURRENT)
+                tags_api.update_tag(
+                    tag_id,
+                    UpdateTagRequest(
+                        encrypted_color = color_field.ciphertext_b64,
+                        color_nonce = color_field.nonce_b64,
+                    ),
+                )
+            } catch (_: Throwable) {
+                _state.value = _state.value.copy(
+                    tags = previous,
+                    action_result = context.getString(R.string.failed_update_label),
+                )
+            }
+        }
+    }
+
+    fun set_tag_icon(tag_id: String, icon: String?) {
+        viewModelScope.launch {
+            val previous = _state.value.tags
+            _state.value = _state.value.copy(
+                tags = previous.map { if (it.id == tag_id) it.copy(encrypted_icon = icon) else it },
+            )
+            try {
+                val identity_key = session_key_store.get_identity_key() ?: throw IllegalStateException("no identity key")
+                val icon_field = encrypt_field_with_version(icon.orEmpty(), identity_key, TAG_VERSION_CURRENT)
+                tags_api.update_tag(
+                    tag_id,
+                    UpdateTagRequest(
+                        encrypted_icon = icon_field.ciphertext_b64,
+                        icon_nonce = icon_field.nonce_b64,
+                    ),
+                )
+            } catch (_: Throwable) {
+                _state.value = _state.value.copy(
+                    tags = previous,
+                    action_result = context.getString(R.string.failed_update_label),
+                )
+            }
+        }
+    }
+
+    fun move_tag(tag_id: String, direction: Int) {
+        viewModelScope.launch {
+            val current = _state.value.tags
+            val index = current.indexOfFirst { it.id == tag_id }
+            val target = index + direction
+            if (index < 0 || target < 0 || target > current.lastIndex) return@launch
+            val reordered = current.toMutableList().apply {
+                add(target, removeAt(index))
+            }
+            _state.value = _state.value.copy(
+                tags = reordered.mapIndexed { i, tag -> tag.copy(sort_order = i) },
+            )
+            try {
+                reordered.forEachIndexed { i, tag ->
+                    if (tag.sort_order != i) {
+                        tags_api.update_tag(tag.id, UpdateTagRequest(sort_order = i))
+                    }
+                }
+            } catch (_: Throwable) {
+                _state.value = _state.value.copy(
+                    tags = current,
+                    action_result = context.getString(R.string.failed_update_label),
+                )
+            }
+        }
+    }
+
+    fun set_label_icon(label_id: String, icon: String?) {
+        viewModelScope.launch {
+            val previous = _state.value.labels
+            _state.value = _state.value.copy(
+                labels = previous.map { if (it.id == label_id) it.copy(encrypted_icon = icon) else it },
+            )
+            try {
+                val identity_key = session_key_store.get_identity_key() ?: throw IllegalStateException("no identity key")
+                val icon_field = encrypt_field_with_version(icon.orEmpty(), identity_key, FOLDER_VERSION_CURRENT)
+                labels_api.update_label(
+                    label_id,
+                    UpdateLabelRequest(
+                        encrypted_icon = icon_field.ciphertext_b64,
+                        icon_nonce = icon_field.nonce_b64,
+                    ),
+                )
+            } catch (_: Throwable) {
+                _state.value = _state.value.copy(
+                    labels = previous,
+                    action_result = context.getString(R.string.failed_update_label),
+                )
+            }
+        }
+    }
+
+    fun move_label_row(label_id: String, direction: Int) {
+        viewModelScope.launch {
+            val all = _state.value.labels
+            val group = all.filter { it.folder_type == "label" }
+            val index = group.indexOfFirst { it.id == label_id }
+            val target = index + direction
+            if (index < 0 || target < 0 || target > group.lastIndex) return@launch
+            val reordered = group.toMutableList().apply {
+                add(target, removeAt(index))
+            }
+            val group_positions = all.indices.filter { all[it].folder_type == "label" }
+            val updated = all.toMutableList()
+            group_positions.forEachIndexed { i, pos ->
+                updated[pos] = reordered[i].copy(sort_order = i)
+            }
+            _state.value = _state.value.copy(labels = updated)
+            val changed = reordered.mapIndexedNotNull { i, label ->
+                if (label.sort_order != i) ReorderLabelEntry(id = label.id, sort_order = i) else null
+            }
+            if (changed.isEmpty()) return@launch
+            try {
+                labels_api.bulk_reorder_labels(BulkReorderLabelsRequest(labels = changed))
+            } catch (_: Throwable) {
+                _state.value = _state.value.copy(
+                    labels = all,
+                    action_result = context.getString(R.string.failed_update_label),
+                )
+            }
+        }
+    }
+
     fun load_referral_info() {
         viewModelScope.launch {
             val info = try {
@@ -3873,7 +4042,13 @@ class SettingsViewModel @Inject constructor(
                 decrypt_label_field_with_fallback(enc_color, c_nonce, all_keys)
             } else enc_color
 
-            label.copy(encrypted_name = name, encrypted_color = color)
+            val enc_icon = label.encrypted_icon
+            val i_nonce = label.icon_nonce
+            val icon = if (!enc_icon.isNullOrBlank() && !i_nonce.isNullOrBlank()) {
+                decrypt_label_field_with_fallback(enc_icon, i_nonce, all_keys)
+            } else enc_icon
+
+            label.copy(encrypted_name = name, encrypted_color = color, encrypted_icon = icon)
         } catch (_: Throwable) {
             label.copy(encrypted_name = null)
         }

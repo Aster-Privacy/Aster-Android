@@ -564,7 +564,9 @@ fun ThreadInboxRow(
                 }
                 if (!has_preview) trailing_controls()
             }
-            val labels_inline = has_preview && thread.label_colors.size in 1..2
+            val folder_chip = thread.folder_chip
+            val chip_count = thread.label_colors.size + (if (folder_chip != null) 1 else 0)
+            val labels_inline = has_preview && chip_count in 1..2
             if (has_preview) {
                 Spacer(Modifier.height(metrics.line_gap))
                 Row(
@@ -572,6 +574,14 @@ fun ThreadInboxRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     if (labels_inline) {
+                        if (folder_chip != null) {
+                            label_chip(
+                                color = folder_chip.color,
+                                name = folder_chip.name,
+                                icon = folder_chip.icon,
+                                modifier = Modifier.widthIn(max = 120.dp).testTag("list_folder_chip"),
+                            )
+                        }
                         thread.label_colors.indices.forEach { i ->
                             label_chip(
                                 color = thread.label_colors[i],
@@ -594,7 +604,7 @@ fun ThreadInboxRow(
                     trailing_controls()
                 }
             }
-            if (thread.label_colors.isNotEmpty() && !labels_inline) {
+            if (chip_count > 0 && !labels_inline) {
                 Spacer(Modifier.height(4.dp))
                 Row(
                     modifier = Modifier
@@ -602,6 +612,14 @@ fun ThreadInboxRow(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    if (folder_chip != null) {
+                        label_chip(
+                            color = folder_chip.color,
+                            name = folder_chip.name,
+                            icon = folder_chip.icon,
+                            modifier = Modifier.weight(1f, fill = false).testTag("list_folder_chip"),
+                        )
+                    }
                     thread.label_colors.indices.forEach { i ->
                         label_chip(
                             color = thread.label_colors[i],
@@ -795,6 +813,7 @@ private fun label_chip(color: Color, name: String, icon: String, modifier: Modif
 }
 
 internal fun material_icon_from_name(name: String) = when (name.trim()) {
+    "inbox" -> TablerIcons.Inbox
     "clock" -> TablerIcons.Clock
     "archive" -> TablerIcons.Archive
     "trash" -> TablerIcons.Trash

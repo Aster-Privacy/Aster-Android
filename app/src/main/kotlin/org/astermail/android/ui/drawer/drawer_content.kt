@@ -149,6 +149,19 @@ data class drawer_label_item(
     val label: String,
     val color: Color,
     val icon: String? = null,
+    val api_id: String = "",
+    val kind: String = "tag",
+    val color_hex: String? = null,
+    val can_move_up: Boolean = false,
+    val can_move_down: Boolean = false,
+)
+
+data class label_menu_actions(
+    val on_rename: (drawer_label_item, String) -> Unit = { _, _ -> },
+    val on_recolor: (drawer_label_item, String) -> Unit = { _, _ -> },
+    val on_set_icon: (drawer_label_item, String?) -> Unit = { _, _ -> },
+    val on_move_order: (drawer_label_item, Int) -> Unit = { _, _ -> },
+    val on_delete: (drawer_label_item) -> Unit = {},
 )
 
 fun resolve_label_icon(key: String?): ImageVector =
@@ -300,6 +313,7 @@ fun DrawerContent(
     on_create_folder: (name: String, parent_token: String?) -> Unit = { _, _ -> },
     folder_parent_options: List<folder_parent_option> = emptyList(),
     folder_actions: folder_menu_actions = folder_menu_actions(),
+    label_actions: label_menu_actions = label_menu_actions(),
     on_logout: () -> Unit = {},
     initial_more_collapsed: Boolean = false,
     initial_folders_collapsed: Boolean = false,
@@ -362,6 +376,10 @@ fun DrawerContent(
     var pending_set_lock by remember { mutableStateOf<drawer_folder_item?>(null) }
     var pending_remove_lock by remember { mutableStateOf<drawer_folder_item?>(null) }
     var pending_delete by remember { mutableStateOf<drawer_folder_item?>(null) }
+    var pending_label_rename by remember { mutableStateOf<drawer_label_item?>(null) }
+    var pending_label_recolor by remember { mutableStateOf<drawer_label_item?>(null) }
+    var pending_label_icon by remember { mutableStateOf<drawer_label_item?>(null) }
+    var pending_label_delete by remember { mutableStateOf<drawer_label_item?>(null) }
 
     val folder_items = api_folder_items.ifEmpty { default_folder_items }
     val label_items = api_label_items.ifEmpty { default_label_items }
@@ -616,17 +634,37 @@ fun DrawerContent(
                         empty_section_hint(stringResource(R.string.no_labels_yet))
                     } else {
                         label_items.forEach { item ->
-                            drawer_label_row(
-                                color = item.color,
-                                label = item.label,
-                                icon = resolve_label_icon(item.icon),
-                                selected = item.id == selected_id,
-                                on_click = {
-                                    on_select(item.id)
-                                    on_navigate_label(item.id, item.label)
-                                    on_close()
-                                },
-                            )
+                            Box {
+                                var menu_open by remember(item.id) { mutableStateOf(false) }
+                                drawer_label_row(
+                                    color = item.color,
+                                    label = item.label,
+                                    icon = resolve_label_icon(item.icon),
+                                    selected = item.id == selected_id,
+                                    on_click = {
+                                        on_select(item.id)
+                                        on_navigate_label(item.id, item.label)
+                                        on_close()
+                                    },
+                                    on_long_click = if (item.api_id.isBlank()) null else {
+                                        {
+                                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            menu_open = true
+                                        }
+                                    },
+                                )
+                                label_actions_menu(
+                                    item = item,
+                                    expanded = menu_open,
+                                    on_dismiss = { menu_open = false },
+                                    on_rename = { pending_label_rename = item },
+                                    on_recolor = { pending_label_recolor = item },
+                                    on_change_icon = { pending_label_icon = item },
+                                    on_move_up = { label_actions.on_move_order(item, -1) },
+                                    on_move_down = { label_actions.on_move_order(item, 1) },
+                                    on_delete = { pending_label_delete = item },
+                                )
+                            }
                         }
                     }
                 }
@@ -915,6 +953,64 @@ fun DrawerContent(
             },
         )
     }
+
+    pending_label_rename?.let { target ->
+        folder_rename_dialog(
+            initial_name = target.label,
+            title = stringResource(R.string.rename_label),
+            placeholder = stringResource(R.string.label_name),
+            on_dismiss = { pending_label_rename = null },
+            on_confirm = { name ->
+                label_actions.on_rename(target, name)
+                pending_label_rename = null
+            },
+        )
+    }
+
+    pending_label_recolor?.let { target ->
+        folder_color_dialog(
+            initial_color = target.color_hex,
+            title = stringResource(R.string.change_label_color),
+            on_dismiss = { pending_label_recolor = null },
+            on_confirm = { color ->
+                label_actions.on_recolor(target, color)
+                pending_label_recolor = null
+            },
+        )
+    }
+
+    pending_label_icon?.let { target ->
+        label_icon_dialog(
+            initial_icon = target.icon,
+            accent_color = target.color,
+            on_dismiss = { pending_label_icon = null },
+            on_confirm = { icon ->
+                label_actions.on_set_icon(target, icon)
+                pending_label_icon = null
+            },
+        )
+    }
+
+    pending_label_delete?.let { target ->
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { pending_label_delete = null },
+            title = stringResource(R.string.delete_label_confirm_title),
+            message = stringResource(R.string.delete_label_confirm_message, target.label),
+            footer = {
+                org.astermail.android.design.components.AsterDialogOutlineButton(
+                    label = stringResource(R.string.cancel),
+                    onClick = { pending_label_delete = null },
+                )
+                org.astermail.android.design.components.AsterDialogDestructiveButton(
+                    label = stringResource(R.string.delete),
+                    onClick = {
+                        label_actions.on_delete(target)
+                        pending_label_delete = null
+                    },
+                )
+            },
+        )
+    }
 }
 
 @Composable
@@ -1032,15 +1128,150 @@ private fun folder_actions_menu(
 }
 
 @Composable
+private fun label_actions_menu(
+    item: drawer_label_item,
+    expanded: Boolean,
+    on_dismiss: () -> Unit,
+    on_rename: () -> Unit,
+    on_recolor: () -> Unit,
+    on_change_icon: () -> Unit,
+    on_move_up: () -> Unit,
+    on_move_down: () -> Unit,
+    on_delete: () -> Unit,
+) {
+    aster_dropdown_menu(
+        expanded = expanded,
+        on_dismiss = on_dismiss,
+        modifier = Modifier.testTag("label_actions_menu"),
+    ) {
+        aster_dropdown_item(
+            label = stringResource(R.string.rename),
+            icon = TablerIcons.Pencil,
+            test_tag = "label_action_rename",
+            on_click = {
+                on_dismiss()
+                on_rename()
+            },
+        )
+        aster_dropdown_item(
+            label = stringResource(R.string.change_label_color),
+            icon = TablerIcons.Palette,
+            test_tag = "label_action_color",
+            on_click = {
+                on_dismiss()
+                on_recolor()
+            },
+        )
+        aster_dropdown_item(
+            label = stringResource(R.string.change_label_icon),
+            icon = TablerIcons.Wand,
+            test_tag = "label_action_icon",
+            on_click = {
+                on_dismiss()
+                on_change_icon()
+            },
+        )
+        aster_dropdown_item(
+            label = stringResource(R.string.move_folder_up),
+            icon = TablerIcons.ArrowUp,
+            enabled = item.can_move_up,
+            test_tag = "label_action_move_up",
+            on_click = {
+                on_dismiss()
+                on_move_up()
+            },
+        )
+        aster_dropdown_item(
+            label = stringResource(R.string.move_folder_down),
+            icon = TablerIcons.ArrowDown,
+            enabled = item.can_move_down,
+            test_tag = "label_action_move_down",
+            on_click = {
+                on_dismiss()
+                on_move_down()
+            },
+        )
+        aster_dropdown_divider()
+        aster_dropdown_item(
+            label = stringResource(R.string.delete),
+            icon = TablerIcons.Trash,
+            destructive = true,
+            test_tag = "label_action_delete",
+            on_click = {
+                on_dismiss()
+                on_delete()
+            },
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun label_icon_dialog(
+    initial_icon: String?,
+    accent_color: Color,
+    on_dismiss: () -> Unit,
+    on_confirm: (String?) -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    var selected_icon by remember { mutableStateOf(initial_icon) }
+    org.astermail.android.design.components.AsterAlertDialog(
+        on_dismiss = on_dismiss,
+        title = stringResource(R.string.change_label_icon),
+        confirm_label = stringResource(R.string.save),
+        cancel_label = stringResource(R.string.cancel),
+        on_confirm = { on_confirm(selected_icon) },
+        extra_content = {
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                label_icon_presets.forEach { (key, vector) ->
+                    val is_selected = key == selected_icon
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(SquircleShape(8.dp))
+                            .background(
+                                if (is_selected) accent_color.copy(alpha = 0.15f) else colors.bg_hover
+                            )
+                            .then(
+                                if (is_selected)
+                                    Modifier.border(1.dp, accent_color, SquircleShape(8.dp))
+                                else
+                                    Modifier
+                            )
+                            .clickable {
+                                selected_icon = if (is_selected) null else key
+                            },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = vector,
+                            contentDescription = key,
+                            tint = if (is_selected) accent_color else colors.text_secondary,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                }
+            }
+        },
+    )
+}
+
+@Composable
 private fun folder_rename_dialog(
     initial_name: String,
     on_dismiss: () -> Unit,
     on_confirm: (String) -> Unit,
+    title: String = stringResource(R.string.rename_folder),
+    placeholder: String = stringResource(R.string.folder_name),
 ) {
     var text_value by remember { mutableStateOf(initial_name) }
     org.astermail.android.design.components.AsterAlertDialog(
         on_dismiss = on_dismiss,
-        title = stringResource(R.string.rename_folder),
+        title = title,
         confirm_label = stringResource(R.string.save),
         cancel_label = stringResource(R.string.cancel),
         confirm_enabled = text_value.isNotBlank(),
@@ -1049,7 +1280,7 @@ private fun folder_rename_dialog(
             org.astermail.android.design.components.AsterTextField(
                 value = text_value,
                 onValueChange = { text_value = it },
-                placeholder = stringResource(R.string.folder_name),
+                placeholder = placeholder,
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth().testTag("folder_rename_input"),
             )
@@ -1063,12 +1294,13 @@ private fun folder_color_dialog(
     initial_color: String?,
     on_dismiss: () -> Unit,
     on_confirm: (String) -> Unit,
+    title: String = stringResource(R.string.folder_color),
 ) {
     val colors = AsterMaterial.colors
     var selected_color by remember { mutableStateOf(initial_color ?: default_label_color) }
     org.astermail.android.design.components.AsterAlertDialog(
         on_dismiss = on_dismiss,
-        title = stringResource(R.string.folder_color),
+        title = title,
         confirm_label = stringResource(R.string.save),
         cancel_label = stringResource(R.string.cancel),
         on_confirm = { on_confirm(selected_color) },
@@ -1321,7 +1553,7 @@ internal fun create_folder_dialog(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun create_label_dialog(
+internal fun create_label_dialog(
     on_dismiss: () -> Unit,
     on_create: (name: String, color: String, icon: String?) -> Unit,
 ) {
@@ -1996,6 +2228,7 @@ private fun count_badge(value: Int, emphasized: Boolean, selected: Boolean) {
     )
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun drawer_label_row(
     color: Color,
@@ -2003,6 +2236,7 @@ private fun drawer_label_row(
     icon: ImageVector,
     selected: Boolean,
     on_click: () -> Unit,
+    on_long_click: (() -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
     val bg by animateColorAsState(
@@ -2024,7 +2258,7 @@ private fun drawer_label_row(
         .padding(horizontal = 10.dp, vertical = 2.dp)
         .clip(RoundedCornerShape(999.dp))
         .background(bg)
-        .clickable(onClick = on_click)
+        .combinedClickable(onClick = on_click, onLongClick = on_long_click)
         .padding(horizontal = 15.dp)
         .height(48.dp)
     Row(

@@ -590,8 +590,8 @@
     <string name="images_tracking">Изображения и отслеживание</string>
     <string name="block_remote_images">Блокировать удалённые изображения</string>
     <string name="block_remote_images_subtitle">Защитите свой IP от отправителей</string>
-    <string name="block_tracking_pixels">Блокировать пиксели отслеживания</string>
-    <string name="block_tracking_links">Блокировать ссылки отслеживания</string>
+    <string name="block_tracking_pixels">Блокировать пиксели-шпионы</string>
+    <string name="block_tracking_links">Очищать отслеживающие ссылки</string>
     <string name="sending">Отправка</string>
     <string name="send">Отправить</string>
     <string name="auto_save_recipients">Автосохранение получателей в контакты</string>
@@ -1060,8 +1060,8 @@
     <string name="send_read_receipts">Отправлять уведомления о прочтении</string>
     <string name="send_read_receipts_subtitle">Сообщать отправителям, что вы прочитали их письмо</string>
     <string name="protection">Защита</string>
-    <string name="warn_suspicious_links">Предупреждать о подозрительных ссылках</string>
-    <string name="strip_exif">Удалять EXIF из вложений</string>
+    <string name="warn_suspicious_links">Предупреждения о внешних ссылках</string>
+    <string name="strip_exif">Удалять метаданные изображений</string>
     <string name="strip_exif_subtitle">Удалять данные о местоположении и устройстве</string>
     <string name="ghost_mode">Режим невидимки</string>
     <string name="ghost_mode_subtitle">Скрыть статус онлайн и индикатор набора текста</string>
@@ -2603,4 +2603,16 @@
     <string name="domain_purchase_create_first_address">Создайте свой первый адрес</string>
     <string name="domain_purchase_please_wait">Это займет всего минуту. Не закрывайте приложение.</string>
     <string name="domain_purchase_warmup_note">Новым доменам нужно время, чтобы заработать репутацию отправителя. Часть первых писем может попадать в спам.</string>
+    <string name="rename_label">Переименовать метку</string>
+    <string name="change_label_color">Изменить цвет</string>
+    <string name="change_label_icon">Изменить значок</string>
+    <string name="failed_update_label">Не удалось обновить метку</string>
+    <string name="tracking_protection_enabled">Включить защиту от отслеживания</string>
+    <string name="tracking_protection_enabled_subtitle">Блокирует встроенные в письма элементы отслеживания для защиты вашей конфиденциальности</string>
+    <string name="block_remote_fonts">Блокировать внешние шрифты</string>
+    <string name="block_remote_fonts_subtitle">Не позволяет письмам загружать шрифты с внешних серверов</string>
+    <string name="block_remote_css">Блокировать внешний CSS</string>
+    <string name="block_remote_css_subtitle">Не позволяет письмам загружать таблицы стилей с внешних серверов</string>
+    <string name="block_html_rendering">Блокировать HTML-отображение</string>
+    <string name="block_html_rendering_subtitle">Показывает входящие письма как обычный текст, предотвращая отслеживание и визуальный фишинг</string>
 </resources>

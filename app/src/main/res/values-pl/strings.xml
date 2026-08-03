@@ -590,8 +590,8 @@
     <string name="images_tracking">Obrazy i śledzenie</string>
     <string name="block_remote_images">Blokuj zdalne obrazy</string>
     <string name="block_remote_images_subtitle">Chroń swój IP przed nadawcami</string>
-    <string name="block_tracking_pixels">Blokuj piksele śledzące</string>
-    <string name="block_tracking_links">Blokuj linki śledzące</string>
+    <string name="block_tracking_pixels">Blokuj piksele szpiegujące</string>
+    <string name="block_tracking_links">Czyść linki śledzące</string>
     <string name="sending">Wysyłanie</string>
     <string name="send">Wyślij</string>
     <string name="auto_save_recipients">Automatycznie zapisuj odbiorców do kontaktów</string>
@@ -1060,8 +1060,8 @@
     <string name="send_read_receipts">Wysyłaj potwierdzenia odczytu</string>
     <string name="send_read_receipts_subtitle">Pozwól nadawcom wiedzieć, że przeczytałeś ich wiadomość</string>
     <string name="protection">Ochrona</string>
-    <string name="warn_suspicious_links">Ostrzegaj o podejrzanych linkach</string>
-    <string name="strip_exif">Usuwaj EXIF z załączników</string>
+    <string name="warn_suspicious_links">Ostrzeżenia o linkach zewnętrznych</string>
+    <string name="strip_exif">Usuwaj metadane obrazów</string>
     <string name="strip_exif_subtitle">Usuwaj dane lokalizacji i urządzenia</string>
     <string name="ghost_mode">Tryb duch</string>
     <string name="ghost_mode_subtitle">Ukryj status online i wskaźnik pisania</string>
@@ -2603,4 +2603,16 @@
     <string name="domain_purchase_create_first_address">Utwórz swój pierwszy adres</string>
     <string name="domain_purchase_please_wait">To zajmie tylko chwilę. Nie zamykaj aplikacji.</string>
     <string name="domain_purchase_warmup_note">Nowe domeny potrzebują trochę czasu, aby zbudować reputację nadawcy. Część pierwszych wiadomości może trafiać do spamu.</string>
+    <string name="rename_label">Zmień nazwę etykiety</string>
+    <string name="change_label_color">Zmień kolor</string>
+    <string name="change_label_icon">Zmień ikonę</string>
+    <string name="failed_update_label">Nie udało się zaktualizować etykiety</string>
+    <string name="tracking_protection_enabled">Włącz ochronę przed śledzeniem</string>
+    <string name="tracking_protection_enabled_subtitle">Blokuje elementy śledzące osadzone w wiadomościach, chroniąc Twoją prywatność</string>
+    <string name="block_remote_fonts">Blokuj zdalne czcionki</string>
+    <string name="block_remote_fonts_subtitle">Zapobiega ładowaniu czcionek z zewnętrznych serwerów</string>
+    <string name="block_remote_css">Blokuj zdalny CSS</string>
+    <string name="block_remote_css_subtitle">Zapobiega ładowaniu arkuszy stylów z zewnętrznych serwerów</string>
+    <string name="block_html_rendering">Blokuj renderowanie HTML</string>
+    <string name="block_html_rendering_subtitle">Wyświetla wiadomości jako zwykły tekst, zapobiegając śledzeniu i phishingowi wizualnemu</string>
 </resources>

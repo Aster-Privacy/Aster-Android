@@ -284,12 +284,21 @@ fun ComposeScreen(
         map.toMap()
     }
 
-    val alias_display_name_map = remember(settings_state.aliases) {
+    val alias_display_name_map = remember(
+        settings_state.aliases,
+        settings_state.custom_domain_addresses,
+    ) {
         val map = mutableMapOf<String, String>()
         settings_state.aliases.forEach { alias ->
             val name = alias.encrypted_display_name?.trim().orEmpty()
             if (alias.address.isNotBlank() && name.isNotBlank()) {
                 map[alias.address] = name
+            }
+        }
+        settings_state.custom_domain_addresses.forEach { addr ->
+            val name = addr.encrypted_display_name?.trim().orEmpty()
+            if (addr.address.isNotBlank() && name.isNotBlank()) {
+                map[addr.address] = name
             }
         }
         map.toMap()

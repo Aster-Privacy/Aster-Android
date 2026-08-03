@@ -96,4 +96,6 @@
     <string name="category_match_keywords_placeholder">newsletter, digest</string>
     <string name="category_match_keywords_help">Scheid trefwoorden met een komma. Er wordt gezocht in het onderwerp en de afzendernaam.</string>
     <string name="category_tutorial_text">Een mail komt in je eigen categorie zodra die past bij een van je domeinen of trefwoorden. Eigen categorieën gaan voor de standaardcategorieën en het matchen gebeurt volledig op je toestel.</string>
+    <string name="rules_create_first_folder_hint">Maak een map aan en deze regel kan overeenkomende e-mails erin verplaatsen.</string>
+    <string name="rules_create_first_label_hint">Maak een label aan en deze regel kan het op overeenkomende e-mails toepassen.</string>
 </resources>

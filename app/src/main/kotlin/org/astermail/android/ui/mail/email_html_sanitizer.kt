@@ -29,6 +29,13 @@ import org.jsoup.select.NodeVisitor
 
 object EmailHtmlSanitizer {
 
+    data class SanitizeOptions(
+        val clean_tracking_links: Boolean = true,
+        val remove_tracking_pixels: Boolean = true,
+        val block_remote_fonts: Boolean = true,
+        val block_remote_css: Boolean = true,
+    )
+
     private val safelist: Safelist by lazy { build_safelist() }
 
     private val tracking_params = setOf(
@@ -67,23 +74,32 @@ object EmailHtmlSanitizer {
         Regex("height\\s*[:=]\\s*[\"']?[01](?!\\d)", RegexOption.IGNORE_CASE),
     )
 
-    fun sanitize(raw_html: String): String {
+    fun sanitize(raw_html: String, options: SanitizeOptions = SanitizeOptions()): String {
         if (raw_html.isBlank()) return ""
         val pre = strip_dangerous_blocks(raw_html)
         val head_styles = extract_head_styles(pre)
         val body_only = extract_body_html(pre)
         val cleaned_body = Jsoup.clean(body_only, "https://mail-content.invalid/", safelist)
         val doc = Jsoup.parseBodyFragment(cleaned_body)
-        scrub_attributes(doc)
-        scrub_style_blocks(doc)
-        autolink_bare_urls(doc)
+        scrub_attributes(doc, options.clean_tracking_links)
+        if (options.remove_tracking_pixels) remove_tracking_pixels(doc)
+        scrub_style_blocks(doc, options)
+        autolink_bare_urls(doc, options.clean_tracking_links)
         val sb = StringBuilder()
         for (css in head_styles) {
-            val safe_css = sanitize_css_block(css)
+            val safe_css = sanitize_css_block(css, options)
             if (safe_css.isNotBlank()) sb.append("<style>").append(safe_css).append("</style>")
         }
         sb.append(doc.body().html())
         return sb.toString()
+    }
+
+    private fun remove_tracking_pixels(doc: Document) {
+        for (img in doc.select("img[src]")) {
+            val lower = img.attr("src").trim().lowercase()
+            if (!lower.startsWith("http://") && !lower.startsWith("https://")) continue
+            if (is_tracking_pixel(img)) img.remove()
+        }
     }
 
     fun strip_tracking_params(url: String): String {
@@ -265,7 +281,7 @@ object EmailHtmlSanitizer {
         el.attr("style", style + sep + "background-color:#6b7280")
     }
 
-    private fun autolink_bare_urls(doc: Document) {
+    private fun autolink_bare_urls(doc: Document, clean_tracking_links: Boolean = true) {
         val url_re = Regex("""https?://[^\s<>"'{}|\\^`\[\]]+""")
         val skip_ancestors = setOf("a", "style", "script")
         val text_nodes = mutableListOf<TextNode>()
@@ -297,7 +313,7 @@ object EmailHtmlSanitizer {
             for (m in url_re.findAll(text)) {
                 if (m.range.first > last) nodes.add(TextNode(text.substring(last, m.range.first)))
                 val a = Element("a")
-                a.attr("href", strip_tracking_params(m.value))
+                a.attr("href", if (clean_tracking_links) strip_tracking_params(m.value) else m.value)
                 a.attr("target", "_blank")
                 a.attr("rel", "noopener noreferrer nofollow")
                 a.text(m.value)
@@ -382,7 +398,7 @@ object EmailHtmlSanitizer {
         return out
     }
 
-    private fun scrub_attributes(doc: Document) {
+    private fun scrub_attributes(doc: Document, clean_tracking_links: Boolean = true) {
         val js_uri = Regex("^\\s*javascript\\s*:", RegexOption.IGNORE_CASE)
         val data_html_uri = Regex("^\\s*data\\s*:\\s*text/html", RegexOption.IGNORE_CASE)
         val vbscript_uri = Regex("^\\s*vbscript\\s*:", RegexOption.IGNORE_CASE)
@@ -413,7 +429,7 @@ object EmailHtmlSanitizer {
                 el.attr("rel", "noopener noreferrer nofollow")
                 val href = el.attr("href")
                 val lower_href = href.trim().lowercase()
-                if (lower_href.startsWith("http://") || lower_href.startsWith("https://")) {
+                if (clean_tracking_links && (lower_href.startsWith("http://") || lower_href.startsWith("https://"))) {
                     val cleaned_href = strip_tracking_params(href)
                     if (cleaned_href != href) el.attr("href", cleaned_href)
                 }
@@ -421,9 +437,9 @@ object EmailHtmlSanitizer {
         }
     }
 
-    private fun scrub_style_blocks(doc: Document) {
+    private fun scrub_style_blocks(doc: Document, options: SanitizeOptions = SanitizeOptions()) {
         for (el in doc.select("style")) {
-            el.html(sanitize_css_block(el.data()))
+            el.html(sanitize_css_block(el.data(), options))
         }
     }
 
@@ -440,9 +456,18 @@ object EmailHtmlSanitizer {
         return out
     }
 
-    private fun sanitize_css_block(css: String): String {
+    private val font_face_block = Regex("@font-face\\s*\\{[^}]*\\}", RegexOption.IGNORE_CASE)
+
+    private fun sanitize_css_block(css: String, options: SanitizeOptions = SanitizeOptions()): String {
         var out = css
-        out = out.replace(Regex("@import\\b[^;]*;?", RegexOption.IGNORE_CASE), "")
+        if (options.block_remote_css) {
+            out = out.replace(Regex("@import\\b[^;]*;?", RegexOption.IGNORE_CASE), "")
+        }
+        if (options.block_remote_fonts) {
+            out = font_face_block.replace(out) { m ->
+                if (css_remote_url.containsMatchIn(m.value)) "" else m.value
+            }
+        }
         out = out.replace(Regex("@charset\\b[^;]*;?", RegexOption.IGNORE_CASE), "")
         out = out.replace(Regex("@namespace\\b[^;]*;?", RegexOption.IGNORE_CASE), "")
         out = out.replace(Regex("@document\\b[^;]*;?", RegexOption.IGNORE_CASE), "")

@@ -944,8 +944,8 @@
     <string name="images_tracking">Images &amp; tracking</string>
     <string name="block_remote_images">Block remote images</string>
     <string name="block_remote_images_subtitle">Protect your IP from senders</string>
-    <string name="block_tracking_pixels">Block tracking pixels</string>
-    <string name="block_tracking_links">Block tracking links</string>
+    <string name="block_tracking_pixels">Block spy pixels</string>
+    <string name="block_tracking_links">Clean tracking links</string>
     <string name="sending">Sending</string>
     <string name="send">Send</string>
     <string name="auto_save_recipients">Auto-save recipients to contacts</string>
@@ -1561,7 +1561,7 @@
     <string name="load_remote_images_subtitle">Off is more private</string>
     <string name="send_read_receipts">Send read receipts</string>
     <string name="protection">Protection</string>
-    <string name="warn_suspicious_links">Warn on suspicious links</string>
+    <string name="warn_suspicious_links">External link warnings</string>
     <string name="ghost_mode">Ghost mode</string>
     <string name="ghost_mode_subtitle">Hide online status and typing indicators</string>
     <string name="privacy_policy">Privacy policy</string>
@@ -2052,11 +2052,19 @@
     <string name="block_tracking_links_subtitle">Remove link redirects that track your clicks</string>
     <string name="block_tracking_links_info_title">Tracking Links</string>
     <string name="block_tracking_links_info_desc">Links in emails often redirect through a sender\'s server first so they can record whether you clicked. This strips those redirects so links go straight to the destination.</string>
+    <string name="tracking_protection_enabled">Enable tracking protection</string>
+    <string name="tracking_protection_enabled_subtitle">Blocks tracking elements embedded in emails to protect your privacy</string>
+    <string name="block_remote_fonts">Block remote fonts</string>
+    <string name="block_remote_fonts_subtitle">Prevents emails from loading fonts from external servers</string>
+    <string name="block_remote_css">Block remote CSS</string>
+    <string name="block_remote_css_subtitle">Prevents emails from loading stylesheets from external servers</string>
+    <string name="block_html_rendering">Block HTML rendering</string>
+    <string name="block_html_rendering_subtitle">Shows incoming emails as plain text to prevent tracking and visual phishing</string>
     <string name="warn_suspicious_links_subtitle">Show a warning before opening links that may be dangerous</string>
     <string name="warn_suspicious_links_info_title">External Link Warnings</string>
     <string name="warn_suspicious_links_info_desc">Shows a warning before opening any link that goes outside Aster. Helps you spot phishing attempts before you click through.</string>
     <string name="section_privacy_security">Privacy</string>
-    <string name="strip_exif">Strip EXIF on compose</string>
+    <string name="strip_exif">Strip image metadata</string>
     <string name="strip_exif_subtitle">Remove location and device metadata from images you send</string>
     <string name="strip_exif_info_title">What is Image Metadata?</string>
     <string name="strip_exif_info_desc">Photos taken on phones and cameras embed hidden data - GPS coordinates, device model, timestamp, and lens info. When you send an image, this data travels with it. Aster strips it before upload so recipients only see the pixels.</string>
@@ -2642,4 +2650,8 @@
     <string name="domain_purchase_create_first_address">Create your first address</string>
     <string name="domain_purchase_please_wait">This only takes a moment. Please keep the app open.</string>
     <string name="domain_purchase_warmup_note">Brand-new domains take a little time to build a sending reputation. Some of your first messages may land in spam while the domain warms up.</string>
+    <string name="rename_label">Rename label</string>
+    <string name="change_label_color">Change color</string>
+    <string name="change_label_icon">Change icon</string>
+    <string name="failed_update_label">Could not update label</string>
 </resources>

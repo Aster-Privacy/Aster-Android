@@ -96,4 +96,6 @@
     <string name="category_match_keywords_placeholder">newsletter, digest</string>
     <string name="category_match_keywords_help">キーワードはカンマ区切りで入力します。件名と差出人名から探します。</string>
     <string name="category_tutorial_text">入力したドメインかキーワードのどれかに一致すると、そのメールはカスタムカテゴリに入ります。カスタムカテゴリは標準のカテゴリより優先され、判定はすべて端末内で行われます。</string>
+    <string name="rules_create_first_folder_hint">フォルダを作成すると、このルールで一致するメールを移動できます。</string>
+    <string name="rules_create_first_label_hint">ラベルを作成すると、このルールで一致するメールに適用できます。</string>
 </resources>

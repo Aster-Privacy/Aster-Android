@@ -590,8 +590,8 @@
     <string name="images_tracking">Afbeeldingen en tracking</string>
     <string name="block_remote_images">Externe afbeeldingen blokkeren</string>
     <string name="block_remote_images_subtitle">Bescherm je IP tegen afzenders</string>
-    <string name="block_tracking_pixels">Trackingpixels blokkeren</string>
-    <string name="block_tracking_links">Trackinglinks blokkeren</string>
+    <string name="block_tracking_pixels">Spionagepixels blokkeren</string>
+    <string name="block_tracking_links">Trackinglinks opschonen</string>
     <string name="sending">Verzenden</string>
     <string name="send">Verzenden</string>
     <string name="auto_save_recipients">Ontvangers automatisch opslaan bij contacten</string>
@@ -1060,8 +1060,8 @@
     <string name="send_read_receipts">Leesbevestigingen versturen</string>
     <string name="send_read_receipts_subtitle">Laat afzenders weten dat je hun e-mail hebt gelezen</string>
     <string name="protection">Bescherming</string>
-    <string name="warn_suspicious_links">Waarschuwen bij verdachte links</string>
-    <string name="strip_exif">EXIF uit bijlagen verwijderen</string>
+    <string name="warn_suspicious_links">Waarschuwingen voor externe links</string>
+    <string name="strip_exif">Afbeeldingsmetadata verwijderen</string>
     <string name="strip_exif_subtitle">Locatie- en apparaatmetadata verwijderen</string>
     <string name="ghost_mode">Ghost-modus</string>
     <string name="ghost_mode_subtitle">Online-status en typerindicatoren verbergen</string>
@@ -2589,4 +2589,16 @@
     <string name="domain_purchase_create_first_address">Maak je eerste adres</string>
     <string name="domain_purchase_please_wait">Dit duurt maar even. Houd de app open.</string>
     <string name="domain_purchase_warmup_note">Gloednieuwe domeinen hebben even tijd nodig om verzendreputatie op te bouwen. Sommige van je eerste berichten kunnen in spam belanden.</string>
+    <string name="rename_label">Label hernoemen</string>
+    <string name="change_label_color">Kleur wijzigen</string>
+    <string name="change_label_icon">Pictogram wijzigen</string>
+    <string name="failed_update_label">Kan label niet bijwerken</string>
+    <string name="tracking_protection_enabled">Trackingbescherming inschakelen</string>
+    <string name="tracking_protection_enabled_subtitle">Blokkeert trackingelementen in e-mails om je privacy te beschermen</string>
+    <string name="block_remote_fonts">Externe lettertypen blokkeren</string>
+    <string name="block_remote_fonts_subtitle">Voorkomt dat e-mails lettertypen van externe servers laden</string>
+    <string name="block_remote_css">Externe CSS blokkeren</string>
+    <string name="block_remote_css_subtitle">Voorkomt dat e-mails stylesheets van externe servers laden</string>
+    <string name="block_html_rendering">HTML-weergave blokkeren</string>
+    <string name="block_html_rendering_subtitle">Toont inkomende e-mails als platte tekst om tracking en visuele phishing te voorkomen</string>
 </resources>
