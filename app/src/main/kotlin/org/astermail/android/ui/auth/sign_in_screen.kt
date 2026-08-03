@@ -24,6 +24,7 @@ package org.astermail.android.ui.auth
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -108,10 +109,6 @@ fun SignInScreen(
     val password_focus = remember { FocusRequester() }
     val keyboard_controller = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
 
-    LaunchedEffect(Unit) {
-        if (prefill_email.isBlank()) email_focus.requestFocus()
-    }
-
     var cached_totp_challenge by remember {
         mutableStateOf<org.astermail.android.auth.TotpChallenge?>(null)
     }
@@ -139,6 +136,14 @@ fun SignInScreen(
     }
 
     val active_totp_challenge = cached_totp_challenge
+    BackHandler {
+        if (active_totp_challenge != null) {
+            view_model.cancel_totp(active_totp_challenge)
+            cached_totp_challenge = null
+        } else {
+            on_back()
+        }
+    }
     if (active_totp_challenge != null) {
         TotpVerifyScreen(
             challenge = active_totp_challenge,
@@ -199,11 +204,6 @@ fun SignInScreen(
             .systemBarsPadding()
             .imePadding(),
     ) {
-        AsterTopBar(
-            title = "",
-            on_back = on_back,
-        )
-
         auth_centered_column(horizontal_padding = 0.dp) {
             Image(
                 painter = painterResource(R.drawable.aster_wordmark),
@@ -215,6 +215,11 @@ fun SignInScreen(
 
             aster_variant_body(fields, callbacks, email_focus, password_focus)
         }
+
+        AsterTopBar(
+            title = "",
+            on_back = on_back,
+        )
 
         debug_build_banner()
     }

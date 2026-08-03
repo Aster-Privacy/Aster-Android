@@ -570,21 +570,23 @@ private fun AsterNavHost() {
             OnboardingScreen(
                 on_sign_in = {
                     theme_vm.mark_onboarding_seen()
-                    nav_controller.navigate(routes.sign_in) {
+                    nav_controller.navigate(routes.welcome) {
                         popUpTo(routes.onboarding) {
                             inclusive = true
                             saveState = false
                         }
                     }
+                    nav_controller.navigate(routes.sign_in)
                 },
                 on_create_account = {
                     theme_vm.mark_onboarding_seen()
-                    nav_controller.navigate(routes.register) {
+                    nav_controller.navigate(routes.welcome) {
                         popUpTo(routes.onboarding) {
                             inclusive = true
                             saveState = false
                         }
                     }
+                    nav_controller.navigate(routes.register)
                 },
                 on_skip = {
                     theme_vm.mark_onboarding_seen()
@@ -615,7 +617,11 @@ private fun AsterNavHost() {
                 ?.let { java.net.URLDecoder.decode(it, "UTF-8") }
                 .orEmpty()
             SignInScreen(
-                on_back = { nav_controller.popBackStack() },
+                on_back = {
+                    if (!nav_controller.popBackStack()) {
+                        nav_controller.navigate(routes.welcome) { popUpTo(0) { inclusive = true } }
+                    }
+                },
                 on_forgot_password = { nav_controller.navigate(routes.forgot_password) },
                 on_signed_in = {
                     nav_controller.navigate(routes.inbox) {
@@ -624,7 +630,7 @@ private fun AsterNavHost() {
                 },
                 on_register = {
                     nav_controller.navigate(routes.register) {
-                        popUpTo(routes.sign_in) { inclusive = true }
+                        popUpTo(routes.sign_in_with_email) { inclusive = true }
                         launchSingleTop = true
                     }
                 },
@@ -633,7 +639,11 @@ private fun AsterNavHost() {
         }
         composable(routes.register) {
             RegisterScreen(
-                on_back = { nav_controller.popBackStack() },
+                on_back = {
+                    if (!nav_controller.popBackStack()) {
+                        nav_controller.navigate(routes.welcome) { popUpTo(0) { inclusive = true } }
+                    }
+                },
                 on_registered = {
                     nav_controller.navigate(routes.inbox) {
                         popUpTo(routes.welcome) { inclusive = true }
@@ -1422,6 +1432,10 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
 
     androidx.compose.runtime.LaunchedEffect(prefs?.custom_categories) {
         mail_vm.set_custom_categories(prefs?.custom_categories ?: emptyList())
+    }
+
+    androidx.compose.runtime.LaunchedEffect(prefs?.conversation_grouping) {
+        if (prefs != null) mail_vm.set_conversation_grouping(prefs.conversation_grouping)
     }
 
     androidx.compose.runtime.LaunchedEffect(prefs) {

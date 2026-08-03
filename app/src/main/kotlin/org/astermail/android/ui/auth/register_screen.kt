@@ -100,7 +100,7 @@ fun RegisterScreen(
         }
     }
 
-    BackHandler(enabled = state.step.value != RegisterStep.email) { handle_back() }
+    BackHandler { handle_back() }
 
     Box(
         modifier = Modifier
