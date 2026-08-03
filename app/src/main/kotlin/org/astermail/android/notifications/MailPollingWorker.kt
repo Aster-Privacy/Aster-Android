@@ -162,14 +162,17 @@ class MailPollingWorker(
         val has_pending_new_mail = has_baseline && new_unread > cached_unread &&
             new_unread != last_notified
         val suppressed_by_quiet_hours = has_pending_new_mail && is_quiet_hours_now(context)
+        var deferred = false
         if (has_pending_new_mail && !suppressed_by_quiet_hours) {
             val arrived = new_unread - cached_unread
-            notify_for_new_mail(arrived)
-            prefs.edit().putInt(KEY_LAST_NOTIFIED_COUNT, new_unread).apply()
+            deferred = !notify_for_new_mail(arrived)
+            if (!deferred) {
+                prefs.edit().putInt(KEY_LAST_NOTIFIED_COUNT, new_unread).apply()
+            }
         }
 
         val editor = prefs.edit().putInt(KEY_CACHED_NOTIFIABLE, new_notifiable)
-        if (!suppressed_by_quiet_hours) {
+        if (!suppressed_by_quiet_hours && !deferred) {
             editor.putInt(KEY_CACHED_UNREAD, new_unread)
         }
         editor.apply()
@@ -181,14 +184,15 @@ class MailPollingWorker(
         show_generic(context, unread_count)
     }
 
-    private suspend fun notify_for_new_mail(arrived: Int) {
-        notify_lock.withLock {
+    private suspend fun notify_for_new_mail(arrived: Int): Boolean {
+        return notify_lock.withLock {
             notify_for_new_mail_locked(arrived)
         }
     }
 
-    private suspend fun notify_for_new_mail_locked(arrived: Int) {
-        if (!is_notify_new_email(context)) return
+    private suspend fun notify_for_new_mail_locked(arrived: Int): Boolean {
+        if (!is_notify_new_email(context)) return true
+        if (message_notified_recently(context)) return false
         val entry = try {
             EntryPointAccessors.fromApplication(
                 context.applicationContext,
@@ -200,12 +204,12 @@ class MailPollingWorker(
         val app_lock_configured = runCatching { entry?.app_lock_store()?.is_configured() ?: true }.getOrDefault(true)
         if (org.astermail.android.security.LockdownStore.is_enabled(context) || app_lock_configured) {
             show_generic(context, arrived)
-            return
+            return true
         }
         val repo = entry?.mail_repository()
         if (repo == null) {
             show_generic(context, arrived)
-            return
+            return true
         }
         var newest: org.astermail.android.mail.InboxItem? = null
         var sender: String? = null
@@ -263,7 +267,7 @@ class MailPollingWorker(
             if (!fetched_any_page) {
                 show_generic(context, arrived)
             }
-            return
+            return true
         }
         val subject = fresh.subject.trim()
         val message_id = message_notification_id(fresh.id.hashCode())
@@ -275,6 +279,7 @@ class MailPollingWorker(
             message_id = message_id,
             item_id = fresh.id,
         )
+        return true
     }
 
     @EntryPoint
@@ -310,6 +315,8 @@ class MailPollingWorker(
         private const val KEY_QUIET_HOURS_END = "quiet_hours_end"
         private const val KEY_LAST_WORK_START_MS = "last_work_start_ms"
         private const val WORKER_IN_FLIGHT_GRACE_MS = 90_000L
+        private const val KEY_LAST_MESSAGE_NOTIFY_MS = "last_message_notify_ms"
+        private const val MESSAGE_NOTIFY_DEDUPE_WINDOW_MS = 90_000L
         private const val KEY_LAST_GENERIC_COUNT = "last_generic_notify_count"
         private const val KEY_LAST_GENERIC_MS = "last_generic_notify_ms"
         private const val GENERIC_NOTIFY_COOLDOWN_MS = 60_000L
@@ -435,6 +442,7 @@ class MailPollingWorker(
                 .remove(KEY_CACHED_NOTIFIABLE)
                 .remove(KEY_LAST_NOTIFIED_COUNT)
                 .remove(KEY_NOTIFIED_ITEM_IDS)
+                .remove(KEY_LAST_MESSAGE_NOTIFY_MS)
                 .apply()
         }
 
@@ -539,9 +547,18 @@ class MailPollingWorker(
             }
         }
 
+        private fun message_notified_recently(context: Context): Boolean {
+            val last = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .getLong(KEY_LAST_MESSAGE_NOTIFY_MS, 0L)
+            if (last <= 0L) return false
+            val elapsed = System.currentTimeMillis() - last
+            return elapsed in 0 until MESSAGE_NOTIFY_DEDUPE_WINDOW_MS
+        }
+
         @Synchronized
         fun show_generic(context: Context, unread_count: Int) {
             if (!can_post(context)) return
+            if (message_notified_recently(context)) return
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             val now = System.currentTimeMillis()
             val repeat_of_last = prefs.getInt(KEY_LAST_GENERIC_COUNT, -1) == unread_count &&
@@ -621,6 +638,13 @@ class MailPollingWorker(
                 builder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             }
             val manager = NotificationManagerCompat.from(context)
+            manager.cancel(NOTIFICATION_ID)
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .remove(KEY_LAST_GENERIC_COUNT)
+                .remove(KEY_LAST_GENERIC_MS)
+                .putLong(KEY_LAST_MESSAGE_NOTIFY_MS, System.currentTimeMillis())
+                .commit()
             manager.notify(message_id, builder.build())
             post_group_summary(context, manager)
         }
@@ -670,7 +694,21 @@ class MailPollingWorker(
 
         private const val ACTION_REQUEST_STRIDE = 8
 
+        private fun active_mail_notification_count(context: Context): Int {
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                ?: return 0
+            return runCatching {
+                manager.activeNotifications.count {
+                    it.id >= MESSAGE_ID_BASE || it.id == NOTIFICATION_ID
+                }
+            }.getOrDefault(0)
+        }
+
         private fun post_group_summary(context: Context, manager: NotificationManagerCompat) {
+            if (active_mail_notification_count(context) < 2) {
+                manager.cancel(SUMMARY_NOTIFICATION_ID)
+                return
+            }
             val intent = Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
@@ -688,6 +726,7 @@ class MailPollingWorker(
                 .setCategory(NotificationCompat.CATEGORY_EMAIL)
                 .setVisibility(NotificationCompat.VISIBILITY_SECRET)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
                 .setContentIntent(pending)
                 .setAutoCancel(true)
                 .build()
