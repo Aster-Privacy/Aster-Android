@@ -642,11 +642,11 @@ class MailRepositoryTest {
         val page2_items = (1..10).map { fake_mail_item("page2_$it") }
 
         coEvery {
-            mail_api.list_messages(limit = 200, cursor = isNull(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
+            mail_api.list_messages(limit = 50, cursor = isNull(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
         } returns MailItemsListResponse(page1_items, has_more = true, next_cursor = "c1", total = 60)
 
         coEvery {
-            mail_api.list_messages(limit = 200, cursor = eq("c1"), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
+            mail_api.list_messages(limit = 50, cursor = eq("c1"), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
         } returns MailItemsListResponse(page2_items, has_more = false, next_cursor = null, total = 60)
 
         val result = repo.fetch_all_for_search()
@@ -984,11 +984,11 @@ class MailRepositoryTest {
     fun `fetch_all_for_search error on page 2 propagates`() = runTest {
         val page1_items = (1..50).map { fake_mail_item("p1_$it") }
         coEvery {
-            mail_api.list_messages(limit = 200, cursor = isNull(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
+            mail_api.list_messages(limit = 50, cursor = isNull(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
         } returns MailItemsListResponse(page1_items, has_more = true, next_cursor = "c1", total = 100)
 
         coEvery {
-            mail_api.list_messages(limit = 200, cursor = eq("c1"), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
+            mail_api.list_messages(limit = 50, cursor = eq("c1"), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
         } throws RuntimeException("page 2 error")
 
         val result = repo.fetch_all_for_search()
