@@ -106,6 +106,8 @@ interface MailApi {
 
     suspend fun empty_trash(): DeleteResponse
 
+    suspend fun empty_spam(): DeleteResponse
+
     suspend fun bulk_delete_permanent(request: BulkPermanentDeleteRequest): DeleteResponse
 
     suspend fun create_message(request: CreateMailItemRequest): CreateMailItemResponse
@@ -385,6 +387,13 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
 
     override suspend fun empty_trash(): DeleteResponse {
         val response = client.http.delete("${client.base_url}$base/messages/trash") {
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun empty_spam(): DeleteResponse {
+        val response = client.http.delete("${client.base_url}$base/messages/spam") {
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
         }
         return decode_or_throw(response)
