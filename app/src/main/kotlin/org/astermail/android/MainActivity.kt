@@ -142,6 +142,8 @@ import org.astermail.android.ui.settings.detail.ReferralScreen
 import org.astermail.android.ui.settings.detail.TrustedDevicesScreen
 import org.astermail.android.ui.settings.detail.AliasesScreen
 import org.astermail.android.ui.settings.detail.AppearanceScreen
+import org.astermail.android.ui.settings.detail.DomainPurchaseScreen
+import org.astermail.android.ui.settings.detail.DomainPurchaseProgressScreen
 import org.astermail.android.ui.settings.detail.AutoForwardScreen
 import org.astermail.android.ui.settings.detail.BehaviorScreen
 import org.astermail.android.ui.settings.detail.SwipeActionsScreen
@@ -401,8 +403,11 @@ private object routes {
     const val contact_edit_new = "contact_edit"
     const val contact_edit = "contact_edit/{contact_id}"
 
+    const val domain_order = "domain_order/{order_id}"
+
     fun mail_detail_for(email_id: String) = "mail_detail/" + java.net.URLEncoder.encode(email_id, "UTF-8")
     fun settings_detail(id: String) = "settings_$id"
+    fun domain_order_for(order_id: String) = "domain_order/$order_id"
     fun contact_detail_for(contact_id: String) = "contact_detail/$contact_id"
     fun contact_edit_for(contact_id: String) = "contact_edit/$contact_id"
 }
@@ -1080,6 +1085,33 @@ private fun AsterNavHost() {
             AliasesScreen(
                 on_back = { back(); Unit },
                 open_create = entry.arguments?.getBoolean("create") ?: false,
+                on_open_buy_domain = { nav_controller.navigate(routes.settings_detail("buy_domain")) },
+                on_open_domain_order = { id -> nav_controller.navigate(routes.domain_order_for(id)) },
+            )
+        }
+        composable(routes.settings_detail("buy_domain")) {
+            DomainPurchaseScreen(
+                on_back = { back(); Unit },
+                on_open_progress = { id ->
+                    nav_controller.navigate(routes.domain_order_for(id)) { launchSingleTop = true }
+                },
+            )
+        }
+        composable(
+            route = routes.domain_order,
+            arguments = listOf(navArgument("order_id") { type = NavType.StringType }),
+        ) { entry ->
+            val order_id = entry.arguments?.getString("order_id").orEmpty()
+            DomainPurchaseProgressScreen(
+                order_id = order_id,
+                on_back = { back(); Unit },
+                on_create_address = {
+                    nav_controller.navigate(routes.settings_detail("aliases") + "?create=true") {
+                        popUpTo(routes.settings) { inclusive = false }
+                        launchSingleTop = true
+                    }
+                },
+                on_done = { back(); Unit },
             )
         }
         composable(routes.settings_detail("subscriptions")) {
