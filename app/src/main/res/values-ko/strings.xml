@@ -2509,4 +2509,10 @@
     <string name="density_compact_subtitle">행 간격을 좁혀 더 많은 메일 표시</string>
     <string name="density_comfortable">여유롭게</string>
     <string name="density_comfortable_subtitle">각 메일 주위에 더 넓은 여백</string>
+    <string name="message_download_status">메시지 다운로드 상태: %2$d개 중 %1$d개</string>
+    <string name="index_download_paused">메시지 다운로드 일시중지됨</string>
+    <string name="index_time_remaining_min">약 %1$d분 남음</string>
+    <string name="index_time_remaining_less_min">1분 미만 남음</string>
+    <string name="pause">일시중지</string>
+    <string name="resume">재개</string>
 </resources>

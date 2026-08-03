@@ -2544,4 +2544,10 @@
     <string name="density_compact_subtitle">صفوف أضيق لعرض المزيد من الرسائل</string>
     <string name="density_comfortable">مريح</string>
     <string name="density_comfortable_subtitle">مساحة أكبر حول كل رسالة</string>
+    <string name="message_download_status">حالة تنزيل الرسائل: %1$d من %2$d</string>
+    <string name="index_download_paused">تم إيقاف تنزيل الرسائل مؤقتًا</string>
+    <string name="index_time_remaining_min">متبق نحو %1$d دقيقة</string>
+    <string name="index_time_remaining_less_min">متبق أقل من دقيقة</string>
+    <string name="pause">إيقاف مؤقت</string>
+    <string name="resume">استئناف</string>
 </resources>

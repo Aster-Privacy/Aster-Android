@@ -2517,4 +2517,10 @@
     <string name="density_compact_subtitle">Engere Zeilen, mehr E-Mails auf dem Bildschirm</string>
     <string name="density_comfortable">Komfortabel</string>
     <string name="density_comfortable_subtitle">Mehr Abstand um jede E-Mail</string>
+    <string name="message_download_status">Nachrichten-Download: %1$d von %2$d</string>
+    <string name="index_download_paused">Nachrichten-Download pausiert</string>
+    <string name="index_time_remaining_min">Noch etwa %1$d Min.</string>
+    <string name="index_time_remaining_less_min">Weniger als eine Minute verbleibend</string>
+    <string name="pause">Pausieren</string>
+    <string name="resume">Fortsetzen</string>
 </resources>

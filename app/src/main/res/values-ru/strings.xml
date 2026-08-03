@@ -2530,4 +2530,10 @@
     <string name="density_compact_subtitle">Более узкие строки, чтобы уместить больше писем</string>
     <string name="density_comfortable">Просторный</string>
     <string name="density_comfortable_subtitle">Больше пространства вокруг каждого письма</string>
+    <string name="message_download_status">Загрузка сообщений: %1$d из %2$d</string>
+    <string name="index_download_paused">Загрузка сообщений приостановлена</string>
+    <string name="index_time_remaining_min">Осталось около %1$d мин</string>
+    <string name="index_time_remaining_less_min">Осталось меньше минуты</string>
+    <string name="pause">Пауза</string>
+    <string name="resume">Продолжить</string>
 </resources>
