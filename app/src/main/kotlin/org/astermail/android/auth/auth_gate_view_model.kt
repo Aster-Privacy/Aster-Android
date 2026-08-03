@@ -83,7 +83,7 @@ class AuthGateViewModel @Inject constructor(
                 } catch (e: Throwable) {
                     if (e is CancellationException) throw e
                     if (e is org.astermail.android.api.ApiError.UnauthorizedError) {
-                        auth_repository.handle_unauthorized_signal()
+                        auth_repository.handle_unauthorized_signal(force = true)
                     }
                 }
             }

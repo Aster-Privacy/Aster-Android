@@ -2113,6 +2113,7 @@ class SettingsViewModel @Inject constructor(
             try {
                 security_api.revoke_trusted_device(device_id)
                 _state.update { it.copy(trusted_devices = it.trusted_devices.filter { d -> d.id != device_id }) }
+                auth_repository.handle_unauthorized_signal(force = true)
             } catch (_: Throwable) {
                 _state.value = _state.value.copy(action_result = context.getString(R.string.something_went_wrong))
             }
@@ -2124,6 +2125,7 @@ class SettingsViewModel @Inject constructor(
             try {
                 security_api.revoke_all_trusted_devices()
                 _state.update { it.copy(trusted_devices = emptyList()) }
+                auth_repository.handle_unauthorized_signal(force = true)
             } catch (_: Throwable) {
                 _state.value = _state.value.copy(action_result = context.getString(R.string.something_went_wrong))
             }
