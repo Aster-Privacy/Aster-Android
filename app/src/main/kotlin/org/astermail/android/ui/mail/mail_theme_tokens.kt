@@ -50,6 +50,37 @@ fun avatar_colors_for(seed: String): Pair<Color, Color> {
     return avatar_palette[idx]
 }
 
+private const val avatar_luminance_crossover = 0.55f
+
+private fun to_linear(channel: Float): Float =
+    if (channel <= 0.03928f) channel / 12.92f
+    else Math.pow(((channel + 0.055f) / 1.055f).toDouble(), 2.4).toFloat()
+
+fun contrast_text_for(background: Color): Color {
+    val luminance = 0.2126f * to_linear(background.red) +
+        0.7152f * to_linear(background.green) +
+        0.0722f * to_linear(background.blue)
+    return if (luminance > avatar_luminance_crossover) Color(0xFF111827) else Color.White
+}
+
+fun parse_profile_color(hex: String?): Color? {
+    val raw = hex?.trim()?.removePrefix("#") ?: return null
+    val full = when (raw.length) {
+        3 -> raw.map { "$it$it" }.joinToString("")
+        6 -> raw
+        8 -> raw.substring(0, 6)
+        else -> return null
+    }
+    if (!full.all { it.isDigit() || it in 'a'..'f' || it in 'A'..'F' }) return null
+    val value = full.toLongOrNull(16) ?: return null
+    return Color(0xFF000000L or value)
+}
+
+fun avatar_colors_for(seed: String, profile_color: String?): Pair<Color, Color> {
+    val chosen = parse_profile_color(profile_color) ?: return avatar_colors_for(seed)
+    return chosen to contrast_text_for(chosen)
+}
+
 fun initial_for(name: String, fallback_email: String): String {
     val source = name.trim().ifEmpty { fallback_email.trim() }
     if (source.isEmpty()) return "?"
