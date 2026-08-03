@@ -886,18 +886,19 @@ class MailRepository @Inject constructor(
         Pair(item, envelope)
     }
 
-    suspend fun fetch_all_for_search(max_pages: Int = 20): Result<List<InboxItem>> = runCatching {
+    suspend fun fetch_all_for_search(max_pages: Int = 100): Result<List<InboxItem>> = runCatching {
         val seen = HashSet<String>()
         val all = mutableListOf<InboxItem>()
         suspend fun drain(is_trashed: Boolean? = null, is_archived: Boolean? = null, is_spam: Boolean? = null) {
             var cursor: String? = null
             repeat(max_pages) {
                 val response = mail_api.list_messages(
-                    limit = 50,
+                    limit = 200,
                     cursor = cursor,
                     is_trashed = is_trashed,
                     is_archived = is_archived,
                     is_spam = is_spam,
+                    skip_total = true,
                 )
                 val items = decrypt_items_parallel(response.items).map {
                     it.copy(
@@ -1351,6 +1352,10 @@ class MailRepository @Inject constructor(
     suspend fun empty_trash(): Result<Unit> = runCatching {
         mail_api.empty_trash()
         Unit
+    }
+
+    suspend fun empty_spam(): Result<Int> = runCatching {
+        mail_api.empty_spam().deleted_count
     }
 
     suspend fun bulk_delete_permanent(ids: List<String>): Result<Int> = runCatching {

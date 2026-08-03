@@ -58,6 +58,7 @@ private const val STATS_DEBOUNCE_MS = 1_200L
 private const val DECRYPT_RETRY_TIMEOUT_MS = 20_000L
 private const val SEND_GUARD_WINDOW_MS = 30_000L
 private const val LOAD_ALL_MAX_PAGES = 5_000
+private const val LOAD_ALL_MAX_ITEMS = 50_000
 private const val LOAD_ALL_PAGE_WAIT_TICKS = 4_800
 private const val LOAD_ALL_MAX_STALLS = 3
 
@@ -792,6 +793,7 @@ class MailViewModel @Inject constructor(
                 val s = _inbox_state.value
                 if (s.current_folder != started_folder) return@launch
                 if (!s.has_more) break
+                if (s.items.size >= LOAD_ALL_MAX_ITEMS) break
                 if (s.is_loading || s.is_loading_more) {
                     kotlinx.coroutines.delay(50)
                     continue
@@ -2282,32 +2284,8 @@ class MailViewModel @Inject constructor(
         }
         _emptying_spam.value = true
         viewModelScope.launch {
-            val ids = mutableListOf<String>()
-            var cursor: String? = null
-            var pages = 0
-            var failed = false
-            while (pages < 200) {
-                val page = repository.fetch_spam(limit = 100, cursor = cursor).getOrElse {
-                    failed = true
-                    null
-                } ?: break
-                ids += page.items.map { it.id }
-                cursor = page.next_cursor
-                pages += 1
-                if (cursor == null) break
-            }
-            if (failed && ids.isEmpty()) {
-                _emptying_spam.value = false
-                emit_toast(context.getString(R.string.failed_empty_spam))
-                return@launch
-            }
-            if (ids.isEmpty()) {
-                _emptying_spam.value = false
-                emit_toast(context.getString(R.string.spam_already_empty))
-                return@launch
-            }
-            repository.bulk_delete_permanent(ids).fold(
-                onSuccess = {
+            repository.empty_spam().fold(
+                onSuccess = { deleted ->
                     folder_cache.remove("spam")
                     folder_cache_time.remove("spam")
                     if (_inbox_state.value.current_folder == "spam") {
@@ -2324,7 +2302,10 @@ class MailViewModel @Inject constructor(
                         )
                     }
                     _emptying_spam.value = false
-                    emit_toast(context.getString(R.string.spam_emptied))
+                    emit_toast(
+                        if (deleted == 0) context.getString(R.string.spam_already_empty)
+                        else context.getString(R.string.spam_emptied),
+                    )
                     load_stats()
                 },
                 onFailure = {
