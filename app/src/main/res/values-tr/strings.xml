@@ -2511,4 +2511,9 @@
     <string name="folder_actions">Klasör işlemleri</string>
     <string name="include_spam">Spam dahil et</string>
     <string name="include_trash">Çöp kutusunu dahil et</string>
+    <string name="mail_list_density">Posta listesi yoğunluğu</string>
+    <string name="density_compact">Sıkışık</string>
+    <string name="density_compact_subtitle">Daha fazla e-posta görmek için daha dar satırlar</string>
+    <string name="density_comfortable">Rahat</string>
+    <string name="density_comfortable_subtitle">Her e-postanın çevresinde daha fazla boşluk</string>
 </resources>

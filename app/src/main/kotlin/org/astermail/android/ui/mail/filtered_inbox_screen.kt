@@ -76,6 +76,8 @@ fun FilteredInboxScreen(
     val list_state = rememberLazyListState()
     val mail_vm: MailViewModel = hiltViewModel()
     val inbox_state by mail_vm.inbox_state.collectAsStateWithLifecycle()
+    val settings_vm = org.astermail.android.settings.shared_settings_view_model()
+    val settings_state by settings_vm.state.collectAsStateWithLifecycle()
 
     val requested_folder = when (filter_type) {
         FilterType.folder -> filter_value
@@ -159,6 +161,7 @@ fun FilteredInboxScreen(
                                     on_click = { on_open_email(thread_open_target_id(thread)) },
                                     on_long_click = { on_open_email(thread_open_target_id(thread)) },
                                     on_toggle_star = { mail_vm.toggle_star(thread.newest.id) },
+                                    user_prefs = settings_state.preferences,
                                 )
                             }
                         }

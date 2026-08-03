@@ -2511,4 +2511,9 @@
     <string name="folder_actions">Mapacties</string>
     <string name="include_spam">Spam opnemen</string>
     <string name="include_trash">Prullenbak opnemen</string>
+    <string name="mail_list_density">Dichtheid van e-maillijst</string>
+    <string name="density_compact">Compact</string>
+    <string name="density_compact_subtitle">Smallere rijen om meer e-mails te tonen</string>
+    <string name="density_comfortable">Comfortabel</string>
+    <string name="density_comfortable_subtitle">Meer ruimte rond elke e-mail</string>
 </resources>

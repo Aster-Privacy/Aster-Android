@@ -2512,4 +2512,9 @@
     <string name="folder_actions">Ordneraktionen</string>
     <string name="include_spam">Spam einschließen</string>
     <string name="include_trash">Papierkorb einschließen</string>
+    <string name="mail_list_density">Dichte der E-Mail-Liste</string>
+    <string name="density_compact">Kompakt</string>
+    <string name="density_compact_subtitle">Engere Zeilen, mehr E-Mails auf dem Bildschirm</string>
+    <string name="density_comfortable">Komfortabel</string>
+    <string name="density_comfortable_subtitle">Mehr Abstand um jede E-Mail</string>
 </resources>

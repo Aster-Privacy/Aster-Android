@@ -2539,4 +2539,9 @@
     <string name="folder_actions">إجراءات المجلد</string>
     <string name="include_spam">تضمين البريد العشوائي</string>
     <string name="include_trash">تضمين المهملات</string>
+    <string name="mail_list_density">كثافة قائمة البريد</string>
+    <string name="density_compact">مضغوط</string>
+    <string name="density_compact_subtitle">صفوف أضيق لعرض المزيد من الرسائل</string>
+    <string name="density_comfortable">مريح</string>
+    <string name="density_comfortable_subtitle">مساحة أكبر حول كل رسالة</string>
 </resources>

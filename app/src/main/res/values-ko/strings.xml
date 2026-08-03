@@ -2504,4 +2504,9 @@
     <string name="folder_actions">폴더 작업</string>
     <string name="include_spam">스팸 포함</string>
     <string name="include_trash">휴지통 포함</string>
+    <string name="mail_list_density">메일 목록 밀도</string>
+    <string name="density_compact">간결하게</string>
+    <string name="density_compact_subtitle">행 간격을 좁혀 더 많은 메일 표시</string>
+    <string name="density_comfortable">여유롭게</string>
+    <string name="density_comfortable_subtitle">각 메일 주위에 더 넓은 여백</string>
 </resources>

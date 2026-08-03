@@ -2504,4 +2504,9 @@
     <string name="folder_actions">文件夹操作</string>
     <string name="include_spam">包含垃圾邮件</string>
     <string name="include_trash">包含回收站</string>
+    <string name="mail_list_density">邮件列表密度</string>
+    <string name="density_compact">紧凑</string>
+    <string name="density_compact_subtitle">更紧凑的行距，显示更多邮件</string>
+    <string name="density_comfortable">宽松</string>
+    <string name="density_comfortable_subtitle">每封邮件周围留出更多空间</string>
 </resources>
