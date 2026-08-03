@@ -109,6 +109,7 @@ import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.design.components.UpgradeGate
 import org.astermail.android.settings.DecryptedDeletedAlias
+import org.astermail.android.settings.DomainPurchaseViewModel
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.ui.auth.TurnstileWidget
 import org.astermail.android.util.generate_random_local_part
@@ -152,6 +153,38 @@ fun AliasesScreen(
     var domain_dns by remember { mutableStateOf<Map<String, List<DnsRecord>>>(emptyMap()) }
     var verifying_domain_id by remember { mutableStateOf<String?>(null) }
 
+    val purchase_vm: DomainPurchaseViewModel = hiltViewModel()
+    val purchase_state by purchase_vm.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        purchase_vm.load_orders()
+        purchase_vm.check_pending_order()
+    }
+
+    LaunchedEffect(purchase_state.checkout_url) {
+        val url = purchase_state.checkout_url ?: return@LaunchedEffect
+        open_url(context, url)
+        purchase_vm.consume_checkout_url()
+    }
+
+    LaunchedEffect(purchase_state.resume_order_id) {
+        val id = purchase_state.resume_order_id ?: return@LaunchedEffect
+        purchase_vm.consume_resume_order()
+        on_open_domain_order(id)
+    }
+
+    val lifecycle_owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    androidx.compose.runtime.DisposableEffect(lifecycle_owner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                purchase_vm.check_pending_order()
+                purchase_vm.load_orders()
+            }
+        }
+        lifecycle_owner.lifecycle.addObserver(observer)
+        onDispose { lifecycle_owner.lifecycle.removeObserver(observer) }
+    }
+
     LaunchedEffect(state.action_result) {
         val msg = state.action_result ?: return@LaunchedEffect
         android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
@@ -173,6 +206,7 @@ fun AliasesScreen(
 
     LaunchedEffect(selected_tab) {
         when (selected_tab) {
+            1 -> purchase_vm.load_orders()
             2 -> vm.load_directories()
             3 -> vm.load_ghost_aliases()
             4 -> vm.load_alias_preferences()
@@ -217,6 +251,14 @@ fun AliasesScreen(
                     on_upgrade = { on_open("billing") },
                 )
                 1 -> tab_scroll {
+                    domain_purchase_area(
+                        state = purchase_state,
+                        on_buy = on_open_buy_domain,
+                        on_open_order = { on_open_domain_order(it.id) },
+                        on_cancel = { purchase_vm.cancel_order(it) },
+                        on_complete_purchase = { purchase_vm.complete_purchase(it) },
+                        on_renew = { purchase_vm.renew_order(it) },
+                    )
                     domains_tab(
                         vm = vm,
                         state = state,
