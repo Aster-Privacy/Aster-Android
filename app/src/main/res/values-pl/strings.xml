@@ -1815,6 +1815,8 @@
     <string name="signature_placement_below">Pod cytowanym tekstem</string>
     <string name="signature_placement_inherit">Użyj ustawienia globalnego</string>
     <string name="signature_alias_conflict">Ten alias ma już podpis.</string>
+    <string name="signature_rich_preview_note">Ten podpis zawiera formatowanie i zostanie wysłany dokładnie tak, jak jest wyświetlany.</string>
+    <string name="signature_edit_as_plain">Edytuj jako zwykły tekst</string>
     <string name="signature_placement">Położenie</string>
     <string name="add_signature">Dodaj podpis</string>
     <string name="delete_signature">Usuń podpis</string>

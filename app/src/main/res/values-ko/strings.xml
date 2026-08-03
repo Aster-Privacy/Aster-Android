@@ -1806,6 +1806,8 @@
     <string name="signature_placement_below">인용문 아래</string>
     <string name="signature_placement_inherit">전체 설정 따르기</string>
     <string name="signature_alias_conflict">이 별칭에는 이미 서명이 있습니다.</string>
+    <string name="signature_rich_preview_note">이 서명은 서식이 포함되어 있으며 표시된 그대로 전송됩니다.</string>
+    <string name="signature_edit_as_plain">일반 텍스트로 편집</string>
     <string name="signature_placement">위치</string>
     <string name="add_signature">서명 추가</string>
     <string name="delete_signature">서명 삭제</string>

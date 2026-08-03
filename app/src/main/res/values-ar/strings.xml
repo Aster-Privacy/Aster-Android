@@ -1821,6 +1821,8 @@
     <string name="signature_placement_below">تحت النص المقتبس</string>
     <string name="signature_placement_inherit">اتباع الإعداد العام</string>
     <string name="signature_alias_conflict">هذا الاسم المستعار له توقيع بالفعل.</string>
+    <string name="signature_rich_preview_note">يحتوي هذا التوقيع على تنسيق منسّق وسيتم إرساله تمامًا كما هو معروض.</string>
+    <string name="signature_edit_as_plain">التحرير كنص عادي</string>
     <string name="signature_placement">الموضع</string>
     <string name="add_signature">إضافة توقيع</string>
     <string name="delete_signature">حذف التوقيع</string>

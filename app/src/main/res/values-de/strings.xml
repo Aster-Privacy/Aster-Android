@@ -1810,6 +1810,8 @@
     <string name="signature_placement_below">Unter dem zitierten Text</string>
     <string name="signature_placement_inherit">Globale Einstellung übernehmen</string>
     <string name="signature_alias_conflict">Dieser Alias hat bereits eine Signatur.</string>
+    <string name="signature_rich_preview_note">Diese Signatur enthält Rich-Text-Formatierung und wird genau so gesendet, wie sie angezeigt wird.</string>
+    <string name="signature_edit_as_plain">Als einfachen Text bearbeiten</string>
     <string name="signature_placement">Position</string>
     <string name="add_signature">Signatur hinzufügen</string>
     <string name="delete_signature">Signatur löschen</string>

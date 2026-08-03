@@ -1806,6 +1806,8 @@
     <string name="signature_placement_below">引用内容下方</string>
     <string name="signature_placement_inherit">跟随全局设置</string>
     <string name="signature_alias_conflict">该别名已经有签名。</string>
+    <string name="signature_rich_preview_note">此签名包含富文本格式，将按显示的样子发送。</string>
+    <string name="signature_edit_as_plain">以纯文本编辑</string>
     <string name="signature_placement">位置</string>
     <string name="add_signature">添加签名</string>
     <string name="delete_signature">删除签名</string>

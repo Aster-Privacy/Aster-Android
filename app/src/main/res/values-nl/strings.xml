@@ -1809,6 +1809,8 @@
     <string name="signature_placement_below">Onder de geciteerde tekst</string>
     <string name="signature_placement_inherit">Globale instelling volgen</string>
     <string name="signature_alias_conflict">Dit alias heeft al een handtekening.</string>
+    <string name="signature_rich_preview_note">Deze handtekening bevat opmaak en wordt precies zo verzonden als weergegeven.</string>
+    <string name="signature_edit_as_plain">Bewerken als platte tekst</string>
     <string name="signature_placement">Plaatsing</string>
     <string name="add_signature">Handtekening toevoegen</string>
     <string name="delete_signature">Handtekening verwijderen</string>

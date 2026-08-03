@@ -1990,6 +1990,8 @@
     <string name="expand_folder">Développer %1$s</string>
     <string name="collapse_folder">Réduire %1$s</string>
     <string name="signature_alias_conflict">Cet alias a déjà une signature.</string>
+    <string name="signature_rich_preview_note">Cette signature contient une mise en forme enrichie et sera envoyée exactement telle qu\'affichée.</string>
+    <string name="signature_edit_as_plain">Modifier en texte brut</string>
     <string name="signature_apply_default">Par défaut (tous les alias)</string>
     <string name="signature_apply_to">Appliquer à</string>
     <string name="signature_name">Nom</string>

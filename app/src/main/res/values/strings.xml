@@ -1302,6 +1302,8 @@
     <string name="signature_placement_below">Below quoted text</string>
     <string name="signature_placement_inherit">Inherit global setting</string>
     <string name="signature_alias_conflict">This alias already has a signature.</string>
+    <string name="signature_rich_preview_note">This signature has rich formatting and will be sent exactly as shown.</string>
+    <string name="signature_edit_as_plain">Edit as plain text</string>
     <string name="signature_placement">Placement</string>
     <string name="add_signature">Add signature</string>
     <string name="delete_signature">Delete signature</string>

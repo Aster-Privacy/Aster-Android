@@ -30,8 +30,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
@@ -69,6 +71,7 @@ import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.settings.DecryptedSignature
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.ui.compose.signature_html_web_preview
 
 @Composable
 fun SignatureScreen(
@@ -240,7 +243,7 @@ private fun signature_edit_modal(
     var alias_id by remember { mutableStateOf(initial?.alias_id) }
     var placement by remember { mutableStateOf(initial?.placement) }
     var is_default by remember { mutableStateOf(initial?.is_default ?: (initial == null)) }
-    val is_html = initial?.is_html ?: false
+    var is_html by remember { mutableStateOf(initial?.is_html ?: false) }
 
     detail_scaffold(
         title = if (initial == null) stringResource(R.string.add_signature) else stringResource(R.string.signature),
@@ -264,28 +267,56 @@ private fun signature_edit_modal(
         }
         v_gap(AsterSpacing.lg)
         section_label(stringResource(R.string.your_signature))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 160.dp)
-                .background(colors.input_bg, SquircleShape(18.dp))
-                .border(1.dp, colors.input_border, SquircleShape(18.dp))
-                .padding(AsterSpacing.lg),
-        ) {
-            if (content.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.signature_placeholder),
-                    color = colors.text_muted,
-                    fontSize = 15.sp,
+        if (is_html) {
+            signature_html_web_preview(
+                html = content,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(SquircleShape(18.dp))
+                    .border(1.dp, colors.input_border, SquircleShape(18.dp))
+                    .height(200.dp),
+            )
+            v_gap(AsterSpacing.sm)
+            Text(
+                text = stringResource(R.string.signature_rich_preview_note),
+                color = colors.text_muted,
+                fontSize = 12.sp,
+            )
+            v_gap(AsterSpacing.sm)
+            AsterSecondaryButton(
+                label = stringResource(R.string.signature_edit_as_plain),
+                onClick = {
+                    content = android.text.Html.fromHtml(
+                        content,
+                        android.text.Html.FROM_HTML_MODE_COMPACT,
+                    ).toString().trim()
+                    is_html = false
+                },
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 160.dp)
+                    .background(colors.input_bg, SquircleShape(18.dp))
+                    .border(1.dp, colors.input_border, SquircleShape(18.dp))
+                    .padding(AsterSpacing.lg),
+            ) {
+                if (content.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.signature_placeholder),
+                        color = colors.text_muted,
+                        fontSize = 15.sp,
+                    )
+                }
+                BasicTextField(
+                    value = content,
+                    onValueChange = { content = it },
+                    textStyle = TextStyle(color = colors.text_primary, fontSize = 15.sp),
+                    cursorBrush = SolidColor(colors.accent_blue),
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
-            BasicTextField(
-                value = content,
-                onValueChange = { content = it },
-                textStyle = TextStyle(color = colors.text_primary, fontSize = 15.sp),
-                cursorBrush = SolidColor(colors.accent_blue),
-                modifier = Modifier.fillMaxWidth(),
-            )
         }
         v_gap(AsterSpacing.lg)
         section_label(stringResource(R.string.signature_apply_to))

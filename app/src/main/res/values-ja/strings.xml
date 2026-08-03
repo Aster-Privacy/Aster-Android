@@ -1806,6 +1806,8 @@
     <string name="signature_placement_below">引用文の下</string>
     <string name="signature_placement_inherit">全体設定に従う</string>
     <string name="signature_alias_conflict">このエイリアスにはすでに署名があります。</string>
+    <string name="signature_rich_preview_note">この署名はリッチフォーマットを含み、表示どおりに送信されます。</string>
+    <string name="signature_edit_as_plain">プレーンテキストとして編集</string>
     <string name="signature_placement">配置</string>
     <string name="add_signature">署名を追加</string>
     <string name="delete_signature">署名を削除</string>

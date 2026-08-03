@@ -1809,6 +1809,8 @@
     <string name="signature_placement_below">Alıntı metnin altında</string>
     <string name="signature_placement_inherit">Genel ayarı kullan</string>
     <string name="signature_alias_conflict">Bu takma adın zaten bir imzası var.</string>
+    <string name="signature_rich_preview_note">Bu imza zengin biçimlendirme içerir ve tam olarak gösterildiği gibi gönderilir.</string>
+    <string name="signature_edit_as_plain">Düz metin olarak düzenle</string>
     <string name="signature_placement">Konum</string>
     <string name="add_signature">İmza ekle</string>
     <string name="delete_signature">İmzayı sil</string>
