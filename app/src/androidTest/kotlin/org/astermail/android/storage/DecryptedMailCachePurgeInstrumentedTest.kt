@@ -103,7 +103,12 @@ class DecryptedMailCachePurgeInstrumentedTest {
                 row("poisoned", "", "ASTER_BUNDLE_V2{\"s\":\"Question\",\"b\":\"<p>Hi</p>"),
             ),
         )
-        val manager = SearchIndexManager(database, mockk<MailApi>(relaxed = true), mockk<MailRepository>(relaxed = true))
+        val manager = SearchIndexManager(
+            database,
+            mockk<MailApi>(relaxed = true),
+            mockk<MailRepository>(relaxed = true),
+            ApplicationProvider.getApplicationContext(),
+        )
 
         val cached = manager.get_cached_items()
 

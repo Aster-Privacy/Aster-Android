@@ -316,7 +316,7 @@ class MailPollingWorker(
         private const val KEY_LAST_WORK_START_MS = "last_work_start_ms"
         private const val WORKER_IN_FLIGHT_GRACE_MS = 90_000L
         private const val KEY_LAST_MESSAGE_NOTIFY_MS = "last_message_notify_ms"
-        private const val MESSAGE_NOTIFY_DEDUPE_WINDOW_MS = 90_000L
+        const val MESSAGE_NOTIFY_DEDUPE_WINDOW_MS = 90_000L
         private const val KEY_LAST_GENERIC_COUNT = "last_generic_notify_count"
         private const val KEY_LAST_GENERIC_MS = "last_generic_notify_ms"
         private const val GENERIC_NOTIFY_COOLDOWN_MS = 60_000L
@@ -547,12 +547,20 @@ class MailPollingWorker(
             }
         }
 
+        fun is_within_message_dedupe_window(last_notify_ms: Long, now_ms: Long): Boolean {
+            if (last_notify_ms <= 0L) return false
+            val elapsed = now_ms - last_notify_ms
+            return elapsed in 0 until MESSAGE_NOTIFY_DEDUPE_WINDOW_MS
+        }
+
+        fun should_post_group_summary(active_mail_notifications: Int): Boolean {
+            return active_mail_notifications >= 2
+        }
+
         private fun message_notified_recently(context: Context): Boolean {
             val last = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                 .getLong(KEY_LAST_MESSAGE_NOTIFY_MS, 0L)
-            if (last <= 0L) return false
-            val elapsed = System.currentTimeMillis() - last
-            return elapsed in 0 until MESSAGE_NOTIFY_DEDUPE_WINDOW_MS
+            return is_within_message_dedupe_window(last, System.currentTimeMillis())
         }
 
         @Synchronized
@@ -705,7 +713,7 @@ class MailPollingWorker(
         }
 
         private fun post_group_summary(context: Context, manager: NotificationManagerCompat) {
-            if (active_mail_notification_count(context) < 2) {
+            if (!should_post_group_summary(active_mail_notification_count(context))) {
                 manager.cancel(SUMMARY_NOTIFICATION_ID)
                 return
             }
