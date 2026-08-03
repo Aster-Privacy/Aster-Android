@@ -1486,7 +1486,8 @@
     <string name="storage_almost_full_title">Storage almost full</string>
     <string name="storage_almost_full_body">Free up space or add storage before new mail starts bouncing.</string>
     <string name="storage_where_section">Where your messages are</string>
-    <string name="storage_where_note">Shares are based on how many messages each folder holds.</string>
+    <string name="storage_where_note">Every message is counted once, in the folder it sits in right now.</string>
+    <string name="storage_donut_caption">messages</string>
     <string name="storage_mailbox_section">Mailbox statistics</string>
     <string name="storage_total_messages">Total messages</string>
     <string name="storage_unread_messages">Unread</string>

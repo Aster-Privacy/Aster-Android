@@ -2270,7 +2270,8 @@
     <string name="storage_almost_full_title">Stockage presque plein</string>
     <string name="storage_almost_full_body">Libérez de la place ou ajoutez du stockage avant que les nouveaux messages soient rejetés.</string>
     <string name="storage_where_section">Où sont vos messages</string>
-    <string name="storage_where_note">Les parts dépendent du nombre de messages dans chaque dossier.</string>
+    <string name="storage_where_note">Chaque message est compté une seule fois, dans le dossier où il se trouve actuellement.</string>
+    <string name="storage_donut_caption">messages</string>
     <string name="storage_mailbox_section">Statistiques de la boîte</string>
     <string name="storage_total_messages">Messages au total</string>
     <string name="storage_unread_messages">Non lus</string>

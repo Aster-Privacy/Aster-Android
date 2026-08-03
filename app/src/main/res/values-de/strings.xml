@@ -1857,7 +1857,8 @@
     <string name="storage_almost_full_title">Speicher fast voll</string>
     <string name="storage_almost_full_body">Schaffe Platz oder buche Speicher dazu, bevor neue Mail zurückgewiesen wird.</string>
     <string name="storage_where_section">Wo deine Nachrichten liegen</string>
-    <string name="storage_where_note">Die Anteile richten sich danach, wie viele Nachrichten jeder Ordner enthält.</string>
+    <string name="storage_where_note">Jede Nachricht wird einmal gezählt, im Ordner, in dem sie gerade liegt.</string>
+    <string name="storage_donut_caption">Nachrichten</string>
     <string name="storage_mailbox_section">Postfach-Statistik</string>
     <string name="storage_total_messages">Nachrichten gesamt</string>
     <string name="storage_unread_messages">Ungelesen</string>

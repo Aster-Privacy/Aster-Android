@@ -1856,7 +1856,8 @@
     <string name="storage_almost_full_title">Spazio quasi esaurito</string>
     <string name="storage_almost_full_body">Libera spazio o aggiungine altro prima che la nuova posta venga respinta.</string>
     <string name="storage_where_section">Dove sono i tuoi messaggi</string>
-    <string name="storage_where_note">Le percentuali si basano sul numero di messaggi in ogni cartella.</string>
+    <string name="storage_where_note">Ogni messaggio viene contato una sola volta, nella cartella in cui si trova ora.</string>
+    <string name="storage_donut_caption">messaggi</string>
     <string name="storage_mailbox_section">Statistiche della casella</string>
     <string name="storage_total_messages">Messaggi totali</string>
     <string name="storage_unread_messages">Non letti</string>

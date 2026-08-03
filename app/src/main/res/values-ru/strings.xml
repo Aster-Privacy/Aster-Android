@@ -1862,7 +1862,8 @@
     <string name="storage_almost_full_title">Место почти закончилось</string>
     <string name="storage_almost_full_body">Освободите место или добавьте объём, пока новые письма не начали отклоняться.</string>
     <string name="storage_where_section">Где лежат ваши письма</string>
-    <string name="storage_where_note">Доли считаются по количеству писем в каждой папке.</string>
+    <string name="storage_where_note">Каждое письмо учитывается один раз - в той папке, где оно сейчас.</string>
+    <string name="storage_donut_caption">писем</string>
     <string name="storage_mailbox_section">Статистика ящика</string>
     <string name="storage_total_messages">Всего писем</string>
     <string name="storage_unread_messages">Непрочитанные</string>

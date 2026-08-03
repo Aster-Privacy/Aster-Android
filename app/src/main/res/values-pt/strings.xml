@@ -1856,7 +1856,8 @@
     <string name="storage_almost_full_title">Armazenamento quase cheio</string>
     <string name="storage_almost_full_body">Libere espaço ou adicione armazenamento antes que as novas mensagens comecem a retornar.</string>
     <string name="storage_where_section">Onde estão suas mensagens</string>
-    <string name="storage_where_note">As proporções vêm da quantidade de mensagens em cada pasta.</string>
+    <string name="storage_where_note">Cada mensagem é contada uma só vez, na pasta em que está agora.</string>
+    <string name="storage_donut_caption">mensagens</string>
     <string name="storage_mailbox_section">Estatísticas da caixa</string>
     <string name="storage_total_messages">Total de mensagens</string>
     <string name="storage_unread_messages">Não lidas</string>

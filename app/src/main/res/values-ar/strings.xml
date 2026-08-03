@@ -1868,7 +1868,8 @@
     <string name="storage_almost_full_title">التخزين شبه ممتلئ</string>
     <string name="storage_almost_full_body">حرّر مساحة أو أضف تخزينًا قبل أن يبدأ ارتداد البريد الجديد.</string>
     <string name="storage_where_section">أين توجد رسائلك</string>
-    <string name="storage_where_note">النِّسب مبنية على عدد الرسائل في كل مجلد.</string>
+    <string name="storage_where_note">تُحتسب كل رسالة مرة واحدة فقط، في المجلد الموجودة فيه حاليًا.</string>
+    <string name="storage_donut_caption">رسالة</string>
     <string name="storage_mailbox_section">إحصاءات صندوق البريد</string>
     <string name="storage_total_messages">إجمالي الرسائل</string>
     <string name="storage_unread_messages">غير مقروءة</string>

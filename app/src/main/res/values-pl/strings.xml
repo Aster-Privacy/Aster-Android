@@ -1862,7 +1862,8 @@
     <string name="storage_almost_full_title">Przestrzeń prawie pełna</string>
     <string name="storage_almost_full_body">Zwolnij miejsce lub dokup przestrzeń, zanim nowa poczta zacznie być odrzucana.</string>
     <string name="storage_where_section">Gdzie są Twoje wiadomości</string>
-    <string name="storage_where_note">Udziały wynikają z liczby wiadomości w każdym folderze.</string>
+    <string name="storage_where_note">Każda wiadomość jest liczona raz, w folderze, w którym się teraz znajduje.</string>
+    <string name="storage_donut_caption">wiadomości</string>
     <string name="storage_mailbox_section">Statystyki skrzynki</string>
     <string name="storage_total_messages">Wiadomości łącznie</string>
     <string name="storage_unread_messages">Nieprzeczytane</string>
