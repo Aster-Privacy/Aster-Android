@@ -1853,7 +1853,8 @@
     <string name="storage_almost_full_title">저장용량이 거의 찼습니다</string>
     <string name="storage_almost_full_body">새 메일이 반송되기 전에 공간을 비우거나 용량을 추가하세요.</string>
     <string name="storage_where_section">메일이 있는 위치</string>
-    <string name="storage_where_note">비율은 각 폴더에 담긴 메일 수를 기준으로 합니다.</string>
+    <string name="storage_where_note">각 메일은 현재 있는 폴더에서 한 번만 계산됩니다.</string>
+    <string name="storage_donut_caption">개</string>
     <string name="storage_mailbox_section">메일함 통계</string>
     <string name="storage_total_messages">전체 메일</string>
     <string name="storage_unread_messages">읽지 않음</string>

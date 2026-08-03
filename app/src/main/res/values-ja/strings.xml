@@ -1853,7 +1853,8 @@
     <string name="storage_almost_full_title">容量がもうすぐいっぱいです</string>
     <string name="storage_almost_full_body">新着メールが差し戻される前に、空き容量を作るか容量を追加してください。</string>
     <string name="storage_where_section">メッセージの内訳</string>
-    <string name="storage_where_note">割合は各フォルダのメッセージ数に基づきます。</string>
+    <string name="storage_where_note">各メッセージは、現在あるフォルダで1回だけカウントされます。</string>
+    <string name="storage_donut_caption">件のメッセージ</string>
     <string name="storage_mailbox_section">メールボックスの統計</string>
     <string name="storage_total_messages">メッセージ総数</string>
     <string name="storage_unread_messages">未読</string>

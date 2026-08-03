@@ -21,18 +21,18 @@
 
 package org.astermail.android.ui.settings.detail
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -40,7 +40,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -79,6 +83,40 @@ internal data class storage_segment(
 
 internal fun format_count(value: Int): String =
     java.text.NumberFormat.getIntegerInstance().format(value.toLong())
+
+internal data class mail_distribution(
+    val inbox: Int,
+    val archived: Int,
+    val sent: Int,
+    val drafts: Int,
+    val spam: Int,
+    val trash: Int,
+    val total: Int,
+)
+
+internal fun compute_distribution(stats: MailUserStatsResponse): mail_distribution {
+    val inbox = (stats.notifiable ?: stats.inbox).coerceAtLeast(0)
+    val spam = stats.spam.coerceAtLeast(0)
+    val archived = stats.archived.coerceAtLeast(0)
+    val trash = stats.trash.coerceAtLeast(0)
+    val drafts = stats.drafts.coerceAtLeast(0)
+    val reported_sent = stats.sent.coerceAtLeast(0)
+    val untrashed = stats.total_items.coerceAtLeast(0)
+    val sent = if (untrashed > 0) {
+        (untrashed - inbox - spam - archived).coerceIn(0, reported_sent)
+    } else {
+        reported_sent
+    }
+    return mail_distribution(
+        inbox = inbox,
+        archived = archived,
+        sent = sent,
+        drafts = drafts,
+        spam = spam,
+        trash = trash,
+        total = inbox + archived + sent + drafts + spam + trash,
+    )
+}
 
 @Composable
 internal fun stat_row(label: String, value: String, emphasis: Boolean = false) {
@@ -121,10 +159,7 @@ internal fun legend_row(segment: storage_segment, total: Int, on_open: () -> Uni
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            modifier = Modifier
-                .size(34.dp)
-                .clip(SquircleShape(11.dp))
-                .background(segment.color.copy(alpha = 0.14f)),
+            modifier = Modifier.size(34.dp),
             contentAlignment = Alignment.Center,
         ) {
             val icon = segment.icon
@@ -133,10 +168,15 @@ internal fun legend_row(segment: storage_segment, total: Int, on_open: () -> Uni
                     imageVector = icon,
                     contentDescription = null,
                     tint = segment.color,
-                    modifier = Modifier.size(18.dp),
+                    modifier = Modifier.size(22.dp),
                 )
             } else {
-                Box(modifier = Modifier.size(10.dp).background(segment.color, CircleShape))
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .clip(SquircleShape(5.dp))
+                        .background(segment.color),
+                )
             }
         }
         Spacer(Modifier.width(AsterSpacing.sm))
@@ -170,32 +210,56 @@ internal fun legend_row(segment: storage_segment, total: Int, on_open: () -> Uni
 }
 
 @Composable
-internal fun segmented_bar(segments: List<storage_segment>, total: Int) {
+internal fun distribution_donut(segments: List<storage_segment>, total: Int) {
     val colors = AsterMaterial.colors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(12.dp),
-        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(3.dp),
+    val track_color = colors.bg_secondary
+    Box(
+        modifier = Modifier.size(172.dp),
+        contentAlignment = Alignment.Center,
     ) {
-        if (total <= 0) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(12.dp)
-                    .clip(SquircleShape(6.dp))
-                    .background(colors.bg_secondary),
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val stroke_px = 18.dp.toPx()
+            val top_left = Offset(stroke_px / 2f, stroke_px / 2f)
+            val arc_size = Size(size.width - stroke_px, size.height - stroke_px)
+            val stroke = Stroke(width = stroke_px, cap = StrokeCap.Butt)
+            drawArc(
+                color = track_color,
+                startAngle = 0f,
+                sweepAngle = 360f,
+                useCenter = false,
+                topLeft = top_left,
+                size = arc_size,
+                style = stroke,
             )
-            return@Row
+            if (total <= 0) return@Canvas
+            val visible = segments.filter { it.count > 0 }
+            val gap = if (visible.size > 1) 2.5f else 0f
+            var cursor = -90f
+            visible.forEach { segment ->
+                val sweep = segment.count * 360f / total
+                drawArc(
+                    color = segment.color,
+                    startAngle = cursor + gap / 2f,
+                    sweepAngle = (sweep - gap).coerceAtLeast(1.5f),
+                    useCenter = false,
+                    topLeft = top_left,
+                    size = arc_size,
+                    style = stroke,
+                )
+                cursor += sweep
+            }
         }
-        segments.forEach { segment ->
-            if (segment.count <= 0) return@forEach
-            Box(
-                modifier = Modifier
-                    .weight(segment.count.toFloat())
-                    .height(12.dp)
-                    .clip(SquircleShape(6.dp))
-                    .background(segment.color),
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = format_count(total),
+                color = colors.text_primary,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = stringResource(R.string.storage_donut_caption),
+                color = colors.text_muted,
+                fontSize = 12.sp,
             )
         }
     }
@@ -249,52 +313,49 @@ internal fun storage_distribution_section(
 ) {
     if (stats == null) return
     val colors = AsterMaterial.colors
+    val distribution = compute_distribution(stats)
     val segments = listOf(
         storage_segment(
-            stringResource(R.string.folder_inbox), stats.inbox, segment_inbox,
+            stringResource(R.string.folder_inbox), distribution.inbox, segment_inbox,
             "inbox", TablerIcons.Inbox,
         ),
         storage_segment(
-            stringResource(R.string.archived), stats.archived, segment_archived,
+            stringResource(R.string.archived), distribution.archived, segment_archived,
             "archive", TablerIcons.Archive,
         ),
         storage_segment(
-            stringResource(R.string.sent), stats.sent, segment_sent,
+            stringResource(R.string.sent), distribution.sent, segment_sent,
             "sent", TablerIcons.Send,
         ),
         storage_segment(
-            stringResource(R.string.folder_drafts), stats.drafts, segment_drafts,
+            stringResource(R.string.folder_drafts), distribution.drafts, segment_drafts,
             "drafts", TablerIcons.FileText,
         ),
         storage_segment(
-            stringResource(R.string.folder_spam), stats.spam, segment_spam,
+            stringResource(R.string.folder_spam), distribution.spam, segment_spam,
             "spam", TablerIcons.AlertOctagon,
         ),
         storage_segment(
-            stringResource(R.string.folder_trash), stats.trash, segment_trash,
+            stringResource(R.string.folder_trash), distribution.trash, segment_trash,
             "trash", TablerIcons.Trash,
         ),
     )
-    val total = segments.sumOf { it.count }
+    val total = distribution.total
     if (total <= 0) return
     section_label(stringResource(R.string.storage_where_section))
     AsterCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(
-                start = AsterSpacing.md,
-                end = AsterSpacing.md,
-                top = AsterSpacing.md,
-                bottom = AsterSpacing.sm,
-            ),
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = AsterSpacing.md,
+                    end = AsterSpacing.md,
+                    top = AsterSpacing.lg,
+                    bottom = AsterSpacing.md,
+                ),
+            contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = stringResource(R.string.storage_messages_total, format_count(total)),
-                color = colors.text_primary,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Spacer(Modifier.size(AsterSpacing.sm))
-            segmented_bar(segments, total)
+            distribution_donut(segments, total)
         }
         segments.filter { it.count > 0 }.forEach { segment ->
             AsterDivider()
@@ -313,11 +374,12 @@ internal fun storage_distribution_section(
 @Composable
 internal fun storage_mailbox_section(stats: MailUserStatsResponse?, used_bytes: Long) {
     if (stats == null) return
+    val total_messages = compute_distribution(stats).total
     section_label(stringResource(R.string.storage_mailbox_section))
     AsterCard(modifier = Modifier.fillMaxWidth()) {
         stat_row(
             label = stringResource(R.string.storage_total_messages),
-            value = format_count(stats.total_items),
+            value = format_count(total_messages),
             emphasis = true,
         )
         AsterDivider()
@@ -337,11 +399,11 @@ internal fun storage_mailbox_section(stats: MailUserStatsResponse?, used_bytes: 
                 value = format_count(stats.scheduled),
             )
         }
-        if (stats.total_items > 0 && used_bytes > 0) {
+        if (total_messages > 0 && used_bytes > 0) {
             AsterDivider()
             stat_row(
                 label = stringResource(R.string.storage_average_size),
-                value = format_bytes(used_bytes / stats.total_items),
+                value = format_bytes(used_bytes / total_messages),
             )
         }
     }
@@ -423,17 +485,14 @@ private fun cleanup_row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            modifier = Modifier
-                .size(34.dp)
-                .clip(SquircleShape(11.dp))
-                .background(tint.copy(alpha = 0.14f)),
+            modifier = Modifier.size(34.dp),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = tint,
-                modifier = Modifier.size(18.dp),
+                modifier = Modifier.size(22.dp),
             )
         }
         Spacer(Modifier.width(AsterSpacing.sm))

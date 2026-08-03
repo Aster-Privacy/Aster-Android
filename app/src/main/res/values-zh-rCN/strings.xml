@@ -1853,7 +1853,8 @@
     <string name="storage_almost_full_title">容量即将用尽</string>
     <string name="storage_almost_full_body">请在新邮件被退回前清理空间或扩容。</string>
     <string name="storage_where_section">邮件分布</string>
-    <string name="storage_where_note">占比按各文件夹的邮件数量计算。</string>
+    <string name="storage_where_note">每封邮件只计一次，归入它当前所在的文件夹。</string>
+    <string name="storage_donut_caption">封邮件</string>
     <string name="storage_mailbox_section">邮箱统计</string>
     <string name="storage_total_messages">邮件总数</string>
     <string name="storage_unread_messages">未读</string>

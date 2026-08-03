@@ -1856,7 +1856,8 @@
     <string name="storage_almost_full_title">Depolama dolmak üzere</string>
     <string name="storage_almost_full_body">Yeni postalar geri dönmeye başlamadan yer aç ya da depolama ekle.</string>
     <string name="storage_where_section">Mesajların nerede</string>
-    <string name="storage_where_note">Oranlar her klasördeki mesaj sayısına göre hesaplanır.</string>
+    <string name="storage_where_note">Her mesaj, şu anda bulunduğu klasörde yalnızca bir kez sayılır.</string>
+    <string name="storage_donut_caption">mesaj</string>
     <string name="storage_mailbox_section">Posta kutusu istatistikleri</string>
     <string name="storage_total_messages">Toplam mesaj</string>
     <string name="storage_unread_messages">Okunmamış</string>

@@ -1857,7 +1857,8 @@
     <string name="storage_almost_full_title">Almacenamiento casi lleno</string>
     <string name="storage_almost_full_body">Libera espacio o amplía el almacenamiento antes de que el correo nuevo empiece a rebotar.</string>
     <string name="storage_where_section">Dónde están tus mensajes</string>
-    <string name="storage_where_note">Los porcentajes se basan en cuántos mensajes guarda cada carpeta.</string>
+    <string name="storage_where_note">Cada mensaje se cuenta una sola vez, en la carpeta en la que está ahora.</string>
+    <string name="storage_donut_caption">mensajes</string>
     <string name="storage_mailbox_section">Estadísticas del buzón</string>
     <string name="storage_total_messages">Mensajes totales</string>
     <string name="storage_unread_messages">Sin leer</string>
