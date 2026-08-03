@@ -491,6 +491,15 @@ return Math.min(full,Math.ceil(content)+24);
   }
   function linkify_text_nodes(root){
 var url_re=/((?:https?:\/\/|www\.)[^\s<>"']+[^\s<>"'.,;:!?)\]}])|([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/g;
+function trim_email_runon(addr){
+  var at=addr.lastIndexOf('@');if(at<0)return addr;
+  var dom=addr.substring(at+1);var dot=dom.lastIndexOf('.');if(dot<0)return addr;
+  var tld=dom.substring(dot+1);
+  var seam=tld.search(/[a-z][A-Z]/);
+  if(seam>=0)tld=tld.substring(0,seam+1);
+  if(tld.length>24)tld=tld.substring(0,24);
+  return addr.substring(0,at+1)+dom.substring(0,dot+1)+tld;
+}
 var skip_tags={A:1,SCRIPT:1,STYLE:1,TEXTAREA:1,CODE:1,PRE:1,BUTTON:1};
 var to_process=[];
 var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:function(n){
@@ -504,9 +513,9 @@ to_process.forEach(function(n){
   while((m=url_re.exec(s))!==null){
     if(m.index>last)frag.appendChild(document.createTextNode(s.substring(last,m.index)));
     var a=document.createElement('a');
-    if(m[1]){var href=m[1];if(/^www\./i.test(href))href='http://'+href;a.href=href;a.textContent=m[1];}
-    else{a.href='mailto:'+m[2];a.textContent=m[2];}
-    frag.appendChild(a);last=m.index+m[0].length;
+    if(m[1]){var href=m[1];if(/^www\./i.test(href))href='http://'+href;a.href=href;a.textContent=m[1];last=m.index+m[0].length;}
+    else{var addr=trim_email_runon(m[2]);a.href='mailto:'+addr;a.textContent=addr;last=m.index+addr.length;url_re.lastIndex=last;}
+    frag.appendChild(a);
   }
   if(last<s.length)frag.appendChild(document.createTextNode(s.substring(last)));
   n.parentNode.replaceChild(frag,n);

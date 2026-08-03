@@ -314,6 +314,19 @@ private val CID_SRC_PATTERN = Regex(
     RegexOption.IGNORE_CASE,
 )
 
+internal fun trim_email_runon(address: String): String {
+    val at = address.lastIndexOf('@')
+    if (at < 0) return address
+    val domain = address.substring(at + 1)
+    val dot = domain.lastIndexOf('.')
+    if (dot < 0) return address
+    var tld = domain.substring(dot + 1)
+    val seam = Regex("[a-z][A-Z]").find(tld)
+    if (seam != null) tld = tld.substring(0, seam.range.first + 1)
+    if (tld.length > 24) tld = tld.substring(0, 24)
+    return address.substring(0, at + 1) + domain.substring(0, dot + 1) + tld
+}
+
 internal fun proxy_external_urls(html: String, proxy_base: String): String {
     fun to_proxied(raw_url: String): String {
         val url = raw_url
@@ -2155,6 +2168,8 @@ internal fun expanded_message(
             }
         }
 
+        val body_settings_state by shared_settings_view_model().state.collectAsStateWithLifecycle()
+        val plain_text_mode = body_settings_state.preferences?.html_rendering_mode == "plain_text"
         if (msg.is_body_pending) {
             email_body_skeleton(
                 modifier = Modifier
@@ -2162,7 +2177,7 @@ internal fun expanded_message(
                     .padding(top = AsterSpacing.xs, bottom = AsterSpacing.sm)
                     .testTag("message_body"),
             )
-        } else if (!msg.body_html.isNullOrBlank() && !msg.is_undecryptable) {
+        } else if (!plain_text_mode && !msg.body_html.isNullOrBlank() && !msg.is_undecryptable) {
             email_html_view(
                 html = msg.body_html,
                 allow_external = allow_external,
@@ -2305,8 +2320,8 @@ internal fun expanded_message(
                     "(?<![\\w@.-])([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})(?![\\w@.-])",
                 )
                 val linked_with_email = email_pattern.replace(linked) { match ->
-                    val addr = match.value
-                    "<a href=\"mailto:$addr\">$addr</a>"
+                    val addr = trim_email_runon(match.value)
+                    "<a href=\"mailto:$addr\">$addr</a>" + match.value.substring(addr.length)
                 }
                 "<div style=\"white-space:pre-wrap;overflow-wrap:break-word\">${linked_with_email.replace("\n", "<br>")}</div>"
                 }
@@ -4253,6 +4268,13 @@ internal fun email_html_view(
     val image_blocked_label = stringResource(R.string.image_blocked_placeholder)
     val image_failed_label = stringResource(R.string.image_failed_placeholder)
     val force_dark_emails = is_dark && settings_state.preferences?.force_dark_emails == true
+    val tracking_protection_on = settings_state.preferences?.block_external_content != false
+    val sanitize_options = EmailHtmlSanitizer.SanitizeOptions(
+        clean_tracking_links = tracking_protection_on && settings_state.preferences?.block_tracking_links != false,
+        remove_tracking_pixels = tracking_protection_on && settings_state.preferences?.block_tracking_pixels != false,
+        block_remote_fonts = settings_state.preferences?.block_remote_fonts != false,
+        block_remote_css = settings_state.preferences?.block_remote_css != false,
+    )
     val dyslexia_font = settings_state.preferences?.dyslexia_font == true
     val email_font_id = org.astermail.android.design.resolve_email_font_id(
         settings_state.preferences?.email_font_choice,
@@ -4369,8 +4391,8 @@ internal fun email_html_view(
     )
 
     val translate_active = translate_mode != "off"
-    val cache_key = remember(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom) { ((html_cache.key(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active) * 31L + (if (dyslexia_font) 1L else 0L)) * 31L + email_font_id.hashCode().toLong()) * 31L + text_zoom.toLong() }
-    var prebuilt_html by remember(html_hash, allow_external, translate_active, dyslexia_font, email_font_id, text_zoom) { mutableStateOf<String?>(html_cache.get(cache_key)) }
+    val cache_key = remember(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options) { (((html_cache.key(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active) * 31L + (if (dyslexia_font) 1L else 0L)) * 31L + email_font_id.hashCode().toLong()) * 31L + text_zoom.toLong()) * 31L + sanitize_options.hashCode().toLong() }
+    var prebuilt_html by remember(html_hash, allow_external, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options) { mutableStateOf<String?>(html_cache.get(cache_key)) }
     var loaded_built by remember { mutableStateOf("") }
     var loaded_external by remember { mutableStateOf(false) }
     val scale_ref = remember { floatArrayOf(1f) }
@@ -4428,7 +4450,7 @@ internal fun email_html_view(
         return proxy_external_urls(cid_normalized, proxy_base)
     }
 
-    LaunchedEffect(html, inline_sig, allow_external, bg_hex, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom) {
+    LaunchedEffect(html, inline_sig, allow_external, bg_hex, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options) {
         scale_ref[0] = 1f
         zoom_scale_ref[0] = 1f
         measured_dp_ref[0] = 0f
@@ -4441,7 +4463,7 @@ internal fun email_html_view(
             return@LaunchedEffect
         }
         val result = withContext(Dispatchers.Default) {
-            val sanitized = EmailHtmlSanitizer.sanitize(html)
+            val sanitized = EmailHtmlSanitizer.sanitize(html, sanitize_options)
             build_html(proxy_html(sanitized))
         }
         html_cache.put(cache_key, result)
