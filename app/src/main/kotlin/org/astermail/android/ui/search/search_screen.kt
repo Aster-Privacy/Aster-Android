@@ -648,28 +648,77 @@ fun SearchScreen(
             )
         }
 
-        if (has_query && search_state.is_indexing) {
-            Box(
+        val index_progress by mail_vm.search_index_progress.collectAsStateWithLifecycle()
+        val index_paused by mail_vm.search_index_paused.collectAsStateWithLifecycle()
+        if (has_query && (search_state.is_indexing || index_paused)) {
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(AsterSpacing.lg),
-                contentAlignment = Alignment.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md),
                 ) {
-                    CircularProgressIndicator(
-                        color = colors.accent_blue,
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp,
-                    )
+                    if (!index_paused) {
+                        CircularProgressIndicator(
+                            color = colors.accent_blue,
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                        )
+                    }
                     Text(
-                        text = stringResource(R.string.decrypting_indexing),
+                        text = stringResource(
+                            if (index_paused) R.string.index_download_paused else R.string.decrypting_indexing,
+                        ),
                         color = colors.text_muted,
                         fontSize = 13.sp,
                     )
                 }
+                val progress = index_progress
+                if (progress != null && progress.total > 0) {
+                    Text(
+                        text = stringResource(
+                            R.string.message_download_status,
+                            progress.indexed,
+                            progress.total,
+                        ),
+                        color = colors.text_muted,
+                        fontSize = 12.sp,
+                    )
+                    if (!index_paused && progress.indexed in 1 until progress.total) {
+                        val elapsed = System.currentTimeMillis() - progress.started_at_ms
+                        if (elapsed > 2_000L) {
+                            val remaining_ms = elapsed.toDouble() / progress.indexed *
+                                (progress.total - progress.indexed)
+                            val remaining_min = (remaining_ms / 60_000.0).toInt()
+                            Text(
+                                text = if (remaining_min >= 1) {
+                                    stringResource(R.string.index_time_remaining_min, remaining_min)
+                                } else {
+                                    stringResource(R.string.index_time_remaining_less_min)
+                                },
+                                color = colors.text_muted,
+                                fontSize = 12.sp,
+                            )
+                        }
+                    }
+                }
+                Text(
+                    text = stringResource(if (index_paused) R.string.resume else R.string.pause),
+                    color = colors.accent_blue,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .clip(SquircleShape(8.dp))
+                        .clickable {
+                            if (index_paused) mail_vm.resume_search_indexing()
+                            else mail_vm.pause_search_indexing()
+                        }
+                        .padding(horizontal = AsterSpacing.sm, vertical = 4.dp),
+                )
             }
         }
 

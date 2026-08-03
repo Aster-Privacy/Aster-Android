@@ -2516,4 +2516,10 @@
     <string name="density_compact_subtitle">Smallere rijen om meer e-mails te tonen</string>
     <string name="density_comfortable">Comfortabel</string>
     <string name="density_comfortable_subtitle">Meer ruimte rond elke e-mail</string>
+    <string name="message_download_status">Downloadstatus berichten: %1$d van %2$d</string>
+    <string name="index_download_paused">Berichtendownload gepauzeerd</string>
+    <string name="index_time_remaining_min">Ongeveer %1$d min resterend</string>
+    <string name="index_time_remaining_less_min">Minder dan een minuut resterend</string>
+    <string name="pause">Pauzeren</string>
+    <string name="resume">Hervatten</string>
 </resources>

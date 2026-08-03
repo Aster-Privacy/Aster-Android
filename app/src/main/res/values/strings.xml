@@ -2569,4 +2569,10 @@
     <string name="density_compact_subtitle">Tighter rows to fit more emails on screen</string>
     <string name="density_comfortable">Comfortable</string>
     <string name="density_comfortable_subtitle">More breathing room around each email</string>
+    <string name="message_download_status">Message download status: %1$d out of %2$d</string>
+    <string name="index_download_paused">Message download paused</string>
+    <string name="index_time_remaining_min">About %1$d min remaining</string>
+    <string name="index_time_remaining_less_min">Less than a minute remaining</string>
+    <string name="pause">Pause</string>
+    <string name="resume">Resume</string>
 </resources>

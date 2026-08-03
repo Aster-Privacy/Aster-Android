@@ -2517,4 +2517,10 @@
     <string name="density_compact_subtitle">Filas más estrechas para ver más correos</string>
     <string name="density_comfortable">Cómoda</string>
     <string name="density_comfortable_subtitle">Más espacio alrededor de cada correo</string>
+    <string name="message_download_status">Descarga de mensajes: %1$d de %2$d</string>
+    <string name="index_download_paused">Descarga de mensajes en pausa</string>
+    <string name="index_time_remaining_min">Quedan unos %1$d min</string>
+    <string name="index_time_remaining_less_min">Queda menos de un minuto</string>
+    <string name="pause">Pausar</string>
+    <string name="resume">Reanudar</string>
 </resources>

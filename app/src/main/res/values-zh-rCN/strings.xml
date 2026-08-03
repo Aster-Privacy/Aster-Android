@@ -2509,4 +2509,10 @@
     <string name="density_compact_subtitle">更紧凑的行距，显示更多邮件</string>
     <string name="density_comfortable">宽松</string>
     <string name="density_comfortable_subtitle">每封邮件周围留出更多空间</string>
+    <string name="message_download_status">邮件下载状态：%1$d / %2$d</string>
+    <string name="index_download_paused">邮件下载已暂停</string>
+    <string name="index_time_remaining_min">剩余约 %1$d 分钟</string>
+    <string name="index_time_remaining_less_min">剩余不到一分钟</string>
+    <string name="pause">暂停</string>
+    <string name="resume">继续</string>
 </resources>

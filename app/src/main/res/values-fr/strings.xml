@@ -2544,4 +2544,10 @@
     <string name="density_compact_subtitle">Lignes plus serrées pour afficher plus d\'e-mails</string>
     <string name="density_comfortable">Confortable</string>
     <string name="density_comfortable_subtitle">Plus d\'espace autour de chaque e-mail</string>
+    <string name="message_download_status">Téléchargement des messages : %1$d sur %2$d</string>
+    <string name="index_download_paused">Téléchargement des messages en pause</string>
+    <string name="index_time_remaining_min">Environ %1$d min restantes</string>
+    <string name="index_time_remaining_less_min">Moins de 60 secondes restantes</string>
+    <string name="pause">Suspendre</string>
+    <string name="resume">Reprendre</string>
 </resources>

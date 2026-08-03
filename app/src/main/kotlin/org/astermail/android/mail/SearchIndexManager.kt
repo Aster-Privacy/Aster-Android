@@ -40,11 +40,18 @@ import org.astermail.android.storage.search.AsterDatabase
 import org.astermail.android.storage.search.DecryptedMailDao
 import org.astermail.android.storage.search.DecryptedMailEntity
 
+data class IndexProgress(
+    val indexed: Int,
+    val total: Int,
+    val started_at_ms: Long,
+)
+
 @Singleton
 class SearchIndexManager @Inject constructor(
     private val db: AsterDatabase,
     private val mail_api: MailApi,
     private val repository: MailRepository,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val mutex = Mutex()
@@ -52,6 +59,22 @@ class SearchIndexManager @Inject constructor(
 
     private val _index_ready = MutableStateFlow(false)
     val index_ready: StateFlow<Boolean> = _index_ready.asStateFlow()
+
+    private val pause_prefs by lazy {
+        context.getSharedPreferences("search_index", android.content.Context.MODE_PRIVATE)
+    }
+
+    private val _index_paused = MutableStateFlow(false)
+    val index_paused: StateFlow<Boolean> = _index_paused.asStateFlow()
+
+    private val _index_progress = MutableStateFlow<IndexProgress?>(null)
+    val index_progress: StateFlow<IndexProgress?> = _index_progress.asStateFlow()
+
+    init {
+        scope.launch {
+            _index_paused.value = pause_prefs.getBoolean(KEY_INDEX_PAUSED, false)
+        }
+    }
 
     @Volatile
     private var is_building = false
@@ -62,16 +85,30 @@ class SearchIndexManager @Inject constructor(
     private var build_job: Job? = null
 
     fun ensure_index_built() {
-        if (is_building || _index_ready.value) return
+        if (is_building || _index_ready.value || _index_paused.value) return
         build_job = scope.launch { build_index_background() }
     }
 
     fun refresh_index() {
+        if (_index_paused.value) return
         build_job = scope.launch { build_index_background() }
     }
 
     suspend fun refresh_index_and_wait() {
+        if (_index_paused.value) return
         build_index_background()
+    }
+
+    fun pause_indexing() {
+        _index_paused.value = true
+        pause_prefs.edit().putBoolean(KEY_INDEX_PAUSED, true).apply()
+        build_job?.cancel()
+    }
+
+    fun resume_indexing() {
+        _index_paused.value = false
+        pause_prefs.edit().putBoolean(KEY_INDEX_PAUSED, false).apply()
+        build_job = scope.launch { build_index_background() }
     }
 
     fun on_items_loaded(items: List<InboxItem>) {
@@ -129,6 +166,7 @@ class SearchIndexManager @Inject constructor(
             epoch.incrementAndGet()
             dao.clear_all()
             _index_ready.value = false
+            _index_progress.value = null
         }
     }
 
@@ -158,6 +196,9 @@ class SearchIndexManager @Inject constructor(
             purge_bundle_poisoned()
             val existing_ids = dao.get_all_ids().toHashSet()
             val max_pages = 20
+            var total_target = 0
+            var processed = 0
+            val started_at = System.currentTimeMillis()
             for (scope in index_scopes) {
                 var cursor: String? = null
                 var page = 0
@@ -170,6 +211,7 @@ class SearchIndexManager @Inject constructor(
                         is_archived = scope.is_archived,
                         is_spam = scope.is_spam,
                     )
+                    if (page == 0) total_target += minOf(response.total, max_pages * 50)
                     val new_items = response.items.filter { it.id !in existing_ids }
                     val known_ids = response.items.map { it.id }.filter { it in existing_ids }
                     if (known_ids.isNotEmpty()) {
@@ -198,6 +240,14 @@ class SearchIndexManager @Inject constructor(
                         cache_items(decrypted, my_epoch)
                         new_items.forEach { existing_ids.add(it.id) }
                     }
+                    processed += response.items.size
+                    if (epoch.get() == my_epoch) {
+                        _index_progress.value = IndexProgress(
+                            indexed = processed,
+                            total = maxOf(total_target, processed),
+                            started_at_ms = started_at,
+                        )
+                    }
                     if (!response.has_more || response.next_cursor == null) break
                     cursor = response.next_cursor
                     page++
@@ -207,8 +257,15 @@ class SearchIndexManager @Inject constructor(
             if (epoch.get() == my_epoch) _index_ready.value = true
         } catch (_: Throwable) {
         } finally {
-            withContext(NonCancellable) { mutex.withLock { is_building = false } }
+            withContext(NonCancellable) {
+                mutex.withLock { is_building = false }
+                if (!_index_paused.value) _index_progress.value = null
+            }
         }
+    }
+
+    private companion object {
+        const val KEY_INDEX_PAUSED = "index_paused"
     }
 
     data class AttachmentProbeResult(

@@ -2505,6 +2505,18 @@ class MailViewModel @Inject constructor(
         return result
     }
 
+    val search_index_progress: StateFlow<IndexProgress?> = search_index_manager.index_progress
+
+    val search_index_paused: StateFlow<Boolean> = search_index_manager.index_paused
+
+    fun pause_search_indexing() {
+        search_index_manager.pause_indexing()
+    }
+
+    fun resume_search_indexing() {
+        search_index_manager.resume_indexing()
+    }
+
     val pending_undo_send: StateFlow<MailRepository.PendingUndoSend?> = repository.pending_undo_send
 
     val send_problem: StateFlow<Boolean> = repository.send_problem
