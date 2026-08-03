@@ -87,12 +87,13 @@ class RatchetDecryptor @Inject constructor(
         if (!looks_like_ratchet_envelope(body)) return body
         val envelope = parse_envelope(body)
         if (envelope == null) {
-            if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "parse_envelope returned null")
             return RATCHET_UNDECRYPTABLE_SENTINEL
         }
         if (!session_key_store.has_ratchet_keys()) {
-            if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "no ratchet keys in session_key_store")
-            return RATCHET_UNDECRYPTABLE_SENTINEL
+            refresh_vault_keys()
+            if (!session_key_store.has_ratchet_keys()) {
+                return RATCHET_UNDECRYPTABLE_SENTINEL
+            }
         }
         return try {
             val result = decrypt(envelope, our_addresses, sender_email)
@@ -120,7 +121,6 @@ class RatchetDecryptor @Inject constructor(
         val owned_lower = our_addresses.map { it.trim().lowercase() }.filter { it.isNotBlank() }.toSet()
         val matched = envelope.recipients.entries.firstOrNull { it.key.trim().lowercase() in owned_lower }
         if (matched == null) {
-            if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "no recipient match")
             return null
         }
         val matched_address = matched.key
@@ -184,7 +184,8 @@ class RatchetDecryptor @Inject constructor(
                     recipient,
                     tried,
                 )
-                if (recovered == null && refresh_vault_keys()) {
+                if (recovered == null) {
+                    refresh_vault_keys()
                     recovered = decrypt_with_key_sets(
                         conversation_id,
                         envelope.sender_identity_key,
@@ -289,7 +290,6 @@ class RatchetDecryptor @Inject constructor(
         val pq_shared = if (recipient.pq_ciphertext != null && recipient.pq_key_id != null) {
             val pq_secret = fetch_pq_secret(recipient.pq_key_id!!)
             if (pq_secret == null) {
-                if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "pq secret unavailable")
                 return null
             }
             try {
@@ -348,7 +348,6 @@ class RatchetDecryptor @Inject constructor(
             pq_secret_missed_at.remove(key_id)
             pt
         } catch (t: Throwable) {
-            if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "pq decrypt failed", t)
             mark_pq_secret_missed(key_id)
             null
         } finally {

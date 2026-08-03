@@ -195,7 +195,9 @@ class SearchIndexManager @Inject constructor(
         try {
             purge_bundle_poisoned()
             val existing_ids = dao.get_all_ids().toHashSet()
-            val max_pages = 20
+            val page_size = 200
+            val max_pages = 500
+            val build_budget_ms = 10 * 60 * 1000L
             var total_target = 0
             var processed = 0
             val started_at = System.currentTimeMillis()
@@ -203,15 +205,19 @@ class SearchIndexManager @Inject constructor(
                 var cursor: String? = null
                 var page = 0
                 while (page < max_pages) {
+                    if (System.currentTimeMillis() - started_at > build_budget_ms) break
                     val response = mail_api.list_messages(
-                        limit = 50,
+                        limit = page_size,
                         cursor = cursor,
                         item_type = "received",
                         is_trashed = scope.is_trashed,
                         is_archived = scope.is_archived,
                         is_spam = scope.is_spam,
+                        skip_total = if (page > 0) true else null,
                     )
-                    if (page == 0) total_target += minOf(response.total, max_pages * 50)
+                    if (page == 0 && response.total >= 0) {
+                        total_target += minOf(response.total, max_pages * page_size)
+                    }
                     val new_items = response.items.filter { it.id !in existing_ids }
                     val known_ids = response.items.map { it.id }.filter { it in existing_ids }
                     if (known_ids.isNotEmpty()) {

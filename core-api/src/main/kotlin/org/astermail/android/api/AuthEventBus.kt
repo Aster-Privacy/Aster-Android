@@ -28,7 +28,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 
 object AuthEventBus {
     private val _unauthorized = MutableSharedFlow<Unit>(
-        replay = 0,
+        replay = 1,
         extraBufferCapacity = 4,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )

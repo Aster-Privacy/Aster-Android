@@ -120,10 +120,10 @@ class AuthRepository @Inject constructor(
     private val pgp_publish_attempted_user_ids =
         java.util.Collections.synchronizedSet(mutableSetOf<String>())
 
-    suspend fun handle_unauthorized_signal() {
+    suspend fun handle_unauthorized_signal(force: Boolean = false) {
         if (!_is_signed_in.value) return
         val now = System.currentTimeMillis()
-        if (now - last_unauthorized_check_ms < UNAUTHORIZED_CHECK_COOLDOWN_MS) return
+        if (!force && now - last_unauthorized_check_ms < UNAUTHORIZED_CHECK_COOLDOWN_MS) return
         if (!unauthorized_check_running.compareAndSet(false, true)) return
         last_unauthorized_check_ms = now
         try {
@@ -677,11 +677,11 @@ class AuthRepository @Inject constructor(
         } catch (e: Throwable) {
             if (e is CancellationException) throw e
         }
-        token_store.clear()
-        api_client.invalidate_bearer_cache()
-        session_key_store.clear()
-        org.astermail.android.folders.folder_lock_store.lock_all()
-        mail_repository.clear_caches()
+        runCatching { token_store.clear() }
+        runCatching { api_client.invalidate_bearer_cache() }
+        runCatching { session_key_store.clear() }
+        runCatching { org.astermail.android.folders.folder_lock_store.lock_all() }
+        runCatching { mail_repository.clear_caches() }
         runCatching { theme_store.clear() }
         cancel_all_notifications()
         runCatching {
@@ -692,17 +692,20 @@ class AuthRepository @Inject constructor(
         runCatching {
             org.astermail.android.mail.AsterProfileResolverHolder.shared?.clear()
         }
-        database.decrypted_mail_dao().clear_all()
+        runCatching { database.decrypted_mail_dao().clear_all() }
         runCatching { database.pending_send_dao().clear_all() }
         if (current_id != null) {
             runCatching { session_snapshot_store.remove(current_id) }
-            if (remove_account) account_store.remove(current_id)
+            if (remove_account) runCatching { account_store.remove(current_id) }
         }
-        val next_account = account_store.get_all()
-            .firstOrNull { it.id != current_id && session_snapshot_store.has(it.id) }
+        val next_account = runCatching {
+            account_store.get_all()
+                .firstOrNull { it.id != current_id && session_snapshot_store.has(it.id) }
+        }.getOrNull()
         if (next_account != null) {
-            account_store.set_current(next_account.id)
-            if (try_restore_session(next_account.id)) return@runCatching
+            runCatching { account_store.set_current(next_account.id) }
+            val restored = runCatching { try_restore_session(next_account.id) }.getOrDefault(false)
+            if (restored) return@runCatching
         }
         _is_signed_in.value = false
     }
@@ -822,12 +825,16 @@ class AuthRepository @Inject constructor(
                 }
                 absorb_data_kek(vault_obj)
                 val old_ratchet_identity = session_key_store.get_ratchet_identity_public_b64()
+                val old_ratchet_previous = session_key_store.get_ratchet_previous_keys_json()
                 extract_ratchet_keys(vault_obj)
                 val new_ratchet_identity = session_key_store.get_ratchet_identity_public_b64()
+                val new_ratchet_previous = session_key_store.get_ratchet_previous_keys_json()
                 val identity_changed = new_identity_key.isNotBlank() && new_identity_key != old_identity_key
                 val ratchet_changed =
                     !new_ratchet_identity.isNullOrBlank() && new_ratchet_identity != old_ratchet_identity
-                identity_changed || ratchet_changed
+                val previous_changed =
+                    !new_ratchet_previous.isNullOrBlank() && new_ratchet_previous != old_ratchet_previous
+                identity_changed || ratchet_changed || previous_changed
             } finally {
                 passphrase.fill(0)
             }
