@@ -320,26 +320,27 @@ private fun AsterDomainAvatar(
 
     val fallback_profiles = remember { MutableStateFlow(emptyMap<String, PublicProfile?>()) }
     val profiles_flow = resolver?.profiles ?: fallback_profiles
-    val own_picture_flow = remember(profiles_flow, lower_email) {
+    val own_profile_flow = remember(profiles_flow, lower_email) {
         profiles_flow
-            .map { it[lower_email]?.profile_picture?.takeIf { url -> url.isNotBlank() } }
+            .map { it[lower_email] }
             .distinctUntilChanged()
     }
-    val pic_url by own_picture_flow.collectAsStateWithLifecycle(
-        initialValue = profiles_flow.value[lower_email]?.profile_picture?.takeIf { it.isNotBlank() },
+    val profile by own_profile_flow.collectAsStateWithLifecycle(
+        initialValue = profiles_flow.value[lower_email],
     )
 
-    val resolved_pic = pic_url
+    val resolved_pic = profile?.profile_picture?.takeIf { it.isNotBlank() }
+    val (aster_bg, aster_fg) = avatar_colors_for(name.ifBlank { email }, profile?.profile_color)
     if (resolved_pic != null) {
         var loaded by remember(resolved_pic) { mutableStateOf(false) }
         Box(
-            modifier = modifier.size(size).clip(CircleShape).background(if (loaded) Color.Transparent else Color(0xFF4F46E5)),
+            modifier = modifier.size(size).clip(CircleShape).background(if (loaded) Color.Transparent else aster_bg),
             contentAlignment = Alignment.Center,
         ) {
             if (!loaded) {
                 Text(
                     text = initial_for(name, email),
-                    color = Color.White,
+                    color = aster_fg,
                     style = avatar_initial_style(size),
                 )
             }
@@ -366,9 +367,7 @@ private fun AsterDomainAvatar(
         return
     }
 
-    val seed = name.ifBlank { email }
-    val (bg, fg) = avatar_colors_for(seed)
-    initials_circle(name, email, bg, fg, size, modifier)
+    initials_circle(name, email, aster_bg, aster_fg, size, modifier)
 }
 
 @Composable

@@ -62,7 +62,7 @@ fun current_user_avatar(
         val email = account?.email.orEmpty()
         val name = account?.display_name.orEmpty()
         val seed = name.ifBlank { email }
-        val (bg, fg) = avatar_colors_for(seed)
+        val (bg, fg) = avatar_colors_for(seed, account?.profile_color)
         Box(
             modifier = modifier
                 .size(size)
