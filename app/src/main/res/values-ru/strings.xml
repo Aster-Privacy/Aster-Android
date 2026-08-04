@@ -2405,6 +2405,8 @@
     <string name="folder_locked_badge">Заблокирована</string>
     <string name="create_folder_subtitle">Создайте новую папку, не покидая этот экран</string>
     <string name="mail_rules_conflict_warning">Эти условия соединены словом \"и\", поэтому письмо должно соответствовать всем сразу. Большинство писем подходит только под одно, поэтому правило может никогда не сработать.</string>
+    <string name="mail_rules_duplicate_alias">Этот псевдоним уже добавлен.</string>
+    <string name="mail_rules_duplicate_condition">Это условие уже добавлено.</string>
     <string name="mail_rules_conflict_switch">Сменить на \"или\"</string>
     <string name="forwards_to_folder">Пересылает в %1$s</string>
     <string name="alias_delivery_folder_title">Доставлять в</string>

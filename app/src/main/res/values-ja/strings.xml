@@ -2384,6 +2384,8 @@
     <string name="folder_locked_badge">ロック中</string>
     <string name="create_folder_subtitle">この画面のまま新しいフォルダを作成できます</string>
     <string name="mail_rules_conflict_warning">これらの条件は「かつ」で結ばれているため、メールはすべてに一致する必要があります。ほとんどのメールは1つにしか一致しないので、このルールは実行されない可能性があります。</string>
+    <string name="mail_rules_duplicate_alias">このエイリアスはすでに追加されています。</string>
+    <string name="mail_rules_duplicate_condition">この条件はすでに追加されています。</string>
     <string name="mail_rules_conflict_switch">「または」に変更</string>
     <string name="forwards_to_folder">%1$s に転送</string>
     <string name="alias_delivery_folder_title">配送先</string>

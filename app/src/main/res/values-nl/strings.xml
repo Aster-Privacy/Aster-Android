@@ -2391,6 +2391,8 @@
     <string name="folder_locked_badge">Vergrendeld</string>
     <string name="create_folder_subtitle">Maak een nieuwe map zonder dit scherm te verlaten</string>
     <string name="mail_rules_conflict_warning">Deze voorwaarden zijn verbonden met \"en\", dus een e-mail moet aan alle voldoen. De meeste voldoen er maar aan één, dus deze regel wordt mogelijk nooit uitgevoerd.</string>
+    <string name="mail_rules_duplicate_alias">Deze alias is al toegevoegd.</string>
+    <string name="mail_rules_duplicate_condition">Deze voorwaarde is al toegevoegd.</string>
     <string name="mail_rules_conflict_switch">Wissel naar \"of\"</string>
     <string name="forwards_to_folder">Stuurt door naar %1$s</string>
     <string name="alias_delivery_folder_title">Bezorgen in</string>

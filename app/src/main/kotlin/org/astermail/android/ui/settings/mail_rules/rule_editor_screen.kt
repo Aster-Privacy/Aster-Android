@@ -159,6 +159,7 @@ fun RuleEditorScreen(
     var auto_advance by remember { mutableStateOf(false) }
     var is_saving by remember { mutableStateOf(false) }
     var save_error by remember { mutableStateOf<Int?>(null) }
+    var duplicate_warning by remember { mutableStateOf<Int?>(null) }
 
     val folders = remember(settings_state.labels) {
         flatten_folder_tree(settings_state.labels)
@@ -193,8 +194,11 @@ fun RuleEditorScreen(
                 picker_item(
                     id = label.label_token,
                     label = label.encrypted_name.orEmpty(),
-                    icon = TablerIcons.Tag,
-                    icon_tint = rules_label_palette[(from_tags.size + idx) % rules_label_palette.size],
+                    icon = resolve_label_icon(label.encrypted_icon?.takeIf { it.isNotBlank() }),
+                    icon_tint = label.encrypted_color
+                        ?.takeIf { it.startsWith("#") }
+                        ?.let { parse_hex_color_safe(it) }
+                        ?: rules_label_palette[(from_tags.size + idx) % rules_label_palette.size],
                 )
             }
         from_tags + from_labels
@@ -303,6 +307,7 @@ fun RuleEditorScreen(
                     on_value = { if (!is_read_only) sheet = active_sheet.pick_value(index) },
                     on_remove = {
                         if (!is_read_only) {
+                            duplicate_warning = null
                             if (conditions.size == 1) {
                                 conditions.removeAt(0)
                                 sheet = active_sheet.pick_field
@@ -332,6 +337,30 @@ fun RuleEditorScreen(
                         sheet = active_sheet.pick_field
                     },
                     modifier = Modifier.testTag("add_condition"),
+                )
+            }
+
+            val existing_duplicates = duplicate_condition_indices(conditions.toList())
+            val duplicate_message = duplicate_warning
+                ?: existing_duplicates.firstOrNull()?.let { index ->
+                    if (condition_is_address_field(conditions[index])) {
+                        R.string.mail_rules_duplicate_alias
+                    } else {
+                        R.string.mail_rules_duplicate_condition
+                    }
+                }
+            if (!is_read_only && duplicate_message != null) {
+                Spacer(Modifier.height(AsterSpacing.md))
+                Text(
+                    text = stringResource(duplicate_message),
+                    color = colors.danger,
+                    fontSize = 13.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(colors.bg_secondary)
+                        .padding(AsterSpacing.md)
+                        .testTag("rule_duplicate_warning"),
                 )
             }
 
@@ -480,11 +509,30 @@ fun RuleEditorScreen(
                 auto_advance = false
             },
         )
-        is active_sheet.pick_value -> value_picker_for(
-            condition = conditions[s.cond_index],
-            on_dismiss = { sheet = active_sheet.none },
-            on_set = { updated -> conditions[s.cond_index] = updated },
-        )
+        is active_sheet.pick_value -> {
+            val target = conditions.getOrNull(s.cond_index)
+            if (target == null) {
+                sheet = active_sheet.none
+            } else {
+                value_picker_for(
+                    condition = target,
+                    on_dismiss = { sheet = active_sheet.none },
+                    on_set = { updated ->
+                        if (duplicates_condition_at(conditions.toList(), s.cond_index, updated)) {
+                            duplicate_warning = if (condition_is_address_field(updated)) {
+                                R.string.mail_rules_duplicate_alias
+                            } else {
+                                R.string.mail_rules_duplicate_condition
+                            }
+                            if (!is_condition_complete(target)) conditions.removeAt(s.cond_index)
+                        } else {
+                            duplicate_warning = null
+                            conditions[s.cond_index] = updated
+                        }
+                    },
+                )
+            }
+        }
         is active_sheet.pick_action_kind -> options_picker(
             on_dismiss = { sheet = active_sheet.none },
             title = stringResource(R.string.mail_rules_pick_action),
