@@ -62,6 +62,7 @@ import org.astermail.android.api.aliases.SENDER_PIN_MODE_LOCK_FIRST
 import org.astermail.android.api.aliases.SENDER_PIN_MODE_OFF
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.keep_visible_above_keyboard
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.AsterTextField
@@ -83,7 +84,9 @@ internal fun alias_inline_field(
             onValueChange = { if (it.length <= 500 || it.length < draft.length) draft = it },
             label = label,
             placeholder = placeholder,
-            modifier = Modifier.testTag(test_tag),
+            modifier = Modifier
+                .keep_visible_above_keyboard()
+                .testTag(test_tag),
         )
         if (draft.trim() != value.trim()) {
             Text(
