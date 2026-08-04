@@ -47,6 +47,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -102,6 +103,39 @@ private fun audit_icon(event_type: String): ImageVector = when {
     event_type.contains("recovery") -> TablerIcons.Key
     event_type.contains("fail") || event_type.contains("block") || event_type.contains("deny") -> TablerIcons.AlertTriangle
     else -> TablerIcons.Shield
+}
+
+@Composable
+internal fun security_choice_row(
+    label: String,
+    selected: Boolean,
+    test_tag: String,
+    on_click: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = on_click)
+            .testTag(test_tag)
+            .padding(start = AsterSpacing.xl + AsterSpacing.md, end = AsterSpacing.md, top = AsterSpacing.sm, bottom = AsterSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(label, color = colors.text_primary, fontSize = 15.sp, modifier = Modifier.weight(1f))
+        if (selected) {
+            Box(
+                modifier = Modifier.size(20.dp).background(colors.accent_blue, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = TablerIcons.Check,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(13.dp),
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -406,16 +440,19 @@ fun SecurityScreen(
 
         v_gap(AsterSpacing.lg)
 
-        section_label(stringResource(R.string.section_content_protection))
-        AsterCard(modifier = Modifier.fillMaxWidth()) {
-            if (prefs == null) {
+        if (prefs == null) {
+            section_label(stringResource(R.string.section_tracking_protection))
+            AsterCard(modifier = Modifier.fillMaxWidth()) {
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xl),
                     contentAlignment = Alignment.Center,
                 ) {
                     androidx.compose.material3.CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
                 }
-            } else {
+            }
+        } else {
+            section_label(stringResource(R.string.section_tracking_protection))
+            AsterCard(modifier = Modifier.fillMaxWidth()) {
                 detail_row(
                     title = stringResource(R.string.tracking_protection_enabled),
                     subtitle = stringResource(R.string.tracking_protection_enabled_subtitle),
@@ -462,7 +499,12 @@ fun SecurityScreen(
                         },
                     )
                 }
-                AsterDivider()
+            }
+
+            v_gap(AsterSpacing.lg)
+
+            section_label(stringResource(R.string.section_images))
+            AsterCard(modifier = Modifier.fillMaxWidth()) {
                 detail_row(
                     title = stringResource(R.string.block_remote_images),
                     subtitle = stringResource(R.string.block_remote_images_subtitle_security),
@@ -472,10 +514,41 @@ fun SecurityScreen(
                     trailing = {
                         AsterSwitch(
                             checked = prefs.block_external_images != false,
-                            onCheckedChange = { v -> toggle { it.copy(block_external_images = v) } },
+                            onCheckedChange = { v ->
+                                toggle {
+                                    it.copy(
+                                        block_external_images = v,
+                                        load_remote_images = if (v) "never" else "always",
+                                    )
+                                }
+                            },
                         )
                     },
                 )
+                AsterDivider()
+                detail_row(
+                    title = stringResource(R.string.remote_image_loading_title),
+                    subtitle = stringResource(R.string.remote_image_loading_subtitle),
+                    icon = TablerIcons.Photo,
+                )
+                listOf(
+                    "never" to stringResource(R.string.remote_images_never),
+                    "ask" to stringResource(R.string.remote_images_ask),
+                    "always" to stringResource(R.string.remote_images_always),
+                ).forEach { (id, label) ->
+                    security_choice_row(
+                        label = label,
+                        selected = prefs.load_remote_images == id,
+                        test_tag = "remote_image_loading_$id",
+                    ) {
+                        toggle {
+                            it.copy(
+                                load_remote_images = id,
+                                block_external_images = id != "always",
+                            )
+                        }
+                    }
+                }
                 AsterDivider()
                 detail_row(
                     title = stringResource(R.string.block_remote_fonts),
@@ -502,6 +575,25 @@ fun SecurityScreen(
                 )
                 AsterDivider()
                 detail_row(
+                    title = stringResource(R.string.strip_exif),
+                    subtitle = stringResource(R.string.strip_exif_subtitle),
+                    icon = TablerIcons.ShieldLock,
+                    info_title = stringResource(R.string.strip_exif_info_title),
+                    info_description = stringResource(R.string.strip_exif_info_desc),
+                    trailing = {
+                        AsterSwitch(
+                            checked = prefs.strip_exif_on_compose != false,
+                            onCheckedChange = { v -> toggle { it.copy(strip_exif = v, strip_exif_on_compose = v) } },
+                        )
+                    },
+                )
+            }
+
+            v_gap(AsterSpacing.lg)
+
+            section_label(stringResource(R.string.section_html_content))
+            AsterCard(modifier = Modifier.fillMaxWidth()) {
+                detail_row(
                     title = stringResource(R.string.block_html_rendering),
                     subtitle = stringResource(R.string.block_html_rendering_subtitle),
                     icon = TablerIcons.Code,
@@ -514,7 +606,12 @@ fun SecurityScreen(
                         )
                     },
                 )
-                AsterDivider()
+            }
+
+            v_gap(AsterSpacing.lg)
+
+            section_label(stringResource(R.string.section_external_links))
+            AsterCard(modifier = Modifier.fillMaxWidth()) {
                 detail_row(
                     title = stringResource(R.string.warn_suspicious_links),
                     subtitle = stringResource(R.string.warn_suspicious_links_subtitle),
@@ -547,20 +644,6 @@ fun SecurityScreen(
                     androidx.compose.material3.CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
                 }
             } else {
-                detail_row(
-                    title = stringResource(R.string.strip_exif),
-                    subtitle = stringResource(R.string.strip_exif_subtitle),
-                    icon = TablerIcons.ShieldLock,
-                    info_title = stringResource(R.string.strip_exif_info_title),
-                    info_description = stringResource(R.string.strip_exif_info_desc),
-                    trailing = {
-                        AsterSwitch(
-                            checked = prefs.strip_exif_on_compose != false,
-                            onCheckedChange = { v -> toggle { it.copy(strip_exif = v, strip_exif_on_compose = v) } },
-                        )
-                    },
-                )
-                AsterDivider()
                 detail_row(
                     title = stringResource(R.string.send_read_receipts),
                     subtitle = stringResource(R.string.send_read_receipts_subtitle),
