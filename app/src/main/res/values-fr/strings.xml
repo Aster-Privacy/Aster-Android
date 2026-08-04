@@ -2435,6 +2435,9 @@
     <string name="alias_delivery_folder_title">Remettre dans</string>
     <string name="alias_delivery_folder_subtitle">Choisis où arrive le courrier de cet alias</string>
     <string name="alias_delivery_folder_missing">Dossier supprimé</string>
+    <string name="alias_delivery_rule_note">La règle de courrier \"%1$s\" déplace déjà les messages de cet alias vers %2$s.</string>
+    <string name="alias_delivery_rule_conflict">La règle de courrier \"%1$s\" déplace les messages de cet alias vers %2$s, ils n\'arriveront donc pas dans %3$s.</string>
+    <string name="mail_rules_alias_delivery_conflict">%1$s est configuré pour être distribué dans %2$s. Cette règle déplacera plutôt ses messages vers %3$s.</string>
     <string name="alias_delivery_title">Remise</string>
     <string name="copied_value">%1$s copié</string>
     <string name="alias_expand_settings">Afficher les réglages de l\'alias</string>

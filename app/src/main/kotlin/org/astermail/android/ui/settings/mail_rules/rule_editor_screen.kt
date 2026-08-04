@@ -80,6 +80,8 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.parse_hex_color_safe
 import org.astermail.android.folders.flatten_folder_tree
+import org.astermail.android.mail_rules.AliasDeliverySetting
+import org.astermail.android.mail_rules.rule_alias_delivery_conflict
 import org.astermail.android.folders.folder_path
 import org.astermail.android.folders.is_custom_folder
 import org.astermail.android.folders.is_folder_protected
@@ -424,6 +426,52 @@ fun RuleEditorScreen(
                         sheet = active_sheet.pick_action_kind(actions.lastIndex)
                     },
                     modifier = Modifier.testTag("add_action"),
+                )
+            }
+
+            val has_move_to = actions.any { it is Action.MoveTo }
+            LaunchedEffect(has_move_to) {
+                if (has_move_to) settings_vm.load_aliases()
+            }
+            val alias_delivery = remember(settings_state.aliases) {
+                settings_state.aliases.associate { alias ->
+                    alias.address.lowercase() to AliasDeliverySetting(
+                        delivery_folder_token = alias.delivery_folder_token,
+                        never_inbox = alias.never_inbox,
+                    )
+                }
+            }
+            val delivery_conflict = rule_alias_delivery_conflict(
+                conditions = conditions.toList(),
+                actions = actions.toList(),
+                alias_delivery = alias_delivery,
+            )
+            if (!is_read_only && delivery_conflict != null) {
+                val archive_name = stringResource(R.string.folder_archive)
+                val missing_name = stringResource(R.string.alias_delivery_folder_missing)
+                val alias_target = delivery_conflict.alias_delivery.delivery_folder_token
+                    ?.let { token -> folders.firstOrNull { it.id == token }?.label ?: missing_name }
+                    ?: archive_name
+                val rule_target = folders
+                    .firstOrNull { it.id == delivery_conflict.rule_folder_token }
+                    ?.label
+                    ?: missing_name
+                Spacer(Modifier.height(AsterSpacing.md))
+                Text(
+                    text = stringResource(
+                        R.string.mail_rules_alias_delivery_conflict,
+                        delivery_conflict.alias_address,
+                        alias_target,
+                        rule_target,
+                    ),
+                    color = colors.warning,
+                    fontSize = 13.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(colors.bg_secondary)
+                        .padding(AsterSpacing.md)
+                        .testTag("rule_alias_delivery_warning"),
                 )
             }
 

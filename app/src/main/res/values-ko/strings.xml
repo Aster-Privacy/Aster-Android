@@ -2400,6 +2400,9 @@
     <string name="alias_delivery_folder_title">받을 위치</string>
     <string name="alias_delivery_folder_subtitle">이 별칭으로 오는 메일이 도착할 위치를 선택하세요</string>
     <string name="alias_delivery_folder_missing">삭제된 폴더</string>
+    <string name="alias_delivery_rule_note">메일 규칙 “%1$s”이(가) 이 별칭의 메일을 이미 %2$s(으)로 이동합니다.</string>
+    <string name="alias_delivery_rule_conflict">메일 규칙 “%1$s”이(가) 이 별칭의 메일을 %2$s(으)로 이동하므로 %3$s에는 도착하지 않습니다.</string>
+    <string name="mail_rules_alias_delivery_conflict">%1$s은(는) %2$s(으)로 배달되도록 설정되어 있습니다. 이 규칙은 대신 메일을 %3$s(으)로 이동합니다.</string>
     <string name="alias_delivery_title">배송</string>
     <string name="copied_value">%1$s 복사됨</string>
     <string name="alias_expand_settings">별칭 설정 표시</string>
