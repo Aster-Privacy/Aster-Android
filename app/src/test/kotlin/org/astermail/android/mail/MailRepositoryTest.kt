@@ -836,10 +836,10 @@ class MailRepositoryTest {
     }
 
     @Test
-    fun `save_draft delegates to mail_api create_message`() = runTest {
+    fun `save_draft delegates to mail_api create_draft`() = runTest {
         every { session_key_store.get_identity_key() } returns "test_identity_key"
-        coEvery { mail_api.create_message(any()) } returns
-            org.astermail.android.api.mail.CreateMailItemResponse(id = "draft_99", success = true)
+        coEvery { mail_api.create_draft(any()) } returns
+            org.astermail.android.api.mail.CreateDraftResponse(id = "draft_99", success = true)
 
         val result = repo.save_draft(
             subject = "Draft subject",
@@ -848,7 +848,52 @@ class MailRepositoryTest {
 
         assertTrue(result.isSuccess)
         assertEquals("draft_99", result.getOrThrow())
-        coVerify { mail_api.create_message(any()) }
+        coVerify { mail_api.create_draft(any()) }
+        coVerify(exactly = 0) { mail_api.create_message(any()) }
+    }
+
+    @Test
+    fun `save_draft forwards reply metadata and replaces previous draft`() = runTest {
+        every { session_key_store.get_identity_key() } returns "test_identity_key"
+        val captured = slot<org.astermail.android.api.mail.CreateDraftRequestBody>()
+        coEvery { mail_api.create_draft(capture(captured)) } returns
+            org.astermail.android.api.mail.CreateDraftResponse(id = "draft_new", success = true)
+        coEvery { mail_api.delete_draft(any()) } returns
+            org.astermail.android.api.mail.DeleteResponse(success = true, deleted_count = 1)
+
+        val result = repo.save_draft(
+            subject = "Reply draft",
+            body_html = "<p>reply</p>",
+            existing_draft_id = "draft_old",
+            draft_type = "reply_all",
+            reply_to_id = "550e8400-e29b-41d4-a716-446655440000",
+            thread_token = "thread_abc",
+        )
+
+        assertTrue(result.isSuccess)
+        assertEquals("reply", captured.captured.draft_type)
+        assertEquals("550e8400-e29b-41d4-a716-446655440000", captured.captured.reply_to_id)
+        assertEquals("thread_abc", captured.captured.thread_token)
+        coVerify { mail_api.delete_draft("draft_old") }
+    }
+
+    @Test
+    fun `save_draft drops non uuid reply_to_id`() = runTest {
+        every { session_key_store.get_identity_key() } returns "test_identity_key"
+        val captured = slot<org.astermail.android.api.mail.CreateDraftRequestBody>()
+        coEvery { mail_api.create_draft(capture(captured)) } returns
+            org.astermail.android.api.mail.CreateDraftResponse(id = "draft_new", success = true)
+
+        val result = repo.save_draft(
+            subject = "Draft",
+            body_html = "<p>x</p>",
+            draft_type = "forward",
+            reply_to_id = "not-a-uuid",
+        )
+
+        assertTrue(result.isSuccess)
+        assertEquals("forward", captured.captured.draft_type)
+        assertEquals(null, captured.captured.reply_to_id)
     }
 
     @Test
@@ -1269,7 +1314,8 @@ class MailRepositoryTest {
 
     @Test
     fun `persist_and_schedule_undo_send stores a pending row and writes a safety draft`() = runTest {
-        coEvery { mail_api.create_message(any()) } returns CreateMailItemResponse(id = "safety_draft_1", success = true)
+        coEvery { mail_api.create_draft(any()) } returns
+            org.astermail.android.api.mail.CreateDraftResponse(id = "safety_draft_1", success = true)
 
         repo.persist_and_schedule_undo_send(
             pending_id = "pend_1",
@@ -1294,7 +1340,7 @@ class MailRepositoryTest {
         assertNotNull(row)
         assertEquals("pending", row!!.status)
         assertEquals("safety_draft_1", row.draft_id)
-        coVerify { mail_api.create_message(any()) }
+        coVerify { mail_api.create_draft(any()) }
     }
 
     @Test

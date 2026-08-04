@@ -2509,11 +2509,11 @@ class SettingsViewModel @Inject constructor(
         val now = System.currentTimeMillis()
         val labels_key = folder_type ?: "all"
         if (!force && last_labels_load_ms[labels_key]?.let { now - it < LIST_TTL_MS } == true) return
-        last_labels_load_ms[labels_key] = now
         viewModelScope.launch {
             _state.value = _state.value.copy(is_loading = true, error = null)
             try {
                 val response = labels_api.list_labels(include_counts = true, folder_type = folder_type)
+                last_labels_load_ms[labels_key] = System.currentTimeMillis()
                 var decrypted = response.labels.map { decrypt_label(it) }
                 val any_decryption_failed = response.labels.indices.any { i ->
                     !response.labels[i].encrypted_name.isNullOrBlank() &&

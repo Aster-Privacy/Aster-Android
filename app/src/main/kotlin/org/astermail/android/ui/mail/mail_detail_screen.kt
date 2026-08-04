@@ -1429,9 +1429,11 @@ fun MailDetailScreen(
                                 }
                             }
                             "folder" -> bottom_action(TablerIcons.Folder, stringResource(R.string.move_to_folder)) {
+                                settings_vm.load_labels(force = settings_state.labels.isEmpty())
                                 show_folder_sheet = true
                             }
                             "label" -> bottom_action(TablerIcons.Tag, stringResource(R.string.label)) {
+                                settings_vm.load_tags(force = settings_state.tags.isEmpty())
                                 show_label_sheet = true
                             }
                             "star" -> bottom_action(

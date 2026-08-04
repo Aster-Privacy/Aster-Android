@@ -203,6 +203,8 @@ fun build_thread_rows(
     return ThreadRowResult(sorted, resolved)
 }
 
+private const val UNREAD_MISMATCH_GRACE_MS = 3000L
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InboxScreen(
@@ -1174,10 +1176,21 @@ fun InboxScreen(
                     }
                 }
                 val hidden_by_category = threads.isEmpty() && inbox_state.items.isNotEmpty()
-                val contradicts_unread = threads.isEmpty() &&
+                val unread_mismatch = threads.isEmpty() &&
                     inbox_state.items.isEmpty() &&
+                    !inbox_state.is_loading &&
+                    !inbox_state.initial &&
                     current_folder == "inbox" &&
                     (inbox_state.stats?.unread ?: 0) > 0
+                var contradicts_unread by remember { mutableStateOf(false) }
+                LaunchedEffect(unread_mismatch) {
+                    if (!unread_mismatch) {
+                        contradicts_unread = false
+                    } else {
+                        kotlinx.coroutines.delay(UNREAD_MISMATCH_GRACE_MS)
+                        contradicts_unread = true
+                    }
+                }
                 if (inbox_state.initial || (inbox_state.is_loading && threads.isEmpty())) {
                     Box(Modifier.padding(top = header_height_dp)) { inbox_skeleton() }
                 } else if (threads.isEmpty() && inbox_state.error != null) {

@@ -152,6 +152,27 @@ data class DraftItem(
 )
 
 @Serializable
+data class CreateDraftRequestBody(
+    val draft_type: String,
+    val encrypted_content: String,
+    val content_nonce: String,
+    val content_hash: String,
+    val reply_to_id: String? = null,
+    val forward_from_id: String? = null,
+    val thread_token: String? = null,
+    val size_bytes: Int = 0,
+    val has_attachments: Boolean = false,
+    val attachment_count: Int = 0,
+)
+
+@Serializable
+data class CreateDraftResponse(
+    val id: String,
+    val version: Int = 1,
+    val success: Boolean = true,
+)
+
+@Serializable
 data class DraftsListResponse(
     val items: List<DraftItem> = emptyList(),
     val next_cursor: String? = null,
