@@ -454,7 +454,7 @@ private fun aliases_tab(
         }
         AsterDivider(modifier = Modifier.fillMaxWidth())
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxWidth().weight(1f),
             contentPadding = PaddingValues(
                 start = AsterSpacing.lg,
                 end = AsterSpacing.lg,

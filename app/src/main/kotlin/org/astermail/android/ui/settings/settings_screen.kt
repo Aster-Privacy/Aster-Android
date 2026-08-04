@@ -122,6 +122,7 @@ internal fun build_settings_sections(is_family: Boolean) = listOf(
             settings_row_item("sender_filters", R.string.mail_management, icon = TablerIcons.Filter),
             settings_row_item("mail_rules", R.string.mail_rules_title, icon = TablerIcons.Bolt),
             settings_row_item("folders", R.string.folders, icon = TablerIcons.Folder),
+            settings_row_item("labels", R.string.labels, icon = TablerIcons.Tag),
         ),
     ),
     settings_section(

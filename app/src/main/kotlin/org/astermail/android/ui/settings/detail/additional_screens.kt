@@ -103,6 +103,7 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.parse_hex_color_safe
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
@@ -982,6 +983,51 @@ fun DeveloperScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
     }
 }
 
+internal data class label_screen_row(
+    val id: String,
+    val name: String,
+    val color: Color,
+    val count: Long?,
+    val can_move_up: Boolean,
+    val can_move_down: Boolean,
+    val can_delete: Boolean,
+    val is_tag: Boolean,
+)
+
+internal fun label_screen_rows(
+    tags: List<org.astermail.android.api.tags.TagItem>,
+    labels: List<org.astermail.android.api.labels.LabelItem>,
+): List<label_screen_row> {
+    val fallback = Color(0xFF6B7280)
+    val tag_rows = org.astermail.android.labels.tag_rows(tags)
+    val label_rows = org.astermail.android.labels.label_rows(labels)
+    val from_tags = tag_rows.mapIndexed { idx, tag ->
+        label_screen_row(
+            id = tag.id,
+            name = tag.encrypted_name.takeIf { it.isNotBlank() } ?: tag.tag_token,
+            color = parse_hex_color_safe(tag.encrypted_color) ?: fallback,
+            count = tag.item_count,
+            can_move_up = idx > 0,
+            can_move_down = idx < tag_rows.lastIndex,
+            can_delete = true,
+            is_tag = true,
+        )
+    }
+    val from_labels = label_rows.mapIndexed { idx, label ->
+        label_screen_row(
+            id = label.id,
+            name = label.encrypted_name?.takeIf { it.isNotBlank() } ?: label.label_token,
+            color = parse_hex_color_safe(label.encrypted_color) ?: fallback,
+            count = label.item_count,
+            can_move_up = idx > 0,
+            can_move_down = idx < label_rows.lastIndex,
+            can_delete = !label.is_system && !label.is_locked,
+            is_tag = false,
+        )
+    }
+    return from_tags + from_labels
+}
+
 @Composable
 fun LabelsScreen(
     on_back: () -> Unit,
@@ -991,20 +1037,23 @@ fun LabelsScreen(
     val state by vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
 
-    LaunchedEffect(Unit) { vm.load_labels(folder_type = "label") }
+    LaunchedEffect(Unit) {
+        vm.load_labels(folder_type = "label")
+        vm.load_tags()
+    }
 
-    val labels = org.astermail.android.labels.label_rows(state.labels)
-    var pending_label_delete by remember { mutableStateOf<org.astermail.android.api.labels.LabelItem?>(null) }
+    val rows = label_screen_rows(state.tags, state.labels)
+    var pending_label_delete by remember { mutableStateOf<label_screen_row?>(null) }
 
     detail_scaffold(title = stringResource(R.string.labels), on_back = on_back) {
-        if (state.is_loading && labels.isEmpty()) {
+        if (state.is_loading && rows.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
                 contentAlignment = Alignment.Center,
             ) {
                 CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
             }
-        } else if (labels.isEmpty()) {
+        } else if (rows.isEmpty()) {
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 detail_row(
                     title = stringResource(R.string.no_labels),
@@ -1012,25 +1061,22 @@ fun LabelsScreen(
                 )
             }
         } else {
-            section_label(stringResource(R.string.labels_count, labels.size))
+            section_label(stringResource(R.string.labels_count, rows.size))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
-                labels.forEachIndexed { idx, l ->
-                    val label_color = try {
-                        l.encrypted_color?.let { Color(android.graphics.Color.parseColor(it)) }
-                    } catch (_: Throwable) { null } ?: Color(0xFF6B7280)
+                rows.forEachIndexed { idx, row ->
                     label_settings_row(
-                        name = l.encrypted_name ?: l.label_token,
-                        color = label_color,
-                        count_text = l.item_count?.let { pluralStringResource(R.plurals.common_messages_count, it.toInt(), it) } ?: "",
-                        can_move_up = idx > 0,
-                        can_move_down = idx < labels.lastIndex,
-                        can_delete = !l.is_system && !l.is_locked,
+                        name = row.name,
+                        color = row.color,
+                        count_text = row.count?.let { pluralStringResource(R.plurals.common_messages_count, it.toInt(), it) } ?: "",
+                        can_move_up = row.can_move_up,
+                        can_move_down = row.can_move_down,
+                        can_delete = row.can_delete,
                         tag_suffix = idx.toString(),
-                        on_move_up = { vm.move_label_row(l.id, -1) },
-                        on_move_down = { vm.move_label_row(l.id, 1) },
-                        on_delete = { pending_label_delete = l },
+                        on_move_up = { if (row.is_tag) vm.move_tag(row.id, -1) else vm.move_label_row(row.id, -1) },
+                        on_move_down = { if (row.is_tag) vm.move_tag(row.id, 1) else vm.move_label_row(row.id, 1) },
+                        on_delete = { pending_label_delete = row },
                     )
-                    if (idx < labels.lastIndex) AsterDivider(modifier = Modifier)
+                    if (idx < rows.lastIndex) AsterDivider(modifier = Modifier)
                 }
             }
         }
@@ -1038,16 +1084,15 @@ fun LabelsScreen(
     }
 
     pending_label_delete?.let { target ->
-        val target_name = target.encrypted_name?.takeIf { it.isNotBlank() } ?: target.label_token
         org.astermail.android.design.components.AsterAlertDialog(
             on_dismiss = { pending_label_delete = null },
             title = stringResource(R.string.delete_label_confirm_title),
-            message = stringResource(R.string.delete_label_confirm_message, target_name),
+            message = stringResource(R.string.delete_label_confirm_message, target.name),
             confirm_label = stringResource(R.string.delete),
             cancel_label = stringResource(R.string.cancel),
             confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
             on_confirm = {
-                vm.delete_label(target.id)
+                if (target.is_tag) vm.delete_tag(target.id) else vm.delete_label(target.id)
                 pending_label_delete = null
             },
         )
