@@ -1613,6 +1613,15 @@ class MailViewModel @Inject constructor(
         return if (n == 1) singular else "$n $plural"
     }
 
+    private fun adjust_stats_for_removed(removed_items: List<InboxItem>) {
+        val unread_removed = removed_items.count { !it.is_read }
+        if (unread_removed == 0) return
+        _inbox_state.update { s ->
+            val stats = s.stats ?: return@update s
+            s.copy(stats = stats.copy(unread = (stats.unread - unread_removed).coerceAtLeast(0)))
+        }
+    }
+
     private fun invalidate_caches(folders: List<String>) {
         folders.forEach {
             folder_cache.remove(it)
@@ -1643,6 +1652,7 @@ class MailViewModel @Inject constructor(
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id !in item_ids },
         )
+        adjust_stats_for_removed(removed_items)
         val search_removed = remove_search_items(item_ids)
         pending_removed_ids.addAll(item_ids)
         val affected_label_caches = removed_items.flatMap { it.labels }.map { "label:$it" }
@@ -1696,6 +1706,7 @@ class MailViewModel @Inject constructor(
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id !in item_ids },
         )
+        adjust_stats_for_removed(removed_items)
         val search_removed = remove_search_items(item_ids)
         pending_removed_ids.addAll(item_ids)
         invalidate_caches(listOf("trash", "inbox"))
@@ -1862,6 +1873,7 @@ class MailViewModel @Inject constructor(
 
     private fun undo_local_restore(removed: List<InboxItem>) {
         if (removed.isEmpty()) return
+        load_stats(force = true)
         val current = _inbox_state.value.items
         val current_ids = current.map { it.id }.toHashSet()
         val to_add = removed.filter { it.id !in current_ids }
@@ -2112,6 +2124,7 @@ class MailViewModel @Inject constructor(
         val removes = action != "mark_read" && action != "mark_unread"
         if (removes) {
             _inbox_state.update { it.copy(items = emptyList(), has_more = false, next_cursor = null) }
+            adjust_stats_for_removed(snapshot)
         } else {
             val read = action == "mark_read"
             _inbox_state.update { s -> s.copy(items = s.items.map { it.copy(is_read = read) }) }
@@ -2132,6 +2145,7 @@ class MailViewModel @Inject constructor(
                             next_cursor = prior.next_cursor,
                         )
                     }
+                    load_stats(force = true)
                     if (on_failure != null) {
                         on_failure()
                     } else {
@@ -2618,6 +2632,9 @@ class MailViewModel @Inject constructor(
         to: List<String> = emptyList(),
         cc: List<String> = emptyList(),
         existing_draft_id: String? = null,
+        draft_type: String = "new",
+        reply_to_id: String? = null,
+        thread_token: String? = null,
     ): Result<String> {
         val result = repository.save_draft(
             subject = subject,
@@ -2626,6 +2643,9 @@ class MailViewModel @Inject constructor(
             to = to,
             cc = cc,
             existing_draft_id = existing_draft_id,
+            draft_type = draft_type,
+            reply_to_id = reply_to_id,
+            thread_token = thread_token,
         )
         if (result.isSuccess) invalidate_caches(listOf("drafts"))
         return result
@@ -2638,6 +2658,9 @@ class MailViewModel @Inject constructor(
         to: List<String> = emptyList(),
         cc: List<String> = emptyList(),
         existing_draft_id: String? = null,
+        draft_type: String = "new",
+        reply_to_id: String? = null,
+        thread_token: String? = null,
         on_complete: (Boolean) -> Unit,
     ) {
         viewModelScope.launch {
@@ -2649,6 +2672,9 @@ class MailViewModel @Inject constructor(
                     to = to,
                     cc = cc,
                     existing_draft_id = existing_draft_id,
+                    draft_type = draft_type,
+                    reply_to_id = reply_to_id,
+                    thread_token = thread_token,
                 )
             }
             if (result.isSuccess) {

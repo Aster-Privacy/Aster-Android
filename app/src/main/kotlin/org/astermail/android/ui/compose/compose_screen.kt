@@ -794,6 +794,19 @@ fun ComposeScreen(
         if (has_unsaved_changes) show_discard_dialog = true else on_back()
     }
 
+    val draft_save_thread_token = if (mode == "draft") {
+        thread_state.item?.raw_item?.thread_token?.takeIf { it.isNotBlank() }
+    } else {
+        thread_state.item?.thread_token?.takeIf { it.isNotBlank() }
+    }
+    val draft_save_reply_to = if (mode == "draft") null else reply_to?.takeIf { it.isNotBlank() }
+    val draft_save_type = when {
+        mode == "draft" -> if (draft_save_thread_token != null) "reply" else "new"
+        mode == "reply" || mode == "reply_all" -> "reply"
+        mode == "forward" -> "forward"
+        else -> "new"
+    }
+
     fun schedule_draft_save() {
         draft_save_job?.cancel()
         draft_save_job = scope.launch {
@@ -807,6 +820,9 @@ fun ComposeScreen(
                 to = to_chips,
                 cc = cc_chips,
                 existing_draft_id = current_draft_id.takeIf { it.isNotBlank() },
+                draft_type = draft_save_type,
+                reply_to_id = draft_save_reply_to,
+                thread_token = draft_save_thread_token,
             )
             if (result.isSuccess) {
                 current_draft_id = result.getOrNull().orEmpty()
@@ -980,6 +996,9 @@ fun ComposeScreen(
                         to = to_chips,
                         cc = cc_chips,
                         existing_draft_id = current_draft_id.takeIf { it.isNotBlank() },
+                        draft_type = draft_save_type,
+                        reply_to_id = draft_save_reply_to,
+                        thread_token = draft_save_thread_token,
                     ) { _ -> }
                 }
             }
@@ -2324,6 +2343,9 @@ fun ComposeScreen(
                                     to = to_chips,
                                     cc = cc_chips,
                                     existing_draft_id = current_draft_id.takeIf { it.isNotBlank() },
+                                    draft_type = draft_save_type,
+                                    reply_to_id = draft_save_reply_to,
+                                    thread_token = draft_save_thread_token,
                                 ) { ok ->
                                     if (ok) on_back()
                                 }

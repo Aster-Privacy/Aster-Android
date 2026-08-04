@@ -2640,6 +2640,9 @@ class MailRepository @Inject constructor(
         to: List<String> = emptyList(),
         cc: List<String> = emptyList(),
         existing_draft_id: String? = null,
+        draft_type: String = "new",
+        reply_to_id: String? = null,
+        thread_token: String? = null,
     ): Result<String> = runCatching {
         val envelope = build_envelope_json(
             subject = subject,
@@ -2650,14 +2653,19 @@ class MailRepository @Inject constructor(
             cc = cc,
         )
         val (encrypted_envelope, envelope_nonce) = encrypt_envelope(envelope)
-        val response = mail_api.create_message(
-            CreateMailItemRequest(
-                item_type = "draft",
-                encrypted_envelope = encrypted_envelope,
-                envelope_nonce = envelope_nonce,
+        val response = mail_api.create_draft(
+            org.astermail.android.api.mail.CreateDraftRequestBody(
+                draft_type = normalize_draft_type(draft_type),
+                encrypted_content = encrypted_envelope,
+                content_nonce = envelope_nonce,
+                content_hash = content_hash_of(encrypted_envelope),
+                reply_to_id = reply_to_id?.takeIf { is_uuid(it) },
+                forward_from_id = null,
+                thread_token = thread_token?.takeIf { it.isNotBlank() },
+                size_bytes = encrypted_envelope.length,
             ),
         )
-        val new_id = response.id ?: throw IllegalStateException("no draft id returned")
+        val new_id = response.id
         if (!existing_draft_id.isNullOrBlank() && existing_draft_id != new_id) {
             runCatching { mail_api.delete_draft(existing_draft_id) }
         }
@@ -2665,6 +2673,21 @@ class MailRepository @Inject constructor(
         draft_item_cache.remove(new_id)
         new_id
     }
+
+    private fun normalize_draft_type(mode: String): String = when (mode) {
+        "reply", "reply_all" -> "reply"
+        "forward" -> "forward"
+        else -> "new"
+    }
+
+    private fun is_uuid(value: String): Boolean =
+        runCatching { java.util.UUID.fromString(value) }.isSuccess
+
+    private fun content_hash_of(encrypted_content: String): String =
+        android.util.Base64.encodeToString(
+            MessageDigest.getInstance("SHA-256").digest(encrypted_content.toByteArray(Charsets.UTF_8)),
+            android.util.Base64.NO_WRAP,
+        )
 
     suspend fun schedule_email(
         subject: String,

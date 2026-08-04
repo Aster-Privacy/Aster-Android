@@ -1041,6 +1041,33 @@ class MailViewModelTest {
     }
 
     @Test
+    fun `save_draft forwards thread metadata to repository`() = runTest {
+        coEvery {
+            repository.save_draft(
+                subject = any(),
+                body_html = any(),
+                sender_email = any(),
+                to = any(),
+                cc = any(),
+                existing_draft_id = any(),
+                draft_type = "reply",
+                reply_to_id = "msg_1",
+                thread_token = "thread_1",
+            )
+        } returns Result.success("draft_456")
+
+        val result = vm.save_draft(
+            subject = "Reply",
+            body_html = "<p>reply</p>",
+            draft_type = "reply",
+            reply_to_id = "msg_1",
+            thread_token = "thread_1",
+        )
+
+        assertEquals("draft_456", result.getOrThrow())
+    }
+
+    @Test
     fun `save_draft failure returns error`() = runTest {
         coEvery {
             repository.save_draft(

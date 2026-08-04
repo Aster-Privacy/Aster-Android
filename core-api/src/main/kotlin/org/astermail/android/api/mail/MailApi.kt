@@ -68,6 +68,8 @@ interface MailApi {
 
     suspend fun list_drafts(limit: Int? = null, cursor: String? = null): DraftsListResponse
 
+    suspend fun create_draft(request: CreateDraftRequestBody): CreateDraftResponse
+
     suspend fun get_draft(draft_id: String): DraftItem
 
     suspend fun get_thread_draft(thread_token: String): DraftItem?
@@ -227,6 +229,15 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
         val response = client.http.get("${client.base_url}$base/drafts") {
             limit?.let { parameter("limit", it) }
             cursor?.let { parameter("cursor", it) }
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun create_draft(request: CreateDraftRequestBody): CreateDraftResponse {
+        val response = client.http.post("${client.base_url}$base/drafts") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
         }
         return decode_or_throw(response)
     }
