@@ -2392,6 +2392,8 @@
     <string name="folder_locked_badge">Gesperrt</string>
     <string name="create_folder_subtitle">Neuen Ordner anlegen, ohne diesen Bildschirm zu verlassen</string>
     <string name="mail_rules_conflict_warning">Diese Bedingungen sind mit \"und\" verknüpft, eine E-Mail muss also alle erfüllen. Die meisten E-Mails erfüllen nur eine, daher wird diese Regel vielleicht nie ausgeführt.</string>
+    <string name="mail_rules_duplicate_alias">Dieser Alias wurde bereits hinzugefügt.</string>
+    <string name="mail_rules_duplicate_condition">Diese Bedingung wurde bereits hinzugefügt.</string>
     <string name="mail_rules_conflict_switch">Auf \"oder\" umstellen</string>
     <string name="forwards_to_folder">Weiterleitung an %1$s</string>
     <string name="alias_delivery_folder_title">Zustellen an</string>

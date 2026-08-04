@@ -2405,6 +2405,8 @@
     <string name="folder_locked_badge">Zablokowany</string>
     <string name="create_folder_subtitle">Utwórz nowy folder bez opuszczania tego ekranu</string>
     <string name="mail_rules_conflict_warning">Te warunki są połączone słowem \"i\", więc wiadomość musi spełnić wszystkie. Większość spełnia tylko jeden, dlatego ta reguła może nigdy nie zadziałać.</string>
+    <string name="mail_rules_duplicate_alias">Ten alias został już dodany.</string>
+    <string name="mail_rules_duplicate_condition">Ten warunek został już dodany.</string>
     <string name="mail_rules_conflict_switch">Zmień na \"lub\"</string>
     <string name="forwards_to_folder">Przekazuje do %1$s</string>
     <string name="alias_delivery_folder_title">Dostarczaj do</string>

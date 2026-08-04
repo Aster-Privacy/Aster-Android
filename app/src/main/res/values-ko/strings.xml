@@ -2384,6 +2384,8 @@
     <string name="folder_locked_badge">잠김</string>
     <string name="create_folder_subtitle">이 화면을 벗어나지 않고 새 폴더를 만드세요</string>
     <string name="mail_rules_conflict_warning">이 조건들은 \"그리고\"로 연결되어 있어 메일이 모두 일치해야 합니다. 대부분의 메일은 하나만 일치하므로 이 규칙은 실행되지 않을 수 있습니다.</string>
+    <string name="mail_rules_duplicate_alias">이 별칭은 이미 추가되어 있습니다.</string>
+    <string name="mail_rules_duplicate_condition">이 조건은 이미 추가되어 있습니다.</string>
     <string name="mail_rules_conflict_switch">\"또는\"으로 변경</string>
     <string name="forwards_to_folder">%1$s(으)로 전달</string>
     <string name="alias_delivery_folder_title">받을 위치</string>

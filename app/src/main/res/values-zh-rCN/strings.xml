@@ -2384,6 +2384,8 @@
     <string name="folder_locked_badge">已锁定</string>
     <string name="create_folder_subtitle">无需离开此页面即可新建文件夹</string>
     <string name="mail_rules_conflict_warning">这些条件以\"并且\"连接，因此邮件必须同时满足全部条件。多数邮件只会满足其中一个，所以此规则可能永远不会生效。</string>
+    <string name="mail_rules_duplicate_alias">该别名已添加。</string>
+    <string name="mail_rules_duplicate_condition">该条件已添加。</string>
     <string name="mail_rules_conflict_switch">改为\"或者\"</string>
     <string name="forwards_to_folder">转发到%1$s</string>
     <string name="alias_delivery_folder_title">投递到</string>

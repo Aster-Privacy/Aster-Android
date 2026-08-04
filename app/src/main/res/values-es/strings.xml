@@ -2392,6 +2392,8 @@
     <string name="folder_locked_badge">Bloqueada</string>
     <string name="create_folder_subtitle">Crea una carpeta nueva sin salir de esta pantalla</string>
     <string name="mail_rules_conflict_warning">Estas condiciones se unen con \"y\", así que un correo debe cumplirlas todas. La mayoría solo cumplirá una, por lo que puede que esta regla nunca se aplique.</string>
+    <string name="mail_rules_duplicate_alias">Este alias ya está añadido.</string>
+    <string name="mail_rules_duplicate_condition">Esta condición ya está añadida.</string>
     <string name="mail_rules_conflict_switch">Cambiar a \"o\"</string>
     <string name="forwards_to_folder">Reenvía a %1$s</string>
     <string name="alias_delivery_folder_title">Entregar en</string>

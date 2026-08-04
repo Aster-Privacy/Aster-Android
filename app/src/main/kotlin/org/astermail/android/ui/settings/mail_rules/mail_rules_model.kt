@@ -298,6 +298,49 @@ private fun exclusive_signature(c: Condition): Pair<String, String>? {
     return "$field:${entry.first}" to value
 }
 
+fun condition_duplicate_key(c: Condition): String? {
+    val field = field_of(c)?.name ?: return null
+    val entry = when (c) {
+        is Condition.From -> c.op.name to c.value
+        is Condition.ReplyTo -> c.op.name to c.value
+        is Condition.To -> c.op.name to c.value
+        is Condition.Cc -> c.op.name to c.value
+        is Condition.Bcc -> c.op.name to c.value
+        is Condition.AnyRecipient -> c.op.name to c.value
+        is Condition.Subject -> c.op.name to c.value
+        is Condition.Body -> c.op.name to c.value
+        is Condition.ListId -> c.op.name to c.value
+        is Condition.Header -> "${c.op.name}:${c.name.trim().lowercase()}" to c.value
+        is Condition.AttachmentName -> c.op.name to c.value
+        else -> return null
+    }
+    val value = entry.second.trim().lowercase().takeIf { it.isNotBlank() } ?: return null
+    return "$field:${entry.first}:$value"
+}
+
+fun condition_is_address_field(c: Condition): Boolean = when (c) {
+    is Condition.From, is Condition.ReplyTo, is Condition.To,
+    is Condition.Cc, is Condition.Bcc, is Condition.AnyRecipient,
+    -> true
+    else -> false
+}
+
+fun duplicate_condition_indices(conditions: List<Condition>): Set<Int> {
+    val seen = mutableSetOf<String>()
+    val duplicates = mutableSetOf<Int>()
+    conditions.forEachIndexed { index, c ->
+        val key = condition_duplicate_key(c) ?: return@forEachIndexed
+        if (!seen.add(key)) duplicates.add(index)
+    }
+    return duplicates
+}
+
+fun duplicates_condition_at(conditions: List<Condition>, index: Int, candidate: Condition): Boolean {
+    val key = condition_duplicate_key(candidate) ?: return false
+    return conditions.filterIndexed { i, _ -> i != index }
+        .any { condition_duplicate_key(it) == key }
+}
+
 fun conditions_conflict_under_all(conditions: List<Condition>, match_mode: MatchMode): Boolean {
     if (match_mode != MatchMode.ALL || conditions.size < 2) return false
     val groups = mutableMapOf<String, MutableSet<String>>()

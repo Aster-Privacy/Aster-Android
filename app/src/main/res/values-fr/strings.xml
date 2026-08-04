@@ -2419,6 +2419,8 @@
     <string name="folder_locked_badge">Verrouillé</string>
     <string name="create_folder_subtitle">Créez un dossier sans quitter cet écran</string>
     <string name="mail_rules_conflict_warning">Ces conditions sont reliées par \"et\", un e-mail doit donc toutes les remplir. La plupart n\'en remplissent qu\'une, cette règle risque donc de ne jamais s\'appliquer.</string>
+    <string name="mail_rules_duplicate_alias">Cet alias est déjà ajouté.</string>
+    <string name="mail_rules_duplicate_condition">Cette condition est déjà ajoutée.</string>
     <string name="mail_rules_conflict_switch">Passer à \"ou\"</string>
     <string name="forwards_to_folder">Transfère vers %1$s</string>
     <string name="alias_delivery_folder_title">Remettre dans</string>

@@ -1822,6 +1822,8 @@
     <string name="mail_rules_match_any">Match any</string>
     <string name="create_folder_subtitle">Add a new folder without leaving this screen</string>
     <string name="mail_rules_conflict_warning">These conditions are joined with \"and\", so an email has to match every one of them. Most emails will only match one, so this rule may never run.</string>
+    <string name="mail_rules_duplicate_alias">This alias is already added.</string>
+    <string name="mail_rules_duplicate_condition">This condition is already added.</string>
     <string name="mail_rules_conflict_switch">Switch to \"or\"</string>
     <string name="mail_rules_pick_field">Pick field</string>
     <string name="mail_rules_pick_operator">Pick operator</string>
