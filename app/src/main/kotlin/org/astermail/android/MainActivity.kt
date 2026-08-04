@@ -1565,9 +1565,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     )
 
     val api_labels = run {
-        val visible_tags = settings_state.tags
-            .filter { it.encrypted_name.isNotBlank() }
-            .filter { !looks_encrypted(it.encrypted_name) }
+        val visible_tags = org.astermail.android.labels.tag_rows(settings_state.tags)
         val from_tags = visible_tags
             .mapIndexed { idx, tag ->
                 val color = parse_hex_color_safe(tag.encrypted_color)
@@ -1585,10 +1583,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                     can_move_down = idx < visible_tags.lastIndex,
                 )
             }
-        val visible_labels = settings_state.labels
-            .filter { it.folder_type == "label" }
-            .filter { !it.encrypted_name.isNullOrBlank() }
-            .filter { !looks_encrypted(it.encrypted_name) }
+        val visible_labels = org.astermail.android.labels.label_rows(settings_state.labels)
         val from_labels = visible_labels
             .mapIndexed { idx, label ->
                 val own_color = label.encrypted_color?.takeIf { it.startsWith("#") }

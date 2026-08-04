@@ -86,6 +86,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontFamily
@@ -992,7 +993,7 @@ fun LabelsScreen(
 
     LaunchedEffect(Unit) { vm.load_labels(folder_type = "label") }
 
-    val labels = state.labels.filter { it.folder_type == "label" }
+    val labels = org.astermail.android.labels.label_rows(state.labels)
     var pending_label_delete by remember { mutableStateOf<org.astermail.android.api.labels.LabelItem?>(null) }
 
     detail_scaffold(title = stringResource(R.string.labels), on_back = on_back) {
@@ -1017,38 +1018,18 @@ fun LabelsScreen(
                     val label_color = try {
                         l.encrypted_color?.let { Color(android.graphics.Color.parseColor(it)) }
                     } catch (_: Throwable) { null } ?: Color(0xFF6B7280)
-                    val label_name = l.encrypted_name ?: l.label_token
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Box(modifier = Modifier.size(12.dp).background(label_color, CircleShape))
-                        Spacer(Modifier.width(AsterSpacing.md))
-                        Column(Modifier.weight(1f)) {
-                            Text(label_name, color = colors.text_primary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
-                            val count_text = l.item_count?.let { pluralStringResource(R.plurals.common_messages_count, it.toInt(), it) } ?: ""
-                            if (count_text.isNotEmpty()) {
-                                Text(count_text, color = colors.text_tertiary, fontSize = 13.sp)
-                            }
-                        }
-                        if (!l.is_system && !l.is_locked) {
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .clickable { pending_label_delete = l }
-                                    .padding(AsterSpacing.xs),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                androidx.compose.material3.Icon(
-                                    imageVector = TablerIcons.Trash,
-                                    contentDescription = stringResource(R.string.delete_label),
-                                    tint = colors.text_tertiary,
-                                    modifier = Modifier.size(18.dp),
-                                )
-                            }
-                        }
-                    }
+                    label_settings_row(
+                        name = l.encrypted_name ?: l.label_token,
+                        color = label_color,
+                        count_text = l.item_count?.let { pluralStringResource(R.plurals.common_messages_count, it.toInt(), it) } ?: "",
+                        can_move_up = idx > 0,
+                        can_move_down = idx < labels.lastIndex,
+                        can_delete = !l.is_system && !l.is_locked,
+                        tag_suffix = idx.toString(),
+                        on_move_up = { vm.move_label_row(l.id, -1) },
+                        on_move_down = { vm.move_label_row(l.id, 1) },
+                        on_delete = { pending_label_delete = l },
+                    )
                     if (idx < labels.lastIndex) AsterDivider(modifier = Modifier)
                 }
             }
@@ -1070,6 +1051,83 @@ fun LabelsScreen(
                 pending_label_delete = null
             },
         )
+    }
+}
+
+@Composable
+internal fun label_settings_row(
+    name: String,
+    color: Color,
+    count_text: String,
+    can_move_up: Boolean,
+    can_move_down: Boolean,
+    can_delete: Boolean,
+    tag_suffix: String,
+    on_move_up: () -> Unit,
+    on_move_down: () -> Unit,
+    on_delete: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(modifier = Modifier.size(12.dp).background(color, CircleShape))
+        Spacer(Modifier.width(AsterSpacing.md))
+        Column(Modifier.weight(1f)) {
+            Text(name, color = colors.text_primary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+            if (count_text.isNotEmpty()) {
+                Text(count_text, color = colors.text_tertiary, fontSize = 13.sp)
+            }
+        }
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .clickable(enabled = can_move_up, onClick = on_move_up)
+                .testTag("label_move_up_$tag_suffix"),
+            contentAlignment = Alignment.Center,
+        ) {
+            androidx.compose.material3.Icon(
+                imageVector = TablerIcons.ChevronUp,
+                contentDescription = stringResource(R.string.move_folder_up),
+                tint = if (can_move_up) colors.text_secondary else colors.text_muted.copy(alpha = 0.35f),
+                modifier = Modifier.size(20.dp),
+            )
+        }
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .clickable(enabled = can_move_down, onClick = on_move_down)
+                .testTag("label_move_down_$tag_suffix"),
+            contentAlignment = Alignment.Center,
+        ) {
+            androidx.compose.material3.Icon(
+                imageVector = TablerIcons.ChevronDown,
+                contentDescription = stringResource(R.string.move_folder_down),
+                tint = if (can_move_down) colors.text_secondary else colors.text_muted.copy(alpha = 0.35f),
+                modifier = Modifier.size(20.dp),
+            )
+        }
+        if (can_delete) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .clickable(onClick = on_delete)
+                    .padding(AsterSpacing.xs)
+                    .testTag("label_delete_$tag_suffix"),
+                contentAlignment = Alignment.Center,
+            ) {
+                androidx.compose.material3.Icon(
+                    imageVector = TablerIcons.Trash,
+                    contentDescription = stringResource(R.string.delete_label),
+                    tint = colors.text_tertiary,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+        }
     }
 }
 

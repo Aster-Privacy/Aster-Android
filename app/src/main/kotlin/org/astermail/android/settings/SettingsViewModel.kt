@@ -3015,21 +3015,19 @@ class SettingsViewModel @Inject constructor(
     fun move_tag(tag_id: String, direction: Int) {
         viewModelScope.launch {
             val current = _state.value.tags
-            val index = current.indexOfFirst { it.id == tag_id }
-            val target = index + direction
-            if (index < 0 || target < 0 || target > current.lastIndex) return@launch
-            val reordered = current.toMutableList().apply {
-                add(target, removeAt(index))
-            }
+            val rows = org.astermail.android.labels.tag_rows(current)
+            val index = rows.indexOfFirst { it.id == tag_id }
+            val reordered = org.astermail.android.labels.move_row(rows, index, direction) ?: return@launch
+            val changed = org.astermail.android.labels.tag_reorder_entries(reordered)
+            if (changed.isEmpty()) return@launch
+            val positions = reordered.withIndex().associate { (position, tag) -> tag.id to position }
             _state.value = _state.value.copy(
-                tags = reordered.mapIndexed { i, tag -> tag.copy(sort_order = i) },
+                tags = current.map { tag -> positions[tag.id]?.let { tag.copy(sort_order = it) } ?: tag },
             )
             try {
-                reordered.forEachIndexed { i, tag ->
-                    if (tag.sort_order != i) {
-                        tags_api.update_tag(tag.id, UpdateTagRequest(sort_order = i))
-                    }
-                }
+                tags_api.bulk_reorder_tags(
+                    org.astermail.android.api.tags.BulkReorderTagsRequest(tags = changed),
+                )
             } catch (_: Throwable) {
                 _state.value = _state.value.copy(
                     tags = current,
@@ -3067,23 +3065,15 @@ class SettingsViewModel @Inject constructor(
     fun move_label_row(label_id: String, direction: Int) {
         viewModelScope.launch {
             val all = _state.value.labels
-            val group = all.filter { it.folder_type == "label" }
-            val index = group.indexOfFirst { it.id == label_id }
-            val target = index + direction
-            if (index < 0 || target < 0 || target > group.lastIndex) return@launch
-            val reordered = group.toMutableList().apply {
-                add(target, removeAt(index))
-            }
-            val group_positions = all.indices.filter { all[it].folder_type == "label" }
-            val updated = all.toMutableList()
-            group_positions.forEachIndexed { i, pos ->
-                updated[pos] = reordered[i].copy(sort_order = i)
-            }
-            _state.value = _state.value.copy(labels = updated)
-            val changed = reordered.mapIndexedNotNull { i, label ->
-                if (label.sort_order != i) ReorderLabelEntry(id = label.id, sort_order = i) else null
-            }
+            val rows = org.astermail.android.labels.label_rows(all)
+            val index = rows.indexOfFirst { it.id == label_id }
+            val reordered = org.astermail.android.labels.move_row(rows, index, direction) ?: return@launch
+            val changed = org.astermail.android.labels.label_reorder_entries(reordered)
             if (changed.isEmpty()) return@launch
+            val positions = reordered.withIndex().associate { (position, label) -> label.id to position }
+            _state.value = _state.value.copy(
+                labels = all.map { label -> positions[label.id]?.let { label.copy(sort_order = it) } ?: label },
+            )
             try {
                 labels_api.bulk_reorder_labels(BulkReorderLabelsRequest(labels = changed))
             } catch (_: Throwable) {

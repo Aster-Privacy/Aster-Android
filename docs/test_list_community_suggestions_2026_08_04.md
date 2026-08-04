@@ -154,10 +154,74 @@ Manual (emulator, signed in) - NOT RUN, see the caveat below
   "To is alias@ -> Move to Receipts": the amber banner names both folders.
 - Delete the rule: the note disappears from the alias panel.
 
+## 7. Move up / move down for labels
+
+The drawer context menu already gained Move up / Move down on `main` in `6331da6`
+(unreleased, which is why the reporter's build lacks it). This entry covers the four
+defects found while auditing whether that option actually works, plus the missing
+affordance on the Labels settings screen.
+
+What was wrong:
+
+- Neither labels nor tags were sorted by `sort_order` on the client. `load_labels`
+  concatenates `decrypted + surviving + preserved`, so a custom order survived the
+  server round trip but was lost on the next optimistic merge.
+- Settings -> Labels had no move controls at all, while Settings -> Folders did.
+- `move_tag` issued N sequential `update_tag` calls; a failure mid-loop left the
+  server half-reordered. The backend has had `POST /tags/bulk/reorder` all along.
+- `can_move_up` / `can_move_down` were derived from the filtered visible list while
+  `move_label_row` operated on the unfiltered group, so an undecryptable label sitting
+  between two visible ones made a move look like a no-op.
+
+Ordering now lives in one place, `labels/label_order.kt`, used by the drawer, the
+settings screen, the rule editor picker, inbox, detail and search.
+
+JVM, `LabelOrderTest` (12):
+
+- sort_order ordering regardless of server order; folders and `custom` excluded.
+- blank, null and still-encrypted names excluded.
+- equal sort_order falls back to created_at, then token.
+- tag ordering plus unreadable-name drop.
+- move up, move down, multi-position move.
+- refusals: both edges, negative index, out-of-range index, zero direction, empty list.
+- reorder entries contain only positions that changed; empty when nothing moved.
+- renumbering starts at zero; duplicate sort_order values renumber stably.
+
+JVM, `SettingsViewModelTest` (6):
+
+- `move_label_row` reorders and persists via one bulk reorder call.
+- `move_label_row` leaves folders untouched.
+- `move_label_row` at an edge makes no api call.
+- `move_label_row` reverts the optimistic order and toasts when the api fails.
+- `move_tag` sends a single bulk request and never calls `update_tag`.
+- `move_tag` reverts the optimistic order when the api fails.
+
+Instrumented, `LabelMoveControlsTest` (6, runs on the emulator):
+
+- every row renders both chevrons.
+- a middle row moves in both directions.
+- the first row's up and the last row's down are inert.
+- the first row can still move down, the last can still move up.
+- a lone label has neither direction enabled.
+- the chevrons do not shadow the delete action.
+
+This suite renders `label_settings_row` directly rather than `LabelsScreen`, so it
+does not need Hilt or mockk. That matters: `FolderDeleteConfirmTest`, the existing
+suite that otherwise covers this screen, cannot run in this environment (see below).
+
+Manual (NOT RUN, see the caveat below):
+
+- Settings -> Labels: move a label up, back out, return, order persists.
+- Sidebar: same order as the settings screen.
+- Rule editor label picker and the inbox/detail/search tag chips: same order.
+
 ## Emulator run (AVD `Aster_Test`, API 34)
 
-- JVM unit suite: 1135 tests, 0 failures (includes the 10 duplicate-condition cases
-  and the 2 web-parity cases).
+- JVM unit suite: 1171 tests, 0 failures (1135 before item 6, +18 for item 7:
+  12 `LabelOrderTest` and 6 `SettingsViewModelTest`).
+- Instrumented `LabelMoveControlsTest`: 6 tests, 0 failures.
+- Instrumented `org.astermail.android.ui.settings`: 28 tests, 11 failures, all the
+  known mockk-android set below.
 - Instrumented `org.astermail.android.ui`: 157 tests, 16 failures.
 - Instrumented crypto/mail/notifications/settings/storage: 43 tests, 2 failures.
 - All 18 failures are pre-existing and environmental, not regressions: the same 16
