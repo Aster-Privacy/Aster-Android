@@ -70,6 +70,7 @@ internal fun alias_detail_panel(
     alias: org.astermail.android.api.settings.AliasInfo,
     detail: AliasDetailState,
     vm: SettingsViewModel,
+    rule_delivery: AliasRuleDeliveryNote? = null,
 ) {
     val colors = AsterMaterial.colors
     Column(
@@ -86,7 +87,7 @@ internal fun alias_detail_panel(
                 .background(colors.border_secondary),
         )
         alias_details_section(alias, vm)
-        alias_delivery_section(alias, vm)
+        alias_delivery_section(alias, vm, rule_delivery)
         if (detail.loading) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -177,10 +178,17 @@ private fun alias_details_section(
     }
 }
 
+data class AliasRuleDeliveryNote(
+    val rule_name: String,
+    val folder_name: String,
+    val matches_alias_delivery: Boolean,
+)
+
 @Composable
 private fun alias_delivery_section(
     alias: org.astermail.android.api.settings.AliasInfo,
     vm: SettingsViewModel,
+    rule_delivery: AliasRuleDeliveryNote?,
 ) {
     val state by vm.state.collectAsState()
 
@@ -203,6 +211,7 @@ private fun alias_delivery_section(
     alias_delivery_picker(
         selected_label = selected_label,
         folders = folders,
+        rule_delivery = rule_delivery,
         on_select_inbox = { vm.set_alias_delivery(alias.id, null, to_archive = false) },
         on_select_archive = { vm.set_alias_delivery(alias.id, null, to_archive = true) },
         on_select_folder = { token -> vm.set_alias_delivery(alias.id, token, to_archive = false) },
@@ -210,9 +219,33 @@ private fun alias_delivery_section(
 }
 
 @Composable
+internal fun alias_delivery_rule_note(note: AliasRuleDeliveryNote, selected_label: String) {
+    val colors = AsterMaterial.colors
+    val text = if (note.matches_alias_delivery) {
+        stringResource(R.string.alias_delivery_rule_note, note.rule_name, note.folder_name)
+    } else {
+        stringResource(
+            R.string.alias_delivery_rule_conflict,
+            note.rule_name,
+            note.folder_name,
+            selected_label,
+        )
+    }
+    Text(
+        text = text,
+        color = if (note.matches_alias_delivery) colors.text_muted else colors.warning,
+        fontSize = 11.sp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("alias_delivery_rule_note"),
+    )
+}
+
+@Composable
 internal fun alias_delivery_picker(
     selected_label: String,
     folders: List<org.astermail.android.api.labels.LabelItem>,
+    rule_delivery: AliasRuleDeliveryNote? = null,
     on_select_inbox: () -> Unit,
     on_select_archive: () -> Unit,
     on_select_folder: (String) -> Unit,
@@ -284,6 +317,7 @@ internal fun alias_delivery_picker(
                 }
             }
         }
+        rule_delivery?.let { alias_delivery_rule_note(it, selected_label) }
     }
 }
 

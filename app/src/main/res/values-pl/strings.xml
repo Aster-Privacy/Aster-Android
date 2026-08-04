@@ -2421,6 +2421,9 @@
     <string name="alias_delivery_folder_title">Dostarczaj do</string>
     <string name="alias_delivery_folder_subtitle">Wybierz, gdzie trafia poczta z tego aliasu</string>
     <string name="alias_delivery_folder_missing">Usunięty folder</string>
+    <string name="alias_delivery_rule_note">Reguła poczty \"%1$s\" już przenosi wiadomości tego aliasu do %2$s.</string>
+    <string name="alias_delivery_rule_conflict">Reguła poczty \"%1$s\" przenosi wiadomości tego aliasu do %2$s, więc nie trafiają one do %3$s.</string>
+    <string name="mail_rules_alias_delivery_conflict">%1$s ma dostarczanie do %2$s. Ta reguła przeniesie jego wiadomości zamiast tego do %3$s.</string>
     <string name="alias_delivery_title">Dostarczanie</string>
     <string name="copied_value">Skopiowano %1$s</string>
     <string name="alias_expand_settings">Pokaż ustawienia aliasu</string>

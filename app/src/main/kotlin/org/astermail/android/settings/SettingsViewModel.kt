@@ -188,6 +188,7 @@ data class SettingsUiState(
     val alias_preferences: AliasPreferences? = null,
     val expanded_alias_ids: Set<String> = emptySet(),
     val alias_details: Map<String, AliasDetailState> = emptyMap(),
+    val mail_rules: List<org.astermail.android.api.mail_rules.MailRule> = emptyList(),
     val recovery_email_address: String? = null,
     val recovery_email_set: Boolean = false,
     val recovery_email_verified: Boolean = false,
@@ -260,6 +261,7 @@ class SettingsViewModel @Inject constructor(
     private val security_api: SecurityApi,
     private val encryption_api: org.astermail.android.api.encryption.EncryptionApi,
     private val alias_detail_api: org.astermail.android.api.aliases.AliasDetailApi,
+    private val mail_rules_api: org.astermail.android.api.mail_rules.MailRulesApi,
     private val auth_repository: AuthRepository,
     private val session_key_store: SessionKeyStore,
     private val token_store: TokenStore,
@@ -295,6 +297,7 @@ class SettingsViewModel @Inject constructor(
     private var last_default_sender_load_ms = 0L
     private var last_profile_load_ms = 0L
     private var last_aliases_load_ms = 0L
+    private var last_mail_rules_load_ms = 0L
     private var last_domain_addresses_load_ms = 0L
     private var last_storage_load_ms = 0L
     private val last_labels_load_ms = java.util.concurrent.ConcurrentHashMap<String, Long>()
@@ -644,6 +647,7 @@ class SettingsViewModel @Inject constructor(
         last_default_sender_load_ms = 0L
         last_profile_load_ms = 0L
         last_aliases_load_ms = 0L
+        last_mail_rules_load_ms = 0L
         last_domain_addresses_load_ms = 0L
         last_storage_load_ms = 0L
         last_labels_load_ms.clear()
@@ -821,6 +825,21 @@ class SettingsViewModel @Inject constructor(
             }
         } finally {
             hmac_key.fill(0)
+        }
+    }
+
+    fun load_mail_rules(force: Boolean = false) {
+        val now = System.currentTimeMillis()
+        if (!force && last_mail_rules_load_ms != 0L && now - last_mail_rules_load_ms < LIST_TTL_MS) return
+        last_mail_rules_load_ms = now
+        viewModelScope.launch {
+            try {
+                val response = mail_rules_api.list()
+                _state.update { it.copy(mail_rules = response.rules) }
+            } catch (t: Throwable) {
+                last_mail_rules_load_ms = 0L
+                android.util.Log.w("SettingsVM", "load_mail_rules failed", t)
+            }
         }
     }
 

@@ -106,6 +106,54 @@ Manual (emulator, signed in)
 - Rows in Trash/Spam show those folder names; custom folders show their own name.
 - Inbox and folder-filtered lists are unchanged (no folder chip there).
 
+## 6. Alias delivery vs mail rules
+
+Code: `mail_rules/alias_rule_delivery.kt` (`alias_rule_delivery`,
+`rule_alias_delivery_conflict` and helpers, mirroring the backend precedence in
+`rules_engine.rs` / `inbound_poller.rs`: rules are ordered by `(priority,
+created_at)`, the last `move_to` wins, and a rule's `move_to` overrides the alias
+`delivery_folder_token`), `ui/settings/detail/alias_detail_panel.kt`
+(`AliasRuleDeliveryNote`, `alias_delivery_rule_note` under the Deliver to picker),
+`ui/settings/detail/aliases_screen.kt` (`alias_rule_delivery_note`),
+`ui/settings/mail_rules/rule_editor_screen.kt` (conflict banner),
+`settings/SettingsViewModel.kt` (`load_mail_rules`, `mail_rules` state),
+3 new keys in all 14 `values*/strings.xml`.
+
+The Deliver to picker keeps showing the alias's own stored setting; it is not
+silently overwritten with the rule's folder. A rule can be conditional (`ALL`
+match mode with extra conditions) and can be deleted, so displaying its folder as
+the alias setting would misreport what is stored. Instead the rule and its
+destination are named under the picker, in muted text when they agree and in
+warning amber when they differ.
+
+Automated - `test settings/AliasRuleDeliveryTest` (18 cases)
+- a `move_to` rule targeting the alias is reported with its name and folder
+- an alias no rule targets has no delivery note
+- disabled rules and rules with no `move_to` are ignored
+- the last rule by priority then `created_at` wins; the last `move_to` in a rule wins
+- address matching ignores case and surrounding whitespace
+- `to` / `cc` / `bcc` / `any_recipient` all match; `contains` and `matches_domain` match
+- nested `and` / `or` match, `not` is excluded
+- blank condition values and non-address alias strings never match
+- conflict reported when the rule folder differs from the alias folder
+- no conflict when they are equal or when the alias has no explicit target
+- archive-only aliases (`never_inbox`) conflict with a `move_to` rule
+- conflicts only consider exact (`is`) address conditions and require a `move_to`
+- the alias is found inside a nested `or`
+
+Automated - `androidTest ui/settings/AliasDeliveryRuleNoteTest` (2 cases)
+- matching rule renders "Mail rule "X" already moves mail for this alias to Y."
+- conflicting rule names the selected destination too
+
+Manual (emulator, signed in) - NOT RUN, see the caveat below
+- Rule "To is alias@astermail.org -> Move to My Feed", then Settings -> Aliases ->
+  expand that alias: the note under Deliver to names the rule and My Feed.
+- Change Deliver to to Inbox: the note turns amber and says mail will not land in Inbox.
+- Set Deliver to to My Feed: the note returns to muted text.
+- Rule editor: with the alias already delivering to My Feed, build a rule
+  "To is alias@ -> Move to Receipts": the amber banner names both folders.
+- Delete the rule: the note disappears from the alias panel.
+
 ## Emulator run (AVD `Aster_Test`, API 34)
 
 - JVM unit suite: 1135 tests, 0 failures (includes the 10 duplicate-condition cases

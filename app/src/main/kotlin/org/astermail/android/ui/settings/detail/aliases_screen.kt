@@ -198,6 +198,7 @@ fun AliasesScreen(
         vm.load_deleted_aliases()
         vm.load_labels(folder_type = "folder")
         vm.load_alias_preferences()
+        vm.load_mail_rules()
     }
 
     LaunchedEffect(open_create) {
@@ -505,6 +506,7 @@ private fun aliases_tab(
                                 alias = alias,
                                 detail = state.alias_details[alias.id] ?: AliasDetailState(),
                                 vm = vm,
+                                rule_delivery = alias_rule_delivery_note(alias, state.mail_rules, state.labels),
                             )
                         },
                     )
@@ -667,6 +669,24 @@ internal fun alias_delivery_folder_name(
         }?.encrypted_name
     }
     return if (alias.never_inbox) archive_name else null
+}
+
+@Composable
+internal fun alias_rule_delivery_note(
+    alias: org.astermail.android.api.settings.AliasInfo,
+    rules: List<org.astermail.android.api.mail_rules.MailRule>,
+    labels: List<org.astermail.android.api.labels.LabelItem>,
+): AliasRuleDeliveryNote? {
+    val delivery = org.astermail.android.mail_rules.alias_rule_delivery(rules, alias.address) ?: return null
+    val missing_name = stringResource(R.string.alias_delivery_folder_missing)
+    val folder_name = labels.firstOrNull {
+        it.label_token == delivery.folder_token && !it.encrypted_name.isNullOrBlank()
+    }?.encrypted_name ?: missing_name
+    return AliasRuleDeliveryNote(
+        rule_name = delivery.rule_name,
+        folder_name = folder_name,
+        matches_alias_delivery = alias.delivery_folder_token == delivery.folder_token,
+    )
 }
 
 @Composable
