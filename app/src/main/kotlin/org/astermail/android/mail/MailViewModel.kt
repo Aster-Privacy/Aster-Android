@@ -783,6 +783,11 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    fun cancel_load_all_remaining() {
+        load_all_remaining_job?.cancel()
+        load_all_remaining_job = null
+    }
+
     fun load_all_remaining(on_complete: (() -> Unit)? = null) {
         load_all_remaining_job?.cancel()
         load_all_remaining_job = viewModelScope.launch {
