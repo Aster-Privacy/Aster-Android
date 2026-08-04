@@ -145,7 +145,7 @@ Automated - `androidTest ui/settings/AliasDeliveryRuleNoteTest` (2 cases)
 - matching rule renders "Mail rule "X" already moves mail for this alias to Y."
 - conflicting rule names the selected destination too
 
-Manual (emulator, signed in) - NOT RUN, see the caveat below
+Manual (emulator, signed in) - RUN, all pass
 - Rule "To is alias@astermail.org -> Move to My Feed", then Settings -> Aliases ->
   expand that alias: the note under Deliver to names the rule and My Feed.
 - Change Deliver to to Inbox: the note turns amber and says mail will not land in Inbox.
@@ -209,11 +209,33 @@ This suite renders `label_settings_row` directly rather than `LabelsScreen`, so 
 does not need Hilt or mockk. That matters: `FolderDeleteConfirmTest`, the existing
 suite that otherwise covers this screen, cannot run in this environment (see below).
 
-Manual (NOT RUN, see the caveat below):
+Manual (emulator, signed in) - RUN, all pass:
 
 - Settings -> Labels: move a label up, back out, return, order persists.
 - Sidebar: same order as the settings screen.
 - Rule editor label picker and the inbox/detail/search tag chips: same order.
+
+Defect found by the signed-in pass and fixed in `cd098d6`:
+
+- Settings -> Labels rendered "No labels" for every real account. The screen listed
+  only `label_rows(state.labels)` (`folder_type == "label"`), but the app's
+  user-facing labels are tags; `LabelItem`s of that type are empty in practice. So
+  the move controls shipped in `ac799a6` sat on a screen with nothing in it.
+  `label_screen_rows(tags, labels)` now merges both (tags first), routing each row's
+  move/delete to `move_tag`/`delete_tag` or `move_label_row`/`delete_label`.
+- Settings -> MAIL had no Labels entry at all; the route was reachable only through
+  settings search. Added after Folders.
+
+JVM, `LabelScreenRowsTest` (8):
+
+- tags are emitted before labels, both in `sort_order`.
+- move edges are computed per kind, so each group's first/last disable independently.
+- a lone row of either kind has both arrows disabled.
+- tags are always deletable; system and locked labels are not.
+- missing and malformed colours fall back to the neutral grey.
+- item counts pass through unchanged, including null.
+- blank, null and still-encrypted names are dropped by the underlying helpers.
+- an empty model yields no rows.
 
 ## Emulator run (AVD `Aster_Test`, API 34)
 
@@ -234,8 +256,22 @@ Manual (NOT RUN, see the caveat below):
   implement interface dagger.hilt.internal.GeneratedComponent`.
 - Every test added by this batch passes.
 
-## Emulator caveat
+## Signed-in manual pass
 
-The demo account in `DEMO_CREDENTIALS.txt` (`familyownervigkl`) no longer
-authenticates, so the signed-in manual passes above could not be run in this
-session; coverage rests on the automated tests listed here.
+Run in full on AVD `Aster_Test` (`emulator-5554`) against a fresh QA account
+recorded in the gitignored `.ops/EMULATOR_ACCOUNT.txt`. All seven suggestions pass
+on-device; the two Labels defects listed under item 7 were found here and fixed.
+
+The previous demo account in `DEMO_CREDENTIALS.txt` (`familyownervigkl`) no longer
+authenticates. In-app registration from the emulator fails with a generic "Access
+denied" - the client never sends `client_fingerprint`, `core-api` still reports UA
+version `0.1.0`, and a `blocked_device_fingerprints` row blocks that class of
+Android registration. `AuthViewModel.map_error` hides the real 403 behind that
+string, which is what made this hard to diagnose.
+
+Emulator notes worth reusing:
+
+- Screenshots render 900x2000 while the device is 1080x2400: multiply displayed
+  coordinates by 1.20 before feeding them to `input tap`.
+- `adb install -r` while the app is running does not reliably swap the running
+  process's code. Always `am force-stop` then relaunch, or you test stale code.
