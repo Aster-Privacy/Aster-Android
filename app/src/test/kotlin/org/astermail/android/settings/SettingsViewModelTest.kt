@@ -1584,6 +1584,129 @@ class SettingsViewModelTest {
         assertEquals(1, by_id["l2"]?.sort_order)
     }
 
+    private suspend fun kotlinx.coroutines.test.TestScope.seed_label_rows() {
+        val labels = listOf(
+            LabelItem(id = "f1", label_token = "ftk1", encrypted_name = "Inbox", folder_type = "folder"),
+            LabelItem(id = "b", label_token = "ltb", encrypted_name = "Bank", folder_type = "label", sort_order = 1),
+            LabelItem(id = "a", label_token = "lta", encrypted_name = "Invoice", folder_type = "label", sort_order = 0),
+            LabelItem(id = "c", label_token = "ltc", encrypted_name = "News", folder_type = "label", sort_order = 2),
+        )
+        coEvery { labels_api.list_labels(any(), any()) } returns LabelsListResponse(labels)
+        every { session_key_store.get_identity_key() } returns "test_identity_key"
+        every { session_key_store.get_previous_keys() } returns null
+        vm.load_labels()
+        advanceUntilIdle()
+    }
+
+    @Test
+    fun `move_label_row reorders labels and persists via bulk reorder`() = runTest {
+        seed_label_rows()
+        val request_slot = io.mockk.slot<org.astermail.android.api.labels.BulkReorderLabelsRequest>()
+        coEvery { labels_api.bulk_reorder_labels(capture(request_slot)) } returns
+            org.astermail.android.api.labels.BulkReorderLabelsResponse(updated = 2)
+
+        vm.move_label_row("c", -1)
+        advanceUntilIdle()
+
+        val entries = request_slot.captured.labels.associate { it.id to it.sort_order }
+        assertEquals(1, entries["c"])
+        assertEquals(2, entries["b"])
+        assertEquals(
+            listOf("a", "c", "b"),
+            org.astermail.android.labels.label_rows(vm.state.value.labels).map { it.id },
+        )
+    }
+
+    @Test
+    fun `move_label_row leaves folders untouched`() = runTest {
+        seed_label_rows()
+        coEvery { labels_api.bulk_reorder_labels(any()) } returns
+            org.astermail.android.api.labels.BulkReorderLabelsResponse(updated = 2)
+
+        vm.move_label_row("b", -1)
+        advanceUntilIdle()
+
+        val folder = vm.state.value.labels.first { it.id == "f1" }
+        assertEquals(0, folder.sort_order)
+        assertEquals("folder", folder.folder_type)
+    }
+
+    @Test
+    fun `move_label_row at an edge does not call the api`() = runTest {
+        seed_label_rows()
+
+        vm.move_label_row("a", -1)
+        vm.move_label_row("c", 1)
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { labels_api.bulk_reorder_labels(any()) }
+    }
+
+    @Test
+    fun `move_label_row reverts optimistic order when the api call fails`() = runTest {
+        seed_label_rows()
+        coEvery { labels_api.bulk_reorder_labels(any()) } throws RuntimeException("offline")
+
+        vm.move_label_row("c", -1)
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf("a", "b", "c"),
+            org.astermail.android.labels.label_rows(vm.state.value.labels).map { it.id },
+        )
+    }
+
+    private suspend fun kotlinx.coroutines.test.TestScope.seed_tag_rows() {
+        val tags = listOf(
+            org.astermail.android.api.tags.TagItem(
+                id = "t2", tag_token = "tk2", encrypted_name = "Beta", name_nonce = "", sort_order = 1,
+            ),
+            org.astermail.android.api.tags.TagItem(
+                id = "t1", tag_token = "tk1", encrypted_name = "Alpha", name_nonce = "", sort_order = 0,
+            ),
+        )
+        coEvery { tags_api.list_tags(any()) } returns
+            org.astermail.android.api.tags.TagsListResponse(tags = tags)
+        every { session_key_store.get_identity_key() } returns "test_identity_key"
+        every { session_key_store.get_previous_keys() } returns null
+        vm.load_tags()
+        advanceUntilIdle()
+    }
+
+    @Test
+    fun `move_tag persists a single bulk reorder request`() = runTest {
+        seed_tag_rows()
+        val request_slot = io.mockk.slot<org.astermail.android.api.tags.BulkReorderTagsRequest>()
+        coEvery { tags_api.bulk_reorder_tags(capture(request_slot)) } returns
+            org.astermail.android.api.tags.BulkReorderTagsResponse(updated = 2)
+
+        vm.move_tag("t2", -1)
+        advanceUntilIdle()
+
+        val entries = request_slot.captured.tags.associate { it.id to it.sort_order }
+        assertEquals(0, entries["t2"])
+        assertEquals(1, entries["t1"])
+        coVerify(exactly = 0) { tags_api.update_tag(any(), any()) }
+        assertEquals(
+            listOf("t2", "t1"),
+            org.astermail.android.labels.tag_rows(vm.state.value.tags).map { it.id },
+        )
+    }
+
+    @Test
+    fun `move_tag reverts optimistic order when the api call fails`() = runTest {
+        seed_tag_rows()
+        coEvery { tags_api.bulk_reorder_tags(any()) } throws RuntimeException("offline")
+
+        vm.move_tag("t2", -1)
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf("t1", "t2"),
+            org.astermail.android.labels.tag_rows(vm.state.value.tags).map { it.id },
+        )
+    }
+
     @Test
     fun `delete_label error does not modify list`() = runTest {
         val labels = listOf(

@@ -1756,8 +1756,7 @@ fun MailDetailScreen(
 
     if (show_label_sheet) {
         val settings_state by settings_vm.state.collectAsStateWithLifecycle()
-        val tag_items = settings_state.tags
-            .filter { it.encrypted_name.isNotBlank() }
+        val tag_items = org.astermail.android.labels.tag_rows(settings_state.tags)
         tag_picker_sheet(
             title = stringResource(R.string.add_label),
             empty_message = stringResource(R.string.no_labels_yet_create),

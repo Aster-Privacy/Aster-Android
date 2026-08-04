@@ -179,8 +179,7 @@ fun RuleEditorScreen(
             }
     }
     val labels = remember(settings_state.labels, settings_state.tags) {
-        val from_tags = settings_state.tags
-            .filter { it.encrypted_name.isNotBlank() }
+        val from_tags = org.astermail.android.labels.tag_rows(settings_state.tags)
             .mapIndexed { idx, tag ->
                 picker_item(
                     id = tag.tag_token,
@@ -190,8 +189,7 @@ fun RuleEditorScreen(
                         ?: rules_label_palette[idx % rules_label_palette.size],
                 )
             }
-        val from_labels = settings_state.labels
-            .filter { it.folder_type == "label" && !it.encrypted_name.isNullOrBlank() }
+        val from_labels = org.astermail.android.labels.label_rows(settings_state.labels)
             .mapIndexed { idx, label ->
                 picker_item(
                     id = label.label_token,

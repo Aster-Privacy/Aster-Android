@@ -854,7 +854,7 @@ fun SearchScreen(
     }
 
     if (show_label_sheet) {
-        val tag_items = settings_state.tags.filter { it.encrypted_name.isNotBlank() }
+        val tag_items = org.astermail.android.labels.tag_rows(settings_state.tags)
         org.astermail.android.ui.mail.tag_picker_sheet(
             title = stringResource(R.string.add_label),
             empty_message = stringResource(R.string.no_labels_yet_create),

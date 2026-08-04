@@ -89,10 +89,27 @@ data class UpdateTagRequest(
     val sort_order: Int? = null,
 )
 
+@Serializable
+data class ReorderTagEntry(
+    val id: String,
+    val sort_order: Int,
+)
+
+@Serializable
+data class BulkReorderTagsRequest(
+    val tags: List<ReorderTagEntry>,
+)
+
+@Serializable
+data class BulkReorderTagsResponse(
+    val updated: Long = 0,
+)
+
 interface TagsApi {
     suspend fun list_tags(include_counts: Boolean = true): TagsListResponse
     suspend fun create_tag(request: CreateTagRequest): CreateTagResponse
     suspend fun update_tag(tag_id: String, request: UpdateTagRequest)
+    suspend fun bulk_reorder_tags(request: BulkReorderTagsRequest): BulkReorderTagsResponse
     suspend fun delete_tag(tag_id: String)
 }
 
@@ -125,6 +142,15 @@ class TagsApiImpl(private val client: ApiClient) : TagsApi {
             val body = try { response.body<String>() } catch (_: Throwable) { "" }
             throw client.map_http_status(response.status.value, body)
         }
+    }
+
+    override suspend fun bulk_reorder_tags(request: BulkReorderTagsRequest): BulkReorderTagsResponse {
+        val response = client.http.post("${client.base_url}$tags_base/bulk/reorder") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
     }
 
     override suspend fun delete_tag(tag_id: String) {
