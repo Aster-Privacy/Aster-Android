@@ -205,6 +205,8 @@ fun build_thread_rows(
 
 private const val UNREAD_MISMATCH_GRACE_MS = 3000L
 
+internal const val SELECT_ALL_DRAIN_LIMIT = 5000
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InboxScreen(
@@ -752,8 +754,13 @@ fun InboxScreen(
         selected_ids.clear()
         selected_ids.addAll(visible_threads.map { it.thread_id })
         select_all_active = true
-        select_all_loading = false
-        scope_selection_confirmed = false
+        scope_selection_confirmed = mail_vm.folder_supports_scope_selection(current_folder)
+        if (inbox_state.has_more && folder_total <= SELECT_ALL_DRAIN_LIMIT) {
+            select_all_loading = true
+            mail_vm.load_all_remaining { select_all_loading = false }
+        } else {
+            select_all_loading = false
+        }
     }
 
     fun toggle_select_all() {
@@ -764,6 +771,7 @@ fun InboxScreen(
             select_all_loading = false
             scope_selection_confirmed = false
             selected_ids.clear()
+            mail_vm.cancel_load_all_remaining()
         } else {
             select_all()
         }
@@ -775,6 +783,7 @@ fun InboxScreen(
         select_all_loading = false
         scope_selection_confirmed = false
         selected_ids.clear()
+        mail_vm.cancel_load_all_remaining()
     }
 
     androidx.activity.compose.BackHandler(enabled = select_mode) { exit_select_mode() }

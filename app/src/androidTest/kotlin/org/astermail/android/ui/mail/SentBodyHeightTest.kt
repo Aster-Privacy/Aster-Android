@@ -102,6 +102,7 @@ class SentBodyHeightTest {
 
     private data class Measurement(val reported: Int, val content_bottom: Int, val diag: String) {
         val fit_scale: Float get() = diag.split('|').getOrNull(6)?.toFloatOrNull() ?: 1f
+        val viewport_width: Int get() = diag.split('|').getOrNull(7)?.toFloatOrNull()?.toInt() ?: 0
     }
 
     private fun measure(body: String): Measurement {
@@ -231,8 +232,9 @@ class SentBodyHeightTest {
 
     @Test
     fun wide_html_sent_email_is_not_cut_off() {
+        val content_width = 900
         val body = buildString {
-            append("<div style=\"width:900px\">")
+            append("<div style=\"width:${content_width}px\">")
             append("<div>Here is the summary you asked for.</div>")
             repeat(20) { append("<div>row $it with a fairly long sentence that keeps the table wide</div>") }
             append("<div>Regards,<br>Sam</div>")
@@ -245,9 +247,12 @@ class SentBodyHeightTest {
             "wide sent email should be zoomed out to fit, was ${m.fit_scale} [${m.diag}]",
             m.fit_scale < 1f,
         )
+
+        val body_padding = 32
+        val needed = (m.viewport_width - body_padding).toFloat() / content_width
         assertTrue(
-            "wide sent email zoomed out far more than the overflow needs: ${m.fit_scale} [${m.diag}]",
-            m.fit_scale > 0.95f,
+            "wide sent email zoomed to ${m.fit_scale} instead of the needed $needed [${m.diag}]",
+            m.fit_scale >= needed * 0.9f && m.fit_scale <= needed * 1.1f,
         )
     }
 }

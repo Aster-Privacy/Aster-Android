@@ -124,6 +124,7 @@ fun SecurityScreen(
         vm.load_trusted_devices()
         vm.load_audit_log()
         vm.load_vanguard_status()
+        vm.load_subscription(force = false)
     }
 
     LaunchedEffect(state.action_result) {
@@ -656,8 +657,7 @@ private fun vanguard_section(
     val state by vm.state.collectAsStateWithLifecycle()
     val store = lock_vm.store
 
-    val plan_name = state.subscription?.effective_plan_name?.lowercase() ?: ""
-    val is_nova_plus = plan_name.contains("nova") || plan_name.contains("supernova")
+    val is_nova_plus = is_vanguard_plan(state.subscription)
     val vanguard_enabled = state.vanguard_enabled == true
 
     var show_disable_confirm by remember { mutableStateOf(false) }
