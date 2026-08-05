@@ -86,7 +86,7 @@ class MailPollingWorker(
         if (token_store.access_token == null) return Result.success()
 
         if (UnifiedPushState.has_pending_registration(context)) {
-            UnifiedPushState.try_register(context)
+            UnifiedPushState.sync_registration(context)
         } else if (UnifiedPushState.subscription_stale(context)) {
             UnifiedPushState.refresh_backend_subscription(context)
         }

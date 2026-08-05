@@ -50,13 +50,15 @@ object UnifiedPushState {
     private const val KEY_REGISTERED_ENDPOINT = "registered_endpoint_url"
     private const val KEY_REGISTERED_P256DH = "registered_p256dh"
     private const val KEY_REGISTERED_AUTH = "registered_auth"
+    private const val KEY_PENDING_P256DH = "pending_p256dh"
+    private const val KEY_PENDING_AUTH = "pending_auth"
     private const val KEY_LAST_SUBSCRIBED_AT = "last_subscribed_at"
     private const val KEY_LAST_REGISTER_ATTEMPT_AT = "last_register_attempt_at"
     private const val KEY_LAST_SUBSCRIBE_ATTEMPT_AT = "last_subscribe_attempt_at"
     private const val KEY_VAPID_PUBLIC_KEY = "vapid_public_key"
     private const val KEY_VAPID_FETCHED_AT = "vapid_fetched_at"
     private const val KEY_DEVICE_ID = "push_device_id"
-    private const val RESUBSCRIBE_INTERVAL_MS = 24L * 60L * 60L * 1000L
+    private const val RESUBSCRIBE_INTERVAL_MS = 6L * 60L * 60L * 1000L
     private const val REGISTER_COOLDOWN_MS = 15L * 60L * 1000L
     private const val SUBSCRIBE_COOLDOWN_MS = 5L * 60L * 1000L
     private const val VAPID_CACHE_TTL_MS = 7L * 24L * 60L * 60L * 1000L
@@ -98,17 +100,22 @@ object UnifiedPushState {
         return endpoint == null || endpoint != registered
     }
 
-    fun save_endpoint(context: Context, url: String) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun save_endpoint(context: Context, url: String, p256dh: String?, auth: String?) {
+        val edit = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
             .putString(KEY_ENDPOINT, url)
-            .apply()
+        if (!p256dh.isNullOrBlank() && !auth.isNullOrBlank()) {
+            edit.putString(KEY_PENDING_P256DH, p256dh).putString(KEY_PENDING_AUTH, auth)
+        }
+        edit.apply()
     }
 
     fun clear_endpoint(context: Context) {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
             .remove(KEY_ENDPOINT)
+            .remove(KEY_PENDING_P256DH)
+            .remove(KEY_PENDING_AUTH)
             .remove(KEY_REGISTERED_ENDPOINT)
             .remove(KEY_REGISTERED_P256DH)
             .remove(KEY_REGISTERED_AUTH)
@@ -139,6 +146,18 @@ object UnifiedPushState {
         return System.currentTimeMillis() - last > RESUBSCRIBE_INTERVAL_MS
     }
 
+    fun sync_registration(context: Context) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val endpoint = prefs.getString(KEY_ENDPOINT, null)
+        val p256dh = prefs.getString(KEY_PENDING_P256DH, null)
+        val auth = prefs.getString(KEY_PENDING_AUTH, null)
+        if (endpoint.isNullOrBlank() || p256dh.isNullOrBlank() || auth.isNullOrBlank()) {
+            try_register(context)
+            return
+        }
+        register_with_backend(context, endpoint, p256dh, auth)
+    }
+
     fun refresh_backend_subscription(context: Context) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val endpoint = prefs.getString(KEY_REGISTERED_ENDPOINT, null) ?: return
@@ -157,11 +176,13 @@ object UnifiedPushState {
     }
 
     fun try_register(context: Context) {
-        if (cooldown_active(context, KEY_LAST_REGISTER_ATTEMPT_AT, REGISTER_COOLDOWN_MS)) return
         scope.launch {
             runCatching {
                 val distributors = UnifiedPush.getDistributors(context)
                 if (distributors.isEmpty()) return@launch
+                if (cooldown_active(context, KEY_LAST_REGISTER_ATTEMPT_AT, REGISTER_COOLDOWN_MS)) {
+                    return@launch
+                }
                 if (UnifiedPush.getAckDistributor(context) == null) {
                     UnifiedPush.saveDistributor(context, distributors.first())
                 }

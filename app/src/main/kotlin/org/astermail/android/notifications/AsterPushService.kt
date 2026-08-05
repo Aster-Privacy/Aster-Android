@@ -38,8 +38,8 @@ class AsterPushService : PushService() {
     }
 
     override fun onNewEndpoint(endpoint: PushEndpoint, instance: String) {
-        UnifiedPushState.save_endpoint(this, endpoint.url)
         val keys = endpoint.pubKeySet
+        UnifiedPushState.save_endpoint(this, endpoint.url, keys?.pubKey, keys?.auth)
         if (keys != null) {
             UnifiedPushState.register_with_backend(
                 context = this,

@@ -338,7 +338,7 @@ class AuthRepository @Inject constructor(
         runCatching { save_session_snapshot(login_resp.user_id) }
         _is_signed_in.value = true
         runCatching { UnifiedPushState.clear_backend_registration(context) }
-        runCatching { UnifiedPushState.try_register(context) }
+        runCatching { UnifiedPushState.sync_registration(context) }
         background_scope.launch { runCatching { ensure_pgp_key_published() } }
     }
 
@@ -489,7 +489,7 @@ class AuthRepository @Inject constructor(
         save_session_snapshot(register_resp.user_id)
         _is_signed_in.value = true
         runCatching { UnifiedPushState.clear_backend_registration(context) }
-        runCatching { UnifiedPushState.try_register(context) }
+        runCatching { UnifiedPushState.sync_registration(context) }
         RegisterSuccess(recovery_codes = recovery_codes)
     }
 
