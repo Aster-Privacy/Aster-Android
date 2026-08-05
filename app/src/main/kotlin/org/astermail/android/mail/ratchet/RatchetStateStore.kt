@@ -64,18 +64,40 @@ class RatchetStateStore @Inject constructor(
         prefs.edit().remove(key_for(conversation_id)).apply()
     }
 
-    fun derive_state_encryption_key(): ByteArray? {
-        val derived_master = derive_storage_master_key() ?: return null
-        return try {
-            RatchetCrypto.hkdf_sha256(
-                ikm = derived_master,
-                salt = "Aster Mail_Ratchet_State_Encryption".toByteArray(Charsets.UTF_8),
-                info = "ratchet_state_key".toByteArray(Charsets.UTF_8),
-                length = 32,
-            )
-        } finally {
-            derived_master.fill(0)
+    fun derive_state_encryption_key(): ByteArray? =
+        state_encryption_key_candidates().firstOrNull()
+
+    fun state_encryption_key_candidates(): List<ByteArray> =
+        master_key_candidates().map { master ->
+            try {
+                RatchetCrypto.hkdf_sha256(
+                    ikm = master,
+                    salt = "Aster Mail_Ratchet_State_Encryption".toByteArray(Charsets.UTF_8),
+                    info = "ratchet_state_key".toByteArray(Charsets.UTF_8),
+                    length = 32,
+                )
+            } finally {
+                master.fill(0)
+            }
         }
+
+    fun master_key_candidates(): List<ByteArray> {
+        val candidates = mutableListOf<ByteArray>()
+        val seen = mutableSetOf<String>()
+        fun offer(key: ByteArray?) {
+            if (key == null || key.size != 32) return
+            if (!seen.add(RatchetCrypto.b64_encode(key))) {
+                key.fill(0)
+                return
+            }
+            candidates.add(key)
+        }
+        offer(session_key_store.get_data_kek())
+        offer(derive_storage_master_key())
+        session_key_store.get_legacy_keks()?.forEach { encoded ->
+            offer(runCatching { RatchetCrypto.b64_decode(encoded) }.getOrNull())
+        }
+        return candidates
     }
 
     private fun derive_storage_master_key(): ByteArray? {

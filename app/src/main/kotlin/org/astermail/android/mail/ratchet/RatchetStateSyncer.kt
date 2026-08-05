@@ -86,7 +86,8 @@ class RatchetStateSyncer @Inject constructor(
 
     suspend fun fetch_from_server(conversation_id: String): RatchetState? {
         if (state_recently_missing(conversation_id)) return null
-        val key = state_store.derive_state_encryption_key() ?: return null
+        val keys = state_store.state_encryption_key_candidates()
+        if (keys.isEmpty()) return null
         return try {
             val conv_b64 = RatchetCrypto.b64_encode(conversation_id.toByteArray(Charsets.UTF_8))
             val resp = ratchet_api.fetch_state(conv_b64)
@@ -97,15 +98,24 @@ class RatchetStateSyncer @Inject constructor(
             missing_state_at.remove(conversation_id)
             val ciphertext = RatchetCrypto.b64_decode(resp.encrypted_state)
             val nonce = RatchetCrypto.b64_decode(resp.state_nonce)
-            val plaintext = RatchetCrypto.aes_gcm_decrypt(ciphertext, key, nonce, null)
-            val state = decode_server_state(String(plaintext, Charsets.UTF_8)) ?: return null
+            var state: RatchetState? = null
+            for (candidate in keys) {
+                val plaintext = try {
+                    RatchetCrypto.aes_gcm_decrypt(ciphertext, candidate, nonce, null)
+                } catch (_: Throwable) {
+                    continue
+                }
+                state = decode_server_state(String(plaintext, Charsets.UTF_8))
+                if (state != null) break
+            }
+            if (state == null) return null
             known_versions[conversation_id] = resp.state_version
             state
         } catch (t: Throwable) {
             if (BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "fetch_from_server failed", t)
             null
         } finally {
-            key.fill(0)
+            keys.forEach { it.fill(0) }
         }
     }
 

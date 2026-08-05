@@ -43,15 +43,22 @@ class RatchetPlaintextCache @Inject constructor(
         val stored = mutex.withLock { prefs.getString(key_for(message_id), null) } ?: return null
         val parts = stored.split(':', limit = 2)
         if (parts.size != 2) return null
-        val key = state_store.derive_state_encryption_key() ?: return null
+        val keys = state_store.state_encryption_key_candidates()
+        if (keys.isEmpty()) return null
         return try {
             val nonce = RatchetCrypto.b64_decode(parts[0])
             val ciphertext = RatchetCrypto.b64_decode(parts[1])
-            String(RatchetCrypto.aes_gcm_decrypt(ciphertext, key, nonce, null), Charsets.UTF_8)
+            keys.firstNotNullOfOrNull { candidate ->
+                try {
+                    String(RatchetCrypto.aes_gcm_decrypt(ciphertext, candidate, nonce, null), Charsets.UTF_8)
+                } catch (_: Throwable) {
+                    null
+                }
+            }
         } catch (_: Throwable) {
             null
         } finally {
-            key.fill(0)
+            keys.forEach { it.fill(0) }
         }
     }
 

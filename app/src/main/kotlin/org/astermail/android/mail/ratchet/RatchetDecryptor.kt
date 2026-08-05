@@ -246,17 +246,27 @@ class RatchetDecryptor @Inject constructor(
         recipient: RatchetRecipientData,
         tried: MutableSet<String>,
     ): Pair<RatchetState, String>? {
-        for (keys in receiver_key_sets()) {
+        val key_sets = receiver_key_sets()
+        if (org.astermail.android.BuildConfig.DEBUG) {
+            android.util.Log.i("AsterRatchet", "bootstrap over ${key_sets.size} receiver key sets")
+        }
+        for (keys in key_sets) {
             val tag = keys.identity_public_b64.ifBlank { keys.identity_jwk }
             if (!tried.add(tag)) continue
             val candidate = try {
                 bootstrap(conversation_id, sender_identity_key_b64, recipient, keys)
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (org.astermail.android.BuildConfig.DEBUG) {
+                    android.util.Log.w("AsterRatchet", "bootstrap threw", t)
+                }
                 null
             } ?: continue
             try {
                 return candidate to DoubleRatchet.decrypt(candidate, recipient)
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (org.astermail.android.BuildConfig.DEBUG) {
+                    android.util.Log.w("AsterRatchet", "bootstrapped state failed to decrypt", t)
+                }
             }
         }
         return null
@@ -290,6 +300,9 @@ class RatchetDecryptor @Inject constructor(
         val pq_shared = if (recipient.pq_ciphertext != null && recipient.pq_key_id != null) {
             val pq_secret = fetch_pq_secret(recipient.pq_key_id!!)
             if (pq_secret == null) {
+                if (org.astermail.android.BuildConfig.DEBUG) {
+                    android.util.Log.w("AsterRatchet", "bootstrap aborted: pq secret ${recipient.pq_key_id} unavailable")
+                }
                 return null
             }
             try {
@@ -333,25 +346,53 @@ class RatchetDecryptor @Inject constructor(
         if (pq_secret_recently_missed(key_id)) return null
         val resp = try { ratchet_api.fetch_pq_secret(key_id) } catch (_: Throwable) { null }
         if (resp == null) {
+            if (org.astermail.android.BuildConfig.DEBUG) {
+                android.util.Log.w("AsterRatchet", "pq secret $key_id: api returned null")
+            }
             mark_pq_secret_missed(key_id)
             return null
         }
-        val key = state_store.derive_state_encryption_key() ?: run {
+        val keys = state_store.state_encryption_key_candidates()
+        if (keys.isEmpty()) {
+            if (org.astermail.android.BuildConfig.DEBUG) {
+                android.util.Log.w("AsterRatchet", "pq secret $key_id: no candidate keys")
+            }
             mark_pq_secret_missed(key_id)
             return null
         }
         return try {
             val ct = RatchetCrypto.b64_decode(resp.encrypted_secret)
             val nonce = RatchetCrypto.b64_decode(resp.secret_nonce)
-            val pt = RatchetCrypto.aes_gcm_decrypt(ct, key, nonce, null)
-            session_key_store.put_pq_secret(key_id, pt)
-            pq_secret_missed_at.remove(key_id)
-            pt
+            var index = -1
+            val pt = keys.withIndex().firstNotNullOfOrNull { (i, candidate) ->
+                try {
+                    RatchetCrypto.aes_gcm_decrypt(ct, candidate, nonce, null).also { index = i }
+                } catch (_: Throwable) {
+                    null
+                }
+            }
+            if (pt == null) {
+                if (org.astermail.android.BuildConfig.DEBUG) {
+                    android.util.Log.w("AsterRatchet", "pq secret $key_id: ${keys.size} candidates all failed")
+                }
+                mark_pq_secret_missed(key_id)
+                null
+            } else {
+                if (org.astermail.android.BuildConfig.DEBUG) {
+                    android.util.Log.i("AsterRatchet", "pq secret $key_id: candidate $index of ${keys.size}")
+                }
+                session_key_store.put_pq_secret(key_id, pt)
+                pq_secret_missed_at.remove(key_id)
+                pt
+            }
         } catch (t: Throwable) {
+            if (org.astermail.android.BuildConfig.DEBUG) {
+                android.util.Log.w("AsterRatchet", "pq secret $key_id: decode failed", t)
+            }
             mark_pq_secret_missed(key_id)
             null
         } finally {
-            key.fill(0)
+            keys.forEach { it.fill(0) }
         }
     }
 
