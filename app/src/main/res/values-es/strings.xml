@@ -2419,7 +2419,8 @@
     <string name="alias_panel_display_name">Nombre visible</string>
     <string name="alias_panel_display_name_placeholder">Añadir nombre visible</string>
     <string name="alias_panel_websites">Sitios web</string>
-    <string name="alias_panel_websites_placeholder">Añade un sitio en el que te registraste</string>
+    <string name="alias_panel_websites_placeholder">Añade sitios en los que te registraste, separados por comas</string>
+    <string name="alias_website_invalid">Introduce una dirección de sitio web válida</string>
     <string name="alias_display_name_updated">Nombre visible guardado</string>
     <string name="alias_websites_updated">Sitios web guardados</string>
     <string name="alias_stats_title">Estadísticas</string>

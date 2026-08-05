@@ -2411,7 +2411,8 @@
     <string name="alias_panel_display_name">표시 이름</string>
     <string name="alias_panel_display_name_placeholder">표시 이름 추가</string>
     <string name="alias_panel_websites">웹사이트</string>
-    <string name="alias_panel_websites_placeholder">가입한 사이트를 추가하세요</string>
+    <string name="alias_panel_websites_placeholder">가입한 사이트를 쉼표로 구분해 추가하세요</string>
+    <string name="alias_website_invalid">유효한 웹사이트 주소를 입력하세요</string>
     <string name="alias_display_name_updated">표시 이름을 저장했습니다</string>
     <string name="alias_websites_updated">웹사이트를 저장했습니다</string>
     <string name="alias_stats_title">통계</string>

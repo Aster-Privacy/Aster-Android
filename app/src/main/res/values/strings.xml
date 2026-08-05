@@ -2483,9 +2483,10 @@
     <string name="alias_panel_display_name">Display name</string>
     <string name="alias_panel_display_name_placeholder">Add display name</string>
     <string name="alias_panel_websites">Websites</string>
-    <string name="alias_panel_websites_placeholder">Add a website you signed up on</string>
+    <string name="alias_panel_websites_placeholder">Add websites you signed up on, comma separated</string>
     <string name="alias_display_name_updated">Display name saved</string>
     <string name="alias_websites_updated">Websites saved</string>
+    <string name="alias_website_invalid">Enter a valid website address</string>
     <string name="alias_delivery_title">Delivery</string>
     <string name="alias_stats_title">Stats</string>
     <string name="alias_stats_received">Received</string>

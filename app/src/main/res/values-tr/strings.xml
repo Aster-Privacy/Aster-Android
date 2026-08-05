@@ -2418,7 +2418,8 @@
     <string name="alias_panel_display_name">Görünen ad</string>
     <string name="alias_panel_display_name_placeholder">Görünen ad ekle</string>
     <string name="alias_panel_websites">Web siteleri</string>
-    <string name="alias_panel_websites_placeholder">Kayıt olduğunuz bir site ekleyin</string>
+    <string name="alias_panel_websites_placeholder">Kayıt olduğunuz siteleri virgülle ayırarak ekleyin</string>
+    <string name="alias_website_invalid">Geçerli bir web sitesi adresi girin</string>
     <string name="alias_display_name_updated">Görünen ad kaydedildi</string>
     <string name="alias_websites_updated">Web siteleri kaydedildi</string>
     <string name="alias_stats_title">İstatistikler</string>

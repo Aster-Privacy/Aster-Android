@@ -2418,7 +2418,8 @@
     <string name="alias_panel_display_name">Nome de exibição</string>
     <string name="alias_panel_display_name_placeholder">Adicionar nome de exibição</string>
     <string name="alias_panel_websites">Sites</string>
-    <string name="alias_panel_websites_placeholder">Adicione um site onde se registou</string>
+    <string name="alias_panel_websites_placeholder">Adicione sites onde se registou, separados por vírgulas</string>
+    <string name="alias_website_invalid">Introduza um endereço de site válido</string>
     <string name="alias_display_name_updated">Nome de exibição guardado</string>
     <string name="alias_websites_updated">Sites guardados</string>
     <string name="alias_stats_title">Estatísticas</string>

@@ -2411,7 +2411,8 @@
     <string name="alias_panel_display_name">显示名称</string>
     <string name="alias_panel_display_name_placeholder">添加显示名称</string>
     <string name="alias_panel_websites">网站</string>
-    <string name="alias_panel_websites_placeholder">添加你注册过的网站</string>
+    <string name="alias_panel_websites_placeholder">添加你注册过的网站，用逗号分隔</string>
+    <string name="alias_website_invalid">请输入有效的网站地址</string>
     <string name="alias_display_name_updated">已保存显示名称</string>
     <string name="alias_websites_updated">已保存网站</string>
     <string name="alias_stats_title">统计</string>

@@ -2432,7 +2432,8 @@
     <string name="alias_panel_display_name">Nazwa wyświetlana</string>
     <string name="alias_panel_display_name_placeholder">Dodaj nazwę wyświetlaną</string>
     <string name="alias_panel_websites">Strony</string>
-    <string name="alias_panel_websites_placeholder">Dodaj stronę, na której się zarejestrowano</string>
+    <string name="alias_panel_websites_placeholder">Dodaj strony, na których się zarejestrowano, oddzielone przecinkami</string>
+    <string name="alias_website_invalid">Wprowadź prawidłowy adres strony</string>
     <string name="alias_display_name_updated">Zapisano nazwę wyświetlaną</string>
     <string name="alias_websites_updated">Zapisano strony</string>
     <string name="alias_stats_title">Statystyki</string>

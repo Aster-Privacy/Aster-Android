@@ -2446,7 +2446,8 @@
     <string name="alias_panel_display_name">Nom affiché</string>
     <string name="alias_panel_display_name_placeholder">Ajouter un nom affiché</string>
     <string name="alias_panel_websites">Sites web</string>
-    <string name="alias_panel_websites_placeholder">Ajouter un site où vous vous êtes inscrit</string>
+    <string name="alias_panel_websites_placeholder">Ajouter des sites où vous vous êtes inscrit, séparés par des virgules</string>
+    <string name="alias_website_invalid">Saisissez une adresse de site web valide</string>
     <string name="alias_display_name_updated">Nom affiché enregistré</string>
     <string name="alias_websites_updated">Sites web enregistrés</string>
     <string name="alias_stats_title">Statistiques</string>

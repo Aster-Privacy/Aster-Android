@@ -2432,7 +2432,8 @@
     <string name="alias_panel_display_name">Отображаемое имя</string>
     <string name="alias_panel_display_name_placeholder">Добавить отображаемое имя</string>
     <string name="alias_panel_websites">Сайты</string>
-    <string name="alias_panel_websites_placeholder">Добавьте сайт, где вы регистрировались</string>
+    <string name="alias_panel_websites_placeholder">Добавьте сайты, где вы регистрировались, через запятую</string>
+    <string name="alias_website_invalid">Введите действительный адрес сайта</string>
     <string name="alias_display_name_updated">Отображаемое имя сохранено</string>
     <string name="alias_websites_updated">Сайты сохранены</string>
     <string name="alias_stats_title">Статистика</string>

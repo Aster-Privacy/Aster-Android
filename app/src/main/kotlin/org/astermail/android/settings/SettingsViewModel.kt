@@ -242,6 +242,8 @@ private const val TAGS_TTL_MS = 60_000L
 private const val PREFERENCES_TTL_MS = 30_000L
 private const val PROFILE_TTL_MS = 60_000L
 private const val LIST_TTL_MS = 60_000L
+private const val MAX_ALIAS_WEBSITES = 10
+private const val MAX_WEBSITE_URL_LENGTH = 200
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
@@ -1306,19 +1308,32 @@ class SettingsViewModel @Inject constructor(
     fun update_alias_websites(alias_id: String, websites: String) {
         val current = _state.value.aliases.firstOrNull { it.id == alias_id } ?: return
         val cleaned = sanitize_alias_text(websites)
+        val normalized_list = split_websites_input(cleaned)
+        if (cleaned.isNotBlank() && normalized_list.isEmpty()) {
+            _state.update { s ->
+                s.copy(
+                    aliases = s.aliases.map {
+                        if (it.id == alias_id) it.copy(encrypted_websites = current.encrypted_websites) else it
+                    },
+                    action_result = context.getString(R.string.alias_website_invalid),
+                )
+            }
+            return
+        }
+        val display_value = normalized_list.joinToString(", ")
         _state.update { s ->
             s.copy(
                 aliases = s.aliases.map {
-                    if (it.id == alias_id) it.copy(encrypted_websites = cleaned.ifBlank { null }) else it
+                    if (it.id == alias_id) it.copy(encrypted_websites = display_value.ifBlank { null }) else it
                 },
             )
         }
         viewModelScope.launch {
             try {
-                if (cleaned.isBlank()) {
+                if (normalized_list.isEmpty()) {
                     settings_api.update_alias_websites(alias_id, null, null)
                 } else {
-                    val (encrypted, nonce) = encrypt_alias_field(cleaned)
+                    val (encrypted, nonce) = encrypt_alias_field(serialize_websites_payload(normalized_list))
                     settings_api.update_alias_websites(alias_id, encrypted, nonce)
                 }
                 _state.value = _state.value.copy(
@@ -1336,6 +1351,58 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(action_result = user_facing_error(t))
             }
         }
+    }
+
+    private fun normalize_website_url(raw: String): String? {
+        val cleaned = raw.replace(Regex("[\\x00-\\x1f\\x7f\\s]"), "")
+        if (cleaned.isEmpty()) return null
+        val with_scheme = if (Regex("^[a-zA-Z][a-zA-Z0-9+.-]*:").containsMatchIn(cleaned)) {
+            cleaned
+        } else {
+            "https://$cleaned"
+        }
+        if (with_scheme.length > MAX_WEBSITE_URL_LENGTH) return null
+        return try {
+            val uri = java.net.URI(with_scheme)
+            val scheme = uri.scheme?.lowercase()
+            if (scheme != "https" && scheme != "http") return null
+            val host = uri.host
+            if (host.isNullOrBlank() || !host.contains(".")) return null
+            with_scheme
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    private fun split_websites_input(raw: String): List<String> {
+        if (raw.isBlank()) return emptyList()
+        return raw.split(Regex("[,;\\n]"))
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .mapNotNull { normalize_website_url(it) }
+            .distinct()
+            .take(MAX_ALIAS_WEBSITES)
+    }
+
+    private fun serialize_websites_payload(websites: List<String>): String {
+        val array = kotlinx.serialization.json.JsonArray(
+            websites.map { kotlinx.serialization.json.JsonPrimitive(it) },
+        )
+        return array.toString()
+    }
+
+    private fun websites_payload_to_display(raw: String): String {
+        val parsed = try {
+            kotlinx.serialization.json.Json.parseToJsonElement(raw)
+        } catch (_: Throwable) {
+            null
+        }
+        if (parsed is kotlinx.serialization.json.JsonArray) {
+            return parsed
+                .mapNotNull { (it as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull }
+                .joinToString(", ")
+        }
+        return raw
     }
 
     private fun is_valid_email(email: String): Boolean {
@@ -4191,7 +4258,7 @@ class SettingsViewModel @Inject constructor(
         val websites_nonce = alias.websites_nonce
         val websites = if (!enc_websites.isNullOrBlank() && !websites_nonce.isNullOrBlank()) {
             try {
-                decrypt_alias_field(enc_websites, websites_nonce)
+                websites_payload_to_display(decrypt_alias_field(enc_websites, websites_nonce))
             } catch (_: Throwable) {
                 null
             }

@@ -2419,7 +2419,8 @@
     <string name="alias_panel_display_name">Anzeigename</string>
     <string name="alias_panel_display_name_placeholder">Anzeigename hinzufügen</string>
     <string name="alias_panel_websites">Webseiten</string>
-    <string name="alias_panel_websites_placeholder">Webseite hinzufügen, auf der Sie sich angemeldet haben</string>
+    <string name="alias_panel_websites_placeholder">Webseiten hinzufügen, durch Komma getrennt</string>
+    <string name="alias_website_invalid">Geben Sie eine gültige Website-Adresse ein</string>
     <string name="alias_display_name_updated">Anzeigename gespeichert</string>
     <string name="alias_websites_updated">Webseiten gespeichert</string>
     <string name="alias_stats_title">Statistik</string>

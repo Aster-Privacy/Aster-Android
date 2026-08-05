@@ -2446,7 +2446,8 @@
     <string name="alias_panel_display_name">الاسم المعروض</string>
     <string name="alias_panel_display_name_placeholder">أضف اسمًا معروضًا</string>
     <string name="alias_panel_websites">المواقع</string>
-    <string name="alias_panel_websites_placeholder">أضف موقعًا سجّلت فيه</string>
+    <string name="alias_panel_websites_placeholder">أضف المواقع التي سجّلت فيها، مفصولة بفواصل</string>
+    <string name="alias_website_invalid">أدخل عنوان موقع ويب صالحًا</string>
     <string name="alias_display_name_updated">تم حفظ الاسم المعروض</string>
     <string name="alias_websites_updated">تم حفظ المواقع</string>
     <string name="alias_stats_title">الإحصائيات</string>
