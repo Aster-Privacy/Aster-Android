@@ -1,0 +1,5 @@
+Bug fixes and improvements:
+
+- Fixed profile avatar sometimes showing the wrong color
+- Fixed the conversation grouping setting not being respected in the inbox
+- Fixed a message decryption error that Retry couldn't resolve for some accounts
