@@ -53,8 +53,11 @@ object RatchetStateMerge {
             a.dh_remote_public == b.dh_remote_public &&
             a.root_key == b.root_key
 
-    private fun epoch_rank(state: RatchetState): Double =
-        state.previous_chain_length + state.updated_at / 1e13
+    private fun pick_newer_epoch(local: RatchetState, remote: RatchetState): RatchetState = when {
+        local.epoch != remote.epoch -> if (local.epoch > remote.epoch) local else remote
+        local.updated_at != remote.updated_at -> if (local.updated_at > remote.updated_at) local else remote
+        else -> if (local.root_key > remote.root_key) local else remote
+    }
 
     fun merge(local: RatchetState, remote: RatchetState): RatchetState {
         if (local.conversation_id != remote.conversation_id) return local
@@ -63,7 +66,7 @@ object RatchetStateMerge {
         val updated_at = maxOf(local.updated_at, remote.updated_at)
 
         if (!same_epoch(local, remote)) {
-            val winner = if (epoch_rank(local) > epoch_rank(remote)) local else remote
+            val winner = pick_newer_epoch(local, remote)
             return winner.copy(
                 skipped_message_keys = skipped,
                 updated_at = updated_at,
@@ -86,6 +89,7 @@ object RatchetStateMerge {
             chain_key_recv = recv_behind.chain_key_recv,
             recv_message_number = recv_behind.recv_message_number,
             previous_chain_length = maxOf(local.previous_chain_length, remote.previous_chain_length),
+            epoch = maxOf(local.epoch, remote.epoch),
             bootstrap = local.bootstrap ?: remote.bootstrap,
             skipped_message_keys = skipped,
             updated_at = updated_at,

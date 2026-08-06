@@ -45,6 +45,7 @@ class RatchetStateMergeTest {
         send_message_number: Int = 0,
         recv_message_number: Int = 0,
         previous_chain_length: Int = 0,
+        epoch: Int = 0,
         skipped_message_keys: List<SkippedMessageKey> = emptyList(),
         bootstrap: BootstrapData? = null,
         updated_at: Long = 1_000L,
@@ -58,6 +59,7 @@ class RatchetStateMergeTest {
         send_message_number = send_message_number,
         recv_message_number = recv_message_number,
         previous_chain_length = previous_chain_length,
+        epoch = epoch,
         skipped_message_keys = skipped_message_keys.toMutableList(),
         version = 2,
         created_at = 1_000L,
@@ -125,7 +127,7 @@ class RatchetStateMergeTest {
     fun carries_skipped_keys_across_a_diverged_dh_epoch() {
         val local = state(
             skipped_message_keys = listOf(skipped("dh-a", 1, 10)),
-            previous_chain_length = 3,
+            epoch = 1,
             updated_at = 5_000L,
         )
         val remote = state(
@@ -133,7 +135,7 @@ class RatchetStateMergeTest {
             root_key = "root-key-epoch-2",
             chain_key_send = "send-chain-epoch-2",
             skipped_message_keys = listOf(skipped("dh-b", 1, 20)),
-            previous_chain_length = 6,
+            epoch = 2,
             updated_at = 9_000L,
         )
 
@@ -145,20 +147,58 @@ class RatchetStateMergeTest {
     }
 
     @Test
-    fun keeps_the_local_epoch_when_it_is_the_more_advanced_one() {
+    fun keeps_the_higher_epoch_even_when_the_other_side_was_written_later() {
         val local = state(
             root_key = "root-key-epoch-3",
-            previous_chain_length = 12,
+            epoch = 3,
             updated_at = 2_000L,
         )
         val remote = state(
             dh_public = "other-dh-pub",
             root_key = "root-key-epoch-2",
-            previous_chain_length = 6,
+            epoch = 2,
             updated_at = 9_000L,
         )
 
         assertEquals("root-key-epoch-3", RatchetStateMerge.merge(local, remote).root_key)
+        assertEquals("root-key-epoch-3", RatchetStateMerge.merge(remote, local).root_key)
+    }
+
+    @Test
+    fun falls_back_to_the_newer_write_when_both_sides_report_the_same_epoch() {
+        val local = state(epoch = 4, updated_at = 2_000L)
+        val remote = state(
+            dh_public = "other-dh-pub",
+            root_key = "root-key-epoch-other",
+            epoch = 4,
+            updated_at = 9_000L,
+        )
+
+        assertEquals("root-key-epoch-other", RatchetStateMerge.merge(local, remote).root_key)
+    }
+
+    @Test
+    fun resolves_a_full_tie_the_same_way_on_both_devices() {
+        val local = state(epoch = 4, updated_at = 7_000L)
+        val remote = state(
+            dh_public = "other-dh-pub",
+            root_key = "root-key-zzz",
+            epoch = 4,
+            updated_at = 7_000L,
+        )
+
+        assertEquals(
+            RatchetStateMerge.merge(local, remote).root_key,
+            RatchetStateMerge.merge(remote, local).root_key,
+        )
+    }
+
+    @Test
+    fun keeps_the_highest_epoch_when_both_devices_are_on_the_same_chain() {
+        val local = state(epoch = 2)
+        val remote = state(epoch = 5)
+
+        assertEquals(5, RatchetStateMerge.merge(local, remote).epoch)
     }
 
     @Test

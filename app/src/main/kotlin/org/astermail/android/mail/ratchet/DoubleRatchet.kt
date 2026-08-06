@@ -208,6 +208,7 @@ object DoubleRatchet {
 
     private fun dh_ratchet_step(state: RatchetState, new_remote_dh_public_b64: String) {
         state.previous_chain_length = state.send_message_number
+        state.epoch += 1
         state.send_message_number = 0
         state.recv_message_number = 0
         state.dh_remote_public = new_remote_dh_public_b64
@@ -259,6 +260,7 @@ object DoubleRatchet {
         target.send_message_number = source.send_message_number
         target.recv_message_number = source.recv_message_number
         target.previous_chain_length = source.previous_chain_length
+        target.epoch = source.epoch
         target.skipped_message_keys.clear()
         target.skipped_message_keys.addAll(source.skipped_message_keys)
         target.updated_at = source.updated_at

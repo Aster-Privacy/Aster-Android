@@ -94,6 +94,7 @@ data class RatchetState(
     var send_message_number: Int = 0,
     var recv_message_number: Int = 0,
     var previous_chain_length: Int = 0,
+    var epoch: Int = 0,
     val skipped_message_keys: MutableList<SkippedMessageKey> = mutableListOf(),
     var version: Int = 1,
     var created_at: Long = 0L,
