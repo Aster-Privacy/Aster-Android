@@ -82,6 +82,7 @@ import org.astermail.android.design.parse_hex_color_safe
 import org.astermail.android.folders.flatten_folder_tree
 import org.astermail.android.mail_rules.AliasDeliverySetting
 import org.astermail.android.mail_rules.rule_alias_delivery_conflict
+import org.astermail.android.mail_rules.rule_alias_label_conflict
 import org.astermail.android.folders.folder_path
 import org.astermail.android.folders.is_custom_folder
 import org.astermail.android.folders.is_folder_protected
@@ -427,14 +428,15 @@ fun RuleEditorScreen(
                 )
             }
 
-            val has_move_to = actions.any { it is Action.MoveTo }
-            LaunchedEffect(has_move_to) {
-                if (has_move_to) settings_vm.load_aliases()
+            val needs_alias_delivery = actions.any { it is Action.MoveTo || it is Action.ApplyLabels }
+            LaunchedEffect(needs_alias_delivery) {
+                if (needs_alias_delivery) settings_vm.load_aliases()
             }
             val alias_delivery = remember(settings_state.aliases) {
                 settings_state.aliases.associate { alias ->
                     alias.address.lowercase() to AliasDeliverySetting(
                         delivery_folder_token = alias.delivery_folder_token,
+                        delivery_label_token = alias.delivery_label_token,
                         never_inbox = alias.never_inbox,
                     )
                 }
@@ -470,6 +472,39 @@ fun RuleEditorScreen(
                         .background(colors.bg_secondary)
                         .padding(AsterSpacing.md)
                         .testTag("rule_alias_delivery_warning"),
+                )
+            }
+
+            val label_conflict = rule_alias_label_conflict(
+                conditions = conditions.toList(),
+                actions = actions.toList(),
+                alias_delivery = alias_delivery,
+            )
+            if (!is_read_only && label_conflict != null) {
+                val missing_label_name = stringResource(R.string.alias_delivery_label_missing)
+                val alias_label = labels
+                    .firstOrNull { it.id == label_conflict.alias_label_token }
+                    ?.label
+                    ?: missing_label_name
+                val rule_labels = label_conflict.rule_label_tokens
+                    .map { token -> labels.firstOrNull { it.id == token }?.label ?: missing_label_name }
+                    .joinToString(", ")
+                Spacer(Modifier.height(AsterSpacing.md))
+                Text(
+                    text = stringResource(
+                        R.string.mail_rules_alias_label_conflict,
+                        label_conflict.alias_address,
+                        alias_label,
+                        rule_labels,
+                    ),
+                    color = colors.warning,
+                    fontSize = 13.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(colors.bg_secondary)
+                        .padding(AsterSpacing.md)
+                        .testTag("rule_alias_label_warning"),
                 )
             }
 

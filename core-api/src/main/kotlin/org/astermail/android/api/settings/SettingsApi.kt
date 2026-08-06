@@ -176,6 +176,7 @@ data class AliasInfo(
     val is_random: Boolean = false,
     val never_inbox: Boolean = false,
     val delivery_folder_token: String? = null,
+    val delivery_label_token: String? = null,
     val profile_picture: String? = null,
     val created_at: String = "",
     val updated_at: String = "",
@@ -501,6 +502,7 @@ interface SettingsApi {
     suspend fun empty_deleted_aliases()
     suspend fun create_alias(request: CreateAliasRequest): CreateAliasResponse
     suspend fun update_alias(alias_id: String, request: UpdateAliasRequest): Boolean
+    suspend fun update_alias_delivery_label(alias_id: String, delivery_label_token: String?): Boolean
     suspend fun update_alias_note(alias_id: String, encrypted_note: String?, note_nonce: String?): Boolean
     suspend fun update_alias_display_name(alias_id: String, encrypted_name: String?, name_nonce: String?): Boolean
     suspend fun update_alias_websites(alias_id: String, encrypted_websites: String?, websites_nonce: String?): Boolean
@@ -723,6 +725,14 @@ class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
         }
         return true
     }
+
+    override suspend fun update_alias_delivery_label(
+        alias_id: String,
+        delivery_label_token: String?,
+    ): Boolean = patch_alias_nullable_fields(
+        alias_id = alias_id,
+        fields = mapOf("delivery_label_token" to delivery_label_token),
+    )
 
     override suspend fun update_alias_note(
         alias_id: String,

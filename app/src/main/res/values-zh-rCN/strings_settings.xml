@@ -23,6 +23,9 @@
     <string name="settings_feat_email_templates">邮件模板</string>
     <string name="settings_feat_auto_responder">自动回复</string>
     <string name="settings_feat_alias_avatars">别名头像</string>
+    <string name="settings_feat_instant_alias_delete">即时删除别名</string>
+    <string name="alias_too_new_title">该别名创建时间过短，暂无法删除</string>
+    <string name="alias_too_new_message">新别名在创建后会保留 30 天才能删除，这一个从 %1$s 开始可以移除。升级到 Supernova 即可立即删除别名。</string>
     <string name="settings_feat_folders">文件夹</string>
     <string name="settings_feat_labels">标签</string>
     <string name="settings_feat_smart_folders">智能文件夹</string>

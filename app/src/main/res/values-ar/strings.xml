@@ -2435,6 +2435,13 @@
     <string name="alias_delivery_folder_title">تسليم إلى</string>
     <string name="alias_delivery_folder_subtitle">اختر أين يصل البريد المرسل إلى هذا الاسم المستعار</string>
     <string name="alias_delivery_folder_missing">مجلد محذوف</string>
+    <string name="alias_delivery_label_title">تسمية</string>
+    <string name="alias_delivery_label_subtitle">ضع تسمية على البريد المرسل إلى هذا الاسم المستعار</string>
+    <string name="alias_delivery_label_none">بدون تسمية</string>
+    <string name="alias_delivery_label_missing">تسمية غير متاحة</string>
+    <string name="alias_delivery_label_rule_note">قاعدة البريد \"%1$s\" تضع بالفعل التسمية %2$s على بريد هذا الاسم المستعار.</string>
+    <string name="alias_delivery_label_rule_conflict">قاعدة البريد \"%1$s\" تضع التسمية %2$s على بريد هذا الاسم المستعار، إضافة إلى %3$s.</string>
+    <string name="mail_rules_alias_label_conflict">%1$s يضع بالفعل التسمية %2$s على بريده. وهذه القاعدة تضيف %3$s أيضًا.</string>
     <string name="alias_delivery_rule_note">قاعدة البريد \"%1$s\" تنقل بالفعل بريد هذا الاسم المستعار إلى %2$s.</string>
     <string name="alias_delivery_rule_conflict">قاعدة البريد \"%1$s\" تنقل بريد هذا الاسم المستعار إلى %2$s، لذلك لن يصل إلى %3$s.</string>
     <string name="mail_rules_alias_delivery_conflict">تم ضبط %1$s للتسليم إلى %2$s. ستنقل هذه القاعدة بريده إلى %3$s بدلاً من ذلك.</string>

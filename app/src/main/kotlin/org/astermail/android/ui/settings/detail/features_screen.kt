@@ -121,6 +121,7 @@ private fun build_features(): List<feature_row> = listOf(
     row(R.string.settings_feat_email_templates, count(3), count(10), unlimited, unlimited),
     row(R.string.settings_feat_auto_responder, no_cell, yes_cell, yes_cell, yes_cell),
     row(R.string.settings_feat_alias_avatars, no_cell, yes_cell, yes_cell, yes_cell),
+    row(R.string.settings_feat_instant_alias_delete, no_cell, no_cell, no_cell, yes_cell),
 
     category(R.string.settings_cat_organization),
     row(R.string.settings_feat_folders, count(10), unlimited, unlimited, unlimited),

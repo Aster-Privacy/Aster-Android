@@ -71,6 +71,7 @@ internal fun alias_detail_panel(
     detail: AliasDetailState,
     vm: SettingsViewModel,
     rule_delivery: AliasRuleDeliveryNote? = null,
+    rule_label: AliasRuleLabelNote? = null,
 ) {
     val colors = AsterMaterial.colors
     Column(
@@ -87,7 +88,7 @@ internal fun alias_detail_panel(
                 .background(colors.border_secondary),
         )
         alias_details_section(alias, vm)
-        alias_delivery_section(alias, vm, rule_delivery)
+        alias_delivery_section(alias, vm, rule_delivery, rule_label)
         if (detail.loading) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -182,15 +183,25 @@ data class AliasRuleDeliveryNote(
     val matches_alias_delivery: Boolean,
 )
 
+data class AliasRuleLabelNote(
+    val rule_name: String,
+    val label_names: String,
+    val matches_alias_label: Boolean,
+)
+
 @Composable
 private fun alias_delivery_section(
     alias: org.astermail.android.api.settings.AliasInfo,
     vm: SettingsViewModel,
     rule_delivery: AliasRuleDeliveryNote?,
+    rule_label: AliasRuleLabelNote?,
 ) {
     val state by vm.state.collectAsState()
 
-    LaunchedEffect(Unit) { vm.load_labels(folder_type = "folder") }
+    LaunchedEffect(Unit) {
+        vm.load_labels(folder_type = "folder")
+        vm.load_tags(force = false)
+    }
 
     val folders = state.labels.filter {
         (it.folder_type == "folder" || it.folder_type == "custom") &&
@@ -206,13 +217,27 @@ private fun alias_delivery_section(
         else -> stringResource(R.string.folder_inbox)
     }
 
+    val tags = state.tags.filter { it.encrypted_name.isNotBlank() }
+    val selected_tag = alias.delivery_label_token?.let { token ->
+        tags.firstOrNull { it.tag_token == token }
+    }
+    val selected_label_name = when {
+        selected_tag != null -> selected_tag.encrypted_name
+        alias.delivery_label_token != null -> stringResource(R.string.alias_delivery_label_missing)
+        else -> stringResource(R.string.alias_delivery_label_none)
+    }
+
     alias_delivery_picker(
         selected_label = selected_label,
         folders = folders,
         rule_delivery = rule_delivery,
+        selected_label_name = selected_label_name,
+        tags = tags,
+        rule_label = rule_label,
         on_select_inbox = { vm.set_alias_delivery(alias.id, null, to_archive = false) },
         on_select_archive = { vm.set_alias_delivery(alias.id, null, to_archive = true) },
         on_select_folder = { token -> vm.set_alias_delivery(alias.id, token, to_archive = false) },
+        on_select_delivery_label = { token -> vm.set_alias_delivery_label(alias.id, token) },
     )
 }
 
@@ -240,16 +265,44 @@ internal fun alias_delivery_rule_note(note: AliasRuleDeliveryNote, selected_labe
 }
 
 @Composable
+internal fun alias_delivery_label_rule_note(note: AliasRuleLabelNote, selected_label_name: String) {
+    val colors = AsterMaterial.colors
+    val text = if (note.matches_alias_label) {
+        stringResource(R.string.alias_delivery_label_rule_note, note.rule_name, note.label_names)
+    } else {
+        stringResource(
+            R.string.alias_delivery_label_rule_conflict,
+            note.rule_name,
+            note.label_names,
+            selected_label_name,
+        )
+    }
+    Text(
+        text = text,
+        color = if (note.matches_alias_label) colors.text_muted else colors.warning,
+        fontSize = 11.sp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("alias_delivery_label_rule_note"),
+    )
+}
+
+@Composable
 internal fun alias_delivery_picker(
     selected_label: String,
     folders: List<org.astermail.android.api.labels.LabelItem>,
     rule_delivery: AliasRuleDeliveryNote? = null,
+    selected_label_name: String = "",
+    tags: List<org.astermail.android.api.tags.TagItem> = emptyList(),
+    rule_label: AliasRuleLabelNote? = null,
     on_select_inbox: () -> Unit,
     on_select_archive: () -> Unit,
     on_select_folder: (String) -> Unit,
+    on_select_delivery_label: (String?) -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     var menu_open by remember { mutableStateOf(false) }
+    var label_menu_open by remember { mutableStateOf(false) }
 
     Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
         panel_section_title(stringResource(R.string.alias_delivery_title))
@@ -316,6 +369,66 @@ internal fun alias_delivery_picker(
             }
         }
         rule_delivery?.let { alias_delivery_rule_note(it, selected_label) }
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.alias_delivery_label_title),
+                    color = colors.text_primary,
+                    fontSize = 13.sp,
+                )
+                panel_hint_text(stringResource(R.string.alias_delivery_label_subtitle))
+            }
+            Spacer(Modifier.width(AsterSpacing.sm))
+            Box {
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(colors.bg_secondary)
+                        .clickable { label_menu_open = true }
+                        .padding(horizontal = 12.dp, vertical = 10.dp)
+                        .testTag("alias_delivery_label_selector"),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = selected_label_name,
+                        color = colors.text_primary,
+                        fontSize = 13.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Icon(
+                        imageVector = TablerIcons.ChevronDown,
+                        contentDescription = null,
+                        tint = colors.text_muted,
+                        modifier = Modifier.size(16.dp),
+                    )
+                }
+                DropdownMenu(
+                    expanded = label_menu_open,
+                    onDismissRequest = { label_menu_open = false },
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.alias_delivery_label_none)) },
+                        onClick = {
+                            label_menu_open = false
+                            on_select_delivery_label(null)
+                        },
+                    )
+                    tags.forEach { tag ->
+                        DropdownMenuItem(
+                            text = { Text(tag.encrypted_name) },
+                            onClick = {
+                                label_menu_open = false
+                                on_select_delivery_label(tag.tag_token)
+                            },
+                        )
+                    }
+                }
+            }
+        }
+        rule_label?.let { alias_delivery_label_rule_note(it, selected_label_name) }
     }
 }
 

@@ -1291,6 +1291,38 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun set_alias_delivery_label(alias_id: String, label_token: String?) {
+        val current = _state.value.aliases.firstOrNull { it.id == alias_id } ?: return
+        val next_token = label_token?.takeIf { it.isNotBlank() }
+        if (current.delivery_label_token == next_token) return
+        _state.update { s ->
+            s.copy(
+                aliases = s.aliases.map {
+                    if (it.id == alias_id) it.copy(delivery_label_token = next_token) else it
+                },
+            )
+        }
+        viewModelScope.launch {
+            try {
+                val updated = settings_api.update_alias_delivery_label(alias_id, next_token)
+                if (!updated) throw IllegalStateException("update_alias_delivery_label failed")
+            } catch (_: Throwable) {
+                _state.update { s ->
+                    s.copy(
+                        aliases = s.aliases.map {
+                            if (it.id == alias_id) {
+                                it.copy(delivery_label_token = current.delivery_label_token)
+                            } else it
+                        },
+                    )
+                }
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.something_went_wrong),
+                )
+            }
+        }
+    }
+
     fun toggle_alias(alias_id: String) {
         val current = _state.value.aliases.firstOrNull { it.id == alias_id } ?: return
         val new_enabled = !current.is_enabled

@@ -23,6 +23,9 @@
     <string name="settings_feat_email_templates">Шаблоны писем</string>
     <string name="settings_feat_auto_responder">Автоответчик</string>
     <string name="settings_feat_alias_avatars">Картинки псевдонимов</string>
+    <string name="settings_feat_instant_alias_delete">Мгновенное удаление псевдонимов</string>
+    <string name="alias_too_new_title">Этот псевдоним слишком новый для удаления</string>
+    <string name="alias_too_new_message">Новые псевдонимы остаются активными 30 дней до возможности удаления. Этот можно убрать начиная с %1$s. Перейдите на Supernova, чтобы удалять псевдонимы мгновенно.</string>
     <string name="settings_feat_folders">Папки</string>
     <string name="settings_feat_labels">Метки</string>
     <string name="settings_feat_smart_folders">Умные папки</string>

@@ -28,7 +28,9 @@ import org.astermail.android.api.mail_rules.MailRule
 import org.astermail.android.api.mail_rules.TextOp
 import org.astermail.android.mail_rules.AliasDeliverySetting
 import org.astermail.android.mail_rules.alias_rule_delivery
+import org.astermail.android.mail_rules.alias_rule_label
 import org.astermail.android.mail_rules.rule_alias_delivery_conflict
+import org.astermail.android.mail_rules.rule_alias_label_conflict
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -239,7 +241,7 @@ class AliasRuleDeliveryTest {
             conditions = listOf(to_is("Shop@astermail.org")),
             actions = listOf(Action.MoveTo("folder_feed")),
             alias_delivery = mapOf(
-                "shop@astermail.org" to AliasDeliverySetting("folder_receipts", never_inbox = false),
+                "shop@astermail.org" to AliasDeliverySetting("folder_receipts", null, never_inbox = false),
             ),
         )
         assertEquals("Shop@astermail.org", conflict?.alias_address)
@@ -253,7 +255,7 @@ class AliasRuleDeliveryTest {
                 conditions = listOf(to_is("shop@astermail.org")),
                 actions = listOf(Action.MoveTo("folder_feed")),
                 alias_delivery = mapOf(
-                    "shop@astermail.org" to AliasDeliverySetting("folder_feed", never_inbox = false),
+                    "shop@astermail.org" to AliasDeliverySetting("folder_feed", null, never_inbox = false),
                 ),
             ),
         )
@@ -266,7 +268,7 @@ class AliasRuleDeliveryTest {
                 conditions = listOf(to_is("shop@astermail.org")),
                 actions = listOf(Action.MoveTo("folder_feed")),
                 alias_delivery = mapOf(
-                    "shop@astermail.org" to AliasDeliverySetting(null, never_inbox = false),
+                    "shop@astermail.org" to AliasDeliverySetting(null, null, never_inbox = false),
                 ),
             ),
         )
@@ -278,7 +280,7 @@ class AliasRuleDeliveryTest {
             conditions = listOf(to_is("shop@astermail.org")),
             actions = listOf(Action.MoveTo("folder_feed")),
             alias_delivery = mapOf(
-                "shop@astermail.org" to AliasDeliverySetting(null, never_inbox = true),
+                "shop@astermail.org" to AliasDeliverySetting(null, null, never_inbox = true),
             ),
         )
         assertEquals("folder_feed", conflict?.rule_folder_token)
@@ -291,7 +293,7 @@ class AliasRuleDeliveryTest {
                 conditions = listOf(Condition.To(op = AddressOp.CONTAINS, value = "shop@astermail.org")),
                 actions = listOf(Action.MoveTo("folder_feed")),
                 alias_delivery = mapOf(
-                    "shop@astermail.org" to AliasDeliverySetting("folder_receipts", never_inbox = false),
+                    "shop@astermail.org" to AliasDeliverySetting("folder_receipts", null, never_inbox = false),
                 ),
             ),
         )
@@ -304,7 +306,7 @@ class AliasRuleDeliveryTest {
                 conditions = listOf(to_is("shop@astermail.org")),
                 actions = listOf(Action.ApplyLabels(listOf("label_a"))),
                 alias_delivery = mapOf(
-                    "shop@astermail.org" to AliasDeliverySetting("folder_receipts", never_inbox = false),
+                    "shop@astermail.org" to AliasDeliverySetting("folder_receipts", null, never_inbox = false),
                 ),
             ),
         )
@@ -316,9 +318,98 @@ class AliasRuleDeliveryTest {
             conditions = listOf(Condition.Or(listOf(to_is("shop@astermail.org")))),
             actions = listOf(Action.MoveTo("folder_feed")),
             alias_delivery = mapOf(
-                "shop@astermail.org" to AliasDeliverySetting("folder_receipts", never_inbox = false),
+                "shop@astermail.org" to AliasDeliverySetting("folder_receipts", null, never_inbox = false),
             ),
         )
         assertEquals("shop@astermail.org", conflict?.alias_address)
+    }
+
+    @Test
+    fun `apply_labels rule targeting the alias is reported`() {
+        val rules = listOf(
+            rule(
+                id = "r1",
+                name = "Receipts",
+                conditions = listOf(to_is("shop@astermail.org")),
+                actions = listOf(Action.ApplyLabels(listOf("tag_a", "tag_b"))),
+            ),
+        )
+        val found = alias_rule_label(rules, "shop@astermail.org")
+        assertEquals("r1", found?.rule_id)
+        assertEquals("Receipts", found?.rule_name)
+        assertEquals(listOf("tag_a", "tag_b"), found?.label_tokens)
+    }
+
+    @Test
+    fun `apply_labels rules that are disabled or target another alias are ignored`() {
+        val rules = listOf(
+            rule(
+                id = "off",
+                enabled = false,
+                conditions = listOf(to_is("shop@astermail.org")),
+                actions = listOf(Action.ApplyLabels(listOf("tag_a"))),
+            ),
+            rule(
+                id = "other",
+                conditions = listOf(to_is("news@astermail.org")),
+                actions = listOf(Action.ApplyLabels(listOf("tag_b"))),
+            ),
+        )
+        assertNull(alias_rule_label(rules, "shop@astermail.org"))
+        assertNull(alias_rule_label(rules, ""))
+        assertNull(alias_rule_label(rules, "not-an-address"))
+    }
+
+    @Test
+    fun `label conflict is reported when the rule labels differ from the alias label`() {
+        val conflict = rule_alias_label_conflict(
+            conditions = listOf(to_is("Shop@astermail.org")),
+            actions = listOf(Action.ApplyLabels(listOf("tag_b"))),
+            alias_delivery = mapOf(
+                "shop@astermail.org" to AliasDeliverySetting(null, "tag_a", never_inbox = false),
+            ),
+        )
+        assertEquals("Shop@astermail.org", conflict?.alias_address)
+        assertEquals("tag_a", conflict?.alias_label_token)
+        assertEquals(listOf("tag_b"), conflict?.rule_label_tokens)
+    }
+
+    @Test
+    fun `no label conflict when the rule already applies the alias label`() {
+        assertNull(
+            rule_alias_label_conflict(
+                conditions = listOf(to_is("shop@astermail.org")),
+                actions = listOf(Action.ApplyLabels(listOf("tag_a", "tag_b"))),
+                alias_delivery = mapOf(
+                    "shop@astermail.org" to AliasDeliverySetting(null, "tag_a", never_inbox = false),
+                ),
+            ),
+        )
+    }
+
+    @Test
+    fun `no label conflict when the alias has no delivery label`() {
+        assertNull(
+            rule_alias_label_conflict(
+                conditions = listOf(to_is("shop@astermail.org")),
+                actions = listOf(Action.ApplyLabels(listOf("tag_b"))),
+                alias_delivery = mapOf(
+                    "shop@astermail.org" to AliasDeliverySetting("folder_receipts", null, never_inbox = false),
+                ),
+            ),
+        )
+    }
+
+    @Test
+    fun `label conflict requires an apply_labels action`() {
+        assertNull(
+            rule_alias_label_conflict(
+                conditions = listOf(to_is("shop@astermail.org")),
+                actions = listOf(Action.MoveTo("folder_feed")),
+                alias_delivery = mapOf(
+                    "shop@astermail.org" to AliasDeliverySetting(null, "tag_a", never_inbox = false),
+                ),
+            ),
+        )
     }
 }

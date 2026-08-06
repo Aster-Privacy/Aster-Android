@@ -2400,6 +2400,13 @@
     <string name="alias_delivery_folder_title">投递到</string>
     <string name="alias_delivery_folder_subtitle">选择发往此别名的邮件落入哪里</string>
     <string name="alias_delivery_folder_missing">已删除的文件夹</string>
+    <string name="alias_delivery_label_title">标签</string>
+    <string name="alias_delivery_label_subtitle">为发送到此别名的邮件添加标签</string>
+    <string name="alias_delivery_label_none">无标签</string>
+    <string name="alias_delivery_label_missing">标签不可用</string>
+    <string name="alias_delivery_label_rule_note">邮件规则“%1$s”已为此别名的邮件加上 %2$s。</string>
+    <string name="alias_delivery_label_rule_conflict">邮件规则“%1$s”会为此别名的邮件加上 %2$s，而不仅是 %3$s。</string>
+    <string name="mail_rules_alias_label_conflict">%1$s 已为邮件加上 %2$s。这条规则还会再加上 %3$s。</string>
     <string name="alias_delivery_rule_note">邮件规则“%1$s”已将此别名的邮件移动到%2$s。</string>
     <string name="alias_delivery_rule_conflict">邮件规则“%1$s”会将此别名的邮件移动到%2$s，因此不会送达%3$s。</string>
     <string name="mail_rules_alias_delivery_conflict">%1$s 已设置为投递到 %2$s。此规则会改为将其邮件移动到 %3$s。</string>

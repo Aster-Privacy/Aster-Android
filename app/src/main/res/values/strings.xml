@@ -2545,6 +2545,13 @@
     <string name="alias_delivery_folder_title">Deliver to</string>
     <string name="alias_delivery_folder_subtitle">Choose where mail to this alias lands</string>
     <string name="alias_delivery_folder_missing">Unavailable folder</string>
+    <string name="alias_delivery_label_title">Label</string>
+    <string name="alias_delivery_label_subtitle">Apply a label to mail sent to this alias</string>
+    <string name="alias_delivery_label_none">No label</string>
+    <string name="alias_delivery_label_missing">Unavailable label</string>
+    <string name="alias_delivery_label_rule_note">Mail rule \"%1$s\" already labels mail for this alias %2$s.</string>
+    <string name="alias_delivery_label_rule_conflict">Mail rule \"%1$s\" labels mail for this alias %2$s, in addition to %3$s.</string>
+    <string name="mail_rules_alias_label_conflict">%1$s already labels its mail %2$s. This rule adds %3$s as well.</string>
     <string name="alias_delivery_rule_note">Mail rule \"%1$s\" already moves mail for this alias to %2$s.</string>
     <string name="alias_delivery_rule_conflict">Mail rule \"%1$s\" moves mail for this alias to %2$s, so it will not land in %3$s.</string>
     <string name="mail_rules_alias_delivery_conflict">%1$s is set to deliver to %2$s. This rule moves its mail to %3$s instead.</string>

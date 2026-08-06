@@ -2407,6 +2407,13 @@
     <string name="alias_delivery_folder_title">Recapita in</string>
     <string name="alias_delivery_folder_subtitle">Scegli dove arriva la posta di questo alias</string>
     <string name="alias_delivery_folder_missing">Cartella eliminata</string>
+    <string name="alias_delivery_label_title">Etichetta</string>
+    <string name="alias_delivery_label_subtitle">Applica un\'etichetta alla posta inviata a questo alias</string>
+    <string name="alias_delivery_label_none">Nessuna etichetta</string>
+    <string name="alias_delivery_label_missing">Etichetta non disponibile</string>
+    <string name="alias_delivery_label_rule_note">La regola \"%1$s\" etichetta già la posta di questo alias con %2$s.</string>
+    <string name="alias_delivery_label_rule_conflict">La regola \"%1$s\" etichetta la posta di questo alias con %2$s, oltre a %3$s.</string>
+    <string name="mail_rules_alias_label_conflict">%1$s etichetta già la sua posta con %2$s. Questa regola aggiunge anche %3$s.</string>
     <string name="alias_delivery_rule_note">La regola di posta \"%1$s\" sposta già la posta di questo alias in %2$s.</string>
     <string name="alias_delivery_rule_conflict">La regola di posta \"%1$s\" sposta la posta di questo alias in %2$s, quindi non arriverà in %3$s.</string>
     <string name="mail_rules_alias_delivery_conflict">%1$s è impostato per la consegna in %2$s. Questa regola sposterà invece la sua posta in %3$s.</string>

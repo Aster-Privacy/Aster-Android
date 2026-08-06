@@ -23,6 +23,9 @@
     <string name="settings_feat_email_templates">Modelos de e-mail</string>
     <string name="settings_feat_auto_responder">Resposta automática</string>
     <string name="settings_feat_alias_avatars">Imagens dos apelidos</string>
+    <string name="settings_feat_instant_alias_delete">Exclusão instantânea de aliases</string>
+    <string name="alias_too_new_title">Este alias é novo demais para ser excluído</string>
+    <string name="alias_too_new_message">Aliases novos ficam ativos por 30 dias antes de poderem ser excluídos. Este pode ser removido a partir de %1$s. Mude para Supernova para excluir aliases instantaneamente.</string>
     <string name="settings_feat_folders">Pastas</string>
     <string name="settings_feat_labels">Marcadores</string>
     <string name="settings_feat_smart_folders">Pastas inteligentes</string>

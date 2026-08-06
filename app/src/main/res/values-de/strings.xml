@@ -2408,6 +2408,13 @@
     <string name="alias_delivery_folder_title">Zustellen an</string>
     <string name="alias_delivery_folder_subtitle">Wähle, wo Mail an diesen Alias landet</string>
     <string name="alias_delivery_folder_missing">Gelöschter Ordner</string>
+    <string name="alias_delivery_label_title">Label</string>
+    <string name="alias_delivery_label_subtitle">Mails an diesen Alias mit einem Label versehen</string>
+    <string name="alias_delivery_label_none">Kein Label</string>
+    <string name="alias_delivery_label_missing">Label nicht verfügbar</string>
+    <string name="alias_delivery_label_rule_note">Die Mail-Regel \"%1$s\" versieht Mails dieses Alias bereits mit %2$s.</string>
+    <string name="alias_delivery_label_rule_conflict">Die Mail-Regel \"%1$s\" versieht Mails dieses Alias mit %2$s, zusätzlich zu %3$s.</string>
+    <string name="mail_rules_alias_label_conflict">%1$s versieht seine Mails bereits mit %2$s. Diese Regel fügt zusätzlich %3$s hinzu.</string>
     <string name="alias_delivery_rule_note">Die Mail-Regel \"%1$s\" verschiebt Mails an diesen Alias bereits nach %2$s.</string>
     <string name="alias_delivery_rule_conflict">Die Mail-Regel \"%1$s\" verschiebt Mails an diesen Alias nach %2$s, sie landen also nicht in %3$s.</string>
     <string name="mail_rules_alias_delivery_conflict">%1$s ist auf Zustellung an %2$s eingestellt. Diese Regel verschiebt die Mails stattdessen nach %3$s.</string>

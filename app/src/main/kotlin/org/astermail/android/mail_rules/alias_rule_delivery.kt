@@ -32,8 +32,20 @@ data class AliasRuleDelivery(
     val folder_token: String,
 )
 
+data class AliasRuleLabel(
+    val rule_id: String,
+    val rule_name: String,
+    val label_tokens: List<String>,
+)
+
 fun rule_move_to_folder(rule: MailRule): String? =
     rule.actions.filterIsInstance<Action.MoveTo>().lastOrNull()?.folder_token
+
+fun rule_apply_labels(rule: MailRule): List<String> =
+    rule.actions.filterIsInstance<Action.ApplyLabels>().lastOrNull()
+        ?.label_tokens
+        ?.filter { it.isNotBlank() }
+        .orEmpty()
 
 fun condition_targets_address(condition: Condition, address: String): Boolean = when (condition) {
     is Condition.To -> address_condition_matches(condition.op, condition.value, address)
@@ -61,6 +73,7 @@ private fun address_condition_matches(op: AddressOp, value: String, address: Str
 
 data class AliasDeliverySetting(
     val delivery_folder_token: String?,
+    val delivery_label_token: String?,
     val never_inbox: Boolean,
 )
 
@@ -68,6 +81,12 @@ data class AliasDeliveryConflict(
     val alias_address: String,
     val alias_delivery: AliasDeliverySetting,
     val rule_folder_token: String,
+)
+
+data class AliasLabelConflict(
+    val alias_address: String,
+    val alias_label_token: String,
+    val rule_label_tokens: List<String>,
 )
 
 fun condition_exact_addresses(condition: Condition): List<String> = when (condition) {
@@ -116,6 +135,43 @@ fun alias_rule_delivery(rules: List<MailRule>, alias_address: String): AliasRule
             val folder = rule_move_to_folder(rule) ?: return@mapNotNull null
             if (!rule_targets_address(rule, address)) return@mapNotNull null
             AliasRuleDelivery(rule_id = rule.id, rule_name = rule.name, folder_token = folder)
+        }
+        .lastOrNull()
+}
+
+fun rule_alias_label_conflict(
+    conditions: List<Condition>,
+    actions: List<Action>,
+    alias_delivery: Map<String, AliasDeliverySetting>,
+): AliasLabelConflict? {
+    val rule_labels = actions.filterIsInstance<Action.ApplyLabels>().lastOrNull()
+        ?.label_tokens
+        ?.filter { it.isNotBlank() }
+        .orEmpty()
+    if (rule_labels.isEmpty()) return null
+    conditions.flatMap { condition_exact_addresses(it) }.forEach { address ->
+        val label_token = alias_delivery[address.lowercase()]?.delivery_label_token ?: return@forEach
+        if (rule_labels.contains(label_token)) return@forEach
+        return AliasLabelConflict(
+            alias_address = address,
+            alias_label_token = label_token,
+            rule_label_tokens = rule_labels,
+        )
+    }
+    return null
+}
+
+fun alias_rule_label(rules: List<MailRule>, alias_address: String): AliasRuleLabel? {
+    val address = alias_address.trim()
+    if (address.isBlank() || !address.contains('@')) return null
+    return rules
+        .filter { it.enabled }
+        .sortedWith(compareBy({ it.priority }, { it.created_at.orEmpty() }))
+        .mapNotNull { rule ->
+            val labels = rule_apply_labels(rule)
+            if (labels.isEmpty()) return@mapNotNull null
+            if (!rule_targets_address(rule, address)) return@mapNotNull null
+            AliasRuleLabel(rule_id = rule.id, rule_name = rule.name, label_tokens = labels)
         }
         .lastOrNull()
 }

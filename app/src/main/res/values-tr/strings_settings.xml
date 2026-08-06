@@ -23,6 +23,9 @@
     <string name="settings_feat_email_templates">E-posta şablonları</string>
     <string name="settings_feat_auto_responder">Otomatik yanıt</string>
     <string name="settings_feat_alias_avatars">Takma ad görselleri</string>
+    <string name="settings_feat_instant_alias_delete">Anında rumuz silme</string>
+    <string name="alias_too_new_title">Bu rumuz silinemeyecek kadar yeni</string>
+    <string name="alias_too_new_message">Yeni rumuzlar silinebilmeden önce 30 gün boyunca aktif kalır. Bu, %1$s tarihinden itibaren kaldırılabilir. Rumuzları anında silmek için Supernova\'ya geçin.</string>
     <string name="settings_feat_folders">Klasörler</string>
     <string name="settings_feat_labels">Etiketler</string>
     <string name="settings_feat_smart_folders">Akıllı klasörler</string>

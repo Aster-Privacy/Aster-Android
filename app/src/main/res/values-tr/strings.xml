@@ -2407,6 +2407,13 @@
     <string name="alias_delivery_folder_title">Teslim edilecek yer</string>
     <string name="alias_delivery_folder_subtitle">Bu takma ada gelen postanın nereye düşeceğini seçin</string>
     <string name="alias_delivery_folder_missing">Silinmiş klasör</string>
+    <string name="alias_delivery_label_title">Etiket</string>
+    <string name="alias_delivery_label_subtitle">Bu takma ada gelen postaya etiket uygula</string>
+    <string name="alias_delivery_label_none">Etiket yok</string>
+    <string name="alias_delivery_label_missing">Etiket kullanılamıyor</string>
+    <string name="alias_delivery_label_rule_note">\"%1$s\" posta kuralı bu takma adın postasını zaten %2$s ile etiketliyor.</string>
+    <string name="alias_delivery_label_rule_conflict">\"%1$s\" posta kuralı bu takma adın postasını %3$s dışında %2$s ile de etiketliyor.</string>
+    <string name="mail_rules_alias_label_conflict">%1$s postasını zaten %2$s ile etiketliyor. Bu kural ayrıca %3$s ekler.</string>
     <string name="alias_delivery_rule_note">\"%1$s\" posta kuralı bu takma ad için gelen postaları zaten %2$s klasörüne taşıyor.</string>
     <string name="alias_delivery_rule_conflict">\"%1$s\" posta kuralı bu takma ad için gelen postaları %2$s klasörüne taşıyor, bu yüzden %3$s klasörüne ulaşmaz.</string>
     <string name="mail_rules_alias_delivery_conflict">%1$s için teslimat %2$s olarak ayarlı. Bu kural postaları bunun yerine %3$s klasörüne taşır.</string>

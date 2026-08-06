@@ -23,6 +23,9 @@
     <string name="settings_feat_email_templates">メールのテンプレート</string>
     <string name="settings_feat_auto_responder">自動返信</string>
     <string name="settings_feat_alias_avatars">エイリアスの画像</string>
+    <string name="settings_feat_instant_alias_delete">エイリアスの即時削除</string>
+    <string name="alias_too_new_title">このエイリアスは新しすぎるため削除できません</string>
+    <string name="alias_too_new_message">新しいエイリアスは、削除できるようになるまで作成後 30 日間そのまま残ります。このエイリアスは %1$s から削除できるようになります。Supernova にアップグレードすると、エイリアスをすぐに削除できます。</string>
     <string name="settings_feat_folders">フォルダ</string>
     <string name="settings_feat_labels">ラベル</string>
     <string name="settings_feat_smart_folders">スマートフォルダ</string>

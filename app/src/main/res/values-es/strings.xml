@@ -2408,6 +2408,13 @@
     <string name="alias_delivery_folder_title">Entregar en</string>
     <string name="alias_delivery_folder_subtitle">Elige dónde llega el correo de este alias</string>
     <string name="alias_delivery_folder_missing">Carpeta eliminada</string>
+    <string name="alias_delivery_label_title">Etiqueta</string>
+    <string name="alias_delivery_label_subtitle">Aplica una etiqueta al correo enviado a este alias</string>
+    <string name="alias_delivery_label_none">Sin etiqueta</string>
+    <string name="alias_delivery_label_missing">Etiqueta no disponible</string>
+    <string name="alias_delivery_label_rule_note">La regla de correo \"%1$s\" ya etiqueta el correo de este alias con %2$s.</string>
+    <string name="alias_delivery_label_rule_conflict">La regla de correo \"%1$s\" etiqueta el correo de este alias con %2$s, además de %3$s.</string>
+    <string name="mail_rules_alias_label_conflict">%1$s ya etiqueta su correo con %2$s. Esta regla añade además %3$s.</string>
     <string name="alias_delivery_rule_note">La regla de correo \"%1$s\" ya mueve el correo de este alias a %2$s.</string>
     <string name="alias_delivery_rule_conflict">La regla de correo \"%1$s\" mueve el correo de este alias a %2$s, por lo que no llegará a %3$s.</string>
     <string name="mail_rules_alias_delivery_conflict">%1$s está configurado para entregarse en %2$s. Esta regla moverá su correo a %3$s en su lugar.</string>

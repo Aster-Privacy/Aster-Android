@@ -2400,6 +2400,13 @@
     <string name="alias_delivery_folder_title">配送先</string>
     <string name="alias_delivery_folder_subtitle">このエイリアス宛メールの届き先を選びます</string>
     <string name="alias_delivery_folder_missing">削除されたフォルダー</string>
+    <string name="alias_delivery_label_title">ラベル</string>
+    <string name="alias_delivery_label_subtitle">このエイリアス宛のメールにラベルを付けます</string>
+    <string name="alias_delivery_label_none">ラベルなし</string>
+    <string name="alias_delivery_label_missing">利用できないラベル</string>
+    <string name="alias_delivery_label_rule_note">メールルール「%1$s」はこのエイリアスのメールに既に %2$s を付けています。</string>
+    <string name="alias_delivery_label_rule_conflict">メールルール「%1$s」はこのエイリアスのメールに %3$s に加えて %2$s を付けます。</string>
+    <string name="mail_rules_alias_label_conflict">%1$s はメールに既に %2$s を付けています。このルールはさらに %3$s を付けます。</string>
     <string name="alias_delivery_rule_note">メールルール「%1$s」は、このエイリアス宛のメールをすでに%2$sに移動しています。</string>
     <string name="alias_delivery_rule_conflict">メールルール「%1$s」がこのエイリアス宛のメールを%2$sに移動するため、%3$sには届きません。</string>
     <string name="mail_rules_alias_delivery_conflict">%1$s は %2$s への配信に設定されています。このルールは代わりにメールを %3$s に移動します。</string>

@@ -1212,6 +1212,72 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `set_alias_delivery_label sends the tag token`() = runTest {
+        val aliases = listOf(
+            AliasInfo(id = "a1", encrypted_local_part = "alias1", domain = "astermail.org"),
+        )
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(aliases)
+        every { session_key_store.get_identity_key() } returns null
+        coEvery { settings_api.update_alias_delivery_label("a1", "dGFn") } returns true
+
+        vm.load_aliases()
+        advanceUntilIdle()
+
+        vm.set_alias_delivery_label("a1", "dGFn")
+        advanceUntilIdle()
+
+        assertEquals("dGFn", vm.state.value.aliases.single { it.id == "a1" }.delivery_label_token)
+        coVerify { settings_api.update_alias_delivery_label("a1", "dGFn") }
+    }
+
+    @Test
+    fun `set_alias_delivery_label clears the tag token`() = runTest {
+        val aliases = listOf(
+            AliasInfo(
+                id = "a1",
+                encrypted_local_part = "alias1",
+                domain = "astermail.org",
+                delivery_label_token = "dGFn",
+            ),
+        )
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(aliases)
+        every { session_key_store.get_identity_key() } returns null
+        coEvery { settings_api.update_alias_delivery_label("a1", null) } returns true
+
+        vm.load_aliases()
+        advanceUntilIdle()
+
+        vm.set_alias_delivery_label("a1", null)
+        advanceUntilIdle()
+
+        assertEquals(null, vm.state.value.aliases.single { it.id == "a1" }.delivery_label_token)
+        coVerify { settings_api.update_alias_delivery_label("a1", null) }
+    }
+
+    @Test
+    fun `set_alias_delivery_label rolls back on api error`() = runTest {
+        val aliases = listOf(
+            AliasInfo(
+                id = "a1",
+                encrypted_local_part = "alias1",
+                domain = "astermail.org",
+                delivery_label_token = "b2xk",
+            ),
+        )
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(aliases)
+        every { session_key_store.get_identity_key() } returns null
+        coEvery { settings_api.update_alias_delivery_label("a1", "dGFn") } throws RuntimeException("boom")
+
+        vm.load_aliases()
+        advanceUntilIdle()
+
+        vm.set_alias_delivery_label("a1", "dGFn")
+        advanceUntilIdle()
+
+        assertEquals("b2xk", vm.state.value.aliases.single { it.id == "a1" }.delivery_label_token)
+    }
+
+    @Test
     fun `set_alias_delivery rolls back on api error`() = runTest {
         val aliases = listOf(
             AliasInfo(id = "a1", encrypted_local_part = "alias1", domain = "astermail.org", never_inbox = false),

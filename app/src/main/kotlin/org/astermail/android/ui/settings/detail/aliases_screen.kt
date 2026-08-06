@@ -144,6 +144,7 @@ fun AliasesScreen(
     val alias_directories_locked = plan_vm.is_feature_locked("max_alias_directories") && !plan_state.is_loading
     val alias_restore_locked = plan_vm.is_feature_locked("has_advanced_aliases") && !plan_state.is_loading
     val alias_export_locked = plan_vm.is_feature_locked("has_advanced_aliases") && !plan_state.is_loading
+    val instant_alias_delete_locked = plan_vm.is_feature_locked("has_instant_alias_delete") && !plan_state.is_loading
 
     var selected_tab by remember { mutableStateOf(0) }
     var pending_delete_alias by remember { mutableStateOf<Pair<String, String>?>(null) }
@@ -249,6 +250,7 @@ fun AliasesScreen(
                     on_show_create = { show_create_alias = true },
                     restore_locked = alias_restore_locked,
                     export_locked = alias_export_locked,
+                    instant_delete_locked = instant_alias_delete_locked,
                     on_upgrade = { on_open("billing") },
                 )
                 1 -> tab_scroll {
@@ -378,9 +380,11 @@ private fun aliases_tab(
     on_show_create: () -> Unit,
     restore_locked: Boolean = false,
     export_locked: Boolean = false,
+    instant_delete_locked: Boolean = false,
     on_upgrade: () -> Unit = {},
 ) {
     var pending_delete by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var alias_too_new_date by remember { mutableStateOf<String?>(null) }
     var pending_domain_address_delete by remember { mutableStateOf<Triple<String, String, String>?>(null) }
     var alias_query by remember { mutableStateOf("") }
     var show_export by remember { mutableStateOf(false) }
@@ -497,7 +501,14 @@ private fun aliases_tab(
                         context = context,
                         on_toggle = { vm.toggle_alias(alias.id) },
                         delivery_folder_name = alias_delivery_folder_name(alias, state.labels),
-                        on_delete = { pending_delete = alias.id to alias.address },
+                        on_delete = {
+                            val eligible_at = alias_delete_eligible_at(alias.created_at)
+                            if (instant_delete_locked && eligible_at != null && System.currentTimeMillis() < eligible_at) {
+                                alias_too_new_date = format_alias_date(eligible_at)
+                            } else {
+                                pending_delete = alias.id to alias.address
+                            }
+                        },
                         on_edit_note = { note_editing = alias.id to (alias.encrypted_note ?: "") },
                         expanded = expanded,
                         on_toggle_expanded = { vm.toggle_alias_expanded(alias.id) },
@@ -507,6 +518,7 @@ private fun aliases_tab(
                                 detail = state.alias_details[alias.id] ?: AliasDetailState(),
                                 vm = vm,
                                 rule_delivery = alias_rule_delivery_note(alias, state.mail_rules, state.labels),
+                                rule_label = alias_rule_label_note(alias, state.mail_rules, state.tags),
                             )
                         },
                     )
@@ -571,6 +583,24 @@ private fun aliases_tab(
                     org.astermail.android.design.components.AsterDialogDestructiveButton(
                         label = stringResource(R.string.delete),
                         onClick = { vm.delete_alias(id); pending_delete = null },
+                    )
+                },
+            )
+        }
+
+        alias_too_new_date?.let { date ->
+            org.astermail.android.design.components.AsterDialog(
+                on_dismiss = { alias_too_new_date = null },
+                title = stringResource(R.string.alias_too_new_title),
+                message = stringResource(R.string.alias_too_new_message, date),
+                footer = {
+                    org.astermail.android.design.components.AsterDialogOutlineButton(
+                        label = stringResource(R.string.close),
+                        onClick = { alias_too_new_date = null },
+                    )
+                    org.astermail.android.design.components.AsterDialogPrimaryButton(
+                        label = stringResource(R.string.upgrade),
+                        onClick = { alias_too_new_date = null; on_upgrade() },
                     )
                 },
             )
@@ -686,6 +716,26 @@ internal fun alias_rule_delivery_note(
         rule_name = delivery.rule_name,
         folder_name = folder_name,
         matches_alias_delivery = alias.delivery_folder_token == delivery.folder_token,
+    )
+}
+
+@Composable
+internal fun alias_rule_label_note(
+    alias: org.astermail.android.api.settings.AliasInfo,
+    rules: List<org.astermail.android.api.mail_rules.MailRule>,
+    tags: List<org.astermail.android.api.tags.TagItem>,
+): AliasRuleLabelNote? {
+    val applied = org.astermail.android.mail_rules.alias_rule_label(rules, alias.address) ?: return null
+    val missing_name = stringResource(R.string.alias_delivery_label_missing)
+    val label_names = applied.label_tokens.joinToString(", ") { token ->
+        tags.firstOrNull { it.tag_token == token && it.encrypted_name.isNotBlank() }?.encrypted_name
+            ?: missing_name
+    }
+    return AliasRuleLabelNote(
+        rule_name = applied.rule_name,
+        label_names = label_names,
+        matches_alias_label = alias.delivery_label_token != null &&
+            applied.label_tokens.contains(alias.delivery_label_token),
     )
 }
 
@@ -1367,6 +1417,16 @@ private fun directories_tab(
         }
     }
 }
+
+private const val ALIAS_DELETE_COOLDOWN_MILLIS = 30L * 24L * 60L * 60L * 1000L
+
+private fun alias_delete_eligible_at(created_at: String): Long? {
+    val created = parse_iso_millis(created_at) ?: return null
+    return created + ALIAS_DELETE_COOLDOWN_MILLIS
+}
+
+private fun format_alias_date(millis: Long): String =
+    java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM).format(java.util.Date(millis))
 
 private fun parse_iso_millis(iso: String): Long? = try {
     java.time.Instant.parse(iso).toEpochMilli()

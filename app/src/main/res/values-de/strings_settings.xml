@@ -23,6 +23,9 @@
     <string name="settings_feat_email_templates">Mail-Vorlagen</string>
     <string name="settings_feat_auto_responder">Abwesenheitsantwort</string>
     <string name="settings_feat_alias_avatars">Alias-Bilder</string>
+    <string name="settings_feat_instant_alias_delete">Sofortiges Löschen von Aliassen</string>
+    <string name="alias_too_new_title">Dieser Alias ist zu neu zum Löschen</string>
+    <string name="alias_too_new_message">Neue Aliase bleiben 30 Tage aktiv, bevor sie gelöscht werden können. Dieser lässt sich ab %1$s entfernen. Mit Supernova lassen sich Aliase sofort löschen.</string>
     <string name="settings_feat_folders">Ordner</string>
     <string name="settings_feat_labels">Labels</string>
     <string name="settings_feat_smart_folders">Intelligente Ordner</string>

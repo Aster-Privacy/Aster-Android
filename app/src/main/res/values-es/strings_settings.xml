@@ -23,6 +23,9 @@
     <string name="settings_feat_email_templates">Plantillas de correo</string>
     <string name="settings_feat_auto_responder">Respuesta automática</string>
     <string name="settings_feat_alias_avatars">Imágenes de alias</string>
+    <string name="settings_feat_instant_alias_delete">Eliminación instantánea de alias</string>
+    <string name="alias_too_new_title">Este alias es demasiado nuevo para eliminarlo</string>
+    <string name="alias_too_new_message">Los alias nuevos siguen activos durante 30 días antes de poder eliminarse. Este se podrá eliminar a partir del %1$s. Cambia a Supernova para eliminar alias al instante.</string>
     <string name="settings_feat_folders">Carpetas</string>
     <string name="settings_feat_labels">Etiquetas</string>
     <string name="settings_feat_smart_folders">Carpetas inteligentes</string>

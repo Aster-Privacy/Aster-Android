@@ -25,6 +25,9 @@
     <string name="settings_feat_email_templates">Email templates</string>
     <string name="settings_feat_auto_responder">Auto-responder</string>
     <string name="settings_feat_alias_avatars">Alias avatars</string>
+    <string name="settings_feat_instant_alias_delete">Instant alias deletion</string>
+    <string name="alias_too_new_title">This alias is too new to delete</string>
+    <string name="alias_too_new_message">New aliases stay live for 30 days before they can be deleted. This one can be removed starting %1$s. Upgrade to Supernova to delete aliases instantly.</string>
     <string name="settings_feat_folders">Folders</string>
     <string name="settings_feat_labels">Labels</string>
     <string name="settings_feat_smart_folders">Smart folders</string>

@@ -1471,11 +1471,11 @@ class MailRepository @Inject constructor(
 
     private fun merge_server_flags(meta: MailItemMetadata, item: MailItem): MailItemMetadata = meta.copy(
         is_read = item.is_read ?: meta.is_read,
-        is_starred = meta.is_starred || (item.is_starred ?: false),
-        is_pinned = meta.is_pinned || (item.is_pinned ?: false),
-        is_trashed = meta.is_trashed || (item.is_trashed ?: false),
-        is_archived = meta.is_archived || (item.is_archived ?: false),
-        is_spam = meta.is_spam || (item.is_spam ?: false),
+        is_starred = item.is_starred ?: meta.is_starred,
+        is_pinned = item.is_pinned ?: meta.is_pinned,
+        is_trashed = item.is_trashed ?: meta.is_trashed,
+        is_archived = item.is_archived ?: meta.is_archived,
+        is_spam = item.is_spam ?: meta.is_spam,
     )
 
     private fun resolve_read_state(item_type: String?, server_is_read: Boolean?, meta_is_read: Boolean?): Boolean {
@@ -1795,15 +1795,15 @@ class MailRepository @Inject constructor(
     }
 
     private fun build_metadata_patch(raw_item: MailItem?, updates: Map<String, Any>): PatchMetadataRequest {
-        var current_metadata: MailItemMetadata? = null
         val enc_meta = raw_item?.encrypted_metadata
         val meta_nonce = raw_item?.metadata_nonce
-        if (enc_meta != null && meta_nonce != null) {
-            current_metadata = decrypt_mail_metadata(enc_meta, meta_nonce)
+        val decrypted = if (enc_meta != null && meta_nonce != null) {
+            decrypt_mail_metadata(enc_meta, meta_nonce)
+        } else {
+            null
         }
-        if (current_metadata == null) {
-            current_metadata = raw_item?.metadata
-        }
+        val is_undecryptable = decrypted == null && enc_meta != null && meta_nonce != null
+        val current_metadata = raw_item?.metadata ?: decrypted
 
         val base = current_metadata ?: MailItemMetadata()
         val updated = base.copy(
@@ -1815,7 +1815,7 @@ class MailRepository @Inject constructor(
             is_spam = (updates["is_spam"] as? Boolean) ?: base.is_spam,
         )
 
-        val encrypted = if (current_metadata != null) encrypt_mail_metadata(updated) else null
+        val encrypted = if (current_metadata != null && !is_undecryptable) encrypt_mail_metadata(updated) else null
 
         return PatchMetadataRequest(
             encrypted_metadata = encrypted?.first,

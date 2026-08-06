@@ -23,6 +23,9 @@
     <string name="settings_feat_email_templates">메일 서식</string>
     <string name="settings_feat_auto_responder">자동 응답</string>
     <string name="settings_feat_alias_avatars">별칭 이미지</string>
+    <string name="settings_feat_instant_alias_delete">별칭 즉시 삭제</string>
+    <string name="alias_too_new_title">이 별칭은 삭제하기에 너무 최근에 만들어졌습니다</string>
+    <string name="alias_too_new_message">새로 만든 별칭은 30일이 지나야 삭제할 수 있습니다. 이 별칭은 %1$s부터 삭제할 수 있습니다. Supernova로 업그레이드하면 별칭을 즉시 삭제할 수 있습니다.</string>
     <string name="settings_feat_folders">폴더</string>
     <string name="settings_feat_labels">라벨</string>
     <string name="settings_feat_smart_folders">스마트 폴더</string>

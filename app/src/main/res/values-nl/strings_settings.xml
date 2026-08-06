@@ -23,6 +23,9 @@
     <string name="settings_feat_email_templates">Mailsjablonen</string>
     <string name="settings_feat_auto_responder">Automatisch antwoord</string>
     <string name="settings_feat_alias_avatars">Aliasafbeeldingen</string>
+    <string name="settings_feat_instant_alias_delete">Aliassen direct verwijderen</string>
+    <string name="alias_too_new_title">Deze alias is te nieuw om te verwijderen</string>
+    <string name="alias_too_new_message">Nieuwe aliassen blijven 30 dagen actief voordat ze kunnen worden verwijderd. Deze kan vanaf %1$s worden verwijderd. Stap over op Supernova om aliassen direct te verwijderen.</string>
     <string name="settings_feat_folders">Mappen</string>
     <string name="settings_feat_labels">Labels</string>
     <string name="settings_feat_smart_folders">Slimme mappen</string>

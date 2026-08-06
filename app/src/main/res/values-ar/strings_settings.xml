@@ -23,6 +23,9 @@
     <string name="settings_feat_email_templates">قوالب الرسائل</string>
     <string name="settings_feat_auto_responder">الرد التلقائي</string>
     <string name="settings_feat_alias_avatars">صور العناوين البديلة</string>
+    <string name="settings_feat_instant_alias_delete">حذف فوري للأسماء المستعارة</string>
+    <string name="alias_too_new_title">هذا الاسم المستعار جديد جدًا ولا يمكن حذفه</string>
+    <string name="alias_too_new_message">الأسماء المستعارة الجديدة تبقى نشطة 30 يومًا قبل أن يمكن حذفها. يمكن إزالة هذا اعتبارًا من %1$s. قم بالترقية إلى Supernova لحذف الأسماء المستعارة فورًا.</string>
     <string name="settings_feat_folders">المجلدات</string>
     <string name="settings_feat_labels">التسميات</string>
     <string name="settings_feat_smart_folders">المجلدات الذكية</string>

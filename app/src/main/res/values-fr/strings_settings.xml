@@ -25,6 +25,9 @@
     <string name="settings_feat_email_templates">Modèles d\'e-mail</string>
     <string name="settings_feat_auto_responder">Réponse automatique</string>
     <string name="settings_feat_alias_avatars">Avatars d\'alias</string>
+    <string name="settings_feat_instant_alias_delete">Suppression instantanée des alias</string>
+    <string name="alias_too_new_title">Cet alias est trop récent pour être supprimé</string>
+    <string name="alias_too_new_message">Les nouveaux alias restent actifs 30 jours avant de pouvoir être supprimés. Celui-ci peut être retiré à partir du %1$s. Passez à Supernova pour supprimer les alias instantanément.</string>
     <string name="settings_feat_folders">Dossiers</string>
     <string name="settings_feat_labels">Libellés</string>
     <string name="settings_feat_smart_folders">Dossiers intelligents</string>

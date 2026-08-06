@@ -2407,6 +2407,13 @@
     <string name="alias_delivery_folder_title">Bezorgen in</string>
     <string name="alias_delivery_folder_subtitle">Kies waar mail aan dit alias terechtkomt</string>
     <string name="alias_delivery_folder_missing">Verwijderde map</string>
+    <string name="alias_delivery_label_title">Label</string>
+    <string name="alias_delivery_label_subtitle">Geef post naar dit alias een label</string>
+    <string name="alias_delivery_label_none">Geen label</string>
+    <string name="alias_delivery_label_missing">Label niet beschikbaar</string>
+    <string name="alias_delivery_label_rule_note">Mailregel \"%1$s\" labelt post voor dit alias al met %2$s.</string>
+    <string name="alias_delivery_label_rule_conflict">Mailregel \"%1$s\" labelt post voor dit alias met %2$s, naast %3$s.</string>
+    <string name="mail_rules_alias_label_conflict">%1$s labelt post al met %2$s. Deze regel voegt ook %3$s toe.</string>
     <string name="alias_delivery_rule_note">E-mailregel \"%1$s\" verplaatst mail voor deze alias al naar %2$s.</string>
     <string name="alias_delivery_rule_conflict">E-mailregel \"%1$s\" verplaatst mail voor deze alias naar %2$s, dus die komt niet in %3$s terecht.</string>
     <string name="mail_rules_alias_delivery_conflict">%1$s is ingesteld op bezorging in %2$s. Deze regel verplaatst de mail in plaats daarvan naar %3$s.</string>

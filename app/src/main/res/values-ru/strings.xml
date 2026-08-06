@@ -2421,6 +2421,13 @@
     <string name="alias_delivery_folder_title">Доставлять в</string>
     <string name="alias_delivery_folder_subtitle">Выберите, куда попадает почта этого псевдонима</string>
     <string name="alias_delivery_folder_missing">Удаленная папка</string>
+    <string name="alias_delivery_label_title">Метка</string>
+    <string name="alias_delivery_label_subtitle">Ставить метку на почту, отправленную на этот алиас</string>
+    <string name="alias_delivery_label_none">Без метки</string>
+    <string name="alias_delivery_label_missing">Метка недоступна</string>
+    <string name="alias_delivery_label_rule_note">Правило \"%1$s\" уже помечает почту этого алиаса меткой %2$s.</string>
+    <string name="alias_delivery_label_rule_conflict">Правило \"%1$s\" помечает почту этого алиаса меткой %2$s, помимо %3$s.</string>
+    <string name="mail_rules_alias_label_conflict">%1$s уже помечает почту меткой %2$s. Это правило добавляет ещё %3$s.</string>
     <string name="alias_delivery_rule_note">Правило \"%1$s\" уже перемещает письма этого алиаса в %2$s.</string>
     <string name="alias_delivery_rule_conflict">Правило \"%1$s\" перемещает письма этого алиаса в %2$s, поэтому они не попадут в %3$s.</string>
     <string name="mail_rules_alias_delivery_conflict">Для %1$s выбрана доставка в %2$s. Это правило вместо этого переместит письма в %3$s.</string>
