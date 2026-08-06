@@ -123,9 +123,19 @@ internal fun decode_avatar_model(url: String): Any {
     if (comma < 0) return url
     val meta = url.substring(5, comma)
     val payload = url.substring(comma + 1)
-    return if (meta.contains("base64")) {
-        runCatching { Base64.decode(payload, Base64.DEFAULT) }.getOrNull() ?: url
-    } else url
+    val bytes = if (meta.contains("base64", ignoreCase = true)) {
+        decode_base64_payload(payload)
+    } else {
+        runCatching { android.net.Uri.decode(payload).toByteArray(Charsets.UTF_8) }.getOrNull()
+    }
+    return bytes?.takeIf { it.isNotEmpty() } ?: url
+}
+
+private fun decode_base64_payload(payload: String): ByteArray? {
+    val cleaned = payload.filterNot { it.isWhitespace() }
+    if (cleaned.isEmpty()) return null
+    return runCatching { Base64.decode(cleaned, Base64.DEFAULT) }.getOrNull()
+        ?: runCatching { Base64.decode(cleaned, Base64.URL_SAFE) }.getOrNull()
 }
 
 @Composable

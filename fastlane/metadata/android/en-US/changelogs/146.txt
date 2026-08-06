@@ -1,0 +1,7 @@
+Bug fixes and improvements:
+
+- Much faster first mail load after signing in, and faster marking as read
+- Your profile picture now shows up on the settings and profile screens
+- Profile pictures fall back to your initials instead of an empty circle
+- Push notifications now come back on their own if they ever stop arriving
+- Fixed messages that showed a decryption error and would not open even after retrying

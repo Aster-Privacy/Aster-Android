@@ -354,6 +354,9 @@ class MailRepository @Inject constructor(
     private val pbkdf2_key_cache = java.util.concurrent.ConcurrentHashMap<String, ByteArray>()
     private val identity_key_cache = java.util.concurrent.ConcurrentHashMap<String, ByteArray>()
     private val ratchet_undecryptable_at = java.util.concurrent.ConcurrentHashMap<String, Long>()
+    @Volatile private var cached_kek_candidates: List<ByteArray>? = null
+    @Volatile private var cached_kek_source: List<String>? = null
+    @Volatile private var cached_metadata_key: ByteArray? = null
     @Volatile private var cached_sent_folder_token: String? = null
     private val draft_item_cache =
         java.util.Collections.synchronizedMap(
@@ -749,6 +752,11 @@ class MailRepository @Inject constructor(
         pbkdf2_key_cache.clear()
         identity_key_cache.values.forEach { it.fill(0) }
         identity_key_cache.clear()
+        cached_kek_candidates?.forEach { it.fill(0) }
+        cached_kek_candidates = null
+        cached_kek_source = null
+        cached_metadata_key?.fill(0)
+        cached_metadata_key = null
         cached_sent_folder_token = null
         draft_item_cache.clear()
         ratchet_undecryptable_at.clear()
@@ -1588,43 +1596,59 @@ class MailRepository @Inject constructor(
         }
     }
 
+    private fun kek_candidates(): List<ByteArray> {
+        val raw = session_key_store.get_legacy_keks().orEmpty()
+        val cached = cached_kek_candidates
+        if (cached != null && cached_kek_source == raw) return cached
+        val decoded = raw.mapNotNull { kek_b64 ->
+            runCatching { android.util.Base64.decode(kek_b64, android.util.Base64.DEFAULT) }.getOrNull()
+        }
+        cached_kek_source = raw
+        cached_kek_candidates = decoded
+        return decoded
+    }
+
+    private fun promote_kek(kek: ByteArray) {
+        val current = cached_kek_candidates ?: return
+        if (current.firstOrNull() === kek) return
+        cached_kek_candidates = listOf(kek) + current.filterNot { it === kek }
+    }
+
     private fun decrypt_envelope_pbkdf2(encrypted_b64: String): ByteArray {
+        val data = android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT)
+        val salt = data.sliceArray(0 until 16)
+        val iv = data.sliceArray(16 until 28)
+        val ciphertext = data.sliceArray(28 until data.size)
+        val salt_hex = salt.joinToString("") { "%02x".format(it) }
+
+        pbkdf2_key_cache[salt_hex]?.let { cached ->
+            runCatching { return aes_gcm_decrypt(ciphertext, cached, iv) }
+        }
+        for (kek in kek_candidates()) {
+            runCatching {
+                val plaintext = aes_gcm_decrypt(ciphertext, kek, iv)
+                promote_kek(kek)
+                return plaintext
+            }
+        }
+
         val passphrase = session_key_store.get_passphrase()
             ?: throw IllegalStateException("no passphrase")
-        try {
-            val data = android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT)
-            val salt = data.sliceArray(0 until 16)
-            val iv = data.sliceArray(16 until 28)
-            val ciphertext = data.sliceArray(28 until data.size)
-
-            val salt_hex = salt.joinToString("") { "%02x".format(it) }
-            val key_bytes = pbkdf2_key_cache.getOrPut(salt_hex) {
-                val c = String(passphrase, Charsets.UTF_8).toCharArray()
-                val spec = PBEKeySpec(c, salt, PBKDF2_ITERATIONS, 256)
-                val derived = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
-                    .generateSecret(spec).encoded
-                spec.clearPassword()
-                c.fill(0.toChar())
-                derived
-            }
-
-            return try {
-                aes_gcm_decrypt(ciphertext, key_bytes, iv)
-            } catch (_: Throwable) {
-                val legacy = session_key_store.get_legacy_keks()
-                if (!legacy.isNullOrEmpty()) {
-                    for (kek_b64 in legacy) {
-                        try {
-                            val kek = android.util.Base64.decode(kek_b64, android.util.Base64.DEFAULT)
-                            return aes_gcm_decrypt(ciphertext, kek, iv)
-                        } catch (_: Throwable) {
-                        }
-                    }
-                }
-                throw IllegalStateException("pbkdf2 decryption failed with all keys")
-            }
+        val key_bytes = try {
+            val c = String(passphrase, Charsets.UTF_8).toCharArray()
+            val spec = PBEKeySpec(c, salt, PBKDF2_ITERATIONS, 256)
+            val derived = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+                .generateSecret(spec).encoded
+            spec.clearPassword()
+            c.fill(0.toChar())
+            derived
         } finally {
             passphrase.fill(0)
+        }
+        pbkdf2_key_cache[salt_hex] = key_bytes
+
+        return runCatching { aes_gcm_decrypt(ciphertext, key_bytes, iv) }.getOrElse {
+            throw IllegalStateException("pbkdf2 decryption failed with all keys")
         }
     }
 
@@ -1733,8 +1757,15 @@ class MailRepository @Inject constructor(
 
     private val metadata_json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
+    private fun metadata_key(): ByteArray? {
+        cached_metadata_key?.let { return it }
+        val derived = derive_metadata_key() ?: return null
+        cached_metadata_key = derived
+        return derived
+    }
+
     private fun decrypt_mail_metadata(encrypted_b64: String, nonce_b64: String): MailItemMetadata? {
-        val key = derive_metadata_key() ?: return null
+        val key = metadata_key() ?: return null
         return try {
             val ciphertext = android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT)
             val nonce = android.util.Base64.decode(nonce_b64, android.util.Base64.DEFAULT)
@@ -1744,13 +1775,11 @@ class MailRepository @Inject constructor(
             metadata_json.decodeFromString<MailItemMetadata>(json_str)
         } catch (_: Throwable) {
             null
-        } finally {
-            key.fill(0)
         }
     }
 
     private fun encrypt_mail_metadata(metadata: MailItemMetadata): Pair<String, String>? {
-        val key = derive_metadata_key() ?: return null
+        val key = metadata_key() ?: return null
         return try {
             val plaintext = metadata_json.encodeToString(metadata).toByteArray(Charsets.UTF_8)
             val nonce = ByteArray(12)
@@ -1762,8 +1791,6 @@ class MailRepository @Inject constructor(
             enc_b64 to nonce_b64
         } catch (_: Throwable) {
             null
-        } finally {
-            key.fill(0)
         }
     }
 

@@ -21,7 +21,6 @@
 
 package org.astermail.android.ui.common
 
-import android.util.Base64
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
@@ -29,7 +28,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -41,10 +42,12 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
 import org.astermail.android.storage.AccountStore
 import org.astermail.android.ui.mail.avatar_colors_for
 import org.astermail.android.ui.mail.avatar_initial_style
+import org.astermail.android.ui.mail.decode_avatar_model
 import org.astermail.android.ui.mail.initial_for
 
 @Composable
@@ -52,68 +55,53 @@ fun current_user_avatar(
     account_store: AccountStore,
     size: Dp = 88.dp,
     modifier: Modifier = Modifier,
+    profile_picture_url: String? = null,
 ) {
-    val initial = remember(account_store) { account_store.current_account.value?.profile_picture }
     val account by account_store.current_account.collectAsStateWithLifecycle(initialValue = account_store.current_account.value)
-    val url = (account?.profile_picture ?: initial)?.takeIf { it.isNotBlank() }
+    val url = (profile_picture_url?.takeIf { it.isNotBlank() } ?: account?.profile_picture)
+        ?.takeIf { it.isNotBlank() }
+    val email = account?.email.orEmpty()
+    val name = account?.display_name.orEmpty()
+    val seed = name.ifBlank { email }
+    val (bg, fg) = avatar_colors_for(seed, account?.profile_color)
     val context = LocalContext.current
+    var loaded by remember(url) { mutableStateOf(false) }
 
-    if (url == null) {
-        val email = account?.email.orEmpty()
-        val name = account?.display_name.orEmpty()
-        val seed = name.ifBlank { email }
-        val (bg, fg) = avatar_colors_for(seed, account?.profile_color)
-        Box(
-            modifier = modifier
-                .size(size)
-                .clip(CircleShape)
-                .background(bg),
-            contentAlignment = Alignment.Center,
-        ) {
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(if (loaded) Color.Transparent else bg),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (!loaded) {
             Text(
                 text = initial_for(name, email),
                 color = fg,
                 style = avatar_initial_style(size),
             )
         }
-        return
-    }
-
-    Box(
-        modifier = modifier
-            .size(size)
-            .clip(CircleShape)
-            .background(Color.Transparent),
-    ) {
-        val cache_key = remember(url) { stable_cache_key(url) }
-        val model = remember(url) { decode_avatar_model(url) }
-        val request = remember(cache_key, context, model) {
-            ImageRequest.Builder(context)
-                .data(model)
-                .memoryCacheKey(cache_key)
-                .placeholderMemoryCacheKey(cache_key)
-                .diskCacheKey(cache_key)
-                .crossfade(false)
-                .build()
+        if (url != null) {
+            val cache_key = remember(url) { stable_cache_key(url) }
+            val model = remember(url) { decode_avatar_model(url) }
+            val request = remember(cache_key, context, model) {
+                ImageRequest.Builder(context)
+                    .data(model)
+                    .memoryCacheKey(cache_key)
+                    .placeholderMemoryCacheKey(cache_key)
+                    .diskCacheKey(cache_key)
+                    .crossfade(false)
+                    .build()
+            }
+            AsyncImage(
+                model = request,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                onState = { state -> loaded = state is AsyncImagePainter.State.Success },
+                modifier = Modifier.size(size).clip(CircleShape),
+            )
         }
-        AsyncImage(
-            model = request,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.size(size).clip(CircleShape),
-        )
     }
-}
-
-private fun decode_avatar_model(url: String): Any {
-    if (!url.startsWith("data:")) return url
-    val comma = url.indexOf(',')
-    if (comma < 0) return url
-    val meta = url.substring(5, comma)
-    val payload = url.substring(comma + 1)
-    return if (meta.contains("base64")) {
-        runCatching { Base64.decode(payload, Base64.DEFAULT) }.getOrNull() ?: url
-    } else url
 }
 
 private fun stable_cache_key(url: String): String {

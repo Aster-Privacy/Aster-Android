@@ -175,6 +175,7 @@ fun SettingsScreen(
             )
             profile_header(
                 account_store = settings_vm.account_store,
+                profile_picture_url = settings_state.user?.profile_picture,
                 display_name = live_account?.display_name?.takeIf { it.isNotBlank() }
                     ?: settings_state.user?.display_name?.ifBlank { null }
                     ?: settings_state.user?.username
@@ -214,6 +215,7 @@ fun SettingsScreen(
 @Composable
 private fun profile_header(
     account_store: org.astermail.android.storage.AccountStore,
+    profile_picture_url: String?,
     display_name: String,
     username: String,
     email: String,
@@ -246,6 +248,7 @@ private fun profile_header(
             current_user_avatar(
                 account_store = account_store,
                 size = 88.dp,
+                profile_picture_url = profile_picture_url,
             )
             Spacer(Modifier.size(14.dp))
             if (profile_loading) {

@@ -166,6 +166,7 @@ fun ProfileScreen(
                 current_user_avatar(
                     account_store = vm.account_store,
                     size = 60.dp,
+                    profile_picture_url = user?.profile_picture,
                 )
                 Spacer(Modifier.width(AsterSpacing.lg))
                 Column(modifier = Modifier.weight(1f)) {
