@@ -357,7 +357,7 @@ fun SubscriptionsScreen(
     }
     val default_interval = stringResource(R.string.settings_interval_default)
     val plan_free_label = stringResource(R.string.plan_name_free)
-    var billing_interval by remember { mutableStateOf("month") }
+    var billing_interval by remember { mutableStateOf("year") }
     val plan_load_settled = remember_load_settled(state.is_loading)
 
     detail_scaffold(title = stringResource(R.string.plan_billing), on_back = on_back, scroll_state = scroll_state) {

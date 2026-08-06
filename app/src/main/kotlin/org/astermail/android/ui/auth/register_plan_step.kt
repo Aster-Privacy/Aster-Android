@@ -170,7 +170,7 @@ fun RegisterPlanStep(
     val state by billing_vm.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var selected_code by remember { mutableStateOf("free") }
-    var billing_interval by remember { mutableStateOf("month") }
+    var billing_interval by remember { mutableStateOf("year") }
     var retry_count by remember { mutableIntStateOf(0) }
     var used_fallback by remember { mutableStateOf(false) }
 
@@ -222,7 +222,8 @@ fun RegisterPlanStep(
 
     val monthly_plans = plans.filter { it.billing_period == "month" || it.price_cents == 0 }
     val yearly_plans = plans.filter { it.billing_period == "year" || it.price_cents == 0 }
-    val display_plans = if (billing_interval == "year" && has_yearly) yearly_plans else monthly_plans
+    val effective_interval = if (billing_interval == "year" && has_yearly) "year" else "month"
+    val display_plans = if (effective_interval == "year") yearly_plans else monthly_plans
 
     auth_centered_column {
         Image(
@@ -279,7 +280,7 @@ fun RegisterPlanStep(
                 plan_card(
                     plan = plan,
                     is_selected = selected_code == plan.code,
-                    billing_interval = billing_interval,
+                    billing_interval = effective_interval,
                     on_select = { selected_code = plan.code },
                 )
                 Spacer(Modifier.height(AsterSpacing.md))
@@ -300,7 +301,7 @@ fun RegisterPlanStep(
                     if (used_fallback && api_plans.isEmpty()) {
                         billing_vm.load_plans()
                     }
-                    billing_vm.start_checkout(selected_code, billing_interval)
+                    billing_vm.start_checkout(selected_code, effective_interval)
                 },
                 is_loading = state.is_acting,
             )
