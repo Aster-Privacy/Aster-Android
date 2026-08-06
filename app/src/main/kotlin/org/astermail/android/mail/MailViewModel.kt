@@ -50,6 +50,7 @@ import org.astermail.android.api.send.ExternalAttachmentPayload
 import org.astermail.android.ui.mail.MessageAttachment
 
 private const val INBOX_FETCH_BACKSTOP_MS = 50_000L
+private const val PULL_REFRESH_BACKSTOP_MS = 20_000L
 private const val WARM_CACHE_MIN_ITEMS = 8
 private const val BULK_ACTION_CONCURRENCY = 6
 private const val CARRIED_ITEM_STALE_MS = 20 * 60 * 1000L
@@ -2448,7 +2449,7 @@ class MailViewModel @Inject constructor(
         refresh_job?.cancel()
         refresh_job = viewModelScope.launch {
             val result = runCatching {
-                kotlinx.coroutines.withTimeout(INBOX_FETCH_BACKSTOP_MS) {
+                kotlinx.coroutines.withTimeout(PULL_REFRESH_BACKSTOP_MS) {
                     fetch_for_folder(folder).getOrThrow()
                 }
             }
@@ -2480,10 +2481,22 @@ class MailViewModel @Inject constructor(
                     search_index_manager.on_items_loaded(page.items)
                     search_index_manager.ensure_index_built()
                 },
-                onFailure = {
-                    _inbox_state.update { it.copy(is_refreshing = false) }
+                onFailure = { t ->
+                    _inbox_state.update {
+                        it.copy(
+                            is_refreshing = false,
+                            is_loading = false,
+                            initial = false,
+                            error = if (it.items.isEmpty()) friendly_load_error(t) else null,
+                        )
+                    }
                 },
             )
+        }
+        refresh_job?.invokeOnCompletion {
+            if (_inbox_state.value.is_refreshing) {
+                _inbox_state.update { it.copy(is_refreshing = false) }
+            }
         }
     }
 
