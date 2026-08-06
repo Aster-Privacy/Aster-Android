@@ -2631,4 +2631,19 @@
     <string name="block_remote_css_subtitle">Zapobiegaj ładowaniu przez wiadomości e-mail arkuszy stylów z zewnętrznych serwerów</string>
     <string name="block_html_rendering">Blokuj renderowanie HTML</string>
     <string name="block_html_rendering_subtitle">Wyświetlaj przychodzące wiadomości jako zwykły tekst, aby zapobiec śledzeniu, podszywaniu się pod układ i wizualnemu phishingowi</string>
+    <string name="allow_a_sender">Dodaj do listy dozwolonych</string>
+    <string name="add_to_allowlist">Dodaj do listy dozwolonych</string>
+    <string name="add_to_allowlist_hint">Wiadomości od tego nadawcy lub domeny nigdy nie zostaną oznaczone jako spam i zawsze trafią do skrzynki odbiorczej.</string>
+    <string name="allowlist_entire_domain">Cała domena</string>
+    <string name="allowlist_email_placeholder">Wpisz adres e-mail…</string>
+    <string name="allowlist_domain_placeholder">Wpisz domenę…</string>
+    <string name="allowlist_domain_label">Cała domena</string>
+    <string name="allowed_senders_load_failed">Nie udało się wczytać listy dozwolonych</string>
+    <string name="sender_added_to_allowlist">Dodano do listy dozwolonych</string>
+    <string name="failed_allow_sender">Nie udało się dodać do listy dozwolonych</string>
+    <string name="failed_remove_allowed_sender">Nie udało się usunąć z listy dozwolonych</string>
+    <string name="alias_websites_limit_reached">Możesz dodać maksymalnie 10 stron</string>
+    <string name="alias_website_add">Dodaj stronę</string>
+    <string name="alias_website_remove">Usuń stronę</string>
+    <string name="alias_website_input_placeholder">przyklad.pl</string>
 </resources>

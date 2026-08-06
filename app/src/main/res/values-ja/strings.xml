@@ -2610,4 +2610,19 @@
     <string name="block_remote_css_subtitle">外部サーバーからのスタイルシートの読み込みをブロックします</string>
     <string name="block_html_rendering">HTMLレンダリングをブロック</string>
     <string name="block_html_rendering_subtitle">受信メールをプレーンテキストで表示し、トラッキング、レイアウトの偽装、視覚的なフィッシングを防ぎます</string>
+    <string name="allow_a_sender">許可リストに追加</string>
+    <string name="add_to_allowlist">許可リストに追加</string>
+    <string name="add_to_allowlist_hint">この送信者またはドメインからのメールは迷惑メールとして分類されず、常に受信トレイに届きます。</string>
+    <string name="allowlist_entire_domain">ドメイン全体</string>
+    <string name="allowlist_email_placeholder">メールアドレスを入力…</string>
+    <string name="allowlist_domain_placeholder">ドメインを入力…</string>
+    <string name="allowlist_domain_label">ドメイン全体</string>
+    <string name="allowed_senders_load_failed">許可リストを読み込めませんでした</string>
+    <string name="sender_added_to_allowlist">許可リストに追加しました</string>
+    <string name="failed_allow_sender">許可リストに追加できませんでした</string>
+    <string name="failed_remove_allowed_sender">許可リストから削除できませんでした</string>
+    <string name="alias_websites_limit_reached">ウェブサイトは10件まで追加できます</string>
+    <string name="alias_website_add">ウェブサイトを追加</string>
+    <string name="alias_website_remove">ウェブサイトを削除</string>
+    <string name="alias_website_input_placeholder">example.com</string>
 </resources>

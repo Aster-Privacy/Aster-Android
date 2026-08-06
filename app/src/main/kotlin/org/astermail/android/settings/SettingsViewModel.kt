@@ -114,6 +114,8 @@ import org.astermail.android.api.settings.AliasInfo
 import org.astermail.android.api.settings.DeletedAliasInfo
 import org.astermail.android.api.settings.CustomDomainAddressInfo
 import org.astermail.android.api.settings.AliasPreferences
+import org.astermail.android.api.settings.AllowSenderRequest
+import org.astermail.android.api.settings.AllowedSenderInfo
 import org.astermail.android.api.settings.BlockSenderRequest
 import org.astermail.android.api.settings.BlockedSenderInfo
 import org.astermail.android.api.settings.CheckAliasAvailabilityRequest
@@ -152,12 +154,23 @@ data class BlockedSenderView(
     val created_at: String?,
 )
 
+data class AllowedSenderView(
+    val id: String,
+    val sender_token: String,
+    val address: String,
+    val is_domain: Boolean,
+    val created_at: String?,
+)
+
 data class SettingsUiState(
     val user: UserInfo? = null,
     val sessions: List<SessionInfo> = emptyList(),
     val blocked_senders: List<BlockedSenderView> = emptyList(),
     val blocked_senders_loading: Boolean = false,
     val blocked_senders_error: String? = null,
+    val allowed_senders: List<AllowedSenderView> = emptyList(),
+    val allowed_senders_loading: Boolean = false,
+    val allowed_senders_error: String? = null,
     val aliases: List<AliasInfo> = emptyList(),
     val max_aliases: Int = 0,
     val custom_domain_addresses: List<CustomDomainAddressInfo> = emptyList(),
@@ -830,6 +843,176 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    private fun allowed_senders_hmac_key(): ByteArray {
+        val raw = derive_encryption_key()
+        try {
+            val info = ALLOWED_SENDERS_HMAC_INFO.toByteArray(Charsets.UTF_8)
+            return MessageDigest.getInstance("SHA-256").digest(raw + info)
+        } finally {
+            raw.fill(0)
+        }
+    }
+
+    private fun allowed_sender_integrity_hash(key: ByteArray, encrypted: String, nonce: String): String =
+        hmac_b64(key, "$encrypted:$nonce:$ALLOWED_SENDERS_INTEGRITY_INFO".toByteArray(Charsets.UTF_8))
+
+    private fun decrypt_allowed_sender_address(item: AllowedSenderInfo): String? {
+        if (item.encrypted_sender_data.isBlank() || item.sender_data_nonce.isBlank()) return null
+        return try {
+            val hmac_key = allowed_senders_hmac_key()
+            try {
+                if (item.integrity_hash.isNotBlank()) {
+                    val expected = allowed_sender_integrity_hash(
+                        hmac_key,
+                        item.encrypted_sender_data,
+                        item.sender_data_nonce,
+                    )
+                    if (expected != item.integrity_hash) return null
+                }
+            } finally {
+                hmac_key.fill(0)
+            }
+            val json = decrypt_alias_field(item.encrypted_sender_data, item.sender_data_nonce)
+            val parsed = kotlinx.serialization.json.Json.parseToJsonElement(json).jsonObject
+            parsed["email"]?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() }
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    private fun build_allow_sender_request(normalized: String, is_domain: Boolean): AllowSenderRequest {
+        val hmac_key = allowed_senders_hmac_key()
+        try {
+            val prefix = if (is_domain) "domain:" else "email:"
+            val sender_token = hmac_b64(hmac_key, (prefix + normalized).toByteArray(Charsets.UTF_8))
+            val sender_hash = MessageDigest.getInstance("SHA-256")
+                .digest(normalized.toByteArray(Charsets.UTF_8))
+                .joinToString("") { "%02x".format(it) }
+            val allowed_at = java.time.format.DateTimeFormatter.ISO_INSTANT
+                .format(java.time.Instant.now())
+            val payload = buildJsonObject {
+                put("email", normalized)
+                put("allowed_at", allowed_at)
+                put("is_domain", is_domain)
+                put("_encrypted_at", allowed_at)
+            }.toString()
+            val key = derive_encryption_key()
+            try {
+                val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
+                val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+                cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(128, nonce))
+                val ciphertext = cipher.doFinal(payload.toByteArray(Charsets.UTF_8))
+                val encrypted_sender_data =
+                    android.util.Base64.encodeToString(ciphertext, android.util.Base64.NO_WRAP)
+                val sender_data_nonce =
+                    android.util.Base64.encodeToString(nonce, android.util.Base64.NO_WRAP)
+                return AllowSenderRequest(
+                    sender_token = sender_token,
+                    sender_hash = sender_hash,
+                    encrypted_sender_data = encrypted_sender_data,
+                    sender_data_nonce = sender_data_nonce,
+                    integrity_hash = allowed_sender_integrity_hash(
+                        hmac_key,
+                        encrypted_sender_data,
+                        sender_data_nonce,
+                    ),
+                    is_domain = is_domain,
+                )
+            } finally {
+                key.fill(0)
+            }
+        } finally {
+            hmac_key.fill(0)
+        }
+    }
+
+    fun load_allowed_senders() {
+        viewModelScope.launch {
+            _state.update { it.copy(allowed_senders_loading = true, allowed_senders_error = null) }
+            try {
+                val response = settings_api.list_allowed_senders()
+                val decrypted = withContext(default_dispatcher) {
+                    response.allowed_senders.mapNotNull { item ->
+                        val address = decrypt_allowed_sender_address(item) ?: return@mapNotNull null
+                        AllowedSenderView(
+                            id = item.id,
+                            sender_token = item.sender_token,
+                            address = address,
+                            is_domain = item.is_domain,
+                            created_at = item.created_at,
+                        )
+                    }
+                }
+                _state.update {
+                    it.copy(allowed_senders = decrypted, allowed_senders_loading = false)
+                }
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.update {
+                    it.copy(
+                        allowed_senders_loading = false,
+                        allowed_senders_error = user_facing_error(t),
+                    )
+                }
+            }
+        }
+    }
+
+    fun allow_sender(address: String, is_domain: Boolean, on_result: (Boolean) -> Unit = {}) {
+        viewModelScope.launch {
+            val normalized = address.trim().lowercase()
+            if (normalized.isEmpty()) {
+                on_result(false)
+                return@launch
+            }
+            try {
+                val request = withContext(default_dispatcher) {
+                    build_allow_sender_request(normalized, is_domain)
+                }
+                settings_api.allow_sender(request)
+                _state.update { s ->
+                    s.copy(
+                        allowed_senders = listOf(
+                            AllowedSenderView(
+                                id = request.sender_token,
+                                sender_token = request.sender_token,
+                                address = normalized,
+                                is_domain = is_domain,
+                                created_at = null,
+                            ),
+                        ) + s.allowed_senders.filter { it.sender_token != request.sender_token },
+                        action_result = context.getString(R.string.sender_added_to_allowlist),
+                    )
+                }
+                on_result(true)
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.failed_allow_sender),
+                )
+                on_result(false)
+            }
+        }
+    }
+
+    fun remove_allowed_sender(sender_token: String) {
+        viewModelScope.launch {
+            val previous = _state.value.allowed_senders
+            _state.update { s -> s.copy(allowed_senders = s.allowed_senders.filter { it.sender_token != sender_token }) }
+            try {
+                settings_api.remove_allowed_sender(sender_token)
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.update { s ->
+                    s.copy(
+                        allowed_senders = previous,
+                        action_result = context.getString(R.string.failed_remove_allowed_sender),
+                    )
+                }
+            }
+        }
+    }
+
     fun load_mail_rules(force: Boolean = false) {
         val now = System.currentTimeMillis()
         if (!force && last_mail_rules_load_ms != 0L && now - last_mail_rules_load_ms < LIST_TTL_MS) return
@@ -1313,7 +1496,14 @@ class SettingsViewModel @Inject constructor(
             _state.update { s ->
                 s.copy(
                     aliases = s.aliases.map {
-                        if (it.id == alias_id) it.copy(encrypted_websites = current.encrypted_websites) else it
+                        if (it.id == alias_id) {
+                            it.copy(
+                                encrypted_websites = current.encrypted_websites,
+                                websites = current.websites,
+                            )
+                        } else {
+                            it
+                        }
                     },
                     action_result = context.getString(R.string.alias_website_invalid),
                 )
@@ -1324,7 +1514,14 @@ class SettingsViewModel @Inject constructor(
         _state.update { s ->
             s.copy(
                 aliases = s.aliases.map {
-                    if (it.id == alias_id) it.copy(encrypted_websites = display_value.ifBlank { null }) else it
+                    if (it.id == alias_id) {
+                        it.copy(
+                            encrypted_websites = display_value.ifBlank { null },
+                            websites = normalized_list,
+                        )
+                    } else {
+                        it
+                    }
                 },
             )
         }
@@ -1344,13 +1541,46 @@ class SettingsViewModel @Inject constructor(
                 _state.update { s ->
                     s.copy(
                         aliases = s.aliases.map {
-                            if (it.id == alias_id) it.copy(encrypted_websites = current.encrypted_websites) else it
+                            if (it.id == alias_id) {
+                            it.copy(
+                                encrypted_websites = current.encrypted_websites,
+                                websites = current.websites,
+                            )
+                        } else {
+                            it
+                        }
                         },
                     )
                 }
                 _state.value = _state.value.copy(action_result = user_facing_error(t))
             }
         }
+    }
+
+    fun add_alias_website(alias_id: String, website: String) {
+        val current = _state.value.aliases.firstOrNull { it.id == alias_id } ?: return
+        val normalized = normalize_website_url(sanitize_alias_text(website))
+        if (normalized == null) {
+            _state.value = _state.value.copy(
+                action_result = context.getString(R.string.alias_website_invalid),
+            )
+            return
+        }
+        if (current.websites.contains(normalized)) return
+        if (current.websites.size >= MAX_ALIAS_WEBSITES) {
+            _state.value = _state.value.copy(
+                action_result = context.getString(R.string.alias_websites_limit_reached),
+            )
+            return
+        }
+        update_alias_websites(alias_id, (current.websites + normalized).joinToString(", "))
+    }
+
+    fun remove_alias_website(alias_id: String, website: String) {
+        val current = _state.value.aliases.firstOrNull { it.id == alias_id } ?: return
+        val remaining = current.websites.filter { it != website }
+        if (remaining.size == current.websites.size) return
+        update_alias_websites(alias_id, remaining.joinToString(", "))
     }
 
     private fun normalize_website_url(raw: String): String? {
@@ -1391,18 +1621,23 @@ class SettingsViewModel @Inject constructor(
         return array.toString()
     }
 
-    private fun websites_payload_to_display(raw: String): String {
+    private fun websites_payload_to_list(raw: String): List<String> {
         val parsed = try {
             kotlinx.serialization.json.Json.parseToJsonElement(raw)
         } catch (_: Throwable) {
             null
         }
-        if (parsed is kotlinx.serialization.json.JsonArray) {
-            return parsed
-                .mapNotNull { (it as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull }
-                .joinToString(", ")
+        val entries = if (parsed is kotlinx.serialization.json.JsonArray) {
+            parsed.mapNotNull { (it as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull }
+        } else {
+            raw.split(Regex("[,;\\n]"))
         }
-        return raw
+        return entries
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .mapNotNull { normalize_website_url(it) }
+            .distinct()
+            .take(MAX_ALIAS_WEBSITES)
     }
 
     private fun is_valid_email(email: String): Boolean {
@@ -4256,20 +4491,21 @@ class SettingsViewModel @Inject constructor(
         }
         val enc_websites = alias.encrypted_websites
         val websites_nonce = alias.websites_nonce
-        val websites = if (!enc_websites.isNullOrBlank() && !websites_nonce.isNullOrBlank()) {
+        val website_list = if (!enc_websites.isNullOrBlank() && !websites_nonce.isNullOrBlank()) {
             try {
-                websites_payload_to_display(decrypt_alias_field(enc_websites, websites_nonce))
+                websites_payload_to_list(decrypt_alias_field(enc_websites, websites_nonce))
             } catch (_: Throwable) {
-                null
+                emptyList()
             }
         } else {
-            null
+            emptyList()
         }
         return alias.copy(
             encrypted_local_part = local_part,
             encrypted_display_name = display_name,
             encrypted_note = note,
-            encrypted_websites = websites,
+            encrypted_websites = website_list.joinToString(", ").ifBlank { null },
+            websites = website_list,
         )
     }
 
@@ -4579,6 +4815,8 @@ class SettingsViewModel @Inject constructor(
     companion object {
         private const val BLOCKED_SENDERS_HMAC_INFO = "blocked-senders-hmac-v1"
         private const val BLOCKED_SENDERS_INTEGRITY_INFO = "blocked-senders-v1"
+        private const val ALLOWED_SENDERS_HMAC_INFO = "allowed-senders-hmac-v1"
+        private const val ALLOWED_SENDERS_INTEGRITY_INFO = "allowed-senders-v1"
         private const val SALT_PREFIX = "aster-hkdf-salt-v1:"
         private const val DERIVED_KEY_INFO = "aster-storage-encryption-key-v1"
         private const val TAG_VERSION_CURRENT = "astermail-tags-v1"

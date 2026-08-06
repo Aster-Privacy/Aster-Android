@@ -2617,4 +2617,19 @@
     <string name="block_remote_css_subtitle">Voorkom dat e-mails stijlbladen laden van externe servers</string>
     <string name="block_html_rendering">HTML-weergave blokkeren</string>
     <string name="block_html_rendering_subtitle">Toon inkomende e-mails als platte tekst om tracking, layoutvervalsing en visuele phishing te voorkomen</string>
+    <string name="allow_a_sender">Toevoegen aan toegestane lijst</string>
+    <string name="add_to_allowlist">Toevoegen aan toegestane lijst</string>
+    <string name="add_to_allowlist_hint">E-mails van deze afzender of dit domein worden nooit als spam gemarkeerd en komen altijd in je inbox terecht.</string>
+    <string name="allowlist_entire_domain">Volledig domein</string>
+    <string name="allowlist_email_placeholder">Voer e-mailadres in…</string>
+    <string name="allowlist_domain_placeholder">Voer domein in…</string>
+    <string name="allowlist_domain_label">Volledig domein</string>
+    <string name="allowed_senders_load_failed">Kan je toegestane lijst niet laden</string>
+    <string name="sender_added_to_allowlist">Toegevoegd aan toegestane lijst</string>
+    <string name="failed_allow_sender">Kan niet toevoegen aan toegestane lijst</string>
+    <string name="failed_remove_allowed_sender">Kan niet verwijderen uit toegestane lijst</string>
+    <string name="alias_websites_limit_reached">Je kunt maximaal 10 websites toevoegen</string>
+    <string name="alias_website_add">Website toevoegen</string>
+    <string name="alias_website_remove">Website verwijderen</string>
+    <string name="alias_website_input_placeholder">voorbeeld.nl</string>
 </resources>

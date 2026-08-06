@@ -2645,4 +2645,19 @@
     <string name="block_remote_css_subtitle">Empêcher le chargement de feuilles de style externes.</string>
     <string name="block_html_rendering">Bloquer le rendu HTML</string>
     <string name="block_html_rendering_subtitle">Affiche les e-mails entrants en texte brut pour empêcher le pistage, l\'usurpation de mise en page et l\'hameçonnage visuel</string>
+    <string name="allow_a_sender">Ajouter à la liste d\'autorisation</string>
+    <string name="add_to_allowlist">Ajouter à la liste d\'autorisation</string>
+    <string name="add_to_allowlist_hint">Les e-mails de cet expéditeur ou de ce domaine ne seront jamais marqués comme spam et arriveront toujours dans votre boîte de réception.</string>
+    <string name="allowlist_entire_domain">Domaine entier</string>
+    <string name="allowlist_email_placeholder">Saisir l\'adresse e-mail…</string>
+    <string name="allowlist_domain_placeholder">Saisir le domaine…</string>
+    <string name="allowlist_domain_label">Domaine entier</string>
+    <string name="allowed_senders_load_failed">Impossible de charger votre liste d\'autorisation</string>
+    <string name="sender_added_to_allowlist">Ajouté à la liste d\'autorisation</string>
+    <string name="failed_allow_sender">Impossible d\'ajouter à la liste d\'autorisation</string>
+    <string name="failed_remove_allowed_sender">Impossible de retirer de la liste d\'autorisation</string>
+    <string name="alias_websites_limit_reached">Vous pouvez ajouter jusqu\'à 10 sites web</string>
+    <string name="alias_website_add">Ajouter un site web</string>
+    <string name="alias_website_remove">Retirer le site web</string>
+    <string name="alias_website_input_placeholder">exemple.com</string>
 </resources>

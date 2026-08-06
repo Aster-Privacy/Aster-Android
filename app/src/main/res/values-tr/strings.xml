@@ -2617,4 +2617,19 @@
     <string name="block_remote_css_subtitle">E-postaların harici sunuculardan stil sayfası yüklemesini engelle</string>
     <string name="block_html_rendering">HTML Görüntülemeyi Engelle</string>
     <string name="block_html_rendering_subtitle">Takibi, düzen sahteciliğini ve görsel kimlik avını önlemek için gelen e-postaları düz metin olarak gösterin</string>
+    <string name="allow_a_sender">İzin listesine ekle</string>
+    <string name="add_to_allowlist">İzin listesine ekle</string>
+    <string name="add_to_allowlist_hint">Bu gönderenden veya alan adından gelen e-postalar asla spam olarak işaretlenmez ve her zaman gelen kutuna ulaşır.</string>
+    <string name="allowlist_entire_domain">Tüm alan adı</string>
+    <string name="allowlist_email_placeholder">E-posta adresini gir…</string>
+    <string name="allowlist_domain_placeholder">Alan adını gir…</string>
+    <string name="allowlist_domain_label">Tüm alan adı</string>
+    <string name="allowed_senders_load_failed">İzin listen yüklenemedi</string>
+    <string name="sender_added_to_allowlist">İzin listesine eklendi</string>
+    <string name="failed_allow_sender">İzin listesine eklenemedi</string>
+    <string name="failed_remove_allowed_sender">İzin listesinden kaldırılamadı</string>
+    <string name="alias_websites_limit_reached">En fazla 10 web sitesi ekleyebilirsin</string>
+    <string name="alias_website_add">Web sitesi ekle</string>
+    <string name="alias_website_remove">Web sitesini kaldır</string>
+    <string name="alias_website_input_placeholder">ornek.com</string>
 </resources>

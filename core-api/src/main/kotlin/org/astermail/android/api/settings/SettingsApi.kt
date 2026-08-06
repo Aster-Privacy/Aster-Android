@@ -132,6 +132,33 @@ data class BlockedSendersResponse(
 )
 
 @Serializable
+data class AllowSenderRequest(
+    val sender_token: String,
+    val sender_hash: String,
+    val encrypted_sender_data: String,
+    val sender_data_nonce: String,
+    val integrity_hash: String,
+    val is_domain: Boolean = false,
+)
+
+@Serializable
+data class AllowedSenderInfo(
+    val id: String = "",
+    val sender_token: String = "",
+    val encrypted_sender_data: String = "",
+    val sender_data_nonce: String = "",
+    val integrity_hash: String = "",
+    val is_domain: Boolean = false,
+    val created_at: String? = null,
+)
+
+@Serializable
+data class AllowedSendersResponse(
+    val allowed_senders: List<AllowedSenderInfo> = emptyList(),
+    val total: Int = 0,
+)
+
+@Serializable
 data class AliasInfo(
     val id: String,
     val encrypted_local_part: String = "",
@@ -142,6 +169,7 @@ data class AliasInfo(
     val note_nonce: String? = null,
     val encrypted_websites: String? = null,
     val websites_nonce: String? = null,
+    val websites: List<String> = emptyList(),
     val alias_address_hash: String = "",
     val domain: String = "",
     val is_enabled: Boolean = true,
@@ -462,6 +490,9 @@ interface SettingsApi {
     suspend fun list_blocked_senders(): BlockedSendersResponse
     suspend fun block_sender(request: BlockSenderRequest)
     suspend fun unblock_sender(sender_token: String)
+    suspend fun list_allowed_senders(limit: Int = 500, offset: Int = 0): AllowedSendersResponse
+    suspend fun allow_sender(request: AllowSenderRequest)
+    suspend fun remove_allowed_sender(sender_token: String)
     suspend fun list_aliases(limit: Int = 100, offset: Int = 0): AliasListResponse
     suspend fun delete_alias(alias_id: String)
     suspend fun list_deleted_aliases(): ListDeletedAliasesResponse
@@ -583,6 +614,36 @@ class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
         val encoded = java.net.URLEncoder.encode(sender_token, "UTF-8")
         val response = client.http.delete(
             "${client.base_url}/api/contacts/v1/blocked_senders?sender_token=$encoded",
+        ) {
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+        }
+        if (response.status.value !in 200..299) {
+            throw client.map_http_status(response.status.value, "")
+        }
+    }
+
+    override suspend fun list_allowed_senders(limit: Int, offset: Int): AllowedSendersResponse {
+        val response = client.http.get(
+            "${client.base_url}/api/contacts/v1/allowed_senders?limit=$limit&offset=$offset",
+        )
+        return decode_or_throw(response)
+    }
+
+    override suspend fun allow_sender(request: AllowSenderRequest) {
+        val response = client.http.post("${client.base_url}/api/contacts/v1/allowed_senders") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        if (response.status.value !in 200..299) {
+            throw client.map_http_status(response.status.value, "")
+        }
+    }
+
+    override suspend fun remove_allowed_sender(sender_token: String) {
+        val encoded = java.net.URLEncoder.encode(sender_token, "UTF-8")
+        val response = client.http.delete(
+            "${client.base_url}/api/contacts/v1/allowed_senders?sender_token=$encoded",
         ) {
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
         }

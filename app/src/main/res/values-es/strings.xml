@@ -2618,4 +2618,19 @@
     <string name="block_remote_css_subtitle">Impedir la carga de hojas de estilo externas.</string>
     <string name="block_html_rendering">Bloquear renderizado de HTML</string>
     <string name="block_html_rendering_subtitle">Muestra los correos entrantes como texto sin formato para evitar el rastreo, la suplantación de diseño y el phishing visual</string>
+    <string name="allow_a_sender">Añadir a la lista de permitidos</string>
+    <string name="add_to_allowlist">Añadir a la lista de permitidos</string>
+    <string name="add_to_allowlist_hint">Los correos de este remitente o dominio nunca se marcarán como spam y siempre llegarán a tu bandeja de entrada.</string>
+    <string name="allowlist_entire_domain">Dominio completo</string>
+    <string name="allowlist_email_placeholder">Introduce la dirección de correo…</string>
+    <string name="allowlist_domain_placeholder">Introduce el dominio…</string>
+    <string name="allowlist_domain_label">Dominio completo</string>
+    <string name="allowed_senders_load_failed">No se pudo cargar tu lista de permitidos</string>
+    <string name="sender_added_to_allowlist">Añadido a la lista de permitidos</string>
+    <string name="failed_allow_sender">No se pudo añadir a la lista de permitidos</string>
+    <string name="failed_remove_allowed_sender">No se pudo quitar de la lista de permitidos</string>
+    <string name="alias_websites_limit_reached">Puedes añadir hasta 10 sitios web</string>
+    <string name="alias_website_add">Añadir sitio web</string>
+    <string name="alias_website_remove">Quitar sitio web</string>
+    <string name="alias_website_input_placeholder">ejemplo.com</string>
 </resources>

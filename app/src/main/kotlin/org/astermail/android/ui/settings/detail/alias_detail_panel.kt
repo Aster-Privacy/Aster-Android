@@ -168,12 +168,10 @@ private fun alias_details_section(
             test_tag = "alias_field_note",
             on_save = { vm.update_alias_note(alias.id, it) },
         )
-        alias_inline_field(
-            label = stringResource(R.string.alias_panel_websites),
-            placeholder = stringResource(R.string.alias_panel_websites_placeholder),
-            value = alias.encrypted_websites.orEmpty(),
-            test_tag = "alias_field_websites",
-            on_save = { vm.update_alias_websites(alias.id, it) },
+        alias_websites_field(
+            websites = alias.websites,
+            on_add = { vm.add_alias_website(alias.id, it) },
+            on_remove = { vm.remove_alias_website(alias.id, it) },
         )
     }
 }

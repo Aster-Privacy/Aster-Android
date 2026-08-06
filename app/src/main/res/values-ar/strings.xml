@@ -2645,4 +2645,19 @@
     <string name="block_remote_css_subtitle">منع الرسائل من تحميل أوراق الأنماط من خوادم خارجية</string>
     <string name="block_html_rendering">حظر عرض HTML</string>
     <string name="block_html_rendering_subtitle">عرض الرسائل الواردة كنص عادي لمنع التتبع وانتحال التخطيط والتصيّد البصري</string>
+    <string name="allow_a_sender">إضافة إلى قائمة السماح</string>
+    <string name="add_to_allowlist">إضافة إلى قائمة السماح</string>
+    <string name="add_to_allowlist_hint">لن يتم وضع علامة بريد مزعج على رسائل هذا المرسل أو النطاق، وستصل دائمًا إلى بريدك الوارد.</string>
+    <string name="allowlist_entire_domain">النطاق بالكامل</string>
+    <string name="allowlist_email_placeholder">أدخل عنوان البريد الإلكتروني…</string>
+    <string name="allowlist_domain_placeholder">أدخل النطاق…</string>
+    <string name="allowlist_domain_label">النطاق بالكامل</string>
+    <string name="allowed_senders_load_failed">تعذر تحميل قائمة السماح</string>
+    <string name="sender_added_to_allowlist">تمت الإضافة إلى قائمة السماح</string>
+    <string name="failed_allow_sender">تعذرت الإضافة إلى قائمة السماح</string>
+    <string name="failed_remove_allowed_sender">تعذرت الإزالة من قائمة السماح</string>
+    <string name="alias_websites_limit_reached">يمكنك إضافة حتى 10 مواقع</string>
+    <string name="alias_website_add">إضافة موقع</string>
+    <string name="alias_website_remove">إزالة الموقع</string>
+    <string name="alias_website_input_placeholder">example.com</string>
 </resources>

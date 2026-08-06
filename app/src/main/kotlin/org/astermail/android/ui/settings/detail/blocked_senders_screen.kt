@@ -83,10 +83,7 @@ private fun blocked_sender_row(
     ) {
         if (is_domain) {
             Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(colors.bg_secondary),
+                modifier = Modifier.size(36.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(

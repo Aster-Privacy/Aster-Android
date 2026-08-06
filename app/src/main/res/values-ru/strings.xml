@@ -2631,4 +2631,19 @@
     <string name="block_remote_css_subtitle">Запретить письмам загружать таблицы стилей с внешних серверов</string>
     <string name="block_html_rendering">Блокировать отображение HTML</string>
     <string name="block_html_rendering_subtitle">Показывать входящие письма как обычный текст, чтобы предотвратить отслеживание, подмену вёрстки и визуальный фишинг</string>
+    <string name="allow_a_sender">Добавить в список разрешённых</string>
+    <string name="add_to_allowlist">Добавить в список разрешённых</string>
+    <string name="add_to_allowlist_hint">Письма от этого отправителя или домена никогда не будут помечены как спам и всегда попадут во входящие.</string>
+    <string name="allowlist_entire_domain">Весь домен</string>
+    <string name="allowlist_email_placeholder">Введите адрес эл. почты…</string>
+    <string name="allowlist_domain_placeholder">Введите домен…</string>
+    <string name="allowlist_domain_label">Весь домен</string>
+    <string name="allowed_senders_load_failed">Не удалось загрузить список разрешённых</string>
+    <string name="sender_added_to_allowlist">Добавлено в список разрешённых</string>
+    <string name="failed_allow_sender">Не удалось добавить в список разрешённых</string>
+    <string name="failed_remove_allowed_sender">Не удалось удалить из списка разрешённых</string>
+    <string name="alias_websites_limit_reached">Можно добавить до 10 сайтов</string>
+    <string name="alias_website_add">Добавить сайт</string>
+    <string name="alias_website_remove">Удалить сайт</string>
+    <string name="alias_website_input_placeholder">primer.ru</string>
 </resources>

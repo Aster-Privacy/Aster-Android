@@ -1251,6 +1251,17 @@
     <string name="no_allowlisted_senders">No allowed senders</string>
     <string name="no_allowlisted_senders_subtitle">You haven\'t allowed anyone yet</string>
     <string name="remove_from_allowlist">Remove</string>
+    <string name="allow_a_sender">Add to allowlist</string>
+    <string name="add_to_allowlist">Add to Allowlist</string>
+    <string name="add_to_allowlist_hint">Emails from this sender or domain will never be marked as spam and will always reach your inbox.</string>
+    <string name="allowlist_entire_domain">Entire domain</string>
+    <string name="allowlist_email_placeholder">Enter email address…</string>
+    <string name="allowlist_domain_placeholder">Enter domain…</string>
+    <string name="allowlist_domain_label">Entire domain</string>
+    <string name="allowed_senders_load_failed">Could not load your allowlist</string>
+    <string name="sender_added_to_allowlist">Added to allowlist</string>
+    <string name="failed_allow_sender">Could not add to allowlist</string>
+    <string name="failed_remove_allowed_sender">Could not remove from allowlist</string>
 
     <!-- Sender filters -->
     <string name="mail_management">Mail management</string>
@@ -2487,6 +2498,10 @@
     <string name="alias_display_name_updated">Display name saved</string>
     <string name="alias_websites_updated">Websites saved</string>
     <string name="alias_website_invalid">Enter a valid website address</string>
+    <string name="alias_websites_limit_reached">You can add up to 10 websites</string>
+    <string name="alias_website_add">Add website</string>
+    <string name="alias_website_remove">Remove website</string>
+    <string name="alias_website_input_placeholder">example.com</string>
     <string name="alias_delivery_title">Delivery</string>
     <string name="alias_stats_title">Stats</string>
     <string name="alias_stats_received">Received</string>

@@ -2618,4 +2618,19 @@
     <string name="block_remote_css_subtitle">Verhindern, dass E-Mails Stylesheets von externen Servern laden</string>
     <string name="block_html_rendering">HTML-Darstellung blockieren</string>
     <string name="block_html_rendering_subtitle">Zeigt eingehende E-Mails als reinen Text an, um Tracking, Layout-Spoofing und visuelles Phishing zu verhindern</string>
+    <string name="allow_a_sender">Zur Erlaubnisliste hinzufügen</string>
+    <string name="add_to_allowlist">Zur Erlaubnisliste hinzufügen</string>
+    <string name="add_to_allowlist_hint">E-Mails von diesem Absender oder dieser Domain werden nie als Spam markiert und erreichen immer deinen Posteingang.</string>
+    <string name="allowlist_entire_domain">Gesamte Domain</string>
+    <string name="allowlist_email_placeholder">E-Mail-Adresse eingeben…</string>
+    <string name="allowlist_domain_placeholder">Domain eingeben…</string>
+    <string name="allowlist_domain_label">Gesamte Domain</string>
+    <string name="allowed_senders_load_failed">Erlaubnisliste konnte nicht geladen werden</string>
+    <string name="sender_added_to_allowlist">Zur Erlaubnisliste hinzugefügt</string>
+    <string name="failed_allow_sender">Hinzufügen zur Erlaubnisliste fehlgeschlagen</string>
+    <string name="failed_remove_allowed_sender">Entfernen aus der Erlaubnisliste fehlgeschlagen</string>
+    <string name="alias_websites_limit_reached">Du kannst bis zu 10 Websites hinzufügen</string>
+    <string name="alias_website_add">Website hinzufügen</string>
+    <string name="alias_website_remove">Website entfernen</string>
+    <string name="alias_website_input_placeholder">beispiel.de</string>
 </resources>

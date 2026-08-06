@@ -2617,4 +2617,19 @@
     <string name="block_remote_css_subtitle">Impedisci alle email di caricare fogli di stile da server esterni</string>
     <string name="block_html_rendering">Blocca il rendering HTML</string>
     <string name="block_html_rendering_subtitle">Mostra le email in arrivo come testo semplice per impedire tracciamento, falsificazione del layout e phishing visivo</string>
+    <string name="allow_a_sender">Aggiungi alla lista consentiti</string>
+    <string name="add_to_allowlist">Aggiungi alla lista consentiti</string>
+    <string name="add_to_allowlist_hint">Le email di questo mittente o dominio non verranno mai contrassegnate come spam e arriveranno sempre nella tua posta in arrivo.</string>
+    <string name="allowlist_entire_domain">Intero dominio</string>
+    <string name="allowlist_email_placeholder">Inserisci l\'indirizzo email…</string>
+    <string name="allowlist_domain_placeholder">Inserisci il dominio…</string>
+    <string name="allowlist_domain_label">Intero dominio</string>
+    <string name="allowed_senders_load_failed">Impossibile caricare la lista consentiti</string>
+    <string name="sender_added_to_allowlist">Aggiunto alla lista consentiti</string>
+    <string name="failed_allow_sender">Impossibile aggiungere alla lista consentiti</string>
+    <string name="failed_remove_allowed_sender">Impossibile rimuovere dalla lista consentiti</string>
+    <string name="alias_websites_limit_reached">Puoi aggiungere fino a 10 siti web</string>
+    <string name="alias_website_add">Aggiungi sito web</string>
+    <string name="alias_website_remove">Rimuovi sito web</string>
+    <string name="alias_website_input_placeholder">esempio.com</string>
 </resources>
