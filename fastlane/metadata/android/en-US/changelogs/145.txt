@@ -1,0 +1,5 @@
+Bug fixes and improvements:
+
+- Push notifications now come back on their own if they ever stop arriving
+- Fixed messages that showed a decryption error and would not open even after retrying
+- Website addresses saved on an alias now stay in sync with the web app
