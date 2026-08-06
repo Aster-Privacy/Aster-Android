@@ -29,6 +29,7 @@ import kotlinx.serialization.json.Json
 import org.astermail.android.api.ratchet.PrekeyBundleResponse
 import org.astermail.android.api.ratchet.RatchetApi
 import org.astermail.android.crypto.ratchet.RatchetCrypto
+import org.astermail.android.crypto.ratchet.RecoveryLane
 import org.astermail.android.storage.SessionKeyStore
 
 class RatchetEncryptionException(
@@ -161,6 +162,8 @@ class RatchetEncryptor @Inject constructor(
                 }
             }
 
+            bundle = resolved_bundle
+
             val recipient_identity_raw = RatchetCrypto.b64_decode(resolved_bundle.kem_identity_key)
             val recipient_spk_raw = RatchetCrypto.b64_decode(resolved_bundle.signed_prekey)
             val pq_prekey_pair = resolved_bundle.pq_prekey?.let { it.key_id to RatchetCrypto.b64_decode(it.public_key) }
@@ -189,6 +192,7 @@ class RatchetEncryptor @Inject constructor(
                     pq_key_id = pq_key_id,
                     sender_identity_key = sender_identity_public,
                     recipient_identity_key = resolved_bundle.kem_identity_key,
+                    recipient_pq_identity_key = resolved_bundle.pq_kem_public_key,
                 )
             } finally {
                 x3dh_result.shared_secret.fill(0)
@@ -200,7 +204,24 @@ class RatchetEncryptor @Inject constructor(
             pq_key_id = boot.pq_key_id
         }
 
+        val recovery_keys = resolve_recovery_lane_keys(bundle, state.bootstrap)
+            ?: return null
+
         val encrypted = DoubleRatchet.encrypt(state, body)
+
+        val recovery = try {
+            RecoveryLane.seal(
+                RatchetCrypto.b64_encode(encrypted.message_key),
+                conversation_id,
+                sender_identity_public,
+                recovery_keys,
+            )
+        } catch (t: Throwable) {
+            throw RatchetEncryptionException(recipient_email, "recovery lane unavailable", t)
+        } finally {
+            encrypted.message_key.fill(0)
+        }
+
         state_store.save(state)
         syncer.sync(conversation_id, state)
 
@@ -211,6 +232,32 @@ class RatchetEncryptor @Inject constructor(
             nonce = RatchetCrypto.b64_encode(encrypted.nonce),
             pq_ciphertext = pq_ciphertext_b64,
             pq_key_id = pq_key_id,
+            recovery = RecoveryLaneData(
+                v = recovery.v,
+                epk = recovery.epk,
+                kem_ct = recovery.kem_ct,
+                ciphertext = recovery.ciphertext,
+                nonce = recovery.nonce,
+                rid = recovery.rid,
+            ),
         )
+    }
+
+    private fun resolve_recovery_lane_keys(
+        bundle: PrekeyBundleResponse?,
+        bootstrap: BootstrapData?,
+    ): RecoveryLane.RecipientKeys? {
+        val identity_public = bundle?.kem_identity_key
+            ?: bootstrap?.recipient_identity_key
+            ?: return null
+        if (identity_public.isBlank()) return null
+
+        val pq_identity_public = if (bundle != null) {
+            bundle.pq_kem_public_key
+        } else {
+            bootstrap?.recipient_pq_identity_key
+        }
+
+        return RecoveryLane.RecipientKeys(identity_public, pq_identity_public)
     }
 }

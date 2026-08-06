@@ -88,6 +88,15 @@ object DoubleRatchet {
         return String(plaintext, Charsets.UTF_8)
     }
 
+    fun decrypt_with_message_key(recipient: RatchetRecipientData, message_key: ByteArray): String {
+        val header = recipient.header
+        val ad = if ((header.v ?: 1) >= 2) serialize_header_for_ad(header) else null
+        val ciphertext = RatchetCrypto.b64_decode(recipient.ciphertext)
+        val nonce = RatchetCrypto.b64_decode(recipient.nonce)
+        val plaintext = RatchetCrypto.aes_gcm_decrypt(ciphertext, message_key.copyOfRange(0, 32), nonce, ad)
+        return String(plaintext, Charsets.UTF_8)
+    }
+
     private fun try_skipped(state: RatchetState, recipient: RatchetRecipientData): String? {
         val header = recipient.header
         val idx = state.skipped_message_keys.indexOfFirst {
@@ -162,6 +171,7 @@ object DoubleRatchet {
         val header: MessageHeader,
         val ciphertext: ByteArray,
         val nonce: ByteArray,
+        val message_key: ByteArray,
     )
 
     fun encrypt(state: RatchetState, plaintext: String): EncryptResult {
@@ -185,7 +195,7 @@ object DoubleRatchet {
         state.send_message_number += 1
         state.updated_at = System.currentTimeMillis()
         chain_key.fill(0)
-        return EncryptResult(header, ciphertext, nonce)
+        return EncryptResult(header, ciphertext, nonce, message_key_aes)
     }
 
     private fun parse_secret_key(secret_key: String): java.security.PrivateKey {

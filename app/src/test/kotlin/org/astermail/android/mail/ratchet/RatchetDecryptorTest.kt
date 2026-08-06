@@ -34,6 +34,7 @@ import kotlinx.serialization.json.Json
 import org.astermail.android.api.ratchet.RatchetApi
 import org.astermail.android.auth.AuthRepository
 import org.astermail.android.crypto.ratchet.RatchetCrypto
+import org.astermail.android.crypto.ratchet.RecoveryLane
 import org.astermail.android.storage.SessionKeyStore
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -343,5 +344,77 @@ class RatchetDecryptorTest {
         val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email)
 
         assertEquals(RATCHET_UNDECRYPTABLE_SENTINEL, result)
+    }
+
+    @Test
+    fun `recovery lane decrypts a continuation message the ratchet state cannot`() = runTest {
+        val fixture = build_fixture()
+
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "first message")
+        val receiver_state = receiver_state_from(fixture)
+        assertEquals("first message", DoubleRatchet.decrypt(receiver_state, recipient_data_for(fixture, enc0)))
+
+        val stale_state = deep_copy(receiver_state)
+        val corrupt_kp = RatchetCrypto.generate_p256_keypair()
+        stale_state.dh_keypair = stale_state.dh_keypair.copy(
+            secret_key = RatchetCrypto.b64_encode(RatchetCrypto.private_to_raw_d(corrupt_kp.private_key)),
+        )
+
+        val reply_state = deep_copy(receiver_state)
+        val enc_reply = DoubleRatchet.encrypt(reply_state, "reply from kchaos")
+        DoubleRatchet.decrypt(fixture.sender_state, recipient_data_for(fixture, enc_reply))
+
+        val enc2 = DoubleRatchet.encrypt(fixture.sender_state, "third message")
+        val body = envelope_json(
+            fixture.sender_identity_raw,
+            recipient_data_for(fixture, enc2).copy(recovery = lane_for(fixture, enc2)),
+        )
+
+        val state_store = mockk<RatchetStateStore>(relaxed = true)
+        coEvery { state_store.load(fixture.conversation_id) } returns stale_state
+        val syncer = mockk<RatchetStateSyncer>(relaxed = true)
+        coEvery { syncer.fetch_from_server(fixture.conversation_id) } returns null
+        coEvery { syncer.sync(any(), any()) } returns true
+        val ratchet_api = mockk<RatchetApi>(relaxed = true)
+        val auth_repo = mockk<AuthRepository>(relaxed = true)
+        coEvery { auth_repo.try_refresh_vault_keys() } returns false
+
+        val session_key_store = SessionKeyStore(null)
+        seed_session_key_store(session_key_store, fixture.receiver_keys)
+
+        val decryptor = new_decryptor(state_store, session_key_store, ratchet_api, syncer, auth_repo)
+        val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email)
+
+        assertEquals("third message", result)
+    }
+
+    @Test
+    fun `recovery lane size does not grow with the message body`() {
+        val fixture = build_fixture()
+
+        val small = DoubleRatchet.encrypt(fixture.sender_state, "hi")
+        val large = DoubleRatchet.encrypt(fixture.sender_state, "x".repeat(100_000))
+
+        val small_lane = json.encodeToString(lane_for(fixture, small))
+        val large_lane = json.encodeToString(lane_for(fixture, large))
+
+        assertEquals(small_lane.length, large_lane.length)
+    }
+
+    private fun lane_for(fixture: Fixture, enc: DoubleRatchet.EncryptResult): RecoveryLaneData {
+        val sealed = RecoveryLane.seal(
+            RatchetCrypto.b64_encode(enc.message_key),
+            fixture.conversation_id,
+            RatchetCrypto.b64_encode(fixture.sender_identity_raw),
+            RecoveryLane.RecipientKeys(fixture.receiver_keys.identity_public_b64, null),
+        )
+        return RecoveryLaneData(
+            v = sealed.v,
+            epk = sealed.epk,
+            kem_ct = sealed.kem_ct,
+            ciphertext = sealed.ciphertext,
+            nonce = sealed.nonce,
+            rid = sealed.rid,
+        )
     }
 }

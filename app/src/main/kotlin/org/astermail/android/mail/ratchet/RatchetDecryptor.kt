@@ -28,6 +28,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.astermail.android.api.ratchet.RatchetApi
 import org.astermail.android.crypto.ratchet.RatchetCrypto
+import org.astermail.android.crypto.ratchet.RecoveryLane
 import org.astermail.android.mail.strip_body_framing
 import org.astermail.android.storage.SessionKeyStore
 
@@ -200,6 +201,20 @@ class RatchetDecryptor @Inject constructor(
             }
 
             if (plaintext == null) {
+                val recovered = try_recovery_lane(
+                    recipient,
+                    conversation_id,
+                    envelope.sender_identity_key,
+                )
+                if (recovered == null && recipient.recovery != null) {
+                    refresh_vault_keys()
+                }
+                val final_recovery = recovered ?: try_recovery_lane(
+                    recipient,
+                    conversation_id,
+                    envelope.sender_identity_key,
+                )
+                if (final_recovery != null) return@with_lock final_recovery
                 decrypt_error?.let { throw it }
                 return@with_lock null
             }
@@ -209,6 +224,114 @@ class RatchetDecryptor @Inject constructor(
             syncer.sync(conversation_id, final_state)
             plaintext
         }
+    }
+
+    private data class RecoveryLaneCandidate(
+        val own_keys: RecoveryLane.OwnKeys,
+        val pq_identity_public: String,
+    )
+
+    private fun recovery_lane_candidates(): List<RecoveryLaneCandidate> {
+        val candidates = mutableListOf<RecoveryLaneCandidate>()
+
+        val identity_jwk = session_key_store.get_ratchet_identity_jwk()
+        val identity_public = session_key_store.get_ratchet_identity_public_b64()
+        if (!identity_jwk.isNullOrBlank() && !identity_public.isNullOrBlank()) {
+            candidates.add(
+                RecoveryLaneCandidate(
+                    own_keys = RecoveryLane.OwnKeys(
+                        identity_jwk = identity_jwk,
+                        identity_public = identity_public,
+                        pq_identity_secret = session_key_store.get_ratchet_pq_identity_secret(),
+                    ),
+                    pq_identity_public = session_key_store.get_ratchet_pq_identity_public().orEmpty(),
+                ),
+            )
+        }
+
+        val previous_json = session_key_store.get_ratchet_previous_keys_json()
+        if (!previous_json.isNullOrBlank()) {
+            try {
+                val entries = org.json.JSONArray(previous_json)
+                for (index in 0 until entries.length()) {
+                    val entry = entries.optJSONObject(index) ?: continue
+                    val previous_jwk = entry.optString("ratchet_identity_key", "")
+                    val previous_public = entry.optString("ratchet_identity_public", "")
+                    if (previous_jwk.isBlank() || previous_public.isBlank()) continue
+                    candidates.add(
+                        RecoveryLaneCandidate(
+                            own_keys = RecoveryLane.OwnKeys(
+                                identity_jwk = previous_jwk,
+                                identity_public = previous_public,
+                                pq_identity_secret = entry
+                                    .optString("ratchet_pq_identity_key", "")
+                                    .ifBlank { null },
+                            ),
+                            pq_identity_public = entry.optString("ratchet_pq_identity_public", ""),
+                        ),
+                    )
+                }
+            } catch (_: Throwable) {
+            }
+        }
+
+        return candidates
+    }
+
+    private fun try_recovery_lane(
+        recipient: RatchetRecipientData,
+        conversation_id: String,
+        sender_identity_key: String,
+    ): String? {
+        val message_key_b64 = open_recovery_lane_message_key(recipient, conversation_id, sender_identity_key)
+            ?: return null
+
+        val message_key = try {
+            RatchetCrypto.b64_decode(message_key_b64)
+        } catch (t: Throwable) {
+            return null
+        }
+
+        return try {
+            DoubleRatchet.decrypt_with_message_key(recipient, message_key)
+        } catch (t: Throwable) {
+            null
+        } finally {
+            message_key.fill(0)
+        }
+    }
+
+    private fun open_recovery_lane_message_key(
+        recipient: RatchetRecipientData,
+        conversation_id: String,
+        sender_identity_key: String,
+    ): String? {
+        val lane = recipient.recovery ?: return null
+
+        val data = RecoveryLane.Data(
+            v = lane.v,
+            epk = lane.epk,
+            kem_ct = lane.kem_ct,
+            ciphertext = lane.ciphertext,
+            nonce = lane.nonce,
+            rid = lane.rid,
+        )
+
+        val ordered = recovery_lane_candidates()
+            .sortedByDescending { it.own_keys.identity_public == lane.rid }
+
+        for (candidate in ordered) {
+            val opened = RecoveryLane.open(
+                data,
+                conversation_id,
+                sender_identity_key,
+                candidate.own_keys,
+                candidate.pq_identity_public,
+            )
+            if (opened != null) return opened
+        }
+
+        return null
     }
 
     private fun receiver_key_sets(): List<ReceiverKeySet> {

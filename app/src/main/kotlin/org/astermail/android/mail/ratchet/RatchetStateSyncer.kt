@@ -138,23 +138,37 @@ class RatchetStateSyncer @Inject constructor(
         }
     }
 
+    private fun encode_container(conversation_id: String, state: RatchetState): String {
+        val state_element = json.encodeToString(RatchetState.serializer(), state)
+        return buildJsonObject {
+            put("state", json.parseToJsonElement(state_element))
+            put("conversation_id", JsonPrimitive(conversation_id))
+        }.toString()
+    }
+
+    private suspend fun absorb_remote(
+        conversation_id: String,
+        working: RatchetState,
+    ): RatchetState? {
+        val remote = fetch_from_server(conversation_id) ?: return null
+        val merged = RatchetStateMerge.merge(working, remote)
+        state_store.save(merged)
+        return merged
+    }
+
     private suspend fun do_sync(conversation_id: String, state: RatchetState): Boolean {
         val key = state_store.derive_state_encryption_key() ?: return false
         try {
             val conv_b64 = RatchetCrypto.b64_encode(conversation_id.toByteArray(Charsets.UTF_8))
-            val state_element = json.encodeToString(RatchetState.serializer(), state)
-            val container = buildJsonObject {
-                put("state", json.parseToJsonElement(state_element))
-                put("conversation_id", JsonPrimitive(conversation_id))
-            }
-            val container_text = container.toString()
-            val fingerprint = container_text.hashCode()
+            var working = state
+            var container_text = encode_container(conversation_id, working)
+            var fingerprint = container_text.hashCode()
             if (synced_fingerprints[conversation_id] == fingerprint &&
                 known_versions.containsKey(conversation_id)
             ) {
                 return true
             }
-            val plaintext = container_text.toByteArray(Charsets.UTF_8)
+            var plaintext = container_text.toByteArray(Charsets.UTF_8)
 
             var known_version: Int? = known_versions[conversation_id]
             var last_error = "sync failed"
@@ -193,6 +207,14 @@ class RatchetStateSyncer @Inject constructor(
                     } else {
                         known_version = existing.state_version
                         known_versions[conversation_id] = existing.state_version
+                        absorb_remote(conversation_id, working)?.let { merged ->
+                            working = merged
+                            container_text = encode_container(conversation_id, working)
+                            fingerprint = container_text.hashCode()
+                            plaintext = container_text.toByteArray(Charsets.UTF_8)
+                            known_version = known_versions[conversation_id] ?: known_version
+                        }
+                        continue
                     }
                 }
 
@@ -205,10 +227,19 @@ class RatchetStateSyncer @Inject constructor(
                         return true
                     }
                     PutStateOutcome.VersionConflict -> {
-                        val recheck = try { ratchet_api.fetch_state(conv_b64) } catch (_: Throwable) { null }
-                        if (recheck != null) {
-                            known_version = recheck.state_version
-                            known_versions[conversation_id] = recheck.state_version
+                        val merged = absorb_remote(conversation_id, working)
+                        if (merged != null) {
+                            working = merged
+                            container_text = encode_container(conversation_id, working)
+                            fingerprint = container_text.hashCode()
+                            plaintext = container_text.toByteArray(Charsets.UTF_8)
+                            known_version = known_versions[conversation_id]
+                        } else {
+                            val recheck = try { ratchet_api.fetch_state(conv_b64) } catch (_: Throwable) { null }
+                            if (recheck != null) {
+                                known_version = recheck.state_version
+                                known_versions[conversation_id] = recheck.state_version
+                            }
                         }
                         last_error = "put 409"
                         delay(50L * (attempt + 1))

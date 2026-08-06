@@ -73,6 +73,7 @@ data class PrekeyBundleResponse(
     val signed_prekey_signature: String,
     val one_time_prekey: String? = null,
     val pq_prekey: PqPrekeyInfo? = null,
+    val pq_kem_public_key: String? = null,
 )
 
 @Serializable

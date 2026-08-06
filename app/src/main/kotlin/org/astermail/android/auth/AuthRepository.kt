@@ -915,6 +915,11 @@ class AuthRepository @Inject constructor(
                 signed_prekey_public_b64 = spk_public,
             )
         }
+        val pq_identity_secret = vault_obj.optString("ratchet_pq_identity_key", "")
+        val pq_identity_public = vault_obj.optString("ratchet_pq_identity_public", "")
+        if (pq_identity_secret.isNotBlank() && pq_identity_public.isNotBlank()) {
+            session_key_store.put_ratchet_pq_identity(pq_identity_secret, pq_identity_public)
+        }
         val previous = vault_obj.optJSONArray("ratchet_previous_keys")
         session_key_store.put_ratchet_previous_keys(previous?.toString())
     }

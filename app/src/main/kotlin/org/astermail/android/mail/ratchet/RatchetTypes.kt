@@ -32,6 +32,16 @@ data class MessageHeader(
 )
 
 @Serializable
+data class RecoveryLaneData(
+    val v: Int,
+    val epk: String,
+    val kem_ct: String? = null,
+    val ciphertext: String,
+    val nonce: String,
+    val rid: String,
+)
+
+@Serializable
 data class RatchetRecipientData(
     val ephemeral_key: String? = null,
     val header: MessageHeader,
@@ -39,6 +49,7 @@ data class RatchetRecipientData(
     val nonce: String,
     val pq_ciphertext: String? = null,
     val pq_key_id: Int? = null,
+    val recovery: RecoveryLaneData? = null,
 )
 
 @Serializable
@@ -69,6 +80,7 @@ data class BootstrapData(
     val pq_key_id: Int? = null,
     val sender_identity_key: String? = null,
     val recipient_identity_key: String? = null,
+    val recipient_pq_identity_key: String? = null,
 )
 
 @Serializable
