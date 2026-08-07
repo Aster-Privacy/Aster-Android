@@ -1,0 +1,5 @@
+Bug fixes and improvements:
+
+- Labels you add to a message show up right away, without reopening the app
+- Labels now appear on messages inside folders, labels, and alias views
+- Family plans count only the members who still hold a seat
