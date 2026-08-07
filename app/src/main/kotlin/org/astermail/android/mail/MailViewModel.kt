@@ -1429,10 +1429,15 @@ class MailViewModel @Inject constructor(
                 ),
             )
         }
+        patch_cached_tag_tokens(setOf(item_id), tag_token)
         viewModelScope.launch {
             repository.add_tag_to_item(item_id, tag_token).fold(
-                onSuccess = { emit_toast(context.getString(R.string.added_to_label, display_name)) },
+                onSuccess = {
+                    invalidate_caches(listOf("tag:$tag_token"))
+                    emit_toast(context.getString(R.string.added_to_label, display_name))
+                },
                 onFailure = {
+                    patch_cached_tag_tokens(setOf(item_id), tag_token, add = false)
                     if (prev_inbox_item != null) {
                         _inbox_state.value = _inbox_state.value.copy(
                             items = _inbox_state.value.items.map {
@@ -1493,12 +1498,14 @@ class MailViewModel @Inject constructor(
                 } else it
             },
         )
+        patch_cached_tag_tokens(id_set, tag_token)
         viewModelScope.launch {
             val failed_ids = repository.add_tag_bulk(ids, tag_token)
             invalidate_caches(listOf("tag:$tag_token"))
             if (failed_ids.isEmpty()) {
                 emit_toast(context.getString(R.string.added_to_label, display_name))
             } else {
+                patch_cached_tag_tokens(failed_ids.toSet(), tag_token, add = false)
                 _inbox_state.value = _inbox_state.value.copy(
                     items = _inbox_state.value.items.map {
                         val prev = prev_items[it.id]
@@ -1626,6 +1633,28 @@ class MailViewModel @Inject constructor(
             val stats = s.stats ?: return@update s
             s.copy(stats = stats.copy(unread = (stats.unread - unread_removed).coerceAtLeast(0)))
         }
+    }
+
+    private fun patch_cached_tag_tokens(ids: Set<String>, tag_token: String, add: Boolean = true) {
+        val current_folder = _inbox_state.value.current_folder
+        val updated = folder_cache.mapValues { (folder, cached) ->
+            if (folder == current_folder) cached
+            else cached.copy(
+                items = cached.items.map {
+                    if (it.id !in ids) it
+                    else {
+                        val new_tokens =
+                            if (add) (it.tag_tokens + tag_token).distinct()
+                            else it.tag_tokens.filter { token -> token != tag_token }
+                        it.copy(
+                            tag_tokens = new_tokens,
+                            raw_item = it.raw_item.copy(tag_tokens = new_tokens),
+                        )
+                    }
+                },
+            )
+        }
+        folder_cache.putAll(updated)
     }
 
     private fun invalidate_caches(folders: List<String>) {

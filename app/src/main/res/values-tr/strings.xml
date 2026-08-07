@@ -2356,7 +2356,7 @@
     <string name="kids_reserved_subtitle">Çocuğun için bir adres ayır. Devralma bağlantısını paylaş ki kurulumu kendi parolasıyla tamamlasın.</string>
     <string name="kids_seats_used">%2$d aile yerinin %1$d tanesi dolu</string>
     <string name="kids_seats_free">%1$d yer müsait</string>
-    <string name="kids_seats_breakdown">%1$d üye, %2$d davet, %3$d ayrılmış adres, %4$d yakında çıkarılan üye</string>
+    <string name="kids_seats_breakdown">%1$d üye, %2$d davet, %3$d ayrılmış adres</string>
     <string name="kids_no_reservations">Henüz ayrılmış adres yok. astermail.org üzerinden bir tane ayır.</string>
     <string name="kids_reserve_on_web">Web\'de ayır</string>
     <string name="kids_status_reserved">Ayrıldı</string>

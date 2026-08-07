@@ -57,7 +57,7 @@ class KidsSeatsStringsTest {
 
             val used = context.getString(R.string.kids_seats_used, 5, 6)
             val free = context.getString(R.string.kids_seats_free, 1)
-            val breakdown = context.getString(R.string.kids_seats_breakdown, 3, 0, 0, 2)
+            val breakdown = context.getString(R.string.kids_seats_breakdown, 3, 0, 2)
 
             assertTrue(tag, used.isNotBlank())
             assertTrue("$tag: $used", used.contains(five) && used.contains(six))

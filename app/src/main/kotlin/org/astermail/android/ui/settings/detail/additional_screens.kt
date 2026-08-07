@@ -1738,7 +1738,6 @@ fun KidsReservedScreen(on_back: () -> Unit) {
                         breakdown.active_members,
                         breakdown.pending_invites,
                         breakdown.reserved_addresses,
-                        breakdown.grace_members,
                     ),
                     color = colors.text_tertiary,
                     fontSize = 11.sp,

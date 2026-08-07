@@ -32,8 +32,7 @@ data class FamilySeatUsage(
 fun breakdown_total(breakdown: FamilySeatBreakdown): Int =
     breakdown.active_members +
         breakdown.pending_invites +
-        breakdown.reserved_addresses +
-        breakdown.grace_members
+        breakdown.reserved_addresses
 
 fun family_seat_usage(
     seats_used: Int,

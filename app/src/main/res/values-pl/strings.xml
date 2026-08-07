@@ -2362,7 +2362,7 @@
     <string name="kids_reserved_subtitle">Zarezerwuj adres dla dziecka. Przekaż link aktywacyjny, aby dokończyło konfigurację własnym hasłem.</string>
     <string name="kids_seats_used">wykorzystane miejsca: %1$d z %2$d</string>
     <string name="kids_seats_free">dostępne miejsca: %1$d</string>
-    <string name="kids_seats_breakdown">%1$d osób, %2$d zaproszeń, %3$d zarezerwowanych adresów, %4$d niedawno usuniętych osób</string>
+    <string name="kids_seats_breakdown">%1$d osób, %2$d zaproszeń, %3$d zarezerwowanych adresów</string>
     <string name="kids_no_reservations">Nie ma jeszcze zarezerwowanych adresów. Zarezerwuj jeden na astermail.org.</string>
     <string name="kids_reserve_on_web">Zarezerwuj w przeglądarce</string>
     <string name="kids_status_reserved">Zarezerwowany</string>

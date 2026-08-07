@@ -2353,7 +2353,7 @@
     <string name="kids_reserved_subtitle">자녀를 위해 주소를 잡아 두세요. 등록 링크를 전달하면 아이가 자기 비밀번호로 설정을 마칠 수 있습니다.</string>
     <string name="kids_seats_used">가족 자리 %2$d개 중 %1$d개 사용</string>
     <string name="kids_seats_free">%1$d개 사용 가능</string>
-    <string name="kids_seats_breakdown">구성원 %1$d명, 초대 %2$d건, 예약 주소 %3$d건, 최근 삭제한 구성원 %4$d명</string>
+    <string name="kids_seats_breakdown">구성원 %1$d명, 초대 %2$d건, 예약 주소 %3$d건</string>
     <string name="kids_no_reservations">아직 잡아 둔 주소가 없습니다. astermail.org에서 하나 잡아 두세요.</string>
     <string name="kids_reserve_on_web">웹에서 잡아 두기</string>
     <string name="kids_status_reserved">예약됨</string>

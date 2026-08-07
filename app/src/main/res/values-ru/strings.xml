@@ -2362,7 +2362,7 @@
     <string name="kids_reserved_subtitle">Забронируйте адрес для ребёнка. Передайте ссылку активации, чтобы он завершил настройку со своим паролем.</string>
     <string name="kids_seats_used">Занято мест: %1$d из %2$d</string>
     <string name="kids_seats_free">доступно мест: %1$d</string>
-    <string name="kids_seats_breakdown">%1$d участников, %2$d приглашений, %3$d зарезервированных адресов, %4$d недавно удалённых участников</string>
+    <string name="kids_seats_breakdown">%1$d участников, %2$d приглашений, %3$d зарезервированных адресов</string>
     <string name="kids_no_reservations">Забронированных адресов пока нет. Забронируйте на astermail.org.</string>
     <string name="kids_reserve_on_web">Забронировать в вебе</string>
     <string name="kids_status_reserved">Забронирован</string>

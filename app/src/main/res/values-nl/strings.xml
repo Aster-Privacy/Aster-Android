@@ -2356,7 +2356,7 @@
     <string name="kids_reserved_subtitle">Reserveer een adres voor je kind. Deel de activatielink zodat het de installatie met een eigen wachtwoord afrondt.</string>
     <string name="kids_seats_used">%1$d van %2$d gezinsplaatsen gebruikt</string>
     <string name="kids_seats_free">%1$d plaatsen beschikbaar</string>
-    <string name="kids_seats_breakdown">%1$d leden, %2$d uitnodigingen, %3$d gereserveerde adressen, %4$d onlangs verwijderde leden</string>
+    <string name="kids_seats_breakdown">%1$d leden, %2$d uitnodigingen, %3$d gereserveerde adressen</string>
     <string name="kids_no_reservations">Nog geen gereserveerde adressen. Reserveer er een op astermail.org.</string>
     <string name="kids_reserve_on_web">Reserveren op het web</string>
     <string name="kids_status_reserved">Gereserveerd</string>

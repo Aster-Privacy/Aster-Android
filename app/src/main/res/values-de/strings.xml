@@ -2357,7 +2357,7 @@
     <string name="kids_reserved_subtitle">Reserviere eine Adresse für dein Kind. Teile den Einlöse-Link, damit es die Einrichtung mit eigenem Passwort abschließt.</string>
     <string name="kids_seats_used">%1$d von %2$d Familienplätzen belegt</string>
     <string name="kids_seats_free">%1$d Plätze verfügbar</string>
-    <string name="kids_seats_breakdown">%1$d Mitglieder, %2$d Einladungen, %3$d reservierte Adressen, %4$d kürzlich entfernte Mitglieder</string>
+    <string name="kids_seats_breakdown">%1$d Mitglieder, %2$d Einladungen, %3$d reservierte Adressen</string>
     <string name="kids_no_reservations">Noch keine reservierten Adressen. Reserviere eine auf astermail.org.</string>
     <string name="kids_reserve_on_web">Im Web reservieren</string>
     <string name="kids_status_reserved">Reserviert</string>

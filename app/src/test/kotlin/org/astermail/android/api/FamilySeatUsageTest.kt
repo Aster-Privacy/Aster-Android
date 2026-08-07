@@ -41,32 +41,31 @@ class FamilySeatUsageTest {
         val response = ListReservationsResponse(
             reservations = emptyList(),
             max_members = 6,
-            seats_used = 5,
+            seats_used = 3,
             seats = FamilySeatBreakdown(
                 active_members = 3,
                 pending_invites = 0,
                 reserved_addresses = 0,
-                grace_members = 2,
             ),
         )
 
         val usage = family_seat_usage(response)
 
-        assertEquals(5, usage.seats_used)
+        assertEquals(3, usage.seats_used)
         assertEquals(6, usage.max_members)
-        assertEquals(1, usage.seats_remaining)
+        assertEquals(3, usage.seats_remaining)
         assertFalse(usage.seats_full)
         assertEquals(3, usage.breakdown?.active_members)
-        assertEquals(2, usage.breakdown?.grace_members)
+        assertEquals(3, usage.breakdown?.let { breakdown_total(it) })
     }
 
     @Test
     fun breakdown_parts_always_sum_to_the_enforced_total() {
         val cases = listOf(
-            FamilySeatBreakdown(3, 0, 0, 2),
-            FamilySeatBreakdown(3, 2, 0, 0),
-            FamilySeatBreakdown(1, 1, 2, 1),
-            FamilySeatBreakdown(0, 0, 0, 0),
+            FamilySeatBreakdown(3, 0, 0),
+            FamilySeatBreakdown(3, 2, 0),
+            FamilySeatBreakdown(1, 1, 2),
+            FamilySeatBreakdown(0, 0, 0),
         )
 
         cases.forEach { breakdown ->
@@ -110,13 +109,12 @@ class FamilySeatUsageTest {
     fun server_breakdown_is_parsed_from_the_reservations_payload() {
         val response = json.decodeFromString<ListReservationsResponse>(
             """
-            {"reservations":[],"max_members":6,"seats_used":5,
-             "seats":{"active_members":3,"pending_invites":0,"reserved_addresses":0,"grace_members":2}}
+            {"reservations":[],"max_members":6,"seats_used":3,
+             "seats":{"active_members":3,"pending_invites":0,"reserved_addresses":0}}
             """.trimIndent(),
         )
 
         assertEquals(3, response.seats?.active_members)
-        assertEquals(2, response.seats?.grace_members)
         assertEquals(response.seats_used, response.seats?.let { breakdown_total(it) })
     }
 }

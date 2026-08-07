@@ -2368,7 +2368,7 @@
     <string name="kids_reserved_subtitle">احجز عنوانًا لطفلك. شارك رابط المطالبة ليكمل الإعداد بكلمة مرور خاصة به.</string>
     <string name="kids_seats_used">%1$d من %2$d مقاعد عائلية مستخدمة</string>
     <string name="kids_seats_free">%1$d مقعد متاح</string>
-    <string name="kids_seats_breakdown">%1$d أعضاء، %2$d دعوات، %3$d عناوين محجوزة، %4$d أعضاء أُزيلوا مؤخرًا</string>
+    <string name="kids_seats_breakdown">%1$d أعضاء، %2$d دعوات، %3$d عناوين محجوزة</string>
     <string name="kids_no_reservations">لا توجد عناوين محجوزة بعد. احجز واحدًا على astermail.org.</string>
     <string name="kids_reserve_on_web">الحجز عبر الويب</string>
     <string name="kids_status_reserved">محجوز</string>

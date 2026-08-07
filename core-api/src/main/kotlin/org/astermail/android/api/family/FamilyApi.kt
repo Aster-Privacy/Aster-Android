@@ -53,7 +53,6 @@ data class FamilySeatBreakdown(
     val active_members: Int = 0,
     val pending_invites: Int = 0,
     val reserved_addresses: Int = 0,
-    val grace_members: Int = 0,
 )
 
 @Serializable

@@ -2385,7 +2385,7 @@
     <string name="kids_reserved_subtitle">Hold an address for your child. Share the claim link so they can finish setup with their own password.</string>
     <string name="kids_seats_used">%1$d of %2$d family seats used</string>
     <string name="kids_seats_free">%1$d seat(s) available</string>
-    <string name="kids_seats_breakdown">%1$d members, %2$d invitations, %3$d reserved addresses, %4$d recently removed members</string>
+    <string name="kids_seats_breakdown">%1$d members, %2$d invitations, %3$d reserved addresses</string>
     <string name="kids_no_reservations">No reserved addresses yet. Reserve one on astermail.org.</string>
     <string name="kids_reserve_on_web">Reserve on web</string>
     <string name="kids_status_reserved">Reserved</string>

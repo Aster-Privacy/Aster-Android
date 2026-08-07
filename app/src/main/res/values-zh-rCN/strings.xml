@@ -2353,7 +2353,7 @@
     <string name="kids_reserved_subtitle">为孩子预留一个地址。把认领链接发给他，他就能用自己的密码完成设置。</string>
     <string name="kids_seats_used">家庭名额已用 %1$d / %2$d</string>
     <string name="kids_seats_free">剩余 %1$d 个名额</string>
-    <string name="kids_seats_breakdown">成员 %1$d 名、邀请 %2$d 个、预留地址 %3$d 个、最近移除的成员 %4$d 名</string>
+    <string name="kids_seats_breakdown">成员 %1$d 名、邀请 %2$d 个、预留地址 %3$d 个</string>
     <string name="kids_no_reservations">还没有预留地址。请在 astermail.org 预留一个。</string>
     <string name="kids_reserve_on_web">在网页端预留</string>
     <string name="kids_status_reserved">已预留</string>

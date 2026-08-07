@@ -2353,7 +2353,7 @@
     <string name="kids_reserved_subtitle">お子さま用のアドレスを確保できます。受け取りリンクを渡せば、本人のパスワードで設定を終えられます。</string>
     <string name="kids_seats_used">ファミリー枠 %2$d 件中 %1$d 件を使用</string>
     <string name="kids_seats_free">空き %1$d 件</string>
-    <string name="kids_seats_breakdown">メンバー %1$d 人、招待 %2$d 件、予約アドレス %3$d 件、最近削除したメンバー %4$d 人</string>
+    <string name="kids_seats_breakdown">メンバー %1$d 人、招待 %2$d 件、予約アドレス %3$d 件</string>
     <string name="kids_no_reservations">確保したアドレスはまだありません。astermail.org で確保してください。</string>
     <string name="kids_reserve_on_web">ウェブで確保</string>
     <string name="kids_status_reserved">確保済み</string>

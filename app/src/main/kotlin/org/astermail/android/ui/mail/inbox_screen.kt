@@ -528,18 +528,7 @@ fun InboxScreen(
     val categories_enabled = current_folder == "inbox" &&
         (settings_state.preferences?.inbox_categories_enabled ?: true)
     val active_category = inbox_category
-    val emails_fingerprint by remember {
-        derivedStateOf {
-            var hash = emails.size
-            emails.forEach { e ->
-                hash = 31 * hash + e.id.hashCode()
-                hash = 31 * hash + (if (e.is_starred) 1 else 0)
-                hash = 31 * hash + (if (e.is_read) 2 else 0)
-                hash = 31 * hash + (if (e.is_pinned) 4 else 0)
-            }
-            hash
-        }
-    }
+    val emails_fingerprint by remember { derivedStateOf { emails_fingerprint_of(emails) } }
     val active_tabs = remember(
         settings_state.preferences?.enabled_categories,
         settings_state.preferences?.custom_categories,
@@ -2952,4 +2941,18 @@ private fun compose_fab(expanded: Boolean, on_click: () -> Unit) {
             )
         }
     }
+}
+
+fun emails_fingerprint_of(emails: List<Email>): Int {
+    var hash = emails.size
+    emails.forEach { e ->
+        hash = 31 * hash + e.id.hashCode()
+        hash = 31 * hash + (if (e.is_starred) 1 else 0)
+        hash = 31 * hash + (if (e.is_read) 2 else 0)
+        hash = 31 * hash + (if (e.is_pinned) 4 else 0)
+        hash = 31 * hash + e.label_names.hashCode()
+        hash = 31 * hash + e.label_colors.hashCode()
+        hash = 31 * hash + e.label_icons.hashCode()
+    }
+    return hash
 }

@@ -110,8 +110,8 @@ fun FilteredInboxScreen(
         }
     }
 
-    val filtered_emails = remember(inbox_state.items, filter_type, filter_value) {
-        inbox_state.items.map { inbox_item_to_email(it) }
+    val filtered_emails = remember(inbox_state.items, filter_type, filter_value, settings_state.tags) {
+        inbox_state.items.map { inbox_item_to_email(it, settings_state.tags) }
     }
     val grouping_enabled = settings_state.preferences?.conversation_grouping != false
     val threads = remember(filtered_emails, grouping_enabled) {
