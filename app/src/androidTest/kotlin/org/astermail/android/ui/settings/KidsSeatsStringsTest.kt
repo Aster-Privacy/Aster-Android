@@ -52,16 +52,22 @@ class KidsSeatsStringsTest {
             val five = digits.format(5)
             val six = digits.format(6)
             val one = digits.format(1)
+            val three = digits.format(3)
+            val two = digits.format(2)
 
             val used = context.getString(R.string.kids_seats_used, 5, 6)
             val free = context.getString(R.string.kids_seats_free, 1)
+            val breakdown = context.getString(R.string.kids_seats_breakdown, 3, 0, 0, 2)
 
             assertTrue(tag, used.isNotBlank())
             assertTrue("$tag: $used", used.contains(five) && used.contains(six))
             assertTrue(tag, free.isNotBlank())
             assertTrue("$tag: $free", free.contains(one))
+            assertTrue(tag, breakdown.isNotBlank())
+            assertTrue("$tag: $breakdown", breakdown.contains(three) && breakdown.contains(two))
             assertTrue("$tag: $used", !used.contains("%"))
             assertTrue("$tag: $free", !free.contains("%"))
+            assertTrue("$tag: $breakdown", !breakdown.contains("%"))
         }
     }
 }

@@ -60,7 +60,9 @@ import org.astermail.android.api.developer.CreateApiKeyRequest
 import org.astermail.android.api.developer.DeveloperApi
 import org.astermail.android.api.developer.WebhookInfo
 import org.astermail.android.api.family.FamilyApi
+import org.astermail.android.api.family.FamilySeatUsage
 import org.astermail.android.api.family.ReservedAddress
+import org.astermail.android.api.family.family_seat_usage
 import org.astermail.android.api.aliases.AddPinRequest
 import org.astermail.android.api.aliases.AliasRuleActions
 import org.astermail.android.api.aliases.AliasRuleCondition
@@ -186,8 +188,7 @@ data class SettingsUiState(
     val preferences: UserPreferences? = null,
     val preferences_authoritative: Boolean = false,
     val reserved_addresses: List<ReservedAddress> = emptyList(),
-    val family_seats_used: Int = 0,
-    val family_max_members: Int = 0,
+    val family_seats: FamilySeatUsage? = null,
     val ghost_aliases: List<GhostAlias> = emptyList(),
     val forwarding_rules: List<ForwardingRule> = emptyList(),
     val forwarding_resending_address: String? = null,
@@ -4806,8 +4807,7 @@ class SettingsViewModel @Inject constructor(
                 val r = family_api.list_reservations()
                 _state.update { it.copy(
                     reserved_addresses = r.reservations,
-                    family_seats_used = r.seats_used,
-                    family_max_members = r.max_members,
+                    family_seats = family_seat_usage(r),
                     is_loading = false,
                 ) }
             } catch (t: Throwable) {
@@ -4816,11 +4816,29 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    private fun without_released_seat(state: SettingsUiState): SettingsUiState {
+        val seats = state.family_seats ?: return state
+        val breakdown = seats.breakdown?.let {
+            it.copy(reserved_addresses = (it.reserved_addresses - 1).coerceAtLeast(0))
+        }
+        return state.copy(
+            family_seats = family_seat_usage(
+                seats_used = (seats.seats_used - 1).coerceAtLeast(0),
+                max_members = seats.max_members,
+                breakdown = breakdown,
+            ),
+        )
+    }
+
     fun release_reservation(id: String, on_done: (Boolean) -> Unit) {
         viewModelScope.launch {
             try {
                 family_api.release_reservation(id)
-                _state.update { it.copy(reserved_addresses = it.reserved_addresses.filter { r -> r.id != id }) }
+                _state.update {
+                    without_released_seat(
+                        it.copy(reserved_addresses = it.reserved_addresses.filter { r -> r.id != id }),
+                    )
+                }
                 on_done(true)
             } catch (_: Throwable) {
                 on_done(false)

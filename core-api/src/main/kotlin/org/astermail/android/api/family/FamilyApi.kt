@@ -49,10 +49,19 @@ data class ReservedAddress(
 )
 
 @Serializable
+data class FamilySeatBreakdown(
+    val active_members: Int = 0,
+    val pending_invites: Int = 0,
+    val reserved_addresses: Int = 0,
+    val grace_members: Int = 0,
+)
+
+@Serializable
 data class ListReservationsResponse(
     val reservations: List<ReservedAddress>,
     val max_members: Int,
     val seats_used: Int,
+    val seats: FamilySeatBreakdown? = null,
 )
 
 @Serializable
