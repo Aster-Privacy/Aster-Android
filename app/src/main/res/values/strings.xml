@@ -2120,6 +2120,12 @@
     <string name="alias_sender_format">Sender format</string>
     <string name="alias_forwarding">Forwarding</string>
     <string name="alias_behavior">Behavior</string>
+    <string name="alias_domains_section">Domains</string>
+    <string name="alias_default_domain">Default domain</string>
+    <string name="alias_default_domain_subtitle">Domain used when creating new aliases</string>
+    <string name="alias_default_domain_info_desc">New aliases start with this domain. You can pick a different domain for any individual alias.</string>
+    <string name="alias_default_domain_platform">Aster domain</string>
+    <string name="alias_default_domain_custom">Your custom domain</string>
     <string name="alias_disabled_response">Disabled alias response</string>
     <string name="alias_delete_behavior">Delete behavior</string>
     <string name="alias_always_expand">Always expand</string>

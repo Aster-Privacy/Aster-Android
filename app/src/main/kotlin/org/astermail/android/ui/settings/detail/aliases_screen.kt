@@ -42,6 +42,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -1715,6 +1716,7 @@ private fun preferences_tab(
     val prefs = state.alias_preferences
 
     var show_unsubscribe_dialog by remember { mutableStateOf(false) }
+    var show_default_domain_dialog by remember { mutableStateOf(false) }
 
     if (prefs == null) {
         skeleton_section_label()
@@ -1724,6 +1726,28 @@ private fun preferences_tab(
         return
     }
 
+    val available_domains = remember(state.domains) { alias_domain_options(state.domains) }
+    val default_domain = resolve_default_alias_domain(prefs.alias_default_domain, available_domains)
+
+    section_label(stringResource(R.string.alias_domains_section))
+    AsterCard(modifier = Modifier.fillMaxWidth()) {
+        detail_row(
+            title = stringResource(R.string.alias_default_domain),
+            subtitle = stringResource(R.string.alias_default_domain_subtitle),
+            info_title = stringResource(R.string.alias_default_domain),
+            info_description = stringResource(R.string.alias_default_domain_info_desc),
+            on_click = { show_default_domain_dialog = true },
+            trailing = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(default_domain, color = colors.text_secondary, fontSize = 14.sp)
+                    Spacer(Modifier.width(AsterSpacing.xs))
+                    Icon(imageVector = TablerIcons.ChevronRight, contentDescription = null, tint = colors.text_muted, modifier = Modifier.size(20.dp))
+                }
+            },
+        )
+    }
+
+    v_gap(AsterSpacing.md)
     section_label(stringResource(R.string.alias_forwarding))
     AsterCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(AsterSpacing.lg)) {
@@ -1812,6 +1836,43 @@ private fun preferences_tab(
                 AsterSwitch(
                     checked = prefs?.readable_reverse_aliases == true,
                     onCheckedChange = { v -> vm.update_alias_preference(UpdateAliasPreferencesRequest(readable_reverse_aliases = v)) },
+                )
+            },
+        )
+    }
+
+    if (show_default_domain_dialog) {
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { show_default_domain_dialog = false },
+            title = stringResource(R.string.alias_default_domain),
+            body = {
+                Column(
+                    modifier = Modifier
+                        .heightIn(max = 360.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                ) {
+                    available_domains.forEach { option ->
+                        preference_option(
+                            label = "@${option.domain_name}",
+                            description = if (option.is_platform) {
+                                stringResource(R.string.alias_default_domain_platform)
+                            } else {
+                                stringResource(R.string.alias_default_domain_custom)
+                            },
+                            selected = option.domain_name == default_domain,
+                            onClick = {
+                                vm.update_alias_preference(UpdateAliasPreferencesRequest(alias_default_domain = option.domain_name))
+                                show_default_domain_dialog = false
+                            },
+                        )
+                    }
+                }
+            },
+            footer = {
+                org.astermail.android.design.components.AsterDialogOutlineButton(
+                    label = stringResource(R.string.cancel),
+                    onClick = { show_default_domain_dialog = false },
                 )
             },
         )
@@ -2074,6 +2135,20 @@ private data class AliasDomainOption(
     val is_platform: Boolean get() = domain_id == null
 }
 
+private fun alias_domain_options(domains: List<CustomDomain>): List<AliasDomainOption> =
+    listOf(AliasDomainOption("astermail.org"), AliasDomainOption("aster.cx")) +
+        domains
+            .filter { it.status == "active" }
+            .map { AliasDomainOption(it.domain_name, it.id) }
+
+private fun resolve_default_alias_domain(
+    preferred: String?,
+    options: List<AliasDomainOption>,
+): String =
+    options.firstOrNull { it.domain_name == preferred }?.domain_name
+        ?: options.firstOrNull()?.domain_name
+        ?: "astermail.org"
+
 @Composable
 private fun create_alias_dialog(
     on_dismiss: () -> Unit,
@@ -2082,7 +2157,7 @@ private fun create_alias_dialog(
 ) {
     var local_part by remember { mutableStateOf("") }
     var display_name by remember { mutableStateOf("") }
-    var selected_domain by remember { mutableStateOf(AliasDomainOption("astermail.org")) }
+    var selected_domain by remember { mutableStateOf<AliasDomainOption?>(null) }
     var captcha_token by remember { mutableStateOf<String?>(null) }
     var captcha_reset by remember { mutableStateOf(0) }
     var availability by remember { mutableStateOf<SettingsViewModel.AliasAvailability?>(null) }
@@ -2092,11 +2167,15 @@ private fun create_alias_dialog(
     val scope = rememberCoroutineScope()
     val settings_state by vm.state.collectAsStateWithLifecycle()
     val available_domains = remember(settings_state.domains) {
-        listOf(AliasDomainOption("astermail.org"), AliasDomainOption("aster.cx")) +
-            settings_state.domains
-                .filter { it.status == "active" }
-                .map { AliasDomainOption(it.domain_name, it.id) }
+        alias_domain_options(settings_state.domains)
     }
+    val preferred_domain = resolve_default_alias_domain(
+        settings_state.alias_preferences?.alias_default_domain,
+        available_domains,
+    )
+    val active_domain = selected_domain
+        ?: available_domains.firstOrNull { it.domain_name == preferred_domain }
+        ?: AliasDomainOption(preferred_domain)
 
     val local_part_valid = remember(local_part) {
         local_part.length in 3..64 &&
@@ -2105,21 +2184,21 @@ private fun create_alias_dialog(
             !local_part.matches(Regex("^[0-9]+$"))
     }
 
-    LaunchedEffect(local_part, selected_domain) {
+    LaunchedEffect(local_part, active_domain) {
         if (!local_part_valid) {
             availability = null
             checking = false
             return@LaunchedEffect
         }
-        if (selected_domain.is_platform) {
+        if (active_domain.is_platform) {
             checking = true
             availability = null
             delay(500)
-            availability = vm.check_alias_availability(local_part, selected_domain.domain_name)
+            availability = vm.check_alias_availability(local_part, active_domain.domain_name)
             checking = false
         } else {
             checking = false
-            availability = vm.domain_address_availability(local_part, selected_domain.domain_name)
+            availability = vm.domain_address_availability(local_part, active_domain.domain_name)
         }
     }
 
@@ -2181,7 +2260,7 @@ private fun create_alias_dialog(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            text = "@${selected_domain.domain_name}",
+                            text = "@${active_domain.domain_name}",
                             color = colors.text_primary,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
@@ -2201,7 +2280,7 @@ private fun create_alias_dialog(
                         available_domains.forEach { domain ->
                             aster_dropdown_item(
                                 label = "@${domain.domain_name}",
-                                selected = domain.domain_name == selected_domain.domain_name,
+                                selected = domain.domain_name == active_domain.domain_name,
                                 on_click = {
                                     selected_domain = domain
                                     domain_menu_open = false
@@ -2212,7 +2291,7 @@ private fun create_alias_dialog(
                 }
                 if (local_part.isNotBlank()) {
                     Text(
-                        text = "$local_part@${selected_domain.domain_name}",
+                        text = "$local_part@${active_domain.domain_name}",
                         color = colors.text_secondary,
                         fontSize = 12.sp,
                     )
@@ -2258,7 +2337,7 @@ private fun create_alias_dialog(
                 enabled = can_create,
                 onClick = {
                     val t = captcha_token
-                    if (can_create && t != null) on_create(local_part, selected_domain, t, display_name.trim().ifBlank { null })
+                    if (can_create && t != null) on_create(local_part, active_domain, t, display_name.trim().ifBlank { null })
                 },
             )
         },

@@ -2114,6 +2114,12 @@
     <string name="alias_sender_format">발신자 표시 형식</string>
     <string name="alias_forwarding">전달</string>
     <string name="alias_behavior">동작</string>
+    <string name="alias_domains_section">도메인</string>
+    <string name="alias_default_domain">기본 도메인</string>
+    <string name="alias_default_domain_subtitle">새 별칭을 만들 때 사용되는 도메인</string>
+    <string name="alias_default_domain_info_desc">새 별칭은 이 도메인으로 시작합니다. 별칭마다 다른 도메인을 선택할 수 있습니다.</string>
+    <string name="alias_default_domain_platform">Aster 도메인</string>
+    <string name="alias_default_domain_custom">내 커스텀 도메인</string>
     <string name="alias_disabled_response">사용 중지된 별칭의 응답</string>
     <string name="alias_delete_behavior">삭제 방식</string>
     <string name="alias_always_expand">항상 펼치기</string>

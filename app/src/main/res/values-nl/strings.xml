@@ -2117,6 +2117,12 @@
     <string name="alias_sender_format">Afzenderopmaak</string>
     <string name="alias_forwarding">Doorsturen</string>
     <string name="alias_behavior">Gedrag</string>
+    <string name="alias_domains_section">Domeinen</string>
+    <string name="alias_default_domain">Standaarddomein</string>
+    <string name="alias_default_domain_subtitle">Domein dat wordt gebruikt bij het aanmaken van nieuwe aliassen</string>
+    <string name="alias_default_domain_info_desc">Nieuwe aliassen gebruiken dit domein. Je kunt per alias een ander domein kiezen.</string>
+    <string name="alias_default_domain_platform">Aster-domein</string>
+    <string name="alias_default_domain_custom">Je eigen domein</string>
     <string name="alias_disabled_response">Antwoord bij uitgeschakeld alias</string>
     <string name="alias_delete_behavior">Verwijdergedrag</string>
     <string name="alias_always_expand">Altijd uitklappen</string>

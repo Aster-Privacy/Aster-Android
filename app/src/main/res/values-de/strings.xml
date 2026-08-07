@@ -2118,6 +2118,12 @@
     <string name="alias_sender_format">Absenderformat</string>
     <string name="alias_forwarding">Weiterleitung</string>
     <string name="alias_behavior">Verhalten</string>
+    <string name="alias_domains_section">Domains</string>
+    <string name="alias_default_domain">Standard-Domain</string>
+    <string name="alias_default_domain_subtitle">Domain, die beim Erstellen neuer Aliase verwendet wird</string>
+    <string name="alias_default_domain_info_desc">Neue Aliase beginnen mit dieser Domain. Für einzelne Aliase kannst du eine andere Domain wählen.</string>
+    <string name="alias_default_domain_platform">Aster-Domain</string>
+    <string name="alias_default_domain_custom">Deine eigene Domain</string>
     <string name="alias_disabled_response">Antwort bei deaktiviertem Alias</string>
     <string name="alias_delete_behavior">Löschverhalten</string>
     <string name="alias_always_expand">Immer ausklappen</string>

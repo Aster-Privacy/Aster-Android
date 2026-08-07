@@ -2129,6 +2129,12 @@
     <string name="alias_sender_format">تنسيق المرسل</string>
     <string name="alias_forwarding">إعادة التوجيه</string>
     <string name="alias_behavior">السلوك</string>
+    <string name="alias_domains_section">النطاقات</string>
+    <string name="alias_default_domain">النطاق الافتراضي</string>
+    <string name="alias_default_domain_subtitle">النطاق المستخدَم عند إنشاء أسماء مستعارة جديدة</string>
+    <string name="alias_default_domain_info_desc">تبدأ الأسماء المستعارة الجديدة بهذا النطاق. ويمكنك اختيار نطاق مختلف لأي اسم مستعار.</string>
+    <string name="alias_default_domain_platform">نطاق Aster</string>
+    <string name="alias_default_domain_custom">نطاقك المخصص</string>
     <string name="alias_disabled_response">رد الاسم المستعار المعطّل</string>
     <string name="alias_delete_behavior">سلوك الحذف</string>
     <string name="alias_always_expand">التوسيع دائمًا</string>

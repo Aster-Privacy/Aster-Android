@@ -2117,6 +2117,12 @@
     <string name="alias_sender_format">Gönderen biçimi</string>
     <string name="alias_forwarding">Yönlendirme</string>
     <string name="alias_behavior">Davranış</string>
+    <string name="alias_domains_section">Alan adları</string>
+    <string name="alias_default_domain">Varsayılan alan adı</string>
+    <string name="alias_default_domain_subtitle">Yeni rumuzlar oluşturulurken kullanılan alan adı</string>
+    <string name="alias_default_domain_info_desc">Yeni rumuzlar bu alan adıyla başlar. Her rumuz için farklı bir alan adı seçebilirsiniz.</string>
+    <string name="alias_default_domain_platform">Aster alan adı</string>
+    <string name="alias_default_domain_custom">Kendi alan adınız</string>
     <string name="alias_disabled_response">Kapalı takma adın yanıtı</string>
     <string name="alias_delete_behavior">Silme davranışı</string>
     <string name="alias_always_expand">Her zaman genişlet</string>

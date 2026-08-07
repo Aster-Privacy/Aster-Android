@@ -2114,6 +2114,12 @@
     <string name="alias_sender_format">发件人格式</string>
     <string name="alias_forwarding">转发</string>
     <string name="alias_behavior">行为</string>
+    <string name="alias_domains_section">域名</string>
+    <string name="alias_default_domain">默认域名</string>
+    <string name="alias_default_domain_subtitle">创建新别名时使用的域名</string>
+    <string name="alias_default_domain_info_desc">新别名默认使用该域名。你也可以为单个别名选择其他域名。</string>
+    <string name="alias_default_domain_platform">Aster 域名</string>
+    <string name="alias_default_domain_custom">自定义域名</string>
     <string name="alias_disabled_response">已停用别名的回应</string>
     <string name="alias_delete_behavior">删除行为</string>
     <string name="alias_always_expand">始终展开</string>

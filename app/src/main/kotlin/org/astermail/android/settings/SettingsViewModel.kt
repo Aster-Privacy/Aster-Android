@@ -2180,6 +2180,7 @@ class SettingsViewModel @Inject constructor(
     fun update_alias_preference(update: UpdateAliasPreferencesRequest) {
         val previous = _state.value.alias_preferences
         _state.update { it.copy(alias_preferences = it.alias_preferences?.copy(
+            alias_default_domain = update.alias_default_domain ?: it.alias_preferences.alias_default_domain,
             alias_sender_format = update.alias_sender_format ?: it.alias_preferences.alias_sender_format,
             readable_reverse_aliases = update.readable_reverse_aliases ?: it.alias_preferences.readable_reverse_aliases,
             alias_always_expand = update.alias_always_expand ?: it.alias_preferences.alias_always_expand,
@@ -2187,6 +2188,7 @@ class SettingsViewModel @Inject constructor(
             alias_disabled_response = update.alias_disabled_response ?: it.alias_preferences.alias_disabled_response,
             alias_delete_action = update.alias_delete_action ?: it.alias_preferences.alias_delete_action,
         ) ?: AliasPreferences(
+            alias_default_domain = update.alias_default_domain,
             alias_sender_format = update.alias_sender_format,
             readable_reverse_aliases = update.readable_reverse_aliases,
             alias_always_expand = update.alias_always_expand,

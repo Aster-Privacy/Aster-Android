@@ -2114,6 +2114,12 @@
     <string name="alias_sender_format">差出人の表示形式</string>
     <string name="alias_forwarding">転送</string>
     <string name="alias_behavior">動作</string>
+    <string name="alias_domains_section">ドメイン</string>
+    <string name="alias_default_domain">既定のドメイン</string>
+    <string name="alias_default_domain_subtitle">新しいエイリアスを作成する際に使用するドメイン</string>
+    <string name="alias_default_domain_info_desc">新しいエイリアスにはこのドメインが使われます。エイリアスごとに別のドメインを選ぶこともできます。</string>
+    <string name="alias_default_domain_platform">Aster のドメイン</string>
+    <string name="alias_default_domain_custom">カスタムドメイン</string>
     <string name="alias_disabled_response">無効なエイリアスへの応答</string>
     <string name="alias_delete_behavior">削除時の動作</string>
     <string name="alias_always_expand">常に展開する</string>

@@ -313,6 +313,7 @@ data class UpdateDirectoryRequest(
 
 @Serializable
 data class AliasPreferences(
+    val alias_default_domain: String? = null,
     val alias_sender_format: String? = null,
     val readable_reverse_aliases: Boolean? = null,
     val alias_always_expand: Boolean? = null,
@@ -323,6 +324,7 @@ data class AliasPreferences(
 
 @Serializable
 data class UpdateAliasPreferencesRequest(
+    val alias_default_domain: String? = null,
     val alias_sender_format: String? = null,
     val readable_reverse_aliases: Boolean? = null,
     val alias_always_expand: Boolean? = null,

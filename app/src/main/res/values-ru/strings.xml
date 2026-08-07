@@ -2123,6 +2123,12 @@
     <string name="alias_sender_format">Формат отправителя</string>
     <string name="alias_forwarding">Пересылка</string>
     <string name="alias_behavior">Поведение</string>
+    <string name="alias_domains_section">Домены</string>
+    <string name="alias_default_domain">Домен по умолчанию</string>
+    <string name="alias_default_domain_subtitle">Домен, используемый при создании новых псевдонимов</string>
+    <string name="alias_default_domain_info_desc">Новые псевдонимы создаются в этом домене. Для каждого псевдонима можно выбрать другой домен.</string>
+    <string name="alias_default_domain_platform">Домен Aster</string>
+    <string name="alias_default_domain_custom">Ваш собственный домен</string>
     <string name="alias_disabled_response">Ответ отключённого псевдонима</string>
     <string name="alias_delete_behavior">Поведение при удалении</string>
     <string name="alias_always_expand">Всегда разворачивать</string>

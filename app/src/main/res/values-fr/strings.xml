@@ -1514,6 +1514,12 @@
     <string name="alias_sender_format">Format de l\'expéditeur</string>
     <string name="alias_forwarding">Transfert</string>
     <string name="alias_behavior">Comportement</string>
+    <string name="alias_domains_section">Domaines</string>
+    <string name="alias_default_domain">Domaine par défaut</string>
+    <string name="alias_default_domain_subtitle">Domaine utilisé lors de la création de nouveaux alias</string>
+    <string name="alias_default_domain_info_desc">Les nouveaux alias utilisent ce domaine. Vous pouvez choisir un autre domaine pour chaque alias.</string>
+    <string name="alias_default_domain_platform">Domaine Aster</string>
+    <string name="alias_default_domain_custom">Votre domaine personnalisé</string>
     <string name="alias_disabled_response">Réponse de l\'alias désactivé</string>
     <string name="alias_delete_behavior">Comportement à la suppression</string>
     <string name="alias_always_expand">Toujours développer</string>

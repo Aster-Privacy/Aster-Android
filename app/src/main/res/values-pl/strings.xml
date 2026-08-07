@@ -2123,6 +2123,12 @@
     <string name="alias_sender_format">Format nadawcy</string>
     <string name="alias_forwarding">Przekazywanie</string>
     <string name="alias_behavior">Zachowanie</string>
+    <string name="alias_domains_section">Domeny</string>
+    <string name="alias_default_domain">Domena domyślna</string>
+    <string name="alias_default_domain_subtitle">Domena używana podczas tworzenia nowych aliasów</string>
+    <string name="alias_default_domain_info_desc">Nowe aliasy korzystają z tej domeny. Dla każdego aliasu możesz wybrać inną domenę.</string>
+    <string name="alias_default_domain_platform">Domena Aster</string>
+    <string name="alias_default_domain_custom">Twoja domena niestandardowa</string>
     <string name="alias_disabled_response">Odpowiedź wyłączonego aliasu</string>
     <string name="alias_delete_behavior">Zachowanie przy usuwaniu</string>
     <string name="alias_always_expand">Zawsze rozwijaj</string>

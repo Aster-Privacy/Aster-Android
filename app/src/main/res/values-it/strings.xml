@@ -2117,6 +2117,12 @@
     <string name="alias_sender_format">Formato del mittente</string>
     <string name="alias_forwarding">Inoltro</string>
     <string name="alias_behavior">Comportamento</string>
+    <string name="alias_domains_section">Domini</string>
+    <string name="alias_default_domain">Dominio predefinito</string>
+    <string name="alias_default_domain_subtitle">Dominio usato quando crei nuovi alias</string>
+    <string name="alias_default_domain_info_desc">I nuovi alias partono da questo dominio. Puoi scegliere un dominio diverso per ogni alias.</string>
+    <string name="alias_default_domain_platform">Dominio Aster</string>
+    <string name="alias_default_domain_custom">Il tuo dominio personalizzato</string>
     <string name="alias_disabled_response">Risposta dell\'alias disattivato</string>
     <string name="alias_delete_behavior">Comportamento di eliminazione</string>
     <string name="alias_always_expand">Mostra sempre espanso</string>
