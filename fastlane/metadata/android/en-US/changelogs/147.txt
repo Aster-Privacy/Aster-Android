@@ -1,6 +1,7 @@
 Bug fixes and improvements:
 
-- Messages you receive now decrypt reliably, even when you read mail on more than one device
-- New delivery rules for aliases, so you can sort or block mail per alias
-- Manage your allowlist from settings, and see which websites an alias is used on
-- Pull to refresh no longer leaves the spinner stuck when the connection drops
+- Messages decrypt reliably, even when you read your mail on more than one device
+- Set delivery rules for each alias to sort, label, or block the mail it receives
+- Manage your allowlist in settings, and see which websites each alias is used on
+- Push notifications resume on their own after your device registers again
+- Family plans show the correct number of seats you have left
