@@ -272,7 +272,7 @@ fun EmailRow(
                     trailing_controls()
                 }
             }
-            email.received_on?.let {
+            alias_indicator_store.label_for_delivery(email.routing_token, email.received_on)?.let {
                 Spacer(Modifier.height(4.dp))
                 Row(
                     modifier = Modifier
@@ -557,7 +557,7 @@ fun ThreadInboxRow(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false),
                     )
-                    email.received_on?.let {
+                    alias_indicator_store.label_for_delivery(email.routing_token, email.received_on)?.let {
                         Spacer(Modifier.width(6.dp))
                         alias_chip(it, modifier = Modifier.widthIn(max = 148.dp))
                     }
@@ -733,7 +733,7 @@ private fun first_name(full: String): String {
 }
 
 @Composable
-private fun alias_chip(address: String, modifier: Modifier = Modifier) {
+internal fun alias_chip(label: String, modifier: Modifier = Modifier) {
     val colors = AsterMaterial.colors
     val shape = RoundedCornerShape(6.dp)
     val background = chip_background(colors.text_tertiary, inbox_card_read_color(colors), colors.is_dark)
@@ -752,7 +752,7 @@ private fun alias_chip(address: String, modifier: Modifier = Modifier) {
             modifier = Modifier.size(11.dp),
         )
         Text(
-            text = address,
+            text = label,
             style = MaterialTheme.typography.labelSmall,
             color = colors.text_secondary,
             fontSize = 11.sp,

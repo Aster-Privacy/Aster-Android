@@ -118,6 +118,7 @@ data class UserPreferences(
     val custom_categories: List<CustomCategoryRule> = emptyList(),
     val conversation_order: String = "newest",
     val show_message_size: Boolean = false,
+    val show_alias_indicators: Boolean = true,
     val force_dark_emails: Boolean = false,
     val folder_lock_mode: String = "session",
     val spam_filter_enabled: Boolean = true,

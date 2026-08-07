@@ -48,4 +48,5 @@ data class DecryptedMailEntity(
     val display_sender_name: String? = null,
     val display_sender_email: String? = null,
     val to_addresses: String? = null,
+    val routing_token: String? = null,
 )

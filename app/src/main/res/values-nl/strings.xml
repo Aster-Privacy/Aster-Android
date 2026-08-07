@@ -2023,6 +2023,8 @@
     <string name="inbox_categories_subtitle">Sorteert inkomende mail in Algemeen, Sociaal, Aanbiedingen en Updates</string>
     <string name="conversation_order_label">Volgorde van het gesprek</string>
     <string name="show_message_size">Berichtgrootte tonen</string>
+    <string name="show_alias_indicators">Aliasindicatoren tonen</string>
+    <string name="show_alias_indicators_subtitle">Berichten markeren die via een van je aliassen zijn binnengekomen</string>
     <string name="show_message_size_subtitle">Toont de grootte van elke e-mail in de lijst</string>
     <string name="force_dark_emails">Donkere modus afdwingen voor e-mail</string>
     <string name="force_dark_emails_subtitle">Toont e-mailinhoud altijd in donkere modus</string>
@@ -2348,12 +2350,13 @@
     <string name="manage_family">Gezin beheren</string>
     <string name="manage_family_subtitle">Bekijk leden en beheer je abonnement op astermail.org</string>
     <string name="no_family_plan">Geen gezinsabonnement</string>
-    <string name="no_family_plan_subtitle">Met een gezinsabonnement deel je opslag en functies met maximaal 5 leden.</string>
+    <string name="no_family_plan_subtitle">Een gezinsabonnement is voor maximaal 6 leden, met aparte accounts en gedeelde opslag.</string>
     <string name="view_plans">Abonnementen bekijken</string>
     <string name="kids_reserved_addresses">Gereserveerde adressen voor kinderen</string>
     <string name="kids_reserved_subtitle">Reserveer een adres voor je kind. Deel de activatielink zodat het de installatie met een eigen wachtwoord afrondt.</string>
     <string name="kids_seats_used">%1$d van %2$d gezinsplaatsen gebruikt</string>
     <string name="kids_seats_free">%1$d plaatsen beschikbaar</string>
+    <string name="kids_seats_breakdown">%1$d leden, %2$d uitnodigingen, %3$d gereserveerde adressen, %4$d onlangs verwijderde leden</string>
     <string name="kids_no_reservations">Nog geen gereserveerde adressen. Reserveer er een op astermail.org.</string>
     <string name="kids_reserve_on_web">Reserveren op het web</string>
     <string name="kids_status_reserved">Gereserveerd</string>

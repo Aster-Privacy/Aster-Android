@@ -72,6 +72,7 @@ data class MailItem(
     val is_external: Boolean = false,
     val has_recipient_key: Boolean? = null,
     val thread_token: String? = null,
+    val routing_token: String? = null,
     val thread_message_count: Int? = null,
     val created_at: String? = null,
     val labels: List<MailItemLabel>? = null,

@@ -1406,6 +1406,8 @@
     <string name="conversation_grouping_subtitle">Regrouper les e-mails d\'une même conversation</string>
     <string name="conversation_order_label">Ordre des conversations</string>
     <string name="show_message_size">Afficher la taille des messages</string>
+    <string name="show_alias_indicators">Afficher les indicateurs d’alias</string>
+    <string name="show_alias_indicators_subtitle">Marquer les messages reçus via l’un de vos alias</string>
     <string name="show_message_size_subtitle">Afficher la taille de chaque e-mail dans la liste de la boîte de réception</string>
     <string name="force_dark_emails">Forcer le mode sombre pour les e-mails</string>
     <string name="force_dark_emails_subtitle">Toujours afficher le contenu des e-mails en mode sombre</string>
@@ -2376,12 +2378,13 @@
     <string name="manage_family">Gérer la famille</string>
     <string name="manage_family_subtitle">Consultez les membres et gérez votre formule sur astermail.org</string>
     <string name="no_family_plan">Aucune formule famille</string>
-    <string name="no_family_plan_subtitle">La formule famille permet de partager stockage et fonctionnalités avec 5 membres au maximum.</string>
+    <string name="no_family_plan_subtitle">La formule famille couvre jusqu\'à 6 membres, avec des comptes séparés et un stockage partagé.</string>
     <string name="view_plans">Voir les formules</string>
     <string name="kids_reserved_addresses">Adresses réservées aux enfants</string>
     <string name="kids_reserved_subtitle">Réservez une adresse pour votre enfant. Partagez le lien d\'activation pour qu\'il termine la configuration avec son propre mot de passe.</string>
     <string name="kids_seats_used">%1$d place(s) famille utilisée(s) sur %2$d</string>
     <string name="kids_seats_free">%1$d place(s) disponible(s)</string>
+    <string name="kids_seats_breakdown">%1$d membres, %2$d invitations, %3$d adresses réservées, %4$d membres retirés récemment</string>
     <string name="kids_no_reservations">Aucune adresse réservée pour l\'instant. Réservez-en une sur astermail.org.</string>
     <string name="kids_reserve_on_web">Réserver sur le web</string>
     <string name="kids_status_reserved">Réservée</string>

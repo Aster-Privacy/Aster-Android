@@ -33,6 +33,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -45,9 +46,33 @@ class LongAliasLabelChipTest {
 
     private val long_alias = "extremely.long.forwarding.address.for.testing@subdomain.example.com"
 
+    private val long_alias_label =
+        "Extremely Long Forwarding Alias Name Used For Truncation Testing"
+
     private val label_name = "Receipts"
 
-    private fun thread(): ThreadRow {
+    private val bcc_alias = "bcc.only.alias@aster.cx"
+
+    private val bcc_alias_label = "Bcc Only Alias"
+
+    private val bcc_alias_hash = "hash-bcc-only-alias"
+
+    private val alias_entries = listOf(
+        AliasLabelEntry(long_alias, long_alias_label),
+        AliasLabelEntry(bcc_alias, bcc_alias_label, bcc_alias_hash),
+    )
+
+    @Before
+    fun seed_alias_indicator_store() {
+        alias_indicator_store.set_enabled(true)
+        alias_indicator_store.set_labels(build_alias_label_map(alias_entries))
+        alias_indicator_store.set_token_labels(build_alias_token_label_map(alias_entries))
+    }
+
+    private fun thread(
+        received_on: String? = long_alias,
+        routing_token: String? = null,
+    ): ThreadRow {
         val email = Email(
             id = "m1",
             sender_name = "Aster",
@@ -58,7 +83,8 @@ class LongAliasLabelChipTest {
             is_read = true,
             is_starred = false,
             has_attachment = false,
-            received_on = long_alias,
+            received_on = received_on,
+            routing_token = routing_token,
         )
         return ThreadRow(
             thread_id = "t1",
@@ -105,6 +131,27 @@ class LongAliasLabelChipTest {
     }
 
     @Test
+    fun no_chip_is_shown_for_an_address_that_is_not_a_known_alias() {
+        alias_indicator_store.set_labels(emptyMap())
+
+        compose_rule.setContent {
+            Box(modifier = Modifier.width(360.dp)) {
+                ThreadInboxRow(
+                    thread = thread(),
+                    on_click = {},
+                    on_long_click = {},
+                    on_toggle_star = {},
+                )
+            }
+        }
+
+        compose_rule.waitForIdle()
+
+        compose_rule.onNodeWithText(long_alias, useUnmergedTree = true).assertDoesNotExist()
+        compose_rule.onNodeWithText(long_alias_label, useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    @Test
     fun alias_chip_sits_to_the_right_of_the_subject() {
         compose_rule.setContent {
             Box(modifier = Modifier.width(360.dp)) {
@@ -120,7 +167,7 @@ class LongAliasLabelChipTest {
         compose_rule.waitForIdle()
 
         val root_right = compose_rule.onRoot().getUnclippedBoundsInRoot().right
-        val alias_bounds = compose_rule.onNodeWithText(long_alias, useUnmergedTree = true).getUnclippedBoundsInRoot()
+        val alias_bounds = compose_rule.onNodeWithText(long_alias_label, useUnmergedTree = true).getUnclippedBoundsInRoot()
         val subject_bounds = compose_rule.onNodeWithText("Welcome", useUnmergedTree = true).getUnclippedBoundsInRoot()
 
         assertTrue(
@@ -135,5 +182,61 @@ class LongAliasLabelChipTest {
             "alias right ${alias_bounds.right} exceeds root right $root_right",
             alias_bounds.right <= root_right,
         )
+    }
+
+    @Test
+    fun a_bcc_delivery_shows_the_chip_from_the_routing_token_alone() {
+        compose_rule.setContent {
+            Box(modifier = Modifier.width(360.dp)) {
+                ThreadInboxRow(
+                    thread = thread(received_on = null, routing_token = bcc_alias_hash),
+                    on_click = {},
+                    on_long_click = {},
+                    on_toggle_star = {},
+                )
+            }
+        }
+
+        compose_rule.waitForIdle()
+
+        compose_rule.onNodeWithText(bcc_alias_label, useUnmergedTree = true).assertIsDisplayed()
+        compose_rule.onNodeWithText(long_alias_label, useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun an_unknown_routing_token_falls_back_to_the_recipient_header() {
+        compose_rule.setContent {
+            Box(modifier = Modifier.width(360.dp)) {
+                ThreadInboxRow(
+                    thread = thread(routing_token = "hash-not-mine"),
+                    on_click = {},
+                    on_long_click = {},
+                    on_toggle_star = {},
+                )
+            }
+        }
+
+        compose_rule.waitForIdle()
+
+        compose_rule.onNodeWithText(long_alias_label, useUnmergedTree = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun the_routing_token_wins_over_the_recipient_header() {
+        compose_rule.setContent {
+            Box(modifier = Modifier.width(360.dp)) {
+                ThreadInboxRow(
+                    thread = thread(routing_token = bcc_alias_hash),
+                    on_click = {},
+                    on_long_click = {},
+                    on_toggle_star = {},
+                )
+            }
+        }
+
+        compose_rule.waitForIdle()
+
+        compose_rule.onNodeWithText(bcc_alias_label, useUnmergedTree = true).assertIsDisplayed()
+        compose_rule.onNodeWithText(long_alias_label, useUnmergedTree = true).assertDoesNotExist()
     }
 }

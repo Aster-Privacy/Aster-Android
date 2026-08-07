@@ -2024,6 +2024,8 @@
     <string name="inbox_categories_subtitle">Clasifica el correo entrante en Principal, Social, Promociones y Novedades</string>
     <string name="conversation_order_label">Orden de la conversación</string>
     <string name="show_message_size">Mostrar el tamaño del mensaje</string>
+    <string name="show_alias_indicators">Mostrar indicadores de alias</string>
+    <string name="show_alias_indicators_subtitle">Marca los mensajes que llegaron a través de uno de tus alias</string>
     <string name="show_message_size_subtitle">Muestra el tamaño de cada correo en la lista</string>
     <string name="force_dark_emails">Forzar el modo oscuro en los correos</string>
     <string name="force_dark_emails_subtitle">Mostrar siempre el contenido de los correos en modo oscuro</string>
@@ -2349,12 +2351,13 @@
     <string name="manage_family">Gestionar la familia</string>
     <string name="manage_family_subtitle">Consulta los miembros y gestiona tu plan en astermail.org</string>
     <string name="no_family_plan">Sin plan familiar</string>
-    <string name="no_family_plan_subtitle">Un plan familiar te deja compartir almacenamiento y funciones con hasta 5 miembros.</string>
+    <string name="no_family_plan_subtitle">Un plan familiar cubre hasta 6 miembros, con cuentas separadas y almacenamiento compartido.</string>
     <string name="view_plans">Ver planes</string>
     <string name="kids_reserved_addresses">Direcciones reservadas para peques</string>
     <string name="kids_reserved_subtitle">Reserva una dirección para tu hijo o hija. Comparte el enlace de activación para que termine la configuración con su propia contraseña.</string>
     <string name="kids_seats_used">%1$d de %2$d plazas familiares usadas</string>
     <string name="kids_seats_free">%1$d plazas disponibles</string>
+    <string name="kids_seats_breakdown">%1$d miembros, %2$d invitaciones, %3$d direcciones reservadas, %4$d miembros eliminados hace poco</string>
     <string name="kids_no_reservations">Aún no hay direcciones reservadas. Reserva una en astermail.org.</string>
     <string name="kids_reserve_on_web">Reservar en la web</string>
     <string name="kids_status_reserved">Reservada</string>

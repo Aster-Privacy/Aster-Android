@@ -2029,6 +2029,8 @@
     <string name="inbox_categories_subtitle">Сортирует входящие письма по разделам: Основные, Соцсети, Промо и Обновления</string>
     <string name="conversation_order_label">Порядок в переписке</string>
     <string name="show_message_size">Показывать размер письма</string>
+    <string name="show_alias_indicators">Показывать индикаторы псевдонимов</string>
+    <string name="show_alias_indicators_subtitle">Отмечать письма, пришедшие на один из ваших псевдонимов</string>
     <string name="show_message_size_subtitle">Показывает размер каждого письма в списке</string>
     <string name="force_dark_emails">Всегда тёмная тема для писем</string>
     <string name="force_dark_emails_subtitle">Показывать содержимое писем только в тёмной теме</string>
@@ -2354,12 +2356,13 @@
     <string name="manage_family">Управление семьёй</string>
     <string name="manage_family_subtitle">Смотрите участников и управляйте тарифом на astermail.org</string>
     <string name="no_family_plan">Семейный тариф не подключён</string>
-    <string name="no_family_plan_subtitle">Семейный тариф позволяет делить место и возможности с 5 участниками.</string>
+    <string name="no_family_plan_subtitle">Семейный тариф рассчитан на 6 участников: отдельные аккаунты и общее место.</string>
     <string name="view_plans">Посмотреть тарифы</string>
     <string name="kids_reserved_addresses">Адреса, забронированные для детей</string>
     <string name="kids_reserved_subtitle">Забронируйте адрес для ребёнка. Передайте ссылку активации, чтобы он завершил настройку со своим паролем.</string>
     <string name="kids_seats_used">Занято мест: %1$d из %2$d</string>
     <string name="kids_seats_free">доступно мест: %1$d</string>
+    <string name="kids_seats_breakdown">%1$d участников, %2$d приглашений, %3$d зарезервированных адресов, %4$d недавно удалённых участников</string>
     <string name="kids_no_reservations">Забронированных адресов пока нет. Забронируйте на astermail.org.</string>
     <string name="kids_reserve_on_web">Забронировать в вебе</string>
     <string name="kids_status_reserved">Забронирован</string>

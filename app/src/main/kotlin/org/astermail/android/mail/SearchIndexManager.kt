@@ -338,6 +338,7 @@ class SearchIndexManager @Inject constructor(
                 display_sender_name = item.display_sender_name,
                 display_sender_email = item.display_sender_email,
                 to_addresses = item.to_addresses.joinToString(",").ifBlank { null },
+                routing_token = item.routing_token,
             )
         }
         mutex.withLock {

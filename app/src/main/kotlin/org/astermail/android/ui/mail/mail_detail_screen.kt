@@ -1951,6 +1951,14 @@ internal fun expanded_message(
                         },
                     ),
                 )
+                val header_received_on = remember(msg) {
+                    resolve_received_on_address(msg.raw_headers, msg.to_addresses + msg.cc_addresses, msg.sender_email)
+                }
+                val header_alias_label = alias_indicator_store.label_for(header_received_on)
+                if (header_alias_label != null) {
+                    Spacer(Modifier.height(4.dp))
+                    alias_chip(header_alias_label, modifier = Modifier.widthIn(max = 200.dp))
+                }
             }
             Spacer(Modifier.width(AsterSpacing.sm))
             Column(horizontalAlignment = Alignment.End) {

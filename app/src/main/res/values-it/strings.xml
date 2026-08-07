@@ -2023,6 +2023,8 @@
     <string name="inbox_categories_subtitle">Ordina la posta in arrivo in Principale, Social, Promozioni e Aggiornamenti</string>
     <string name="conversation_order_label">Ordine della conversazione</string>
     <string name="show_message_size">Mostra la dimensione del messaggio</string>
+    <string name="show_alias_indicators">Mostra indicatori alias</string>
+    <string name="show_alias_indicators_subtitle">Contrassegna i messaggi arrivati tramite uno dei tuoi alias</string>
     <string name="show_message_size_subtitle">Mostra la dimensione di ogni email nell\'elenco</string>
     <string name="force_dark_emails">Forza la modalità scura nelle email</string>
     <string name="force_dark_emails_subtitle">Mostra sempre il contenuto delle email in modalità scura</string>
@@ -2348,12 +2350,13 @@
     <string name="manage_family">Gestisci la famiglia</string>
     <string name="manage_family_subtitle">Guarda i membri e gestisci il piano su astermail.org</string>
     <string name="no_family_plan">Nessun piano famiglia</string>
-    <string name="no_family_plan_subtitle">Con un piano famiglia condividi spazio e funzioni con un massimo di 5 membri.</string>
+    <string name="no_family_plan_subtitle">Un piano famiglia copre fino a 6 membri, con account separati e spazio condiviso.</string>
     <string name="view_plans">Vedi i piani</string>
     <string name="kids_reserved_addresses">Indirizzi riservati ai bambini</string>
     <string name="kids_reserved_subtitle">Riserva un indirizzo per tuo figlio. Condividi il link di attivazione così potrà completare la configurazione con una password sua.</string>
     <string name="kids_seats_used">%1$d di %2$d posti famiglia usati</string>
     <string name="kids_seats_free">%1$d posti disponibili</string>
+    <string name="kids_seats_breakdown">%1$d membri, %2$d inviti, %3$d indirizzi riservati, %4$d membri rimossi di recente</string>
     <string name="kids_no_reservations">Ancora nessun indirizzo riservato. Riservane uno su astermail.org.</string>
     <string name="kids_reserve_on_web">Riserva sul web</string>
     <string name="kids_status_reserved">Riservato</string>

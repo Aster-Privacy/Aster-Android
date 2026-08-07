@@ -2020,6 +2020,8 @@
     <string name="inbox_categories_subtitle">받은 메일을 기본, 소셜, 프로모션, 알림으로 나눕니다</string>
     <string name="conversation_order_label">대화 정렬 순서</string>
     <string name="show_message_size">메일 크기 표시</string>
+    <string name="show_alias_indicators">별칭 표시 보기</string>
+    <string name="show_alias_indicators_subtitle">별칭으로 도착한 메시지에 표시합니다</string>
     <string name="show_message_size_subtitle">목록에 각 메일의 크기를 표시합니다</string>
     <string name="force_dark_emails">메일에 어두운 모드 강제 적용</string>
     <string name="force_dark_emails_subtitle">메일 내용을 항상 어두운 모드로 표시합니다</string>
@@ -2345,12 +2347,13 @@
     <string name="manage_family">가족 관리</string>
     <string name="manage_family_subtitle">astermail.org에서 구성원을 보고 요금제를 관리하세요</string>
     <string name="no_family_plan">가족 요금제 미사용</string>
-    <string name="no_family_plan_subtitle">가족 요금제로 최대 5명과 저장 공간과 기능을 함께 쓸 수 있습니다.</string>
+    <string name="no_family_plan_subtitle">가족 요금제는 구성원 최대 6명을 지원하며, 계정은 각자 따로 쓰고 저장 공간은 함께 씁니다.</string>
     <string name="view_plans">요금제 보기</string>
     <string name="kids_reserved_addresses">아이용으로 잡아 둔 주소</string>
     <string name="kids_reserved_subtitle">자녀를 위해 주소를 잡아 두세요. 등록 링크를 전달하면 아이가 자기 비밀번호로 설정을 마칠 수 있습니다.</string>
     <string name="kids_seats_used">가족 자리 %2$d개 중 %1$d개 사용</string>
     <string name="kids_seats_free">%1$d개 사용 가능</string>
+    <string name="kids_seats_breakdown">구성원 %1$d명, 초대 %2$d건, 예약 주소 %3$d건, 최근 삭제한 구성원 %4$d명</string>
     <string name="kids_no_reservations">아직 잡아 둔 주소가 없습니다. astermail.org에서 하나 잡아 두세요.</string>
     <string name="kids_reserve_on_web">웹에서 잡아 두기</string>
     <string name="kids_status_reserved">예약됨</string>

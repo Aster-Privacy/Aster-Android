@@ -2020,6 +2020,8 @@
     <string name="inbox_categories_subtitle">受信メールをメイン、ソーシャル、プロモーション、お知らせに振り分けます</string>
     <string name="conversation_order_label">スレッドの並び順</string>
     <string name="show_message_size">メールのサイズを表示</string>
+    <string name="show_alias_indicators">エイリアスインジケーターを表示</string>
+    <string name="show_alias_indicators_subtitle">エイリアス宛てに届いたメッセージに印を付けます</string>
     <string name="show_message_size_subtitle">一覧に各メールのサイズを表示します</string>
     <string name="force_dark_emails">メールを常にダークで表示</string>
     <string name="force_dark_emails_subtitle">メール本文を常にダークモードで表示します</string>
@@ -2345,12 +2347,13 @@
     <string name="manage_family">ファミリーを管理</string>
     <string name="manage_family_subtitle">メンバーの確認とプランの管理は astermail.org で行えます</string>
     <string name="no_family_plan">ファミリープランに未加入</string>
-    <string name="no_family_plan_subtitle">ファミリープランなら、最大 5 人と容量や機能を共有できます。</string>
+    <string name="no_family_plan_subtitle">ファミリープランはメンバー 6 人まで対応し、アカウントは別々のまま容量を共有できます。</string>
     <string name="view_plans">プランを見る</string>
     <string name="kids_reserved_addresses">子ども用に確保したアドレス</string>
     <string name="kids_reserved_subtitle">お子さま用のアドレスを確保できます。受け取りリンクを渡せば、本人のパスワードで設定を終えられます。</string>
     <string name="kids_seats_used">ファミリー枠 %2$d 件中 %1$d 件を使用</string>
     <string name="kids_seats_free">空き %1$d 件</string>
+    <string name="kids_seats_breakdown">メンバー %1$d 人、招待 %2$d 件、予約アドレス %3$d 件、最近削除したメンバー %4$d 人</string>
     <string name="kids_no_reservations">確保したアドレスはまだありません。astermail.org で確保してください。</string>
     <string name="kids_reserve_on_web">ウェブで確保</string>
     <string name="kids_status_reserved">確保済み</string>

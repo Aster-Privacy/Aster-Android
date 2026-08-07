@@ -1721,18 +1721,30 @@ fun KidsReservedScreen(on_back: () -> Unit) {
     detail_scaffold(title = stringResource(R.string.kids_reserved_addresses), on_back = on_back) {
         section_label(stringResource(R.string.kids_reserved_subtitle))
 
-        if (state.family_max_members > 0) {
+        val seats = state.family_seats
+        if (seats != null && seats.max_members > 0) {
             Text(
-                text = stringResource(R.string.kids_seats_used, state.family_seats_used, state.family_max_members) +
+                text = stringResource(R.string.kids_seats_used, seats.seats_used, seats.max_members) +
                     " · " +
-                    stringResource(
-                        R.string.kids_seats_free,
-                        (state.family_max_members - state.family_seats_used).coerceAtLeast(0),
-                    ),
+                    stringResource(R.string.kids_seats_free, seats.seats_remaining),
                 color = colors.text_tertiary,
                 fontSize = 12.sp,
-                modifier = androidx.compose.ui.Modifier.padding(bottom = AsterSpacing.sm),
             )
+            val breakdown = seats.breakdown
+            if (breakdown != null) {
+                Text(
+                    text = stringResource(
+                        R.string.kids_seats_breakdown,
+                        breakdown.active_members,
+                        breakdown.pending_invites,
+                        breakdown.reserved_addresses,
+                        breakdown.grace_members,
+                    ),
+                    color = colors.text_tertiary,
+                    fontSize = 11.sp,
+                    modifier = androidx.compose.ui.Modifier.padding(bottom = AsterSpacing.sm),
+                )
+            }
         }
 
         AsterButton(

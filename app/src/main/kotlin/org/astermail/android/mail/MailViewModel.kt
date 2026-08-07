@@ -2871,6 +2871,7 @@ fun org.astermail.android.storage.search.DecryptedMailEntity.to_inbox_item(): In
     display_sender_name = display_sender_name,
     display_sender_email = display_sender_email,
     to_addresses = to_addresses?.split(",")?.filter { it.isNotBlank() } ?: emptyList(),
+    routing_token = routing_token,
     raw_item = org.astermail.android.api.mail.MailItem(id = id),
 )
 

@@ -128,6 +128,7 @@ object StorageModule {
             AsterDatabase.migration_5_6,
             AsterDatabase.migration_6_7,
             AsterDatabase.migration_7_8,
+            AsterDatabase.migration_8_9,
         )
         builder.fallbackToDestructiveMigration()
         val db = builder.build()

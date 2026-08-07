@@ -2023,6 +2023,8 @@
     <string name="inbox_categories_subtitle">Gelen postaları Birincil, Sosyal, Tanıtım ve Güncellemeler olarak ayırır</string>
     <string name="conversation_order_label">Sohbet sıralaması</string>
     <string name="show_message_size">İleti boyutunu göster</string>
+    <string name="show_alias_indicators">Takma ad göstergelerini göster</string>
+    <string name="show_alias_indicators_subtitle">Takma adlarınızdan birine gelen iletileri işaretler</string>
     <string name="show_message_size_subtitle">Listede her e-postanın boyutunu gösterir</string>
     <string name="force_dark_emails">E-postalarda koyu modu zorla</string>
     <string name="force_dark_emails_subtitle">E-posta içeriğini her zaman koyu modda göster</string>
@@ -2348,12 +2350,13 @@
     <string name="manage_family">Aileyi yönet</string>
     <string name="manage_family_subtitle">Üyeleri gör ve planını astermail.org üzerinden yönet</string>
     <string name="no_family_plan">Aile planında değilsin</string>
-    <string name="no_family_plan_subtitle">Aile planı, depolamayı ve özellikleri en fazla 5 kişiyle paylaşmanı sağlar.</string>
+    <string name="no_family_plan_subtitle">Aile planı en fazla 6 üyeyi kapsar; hesaplar ayrı, depolama ortaktır.</string>
     <string name="view_plans">Planları gör</string>
     <string name="kids_reserved_addresses">Çocuklar için ayrılmış adresler</string>
     <string name="kids_reserved_subtitle">Çocuğun için bir adres ayır. Devralma bağlantısını paylaş ki kurulumu kendi parolasıyla tamamlasın.</string>
     <string name="kids_seats_used">%2$d aile yerinin %1$d tanesi dolu</string>
     <string name="kids_seats_free">%1$d yer müsait</string>
+    <string name="kids_seats_breakdown">%1$d üye, %2$d davet, %3$d ayrılmış adres, %4$d yakında çıkarılan üye</string>
     <string name="kids_no_reservations">Henüz ayrılmış adres yok. astermail.org üzerinden bir tane ayır.</string>
     <string name="kids_reserve_on_web">Web\'de ayır</string>
     <string name="kids_status_reserved">Ayrıldı</string>

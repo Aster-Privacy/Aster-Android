@@ -275,6 +275,7 @@ data class InboxItem(
     val display_sender_name: String? = null,
     val display_sender_email: String? = null,
     val to_addresses: List<String> = emptyList(),
+    val routing_token: String? = null,
     val raw_item: MailItem,
 )
 
@@ -1462,6 +1463,11 @@ class MailRepository @Inject constructor(
             to_addresses = envelope?.let {
                 org.astermail.android.ui.mail.collect_recipient_addresses(it.to, it.cc, it.raw_headers)
             } ?: emptyList(),
+            routing_token = if (item.item_type == "received") {
+                item.routing_token?.takeIf { it.isNotBlank() }
+            } else {
+                null
+            },
             raw_item = if (meta != null) item.copy(metadata = meta) else item,
         )
     }

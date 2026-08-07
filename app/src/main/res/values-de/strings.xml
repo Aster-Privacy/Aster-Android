@@ -2024,6 +2024,8 @@
     <string name="inbox_categories_subtitle">Eingehende Mail nach Allgemein, Sozial, Angebote und Updates sortieren</string>
     <string name="conversation_order_label">Reihenfolge der Unterhaltung</string>
     <string name="show_message_size">Nachrichtengröße anzeigen</string>
+    <string name="show_alias_indicators">Alias-Kennzeichnung anzeigen</string>
+    <string name="show_alias_indicators_subtitle">Nachrichten kennzeichnen, die über einen Ihrer Aliasse eingegangen sind</string>
     <string name="show_message_size_subtitle">Zeigt die Größe jeder E-Mail in der Liste an</string>
     <string name="force_dark_emails">Dunkelmodus für E-Mails erzwingen</string>
     <string name="force_dark_emails_subtitle">E-Mail-Inhalte immer im Dunkelmodus darstellen</string>
@@ -2349,12 +2351,13 @@
     <string name="manage_family">Familie verwalten</string>
     <string name="manage_family_subtitle">Mitglieder ansehen und Tarif auf astermail.org verwalten</string>
     <string name="no_family_plan">Kein Familientarif</string>
-    <string name="no_family_plan_subtitle">Mit einem Familientarif teilst du Speicher und Funktionen mit bis zu 5 Mitgliedern.</string>
+    <string name="no_family_plan_subtitle">Ein Familientarif umfasst bis zu 6 Mitglieder mit getrennten Konten und gemeinsamem Speicher.</string>
     <string name="view_plans">Tarife ansehen</string>
     <string name="kids_reserved_addresses">Reservierte Adressen für Kinder</string>
     <string name="kids_reserved_subtitle">Reserviere eine Adresse für dein Kind. Teile den Einlöse-Link, damit es die Einrichtung mit eigenem Passwort abschließt.</string>
     <string name="kids_seats_used">%1$d von %2$d Familienplätzen belegt</string>
     <string name="kids_seats_free">%1$d Plätze verfügbar</string>
+    <string name="kids_seats_breakdown">%1$d Mitglieder, %2$d Einladungen, %3$d reservierte Adressen, %4$d kürzlich entfernte Mitglieder</string>
     <string name="kids_no_reservations">Noch keine reservierten Adressen. Reserviere eine auf astermail.org.</string>
     <string name="kids_reserve_on_web">Im Web reservieren</string>
     <string name="kids_status_reserved">Reserviert</string>

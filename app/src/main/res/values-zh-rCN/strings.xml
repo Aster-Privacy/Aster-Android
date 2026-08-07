@@ -2020,6 +2020,8 @@
     <string name="inbox_categories_subtitle">把收到的邮件分入主要、社交、推广和动态</string>
     <string name="conversation_order_label">会话排序</string>
     <string name="show_message_size">显示邮件大小</string>
+    <string name="show_alias_indicators">显示别名标识</string>
+    <string name="show_alias_indicators_subtitle">标记通过您的别名收到的邮件</string>
     <string name="show_message_size_subtitle">在列表中显示每封邮件的大小</string>
     <string name="force_dark_emails">强制以深色显示邮件</string>
     <string name="force_dark_emails_subtitle">始终以深色模式渲染邮件内容</string>
@@ -2345,12 +2347,13 @@
     <string name="manage_family">管理家庭成员</string>
     <string name="manage_family_subtitle">在 astermail.org 查看成员并管理套餐</string>
     <string name="no_family_plan">尚未加入家庭套餐</string>
-    <string name="no_family_plan_subtitle">家庭套餐可与最多 5 位成员共享容量和功能。</string>
+    <string name="no_family_plan_subtitle">家庭套餐最多支持 6 名成员，各自独立账号，共享存储空间。</string>
     <string name="view_plans">查看套餐</string>
     <string name="kids_reserved_addresses">为孩子预留的地址</string>
     <string name="kids_reserved_subtitle">为孩子预留一个地址。把认领链接发给他，他就能用自己的密码完成设置。</string>
     <string name="kids_seats_used">家庭名额已用 %1$d / %2$d</string>
     <string name="kids_seats_free">剩余 %1$d 个名额</string>
+    <string name="kids_seats_breakdown">成员 %1$d 名、邀请 %2$d 个、预留地址 %3$d 个、最近移除的成员 %4$d 名</string>
     <string name="kids_no_reservations">还没有预留地址。请在 astermail.org 预留一个。</string>
     <string name="kids_reserve_on_web">在网页端预留</string>
     <string name="kids_status_reserved">已预留</string>

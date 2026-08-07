@@ -1364,6 +1364,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         settings_vm.load_tags(force = false)
         settings_vm.load_aliases()
         settings_vm.load_custom_domain_addresses()
+        settings_vm.load_ghost_aliases()
         settings_vm.load_preferences()
         mail_vm.load_stats()
     }
@@ -1393,6 +1394,42 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
 
     val prefs = settings_state.preferences
     val categories_enabled = prefs?.inbox_categories_enabled ?: false
+
+    androidx.compose.runtime.LaunchedEffect(prefs?.show_alias_indicators) {
+        org.astermail.android.ui.mail.alias_indicator_store.set_enabled(
+            prefs?.show_alias_indicators ?: true,
+        )
+    }
+
+    androidx.compose.runtime.LaunchedEffect(
+        settings_state.aliases,
+        settings_state.ghost_aliases,
+    ) {
+        val alias_entries = settings_state.aliases
+            .filterNot { it.decryption_failed }
+            .map {
+                org.astermail.android.ui.mail.AliasLabelEntry(
+                    it.address,
+                    it.encrypted_display_name,
+                    it.alias_address_hash,
+                )
+            }
+        val ghost_entries = settings_state.ghost_aliases
+            .filterNot { it.decryption_failed || it.decrypted_address.isBlank() }
+            .map {
+                org.astermail.android.ui.mail.AliasLabelEntry(
+                    it.decrypted_address,
+                    address_hash = it.alias_address_hash,
+                )
+            }
+        val entries = alias_entries + ghost_entries
+        org.astermail.android.ui.mail.alias_indicator_store.set_labels(
+            org.astermail.android.ui.mail.build_alias_label_map(entries),
+        )
+        org.astermail.android.ui.mail.alias_indicator_store.set_token_labels(
+            org.astermail.android.ui.mail.build_alias_token_label_map(entries),
+        )
+    }
     val plan_vm_inbox: org.astermail.android.billing.PlanLimitsViewModel = hiltViewModel()
     val plan_state_inbox by plan_vm_inbox.state.collectAsStateWithLifecycle()
     val custom_category_limit =
