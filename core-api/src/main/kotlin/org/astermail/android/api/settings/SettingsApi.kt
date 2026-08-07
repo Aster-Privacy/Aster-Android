@@ -348,6 +348,51 @@ data class CreateAliasRequest(
 )
 
 @Serializable
+data class BulkCreateAliasItem(
+    val encrypted_local_part: String,
+    val local_part_nonce: String,
+    val alias_address_hash: String,
+    val routing_address_hash: String? = null,
+    val domain: String,
+    val encrypted_display_name: String? = null,
+    val display_name_nonce: String? = null,
+    val is_enabled: Boolean? = null,
+)
+
+@Serializable
+data class BulkCreateAliasRequest(
+    val aliases: List<BulkCreateAliasItem>,
+)
+
+@Serializable
+data class BulkCreateAliasResponse(
+    val created: Int = 0,
+    val failed: Int = 0,
+)
+
+@Serializable
+data class BulkAddAddressItem(
+    val encrypted_local_part: String,
+    val local_part_nonce: String,
+    val local_part_hash: String,
+    val address_routing_hash: String,
+    val encrypted_display_name: String? = null,
+    val display_name_nonce: String? = null,
+    val is_enabled: Boolean? = null,
+)
+
+@Serializable
+data class BulkAddAddressesRequest(
+    val addresses: List<BulkAddAddressItem>,
+)
+
+@Serializable
+data class BulkAddAddressesResponse(
+    val created: Int = 0,
+    val failed: Int = 0,
+)
+
+@Serializable
 data class UpdateAliasRequest(
     val is_enabled: Boolean? = null,
     val never_inbox: Boolean? = null,
@@ -378,6 +423,8 @@ data class CreateDomainAddressResponse(
 @Serializable
 data class UpdateDomainAddressRequest(
     val is_enabled: Boolean? = null,
+    val encrypted_display_name: String? = null,
+    val display_name_nonce: String? = null,
 )
 
 @Serializable
@@ -503,6 +550,8 @@ interface SettingsApi {
     suspend fun purge_deleted_alias(deleted_id: String)
     suspend fun empty_deleted_aliases()
     suspend fun create_alias(request: CreateAliasRequest): CreateAliasResponse
+    suspend fun bulk_create_aliases(request: BulkCreateAliasRequest): BulkCreateAliasResponse
+    suspend fun bulk_add_domain_addresses(domain_id: String, request: BulkAddAddressesRequest): BulkAddAddressesResponse
     suspend fun update_alias(alias_id: String, request: UpdateAliasRequest): Boolean
     suspend fun update_alias_delivery_label(alias_id: String, delivery_label_token: String?): Boolean
     suspend fun update_alias_note(alias_id: String, encrypted_note: String?, note_nonce: String?): Boolean
@@ -709,6 +758,27 @@ class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
 
     override suspend fun create_alias(request: CreateAliasRequest): CreateAliasResponse {
         val response = client.http.post("${client.base_url}/api/addresses/v1/aliases") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun bulk_create_aliases(request: BulkCreateAliasRequest): BulkCreateAliasResponse {
+        val response = client.http.post("${client.base_url}/api/addresses/v1/aliases/bulk-create") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun bulk_add_domain_addresses(
+        domain_id: String,
+        request: BulkAddAddressesRequest,
+    ): BulkAddAddressesResponse {
+        val response = client.http.post("${client.base_url}/api/addresses/v1/domains/$domain_id/bulk-addresses") {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)

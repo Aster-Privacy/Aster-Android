@@ -306,12 +306,12 @@ fun AliasesScreen(
     if (show_create_alias) {
         create_alias_dialog(
             on_dismiss = { show_create_alias = false },
-            on_create = { local_part, domain, token, display_name ->
+            on_create = { local_part, domain, token, display_name, note ->
                 show_create_alias = false
                 scope.launch {
                     val domain_id = domain.domain_id
                     if (domain_id == null) {
-                        vm.create_alias_now(local_part, domain.domain_name, token, display_name)
+                        vm.create_alias_now(local_part, domain.domain_name, token, display_name, note)
                     } else {
                         vm.create_domain_address_now(local_part, domain_id, domain.domain_name, token, display_name)
                     }
@@ -389,6 +389,7 @@ private fun aliases_tab(
     var pending_domain_address_delete by remember { mutableStateOf<Triple<String, String, String>?>(null) }
     var alias_query by remember { mutableStateOf("") }
     var show_export by remember { mutableStateOf(false) }
+    var show_import by remember { mutableStateOf(false) }
     var note_editing by remember { mutableStateOf<Pair<String, String>?>(null) }
     val alias_load_settled = remember_load_settled(state.is_loading)
     val always_expand_aliases = state.alias_preferences?.alias_always_expand == true
@@ -431,6 +432,13 @@ private fun aliases_tab(
                     fontSize = 13.sp,
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = { show_import = true }) {
+                        Text(
+                            stringResource(R.string.alias_import_action),
+                            color = colors.accent_blue,
+                            fontSize = 14.sp,
+                        )
+                    }
                     TextButton(
                         onClick = {
                             if (export_locked) on_upgrade() else show_export = true
@@ -561,6 +569,14 @@ private fun aliases_tab(
             }
         }
       }
+
+        if (show_import) {
+            alias_import_dialog(
+                vm = vm,
+                state = state,
+                on_dismiss = { show_import = false },
+            )
+        }
 
         if (show_export && !export_locked) {
             alias_export_dialog(
@@ -2128,14 +2144,14 @@ private fun dns_record_row(label: String, verified: Boolean) {
     }
 }
 
-private data class AliasDomainOption(
+internal data class AliasDomainOption(
     val domain_name: String,
     val domain_id: String? = null,
 ) {
     val is_platform: Boolean get() = domain_id == null
 }
 
-private fun alias_domain_options(domains: List<CustomDomain>): List<AliasDomainOption> =
+internal fun alias_domain_options(domains: List<CustomDomain>): List<AliasDomainOption> =
     listOf(AliasDomainOption("astermail.org"), AliasDomainOption("aster.cx")) +
         domains
             .filter { it.status == "active" }
@@ -2152,11 +2168,12 @@ private fun resolve_default_alias_domain(
 @Composable
 private fun create_alias_dialog(
     on_dismiss: () -> Unit,
-    on_create: (String, AliasDomainOption, String, String?) -> Unit,
+    on_create: (String, AliasDomainOption, String, String?, String?) -> Unit,
     vm: SettingsViewModel,
 ) {
     var local_part by remember { mutableStateOf("") }
     var display_name by remember { mutableStateOf("") }
+    var note by remember { mutableStateOf("") }
     var selected_domain by remember { mutableStateOf<AliasDomainOption?>(null) }
     var captcha_token by remember { mutableStateOf<String?>(null) }
     var captcha_reset by remember { mutableStateOf(0) }
@@ -2303,6 +2320,16 @@ private fun create_alias_dialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
+                if (active_domain.is_platform) {
+                    AsterTextField(
+                        value = note,
+                        onValueChange = { if (it.length <= 500) note = it },
+                        label = stringResource(R.string.create_alias_note_label),
+                        placeholder = stringResource(R.string.create_alias_note_placeholder),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
                 Box(
                     modifier = Modifier
                         .clip(SquircleShape(8.dp))
@@ -2337,7 +2364,15 @@ private fun create_alias_dialog(
                 enabled = can_create,
                 onClick = {
                     val t = captcha_token
-                    if (can_create && t != null) on_create(local_part, active_domain, t, display_name.trim().ifBlank { null })
+                    if (can_create && t != null) {
+                        on_create(
+                            local_part,
+                            active_domain,
+                            t,
+                            display_name.trim().ifBlank { null },
+                            note.replace(Regex("[\\x00-\\x08\\x0B-\\x1F\\x7F]"), "").trim().ifBlank { null },
+                        )
+                    }
                 },
             )
         },

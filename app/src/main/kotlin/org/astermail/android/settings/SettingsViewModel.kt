@@ -119,6 +119,10 @@ import org.astermail.android.api.settings.AliasPreferences
 import org.astermail.android.api.settings.AllowSenderRequest
 import org.astermail.android.api.settings.AllowedSenderInfo
 import org.astermail.android.api.settings.BlockSenderRequest
+import org.astermail.android.api.settings.BulkAddAddressItem
+import org.astermail.android.api.settings.BulkAddAddressesRequest
+import org.astermail.android.api.settings.BulkCreateAliasItem
+import org.astermail.android.api.settings.BulkCreateAliasRequest
 import org.astermail.android.api.settings.BlockedSenderInfo
 import org.astermail.android.api.settings.CheckAliasAvailabilityRequest
 import org.astermail.android.api.settings.CreateAliasRequest
@@ -257,6 +261,7 @@ private const val PREFERENCES_TTL_MS = 30_000L
 private const val PROFILE_TTL_MS = 60_000L
 private const val LIST_TTL_MS = 60_000L
 private const val MAX_ALIAS_WEBSITES = 10
+private const val IMPORT_BATCH_SIZE = 100
 private const val MAX_WEBSITE_URL_LENGTH = 200
 
 @HiltViewModel
@@ -2208,12 +2213,23 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    suspend fun create_alias_now(local_part: String, domain: String, captcha_token: String? = null, display_name: String? = null): Boolean {
+    suspend fun create_alias_now(
+        local_part: String,
+        domain: String,
+        captcha_token: String? = null,
+        display_name: String? = null,
+        note: String? = null,
+    ): Boolean {
         return try {
             val (enc_local, local_nonce) = encrypt_alias_field(local_part.lowercase())
             val addr_hash = compute_alias_address_hash(local_part.lowercase(), domain)
             val routing_hash = compute_routing_address_hash(local_part.lowercase(), domain)
             val name_pair = display_name?.trim()?.takeIf { it.isNotBlank() }?.let { encrypt_alias_field(it) }
+            val note_pair = note
+                ?.replace(Regex("[\\x00-\\x08\\x0B-\\x1F\\x7F]"), "")
+                ?.trim()
+                ?.takeIf { it.isNotBlank() }
+                ?.let { encrypt_alias_field(it) }
             settings_api.create_alias(
                 CreateAliasRequest(
                     encrypted_local_part = enc_local,
@@ -2223,6 +2239,8 @@ class SettingsViewModel @Inject constructor(
                     domain = domain,
                     encrypted_display_name = name_pair?.first,
                     display_name_nonce = name_pair?.second,
+                    encrypted_note = note_pair?.first,
+                    note_nonce = note_pair?.second,
                     captcha_token = captcha_token,
                 )
             )
@@ -2259,6 +2277,145 @@ class SettingsViewModel @Inject constructor(
             _state.value = _state.value.copy(action_result = user_facing_error(t))
             false
         }
+    }
+
+    suspend fun import_aliases(
+        to_create: List<ImportPreviewRow>,
+        to_update: List<ImportPreviewRow>,
+        on_progress: (Int) -> Unit,
+    ): Pair<Int, Int> {
+        var created = 0
+        var failed = 0
+        var processed = 0
+
+        val system_rows = to_create.filter { SYSTEM_ALIAS_DOMAINS.contains(it.domain) }
+        val custom_rows = to_create.filterNot { SYSTEM_ALIAS_DOMAINS.contains(it.domain) }
+
+        if (system_rows.isNotEmpty()) {
+            val items = system_rows.map { row ->
+                val normalized = row.local_part.lowercase().trim()
+                val (enc_local, local_nonce) = encrypt_alias_field(normalized)
+                val name_pair = row.display_name?.takeIf { it.isNotBlank() }?.let { encrypt_alias_field(it) }
+                BulkCreateAliasItem(
+                    encrypted_local_part = enc_local,
+                    local_part_nonce = local_nonce,
+                    alias_address_hash = compute_alias_address_hash(normalized, row.domain),
+                    routing_address_hash = compute_routing_address_hash(normalized, row.domain),
+                    domain = row.domain,
+                    encrypted_display_name = name_pair?.first,
+                    display_name_nonce = name_pair?.second,
+                    is_enabled = row.enabled,
+                )
+            }
+            items.chunked(IMPORT_BATCH_SIZE).forEach { batch ->
+                try {
+                    val response = settings_api.bulk_create_aliases(BulkCreateAliasRequest(batch))
+                    created += response.created
+                    failed += response.failed
+                } catch (_: Throwable) {
+                    failed += batch.size
+                }
+                processed += batch.size
+                on_progress(processed)
+            }
+        }
+
+        custom_rows.groupBy { it.domain }.forEach { (domain_name, rows) ->
+            val domain_id = resolve_domain_id(domain_name)
+            if (domain_id == null) {
+                failed += rows.size
+                processed += rows.size
+                on_progress(processed)
+                return@forEach
+            }
+            val items = rows.map { row ->
+                val normalized = row.local_part.lowercase().trim()
+                val (enc_local, local_nonce) = encrypt_alias_field(normalized)
+                val name_pair = row.display_name?.takeIf { it.isNotBlank() }?.let { encrypt_alias_field(it) }
+                BulkAddAddressItem(
+                    encrypted_local_part = enc_local,
+                    local_part_nonce = local_nonce,
+                    local_part_hash = compute_domain_address_hash(normalized, domain_name),
+                    address_routing_hash = compute_domain_address_routing_hash(normalized, domain_name),
+                    encrypted_display_name = name_pair?.first,
+                    display_name_nonce = name_pair?.second,
+                    is_enabled = row.enabled,
+                )
+            }
+            items.chunked(IMPORT_BATCH_SIZE).forEach { batch ->
+                try {
+                    val response = settings_api.bulk_add_domain_addresses(
+                        domain_id,
+                        BulkAddAddressesRequest(batch),
+                    )
+                    created += response.created
+                    failed += response.failed
+                } catch (_: Throwable) {
+                    failed += batch.size
+                }
+                processed += batch.size
+                on_progress(processed)
+            }
+        }
+
+        to_update.forEach { row ->
+            val existing_id = row.existing_id
+            if (existing_id == null) {
+                failed += 1
+            } else {
+                val enabled = row.enabled ?: true
+                val existing_domain_id = row.existing_domain_id
+                val name_pair = row.display_name
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { encrypt_alias_field(it) }
+
+                suspend fun send_update(with_name: Boolean) {
+                    if (existing_domain_id != null) {
+                        settings_api.update_domain_address(
+                            existing_domain_id,
+                            existing_id,
+                            UpdateDomainAddressRequest(
+                                is_enabled = enabled,
+                                encrypted_display_name = name_pair?.first?.takeIf { with_name },
+                                display_name_nonce = name_pair?.second?.takeIf { with_name },
+                            ),
+                        )
+                    } else {
+                        settings_api.update_alias(
+                            existing_id,
+                            UpdateAliasRequest(
+                                is_enabled = enabled,
+                                encrypted_display_name = name_pair?.first?.takeIf { with_name },
+                                display_name_nonce = name_pair?.second?.takeIf { with_name },
+                            ),
+                        )
+                    }
+                }
+
+                try {
+                    send_update(with_name = true)
+                    created += 1
+                } catch (_: Throwable) {
+                    if (name_pair == null) {
+                        failed += 1
+                    } else {
+                        try {
+                            send_update(with_name = false)
+                            created += 1
+                        } catch (_: Throwable) {
+                            failed += 1
+                        }
+                    }
+                }
+            }
+            processed += 1
+            on_progress(processed)
+        }
+
+        load_aliases(force = true)
+        load_custom_domain_addresses()
+
+        return created to failed
     }
 
     private fun resolve_domain_id(domain_name: String): String? =
