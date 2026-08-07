@@ -245,6 +245,41 @@ object EmailHtmlSanitizer {
         RegexOption.IGNORE_CASE,
     )
 
+    fun strip_css_comments(css: String): String {
+        if (!css.contains("/*")) return css
+        val out = StringBuilder(css.length)
+        var index = 0
+        var quote: Char? = null
+        while (index < css.length) {
+            val ch = css[index]
+            if (quote != null) {
+                out.append(ch)
+                if (ch == '\\' && index + 1 < css.length) {
+                    out.append(css[index + 1])
+                    index += 2
+                    continue
+                }
+                if (ch == quote) quote = null
+                index++
+                continue
+            }
+            if (ch == '"' || ch == '\'') {
+                quote = ch
+                out.append(ch)
+                index++
+                continue
+            }
+            if (ch == '/' && index + 1 < css.length && css[index + 1] == '*') {
+                val end = css.indexOf("*/", index + 2)
+                index = if (end < 0) css.length else end + 2
+                continue
+            }
+            out.append(ch)
+            index++
+        }
+        return out.toString()
+    }
+
     private val solid_bg_color = Regex(
         """background(?:-color)?\s*:\s*[^;]*(#[0-9a-f]{3,8}|rgb|hsl|\b(?:black|white|red|green|blue|gray|grey|silver|navy|teal|maroon|purple|orange|yellow)\b)""",
         RegexOption.IGNORE_CASE,
@@ -260,14 +295,14 @@ object EmailHtmlSanitizer {
             }
         }
         for (el in doc.select("[style]")) {
-            val style = el.attr("style")
+            val style = strip_css_comments(el.attr("style"))
             if (css_remote_url.containsMatchIn(style)) {
                 el.attr("style", css_remote_url.replace(style, "none"))
                 apply_bg_placeholder(el)
             }
         }
         for (st in doc.select("style")) {
-            val css = st.data()
+            val css = strip_css_comments(st.data())
             if (css_remote_url.containsMatchIn(css)) st.html(css_remote_url.replace(css, "none"))
         }
         return doc.body().html()
@@ -444,7 +479,7 @@ object EmailHtmlSanitizer {
     }
 
     private fun sanitize_style_value(css: String): String {
-        var out = css
+        var out = strip_css_comments(css)
         out = out.replace("<", "")
         out = out.replace(Regex("expression\\s*\\(", RegexOption.IGNORE_CASE), "blocked(")
         out = out.replace(Regex("javascript\\s*:", RegexOption.IGNORE_CASE), "blocked:")
@@ -459,7 +494,7 @@ object EmailHtmlSanitizer {
     private val font_face_block = Regex("@font-face\\s*\\{[^}]*\\}", RegexOption.IGNORE_CASE)
 
     private fun sanitize_css_block(css: String, options: SanitizeOptions = SanitizeOptions()): String {
-        var out = css
+        var out = strip_css_comments(css)
         if (options.block_remote_css) {
             out = out.replace(Regex("@import\\b[^;]*;?", RegexOption.IGNORE_CASE), "")
         }

@@ -36,15 +36,22 @@ object TranslationAssets {
     private const val MODEL_RELAY_BASE = "https://relay.astermail.org/models/bergamot/v1"
     private const val CACHE_DIR = "bergamot_models"
     private const val MAX_CACHE_BYTES = 600L * 1024L * 1024L
+    private const val MAX_MODEL_BYTES = 128L * 1024L * 1024L
     private const val EVICTION_GRACE_MS = 60_000L
 
     private val model_lock = Any()
 
-    fun serve(context: Context, host: String?, path: String?): WebResourceResponse? {
+    fun serve(
+        context: Context,
+        host: String?,
+        path: String?,
+        allow_models: Boolean,
+    ): WebResourceResponse? {
         if (host != CONTENT_HOST || path == null) return null
         return when {
             path.startsWith(ASSET_PREFIX) -> serve_asset(context, path.removePrefix(ASSET_PREFIX))
-            path.startsWith(MODEL_PREFIX) -> serve_model(context, path.removePrefix(MODEL_PREFIX))
+            path.startsWith(MODEL_PREFIX) ->
+                if (allow_models) serve_model(context, path.removePrefix(MODEL_PREFIX)) else null
             else -> null
         }
     }
@@ -104,15 +111,32 @@ object TranslationAssets {
                 requestMethod = "GET"
             }
             if (connection.responseCode != HttpURLConnection.HTTP_OK) return false
+            if (connection.contentLengthLong > MAX_MODEL_BYTES) return false
             val tmp = File(target.parentFile, target.name + ".part")
-            connection.inputStream.use { input ->
-                tmp.outputStream().use { output -> input.copyTo(output) }
+            val copied = connection.inputStream.use { input ->
+                tmp.outputStream().use { output -> copy_capped(input, output) }
+            }
+            if (!copied) {
+                tmp.delete()
+                return false
             }
             tmp.renameTo(target)
         } catch (_: Throwable) {
             false
         } finally {
             connection?.disconnect()
+        }
+    }
+
+    private fun copy_capped(input: java.io.InputStream, output: java.io.OutputStream): Boolean {
+        val buffer = ByteArray(64 * 1024)
+        var total = 0L
+        while (true) {
+            val read = input.read(buffer)
+            if (read < 0) return true
+            total += read
+            if (total > MAX_MODEL_BYTES) return false
+            output.write(buffer, 0, read)
         }
     }
 

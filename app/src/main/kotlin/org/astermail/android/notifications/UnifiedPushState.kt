@@ -45,7 +45,8 @@ import org.unifiedpush.android.connector.UnifiedPush
 
 object UnifiedPushState {
 
-    private const val PREFS_NAME = "aster_unifiedpush"
+    private const val LEGACY_PREFS_NAME = "aster_unifiedpush"
+    private const val PREFS_NAME = "aster_unifiedpush_secure"
     private const val KEY_ENDPOINT = "endpoint_url"
     private const val KEY_REGISTERED_ENDPOINT = "registered_endpoint_url"
     private const val KEY_REGISTERED_P256DH = "registered_p256dh"
@@ -89,19 +90,60 @@ object UnifiedPushState {
         fun api_client(): ApiClient
     }
 
+    @Volatile
+    private var secure_prefs: android.content.SharedPreferences? = null
+
+    private fun push_prefs(context: Context): android.content.SharedPreferences {
+        val existing = secure_prefs
+        if (existing != null) return existing
+        synchronized(this) {
+            val current = secure_prefs
+            if (current != null) return current
+            val app = context.applicationContext
+            val opened = org.astermail.android.storage.SecurePrefs.open(app, PREFS_NAME)
+            migrate_legacy_prefs(app, opened)
+            secure_prefs = opened
+            return opened
+        }
+    }
+
+    private fun migrate_legacy_prefs(
+        context: Context,
+        target: android.content.SharedPreferences,
+    ) {
+        val legacy = runCatching {
+            context.getSharedPreferences(LEGACY_PREFS_NAME, Context.MODE_PRIVATE)
+        }.getOrNull() ?: return
+        val entries = runCatching { legacy.all }.getOrNull().orEmpty()
+        if (entries.isNotEmpty()) {
+            val edit = target.edit()
+            for ((key, value) in entries) {
+                when (value) {
+                    is String -> edit.putString(key, value)
+                    is Long -> edit.putLong(key, value)
+                    is Int -> edit.putInt(key, value)
+                    is Boolean -> edit.putBoolean(key, value)
+                    else -> Unit
+                }
+            }
+            edit.commit()
+        }
+        runCatching { legacy.edit().clear().commit() }
+        runCatching { context.deleteSharedPreferences(LEGACY_PREFS_NAME) }
+    }
+
     fun endpoint(context: Context): String? =
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getString(KEY_ENDPOINT, null)
+        push_prefs(context).getString(KEY_ENDPOINT, null)
 
     fun has_pending_registration(context: Context): Boolean {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val prefs = push_prefs(context)
         val endpoint = prefs.getString(KEY_ENDPOINT, null)
         val registered = prefs.getString(KEY_REGISTERED_ENDPOINT, null)
         return endpoint == null || endpoint != registered
     }
 
     fun save_endpoint(context: Context, url: String, p256dh: String?, auth: String?) {
-        val edit = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val edit = push_prefs(context)
             .edit()
             .putString(KEY_ENDPOINT, url)
         if (!p256dh.isNullOrBlank() && !auth.isNullOrBlank()) {
@@ -111,7 +153,7 @@ object UnifiedPushState {
     }
 
     fun clear_endpoint(context: Context) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        push_prefs(context)
             .edit()
             .remove(KEY_ENDPOINT)
             .remove(KEY_PENDING_P256DH)
@@ -126,7 +168,7 @@ object UnifiedPushState {
     }
 
     fun clear_backend_registration(context: Context) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        push_prefs(context)
             .edit()
             .remove(KEY_REGISTERED_ENDPOINT)
             .remove(KEY_REGISTERED_P256DH)
@@ -138,7 +180,7 @@ object UnifiedPushState {
     }
 
     fun subscription_stale(context: Context): Boolean {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val prefs = push_prefs(context)
         val endpoint = prefs.getString(KEY_REGISTERED_ENDPOINT, null) ?: return false
         val p256dh = prefs.getString(KEY_REGISTERED_P256DH, null) ?: return false
         if (endpoint.isBlank() || p256dh.isBlank()) return false
@@ -147,7 +189,7 @@ object UnifiedPushState {
     }
 
     fun sync_registration(context: Context) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val prefs = push_prefs(context)
         val endpoint = prefs.getString(KEY_ENDPOINT, null)
         val p256dh = prefs.getString(KEY_PENDING_P256DH, null)
         val auth = prefs.getString(KEY_PENDING_AUTH, null)
@@ -159,7 +201,7 @@ object UnifiedPushState {
     }
 
     fun refresh_backend_subscription(context: Context) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val prefs = push_prefs(context)
         val endpoint = prefs.getString(KEY_REGISTERED_ENDPOINT, null) ?: return
         val p256dh = prefs.getString(KEY_REGISTERED_P256DH, null) ?: return
         val auth = prefs.getString(KEY_REGISTERED_AUTH, null) ?: return
@@ -167,7 +209,7 @@ object UnifiedPushState {
     }
 
     private fun cooldown_active(context: Context, key: String, window_ms: Long): Boolean {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val prefs = push_prefs(context)
         val last = prefs.getLong(key, 0L)
         val now = System.currentTimeMillis()
         if (last != 0L && now - last < window_ms) return true
@@ -201,7 +243,7 @@ object UnifiedPushState {
     }
 
     private suspend fun get_vapid_public_key(context: Context): String? {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val prefs = push_prefs(context)
         val cached = prefs.getString(KEY_VAPID_PUBLIC_KEY, null)
         val fetched_at = prefs.getLong(KEY_VAPID_FETCHED_AT, 0L)
         if (!cached.isNullOrBlank() && System.currentTimeMillis() - fetched_at < VAPID_CACHE_TTL_MS) {
@@ -235,7 +277,7 @@ object UnifiedPushState {
         p256dh: String,
         auth: String,
     ) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val prefs = push_prefs(context)
         val unchanged = prefs.getString(KEY_REGISTERED_ENDPOINT, null) == endpoint_url &&
             prefs.getString(KEY_REGISTERED_P256DH, null) == p256dh &&
             prefs.getString(KEY_REGISTERED_AUTH, null) == auth
@@ -244,7 +286,7 @@ object UnifiedPushState {
     }
 
     private fun device_id(context: Context): String {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val prefs = push_prefs(context)
         val existing = prefs.getString(KEY_DEVICE_ID, null)
         if (!existing.isNullOrBlank()) return existing
         val generated = java.util.UUID.randomUUID().toString()
@@ -259,7 +301,7 @@ object UnifiedPushState {
         auth: String,
     ) {
         if (cooldown_active(context, KEY_LAST_SUBSCRIBE_ATTEMPT_AT, SUBSCRIBE_COOLDOWN_MS)) return
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val prefs = push_prefs(context)
         val previous_endpoint = prefs.getString(KEY_REGISTERED_ENDPOINT, null)
         scope.launch {
             runCatching {

@@ -193,9 +193,19 @@ data class ThreadMessage(
     val spf_result: String? = null,
     val dkim_result: String? = null,
     val dmarc_result: String? = null,
+    val is_external: Boolean = false,
 )
 
 enum class SenderAuthStatus { verified, failed, unknown }
+
+private val aster_sender_domains = listOf("@astermail.org", "@aster.cx")
+
+fun is_aster_system_sender(msg: ThreadMessage): Boolean {
+    val address = msg.sender_email.trim().lowercase()
+    if (aster_sender_domains.none { address.endsWith(it) }) return false
+    if (!msg.is_external) return true
+    return sender_auth_status(msg) == SenderAuthStatus.verified
+}
 
 fun sender_auth_status(msg: ThreadMessage): SenderAuthStatus {
     if (msg.item_type != "received") return SenderAuthStatus.unknown
@@ -1174,6 +1184,7 @@ fun thread_message_to_mock(msg: org.astermail.android.mail.ThreadMessageDecrypte
         spf_result = msg.raw_item.spf_result,
         dkim_result = msg.raw_item.dkim_result,
         dmarc_result = msg.raw_item.dmarc_result,
+        is_external = msg.raw_item.is_external ?: false,
     )
 }
 

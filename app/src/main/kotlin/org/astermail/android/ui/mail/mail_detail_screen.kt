@@ -1116,8 +1116,7 @@ fun MailDetailScreen(
                         return@items
                     }
 
-                    val is_system_sender = msg.sender_email.endsWith("@astermail.org") ||
-                        msg.sender_email.endsWith("@aster.cx")
+                    val is_system_sender = is_aster_system_sender(msg)
 
                     if (is_expanded) {
                         expanded_message(
@@ -4400,6 +4399,8 @@ internal fun email_html_view(
     )
 
     val translate_active = translate_mode != "off"
+    val translate_active_ref = remember { booleanArrayOf(false) }
+    translate_active_ref[0] = translate_active
     val cache_key = remember(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options) { (((html_cache.key(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active) * 31L + (if (dyslexia_font) 1L else 0L)) * 31L + email_font_id.hashCode().toLong()) * 31L + text_zoom.toLong()) * 31L + sanitize_options.hashCode().toLong() }
     var prebuilt_html by remember(html_hash, allow_external, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options) { mutableStateOf<String?>(html_cache.get(cache_key)) }
     var loaded_built by remember { mutableStateOf("") }
@@ -4646,6 +4647,7 @@ internal fun email_html_view(
                             ctx0,
                             req_uri.host,
                             req_uri.path,
+                            translate_active_ref[0],
                         )
                         if (served != null) return served
                     }
