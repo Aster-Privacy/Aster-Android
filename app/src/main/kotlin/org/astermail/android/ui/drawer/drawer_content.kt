@@ -95,6 +95,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.astermail.android.ui.mail.SenderAvatar
 import org.astermail.android.ui.mail.avatar_colors_for
+import org.astermail.android.ui.mail.avatar_seed_for
 import org.astermail.android.ui.mail.avatar_initial_style
 import org.astermail.android.ui.mail.initial_for
 import androidx.compose.ui.res.stringResource
@@ -1752,7 +1753,7 @@ private fun workspace_switcher_sheet(
                         .padding(horizontal = AsterSpacing.sm, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    val (av_bg, av_fg) = avatar_colors_for(current_email)
+                    val (av_bg, av_fg) = avatar_colors_for(avatar_seed_for(current_email, ""))
                     Box(
                         modifier = Modifier
                             .size(32.dp)

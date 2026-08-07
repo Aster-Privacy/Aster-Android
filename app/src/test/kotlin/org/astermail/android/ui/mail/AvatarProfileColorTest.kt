@@ -53,6 +53,24 @@ class AvatarProfileColorTest {
     }
 
     @Test
+    fun seed_ignores_display_name_when_an_address_is_known() {
+        assertEquals(
+            avatar_seed_for("Sher@Aster.cx", ""),
+            avatar_seed_for("sher@aster.cx", "Sher Holmes"),
+        )
+        assertEquals(
+            avatar_colors_for(avatar_seed_for("sher@aster.cx", "")),
+            avatar_colors_for(avatar_seed_for("sher@aster.cx", "Sher Holmes")),
+        )
+    }
+
+    @Test
+    fun seed_falls_back_to_the_name_without_an_address() {
+        assertEquals("sher holmes", avatar_seed_for("  ", "Sher Holmes"))
+        assertEquals("", avatar_seed_for("", ""))
+    }
+
+    @Test
     fun light_backgrounds_get_dark_text() {
         assertEquals(Color(0xFF111827), contrast_text_for(Color(0xFFFFFFFF)))
         assertEquals(Color.White, contrast_text_for(Color(0xFF000000)))

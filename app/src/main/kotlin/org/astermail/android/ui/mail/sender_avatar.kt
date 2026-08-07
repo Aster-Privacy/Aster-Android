@@ -148,7 +148,7 @@ fun SenderAvatar(
 ) {
     val context = LocalContext.current
     if (!profile_picture_url.isNullOrBlank()) {
-        val seed_fb = name.ifBlank { email }
+        val seed_fb = avatar_seed_for(email, name)
         val (bg_fb, fg_fb) = avatar_colors_for(seed_fb)
         var loaded_pp by remember(profile_picture_url) { mutableStateOf(false) }
         Box(
@@ -185,7 +185,7 @@ fun SenderAvatar(
         return
     }
 
-    val seed = name.ifBlank { email }
+    val seed = avatar_seed_for(email, name)
     val (bg, fg) = avatar_colors_for(seed)
     val domain = remember(email) { extract_domain(email) }
     val root_domain = remember(domain) { get_root_domain(domain) }
@@ -340,7 +340,7 @@ private fun AsterDomainAvatar(
     )
 
     val resolved_pic = profile?.profile_picture?.takeIf { it.isNotBlank() }
-    val (aster_bg, aster_fg) = avatar_colors_for(name.ifBlank { email }, profile?.profile_color)
+    val (aster_bg, aster_fg) = avatar_colors_for(avatar_seed_for(email, name), profile?.profile_color)
     if (resolved_pic != null) {
         var loaded by remember(resolved_pic) { mutableStateOf(false) }
         Box(

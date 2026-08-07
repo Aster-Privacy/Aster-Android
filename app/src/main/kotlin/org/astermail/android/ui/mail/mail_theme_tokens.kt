@@ -44,6 +44,12 @@ private val avatar_palette: List<Pair<Color, Color>> = listOf(
     Color(0xFFF97316) to Color.White,
 )
 
+fun avatar_seed_for(email: String, name: String): String {
+    val address = email.trim().lowercase()
+    if (address.isNotEmpty()) return address
+    return name.trim().lowercase()
+}
+
 fun avatar_colors_for(seed: String): Pair<Color, Color> {
     if (seed.isEmpty()) return avatar_palette[0]
     val idx = (seed.hashCode() % avatar_palette.size + avatar_palette.size) % avatar_palette.size

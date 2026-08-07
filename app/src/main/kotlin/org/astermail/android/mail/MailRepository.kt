@@ -931,9 +931,11 @@ class MailRepository @Inject constructor(
     suspend fun fetch_thread(thread_token: String): Result<List<ThreadMessageDecrypted>> = runCatching {
         val response = mail_api.get_thread_messages(thread_token)
         coroutineScope {
-            response.messages.map { msg ->
+            val decrypted = response.messages.map { msg ->
                 async(Dispatchers.IO) { decrypt_thread_message(msg) }
             }.awaitAll()
+            prefetch_sender_profiles(decrypted.map { org.astermail.android.ui.mail.displayed_sender_email(it.display_sender_email, it.sender_email) })
+            decrypted
         }
     }
 
@@ -1414,10 +1416,18 @@ class MailRepository @Inject constructor(
 
     private suspend fun decrypt_items_parallel(items: List<MailItem>): List<InboxItem> =
         coroutineScope {
-            items.map { item ->
+            val decrypted = items.map { item ->
                 async(Dispatchers.IO) { decrypt_inbox_item(item) }
             }.awaitAll()
+            prefetch_sender_profiles(decrypted.map { org.astermail.android.ui.mail.displayed_sender_email(it.display_sender_email, it.sender_email) })
+            decrypted
         }
+
+    private fun prefetch_sender_profiles(emails: List<String>) {
+        val addresses = emails.filter { it.isNotBlank() }
+        if (addresses.isEmpty()) return
+        AsterProfileResolverHolder.shared?.request_all(addresses)
+    }
 
     private fun decrypt_inbox_item(item: MailItem): InboxItem {
         val envelope = try_decrypt_envelope(item.encrypted_envelope, item.envelope_nonce, item.id)

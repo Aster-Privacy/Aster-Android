@@ -46,6 +46,7 @@ import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
 import org.astermail.android.storage.AccountStore
 import org.astermail.android.ui.mail.avatar_colors_for
+import org.astermail.android.ui.mail.avatar_seed_for
 import org.astermail.android.ui.mail.avatar_initial_style
 import org.astermail.android.ui.mail.decode_avatar_model
 import org.astermail.android.ui.mail.initial_for
@@ -62,7 +63,7 @@ fun current_user_avatar(
         ?.takeIf { it.isNotBlank() }
     val email = account?.email.orEmpty()
     val name = account?.display_name.orEmpty()
-    val seed = name.ifBlank { email }
+    val seed = avatar_seed_for(email, name)
     val (bg, fg) = avatar_colors_for(seed, account?.profile_color)
     val context = LocalContext.current
     var loaded by remember(url) { mutableStateOf(false) }

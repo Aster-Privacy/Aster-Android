@@ -109,6 +109,10 @@ class AsterProfileResolver @Inject constructor(
         }
     }
 
+    fun request_all(emails: Collection<String>) {
+        for (email in emails.toSet()) request(email)
+    }
+
     fun clear() {
         scope.launch {
             mutex.withLock {
@@ -119,6 +123,16 @@ class AsterProfileResolver @Inject constructor(
                 _profiles.value = emptyMap()
             }
         }
+    }
+
+    private fun merge_profiles(existing: PublicProfile?, fetched: PublicProfile?): PublicProfile? {
+        if (existing == null) return fetched
+        if (fetched == null) return existing
+        return PublicProfile(
+            display_name = fetched.display_name?.takeIf { it.isNotBlank() } ?: existing.display_name,
+            profile_picture = fetched.profile_picture?.takeIf { it.isNotBlank() } ?: existing.profile_picture,
+            profile_color = fetched.profile_color?.takeIf { it.isNotBlank() } ?: existing.profile_color,
+        )
     }
 
     private suspend fun flush() {
@@ -135,7 +149,7 @@ class AsterProfileResolver @Inject constructor(
                 val current = _profiles.value.toMutableMap()
                 val now = System.currentTimeMillis()
                 for (email in chunk) {
-                    current[email] = resp.profiles[email]
+                    current[email] = merge_profiles(current[email], resp.profiles[email])
                     resolved_at[email] = now
                 }
                 _profiles.value = current
