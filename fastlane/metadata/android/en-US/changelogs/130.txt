@@ -1,0 +1,8 @@
+Bug fixes and improvements:
+
+- Organize mail into nested subfolders and reorder them however you like
+- See which of your addresses received an email, right from the inbox
+- Fixed search results resetting when you return from reading an email
+- Attachments now have identifying metadata stripped before sending, for better privacy
+- More reliable sending and receiving between Aster accounts
+- Inbox updates instantly when new mail arrives
