@@ -164,6 +164,14 @@ fun action_of(action: Action): action_id? = when (action) {
     is Action.Notify -> action_id.notify
 }
 
+fun apply_created_target(action: Action?, token: String): Action? = when {
+    token.isBlank() -> null
+    action is Action.MoveTo -> action.copy(folder_token = token)
+    action is Action.ApplyLabels ->
+        if (token in action.label_tokens) null else action.copy(label_tokens = action.label_tokens + token)
+    else -> null
+}
+
 fun default_action_for(id: action_id): Action = when (id) {
     action_id.move_to -> Action.MoveTo(folder_token = "")
     action_id.apply_labels -> Action.ApplyLabels(label_tokens = emptyList())

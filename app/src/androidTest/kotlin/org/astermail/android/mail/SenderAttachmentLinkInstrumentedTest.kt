@@ -62,6 +62,7 @@ class SenderAttachmentLinkInstrumentedTest {
             ratchet_plaintext_cache = mockk(relaxed = true),
             pending_send_dao = mockk(relaxed = true),
             context = ApplicationProvider.getApplicationContext(),
+            auth_repository = mockk(relaxed = true),
         )
     }
 

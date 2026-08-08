@@ -158,6 +158,7 @@ fun RuleEditorScreen(
 
     var sheet: active_sheet by remember { mutableStateOf(active_sheet.none) }
     var create_target by remember { mutableStateOf<String?>(null) }
+    var create_for_action by remember { mutableStateOf<Int?>(null) }
     var pending_field: field_id? by remember { mutableStateOf(null) }
     var auto_advance by remember { mutableStateOf(false) }
     var is_saving by remember { mutableStateOf(false) }
@@ -637,8 +638,16 @@ fun RuleEditorScreen(
             labels = labels,
             on_dismiss = { sheet = active_sheet.none },
             on_set = { updated -> actions[s.action_index] = updated },
-            on_create_folder = { create_target = "folder" },
-            on_create_label = { create_target = "label" },
+            on_create_folder = {
+                create_for_action = s.action_index
+                create_target = "folder"
+                sheet = active_sheet.none
+            },
+            on_create_label = {
+                create_for_action = s.action_index
+                create_target = "label"
+                sheet = active_sheet.none
+            },
         )
         active_sheet.pick_color -> color_picker(
             on_dismiss = { sheet = active_sheet.none },
@@ -663,23 +672,49 @@ fun RuleEditorScreen(
             title = stringResource(R.string.create_folder),
             placeholder = stringResource(R.string.folder_name),
             parent_options = folder_parent_options,
-            on_dismiss = { create_target = null },
+            on_dismiss = { create_target = null; create_for_action = null },
             on_create = { folder_name, parent_token ->
                 val sibling_count = settings_state.labels.count {
                     is_custom_folder(it) && it.parent_token.orEmpty() == parent_token.orEmpty()
                 }
+                val action_index = create_for_action
                 settings_vm.create_folder(
                     name = folder_name,
                     sort_order = sibling_count,
                     parent_token = parent_token,
+                    on_created = { token ->
+                        if (action_index != null) {
+                            val updated = apply_created_target(actions.getOrNull(action_index), token)
+                            if (updated != null) {
+                                actions[action_index] = updated
+                                sheet = active_sheet.pick_action_target(action_index)
+                            }
+                        }
+                        create_for_action = null
+                    },
                 )
                 create_target = null
             },
         )
         "label" -> create_label_dialog(
-            on_dismiss = { create_target = null },
+            on_dismiss = { create_target = null; create_for_action = null },
             on_create = { label_name, label_color, label_icon ->
-                settings_vm.create_tag(name = label_name, color = label_color, icon = label_icon)
+                val action_index = create_for_action
+                settings_vm.create_tag(
+                    name = label_name,
+                    color = label_color,
+                    icon = label_icon,
+                    on_created = { token ->
+                        if (action_index != null) {
+                            val updated = apply_created_target(actions.getOrNull(action_index), token)
+                            if (updated != null) {
+                                actions[action_index] = updated
+                                sheet = active_sheet.pick_action_target(action_index)
+                            }
+                        }
+                        create_for_action = null
+                    },
+                )
                 create_target = null
             },
         )

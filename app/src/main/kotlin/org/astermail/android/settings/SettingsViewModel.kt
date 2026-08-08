@@ -3214,16 +3214,22 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun create_tag(name: String, color: String? = null, icon: String? = null) {
+    fun create_tag(
+        name: String,
+        color: String? = null,
+        icon: String? = null,
+        on_created: ((String) -> Unit)? = null,
+    ) {
         viewModelScope.launch {
             try {
                 val identity_key = session_key_store.get_identity_key() ?: return@launch
                 val name_field = encrypt_field_with_version(name, identity_key, TAG_VERSION_CURRENT)
                 val color_field = color?.let { encrypt_field_with_version(it, identity_key, TAG_VERSION_CURRENT) }
                 val icon_field = icon?.let { encrypt_field_with_version(it, identity_key, TAG_VERSION_CURRENT) }
+                val tag_token = generate_token_b64()
                 tags_api.create_tag(
                     CreateTagRequest(
-                        tag_token = generate_token_b64(),
+                        tag_token = tag_token,
                         encrypted_name = name_field.ciphertext_b64,
                         name_nonce = name_field.nonce_b64,
                         encrypted_color = color_field?.ciphertext_b64,
@@ -3233,6 +3239,7 @@ class SettingsViewModel @Inject constructor(
                     ),
                 )
                 load_tags()
+                on_created?.invoke(tag_token)
             } catch (_: Throwable) {
                 _state.value = _state.value.copy(
                     action_result = context.getString(R.string.failed_create_tag),
@@ -3246,6 +3253,7 @@ class SettingsViewModel @Inject constructor(
         color: String? = null,
         sort_order: Int? = null,
         parent_token: String? = null,
+        on_created: ((String) -> Unit)? = null,
     ) {
         viewModelScope.launch {
             try {
@@ -3282,6 +3290,7 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     labels = _state.value.labels + optimistic,
                 )
+                on_created?.invoke(token)
             } catch (_: Throwable) {
                 _state.value = _state.value.copy(
                     action_result = context.getString(R.string.failed_create_folder),

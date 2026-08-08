@@ -32,6 +32,7 @@ import org.astermail.android.api.ratchet.PrekeyBundleResponse
 import org.astermail.android.api.ratchet.PutStateOutcome
 import org.astermail.android.api.ratchet.RatchetApi
 import org.astermail.android.api.ratchet.RatchetStateResponse
+import org.astermail.android.api.ratchet.UploadPrekeyBundleRequest
 import org.astermail.android.auth.AuthRepository
 import org.astermail.android.crypto.ratchet.RatchetCrypto
 import org.astermail.android.storage.SessionKeyStore
@@ -106,6 +107,8 @@ class RatchetDecryptorInstrumentedTest {
             stored = null
             return true
         }
+
+        override suspend fun upload_prekey_bundle(request: UploadPrekeyBundleRequest): Boolean = true
     }
 
     private fun to_private_jwk(kp: RatchetCrypto.EcKeyPair): String {
