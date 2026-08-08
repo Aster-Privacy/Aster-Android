@@ -52,6 +52,7 @@ import org.astermail.android.ui.mail.MessageAttachment
 private const val INBOX_FETCH_BACKSTOP_MS = 50_000L
 private const val PULL_REFRESH_BACKSTOP_MS = 20_000L
 private const val WARM_CACHE_MIN_ITEMS = 8
+private const val WARM_CACHE_WINDOW = 200
 private const val BULK_ACTION_CONCURRENCY = 6
 private const val CARRIED_ITEM_STALE_MS = 20 * 60 * 1000L
 private const val STATS_TTL_MS = 30_000L
@@ -598,11 +599,14 @@ class MailViewModel @Inject constructor(
             if (_inbox_state.value.items.isEmpty()) {
                 val persisted = runCatching { search_index_manager.get_cached_items() }.getOrNull().orEmpty()
                 if (persisted.isNotEmpty() && list_order == null && _inbox_state.value.current_folder == folder && folder == "inbox") {
-                    val safe = persisted.filter { !it.is_trashed && !it.is_archived && !it.is_spam }.take(20)
+                    val safe = persisted.filter { !it.is_trashed && !it.is_archived && !it.is_spam }
+                        .take(WARM_CACHE_WINDOW)
                     if (safe.size >= WARM_CACHE_MIN_ITEMS) {
                         val items = safe.map { it.to_inbox_item() }
                             .filter { folder_matches(folder, it) }
                         if (items.size >= WARM_CACHE_MIN_ITEMS) {
+                            val warmed_at = System.currentTimeMillis()
+                            items.forEach { item_last_confirmed.putIfAbsent(it.id, warmed_at) }
                             _inbox_state.value = _inbox_state.value.copy(
                                 items = apply_demo_overlay(apply_pin_overrides(apply_star_overrides(apply_read_overrides(items))), folder),
                                 initial = false,
