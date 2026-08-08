@@ -60,6 +60,7 @@ import org.astermail.android.api.mail.SpamSenderRequest
 import org.astermail.android.api.mail.ThreadMessageItem
 import org.astermail.android.api.mail.ThreadWithMessages
 import org.astermail.android.api.labels.LabelsApi
+import org.astermail.android.crypto.ratchet.RatchetCrypto
 import org.astermail.android.api.scheduled.CreateScheduledRequest
 import org.astermail.android.api.scheduled.ScheduledApi
 import org.astermail.android.api.send.ExternalAttachmentPayload
@@ -1624,7 +1625,8 @@ class MailRepository @Inject constructor(
                     decrypt_envelope_pbkdf2(encrypted_envelope)
                 }
                 else -> {
-                    decrypt_envelope_identity_key(encrypted_envelope, nonce_bytes)
+                    decrypt_inbound_envelope(encrypted_envelope, nonce_bytes)
+                        ?: decrypt_envelope_identity_key(encrypted_envelope, nonce_bytes)
                 }
             }
 
@@ -1727,6 +1729,198 @@ class MailRepository @Inject constructor(
         }
 
         throw IllegalStateException("all identity key versions failed")
+    }
+
+    private data class InboundRatchetKeySet(
+        val identity_jwk: String,
+        val pq_identity_secret_b64: String?,
+    )
+
+    private fun inbound_ratchet_key_sets(): List<InboundRatchetKeySet> {
+        val key_sets = mutableListOf<InboundRatchetKeySet>()
+
+        val identity_jwk = session_key_store.get_ratchet_identity_jwk()
+        if (!identity_jwk.isNullOrBlank()) {
+            key_sets.add(
+                InboundRatchetKeySet(
+                    identity_jwk = identity_jwk,
+                    pq_identity_secret_b64 = session_key_store
+                        .get_ratchet_pq_identity_secret()
+                        ?.ifBlank { null },
+                ),
+            )
+        }
+
+        val previous_json = session_key_store.get_ratchet_previous_keys_json()
+        if (!previous_json.isNullOrBlank()) {
+            runCatching {
+                val entries = org.json.JSONArray(previous_json)
+                for (index in 0 until entries.length()) {
+                    val entry = entries.optJSONObject(index) ?: continue
+                    val previous_jwk = entry.optString("ratchet_identity_key", "")
+                    if (previous_jwk.isBlank()) continue
+                    key_sets.add(
+                        InboundRatchetKeySet(
+                            identity_jwk = previous_jwk,
+                            pq_identity_secret_b64 = entry
+                                .optString("ratchet_pq_identity_key", "")
+                                .ifBlank { null },
+                        ),
+                    )
+                }
+            }
+        }
+
+        return key_sets
+    }
+
+    private fun decrypt_inbound_envelope(encrypted_b64: String, nonce: ByteArray): ByteArray? {
+        if (nonce.size != 12) return null
+
+        val enc = runCatching {
+            android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT)
+        }.getOrNull() ?: return null
+        if (enc.isEmpty()) return null
+
+        val marker = enc[0]
+        val header_len = when (marker) {
+            INBOUND_ECDH_MARKER, INBOUND_ECDH_COMPRESSED_MARKER -> 1 + INBOUND_EPH_KEY_LEN
+            INBOUND_PQ_HYBRID_MARKER -> 1 + INBOUND_EPH_KEY_LEN + INBOUND_ML_KEM_CT_LEN
+            else -> return null
+        }
+        if (enc.size <= header_len) return null
+
+        for (key_set in inbound_ratchet_key_sets()) {
+            val plaintext = when (marker) {
+                INBOUND_PQ_HYBRID_MARKER -> key_set.pq_identity_secret_b64?.let { pq_secret ->
+                    decrypt_inbound_pq_hybrid(enc, nonce, key_set.identity_jwk, pq_secret)
+                }
+                else -> decrypt_inbound_ecdh(
+                    enc,
+                    nonce,
+                    key_set.identity_jwk,
+                    marker == INBOUND_ECDH_COMPRESSED_MARKER,
+                )
+            }
+            if (plaintext != null) return plaintext
+        }
+
+        return null
+    }
+
+    private fun decrypt_inbound_ecdh(
+        enc: ByteArray,
+        nonce: ByteArray,
+        identity_jwk: String,
+        compressed: Boolean,
+    ): ByteArray? {
+        var shared_secret: ByteArray? = null
+        var aes_key: ByteArray? = null
+        var plaintext: ByteArray? = null
+        return try {
+            val ephemeral_public = RatchetCrypto.parse_p256_public_raw(
+                enc.copyOfRange(1, 1 + INBOUND_EPH_KEY_LEN),
+            )
+            val identity_private = RatchetCrypto.parse_p256_private_jwk(identity_jwk)
+            shared_secret = RatchetCrypto.ecdh(identity_private, ephemeral_public)
+            if (shared_secret.size < 32) return null
+            aes_key = RatchetCrypto.hkdf_sha256(
+                shared_secret,
+                ByteArray(0),
+                INBOUND_ECDH_INFO,
+                32,
+            )
+            plaintext = RatchetCrypto.aes_gcm_decrypt(
+                enc.copyOfRange(1 + INBOUND_EPH_KEY_LEN, enc.size),
+                aes_key,
+                nonce,
+            )
+            if (compressed) inflate_zlib(plaintext) else plaintext.copyOf()
+        } catch (_: Throwable) {
+            null
+        } finally {
+            shared_secret?.fill(0)
+            aes_key?.fill(0)
+            plaintext?.fill(0)
+        }
+    }
+
+    private fun decrypt_inbound_pq_hybrid(
+        enc: ByteArray,
+        nonce: ByteArray,
+        identity_jwk: String,
+        pq_identity_secret_b64: String,
+    ): ByteArray? {
+        var ecdh_shared: ByteArray? = null
+        var pq_secret: ByteArray? = null
+        var ml_kem_shared: ByteArray? = null
+        var ikm: ByteArray? = null
+        var aes_key: ByteArray? = null
+        var plaintext: ByteArray? = null
+        return try {
+            val ephemeral_public = RatchetCrypto.parse_p256_public_raw(
+                enc.copyOfRange(1, 1 + INBOUND_EPH_KEY_LEN),
+            )
+            val identity_private = RatchetCrypto.parse_p256_private_jwk(identity_jwk)
+            ecdh_shared = RatchetCrypto.ecdh(identity_private, ephemeral_public)
+            if (ecdh_shared.size < 32) return null
+
+            pq_secret = RatchetCrypto.b64_decode(pq_identity_secret_b64)
+            ml_kem_shared = RatchetCrypto.ml_kem_768_decapsulate(
+                enc.copyOfRange(
+                    1 + INBOUND_EPH_KEY_LEN,
+                    1 + INBOUND_EPH_KEY_LEN + INBOUND_ML_KEM_CT_LEN,
+                ),
+                pq_secret,
+            )
+            if (ml_kem_shared.size < 32) return null
+
+            ikm = ByteArray(64)
+            System.arraycopy(ecdh_shared, 0, ikm, 0, 32)
+            System.arraycopy(ml_kem_shared, 0, ikm, 32, 32)
+            aes_key = RatchetCrypto.hkdf_sha256(ikm, ByteArray(0), INBOUND_PQ_HYBRID_INFO, 32)
+
+            plaintext = RatchetCrypto.aes_gcm_decrypt(
+                enc.copyOfRange(1 + INBOUND_EPH_KEY_LEN + INBOUND_ML_KEM_CT_LEN, enc.size),
+                aes_key,
+                nonce,
+            )
+            inflate_zlib(plaintext)
+        } catch (_: Throwable) {
+            null
+        } finally {
+            ecdh_shared?.fill(0)
+            pq_secret?.fill(0)
+            ml_kem_shared?.fill(0)
+            ikm?.fill(0)
+            aes_key?.fill(0)
+            plaintext?.fill(0)
+        }
+    }
+
+    private fun inflate_zlib(compressed: ByteArray): ByteArray {
+        val inflater = java.util.zip.Inflater()
+        try {
+            inflater.setInput(compressed)
+            val out = java.io.ByteArrayOutputStream(compressed.size.coerceAtMost(1 shl 20))
+            val buffer = ByteArray(1 shl 16)
+            var total = 0L
+            while (!inflater.finished()) {
+                val produced = inflater.inflate(buffer)
+                if (produced == 0 && !inflater.finished()) {
+                    throw IllegalStateException("truncated zlib stream")
+                }
+                total += produced
+                if (total > MAX_DECOMPRESSED_BYTES) {
+                    throw IllegalStateException("decompressed envelope exceeds size limit")
+                }
+                out.write(buffer, 0, produced)
+            }
+            buffer.fill(0)
+            return out.toByteArray()
+        } finally {
+            inflater.end()
+        }
     }
 
     private fun aes_gcm_decrypt(ciphertext: ByteArray, key: ByteArray, iv: ByteArray): ByteArray =
@@ -2924,6 +3118,14 @@ class MailRepository @Inject constructor(
 
     companion object {
         private const val PBKDF2_ITERATIONS = 310000
+        private const val INBOUND_ECDH_MARKER: Byte = 0x02
+        private const val INBOUND_ECDH_COMPRESSED_MARKER: Byte = 0x03
+        private const val INBOUND_PQ_HYBRID_MARKER: Byte = 0x04
+        private const val INBOUND_EPH_KEY_LEN = 65
+        private const val INBOUND_ML_KEM_CT_LEN = 1088
+        private const val MAX_DECOMPRESSED_BYTES = 48L * 1024 * 1024
+        private val INBOUND_ECDH_INFO = "aster-inbound-v1".toByteArray(Charsets.UTF_8)
+        private val INBOUND_PQ_HYBRID_INFO = "aster-inbound-pq-v1".toByteArray(Charsets.UTF_8)
         private val PLACEHOLDER_META_NONCE = ByteArray(12)
 
         fun is_placeholder_meta_nonce(nonce: ByteArray): Boolean =
