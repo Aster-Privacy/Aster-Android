@@ -166,6 +166,7 @@ import org.astermail.android.R
 import org.astermail.android.looks_encrypted
 import org.astermail.android.api.subscriptions.ProxyUnsubscribeRequest
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.AsterColors
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
@@ -2002,63 +2003,42 @@ internal fun expanded_message(
             val received_on = remember(msg) {
                 resolve_received_on_address(msg.raw_headers, msg.to_addresses + msg.cc_addresses, msg.sender_email)
             }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = AsterSpacing.md)
-                    .padding(bottom = AsterSpacing.sm)
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(colors.bg_secondary)
-                    .border(1.dp, colors.border_secondary, RoundedCornerShape(18.dp))
-                    .padding(AsterSpacing.md),
-            ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
-                    detail_status_chip(
-                        icon = if (msg.is_encrypted) TablerIcons.ShieldLock else TablerIcons.Lock,
-                        label = stringResource(R.string.encryption),
-                        value = if (msg.is_encrypted) stringResource(R.string.encrypted_e2e) else stringResource(R.string.encrypted_in_transit),
-                        tint = if (msg.is_encrypted) colors.success else colors.text_secondary,
-                        modifier = Modifier.weight(1f),
-                    )
-                    detail_status_chip(
-                        icon = if (tracker_count > 0) TablerIcons.ShieldX else TablerIcons.ShieldCheck,
-                        label = stringResource(R.string.tracker_protection),
-                        value = if (tracker_count > 0) stringResource(R.string.trackers_blocked_count, tracker_count) else stringResource(R.string.no_trackers),
-                        tint = if (tracker_count > 0) colors.warning else colors.success,
-                        modifier = Modifier.weight(1f).testTag("tracker_badge"),
-                        on_click = if (tracker_report.total > 0) ({ show_tracker_details = true }) else null,
-                    )
-                }
-                Spacer(Modifier.height(AsterSpacing.md))
-                detail_meta_row(
-                    icon = TablerIcons.CalendarEvent,
-                    label = stringResource(R.string.date),
-                    value = msg.timestamp.format_full_datetime(),
-                )
-                if (received_on != null) {
-                    Spacer(Modifier.height(AsterSpacing.sm))
-                    detail_meta_row(
-                        icon = TablerIcons.Inbox,
-                        label = stringResource(R.string.received_on_label),
-                        value = received_on,
-                    )
-                }
-                if (msg.item_type == "received" &&
+            val details_sender_name = displayed_sender_name(msg.display_sender_name, msg.sender_name)
+            val details_sender_email = displayed_sender_email(msg.display_sender_email, msg.sender_email)
+            val details_sender = if (details_sender_name.equals(details_sender_email, ignoreCase = true)) {
+                details_sender_email
+            } else {
+                "$details_sender_name <$details_sender_email>"
+            }
+            val details_reply_to = remember(msg.raw_headers, details_sender_email) {
+                msg.raw_headers
+                    .firstOrNull { it.first.equals("reply-to", ignoreCase = true) }
+                    ?.second
+                    ?.trim()
+                    ?.takeIf { it.isNotEmpty() && !it.contains(details_sender_email, ignoreCase = true) }
+            }
+            message_details_panel(
+                sender = details_sender,
+                reply_to = details_reply_to,
+                is_encrypted = msg.is_encrypted,
+                tracker_count = tracker_count,
+                date_text = msg.timestamp.format_full_datetime(),
+                received_on = received_on,
+                authentication = if (msg.item_type == "received" &&
                     (msg.spf_result != null || msg.dkim_result != null || msg.dmarc_result != null)
                 ) {
-                    Spacer(Modifier.height(AsterSpacing.sm))
-                    detail_meta_row(
-                        icon = if (auth_status == SenderAuthStatus.failed) TablerIcons.ShieldX else TablerIcons.ShieldCheck,
-                        label = stringResource(R.string.sender_authentication),
-                        value = stringResource(
-                            R.string.auth_summary_format,
-                            auth_result_label(msg.spf_result),
-                            auth_result_label(msg.dkim_result),
-                            auth_result_label(msg.dmarc_result),
-                        ),
+                    stringResource(
+                        R.string.auth_summary_format,
+                        auth_result_label(msg.spf_result),
+                        auth_result_label(msg.dkim_result),
+                        auth_result_label(msg.dmarc_result),
                     )
-                }
-            }
+                } else {
+                    null
+                },
+                authentication_failed = auth_status == SenderAuthStatus.failed,
+                on_show_trackers = if (tracker_report.total > 0) ({ show_tracker_details = true }) else null,
+            )
         }
 
         val unsub_info = remember(msg.body_html, msg.body, msg.raw_headers) {
@@ -3185,78 +3165,187 @@ private fun message_details_dialog(
 }
 
 @Composable
-private fun detail_status_chip(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    value: String,
-    tint: androidx.compose.ui.graphics.Color,
-    modifier: Modifier = Modifier,
-    on_click: (() -> Unit)? = null,
+internal fun message_details_panel(
+    sender: String,
+    reply_to: String?,
+    date_text: String,
+    is_encrypted: Boolean,
+    tracker_count: Int,
+    received_on: String?,
+    authentication: String?,
+    authentication_failed: Boolean,
+    on_show_trackers: (() -> Unit)?,
 ) {
     val colors = AsterMaterial.colors
+    var show_security by remember { mutableStateOf(false) }
+    val encryption_value = if (is_encrypted) {
+        stringResource(R.string.encrypted_e2e)
+    } else {
+        stringResource(R.string.encrypted_in_transit)
+    }
+    val encryption_tint = if (is_encrypted) AsterColors.accent_blue else colors.text_muted
     Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(tint.copy(alpha = 0.10f))
-            .then(if (on_click != null) Modifier.clickable(onClick = on_click) else Modifier)
-            .padding(horizontal = AsterSpacing.md, vertical = 10.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.md)
+            .padding(bottom = AsterSpacing.sm)
+            .clip(SquircleShape(14.dp))
+            .background(colors.bg_secondary)
+            .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = tint,
-                modifier = Modifier.size(15.dp),
-            )
-            Spacer(Modifier.width(6.dp))
-            Text(
-                text = label,
-                color = colors.text_muted,
-                fontSize = 11.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+        detail_meta_row(label = stringResource(R.string.from), value = sender)
+        if (reply_to != null) {
+            detail_meta_row(label = stringResource(R.string.reply_to_label), value = reply_to)
         }
-        Spacer(Modifier.height(3.dp))
+        detail_meta_row(label = stringResource(R.string.date), value = date_text)
+        detail_meta_row(
+            label = stringResource(R.string.encryption),
+            value = encryption_value,
+            icon = TablerIcons.Lock,
+            value_tint = encryption_tint,
+        )
         Text(
-            text = value,
-            color = tint,
+            text = stringResource(R.string.view_encryption_details),
+            color = AsterColors.accent_blue,
             fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
-            lineHeight = 17.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier
+                .padding(top = 2.dp)
+                .clip(SquircleShape(8.dp))
+                .clickable { show_security = true }
+                .padding(vertical = 5.dp),
+        )
+    }
+    if (show_security) {
+        security_details_dialog(
+            is_encrypted = is_encrypted,
+            tracker_count = tracker_count,
+            received_on = received_on,
+            authentication = authentication,
+            authentication_failed = authentication_failed,
+            on_show_trackers = on_show_trackers,
+            on_close = { show_security = false },
         )
     }
 }
 
 @Composable
-private fun detail_meta_row(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    value: String,
+private fun security_details_dialog(
+    is_encrypted: Boolean,
+    tracker_count: Int,
+    received_on: String?,
+    authentication: String?,
+    authentication_failed: Boolean,
+    on_show_trackers: (() -> Unit)?,
+    on_close: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = colors.text_muted,
-            modifier = Modifier.size(15.dp),
-        )
-        Spacer(Modifier.width(AsterSpacing.sm))
+    org.astermail.android.design.components.AsterDialog(
+        on_dismiss = on_close,
+        title = stringResource(R.string.security_details_title),
+        message = null,
+        body = ({
+            Column(modifier = Modifier.fillMaxWidth()) {
+                detail_meta_row(
+                    label = stringResource(R.string.encryption),
+                    value = if (is_encrypted) {
+                        stringResource(R.string.encrypted_e2e)
+                    } else {
+                        stringResource(R.string.encrypted_in_transit)
+                    },
+                    icon = TablerIcons.Lock,
+                    value_tint = if (is_encrypted) AsterColors.accent_blue else colors.text_muted,
+                )
+                detail_meta_row(
+                    label = stringResource(R.string.tracker_protection),
+                    value = if (tracker_count > 0) {
+                        stringResource(R.string.trackers_blocked_count, tracker_count)
+                    } else {
+                        stringResource(R.string.no_trackers)
+                    },
+                    icon = TablerIcons.ShieldLock,
+                    value_tint = if (tracker_count > 0) colors.warning else colors.success,
+                    modifier = Modifier.testTag("tracker_badge"),
+                    on_click = if (on_show_trackers != null) ({
+                        on_close()
+                        on_show_trackers()
+                    }) else null,
+                )
+                if (received_on != null) {
+                    detail_meta_row(
+                        label = stringResource(R.string.received_on_label),
+                        value = received_on,
+                    )
+                }
+                if (authentication != null) {
+                    detail_meta_row(
+                        label = stringResource(R.string.sender_authentication),
+                        value = authentication,
+                        value_tint = if (authentication_failed) colors.danger else null,
+                    )
+                }
+            }
+        }),
+        footer = {
+            org.astermail.android.design.components.AsterDialogPrimaryButton(
+                label = stringResource(R.string.close),
+                onClick = on_close,
+            )
+        },
+    )
+}
+
+@Composable
+private fun detail_meta_row(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    value_tint: androidx.compose.ui.graphics.Color? = null,
+    on_click: (() -> Unit)? = null,
+) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .then(if (on_click != null) Modifier.clickable(onClick = on_click) else Modifier)
+            .padding(vertical = 5.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
         Text(
             text = label,
             color = colors.text_muted,
-            fontSize = 12.sp,
+            fontSize = 13.sp,
+            modifier = Modifier.width(116.dp),
         )
-        Spacer(Modifier.width(AsterSpacing.sm))
-        Text(
-            text = value,
-            color = colors.text_primary,
-            fontSize = 12.5.sp,
-            fontWeight = FontWeight.Medium,
-            textAlign = TextAlign.End,
+        Row(
             modifier = Modifier.weight(1f),
-        )
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = value_tint ?: colors.text_muted,
+                    modifier = Modifier.size(15.dp),
+                )
+                Spacer(Modifier.width(6.dp))
+            }
+            Text(
+                text = value,
+                color = value_tint ?: colors.text_secondary,
+                fontSize = 13.sp,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+        }
+        if (on_click != null) {
+            Icon(
+                imageVector = TablerIcons.ChevronRight,
+                contentDescription = null,
+                tint = colors.text_muted,
+                modifier = Modifier.size(15.dp),
+            )
+        }
     }
 }
 
