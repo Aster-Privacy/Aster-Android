@@ -59,6 +59,7 @@ private const val STATS_TTL_MS = 30_000L
 private const val STATS_DEBOUNCE_MS = 1_200L
 private const val DECRYPT_RETRY_TIMEOUT_MS = 20_000L
 private const val SEND_GUARD_WINDOW_MS = 30_000L
+private const val LOAD_MORE_FAILURE_LIMIT = 3
 private const val LOAD_ALL_MAX_PAGES = 5_000
 private const val LOAD_ALL_MAX_ITEMS = 50_000
 private const val LOAD_ALL_PAGE_WAIT_TICKS = 4_800
@@ -328,6 +329,7 @@ class MailViewModel @Inject constructor(
     private var silent_revalidate_job: Job? = null
     private var load_more_job: Job? = null
     private var load_more_generation = 0
+    private var load_more_failures = 0
     private var refresh_job: Job? = null
     private var refresh_generation = 0
     private var load_all_remaining_job: Job? = null
@@ -560,6 +562,7 @@ class MailViewModel @Inject constructor(
     }
 
     fun load_inbox(folder: String = "inbox", force: Boolean = false) {
+        load_more_failures = 0
         val current = _inbox_state.value
         if (current.current_folder != folder && folder_cache_time.containsKey(current.current_folder)) {
             folder_cache[current.current_folder] = current
@@ -737,6 +740,7 @@ class MailViewModel @Inject constructor(
         val state = _inbox_state.value
         if (state.is_loading || !state.has_more) return
         if (state.is_loading_more && load_more_job?.isActive == true) return
+        if (load_more_failures >= LOAD_MORE_FAILURE_LIMIT) return
         var cursor = state.next_cursor ?: return
         val started_folder = state.current_folder
         _inbox_state.update { it.copy(is_loading_more = true) }
@@ -756,6 +760,7 @@ class MailViewModel @Inject constructor(
                     return@launch
                 }
                 if (page == null) {
+                    load_more_failures++
                     if (pages_scanned > 0) {
                         _inbox_state.update { it.copy(is_loading_more = false, next_cursor = cursor) }
                     } else {
@@ -764,6 +769,7 @@ class MailViewModel @Inject constructor(
                     }
                     return@launch
                 }
+                load_more_failures = 0
                 val confirmed_at = System.currentTimeMillis()
                 page.items.forEach { item_last_confirmed[it.id] = confirmed_at }
                 val existing = _inbox_state.value.items
@@ -2483,6 +2489,7 @@ class MailViewModel @Inject constructor(
         val folder = _inbox_state.value.current_folder
         if (_inbox_state.value.is_refreshing && refresh_job?.isActive == true) return
         val gen = account_generation
+        load_more_failures = 0
         folder_cache.remove(folder)
         folder_cache_time.remove(folder)
         _inbox_state.update { it.copy(is_refreshing = true) }
