@@ -206,6 +206,8 @@ fun build_thread_rows(
 
 private const val UNREAD_MISMATCH_GRACE_MS = 3000L
 
+private const val MIN_FILLED_ROWS = 15
+
 internal const val SELECT_ALL_DRAIN_LIMIT = 5000
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -686,10 +688,9 @@ fun InboxScreen(
             val layout_info = list_state.layoutInfo
             val total = layout_info.totalItemsCount
             val last_visible = layout_info.visibleItemsInfo.lastOrNull()?.index ?: 0
-            total > 0 && (total - last_visible) <= 3
-        }.distinctUntilChanged().collect { near_end ->
+            val near_end = total > 0 && (total - last_visible) <= 3
             val s = inbox_state
-            if (near_end &&
+            near_end &&
                 s.has_more &&
                 !s.is_loading &&
                 !s.is_loading_more &&
@@ -697,9 +698,8 @@ fun InboxScreen(
                 s.items.isNotEmpty() &&
                 s.next_cursor != null &&
                 s.current_folder == current_folder
-            ) {
-                mail_vm.load_more()
-            }
+        }.distinctUntilChanged().collect { should_load_more ->
+            if (should_load_more) mail_vm.load_more()
         }
     }
 
@@ -708,24 +708,30 @@ fun InboxScreen(
         active_category,
         active_tabs,
         emails_fingerprint,
+        threads.size,
         inbox_state.has_more,
         inbox_state.is_loading,
         inbox_state.is_loading_more,
         inbox_state.initial,
     ) {
         val s = inbox_state
-        if (categories_enabled &&
-            s.has_more &&
+        if (s.has_more &&
             !s.is_loading &&
             !s.is_loading_more &&
             !s.initial &&
             s.next_cursor != null &&
             s.current_folder == current_folder
         ) {
-            val in_tab = emails.count {
-                org.astermail.android.mail.category_for_tab(it.category, active_tabs) == active_category
+            val visible_rows = if (categories_enabled) {
+                emails.count {
+                    org.astermail.android.mail.category_for_tab(it.category, active_tabs) == active_category
+                }
+            } else if (emails.isNotEmpty() && threads.isEmpty()) {
+                MIN_FILLED_ROWS
+            } else {
+                threads.size
             }
-            if (in_tab < 15) mail_vm.load_more()
+            if (visible_rows < MIN_FILLED_ROWS) mail_vm.load_more()
         }
     }
 

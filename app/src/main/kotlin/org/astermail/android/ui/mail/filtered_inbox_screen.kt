@@ -64,6 +64,8 @@ import org.astermail.android.design.components.AsterIconButton
 
 enum class FilterType { folder, label, alias }
 
+private const val FILTERED_MIN_FILLED_ROWS = 15
+
 @Composable
 fun FilteredInboxScreen(
     filter_type: FilterType,
@@ -93,10 +95,9 @@ fun FilteredInboxScreen(
             val layout_info = list_state.layoutInfo
             val total = layout_info.totalItemsCount
             val last_visible = layout_info.visibleItemsInfo.lastOrNull()?.index ?: 0
-            total > 0 && (total - last_visible) <= 3
-        }.distinctUntilChanged().collect { near_end ->
+            val near_end = total > 0 && (total - last_visible) <= 3
             val s = inbox_state
-            if (near_end &&
+            near_end &&
                 s.has_more &&
                 !s.is_loading &&
                 !s.is_loading_more &&
@@ -104,9 +105,8 @@ fun FilteredInboxScreen(
                 s.items.isNotEmpty() &&
                 s.next_cursor != null &&
                 s.current_folder == requested_folder
-            ) {
-                mail_vm.load_more()
-            }
+        }.distinctUntilChanged().collect { should_load_more ->
+            if (should_load_more) mail_vm.load_more()
         }
     }
 
@@ -117,6 +117,26 @@ fun FilteredInboxScreen(
     val threads = remember(filtered_emails, grouping_enabled) {
         val rows = if (grouping_enabled) group_by_thread(filtered_emails) else flat_thread_rows(filtered_emails)
         rows.sortedByDescending { it.newest.received_at }
+    }
+
+    LaunchedEffect(
+        threads.size,
+        inbox_state.has_more,
+        inbox_state.is_loading,
+        inbox_state.is_loading_more,
+        inbox_state.initial,
+    ) {
+        val s = inbox_state
+        if (s.has_more &&
+            !s.is_loading &&
+            !s.is_loading_more &&
+            !s.initial &&
+            s.next_cursor != null &&
+            s.current_folder == requested_folder &&
+            threads.size < FILTERED_MIN_FILLED_ROWS
+        ) {
+            mail_vm.load_more()
+        }
     }
 
     Box(

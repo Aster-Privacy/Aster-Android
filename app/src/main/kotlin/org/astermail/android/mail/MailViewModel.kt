@@ -326,6 +326,8 @@ class MailViewModel @Inject constructor(
     private val _emptying_spam = MutableStateFlow(false)
     val emptying_spam_state: StateFlow<Boolean> = _emptying_spam.asStateFlow()
     private var silent_revalidate_job: Job? = null
+    private var load_more_job: Job? = null
+    private var load_more_generation = 0
     private var refresh_job: Job? = null
     private var refresh_generation = 0
     private var load_all_remaining_job: Job? = null
@@ -733,11 +735,13 @@ class MailViewModel @Inject constructor(
 
     fun load_more() {
         val state = _inbox_state.value
-        if (state.is_loading || state.is_loading_more || !state.has_more) return
+        if (state.is_loading || !state.has_more) return
+        if (state.is_loading_more && load_more_job?.isActive == true) return
         var cursor = state.next_cursor ?: return
         val started_folder = state.current_folder
-        _inbox_state.value = state.copy(is_loading_more = true)
-        viewModelScope.launch {
+        _inbox_state.update { it.copy(is_loading_more = true) }
+        val load_more_gen = ++load_more_generation
+        load_more_job = viewModelScope.launch {
             var pages_scanned = 0
             while (true) {
                 val page = try {
@@ -785,6 +789,11 @@ class MailViewModel @Inject constructor(
                 folder_cache_time[started_folder] = System.currentTimeMillis()
                 search_index_manager.on_items_loaded(page.items)
                 return@launch
+            }
+        }
+        load_more_job?.invokeOnCompletion {
+            if (load_more_gen == load_more_generation && _inbox_state.value.is_loading_more) {
+                _inbox_state.update { it.copy(is_loading_more = false) }
             }
         }
     }
@@ -2478,10 +2487,10 @@ class MailViewModel @Inject constructor(
         folder_cache_time.remove(folder)
         _inbox_state.update { it.copy(is_refreshing = true) }
         load_stats()
+        val refresh_gen = ++refresh_generation
         inbox_load_job?.cancel()
         silent_revalidate_job?.cancel()
         refresh_job?.cancel()
-        val refresh_gen = ++refresh_generation
         refresh_job = viewModelScope.launch {
             val result = runCatching {
                 kotlinx.coroutines.withTimeout(PULL_REFRESH_BACKSTOP_MS) {
