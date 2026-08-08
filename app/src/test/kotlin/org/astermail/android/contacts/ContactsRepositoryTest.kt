@@ -182,6 +182,35 @@ class ContactsRepositoryTest {
     }
 
     @Test
+    fun `fetch_contacts keeps earlier pages when a later page fails`() = runTest {
+        val page1_items = listOf(fake_encrypted_contact_item("c_1"))
+
+        coEvery { contacts_api.list_contacts(limit = 100, cursor = null) } returns
+            ListContactsResponse(items = page1_items, has_more = true, next_cursor = "cursor_1")
+        coEvery { contacts_api.list_contacts(limit = 100, cursor = "cursor_1") } throws
+            RuntimeException("invalid cursor timestamp")
+
+        val result = repo.fetch_contacts()
+        assertTrue(result.isSuccess)
+        assertEquals(1, result.getOrThrow().size)
+        assertEquals("c_1", result.getOrThrow()[0].id)
+    }
+
+    @Test
+    fun `fetch_contacts stops when the server repeats a cursor`() = runTest {
+        coEvery { contacts_api.list_contacts(limit = 100, cursor = any()) } returns
+            ListContactsResponse(
+                items = listOf(fake_encrypted_contact_item("c_1")),
+                has_more = true,
+                next_cursor = "cursor_1",
+            )
+
+        val result = repo.fetch_contacts()
+        assertTrue(result.isSuccess)
+        coVerify(exactly = 2) { contacts_api.list_contacts(any(), any()) }
+    }
+
+    @Test
     fun `fetch_contacts skips items with null encrypted_data`() = runTest {
         val valid_item = fake_encrypted_contact_item("c_1")
         val null_item = ContactItem(id = "c_2", encrypted_data = null, data_nonce = null)

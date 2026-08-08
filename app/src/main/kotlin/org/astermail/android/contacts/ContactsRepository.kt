@@ -58,12 +58,22 @@ class ContactsRepository @Inject constructor(
 ) {
     suspend fun fetch_contacts(group_id: String? = null): Result<List<Contact>> = runCatching {
         val all = mutableListOf<ContactItem>()
+        val seen_cursors = mutableSetOf<String>()
         var cursor: String? = null
-        do {
-            val page = contacts_api.list_contacts(limit = 100, cursor = cursor, group_id = group_id)
+        while (true) {
+            val page = try {
+                contacts_api.list_contacts(limit = 100, cursor = cursor, group_id = group_id)
+            } catch (t: kotlin.coroutines.cancellation.CancellationException) {
+                throw t
+            } catch (t: Throwable) {
+                if (cursor == null) throw t
+                break
+            }
             all.addAll(page.items)
-            cursor = page.next_cursor
-        } while (page.has_more && cursor != null)
+            val next = page.next_cursor
+            if (!page.has_more || next.isNullOrBlank() || !seen_cursors.add(next)) break
+            cursor = next
+        }
         all.mapNotNull { decrypt_contact(it) }
     }
 
