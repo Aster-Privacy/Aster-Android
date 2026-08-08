@@ -384,6 +384,11 @@ class ApiClient(
                 detail = detail.ifBlank { "storage full" },
             ).also { emit_storage_full(it) }
         }
+        if (server_code == "EXTERNAL_SEND_QUOTA_REACHED") {
+            return ApiError.ValidationError(
+                listOf(detail.ifBlank { "You've reached this account's daily limit for messages to addresses outside Aster. Messages to other Aster addresses aren't affected." }),
+            )
+        }
         return when (code) {
             400 -> ApiError.ValidationError(parse_validation_messages(body).ifEmpty { listOf(detail.ifBlank { "bad request" }) })
             401 -> ApiError.UnauthorizedError.also {
@@ -393,7 +398,9 @@ class ApiClient(
             404 -> ApiError.NotFoundError
             413 -> ApiError.StorageQuotaExceeded(detail.ifBlank { "storage full" })
                 .also { emit_storage_full(it) }
-            422 -> ApiError.ValidationError(parse_validation_messages(body))
+            422 -> ApiError.ValidationError(
+                parse_validation_messages(body).ifEmpty { listOf(detail.ifBlank { "unprocessable request" }) },
+            )
             429 -> ApiError.RateLimited
             in 500..599 -> ApiError.ServerError(code)
             else -> ApiError.UnknownError(body.ifBlank { "http $code" })
