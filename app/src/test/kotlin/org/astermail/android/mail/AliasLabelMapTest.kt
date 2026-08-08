@@ -32,17 +32,21 @@ import org.junit.Test
 class AliasLabelMapTest {
 
     @Test
-    fun falls_back_to_the_local_part_when_there_is_no_display_name() {
+    fun uses_the_local_part_of_the_address() {
         val map = build_alias_label_map(listOf(AliasLabelEntry("shopping@aster.cx")))
         assertEquals("shopping", map["shopping@aster.cx"])
     }
 
     @Test
-    fun prefers_the_trimmed_display_name() {
-        val map = build_alias_label_map(
-            listOf(AliasLabelEntry("shopping@aster.cx", "  Shopping  ")),
-        )
-        assertEquals("Shopping", map["shopping@aster.cx"])
+    fun keeps_the_whole_local_part_for_a_dotted_alias() {
+        val map = build_alias_label_map(listOf(AliasLabelEntry("thehindu.3month@aster.cx")))
+        assertEquals("thehindu.3month", map["thehindu.3month@aster.cx"])
+    }
+
+    @Test
+    fun keeps_the_local_part_when_a_subdomain_address_has_extra_dots() {
+        val map = build_alias_label_map(listOf(AliasLabelEntry("news@mail.aster.cx")))
+        assertEquals("news", map["news@mail.aster.cx"])
     }
 
     @Test
@@ -69,11 +73,11 @@ class AliasLabelMapTest {
     fun keeps_the_first_entry_for_a_duplicate_address() {
         val map = build_alias_label_map(
             listOf(
-                AliasLabelEntry("shopping@aster.cx", "First"),
-                AliasLabelEntry("shopping@aster.cx", "Second"),
+                AliasLabelEntry("shopping@aster.cx", "hash-first"),
+                AliasLabelEntry("shopping@aster.cx", "hash-second"),
             ),
         )
-        assertEquals("First", map["shopping@aster.cx"])
+        assertEquals("shopping", map["shopping@aster.cx"])
         assertEquals(1, map.size)
     }
 
@@ -84,15 +88,15 @@ class AliasLabelMapTest {
     }
 
     private val entries = listOf(
-        AliasLabelEntry("shopping@aster.cx", "Shopping", "hash-shopping"),
-        AliasLabelEntry("newsletters@aster.cx", null, "hash-newsletters"),
+        AliasLabelEntry("shopping@aster.cx", "hash-shopping"),
+        AliasLabelEntry("newsletters@aster.cx", "hash-newsletters"),
     )
     private val token_labels = build_alias_token_label_map(entries)
     private val labels = build_alias_label_map(entries)
 
     @Test
     fun token_map_keeps_the_hash_case_and_uses_the_same_label_rules() {
-        assertEquals("Shopping", token_labels["hash-shopping"])
+        assertEquals("shopping", token_labels["hash-shopping"])
         assertEquals("newsletters", token_labels["hash-newsletters"])
         assertEquals(2, token_labels.size)
     }
@@ -101,10 +105,10 @@ class AliasLabelMapTest {
     fun token_map_skips_entries_without_a_hash_or_a_usable_address() {
         val map = build_alias_token_label_map(
             listOf(
-                AliasLabelEntry("shopping@aster.cx", null, "  "),
-                AliasLabelEntry("shopping@aster.cx", null, null),
-                AliasLabelEntry("no-at-sign", null, "hash-broken"),
-                AliasLabelEntry(null, "Name", "hash-nameless"),
+                AliasLabelEntry("shopping@aster.cx", "  "),
+                AliasLabelEntry("shopping@aster.cx", null),
+                AliasLabelEntry("no-at-sign", "hash-broken"),
+                AliasLabelEntry(null, "hash-nameless"),
             ),
         )
         assertEquals(0, map.size)
@@ -114,18 +118,18 @@ class AliasLabelMapTest {
     fun token_map_keeps_the_first_entry_for_a_duplicate_hash() {
         val map = build_alias_token_label_map(
             listOf(
-                AliasLabelEntry("first@aster.cx", "First", "hash-dup"),
-                AliasLabelEntry("second@aster.cx", "Second", "hash-dup"),
+                AliasLabelEntry("first@aster.cx", "hash-dup"),
+                AliasLabelEntry("second@aster.cx", "hash-dup"),
             ),
         )
-        assertEquals("First", map["hash-dup"])
+        assertEquals("first", map["hash-dup"])
         assertEquals(1, map.size)
     }
 
     @Test
     fun resolves_a_bcc_delivery_from_the_routing_token_alone() {
         assertEquals(
-            "Shopping",
+            "shopping",
             resolve_alias_delivery_label(token_labels, labels, "hash-shopping", null),
         )
     }
@@ -133,7 +137,7 @@ class AliasLabelMapTest {
     @Test
     fun resolves_from_the_recipient_header_when_there_is_no_token() {
         assertEquals(
-            "Shopping",
+            "shopping",
             resolve_alias_delivery_label(token_labels, labels, null, "SHOPPING@Aster.CX"),
         )
     }
@@ -154,7 +158,7 @@ class AliasLabelMapTest {
     @Test
     fun an_unknown_token_falls_back_to_the_recipient_header() {
         assertEquals(
-            "Shopping",
+            "shopping",
             resolve_alias_delivery_label(
                 token_labels,
                 labels,
@@ -179,7 +183,7 @@ class AliasLabelMapTest {
     @Test
     fun a_legacy_cached_row_without_a_token_still_resolves_by_header() {
         assertEquals(
-            "Shopping",
+            "shopping",
             resolve_alias_delivery_label(token_labels, labels, null, "shopping@aster.cx"),
         )
         assertNull(resolve_alias_delivery_label(token_labels, labels, null, null))

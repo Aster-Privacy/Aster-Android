@@ -1417,7 +1417,6 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
             .map {
                 org.astermail.android.ui.mail.AliasLabelEntry(
                     it.address,
-                    it.encrypted_display_name,
                     it.alias_address_hash,
                 )
             }

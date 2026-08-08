@@ -46,20 +46,19 @@ class LongAliasLabelChipTest {
 
     private val long_alias = "extremely.long.forwarding.address.for.testing@subdomain.example.com"
 
-    private val long_alias_label =
-        "Extremely Long Forwarding Alias Name Used For Truncation Testing"
+    private val long_alias_label = "extremely.long.forwarding.address.for.testing"
 
     private val label_name = "Receipts"
 
     private val bcc_alias = "bcc.only.alias@aster.cx"
 
-    private val bcc_alias_label = "Bcc Only Alias"
+    private val bcc_alias_label = "bcc.only.alias"
 
     private val bcc_alias_hash = "hash-bcc-only-alias"
 
     private val alias_entries = listOf(
-        AliasLabelEntry(long_alias, long_alias_label),
-        AliasLabelEntry(bcc_alias, bcc_alias_label, bcc_alias_hash),
+        AliasLabelEntry(long_alias),
+        AliasLabelEntry(bcc_alias, bcc_alias_hash),
     )
 
     @Before

@@ -23,7 +23,6 @@ package org.astermail.android.ui.mail
 
 data class AliasLabelEntry(
     val address: String?,
-    val display_name: String? = null,
     val address_hash: String? = null,
 )
 
@@ -36,7 +35,7 @@ private fun alias_label_of(entry: AliasLabelEntry): String? {
     if (key.isEmpty() || !key.contains("@")) return null
     val local_part = key.substringBefore("@")
     if (local_part.isEmpty()) return null
-    return entry.display_name?.trim().orEmpty().ifBlank { local_part }
+    return local_part
 }
 
 fun build_alias_label_map(entries: List<AliasLabelEntry>): Map<String, String> {
