@@ -52,16 +52,66 @@ private fun mix(from: Color, to: Color, amount: Float): Color {
     )
 }
 
+private data class HslColor(val hue: Float, val saturation: Float, val lightness: Float)
+
+private fun to_hsl(color: Color): HslColor {
+    val r = color.red
+    val g = color.green
+    val b = color.blue
+    val high = max(r, max(g, b))
+    val low = min(r, min(g, b))
+    val lightness = (high + low) / 2f
+    if (high == low) return HslColor(0f, 0f, lightness)
+    val delta = high - low
+    val saturation = if (lightness > 0.5f) delta / (2f - high - low) else delta / (high + low)
+    val hue = when (high) {
+        r -> (g - b) / delta + if (g < b) 6f else 0f
+        g -> (b - r) / delta + 2f
+        else -> (r - g) / delta + 4f
+    } / 6f
+    return HslColor(hue, saturation, lightness)
+}
+
+private fun hue_to_channel(p: Float, q: Float, offset: Float): Float {
+    var t = offset
+    if (t < 0f) t += 1f
+    if (t > 1f) t -= 1f
+    return when {
+        t < 1f / 6f -> p + (q - p) * 6f * t
+        t < 1f / 2f -> q
+        t < 2f / 3f -> p + (q - p) * (2f / 3f - t) * 6f
+        else -> p
+    }
+}
+
+private fun from_hsl(value: HslColor): Color {
+    val l = value.lightness.coerceIn(0f, 1f)
+    if (value.saturation <= 0f) return Color(l, l, l, 1f)
+    val q = if (l < 0.5f) l * (1f + value.saturation) else l + value.saturation - l * value.saturation
+    val p = 2f * l - q
+    return Color(
+        hue_to_channel(p, q, value.hue + 1f / 3f),
+        hue_to_channel(p, q, value.hue),
+        hue_to_channel(p, q, value.hue - 1f / 3f),
+        1f,
+    )
+}
+
 internal fun chip_background(label: Color, surface: Color, is_dark: Boolean): Color =
-    mix(surface, label, if (is_dark) 0.26f else 0.18f)
+    mix(surface, label, if (is_dark) 0.15f else 0.12f)
+
+internal fun chip_border(label: Color, surface: Color, is_dark: Boolean): Color =
+    mix(surface, label, if (is_dark) 0.30f else 0.25f)
 
 internal fun chip_content(label: Color, background: Color, is_dark: Boolean): Color {
-    val toward = if (is_dark) Color.White else Color.Black
-    var candidate = mix(label, toward, if (is_dark) 0.2f else 0.1f)
+    val base = to_hsl(label)
+    val target = if (is_dark) max(base.lightness, 0.68f) else min(base.lightness, 0.36f)
+    var candidate = from_hsl(base.copy(lightness = target))
     var step = 0
-    while (contrast_ratio(candidate, background) < chip_min_contrast && step < 24) {
+    while (contrast_ratio(candidate, background) < chip_min_contrast && step < 40) {
         step += 1
-        candidate = mix(label, toward, (if (is_dark) 0.2f else 0.1f) + step * 0.035f)
+        val walked = if (is_dark) target + step * 0.02f else target - step * 0.02f
+        candidate = from_hsl(base.copy(lightness = walked.coerceIn(0f, 1f)))
     }
     return candidate
 }

@@ -118,6 +118,36 @@ class ChipColorsTest {
     }
 
     @Test
+    fun chip_border_sits_between_the_background_and_the_label() {
+        val surface = Color(0xFFFFFFFF)
+        val label = Color(0xFF4285F4)
+        val background = chip_background(label, surface, is_dark = false)
+        val border = chip_border(label, surface, is_dark = false)
+        assertTrue(contrast_ratio(border, surface) > contrast_ratio(background, surface))
+        assertTrue(contrast_ratio(border, surface) < contrast_ratio(label, surface))
+    }
+
+    @Test
+    fun chip_content_keeps_the_label_hue() {
+        val label = Color(0xFF4285F4)
+        val background = chip_background(label, Color.White, is_dark = false)
+        val content = chip_content(label, background, is_dark = false)
+        assertTrue(content.blue > content.red)
+        assertTrue(content.blue > content.green)
+    }
+
+    @Test
+    fun chip_content_is_darker_on_light_and_lighter_on_dark() {
+        val label = Color(0xFF34A853)
+        val light_background = chip_background(label, Color.White, is_dark = false)
+        val dark_background = chip_background(label, Color(0xFF121212), is_dark = true)
+        val on_light = chip_content(label, light_background, is_dark = false)
+        val on_dark = chip_content(label, dark_background, is_dark = true)
+        assertTrue(relative_luminance(on_light) < relative_luminance(label))
+        assertTrue(relative_luminance(on_dark) > relative_luminance(label))
+    }
+
+    @Test
     fun contrast_ratio_is_symmetric() {
         val a = Color(0xFF123456)
         val b = Color(0xFFABCDEF)

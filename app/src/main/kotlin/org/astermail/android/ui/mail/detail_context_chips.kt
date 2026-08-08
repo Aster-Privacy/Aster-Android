@@ -22,6 +22,7 @@
 package org.astermail.android.ui.mail
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -142,15 +143,17 @@ internal fun detail_folder_chip(data: detail_folder_chip_data, modifier: Modifie
         "warning" -> colors.warning
         else -> colors.accent_blue
     }
-    val shape = RoundedCornerShape(6.dp)
+    val shape = RoundedCornerShape(4.dp)
     val background = chip_background(tint, colors.bg_primary, colors.is_dark)
+    val border = chip_border(tint, colors.bg_primary, colors.is_dark)
     val content = chip_content(tint, background, colors.is_dark)
     Row(
         modifier = modifier
             .testTag("detail_folder_chip")
             .clip(shape)
             .background(background, shape)
-            .padding(horizontal = 8.dp, vertical = 3.dp),
+            .border(1.dp, border, shape)
+            .padding(horizontal = 7.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
@@ -182,15 +185,17 @@ internal fun detail_label_chip(tag: TagItem, modifier: Modifier = Modifier) {
     } else {
         null
     }
-    val shape = RoundedCornerShape(6.dp)
+    val shape = RoundedCornerShape(4.dp)
     val background = chip_background(tag_color, colors.bg_primary, colors.is_dark)
+    val border = chip_border(tag_color, colors.bg_primary, colors.is_dark)
     val content = chip_content(tag_color, background, colors.is_dark)
     Row(
         modifier = modifier
             .testTag("detail_label_chip")
             .clip(shape)
             .background(background, shape)
-            .padding(horizontal = 8.dp, vertical = 3.dp),
+            .border(1.dp, border, shape)
+            .padding(horizontal = 7.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
