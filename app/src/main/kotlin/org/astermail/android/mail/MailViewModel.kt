@@ -327,6 +327,7 @@ class MailViewModel @Inject constructor(
     val emptying_spam_state: StateFlow<Boolean> = _emptying_spam.asStateFlow()
     private var silent_revalidate_job: Job? = null
     private var refresh_job: Job? = null
+    private var refresh_generation = 0
     private var load_all_remaining_job: Job? = null
     private var account_generation = 0
     private val star_overrides = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
@@ -2471,7 +2472,7 @@ class MailViewModel @Inject constructor(
 
     fun refresh() {
         val folder = _inbox_state.value.current_folder
-        if (_inbox_state.value.is_refreshing) return
+        if (_inbox_state.value.is_refreshing && refresh_job?.isActive == true) return
         val gen = account_generation
         folder_cache.remove(folder)
         folder_cache_time.remove(folder)
@@ -2480,6 +2481,7 @@ class MailViewModel @Inject constructor(
         inbox_load_job?.cancel()
         silent_revalidate_job?.cancel()
         refresh_job?.cancel()
+        val refresh_gen = ++refresh_generation
         refresh_job = viewModelScope.launch {
             val result = runCatching {
                 kotlinx.coroutines.withTimeout(PULL_REFRESH_BACKSTOP_MS) {
@@ -2487,6 +2489,7 @@ class MailViewModel @Inject constructor(
                 }
             }
             if (account_generation != gen) return@launch
+            if (refresh_gen != refresh_generation) return@launch
             if (_inbox_state.value.current_folder != folder) {
                 _inbox_state.update { it.copy(is_refreshing = false) }
                 return@launch
@@ -2527,7 +2530,7 @@ class MailViewModel @Inject constructor(
             )
         }
         refresh_job?.invokeOnCompletion {
-            if (_inbox_state.value.is_refreshing) {
+            if (refresh_gen == refresh_generation && _inbox_state.value.is_refreshing) {
                 _inbox_state.update { it.copy(is_refreshing = false) }
             }
         }

@@ -70,22 +70,29 @@ fun strip_body_html(html: String): String {
     }
     text = text.replace(Regex("&[a-zA-Z]+;"), " ")
     text = text.replace(Regex("<[^>]+>"), " ")
-    text = text.replace(Regex("[\\u200B-\\u200F\\u202A-\\u202E\\u2060\\uFEFF\\u00AD\\u034F\\u115F\\u1160\\u17B4\\u17B5\\u180E\\u3164\\uFFA0]"), "")
+    text = text.replace(Regex("[\\u200B-\\u200F\\u202A-\\u202E\\u2060\\u2066-\\u2069\\uFEFF\\u00AD\\u034F\\u115F\\u1160\\u17B4\\u17B5\\u180E\\u3164\\uFFA0\\uFFF9-\\uFFFC]"), "")
     text = text.replace(Regex("\\s+"), " ")
     return text.trim()
+}
+
+fun take_whole_chars(text: String, max_length: Int): String {
+    if (max_length <= 0) return ""
+    if (text.length <= max_length) return text
+    val end = if (Character.isHighSurrogate(text[max_length - 1])) max_length - 1 else max_length
+    return text.substring(0, end)
 }
 
 fun clean_body_preview(body_text: String, body_html: String?): String {
     if (body_html != null && !looks_like_ciphertext(body_html)) {
         val from_html = strip_body_html(body_html)
-        if (from_html.length > 4) return from_html.take(PREVIEW_MAX_LENGTH)
+        if (from_html.length > 4) return take_whole_chars(from_html, PREVIEW_MAX_LENGTH)
     }
     if (looks_like_ciphertext(body_text)) return ""
-    return strip_body_html(body_text).take(PREVIEW_MAX_LENGTH)
+    return take_whole_chars(strip_body_html(body_text), PREVIEW_MAX_LENGTH)
 }
 
 fun safe_display_text(text: String, max_length: Int = PREVIEW_MAX_LENGTH): String {
     if (text.isBlank()) return ""
     if (looks_like_ciphertext(text)) return ""
-    return strip_body_html(text).take(max_length)
+    return take_whole_chars(strip_body_html(text), max_length)
 }

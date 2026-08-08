@@ -592,8 +592,8 @@ fun InboxScreen(
 
     var last_scroll_reset_key by rememberSaveable { mutableStateOf("") }
     var pending_scroll_reset by remember { mutableStateOf(false) }
-    LaunchedEffect(sort_mode, current_folder) {
-        val reset_key = "$sort_mode|$current_folder"
+    LaunchedEffect(sort_mode, current_folder, active_category, categories_enabled) {
+        val reset_key = "$sort_mode|$current_folder|${if (categories_enabled) active_category else ""}"
         if (last_scroll_reset_key.isNotEmpty() && last_scroll_reset_key != reset_key) {
             pending_scroll_reset = true
             list_state.scrollToItem(0)
@@ -703,7 +703,16 @@ fun InboxScreen(
         }
     }
 
-    LaunchedEffect(categories_enabled, active_category, emails_fingerprint, inbox_state.has_more, inbox_state.is_loading, inbox_state.is_loading_more) {
+    LaunchedEffect(
+        categories_enabled,
+        active_category,
+        active_tabs,
+        emails_fingerprint,
+        inbox_state.has_more,
+        inbox_state.is_loading,
+        inbox_state.is_loading_more,
+        inbox_state.initial,
+    ) {
         val s = inbox_state
         if (categories_enabled &&
             s.has_more &&
