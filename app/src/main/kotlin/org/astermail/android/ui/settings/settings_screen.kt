@@ -76,6 +76,7 @@ import org.astermail.android.design.components.shimmer_brush
 import org.astermail.android.settings.SettingsViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.ui.common.current_user_avatar
+import org.astermail.android.ui.common.plan_ring
 import org.astermail.android.ui.mail.search_field_bg_color
 import org.astermail.android.settings.shared_settings_view_model
 
@@ -246,11 +247,13 @@ private fun profile_header(
                 .clickable(onClick = on_click),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            current_user_avatar(
-                account_store = account_store,
-                size = 88.dp,
-                profile_picture_url = profile_picture_url,
-            )
+            plan_ring(size = 88.dp, enabled = subscription != null && !is_free) {
+                current_user_avatar(
+                    account_store = account_store,
+                    size = 88.dp,
+                    profile_picture_url = profile_picture_url,
+                )
+            }
             Spacer(Modifier.size(14.dp))
             if (profile_loading) {
                 Box(

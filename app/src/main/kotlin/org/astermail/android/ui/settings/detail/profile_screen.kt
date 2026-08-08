@@ -76,6 +76,8 @@ import compose.icons.tablericons.ChevronDown
 import org.astermail.android.api.user.Badge
 import org.astermail.android.api.user.UpdateBadgePreferencesRequest
 import org.astermail.android.ui.common.current_user_avatar
+import org.astermail.android.ui.common.plan_ring
+import org.astermail.android.ui.common.remember_has_paid_plan
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
@@ -163,11 +165,13 @@ fun ProfileScreen(
                     .padding(AsterSpacing.lg),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                current_user_avatar(
-                    account_store = vm.account_store,
-                    size = 60.dp,
-                    profile_picture_url = user?.profile_picture,
-                )
+                plan_ring(size = 60.dp, enabled = remember_has_paid_plan()) {
+                    current_user_avatar(
+                        account_store = vm.account_store,
+                        size = 60.dp,
+                        profile_picture_url = user?.profile_picture,
+                    )
+                }
                 Spacer(Modifier.width(AsterSpacing.lg))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(

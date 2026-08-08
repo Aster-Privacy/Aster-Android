@@ -93,6 +93,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.astermail.android.ui.common.plan_ring
+import org.astermail.android.ui.common.remember_has_paid_plan
 import org.astermail.android.ui.mail.SenderAvatar
 import org.astermail.android.ui.mail.avatar_colors_for
 import org.astermail.android.ui.mail.avatar_seed_for
@@ -1920,13 +1922,15 @@ private fun workspace_header(
                 .testTag("workspace_switcher"),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            SenderAvatar(
-                email = account_email,
-                name = account_name,
-                size = 40.dp,
-                profile_picture_url = profile_picture,
-                modifier = Modifier.testTag("account_avatar"),
-            )
+            plan_ring(size = 40.dp, enabled = remember_has_paid_plan()) {
+                SenderAvatar(
+                    email = account_email,
+                    name = account_name,
+                    size = 40.dp,
+                    profile_picture_url = profile_picture,
+                    modifier = Modifier.testTag("account_avatar"),
+                )
+            }
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
