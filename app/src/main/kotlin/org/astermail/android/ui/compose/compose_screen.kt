@@ -93,6 +93,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import org.astermail.android.ui.icons.pin_icon
+import org.astermail.android.ui.icons.pin_icon_filled
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.unit.IntOffset
@@ -2977,14 +2979,15 @@ private fun FromAliasSheet(
                             )
                         }
                         Icon(
-                            imageVector = if (opt == primary) TablerIcons.Pin else TablerIcons.Pin,
+                            imageVector = if (opt == primary) pin_icon_filled else pin_icon,
                             contentDescription = stringResource(R.string.set_as_primary),
                             tint = if (opt == primary) colors.accent_blue else colors.text_muted,
                             modifier = Modifier
                                 .size(36.dp)
                                 .clip(SquircleShape(8.dp))
                                 .clickable { on_set_primary(opt) }
-                                .padding(8.dp),
+                                .padding(8.dp)
+                                .rotate(if (opt == primary) -38f else 0f),
                         )
                         if (opt == current) {
                             Icon(

@@ -24,6 +24,8 @@ package org.astermail.android.ui.mail
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
+import org.astermail.android.ui.icons.pin_icon_filled
+
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -64,6 +66,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
@@ -228,10 +231,12 @@ fun EmailRow(
                 ) {
                     if (is_pinned) {
                         Icon(
-                            imageVector = TablerIcons.Pin,
+                            imageVector = pin_icon_filled,
                             contentDescription = stringResource(R.string.pinned),
                             tint = colors.accent_blue,
-                            modifier = Modifier.size(14.dp),
+                            modifier = Modifier
+                                .size(14.dp)
+                                .rotate(-38f),
                         )
                     }
                     star_button(
@@ -527,10 +532,12 @@ fun ThreadInboxRow(
                 if (is_pinned) {
                     Spacer(Modifier.width(AsterSpacing.sm))
                     Icon(
-                        imageVector = TablerIcons.Pin,
+                        imageVector = pin_icon_filled,
                         contentDescription = stringResource(R.string.pinned),
                         tint = colors.accent_blue,
-                        modifier = Modifier.size(14.dp),
+                        modifier = Modifier
+                            .size(14.dp)
+                            .rotate(-38f),
                     )
                 }
                 Spacer(Modifier.width(AsterSpacing.sm))

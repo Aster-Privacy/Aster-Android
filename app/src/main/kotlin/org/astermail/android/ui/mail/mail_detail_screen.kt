@@ -25,6 +25,8 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.AlertTriangle
 import compose.icons.tablericons.*
 
+import org.astermail.android.ui.icons.pin_icon
+import org.astermail.android.ui.icons.pin_icon_filled
 import org.astermail.android.design.components.aster_dropdown_divider
 import org.astermail.android.design.components.aster_dropdown_item
 import org.astermail.android.design.components.aster_dropdown_menu
@@ -828,7 +830,7 @@ fun MailDetailScreen(
                             on_back()
                         }
                         detail_menu_action(
-                            icon = TablerIcons.Pin,
+                            icon = if (is_pinned) pin_icon_filled else pin_icon,
                             text = if (is_pinned) stringResource(R.string.unpin) else stringResource(R.string.pin_to_top),
                             tint = colors.text_primary,
                         ) {
