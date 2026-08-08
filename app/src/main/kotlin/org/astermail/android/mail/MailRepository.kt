@@ -329,6 +329,7 @@ class MailRepository @Inject constructor(
     private val ratchet_plaintext_cache: org.astermail.android.mail.ratchet.RatchetPlaintextCache,
     private val pending_send_dao: PendingSendDao,
     @ApplicationContext private val context: Context,
+    private val auth_repository: dagger.Lazy<org.astermail.android.auth.AuthRepository>,
 ) {
     @Volatile
     private var custom_categories: List<org.astermail.android.api.preferences.CustomCategoryRule> =
@@ -611,14 +612,19 @@ class MailRepository @Inject constructor(
         expected_owner: String? = null,
         attempt: Int = 0,
     ): PendingSendOutcome {
-        val row = pending_send_dao.get_by_id(pending_id) ?: return PendingSendOutcome.GONE
+        val row = pending_send_dao.get_by_id(pending_id) ?: run {
+            if (BuildConfig.DEBUG) android.util.Log.w("MailRepository", "run_pending_send id=$pending_id GONE: no row")
+            return PendingSendOutcome.GONE
+        }
         val owner = row.account_id ?: expected_owner
         if (owner != null && owner != session_key_store.get_user_id()) {
+            if (BuildConfig.DEBUG) android.util.Log.w("MailRepository", "run_pending_send id=$pending_id RETRY: owner mismatch")
             return PendingSendOutcome.RETRY
         }
         if (undo_canceled_ids.contains(pending_id)) {
             runCatching { pending_send_dao.delete_by_id(pending_id) }
             delete_outbox_attachments(pending_id)
+            if (BuildConfig.DEBUG) android.util.Log.w("MailRepository", "run_pending_send id=$pending_id GONE: undo canceled")
             return PendingSendOutcome.GONE
         }
         val now_ms = System.currentTimeMillis()
@@ -629,8 +635,12 @@ class MailRepository @Inject constructor(
                 now_ms,
                 now_ms - SENDING_CLAIM_STALE_MS,
             )
-            if (stale_claimed == 0) return PendingSendOutcome.RETRY
+            if (stale_claimed == 0) {
+                if (BuildConfig.DEBUG) android.util.Log.w("MailRepository", "run_pending_send id=$pending_id RETRY: already claimed")
+                return PendingSendOutcome.RETRY
+            }
         }
+        if (BuildConfig.DEBUG) android.util.Log.w("MailRepository", "run_pending_send id=$pending_id claimed, calling send_email")
         _pending_undo_send.value?.let { _pending_undo_send.compareAndSet(it, null) }
         val attachments = runCatching { load_outbox_attachments(row.attachments_json) }.getOrElse { err ->
             _send_problem.value = true
@@ -661,9 +671,16 @@ class MailRepository @Inject constructor(
             row.draft_id?.takeIf { it.isNotBlank() }?.let { runCatching { delete_draft(it) } }
             _send_problem.value = false
             _send_result_events.tryEmit(Result.success(Unit))
+            if (BuildConfig.DEBUG) android.util.Log.w("MailRepository", "run_pending_send id=$pending_id SENT mail_item_id=${response?.mail_item_id}")
             PendingSendOutcome.SENT
         } else {
             val err = result.exceptionOrNull()
+            if (BuildConfig.DEBUG) {
+                android.util.Log.w(
+                    "MailRepository",
+                    "send_pending attempt=$attempt failed cause=${err?.javaClass?.name} msg=${err?.message} inner=${err?.cause?.javaClass?.name}",
+                )
+            }
             if (is_permanent_send_failure(err) || attempt >= SEND_RETRY_MAX_ATTEMPTS) {
                 _send_problem.value = true
                 _send_result_events.tryEmit(Result.failure(err ?: IllegalStateException("send rejected")))
@@ -678,6 +695,14 @@ class MailRepository @Inject constructor(
                 PendingSendOutcome.RETRY
             }
         }
+    }
+
+    private suspend fun ensure_ratchet_keys_ready(): Boolean {
+        if (session_key_store.has_ratchet_keys()) return true
+        runCatching { auth_repository.get().try_recover_identity_key() }
+        if (session_key_store.has_ratchet_keys()) return true
+        runCatching { auth_repository.get().try_refresh_vault_keys() }
+        return session_key_store.has_ratchet_keys()
     }
 
     private fun is_permanent_send_failure(err: Throwable?): Boolean {
@@ -2402,7 +2427,7 @@ class MailRepository @Inject constructor(
             val internal_recipients = (to + cc + bcc).filter { is_internal_recipient(it) }
 
             val ratchet_body = if (internal_recipients.isNotEmpty()) {
-                if (from_addr.isBlank() || !session_key_store.has_ratchet_keys()) {
+                if (from_addr.isBlank() || !ensure_ratchet_keys_ready()) {
                     throw IllegalStateException(context.getString(R.string.e2e_keys_not_ready))
                 }
                 val existing_bundle = extract_subject_bundle(body_html)
@@ -2492,7 +2517,7 @@ class MailRepository @Inject constructor(
             }
 
         val body = if (internal) {
-            if (from_addr.isBlank() || !session_key_store.has_ratchet_keys()) {
+            if (from_addr.isBlank() || !ensure_ratchet_keys_ready()) {
                 throw IllegalStateException(context.getString(R.string.e2e_keys_not_ready))
             }
             val encrypted = try {

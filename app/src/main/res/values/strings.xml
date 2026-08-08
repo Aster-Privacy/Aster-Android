@@ -765,6 +765,15 @@
     <string name="settings_security_subtitle">Password, 2FA, sessions</string>
     <string name="settings_encryption">Encryption</string>
     <string name="settings_encryption_subtitle">PGP keys and recovery</string>
+    <string name="settings_connection">Connection</string>
+    <string name="connection_description">Choose how Aster Mail connects to our servers.</string>
+    <string name="connection_method_header">Connection method</string>
+    <string name="connection_saving">Saving...</string>
+    <string name="connection_direct">Direct</string>
+    <string name="connection_direct_description">Connect straight to Aster servers for the fastest experience.</string>
+    <string name="connection_cdn_relay">CDN relay</string>
+    <string name="connection_cdn_relay_description">Route traffic through a content delivery relay to mask your IP address.</string>
+    <string name="failed_save_connection_preference">Couldn\'t save connection preference</string>
     <string name="settings_aliases">Aliases &amp; domains</string>
     <string name="settings_aliases_subtitle">Manage addresses</string>
     <string name="settings_ghost_aliases">Ghost aliases</string>
@@ -2407,8 +2416,6 @@
     <string name="kids_load_failed">Could not load reservations</string>
     <string name="kids_action_failed">Action failed. Please try again.</string>
 
-    <!-- Connection screen -->
-    <string name="settings_connection">Connection</string>
 
     <!-- Pending account deletion -->
     <string name="pending_deletion_title">Account scheduled for deletion</string>

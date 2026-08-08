@@ -228,6 +228,9 @@ data class SettingsUiState(
     val save_status: SaveStatus = SaveStatus.IDLE,
     val action_result: String? = null,
     val default_sender_id: String? = null,
+    val connection_method: String = "direct",
+    val connection_loading: Boolean = false,
+    val connection_saving: Boolean = false,
 )
 
 enum class SaveStatus { IDLE, SAVING, SAVED, ERROR }
@@ -612,6 +615,39 @@ class SettingsViewModel @Inject constructor(
             } catch (_: Throwable) {
                 _state.value = _state.value.copy(
                     action_result = context.getString(R.string.failed_revoke_session),
+                )
+            }
+        }
+    }
+
+    fun load_connection_preference() {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(connection_loading = true)
+            try {
+                val response = settings_api.get_connection_preference()
+                _state.value = _state.value.copy(
+                    connection_method = response.method ?: "direct",
+                    connection_loading = false,
+                )
+            } catch (_: Throwable) {
+                _state.value = _state.value.copy(connection_loading = false)
+            }
+        }
+    }
+
+    fun update_connection_preference(method: String) {
+        val previous = _state.value.connection_method
+        if (method == previous) return
+        _state.value = _state.value.copy(connection_method = method, connection_saving = true)
+        viewModelScope.launch {
+            try {
+                settings_api.update_connection_preference(method)
+                _state.value = _state.value.copy(connection_saving = false)
+            } catch (_: Throwable) {
+                _state.value = _state.value.copy(
+                    connection_method = previous,
+                    connection_saving = false,
+                    action_result = context.getString(R.string.failed_save_connection_preference),
                 )
             }
         }

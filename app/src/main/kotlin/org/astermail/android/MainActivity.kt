@@ -157,6 +157,7 @@ import org.astermail.android.ui.settings.detail.BlockedSendersScreen
 import org.astermail.android.ui.settings.detail.ChangePasswordScreen
 import org.astermail.android.ui.settings.detail.DeleteAccountScreen
 import org.astermail.android.ui.settings.detail.DiagnosticsScreen
+import org.astermail.android.ui.settings.detail.ConnectionScreen
 import org.astermail.android.ui.settings.detail.EncryptionScreen
 import org.astermail.android.ui.settings.detail.ExportScreen
 import org.astermail.android.ui.settings.detail.ExternalAccountsScreen
@@ -514,6 +515,9 @@ private fun AsterNavHost() {
             org.astermail.android.api.AuthEventBus.unauthorized.collect {
                 auth_gate.auth_repository.handle_unauthorized_signal()
             }
+        }
+        androidx.compose.runtime.LaunchedEffect(Unit) {
+            auth_gate.auth_repository.trigger_ratchet_bootstrap()
         }
         val preferences_sync_vm: org.astermail.android.settings.SettingsViewModel = org.astermail.android.settings.shared_settings_view_model()
         androidx.compose.runtime.LaunchedEffect(is_signed_in_state) {
@@ -1078,6 +1082,9 @@ private fun AsterNavHost() {
         }
         composable(routes.settings_detail("encryption")) {
             EncryptionScreen(on_back = { back(); Unit }, on_open = open_detail)
+        }
+        composable(routes.settings_detail("connection")) {
+            ConnectionScreen(on_back = { back(); Unit })
         }
         composable(routes.settings_detail("theme")) {
             AppearanceScreen(on_back = { back(); Unit }, on_open = open_detail)
@@ -1976,7 +1983,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             on_open_drawer = { scope.launch { drawer_state.open() } },
                             on_open_search = { nav_controller.navigate(routes.search_for_folder(effective_folder)) },
                             on_compose = { drawer_context.startActivity(ComposeActivity.intent_for(drawer_context)) },
-                            on_compose_draft = { id -> drawer_context.startActivity(ComposeActivity.intent_for(drawer_context, draft_id = id)) },
+                            on_compose_draft = { id -> drawer_context.startActivity(ComposeActivity.intent_for(drawer_context, mode = "draft", draft_id = id)) },
                             on_view_pending_send = { nav_controller.navigate(routes.pending_send_preview) },
                             on_open_email = { id -> open_mail_detail(nav_controller, id) },
                             on_open_settings = { nav_controller.navigate(routes.settings) },
@@ -2033,11 +2040,11 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             on_open_drawer = { scope.launch { drawer_state.open() } },
                             on_open_search = { nav_controller.navigate(routes.search_for_folder(effective_selected_folder)) },
                             on_compose = { drawer_context.startActivity(ComposeActivity.intent_for(drawer_context)) },
-                            on_compose_draft = { id -> drawer_context.startActivity(ComposeActivity.intent_for(drawer_context, draft_id = id)) },
+                            on_compose_draft = { id -> drawer_context.startActivity(ComposeActivity.intent_for(drawer_context, mode = "draft", draft_id = id)) },
                             on_view_pending_send = { nav_controller.navigate(routes.pending_send_preview) },
                             on_open_email = { id ->
                                 if (effective_selected_folder == "drafts") {
-                                    drawer_context.startActivity(ComposeActivity.intent_for(drawer_context, draft_id = id))
+                                    drawer_context.startActivity(ComposeActivity.intent_for(drawer_context, mode = "draft", draft_id = id))
                                 } else {
                                     open_mail_detail(nav_controller, id)
                                 }

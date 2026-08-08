@@ -26,6 +26,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
@@ -37,6 +38,18 @@ import org.astermail.android.api.ApiClient
 data class PublicKeyResponse(
     val username: String,
     val public_key: String,
+)
+
+@Serializable
+data class UpdateVaultRequest(
+    val encrypted_vault: String,
+    val vault_nonce: String,
+    val expected_user_id: String? = null,
+)
+
+@Serializable
+data class UpdateVaultResponse(
+    val success: Boolean,
 )
 
 @Serializable
@@ -55,6 +68,7 @@ data class DiscoverKeyRequest(val email: String)
 interface KeysApi {
     suspend fun get_recipient_public_key(username: String, email: String? = null): PublicKeyResponse
     suspend fun discover_external_key(email: String): ExternalKeyInfo
+    suspend fun update_vault(encrypted_vault: String, vault_nonce: String, expected_user_id: String?): Boolean
 }
 
 class KeysApiImpl(private val client: ApiClient) : KeysApi {
@@ -80,5 +94,14 @@ class KeysApiImpl(private val client: ApiClient) : KeysApi {
             throw client.map_http_status(response.status.value, "")
         }
         return response.body()
+    }
+
+    override suspend fun update_vault(encrypted_vault: String, vault_nonce: String, expected_user_id: String?): Boolean {
+        val response = client.http.put("${client.base_url}$base/vault") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(UpdateVaultRequest(encrypted_vault, vault_nonce, expected_user_id))
+        }
+        return response.status.value in 200..299
     }
 }

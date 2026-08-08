@@ -812,11 +812,9 @@ fun MailDetailScreen(
                             if (is_archived) {
                                 mail_vm.unarchive(listOf(email_id))
                                 on_archive()
-                                show_toast(context.getString(R.string.moved_to_inbox))
                             } else {
                                 mail_vm.archive(listOf(email_id))
                                 on_archive()
-                                show_toast(context.getString(R.string.swipe_archive))
                             }
                         }
                         detail_menu_action(
@@ -906,11 +904,9 @@ fun MailDetailScreen(
                             if (is_spam) {
                                 is_spam_override = false
                                 mail_vm.unmark_spam(listOf(email_id), sender_emails_hint = spam_sender_hint)
-                                show_toast(context.getString(R.string.swipe_not_spam))
                             } else {
                                 is_spam_override = true
                                 mail_vm.mark_spam(listOf(email_id), sender_emails_hint = spam_sender_hint)
-                                show_toast(context.getString(R.string.reported_as_spam))
                             }
                             on_back()
                         }
@@ -933,7 +929,6 @@ fun MailDetailScreen(
                             show_topbar_menu = false
                             mail_vm.trash(listOf(email_id))
                             on_delete()
-                            show_toast(context.getString(R.string.swipe_delete))
                         }
                     }
                     }
@@ -1407,7 +1402,6 @@ fun MailDetailScreen(
                             "trash" -> bottom_action(TablerIcons.Trash, stringResource(R.string.move_to_trash), test_tag = "delete") {
                                 mail_vm.trash(listOf(email_id))
                                 on_delete()
-                                show_toast(context.getString(R.string.move_to_trash))
                             }
                             "archive" -> {
                                 val archived = api_item?.is_archived == true
@@ -1419,11 +1413,9 @@ fun MailDetailScreen(
                                     if (archived) {
                                         mail_vm.unarchive(listOf(email_id))
                                         on_archive()
-                                        show_toast(context.getString(R.string.moved_to_inbox))
                                     } else {
                                         mail_vm.archive(listOf(email_id))
                                         on_archive()
-                                        show_toast(context.getString(R.string.archived))
                                     }
                                 }
                             }
@@ -1452,7 +1444,6 @@ fun MailDetailScreen(
                                 if (is_spam) {
                                     is_spam_override = false
                                     mail_vm.unmark_spam(listOf(email_id), sender_emails_hint = spam_sender_hint)
-                                    show_toast(context.getString(R.string.swipe_not_spam))
                                 } else {
                                     is_spam_override = true
                                     mail_vm.mark_spam(listOf(email_id), sender_emails_hint = spam_sender_hint)
@@ -1460,7 +1451,6 @@ fun MailDetailScreen(
                                     if (!sender.isNullOrBlank()) {
                                         settings_vm.block_sender(sender)
                                     }
-                                    show_toast(context.getString(R.string.reported_as_spam))
                                 }
                                 on_back()
                             }
@@ -1506,18 +1496,15 @@ fun MailDetailScreen(
                 if (api_item?.is_archived == true) {
                     mail_vm.unarchive(listOf(email_id))
                     on_archive()
-                    show_toast(context.getString(R.string.moved_to_inbox))
                 } else {
                     mail_vm.archive(listOf(email_id))
                     on_archive()
-                    show_toast(context.getString(R.string.archived))
                 }
             },
             on_trash = {
                 show_action_sheet = false
                 mail_vm.trash(listOf(email_id))
                 on_delete()
-                show_toast(context.getString(R.string.move_to_trash))
             },
             on_spam = {
                 show_action_sheet = false
@@ -1525,7 +1512,6 @@ fun MailDetailScreen(
                 if (is_spam) {
                     is_spam_override = false
                     mail_vm.unmark_spam(listOf(email_id), sender_emails_hint = spam_sender_hint)
-                    show_toast(context.getString(R.string.swipe_not_spam))
                 } else {
                     is_spam_override = true
                     mail_vm.mark_spam(listOf(email_id), sender_emails_hint = spam_sender_hint)
@@ -1533,7 +1519,6 @@ fun MailDetailScreen(
                     if (!sender.isNullOrBlank()) {
                         settings_vm.block_sender(sender)
                     }
-                    show_toast(context.getString(R.string.reported_as_spam))
                 }
                 on_back()
             },

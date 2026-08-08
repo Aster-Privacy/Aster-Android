@@ -99,6 +99,7 @@ internal fun build_settings_sections(is_family: Boolean) = listOf(
             add(settings_row_item("accessibility", R.string.settings_accessibility, icon = TablerIcons.Typography))
             add(settings_row_item("security", R.string.settings_security, icon = TablerIcons.Shield))
             add(settings_row_item("encryption", R.string.settings_encryption, icon = TablerIcons.Key))
+            add(settings_row_item("connection", R.string.settings_connection, icon = TablerIcons.Router))
             add(settings_row_item("trusted_devices", R.string.trusted_devices, icon = TablerIcons.DeviceDesktop))
             add(settings_row_item("aliases", R.string.settings_aliases, icon = TablerIcons.At))
             add(settings_row_item("ghost_aliases", R.string.settings_ghost_aliases, icon = TablerIcons.EyeOff))

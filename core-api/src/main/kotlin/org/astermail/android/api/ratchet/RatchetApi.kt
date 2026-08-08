@@ -82,6 +82,16 @@ data class PqPrekeyInfo(
     val public_key: String,
 )
 
+@Serializable
+data class UploadPrekeyBundleRequest(
+    val kem_identity_key: String,
+    val signed_prekey: String,
+    val signed_prekey_signature: String,
+    val one_time_prekeys: List<String> = emptyList(),
+    val expected_version: Int? = null,
+    val pq_kem_public_key: String? = null,
+)
+
 sealed class PutStateOutcome {
     data class Success(val response: RatchetStateResponse) : PutStateOutcome()
     object VersionConflict : PutStateOutcome()
@@ -102,6 +112,7 @@ interface RatchetApi {
     suspend fun fetch_pq_secret(key_id: Int): PqSecretResponse?
     suspend fun fetch_prekey_bundle(username: String, email: String): PrekeyBundleResponse?
     suspend fun delete_state(conversation_id_b64: String): Boolean
+    suspend fun upload_prekey_bundle(request: UploadPrekeyBundleRequest): Boolean
 }
 
 class RatchetApiImpl(private val client: ApiClient) : RatchetApi {
@@ -177,6 +188,15 @@ class RatchetApiImpl(private val client: ApiClient) : RatchetApi {
         if (response.status.value == 404) return null
         if (response.status.value !in 200..299) return null
         return try { response.body() } catch (_: Throwable) { null }
+    }
+
+    override suspend fun upload_prekey_bundle(request: UploadPrekeyBundleRequest): Boolean {
+        val response = client.http.put("${client.base_url}/api/crypto/v1/ratchet/prekey-bundle") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return response.status.value in 200..299
     }
 }
 

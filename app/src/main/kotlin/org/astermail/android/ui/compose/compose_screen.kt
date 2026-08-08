@@ -670,7 +670,7 @@ fun ComposeScreen(
                 subject = item.subject
                 val raw = msg.body_html ?: msg.body_text
                 body = if (raw.contains("<") && raw.contains(">")) {
-                    android.text.Html.fromHtml(raw, android.text.Html.FROM_HTML_MODE_LEGACY)
+                    android.text.Html.fromHtml(STYLE_SCRIPT_TAG_RE.replace(raw, ""), android.text.Html.FROM_HTML_MODE_LEGACY)
                         .toString().trimEnd()
                 } else raw
                 to_chips = msg.to_addresses.filter { it.isNotBlank() }
@@ -1874,7 +1874,7 @@ fun ComposeScreen(
                                 },
                                 update = { tv ->
                                     tv.text = android.text.Html.fromHtml(
-                                        quoted_html,
+                                        STYLE_SCRIPT_TAG_RE.replace(quoted_html, ""),
                                         android.text.Html.FROM_HTML_MODE_COMPACT,
                                     ).toString().trim()
                                 },
@@ -3847,6 +3847,8 @@ internal fun insert_template_body(
     return trimmed_core + separator + template.trim() + signature_block + watermark_block
 }
 
+private val STYLE_SCRIPT_TAG_RE = Regex("(?is)<(style|script)\\b[^>]*>.*?</\\1>")
+
 private fun build_quoted_body(
     msg: org.astermail.android.mail.ThreadMessageDecrypted,
     item: org.astermail.android.mail.InboxItem?,
@@ -3854,7 +3856,8 @@ private fun build_quoted_body(
 ): String {
     val raw = msg.body_html ?: msg.body_text
     val plain_raw = if (raw.contains("<") && raw.contains(">")) {
-        android.text.Html.fromHtml(raw, android.text.Html.FROM_HTML_MODE_LEGACY).toString().trimEnd()
+        val without_style_script = STYLE_SCRIPT_TAG_RE.replace(raw, "")
+        android.text.Html.fromHtml(without_style_script, android.text.Html.FROM_HTML_MODE_LEGACY).toString().trimEnd()
     } else raw
     val plain = strip_watermarks(plain_raw)
     val from_line = msg.display_sender_email ?: msg.sender_email

@@ -160,6 +160,25 @@ object RatchetCrypto {
         return EcKeyPair(kp.private, kp.public, raw)
     }
 
+    fun p256_private_to_jwk(private_key: java.security.PrivateKey): String {
+        val d_b64url = b64url_encode(private_to_raw_d(private_key))
+        return "{\"kty\":\"EC\",\"crv\":\"P-256\",\"d\":\"$d_b64url\"}"
+    }
+
+    fun p256_public_raw_from_private_jwk(jwk_json: String): ByteArray {
+        val private_key = parse_p256_private_jwk(jwk_json)
+        val ec = private_key as java.security.interfaces.ECPrivateKey
+        val spec = org.bouncycastle.jce.ECNamedCurveTable.getParameterSpec("P-256")
+        val point = spec.g.multiply(ec.s).normalize()
+        val x = int_to_fixed(point.affineXCoord.toBigInteger(), 32)
+        val y = int_to_fixed(point.affineYCoord.toBigInteger(), 32)
+        val out = ByteArray(65)
+        out[0] = 0x04
+        System.arraycopy(x, 0, out, 1, 32)
+        System.arraycopy(y, 0, out, 33, 32)
+        return out
+    }
+
     fun parse_p256_private_jwk(jwk_json: String): java.security.PrivateKey {
         val obj = org.json.JSONObject(jwk_json)
         val d_bytes = b64url_decode(obj.getString("d"))

@@ -53,6 +53,8 @@ import org.astermail.android.api.auth.LoginResponse
 import org.astermail.android.api.auth.LoginResult
 import org.astermail.android.api.auth.RegisterRequest
 import org.astermail.android.api.auth.TotpLoginVerifyRequest
+import org.astermail.android.api.labels.CreateLabelRequest
+import org.astermail.android.api.labels.LabelsApi
 import org.astermail.android.api.recovery.RecoveryApi
 import org.astermail.android.api.recovery.RecoveryShareData
 import org.astermail.android.api.recovery.SaveRecoveryBackupRequest
@@ -95,6 +97,7 @@ class AuthRepository @Inject constructor(
     private val auth_api: AuthApi,
     private val recovery_api: RecoveryApi,
     private val settings_api: SettingsApi,
+    private val labels_api: LabelsApi,
     private val encryption_api: org.astermail.android.api.encryption.EncryptionApi,
     private val api_client: ApiClient,
     private val token_store: TokenStore,
@@ -105,6 +108,7 @@ class AuthRepository @Inject constructor(
     private val trusted_device_store: TrustedDeviceStore,
     private val mail_repository: org.astermail.android.mail.MailRepository,
     private val theme_store: ThemeStore,
+    private val ratchet_bootstrap_service: org.astermail.android.mail.ratchet.RatchetBootstrapService,
     @ApplicationContext private val context: Context,
 ) {
 
@@ -119,6 +123,17 @@ class AuthRepository @Inject constructor(
     )
     private val pgp_publish_attempted_user_ids =
         java.util.Collections.synchronizedSet(mutableSetOf<String>())
+    private val ratchet_bootstrap_triggered = java.util.concurrent.atomic.AtomicBoolean(false)
+
+    fun trigger_ratchet_bootstrap() {
+        if (!_is_signed_in.value) return
+        if (!ratchet_bootstrap_triggered.compareAndSet(false, true)) return
+        if (BuildConfig.DEBUG) android.util.Log.w("RatchetBootstrap", "trigger_ratchet_bootstrap firing")
+        background_scope.launch {
+            runCatching { ratchet_bootstrap_service.bootstrap_if_needed() }
+                .onFailure { if (BuildConfig.DEBUG) android.util.Log.w("RatchetBootstrap", "bootstrap_if_needed threw: ${it.javaClass.simpleName}: ${it.message}") }
+        }
+    }
 
     suspend fun handle_unauthorized_signal(force: Boolean = false) {
         if (!_is_signed_in.value) return
@@ -340,6 +355,7 @@ class AuthRepository @Inject constructor(
         runCatching { UnifiedPushState.clear_backend_registration(context) }
         runCatching { UnifiedPushState.sync_registration(context) }
         background_scope.launch { runCatching { ensure_pgp_key_published() } }
+        background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
     }
 
     suspend fun register(email: String, password: String, captcha_token: String? = null): Result<RegisterSuccess> = runCatching {
@@ -451,6 +467,8 @@ class AuthRepository @Inject constructor(
             base64_encode(vault_envelope.vault_nonce),
         )
 
+        create_default_folders(stored_identity)
+
         identity.private_key.fill(0)
         prekey.private_key.fill(0)
         signature.fill(0)
@@ -490,6 +508,7 @@ class AuthRepository @Inject constructor(
         _is_signed_in.value = true
         runCatching { UnifiedPushState.clear_backend_registration(context) }
         runCatching { UnifiedPushState.sync_registration(context) }
+        background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
         RegisterSuccess(recovery_codes = recovery_codes)
     }
 
@@ -544,6 +563,7 @@ class AuthRepository @Inject constructor(
             loader.diskCache?.clear()
         }
         _is_signed_in.value = true
+        background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
         return true
     }
 
@@ -1113,6 +1133,66 @@ class AuthRepository @Inject constructor(
         return okm.copyOf(length)
     }
 
+    private data class DefaultFolder(val folder_type: String, val name_res: Int)
+
+    private val default_folders = listOf(
+        DefaultFolder("inbox", R.string.folder_inbox),
+        DefaultFolder("sent", R.string.folder_sent),
+        DefaultFolder("drafts", R.string.folder_drafts),
+        DefaultFolder("trash", R.string.folder_trash),
+        DefaultFolder("spam", R.string.folder_spam),
+        DefaultFolder("archive", R.string.folder_archive),
+    )
+
+    private suspend fun create_default_folders(identity_key: String) {
+        for (folder in default_folders) {
+            runCatching {
+                val name = context.getString(folder.name_res)
+                val name_field = encrypt_folder_field(name, identity_key)
+                labels_api.create_label(
+                    CreateLabelRequest(
+                        label_token = generate_folder_token_b64(),
+                        encrypted_name = name_field.ciphertext_b64,
+                        name_nonce = name_field.nonce_b64,
+                        folder_type = folder.folder_type,
+                    ),
+                )
+            }
+        }
+    }
+
+    private data class EncryptedFolderField(val ciphertext_b64: String, val nonce_b64: String)
+
+    private fun encrypt_folder_field(plaintext: String, identity_key: String): EncryptedFolderField {
+        val data = plaintext.toByteArray(Charsets.UTF_8)
+        val nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
+        val key = derive_folder_field_key(identity_key)
+        try {
+            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+            cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(128, nonce))
+            val ct = cipher.doFinal(data)
+            data.fill(0)
+            return EncryptedFolderField(
+                ciphertext_b64 = base64_encode(ct),
+                nonce_b64 = base64_encode(nonce),
+            )
+        } finally {
+            key.fill(0)
+        }
+    }
+
+    private fun derive_folder_field_key(identity_key: String): ByteArray {
+        val material = (identity_key + FOLDER_FIELD_VERSION).toByteArray(Charsets.UTF_8)
+        val key = java.security.MessageDigest.getInstance("SHA-256").digest(material)
+        material.fill(0)
+        return key
+    }
+
+    private fun generate_folder_token_b64(): String {
+        val bytes = ByteArray(16).also { SecureRandom().nextBytes(it) }
+        return base64_encode(bytes)
+    }
+
     private fun base64_encode(bytes: ByteArray): String =
         android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
 
@@ -1129,5 +1209,6 @@ class AuthRepository @Inject constructor(
         private const val vault_pbkdf2_iterations = 310000
         private const val pgp_private_key_pbkdf2_iterations = 310000
         private const val HKDF_INFO = "Aster Mail_Recovery_Vault_v1"
+        private const val FOLDER_FIELD_VERSION = "astermail-labels-v1"
     }
 }

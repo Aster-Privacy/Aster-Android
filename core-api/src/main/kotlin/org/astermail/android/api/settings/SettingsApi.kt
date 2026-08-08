@@ -29,6 +29,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
@@ -528,6 +529,16 @@ data class RecoveryKeyResponse(
     val recovery_key: String? = null,
 )
 
+@Serializable
+data class ConnectionPreference(
+    val method: String? = null,
+)
+
+@Serializable
+data class UpdateConnectionPreferenceRequest(
+    val method: String,
+)
+
 interface SettingsApi {
     suspend fun list_sessions(): SessionListResponse
     suspend fun revoke_session(session_id: String)
@@ -579,6 +590,8 @@ interface SettingsApi {
     suspend fun delete_directory(directory_id: String)
     suspend fun get_alias_preferences(): AliasPreferences
     suspend fun update_alias_preferences(request: UpdateAliasPreferencesRequest)
+    suspend fun get_connection_preference(): ConnectionPreference
+    suspend fun update_connection_preference(method: String)
 }
 
 class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
@@ -1038,6 +1051,22 @@ class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)
+        }
+        if (response.status.value !in 200..299) {
+            throw client.map_http_status(response.status.value, "")
+        }
+    }
+
+    override suspend fun get_connection_preference(): ConnectionPreference {
+        val response = client.http.get("${client.base_url}/api/settings/v1/preferences/connection")
+        return decode_or_throw(response)
+    }
+
+    override suspend fun update_connection_preference(method: String) {
+        val response = client.http.put("${client.base_url}/api/settings/v1/preferences/connection") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(UpdateConnectionPreferenceRequest(method))
         }
         if (response.status.value !in 200..299) {
             throw client.map_http_status(response.status.value, "")
