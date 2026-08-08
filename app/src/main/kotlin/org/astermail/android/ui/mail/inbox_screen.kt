@@ -115,6 +115,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.snapshotFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -1109,6 +1110,19 @@ fun InboxScreen(
             if (at_top) {
                 header_offset_px.floatValue = 0f
                 header_hidden = false
+            }
+        }
+    }
+
+    val pull_active by rememberUpdatedState(is_refreshing && !select_mode)
+    LaunchedEffect(pull_state, list_state) {
+        snapshotFlow {
+            Triple(pull_active, list_state.isScrollInProgress, pull_state.distanceFraction)
+        }.distinctUntilChanged().collect { (active, dragging, fraction) ->
+            if (active || dragging || fraction <= 0f) return@collect
+            delay(160)
+            if (!pull_active && !list_state.isScrollInProgress && pull_state.distanceFraction > 0f) {
+                pull_state.animateToHidden()
             }
         }
     }
