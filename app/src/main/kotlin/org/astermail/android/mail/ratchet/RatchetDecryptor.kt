@@ -265,6 +265,12 @@ class RatchetDecryptor @Inject constructor(
                                 identity_public = previous_public,
                                 pq_identity_secret = entry
                                     .optString("ratchet_pq_identity_key", "")
+                                    .ifBlank {
+                                        entry.optString("ratchet_pq_identity_seed", "")
+                                            .takeIf { it.isNotBlank() }
+                                            ?.let { expand_pq_identity_secret(it) }
+                                            .orEmpty()
+                                    }
                                     .ifBlank { null },
                             ),
                             pq_identity_public = entry.optString("ratchet_pq_identity_public", ""),
@@ -276,6 +282,35 @@ class RatchetDecryptor @Inject constructor(
         }
 
         return candidates
+    }
+
+    private fun pq_identity_secret_candidates(): List<String> {
+        val secrets = mutableListOf<String>()
+
+        session_key_store.get_ratchet_pq_identity_secret()
+            ?.takeIf { it.isNotBlank() }
+            ?.let { secrets.add(it) }
+
+        val previous_json = session_key_store.get_ratchet_previous_keys_json()
+        if (!previous_json.isNullOrBlank()) {
+            try {
+                val entries = org.json.JSONArray(previous_json)
+                for (index in 0 until entries.length()) {
+                    val entry = entries.optJSONObject(index) ?: continue
+                    val previous_secret = entry.optString("ratchet_pq_identity_key", "")
+                        .ifBlank {
+                            entry.optString("ratchet_pq_identity_seed", "")
+                                .takeIf { it.isNotBlank() }
+                                ?.let { expand_pq_identity_secret(it) }
+                                .orEmpty()
+                        }
+                    if (previous_secret.isNotBlank()) secrets.add(previous_secret)
+                }
+            } catch (_: Throwable) {
+            }
+        }
+
+        return secrets.distinct()
     }
 
     private fun try_recovery_lane(
@@ -376,19 +411,21 @@ class RatchetDecryptor @Inject constructor(
         for (keys in key_sets) {
             val tag = keys.identity_public_b64.ifBlank { keys.identity_jwk }
             if (!tried.add(tag)) continue
-            val candidate = try {
+            val candidates = try {
                 bootstrap(conversation_id, sender_identity_key_b64, recipient, keys)
             } catch (t: Throwable) {
                 if (org.astermail.android.BuildConfig.DEBUG) {
                     android.util.Log.w("AsterRatchet", "bootstrap threw", t)
                 }
-                null
-            } ?: continue
-            try {
-                return candidate to DoubleRatchet.decrypt(candidate, recipient)
-            } catch (t: Throwable) {
-                if (org.astermail.android.BuildConfig.DEBUG) {
-                    android.util.Log.w("AsterRatchet", "bootstrapped state failed to decrypt", t)
+                emptyList()
+            }
+            for (candidate in candidates) {
+                try {
+                    return candidate to DoubleRatchet.decrypt(candidate, recipient)
+                } catch (t: Throwable) {
+                    if (org.astermail.android.BuildConfig.DEBUG) {
+                        android.util.Log.w("AsterRatchet", "bootstrapped state failed to decrypt", t)
+                    }
                 }
             }
         }
@@ -411,8 +448,8 @@ class RatchetDecryptor @Inject constructor(
         sender_identity_key_b64: String,
         recipient: RatchetRecipientData,
         keys: ReceiverKeySet,
-    ): RatchetState? {
-        val ephemeral_b64 = recipient.ephemeral_key ?: return null
+    ): List<RatchetState> {
+        val ephemeral_b64 = recipient.ephemeral_key ?: return emptyList()
         val identity_jwk = keys.identity_jwk
         val spk_jwk = keys.signed_prekey_jwk
         val spk_pub_b64 = keys.signed_prekey_public_b64
@@ -420,37 +457,60 @@ class RatchetDecryptor @Inject constructor(
         val sender_identity_raw = RatchetCrypto.b64_decode(sender_identity_key_b64)
         val sender_ephemeral_raw = RatchetCrypto.b64_decode(ephemeral_b64)
 
-        val pq_shared = if (recipient.pq_ciphertext != null && recipient.pq_key_id != null) {
-            val pq_secret = fetch_pq_secret(recipient.pq_key_id!!)
-            if (pq_secret == null) {
-                if (org.astermail.android.BuildConfig.DEBUG) {
-                    android.util.Log.w("AsterRatchet", "bootstrap aborted: pq secret ${recipient.pq_key_id} unavailable")
+        val pq_ciphertext = recipient.pq_ciphertext
+        val pq_key_id = recipient.pq_key_id
+        val from_identity = pq_key_id == X3dh.PQ_IDENTITY_KEY_ID
+
+        val pq_secrets: List<ByteArray> = when {
+            pq_ciphertext == null || pq_key_id == null -> emptyList()
+            from_identity -> pq_identity_secret_candidates().mapNotNull {
+                try {
+                    RatchetCrypto.b64_decode(it)
+                } catch (_: Throwable) {
+                    null
                 }
-                return null
             }
-            try {
-                val pq_ct = RatchetCrypto.b64_decode(recipient.pq_ciphertext!!)
+            else -> listOfNotNull(fetch_pq_secret(pq_key_id))
+        }
+
+        if (pq_ciphertext != null && pq_key_id != null && pq_secrets.isEmpty()) {
+            if (org.astermail.android.BuildConfig.DEBUG) {
+                android.util.Log.w("AsterRatchet", "bootstrap aborted: pq secret $pq_key_id unavailable")
+            }
+            return emptyList()
+        }
+
+        fun derive(pq_shared: ByteArray?): RatchetState {
+            val shared_secret = X3dh.perform_receiver(
+                receiver_identity_jwk = identity_jwk,
+                receiver_signed_prekey_jwk = spk_jwk,
+                sender_identity_raw = sender_identity_raw,
+                sender_ephemeral_raw = sender_ephemeral_raw,
+                pq_shared_secret = pq_shared,
+                pq_from_identity = from_identity,
+            )
+            return X3dh.init_receiver_state(
+                conversation_id = conversation_id,
+                shared_secret = shared_secret,
+                own_signed_prekey_jwk = spk_jwk,
+                own_signed_prekey_public_b64 = spk_pub_b64,
+            ).also { shared_secret.fill(0) }
+        }
+
+        if (pq_ciphertext == null || pq_key_id == null) return listOf(derive(null))
+
+        val pq_ct = RatchetCrypto.b64_decode(pq_ciphertext)
+
+        return pq_secrets.mapNotNull { pq_secret ->
+            val pq_shared = try {
                 RatchetCrypto.ml_kem_768_decapsulate(pq_ct, pq_secret)
+            } catch (_: Throwable) {
+                null
             } finally {
                 pq_secret.fill(0)
             }
-        } else null
-
-        val shared_secret = X3dh.perform_receiver(
-            receiver_identity_jwk = identity_jwk,
-            receiver_signed_prekey_jwk = spk_jwk,
-            sender_identity_raw = sender_identity_raw,
-            sender_ephemeral_raw = sender_ephemeral_raw,
-            pq_shared_secret = pq_shared,
-        )
-        pq_shared?.fill(0)
-
-        return X3dh.init_receiver_state(
-            conversation_id = conversation_id,
-            shared_secret = shared_secret,
-            own_signed_prekey_jwk = spk_jwk,
-            own_signed_prekey_public_b64 = spk_pub_b64,
-        ).also { shared_secret.fill(0) }
+            pq_shared?.let { derive(it).also { _ -> pq_shared.fill(0) } }
+        }
     }
 
     private fun pq_secret_recently_missed(key_id: Int): Boolean {

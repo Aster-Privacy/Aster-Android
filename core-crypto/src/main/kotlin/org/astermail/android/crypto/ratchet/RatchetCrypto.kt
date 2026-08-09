@@ -128,6 +128,34 @@ object RatchetCrypto {
         return MlKemEncapsulation(encap.encapsulation, encap.secret)
     }
 
+    data class MlKemKeyPair(
+        val seed: ByteArray,
+        val secret_key: ByteArray,
+        val public_key: ByteArray,
+    )
+
+    fun ml_kem_768_generate_keypair(): MlKemKeyPair = ml_kem_768_keypair_from_seed(random_bytes(64))
+
+    fun ml_kem_768_keypair_from_seed(seed: ByteArray): MlKemKeyPair {
+        require(seed.size == 64) { "ml-kem seed must be 64 bytes" }
+        val params = org.bouncycastle.pqc.crypto.mlkem.MLKEMParameters.ml_kem_768
+        val generator = org.bouncycastle.pqc.crypto.mlkem.MLKEMKeyPairGenerator()
+        generator.init(
+            org.bouncycastle.pqc.crypto.mlkem.MLKEMKeyGenerationParameters(secure_random, params),
+        )
+        val pair = generator.internalGenerateKeyPair(
+            seed.copyOfRange(0, 32),
+            seed.copyOfRange(32, 64),
+        )
+        val priv = pair.private as org.bouncycastle.pqc.crypto.mlkem.MLKEMPrivateKeyParameters
+        val pub = pair.public as org.bouncycastle.pqc.crypto.mlkem.MLKEMPublicKeyParameters
+        return MlKemKeyPair(
+            seed = seed,
+            secret_key = priv.encoded,
+            public_key = pub.encoded,
+        )
+    }
+
     fun jwk_extract_d_bytes(jwk_json: String): ByteArray {
         val obj = org.json.JSONObject(jwk_json)
         return b64url_decode(obj.getString("d"))

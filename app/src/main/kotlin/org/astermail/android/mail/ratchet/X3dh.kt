@@ -27,20 +27,65 @@ object X3dh {
 
     private val info_classical = "Aster Mail_X3DH_v1".toByteArray(Charsets.UTF_8)
     private val info_pq = "Aster Mail_PQXDH_v1".toByteArray(Charsets.UTF_8)
+    private val info_pq_identity = "Aster Mail_PQXDH_identity_v1".toByteArray(Charsets.UTF_8)
     private val salt = ByteArray(32)
+
+    const val PQ_IDENTITY_KEY_ID = -1
+    const val ML_KEM_768_EK_LEN = 1184
+
+    enum class PqMode { ONETIME, IDENTITY, NONE }
 
     data class SenderResult(
         val shared_secret: ByteArray,
         val ephemeral_public_raw: ByteArray,
         val pq_ciphertext: ByteArray? = null,
         val pq_key_id: Int? = null,
+        val pq_mode: PqMode = PqMode.NONE,
     )
+
+    private data class PqTarget(
+        val public_key: ByteArray,
+        val key_id: Int,
+        val info: ByteArray,
+        val mode: PqMode,
+    )
+
+    private fun select_pq_target(
+        recipient_pq_prekey: Pair<Int, ByteArray>?,
+        recipient_pq_identity: ByteArray?,
+    ): PqTarget? {
+        if (recipient_pq_prekey != null && recipient_pq_prekey.second.size == ML_KEM_768_EK_LEN) {
+            return PqTarget(
+                public_key = recipient_pq_prekey.second,
+                key_id = recipient_pq_prekey.first,
+                info = info_pq,
+                mode = PqMode.ONETIME,
+            )
+        }
+
+        if (recipient_pq_identity != null && recipient_pq_identity.size == ML_KEM_768_EK_LEN) {
+            return PqTarget(
+                public_key = recipient_pq_identity,
+                key_id = PQ_IDENTITY_KEY_ID,
+                info = info_pq_identity,
+                mode = PqMode.IDENTITY,
+            )
+        }
+
+        return null
+    }
+
+    fun supports_pq(
+        recipient_pq_prekey: Pair<Int, ByteArray>?,
+        recipient_pq_identity: ByteArray?,
+    ): Boolean = select_pq_target(recipient_pq_prekey, recipient_pq_identity) != null
 
     fun perform_sender(
         sender_identity_jwk: String,
         recipient_identity_raw: ByteArray,
         recipient_signed_prekey_raw: ByteArray,
         recipient_pq_prekey: Pair<Int, ByteArray>? = null,
+        recipient_pq_identity: ByteArray? = null,
     ): SenderResult {
         val sender_identity_priv = RatchetCrypto.parse_p256_private_jwk(sender_identity_jwk)
         val recipient_identity_pub = RatchetCrypto.parse_p256_public_raw(recipient_identity_raw)
@@ -52,13 +97,15 @@ object X3dh {
         val dh2 = RatchetCrypto.ecdh(ephemeral_kp.private_key, recipient_identity_pub)
         val dh3 = RatchetCrypto.ecdh(ephemeral_kp.private_key, recipient_spk_pub)
 
-        val pq_pair = if (recipient_pq_prekey != null) {
-            val encap = RatchetCrypto.ml_kem_768_encapsulate(recipient_pq_prekey.second)
+        val pq_target = select_pq_target(recipient_pq_prekey, recipient_pq_identity)
+
+        val pq_pair = if (pq_target != null) {
+            val encap = RatchetCrypto.ml_kem_768_encapsulate(pq_target.public_key)
             encap.ciphertext to encap.shared_secret
         } else null
 
         val combined = if (pq_pair != null) dh1 + dh2 + dh3 + pq_pair.second else dh1 + dh2 + dh3
-        val info = if (pq_pair != null) info_pq else info_classical
+        val info = pq_target?.info ?: info_classical
         val shared = RatchetCrypto.hkdf_sha256(combined, salt, info, 32)
 
         dh1.fill(0); dh2.fill(0); dh3.fill(0); combined.fill(0)
@@ -68,7 +115,8 @@ object X3dh {
             shared_secret = shared,
             ephemeral_public_raw = ephemeral_kp.public_raw,
             pq_ciphertext = pq_pair?.first,
-            pq_key_id = recipient_pq_prekey?.first,
+            pq_key_id = pq_target?.key_id,
+            pq_mode = pq_target?.mode ?: PqMode.NONE,
         )
     }
 
@@ -78,6 +126,7 @@ object X3dh {
         sender_identity_raw: ByteArray,
         sender_ephemeral_raw: ByteArray,
         pq_shared_secret: ByteArray? = null,
+        pq_from_identity: Boolean = false,
     ): ByteArray {
         val identity_priv = RatchetCrypto.parse_p256_private_jwk(receiver_identity_jwk)
         val spk_priv = RatchetCrypto.parse_p256_private_jwk(receiver_signed_prekey_jwk)
@@ -94,7 +143,11 @@ object X3dh {
         } else {
             dh1 + dh2 + dh3
         }
-        val info = if (pq_shared_secret != null) info_pq else info_classical
+        val info = when {
+            pq_shared_secret == null -> info_classical
+            pq_from_identity -> info_pq_identity
+            else -> info_pq
+        }
         val secret = RatchetCrypto.hkdf_sha256(combined, salt, info, 32)
 
         dh1.fill(0)

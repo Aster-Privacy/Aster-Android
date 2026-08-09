@@ -166,13 +166,19 @@ class RatchetEncryptor @Inject constructor(
 
             val recipient_identity_raw = RatchetCrypto.b64_decode(resolved_bundle.kem_identity_key)
             val recipient_spk_raw = RatchetCrypto.b64_decode(resolved_bundle.signed_prekey)
-            val pq_prekey_pair = resolved_bundle.pq_prekey?.let { it.key_id to RatchetCrypto.b64_decode(it.public_key) }
+            val pq_prekey_pair = resolved_bundle.pq_prekey?.let {
+                runCatching { it.key_id to RatchetCrypto.b64_decode(it.public_key) }.getOrNull()
+            }
+            val pq_identity_raw = resolved_bundle.pq_kem_public_key
+                ?.takeIf { it.isNotBlank() }
+                ?.let { runCatching { RatchetCrypto.b64_decode(it) }.getOrNull() }
 
             val x3dh_result = X3dh.perform_sender(
                 sender_identity_jwk = sender_identity_jwk,
                 recipient_identity_raw = recipient_identity_raw,
                 recipient_signed_prekey_raw = recipient_spk_raw,
                 recipient_pq_prekey = pq_prekey_pair,
+                recipient_pq_identity = pq_identity_raw,
             )
 
             try {
