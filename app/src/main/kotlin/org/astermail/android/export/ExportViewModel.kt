@@ -73,6 +73,7 @@ class ExportViewModel @Inject constructor(
         val processed: Int = 0,
         val total: Int = 0,
         val bytes_written: Long = 0,
+        val skipped_undecryptable: Int = 0,
         val error: String? = null,
         val export_file: File? = null,
         val is_running: Boolean = false,
@@ -105,6 +106,7 @@ class ExportViewModel @Inject constructor(
                 processed = 0,
                 total = 0,
                 bytes_written = 0,
+                skipped_undecryptable = 0,
                 error = null,
             )
         }
@@ -208,7 +210,12 @@ class ExportViewModel @Inject constructor(
             for (item in response.items) {
                 val env = mail_repository.decrypt_item_for_export(item)
                 if (env == null) {
-                    _state.update { it.copy(processed = it.processed + 1) }
+                    _state.update {
+                        it.copy(
+                            processed = it.processed + 1,
+                            skipped_undecryptable = it.skipped_undecryptable + 1,
+                        )
+                    }
                     continue
                 }
                 val item_bytes: Long

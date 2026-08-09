@@ -121,6 +121,7 @@ fun ExportScreen(
                 complete_step(
                     processed = state.processed,
                     bytes_written = state.bytes_written,
+                    skipped_undecryptable = state.skipped_undecryptable,
                     error = state.error,
                     on_share = { vm.share_export() },
                     on_done = { vm.reset(); on_back() },
@@ -398,6 +399,7 @@ private fun progress_step(
 private fun complete_step(
     processed: Int,
     bytes_written: Long,
+    skipped_undecryptable: Int,
     error: String?,
     on_share: () -> Unit,
     on_done: () -> Unit,
@@ -428,9 +430,19 @@ private fun complete_step(
     }
     AsterCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(AsterSpacing.lg), verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
-            export_summary_row(stringResource(R.string.export_emails_exported), "$processed")
+            export_summary_row(stringResource(R.string.export_emails_exported), "${processed - skipped_undecryptable}")
             if (bytes_written > 0) export_summary_row(stringResource(R.string.export_file_size), format_bytes(bytes_written))
         }
+    }
+    if (skipped_undecryptable > 0) {
+        v_gap(AsterSpacing.md)
+        Text(
+            text = stringResource(R.string.export_undecryptable_skipped, skipped_undecryptable),
+            color = colors.warning,
+            fontSize = 13.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
     v_gap(AsterSpacing.xl)
     AsterButton(
