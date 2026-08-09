@@ -167,6 +167,8 @@ data class MessageAttachment(
     val data_nonce: String? = null,
     val session_key: String? = null,
     val content_id: String? = null,
+    val mail_item_id: String? = null,
+    val seq_num: Int? = null,
 )
 
 data class ThreadMessage(

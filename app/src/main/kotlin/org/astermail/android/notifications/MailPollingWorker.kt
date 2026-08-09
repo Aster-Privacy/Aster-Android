@@ -249,11 +249,15 @@ class MailPollingWorker(
                 }
             }
 
-            val candidate_sender = (
-                candidate?.display_sender_name
-                    ?: candidate?.sender_name?.takeIf { it.isNotBlank() }
-                    ?: candidate?.sender_email
-                )?.trim()
+            val candidate_sender = if (candidate?.is_undecryptable == true) {
+                context.getString(org.astermail.android.R.string.encrypted)
+            } else {
+                (
+                    candidate?.display_sender_name
+                        ?: candidate?.sender_name?.takeIf { it.isNotBlank() }
+                        ?: candidate?.sender_email
+                    )?.trim()
+            }
             if (candidate != null &&
                 !candidate_sender.isNullOrBlank() &&
                 claim_item_notification(context, candidate.id)
@@ -269,13 +273,22 @@ class MailPollingWorker(
             }
             return true
         }
-        val subject = fresh.subject.trim()
+        val subject = if (fresh.is_undecryptable) {
+            context.getString(org.astermail.android.R.string.decrypt_failed_title)
+        } else {
+            fresh.subject.trim()
+        }
+        val preview = if (fresh.is_undecryptable) {
+            context.getString(org.astermail.android.R.string.undecryptable_message_preview)
+        } else {
+            fresh.preview
+        }
         val message_id = message_notification_id(fresh.id.hashCode())
         show_message(
             context = context,
             sender = sender!!,
             subject = subject,
-            preview = fresh.preview,
+            preview = preview,
             message_id = message_id,
             item_id = fresh.id,
         )

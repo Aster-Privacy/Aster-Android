@@ -407,6 +407,8 @@ internal fun inline_image_sources(
                 data,
                 nonce,
                 att.session_key.orEmpty(),
+                att.mail_item_id,
+                att.seq_num,
             )
         }.getOrNull() ?: continue
         if (bytes.isEmpty() || bytes.size > INLINE_IMAGE_MAX_BYTES || bytes.size > budget) continue
@@ -2269,36 +2271,7 @@ internal fun expanded_message(
                         no_body_text
                     }
                 }
-                val raw = if (org.astermail.android.mail.FormatFlowed.looks_flowed(body_source)) {
-                    org.astermail.android.mail.FormatFlowed.unflow(body_source)
-                } else {
-                    body_source
-                }
-                val escaped = raw
-                    .replace("&", "&amp;")
-                    .replace("<", "&lt;")
-                    .replace(">", "&gt;")
-                val url_pattern = Regex(
-                    "(https?://[^\\s<>\"']+|www\\.[a-zA-Z0-9][a-zA-Z0-9.-]*\\.[a-zA-Z]{2,}(?:/[^\\s<>\"']*)?)",
-                )
-                val trailing_punct = Regex("[.,;:!?)\\]\\}\"']+\$")
-                val linked = url_pattern.replace(escaped) { match ->
-                    val raw = match.value
-                    val trail_match = trailing_punct.find(raw)
-                    val (clean, trail) = if (trail_match != null) {
-                        raw.substring(0, trail_match.range.first) to raw.substring(trail_match.range.first)
-                    } else raw to ""
-                    val href = if (clean.startsWith("www.")) "http://$clean" else clean
-                    "<a href=\"$href\">$clean</a>$trail"
-                }
-                val email_pattern = Regex(
-                    "(?<![\\w@.-])([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})(?![\\w@.-])",
-                )
-                val linked_with_email = email_pattern.replace(linked) { match ->
-                    val addr = trim_email_runon(match.value)
-                    "<a href=\"mailto:$addr\">$addr</a>" + match.value.substring(addr.length)
-                }
-                "<div style=\"white-space:pre-wrap;overflow-wrap:break-word\">${linked_with_email.replace("\n", "<br>")}</div>"
+                org.astermail.android.mail.build_plain_text_html(body_source)
                 }
             }
             email_html_view(

@@ -77,6 +77,7 @@ import org.astermail.android.settings.SettingsViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.ui.common.current_user_avatar
 import org.astermail.android.ui.common.plan_ring
+import org.astermail.android.ui.common.remember_has_paid_plan
 import org.astermail.android.ui.mail.search_field_bg_color
 import org.astermail.android.settings.shared_settings_view_model
 
@@ -247,7 +248,7 @@ private fun profile_header(
                 .clickable(onClick = on_click),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            plan_ring(size = 88.dp, enabled = subscription != null && !is_free) {
+            plan_ring(size = 88.dp, enabled = remember_has_paid_plan()) {
                 current_user_avatar(
                     account_store = account_store,
                     size = 88.dp,

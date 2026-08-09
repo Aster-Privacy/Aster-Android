@@ -1106,6 +1106,8 @@ class MailViewModel @Inject constructor(
                         attachment.encrypted_data,
                         attachment.data_nonce,
                         attachment.session_key ?: "",
+                        attachment.mail_item_id,
+                        attachment.seq_num,
                     )
                     Pair(attachment, bytes)
                 } else {
