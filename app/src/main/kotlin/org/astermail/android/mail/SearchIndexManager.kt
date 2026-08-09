@@ -132,6 +132,7 @@ class SearchIndexManager @Inject constructor(
 
     private suspend fun purge_bundle_poisoned() {
         runCatching { dao.delete_bundle_poisoned() }
+        runCatching { dao.delete_blank_rows() }
     }
 
     suspend fun reconcile_inbox_window(returned_ids: Set<String>, min_timestamp: String) {
@@ -243,8 +244,8 @@ class SearchIndexManager @Inject constructor(
                                 is_spam = scope.is_spam ?: it.is_spam,
                             )
                         }
-                        cache_items(decrypted, my_epoch)
-                        new_items.forEach { existing_ids.add(it.id) }
+                        val persisted = cache_items(decrypted, my_epoch)
+                        existing_ids.addAll(persisted)
                     }
                     processed += response.items.size
                     if (epoch.get() == my_epoch) {
@@ -312,9 +313,11 @@ class SearchIndexManager @Inject constructor(
         resolve_attachment_ids(dao.ids_without_attachments())
     }
 
-    private suspend fun cache_items(items: List<InboxItem>, my_epoch: Int) {
-        if (items.isEmpty()) return
-        val entities = items.map { item ->
+    private suspend fun cache_items(items: List<InboxItem>, my_epoch: Int): Set<String> {
+        if (items.isEmpty()) return emptySet()
+        val indexable = items.filterNot { is_index_poisoned(it) }
+        if (indexable.isEmpty()) return emptySet()
+        val entities = indexable.map { item ->
             DecryptedMailEntity(
                 id = item.id,
                 thread_token = item.thread_token,
@@ -342,8 +345,14 @@ class SearchIndexManager @Inject constructor(
             )
         }
         mutex.withLock {
-            if (epoch.get() != my_epoch) return
+            if (epoch.get() != my_epoch) return emptySet()
             dao.insert_all(entities)
         }
+        return indexable.map { it.id }.toSet()
     }
+}
+
+internal fun is_index_poisoned(item: InboxItem): Boolean {
+    if (item.is_undecryptable) return true
+    return item.sender_email.isBlank() && item.subject.isBlank() && item.preview.isBlank()
 }

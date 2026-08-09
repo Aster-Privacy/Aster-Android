@@ -64,6 +64,12 @@ interface DecryptedMailDao {
     )
     suspend fun delete_bundle_poisoned(): Int
 
+    @Query(
+        "DELETE FROM decrypted_mail_cache WHERE " +
+            "TRIM(sender_email) = '' AND TRIM(subject) = '' AND TRIM(preview) = ''",
+    )
+    suspend fun delete_blank_rows(): Int
+
     @Query("UPDATE decrypted_mail_cache SET is_read = :is_read WHERE id = :id")
     suspend fun update_read(id: String, is_read: Boolean)
 
