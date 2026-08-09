@@ -28,7 +28,6 @@ import org.astermail.android.R
 import java.security.MessageDigest
 import java.security.SecureRandom
 import javax.crypto.Cipher
-import javax.crypto.Mac
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.PBEKeySpec
@@ -96,6 +95,7 @@ private const val METADATA_PATCH_ATTEMPTS = 3
 private const val METADATA_PATCH_RETRY_DELAY_MS = 400L
 private const val METADATA_PATCH_BATCH_SIZE = 100
 private const val METADATA_RESOLVE_CONCURRENCY = 8
+private const val ENVELOPE_KEY_CACHE_MAX_ENTRIES = 32
 
 data class DecryptedEnvelope(
     val subject: String,
@@ -277,6 +277,7 @@ data class InboxItem(
     val display_sender_email: String? = null,
     val to_addresses: List<String> = emptyList(),
     val routing_token: String? = null,
+    val is_undecryptable: Boolean = false,
     val raw_item: MailItem,
 )
 
@@ -285,6 +286,8 @@ data class AttachmentMeta(
     val content_type: String,
     val session_key: String,
     val content_id: String? = null,
+    val size_bytes: Long? = null,
+    val is_placeholder: Boolean = false,
 )
 
 data class DecryptedReaction(
@@ -354,8 +357,8 @@ class MailRepository @Inject constructor(
         return true
     }
 
-    private val pbkdf2_key_cache = java.util.concurrent.ConcurrentHashMap<String, ByteArray>()
-    private val identity_key_cache = java.util.concurrent.ConcurrentHashMap<String, ByteArray>()
+    private val pbkdf2_key_cache = BoundedKeyCache(ENVELOPE_KEY_CACHE_MAX_ENTRIES)
+    private val identity_key_cache = BoundedKeyCache(ENVELOPE_KEY_CACHE_MAX_ENTRIES)
     private val ratchet_undecryptable_at = java.util.concurrent.ConcurrentHashMap<String, Long>()
     @Volatile private var cached_kek_candidates: List<ByteArray>? = null
     @Volatile private var cached_kek_source: List<String>? = null
@@ -775,9 +778,7 @@ class MailRepository @Inject constructor(
     }
 
     fun clear_caches() {
-        pbkdf2_key_cache.values.forEach { it.fill(0) }
         pbkdf2_key_cache.clear()
-        identity_key_cache.values.forEach { it.fill(0) }
         identity_key_cache.clear()
         cached_kek_candidates?.forEach { it.fill(0) }
         cached_kek_candidates = null
@@ -788,6 +789,7 @@ class MailRepository @Inject constructor(
         draft_item_cache.clear()
         ratchet_undecryptable_at.clear()
         ratchet_plaintext_cache.clear()
+        InboundAttachmentKeyStore.clear()
     }
 
     suspend fun fetch_inbox(
@@ -1457,6 +1459,8 @@ class MailRepository @Inject constructor(
 
     private fun decrypt_inbox_item(item: MailItem): InboxItem {
         val envelope = try_decrypt_envelope(item.encrypted_envelope, item.envelope_nonce, item.id)
+        val is_undecryptable = envelope?.is_undecryptable
+            ?: !item.encrypted_envelope.isNullOrBlank()
         val enc_meta = item.encrypted_metadata
         val meta_nonce = item.metadata_nonce
         val decrypted_meta = item.metadata
@@ -1471,10 +1475,18 @@ class MailRepository @Inject constructor(
             id = item.id,
             thread_token = item.thread_token,
             thread_message_count = item.thread_message_count ?: 1,
-            sender_name = envelope?.from_name ?: "",
+            sender_name = if (is_undecryptable) context.getString(R.string.encrypted) else envelope?.from_name ?: "",
             sender_email = envelope?.from_email ?: "",
-            subject = envelope?.subject ?: "",
-            preview = envelope?.let { clean_preview(it.body_text, it.body_html) } ?: "",
+            subject = if (is_undecryptable) {
+                context.getString(R.string.decrypt_failed_title)
+            } else {
+                envelope?.subject ?: ""
+            },
+            preview = if (is_undecryptable) {
+                context.getString(R.string.undecryptable_message_preview)
+            } else {
+                envelope?.let { clean_preview(it.body_text, it.body_html) } ?: ""
+            },
             timestamp = item.message_ts ?: item.created_at ?: "",
             is_read = resolve_read_state(item.item_type, item.is_read, meta?.is_read) ||
                 (meta?.is_trashed ?: item.is_trashed) == true,
@@ -1504,6 +1516,7 @@ class MailRepository @Inject constructor(
             } else {
                 null
             },
+            is_undecryptable = is_undecryptable,
             raw_item = if (meta != null) item.copy(metadata = meta) else item,
         )
     }
@@ -1553,7 +1566,7 @@ class MailRepository @Inject constructor(
             cc_addresses = envelope?.cc?.map { it.second } ?: emptyList(),
             has_attachments = meta?.has_attachments ?: false,
             raw_headers = envelope?.raw_headers ?: emptyList(),
-            is_undecryptable = envelope?.is_undecryptable ?: false,
+            is_undecryptable = envelope?.is_undecryptable ?: !item.encrypted_envelope.isNullOrBlank(),
             subject = envelope?.subject ?: "",
             display_sender_name = forwarding?.display_sender_name,
             display_sender_email = forwarding?.display_sender_email,
@@ -1632,6 +1645,7 @@ class MailRepository @Inject constructor(
 
             val json_str = String(decrypted, Charsets.UTF_8)
             decrypted.fill(0)
+            InboundAttachmentKeyStore.register_from_envelope_json(message_id, json_str)
             val envelope = parse_envelope_json(json_str)
             if (envelope != null) decrypt_pgp_body_fields(envelope, message_id) else null
         } catch (_: Throwable) {
@@ -1664,7 +1678,7 @@ class MailRepository @Inject constructor(
         val ciphertext = data.sliceArray(28 until data.size)
         val salt_hex = salt.joinToString("") { "%02x".format(it) }
 
-        pbkdf2_key_cache[salt_hex]?.let { cached ->
+        pbkdf2_key_cache.get(salt_hex)?.let { cached ->
             runCatching { return aes_gcm_decrypt(ciphertext, cached, iv) }
         }
         for (kek in kek_candidates()) {
@@ -1688,7 +1702,7 @@ class MailRepository @Inject constructor(
         } finally {
             passphrase.fill(0)
         }
-        pbkdf2_key_cache[salt_hex] = key_bytes
+        pbkdf2_key_cache.put(salt_hex, key_bytes)
 
         return runCatching { aes_gcm_decrypt(ciphertext, key_bytes, iv) }.getOrElse {
             throw IllegalStateException("pbkdf2 decryption failed with all keys")
@@ -1702,7 +1716,7 @@ class MailRepository @Inject constructor(
 
         for (version in ENVELOPE_VERSIONS) {
             try {
-                val key = identity_key_cache.getOrPut(version) {
+                val key = identity_key_cache.get_or_put(version) {
                     val material = (identity_key + version).toByteArray(Charsets.UTF_8)
                     MessageDigest.getInstance("SHA-256").digest(material)
                 }
@@ -1717,7 +1731,7 @@ class MailRepository @Inject constructor(
                 for (version in ENVELOPE_VERSIONS) {
                     try {
                         val cache_key = "prev_${prev_key.hashCode()}_$version"
-                        val key = identity_key_cache.getOrPut(cache_key) {
+                        val key = identity_key_cache.get_or_put(cache_key) {
                             val material = (prev_key + version).toByteArray(Charsets.UTF_8)
                             MessageDigest.getInstance("SHA-256").digest(material)
                         }
@@ -1730,11 +1744,6 @@ class MailRepository @Inject constructor(
 
         throw IllegalStateException("all identity key versions failed")
     }
-
-    private data class InboundRatchetKeySet(
-        val identity_jwk: String,
-        val pq_identity_secret_b64: String?,
-    )
 
     private fun inbound_ratchet_key_sets(): List<InboundRatchetKeySet> {
         val key_sets = mutableListOf<InboundRatchetKeySet>()
@@ -1774,154 +1783,8 @@ class MailRepository @Inject constructor(
         return key_sets
     }
 
-    private fun decrypt_inbound_envelope(encrypted_b64: String, nonce: ByteArray): ByteArray? {
-        if (nonce.size != 12) return null
-
-        val enc = runCatching {
-            android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT)
-        }.getOrNull() ?: return null
-        if (enc.isEmpty()) return null
-
-        val marker = enc[0]
-        val header_len = when (marker) {
-            INBOUND_ECDH_MARKER, INBOUND_ECDH_COMPRESSED_MARKER -> 1 + INBOUND_EPH_KEY_LEN
-            INBOUND_PQ_HYBRID_MARKER -> 1 + INBOUND_EPH_KEY_LEN + INBOUND_ML_KEM_CT_LEN
-            else -> return null
-        }
-        if (enc.size <= header_len) return null
-
-        for (key_set in inbound_ratchet_key_sets()) {
-            val plaintext = when (marker) {
-                INBOUND_PQ_HYBRID_MARKER -> key_set.pq_identity_secret_b64?.let { pq_secret ->
-                    decrypt_inbound_pq_hybrid(enc, nonce, key_set.identity_jwk, pq_secret)
-                }
-                else -> decrypt_inbound_ecdh(
-                    enc,
-                    nonce,
-                    key_set.identity_jwk,
-                    marker == INBOUND_ECDH_COMPRESSED_MARKER,
-                )
-            }
-            if (plaintext != null) return plaintext
-        }
-
-        return null
-    }
-
-    private fun decrypt_inbound_ecdh(
-        enc: ByteArray,
-        nonce: ByteArray,
-        identity_jwk: String,
-        compressed: Boolean,
-    ): ByteArray? {
-        var shared_secret: ByteArray? = null
-        var aes_key: ByteArray? = null
-        var plaintext: ByteArray? = null
-        return try {
-            val ephemeral_public = RatchetCrypto.parse_p256_public_raw(
-                enc.copyOfRange(1, 1 + INBOUND_EPH_KEY_LEN),
-            )
-            val identity_private = RatchetCrypto.parse_p256_private_jwk(identity_jwk)
-            shared_secret = RatchetCrypto.ecdh(identity_private, ephemeral_public)
-            if (shared_secret.size < 32) return null
-            aes_key = RatchetCrypto.hkdf_sha256(
-                shared_secret,
-                ByteArray(0),
-                INBOUND_ECDH_INFO,
-                32,
-            )
-            plaintext = RatchetCrypto.aes_gcm_decrypt(
-                enc.copyOfRange(1 + INBOUND_EPH_KEY_LEN, enc.size),
-                aes_key,
-                nonce,
-            )
-            if (compressed) inflate_zlib(plaintext) else plaintext.copyOf()
-        } catch (_: Throwable) {
-            null
-        } finally {
-            shared_secret?.fill(0)
-            aes_key?.fill(0)
-            plaintext?.fill(0)
-        }
-    }
-
-    private fun decrypt_inbound_pq_hybrid(
-        enc: ByteArray,
-        nonce: ByteArray,
-        identity_jwk: String,
-        pq_identity_secret_b64: String,
-    ): ByteArray? {
-        var ecdh_shared: ByteArray? = null
-        var pq_secret: ByteArray? = null
-        var ml_kem_shared: ByteArray? = null
-        var ikm: ByteArray? = null
-        var aes_key: ByteArray? = null
-        var plaintext: ByteArray? = null
-        return try {
-            val ephemeral_public = RatchetCrypto.parse_p256_public_raw(
-                enc.copyOfRange(1, 1 + INBOUND_EPH_KEY_LEN),
-            )
-            val identity_private = RatchetCrypto.parse_p256_private_jwk(identity_jwk)
-            ecdh_shared = RatchetCrypto.ecdh(identity_private, ephemeral_public)
-            if (ecdh_shared.size < 32) return null
-
-            pq_secret = RatchetCrypto.b64_decode(pq_identity_secret_b64)
-            ml_kem_shared = RatchetCrypto.ml_kem_768_decapsulate(
-                enc.copyOfRange(
-                    1 + INBOUND_EPH_KEY_LEN,
-                    1 + INBOUND_EPH_KEY_LEN + INBOUND_ML_KEM_CT_LEN,
-                ),
-                pq_secret,
-            )
-            if (ml_kem_shared.size < 32) return null
-
-            ikm = ByteArray(64)
-            System.arraycopy(ecdh_shared, 0, ikm, 0, 32)
-            System.arraycopy(ml_kem_shared, 0, ikm, 32, 32)
-            aes_key = RatchetCrypto.hkdf_sha256(ikm, ByteArray(0), INBOUND_PQ_HYBRID_INFO, 32)
-
-            plaintext = RatchetCrypto.aes_gcm_decrypt(
-                enc.copyOfRange(1 + INBOUND_EPH_KEY_LEN + INBOUND_ML_KEM_CT_LEN, enc.size),
-                aes_key,
-                nonce,
-            )
-            inflate_zlib(plaintext)
-        } catch (_: Throwable) {
-            null
-        } finally {
-            ecdh_shared?.fill(0)
-            pq_secret?.fill(0)
-            ml_kem_shared?.fill(0)
-            ikm?.fill(0)
-            aes_key?.fill(0)
-            plaintext?.fill(0)
-        }
-    }
-
-    private fun inflate_zlib(compressed: ByteArray): ByteArray {
-        val inflater = java.util.zip.Inflater()
-        try {
-            inflater.setInput(compressed)
-            val out = java.io.ByteArrayOutputStream(compressed.size.coerceAtMost(1 shl 20))
-            val buffer = ByteArray(1 shl 16)
-            var total = 0L
-            while (!inflater.finished()) {
-                val produced = inflater.inflate(buffer)
-                if (produced == 0 && !inflater.finished()) {
-                    throw IllegalStateException("truncated zlib stream")
-                }
-                total += produced
-                if (total > MAX_DECOMPRESSED_BYTES) {
-                    throw IllegalStateException("decompressed envelope exceeds size limit")
-                }
-                out.write(buffer, 0, produced)
-            }
-            buffer.fill(0)
-            return out.toByteArray()
-        } finally {
-            inflater.end()
-        }
-    }
+    private fun decrypt_inbound_envelope(encrypted_b64: String, nonce: ByteArray): ByteArray? =
+        InboundEnvelopeDecryptor.decrypt(encrypted_b64, nonce, inbound_ratchet_key_sets())
 
     private fun aes_gcm_decrypt(ciphertext: ByteArray, key: ByteArray, iv: ByteArray): ByteArray =
         aes_gcm_decrypt_bytes(ciphertext, key, iv)
@@ -1936,30 +1799,6 @@ class MailRepository @Inject constructor(
         return cipher.doFinal(plaintext)
     }
 
-    private fun hkdf_sha256(ikm: ByteArray, salt: ByteArray, info: ByteArray, length: Int): ByteArray {
-        val hmac_extract = Mac.getInstance("HmacSHA256")
-        hmac_extract.init(SecretKeySpec(salt, "HmacSHA256"))
-        val prk = hmac_extract.doFinal(ikm)
-
-        val hmac_expand = Mac.getInstance("HmacSHA256")
-        hmac_expand.init(SecretKeySpec(prk, "HmacSHA256"))
-        val blocks = (length + 31) / 32
-        val okm = ByteArray(length)
-        var t = ByteArray(0)
-        for (i in 1..blocks) {
-            hmac_expand.reset()
-            hmac_expand.update(t)
-            hmac_expand.update(info)
-            hmac_expand.update(i.toByte())
-            t = hmac_expand.doFinal()
-            val offset = (i - 1) * 32
-            val copy_len = minOf(32, length - offset)
-            System.arraycopy(t, 0, okm, offset, copy_len)
-        }
-        prk.fill(0)
-        return okm
-    }
-
     private fun derive_encryption_key(): ByteArray? {
         val passphrase = session_key_store.get_passphrase() ?: return null
         try {
@@ -1971,7 +1810,7 @@ class MailRepository @Inject constructor(
             combined.fill(0)
 
             val info = "aster-storage-encryption-key-v1".toByteArray(Charsets.UTF_8)
-            val key = hkdf_sha256(passphrase, salt, info, 32)
+            val key = org.astermail.android.crypto.ratchet.RatchetCrypto.hkdf_sha256(passphrase, salt, info, 32)
             salt.fill(0)
             return key
         } finally {
@@ -1984,7 +1823,7 @@ class MailRepository @Inject constructor(
         try {
             val salt = "aster-metadata-salt-v1".toByteArray(Charsets.UTF_8)
             val info = "aster-metadata-encryption-v1:mail-item-metadata".toByteArray(Charsets.UTF_8)
-            return hkdf_sha256(master, salt, info, 32)
+            return org.astermail.android.crypto.ratchet.RatchetCrypto.hkdf_sha256(master, salt, info, 32)
         } finally {
             master.fill(0)
         }
@@ -2064,77 +1903,106 @@ class MailRepository @Inject constructor(
         )
     }
 
-    fun decrypt_attachment_meta(encrypted_meta: String, meta_nonce: String?): AttachmentMeta? {
-        return try {
-            val raw = android.util.Base64.decode(encrypted_meta, android.util.Base64.DEFAULT)
-            val text = String(raw, Charsets.UTF_8)
+    fun decrypt_attachment_meta(
+        encrypted_meta: String,
+        meta_nonce: String?,
+        mail_item_id: String? = null,
+        seq_num: Int? = null,
+        size_bytes: Long? = null,
+    ): AttachmentMeta {
+        val entry = InboundAttachmentKeyStore.entry(mail_item_id, seq_num)
+        val nonce_bytes = runCatching {
+            if (meta_nonce.isNullOrBlank()) null
+            else android.util.Base64.decode(meta_nonce, android.util.Base64.DEFAULT)
+        }.getOrNull()
 
-            try {
-                val json = org.json.JSONObject(text)
-                if (json.has("filename") && json.has("content_type")) {
-                    return AttachmentMeta(
-                        filename = json.getString("filename"),
-                        content_type = json.getString("content_type"),
-                        session_key = json.optString("session_key", ""),
-                        content_id = if (json.has("content_id")) json.getString("content_id") else null,
-                    )
-                }
-            } catch (_: Throwable) {}
-
-            if (body_starts_with(text, "-----BEGIN PGP")) {
-                val pgp_result = try_pgp_decrypt(text)
-                if (pgp_result != null) {
-                    val json = org.json.JSONObject(pgp_result)
-                    return AttachmentMeta(
-                        filename = json.getString("filename"),
-                        content_type = json.getString("content_type"),
-                        session_key = json.optString("session_key", ""),
-                        content_id = if (json.has("content_id")) json.getString("content_id") else null,
-                    )
-                }
-            }
-
-            val nonce_bytes = if (meta_nonce.isNullOrBlank()) null
-                else android.util.Base64.decode(meta_nonce, android.util.Base64.DEFAULT)
-
-            val decrypted: ByteArray = when {
-                nonce_bytes == null || nonce_bytes.isEmpty() -> {
-                    decrypt_envelope_pbkdf2(encrypted_meta)
-                }
-                nonce_bytes.size == 1 && nonce_bytes[0] == 1.toByte() -> {
-                    decrypt_envelope_pbkdf2(encrypted_meta)
-                }
-                is_placeholder_meta_nonce(nonce_bytes) -> {
-                    decrypt_envelope_pbkdf2(encrypted_meta)
-                }
-                else -> {
-                    try {
-                        decrypt_envelope_identity_key(encrypted_meta, nonce_bytes)
-                    } catch (_: Throwable) {
-                        decrypt_envelope_pbkdf2(encrypted_meta)
-                    }
-                }
-            }
-
-            val json_str = String(decrypted, Charsets.UTF_8)
-            decrypted.fill(0)
-            val json = org.json.JSONObject(json_str)
-            AttachmentMeta(
-                filename = json.getString("filename"),
-                content_type = json.getString("content_type"),
-                session_key = json.optString("session_key", ""),
-                content_id = if (json.has("content_id")) json.getString("content_id") else null,
-            )
-        } catch (_: Throwable) {
-            null
+        val row_meta = if (is_sealed_meta_nonce(nonce_bytes)) {
+            read_sealed_attachment_meta(encrypted_meta, nonce_bytes!!, entry?.key)
+        } else {
+            read_legacy_attachment_meta(encrypted_meta)
         }
+
+        return merge_attachment_meta(entry, row_meta, size_bytes)
+    }
+
+    private fun merge_attachment_meta(
+        entry: InboundAttachmentEntry?,
+        row_meta: AttachmentMeta?,
+        size_bytes: Long?,
+    ): AttachmentMeta {
+        val filename = entry?.filename?.takeIf { it.isNotBlank() }
+            ?: row_meta?.filename?.takeIf { it.isNotBlank() }
+        val content_type = entry?.content_type?.takeIf { it.isNotBlank() }
+            ?: row_meta?.content_type?.takeIf { it.isNotBlank() }
+            ?: DEFAULT_ATTACHMENT_CONTENT_TYPE
+        val session_key = row_meta?.session_key?.takeIf { it.isNotBlank() }
+            ?: entry?.key.orEmpty()
+        val content_id = entry?.content_id?.takeIf { it.isNotBlank() }
+            ?: row_meta?.content_id?.takeIf { it.isNotBlank() }
+        val size = entry?.size ?: size_bytes
+
+        return AttachmentMeta(
+            filename = filename ?: context.getString(R.string.attachment_unnamed),
+            content_type = content_type,
+            session_key = session_key,
+            content_id = content_id,
+            size_bytes = size,
+            is_placeholder = filename == null,
+        )
+    }
+
+    private fun read_sealed_attachment_meta(
+        encrypted_meta: String,
+        nonce_bytes: ByteArray,
+        session_key_b64: String?,
+    ): AttachmentMeta? {
+        val sealed = decrypt_sealed_attachment_meta(encrypted_meta, nonce_bytes, session_key_b64)
+        if (sealed != null) return sealed
+
+        val decrypted = runCatching {
+            decrypt_envelope_identity_key(encrypted_meta, nonce_bytes)
+        }.recoverCatching {
+            decrypt_envelope_pbkdf2(encrypted_meta)
+        }.getOrNull() ?: return null
+
+        return parse_attachment_meta_json(decrypted)
+    }
+
+    private fun read_legacy_attachment_meta(encrypted_meta: String): AttachmentMeta? {
+        val raw = runCatching {
+            android.util.Base64.decode(encrypted_meta, android.util.Base64.DEFAULT)
+        }.getOrNull() ?: return null
+
+        parse_attachment_meta_json(raw)?.let { return it }
+
+        val text = String(raw, Charsets.UTF_8)
+        if (body_starts_with(text, "-----BEGIN PGP")) {
+            val pgp_result = try_pgp_decrypt(text)
+            if (pgp_result != null) {
+                parse_attachment_meta_json(pgp_result.toByteArray(Charsets.UTF_8))?.let { return it }
+            }
+        }
+
+        val decrypted = runCatching {
+            decrypt_envelope_pbkdf2(encrypted_meta)
+        }.getOrNull() ?: return null
+
+        return parse_attachment_meta_json(decrypted)
     }
 
     fun decrypt_attachment_data(
         encrypted_data_b64: String,
         data_nonce_b64: String,
         session_key_b64: String,
-    ): ByteArray = decrypt_attachment_bytes(encrypted_data_b64, data_nonce_b64, session_key_b64)
+        mail_item_id: String? = null,
+        seq_num: Int? = null,
+    ): ByteArray = decrypt_attachment_bytes(
+        encrypted_data_b64,
+        data_nonce_b64,
+        session_key_b64,
+        mail_item_id,
+        seq_num,
+    )
 
     suspend fun probe_messages_with_attachments(mail_item_ids: List<String>): Result<List<String>> {
         return try {
@@ -2157,18 +2025,24 @@ class MailRepository @Inject constructor(
         return try {
             val response = mail_api.batch_attachment_meta(mail_item_ids)
             response.items.mapValues { (_, items) ->
-                items.mapNotNull { att ->
-                    val meta = decrypt_attachment_meta(att.encrypted_meta, att.meta_nonce)
-                    if (meta != null) {
-                        org.astermail.android.ui.mail.MessageAttachment(
-                            id = att.id,
-                            filename = meta.filename,
-                            content_type = meta.content_type,
-                            size_bytes = att.size_bytes,
-                            session_key = meta.session_key,
-                            content_id = meta.content_id,
-                        )
-                    } else null
+                items.map { att ->
+                    val meta = decrypt_attachment_meta(
+                        att.encrypted_meta,
+                        att.meta_nonce,
+                        att.mail_item_id,
+                        att.seq_num,
+                        att.size_bytes,
+                    )
+                    org.astermail.android.ui.mail.MessageAttachment(
+                        id = att.id,
+                        filename = meta.filename,
+                        content_type = meta.content_type,
+                        size_bytes = meta.size_bytes ?: att.size_bytes,
+                        session_key = meta.session_key,
+                        content_id = meta.content_id,
+                        mail_item_id = att.mail_item_id,
+                        seq_num = att.seq_num,
+                    )
                 }
             }.filterValues { it.isNotEmpty() }
         } catch (t: kotlin.coroutines.cancellation.CancellationException) {
@@ -2184,20 +2058,26 @@ class MailRepository @Inject constructor(
         return try {
             val api_response = mail_api.list_attachments(mail_item_id)
             val api_attachments = api_response.attachments
-            api_attachments.mapNotNull { att ->
-                val meta = decrypt_attachment_meta(att.encrypted_meta, att.meta_nonce)
-                if (meta != null) {
-                    org.astermail.android.ui.mail.MessageAttachment(
-                        id = att.id,
-                        filename = meta.filename,
-                        content_type = meta.content_type,
-                        size_bytes = att.size_bytes,
-                        encrypted_data = att.encrypted_data,
-                        data_nonce = att.data_nonce,
-                        session_key = meta.session_key,
-                        content_id = meta.content_id,
-                    )
-                } else null
+            api_attachments.map { att ->
+                val meta = decrypt_attachment_meta(
+                    att.encrypted_meta,
+                    att.meta_nonce,
+                    att.mail_item_id,
+                    att.seq_num,
+                    att.size_bytes,
+                )
+                org.astermail.android.ui.mail.MessageAttachment(
+                    id = att.id,
+                    filename = meta.filename,
+                    content_type = meta.content_type,
+                    size_bytes = meta.size_bytes ?: att.size_bytes,
+                    encrypted_data = att.encrypted_data,
+                    data_nonce = att.data_nonce,
+                    session_key = meta.session_key,
+                    content_id = meta.content_id,
+                    mail_item_id = att.mail_item_id,
+                    seq_num = att.seq_num,
+                )
             }
         } catch (_: Throwable) {
             emptyList()
@@ -2209,8 +2089,20 @@ class MailRepository @Inject constructor(
     ): Pair<org.astermail.android.ui.mail.MessageAttachment, ByteArray>? {
         return try {
             val att = mail_api.get_attachment(attachment_id)
-            val meta = decrypt_attachment_meta(att.encrypted_meta, att.meta_nonce) ?: return null
-            val data = decrypt_attachment_data(att.encrypted_data, att.data_nonce, meta.session_key)
+            val meta = decrypt_attachment_meta(
+                att.encrypted_meta,
+                att.meta_nonce,
+                att.mail_item_id,
+                att.seq_num,
+                att.size_bytes,
+            )
+            val data = decrypt_attachment_data(
+                att.encrypted_data,
+                att.data_nonce,
+                meta.session_key,
+                att.mail_item_id,
+                att.seq_num,
+            )
             Pair(
                 org.astermail.android.ui.mail.MessageAttachment(
                     id = att.id,
@@ -2218,6 +2110,8 @@ class MailRepository @Inject constructor(
                     content_type = meta.content_type,
                     size_bytes = att.size_bytes,
                     session_key = meta.session_key,
+                    mail_item_id = att.mail_item_id,
+                    seq_num = att.seq_num,
                 ),
                 data,
             )
@@ -3118,18 +3012,59 @@ class MailRepository @Inject constructor(
 
     companion object {
         private const val PBKDF2_ITERATIONS = 310000
-        private const val INBOUND_ECDH_MARKER: Byte = 0x02
-        private const val INBOUND_ECDH_COMPRESSED_MARKER: Byte = 0x03
-        private const val INBOUND_PQ_HYBRID_MARKER: Byte = 0x04
-        private const val INBOUND_EPH_KEY_LEN = 65
-        private const val INBOUND_ML_KEM_CT_LEN = 1088
-        private const val MAX_DECOMPRESSED_BYTES = 48L * 1024 * 1024
-        private val INBOUND_ECDH_INFO = "aster-inbound-v1".toByteArray(Charsets.UTF_8)
-        private val INBOUND_PQ_HYBRID_INFO = "aster-inbound-pq-v1".toByteArray(Charsets.UTF_8)
         private val PLACEHOLDER_META_NONCE = ByteArray(12)
+        const val DEFAULT_ATTACHMENT_CONTENT_TYPE = "application/octet-stream"
 
         fun is_placeholder_meta_nonce(nonce: ByteArray): Boolean =
             nonce.size == 12 && nonce.all { it == 0.toByte() }
+
+        fun is_sealed_meta_nonce(nonce: ByteArray?): Boolean {
+            if (nonce == null || nonce.isEmpty()) return false
+            return nonce.any { it != 0.toByte() }
+        }
+
+        fun decrypt_sealed_attachment_meta(
+            encrypted_meta: String,
+            nonce: ByteArray,
+            session_key_b64: String?,
+        ): AttachmentMeta? {
+            if (session_key_b64.isNullOrBlank() || nonce.size != 12) return null
+            var key: ByteArray? = null
+            var plaintext: ByteArray? = null
+            return try {
+                key = android.util.Base64.decode(session_key_b64, android.util.Base64.DEFAULT)
+                if (key.size != 32) return null
+                val ciphertext = android.util.Base64.decode(
+                    encrypted_meta,
+                    android.util.Base64.DEFAULT,
+                )
+                plaintext = aes_gcm_decrypt_bytes(ciphertext, key, nonce)
+                parse_attachment_meta_json(plaintext)
+            } catch (_: Throwable) {
+                null
+            } finally {
+                key?.fill(0)
+                plaintext?.fill(0)
+            }
+        }
+
+        fun parse_attachment_meta_json(plaintext: ByteArray): AttachmentMeta? {
+            return try {
+                val json = org.json.JSONObject(String(plaintext, Charsets.UTF_8))
+                val filename = json.optString("filename", "").ifBlank { null }
+                val content_type = json.optString("content_type", "").ifBlank { null }
+                val session_key = json.optString("session_key", "")
+                if (filename == null && content_type == null && !json.has("session_key")) return null
+                AttachmentMeta(
+                    filename = filename.orEmpty(),
+                    content_type = content_type ?: DEFAULT_ATTACHMENT_CONTENT_TYPE,
+                    session_key = session_key,
+                    content_id = json.optString("content_id", "").ifBlank { null },
+                )
+            } catch (_: Throwable) {
+                null
+            }
+        }
 
         fun server_meta_nonce(envelope_nonce: String): String {
             val decoded = runCatching {
@@ -3165,13 +3100,26 @@ class MailRepository @Inject constructor(
             encrypted_data_b64: String,
             data_nonce_b64: String,
             session_key_b64: String,
+            mail_item_id: String? = null,
+            seq_num: Int? = null,
         ): ByteArray {
-            if (session_key_b64.isBlank()) {
-                return android.util.Base64.decode(encrypted_data_b64, android.util.Base64.DEFAULT)
+            val resolved_key_b64 = if (session_key_b64.isBlank()) {
+                InboundAttachmentKeyStore.key(mail_item_id, seq_num).orEmpty()
+            } else {
+                session_key_b64
             }
-            val key = android.util.Base64.decode(session_key_b64, android.util.Base64.DEFAULT)
+            val key = if (resolved_key_b64.isBlank()) {
+                ByteArray(0)
+            } else {
+                runCatching {
+                    android.util.Base64.decode(resolved_key_b64, android.util.Base64.DEFAULT)
+                }.getOrDefault(ByteArray(0))
+            }
             if (key.isEmpty()) {
-                return android.util.Base64.decode(encrypted_data_b64, android.util.Base64.DEFAULT)
+                if (is_unencrypted_stored_attachment(data_nonce_b64)) {
+                    return android.util.Base64.decode(encrypted_data_b64, android.util.Base64.DEFAULT)
+                }
+                throw AttachmentKeyUnavailableException()
             }
             try {
                 val ciphertext = android.util.Base64.decode(encrypted_data_b64, android.util.Base64.DEFAULT)
@@ -3181,8 +3129,18 @@ class MailRepository @Inject constructor(
                 key.fill(0)
             }
         }
+
+        fun is_unencrypted_stored_attachment(data_nonce_b64: String): Boolean {
+            if (data_nonce_b64.isBlank()) return false
+            val nonce = runCatching {
+                android.util.Base64.decode(data_nonce_b64, android.util.Base64.DEFAULT)
+            }.getOrNull() ?: return false
+            return is_placeholder_meta_nonce(nonce)
+        }
     }
 }
+
+class AttachmentKeyUnavailableException : Exception("attachment key unavailable")
 
 data class InboxPage(
     val items: List<InboxItem>,
