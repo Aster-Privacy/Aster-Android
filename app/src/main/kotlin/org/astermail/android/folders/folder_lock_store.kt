@@ -252,23 +252,23 @@ object folder_lock_store {
             thread_folder_index[thread_token]?.let { tokens ->
                 token_for_any(tokens)?.let { return it }
             }
-            return single_unlocked_token()
+            return fallback_unlock_token()
         }
         val item_id = item_id_from_path(request.path)
         if (item_id != null) {
             item_folder_index[item_id]?.let { tokens ->
                 token_for_any(tokens)?.let { return it }
             }
-            return single_unlocked_token()
+            return fallback_unlock_token()
         }
-        if (is_attachment_path(request.path)) return single_unlocked_token()
+        if (is_attachment_path(request.path)) return fallback_unlock_token()
         return null
     }
 
     @Synchronized
-    private fun single_unlocked_token(): String? {
-        val live = unlocked.keys.toList().mapNotNull { session_for(it)?.unlock_token }
-        return if (live.size == 1) live.first() else null
+    private fun fallback_unlock_token(): String? {
+        token_for_label_token(active_folder_token)?.let { return it }
+        return unlocked.keys.toList().firstNotNullOfOrNull { session_for(it)?.unlock_token }
     }
 
     private fun is_attachment_path(path: String): Boolean =
