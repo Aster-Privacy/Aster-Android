@@ -92,6 +92,20 @@ data class UploadPrekeyBundleRequest(
     val pq_kem_public_key: String? = null,
 )
 
+@Serializable
+data class ReportEnvelopeCapabilityRequest(
+    val client_id: String,
+    val max_envelope_marker: Int,
+    val platform: String? = null,
+)
+
+@Serializable
+data class EnvelopeCapabilityResponse(
+    val success: Boolean,
+    val min_supported_marker: Int? = null,
+    val pq_hybrid_enabled: Boolean = false,
+)
+
 sealed class PutStateOutcome {
     data class Success(val response: RatchetStateResponse) : PutStateOutcome()
     object VersionConflict : PutStateOutcome()
@@ -113,6 +127,7 @@ interface RatchetApi {
     suspend fun fetch_prekey_bundle(username: String, email: String): PrekeyBundleResponse?
     suspend fun delete_state(conversation_id_b64: String): Boolean
     suspend fun upload_prekey_bundle(request: UploadPrekeyBundleRequest): Boolean
+    suspend fun report_envelope_capability(request: ReportEnvelopeCapabilityRequest): EnvelopeCapabilityResponse?
 }
 
 class RatchetApiImpl(private val client: ApiClient) : RatchetApi {
@@ -197,6 +212,18 @@ class RatchetApiImpl(private val client: ApiClient) : RatchetApi {
             setBody(request)
         }
         return response.status.value in 200..299
+    }
+
+    override suspend fun report_envelope_capability(
+        request: ReportEnvelopeCapabilityRequest,
+    ): EnvelopeCapabilityResponse? {
+        val response = client.http.post("${client.base_url}/api/crypto/v1/ratchet/envelope-capability") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        if (response.status.value !in 200..299) return null
+        return try { response.body() } catch (_: Throwable) { null }
     }
 }
 
