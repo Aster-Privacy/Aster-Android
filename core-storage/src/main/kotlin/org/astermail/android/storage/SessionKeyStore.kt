@@ -135,20 +135,28 @@ class SessionKeyStore(context: Context? = null) {
     fun put_ratchet_keys(
         identity_jwk: String,
         identity_public_b64: String,
-        signed_prekey_jwk: String,
-        signed_prekey_public_b64: String,
+        signed_prekey_jwk: String? = null,
+        signed_prekey_public_b64: String? = null,
     ) {
         synchronized(lock) {
             ratchet_identity_jwk = identity_jwk
-            ratchet_identity_public_b64 = identity_public_b64
-            ratchet_signed_prekey_jwk = signed_prekey_jwk
-            ratchet_signed_prekey_public_b64 = signed_prekey_public_b64
-            prefs?.edit()
-                ?.putString(key_ratchet_identity_jwk, identity_jwk)
-                ?.putString(key_ratchet_identity_pub, identity_public_b64)
-                ?.putString(key_ratchet_spk_jwk, signed_prekey_jwk)
-                ?.putString(key_ratchet_spk_pub, signed_prekey_public_b64)
-                ?.apply()
+            ratchet_identity_public_b64 = identity_public_b64.takeIf { it.isNotBlank() }
+            val editor = prefs?.edit()
+            editor?.putString(key_ratchet_identity_jwk, identity_jwk)
+            if (ratchet_identity_public_b64 == null) {
+                editor?.remove(key_ratchet_identity_pub)
+            } else {
+                editor?.putString(key_ratchet_identity_pub, ratchet_identity_public_b64)
+            }
+            if (!signed_prekey_jwk.isNullOrBlank()) {
+                ratchet_signed_prekey_jwk = signed_prekey_jwk
+                editor?.putString(key_ratchet_spk_jwk, signed_prekey_jwk)
+            }
+            if (!signed_prekey_public_b64.isNullOrBlank()) {
+                ratchet_signed_prekey_public_b64 = signed_prekey_public_b64
+                editor?.putString(key_ratchet_spk_pub, signed_prekey_public_b64)
+            }
+            editor?.apply()
         }
     }
 
@@ -166,18 +174,20 @@ class SessionKeyStore(context: Context? = null) {
 
     fun put_ratchet_pq_identity(secret_b64: String?, public_b64: String?) {
         synchronized(lock) {
-            ratchet_pq_identity_secret = secret_b64
-            ratchet_pq_identity_public = public_b64
+            ratchet_pq_identity_secret = secret_b64?.takeIf { it.isNotBlank() }
+            ratchet_pq_identity_public = public_b64?.takeIf { it.isNotBlank() }
             val editor = prefs?.edit() ?: return
-            if (secret_b64.isNullOrBlank() || public_b64.isNullOrBlank()) {
+            if (ratchet_pq_identity_secret == null) {
                 editor.remove(key_ratchet_pq_identity_priv)
-                    .remove(key_ratchet_pq_identity_pub)
-                    .apply()
             } else {
-                editor.putString(key_ratchet_pq_identity_priv, secret_b64)
-                    .putString(key_ratchet_pq_identity_pub, public_b64)
-                    .apply()
+                editor.putString(key_ratchet_pq_identity_priv, ratchet_pq_identity_secret)
             }
+            if (ratchet_pq_identity_public == null) {
+                editor.remove(key_ratchet_pq_identity_pub)
+            } else {
+                editor.putString(key_ratchet_pq_identity_pub, ratchet_pq_identity_public)
+            }
+            editor.apply()
         }
     }
 
