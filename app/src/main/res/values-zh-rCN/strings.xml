@@ -263,6 +263,7 @@
     <string name="e2e_no_key_description">此消息使用此设备尚未拥有的密钥加密。请在 Aster 网页端打开阅读。</string>
     <string name="no_body">（无正文）</string>
     <string name="attachments_count">%d 个附件</string>
+    <string name="attachment_unnamed">附件</string>
     <string name="download_complete">下载完成</string>
     <string name="cannot_decode_image">无法解码图片</string>
     <string name="no_app_to_open">没有可以打开此文件的应用</string>
@@ -2657,4 +2658,6 @@
     <string name="alias_website_add">添加网站</string>
     <string name="alias_website_remove">移除网站</string>
     <string name="alias_website_input_placeholder">example.com</string>
+    <string name="undecryptable_message_preview">此设备没有该邮件的密钥。</string>
+    <string name="export_undecryptable_skipped">%1$d 封邮件无法解密，未包含在导出中。</string>
 </resources>

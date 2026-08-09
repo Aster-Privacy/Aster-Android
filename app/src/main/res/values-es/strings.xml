@@ -264,6 +264,7 @@
     <string name="e2e_no_key_description">Este mensaje está cifrado con una clave que este dispositivo aún no posee. Ábrelo en la aplicación web de Aster para leerlo.</string>
     <string name="no_body">(sin contenido)</string>
     <string name="attachments_count">%d adjunto(s)</string>
+    <string name="attachment_unnamed">Archivo adjunto</string>
     <string name="download_complete">Descarga completa</string>
     <string name="cannot_decode_image">No se puede decodificar la imagen</string>
     <string name="no_app_to_open">No hay aplicación para abrir este archivo</string>
@@ -2665,4 +2666,6 @@
     <string name="alias_website_add">Añadir sitio web</string>
     <string name="alias_website_remove">Quitar sitio web</string>
     <string name="alias_website_input_placeholder">ejemplo.com</string>
+    <string name="undecryptable_message_preview">Este dispositivo no tiene la clave de este mensaje.</string>
+    <string name="export_undecryptable_skipped">No se pudieron descifrar %1$d mensajes y quedaron fuera de la exportación.</string>
 </resources>

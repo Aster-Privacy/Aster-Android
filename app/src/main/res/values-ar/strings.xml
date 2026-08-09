@@ -263,6 +263,7 @@
     <string name="e2e_no_key_description">هذه الرسالة مشفرة بمفتاح لا يمتلكه هذا الجهاز بعد. افتحها على تطبيق Aster الويب لقراءتها.</string>
     <string name="no_body">(بدون محتوى)</string>
     <string name="attachments_count">%d مرفق(ات)</string>
+    <string name="attachment_unnamed">مرفق</string>
     <string name="download_complete">اكتمل التنزيل</string>
     <string name="cannot_decode_image">لا يمكن فك تشفير الصورة</string>
     <string name="no_app_to_open">لا يوجد تطبيق لفتح هذا الملف</string>
@@ -2692,4 +2693,6 @@
     <string name="alias_website_add">إضافة موقع</string>
     <string name="alias_website_remove">إزالة الموقع</string>
     <string name="alias_website_input_placeholder">example.com</string>
+    <string name="undecryptable_message_preview">لا يحتوي هذا الجهاز على مفتاح هذه الرسالة.</string>
+    <string name="export_undecryptable_skipped">تعذر فك تشفير %1$d رسالة ولم تُدرج في التصدير.</string>
 </resources>

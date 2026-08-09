@@ -263,6 +263,7 @@
     <string name="e2e_no_key_description">このメッセージはこのデバイスがまだ持っていないキーで暗号化されています。Asterウェブアプリで開いて読んでください。</string>
     <string name="no_body">(本文なし)</string>
     <string name="attachments_count">%d個の添付ファイル</string>
+    <string name="attachment_unnamed">添付ファイル</string>
     <string name="download_complete">ダウンロード完了</string>
     <string name="cannot_decode_image">画像をデコードできません</string>
     <string name="no_app_to_open">このファイルを開くアプリがありません</string>
@@ -2657,4 +2658,6 @@
     <string name="alias_website_add">ウェブサイトを追加</string>
     <string name="alias_website_remove">ウェブサイトを削除</string>
     <string name="alias_website_input_placeholder">example.com</string>
+    <string name="undecryptable_message_preview">このデバイスにはこのメッセージの鍵がありません。</string>
+    <string name="export_undecryptable_skipped">%1$d 件のメッセージを復号できず、エクスポートから除外されました。</string>
 </resources>

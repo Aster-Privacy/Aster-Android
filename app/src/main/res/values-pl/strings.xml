@@ -263,6 +263,7 @@
     <string name="e2e_no_key_description">Ta wiadomość jest zaszyfrowana kluczem, którego to urządzenie jeszcze nie posiada. Otwórz ją w aplikacji webowej Aster, aby przeczytać.</string>
     <string name="no_body">(brak treści)</string>
     <string name="attachments_count">%d załącznik(ów)</string>
+    <string name="attachment_unnamed">Załącznik</string>
     <string name="download_complete">Pobieranie zakończone</string>
     <string name="cannot_decode_image">Nie można zdekodować obrazu</string>
     <string name="no_app_to_open">Brak aplikacji do otwarcia tego pliku</string>
@@ -2678,4 +2679,6 @@
     <string name="alias_website_add">Dodaj stronę</string>
     <string name="alias_website_remove">Usuń stronę</string>
     <string name="alias_website_input_placeholder">przyklad.pl</string>
+    <string name="undecryptable_message_preview">To urządzenie nie ma klucza do tej wiadomości.</string>
+    <string name="export_undecryptable_skipped">Nie udało się odszyfrować %1$d wiadomości i pominięto je w eksporcie.</string>
 </resources>

@@ -392,6 +392,7 @@
     <string name="e2e_keys_not_ready">Could not send: encryption keys aren\'t ready yet. The message was not sent.</string>
     <string name="no_body">(no body)</string>
     <string name="attachments_count">%d attachment(s)</string>
+    <string name="attachment_unnamed">Attachment</string>
     <string name="download_complete">Download complete</string>
     <string name="cannot_decode_image">Cannot decode image</string>
     <string name="no_app_to_open">No app to open this file</string>
@@ -2727,4 +2728,6 @@
     <string name="change_label_color">Change color</string>
     <string name="change_label_icon">Change icon</string>
     <string name="failed_update_label">Could not update label</string>
+    <string name="undecryptable_message_preview">This device doesn’t have the key for this message.</string>
+    <string name="export_undecryptable_skipped">%1$d messages couldn’t be decrypted and were left out of the export.</string>
 </resources>

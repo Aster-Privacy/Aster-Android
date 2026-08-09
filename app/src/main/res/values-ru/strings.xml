@@ -263,6 +263,7 @@
     <string name="e2e_no_key_description">Это сообщение зашифровано ключом, которого нет на этом устройстве. Откройте его в веб-приложении Aster, чтобы прочитать.</string>
     <string name="no_body">(нет текста)</string>
     <string name="attachments_count">%d вложение(й)</string>
+    <string name="attachment_unnamed">Вложение</string>
     <string name="download_complete">Загрузка завершена</string>
     <string name="cannot_decode_image">Не удаётся декодировать изображение</string>
     <string name="no_app_to_open">Нет приложения для открытия этого файла</string>
@@ -2678,4 +2679,6 @@
     <string name="alias_website_add">Добавить сайт</string>
     <string name="alias_website_remove">Удалить сайт</string>
     <string name="alias_website_input_placeholder">primer.ru</string>
+    <string name="undecryptable_message_preview">На этом устройстве нет ключа к этому сообщению.</string>
+    <string name="export_undecryptable_skipped">Не удалось расшифровать %1$d сообщений, они не вошли в экспорт.</string>
 </resources>

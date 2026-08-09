@@ -264,6 +264,7 @@
     <string name="e2e_no_key_description">Diese Nachricht ist mit einem Schlüssel verschlüsselt, den dieses Gerät noch nicht besitzt. Öffnen Sie sie in der Aster-Webanwendung, um sie zu lesen.</string>
     <string name="no_body">(kein Inhalt)</string>
     <string name="attachments_count">%d Anhang/Anhänge</string>
+    <string name="attachment_unnamed">Anhang</string>
     <string name="download_complete">Download abgeschlossen</string>
     <string name="cannot_decode_image">Bild kann nicht decodiert werden</string>
     <string name="no_app_to_open">Keine App zum Öffnen dieser Datei</string>
@@ -2665,4 +2666,6 @@
     <string name="alias_website_add">Website hinzufügen</string>
     <string name="alias_website_remove">Website entfernen</string>
     <string name="alias_website_input_placeholder">beispiel.de</string>
+    <string name="undecryptable_message_preview">Dieses Gerät hat den Schlüssel für diese Nachricht nicht.</string>
+    <string name="export_undecryptable_skipped">%1$d Nachrichten konnten nicht entschlüsselt werden und fehlen im Export.</string>
 </resources>

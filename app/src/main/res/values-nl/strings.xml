@@ -263,6 +263,7 @@
     <string name="e2e_no_key_description">Dit bericht is versleuteld met een sleutel die dit apparaat nog niet heeft. Open het in de Aster-webapp om te lezen.</string>
     <string name="no_body">(geen inhoud)</string>
     <string name="attachments_count">%d bijlage(n)</string>
+    <string name="attachment_unnamed">Bijlage</string>
     <string name="download_complete">Download voltooid</string>
     <string name="cannot_decode_image">Kan afbeelding niet decoderen</string>
     <string name="no_app_to_open">Geen app om dit bestand te openen</string>
@@ -2664,4 +2665,6 @@
     <string name="alias_website_add">Website toevoegen</string>
     <string name="alias_website_remove">Website verwijderen</string>
     <string name="alias_website_input_placeholder">voorbeeld.nl</string>
+    <string name="undecryptable_message_preview">Dit apparaat heeft de sleutel voor dit bericht niet.</string>
+    <string name="export_undecryptable_skipped">%1$d berichten konden niet worden ontsleuteld en ontbreken in de export.</string>
 </resources>

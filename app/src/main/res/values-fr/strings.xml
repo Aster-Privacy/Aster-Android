@@ -273,6 +273,7 @@
     <string name="e2e_no_key_description">Ce message est chiffré avec une clé que cet appareil ne possède pas encore. Ouvrez-le dans l\'application web Aster pour le lire.</string>
     <string name="no_body">(aucun contenu)</string>
     <string name="attachments_count">%d pièce(s) jointe(s)</string>
+    <string name="attachment_unnamed">Pièce jointe</string>
     <string name="download_complete">Téléchargement terminé</string>
     <string name="cannot_decode_image">Impossible de décoder l\'image</string>
     <string name="no_app_to_open">Aucune application pour ouvrir ce fichier</string>
@@ -2692,4 +2693,6 @@
     <string name="alias_website_add">Ajouter un site web</string>
     <string name="alias_website_remove">Retirer le site web</string>
     <string name="alias_website_input_placeholder">exemple.com</string>
+    <string name="undecryptable_message_preview">Cet appareil ne possède pas la clé de ce message.</string>
+    <string name="export_undecryptable_skipped">%1$d messages n’ont pas pu être déchiffrés et sont absents de l’export.</string>
 </resources>

@@ -263,6 +263,7 @@
     <string name="e2e_no_key_description">이 메시지는 이 기기에 아직 없는 키로 암호화되어 있습니다. Aster 웹 앱에서 열어 읽으세요.</string>
     <string name="no_body">(본문 없음)</string>
     <string name="attachments_count">첨부 파일 %d개</string>
+    <string name="attachment_unnamed">첨부 파일</string>
     <string name="download_complete">다운로드 완료</string>
     <string name="cannot_decode_image">이미지를 디코딩할 수 없습니다</string>
     <string name="no_app_to_open">이 파일을 열 앱이 없습니다</string>
@@ -2657,4 +2658,6 @@
     <string name="alias_website_add">웹사이트 추가</string>
     <string name="alias_website_remove">웹사이트 삭제</string>
     <string name="alias_website_input_placeholder">example.com</string>
+    <string name="undecryptable_message_preview">이 기기에는 이 메시지의 키가 없습니다.</string>
+    <string name="export_undecryptable_skipped">%1$d개의 메시지를 복호화하지 못해 내보내기에서 제외되었습니다.</string>
 </resources>

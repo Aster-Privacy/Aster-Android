@@ -263,6 +263,7 @@
     <string name="e2e_no_key_description">Bu mesaj, bu cihazın henüz sahip olmadığı bir anahtarla şifrelenmiş. Okumak için Aster web uygulamasında açın.</string>
     <string name="no_body">(içerik yok)</string>
     <string name="attachments_count">%d ek</string>
+    <string name="attachment_unnamed">Ek</string>
     <string name="download_complete">İndirme tamamlandı</string>
     <string name="cannot_decode_image">Görsel çözümlenemiyor</string>
     <string name="no_app_to_open">Bu dosyayı açacak uygulama yok</string>
@@ -2664,4 +2665,6 @@
     <string name="alias_website_add">Web sitesi ekle</string>
     <string name="alias_website_remove">Web sitesini kaldır</string>
     <string name="alias_website_input_placeholder">ornek.com</string>
+    <string name="undecryptable_message_preview">Bu cihazda bu mesajın anahtarı yok.</string>
+    <string name="export_undecryptable_skipped">%1$d mesajın şifresi çözülemedi ve dışa aktarıma dahil edilmedi.</string>
 </resources>
