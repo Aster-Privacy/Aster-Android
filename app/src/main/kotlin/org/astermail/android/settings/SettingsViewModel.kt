@@ -93,6 +93,7 @@ import org.astermail.android.api.tags.UpdateTagRequest
 import org.astermail.android.api.preferences.PreferencesApi
 import org.astermail.android.api.preferences.SaveEncryptedPreferencesRequest
 import org.astermail.android.api.preferences.UserPreferences
+import org.astermail.android.api.preferences.effective_theme_values
 import org.astermail.android.api.preferences.encode_preferences_preserving_unknown
 import org.astermail.android.api.preferences.merge_decrypted_preferences
 import org.astermail.android.api.preferences.rebase_preferences_changes
@@ -370,17 +371,18 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun apply_preferences_to_theme_store(prefs: UserPreferences) {
-        val mode = when (prefs.theme) {
+        val theme_values = effective_theme_values(prefs)
+        val mode = when (theme_values.theme) {
             ThemeMode.light.name -> ThemeMode.light
             ThemeMode.dark.name -> ThemeMode.dark
             else -> ThemeMode.system
         }
         if (theme_store.theme_mode.value != mode) theme_store.set_theme_mode(mode)
-        if (theme_store.color_theme.value != prefs.color_theme) {
-            theme_store.set_color_theme(prefs.color_theme)
+        if (theme_store.color_theme.value != theme_values.color_theme) {
+            theme_store.set_color_theme(theme_values.color_theme)
         }
-        if (theme_store.custom_theme_seed.value != prefs.custom_theme_seed) {
-            theme_store.set_custom_theme_seed(prefs.custom_theme_seed)
+        if (theme_store.custom_theme_seed.value != theme_values.custom_theme_seed) {
+            theme_store.set_custom_theme_seed(theme_values.custom_theme_seed)
         }
         if (theme_store.custom_theme_overrides.value != prefs.custom_theme_overrides) {
             theme_store.set_custom_theme_overrides(prefs.custom_theme_overrides)

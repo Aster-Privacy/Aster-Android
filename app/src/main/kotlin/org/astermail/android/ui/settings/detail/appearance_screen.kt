@@ -77,8 +77,13 @@ import org.astermail.android.design.MaterialThemeGenerator
 import org.astermail.android.design.FONT_OPTIONS
 import org.astermail.android.design.preview_font_family_for
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.api.preferences.effective_theme_values
+import org.astermail.android.api.preferences.theme_sync_enabled
+import org.astermail.android.api.preferences.with_theme_sync_enabled
+import org.astermail.android.api.preferences.with_theme_values
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
+import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.UpgradeGate
 import org.astermail.android.settings.SettingsViewModel
@@ -180,18 +185,21 @@ fun AppearanceScreen(
         if (!prefs_authoritative || remote_prefs_adopted) return@LaunchedEffect
         val remote = prefs ?: return@LaunchedEffect
         remote_prefs_adopted = true
+        val remote_theme = effective_theme_values(remote)
         if (!mode_derived_from_color_theme) {
-            when (remote.theme) {
+            when (remote_theme.theme) {
                 "light" -> if (mode != ThemeMode.light) vm.set_mode(ThemeMode.light)
                 "dark" -> if (mode != ThemeMode.dark) vm.set_mode(ThemeMode.dark)
                 "system" -> if (mode != ThemeMode.system) vm.set_mode(ThemeMode.system)
                 else -> {}
             }
         }
-        remote.color_theme?.let { if (it != color_theme_key) vm.set_color_theme(it) }
-        remote.custom_theme_seed?.let { if (it != custom_theme_seed) vm.set_custom_theme_seed(it) }
-        remote.custom_theme_overrides?.let { if (it != custom_theme_overrides) vm.set_custom_theme_overrides(it) }
-        remote.font_choice?.let { if (it != font_choice) vm.set_font_choice(it) }
+        if (remote_theme.color_theme != color_theme_key) vm.set_color_theme(remote_theme.color_theme)
+        if (remote_theme.custom_theme_seed != custom_theme_seed) {
+            vm.set_custom_theme_seed(remote_theme.custom_theme_seed)
+        }
+        remote.custom_theme_overrides.let { if (it != custom_theme_overrides) vm.set_custom_theme_overrides(it) }
+        remote.font_choice.let { if (it != font_choice) vm.set_font_choice(it) }
     }
 
     LaunchedEffect(plan_limits, color_theme) {
@@ -201,7 +209,8 @@ fun AppearanceScreen(
         vm.set_custom_theme_overrides(emptyMap())
         val base = prefs ?: return@LaunchedEffect
         settings_vm.save_preferences(
-            base.copy(color_theme = ColorThemeId.default.name, custom_theme_overrides = emptyMap()),
+            with_theme_values(base, color_theme = ColorThemeId.default.name)
+                .copy(custom_theme_overrides = emptyMap()),
         )
     }
 
@@ -210,9 +219,8 @@ fun AppearanceScreen(
         vm.set_mode(theme_mode)
         vm.set_color_theme(ColorThemeId.default.name)
         val base = prefs ?: return
-        if (base.theme != theme_key || base.color_theme != ColorThemeId.default.name) {
-            settings_vm.save_preferences(base.copy(theme = theme_key, color_theme = ColorThemeId.default.name))
-        }
+        val next = with_theme_values(base, theme = theme_key, color_theme = ColorThemeId.default.name)
+        if (next != base) settings_vm.save_preferences(next)
     }
 
     fun apply_color_theme(id: ColorThemeId) {
@@ -221,19 +229,36 @@ fun AppearanceScreen(
         val forced_dark = AsterColorThemes.is_dark_only(id)
         if (forced_dark) vm.set_mode(ThemeMode.dark)
         val base = prefs ?: return
-        val next_theme = if (forced_dark) "dark" else base.theme
-        if (base.color_theme != id.name || base.theme != next_theme) {
-            settings_vm.save_preferences(base.copy(color_theme = id.name, theme = next_theme))
-        }
+        val next = with_theme_values(
+            base,
+            theme = if (forced_dark) "dark" else null,
+            color_theme = id.name,
+        )
+        if (next != base) settings_vm.save_preferences(next)
     }
 
     fun apply_custom_seed(hex: String) {
         remote_prefs_adopted = true
         vm.set_custom_theme_seed(hex)
         val base = prefs ?: return
-        if (base.custom_theme_seed != hex) {
-            settings_vm.save_preferences(base.copy(custom_theme_seed = hex))
+        val next = with_theme_values(base, custom_theme_seed = hex)
+        if (next != base) settings_vm.save_preferences(next)
+    }
+
+    fun apply_theme_sync(enabled: Boolean) {
+        remote_prefs_adopted = true
+        val base = prefs ?: return
+        val next = with_theme_sync_enabled(base, enabled)
+        settings_vm.save_preferences(next)
+        val values = effective_theme_values(next)
+        val next_mode = when (values.theme) {
+            "light" -> ThemeMode.light
+            "dark" -> ThemeMode.dark
+            else -> ThemeMode.system
         }
+        if (mode != next_mode) vm.set_mode(next_mode)
+        if (color_theme_key != values.color_theme) vm.set_color_theme(values.color_theme)
+        if (custom_theme_seed != values.custom_theme_seed) vm.set_custom_theme_seed(values.custom_theme_seed)
     }
 
     fun apply_density(value: String) {
@@ -293,6 +318,22 @@ fun AppearanceScreen(
                     color_theme == ColorThemeId.dynamic,
                 ) { apply_color_theme(ColorThemeId.dynamic) }
             }
+        }
+
+        v_gap(AsterSpacing.xxl)
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            val sync_enabled = prefs?.let { theme_sync_enabled(it) } ?: true
+            detail_row(
+                title = stringResource(R.string.theme_sync_across_devices),
+                subtitle = stringResource(R.string.theme_sync_across_devices_subtitle),
+                trailing = {
+                    AsterSwitch(
+                        checked = sync_enabled,
+                        onCheckedChange = { apply_theme_sync(it) },
+                        modifier = Modifier.testTag("theme_sync_switch"),
+                    )
+                },
+            )
         }
 
         v_gap(AsterSpacing.xxl)

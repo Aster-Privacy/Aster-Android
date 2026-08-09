@@ -874,6 +874,8 @@
     <string name="theme_aster_blue_subtitle">Aster\'s signature blue</string>
     <string name="theme_dynamic">Wallpaper colors</string>
     <string name="theme_dynamic_subtitle">Match your device colors</string>
+    <string name="theme_sync_across_devices">Sync theme across devices</string>
+    <string name="theme_sync_across_devices_subtitle">Turn this off to keep a separate theme on this device.</string>
     <string name="color_theme">Color theme</string>
     <string name="color_theme_default">Aster Default</string>
     <string name="color_theme_custom">Custom theme</string>
