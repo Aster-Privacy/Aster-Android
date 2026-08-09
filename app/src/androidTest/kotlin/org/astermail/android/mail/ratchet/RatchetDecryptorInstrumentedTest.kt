@@ -109,6 +109,10 @@ class RatchetDecryptorInstrumentedTest {
         }
 
         override suspend fun upload_prekey_bundle(request: UploadPrekeyBundleRequest): Boolean = true
+
+        override suspend fun report_envelope_capability(
+            request: org.astermail.android.api.ratchet.ReportEnvelopeCapabilityRequest,
+        ): org.astermail.android.api.ratchet.EnvelopeCapabilityResponse? = null
     }
 
     private fun to_private_jwk(kp: RatchetCrypto.EcKeyPair): String {

@@ -923,25 +923,10 @@ class AuthRepository @Inject constructor(
     }
 
     private fun extract_ratchet_keys(vault_obj: org.json.JSONObject) {
-        val identity_jwk = vault_obj.optString("ratchet_identity_key", "")
-        val identity_public = vault_obj.optString("ratchet_identity_public", "")
-        val spk_jwk = vault_obj.optString("ratchet_signed_prekey", "")
-        val spk_public = vault_obj.optString("ratchet_signed_prekey_public", "")
-        if (identity_jwk.isNotBlank() && spk_jwk.isNotBlank() && spk_public.isNotBlank()) {
-            session_key_store.put_ratchet_keys(
-                identity_jwk = identity_jwk,
-                identity_public_b64 = identity_public,
-                signed_prekey_jwk = spk_jwk,
-                signed_prekey_public_b64 = spk_public,
-            )
-        }
-        val pq_identity_secret = vault_obj.optString("ratchet_pq_identity_key", "")
-        val pq_identity_public = vault_obj.optString("ratchet_pq_identity_public", "")
-        if (pq_identity_secret.isNotBlank() && pq_identity_public.isNotBlank()) {
-            session_key_store.put_ratchet_pq_identity(pq_identity_secret, pq_identity_public)
-        }
-        val previous = vault_obj.optJSONArray("ratchet_previous_keys")
-        session_key_store.put_ratchet_previous_keys(previous?.toString())
+        org.astermail.android.mail.ratchet.apply_vault_ratchet_keys(
+            org.astermail.android.mail.ratchet.parse_vault_ratchet_keys(vault_obj),
+            session_key_store,
+        )
     }
 
     private fun build_vault_json(

@@ -35,6 +35,8 @@ import org.astermail.android.storage.SessionKeyStore
 
 private const val UPLOADED_FLAG_PREFS = "ratchet_bootstrap"
 private const val UPLOADED_FLAG_PREFIX = "uploaded_"
+private const val UPLOADED_GENERATION_PREFIX = "uploaded_generation_"
+private const val BUNDLE_UPLOAD_GENERATION = 2
 
 @Singleton
 class RatchetBootstrapService @Inject constructor(
@@ -45,6 +47,13 @@ class RatchetBootstrapService @Inject constructor(
 ) {
 
     private val in_flight = AtomicBoolean(false)
+
+    private val capability_reporter by lazy {
+        EnvelopeCapabilityReporter(
+            store = SharedPrefsEnvelopeCapabilityStore(context),
+            ratchet_api = ratchet_api,
+        )
+    }
 
     private data class LocalRatchetKeys(
         val identity_public_b64: String,
@@ -70,8 +79,22 @@ class RatchetBootstrapService @Inject constructor(
             debug_log("local ratchet keys ready for user $user_id")
             persist_ratchet_identity_to_vault_if_needed()
 
-            if (already_uploaded(user_id)) {
+            val capability = runCatching { capability_reporter.report_if_due(user_id) }
+                .onFailure { debug_log("report_envelope_capability threw: ${it.javaClass.simpleName}: ${it.message}") }
+                .getOrNull()
+            if (capability != null) {
+                debug_log("envelope capability reported: min=${capability.min_supported_marker} pq=${capability.pq_hybrid_enabled}")
+            }
+
+            val stored_generation = uploaded_generation(user_id)
+            if (stored_generation >= BUNDLE_UPLOAD_GENERATION) {
                 debug_log("skipped upload: already uploaded for user $user_id")
+                return
+            }
+
+            val pq_identity_public = session_key_store.get_ratchet_pq_identity_public()
+            if (stored_generation > 0 && pq_identity_public.isNullOrBlank()) {
+                debug_log("skipped upload: no local pq identity to publish for user $user_id")
                 return
             }
 
@@ -88,6 +111,7 @@ class RatchetBootstrapService @Inject constructor(
                         signed_prekey_signature = signature,
                         one_time_prekeys = emptyList(),
                         expected_version = null,
+                        pq_kem_public_key = pq_identity_public?.takeIf { it.isNotBlank() },
                     ),
                 )
             }.onFailure { debug_log("upload_prekey_bundle threw: ${it.javaClass.simpleName}: ${it.message}") }
@@ -124,13 +148,27 @@ class RatchetBootstrapService @Inject constructor(
                 val identity_public_b64 = runCatching {
                     RatchetCrypto.b64_encode(RatchetCrypto.p256_public_raw_from_private_jwk(vault_state.identity_jwk))
                 }.getOrNull() ?: return null
+                val vault_spk_jwk = vault_state.signed_prekey_jwk
+                val vault_spk_public = vault_state.signed_prekey_public_b64
+                if (vault_spk_jwk != null && vault_spk_public != null) {
+                    session_key_store.put_ratchet_keys(
+                        identity_jwk = vault_state.identity_jwk,
+                        identity_public_b64 = identity_public_b64,
+                        signed_prekey_jwk = vault_spk_jwk,
+                        signed_prekey_public_b64 = vault_spk_public,
+                    )
+                    return LocalRatchetKeys(identity_public_b64, vault_spk_public)
+                }
+                val fresh_prekey = RatchetCrypto.generate_p256_keypair()
+                val fresh_prekey_jwk = RatchetCrypto.p256_private_to_jwk(fresh_prekey.private_key)
+                val fresh_prekey_public = RatchetCrypto.b64_encode(fresh_prekey.public_raw)
                 session_key_store.put_ratchet_keys(
                     identity_jwk = vault_state.identity_jwk,
                     identity_public_b64 = identity_public_b64,
-                    signed_prekey_jwk = vault_state.signed_prekey_jwk,
-                    signed_prekey_public_b64 = vault_state.signed_prekey_public_b64,
+                    signed_prekey_jwk = fresh_prekey_jwk,
+                    signed_prekey_public_b64 = fresh_prekey_public,
                 )
-                return LocalRatchetKeys(identity_public_b64, vault_state.signed_prekey_public_b64)
+                return LocalRatchetKeys(identity_public_b64, fresh_prekey_public)
             }
             VaultRatchetIdentity.Unavailable -> return null
             VaultRatchetIdentity.Empty -> Unit
@@ -157,8 +195,8 @@ class RatchetBootstrapService @Inject constructor(
     private sealed class VaultRatchetIdentity {
         data class Present(
             val identity_jwk: String,
-            val signed_prekey_jwk: String,
-            val signed_prekey_public_b64: String,
+            val signed_prekey_jwk: String?,
+            val signed_prekey_public_b64: String?,
         ) : VaultRatchetIdentity()
         object Empty : VaultRatchetIdentity()
         object Unavailable : VaultRatchetIdentity()
@@ -180,13 +218,13 @@ class RatchetBootstrapService @Inject constructor(
             json
         }.getOrNull() ?: return VaultRatchetIdentity.Unavailable
 
-        val identity_jwk = vault_json.optString("ratchet_identity_key", "")
-        val spk_jwk = vault_json.optString("ratchet_signed_prekey", "")
-        val spk_pub = vault_json.optString("ratchet_signed_prekey_public", "")
-        if (identity_jwk.isNotBlank() && spk_jwk.isNotBlank() && spk_pub.isNotBlank()) {
-            return VaultRatchetIdentity.Present(identity_jwk, spk_jwk, spk_pub)
+        val keys = parse_vault_ratchet_keys(vault_json)
+        val identity_jwk = keys.identity_jwk ?: return VaultRatchetIdentity.Empty
+        return if (keys.has_signed_prekey) {
+            VaultRatchetIdentity.Present(identity_jwk, keys.signed_prekey_jwk, keys.signed_prekey_public_b64)
+        } else {
+            VaultRatchetIdentity.Present(identity_jwk, null, null)
         }
-        return VaultRatchetIdentity.Empty
     }
 
     private suspend fun persist_ratchet_identity_to_vault_if_needed() {
@@ -240,14 +278,21 @@ class RatchetBootstrapService @Inject constructor(
         return RatchetCrypto.b64_encode(RatchetCrypto.sha256(input))
     }
 
-    private fun already_uploaded(user_id: String): Boolean {
+    private fun uploaded_generation(user_id: String): Int {
         val prefs = context.getSharedPreferences(UPLOADED_FLAG_PREFS, Context.MODE_PRIVATE)
-        return prefs.getBoolean(UPLOADED_FLAG_PREFIX + user_id, false)
+        val stored = prefs.getInt(UPLOADED_GENERATION_PREFIX + user_id, 0)
+        if (stored > 0) {
+            return stored
+        }
+        return if (prefs.getBoolean(UPLOADED_FLAG_PREFIX + user_id, false)) 1 else 0
     }
 
     private fun mark_uploaded(user_id: String) {
         val prefs = context.getSharedPreferences(UPLOADED_FLAG_PREFS, Context.MODE_PRIVATE)
-        prefs.edit().putBoolean(UPLOADED_FLAG_PREFIX + user_id, true).apply()
+        prefs.edit()
+            .putBoolean(UPLOADED_FLAG_PREFIX + user_id, true)
+            .putInt(UPLOADED_GENERATION_PREFIX + user_id, BUNDLE_UPLOAD_GENERATION)
+            .apply()
     }
 
     private fun base64_decode(s: String): ByteArray = android.util.Base64.decode(s, android.util.Base64.NO_WRAP)
