@@ -169,8 +169,7 @@ data class label_menu_actions(
 )
 
 fun resolve_label_icon(key: String?): ImageVector =
-    key?.let { name -> label_icon_presets.firstOrNull { it.first == name }?.second }
-        ?: TablerIcons.Tag
+    org.astermail.android.ui.common.label_icon_or_null(key) ?: TablerIcons.Tag
 
 data class drawer_alias_item(
     val id: String,
@@ -217,38 +216,8 @@ private val label_color_presets = listOf(
 
 private const val default_label_color = "#3b82f6"
 
-private val label_icon_presets: List<Pair<String, ImageVector>> = listOf(
-    "clock" to TablerIcons.Clock,
-    "archive" to TablerIcons.Archive,
-    "trash" to TablerIcons.Trash,
-    "send" to TablerIcons.Send,
-    "draft" to TablerIcons.FileText,
-    "star" to TablerIcons.Star,
-    "flag" to TablerIcons.Flag,
-    "bolt" to TablerIcons.Bolt,
-    "shield" to TablerIcons.Shield,
-    "warning" to TablerIcons.AlertTriangle,
-    "check" to TablerIcons.CircleCheck,
-    "tag" to TablerIcons.Tag,
-    "folder" to TablerIcons.Folder,
-    "envelope" to TablerIcons.Mail,
-    "lock" to TablerIcons.Lock,
-    "bell" to TablerIcons.Bell,
-    "sparkles" to TablerIcons.Wand,
-    "fire" to TablerIcons.Flame,
-    "heart" to TablerIcons.Heart,
-    "bookmark" to TablerIcons.Bookmark,
-    "chat" to TablerIcons.MessageDots,
-    "document" to TablerIcons.FileText,
-    "currency" to TablerIcons.CurrencyDollar,
-    "cart" to TablerIcons.ShoppingCart,
-    "code" to TablerIcons.Code,
-    "user" to TablerIcons.User,
-    "building" to TablerIcons.Building,
-    "globe" to TablerIcons.World,
-    "info" to TablerIcons.InfoCircle,
-    "eye-slash" to TablerIcons.EyeOff,
-)
+private val label_icon_presets: List<Pair<String, ImageVector>> =
+    org.astermail.android.ui.common.label_icon_catalog
 
 private val category_icons: Map<String, androidx.compose.ui.graphics.vector.ImageVector> = mapOf(
     "inbox" to TablerIcons.Inbox,

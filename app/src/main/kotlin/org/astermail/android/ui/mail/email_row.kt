@@ -824,40 +824,8 @@ private fun label_chip(color: Color, name: String, icon: String, modifier: Modif
     }
 }
 
-internal fun material_icon_from_name(name: String) = when (name.trim()) {
-    "inbox" -> TablerIcons.Inbox
-    "clock" -> TablerIcons.Clock
-    "archive" -> TablerIcons.Archive
-    "trash" -> TablerIcons.Trash
-    "send" -> TablerIcons.Send
-    "draft" -> TablerIcons.FileText
-    "star" -> TablerIcons.Star
-    "flag" -> TablerIcons.Flag
-    "bolt" -> TablerIcons.Bolt
-    "shield" -> TablerIcons.Shield
-    "warning" -> TablerIcons.AlertCircle
-    "check" -> TablerIcons.CircleCheck
-    "tag" -> TablerIcons.Tag
-    "folder" -> TablerIcons.Folder
-    "envelope" -> TablerIcons.Mail
-    "lock" -> TablerIcons.Lock
-    "bell" -> TablerIcons.Bell
-    "sparkles" -> TablerIcons.Wand
-    "fire" -> TablerIcons.TrendingUp
-    "heart" -> TablerIcons.Heart
-    "bookmark" -> TablerIcons.Bookmark
-    "chat" -> TablerIcons.MessageCircle
-    "document" -> TablerIcons.FileText
-    "currency" -> TablerIcons.CurrencyDollar
-    "cart" -> TablerIcons.ShoppingCart
-    "code" -> TablerIcons.Code
-    "user" -> TablerIcons.User
-    "building" -> TablerIcons.Building
-    "globe" -> TablerIcons.Language
-    "info" -> TablerIcons.InfoCircle
-    "eye-slash" -> TablerIcons.EyeOff
-    else -> null
-}
+internal fun material_icon_from_name(name: String) =
+    org.astermail.android.ui.common.label_icon_or_null(name)
 
 @Composable
 private fun thread_count_pill(count: Int) {

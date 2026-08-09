@@ -99,9 +99,20 @@ fun group_by_thread(emails: List<Email>): List<ThreadRow> {
         val any_attach = msgs.any { it.has_attachment }
         val any_star = msgs.any { it.is_starred }
         val any_pinned = msgs.any { it.is_pinned }
-        val labels = msgs.flatMap { it.label_colors }.distinct()
-        val names = msgs.flatMap { it.label_names }.distinct()
-        val icons = msgs.flatMap { it.label_icons }.distinct()
+        val labels = mutableListOf<Color>()
+        val names = mutableListOf<String>()
+        val icons = mutableListOf<String>()
+        val seen_labels = mutableSetOf<String>()
+        msgs.forEach { msg ->
+            msg.label_names.indices.forEach { i ->
+                val name = msg.label_names[i]
+                if (seen_labels.add(name)) {
+                    names.add(name)
+                    labels.add(msg.label_colors.getOrElse(i) { default_label_color })
+                    icons.add(msg.label_icons.getOrElse(i) { "" })
+                }
+            }
+        }
         val ordered_senders = msgs.sortedByDescending { it.received_at }
             .map {
                 displayed_sender_name(it.display_sender_name, it.sender_name) to
@@ -196,7 +207,11 @@ data class ThreadMessage(
     val dkim_result: String? = null,
     val dmarc_result: String? = null,
     val is_external: Boolean = false,
+    val has_recipient_key: Boolean? = null,
 )
+
+val ThreadMessage.is_e2e_encrypted: Boolean
+    get() = !is_external || has_recipient_key == true
 
 enum class SenderAuthStatus { verified, failed, unknown }
 
@@ -218,6 +233,8 @@ fun sender_auth_status(msg: ThreadMessage): SenderAuthStatus {
     if (dmarc == "fail" || spf == "fail" || dkim == "fail") return SenderAuthStatus.failed
     return SenderAuthStatus.unknown
 }
+
+internal val default_label_color = Color(0xFF3B82F6)
 
 private val label_work = Color(0xFF3B82F6)
 private val label_personal = Color(0xFF10B981)
@@ -1137,9 +1154,9 @@ fun inbox_item_to_email(
         trackers_blocked = 0,
         is_pinned = item.raw_item.metadata?.is_pinned ?: false,
         size_bytes = item.raw_item.metadata?.size_bytes ?: 0L,
-        label_colors = matched_tags.mapNotNull { tag ->
+        label_colors = matched_tags.map { tag ->
             try { tag.encrypted_color?.let { Color(android.graphics.Color.parseColor(it)) } }
-            catch (_: Throwable) { null }
+            catch (_: Throwable) { null } ?: default_label_color
         },
         label_names = matched_tags.map { it.encrypted_name },
         label_icons = matched_tags.map { it.encrypted_icon.orEmpty() },
@@ -1187,6 +1204,7 @@ fun thread_message_to_mock(msg: org.astermail.android.mail.ThreadMessageDecrypte
         dkim_result = msg.raw_item.dkim_result,
         dmarc_result = msg.raw_item.dmarc_result,
         is_external = msg.raw_item.is_external ?: false,
+        has_recipient_key = msg.raw_item.has_recipient_key,
     )
 }
 
