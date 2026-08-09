@@ -62,8 +62,10 @@ import compose.icons.tablericons.ChevronDown
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.api.settings.AliasRun
 import org.astermail.android.settings.AliasDetailState
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.settings.is_alias_run_active
 
 @Composable
 internal fun alias_detail_panel(
@@ -88,7 +90,7 @@ internal fun alias_detail_panel(
                 .background(colors.border_secondary),
         )
         alias_details_section(alias, vm)
-        alias_delivery_section(alias, vm, rule_delivery, rule_label)
+        alias_delivery_section(alias, vm, detail, rule_delivery, rule_label)
         if (detail.loading) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -193,6 +195,7 @@ data class AliasRuleLabelNote(
 private fun alias_delivery_section(
     alias: org.astermail.android.api.settings.AliasInfo,
     vm: SettingsViewModel,
+    detail: AliasDetailState,
     rule_delivery: AliasRuleDeliveryNote?,
     rule_label: AliasRuleLabelNote?,
 ) {
@@ -227,6 +230,13 @@ private fun alias_delivery_section(
         else -> stringResource(R.string.alias_delivery_label_none)
     }
 
+    val apply_unsupported = alias.delivery_folder_token?.let { token ->
+        state.labels.firstOrNull { it.label_token == token }?.folder_type == "spam"
+    } ?: false
+    val nothing_to_apply = alias.delivery_folder_token == null &&
+        !alias.never_inbox &&
+        alias.delivery_label_token == null
+
     alias_delivery_picker(
         selected_label = selected_label,
         folders = folders,
@@ -238,6 +248,16 @@ private fun alias_delivery_section(
         on_select_archive = { vm.set_alias_delivery(alias.id, null, to_archive = true) },
         on_select_folder = { token -> vm.set_alias_delivery(alias.id, token, to_archive = false) },
         on_select_delivery_label = { token -> vm.set_alias_delivery_label(alias.id, token) },
+        apply_section = {
+            alias_apply_existing_row(
+                run = detail.apply_run,
+                busy = detail.apply_busy,
+                unsupported = apply_unsupported,
+                nothing_to_apply = nothing_to_apply,
+                on_apply = { vm.run_alias_on_existing(alias.id) },
+                on_cancel = { vm.cancel_alias_run(alias.id) },
+            )
+        },
     )
 }
 
@@ -299,6 +319,7 @@ internal fun alias_delivery_picker(
     on_select_archive: () -> Unit,
     on_select_folder: (String) -> Unit,
     on_select_delivery_label: (String?) -> Unit = {},
+    apply_section: (@Composable () -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
     var menu_open by remember { mutableStateOf(false) }
@@ -429,6 +450,99 @@ internal fun alias_delivery_picker(
             }
         }
         rule_label?.let { alias_delivery_label_rule_note(it, selected_label_name) }
+        apply_section?.invoke()
+    }
+}
+
+@Composable
+private fun alias_apply_existing_status(run: AliasRun?, unsupported: Boolean): String? {
+    if (unsupported) return stringResource(R.string.alias_apply_existing_unavailable)
+    if (run == null) return null
+    val total = run.total_estimate
+    return when (run.status) {
+        "pending" -> stringResource(R.string.alias_apply_existing_queued)
+        "running" -> if (total != null && total > 0) {
+            stringResource(R.string.alias_apply_existing_progress_total, run.scanned, total, run.applied)
+        } else {
+            stringResource(R.string.alias_apply_existing_progress, run.scanned, run.applied)
+        }
+        "completed" -> stringResource(R.string.alias_apply_existing_done, run.scanned, run.applied)
+        "canceled" -> stringResource(R.string.alias_apply_existing_canceled, run.applied)
+        "failed" -> stringResource(R.string.alias_apply_existing_error)
+        else -> null
+    }
+}
+
+@Composable
+internal fun alias_apply_existing_row(
+    run: AliasRun?,
+    busy: Boolean,
+    unsupported: Boolean,
+    nothing_to_apply: Boolean,
+    on_apply: () -> Unit,
+    on_cancel: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val active = is_alias_run_active(run)
+    val enabled = !busy && !unsupported && (active || !nothing_to_apply)
+
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.alias_apply_existing),
+                color = colors.text_primary,
+                fontSize = 13.sp,
+            )
+            panel_hint_text(stringResource(R.string.alias_apply_existing_desc))
+        }
+        Spacer(Modifier.width(AsterSpacing.sm))
+        Row(
+            modifier = Modifier
+                .clip(RoundedCornerShape(12.dp))
+                .background(colors.bg_secondary)
+                .then(
+                    if (enabled) {
+                        Modifier.clickable { if (active) on_cancel() else on_apply() }
+                    } else {
+                        Modifier
+                    },
+                )
+                .padding(horizontal = 12.dp, vertical = 10.dp)
+                .testTag("alias_apply_existing_button"),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (busy) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(14.dp),
+                    strokeWidth = 2.dp,
+                    color = colors.text_muted,
+                )
+                Spacer(Modifier.width(6.dp))
+            }
+            Text(
+                text = stringResource(
+                    if (active) {
+                        R.string.alias_apply_existing_cancel
+                    } else {
+                        R.string.alias_apply_existing_action
+                    },
+                ),
+                color = if (enabled) colors.text_primary else colors.text_muted,
+                fontSize = 13.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+    alias_apply_existing_status(run, unsupported)?.let { status ->
+        Text(
+            text = status,
+            color = colors.text_muted,
+            fontSize = 11.sp,
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("alias_apply_existing_status"),
+        )
     }
 }
 
