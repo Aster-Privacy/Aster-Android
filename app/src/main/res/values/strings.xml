@@ -1860,6 +1860,20 @@
     <string name="mail_rules_value_placeholder">Enter value</string>
     <string name="mail_rules_enter_value">Enter value</string>
     <string name="mail_rules_match_case">Match case</string>
+    <string name="mail_rules_search_aliases">Search your aliases</string>
+    <string name="mail_rules_aliases_loading">Loading your aliases…</string>
+    <string name="mail_rules_no_aliases">You don\'t have any aliases yet.</string>
+    <string name="mail_rules_no_alias_matches">No aliases match your search.</string>
+    <string name="mail_rules_other_address">Other address</string>
+    <string name="mail_rules_switched_to_any">This rule now matches any of the addresses you picked.</string>
+    <plurals name="mail_rules_aliases_selected">
+        <item quantity="one">%1$d alias selected</item>
+        <item quantity="other">%1$d aliases selected</item>
+    </plurals>
+    <plurals name="mail_rules_aliases_skipped">
+        <item quantity="one">%1$d address was already in this rule, so it wasn\'t added again.</item>
+        <item quantity="other">%1$d addresses were already in this rule, so they weren\'t added again.</item>
+    </plurals>
     <string name="mail_rules_yes">Yes</string>
     <string name="mail_rules_no">No</string>
     <string name="mail_rules_header_name">Header name</string>

@@ -60,6 +60,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -97,6 +98,8 @@ import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.AsterTopBar
 import org.astermail.android.mail_rules.MailRulesViewModel
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.ui.settings.mail_rules.pickers.address_value_picker
+import org.astermail.android.ui.settings.mail_rules.pickers.alias_option
 import org.astermail.android.ui.settings.mail_rules.pickers.boolean_value_picker
 import org.astermail.android.ui.settings.mail_rules.pickers.color_picker
 import org.astermail.android.ui.settings.mail_rules.pickers.decimal_value_picker
@@ -164,6 +167,8 @@ fun RuleEditorScreen(
     var is_saving by remember { mutableStateOf(false) }
     var save_error by remember { mutableStateOf<Int?>(null) }
     var duplicate_warning by remember { mutableStateOf<Int?>(null) }
+    var skipped_duplicates by remember { mutableStateOf(0) }
+    var switched_to_any by remember { mutableStateOf(false) }
 
     val folders = remember(settings_state.labels) {
         flatten_folder_tree(settings_state.labels)
@@ -204,6 +209,17 @@ fun RuleEditorScreen(
                 )
             }
         from_tags + from_labels
+    }
+    val alias_options = remember(settings_state.aliases) {
+        settings_state.aliases
+            .asSequence()
+            .filter { !it.decryption_failed }
+            .map { it.address to it.encrypted_display_name?.takeIf { name -> name.isNotBlank() } }
+            .filter { (address, _) -> address.contains('@') && !address.startsWith('@') }
+            .distinctBy { (address, _) -> address.lowercase() }
+            .sortedBy { (address, _) -> address.lowercase() }
+            .map { (address, display_name) -> alias_option(address = address, display_name = display_name) }
+            .toList()
     }
     val folder_parent_options = remember(settings_state.labels) {
         flatten_folder_tree(settings_state.labels)
@@ -310,6 +326,8 @@ fun RuleEditorScreen(
                     on_remove = {
                         if (!is_read_only) {
                             duplicate_warning = null
+                            skipped_duplicates = 0
+                            switched_to_any = false
                             if (conditions.size == 1) {
                                 conditions.removeAt(0)
                                 sheet = active_sheet.pick_field
@@ -363,6 +381,40 @@ fun RuleEditorScreen(
                         .background(colors.bg_secondary)
                         .padding(AsterSpacing.md)
                         .testTag("rule_duplicate_warning"),
+                )
+            }
+
+            if (!is_read_only && skipped_duplicates > 0) {
+                Spacer(Modifier.height(AsterSpacing.md))
+                Text(
+                    text = pluralStringResource(
+                        R.plurals.mail_rules_aliases_skipped,
+                        skipped_duplicates,
+                        skipped_duplicates,
+                    ),
+                    color = colors.text_secondary,
+                    fontSize = 13.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(colors.bg_secondary)
+                        .padding(AsterSpacing.md)
+                        .testTag("rule_skipped_warning"),
+                )
+            }
+
+            if (!is_read_only && switched_to_any) {
+                Spacer(Modifier.height(AsterSpacing.md))
+                Text(
+                    text = stringResource(R.string.mail_rules_switched_to_any),
+                    color = colors.text_secondary,
+                    fontSize = 13.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(colors.bg_secondary)
+                        .padding(AsterSpacing.md)
+                        .testTag("rule_switched_to_any"),
                 )
             }
 
@@ -595,6 +647,43 @@ fun RuleEditorScreen(
             val target = conditions.getOrNull(s.cond_index)
             if (target == null) {
                 sheet = active_sheet.none
+            } else if (condition_is_address_field(target)) {
+                LaunchedEffect(Unit) { settings_vm.load_aliases() }
+                address_value_picker(
+                    on_dismiss = { sheet = active_sheet.none },
+                    title = stringResource(R.string.mail_rules_enter_value),
+                    initial = value_display(target).orEmpty(),
+                    case_sensitive = case_sensitive_of(target),
+                    is_regex = uses_regex_op(target),
+                    show_aliases = condition_offers_alias_picker(target),
+                    aliases = alias_options,
+                    aliases_loading = settings_state.is_loading && settings_state.aliases.isEmpty(),
+                    on_confirm = { values, case ->
+                        val result = insert_condition_values(
+                            conditions = conditions.toList(),
+                            index = s.cond_index,
+                            template = target,
+                            values = values,
+                            case = case,
+                            match_mode = match_mode,
+                        )
+                        conditions.clear()
+                        conditions.addAll(result.conditions)
+                        switched_to_any = result.match_mode != match_mode
+                        match_mode = result.match_mode
+                        if (normalize_address_values(values).size <= 1) {
+                            skipped_duplicates = 0
+                            duplicate_warning = if (result.skipped_duplicates > 0) {
+                                R.string.mail_rules_duplicate_alias
+                            } else {
+                                null
+                            }
+                        } else {
+                            duplicate_warning = null
+                            skipped_duplicates = result.skipped_duplicates
+                        }
+                    },
+                )
             } else {
                 value_picker_for(
                     condition = target,
@@ -1087,7 +1176,6 @@ private fun value_picker_for(
     on_set: (Condition) -> Unit,
 ) {
     when (condition) {
-        is Condition.From, is Condition.ReplyTo, is Condition.To, is Condition.Cc, is Condition.Bcc, is Condition.AnyRecipient,
         is Condition.Subject, is Condition.Body, is Condition.ListId, is Condition.AttachmentName -> {
             val current = value_display(condition).orEmpty()
             val case = case_sensitive_of(condition)
@@ -1098,7 +1186,7 @@ private fun value_picker_for(
                 case_sensitive = case,
                 show_case_toggle = true,
                 is_regex = uses_regex_op(condition),
-                on_confirm = { v, c -> on_set(set_value_and_case(condition, v, c)) },
+                on_confirm = { v, c -> on_set(set_condition_value(condition, v, c)) },
             )
         }
         is Condition.Header -> header_value_picker(
@@ -1216,20 +1304,6 @@ private fun case_sensitive_of(c: Condition): Boolean = when (c) {
     is Condition.ListId -> c.case_sensitive == true
     is Condition.AttachmentName -> c.case_sensitive == true
     else -> false
-}
-
-private fun set_value_and_case(c: Condition, value: String, case: Boolean): Condition = when (c) {
-    is Condition.From -> c.copy(value = value, case_sensitive = case)
-    is Condition.ReplyTo -> c.copy(value = value, case_sensitive = case)
-    is Condition.To -> c.copy(value = value, case_sensitive = case)
-    is Condition.Cc -> c.copy(value = value, case_sensitive = case)
-    is Condition.Bcc -> c.copy(value = value, case_sensitive = case)
-    is Condition.AnyRecipient -> c.copy(value = value, case_sensitive = case)
-    is Condition.Subject -> c.copy(value = value, case_sensitive = case)
-    is Condition.Body -> c.copy(value = value, case_sensitive = case)
-    is Condition.ListId -> c.copy(value = value, case_sensitive = case)
-    is Condition.AttachmentName -> c.copy(value = value, case_sensitive = case)
-    else -> c
 }
 
 @Composable

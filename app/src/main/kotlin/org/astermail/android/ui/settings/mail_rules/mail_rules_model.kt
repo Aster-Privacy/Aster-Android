@@ -333,6 +333,110 @@ fun condition_is_address_field(c: Condition): Boolean = when (c) {
     else -> false
 }
 
+fun address_op_of(c: Condition): AddressOp? = when (c) {
+    is Condition.From -> c.op
+    is Condition.ReplyTo -> c.op
+    is Condition.To -> c.op
+    is Condition.Cc -> c.op
+    is Condition.Bcc -> c.op
+    is Condition.AnyRecipient -> c.op
+    else -> null
+}
+
+fun condition_offers_alias_picker(c: Condition): Boolean = when (address_op_of(c)) {
+    AddressOp.IS, AddressOp.IS_NOT, AddressOp.CONTAINS -> true
+    else -> false
+}
+
+private fun address_op_is_negated(c: Condition): Boolean = address_op_of(c) == AddressOp.IS_NOT
+
+fun set_condition_value(c: Condition, value: String, case: Boolean): Condition = when (c) {
+    is Condition.From -> c.copy(value = value, case_sensitive = case)
+    is Condition.ReplyTo -> c.copy(value = value, case_sensitive = case)
+    is Condition.To -> c.copy(value = value, case_sensitive = case)
+    is Condition.Cc -> c.copy(value = value, case_sensitive = case)
+    is Condition.Bcc -> c.copy(value = value, case_sensitive = case)
+    is Condition.AnyRecipient -> c.copy(value = value, case_sensitive = case)
+    is Condition.Subject -> c.copy(value = value, case_sensitive = case)
+    is Condition.Body -> c.copy(value = value, case_sensitive = case)
+    is Condition.ListId -> c.copy(value = value, case_sensitive = case)
+    is Condition.AttachmentName -> c.copy(value = value, case_sensitive = case)
+    else -> c
+}
+
+fun normalize_address_values(values: List<String>): List<String> {
+    val seen = mutableSetOf<String>()
+    return values.mapNotNull { raw ->
+        val trimmed = raw.trim()
+        if (trimmed.isEmpty()) null else if (seen.add(trimmed.lowercase())) trimmed else null
+    }
+}
+
+data class value_insert_result(
+    val conditions: List<Condition>,
+    val match_mode: MatchMode,
+    val inserted: Int,
+    val skipped_duplicates: Int,
+)
+
+private fun switches_to_any(
+    result: List<Condition>,
+    template: Condition,
+    inserted: Int,
+    match_mode: MatchMode,
+): Boolean {
+    if (inserted < 2 || match_mode != MatchMode.ALL) return false
+    if (address_op_is_negated(template)) return false
+    val field = field_of(template) ?: return false
+    return result.all { field_of(it) == field && !address_op_is_negated(it) }
+}
+
+fun insert_condition_values(
+    conditions: List<Condition>,
+    index: Int,
+    template: Condition,
+    values: List<String>,
+    case: Boolean,
+    match_mode: MatchMode,
+): value_insert_result {
+    val cleaned = normalize_address_values(values)
+    if (cleaned.isEmpty()) {
+        val blanked = conditions.toMutableList()
+        if (index in blanked.indices) blanked[index] = set_condition_value(template, "", case)
+        return value_insert_result(blanked, match_mode, 0, 0)
+    }
+
+    val kept = conditions.filterIndexed { i, _ -> i != index }
+    val accepted = mutableListOf<Condition>()
+    var skipped = 0
+    cleaned.forEach { value ->
+        val candidate = set_condition_value(template, value, case)
+        val key = condition_duplicate_key(candidate)
+        val clashes = key != null &&
+            (kept.any { condition_duplicate_key(it) == key } ||
+                accepted.any { condition_duplicate_key(it) == key })
+        if (clashes) skipped += 1 else accepted.add(candidate)
+    }
+
+    if (accepted.isEmpty()) {
+        val pruned = conditions.toMutableList()
+        val target = pruned.getOrNull(index)
+        if (target != null && !is_condition_complete(target)) pruned.removeAt(index)
+        return value_insert_result(pruned, match_mode, 0, skipped)
+    }
+
+    val result = conditions.toMutableList()
+    if (index in result.indices) result[index] = accepted.first() else result.add(accepted.first())
+    result.addAll(accepted.drop(1))
+
+    val next_mode = if (switches_to_any(result, template, accepted.size, match_mode)) {
+        MatchMode.ANY
+    } else {
+        match_mode
+    }
+    return value_insert_result(result, next_mode, accepted.size, skipped)
+}
+
 fun duplicate_condition_indices(conditions: List<Condition>): Set<Int> {
     val seen = mutableSetOf<String>()
     val duplicates = mutableSetOf<Int>()
