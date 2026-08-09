@@ -74,13 +74,16 @@ object EmailHtmlSanitizer {
         Regex("height\\s*[:=]\\s*[\"']?[01](?!\\d)", RegexOption.IGNORE_CASE),
     )
 
+    private fun raw_output_settings(): org.jsoup.nodes.Document.OutputSettings =
+        org.jsoup.nodes.Document.OutputSettings().prettyPrint(false)
+
     fun sanitize(raw_html: String, options: SanitizeOptions = SanitizeOptions()): String {
         if (raw_html.isBlank()) return ""
         val pre = strip_dangerous_blocks(raw_html)
         val head_styles = extract_head_styles(pre)
         val body_only = extract_body_html(pre)
-        val cleaned_body = Jsoup.clean(body_only, "https://mail-content.invalid/", safelist)
-        val doc = Jsoup.parseBodyFragment(cleaned_body)
+        val cleaned_body = Jsoup.clean(body_only, "https://mail-content.invalid/", safelist, raw_output_settings())
+        val doc = Jsoup.parseBodyFragment(cleaned_body).apply { outputSettings(raw_output_settings()) }
         scrub_attributes(doc, options.clean_tracking_links)
         if (options.remove_tracking_pixels) remove_tracking_pixels(doc)
         scrub_style_blocks(doc, options)
@@ -211,7 +214,7 @@ object EmailHtmlSanitizer {
 
     fun replace_blocked_images(html: String, placeholder_text: String): String {
         if (html.isBlank()) return html
-        val doc = Jsoup.parseBodyFragment(html)
+        val doc = Jsoup.parseBodyFragment(html).apply { outputSettings(raw_output_settings()) }
         for (img in doc.select("img[src]")) {
             val src = img.attr("src")
             val lower = src.trim().lowercase()
@@ -287,7 +290,7 @@ object EmailHtmlSanitizer {
 
     fun neutralize_blocked_backgrounds(html: String): String {
         if (html.isBlank()) return html
-        val doc = Jsoup.parseBodyFragment(html)
+        val doc = Jsoup.parseBodyFragment(html).apply { outputSettings(raw_output_settings()) }
         for (el in doc.select("[background]")) {
             if (remote_url_prefix.containsMatchIn(el.attr("background").trim())) {
                 el.removeAttr("background")
@@ -543,7 +546,7 @@ object EmailHtmlSanitizer {
 
     fun rewrite_img_through_proxy(html: String, proxy_base: String, allow_external: Boolean): String {
         if (html.isBlank()) return html
-        val doc = Jsoup.parseBodyFragment(html)
+        val doc = Jsoup.parseBodyFragment(html).apply { outputSettings(raw_output_settings()) }
         for (img in doc.select("img[src]")) {
             val src = img.attr("src")
             if (src.startsWith("cid:", ignoreCase = true)) continue
