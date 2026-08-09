@@ -121,4 +121,18 @@ class PreheaderTextTest {
 
         assertEquals("Weekly menu Pick your meals", clean_body_preview("", html))
     }
+
+    @Test
+    fun `ignores overflow hidden in a style attribute`() {
+        val html = "<body><div style=\"overflow: hidden; color: red\">Not a preheader</div><p>Body</p></body>"
+
+        assertEquals("", extract_preheader_text(html))
+    }
+
+    @Test
+    fun `reads a block marked with the hidden attribute`() {
+        val html = "<body><div hidden>Real preheader</div><p>Body</p></body>"
+
+        assertEquals("Real preheader", extract_preheader_text(html))
+    }
 }
