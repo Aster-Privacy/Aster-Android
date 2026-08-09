@@ -238,6 +238,7 @@ class ApiClient(
 
     init {
         http.plugin(HttpSend).intercept { request ->
+            apply_folder_unlock_header(request)
             val original_call: HttpClientCall = execute(request)
             if (original_call.response.status != HttpStatusCode.Forbidden) {
                 return@intercept original_call
@@ -280,6 +281,27 @@ class ApiClient(
             } else {
                 reattach_fresh_bearer(request)
                 execute(request)
+            }
+        }
+    }
+
+    private fun apply_folder_unlock_header(request: HttpRequestBuilder) {
+        runCatching {
+            val same_host = api_host == null || request.url.host == api_host
+            if (!same_host) return
+            if (request.headers.contains(folder_unlock_header)) return
+            val built = io.ktor.http.Url(request.url.buildString())
+            val parameters = built.parameters.entries()
+                .associate { entry -> entry.key to entry.value.toList() }
+            val resolved = folder_unlock_resolver.resolve(
+                folder_unlock_request(
+                    method = request.method.value,
+                    path = built.encodedPath,
+                    parameters = parameters,
+                ),
+            )
+            if (!resolved.isNullOrBlank()) {
+                request.headers.append(folder_unlock_header, resolved)
             }
         }
     }

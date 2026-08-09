@@ -184,6 +184,9 @@ fun BehaviorScreen(
     var spam_sensitivity by remember(prefs_loaded) { mutableStateOf(prefs?.spam_sensitivity ?: "medium") }
     var auto_delete_spam_days by remember(prefs_loaded) { mutableIntStateOf(prefs?.auto_delete_spam_days ?: 30) }
     var folder_lock_mode by remember(prefs_loaded) { mutableStateOf(prefs?.folder_lock_mode ?: "session") }
+    var purge_locked_folder_on_delete by remember(prefs_loaded) {
+        mutableStateOf(prefs?.purge_locked_folder_on_delete ?: false)
+    }
     val theme_vm: ThemeViewModel = hiltViewModel()
     var haptic by remember(prefs_loaded) { mutableStateOf(prefs?.haptic_enabled ?: true) }
     var dev_mode by remember(prefs_loaded) { mutableStateOf(prefs?.dev_mode ?: false) }
@@ -220,6 +223,7 @@ fun BehaviorScreen(
                 spam_sensitivity = prefs.spam_sensitivity
                 auto_delete_spam_days = prefs.auto_delete_spam_days
                 folder_lock_mode = prefs.folder_lock_mode
+                purge_locked_folder_on_delete = prefs.purge_locked_folder_on_delete
                 haptic = prefs.haptic_enabled
                 theme_vm.set_haptic_enabled(prefs.haptic_enabled)
                 dev_mode = prefs.dev_mode
@@ -256,6 +260,7 @@ fun BehaviorScreen(
                 spam_sensitivity = spam_sensitivity,
                 auto_delete_spam_days = auto_delete_spam_days,
                 folder_lock_mode = folder_lock_mode,
+                purge_locked_folder_on_delete = purge_locked_folder_on_delete,
                 haptic_enabled = haptic,
                 dev_mode = dev_mode,
                 translate_incoming = translate_incoming,
@@ -626,6 +631,13 @@ fun BehaviorScreen(
                     label = stringResource(R.string.folder_lock_on_leave),
                     selected = folder_lock_mode == "on_leave",
                 ) { folder_lock_mode = "on_leave"; save_trigger++ }
+                AsterDivider(modifier = Modifier)
+                behavior_toggle(
+                    title = stringResource(R.string.purge_locked_folder_on_delete),
+                    subtitle = stringResource(R.string.purge_locked_folder_on_delete_subtitle),
+                    checked = purge_locked_folder_on_delete,
+                    on_change = { purge_locked_folder_on_delete = it; save_trigger++ },
+                )
             }
             v_gap(AsterSpacing.xs)
             Text(

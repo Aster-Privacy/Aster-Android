@@ -116,6 +116,7 @@ import org.astermail.android.api.settings.AliasInfo
 import org.astermail.android.api.settings.DeletedAliasInfo
 import org.astermail.android.api.settings.CustomDomainAddressInfo
 import org.astermail.android.api.settings.AliasPreferences
+import org.astermail.android.api.settings.AliasRun
 import org.astermail.android.api.settings.AllowSenderRequest
 import org.astermail.android.api.settings.AllowedSenderInfo
 import org.astermail.android.api.settings.BlockSenderRequest
@@ -266,6 +267,9 @@ private const val LIST_TTL_MS = 60_000L
 private const val MAX_ALIAS_WEBSITES = 10
 private const val IMPORT_BATCH_SIZE = 100
 private const val MAX_WEBSITE_URL_LENGTH = 200
+private const val ALIAS_RUN_POLL_MIN_MS = 1200L
+private const val ALIAS_RUN_POLL_MAX_MS = 8000L
+private const val ALIAS_RUN_POLL_MAX_FAILURES = 5
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
@@ -298,6 +302,7 @@ class SettingsViewModel @Inject constructor(
     internal var default_dispatcher: CoroutineDispatcher = Dispatchers.Default
 
     private val _state = MutableStateFlow(SettingsUiState())
+    private val alias_run_polls = mutableMapOf<String, kotlinx.coroutines.Job>()
     private var last_subscription_load_ms = 0L
     private var last_tags_load_ms = 0L
     private val optimistic_label_tokens = java.util.Collections.newSetFromMap(
@@ -1365,6 +1370,87 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun run_alias_on_existing(alias_id: String) {
+        if (_state.value.alias_details[alias_id]?.apply_busy == true) return
+        update_alias_detail(alias_id) { it.copy(apply_busy = true) }
+        viewModelScope.launch {
+            try {
+                val response = settings_api.run_alias_on_existing(alias_id)
+                update_alias_detail(alias_id) {
+                    it.copy(apply_busy = false, apply_run = response.run ?: it.apply_run)
+                }
+                start_alias_run_poll(alias_id)
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                update_alias_detail(alias_id) { it.copy(apply_busy = false) }
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.alias_apply_existing_failed),
+                )
+            }
+        }
+    }
+
+    fun cancel_alias_run(alias_id: String) {
+        if (_state.value.alias_details[alias_id]?.apply_busy == true) return
+        update_alias_detail(alias_id) { it.copy(apply_busy = true) }
+        viewModelScope.launch {
+            try {
+                val response = settings_api.cancel_alias_run(alias_id)
+                update_alias_detail(alias_id) {
+                    it.copy(apply_busy = false, apply_run = response.run ?: it.apply_run)
+                }
+                start_alias_run_poll(alias_id)
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                update_alias_detail(alias_id) { it.copy(apply_busy = false) }
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.alias_apply_existing_cancel_failed),
+                )
+                refresh_alias_run(alias_id)
+            }
+        }
+    }
+
+    private fun refresh_alias_run(alias_id: String) {
+        viewModelScope.launch {
+            val next = try {
+                settings_api.get_alias_run(alias_id).run
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                null
+            }
+            if (next != null) update_alias_detail(alias_id) { it.copy(apply_run = next) }
+        }
+    }
+
+    private fun start_alias_run_poll(alias_id: String) {
+        if (!is_alias_run_active(_state.value.alias_details[alias_id]?.apply_run)) return
+        if (alias_run_polls[alias_id]?.isActive == true) return
+        alias_run_polls[alias_id] = viewModelScope.launch {
+            var delay_ms = ALIAS_RUN_POLL_MIN_MS
+            var failures = 0
+            while (true) {
+                delay(delay_ms)
+                val next = try {
+                    settings_api.get_alias_run(alias_id).run
+                } catch (t: Throwable) {
+                    if (t is kotlinx.coroutines.CancellationException) throw t
+                    null
+                }
+                if (next == null) {
+                    failures += 1
+                    if (failures >= ALIAS_RUN_POLL_MAX_FAILURES) break
+                } else {
+                    failures = 0
+                    update_alias_detail(alias_id) { it.copy(apply_run = next) }
+                    if (!is_alias_run_active(next)) break
+                }
+                delay_ms = (delay_ms * 3 / 2).coerceAtMost(ALIAS_RUN_POLL_MAX_MS)
+            }
+            alias_run_polls.remove(alias_id)
+        }
+    }
+
     fun toggle_alias(alias_id: String) {
         val current = _state.value.aliases.firstOrNull { it.id == alias_id } ?: return
         val new_enabled = !current.is_enabled
@@ -1451,6 +1537,7 @@ class SettingsViewModel @Inject constructor(
             val contacts = fetch_alias_section { alias_detail_api.list_contacts(alias_id) }
             val log = fetch_alias_section { alias_detail_api.get_delivery_log(alias_id) }
             val rules = fetch_alias_section { alias_detail_api.list_rules(alias_id) }
+            val apply_run = fetch_alias_section { settings_api.get_alias_run(alias_id) }
             val decrypted_pins = withContext(default_dispatcher) {
                 pins.value?.pins.orEmpty().map { pin ->
                     DecryptedAliasPin(
@@ -3109,6 +3196,7 @@ class SettingsViewModel @Inject constructor(
                     labels = decrypted + surviving + preserved,
                     is_loading = false,
                 )
+                org.astermail.android.folders.folder_lock_store.set_folders(_state.value.labels)
                 org.astermail.android.notifications.MailPollingWorker.set_protected_folder_tokens(
                     context,
                     _state.value.labels.filter { org.astermail.android.folders.is_folder_protected(it) }
@@ -3139,17 +3227,39 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun delete_label(label_id: String) {
+    fun delete_label(
+        label_id: String,
+        password: String? = null,
+        totp_code: String? = null,
+        purge_contents: Boolean = false,
+        on_result: ((Boolean) -> Unit)? = null,
+    ) {
         viewModelScope.launch {
             try {
-                labels_api.delete_label(label_id)
+                val request = if (password.isNullOrBlank() && !purge_contents) {
+                    null
+                } else {
+                    val password_hash = password?.takeIf { it.isNotBlank() }?.let {
+                        auth_repository.derive_password_hash_b64(it)
+                            ?: throw IllegalStateException(context.getString(R.string.something_went_wrong))
+                    }
+                    org.astermail.android.api.labels.DeleteLabelRequest(
+                        password_hash = password_hash,
+                        totp_code = totp_code?.trim()?.ifBlank { null },
+                        purge_contents = purge_contents,
+                    )
+                }
+                labels_api.delete_label(label_id, request)
+                org.astermail.android.folders.folder_lock_store.lock(label_id)
                 _state.value = _state.value.copy(
                     labels = _state.value.labels.filter { it.id != label_id },
                 )
+                on_result?.invoke(true)
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     action_result = user_facing_error(t),
                 )
+                on_result?.invoke(false)
             }
         }
     }
@@ -3173,14 +3283,26 @@ class SettingsViewModel @Inject constructor(
                         label_id,
                         VerifyFolderPasswordRequest(password_hash = password_hash),
                     )
+                    if (response.verified) {
+                        org.astermail.android.folders.folder_lock_store.mark_unlocked(
+                            folder_id = label_id,
+                            unlock_token = response.unlock_token,
+                            unlock_expires_at = response.unlock_expires_at,
+                            encrypted_folder_key = response.encrypted_folder_key,
+                            folder_key_nonce = response.folder_key_nonce,
+                        )
+                    }
                     response.verified
                 }
             } catch (_: Throwable) {
                 false
             }
-            if (ok) org.astermail.android.folders.folder_lock_store.mark_unlocked(label_id)
             on_result(ok)
         }
+    }
+
+    fun lock_folder(label_id: String) {
+        org.astermail.android.folders.folder_lock_store.lock(label_id)
     }
 
     fun toggle_folder_notifications(label_token: String) {

@@ -50,6 +50,9 @@ interface DecryptedMailDao {
     @Query("DELETE FROM decrypted_mail_cache")
     suspend fun clear_all()
 
+    @Query("DELETE FROM decrypted_mail_cache WHERE ',' || labels || ',' LIKE '%,' || :folder_token || ',%'")
+    suspend fun delete_by_folder_token(folder_token: String)
+
     @Query(
         "DELETE FROM decrypted_mail_cache WHERE preview LIKE '%ASTER_BUNDLE_V2%' " +
             "OR subject LIKE '%ASTER_BUNDLE_V2%' " +

@@ -569,6 +569,8 @@ internal val settings_search_index: List<settings_index_entry> = listOf(
     settings_index_entry("behavior", R.string.settings_behavior, R.string.folder_lock_session, false),
     settings_index_entry("behavior", R.string.settings_behavior, R.string.folder_lock_on_leave, false),
     settings_index_entry("behavior", R.string.settings_behavior, R.string.folder_lock_explanation, false),
+    settings_index_entry("behavior", R.string.settings_behavior, R.string.purge_locked_folder_on_delete, false),
+    settings_index_entry("behavior", R.string.settings_behavior, R.string.purge_locked_folder_on_delete_subtitle, false),
     settings_index_entry("behavior", R.string.settings_behavior, R.string.section_advanced, false),
     settings_index_entry("behavior", R.string.settings_behavior, R.string.haptic_feedback, false),
     settings_index_entry("behavior", R.string.settings_behavior, R.string.haptic_feedback_subtitle, false),

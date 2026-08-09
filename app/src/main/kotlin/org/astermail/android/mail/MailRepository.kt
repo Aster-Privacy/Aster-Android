@@ -1447,8 +1447,10 @@ class MailRepository @Inject constructor(
             val decrypted = items.map { item ->
                 async(Dispatchers.IO) { decrypt_inbox_item(item) }
             }.awaitAll()
-            prefetch_sender_profiles(decrypted.map { org.astermail.android.ui.mail.displayed_sender_email(it.display_sender_email, it.sender_email) })
-            decrypted
+            org.astermail.android.folders.record_item_folders(decrypted)
+            val visible = org.astermail.android.folders.filter_locked_items(decrypted)
+            prefetch_sender_profiles(visible.map { org.astermail.android.ui.mail.displayed_sender_email(it.display_sender_email, it.sender_email) })
+            visible
         }
 
     private fun prefetch_sender_profiles(emails: List<String>) {
@@ -1773,6 +1775,12 @@ class MailRepository @Inject constructor(
                             identity_jwk = previous_jwk,
                             pq_identity_secret_b64 = entry
                                 .optString("ratchet_pq_identity_key", "")
+                                .ifBlank {
+                                    entry.optString("ratchet_pq_identity_seed", "")
+                                        .takeIf { it.isNotBlank() }
+                                        ?.let { org.astermail.android.mail.ratchet.expand_pq_identity_secret(it) }
+                                        .orEmpty()
+                                }
                                 .ifBlank { null },
                         ),
                     )

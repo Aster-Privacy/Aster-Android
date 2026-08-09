@@ -127,7 +127,13 @@ class SearchIndexManager @Inject constructor(
 
     suspend fun get_cached_items(): List<DecryptedMailEntity> {
         purge_bundle_poisoned()
-        return dao.get_all()
+        val protected_tokens = org.astermail.android.folders.folder_lock_store.protected_tokens()
+        if (protected_tokens.isNotEmpty()) purge_folder_tokens(protected_tokens)
+        val rows = dao.get_all()
+        if (protected_tokens.isEmpty()) return rows
+        return rows.filterNot { row ->
+            row.labels.split(',').any { it.isNotBlank() && it in protected_tokens }
+        }
     }
 
     private suspend fun purge_bundle_poisoned() {
@@ -313,9 +319,22 @@ class SearchIndexManager @Inject constructor(
         resolve_attachment_ids(dao.ids_without_attachments())
     }
 
+    suspend fun purge_folder_tokens(folder_tokens: Set<String>) {
+        for (token in folder_tokens) {
+            if (token.isBlank()) continue
+            runCatching { dao.delete_by_folder_token(token) }
+        }
+    }
+
     private suspend fun cache_items(items: List<InboxItem>, my_epoch: Int): Set<String> {
         if (items.isEmpty()) return emptySet()
-        val indexable = items.filterNot { is_index_poisoned(it) }
+        val protected_tokens = org.astermail.android.folders.folder_lock_store.protected_tokens()
+        val indexable = items
+            .filterNot { is_index_poisoned(it) }
+            .filterNot { item ->
+                protected_tokens.isNotEmpty() &&
+                    org.astermail.android.folders.inbox_item_folder_tokens(item).any { it in protected_tokens }
+            }
         if (indexable.isEmpty()) return emptySet()
         val entities = indexable.map { item ->
             DecryptedMailEntity(

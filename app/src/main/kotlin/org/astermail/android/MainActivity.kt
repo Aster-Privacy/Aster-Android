@@ -1408,6 +1408,12 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         )
     }
 
+    androidx.compose.runtime.LaunchedEffect(prefs?.folder_lock_mode) {
+        org.astermail.android.folders.folder_lock_store.set_lock_mode(
+            prefs?.folder_lock_mode ?: org.astermail.android.folders.folder_lock_mode_session,
+        )
+    }
+
     androidx.compose.runtime.LaunchedEffect(
         settings_state.aliases,
         settings_state.ghost_aliases,
@@ -1541,7 +1547,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
             id = label.label_token,
             label = readable_name ?: drawer_context.getString(R.string.folder_decrypt_failed),
             icon = if (org.astermail.android.folders.is_folder_protected(label)) TablerIcons.Lock else TablerIcons.Folder,
-            count = label.unread_count?.toInt() ?: 0,
+            count = if (org.astermail.android.folders.requires_unlock(label)) 0 else label.unread_count?.toInt() ?: 0,
             depth = node.depth,
             trail = node.trail,
             has_next = node.has_next,
@@ -1591,6 +1597,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         put("spam", stats?.spam ?: 0)
         put("trash", stats?.trash ?: 0)
         folder_nodes.forEach { node ->
+            if (org.astermail.android.folders.requires_unlock(node.label)) return@forEach
             val unread = node.label.unread_count?.toInt() ?: 0
             if (unread > 0) put(node.label.label_token, unread)
         }
@@ -1690,6 +1697,9 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     }
 
     val active_folder_token = if (filter_kind == "folder") filter_value else selected_folder
+    androidx.compose.runtime.LaunchedEffect(active_folder_token) {
+        org.astermail.android.folders.folder_lock_store.set_active_folder_token(active_folder_token)
+    }
     val locked_active_folder = androidx.compose.runtime.remember(
         active_folder_token,
         settings_state.labels,
@@ -1859,7 +1869,15 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                     on_toggle_mute = { item -> settings_vm.toggle_folder_notifications(item.id) },
                     on_set_lock = { item, password -> settings_vm.set_folder_lock(item.label_id, password) {} },
                     on_remove_lock = { item, password -> settings_vm.remove_folder_lock(item.label_id, password) {} },
-                    on_delete = { item -> settings_vm.delete_label(item.label_id) },
+                    on_lock_now = { item -> settings_vm.lock_folder(item.label_id) },
+                    on_delete = { item, password, totp_code, purge ->
+                        settings_vm.delete_label(
+                            label_id = item.label_id,
+                            password = password,
+                            totp_code = totp_code,
+                            purge_contents = purge,
+                        )
+                    },
                 ),
                 label_actions = org.astermail.android.ui.drawer.label_menu_actions(
                     on_rename = { item, name ->
@@ -1914,6 +1932,8 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 initial_labels_collapsed = prefs?.sidebar_labels_collapsed ?: false,
                 initial_aliases_collapsed = prefs?.sidebar_aliases_collapsed ?: false,
                 preferences_loaded = prefs != null,
+                totp_enabled = settings_state.security_status?.totp_enabled == true,
+                purge_locked_folder_default = prefs?.purge_locked_folder_on_delete ?: false,
                 on_sidebar_toggle = { key, value ->
                     settings_vm.update_sidebar_state(key, value)
                 },

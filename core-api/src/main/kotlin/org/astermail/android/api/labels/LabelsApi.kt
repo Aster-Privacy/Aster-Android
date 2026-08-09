@@ -174,6 +174,27 @@ data class VerifyFolderPasswordResponse(
     val verified: Boolean = false,
     val encrypted_folder_key: String? = null,
     val folder_key_nonce: String? = null,
+    val unlock_token: String? = null,
+    val unlock_expires_at: String? = null,
+)
+
+@Serializable
+data class LockFolderRequest(
+    val unlock_token: String? = null,
+    val all_sessions: Boolean = false,
+)
+
+@Serializable
+data class DeleteLabelRequest(
+    val password_hash: String? = null,
+    val totp_code: String? = null,
+    val purge_contents: Boolean = false,
+)
+
+@Serializable
+data class DeleteLabelResponse(
+    val status: String = "",
+    val purged_items: Long = 0,
 )
 
 interface LabelsApi {
@@ -182,10 +203,11 @@ interface LabelsApi {
     suspend fun verify_folder_password(label_id: String, request: VerifyFolderPasswordRequest): VerifyFolderPasswordResponse
     suspend fun set_folder_password(label_id: String, request: SetFolderPasswordRequest)
     suspend fun remove_folder_password(label_id: String, request: RemoveFolderPasswordRequest)
+    suspend fun lock_folder(label_id: String, request: LockFolderRequest)
     suspend fun create_label(request: CreateLabelRequest): CreateLabelResponse
     suspend fun update_label(label_id: String, request: UpdateLabelRequest)
     suspend fun bulk_reorder_labels(request: BulkReorderLabelsRequest): BulkReorderLabelsResponse
-    suspend fun delete_label(label_id: String)
+    suspend fun delete_label(label_id: String, request: DeleteLabelRequest? = null): DeleteLabelResponse
     suspend fun get_referral_info(): ReferralInfoResponse
     suspend fun get_referral_history(): ReferralHistoryResponse
 }
@@ -273,13 +295,36 @@ class LabelsApiImpl(private val client: ApiClient) : LabelsApi {
         return decode_or_throw(response)
     }
 
-    override suspend fun delete_label(label_id: String) {
-        val response = client.http.delete("${client.base_url}$labels_base/$label_id") {
+    override suspend fun lock_folder(label_id: String, request: LockFolderRequest) {
+        val response = client.http.post("${client.base_url}$labels_base/$label_id/lock") {
+            contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
         }
         if (response.status.value !in 200..299) {
             val body = try { response.body<String>() } catch (_: Throwable) { "" }
             throw client.map_http_status(response.status.value, body)
+        }
+    }
+
+    override suspend fun delete_label(label_id: String, request: DeleteLabelRequest?): DeleteLabelResponse {
+        val response = client.http.delete("${client.base_url}$labels_base/$label_id") {
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            if (request != null) {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }
+        }
+        if (response.status.value !in 200..299) {
+            val body = try { response.body<String>() } catch (_: Throwable) { "" }
+            throw client.map_http_status(response.status.value, body)
+        }
+        return try {
+            response.body()
+        } catch (t: kotlin.coroutines.cancellation.CancellationException) {
+            throw t
+        } catch (_: Throwable) {
+            DeleteLabelResponse(status = "deleted")
         }
     }
 

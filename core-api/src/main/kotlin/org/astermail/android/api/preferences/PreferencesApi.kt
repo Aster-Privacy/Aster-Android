@@ -121,6 +121,7 @@ data class UserPreferences(
     val show_alias_indicators: Boolean = true,
     val force_dark_emails: Boolean = false,
     val folder_lock_mode: String = "session",
+    val purge_locked_folder_on_delete: Boolean = false,
     val spam_filter_enabled: Boolean = true,
     val spam_sensitivity: String = "medium",
     val auto_delete_spam_days: Int = 30,

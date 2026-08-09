@@ -1547,7 +1547,7 @@ class SettingsViewModelTest {
         every { session_key_store.get_identity_key() } returns "test-identity-key"
         coEvery { labels_api.create_label(any()) } returns
             CreateLabelResponse(id = "srv_id", label_token = "srv_tok", success = true)
-        coEvery { labels_api.delete_label(any()) } returns Unit
+        coEvery { labels_api.delete_label(any(), any()) } returns org.astermail.android.api.labels.DeleteLabelResponse(status = "deleted")
 
         vm.create_folder(name = "Receipts")
         advanceUntilIdle()
@@ -1558,7 +1558,7 @@ class SettingsViewModelTest {
         vm.delete_label(created.id)
         advanceUntilIdle()
 
-        coVerify { labels_api.delete_label("srv_id") }
+        coVerify { labels_api.delete_label("srv_id", null) }
         assertTrue(vm.state.value.labels.isEmpty())
     }
 
@@ -1568,7 +1568,7 @@ class SettingsViewModelTest {
             LabelsListResponse(listOf(LabelItem(id = "l1", label_token = "lt1", encrypted_name = "Alpha")))
         vm.load_labels()
         advanceUntilIdle()
-        coEvery { labels_api.delete_label("l1") } throws
+        coEvery { labels_api.delete_label("l1", null) } throws
             org.astermail.android.api.ApiError.UnknownError("folder is locked")
 
         vm.delete_label("l1")
@@ -1780,7 +1780,7 @@ class SettingsViewModelTest {
         )
         coEvery { labels_api.list_labels(any(), any()) } returns LabelsListResponse(labels)
         every { session_key_store.get_identity_key() } returns null
-        coEvery { labels_api.delete_label("l1") } throws RuntimeException("error")
+        coEvery { labels_api.delete_label("l1", null) } throws RuntimeException("error")
 
         vm.load_labels()
         advanceUntilIdle()

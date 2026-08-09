@@ -84,6 +84,7 @@ class AppLockStore @Inject constructor(@ApplicationContext private val context: 
         if (!is_configured()) return
         session_unlocked = false
         _is_locked.value = true
+        runCatching { org.astermail.android.folders.folder_lock_store.lock_all() }
     }
 
     fun mark_session_unlocked() {
@@ -94,6 +95,7 @@ class AppLockStore @Inject constructor(@ApplicationContext private val context: 
     fun check_on_foreground() {
         if (is_configured() && !session_unlocked) {
             _is_locked.value = true
+            runCatching { org.astermail.android.folders.folder_lock_store.lock_all() }
         }
     }
 

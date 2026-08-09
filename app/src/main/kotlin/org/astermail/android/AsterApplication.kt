@@ -33,6 +33,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.HiltAndroidApp
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.launch
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
@@ -69,10 +70,48 @@ class AsterApplication : Application(), ImageLoaderFactory {
                 }
             }
         }
+        runCatching { register_folder_lock_hooks() }
         runCatching { org.astermail.android.notifications.MailPollingWorker.create_channel(this) }
         runCatching { org.astermail.android.notifications.LoginAlertNotifier.create_channel(this) }
         runCatching { org.astermail.android.notifications.MailPollingWorker.enqueue(this) }
         runCatching { org.astermail.android.notifications.UnifiedPushState.sync_registration(this) }
+    }
+
+    private fun register_folder_lock_hooks() {
+        val scope = kotlinx.coroutines.CoroutineScope(
+            kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO,
+        )
+        org.astermail.android.api.folder_unlock_resolver.register { request ->
+            org.astermail.android.folders.folder_lock_store.resolve_unlock_header(request)
+        }
+        org.astermail.android.folders.folder_lock_store.register_remote_revoker { folder_id, unlock_token ->
+            scope.launch {
+                runCatching {
+                    val ep = EntryPointAccessors.fromApplication(
+                        this@AsterApplication,
+                        ImageLoaderEntryPoint::class.java,
+                    )
+                    ep.labels_api().lock_folder(
+                        folder_id,
+                        org.astermail.android.api.labels.LockFolderRequest(
+                            unlock_token = unlock_token,
+                            all_sessions = false,
+                        ),
+                    )
+                }
+            }
+        }
+        org.astermail.android.folders.folder_lock_store.register_purge_hook { folder_tokens ->
+            scope.launch {
+                runCatching {
+                    val ep = EntryPointAccessors.fromApplication(
+                        this@AsterApplication,
+                        ImageLoaderEntryPoint::class.java,
+                    )
+                    ep.search_index_manager().purge_folder_tokens(folder_tokens)
+                }
+            }
+        }
     }
 
     @EntryPoint
@@ -80,6 +119,8 @@ class AsterApplication : Application(), ImageLoaderFactory {
     interface ImageLoaderEntryPoint {
         fun token_store(): TokenStore
         fun aster_profile_resolver(): org.astermail.android.mail.AsterProfileResolver
+        fun labels_api(): org.astermail.android.api.labels.LabelsApi
+        fun search_index_manager(): org.astermail.android.mail.SearchIndexManager
     }
 
     override fun newImageLoader(): ImageLoader {

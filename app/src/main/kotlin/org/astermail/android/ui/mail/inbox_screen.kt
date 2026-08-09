@@ -417,6 +417,7 @@ fun InboxScreen(
                     val custom = settings_state.labels.firstOrNull { label ->
                         label.folder_type == "folder" &&
                             label.label_token in item.labels &&
+                            !org.astermail.android.folders.requires_unlock(label) &&
                             !label.encrypted_name.isNullOrBlank() &&
                             !org.astermail.android.looks_encrypted(label.encrypted_name)
                     }

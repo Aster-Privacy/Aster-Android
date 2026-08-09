@@ -408,13 +408,18 @@ fun SearchScreen(
 
     val has_query = query.isNotBlank() || active_filter != null
 
+    val lock_revision by org.astermail.android.folders.folder_lock_store.revision.collectAsState()
+    val visible_corpus = remember(search_state.all_items, lock_revision) {
+        org.astermail.android.folders.filter_locked_items(search_state.all_items)
+    }
+
     val sorted_corpus by androidx.compose.runtime.produceState<List<org.astermail.android.mail.InboxItem>?>(
         initialValue = null,
-        search_state.all_items,
+        visible_corpus,
     ) {
         value = null
         value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-            search_state.all_items
+            visible_corpus
                 .map { it to parse_item_timestamp(it.timestamp) }
                 .sortedByDescending { it.second }
                 .map { it.first }
@@ -461,23 +466,18 @@ fun SearchScreen(
     }
     val results_pending = has_query && computed == null
     val hidden_spam_trash = computed?.hidden_spam_trash ?: 0
-    val chip_people = remember(search_state.all_items) {
-        collect_chip_people(search_state.all_items)
+    val chip_people = remember(visible_corpus) {
+        collect_chip_people(visible_corpus)
     }
-    val chip_recipients = remember(search_state.all_items) {
-        collect_recipient_people(search_state.all_items)
+    val chip_recipients = remember(visible_corpus) {
+        collect_recipient_people(visible_corpus)
     }
     val custom_chips = remember(operator_chips) {
         operator_chips.filterNot { is_quick_operator(it) }
     }
-    val lock_revision by org.astermail.android.folders.folder_lock_store.revision.collectAsState()
-    val locked_tokens = remember(settings_state.labels, lock_revision) {
-        org.astermail.android.folders.protected_folder_tokens(settings_state.labels)
-    }
     val visible_results = computed?.results ?: last_results
-    val filtered = remember(visible_results, locked_tokens) {
-        if (locked_tokens.isEmpty()) visible_results
-        else visible_results.filter { item -> item.labels.none { it in locked_tokens } }
+    val filtered = remember(visible_results, lock_revision) {
+        org.astermail.android.folders.filter_locked_items(visible_results)
     }
 
     LaunchedEffect(filtered, results_pending) {

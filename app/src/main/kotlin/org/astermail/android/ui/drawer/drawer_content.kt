@@ -137,7 +137,8 @@ data class folder_menu_actions(
     val on_toggle_mute: (drawer_folder_item) -> Unit = {},
     val on_set_lock: (drawer_folder_item, String) -> Unit = { _, _ -> },
     val on_remove_lock: (drawer_folder_item, String) -> Unit = { _, _ -> },
-    val on_delete: (drawer_folder_item) -> Unit = {},
+    val on_lock_now: (drawer_folder_item) -> Unit = {},
+    val on_delete: (drawer_folder_item, String?, String?, Boolean) -> Unit = { _, _, _, _ -> },
 )
 
 data class folder_parent_option(
@@ -323,6 +324,8 @@ fun DrawerContent(
     initial_labels_collapsed: Boolean = false,
     initial_aliases_collapsed: Boolean = false,
     preferences_loaded: Boolean = false,
+    totp_enabled: Boolean = false,
+    purge_locked_folder_default: Boolean = false,
     on_sidebar_toggle: (String, Boolean) -> Unit = { _, _ -> },
 ) {
     val colors = AsterMaterial.colors
@@ -595,6 +598,11 @@ fun DrawerContent(
                                     on_toggle_mute = { folder_actions.on_toggle_mute(item) },
                                     on_move_up = { folder_actions.on_move_order(item, -1) },
                                     on_move_down = { folder_actions.on_move_order(item, 1) },
+                                    on_lock_now = if (item.password_set) {
+                                        { folder_actions.on_lock_now(item) }
+                                    } else {
+                                        null
+                                    },
                                     on_delete = { pending_delete = item },
                                 )
                             }
@@ -933,28 +941,41 @@ fun DrawerContent(
     }
 
     pending_delete?.let { target ->
-        org.astermail.android.design.components.AsterDialog(
-            on_dismiss = { pending_delete = null },
-            title = stringResource(R.string.delete_folder_confirm_title),
-            message = if (target.has_children) {
-                stringResource(R.string.delete_folder_confirm_subfolders, target.label)
-            } else {
-                stringResource(R.string.delete_folder_confirm_message, target.label)
-            },
-            footer = {
-                org.astermail.android.design.components.AsterDialogOutlineButton(
-                    label = stringResource(R.string.cancel),
-                    onClick = { pending_delete = null },
-                )
-                org.astermail.android.design.components.AsterDialogDestructiveButton(
-                    label = stringResource(R.string.delete),
-                    onClick = {
-                        folder_actions.on_delete(target)
-                        pending_delete = null
-                    },
-                )
-            },
-        )
+        if (target.password_set) {
+            protected_folder_delete_dialog(
+                target = target,
+                totp_enabled = totp_enabled,
+                purge_default = purge_locked_folder_default,
+                on_dismiss = { pending_delete = null },
+                on_confirm = { password, totp_code, purge ->
+                    folder_actions.on_delete(target, password, totp_code, purge)
+                    pending_delete = null
+                },
+            )
+        } else {
+            org.astermail.android.design.components.AsterDialog(
+                on_dismiss = { pending_delete = null },
+                title = stringResource(R.string.delete_folder_confirm_title),
+                message = if (target.has_children) {
+                    stringResource(R.string.delete_folder_confirm_subfolders, target.label)
+                } else {
+                    stringResource(R.string.delete_folder_confirm_message, target.label)
+                },
+                footer = {
+                    org.astermail.android.design.components.AsterDialogOutlineButton(
+                        label = stringResource(R.string.cancel),
+                        onClick = { pending_delete = null },
+                    )
+                    org.astermail.android.design.components.AsterDialogDestructiveButton(
+                        label = stringResource(R.string.delete),
+                        onClick = {
+                            folder_actions.on_delete(target, null, null, false)
+                            pending_delete = null
+                        },
+                    )
+                },
+            )
+        }
     }
 
     pending_label_rename?.let { target ->
@@ -1026,6 +1047,7 @@ private fun folder_actions_menu(
     on_recolor: () -> Unit,
     on_move_to: () -> Unit,
     on_lock: () -> Unit,
+    on_lock_now: (() -> Unit)?,
     on_toggle_mute: () -> Unit,
     on_move_up: () -> Unit,
     on_move_down: () -> Unit,
@@ -1058,6 +1080,17 @@ private fun folder_actions_menu(
                 on_lock()
             },
         )
+        if (on_lock_now != null) {
+            aster_dropdown_item(
+                label = stringResource(R.string.lock_folder_now),
+                icon = TablerIcons.Lock,
+                test_tag = "folder_action_lock_now",
+                on_click = {
+                    on_dismiss()
+                    on_lock_now()
+                },
+            )
+        }
         aster_dropdown_item(
             label = stringResource(R.string.rename),
             icon = TablerIcons.Pencil,
@@ -1447,6 +1480,114 @@ private fun folder_password_dialog(
                 visual_transformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth().testTag("folder_password_input"),
             )
+        },
+    )
+}
+
+@Composable
+private fun protected_folder_delete_dialog(
+    target: drawer_folder_item,
+    totp_enabled: Boolean,
+    purge_default: Boolean,
+    on_dismiss: () -> Unit,
+    on_confirm: (String, String?, Boolean) -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    var password_value by remember { mutableStateOf("") }
+    var totp_value by remember { mutableStateOf("") }
+    var purge_contents by remember { mutableStateOf(purge_default) }
+    var acknowledged by remember { mutableStateOf(false) }
+    val can_confirm = password_value.isNotBlank() &&
+        (!totp_enabled || totp_value.trim().length >= 6) &&
+        (!purge_contents || acknowledged)
+
+    org.astermail.android.design.components.AsterAlertDialog(
+        on_dismiss = on_dismiss,
+        title = stringResource(R.string.delete_protected_folder_title),
+        message = stringResource(R.string.delete_protected_folder_message, target.label),
+        confirm_label = stringResource(R.string.delete),
+        cancel_label = stringResource(R.string.cancel),
+        confirm_enabled = can_confirm,
+        on_confirm = {
+            if (can_confirm) {
+                on_confirm(password_value, totp_value.trim().ifBlank { null }, purge_contents)
+            }
+        },
+        extra_content = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                org.astermail.android.design.components.AsterTextField(
+                    value = password_value,
+                    onValueChange = { password_value = it },
+                    placeholder = stringResource(R.string.enter_account_password),
+                    singleLine = true,
+                    visual_transformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth().testTag("protected_delete_password"),
+                )
+                if (totp_enabled) {
+                    Spacer(modifier = Modifier.height(AsterSpacing.sm))
+                    org.astermail.android.design.components.AsterTextField(
+                        value = totp_value,
+                        onValueChange = { totp_value = it },
+                        placeholder = stringResource(R.string.totp_code_required_label),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().testTag("protected_delete_totp"),
+                    )
+                }
+                Spacer(modifier = Modifier.height(AsterSpacing.md))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    androidx.compose.material3.Checkbox(
+                        checked = purge_contents,
+                        onCheckedChange = {
+                            purge_contents = it
+                            if (!it) acknowledged = false
+                        },
+                        modifier = Modifier.testTag("protected_delete_purge"),
+                    )
+                    Spacer(modifier = Modifier.width(AsterSpacing.sm))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.delete_protected_folder_purge),
+                            color = colors.text_primary,
+                            fontSize = 14.sp,
+                        )
+                        Text(
+                            text = stringResource(R.string.delete_protected_folder_purge_subtitle),
+                            color = colors.text_tertiary,
+                            fontSize = 12.sp,
+                        )
+                    }
+                }
+                if (purge_contents) {
+                    Spacer(modifier = Modifier.height(AsterSpacing.sm))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        androidx.compose.material3.Checkbox(
+                            checked = acknowledged,
+                            onCheckedChange = { acknowledged = it },
+                            modifier = Modifier.testTag("protected_delete_ack"),
+                        )
+                        Spacer(modifier = Modifier.width(AsterSpacing.sm))
+                        Text(
+                            text = stringResource(R.string.delete_protected_folder_acknowledge),
+                            color = colors.text_primary,
+                            fontSize = 13.sp,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                } else {
+                    Spacer(modifier = Modifier.height(AsterSpacing.xs))
+                    Text(
+                        text = stringResource(R.string.delete_protected_folder_keep_note),
+                        color = colors.text_tertiary,
+                        fontSize = 12.sp,
+                    )
+                }
+            }
         },
     )
 }

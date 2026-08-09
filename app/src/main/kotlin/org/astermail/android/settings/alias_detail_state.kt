@@ -25,6 +25,7 @@ import org.astermail.android.api.aliases.AliasDeliveryEvent
 import org.astermail.android.api.aliases.AliasRule
 import org.astermail.android.api.aliases.AliasStatsResponse
 import org.astermail.android.api.aliases.SENDER_PIN_MODE_OFF
+import org.astermail.android.api.settings.AliasRun
 
 data class DecryptedAliasPin(
     val id: String,
@@ -53,4 +54,9 @@ data class AliasDetailState(
     val blocked_locked: Boolean = false,
     val rules: List<AliasRule> = emptyList(),
     val rules_locked: Boolean = false,
+    val apply_run: AliasRun? = null,
+    val apply_busy: Boolean = false,
 )
+
+fun is_alias_run_active(run: AliasRun?): Boolean =
+    run != null && (run.status == "pending" || run.status == "running")

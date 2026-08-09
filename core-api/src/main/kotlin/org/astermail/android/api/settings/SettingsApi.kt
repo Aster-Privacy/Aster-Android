@@ -539,6 +539,25 @@ data class UpdateConnectionPreferenceRequest(
     val method: String,
 )
 
+@Serializable
+data class AliasRun(
+    val run_id: String,
+    val alias_id: String,
+    val status: String,
+    val include_trashed: Boolean = false,
+    val scanned: Long = 0,
+    val matched: Long = 0,
+    val applied: Long = 0,
+    val total_estimate: Long? = null,
+    val created_at: String? = null,
+    val started_at: String? = null,
+    val finished_at: String? = null,
+    val error: String? = null,
+)
+
+@Serializable
+data class AliasRunStatusResponse(val run: AliasRun? = null)
+
 interface SettingsApi {
     suspend fun list_sessions(): SessionListResponse
     suspend fun revoke_session(session_id: String)
@@ -565,6 +584,9 @@ interface SettingsApi {
     suspend fun bulk_add_domain_addresses(domain_id: String, request: BulkAddAddressesRequest): BulkAddAddressesResponse
     suspend fun update_alias(alias_id: String, request: UpdateAliasRequest): Boolean
     suspend fun update_alias_delivery_label(alias_id: String, delivery_label_token: String?): Boolean
+    suspend fun run_alias_on_existing(alias_id: String): AliasRunStatusResponse
+    suspend fun get_alias_run(alias_id: String): AliasRunStatusResponse
+    suspend fun cancel_alias_run(alias_id: String): AliasRunStatusResponse
     suspend fun update_alias_note(alias_id: String, encrypted_note: String?, note_nonce: String?): Boolean
     suspend fun update_alias_display_name(alias_id: String, encrypted_name: String?, name_nonce: String?): Boolean
     suspend fun update_alias_websites(alias_id: String, encrypted_websites: String?, websites_nonce: String?): Boolean
@@ -1039,6 +1061,29 @@ class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
         if (response.status.value !in 200..299) {
             throw client.map_http_status(response.status.value, "")
         }
+    }
+
+    override suspend fun run_alias_on_existing(alias_id: String): AliasRunStatusResponse {
+        val response = client.http.post(
+            "${client.base_url}/api/addresses/v1/aliases/$alias_id/run-on-existing",
+        ) {
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun get_alias_run(alias_id: String): AliasRunStatusResponse {
+        val response = client.http.get("${client.base_url}/api/addresses/v1/aliases/$alias_id/run")
+        return decode_or_throw(response)
+    }
+
+    override suspend fun cancel_alias_run(alias_id: String): AliasRunStatusResponse {
+        val response = client.http.post(
+            "${client.base_url}/api/addresses/v1/aliases/$alias_id/run/cancel",
+        ) {
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+        }
+        return decode_or_throw(response)
     }
 
     override suspend fun get_alias_preferences(): AliasPreferences {
