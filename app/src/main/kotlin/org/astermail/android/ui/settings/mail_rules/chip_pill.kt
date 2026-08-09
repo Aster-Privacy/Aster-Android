@@ -94,9 +94,8 @@ fun chip_pill_row(
         modifier = modifier
             .height(32.dp)
             .clip(SquircleShape(999.dp))
-            .background(colors.bg_card, SquircleShape(999.dp))
-            .border(1.dp, colors.border_secondary, SquircleShape(999.dp))
-            .padding(horizontal = 3.dp),
+            .background(colors.bg_tertiary, SquircleShape(999.dp))
+            .border(1.dp, colors.border_secondary, SquircleShape(999.dp)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         segments.forEachIndexed { index, spec ->
@@ -120,7 +119,7 @@ fun chip_pill_row(
                 modifier = Modifier
                     .fillMaxHeight()
                     .clickable(onClick = on_remove)
-                    .padding(horizontal = 6.dp),
+                    .padding(start = 8.dp, end = 12.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -170,7 +169,7 @@ fun and_or_pill(label: String, on_click: () -> Unit, modifier: Modifier = Modifi
         modifier = modifier
             .height(24.dp)
             .clip(SquircleShape(999.dp))
-            .background(colors.bg_secondary)
+            .background(colors.bg_tertiary)
             .clickable(onClick = on_click)
             .padding(horizontal = 10.dp),
         contentAlignment = Alignment.Center,

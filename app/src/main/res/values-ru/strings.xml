@@ -2058,6 +2058,14 @@
     <string name="folder_lock_session">Разблокирована на время сеанса</string>
     <string name="folder_lock_on_leave">Блокировать при выходе</string>
     <string name="folder_lock_explanation">Сеанс: остаётся разблокированной, пока вы не закроете приложение или сеанс не завершится. При выходе: блокируется сразу, как только вы перейдёте в другое место.</string>
+    <string name="purge_locked_folder_on_delete">Заранее выбирать безвозвратное удаление</string>
+    <string name="purge_locked_folder_on_delete_subtitle">При удалении папки, защищённой паролем, параметр уничтожения почты выбирается заранее. Вы всё равно подтверждаете действие перед удалением.</string>
+    <string name="delete_protected_folder_title">Удаление защищённой папки</string>
+    <string name="delete_protected_folder_message">Чтобы удалить \"%1$s\", введите пароль учётной записи.</string>
+    <string name="delete_protected_folder_purge">Удалить почту в этой папке</string>
+    <string name="delete_protected_folder_purge_subtitle">Сообщения, вложения и их резервные копии уничтожаются на всех устройствах.</string>
+    <string name="delete_protected_folder_keep_note">Почта в этой папке остаётся в вашей учётной записи и переходит в раздел «Вся почта».</string>
+    <string name="delete_protected_folder_acknowledge">Я понимаю, что эту почту нельзя восстановить.</string>
     <string name="section_advanced">Дополнительно</string>
     <string name="developer_mode_subtitle_behavior">Показывает вкладку разработчика со сведениями о сборке, состоянием шифрования и инструментами отладки</string>
     <string name="auto_save_recipients_subtitle">Автоматически добавляет адреса, которым вы пишете, в контакты</string>
@@ -2568,6 +2576,7 @@
     <string name="change_folder_color">Изменить цвет</string>
     <string name="folder_color">Цвет папки</string>
     <string name="move_folder_to">Переместить в</string>
+    <string name="lock_folder_now">Заблокировать</string>
     <string name="lock_folder">Заблокировать папку</string>
     <string name="remove_folder_lock">Снять блокировку</string>
     <string name="lock_folder_message">Задайте пароль для \"%1$s\". Он потребуется для открытия этой папки.</string>
@@ -2681,4 +2690,12 @@
     <string name="alias_website_input_placeholder">primer.ru</string>
     <string name="undecryptable_message_preview">На этом устройстве нет ключа к этому сообщению.</string>
     <string name="export_undecryptable_skipped">Не удалось расшифровать %1$d сообщений, они не вошли в экспорт.</string>
+    <plurals name="archived_messages">
+        <item quantity="one">Архивировано %d письмо</item>
+        <item quantity="other">Архивировано %d писем</item>
+    </plurals>
+    <plurals name="moved_messages_to_trash">
+        <item quantity="one">Перемещено %d письмо в корзину</item>
+        <item quantity="other">Перемещено %d писем в корзину</item>
+    </plurals>
 </resources>

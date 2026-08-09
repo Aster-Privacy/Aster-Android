@@ -2053,6 +2053,14 @@
     <string name="folder_lock_session">Desbloqueada durante la sesión</string>
     <string name="folder_lock_on_leave">Bloquear al salir</string>
     <string name="folder_lock_explanation">Sesión: se mantiene abierta hasta que cierres la aplicación o termine tu sesión. Al salir: se bloquea en cuanto navegas a otro sitio.</string>
+    <string name="purge_locked_folder_on_delete">Preseleccionar la eliminación permanente</string>
+    <string name="purge_locked_folder_on_delete_subtitle">Cuando elimines una carpeta protegida con contraseña, se preselecciona la opción de destruir su correo. Sigues confirmando antes de que se elimine algo.</string>
+    <string name="delete_protected_folder_title">Eliminar carpeta protegida</string>
+    <string name="delete_protected_folder_message">Para eliminar \"%1$s\", introduce la contraseña de tu cuenta.</string>
+    <string name="delete_protected_folder_purge">Eliminar el correo de esta carpeta</string>
+    <string name="delete_protected_folder_purge_subtitle">Los mensajes, los archivos adjuntos y sus copias de seguridad se destruyen en todos los dispositivos.</string>
+    <string name="delete_protected_folder_keep_note">El correo de esta carpeta permanece en tu cuenta y se mueve a Todo el correo.</string>
+    <string name="delete_protected_folder_acknowledge">Entiendo que este correo no se puede recuperar.</string>
     <string name="section_advanced">Avanzado</string>
     <string name="developer_mode_subtitle_behavior">Muestra la pestaña de desarrollo con datos de compilación, estado del cifrado y herramientas de depuración</string>
     <string name="auto_save_recipients_subtitle">Guarda automáticamente como contactos las direcciones a las que escribes</string>
@@ -2555,6 +2563,7 @@
     <string name="change_folder_color">Cambiar color</string>
     <string name="folder_color">Color de carpeta</string>
     <string name="move_folder_to">Mover a</string>
+    <string name="lock_folder_now">Bloquear ahora</string>
     <string name="lock_folder">Bloquear carpeta</string>
     <string name="remove_folder_lock">Quitar bloqueo</string>
     <string name="lock_folder_message">Establece una contraseña para \"%1$s\". La necesitarás para abrir esta carpeta.</string>
@@ -2668,4 +2677,12 @@
     <string name="alias_website_input_placeholder">ejemplo.com</string>
     <string name="undecryptable_message_preview">Este dispositivo no tiene la clave de este mensaje.</string>
     <string name="export_undecryptable_skipped">No se pudieron descifrar %1$d mensajes y quedaron fuera de la exportación.</string>
+    <plurals name="archived_messages">
+        <item quantity="one">%d mensaje archivado</item>
+        <item quantity="other">%d mensajes archivados</item>
+    </plurals>
+    <plurals name="moved_messages_to_trash">
+        <item quantity="one">%d mensaje movido a la papelera</item>
+        <item quantity="other">%d mensajes movidos a la papelera</item>
+    </plurals>
 </resources>

@@ -1696,11 +1696,17 @@ class MailViewModel @Inject constructor(
         }
     }
 
-    fun archive(item_ids: List<String>, thread_count: Int = 1) {
+    private fun archived_message(count: Int, message_scope: Boolean): String =
+        archived_action_message(context, count, message_scope)
+
+    private fun trashed_message(count: Int, message_scope: Boolean): String =
+        trashed_action_message(context, count, message_scope)
+
+    fun archive(item_ids: List<String>, thread_count: Int = 1, message_scope: Boolean = false) {
         val had_demo = DEMO_PHISH_ITEM_ID in item_ids
         @Suppress("NAME_SHADOWING") val item_ids = handle_demo_in(item_ids)
         if (item_ids.isEmpty()) {
-            if (had_demo) emit_toast(context.getString(R.string.archived_conversations, 1))
+            if (had_demo) emit_toast(archived_message(1, message_scope))
             return
         }
         val previous = _inbox_state.value.items
@@ -1721,9 +1727,9 @@ class MailViewModel @Inject constructor(
                     onSuccess = {
                         runCatching { search_index_manager.mark_archived(item_ids) }
                         accumulate_batch_action(
-                            action_key = "archive",
+                            action_key = batch_action_key("archive", message_scope),
                             thread_count = thread_count,
-                            message_fn = { n -> context.getString(R.string.archived_conversations, n) },
+                            message_fn = { n -> archived_message(n, message_scope) },
                             undo_label = context.getString(R.string.undo),
                         ) { prev_undo -> { prev_undo?.invoke(); undo_local_restore(removed_items); undo_search_restore(search_removed); unarchive_backend_only(item_ids) } }
                         load_stats()
@@ -1746,7 +1752,7 @@ class MailViewModel @Inject constructor(
         }
     }
 
-    fun trash(item_ids: List<String>, thread_count: Int = 1) {
+    fun trash(item_ids: List<String>, thread_count: Int = 1, message_scope: Boolean = false) {
         if (_inbox_state.value.current_folder == "drafts") {
             delete_draft_items(item_ids)
             return
@@ -1754,7 +1760,7 @@ class MailViewModel @Inject constructor(
         val had_demo = DEMO_PHISH_ITEM_ID in item_ids
         @Suppress("NAME_SHADOWING") val item_ids = handle_demo_in(item_ids)
         if (item_ids.isEmpty()) {
-            if (had_demo) emit_toast(context.getString(R.string.moved_to_trash, 1))
+            if (had_demo) emit_toast(trashed_message(1, message_scope))
             return
         }
         val previous = _inbox_state.value.items
@@ -1773,9 +1779,9 @@ class MailViewModel @Inject constructor(
                     onSuccess = {
                         runCatching { search_index_manager.mark_trashed(item_ids) }
                         accumulate_batch_action(
-                            action_key = "trash",
+                            action_key = batch_action_key("trash", message_scope),
                             thread_count = thread_count,
-                            message_fn = { n -> context.getString(R.string.moved_to_trash, n) },
+                            message_fn = { n -> trashed_message(n, message_scope) },
                             undo_label = context.getString(R.string.undo),
                         ) { prev_undo -> { prev_undo?.invoke(); undo_local_restore(removed_items); undo_search_restore(search_removed); restore_trash_backend_only(item_ids) } }
                         load_stats()

@@ -1435,6 +1435,14 @@
     <string name="folder_lock_session">Déverrouillé pour la session</string>
     <string name="folder_lock_on_leave">Verrouiller en quittant</string>
     <string name="folder_lock_explanation">Session : se déverrouille quand vous fermez ou que votre session se termine. En quittant : se verrouille immédiatement quand vous naviguez ailleurs.</string>
+    <string name="purge_locked_folder_on_delete">Présélectionner la suppression définitive</string>
+    <string name="purge_locked_folder_on_delete_subtitle">Lorsque vous supprimez un dossier protégé par mot de passe, l’option de détruire son courrier est présélectionnée. Vous confirmez toujours avant toute suppression.</string>
+    <string name="delete_protected_folder_title">Supprimer le dossier protégé</string>
+    <string name="delete_protected_folder_message">Pour supprimer \"%1$s\", saisissez le mot de passe de votre compte.</string>
+    <string name="delete_protected_folder_purge">Supprimer le courrier de ce dossier</string>
+    <string name="delete_protected_folder_purge_subtitle">Les messages, les pièces jointes et leurs sauvegardes sont détruits sur tous les appareils.</string>
+    <string name="delete_protected_folder_keep_note">Le courrier de ce dossier reste dans votre compte et passe dans Tous les messages.</string>
+    <string name="delete_protected_folder_acknowledge">Je comprends que ce courrier ne peut pas être récupéré.</string>
     <string name="section_advanced">Avancé</string>
     <string name="developer_mode_subtitle_behavior">Afficher l\'onglet Développeur avec les infos de build, l\'état crypto et les outils de débogage</string>
     <string name="auto_save_recipients_subtitle">Ajouter automatiquement les adresses auxquelles vous envoyez comme contacts</string>
@@ -2582,6 +2590,7 @@
     <string name="change_folder_color">Changer la couleur</string>
     <string name="folder_color">Couleur du dossier</string>
     <string name="move_folder_to">Déplacer vers</string>
+    <string name="lock_folder_now">Verrouiller maintenant</string>
     <string name="lock_folder">Verrouiller le dossier</string>
     <string name="remove_folder_lock">Retirer le verrou</string>
     <string name="lock_folder_message">Définissez un mot de passe pour \"%1$s\". Il sera nécessaire pour ouvrir ce dossier.</string>
@@ -2695,4 +2704,12 @@
     <string name="alias_website_input_placeholder">exemple.com</string>
     <string name="undecryptable_message_preview">Cet appareil ne possède pas la clé de ce message.</string>
     <string name="export_undecryptable_skipped">%1$d messages n’ont pas pu être déchiffrés et sont absents de l’export.</string>
+    <plurals name="archived_messages">
+        <item quantity="one">%d message archivé</item>
+        <item quantity="other">%d messages archivés</item>
+    </plurals>
+    <plurals name="moved_messages_to_trash">
+        <item quantity="one">%d message déplacé vers la corbeille</item>
+        <item quantity="other">%d messages déplacés vers la corbeille</item>
+    </plurals>
 </resources>

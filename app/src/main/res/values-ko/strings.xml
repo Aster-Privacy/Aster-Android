@@ -2049,6 +2049,14 @@
     <string name="folder_lock_session">세션 동안 잠금 해제</string>
     <string name="folder_lock_on_leave">나가면 잠금</string>
     <string name="folder_lock_explanation">세션: 앱을 닫거나 세션이 끝날 때까지 열려 있습니다. 나가면 잠금: 다른 화면으로 이동하는 즉시 잠깁니다.</string>
+    <string name="purge_locked_folder_on_delete">영구 삭제 미리 선택</string>
+    <string name="purge_locked_folder_on_delete_subtitle">비밀번호로 보호된 폴더를 삭제할 때 메일을 완전히 삭제하는 옵션을 미리 선택합니다. 삭제 전에는 항상 확인합니다.</string>
+    <string name="delete_protected_folder_title">보호된 폴더 삭제</string>
+    <string name="delete_protected_folder_message">\"%1$s\"을(를) 삭제하려면 계정 비밀번호를 입력하세요.</string>
+    <string name="delete_protected_folder_purge">이 폴더의 메일 삭제</string>
+    <string name="delete_protected_folder_purge_subtitle">메시지, 첨부 파일, 백업이 모든 기기에서 완전히 삭제됩니다.</string>
+    <string name="delete_protected_folder_keep_note">이 폴더의 메일은 계정에 남아 전체 메일로 이동합니다.</string>
+    <string name="delete_protected_folder_acknowledge">이 메일은 복구할 수 없다는 점을 이해합니다.</string>
     <string name="section_advanced">고급</string>
     <string name="developer_mode_subtitle_behavior">빌드 정보, 암호화 상태, 디버그 도구가 있는 개발자 탭을 표시합니다</string>
     <string name="auto_save_recipients_subtitle">메일을 보낸 주소를 연락처에 자동으로 추가합니다</string>
@@ -2547,6 +2555,7 @@
     <string name="change_folder_color">색상 변경</string>
     <string name="folder_color">폴더 색상</string>
     <string name="move_folder_to">이동 위치</string>
+    <string name="lock_folder_now">지금 잠그기</string>
     <string name="lock_folder">폴더 잠금</string>
     <string name="remove_folder_lock">잠금 해제</string>
     <string name="lock_folder_message">\"%1$s\"의 비밀번호를 설정하세요. 이 폴더를 열 때 필요합니다.</string>
@@ -2660,4 +2669,12 @@
     <string name="alias_website_input_placeholder">example.com</string>
     <string name="undecryptable_message_preview">이 기기에는 이 메시지의 키가 없습니다.</string>
     <string name="export_undecryptable_skipped">%1$d개의 메시지를 복호화하지 못해 내보내기에서 제외되었습니다.</string>
+    <plurals name="archived_messages">
+        <item quantity="one">메시지 %d개를 보관함으로 이동</item>
+        <item quantity="other">메시지 %d개를 보관함으로 이동</item>
+    </plurals>
+    <plurals name="moved_messages_to_trash">
+        <item quantity="one">메시지 %d개를 휴지통으로 이동했습니다</item>
+        <item quantity="other">메시지 %d개를 휴지통으로 이동했습니다</item>
+    </plurals>
 </resources>

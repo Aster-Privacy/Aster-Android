@@ -2049,6 +2049,14 @@
     <string name="folder_lock_session">本次会话内保持解锁</string>
     <string name="folder_lock_on_leave">离开即锁定</string>
     <string name="folder_lock_explanation">会话：在你关闭应用或会话结束前一直保持解锁。离开即锁定：一旦切换到别处立即锁定。</string>
+    <string name="purge_locked_folder_on_delete">预先选择永久删除</string>
+    <string name="purge_locked_folder_on_delete_subtitle">删除受密码保护的文件夹时，预先选择销毁其邮件的选项。删除任何内容前你仍需确认。</string>
+    <string name="delete_protected_folder_title">删除受保护的文件夹</string>
+    <string name="delete_protected_folder_message">要删除“%1$s”，请输入你的账户密码。</string>
+    <string name="delete_protected_folder_purge">删除此文件夹中的邮件</string>
+    <string name="delete_protected_folder_purge_subtitle">邮件、附件及其备份会在所有设备上被销毁。</string>
+    <string name="delete_protected_folder_keep_note">此文件夹中的邮件会保留在你的账户中，并移至“所有邮件”。</string>
+    <string name="delete_protected_folder_acknowledge">我了解这些邮件无法恢复。</string>
     <string name="section_advanced">高级</string>
     <string name="developer_mode_subtitle_behavior">显示开发者标签页，包含构建信息、加密状态和调试工具</string>
     <string name="auto_save_recipients_subtitle">自动把你发送过的地址加入联系人</string>
@@ -2547,6 +2555,7 @@
     <string name="change_folder_color">更改颜色</string>
     <string name="folder_color">文件夹颜色</string>
     <string name="move_folder_to">移动到</string>
+    <string name="lock_folder_now">立即锁定</string>
     <string name="lock_folder">锁定文件夹</string>
     <string name="remove_folder_lock">移除锁定</string>
     <string name="lock_folder_message">为 \"%1$s\" 设置密码。打开此文件夹时需要输入。</string>
@@ -2660,4 +2669,12 @@
     <string name="alias_website_input_placeholder">example.com</string>
     <string name="undecryptable_message_preview">此设备没有该邮件的密钥。</string>
     <string name="export_undecryptable_skipped">%1$d 封邮件无法解密，未包含在导出中。</string>
+    <plurals name="archived_messages">
+        <item quantity="one">已归档 %d 封邮件</item>
+        <item quantity="other">已归档 %d 封邮件</item>
+    </plurals>
+    <plurals name="moved_messages_to_trash">
+        <item quantity="one">已将 %d 封邮件移至回收站</item>
+        <item quantity="other">已将 %d 封邮件移至回收站</item>
+    </plurals>
 </resources>

@@ -252,7 +252,7 @@ class FolderContextMenuTest {
         var deleted: String? = null
         render(
             listOf(unlocked),
-            folder_menu_actions(on_delete = { item -> deleted = item.label_id }),
+            folder_menu_actions(on_delete = { item, _, _, _ -> deleted = item.label_id }),
         )
         open_menu("Work")
 

@@ -2052,6 +2052,14 @@
     <string name="folder_lock_session">Desbloqueada durante a sessão</string>
     <string name="folder_lock_on_leave">Bloquear ao sair</string>
     <string name="folder_lock_explanation">Sessão: fica desbloqueada até você fechar o app ou a sessão terminar. Ao sair: bloqueia assim que você vai para outro lugar.</string>
+    <string name="purge_locked_folder_on_delete">Pré-selecionar a eliminação permanente</string>
+    <string name="purge_locked_folder_on_delete_subtitle">Quando eliminas uma pasta protegida por palavra-passe, a opção de destruir o correio é pré-selecionada. Continuas a confirmar antes de algo ser eliminado.</string>
+    <string name="delete_protected_folder_title">Eliminar pasta protegida</string>
+    <string name="delete_protected_folder_message">Para eliminar \"%1$s\", introduz a palavra-passe da tua conta.</string>
+    <string name="delete_protected_folder_purge">Eliminar o correio nesta pasta</string>
+    <string name="delete_protected_folder_purge_subtitle">As mensagens, os anexos e as respetivas cópias de segurança são destruídos em todos os dispositivos.</string>
+    <string name="delete_protected_folder_keep_note">O correio nesta pasta permanece na tua conta e passa para Todo o correio.</string>
+    <string name="delete_protected_folder_acknowledge">Compreendo que este correio não pode ser recuperado.</string>
     <string name="section_advanced">Avançado</string>
     <string name="developer_mode_subtitle_behavior">Mostra a aba de desenvolvimento com dados da compilação, estado da criptografia e ferramentas de depuração</string>
     <string name="auto_save_recipients_subtitle">Salva automaticamente nos contatos os endereços para os quais você escreve</string>
@@ -2554,6 +2562,7 @@
     <string name="change_folder_color">Alterar cor</string>
     <string name="folder_color">Cor da pasta</string>
     <string name="move_folder_to">Mover para</string>
+    <string name="lock_folder_now">Bloquear agora</string>
     <string name="lock_folder">Bloquear pasta</string>
     <string name="remove_folder_lock">Remover bloqueio</string>
     <string name="lock_folder_message">Defina uma senha para \"%1$s\". Você precisará dela para abrir esta pasta.</string>
@@ -2667,4 +2676,12 @@
     <string name="alias_website_input_placeholder">exemplo.com</string>
     <string name="undecryptable_message_preview">Este dispositivo não tem a chave desta mensagem.</string>
     <string name="export_undecryptable_skipped">Não foi possível descriptografar %1$d mensagens, que ficaram de fora da exportação.</string>
+    <plurals name="archived_messages">
+        <item quantity="one">%d mensagem arquivada</item>
+        <item quantity="other">%d mensagens arquivadas</item>
+    </plurals>
+    <plurals name="moved_messages_to_trash">
+        <item quantity="one">%d mensagem movida para a lixeira</item>
+        <item quantity="other">%d mensagens movidas para a lixeira</item>
+    </plurals>
 </resources>

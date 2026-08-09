@@ -271,7 +271,8 @@ fun RuleEditorScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
-                        .background(colors.bg_secondary)
+                        .background(colors.bg_tertiary)
+                        .border(1.dp, colors.border_secondary, RoundedCornerShape(10.dp))
                         .padding(AsterSpacing.md)
                         .testTag("rule_advanced_notice"),
                 )
@@ -378,7 +379,8 @@ fun RuleEditorScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
-                        .background(colors.bg_secondary)
+                        .background(colors.bg_tertiary)
+                        .border(1.dp, colors.border_secondary, RoundedCornerShape(10.dp))
                         .padding(AsterSpacing.md)
                         .testTag("rule_duplicate_warning"),
                 )
@@ -397,7 +399,8 @@ fun RuleEditorScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
-                        .background(colors.bg_secondary)
+                        .background(colors.bg_tertiary)
+                        .border(1.dp, colors.border_secondary, RoundedCornerShape(10.dp))
                         .padding(AsterSpacing.md)
                         .testTag("rule_skipped_warning"),
                 )
@@ -412,7 +415,8 @@ fun RuleEditorScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
-                        .background(colors.bg_secondary)
+                        .background(colors.bg_tertiary)
+                        .border(1.dp, colors.border_secondary, RoundedCornerShape(10.dp))
                         .padding(AsterSpacing.md)
                         .testTag("rule_switched_to_any"),
                 )
@@ -424,7 +428,8 @@ fun RuleEditorScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
-                        .background(colors.bg_secondary)
+                        .background(colors.bg_tertiary)
+                        .border(1.dp, colors.border_secondary, RoundedCornerShape(10.dp))
                         .padding(AsterSpacing.md)
                         .testTag("rule_conflict_warning"),
                 ) {
@@ -522,7 +527,8 @@ fun RuleEditorScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
-                        .background(colors.bg_secondary)
+                        .background(colors.bg_tertiary)
+                        .border(1.dp, colors.border_secondary, RoundedCornerShape(10.dp))
                         .padding(AsterSpacing.md)
                         .testTag("rule_alias_delivery_warning"),
                 )
@@ -555,7 +561,8 @@ fun RuleEditorScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
-                        .background(colors.bg_secondary)
+                        .background(colors.bg_tertiary)
+                        .border(1.dp, colors.border_secondary, RoundedCornerShape(10.dp))
                         .padding(AsterSpacing.md)
                         .testTag("rule_alias_label_warning"),
                 )

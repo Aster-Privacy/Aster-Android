@@ -731,6 +731,7 @@
     <string name="change_folder_color">Change color</string>
     <string name="folder_color">Folder color</string>
     <string name="move_folder_to">Move to</string>
+    <string name="lock_folder_now">Lock now</string>
     <string name="lock_folder">Lock folder</string>
     <string name="remove_folder_lock">Remove lock</string>
     <string name="lock_folder_message">Set a password for \"%1$s\". You will need it to open this folder.</string>
@@ -2067,6 +2068,14 @@
     <string name="folder_lock_session">Unlocked for session</string>
     <string name="folder_lock_on_leave">Lock on leave</string>
     <string name="folder_lock_explanation">Session: unlocks when you close or your session ends. On leave: locks immediately when you navigate away.</string>
+    <string name="purge_locked_folder_on_delete">Preselect permanent deletion</string>
+    <string name="purge_locked_folder_on_delete_subtitle">When you delete a password-protected folder, preselect the option to destroy its mail. You still confirm before anything is deleted.</string>
+    <string name="delete_protected_folder_title">Delete protected folder</string>
+    <string name="delete_protected_folder_message">To delete \"%1$s\", enter your account password.</string>
+    <string name="delete_protected_folder_purge">Delete the mail in this folder</string>
+    <string name="delete_protected_folder_purge_subtitle">Messages, attachments, and their backups are destroyed on every device.</string>
+    <string name="delete_protected_folder_keep_note">The mail in this folder stays in your account and moves to All Mail.</string>
+    <string name="delete_protected_folder_acknowledge">I understand that this mail cannot be recovered.</string>
     <string name="section_advanced">Advanced</string>
     <string name="developer_mode_subtitle_behavior">Show the Developer tab with build info, crypto status, and debug tools</string>
     <string name="auto_save_recipients_subtitle">Automatically add addresses you send to as contacts</string>
@@ -2744,4 +2753,12 @@
     <string name="failed_update_label">Could not update label</string>
     <string name="undecryptable_message_preview">This device doesn’t have the key for this message.</string>
     <string name="export_undecryptable_skipped">%1$d messages couldn’t be decrypted and were left out of the export.</string>
+    <plurals name="archived_messages">
+        <item quantity="one">Archived %d message</item>
+        <item quantity="other">Archived %d messages</item>
+    </plurals>
+    <plurals name="moved_messages_to_trash">
+        <item quantity="one">Moved %d message to trash</item>
+        <item quantity="other">Moved %d messages to trash</item>
+    </plurals>
 </resources>

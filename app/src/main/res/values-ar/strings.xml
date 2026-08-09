@@ -2064,6 +2064,14 @@
     <string name="folder_lock_session">مفتوح طوال الجلسة</string>
     <string name="folder_lock_on_leave">القفل عند المغادرة</string>
     <string name="folder_lock_explanation">الجلسة: يُفتح حتى تغلق التطبيق أو تنتهي جلستك. عند المغادرة: يُقفل فورًا بمجرد انتقالك لمكان آخر.</string>
+    <string name="purge_locked_folder_on_delete">تحديد الحذف النهائي مسبقاً</string>
+    <string name="purge_locked_folder_on_delete_subtitle">عند حذف مجلد محمي بكلمة سر، يُحدَّد خيار إتلاف بريده مسبقاً. ما زلت تؤكد قبل حذف أي شيء.</string>
+    <string name="delete_protected_folder_title">حذف المجلد المحمي</string>
+    <string name="delete_protected_folder_message">لحذف \"%1$s\"، أدخل كلمة سر حسابك.</string>
+    <string name="delete_protected_folder_purge">حذف البريد في هذا المجلد</string>
+    <string name="delete_protected_folder_purge_subtitle">تُتلَف الرسائل والمرفقات ونسخها الاحتياطية على كل جهاز.</string>
+    <string name="delete_protected_folder_keep_note">يبقى البريد في هذا المجلد ضمن حسابك وينتقل إلى كل البريد.</string>
+    <string name="delete_protected_folder_acknowledge">أفهم أنه لا يمكن استرجاع هذا البريد.</string>
     <string name="section_advanced">متقدم</string>
     <string name="developer_mode_subtitle_behavior">إظهار تبويب المطوّر بمعلومات البناء وحالة التشفير وأدوات التصحيح</string>
     <string name="auto_save_recipients_subtitle">إضافة العناوين التي تراسلها إلى جهات الاتصال تلقائيًا</string>
@@ -2582,6 +2590,7 @@
     <string name="change_folder_color">تغيير اللون</string>
     <string name="folder_color">لون المجلد</string>
     <string name="move_folder_to">نقل إلى</string>
+    <string name="lock_folder_now">اقفل الآن</string>
     <string name="lock_folder">قفل المجلد</string>
     <string name="remove_folder_lock">إزالة القفل</string>
     <string name="lock_folder_message">عيّن كلمة مرور لـ \"%1$s\". ستحتاج إليها لفتح هذا المجلد.</string>
@@ -2695,4 +2704,12 @@
     <string name="alias_website_input_placeholder">example.com</string>
     <string name="undecryptable_message_preview">لا يحتوي هذا الجهاز على مفتاح هذه الرسالة.</string>
     <string name="export_undecryptable_skipped">تعذر فك تشفير %1$d رسالة ولم تُدرج في التصدير.</string>
+    <plurals name="archived_messages">
+        <item quantity="one">تمت أرشفة %d رسالة</item>
+        <item quantity="other">تمت أرشفة %d رسالة</item>
+    </plurals>
+    <plurals name="moved_messages_to_trash">
+        <item quantity="one">تم نقل %d رسالة إلى سلة المهملات</item>
+        <item quantity="other">تم نقل %d رسالة إلى سلة المهملات</item>
+    </plurals>
 </resources>

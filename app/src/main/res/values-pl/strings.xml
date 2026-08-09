@@ -2058,6 +2058,14 @@
     <string name="folder_lock_session">Odblokowany na czas sesji</string>
     <string name="folder_lock_on_leave">Blokuj przy wyjściu</string>
     <string name="folder_lock_explanation">Sesja: pozostaje odblokowany, dopóki nie zamkniesz aplikacji lub sesja się nie skończy. Przy wyjściu: blokuje się od razu po przejściu w inne miejsce.</string>
+    <string name="purge_locked_folder_on_delete">Wstępnie zaznacz trwałe usuwanie</string>
+    <string name="purge_locked_folder_on_delete_subtitle">Gdy usuwasz folder chroniony hasłem, opcja zniszczenia poczty jest wstępnie zaznaczona. Nadal potwierdzasz przed usunięciem czegokolwiek.</string>
+    <string name="delete_protected_folder_title">Usuń chroniony folder</string>
+    <string name="delete_protected_folder_message">Aby usunąć \"%1$s\", wpisz hasło swojego konta.</string>
+    <string name="delete_protected_folder_purge">Usuń pocztę w tym folderze</string>
+    <string name="delete_protected_folder_purge_subtitle">Wiadomości, załączniki i ich kopie zapasowe zostaną zniszczone na każdym urządzeniu.</string>
+    <string name="delete_protected_folder_keep_note">Poczta w tym folderze pozostaje na Twoim koncie i trafia do Cała poczta.</string>
+    <string name="delete_protected_folder_acknowledge">Rozumiem, że tej poczty nie można odzyskać.</string>
     <string name="section_advanced">Zaawansowane</string>
     <string name="developer_mode_subtitle_behavior">Pokazuje kartę dewelopera z informacjami o kompilacji, stanem szyfrowania i narzędziami diagnostycznymi</string>
     <string name="auto_save_recipients_subtitle">Automatycznie zapisuje w kontaktach adresy, na które piszesz</string>
@@ -2568,6 +2576,7 @@
     <string name="change_folder_color">Zmień kolor</string>
     <string name="folder_color">Kolor folderu</string>
     <string name="move_folder_to">Przenieś do</string>
+    <string name="lock_folder_now">Zablokuj teraz</string>
     <string name="lock_folder">Zablokuj folder</string>
     <string name="remove_folder_lock">Usuń blokadę</string>
     <string name="lock_folder_message">Ustaw hasło dla \"%1$s\". Będzie potrzebne do otwarcia tego folderu.</string>
@@ -2681,4 +2690,12 @@
     <string name="alias_website_input_placeholder">przyklad.pl</string>
     <string name="undecryptable_message_preview">To urządzenie nie ma klucza do tej wiadomości.</string>
     <string name="export_undecryptable_skipped">Nie udało się odszyfrować %1$d wiadomości i pominięto je w eksporcie.</string>
+    <plurals name="archived_messages">
+        <item quantity="one">Zarchiwizowano %d wiadomość</item>
+        <item quantity="other">Zarchiwizowano %d wiadomości</item>
+    </plurals>
+    <plurals name="moved_messages_to_trash">
+        <item quantity="one">Przeniesiono %d wiadomość do kosza</item>
+        <item quantity="other">Przeniesiono %d wiadomości do kosza</item>
+    </plurals>
 </resources>

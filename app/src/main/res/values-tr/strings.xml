@@ -2052,6 +2052,14 @@
     <string name="folder_lock_session">Oturum boyunca açık</string>
     <string name="folder_lock_on_leave">Ayrılınca kilitle</string>
     <string name="folder_lock_explanation">Oturum: uygulamayı kapatana ya da oturumun bitene kadar açık kalır. Ayrılınca: başka bir yere geçtiğin anda kilitlenir.</string>
+    <string name="purge_locked_folder_on_delete">Kalıcı silmeyi önceden seç</string>
+    <string name="purge_locked_folder_on_delete_subtitle">Parolayla korunan bir klasörü sildiğinizde, postayı yok etme seçeneği önceden seçilir. Bir şey silinmeden önce yine de onaylarsınız.</string>
+    <string name="delete_protected_folder_title">Korumalı klasörü sil</string>
+    <string name="delete_protected_folder_message">\"%1$s\" klasörünü silmek için hesap parolanızı girin.</string>
+    <string name="delete_protected_folder_purge">Bu klasördeki postayı sil</string>
+    <string name="delete_protected_folder_purge_subtitle">İletiler, ekler ve yedekleri her cihazda yok edilir.</string>
+    <string name="delete_protected_folder_keep_note">Bu klasördeki posta hesabınızda kalır ve Tüm Posta bölümüne taşınır.</string>
+    <string name="delete_protected_folder_acknowledge">Bu postanın kurtarılamayacağını anlıyorum.</string>
     <string name="section_advanced">Gelişmiş</string>
     <string name="developer_mode_subtitle_behavior">Yapı bilgisi, şifreleme durumu ve hata ayıklama araçlarını içeren Geliştirici sekmesini gösterir</string>
     <string name="auto_save_recipients_subtitle">Yazdığın adresleri otomatik olarak kişilere ekler</string>
@@ -2554,6 +2562,7 @@
     <string name="change_folder_color">Rengi değiştir</string>
     <string name="folder_color">Klasör rengi</string>
     <string name="move_folder_to">Şuraya taşı</string>
+    <string name="lock_folder_now">Şimdi kilitle</string>
     <string name="lock_folder">Klasörü kilitle</string>
     <string name="remove_folder_lock">Kilidi kaldır</string>
     <string name="lock_folder_message">\"%1$s\" için bir parola belirleyin. Bu klasörü açmak için gerekecek.</string>
@@ -2667,4 +2676,12 @@
     <string name="alias_website_input_placeholder">ornek.com</string>
     <string name="undecryptable_message_preview">Bu cihazda bu mesajın anahtarı yok.</string>
     <string name="export_undecryptable_skipped">%1$d mesajın şifresi çözülemedi ve dışa aktarıma dahil edilmedi.</string>
+    <plurals name="archived_messages">
+        <item quantity="one">%d ileti arşivlendi</item>
+        <item quantity="other">%d ileti arşivlendi</item>
+    </plurals>
+    <plurals name="moved_messages_to_trash">
+        <item quantity="one">%d ileti çöpe taşındı</item>
+        <item quantity="other">%d ileti çöpe taşındı</item>
+    </plurals>
 </resources>

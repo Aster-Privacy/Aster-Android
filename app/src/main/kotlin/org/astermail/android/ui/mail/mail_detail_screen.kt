@@ -1468,6 +1468,7 @@ fun MailDetailScreen(
                         }
                     }
                     bottom_action(TablerIcons.Dots, stringResource(R.string.more)) {
+                        action_target_id = null
                         show_action_sheet = true
                     }
                 }
@@ -1477,6 +1478,8 @@ fun MailDetailScreen(
 
     run {
         val target = action_target_id ?: messages.lastOrNull()?.id.orEmpty()
+        val item_target = action_target_id ?: email_id
+        val message_scope = action_target_id != null
         action_menu_sheet(
             expanded = show_action_sheet,
             on_close = { show_action_sheet = false },
@@ -1486,41 +1489,42 @@ fun MailDetailScreen(
             on_star = {
                 show_action_sheet = false
                 haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                mail_vm.toggle_star(email_id)
+                mail_vm.toggle_star(item_target)
                 show_toast(if (!is_starred) context.getString(R.string.starred) else context.getString(R.string.unstarred))
             },
             is_starred = is_starred,
             on_mark_unread = {
                 show_action_sheet = false
-                mail_vm.mark_unread(email_id)
+                mail_vm.mark_unread(item_target)
                 show_toast(context.getString(R.string.marked_as_unread))
                 on_back()
             },
             on_archive = {
                 show_action_sheet = false
                 if (api_item?.is_archived == true) {
-                    mail_vm.unarchive(listOf(email_id))
+                    mail_vm.unarchive(listOf(item_target))
                     on_archive()
                 } else {
-                    mail_vm.archive(listOf(email_id))
+                    mail_vm.archive(listOf(item_target), message_scope = message_scope)
                     on_archive()
                 }
             },
             on_trash = {
                 show_action_sheet = false
-                mail_vm.trash(listOf(email_id))
+                mail_vm.trash(listOf(item_target), message_scope = message_scope)
                 on_delete()
             },
             on_spam = {
                 show_action_sheet = false
-                val spam_sender_hint = listOfNotNull(messages.lastOrNull()?.sender_email)
+                val target_message = messages.firstOrNull { it.id == item_target } ?: messages.lastOrNull()
+                val spam_sender_hint = listOfNotNull(target_message?.sender_email)
                 if (is_spam) {
                     is_spam_override = false
-                    mail_vm.unmark_spam(listOf(email_id), sender_emails_hint = spam_sender_hint)
+                    mail_vm.unmark_spam(listOf(item_target), sender_emails_hint = spam_sender_hint)
                 } else {
                     is_spam_override = true
-                    mail_vm.mark_spam(listOf(email_id), sender_emails_hint = spam_sender_hint)
-                    val sender = messages.lastOrNull()?.sender_email
+                    mail_vm.mark_spam(listOf(item_target), sender_emails_hint = spam_sender_hint)
+                    val sender = target_message?.sender_email
                     if (!sender.isNullOrBlank()) {
                         settings_vm.block_sender(sender)
                     }

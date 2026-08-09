@@ -2049,6 +2049,14 @@
     <string name="folder_lock_session">セッション中は解除</string>
     <string name="folder_lock_on_leave">離れたらロック</string>
     <string name="folder_lock_explanation">セッション: アプリを閉じるかセッションが終わるまで解除されたままになります。離れたらロック: 別の画面に移った時点ですぐロックします。</string>
+    <string name="purge_locked_folder_on_delete">完全な削除をあらかじめ選択</string>
+    <string name="purge_locked_folder_on_delete_subtitle">パスワードで保護されたフォルダを削除するときに、メールを完全に消去するオプションをあらかじめ選択します。削除の前には必ず確認します。</string>
+    <string name="delete_protected_folder_title">保護されたフォルダを削除</string>
+    <string name="delete_protected_folder_message">\"%1$s\" を削除するには、アカウントのパスワードを入力します。</string>
+    <string name="delete_protected_folder_purge">このフォルダのメールを削除</string>
+    <string name="delete_protected_folder_purge_subtitle">メッセージ、添付ファイル、そのバックアップがすべてのデバイスで消去されます。</string>
+    <string name="delete_protected_folder_keep_note">このフォルダのメールはアカウントに残り、「すべてのメール」に移動します。</string>
+    <string name="delete_protected_folder_acknowledge">このメールは復元できないことを理解しました。</string>
     <string name="section_advanced">詳細設定</string>
     <string name="developer_mode_subtitle_behavior">ビルド情報、暗号の状態、デバッグ用ツールを含む開発者タブを表示します</string>
     <string name="auto_save_recipients_subtitle">送信した相手のアドレスを自動で連絡先に追加します</string>
@@ -2547,6 +2555,7 @@
     <string name="change_folder_color">色を変更</string>
     <string name="folder_color">フォルダの色</string>
     <string name="move_folder_to">移動先</string>
+    <string name="lock_folder_now">今すぐロック</string>
     <string name="lock_folder">フォルダをロック</string>
     <string name="remove_folder_lock">ロックを解除</string>
     <string name="lock_folder_message">\"%1$s\" のパスワードを設定します。このフォルダを開くときに必要です。</string>
@@ -2660,4 +2669,12 @@
     <string name="alias_website_input_placeholder">example.com</string>
     <string name="undecryptable_message_preview">このデバイスにはこのメッセージの鍵がありません。</string>
     <string name="export_undecryptable_skipped">%1$d 件のメッセージを復号できず、エクスポートから除外されました。</string>
+    <plurals name="archived_messages">
+        <item quantity="one">%d件のメッセージをアーカイブしました</item>
+        <item quantity="other">%d件のメッセージをアーカイブしました</item>
+    </plurals>
+    <plurals name="moved_messages_to_trash">
+        <item quantity="one">%d件のメッセージをゴミ箱に移動しました</item>
+        <item quantity="other">%d件のメッセージをゴミ箱に移動しました</item>
+    </plurals>
 </resources>

@@ -2052,6 +2052,14 @@
     <string name="folder_lock_session">Ontgrendeld tijdens de sessie</string>
     <string name="folder_lock_on_leave">Vergrendelen bij verlaten</string>
     <string name="folder_lock_explanation">Sessie: blijft open tot je de app sluit of je sessie eindigt. Bij verlaten: vergrendelt meteen zodra je ergens anders heen gaat.</string>
+    <string name="purge_locked_folder_on_delete">Definitief verwijderen vooraf selecteren</string>
+    <string name="purge_locked_folder_on_delete_subtitle">Wanneer je een met een wachtwoord beveiligde map verwijdert, wordt de optie om de e-mail te vernietigen vooraf geselecteerd. Je bevestigt nog steeds voordat er iets wordt verwijderd.</string>
+    <string name="delete_protected_folder_title">Beveiligde map verwijderen</string>
+    <string name="delete_protected_folder_message">Voer je accountwachtwoord in om \"%1$s\" te verwijderen.</string>
+    <string name="delete_protected_folder_purge">De e-mail in deze map verwijderen</string>
+    <string name="delete_protected_folder_purge_subtitle">Berichten, bijlagen en hun back-ups worden op elk apparaat vernietigd.</string>
+    <string name="delete_protected_folder_keep_note">De e-mail in deze map blijft in je account en gaat naar Alle e-mail.</string>
+    <string name="delete_protected_folder_acknowledge">Ik begrijp dat deze e-mail niet kan worden hersteld.</string>
     <string name="section_advanced">Geavanceerd</string>
     <string name="developer_mode_subtitle_behavior">Toont het ontwikkelaarstabblad met buildinfo, cryptostatus en foutopsporingshulpmiddelen</string>
     <string name="auto_save_recipients_subtitle">Adressen waarnaar je mailt automatisch als contact opslaan</string>
@@ -2554,6 +2562,7 @@
     <string name="change_folder_color">Kleur wijzigen</string>
     <string name="folder_color">Mapkleur</string>
     <string name="move_folder_to">Verplaatsen naar</string>
+    <string name="lock_folder_now">Nu vergrendelen</string>
     <string name="lock_folder">Map vergrendelen</string>
     <string name="remove_folder_lock">Vergrendeling verwijderen</string>
     <string name="lock_folder_message">Stel een wachtwoord in voor \"%1$s\". Je hebt het nodig om deze map te openen.</string>
@@ -2667,4 +2676,12 @@
     <string name="alias_website_input_placeholder">voorbeeld.nl</string>
     <string name="undecryptable_message_preview">Dit apparaat heeft de sleutel voor dit bericht niet.</string>
     <string name="export_undecryptable_skipped">%1$d berichten konden niet worden ontsleuteld en ontbreken in de export.</string>
+    <plurals name="archived_messages">
+        <item quantity="one">%d bericht gearchiveerd</item>
+        <item quantity="other">%d berichten gearchiveerd</item>
+    </plurals>
+    <plurals name="moved_messages_to_trash">
+        <item quantity="one">%d bericht naar prullenbak verplaatst</item>
+        <item quantity="other">%d berichten naar prullenbak verplaatst</item>
+    </plurals>
 </resources>

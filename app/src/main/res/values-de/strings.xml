@@ -2053,6 +2053,14 @@
     <string name="folder_lock_session">Für die Sitzung entsperrt</string>
     <string name="folder_lock_on_leave">Beim Verlassen sperren</string>
     <string name="folder_lock_explanation">Sitzung: bleibt offen, bis du die App schließt oder die Sitzung endet. Beim Verlassen: sperrt sofort, sobald du woandershin wechselst.</string>
+    <string name="purge_locked_folder_on_delete">Endgültiges Löschen vorauswählen</string>
+    <string name="purge_locked_folder_on_delete_subtitle">Wenn du einen kennwortgeschützten Ordner löschst, wird die Option zum Vernichten der E-Mails vorausgewählt. Du bestätigst weiterhin, bevor etwas gelöscht wird.</string>
+    <string name="delete_protected_folder_title">Geschützten Ordner löschen</string>
+    <string name="delete_protected_folder_message">Gib dein Kontokennwort ein, um \"%1$s\" zu löschen.</string>
+    <string name="delete_protected_folder_purge">E-Mails in diesem Ordner löschen</string>
+    <string name="delete_protected_folder_purge_subtitle">Nachrichten, Anhänge und ihre Sicherungen werden auf allen Geräten vernichtet.</string>
+    <string name="delete_protected_folder_keep_note">Die E-Mails in diesem Ordner bleiben in deinem Konto und werden nach „Alle E-Mails“ verschoben.</string>
+    <string name="delete_protected_folder_acknowledge">Mir ist klar, dass diese E-Mails nicht wiederhergestellt werden können.</string>
     <string name="section_advanced">Erweitert</string>
     <string name="developer_mode_subtitle_behavior">Zeigt den Entwickler-Tab mit Build-Infos, Krypto-Status und Debug-Werkzeugen</string>
     <string name="auto_save_recipients_subtitle">Adressen, an die du schreibst, automatisch als Kontakte speichern</string>
@@ -2555,6 +2563,7 @@
     <string name="change_folder_color">Farbe ändern</string>
     <string name="folder_color">Ordnerfarbe</string>
     <string name="move_folder_to">Verschieben nach</string>
+    <string name="lock_folder_now">Jetzt sperren</string>
     <string name="lock_folder">Ordner sperren</string>
     <string name="remove_folder_lock">Sperre entfernen</string>
     <string name="lock_folder_message">Legen Sie ein Passwort für \"%1$s\" fest. Sie benötigen es, um diesen Ordner zu öffnen.</string>
@@ -2668,4 +2677,12 @@
     <string name="alias_website_input_placeholder">beispiel.de</string>
     <string name="undecryptable_message_preview">Dieses Gerät hat den Schlüssel für diese Nachricht nicht.</string>
     <string name="export_undecryptable_skipped">%1$d Nachrichten konnten nicht entschlüsselt werden und fehlen im Export.</string>
+    <plurals name="archived_messages">
+        <item quantity="one">%d Nachricht archiviert</item>
+        <item quantity="other">%d Nachrichten archiviert</item>
+    </plurals>
+    <plurals name="moved_messages_to_trash">
+        <item quantity="one">%d Nachricht in den Papierkorb verschoben</item>
+        <item quantity="other">%d Nachrichten in den Papierkorb verschoben</item>
+    </plurals>
 </resources>
