@@ -2932,7 +2932,13 @@ fun org.astermail.android.storage.search.DecryptedMailEntity.to_inbox_item(): In
     display_sender_email = display_sender_email,
     to_addresses = to_addresses?.split(",")?.filter { it.isNotBlank() } ?: emptyList(),
     routing_token = routing_token,
-    raw_item = org.astermail.android.api.mail.MailItem(id = id),
+    raw_item = org.astermail.android.api.mail.MailItem(
+        id = id,
+        is_external = is_external,
+        has_recipient_key = has_recipient_key,
+        thread_token = thread_token,
+        routing_token = routing_token,
+    ),
 )
 
 internal fun folder_matches_item(folder: String, item: InboxItem): Boolean = when (folder) {

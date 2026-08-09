@@ -621,7 +621,7 @@ fun MailDetailScreen(
     var is_downloading_attachment by remember { mutableStateOf(false) }
 
     val messages = remember(email_id, api_messages) { api_messages.distinctBy { it.id } }
-    val is_thread_encrypted = remember(messages) { messages.any { it.is_encrypted } }
+    val is_thread_encrypted = remember(messages) { thread_is_end_to_end_encrypted(messages) }
     val thread_trackers_blocked = remember(messages) { messages.sumOf { it.trackers_blocked } }
 
     var bottom_bar_height by remember { mutableStateOf(132.dp) }
@@ -757,10 +757,7 @@ fun MailDetailScreen(
                         enter = fadeIn(),
                         exit = fadeOut(),
                     ) {
-                        val label = if (is_thread_encrypted)
-                            stringResource(R.string.end_to_end_encrypted)
-                        else
-                            stringResource(R.string.standard)
+                        val label = encryption_badge_label(is_thread_encrypted)
                         val tint = if (is_thread_encrypted) colors.accent_blue else colors.text_muted
                         Row(
                             modifier = Modifier
@@ -1698,10 +1695,7 @@ fun MailDetailScreen(
     if (show_encryption_info) {
         org.astermail.android.design.components.AsterDialog(
             on_dismiss = { show_encryption_info = false },
-            title = if (is_thread_encrypted)
-                stringResource(R.string.end_to_end_encrypted)
-            else
-                stringResource(R.string.standard),
+            title = encryption_badge_label(is_thread_encrypted),
             body = { encryption_info_body(is_thread_encrypted) },
             footer = {
                 org.astermail.android.design.components.AsterDialogPrimaryButton(
@@ -2026,7 +2020,7 @@ internal fun expanded_message(
             message_details_panel(
                 sender = details_sender,
                 reply_to = details_reply_to,
-                is_encrypted = msg.is_encrypted,
+                is_encrypted = msg.is_e2e_encrypted,
                 tracker_count = tracker_count,
                 date_text = msg.timestamp.format_full_datetime(),
                 received_on = received_on,
@@ -2960,7 +2954,7 @@ private fun raw_source_dialog(
             if (subject.isNotBlank()) append("Subject: ").append(subject).append("\n")
             append("Date: ").append(java.text.SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z", java.util.Locale.US).format(java.util.Date(message.timestamp))).append("\n")
             append("Message-Id: ").append(message.id).append("\n")
-            append("X-Encrypted: ").append(if (message.is_encrypted) "end-to-end" else "in-transit").append("\n")
+            append("X-Encrypted: ").append(if (message.is_e2e_encrypted) "end-to-end" else "in-transit").append("\n")
             if (message.trackers_blocked > 0) append("X-Aster-Trackers-Blocked: ").append(message.trackers_blocked).append("\n")
         }
     }
@@ -3100,7 +3094,7 @@ private fun message_details_dialog(
                 )
                 message_detail_row(
                     stringResource(R.string.encryption),
-                    if (message.is_encrypted) stringResource(R.string.encrypted_e2e) else stringResource(R.string.encrypted_in_transit),
+                    if (message.is_e2e_encrypted) stringResource(R.string.encrypted_e2e) else stringResource(R.string.encrypted_in_transit),
                 )
                 Spacer(Modifier.height(AsterSpacing.md))
                 Text(
@@ -5708,6 +5702,16 @@ private fun detail_menu_divider() {
             .background(colors.border_secondary.copy(alpha = 0.5f)),
     )
 }
+
+@Composable
+internal fun encryption_badge_label(is_encrypted: Boolean): String =
+    if (is_encrypted)
+        stringResource(R.string.end_to_end_encrypted)
+    else
+        stringResource(R.string.protected_in_transit)
+
+internal fun thread_is_end_to_end_encrypted(messages: List<ThreadMessage>): Boolean =
+    messages.isNotEmpty() && messages.all { it.is_e2e_encrypted }
 
 @Composable
 internal fun encryption_info_body(is_encrypted: Boolean) {
