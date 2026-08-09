@@ -84,6 +84,8 @@ fun take_whole_chars(text: String, max_length: Int): String {
 
 fun clean_body_preview(body_text: String, body_html: String?): String {
     if (body_html != null && !looks_like_ciphertext(body_html)) {
+        val preheader = extract_preheader_text(body_html)
+        if (preheader.isNotEmpty()) return take_whole_chars(preheader, PREVIEW_MAX_LENGTH)
         val from_html = strip_body_html(body_html)
         if (from_html.length > 4) return take_whole_chars(from_html, PREVIEW_MAX_LENGTH)
     }
