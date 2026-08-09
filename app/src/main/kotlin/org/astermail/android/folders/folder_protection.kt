@@ -23,9 +23,9 @@ package org.astermail.android.folders
 
 import java.security.SecureRandom
 import java.util.Base64
-import javax.crypto.Cipher
 import javax.crypto.Mac
-import javax.crypto.spec.GCMParameterSpec
+import org.astermail.android.crypto.AesGcm
+import org.astermail.android.crypto.hkdf_sha256 as hkdf_expand
 import javax.crypto.spec.SecretKeySpec
 
 private const val pbkdf2_iterations_legacy = 100000
@@ -35,31 +35,8 @@ private const val salt_bytes = 32
 private const val auth_key_context = "astermail-folder-auth-v1"
 private const val encrypt_key_context = "astermail-folder-encrypt-v1"
 
-private fun hkdf_sha256(ikm: ByteArray, info: String, length: Int): ByteArray {
-    val mac = Mac.getInstance("HmacSHA256")
-    mac.init(SecretKeySpec(ByteArray(32), "HmacSHA256"))
-    val prk = mac.doFinal(ikm)
-
-    mac.init(SecretKeySpec(prk, "HmacSHA256"))
-    val info_bytes = info.toByteArray(Charsets.UTF_8)
-    val out = ByteArray(length)
-    var offset = 0
-    var counter = 1
-    var previous = ByteArray(0)
-    while (offset < length) {
-        mac.update(previous)
-        mac.update(info_bytes)
-        mac.update(counter.toByte())
-        previous = mac.doFinal()
-        val take = minOf(previous.size, length - offset)
-        previous.copyInto(out, offset, 0, take)
-        offset += take
-        counter++
-    }
-    prk.fill(0)
-    previous.fill(0)
-    return out
-}
+private fun hkdf_sha256(ikm: ByteArray, info: String, length: Int): ByteArray =
+    hkdf_expand(ikm, ByteArray(32), info.toByteArray(Charsets.UTF_8), length)
 
 private fun pbkdf2_hmac_sha256(password: ByteArray, salt: ByteArray, iterations: Int, length: Int): ByteArray {
     val mac = Mac.getInstance("HmacSHA256")
@@ -105,9 +82,7 @@ fun prepare_folder_password(password: String): folder_password_material {
 
     val folder_key = ByteArray(32).also { random.nextBytes(it) }
     val nonce = ByteArray(12).also { random.nextBytes(it) }
-    val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-    cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(encryption_key, "AES"), GCMParameterSpec(128, nonce))
-    val encrypted = cipher.doFinal(folder_key)
+    val encrypted = AesGcm.encrypt(encryption_key, nonce, folder_key)
     folder_key.fill(0)
     encryption_key.fill(0)
 

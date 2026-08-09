@@ -22,9 +22,9 @@
 package org.astermail.android.contacts
 
 import java.security.MessageDigest
-import javax.crypto.Cipher
 import javax.crypto.Mac
-import javax.crypto.spec.GCMParameterSpec
+import org.astermail.android.crypto.AesGcm
+import org.astermail.android.crypto.hkdf_sha256
 import javax.crypto.spec.SecretKeySpec
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -372,31 +372,11 @@ class ContactsRepository @Inject constructor(
         return result == 0
     }
 
-    private fun hkdf_sha256(ikm: ByteArray, salt: ByteArray, info: ByteArray, length: Int): ByteArray {
-        val mac = Mac.getInstance("HmacSHA256")
-        mac.init(SecretKeySpec(salt, "HmacSHA256"))
-        val prk = mac.doFinal(ikm)
+    private fun aes_gcm_decrypt(ciphertext: ByteArray, key: ByteArray, iv: ByteArray): ByteArray =
+        AesGcm.decrypt(key, iv, ciphertext)
 
-        mac.init(SecretKeySpec(prk, "HmacSHA256"))
-        mac.update(info)
-        mac.update(1.toByte())
-        val okm = mac.doFinal()
-        prk.fill(0)
-
-        return okm.copyOf(length)
-    }
-
-    private fun aes_gcm_decrypt(ciphertext: ByteArray, key: ByteArray, iv: ByteArray): ByteArray {
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(128, iv))
-        return cipher.doFinal(ciphertext)
-    }
-
-    private fun aes_gcm_encrypt(plaintext: ByteArray, key: ByteArray, iv: ByteArray): ByteArray {
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(128, iv))
-        return cipher.doFinal(plaintext)
-    }
+    private fun aes_gcm_encrypt(plaintext: ByteArray, key: ByteArray, iv: ByteArray): ByteArray =
+        AesGcm.encrypt(key, iv, plaintext)
 
     private fun b64(bytes: ByteArray): String =
         android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)

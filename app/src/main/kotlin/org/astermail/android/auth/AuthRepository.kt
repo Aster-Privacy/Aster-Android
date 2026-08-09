@@ -29,11 +29,6 @@ import java.io.ByteArrayOutputStream
 import java.math.BigInteger
 import java.security.SecureRandom
 import java.util.Locale
-import javax.crypto.Cipher
-import javax.crypto.SecretKeyFactory
-import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.PBEKeySpec
-import javax.crypto.spec.SecretKeySpec
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
@@ -42,6 +37,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withTimeoutOrNull
+import org.astermail.android.crypto.AesGcm
+import org.astermail.android.crypto.hkdf_sha256
+import org.astermail.android.crypto.PasswordKdf
 import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
 import org.astermail.android.api.auth.Argon2Params
@@ -317,18 +315,7 @@ class AuthRepository @Inject constructor(
                 val codes = (0 until codes_array.length()).map { codes_array.getString(it) }
                 session_key_store.put_recovery_codes(codes)
             }
-            val prev_keys_array = vault_obj.optJSONArray("previous_keys")
-            if (prev_keys_array != null) {
-                val keys = (0 until prev_keys_array.length()).map { prev_keys_array.getString(it) }
-                session_key_store.put_previous_keys(keys)
-            }
-            val keks_array = vault_obj.optJSONArray("legacy_keks")
-            if (keks_array != null) {
-                val keks = (0 until keks_array.length()).mapNotNull { i ->
-                    keks_array.optJSONObject(i)?.optString("k", "")?.takeIf { it.isNotBlank() }
-                }
-                if (keks.isNotEmpty()) session_key_store.put_legacy_keks(keks)
-            }
+            absorb_previous_keys_and_keks(vault_obj)
             absorb_data_kek(vault_obj)
             extract_ratchet_keys(vault_obj)
         } catch (t: Throwable) {
@@ -755,6 +742,18 @@ class AuthRepository @Inject constructor(
         )
     }
 
+    private fun absorb_previous_keys_and_keks(vault_obj: org.json.JSONObject) {
+        vault_obj.optJSONArray("previous_keys")?.let { array ->
+            session_key_store.put_previous_keys((0 until array.length()).map { array.getString(it) })
+        }
+        vault_obj.optJSONArray("legacy_keks")?.let { array ->
+            val keks = (0 until array.length()).mapNotNull { i ->
+                array.optJSONObject(i)?.optString("k", "")?.takeIf { it.isNotBlank() }
+            }
+            if (keks.isNotEmpty()) session_key_store.put_legacy_keks(keks)
+        }
+    }
+
     private fun absorb_data_kek(vault_obj: org.json.JSONObject) {
         val data_kek = vault_obj.optString("data_kek", "")
         if (data_kek.isBlank()) return
@@ -787,18 +786,7 @@ class AuthRepository @Inject constructor(
                 .ifBlank { vault_obj.optString("identity_private_key", "") }
             if (identity_key.isNotBlank() && !identity_already_present) {
                 session_key_store.put_identity_key(identity_key)
-                val prev_keys_array = vault_obj.optJSONArray("previous_keys")
-                if (prev_keys_array != null) {
-                    val keys = (0 until prev_keys_array.length()).map { prev_keys_array.getString(it) }
-                    session_key_store.put_previous_keys(keys)
-                }
-                val keks_array = vault_obj.optJSONArray("legacy_keks")
-                if (keks_array != null) {
-                    val keks = (0 until keks_array.length()).mapNotNull { i ->
-                        keks_array.optJSONObject(i)?.optString("k", "")?.takeIf { it.isNotBlank() }
-                    }
-                    if (keks.isNotEmpty()) session_key_store.put_legacy_keks(keks)
-                }
+                absorb_previous_keys_and_keks(vault_obj)
             }
             absorb_data_kek(vault_obj)
             extract_ratchet_keys(vault_obj)
@@ -831,18 +819,7 @@ class AuthRepository @Inject constructor(
                 if (new_identity_key.isNotBlank()) {
                     session_key_store.put_identity_key(new_identity_key)
                 }
-                val prev_keys_array = vault_obj.optJSONArray("previous_keys")
-                if (prev_keys_array != null) {
-                    val keys = (0 until prev_keys_array.length()).map { prev_keys_array.getString(it) }
-                    session_key_store.put_previous_keys(keys)
-                }
-                val keks_array = vault_obj.optJSONArray("legacy_keks")
-                if (keks_array != null) {
-                    val keks = (0 until keks_array.length()).mapNotNull { i ->
-                        keks_array.optJSONObject(i)?.optString("k", "")?.takeIf { it.isNotBlank() }
-                    }
-                    if (keks.isNotEmpty()) session_key_store.put_legacy_keks(keks)
-                }
+                absorb_previous_keys_and_keks(vault_obj)
                 absorb_data_kek(vault_obj)
                 val old_ratchet_identity = session_key_store.get_ratchet_identity_public_b64()
                 val old_ratchet_previous = session_key_store.get_ratchet_previous_keys_json()
@@ -1011,21 +988,9 @@ class AuthRepository @Inject constructor(
         val salt = ByteArray(16).also { rng.nextBytes(it) }
         val nonce = ByteArray(12).also { rng.nextBytes(it) }
 
-        val password_chars = password.toCharArray()
-        val key_spec = PBEKeySpec(password_chars, salt, pgp_private_key_pbkdf2_iterations, 256)
-        password_chars.fill(' ')
-        val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
-        val derived = factory.generateSecret(key_spec).encoded
-        key_spec.clearPassword()
-
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(
-            Cipher.ENCRYPT_MODE,
-            SecretKeySpec(derived, "AES"),
-            GCMParameterSpec(128, nonce),
-        )
+        val derived = PasswordKdf.derive_aes_key(password, salt, pgp_private_key_pbkdf2_iterations)
+        val ciphertext = AesGcm.encrypt(derived, nonce, armored_private_key.toByteArray(Charsets.UTF_8))
         derived.fill(0)
-        val ciphertext = cipher.doFinal(armored_private_key.toByteArray(Charsets.UTF_8))
 
         return base64_encode(salt + ciphertext) to base64_encode(nonce)
     }
@@ -1040,18 +1005,12 @@ class AuthRepository @Inject constructor(
         val salt = combined.copyOfRange(0, 16)
         val ciphertext = combined.copyOfRange(16, combined.size)
 
-        val password_chars = String(password_bytes, Charsets.UTF_8).toCharArray()
-        val key_spec = PBEKeySpec(password_chars, salt, vault_pbkdf2_iterations, 256)
-        password_chars.fill(' ')
-        val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
-        val derived = factory.generateSecret(key_spec).encoded
-        key_spec.clearPassword()
-
-        val secret_key = SecretKeySpec(derived, "AES")
-        derived.fill(0)
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.DECRYPT_MODE, secret_key, GCMParameterSpec(128, nonce))
-        return cipher.doFinal(ciphertext)
+        val derived = PasswordKdf.derive_aes_key(password_bytes, salt, vault_pbkdf2_iterations)
+        try {
+            return AesGcm.decrypt(derived, nonce, ciphertext)
+        } finally {
+            derived.fill(0)
+        }
     }
 
     private fun generate_recovery_codes(): List<String> {
@@ -1076,14 +1035,8 @@ class AuthRepository @Inject constructor(
         val code_hash = hash_recovery_code(code)
         val salt = ByteArray(16).also { java.security.SecureRandom().nextBytes(it) }
         val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
-        val code_chars = code.uppercase().trim().toCharArray()
-        val spec = javax.crypto.spec.PBEKeySpec(code_chars, salt, pbkdf2_iterations, 256)
-        val factory = javax.crypto.SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
-        val derived = factory.generateSecret(spec).encoded
-        spec.clearPassword()
-        val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, javax.crypto.spec.SecretKeySpec(derived, "AES"), javax.crypto.spec.GCMParameterSpec(128, nonce))
-        val encrypted = cipher.doFinal(recovery_key)
+        val derived = PasswordKdf.derive_aes_key(code.uppercase().trim(), salt, pbkdf2_iterations)
+        val encrypted = AesGcm.encrypt(derived, nonce, recovery_key)
         derived.fill(0)
         return RecoveryShareData(
             code_hash = code_hash,
@@ -1099,23 +1052,9 @@ class AuthRepository @Inject constructor(
         val salt = ByteArray(16).also { java.security.SecureRandom().nextBytes(it) }
         val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
         val derived = hkdf_sha256(recovery_key, salt, HKDF_INFO.toByteArray(Charsets.UTF_8), 32)
-        val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, javax.crypto.spec.SecretKeySpec(derived, "AES"), javax.crypto.spec.GCMParameterSpec(128, nonce))
-        val encrypted = cipher.doFinal(vault)
+        val encrypted = AesGcm.encrypt(derived, nonce, vault)
         derived.fill(0)
         return VaultBackupResult(base64_encode(encrypted), base64_encode(nonce), base64_encode(salt))
-    }
-
-    private fun hkdf_sha256(ikm: ByteArray, salt: ByteArray, info: ByteArray, length: Int): ByteArray {
-        val mac = javax.crypto.Mac.getInstance("HmacSHA256")
-        mac.init(javax.crypto.spec.SecretKeySpec(salt, "HmacSHA256"))
-        val prk = mac.doFinal(ikm)
-        mac.init(javax.crypto.spec.SecretKeySpec(prk, "HmacSHA256"))
-        mac.update(info)
-        mac.update(byteArrayOf(1))
-        val okm = mac.doFinal()
-        prk.fill(0)
-        return okm.copyOf(length)
     }
 
     private data class DefaultFolder(val folder_type: String, val name_res: Int)
@@ -1153,9 +1092,7 @@ class AuthRepository @Inject constructor(
         val nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
         val key = derive_folder_field_key(identity_key)
         try {
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(128, nonce))
-            val ct = cipher.doFinal(data)
+            val ct = AesGcm.encrypt(key, nonce, data)
             data.fill(0)
             return EncryptedFolderField(
                 ciphertext_b64 = base64_encode(ct),

@@ -30,20 +30,13 @@ import org.bouncycastle.crypto.params.HKDFParameters
 import org.bouncycastle.crypto.signers.Ed25519Signer
 import java.security.MessageDigest
 import java.security.SecureRandom
-import javax.crypto.Cipher
-import javax.crypto.SecretKeyFactory
-import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.PBEKeySpec
-import javax.crypto.spec.SecretKeySpec
 
 data class IdentityKeypair(val public_key: ByteArray, val private_key: ByteArray)
 
 data class RecoveryKeyResult(val mnemonic: String, val bytes: ByteArray)
 
 object CryptoNative {
-    private const val pbkdf2_algorithm = "PBKDF2WithHmacSHA256"
     private const val derived_key_bits = 256
-    private const val gcm_tag_bits = 128
     private const val gcm_nonce_bytes = 12
     private const val vault_salt_bytes = 16
     private const val vault_iterations = 310000
@@ -91,10 +84,11 @@ object CryptoNative {
         val nonce = ByteArray(gcm_nonce_bytes)
         secure_random.nextBytes(nonce)
         val key_bytes = pbkdf2(password, salt, vault_iterations)
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(key_bytes, "AES"), GCMParameterSpec(gcm_tag_bits, nonce))
-        val ciphertext = cipher.doFinal(plaintext)
-        key_bytes.fill(0)
+        val ciphertext = try {
+            AesGcm.encrypt(key_bytes, nonce, plaintext)
+        } finally {
+            key_bytes.fill(0)
+        }
         return VaultEnvelope(encrypted_vault = salt + ciphertext, vault_nonce = nonce)
     }
 
@@ -109,9 +103,7 @@ object CryptoNative {
         val ciphertext = encrypted_vault.copyOfRange(vault_salt_bytes, encrypted_vault.size)
         val key_bytes = pbkdf2(password, salt, vault_iterations)
         try {
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(key_bytes, "AES"), GCMParameterSpec(gcm_tag_bits, vault_nonce))
-            return cipher.doFinal(ciphertext)
+            return AesGcm.decrypt(key_bytes, vault_nonce, ciphertext)
         } finally {
             key_bytes.fill(0)
         }
@@ -122,10 +114,7 @@ object CryptoNative {
         val key_bytes = ensure_key_bytes(password_hash)
         val nonce = ByteArray(gcm_nonce_bytes)
         secure_random.nextBytes(nonce)
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(key_bytes, "AES"), GCMParameterSpec(gcm_tag_bits, nonce))
-        val encrypted = cipher.doFinal(plaintext)
-        return nonce + encrypted
+        return nonce + AesGcm.encrypt(key_bytes, nonce, plaintext)
     }
 
     @Deprecated("Use decrypt_vault_with_password (matches web client format)")
@@ -134,9 +123,7 @@ object CryptoNative {
         val key_bytes = ensure_key_bytes(password_hash)
         val nonce = ciphertext.copyOfRange(0, gcm_nonce_bytes)
         val payload = ciphertext.copyOfRange(gcm_nonce_bytes, ciphertext.size)
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(key_bytes, "AES"), GCMParameterSpec(gcm_tag_bits, nonce))
-        return cipher.doFinal(payload)
+        return AesGcm.decrypt(key_bytes, nonce, payload)
     }
 
     private const val storage_key_info = "aster-storage-encryption-key-v1"
@@ -164,26 +151,16 @@ object CryptoNative {
         require(storage_key.size == storage_key_bytes) { "storage_key must be $storage_key_bytes bytes" }
         val nonce = ByteArray(gcm_nonce_bytes)
         secure_random.nextBytes(nonce)
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(
-            Cipher.ENCRYPT_MODE,
-            SecretKeySpec(storage_key, "AES"),
-            GCMParameterSpec(gcm_tag_bits, nonce),
+        return EncryptedField(
+            ciphertext = AesGcm.encrypt(storage_key, nonce, plaintext),
+            nonce = nonce,
         )
-        val ciphertext = cipher.doFinal(plaintext)
-        return EncryptedField(ciphertext = ciphertext, nonce = nonce)
     }
 
     fun decrypt_field(ciphertext: ByteArray, nonce: ByteArray, storage_key: ByteArray): ByteArray {
         require(storage_key.size == storage_key_bytes) { "storage_key must be $storage_key_bytes bytes" }
         require(nonce.size == gcm_nonce_bytes) { "nonce must be $gcm_nonce_bytes bytes" }
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(
-            Cipher.DECRYPT_MODE,
-            SecretKeySpec(storage_key, "AES"),
-            GCMParameterSpec(gcm_tag_bits, nonce),
-        )
-        return cipher.doFinal(ciphertext)
+        return AesGcm.decrypt(storage_key, nonce, ciphertext)
     }
 
     fun generate_recovery_bytes(): ByteArray {
@@ -249,15 +226,7 @@ object CryptoNative {
     }
 
     private fun pbkdf2(password: ByteArray, salt: ByteArray, iterations: Int): ByteArray {
-        val password_chars = String(password, Charsets.UTF_8).toCharArray()
-        val spec = PBEKeySpec(password_chars, salt, iterations, derived_key_bits)
-        try {
-            val factory = SecretKeyFactory.getInstance(pbkdf2_algorithm)
-            return factory.generateSecret(spec).encoded
-        } finally {
-            spec.clearPassword()
-            password_chars.fill('\u0000')
-        }
+        return PasswordKdf.derive_aes_key(password, salt, iterations, derived_key_bits)
     }
 
     private fun ensure_key_bytes(key: ByteArray): ByteArray {

@@ -24,9 +24,8 @@ package org.astermail.android.imports
 import android.util.Base64
 import java.security.MessageDigest
 import java.security.SecureRandom
-import javax.crypto.Cipher
 import javax.crypto.Mac
-import javax.crypto.spec.GCMParameterSpec
+import org.astermail.android.crypto.AesGcm
 import javax.crypto.spec.SecretKeySpec
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -103,11 +102,8 @@ fun decrypt_account_data(
 
     val ciphertext = Base64.decode(encrypted_account_data, Base64.NO_WRAP)
     val nonce = Base64.decode(account_data_nonce, Base64.NO_WRAP)
-    val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-    val key = SecretKeySpec(master_key, "AES")
     val plaintext = try {
-        cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(128, nonce))
-        cipher.doFinal(ciphertext)
+        AesGcm.decrypt(master_key, nonce, ciphertext)
     } catch (t: Throwable) {
         throw ExternalAccountDecryptException("Failed to decrypt external account data")
     }
@@ -126,10 +122,7 @@ fun encrypt_account_data(
     val payload = data.copy(_encrypted_at = java.time.Instant.now().toString())
     val plaintext = json.encodeToString(payload).toByteArray(Charsets.UTF_8)
     val nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
-    val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-    val key = SecretKeySpec(master_key, "AES")
-    cipher.init(Cipher.ENCRYPT_MODE, key, GCMParameterSpec(128, nonce))
-    val ciphertext = cipher.doFinal(plaintext)
+    val ciphertext = AesGcm.encrypt(master_key, nonce, plaintext)
     plaintext.fill(0)
 
     val encrypted_b64 = Base64.encodeToString(ciphertext, Base64.NO_WRAP)

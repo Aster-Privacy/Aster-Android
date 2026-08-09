@@ -29,9 +29,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.security.SecureRandom
-import java.security.spec.KeySpec
-import javax.crypto.SecretKeyFactory
-import javax.crypto.spec.PBEKeySpec
+import org.astermail.android.crypto.PasswordKdf
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -179,11 +177,8 @@ class AppLockStore @Inject constructor(@ApplicationContext private val context: 
             .apply()
     }
 
-    private fun hash_pin(pin: String, salt: ByteArray): ByteArray {
-        val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
-        val spec: KeySpec = PBEKeySpec(pin.toCharArray(), salt, PBKDF2_ITERATIONS, HASH_KEY_BITS)
-        return factory.generateSecret(spec).encoded
-    }
+    private fun hash_pin(pin: String, salt: ByteArray): ByteArray =
+        PasswordKdf.derive_aes_key(pin, salt, PBKDF2_ITERATIONS, HASH_KEY_BITS)
 
     private fun constant_time_equals(a: ByteArray, b: ByteArray): Boolean {
         if (a.size != b.size) return false

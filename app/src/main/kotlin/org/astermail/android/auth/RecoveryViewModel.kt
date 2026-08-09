@@ -27,11 +27,10 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.security.MessageDigest
 import java.security.SecureRandom
-import javax.crypto.Cipher
-import javax.crypto.SecretKeyFactory
-import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
+import org.astermail.android.crypto.AesGcm
+import org.astermail.android.crypto.hkdf_sha256
+import org.astermail.android.crypto.PasswordKdf
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -284,15 +283,8 @@ class RecoveryViewModel @Inject constructor(
         nonce: ByteArray,
         salt: ByteArray,
     ): ByteArray {
-        val code_bytes = code.uppercase().trim().toCharArray()
-        val spec = PBEKeySpec(code_bytes, salt, PBKDF2_ITERATIONS, 256)
-        val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
-        val derived = factory.generateSecret(spec).encoded
-        spec.clearPassword()
-
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(derived, "AES"), GCMParameterSpec(128, nonce))
-        val decrypted = cipher.doFinal(encrypted_key)
+        val derived = PasswordKdf.derive_aes_key(code.uppercase().trim(), salt, PBKDF2_ITERATIONS)
+        val decrypted = AesGcm.decrypt(derived, nonce, encrypted_key)
         derived.fill(0)
         return decrypted
     }
@@ -304,9 +296,7 @@ class RecoveryViewModel @Inject constructor(
         recovery_key: ByteArray,
     ): ByteArray {
         val derived = hkdf_sha256(recovery_key, salt, HKDF_INFO.toByteArray(Charsets.UTF_8), 32)
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(derived, "AES"), GCMParameterSpec(128, nonce))
-        val decrypted = cipher.doFinal(encrypted)
+        val decrypted = AesGcm.decrypt(derived, nonce, encrypted)
         derived.fill(0)
         return decrypted
     }
@@ -317,9 +307,7 @@ class RecoveryViewModel @Inject constructor(
         val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
         val nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
         val derived = hkdf_sha256(recovery_key, salt, HKDF_INFO.toByteArray(Charsets.UTF_8), 32)
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(derived, "AES"), GCMParameterSpec(128, nonce))
-        val encrypted = cipher.doFinal(vault)
+        val encrypted = AesGcm.encrypt(derived, nonce, vault)
         derived.fill(0)
         return VaultBackup(base64_encode(encrypted), base64_encode(nonce), base64_encode(salt))
     }
@@ -329,15 +317,8 @@ class RecoveryViewModel @Inject constructor(
         val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
         val nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
 
-        val code_chars = code.uppercase().trim().toCharArray()
-        val spec = PBEKeySpec(code_chars, salt, PBKDF2_ITERATIONS, 256)
-        val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
-        val derived = factory.generateSecret(spec).encoded
-        spec.clearPassword()
-
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(derived, "AES"), GCMParameterSpec(128, nonce))
-        val encrypted = cipher.doFinal(recovery_key)
+        val derived = PasswordKdf.derive_aes_key(code.uppercase().trim(), salt, PBKDF2_ITERATIONS)
+        val encrypted = AesGcm.encrypt(derived, nonce, recovery_key)
         derived.fill(0)
 
         return RecoveryShareData(
@@ -357,19 +338,6 @@ class RecoveryViewModel @Inject constructor(
             val seg3 = (1..4).map { chars[random.nextInt(chars.length)] }.joinToString("")
             "ASTER-$seg1-$seg2-$seg3"
         }
-    }
-
-    private fun hkdf_sha256(ikm: ByteArray, salt: ByteArray, info: ByteArray, length: Int): ByteArray {
-        val mac = javax.crypto.Mac.getInstance("HmacSHA256")
-        mac.init(SecretKeySpec(salt, "HmacSHA256"))
-        val prk = mac.doFinal(ikm)
-
-        mac.init(SecretKeySpec(prk, "HmacSHA256"))
-        mac.update(info)
-        mac.update(byteArrayOf(1))
-        val okm = mac.doFinal()
-        prk.fill(0)
-        return okm.copyOf(length)
     }
 
     private fun base64_encode(bytes: ByteArray): String =

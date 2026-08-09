@@ -22,9 +22,6 @@
 package org.astermail.android.crypto.ratchet
 
 import android.util.Base64
-import org.bouncycastle.crypto.digests.SHA256Digest
-import org.bouncycastle.crypto.generators.HKDFBytesGenerator
-import org.bouncycastle.crypto.params.HKDFParameters
 import java.math.BigInteger
 import java.security.AlgorithmParameters
 import java.security.KeyFactory
@@ -37,9 +34,7 @@ import java.security.spec.ECPoint
 import java.security.spec.ECPrivateKeySpec
 import java.security.spec.ECPublicKeySpec
 import javax.crypto.KeyAgreement
-import javax.crypto.Cipher
-import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.SecretKeySpec
+import org.astermail.android.crypto.AesGcm
 
 object RatchetCrypto {
 
@@ -70,13 +65,8 @@ object RatchetCrypto {
         require(d.signum() > 0 && d < secp256r1.order) { "ec private scalar out of range" }
     }
 
-    fun hkdf_sha256(ikm: ByteArray, salt: ByteArray, info: ByteArray, length: Int): ByteArray {
-        val gen = HKDFBytesGenerator(SHA256Digest())
-        gen.init(HKDFParameters(ikm, salt, info))
-        val out = ByteArray(length)
-        gen.generateBytes(out, 0, length)
-        return out
-    }
+    fun hkdf_sha256(ikm: ByteArray, salt: ByteArray, info: ByteArray, length: Int): ByteArray =
+        org.astermail.android.crypto.hkdf_sha256(ikm, salt, info, length)
 
     fun sha256(input: ByteArray): ByteArray =
         MessageDigest.getInstance("SHA-256").digest(input)
@@ -86,24 +76,14 @@ object RatchetCrypto {
         key: ByteArray,
         nonce: ByteArray,
         aad: ByteArray? = null,
-    ): ByteArray {
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(128, nonce))
-        if (aad != null) cipher.updateAAD(aad)
-        return cipher.doFinal(ciphertext)
-    }
+    ): ByteArray = AesGcm.decrypt(key, nonce, ciphertext, aad)
 
     fun aes_gcm_encrypt(
         plaintext: ByteArray,
         key: ByteArray,
         nonce: ByteArray,
         aad: ByteArray? = null,
-    ): ByteArray {
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(128, nonce))
-        if (aad != null) cipher.updateAAD(aad)
-        return cipher.doFinal(plaintext)
-    }
+    ): ByteArray = AesGcm.encrypt(key, nonce, plaintext, aad)
 
     fun random_bytes(length: Int): ByteArray {
         val out = ByteArray(length)

@@ -30,10 +30,10 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import org.astermail.android.R
 import java.security.MessageDigest
 import java.security.SecureRandom
-import javax.crypto.Cipher
 import javax.crypto.Mac
-import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
+import org.astermail.android.crypto.AesGcm
+import org.astermail.android.crypto.hkdf_sha256
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -863,9 +863,7 @@ class SettingsViewModel @Inject constructor(
             val key = derive_encryption_key()
             try {
                 val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
-                val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-                cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(128, nonce))
-                val ciphertext = cipher.doFinal(payload.toByteArray(Charsets.UTF_8))
+                val ciphertext = AesGcm.encrypt(key, nonce, payload.toByteArray(Charsets.UTF_8))
                 val encrypted_sender_data =
                     android.util.Base64.encodeToString(ciphertext, android.util.Base64.NO_WRAP)
                 val sender_data_nonce =
@@ -946,9 +944,7 @@ class SettingsViewModel @Inject constructor(
             val key = derive_encryption_key()
             try {
                 val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
-                val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-                cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(128, nonce))
-                val ciphertext = cipher.doFinal(payload.toByteArray(Charsets.UTF_8))
+                val ciphertext = AesGcm.encrypt(key, nonce, payload.toByteArray(Charsets.UTF_8))
                 val encrypted_sender_data =
                     android.util.Base64.encodeToString(ciphertext, android.util.Base64.NO_WRAP)
                 val sender_data_nonce =
@@ -1573,8 +1569,10 @@ class SettingsViewModel @Inject constructor(
                     blocked_locked = log.locked,
                     rules = rules.value?.rules.orEmpty(),
                     rules_locked = rules.locked,
+                    apply_run = apply_run.value?.run ?: it.apply_run,
                 )
             }
+            start_alias_run_poll(alias_id)
         }
     }
 
@@ -3095,9 +3093,7 @@ class SettingsViewModel @Inject constructor(
         val nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
         val key = derive_recovery_email_key(identity_key)
         try {
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(128, nonce))
-            val ct = cipher.doFinal(data)
+            val ct = AesGcm.encrypt(key, nonce, data)
             data.fill(0)
             return EncryptedField(
                 ciphertext_b64 = android.util.Base64.encodeToString(ct, android.util.Base64.NO_WRAP),
@@ -4131,9 +4127,7 @@ class SettingsViewModel @Inject constructor(
         val nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
         val key = derive_encryption_key()
         try {
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(128, nonce))
-            val ct = cipher.doFinal(data)
+            val ct = AesGcm.encrypt(key, nonce, data)
             data.fill(0)
             return EncryptedField(
                 ciphertext_b64 = android.util.Base64.encodeToString(ct, android.util.Base64.NO_WRAP),
@@ -4764,9 +4758,7 @@ class SettingsViewModel @Inject constructor(
         val nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
         val key = derive_field_key(identity_key, version)
         try {
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(128, nonce))
-            val ct = cipher.doFinal(data)
+            val ct = AesGcm.encrypt(key, nonce, data)
             data.fill(0)
             return EncryptedField(
                 ciphertext_b64 = android.util.Base64.encodeToString(ct, android.util.Base64.NO_WRAP),
@@ -4926,9 +4918,7 @@ class SettingsViewModel @Inject constructor(
         val key = derive_encryption_key()
         try {
             val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(128, nonce))
-            val ciphertext = cipher.doFinal(plaintext.toByteArray(Charsets.UTF_8))
+            val ciphertext = AesGcm.encrypt(key, nonce, plaintext.toByteArray(Charsets.UTF_8))
             return android.util.Base64.encodeToString(ciphertext, android.util.Base64.NO_WRAP) to
                 android.util.Base64.encodeToString(nonce, android.util.Base64.NO_WRAP)
         } finally {
@@ -5008,11 +4998,8 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    private fun aes_gcm_decrypt(ciphertext: ByteArray, key: ByteArray, iv: ByteArray): ByteArray {
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(128, iv))
-        return cipher.doFinal(ciphertext)
-    }
+    private fun aes_gcm_decrypt(ciphertext: ByteArray, key: ByteArray, iv: ByteArray): ByteArray =
+        AesGcm.decrypt(key, iv, ciphertext)
 
     private fun derive_encryption_key(): ByteArray {
         session_key_store.get_data_kek()?.let { kek ->
@@ -5038,18 +5025,6 @@ class SettingsViewModel @Inject constructor(
         } finally {
             passphrase.fill(0)
         }
-    }
-
-    private fun hkdf_sha256(ikm: ByteArray, salt: ByteArray, info: ByteArray, length: Int): ByteArray {
-        val mac = Mac.getInstance("HmacSHA256")
-        mac.init(SecretKeySpec(salt, "HmacSHA256"))
-        val prk = mac.doFinal(ikm)
-        mac.init(SecretKeySpec(prk, "HmacSHA256"))
-        mac.update(info)
-        mac.update(1.toByte())
-        val okm = mac.doFinal()
-        prk.fill(0)
-        return okm.copyOf(length)
     }
 
     private val prefs_json = kotlinx.serialization.json.Json {
@@ -5116,9 +5091,7 @@ class SettingsViewModel @Inject constructor(
         val key_material = (identity_key + PREFERENCES_KEY_SUFFIX).toByteArray(Charsets.UTF_8)
         val key = MessageDigest.getInstance("SHA-256").digest(key_material)
         val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(128, nonce))
-        val ciphertext = cipher.doFinal(plaintext)
+        val ciphertext = AesGcm.encrypt(key, nonce, plaintext)
         key.fill(0)
         return SaveEncryptedPreferencesRequest(
             encrypted_preferences = android.util.Base64.encodeToString(ciphertext, android.util.Base64.NO_WRAP),

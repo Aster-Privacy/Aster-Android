@@ -27,11 +27,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import org.astermail.android.R
 import java.security.MessageDigest
 import java.security.SecureRandom
-import javax.crypto.Cipher
-import javax.crypto.SecretKeyFactory
-import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.PBEKeySpec
-import javax.crypto.spec.SecretKeySpec
+import org.astermail.android.crypto.AesGcm
+import org.astermail.android.crypto.PasswordKdf
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
@@ -1694,13 +1691,7 @@ class MailRepository @Inject constructor(
         val passphrase = session_key_store.get_passphrase()
             ?: throw IllegalStateException("no passphrase")
         val key_bytes = try {
-            val c = String(passphrase, Charsets.UTF_8).toCharArray()
-            val spec = PBEKeySpec(c, salt, PBKDF2_ITERATIONS, 256)
-            val derived = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
-                .generateSecret(spec).encoded
-            spec.clearPassword()
-            c.fill(0.toChar())
-            derived
+            PasswordKdf.derive_aes_key(passphrase, salt, PBKDF2_ITERATIONS)
         } finally {
             passphrase.fill(0)
         }
@@ -1797,15 +1788,8 @@ class MailRepository @Inject constructor(
     private fun aes_gcm_decrypt(ciphertext: ByteArray, key: ByteArray, iv: ByteArray): ByteArray =
         aes_gcm_decrypt_bytes(ciphertext, key, iv)
 
-    private fun aes_gcm_encrypt(plaintext: ByteArray, key: ByteArray, iv: ByteArray): ByteArray {
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(
-            Cipher.ENCRYPT_MODE,
-            SecretKeySpec(key, "AES"),
-            GCMParameterSpec(128, iv),
-        )
-        return cipher.doFinal(plaintext)
-    }
+    private fun aes_gcm_encrypt(plaintext: ByteArray, key: ByteArray, iv: ByteArray): ByteArray =
+        AesGcm.encrypt(key, iv, plaintext)
 
     private fun derive_encryption_key(): ByteArray? {
         val passphrase = session_key_store.get_passphrase() ?: return null
@@ -2465,18 +2449,11 @@ class MailRepository @Inject constructor(
                 return n
             }
 
-            fun encrypt_field(plaintext: String, nonce: ByteArray): String {
-                val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-                cipher.init(
-                    Cipher.ENCRYPT_MODE,
-                    SecretKeySpec(ephemeral_key, "AES"),
-                    GCMParameterSpec(128, nonce),
-                )
-                return android.util.Base64.encodeToString(
-                    cipher.doFinal(plaintext.toByteArray(Charsets.UTF_8)),
+            fun encrypt_field(plaintext: String, nonce: ByteArray): String =
+                android.util.Base64.encodeToString(
+                    AesGcm.encrypt(ephemeral_key, nonce, plaintext.toByteArray(Charsets.UTF_8)),
                     android.util.Base64.NO_WRAP,
                 )
-            }
 
             val recipients_json = org.json.JSONObject().apply {
                 put("to", org.json.JSONArray(to))
@@ -2875,18 +2852,11 @@ class MailRepository @Inject constructor(
             return n
         }
 
-        fun encrypt_field(plaintext: String, nonce: ByteArray): String {
-            val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(
-                javax.crypto.Cipher.ENCRYPT_MODE,
-                javax.crypto.spec.SecretKeySpec(ephemeral_key, "AES"),
-                javax.crypto.spec.GCMParameterSpec(128, nonce),
-            )
-            return android.util.Base64.encodeToString(
-                cipher.doFinal(plaintext.toByteArray(Charsets.UTF_8)),
+        fun encrypt_field(plaintext: String, nonce: ByteArray): String =
+            android.util.Base64.encodeToString(
+                AesGcm.encrypt(ephemeral_key, nonce, plaintext.toByteArray(Charsets.UTF_8)),
                 android.util.Base64.NO_WRAP,
             )
-        }
 
         val envelope_nonce_bytes = derive_nonce(base_nonce, 0x01)
         val recipients_nonce_bytes = derive_nonce(base_nonce, 0x02)
@@ -2972,19 +2942,8 @@ class MailRepository @Inject constructor(
             try {
                 val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
                 val nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
-                val chars = String(passphrase, Charsets.UTF_8).toCharArray()
-                val spec = PBEKeySpec(chars, salt, PBKDF2_ITERATIONS, 256)
-                chars.fill(0.toChar())
-                val key_bytes = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
-                    .generateSecret(spec).encoded
-                spec.clearPassword()
-                val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-                cipher.init(
-                    Cipher.ENCRYPT_MODE,
-                    SecretKeySpec(key_bytes, "AES"),
-                    GCMParameterSpec(128, nonce),
-                )
-                val ciphertext = cipher.doFinal(json.toByteArray(Charsets.UTF_8))
+                val key_bytes = PasswordKdf.derive_aes_key(passphrase, salt, PBKDF2_ITERATIONS)
+                val ciphertext = AesGcm.encrypt(key_bytes, nonce, json.toByteArray(Charsets.UTF_8))
                 key_bytes.fill(0)
                 val combined = salt + nonce + ciphertext
                 return Pair(
@@ -3001,13 +2960,7 @@ class MailRepository @Inject constructor(
         val key = MessageDigest.getInstance("SHA-256").digest(material)
         try {
             val nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(
-                Cipher.ENCRYPT_MODE,
-                SecretKeySpec(key, "AES"),
-                GCMParameterSpec(128, nonce),
-            )
-            val ciphertext = cipher.doFinal(json.toByteArray(Charsets.UTF_8))
+            val ciphertext = AesGcm.encrypt(key, nonce, json.toByteArray(Charsets.UTF_8))
             return Pair(
                 android.util.Base64.encodeToString(ciphertext, android.util.Base64.NO_WRAP),
                 android.util.Base64.encodeToString(nonce, android.util.Base64.NO_WRAP),
@@ -3095,13 +3048,7 @@ class MailRepository @Inject constructor(
             if (key.size != 16 && key.size != 24 && key.size != 32) {
                 throw IllegalStateException("invalid aes key length")
             }
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(
-                Cipher.DECRYPT_MODE,
-                SecretKeySpec(key, "AES"),
-                GCMParameterSpec(128, iv),
-            )
-            return cipher.doFinal(ciphertext)
+            return AesGcm.decrypt(key, iv, ciphertext)
         }
 
         fun decrypt_attachment_bytes(
