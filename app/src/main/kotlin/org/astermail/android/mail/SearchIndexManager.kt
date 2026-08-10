@@ -165,6 +165,10 @@ class SearchIndexManager @Inject constructor(
 
     suspend fun mark_spam(ids: List<String>) = dao.mark_spam(ids)
 
+    suspend fun mark_unspam(ids: List<String>) = dao.mark_unspam(ids)
+
+    suspend fun mark_restored(ids: List<String>) = dao.mark_restored(ids)
+
     suspend fun remove_items(ids: List<String>) = dao.remove_items(ids)
 
     suspend fun clear() {

@@ -2690,4 +2690,10 @@
         <item quantity="one">已将 %d 封邮件移至回收站</item>
         <item quantity="other">已将 %d 封邮件移至回收站</item>
     </plurals>
+    <string name="unsnooze">取消延后</string>
+    <string name="edit_labels">编辑标签</string>
+    <string name="removed_from_label">已从 %s 移除</string>
+    <string name="couldnt_remove_label">无法移除标签</string>
+    <string name="unsnoozed_count">已取消延后 %d 个会话</string>
+    <string name="couldnt_unsnooze">无法取消延后</string>
 </resources>

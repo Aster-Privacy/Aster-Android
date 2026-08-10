@@ -67,6 +67,7 @@ class NotificationSanitizationTest {
         MailPollingWorker.set_push_enabled(context, false)
         MailPollingWorker.set_notify_new_email(context, true)
         MailPollingWorker.set_muted_folder_tokens(context, emptyList())
+        MailPollingWorker.set_protected_folder_tokens(context, emptyList())
         LockdownStore.set_enabled(context, false)
         MailPollingWorker.create_channel(context)
         manager.cancelAll()

@@ -2698,4 +2698,10 @@
         <item quantity="one">%d Nachricht in den Papierkorb verschoben</item>
         <item quantity="other">%d Nachrichten in den Papierkorb verschoben</item>
     </plurals>
+    <string name="unsnooze">Nicht mehr zurückstellen</string>
+    <string name="edit_labels">Labels bearbeiten</string>
+    <string name="removed_from_label">Aus %s entfernt</string>
+    <string name="couldnt_remove_label">Label konnte nicht entfernt werden</string>
+    <string name="unsnoozed_count">%d Konversation(en) nicht mehr zurückgestellt</string>
+    <string name="couldnt_unsnooze">Zurückstellen konnte nicht aufgehoben werden</string>
 </resources>

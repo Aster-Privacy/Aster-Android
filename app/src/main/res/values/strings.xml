@@ -333,6 +333,8 @@
     <string name="pin_to_top">Pin to top</string>
     <string name="pin_not_available">Pin not available yet</string>
     <string name="snooze">Snooze</string>
+    <string name="unsnooze">Unsnooze</string>
+    <string name="edit_labels">Edit labels</string>
     <string name="snooze_not_available">Snooze not available yet</string>
     <string name="move_to_folder">Move to folder</string>
     <string name="no_folders_created">No folders created yet</string>
@@ -446,6 +448,10 @@
     <string name="couldnt_snooze">Couldn\'t snooze</string>
     <string name="added_to_label">Added to %s</string>
     <string name="couldnt_apply_label">Couldn\'t apply label</string>
+    <string name="removed_from_label">Removed from %s</string>
+    <string name="couldnt_remove_label">Couldn\'t remove label</string>
+    <string name="unsnoozed_count">Unsnoozed %d conversation(s)</string>
+    <string name="couldnt_unsnooze">Couldn\'t unsnooze</string>
     <string name="archived_conversations">Archived %d conversation(s)</string>
     <string name="failed_to_archive">Failed to archive</string>
     <string name="moved_to_trash">Moved %d conversation(s) to trash</string>

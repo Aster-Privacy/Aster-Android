@@ -2698,4 +2698,10 @@
         <item quantity="one">%d mensaje movido a la papelera</item>
         <item quantity="other">%d mensajes movidos a la papelera</item>
     </plurals>
+    <string name="unsnooze">Dejar de posponer</string>
+    <string name="edit_labels">Editar etiquetas</string>
+    <string name="removed_from_label">Quitado de %s</string>
+    <string name="couldnt_remove_label">No se pudo quitar la etiqueta</string>
+    <string name="unsnoozed_count">%d conversación(es) sin posponer</string>
+    <string name="couldnt_unsnooze">No se pudo dejar de posponer</string>
 </resources>

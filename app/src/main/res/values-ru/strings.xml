@@ -2711,4 +2711,10 @@
         <item quantity="one">Перемещено %d письмо в корзину</item>
         <item quantity="other">Перемещено %d писем в корзину</item>
     </plurals>
+    <string name="unsnooze">Вернуть во входящие</string>
+    <string name="edit_labels">Изменить метки</string>
+    <string name="removed_from_label">Удалено из %s</string>
+    <string name="couldnt_remove_label">Не удалось удалить метку</string>
+    <string name="unsnoozed_count">Возвращено во входящие: %d разговоров</string>
+    <string name="couldnt_unsnooze">Не удалось вернуть во входящие</string>
 </resources>

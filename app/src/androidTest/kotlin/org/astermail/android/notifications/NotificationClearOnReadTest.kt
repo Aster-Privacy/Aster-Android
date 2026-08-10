@@ -97,6 +97,7 @@ class NotificationClearOnReadTest {
         post_and_await("Alice", "First subject", "preview one", id_a)
         post_and_await("Bob", "Second subject", "preview two", id_b)
 
+        await_id(MailPollingWorker.SUMMARY_NOTIFICATION_ID, true)
         val with_both = active_ids()
         assertTrue("message A ($id_a) should be posted; active=$with_both", id_a in with_both)
         assertTrue("message B ($id_b) should be posted; active=$with_both", id_b in with_both)

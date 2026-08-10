@@ -855,17 +855,28 @@ fun SearchScreen(
 
     if (show_label_sheet) {
         val tag_items = org.astermail.android.labels.tag_rows(settings_state.tags)
+        val selected_items = search_state.all_items.filter { it.id in selected_ids }
+        val applied_tags = if (selected_items.isEmpty()) {
+            emptySet()
+        } else {
+            selected_items.map { it.tag_tokens.toSet() }.reduce { acc, tokens -> acc intersect tokens }
+        }
         org.astermail.android.ui.mail.tag_picker_sheet(
-            title = stringResource(R.string.add_label),
+            title = stringResource(R.string.edit_labels),
             empty_message = stringResource(R.string.no_labels_yet_create),
             items = tag_items,
             on_close = { show_label_sheet = false },
             on_pick = { picked ->
                 val display = picked.encrypted_name.takeIf { it.isNotBlank() } ?: picked.tag_token
                 show_label_sheet = false
-                mail_vm.apply_tag_bulk(selected_ids.toList(), picked.tag_token, display)
+                if (picked.tag_token in applied_tags) {
+                    mail_vm.remove_tag_bulk(selected_ids.toList(), picked.tag_token, display)
+                } else {
+                    mail_vm.apply_tag_bulk(selected_ids.toList(), picked.tag_token, display)
+                }
                 exit_select_mode()
             },
+            applied_tokens = applied_tags,
         )
     }
 
@@ -1144,8 +1155,8 @@ internal fun search_results_list(
     val selected_set = selected_ids.toSet()
     val list_state = rememberLazyListState()
     val haptics = LocalHapticFeedback.current
-    val settings_vm = org.astermail.android.settings.shared_settings_view_model()
-    val settings_state by settings_vm.state.collectAsStateWithLifecycle()
+    val settings_vm = org.astermail.android.settings.optional_shared_settings_view_model()
+    val settings_state = settings_vm?.state?.collectAsStateWithLifecycle()?.value
     val live_select_mode by rememberUpdatedState(select_mode)
     val live_selected_set by rememberUpdatedState(selected_set)
     val live_items by rememberUpdatedState(items)
@@ -1281,7 +1292,7 @@ internal fun search_results_list(
                 is_first = index == 0,
                 is_last = index == items.lastIndex,
                 is_selected = is_selected,
-                list_density = settings_state.preferences?.mail_list_density,
+                list_density = settings_state?.preferences?.mail_list_density,
             )
         }
     }

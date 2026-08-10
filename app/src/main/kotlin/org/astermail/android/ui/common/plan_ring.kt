@@ -44,7 +44,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.design.AsterMaterial
-import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.settings.optional_shared_settings_view_model
 
 val plan_ring_stroke: Dp = 2.dp
 val plan_ring_gap: Dp = 3.dp
@@ -100,8 +100,7 @@ fun plan_ring(
 
 @Composable
 fun remember_has_paid_plan(): Boolean {
-    val settings_vm = shared_settings_view_model()
-    val settings_state by settings_vm.state.collectAsStateWithLifecycle()
+    val settings_vm = optional_shared_settings_view_model()
     val context = LocalContext.current
     val plan_prefs = remember(context) {
         context.getSharedPreferences("aster_plan", Context.MODE_PRIVATE)
@@ -109,6 +108,9 @@ fun remember_has_paid_plan(): Boolean {
     var cached_paid by rememberSaveable {
         mutableStateOf(plan_prefs.getBoolean("has_paid", false))
     }
+    if (settings_vm == null) return cached_paid
+
+    val settings_state by settings_vm.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) { settings_vm.load_subscription(force = false) }
 

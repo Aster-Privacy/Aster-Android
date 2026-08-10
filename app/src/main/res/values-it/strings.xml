@@ -2697,4 +2697,10 @@
         <item quantity="one">%d messaggio spostato nel cestino</item>
         <item quantity="other">%d messaggi spostati nel cestino</item>
     </plurals>
+    <string name="unsnooze">Annulla posticipo</string>
+    <string name="edit_labels">Modifica etichette</string>
+    <string name="removed_from_label">Rimosso da %s</string>
+    <string name="couldnt_remove_label">Impossibile rimuovere l\'etichetta</string>
+    <string name="unsnoozed_count">Posticipo annullato per %d conversazione/i</string>
+    <string name="couldnt_unsnooze">Impossibile annullare il posticipo</string>
 </resources>

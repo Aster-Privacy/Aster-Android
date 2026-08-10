@@ -55,6 +55,7 @@ private const val WARM_CACHE_MIN_ITEMS = 8
 private const val WARM_CACHE_WINDOW = 200
 private const val BULK_ACTION_CONCURRENCY = 6
 private const val CARRIED_ITEM_STALE_MS = 20 * 60 * 1000L
+private const val RESTORE_PROTECTION_MS = 15_000L
 private const val STATS_TTL_MS = 30_000L
 private const val STATS_DEBOUNCE_MS = 1_200L
 private const val DECRYPT_RETRY_TIMEOUT_MS = 20_000L
@@ -319,6 +320,7 @@ class MailViewModel @Inject constructor(
     private val folder_cache_time = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val item_last_confirmed = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val pending_removed_ids = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+    private val restore_protected_until = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private var list_order: String? = null
     private var page_size: Int = 50
     private var inbox_load_job: Job? = null
@@ -400,6 +402,7 @@ class MailViewModel @Inject constructor(
         folder_cache_time.clear()
         item_last_confirmed.clear()
         pending_removed_ids.clear()
+        restore_protected_until.clear()
         last_stats_load_ms = 0L
         star_overrides.clear()
         pin_overrides.clear()
@@ -486,9 +489,16 @@ class MailViewModel @Inject constructor(
         val carried = previous_items.asSequence()
             .filter { it.id !in page_ids }
             .filter { it.id !in pending_removed_ids }
-            .filter { min_page_timestamp == null || it.timestamp < min_page_timestamp }
+            .filter {
+                restore_protected(it.id, now) ||
+                    min_page_timestamp == null ||
+                    it.timestamp < min_page_timestamp
+            }
             .filter { folder_matches(folder, it) }
-            .filter { now - (item_last_confirmed[it.id] ?: 0L) <= CARRIED_ITEM_STALE_MS }
+            .filter {
+                restore_protected(it.id, now) ||
+                    now - (item_last_confirmed[it.id] ?: 0L) <= CARRIED_ITEM_STALE_MS
+            }
             .toList()
         val combined = live_items + carried
         return if (combined.size > cap) combined.take(cap) else combined
@@ -1426,6 +1436,45 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    fun remove_label(item_id: String, label_token: String, display_name: String) {
+        if (item_id == DEMO_PHISH_ITEM_ID) return
+        val prev_inbox_labels = _inbox_state.value.items.find { it.id == item_id }?.labels
+        val prev_thread_labels = _thread_state.value.item?.takeIf { it.id == item_id }?.labels
+        _inbox_state.value = _inbox_state.value.copy(
+            items = _inbox_state.value.items.map {
+                if (it.id == item_id) it.copy(labels = it.labels - label_token) else it
+            },
+        )
+        val thread = _thread_state.value
+        if (thread.item?.id == item_id) {
+            _thread_state.value = thread.copy(
+                item = thread.item.copy(labels = thread.item.labels - label_token),
+            )
+        }
+        viewModelScope.launch {
+            repository.remove_label_from_item(item_id, label_token).fold(
+                onSuccess = {
+                    invalidate_caches(listOf("label:$label_token"))
+                    emit_toast(context.getString(R.string.removed_from_label, display_name))
+                },
+                onFailure = {
+                    if (prev_inbox_labels != null) {
+                        _inbox_state.value = _inbox_state.value.copy(
+                            items = _inbox_state.value.items.map {
+                                if (it.id == item_id) it.copy(labels = prev_inbox_labels) else it
+                            },
+                        )
+                    }
+                    val th = _thread_state.value
+                    if (prev_thread_labels != null && th.item?.id == item_id) {
+                        _thread_state.value = th.copy(item = th.item.copy(labels = prev_thread_labels))
+                    }
+                    emit_toast(org.astermail.android.api.user_facing_error(it, context.getString(R.string.couldnt_remove_label)))
+                },
+            )
+        }
+    }
+
     fun apply_tag(item_id: String, tag_token: String, display_name: String) {
         if (item_id == DEMO_PHISH_ITEM_ID) return
         val prev_inbox_item = _inbox_state.value.items.find { it.id == item_id }
@@ -1477,6 +1526,57 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    fun remove_tag(item_id: String, tag_token: String, display_name: String) {
+        if (item_id == DEMO_PHISH_ITEM_ID) return
+        val prev_inbox_item = _inbox_state.value.items.find { it.id == item_id }
+        val prev_thread_item = _thread_state.value.item?.takeIf { it.id == item_id }
+        _inbox_state.value = _inbox_state.value.copy(
+            items = _inbox_state.value.items.map {
+                if (it.id == item_id) {
+                    val new_tokens = it.tag_tokens - tag_token
+                    it.copy(
+                        tag_tokens = new_tokens,
+                        raw_item = it.raw_item.copy(tag_tokens = new_tokens),
+                    )
+                } else it
+            },
+        )
+        val thread = _thread_state.value
+        if (thread.item?.id == item_id) {
+            val new_tokens = thread.item.tag_tokens - tag_token
+            _thread_state.value = thread.copy(
+                item = thread.item.copy(
+                    tag_tokens = new_tokens,
+                    raw_item = thread.item.raw_item.copy(tag_tokens = new_tokens),
+                ),
+            )
+        }
+        patch_cached_tag_tokens(setOf(item_id), tag_token, add = false)
+        viewModelScope.launch {
+            repository.remove_tag_from_item(item_id, tag_token).fold(
+                onSuccess = {
+                    invalidate_caches(listOf("tag:$tag_token"))
+                    emit_toast(context.getString(R.string.removed_from_label, display_name))
+                },
+                onFailure = {
+                    patch_cached_tag_tokens(setOf(item_id), tag_token)
+                    if (prev_inbox_item != null) {
+                        _inbox_state.value = _inbox_state.value.copy(
+                            items = _inbox_state.value.items.map {
+                                if (it.id == item_id) prev_inbox_item else it
+                            },
+                        )
+                    }
+                    val th = _thread_state.value
+                    if (prev_thread_item != null && th.item?.id == item_id) {
+                        _thread_state.value = th.copy(item = prev_thread_item)
+                    }
+                    emit_toast(org.astermail.android.api.user_facing_error(it, context.getString(R.string.couldnt_remove_label)))
+                },
+            )
+        }
+    }
+
     fun apply_label_bulk(item_ids: List<String>, label_token: String, display_name: String) {
         val ids = item_ids.filter { it != DEMO_PHISH_ITEM_ID }
         if (ids.isEmpty()) return
@@ -1500,6 +1600,56 @@ class MailViewModel @Inject constructor(
                     },
                 )
                 emit_toast(context.getString(R.string.couldnt_apply_label))
+            }
+        }
+    }
+
+    fun remove_label_bulk(item_ids: List<String>, label_token: String, display_name: String) {
+        val ids = item_ids.filter { it != DEMO_PHISH_ITEM_ID }
+        if (ids.isEmpty()) return
+        val id_set = ids.toSet()
+        val prev_items = _inbox_state.value.items.filter { it.id in id_set }.associateBy { it.id }
+        _inbox_state.value = _inbox_state.value.copy(
+            items = _inbox_state.value.items.map {
+                if (it.id in id_set) it.copy(labels = it.labels - label_token) else it
+            },
+        )
+        viewModelScope.launch {
+            val failed_ids = repository.remove_label_bulk(ids, label_token)
+            invalidate_caches(listOf("label:$label_token"))
+            if (failed_ids.isEmpty()) {
+                emit_toast(context.getString(R.string.removed_from_label, display_name))
+            } else {
+                _inbox_state.value = _inbox_state.value.copy(
+                    items = _inbox_state.value.items.map {
+                        val prev = prev_items[it.id]
+                        if (it.id in failed_ids && prev != null) it.copy(labels = prev.labels) else it
+                    },
+                )
+                emit_toast(context.getString(R.string.couldnt_remove_label))
+            }
+        }
+    }
+
+    fun unsnooze_bulk(item_ids: List<String>) {
+        val ids = item_ids.filter { it != DEMO_PHISH_ITEM_ID }
+        if (ids.isEmpty()) return
+        viewModelScope.launch {
+            val failed_ids = run_bulk_action(ids) { id ->
+                repository.unsnooze(id).isSuccess
+            }
+            val ok_ids = ids.filter { it !in failed_ids }.toSet()
+            if (ok_ids.isNotEmpty()) {
+                _inbox_state.value = _inbox_state.value.copy(
+                    items = _inbox_state.value.items.filter { it.id !in ok_ids },
+                )
+                invalidate_caches(listOf("inbox", "snoozed"))
+                load_stats(force = true)
+            }
+            if (failed_ids.isNotEmpty()) {
+                emit_toast(context.getString(R.string.couldnt_unsnooze))
+            } else {
+                emit_toast(context.getString(R.string.unsnoozed_count, ok_ids.size))
             }
         }
     }
@@ -1535,6 +1685,41 @@ class MailViewModel @Inject constructor(
                     },
                 )
                 emit_toast(context.getString(R.string.couldnt_apply_label))
+            }
+        }
+    }
+
+    fun remove_tag_bulk(item_ids: List<String>, tag_token: String, display_name: String) {
+        val ids = item_ids.filter { it != DEMO_PHISH_ITEM_ID }
+        if (ids.isEmpty()) return
+        val id_set = ids.toSet()
+        val prev_items = _inbox_state.value.items.filter { it.id in id_set }.associateBy { it.id }
+        _inbox_state.value = _inbox_state.value.copy(
+            items = _inbox_state.value.items.map {
+                if (it.id in id_set) {
+                    val new_tokens = it.tag_tokens - tag_token
+                    it.copy(
+                        tag_tokens = new_tokens,
+                        raw_item = it.raw_item.copy(tag_tokens = new_tokens),
+                    )
+                } else it
+            },
+        )
+        patch_cached_tag_tokens(id_set, tag_token, add = false)
+        viewModelScope.launch {
+            val failed_ids = repository.remove_tag_bulk(ids, tag_token)
+            invalidate_caches(listOf("tag:$tag_token"))
+            if (failed_ids.isEmpty()) {
+                emit_toast(context.getString(R.string.removed_from_label, display_name))
+            } else {
+                patch_cached_tag_tokens(failed_ids.toSet(), tag_token)
+                _inbox_state.value = _inbox_state.value.copy(
+                    items = _inbox_state.value.items.map {
+                        val prev = prev_items[it.id]
+                        if (it.id in failed_ids && prev != null) prev else it
+                    },
+                )
+                emit_toast(context.getString(R.string.couldnt_remove_label))
             }
         }
     }
@@ -1731,7 +1916,18 @@ class MailViewModel @Inject constructor(
                             thread_count = thread_count,
                             message_fn = { n -> archived_message(n, message_scope) },
                             undo_label = context.getString(R.string.undo),
-                        ) { prev_undo -> { prev_undo?.invoke(); undo_local_restore(removed_items); undo_search_restore(search_removed); unarchive_backend_only(item_ids) } }
+                        ) { prev_undo ->
+                            {
+                                prev_undo?.invoke()
+                                undo_restore(
+                                    removed_items = removed_items,
+                                    search_removed = search_removed,
+                                    item_ids = item_ids,
+                                    reindex = { search_index_manager.mark_unarchived(it) },
+                                    restore = { repository.unarchive(it, lookup_raw_items(it)) },
+                                )
+                            }
+                        }
                         load_stats()
                     },
                     onFailure = { t ->
@@ -1783,7 +1979,18 @@ class MailViewModel @Inject constructor(
                             thread_count = thread_count,
                             message_fn = { n -> trashed_message(n, message_scope) },
                             undo_label = context.getString(R.string.undo),
-                        ) { prev_undo -> { prev_undo?.invoke(); undo_local_restore(removed_items); undo_search_restore(search_removed); restore_trash_backend_only(item_ids) } }
+                        ) { prev_undo ->
+                            {
+                                prev_undo?.invoke()
+                                undo_restore(
+                                    removed_items = removed_items,
+                                    search_removed = search_removed,
+                                    item_ids = item_ids,
+                                    reindex = { search_index_manager.mark_restored(it) },
+                                    restore = { repository.restore_trash(it) },
+                                )
+                            }
+                        }
                         load_stats()
                     },
                     onFailure = {
@@ -1873,8 +2080,13 @@ class MailViewModel @Inject constructor(
                             context.getString(R.string.reported_as_spam),
                             context.getString(R.string.undo),
                         ) {
-                            undo_local_restore(removed_items)
-                            unmark_spam_backend_only(item_ids)
+                            undo_restore(
+                                removed_items = removed_items,
+                                search_removed = emptyList(),
+                                item_ids = item_ids,
+                                reindex = { search_index_manager.mark_unspam(it) },
+                                restore = { repository.unmark_spam(it) },
+                            )
                             viewModelScope.launch {
                                 report_job.join()
                                 repository.remove_spam_senders(sender_emails)
@@ -1908,14 +2120,20 @@ class MailViewModel @Inject constructor(
                     removed_items.map { it.sender_email }.ifEmpty { sender_emails_hint }
                 repository.unmark_spam(item_ids).fold(
                     onSuccess = {
+                        runCatching { search_index_manager.mark_unspam(item_ids) }
                         val remove_job =
                             viewModelScope.launch { repository.remove_spam_senders(sender_emails) }
                         emit_toast_undo(
                             context.getString(R.string.moved_to_inbox),
                             context.getString(R.string.undo),
                         ) {
-                            undo_local_restore(removed_items)
-                            mark_spam_backend_only(item_ids)
+                            undo_restore(
+                                removed_items = removed_items,
+                                search_removed = emptyList(),
+                                item_ids = item_ids,
+                                reindex = { search_index_manager.mark_spam(it) },
+                                restore = { repository.mark_spam(it, lookup_raw_items(it)) },
+                            )
                             viewModelScope.launch {
                                 remove_job.join()
                                 repository.report_spam_senders(sender_emails)
@@ -1969,37 +2187,37 @@ class MailViewModel @Inject constructor(
         _search_state.value = _search_state.value.copy(all_items = current + to_add)
     }
 
-    fun unarchive_backend_only(item_ids: List<String>) {
-        if (item_ids.isEmpty()) return
-        viewModelScope.launch { repository.unarchive(item_ids) }
+    private fun protect_restored(item_ids: List<String>) {
+        val until = System.currentTimeMillis() + RESTORE_PROTECTION_MS
+        item_ids.forEach { restore_protected_until[it] = until }
     }
 
-    fun archive_backend_only(item_ids: List<String>) {
-        if (item_ids.isEmpty()) return
-        val raw_items = lookup_raw_items(item_ids)
-        viewModelScope.launch { repository.archive(item_ids, raw_items) }
+    private fun restore_protected(item_id: String, now: Long): Boolean {
+        val until = restore_protected_until[item_id] ?: return false
+        if (now > until) {
+            restore_protected_until.remove(item_id)
+            return false
+        }
+        return true
     }
 
-    fun trash_backend_only(item_ids: List<String>) {
+    private fun undo_restore(
+        removed_items: List<InboxItem>,
+        search_removed: List<InboxItem>,
+        item_ids: List<String>,
+        reindex: suspend (List<String>) -> Unit,
+        restore: suspend (List<String>) -> Unit,
+    ) {
+        undo_local_restore(removed_items)
+        undo_search_restore(search_removed)
         if (item_ids.isEmpty()) return
-        val raw_items = lookup_raw_items(item_ids)
-        viewModelScope.launch { repository.trash(item_ids, raw_items) }
-    }
-
-    fun mark_spam_backend_only(item_ids: List<String>) {
-        if (item_ids.isEmpty()) return
-        val raw_items = lookup_raw_items(item_ids)
-        viewModelScope.launch { repository.mark_spam(item_ids, raw_items) }
-    }
-
-    fun restore_trash_backend_only(item_ids: List<String>) {
-        if (item_ids.isEmpty()) return
-        viewModelScope.launch { repository.restore_trash(item_ids) }
-    }
-
-    fun unmark_spam_backend_only(item_ids: List<String>) {
-        if (item_ids.isEmpty()) return
-        viewModelScope.launch { repository.unmark_spam(item_ids) }
+        protect_restored(item_ids)
+        viewModelScope.launch {
+            runCatching { restore(item_ids) }
+            runCatching { reindex(item_ids) }
+            load_inbox(_inbox_state.value.current_folder, force = true)
+            load_stats(force = true)
+        }
     }
 
     fun unarchive(item_ids: List<String>) {
@@ -2020,7 +2238,15 @@ class MailViewModel @Inject constructor(
                         emit_toast_undo(
                             context.getString(R.string.moved_to_inbox),
                             context.getString(R.string.undo),
-                        ) { undo_local_restore(removed_items); archive_backend_only(item_ids) }
+                        ) {
+                            undo_restore(
+                                removed_items = removed_items,
+                                search_removed = emptyList(),
+                                item_ids = item_ids,
+                                reindex = { search_index_manager.mark_archived(it) },
+                                restore = { repository.archive(it, lookup_raw_items(it)) },
+                            )
+                        }
                         load_stats()
                     },
                     onFailure = {
@@ -2047,10 +2273,19 @@ class MailViewModel @Inject constructor(
             try {
                 repository.restore_trash(item_ids).fold(
                     onSuccess = {
+                        runCatching { search_index_manager.mark_restored(item_ids) }
                         emit_toast_undo(
                             context.getString(R.string.restored_to_inbox),
                             context.getString(R.string.undo),
-                        ) { undo_local_restore(removed_items); trash_backend_only(item_ids) }
+                        ) {
+                            undo_restore(
+                                removed_items = removed_items,
+                                search_removed = emptyList(),
+                                item_ids = item_ids,
+                                reindex = { search_index_manager.mark_trashed(it) },
+                                restore = { repository.trash(it, lookup_raw_items(it)) },
+                            )
+                        }
                         load_stats()
                     },
                     onFailure = {

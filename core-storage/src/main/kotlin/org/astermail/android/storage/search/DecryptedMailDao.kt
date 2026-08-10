@@ -91,6 +91,15 @@ interface DecryptedMailDao {
     @Query("UPDATE decrypted_mail_cache SET is_spam = 1 WHERE id IN (:ids)")
     suspend fun mark_spam(ids: List<String>)
 
+    @Query("UPDATE decrypted_mail_cache SET is_spam = 0 WHERE id IN (:ids)")
+    suspend fun mark_unspam(ids: List<String>)
+
+    @Query(
+        "UPDATE decrypted_mail_cache SET is_trashed = 0, is_spam = 0, is_archived = 0 " +
+            "WHERE id IN (:ids)",
+    )
+    suspend fun mark_restored(ids: List<String>)
+
     @Query("UPDATE decrypted_mail_cache SET has_attachments = 1 WHERE id IN (:ids)")
     suspend fun mark_has_attachments(ids: List<String>)
 

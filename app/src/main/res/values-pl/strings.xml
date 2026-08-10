@@ -2711,4 +2711,10 @@
         <item quantity="one">Przeniesiono %d wiadomość do kosza</item>
         <item quantity="other">Przeniesiono %d wiadomości do kosza</item>
     </plurals>
+    <string name="unsnooze">Anuluj odłożenie</string>
+    <string name="edit_labels">Edytuj etykiety</string>
+    <string name="removed_from_label">Usunięto z %s</string>
+    <string name="couldnt_remove_label">Nie można usunąć etykiety</string>
+    <string name="unsnoozed_count">Anulowano odłożenie %d konwersacji</string>
+    <string name="couldnt_unsnooze">Nie można anulować odłożenia</string>
 </resources>

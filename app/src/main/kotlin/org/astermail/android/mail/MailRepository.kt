@@ -1097,11 +1097,25 @@ class MailRepository @Inject constructor(
             per_chunk = { mail_api.bulk_add_label(BulkLabelRequest(ids = it, label_token = label_token)) },
         )
 
+    suspend fun remove_label_bulk(item_ids: List<String>, label_token: String): Set<String> =
+        bulk_membership(
+            item_ids,
+            per_item = { mail_api.remove_label_from_item(it, label_token) },
+            per_chunk = { mail_api.bulk_remove_label(BulkLabelRequest(ids = it, label_token = label_token)) },
+        )
+
     suspend fun add_tag_bulk(item_ids: List<String>, tag_token: String): Set<String> =
         bulk_membership(
             item_ids,
             per_item = { mail_api.add_tag_to_item(it, tag_token) },
             per_chunk = { mail_api.bulk_add_tag(BulkTagRequest(ids = it, tag_token = tag_token)) },
+        )
+
+    suspend fun remove_tag_bulk(item_ids: List<String>, tag_token: String): Set<String> =
+        bulk_membership(
+            item_ids,
+            per_item = { mail_api.remove_tag_from_item(it, tag_token) },
+            per_chunk = { mail_api.bulk_remove_tag(BulkTagRequest(ids = it, tag_token = tag_token)) },
         )
 
     suspend fun star_bulk(

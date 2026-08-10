@@ -1628,4 +1628,83 @@ class MailViewModelTest {
         coVerify(atLeast = 1) { repository.fetch_inbox(any(), any(), any(), any(), any(), any()) }
     }
 
+    @Test
+    fun `undo archive restores the item, the search index and the folder`() = runTest {
+        val page = fake_inbox_page(3)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+        coEvery { repository.archive(any(), any()) } returns Result.success(Unit)
+        coEvery { repository.unarchive(any(), any()) } returns Result.success(BulkScopeResponse(affected_count = 1))
+
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        vm.archive(listOf("id_2"))
+        advanceUntilIdle()
+        assertFalse("id_2" in vm.inbox_state.value.items.map { it.id })
+
+        val undo = vm.batch_action_state.value?.on_undo
+        assertNotNull("archive must offer an undo action", undo)
+        undo!!.invoke()
+        advanceUntilIdle()
+
+        assertTrue("id_2" in vm.inbox_state.value.items.map { it.id })
+        coVerify { repository.unarchive(listOf("id_2"), any()) }
+        coVerify { search_index_manager.mark_unarchived(listOf("id_2")) }
+    }
+
+    @Test
+    fun `undo trash clears the trashed flag in the search index`() = runTest {
+        val page = fake_inbox_page(3)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+        coEvery { repository.trash(any(), any()) } returns Result.success(Unit)
+        coEvery { repository.restore_trash(any()) } returns Result.success(BulkScopeResponse(affected_count = 1))
+
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        vm.trash(listOf("id_1"))
+        advanceUntilIdle()
+
+        val undo = vm.batch_action_state.value?.on_undo
+        assertNotNull("trash must offer an undo action", undo)
+        undo!!.invoke()
+        advanceUntilIdle()
+
+        assertTrue("id_1" in vm.inbox_state.value.items.map { it.id })
+        coVerify { repository.restore_trash(listOf("id_1")) }
+        coVerify { search_index_manager.mark_restored(listOf("id_1")) }
+    }
+
+    @Test
+    fun `a restored item survives the next page load`() = runTest {
+        val page = fake_inbox_page(3)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+        coEvery { repository.archive(any(), any()) } returns Result.success(Unit)
+        coEvery { repository.unarchive(any(), any()) } returns Result.success(BulkScopeResponse(affected_count = 1))
+
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        vm.archive(listOf("id_3"))
+        advanceUntilIdle()
+
+        val without_restored = InboxPage(
+            page.items.filter { it.id != "id_3" },
+            has_more = false,
+            next_cursor = null,
+            total = 3,
+        )
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns
+            Result.success(without_restored)
+
+        vm.batch_action_state.value?.on_undo?.invoke()
+        advanceUntilIdle()
+
+        vm.load_inbox(force = true)
+        advanceUntilIdle()
+
+        val ids = vm.inbox_state.value.items.map { it.id }
+        assertTrue("restored item must survive a stale page, got $ids", "id_3" in ids)
+    }
+
 }

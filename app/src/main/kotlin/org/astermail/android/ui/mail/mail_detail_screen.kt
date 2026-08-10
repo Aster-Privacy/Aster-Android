@@ -1744,16 +1744,23 @@ fun MailDetailScreen(
     if (show_label_sheet) {
         val settings_state by settings_vm.state.collectAsStateWithLifecycle()
         val tag_items = org.astermail.android.labels.tag_rows(settings_state.tags)
+        val applied_tags = thread_state.item?.takeIf { it.id == email_id }?.tag_tokens?.toSet()
+            ?: emptySet()
         tag_picker_sheet(
-            title = stringResource(R.string.add_label),
+            title = stringResource(R.string.edit_labels),
             empty_message = stringResource(R.string.no_labels_yet_create),
             items = tag_items,
             on_close = { show_label_sheet = false },
             on_pick = { picked ->
                 val display = picked.encrypted_name.takeIf { it.isNotBlank() } ?: picked.tag_token
-                mail_vm.apply_tag(email_id, picked.tag_token, display)
+                if (picked.tag_token in applied_tags) {
+                    mail_vm.remove_tag(email_id, picked.tag_token, display)
+                } else {
+                    mail_vm.apply_tag(email_id, picked.tag_token, display)
+                }
                 show_label_sheet = false
             },
+            applied_tokens = applied_tags,
         )
     }
 
@@ -3694,6 +3701,7 @@ internal fun label_picker_sheet(
     items: List<org.astermail.android.api.labels.LabelItem>,
     on_close: () -> Unit,
     on_pick: (org.astermail.android.api.labels.LabelItem) -> Unit,
+    applied_tokens: Set<String> = emptySet(),
 ) {
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
@@ -3732,7 +3740,12 @@ internal fun label_picker_sheet(
                 items.forEach { item ->
                     val display = item.encrypted_name?.takeIf { it.isNotBlank() }
                         ?: stringResource(R.string.unnamed_folder)
-                    sheet_row(display, colors.text_primary) { on_pick(item) }
+                    val applied = item.label_token in applied_tokens
+                    sheet_row(
+                        label = display,
+                        tint = colors.text_primary,
+                        icon = if (applied) TablerIcons.Check else null,
+                    ) { on_pick(item) }
                 }
             }
             Spacer(Modifier.height(AsterSpacing.md))
@@ -3748,6 +3761,7 @@ internal fun tag_picker_sheet(
     items: List<org.astermail.android.api.tags.TagItem>,
     on_close: () -> Unit,
     on_pick: (org.astermail.android.api.tags.TagItem) -> Unit,
+    applied_tokens: Set<String> = emptySet(),
 ) {
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
@@ -3807,7 +3821,16 @@ internal fun tag_picker_sheet(
                             text = display,
                             color = colors.text_primary,
                             fontSize = 15.sp,
+                            modifier = Modifier.weight(1f),
                         )
+                        if (item.tag_token in applied_tokens) {
+                            Icon(
+                                imageVector = TablerIcons.Check,
+                                contentDescription = null,
+                                tint = colors.accent_blue,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
                     }
                 }
             }

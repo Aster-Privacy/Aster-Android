@@ -30,11 +30,22 @@ private const val CHUNK_SIZE = 2500
 private const val TARGET_WIDTH = 520
 
 internal fun capture_screenshot(name: String, node: SemanticsNodeInteraction) {
-    dump_screenshot(name, node.captureToImage().asAndroidBitmap())
+    capture_safely(name) { node.captureToImage().asAndroidBitmap() }
 }
 
 internal fun capture_device_screenshot(name: String) {
-    dump_screenshot(name, InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot())
+    capture_safely(name) { InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot() }
+}
+
+private fun capture_safely(name: String, grab: () -> Bitmap?) {
+    val bitmap = runCatching(grab).getOrNull()
+    if (bitmap == null) {
+        Log.w(LOG_TAG, "SKIP $name")
+
+        return
+    }
+    runCatching { dump_screenshot(name, bitmap) }
+        .onFailure { Log.w(LOG_TAG, "SKIP $name") }
 }
 
 private fun dump_screenshot(name: String, bitmap: Bitmap) {

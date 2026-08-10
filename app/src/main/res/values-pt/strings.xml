@@ -2697,4 +2697,10 @@
         <item quantity="one">%d mensagem movida para a lixeira</item>
         <item quantity="other">%d mensagens movidas para a lixeira</item>
     </plurals>
+    <string name="unsnooze">Cancelar adiamento</string>
+    <string name="edit_labels">Editar etiquetas</string>
+    <string name="removed_from_label">Removido de %s</string>
+    <string name="couldnt_remove_label">Não foi possível remover a etiqueta</string>
+    <string name="unsnoozed_count">Adiamento cancelado em %d conversa(s)</string>
+    <string name="couldnt_unsnooze">Não foi possível cancelar o adiamento</string>
 </resources>

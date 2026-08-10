@@ -2725,4 +2725,10 @@
         <item quantity="one">%d message déplacé vers la corbeille</item>
         <item quantity="other">%d messages déplacés vers la corbeille</item>
     </plurals>
+    <string name="unsnooze">Ne plus mettre en pause</string>
+    <string name="edit_labels">Modifier les libellés</string>
+    <string name="removed_from_label">Retiré de %s</string>
+    <string name="couldnt_remove_label">Impossible de retirer le libellé</string>
+    <string name="unsnoozed_count">%d conversation(s) remise(s) en boîte de réception</string>
+    <string name="couldnt_unsnooze">Impossible d\'annuler la mise en pause</string>
 </resources>

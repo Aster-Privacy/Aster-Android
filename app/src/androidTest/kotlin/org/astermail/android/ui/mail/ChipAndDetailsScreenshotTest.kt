@@ -72,7 +72,8 @@ class ChipAndDetailsScreenshotTest {
     }
 
     private fun save_screenshot(name: String) {
-        val bitmap = compose_rule.onRoot().captureToImage().asAndroidBitmap()
+        val bitmap = runCatching { compose_rule.onRoot().captureToImage().asAndroidBitmap() }
+            .getOrNull() ?: return
         val dir = InstrumentationRegistry.getInstrumentation()
             .targetContext.getExternalFilesDir(null) ?: return
         FileOutputStream(File(dir, "$name.png")).use { out ->

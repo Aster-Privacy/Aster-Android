@@ -2690,4 +2690,10 @@
         <item quantity="one">메시지 %d개를 휴지통으로 이동했습니다</item>
         <item quantity="other">메시지 %d개를 휴지통으로 이동했습니다</item>
     </plurals>
+    <string name="unsnooze">다시 알림 해제</string>
+    <string name="edit_labels">라벨 편집</string>
+    <string name="removed_from_label">%s에서 제거됨</string>
+    <string name="couldnt_remove_label">라벨을 제거할 수 없음</string>
+    <string name="unsnoozed_count">대화 %d개의 다시 알림 해제</string>
+    <string name="couldnt_unsnooze">다시 알림을 해제할 수 없음</string>
 </resources>

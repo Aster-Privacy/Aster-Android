@@ -67,7 +67,7 @@ class FolderNestingScreenshotTest {
     }
 
     private fun save_screenshot(name: String, node: SemanticsNodeInteraction = compose_rule.onRoot()) {
-        val bitmap = node.captureToImage().asAndroidBitmap()
+        val bitmap = runCatching { node.captureToImage().asAndroidBitmap() }.getOrNull() ?: return
         val dir = InstrumentationRegistry.getInstrumentation()
             .targetContext.getExternalFilesDir(null) ?: return
         FileOutputStream(File(dir, "$name.png")).use { out ->

@@ -2697,4 +2697,10 @@
         <item quantity="one">%d ileti çöpe taşındı</item>
         <item quantity="other">%d ileti çöpe taşındı</item>
     </plurals>
+    <string name="unsnooze">Ertelemeyi kaldır</string>
+    <string name="edit_labels">Etiketleri düzenle</string>
+    <string name="removed_from_label">%s etiketinden kaldırıldı</string>
+    <string name="couldnt_remove_label">Etiket kaldırılamadı</string>
+    <string name="unsnoozed_count">%d konuşmanın ertelemesi kaldırıldı</string>
+    <string name="couldnt_unsnooze">Erteleme kaldırılamadı</string>
 </resources>

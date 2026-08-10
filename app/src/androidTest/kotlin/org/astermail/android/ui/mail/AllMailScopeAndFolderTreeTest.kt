@@ -35,6 +35,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterTheme
@@ -45,6 +46,7 @@ import org.astermail.android.mail.is_all_mail_folder
 import org.astermail.android.ui.capture_device_screenshot
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.After
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -97,6 +99,20 @@ class AllMailScopeAndFolderTreeTest {
                         },
                     )
                 }
+            }
+        }
+    }
+
+    @After
+    fun close_any_open_popup() {
+        repeat(3) {
+            val open = runCatching {
+                compose_rule.onAllNodes(isPopup()).fetchSemanticsNodes().isNotEmpty()
+            }.getOrDefault(false)
+            if (!open) return
+            runCatching {
+                Espresso.pressBack()
+                compose_rule.waitForIdle()
             }
         }
     }

@@ -2690,4 +2690,10 @@
         <item quantity="one">%d件のメッセージをゴミ箱に移動しました</item>
         <item quantity="other">%d件のメッセージをゴミ箱に移動しました</item>
     </plurals>
+    <string name="unsnooze">スヌーズ解除</string>
+    <string name="edit_labels">ラベルを編集</string>
+    <string name="removed_from_label">%sから削除しました</string>
+    <string name="couldnt_remove_label">ラベルを削除できませんでした</string>
+    <string name="unsnoozed_count">%d件のスレッドのスヌーズを解除しました</string>
+    <string name="couldnt_unsnooze">スヌーズを解除できませんでした</string>
 </resources>

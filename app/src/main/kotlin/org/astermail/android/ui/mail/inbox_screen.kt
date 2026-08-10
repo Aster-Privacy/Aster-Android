@@ -1004,6 +1004,20 @@ fun InboxScreen(
         exit_select_mode()
     }
 
+    fun unlabel_selected(tag_token: String, display_name: String) {
+        val ids = selected_email_ids()
+        notify_if_scope_incomplete(ids.size)
+        mail_vm.remove_tag_bulk(ids, tag_token, display_name)
+        exit_select_mode()
+    }
+
+    fun unsnooze_selected() {
+        val ids = selected_email_ids()
+        notify_if_scope_incomplete(ids.size)
+        mail_vm.unsnooze_bulk(ids)
+        exit_select_mode()
+    }
+
     fun scope_action_name(action_id: String): String? = when (action_id) {
         "read" -> "mark_read"
         "unread" -> "mark_unread"
@@ -1033,6 +1047,7 @@ fun InboxScreen(
             "label" -> show_bulk_label_sheet = true
             "star" -> star_selected()
             "snooze" -> show_bulk_snooze_sheet = true
+            "unsnooze" -> unsnooze_selected()
             "spam" -> mark_spam_selected()
         }
     }
@@ -1667,6 +1682,7 @@ fun InboxScreen(
                     show_selection_overflow = false
                     run_selection_action(id)
                 },
+                show_unsnooze = current_folder == "snoozed",
                 on_customize = {
                     show_selection_overflow = false
                     on_customize_toolbar()
@@ -1701,16 +1717,28 @@ fun InboxScreen(
 
         if (show_bulk_label_sheet) {
             val tag_items = org.astermail.android.labels.tag_rows(settings_state.tags)
+            val selected = selected_email_ids().toSet()
+            val selected_items = inbox_state.items.filter { it.id in selected }
+            val applied_tags = if (selected_items.isEmpty()) {
+                emptySet()
+            } else {
+                selected_items.map { it.tag_tokens.toSet() }.reduce { acc, tokens -> acc intersect tokens }
+            }
             tag_picker_sheet(
-                title = stringResource(R.string.add_label),
+                title = stringResource(R.string.edit_labels),
                 empty_message = stringResource(R.string.no_labels_yet_create),
                 items = tag_items,
                 on_close = { show_bulk_label_sheet = false },
                 on_pick = { picked ->
                     val display = picked.encrypted_name.takeIf { it.isNotBlank() } ?: picked.tag_token
                     show_bulk_label_sheet = false
-                    label_selected(picked.tag_token, display)
+                    if (picked.tag_token in applied_tags) {
+                        unlabel_selected(picked.tag_token, display)
+                    } else {
+                        label_selected(picked.tag_token, display)
+                    }
                 },
+                applied_tokens = applied_tags,
             )
         }
 
@@ -2486,6 +2514,7 @@ internal fun selection_overflow_sheet(
     on_close: () -> Unit,
     on_action: (String) -> Unit,
     on_customize: (() -> Unit)? = null,
+    show_unsnooze: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
     val state = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -2507,6 +2536,9 @@ internal fun selection_overflow_sheet(
             overflow_sheet_row("unread", TablerIcons.Mail, stringResource(R.string.mark_as_unread), colors.text_primary) { on_action("unread") }
             overflow_sheet_row("archive", TablerIcons.Archive, stringResource(R.string.archive_action), colors.text_primary) { on_action("archive") }
             overflow_sheet_row("snooze", TablerIcons.Clock, stringResource(R.string.snooze), colors.text_primary) { on_action("snooze") }
+            if (show_unsnooze) {
+                overflow_sheet_row("unsnooze", TablerIcons.BellOff, stringResource(R.string.unsnooze), colors.text_primary) { on_action("unsnooze") }
+            }
             overflow_sheet_row("folder", TablerIcons.Folder, stringResource(R.string.move_to_folder), colors.text_primary) { on_action("folder") }
             overflow_sheet_row("label", TablerIcons.Tag, stringResource(R.string.add_label), colors.text_primary) { on_action("label") }
             AsterDivider()

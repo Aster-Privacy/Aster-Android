@@ -2697,4 +2697,10 @@
         <item quantity="one">%d bericht naar prullenbak verplaatst</item>
         <item quantity="other">%d berichten naar prullenbak verplaatst</item>
     </plurals>
+    <string name="unsnooze">Niet meer uitstellen</string>
+    <string name="edit_labels">Labels bewerken</string>
+    <string name="removed_from_label">Verwijderd uit %s</string>
+    <string name="couldnt_remove_label">Kan label niet verwijderen</string>
+    <string name="unsnoozed_count">%d gesprek(ken) niet meer uitgesteld</string>
+    <string name="couldnt_unsnooze">Kan uitstellen niet ongedaan maken</string>
 </resources>

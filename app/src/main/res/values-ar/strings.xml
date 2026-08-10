@@ -2725,4 +2725,10 @@
         <item quantity="one">تم نقل %d رسالة إلى سلة المهملات</item>
         <item quantity="other">تم نقل %d رسالة إلى سلة المهملات</item>
     </plurals>
+    <string name="unsnooze">إلغاء التأجيل</string>
+    <string name="edit_labels">تعديل التصنيفات</string>
+    <string name="removed_from_label">تمت الإزالة من %s</string>
+    <string name="couldnt_remove_label">تعذر إزالة التصنيف</string>
+    <string name="unsnoozed_count">تم إلغاء تأجيل %d محادثة</string>
+    <string name="couldnt_unsnooze">تعذر إلغاء التأجيل</string>
 </resources>
