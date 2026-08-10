@@ -1394,6 +1394,9 @@
     <string name="reply_from_mismatch_message">このメールは %1$s で受信しましたが、返信は %2$s から送信されます。別のアドレスから返信すると、そのアドレスが送信者に知られたり、返信が拒否されたりする可能性があります。</string>
     <string name="reply_from_mismatch_use_received">受信アドレスを使用</string>
     <string name="reply_from_mismatch_send_anyway">そのまま送信</string>
+    <string name="post_quantum_unavailable_title">耐量子暗号化なしで送信しますか？</string>
+    <string name="post_quantum_unavailable_message">%1$s はまだ耐量子鍵を公開していないため、このメッセージは標準のエンドツーエンド暗号化のみを使用します。Aster を開くかアプリを更新して、耐量子保護を再度有効にするよう依頼してください。</string>
+    <string name="post_quantum_send_anyway">そのまま送信</string>
     <string name="expires_custom">日時を指定</string>
     <string name="expires_custom_at">%1$s に期限切れ</string>
     <string name="expiry_time_in_past">有効期限は未来の日時を指定してください</string>

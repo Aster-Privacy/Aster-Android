@@ -586,6 +586,7 @@ fun ComposeScreen(
     }
     var show_discard_dialog by remember { mutableStateOf(false) }
     var show_from_mismatch_dialog by remember { mutableStateOf(false) }
+    var post_quantum_missing by remember { mutableStateOf<List<String>>(emptyList()) }
     val quoted_source = remember(reply_to, mode, thread_state) {
         if (reply_to.isNullOrBlank() || mode.isNullOrBlank()) {
             null
@@ -1155,6 +1156,7 @@ fun ComposeScreen(
         snapshot_subject: String = subject,
         snapshot_from: String = from_alias,
         suppress_branding: Boolean = false,
+        allow_non_post_quantum: Boolean = false,
     ) {
         if (snapshot_to.isEmpty()) {
             is_sending = false
@@ -1183,6 +1185,7 @@ fun ComposeScreen(
                 attachments = attachment_payloads,
                 sender_alias_hash = if (snapshot_from != user_email) alias_hash_map[snapshot_from]?.takeIf { it.isNotBlank() } else null,
                 suppress_branding = suppress_branding,
+                allow_non_post_quantum = allow_non_post_quantum,
             )
             result.fold(
                 onSuccess = { resp ->
@@ -1207,7 +1210,7 @@ fun ComposeScreen(
         }
     }
 
-    fun do_send(skip_from_guard: Boolean = false) {
+    fun do_send(skip_from_guard: Boolean = false, allow_non_post_quantum: Boolean = false) {
         if (!skip_from_guard && reply_from_mismatch(mode, received_on_alias, from_alias)) {
             show_from_mismatch_dialog = true
             return
@@ -1253,6 +1256,19 @@ fun ComposeScreen(
                 return@launch
             }
             val (body_html, attachment_payloads, suppress_branding) = prepared
+
+            if (!allow_non_post_quantum && !scheduled_send) {
+                val missing = mail_vm.check_post_quantum_coverage(
+                    recipients = snap_to + snap_cc + snap_bcc,
+                    sender_email = snap_from,
+                )
+                if (missing.isNotEmpty()) {
+                    is_sending = false
+                    send_lock.set(false)
+                    post_quantum_missing = missing
+                    return@launch
+                }
+            }
 
             if (scheduled_send) {
                 if (attachment_payloads.isNotEmpty()) {
@@ -1310,6 +1326,7 @@ fun ComposeScreen(
                     suppress_branding = suppress_branding,
                     undo_seconds = undo_send_seconds,
                     draft_id = current_draft_id.takeIf { it.isNotBlank() },
+                    allow_non_post_quantum = allow_non_post_quantum,
                 )
                 is_sending = false
                 send_lock.set(false)
@@ -1323,7 +1340,17 @@ fun ComposeScreen(
                     },
                 )
             } else {
-                execute_send(body_html, attachment_payloads, snap_to, snap_cc, snap_bcc, snap_subject, snap_from, suppress_branding)
+                execute_send(
+                    body_html,
+                    attachment_payloads,
+                    snap_to,
+                    snap_cc,
+                    snap_bcc,
+                    snap_subject,
+                    snap_from,
+                    suppress_branding,
+                    allow_non_post_quantum,
+                )
             }
         }
     }
@@ -2242,6 +2269,48 @@ fun ComposeScreen(
                         link_dialog_text = null
                     },
                 )
+            },
+        )
+    }
+
+    if (post_quantum_missing.isNotEmpty()) {
+        val missing_list = post_quantum_missing.joinToString(", ")
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { post_quantum_missing = emptyList() },
+            title = stringResource(R.string.post_quantum_unavailable_title),
+            message = stringResource(R.string.post_quantum_unavailable_message, missing_list),
+            footer = {
+                androidx.compose.foundation.layout.FlowRow(
+                    modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
+                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(
+                        4.dp,
+                        Alignment.End,
+                    ),
+                ) {
+                    androidx.compose.material3.TextButton(
+                        modifier = androidx.compose.ui.Modifier.testTag("post_quantum_cancel"),
+                        onClick = { post_quantum_missing = emptyList() },
+                    ) {
+                        Text(
+                            text = stringResource(R.string.cancel),
+                            color = colors.text_secondary,
+                            fontSize = 14.sp,
+                        )
+                    }
+                    androidx.compose.material3.TextButton(
+                        modifier = androidx.compose.ui.Modifier.testTag("post_quantum_send_anyway"),
+                        onClick = {
+                            post_quantum_missing = emptyList()
+                            do_send(skip_from_guard = true, allow_non_post_quantum = true)
+                        },
+                    ) {
+                        Text(
+                            text = stringResource(R.string.post_quantum_send_anyway),
+                            color = colors.accent_blue,
+                            fontSize = 14.sp,
+                        )
+                    }
+                }
             },
         )
     }

@@ -2798,6 +2798,11 @@ class MailViewModel @Inject constructor(
     suspend fun get_or_create_thread_token(original_email_id: String, existing_thread_token: String?): String? =
         repository.get_or_create_thread_token(original_email_id, existing_thread_token)
 
+    suspend fun check_post_quantum_coverage(
+        recipients: List<String>,
+        sender_email: String? = null,
+    ): List<String> = repository.check_post_quantum_coverage(recipients, sender_email)
+
     suspend fun send_email(
         to: List<String>,
         cc: List<String> = emptyList(),
@@ -2812,6 +2817,7 @@ class MailViewModel @Inject constructor(
         attachments: List<ExternalAttachmentPayload> = emptyList(),
         sender_alias_hash: String? = null,
         suppress_branding: Boolean? = null,
+        allow_non_post_quantum: Boolean = false,
     ): Result<org.astermail.android.api.send.SimpleSendResponse> {
         val result = repository.send_email(
             to = to,
@@ -2827,6 +2833,7 @@ class MailViewModel @Inject constructor(
             attachments = attachments,
             sender_alias_hash = sender_alias_hash,
             suppress_branding = suppress_branding,
+            allow_non_post_quantum = allow_non_post_quantum,
         )
         if (result.isSuccess && result.getOrNull()?.success == true) {
             invalidate_caches(listOf("sent", "drafts"))
@@ -2918,6 +2925,7 @@ class MailViewModel @Inject constructor(
         suppress_branding: Boolean? = null,
         undo_seconds: Int,
         draft_id: String? = null,
+        allow_non_post_quantum: Boolean = false,
     ): Result<String> {
         return repository.schedule_send_with_undo(
             to = to,
@@ -2935,6 +2943,7 @@ class MailViewModel @Inject constructor(
             suppress_branding = suppress_branding,
             undo_seconds = undo_seconds,
             draft_id = draft_id,
+            allow_non_post_quantum = allow_non_post_quantum,
         )
     }
 

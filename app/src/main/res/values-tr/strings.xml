@@ -1396,6 +1396,9 @@
     <string name="reply_from_mismatch_message">Bu e-posta %1$s adresinde alındı, ancak yanıtınız %2$s adresinden gönderilecek. Farklı bir adresten yanıtlamak bu adresi gönderene açığa çıkarabilir ve yanıt reddedilebilir.</string>
     <string name="reply_from_mismatch_use_received">Alınan adresi kullan</string>
     <string name="reply_from_mismatch_send_anyway">Yine de gönder</string>
+    <string name="post_quantum_unavailable_title">Post-kuantum şifreleme olmadan gönderilsin mi?</string>
+    <string name="post_quantum_unavailable_message">%1$s henüz post-kuantum anahtar yayınlamadı, bu nedenle bu ileti yalnızca standart uçtan uca şifreleme kullanabilir. Post-kuantum korumayı yeniden açmak için Aster’ı açmasını veya uygulamayı güncellemesini iste.</string>
+    <string name="post_quantum_send_anyway">Yine de gönder</string>
     <string name="expires_custom">Özel tarih ve saat</string>
     <string name="expires_custom_at">%1$s tarihinde sona erer</string>
     <string name="expiry_time_in_past">Sona erme zamanı gelecekte olmalıdır</string>

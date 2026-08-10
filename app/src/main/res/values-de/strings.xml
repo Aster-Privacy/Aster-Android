@@ -1397,6 +1397,9 @@
     <string name="reply_from_mismatch_message">Diese E-Mail wurde auf %1$s empfangen, deine Antwort wird aber von %2$s gesendet. Eine Antwort von einer anderen Adresse kann diese dem Absender offenlegen und die Antwort kann abgelehnt werden.</string>
     <string name="reply_from_mismatch_use_received">Empfangsadresse verwenden</string>
     <string name="reply_from_mismatch_send_anyway">Trotzdem senden</string>
+    <string name="post_quantum_unavailable_title">Ohne Post-Quanten-Verschlüsselung senden?</string>
+    <string name="post_quantum_unavailable_message">%1$s hat noch keine Post-Quanten-Schlüssel veröffentlicht, daher kann diese Nachricht nur die standardmäßige Ende-zu-Ende-Verschlüsselung verwenden. Bitte den Empfänger, Aster zu öffnen oder die App zu aktualisieren, um den Post-Quanten-Schutz wieder zu aktivieren.</string>
+    <string name="post_quantum_send_anyway">Trotzdem senden</string>
     <string name="expires_custom">Benutzerdefiniertes Datum und Uhrzeit</string>
     <string name="expires_custom_at">Läuft ab: %1$s</string>
     <string name="expiry_time_in_past">Die Ablaufzeit muss in der Zukunft liegen</string>

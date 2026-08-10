@@ -2101,6 +2101,9 @@
     <string name="reply_from_mismatch_message">Cet e-mail a été reçu sur %1$s, mais votre réponse sera envoyée depuis %2$s. Répondre depuis une autre adresse peut la révéler à l\'expéditeur et la réponse peut être rejetée.</string>
     <string name="reply_from_mismatch_use_received">Utiliser l\'adresse de réception</string>
     <string name="reply_from_mismatch_send_anyway">Envoyer quand même</string>
+    <string name="post_quantum_unavailable_title">Envoyer sans chiffrement post-quantique ?</string>
+    <string name="post_quantum_unavailable_message">%1$s n’a pas encore publié de clés post-quantiques, ce message ne peut donc utiliser que le chiffrement de bout en bout standard. Demande à cette personne d’ouvrir Aster ou de mettre à jour son application pour réactiver la protection post-quantique.</string>
+    <string name="post_quantum_send_anyway">Envoyer quand même</string>
     <string name="expires_custom">Date et heure personnalisées</string>
     <string name="expires_custom_at">Expire le %1$s</string>
     <string name="expiry_time_in_past">L\'heure d\'expiration doit être dans le futur</string>

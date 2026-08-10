@@ -1394,6 +1394,9 @@
     <string name="reply_from_mismatch_message">이 이메일은 %1$s에서 수신했지만 답장은 %2$s에서 전송됩니다. 다른 주소로 답장하면 해당 주소가 발신자에게 노출되거나 답장이 거부될 수 있습니다.</string>
     <string name="reply_from_mismatch_use_received">수신 주소 사용</string>
     <string name="reply_from_mismatch_send_anyway">그대로 보내기</string>
+    <string name="post_quantum_unavailable_title">양자 내성 암호화 없이 보내시겠습니까?</string>
+    <string name="post_quantum_unavailable_message">%1$s님이 아직 양자 내성 키를 게시하지 않아 이 메시지는 표준 종단간 암호화만 사용합니다. Aster를 열거나 앱을 업데이트해 양자 내성 보호를 다시 켜달라고 요청하세요.</string>
+    <string name="post_quantum_send_anyway">그대로 보내기</string>
     <string name="expires_custom">사용자 지정 날짜 및 시간</string>
     <string name="expires_custom_at">%1$s에 만료</string>
     <string name="expiry_time_in_past">만료 시간은 미래여야 합니다</string>

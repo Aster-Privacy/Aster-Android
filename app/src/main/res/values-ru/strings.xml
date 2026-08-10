@@ -1400,6 +1400,9 @@
     <string name="reply_from_mismatch_message">Это письмо получено на %1$s, но ответ будет отправлен с %2$s. Ответ с другого адреса может раскрыть его отправителю и быть отклонён.</string>
     <string name="reply_from_mismatch_use_received">Использовать адрес получения</string>
     <string name="reply_from_mismatch_send_anyway">Всё равно отправить</string>
+    <string name="post_quantum_unavailable_title">Отправить без постквантового шифрования?</string>
+    <string name="post_quantum_unavailable_message">%1$s ещё не опубликовал постквантовые ключи, поэтому это сообщение может использовать только стандартное сквозное шифрование. Попросите открыть Aster или обновить приложение, чтобы снова включить постквантовую защиту.</string>
+    <string name="post_quantum_send_anyway">Всё равно отправить</string>
     <string name="expires_custom">Своя дата и время</string>
     <string name="expires_custom_at">Истекает %1$s</string>
     <string name="expiry_time_in_past">Время истечения должно быть в будущем</string>

@@ -1396,6 +1396,9 @@
     <string name="reply_from_mismatch_message">Deze e-mail is ontvangen op %1$s, maar je antwoord wordt verzonden vanaf %2$s. Antwoorden vanaf een ander adres kan dit adres onthullen aan de afzender en het antwoord kan worden geweigerd.</string>
     <string name="reply_from_mismatch_use_received">Ontvangstadres gebruiken</string>
     <string name="reply_from_mismatch_send_anyway">Toch verzenden</string>
+    <string name="post_quantum_unavailable_title">Verzenden zonder post-quantumversleuteling?</string>
+    <string name="post_quantum_unavailable_message">%1$s heeft nog geen post-quantumsleutels gepubliceerd, dus dit bericht kan alleen standaard end-to-end-versleuteling gebruiken. Vraag om Aster te openen of de app bij te werken om post-quantumbeveiliging weer in te schakelen.</string>
+    <string name="post_quantum_send_anyway">Toch verzenden</string>
     <string name="expires_custom">Aangepaste datum en tijd</string>
     <string name="expires_custom_at">Verloopt op %1$s</string>
     <string name="expiry_time_in_past">De vervaltijd moet in de toekomst liggen</string>

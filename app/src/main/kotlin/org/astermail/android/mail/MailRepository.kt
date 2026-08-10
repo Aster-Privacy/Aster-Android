@@ -475,6 +475,7 @@ class MailRepository @Inject constructor(
         suppress_branding: Boolean? = null,
         undo_seconds: Int,
         draft_id: String? = null,
+        allow_non_post_quantum: Boolean = false,
     ): Result<String> {
         val delay_ms = undo_seconds.coerceAtLeast(1) * 1000L
         val pending_id = java.util.UUID.randomUUID().toString()
@@ -513,6 +514,7 @@ class MailRepository @Inject constructor(
                     suppress_branding = suppress_branding,
                     delay_ms = delay_ms,
                     draft_id = draft_id,
+                    allow_non_post_quantum = allow_non_post_quantum,
                 )
             }
         }
@@ -547,6 +549,7 @@ class MailRepository @Inject constructor(
         suppress_branding: Boolean?,
         delay_ms: Long,
         draft_id: String?,
+        allow_non_post_quantum: Boolean = false,
     ): String {
         val now = System.currentTimeMillis()
         val row = PendingSendEntity(
@@ -569,6 +572,7 @@ class MailRepository @Inject constructor(
             status = STATUS_PENDING,
             created_at_ms = now,
             account_id = session_key_store.get_user_id(),
+            allow_non_post_quantum = allow_non_post_quantum,
         )
         pending_send_dao.upsert(row)
         if (undo_canceled_ids.remove(pending_id)) {
@@ -664,6 +668,7 @@ class MailRepository @Inject constructor(
             attachments = attachments,
             sender_alias_hash = row.sender_alias_hash,
             suppress_branding = row.suppress_branding,
+            allow_non_post_quantum = row.allow_non_post_quantum,
         )
         val response = result.getOrNull()
         return if (result.isSuccess && response?.success == true) {
@@ -711,6 +716,7 @@ class MailRepository @Inject constructor(
         var depth = 0
         while (cause != null && depth < 6) {
             if (cause is org.astermail.android.mail.ratchet.RatchetEncryptionException) return true
+            if (cause is org.astermail.android.mail.ratchet.PostQuantumUnavailableException) return true
             if (cause is OutOfMemoryError) return true
             cause = cause.cause
             depth++
@@ -2419,6 +2425,20 @@ class MailRepository @Inject constructor(
         }
     }
 
+    suspend fun check_post_quantum_coverage(
+        recipients: List<String>,
+        sender_email: String? = null,
+    ): List<String> {
+        val from_addr = sender_email ?: session_key_store.get_user_email() ?: return emptyList()
+        if (from_addr.isBlank()) return emptyList()
+        val internal_recipients = recipients.filter { is_internal_recipient(it) }
+        if (internal_recipients.isEmpty()) return emptyList()
+        if (!ensure_ratchet_keys_ready()) return emptyList()
+        return runCatching {
+            ratchet_encryptor.check_post_quantum_coverage(from_addr, internal_recipients)
+        }.getOrDefault(emptyList())
+    }
+
     suspend fun send_email(
         to: List<String>,
         cc: List<String> = emptyList(),
@@ -2433,6 +2453,7 @@ class MailRepository @Inject constructor(
         attachments: List<ExternalAttachmentPayload> = emptyList(),
         sender_alias_hash: String? = null,
         suppress_branding: Boolean? = null,
+        allow_non_post_quantum: Boolean = false,
     ): Result<SimpleSendResponse> = runCatching {
         val envelope = build_envelope_json(
             subject = subject,
@@ -2523,7 +2544,14 @@ class MailRepository @Inject constructor(
                     put("b", existing_bundle.body)
                 }.toString()
                 val encrypted = try {
-                    ratchet_encryptor.encrypt_envelope(from_addr, internal_recipients, wrapped)
+                    ratchet_encryptor.encrypt_envelope(
+                        from_addr,
+                        internal_recipients,
+                        wrapped,
+                        allow_non_post_quantum,
+                    )
+                } catch (t: org.astermail.android.mail.ratchet.PostQuantumUnavailableException) {
+                    throw t
                 } catch (t: Throwable) {
                     throw IllegalStateException(context.getString(R.string.e2e_encryption_failed), t)
                 }

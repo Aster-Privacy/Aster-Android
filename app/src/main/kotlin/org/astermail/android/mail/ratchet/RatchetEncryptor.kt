@@ -38,6 +38,10 @@ class RatchetEncryptionException(
     cause: Throwable? = null,
 ) : Exception(message, cause)
 
+class PostQuantumUnavailableException(
+    val recipients: List<String>,
+) : Exception("post-quantum key agreement unavailable for ${recipients.joinToString(", ")}")
+
 @Singleton
 class RatchetEncryptor @Inject constructor(
     private val state_store: RatchetStateStore,
@@ -53,10 +57,43 @@ class RatchetEncryptor @Inject constructor(
         explicitNulls = false
     }
 
+    suspend fun check_post_quantum_coverage(
+        sender_email: String,
+        recipients: List<String>,
+    ): List<String> {
+        if (sender_email.isBlank()) return emptyList()
+
+        val missing = mutableListOf<String>()
+        for (recipient_email in recipients) {
+            val covered = runCatching {
+                val conversation_id = X3dh.derive_conversation_id(sender_email, recipient_email)
+                val bootstrap = state_store.load(conversation_id)?.bootstrap
+                if (bootstrap != null) {
+                    bootstrap.pq_ciphertext != null
+                } else {
+                    val bundle = ratchet_api.fetch_prekey_bundle(
+                        recipient_email.substringBefore('@'),
+                        recipient_email,
+                    ) ?: return@runCatching false
+                    val pq_prekey_pair = bundle.pq_prekey?.let {
+                        runCatching { it.key_id to RatchetCrypto.b64_decode(it.public_key) }.getOrNull()
+                    }
+                    val pq_identity_raw = bundle.pq_kem_public_key
+                        ?.takeIf { it.isNotBlank() }
+                        ?.let { runCatching { RatchetCrypto.b64_decode(it) }.getOrNull() }
+                    X3dh.supports_pq(pq_prekey_pair, pq_identity_raw)
+                }
+            }.getOrNull() ?: continue
+            if (!covered) missing.add(recipient_email)
+        }
+        return missing
+    }
+
     suspend fun encrypt_envelope(
         sender_email: String,
         recipients: List<String>,
         body: String,
+        allow_non_post_quantum: Boolean = false,
     ): String? {
         if (recipients.isEmpty()) return null
         val sender_identity_public = session_key_store.get_ratchet_identity_public_b64()
@@ -74,6 +111,14 @@ class RatchetEncryptor @Inject constructor(
                 throw RatchetEncryptionException(recipient_email, "ratchet encryption failed for recipient", e)
             } ?: throw RatchetEncryptionException(recipient_email, "no prekey bundle available for recipient")
             per_recipient[recipient_email.lowercase()] = data
+        }
+
+        if (!allow_non_post_quantum) {
+            val non_pq = per_recipient
+                .filterValues { it.pq_ciphertext == null || it.pq_key_id == null }
+                .keys
+                .toList()
+            if (non_pq.isNotEmpty()) throw PostQuantumUnavailableException(non_pq)
         }
 
         val envelope = RatchetEnvelope(

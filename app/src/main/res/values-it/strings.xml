@@ -1396,6 +1396,9 @@
     <string name="reply_from_mismatch_message">Questa email è stata ricevuta su %1$s, ma la risposta verrà inviata da %2$s. Rispondere da un altro indirizzo può rivelarlo al mittente e la risposta potrebbe essere rifiutata.</string>
     <string name="reply_from_mismatch_use_received">Usa l\'indirizzo di ricezione</string>
     <string name="reply_from_mismatch_send_anyway">Invia comunque</string>
+    <string name="post_quantum_unavailable_title">Inviare senza crittografia post-quantistica?</string>
+    <string name="post_quantum_unavailable_message">%1$s non ha ancora pubblicato chiavi post-quantistiche, quindi questo messaggio può usare solo la crittografia end-to-end standard. Chiedi di aprire Aster o di aggiornare l’app per riattivare la protezione post-quantistica.</string>
+    <string name="post_quantum_send_anyway">Invia comunque</string>
     <string name="expires_custom">Data e ora personalizzate</string>
     <string name="expires_custom_at">Scade il %1$s</string>
     <string name="expiry_time_in_past">L\'ora di scadenza deve essere futura</string>

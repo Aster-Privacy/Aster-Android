@@ -1404,6 +1404,9 @@
     <string name="reply_from_mismatch_message">تم استلام هذا البريد على %1$s، لكن ردك سيُرسل من %2$s. الرد من عنوان مختلف قد يكشفه للمرسل وقد يُرفض الرد.</string>
     <string name="reply_from_mismatch_use_received">استخدام عنوان الاستلام</string>
     <string name="reply_from_mismatch_send_anyway">الإرسال على أي حال</string>
+    <string name="post_quantum_unavailable_title">هل تريد الإرسال دون تشفير ما بعد الكمومي؟</string>
+    <string name="post_quantum_unavailable_message">لم ينشر %1$s مفاتيح ما بعد الكمومي بعد، لذلك لن تستخدم هذه الرسالة سوى التشفير القياسي من طرف إلى طرف. اطلب منه فتح Aster أو تحديث التطبيق لإعادة تفعيل حماية ما بعد الكمومي.</string>
+    <string name="post_quantum_send_anyway">أرسل على أي حال</string>
     <string name="expires_custom">تاريخ ووقت مخصصان</string>
     <string name="expires_custom_at">تنتهي في %1$s</string>
     <string name="expiry_time_in_past">يجب أن يكون وقت انتهاء الصلاحية في المستقبل</string>

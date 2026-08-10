@@ -1397,6 +1397,9 @@
     <string name="reply_from_mismatch_message">Este correo se recibió en %1$s, pero tu respuesta se enviará desde %2$s. Responder desde otra dirección puede revelarla al remitente y la respuesta podría ser rechazada.</string>
     <string name="reply_from_mismatch_use_received">Usar dirección de recepción</string>
     <string name="reply_from_mismatch_send_anyway">Enviar de todos modos</string>
+    <string name="post_quantum_unavailable_title">¿Enviar sin cifrado poscuántico?</string>
+    <string name="post_quantum_unavailable_message">%1$s aún no ha publicado claves poscuánticas, por lo que este mensaje solo puede usar el cifrado de extremo a extremo estándar. Pídele que abra Aster o actualice la app para volver a activar la protección poscuántica.</string>
+    <string name="post_quantum_send_anyway">Enviar de todos modos</string>
     <string name="expires_custom">Fecha y hora personalizadas</string>
     <string name="expires_custom_at">Expira el %1$s</string>
     <string name="expiry_time_in_past">La hora de caducidad debe estar en el futuro</string>

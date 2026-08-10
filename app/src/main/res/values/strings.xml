@@ -2474,6 +2474,9 @@
     <string name="reply_from_mismatch_message">This email was received on %1$s, but your reply is set to send from %2$s. Replying from a different address can expose it to the sender, and the reply may be rejected.</string>
     <string name="reply_from_mismatch_use_received">Use received address</string>
     <string name="reply_from_mismatch_send_anyway">Send anyway</string>
+    <string name="post_quantum_unavailable_title">Send without post-quantum encryption?</string>
+    <string name="post_quantum_unavailable_message">%1$s has not published post-quantum keys yet, so this message can only use standard end-to-end encryption. Ask them to open Aster or update their app to turn post-quantum protection back on.</string>
+    <string name="post_quantum_send_anyway">Send anyway</string>
     <string name="expires_custom">Custom date and time</string>
     <string name="expires_custom_at">Expires %1$s</string>
     <string name="expiry_time_in_past">Expiration time must be in the future</string>

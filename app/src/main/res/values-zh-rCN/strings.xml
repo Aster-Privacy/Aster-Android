@@ -1394,6 +1394,9 @@
     <string name="reply_from_mismatch_message">这封邮件是在 %1$s 收到的，但你的回复将从 %2$s 发送。使用其他地址回复可能会向发件人泄露该地址，回复也可能被拒收。</string>
     <string name="reply_from_mismatch_use_received">使用接收地址</string>
     <string name="reply_from_mismatch_send_anyway">仍然发送</string>
+    <string name="post_quantum_unavailable_title">在没有后量子加密的情况下发送？</string>
+    <string name="post_quantum_unavailable_message">%1$s 尚未发布后量子密钥，因此此邮件只能使用标准端到端加密。请对方打开 Aster 或更新应用，以重新启用后量子保护。</string>
+    <string name="post_quantum_send_anyway">仍然发送</string>
     <string name="expires_custom">自定义日期和时间</string>
     <string name="expires_custom_at">%1$s 过期</string>
     <string name="expiry_time_in_past">过期时间必须晚于当前时间</string>
