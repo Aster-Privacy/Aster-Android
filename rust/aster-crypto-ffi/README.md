@@ -1,13 +1,19 @@
-# aster-crypto-ffi (Android JNI crypto)
+# aster-crypto-ffi (unused)
 
-This crate is the native crypto core for the Android app. It is compiled from
-source into `libaster_crypto_ffi.so` and packaged into the APK. The JNI symbols
-here back `core-crypto/.../CryptoNative.kt`.
+This crate is not part of the Android build. Nothing in the Kotlin source tree
+loads `libaster_crypto_ffi.so`, and `core-crypto/.../CryptoNative.kt` is pure
+Kotlin on top of Bouncy Castle and the platform `javax.crypto` providers. The
+only `System.loadLibrary` call in the app loads `sqlcipher`, which ships inside
+the SQLCipher AAR.
+
+The source is kept here for reference. It is not compiled by Gradle, not built
+in CI, and not packaged into the APK. If you revive it, add the JNI declarations
+to `CryptoNative.kt` first, then restore the `cargo-ndk` build step and the
+`jniLibs.srcDirs` source set.
 
 It is self-contained: it depends only on published crates (argon2, aes-gcm,
 ed25519-dalek, hkdf, hmac, pbkdf2, sha2, base64, rand, zeroize, jni). It does
-not read or embed any secret. The email-hash pepper is supplied at runtime by
-the app (`set_hash_email_pepper`), never compiled in.
+not read or embed any secret.
 
 ## Build
 
@@ -19,10 +25,5 @@ ANDROID_NDK_HOME=/path/to/ndk bash scripts/build_android.sh
 ```
 
 This produces `libaster_crypto_ffi.so` for `arm64-v8a`, `armeabi-v7a`, and
-`x86_64` into `core-crypto/src/main/jniLibs/`. Gradle then packages whatever is
-in that directory; the `.so` files themselves are gitignored (build output,
-never committed). CI (`.github/workflows/build.yml`) runs this step before
-`./gradlew assemble`, so CI APKs are built entirely from source.
-
-The toolchain is pinned in `rust-toolchain.toml` and dependencies in
-`Cargo.lock` so the output is deterministic for F-Droid's reproducible build.
+`x86_64` into `core-crypto/src/main/jniLibs/`. The toolchain is pinned in
+`rust-toolchain.toml` and dependencies in `Cargo.lock`.

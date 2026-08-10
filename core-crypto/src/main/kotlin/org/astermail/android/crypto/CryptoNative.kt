@@ -180,15 +180,6 @@ object CryptoNative {
         return Base64.encodeToString(digest, Base64.NO_WRAP)
     }
 
-    @JvmStatic
-    external fun set_hash_email_pepper(pepper: ByteArray): Int
-
-    fun configure_hash_email_pepper(pepper: String) {
-        val bytes = pepper.toByteArray(Charsets.UTF_8)
-        runCatching { set_hash_email_pepper(bytes) }
-        bytes.fill(0)
-    }
-
     fun generate_identity_keypair_struct(): IdentityKeypair {
         val seed = ByteArray(32)
         secure_random.nextBytes(seed)

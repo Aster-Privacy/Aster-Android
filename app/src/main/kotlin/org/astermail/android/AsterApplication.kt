@@ -21,7 +21,6 @@
 
 package org.astermail.android
 
-import org.astermail.android.BuildConfig
 import android.app.Application
 import coil.ImageLoader
 import coil.ImageLoaderFactory
@@ -39,7 +38,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.astermail.android.api.BuildConfig as ApiBuildConfig
-import org.astermail.android.crypto.CryptoNative
 import org.astermail.android.security.LockdownStore
 import org.astermail.android.storage.TokenStore
 
@@ -48,12 +46,6 @@ class AsterApplication : Application(), ImageLoaderFactory {
 
     override fun onCreate() {
         super.onCreate()
-        runCatching {
-            val pepper = BuildConfig.HASH_EMAIL_PEPPER
-            if (pepper.isNotEmpty()) {
-                CryptoNative.configure_hash_email_pepper(pepper)
-            }
-        }
         runCatching {
             val ep = EntryPointAccessors.fromApplication(this, ImageLoaderEntryPoint::class.java)
             val resolver = ep.aster_profile_resolver()

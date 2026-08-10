@@ -36,11 +36,6 @@ android {
         vectorDrawables { useSupportLibrary = true }
 
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64") }
-
-        val hash_email_pepper = System.getenv("ASTER_HASH_EMAIL_PEPPER")
-            ?: project.findProperty("aster.hash_email_pepper") as String?
-            ?: ""
-        buildConfigField("String", "HASH_EMAIL_PEPPER", "\"$hash_email_pepper\"")
     }
 
     signingConfigs {
