@@ -28,6 +28,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import dagger.hilt.internal.GeneratedComponent
+import dagger.hilt.internal.GeneratedComponentManager
 
 internal tailrec fun Context.host_activity(): ComponentActivity? = when (this) {
     is ComponentActivity -> this
@@ -41,4 +43,14 @@ fun shared_settings_view_model(): SettingsViewModel {
     val view_model: SettingsViewModel = if (host != null) hiltViewModel(host) else hiltViewModel()
     LaunchedEffect(Unit) { view_model.reset_transient_state() }
     return view_model
+}
+
+private fun ComponentActivity.holds_injector(): Boolean =
+    this is GeneratedComponent || this is GeneratedComponentManager<*>
+
+@Composable
+fun optional_shared_settings_view_model(): SettingsViewModel? {
+    val host = LocalContext.current.host_activity() ?: return null
+    if (!host.holds_injector()) return null
+    return shared_settings_view_model()
 }
