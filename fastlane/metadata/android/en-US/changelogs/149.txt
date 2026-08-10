@@ -1,0 +1,7 @@
+Bug fixes and improvements:
+
+- Lock a folder to keep its mail hidden until you unlock it
+- Message previews now use the sender's preview text instead of hidden filler
+- Remove labels, unsnooze conversations, and restore mail from spam or trash
+- Import aliases from a CSV file, set a default domain, and add a note as you create one
+- The inbox holds its place while you scroll, and pull to refresh no longer sticks
