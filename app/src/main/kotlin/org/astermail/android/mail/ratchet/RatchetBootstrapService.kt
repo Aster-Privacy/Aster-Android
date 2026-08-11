@@ -79,11 +79,16 @@ class RatchetBootstrapService @Inject constructor(
             debug_log("local ratchet keys ready for user $user_id")
             val pq_identity_generated = persist_ratchet_identity_to_vault_if_needed()
 
-            val capability = runCatching { capability_reporter.report_if_due(user_id) }
+            val capability = runCatching {
+                capability_reporter.report_if_due(user_id, keys.identity_public_b64)
+            }
                 .onFailure { debug_log("report_envelope_capability threw: ${it.javaClass.simpleName}: ${it.message}") }
                 .getOrNull()
             if (capability != null) {
-                debug_log("envelope capability reported: min=${capability.min_supported_marker} pq=${capability.pq_hybrid_enabled}")
+                debug_log(
+                    "envelope capability reported: min=${capability.min_supported_marker} " +
+                        "pq=${capability.pq_hybrid_enabled} identity=${capability.identity_verified}",
+                )
             }
 
             val stored_generation = uploaded_generation(user_id)

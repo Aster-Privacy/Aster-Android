@@ -97,6 +97,7 @@ data class ReportEnvelopeCapabilityRequest(
     val client_id: String,
     val max_envelope_marker: Int,
     val platform: String? = null,
+    val identity_fingerprint: String? = null,
 )
 
 @Serializable
@@ -104,6 +105,7 @@ data class EnvelopeCapabilityResponse(
     val success: Boolean,
     val min_supported_marker: Int? = null,
     val pq_hybrid_enabled: Boolean = false,
+    val identity_verified: Boolean = false,
 )
 
 sealed class PutStateOutcome {

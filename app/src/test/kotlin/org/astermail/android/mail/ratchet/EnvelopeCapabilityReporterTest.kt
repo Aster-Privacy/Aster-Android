@@ -21,6 +21,8 @@
 
 package org.astermail.android.mail.ratchet
 
+import java.security.MessageDigest
+import java.util.Base64
 import kotlinx.coroutines.test.runTest
 import org.astermail.android.api.ratchet.EnvelopeCapabilityResponse
 import org.astermail.android.api.ratchet.PostStateOutcome
@@ -38,7 +40,7 @@ import org.junit.Test
 
 private class FakeStore : EnvelopeCapabilityStore {
     var client_id: String? = null
-    val last_reported = mutableMapOf<String, Long>()
+    val last_reported = mutableMapOf<String, EnvelopeCapabilityReport>()
 
     override fun get_client_id(): String? = client_id
 
@@ -46,11 +48,13 @@ private class FakeStore : EnvelopeCapabilityStore {
         this.client_id = client_id
     }
 
-    override fun get_last_reported_at_ms(user_id: String): Long = last_reported[user_id] ?: 0L
+    override fun get_last_report(user_id: String): EnvelopeCapabilityReport? = last_reported[user_id]
 
-    override fun put_last_reported_at_ms(user_id: String, at_ms: Long) {
-        last_reported[user_id] = at_ms
+    override fun put_last_report(user_id: String, report: EnvelopeCapabilityReport) {
+        last_reported[user_id] = report
     }
+
+    fun last_reported_at_ms(user_id: String): Long = last_reported[user_id]?.at_ms ?: 0L
 }
 
 private class FakeRatchetApi(
@@ -58,6 +62,7 @@ private class FakeRatchetApi(
         success = true,
         min_supported_marker = 4,
         pq_hybrid_enabled = true,
+        identity_verified = true,
     ),
     private val thrown: Throwable? = null,
 ) : RatchetApi {
@@ -95,6 +100,16 @@ class EnvelopeCapabilityReporterTest {
 
     private val user_id = "11111111-2222-3333-4444-555555555555"
 
+    private fun identity_point(fill: Byte): String =
+        Base64.getEncoder().encodeToString(ByteArray(65) { if (it == 0) 0x04 else fill })
+
+    private fun expected_fingerprint(point_b64: String): String =
+        Base64.getEncoder().encodeToString(
+            MessageDigest.getInstance("SHA-256").digest(Base64.getDecoder().decode(point_b64)),
+        )
+
+    private val identity = identity_point(0x11)
+
     private fun reporter(
         store: EnvelopeCapabilityStore,
         api: RatchetApi,
@@ -112,7 +127,7 @@ class EnvelopeCapabilityReporterTest {
         val store = FakeStore()
         val api = FakeRatchetApi()
 
-        val response = reporter(store, api, now = { 1_000L }).report_if_due(user_id)
+        val response = reporter(store, api, now = { 1_000L }).report_if_due(user_id, identity)
 
         assertEquals(1, api.requests.size)
         assertEquals(4, api.requests[0].max_envelope_marker)
@@ -126,8 +141,8 @@ class EnvelopeCapabilityReporterTest {
         val store = FakeStore()
         val api = FakeRatchetApi()
 
-        reporter(store, api, now = { 1_000L }, client_id = "first").report_if_due(user_id)
-        reporter(store, api, now = { 1_000L }, client_id = "second").report_if_due(user_id, force = true)
+        reporter(store, api, now = { 1_000L }, client_id = "first").report_if_due(user_id, identity)
+        reporter(store, api, now = { 1_000L }, client_id = "second").report_if_due(user_id, identity, force = true)
 
         assertEquals("first", store.client_id)
         assertEquals(listOf("first", "first"), api.requests.map { it.client_id })
@@ -138,8 +153,8 @@ class EnvelopeCapabilityReporterTest {
         val store = FakeStore()
         val api = FakeRatchetApi()
 
-        reporter(store, api, now = { 1_000L }).report_if_due(user_id)
-        val second = reporter(store, api, now = { 1_000L + 60_000L }).report_if_due(user_id)
+        reporter(store, api, now = { 1_000L }).report_if_due(user_id, identity)
+        val second = reporter(store, api, now = { 1_000L + 60_000L }).report_if_due(user_id, identity)
 
         assertNull(second)
         assertEquals(1, api.requests.size)
@@ -151,14 +166,14 @@ class EnvelopeCapabilityReporterTest {
         val api = FakeRatchetApi()
         val start = 1_000L
 
-        reporter(store, api, now = { start }).report_if_due(user_id)
+        reporter(store, api, now = { start }).report_if_due(user_id, identity)
         reporter(store, api, now = { start + EnvelopeCapabilityReporter.REPORT_INTERVAL_MS })
-            .report_if_due(user_id)
+            .report_if_due(user_id, identity)
 
         assertEquals(2, api.requests.size)
         assertEquals(
             start + EnvelopeCapabilityReporter.REPORT_INTERVAL_MS,
-            store.get_last_reported_at_ms(user_id),
+            store.last_reported_at_ms(user_id),
         )
     }
 
@@ -175,10 +190,10 @@ class EnvelopeCapabilityReporterTest {
         val store = FakeStore()
         val api = FakeRatchetApi(response = null)
 
-        assertNull(reporter(store, api, now = { 1_000L }).report_if_due(user_id))
-        assertEquals(0L, store.get_last_reported_at_ms(user_id))
+        assertNull(reporter(store, api, now = { 1_000L }).report_if_due(user_id, identity))
+        assertEquals(0L, store.last_reported_at_ms(user_id))
 
-        reporter(store, api, now = { 2_000L }).report_if_due(user_id)
+        reporter(store, api, now = { 2_000L }).report_if_due(user_id, identity)
         assertEquals(2, api.requests.size)
     }
 
@@ -189,9 +204,9 @@ class EnvelopeCapabilityReporterTest {
             response = EnvelopeCapabilityResponse(success = false, min_supported_marker = null),
         )
 
-        reporter(store, api, now = { 1_000L }).report_if_due(user_id)
+        reporter(store, api, now = { 1_000L }).report_if_due(user_id, identity)
 
-        assertEquals(0L, store.get_last_reported_at_ms(user_id))
+        assertEquals(0L, store.last_reported_at_ms(user_id))
     }
 
     @Test
@@ -199,8 +214,8 @@ class EnvelopeCapabilityReporterTest {
         val store = FakeStore()
         val api = FakeRatchetApi(thrown = IllegalStateException("offline"))
 
-        assertNull(reporter(store, api, now = { 1_000L }).report_if_due(user_id))
-        assertEquals(0L, store.get_last_reported_at_ms(user_id))
+        assertNull(reporter(store, api, now = { 1_000L }).report_if_due(user_id, identity))
+        assertEquals(0L, store.last_reported_at_ms(user_id))
     }
 
     @Test
@@ -208,10 +223,53 @@ class EnvelopeCapabilityReporterTest {
         val store = FakeStore()
         val api = FakeRatchetApi()
 
-        assertNull(reporter(store, api, now = { 1_000L }).report_if_due("  "))
+        assertNull(reporter(store, api, now = { 1_000L }).report_if_due("  ", identity))
 
         assertEquals(0, api.requests.size)
         assertNull(store.client_id)
+    }
+
+    @Test
+    fun proves_key_possession_by_reporting_the_identity_fingerprint() = runTest {
+        val store = FakeStore()
+        val api = FakeRatchetApi()
+
+        reporter(store, api, now = { 1_000L }).report_if_due(user_id, identity)
+
+        assertEquals(expected_fingerprint(identity), api.requests[0].identity_fingerprint)
+    }
+
+    @Test
+    fun a_missing_identity_key_reports_no_fingerprint() = runTest {
+        val store = FakeStore()
+        val api = FakeRatchetApi()
+
+        reporter(store, api, now = { 1_000L }).report_if_due(user_id, null)
+
+        assertNull(api.requests[0].identity_fingerprint)
+    }
+
+    @Test
+    fun a_malformed_identity_key_reports_no_fingerprint() = runTest {
+        val store = FakeStore()
+        val api = FakeRatchetApi()
+
+        reporter(store, api, now = { 1_000L }).report_if_due(user_id, "not-a-point")
+
+        assertNull(api.requests[0].identity_fingerprint)
+    }
+
+    @Test
+    fun a_rotated_identity_key_reports_immediately() = runTest {
+        val store = FakeStore()
+        val api = FakeRatchetApi()
+        val rotated = identity_point(0x22)
+
+        reporter(store, api, now = { 1_000L }).report_if_due(user_id, identity)
+        reporter(store, api, now = { 2_000L }).report_if_due(user_id, rotated)
+
+        assertEquals(2, api.requests.size)
+        assertEquals(expected_fingerprint(rotated), api.requests[1].identity_fingerprint)
     }
 
     @Test
@@ -219,8 +277,8 @@ class EnvelopeCapabilityReporterTest {
         val store = FakeStore()
         val api = FakeRatchetApi()
 
-        reporter(store, api, now = { 10_000_000L }).report_if_due(user_id)
-        reporter(store, api, now = { 5_000L }).report_if_due(user_id)
+        reporter(store, api, now = { 10_000_000L }).report_if_due(user_id, identity)
+        reporter(store, api, now = { 5_000L }).report_if_due(user_id, identity)
 
         assertEquals(2, api.requests.size)
     }
