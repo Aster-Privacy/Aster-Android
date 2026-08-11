@@ -41,6 +41,12 @@ object InboundAttachmentKeyStore {
         ): Boolean = size > MAX_ENTRIES
     }
 
+    private val unreadable = object : LinkedHashMap<String, Boolean>(64, 0.75f, true) {
+        override fun removeEldestEntry(
+            eldest: MutableMap.MutableEntry<String, Boolean>?,
+        ): Boolean = size > MAX_ENTRIES
+    }
+
     private val lock = Any()
 
     fun register(mail_item_id: String?, seq_num: Int?, key: String?) {
@@ -60,6 +66,7 @@ object InboundAttachmentKeyStore {
         val id = entry_key(mail_item_id, seq_num)
         synchronized(lock) {
             keys.put(id, key.toByteArray(Charsets.UTF_8))
+            unreadable.remove(id)
             if (filename == null && content_type == null && content_id == null && size == null) {
                 metas.remove(id)
             } else {
@@ -115,10 +122,21 @@ object InboundAttachmentKeyStore {
         }
     }
 
+    fun mark_unreadable(mail_item_id: String?, seq_num: Int?) {
+        if (mail_item_id.isNullOrBlank() || seq_num == null) return
+        synchronized(lock) { unreadable[entry_key(mail_item_id, seq_num)] = true }
+    }
+
+    fun is_unreadable(mail_item_id: String?, seq_num: Int?): Boolean {
+        if (mail_item_id.isNullOrBlank() || seq_num == null) return false
+        return synchronized(lock) { unreadable.containsKey(entry_key(mail_item_id, seq_num)) }
+    }
+
     fun clear() {
         synchronized(lock) {
             keys.clear()
             metas.clear()
+            unreadable.clear()
         }
     }
 

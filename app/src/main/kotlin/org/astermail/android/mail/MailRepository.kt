@@ -1715,11 +1715,14 @@ class MailRepository @Inject constructor(
         } finally {
             passphrase.fill(0)
         }
-        pbkdf2_key_cache.put(salt_hex, key_bytes)
-
-        return runCatching { aes_gcm_decrypt(ciphertext, key_bytes, iv) }.getOrElse {
+        val plaintext = runCatching { aes_gcm_decrypt(ciphertext, key_bytes, iv) }.getOrElse {
+            key_bytes.fill(0)
             throw IllegalStateException("pbkdf2 decryption failed with all keys")
         }
+
+        pbkdf2_key_cache.put(salt_hex, key_bytes)
+
+        return plaintext
     }
 
     private fun decrypt_envelope_identity_key(encrypted_b64: String, nonce: ByteArray): ByteArray {
@@ -1929,7 +1932,13 @@ class MailRepository @Inject constructor(
         }.getOrNull()
 
         val row_meta = if (is_sealed_meta_nonce(nonce_bytes)) {
-            read_sealed_attachment_meta(encrypted_meta, nonce_bytes!!, entry?.key)
+            read_sealed_attachment_meta(
+                encrypted_meta,
+                nonce_bytes!!,
+                entry?.key,
+                mail_item_id,
+                seq_num,
+            )
         } else {
             read_legacy_attachment_meta(encrypted_meta)
         }
@@ -1967,15 +1976,26 @@ class MailRepository @Inject constructor(
         encrypted_meta: String,
         nonce_bytes: ByteArray,
         session_key_b64: String?,
+        mail_item_id: String?,
+        seq_num: Int?,
     ): AttachmentMeta? {
         val sealed = decrypt_sealed_attachment_meta(encrypted_meta, nonce_bytes, session_key_b64)
         if (sealed != null) return sealed
+
+        if (InboundAttachmentKeyStore.is_unreadable(mail_item_id, seq_num)) return null
 
         val decrypted = runCatching {
             decrypt_envelope_identity_key(encrypted_meta, nonce_bytes)
         }.recoverCatching {
             decrypt_envelope_pbkdf2(encrypted_meta)
-        }.getOrNull() ?: return null
+        }.getOrNull()
+
+        if (decrypted == null) {
+            if (session_key_store.get_identity_key() != null) {
+                InboundAttachmentKeyStore.mark_unreadable(mail_item_id, seq_num)
+            }
+            return null
+        }
 
         return parse_attachment_meta_json(decrypted)
     }
@@ -2054,6 +2074,7 @@ class MailRepository @Inject constructor(
                         content_id = meta.content_id,
                         mail_item_id = att.mail_item_id,
                         seq_num = att.seq_num,
+                        is_placeholder = meta.is_placeholder,
                     )
                 }
             }.filterValues { it.isNotEmpty() }
@@ -2089,6 +2110,7 @@ class MailRepository @Inject constructor(
                     content_id = meta.content_id,
                     mail_item_id = att.mail_item_id,
                     seq_num = att.seq_num,
+                    is_placeholder = meta.is_placeholder,
                 )
             }
         } catch (_: Throwable) {
@@ -2124,6 +2146,7 @@ class MailRepository @Inject constructor(
                     session_key = meta.session_key,
                     mail_item_id = att.mail_item_id,
                     seq_num = att.seq_num,
+                    is_placeholder = meta.is_placeholder,
                 ),
                 data,
             )

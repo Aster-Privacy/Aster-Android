@@ -180,6 +180,7 @@ data class MessageAttachment(
     val content_id: String? = null,
     val mail_item_id: String? = null,
     val seq_num: Int? = null,
+    val is_placeholder: Boolean = false,
 )
 
 data class ThreadMessage(

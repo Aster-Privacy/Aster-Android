@@ -341,6 +341,34 @@ class AttachmentMetaSealedTest {
     }
 
     @Test
+    fun opens_the_sealed_meta_vector_written_by_the_server() {
+        val stream = checkNotNull(
+            javaClass.classLoader?.getResourceAsStream("sealed_attachment_meta_vector.json"),
+        )
+        val vector = org.json.JSONObject(stream.bufferedReader().use { it.readText() })
+        val key_b64 = vector.getString("session_key_b64")
+        val nonce = java.util.Base64.getDecoder().decode(vector.getString("meta_nonce_b64"))
+
+        assertTrue(MailRepository.is_sealed_meta_nonce(nonce))
+
+        InboundAttachmentKeyStore.register("item-vector", 0, key_b64)
+
+        val meta = repo.decrypt_attachment_meta(
+            vector.getString("sealed_meta_b64"),
+            b64(nonce),
+            "item-vector",
+            0,
+            null,
+        )
+
+        assertFalse(meta.is_placeholder)
+        assertEquals("quarterly report.pdf", meta.filename)
+        assertEquals("application/pdf", meta.content_type)
+        assertEquals("cid-7", meta.content_id)
+        assertEquals(key_b64, meta.session_key)
+    }
+
+    @Test
     fun garbage_metadata_never_surfaces_ciphertext_as_a_name() {
         val garbage = b64(ByteArray(64) { (it * 7).toByte() })
 

@@ -1188,6 +1188,10 @@ fun MailDetailScreen(
                                 show_action_sheet = true
                             },
                             on_attachment_tap = { att ->
+                                if (att.is_placeholder && att.session_key.isNullOrBlank()) {
+                                    org.astermail.android.ui.common.app_toast.show(context.getString(R.string.attachment_locked))
+                                    return@expanded_message
+                                }
                                 is_downloading_attachment = true
                                 mail_vm.download_attachment(att) { result ->
                                     result.onSuccess { (resolved_att, bytes) ->
@@ -1201,6 +1205,10 @@ fun MailDetailScreen(
                                 }
                             },
                             on_attachment_download = { att ->
+                                if (att.is_placeholder && att.session_key.isNullOrBlank()) {
+                                    org.astermail.android.ui.common.app_toast.show(context.getString(R.string.attachment_locked))
+                                    return@expanded_message
+                                }
                                 org.astermail.android.ui.common.app_toast.show(context.getString(R.string.downloading_file, att.filename))
                                 mail_vm.download_attachment(att) { result ->
                                     result.onSuccess { (resolved_att, bytes) ->

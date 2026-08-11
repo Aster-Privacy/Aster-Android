@@ -395,6 +395,7 @@
     <string name="no_body">(no body)</string>
     <string name="attachments_count">%d attachment(s)</string>
     <string name="attachment_unnamed">Attachment</string>
+    <string name="attachment_locked">This attachment can\'t be opened yet. Open the email again in a moment.</string>
     <string name="download_complete">Download complete</string>
     <string name="cannot_decode_image">Cannot decode image</string>
     <string name="no_app_to_open">No app to open this file</string>
