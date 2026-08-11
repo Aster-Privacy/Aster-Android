@@ -1274,6 +1274,7 @@ fun MailDetailScreen(
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .background(colors.bg_primary)
+                    .pointerInput(Unit) {}
                     .navigationBarsPadding()
                     .onGloballyPositioned { coords ->
                         val measured = with(density) { coords.size.height.toDp() }
@@ -2363,7 +2364,7 @@ private fun reply_action_row(
             val react_alpha = if (react_enabled) 1f else 0.4f
             Box(
                 modifier = Modifier
-                    .size(44.dp)
+                    .size(48.dp)
                     .clip(SquircleShape(999.dp))
                     .border(
                         1.dp,
@@ -2591,6 +2592,7 @@ internal fun reply_action_button(
     }
     Row(
         modifier = modifier
+            .heightIn(min = 48.dp)
             .clip(SquircleShape(999.dp))
             .background(bg)
             .border(1.dp, border_color, SquircleShape(999.dp))
@@ -5578,7 +5580,7 @@ private fun attachment_preview_dialog(
 }
 
 @Composable
-private fun bottom_action(
+private fun androidx.compose.foundation.layout.RowScope.bottom_action(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     test_tag: String? = null,
@@ -5587,8 +5589,9 @@ private fun bottom_action(
     val colors = AsterMaterial.colors
     Box(
         modifier = Modifier
-            .size(44.dp)
-            .clip(CircleShape)
+            .weight(1f)
+            .heightIn(min = 48.dp)
+            .clip(SquircleShape(18.dp))
             .clickable(onClick = onClick)
             .then(if (test_tag != null) Modifier.testTag(test_tag) else Modifier),
         contentAlignment = Alignment.Center,
