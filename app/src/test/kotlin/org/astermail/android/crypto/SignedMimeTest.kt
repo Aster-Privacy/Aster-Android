@@ -163,7 +163,17 @@ class SignedMimeTest {
 
         val sender = PgpKeyGenerator.generate("Alice", "alice@astermail.org", passphrase.toCharArray())
         val recipient = PgpKeyGenerator.generate("Bob", "bob@example.com", passphrase.toCharArray())
-        val mime = ProtectedMimeBuilder.build(sample_input()).toByteArray(Charsets.UTF_8)
+        val input = sample_input(
+            subject = "Signed and encrypted ✓",
+            attachments = listOf(
+                ProtectedMimeAttachment(
+                    filename = "note.txt",
+                    content_type = "text/plain",
+                    data_base64 = java.util.Base64.getEncoder().encodeToString("hello".toByteArray()),
+                ),
+            ),
+        )
+        val mime = ProtectedMimeBuilder.build(input).toByteArray(Charsets.UTF_8)
         val signed = PgpSigner.sign_detached(mime, sender.armored_private_key, passphrase.toCharArray())!!
 
         val fields = linkedMapOf(
