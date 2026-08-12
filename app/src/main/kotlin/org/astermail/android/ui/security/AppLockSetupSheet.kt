@@ -383,7 +383,7 @@ fun AppLockVerifySheet(
     val scope = rememberCoroutineScope()
     val config = remember { store.get_config() }
     val pin_type = config?.pin_type ?: "numeric"
-    val digits = config?.digits ?: 4
+    val digits = config?.digits ?: 6
 
     var input by remember { mutableStateOf("") }
     var verifying by remember { mutableStateOf(false) }
@@ -467,7 +467,7 @@ fun AppLockVerifySheet(
                     }
                     PinPad(
                         on_digit = { d ->
-                            if (!verifying && !locked_out) {
+                            if (!verifying && !locked_out && input.length < digits) {
                                 val next = input + d
                                 input = next
                                 if (next.length == digits) attempt(next)

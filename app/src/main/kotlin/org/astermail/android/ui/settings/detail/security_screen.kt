@@ -36,7 +36,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -825,26 +827,30 @@ private fun vanguard_section(
                 enter = expandVertically() + fadeIn(),
                 exit = shrinkVertically() + fadeOut(),
             ) {
-                Column(
+                Row(
                     modifier = Modifier
                         .padding(top = AsterSpacing.md)
                         .padding(start = AsterSpacing.md)
-                        .border(
-                            width = 2.dp,
-                            color = colors.accent_blue.copy(alpha = 0.25f),
-                            shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 2.dp, bottomStart = 2.dp),
-                        )
-                        .padding(start = AsterSpacing.md),
+                        .height(IntrinsicSize.Min),
                 ) {
-                    app_lock_subsection(
-                        store = store,
-                        enabled = app_lock_enabled,
-                        on_toggle = { want ->
-                            if (want) modal = AppLockModal.setup
-                            else modal = AppLockModal.disable
-                        },
-                        on_change_pin = { modal = AppLockModal.verify_to_change },
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .width(2.dp)
+                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
+                            .background(colors.accent_blue.copy(alpha = 0.25f)),
                     )
+                    Column(modifier = Modifier.padding(start = AsterSpacing.md)) {
+                        app_lock_subsection(
+                            store = store,
+                            enabled = app_lock_enabled,
+                            on_toggle = { want ->
+                                if (want) modal = AppLockModal.setup
+                                else modal = AppLockModal.disable
+                            },
+                            on_change_pin = { modal = AppLockModal.verify_to_change },
+                        )
+                    }
                 }
             }
         }

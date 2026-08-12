@@ -173,6 +173,7 @@ fun AppLockScreen(store: AppLockStore, on_sign_out: () -> Unit) {
 
     fun handle_digit(d: String) {
         if (verifying || locked_out) return
+        if (input.length >= digits) return
         val next = input + d
         input = next
         if (next.length == digits) attempt_verify(next)
@@ -385,7 +386,12 @@ fun PinPad(
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            PinKey(label = null, enabled = enabled, bg = Color.Transparent, on_click = {})
+            PinIconKey(
+                icon = TablerIcons.Backspace,
+                enabled = enabled,
+                bg = Color.Transparent,
+                on_click = on_backspace,
+            )
             PinKey(label = "0", enabled = enabled, bg = colors.bg_secondary, on_click = { on_digit("0") })
             PinIconKey(
                 icon = TablerIcons.Check,
