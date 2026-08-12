@@ -1982,6 +1982,7 @@
     <string name="publish_to_wkd_sub">Publiceert je publieke sleutel in de Web Key Directory</string>
     <string name="publish_to_keyservers">Publiceren naar keyservers</string>
     <string name="publish_to_keyservers_sub">Publiceert je sleutel op openbare keyservers</string>
+    <string name="keyserver_publish_failed">Je openbare sleutel is niet gepubliceerd op de keyserver. Een nieuwe poging zou moeten werken.</string>
     <string name="public_key_copied">Publieke sleutel gekopieerd</string>
     <string name="created_at_format">Aangemaakt op %1$s</string>
     <string name="identity_key_unavailable_hint">Meld je opnieuw aan om je sleutelmateriaal te herstellen.</string>

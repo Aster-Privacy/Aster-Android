@@ -1979,6 +1979,7 @@
     <string name="publish_to_wkd_sub">把你的公钥发布到 Web Key Directory</string>
     <string name="publish_to_keyservers">发布到密钥服务器</string>
     <string name="publish_to_keyservers_sub">把你的公钥发布到公共密钥服务器</string>
+    <string name="keyserver_publish_failed">你的公钥未能发布到密钥服务器，再试一次应该可以。</string>
     <string name="public_key_copied">已复制公钥</string>
     <string name="created_at_format">创建于 %1$s</string>
     <string name="identity_key_unavailable_hint">重新登录即可恢复你的密钥材料。</string>

@@ -1979,6 +1979,7 @@
     <string name="publish_to_wkd_sub">公開鍵を Web Key Directory に公開します</string>
     <string name="publish_to_keyservers">鍵サーバーに公開</string>
     <string name="publish_to_keyservers_sub">公開鍵サーバーに鍵を公開します</string>
+    <string name="keyserver_publish_failed">公開鍵は鍵サーバーに公開されませんでした。もう一度試すと通ることが多いです。</string>
     <string name="public_key_copied">公開鍵をコピーしました</string>
     <string name="created_at_format">作成日 %1$s</string>
     <string name="identity_key_unavailable_hint">もう一度サインインすると鍵情報を復元できます。</string>

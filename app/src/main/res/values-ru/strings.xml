@@ -1988,6 +1988,7 @@
     <string name="publish_to_wkd_sub">Публикует ваш открытый ключ в Web Key Directory</string>
     <string name="publish_to_keyservers">Опубликовать на серверах ключей</string>
     <string name="publish_to_keyservers_sub">Публикует ваш ключ на публичных серверах ключей</string>
+    <string name="keyserver_publish_failed">Публичный ключ не опубликован на сервере ключей. Повторная попытка обычно помогает.</string>
     <string name="public_key_copied">Открытый ключ скопирован</string>
     <string name="created_at_format">Создан %1$s</string>
     <string name="identity_key_unavailable_hint">Войдите снова, чтобы восстановить ключевой материал.</string>

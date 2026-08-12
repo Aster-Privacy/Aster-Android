@@ -1994,6 +1994,7 @@
     <string name="publish_to_wkd_sub">نشر مفتاحك العام في دليل مفاتيح الويب</string>
     <string name="publish_to_keyservers">النشر إلى خوادم المفاتيح</string>
     <string name="publish_to_keyservers_sub">نشر مفتاحك على خوادم المفاتيح العامة</string>
+    <string name="keyserver_publish_failed">مفتاحك العام لم يُنشر إلى خادم المفاتيح. محاولة أخرى ينبغي أن تنجح.</string>
     <string name="public_key_copied">تم نسخ المفتاح العام</string>
     <string name="created_at_format">أُنشئ في %1$s</string>
     <string name="identity_key_unavailable_hint">سجّل الدخول مجددًا لاستعادة مواد مفاتيحك.</string>

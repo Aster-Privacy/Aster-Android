@@ -1982,6 +1982,7 @@
     <string name="publish_to_wkd_sub">Pubblica la tua chiave pubblica nel Web Key Directory</string>
     <string name="publish_to_keyservers">Pubblica sui keyserver</string>
     <string name="publish_to_keyservers_sub">Pubblica la tua chiave sui keyserver pubblici</string>
+    <string name="keyserver_publish_failed">La tua chiave pubblica non è stata pubblicata sul keyserver. Un altro tentativo dovrebbe bastare.</string>
     <string name="public_key_copied">Chiave pubblica copiata</string>
     <string name="created_at_format">Creata il %1$s</string>
     <string name="identity_key_unavailable_hint">Accedi di nuovo per ripristinare il tuo materiale crittografico.</string>

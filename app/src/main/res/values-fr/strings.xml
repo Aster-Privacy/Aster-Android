@@ -1976,6 +1976,7 @@
     <string name="public_key_copied">Clé publique copiée dans le presse-papiers</string>
     <string name="publish_to_keyservers">Publier sur les serveurs de clés</string>
     <string name="publish_to_keyservers_sub">Publier votre clé sur les serveurs de clés publics</string>
+    <string name="keyserver_publish_failed">Votre clé publique ne s\'est pas publiée sur le serveur de clés. Un autre essai devrait suffire.</string>
     <string name="publish_to_wkd">Publier sur WKD</string>
     <string name="publish_to_wkd_sub">Publier votre clé publique sur le Web Key Directory</string>
     <string name="quiet_hours_end">Fin</string>

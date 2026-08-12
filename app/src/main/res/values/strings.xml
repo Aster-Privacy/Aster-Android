@@ -1999,6 +1999,7 @@
     <string name="publish_to_wkd_sub">Publish your public key to Web Key Directory</string>
     <string name="publish_to_keyservers">Publish to keyservers</string>
     <string name="publish_to_keyservers_sub">Publish your key to public keyservers</string>
+    <string name="keyserver_publish_failed">Your public key did not publish to the keyserver. Another attempt should do it.</string>
     <string name="public_key_copied">Public key copied to clipboard</string>
     <string name="created_at_format">Created %1$s</string>
     <string name="identity_key_unavailable_hint">Sign in again to restore your key material.</string>

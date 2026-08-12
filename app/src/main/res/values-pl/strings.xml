@@ -1988,6 +1988,7 @@
     <string name="publish_to_wkd_sub">Publikuje Twój klucz publiczny w Web Key Directory</string>
     <string name="publish_to_keyservers">Publikuj na serwerach kluczy</string>
     <string name="publish_to_keyservers_sub">Publikuje Twój klucz na publicznych serwerach kluczy</string>
+    <string name="keyserver_publish_failed">Klucz publiczny nie został opublikowany na serwerze kluczy. Kolejna próba powinna to załatwić.</string>
     <string name="public_key_copied">Skopiowano klucz publiczny</string>
     <string name="created_at_format">Utworzono %1$s</string>
     <string name="identity_key_unavailable_hint">Zaloguj się ponownie, aby przywrócić materiał kluczy.</string>

@@ -1979,6 +1979,7 @@
     <string name="publish_to_wkd_sub">공개 키를 Web Key Directory에 게시합니다</string>
     <string name="publish_to_keyservers">키 서버에 게시</string>
     <string name="publish_to_keyservers_sub">공개 키 서버에 키를 게시합니다</string>
+    <string name="keyserver_publish_failed">공개 키가 키 서버에 게시되지 않았습니다. 다시 시도하면 됩니다.</string>
     <string name="public_key_copied">공개 키를 복사했습니다</string>
     <string name="created_at_format">%1$s에 생성됨</string>
     <string name="identity_key_unavailable_hint">다시 로그인하면 키 자료가 복원됩니다.</string>

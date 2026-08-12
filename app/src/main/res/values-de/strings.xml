@@ -1983,6 +1983,7 @@
     <string name="publish_to_wkd_sub">Deinen öffentlichen Schlüssel im Web Key Directory veröffentlichen</string>
     <string name="publish_to_keyservers">Auf Keyservern veröffentlichen</string>
     <string name="publish_to_keyservers_sub">Deinen Schlüssel auf öffentlichen Keyservern veröffentlichen</string>
+    <string name="keyserver_publish_failed">Dein öffentlicher Schlüssel wurde nicht auf dem Keyserver veröffentlicht. Ein erneuter Versuch genügt meist.</string>
     <string name="public_key_copied">Öffentlicher Schlüssel kopiert</string>
     <string name="created_at_format">Erstellt am %1$s</string>
     <string name="identity_key_unavailable_hint">Melde dich erneut an, um dein Schlüsselmaterial wiederherzustellen.</string>

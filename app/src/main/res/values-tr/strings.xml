@@ -1982,6 +1982,7 @@
     <string name="publish_to_wkd_sub">Açık anahtarını Web Key Directory\'de yayımlar</string>
     <string name="publish_to_keyservers">Anahtar sunucularına yayımla</string>
     <string name="publish_to_keyservers_sub">Anahtarını herkese açık anahtar sunucularında yayımlar</string>
+    <string name="keyserver_publish_failed">Genel anahtarın anahtar sunucusuna yayımlanmadı. Bir kez daha denemek genellikle yeterli olur.</string>
     <string name="public_key_copied">Açık anahtar kopyalandı</string>
     <string name="created_at_format">%1$s tarihinde oluşturuldu</string>
     <string name="identity_key_unavailable_hint">Anahtar bilgilerini geri getirmek için yeniden oturum aç.</string>

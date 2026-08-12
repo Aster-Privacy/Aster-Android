@@ -630,8 +630,7 @@ fun EncryptionScreen(
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             val enc = state.encryption_settings
             val wkd = state.wkd_status
-            val ks = state.keyserver_status
-            if (prefs == null || enc == null || wkd == null || ks == null) {
+            if (prefs == null || enc == null) {
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xl),
                     contentAlignment = Alignment.Center,
@@ -698,7 +697,7 @@ fun EncryptionScreen(
                     info_description = stringResource(R.string.info_wkd_desc),
                     trailing = {
                         AsterSwitch(
-                            checked = wkd.published == true,
+                            checked = wkd?.published == true,
                             onCheckedChange = { vm.toggle_wkd_publishing() },
                         )
                     },
@@ -711,7 +710,7 @@ fun EncryptionScreen(
                     info_description = stringResource(R.string.info_keyservers_desc),
                     trailing = {
                         AsterSwitch(
-                            checked = ks.published == true,
+                            checked = prefs.publish_to_keyservers,
                             onCheckedChange = { vm.toggle_keyserver_publishing() },
                         )
                     },

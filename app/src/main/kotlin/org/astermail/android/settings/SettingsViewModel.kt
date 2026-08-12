@@ -2901,11 +2901,31 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun toggle_keyserver_publishing() {
+        val current = _state.value.preferences ?: return
+        val new_value = !current.publish_to_keyservers
+        save_preferences(current.copy(publish_to_keyservers = new_value))
+        if (!new_value) return
         viewModelScope.launch {
-            try {
+            val failed = try {
                 encryption_api.publish_to_keyserver()
-                _state.update { it.copy(keyserver_status = it.keyserver_status?.copy(published = true)) }
-            } catch (_: Throwable) {}
+                false
+            } catch (t: Throwable) {
+                if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "publish_to_keyserver", t)
+                true
+            }
+            if (failed) {
+                save_preferences_job?.join()
+                val latest = _state.value.preferences ?: return@launch
+                save_preferences(latest.copy(publish_to_keyservers = false))
+                _state.update { it.copy(action_result = context.getString(R.string.keyserver_publish_failed)) }
+                return@launch
+            }
+            try {
+                val ks = encryption_api.get_keyserver_status()
+                _state.update { it.copy(keyserver_status = ks) }
+            } catch (t: Throwable) {
+                if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "keyserver status refresh", t)
+            }
         }
     }
 
