@@ -36,9 +36,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -768,18 +766,7 @@ private fun vanguard_section(
                         )
                         if (vanguard_enabled) {
                             Spacer(Modifier.width(AsterSpacing.xs))
-                            Box(
-                                modifier = Modifier
-                                    .background(colors.success.copy(alpha = 0.15f), SquircleShape(4.dp))
-                                    .padding(horizontal = 6.dp, vertical = 2.dp),
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.vanguard_active),
-                                    color = colors.success,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
-                            }
+                            verified_badge(stringResource(R.string.vanguard_active))
                         }
                     }
                     Spacer(Modifier.height(2.dp))
@@ -827,30 +814,19 @@ private fun vanguard_section(
                 enter = expandVertically() + fadeIn(),
                 exit = shrinkVertically() + fadeOut(),
             ) {
-                Row(
-                    modifier = Modifier
-                        .padding(top = AsterSpacing.md)
-                        .padding(start = AsterSpacing.md)
-                        .height(IntrinsicSize.Min),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .width(2.dp)
-                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
-                            .background(colors.accent_blue.copy(alpha = 0.25f)),
+                Column {
+                    Spacer(Modifier.height(AsterSpacing.md))
+                    AsterDivider()
+                    Spacer(Modifier.height(AsterSpacing.md))
+                    app_lock_row(
+                        store = store,
+                        enabled = app_lock_enabled,
+                        on_toggle = { want ->
+                            if (want) modal = AppLockModal.setup
+                            else modal = AppLockModal.disable
+                        },
+                        on_change_pin = { modal = AppLockModal.verify_to_change },
                     )
-                    Column(modifier = Modifier.padding(start = AsterSpacing.md)) {
-                        app_lock_subsection(
-                            store = store,
-                            enabled = app_lock_enabled,
-                            on_toggle = { want ->
-                                if (want) modal = AppLockModal.setup
-                                else modal = AppLockModal.disable
-                            },
-                            on_change_pin = { modal = AppLockModal.verify_to_change },
-                        )
-                    }
                 }
             }
         }
@@ -896,31 +872,31 @@ private fun vanguard_section(
 }
 
 @Composable
-private fun app_lock_subsection(
+private fun app_lock_row(
     store: AppLockStore,
     enabled: Boolean,
     on_toggle: (Boolean) -> Unit,
     on_change_pin: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = AsterSpacing.sm)) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(modifier = Modifier.weight(1f).padding(end = AsterSpacing.sm)) {
+            Column(modifier = Modifier.weight(1f).padding(end = AsterSpacing.md)) {
                 Text(
                     text = stringResource(R.string.app_lock_pin),
                     color = colors.text_primary,
-                    fontSize = 14.sp,
+                    fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
                     text = stringResource(R.string.app_lock_pin_description),
                     color = colors.text_muted,
-                    fontSize = 12.sp,
+                    fontSize = 13.sp,
                 )
             }
             AsterSwitch(
