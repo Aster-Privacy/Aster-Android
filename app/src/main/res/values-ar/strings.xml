@@ -264,6 +264,7 @@
     <string name="no_body">(بدون محتوى)</string>
     <string name="attachments_count">%d مرفق(ات)</string>
     <string name="attachment_unnamed">مرفق</string>
+    <string name="attachment_locked">لا يمكن فتح هذا المرفق لأن مفتاح التشفير الخاص به غير متوفر على هذا الجهاز.</string>
     <string name="download_complete">اكتمل التنزيل</string>
     <string name="cannot_decode_image">لا يمكن فك تشفير الصورة</string>
     <string name="no_app_to_open">لا يوجد تطبيق لفتح هذا الملف</string>

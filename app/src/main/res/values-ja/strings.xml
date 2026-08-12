@@ -264,6 +264,7 @@
     <string name="no_body">(本文なし)</string>
     <string name="attachments_count">%d個の添付ファイル</string>
     <string name="attachment_unnamed">添付ファイル</string>
+    <string name="attachment_locked">この添付ファイルは、暗号化キーがこのデバイスで利用できないため開けません。</string>
     <string name="download_complete">ダウンロード完了</string>
     <string name="cannot_decode_image">画像をデコードできません</string>
     <string name="no_app_to_open">このファイルを開くアプリがありません</string>

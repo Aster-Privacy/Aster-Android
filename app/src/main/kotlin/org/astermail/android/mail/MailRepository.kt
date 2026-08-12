@@ -1932,13 +1932,7 @@ class MailRepository @Inject constructor(
         }.getOrNull()
 
         val row_meta = if (is_sealed_meta_nonce(nonce_bytes)) {
-            read_sealed_attachment_meta(
-                encrypted_meta,
-                nonce_bytes!!,
-                entry?.key,
-                mail_item_id,
-                seq_num,
-            )
+            read_sealed_attachment_meta(encrypted_meta, nonce_bytes!!, entry?.key, mail_item_id, seq_num)
         } else {
             read_legacy_attachment_meta(encrypted_meta)
         }
@@ -1988,12 +1982,9 @@ class MailRepository @Inject constructor(
             decrypt_envelope_identity_key(encrypted_meta, nonce_bytes)
         }.recoverCatching {
             decrypt_envelope_pbkdf2(encrypted_meta)
-        }.getOrNull()
-
-        if (decrypted == null) {
-            if (session_key_store.get_identity_key() != null) {
-                InboundAttachmentKeyStore.mark_unreadable(mail_item_id, seq_num)
-            }
+        }.getOrNull() ?: run {
+            session_key_store.get_identity_key()
+                ?.let { InboundAttachmentKeyStore.mark_unreadable(mail_item_id, seq_num) }
             return null
         }
 
@@ -2074,7 +2065,6 @@ class MailRepository @Inject constructor(
                         content_id = meta.content_id,
                         mail_item_id = att.mail_item_id,
                         seq_num = att.seq_num,
-                        is_placeholder = meta.is_placeholder,
                     )
                 }
             }.filterValues { it.isNotEmpty() }
@@ -2110,7 +2100,6 @@ class MailRepository @Inject constructor(
                     content_id = meta.content_id,
                     mail_item_id = att.mail_item_id,
                     seq_num = att.seq_num,
-                    is_placeholder = meta.is_placeholder,
                 )
             }
         } catch (_: Throwable) {
@@ -2146,7 +2135,6 @@ class MailRepository @Inject constructor(
                     session_key = meta.session_key,
                     mail_item_id = att.mail_item_id,
                     seq_num = att.seq_num,
-                    is_placeholder = meta.is_placeholder,
                 ),
                 data,
             )

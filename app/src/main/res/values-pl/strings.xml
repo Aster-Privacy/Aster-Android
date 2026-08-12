@@ -264,6 +264,7 @@
     <string name="no_body">(brak treści)</string>
     <string name="attachments_count">%d załącznik(ów)</string>
     <string name="attachment_unnamed">Załącznik</string>
+    <string name="attachment_locked">Nie można otworzyć tego załącznika, ponieważ jego klucz szyfrowania nie jest dostępny na tym urządzeniu.</string>
     <string name="download_complete">Pobieranie zakończone</string>
     <string name="cannot_decode_image">Nie można zdekodować obrazu</string>
     <string name="no_app_to_open">Brak aplikacji do otwarcia tego pliku</string>

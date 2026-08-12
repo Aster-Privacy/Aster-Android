@@ -264,6 +264,7 @@
     <string name="no_body">（无正文）</string>
     <string name="attachments_count">%d 个附件</string>
     <string name="attachment_unnamed">附件</string>
+    <string name="attachment_locked">此附件的加密密钥在此设备上不可用，因此无法打开。</string>
     <string name="download_complete">下载完成</string>
     <string name="cannot_decode_image">无法解码图片</string>
     <string name="no_app_to_open">没有可以打开此文件的应用</string>

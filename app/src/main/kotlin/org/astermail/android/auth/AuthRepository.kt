@@ -121,11 +121,8 @@ class AuthRepository @Inject constructor(
     )
     private val pgp_publish_attempted_user_ids =
         java.util.Collections.synchronizedSet(mutableSetOf<String>())
-    private val ratchet_bootstrap_triggered = java.util.concurrent.atomic.AtomicBoolean(false)
-
     fun trigger_ratchet_bootstrap() {
         if (!_is_signed_in.value) return
-        if (!ratchet_bootstrap_triggered.compareAndSet(false, true)) return
         if (BuildConfig.DEBUG) android.util.Log.w("RatchetBootstrap", "trigger_ratchet_bootstrap firing")
         background_scope.launch {
             runCatching { ratchet_bootstrap_service.bootstrap_if_needed() }

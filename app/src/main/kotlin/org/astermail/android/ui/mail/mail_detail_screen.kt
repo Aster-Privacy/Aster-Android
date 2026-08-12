@@ -172,6 +172,7 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterDragHandle
 import org.astermail.android.design.components.AsterIconButton
+import org.astermail.android.mail.AttachmentKeyUnavailableException
 import org.astermail.android.mail.DecryptedReaction
 import org.astermail.android.mail.MailViewModel
 import org.astermail.android.mail.body_starts_with
@@ -708,7 +709,7 @@ fun MailDetailScreen(
                     ),
                 )
             } else {
-                org.astermail.android.ui.common.app_toast.show(evt.message)
+                show_toast(evt.message)
             }
         }
     }
@@ -1160,16 +1161,14 @@ fun MailDetailScreen(
                                 dismissed_unsub_ids = dismissed_unsub_ids + msg.id
                                 scope.launch {
                                     if (!is_safe_unsubscribe_url(url)) {
-                                        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.could_not_unsubscribe))
+                                        show_toast(context.getString(R.string.could_not_unsubscribe))
                                         return@launch
                                     }
                                     try {
-                                        context.startActivity(
-                                            Intent(Intent.ACTION_VIEW, Uri.parse(url)),
-                                        )
-                                        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.opening_unsubscribe))
+                                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                                        show_toast(context.getString(R.string.opening_unsubscribe))
                                     } catch (_: Throwable) {
-                                        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.could_not_unsubscribe))
+                                        show_toast(context.getString(R.string.could_not_unsubscribe))
                                     }
                                 }
                             },
@@ -1188,34 +1187,31 @@ fun MailDetailScreen(
                                 show_action_sheet = true
                             },
                             on_attachment_tap = { att ->
-                                if (att.is_placeholder && att.session_key.isNullOrBlank()) {
-                                    org.astermail.android.ui.common.app_toast.show(context.getString(R.string.attachment_locked))
-                                    return@expanded_message
-                                }
                                 is_downloading_attachment = true
                                 mail_vm.download_attachment(att) { result ->
                                     result.onSuccess { (resolved_att, bytes) ->
                                         preview_attachment = resolved_att
                                         preview_bytes = bytes
-                                        is_downloading_attachment = false
-                                    }.onFailure {
-                                        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.failed_to_load_preview))
-                                        is_downloading_attachment = false
+                                    }.onFailure { error ->
+                                        show_toast(
+                                            if (error is AttachmentKeyUnavailableException) context.getString(R.string.attachment_locked)
+                                            else context.getString(R.string.failed_to_load_preview),
+                                        )
                                     }
+                                    is_downloading_attachment = false
                                 }
                             },
                             on_attachment_download = { att ->
-                                if (att.is_placeholder && att.session_key.isNullOrBlank()) {
-                                    org.astermail.android.ui.common.app_toast.show(context.getString(R.string.attachment_locked))
-                                    return@expanded_message
-                                }
-                                org.astermail.android.ui.common.app_toast.show(context.getString(R.string.downloading_file, att.filename))
+                                show_toast(context.getString(R.string.downloading_file, att.filename))
                                 mail_vm.download_attachment(att) { result ->
                                     result.onSuccess { (resolved_att, bytes) ->
                                         val saved = save_attachment_to_storage(context, resolved_att, bytes)
-                                        org.astermail.android.ui.common.app_toast.show(if (saved) context.getString(R.string.saved_file, resolved_att.filename) else context.getString(R.string.failed_to_save))
-                                    }.onFailure {
-                                        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.failed_to_download, att.filename))
+                                        show_toast(if (saved) context.getString(R.string.saved_file, resolved_att.filename) else context.getString(R.string.failed_to_save))
+                                    }.onFailure { error ->
+                                        show_toast(
+                                            if (error is AttachmentKeyUnavailableException) context.getString(R.string.attachment_locked)
+                                            else context.getString(R.string.failed_to_download, att.filename),
+                                        )
                                     }
                                 }
                             },

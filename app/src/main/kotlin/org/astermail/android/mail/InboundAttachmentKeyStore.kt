@@ -32,6 +32,7 @@ data class InboundAttachmentEntry(
 object InboundAttachmentKeyStore {
 
     private const val MAX_ENTRIES = 4096
+    private const val UNREADABLE_TTL_MS = 60_000L
 
     private val keys = BoundedKeyCache(MAX_ENTRIES)
 
@@ -41,9 +42,9 @@ object InboundAttachmentKeyStore {
         ): Boolean = size > MAX_ENTRIES
     }
 
-    private val unreadable = object : LinkedHashMap<String, Boolean>(64, 0.75f, true) {
+    private val unreadable = object : LinkedHashMap<String, Long>(64, 0.75f, true) {
         override fun removeEldestEntry(
-            eldest: MutableMap.MutableEntry<String, Boolean>?,
+            eldest: MutableMap.MutableEntry<String, Long>?,
         ): Boolean = size > MAX_ENTRIES
     }
 
@@ -124,12 +125,23 @@ object InboundAttachmentKeyStore {
 
     fun mark_unreadable(mail_item_id: String?, seq_num: Int?) {
         if (mail_item_id.isNullOrBlank() || seq_num == null) return
-        synchronized(lock) { unreadable[entry_key(mail_item_id, seq_num)] = true }
+        synchronized(lock) {
+            unreadable[entry_key(mail_item_id, seq_num)] = android.os.SystemClock.elapsedRealtime()
+        }
     }
 
     fun is_unreadable(mail_item_id: String?, seq_num: Int?): Boolean {
         if (mail_item_id.isNullOrBlank() || seq_num == null) return false
-        return synchronized(lock) { unreadable.containsKey(entry_key(mail_item_id, seq_num)) }
+        val id = entry_key(mail_item_id, seq_num)
+        return synchronized(lock) {
+            val marked_at = unreadable[id] ?: return@synchronized false
+            if (android.os.SystemClock.elapsedRealtime() - marked_at < UNREADABLE_TTL_MS) {
+                true
+            } else {
+                unreadable.remove(id)
+                false
+            }
+        }
     }
 
     fun clear() {

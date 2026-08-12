@@ -264,6 +264,7 @@
     <string name="no_body">(нет текста)</string>
     <string name="attachments_count">%d вложение(й)</string>
     <string name="attachment_unnamed">Вложение</string>
+    <string name="attachment_locked">Это вложение нельзя открыть, потому что ключ шифрования недоступен на этом устройстве.</string>
     <string name="download_complete">Загрузка завершена</string>
     <string name="cannot_decode_image">Не удаётся декодировать изображение</string>
     <string name="no_app_to_open">Нет приложения для открытия этого файла</string>

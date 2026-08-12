@@ -265,6 +265,7 @@
     <string name="no_body">(sin contenido)</string>
     <string name="attachments_count">%d adjunto(s)</string>
     <string name="attachment_unnamed">Archivo adjunto</string>
+    <string name="attachment_locked">Este archivo adjunto no se puede abrir porque su clave de cifrado no está disponible en este dispositivo.</string>
     <string name="download_complete">Descarga completa</string>
     <string name="cannot_decode_image">No se puede decodificar la imagen</string>
     <string name="no_app_to_open">No hay aplicación para abrir este archivo</string>

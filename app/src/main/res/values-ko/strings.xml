@@ -264,6 +264,7 @@
     <string name="no_body">(본문 없음)</string>
     <string name="attachments_count">첨부 파일 %d개</string>
     <string name="attachment_unnamed">첨부 파일</string>
+    <string name="attachment_locked">이 첨부 파일의 암호화 키를 이 기기에서 사용할 수 없어 열 수 없습니다.</string>
     <string name="download_complete">다운로드 완료</string>
     <string name="cannot_decode_image">이미지를 디코딩할 수 없습니다</string>
     <string name="no_app_to_open">이 파일을 열 앱이 없습니다</string>

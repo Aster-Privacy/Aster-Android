@@ -264,6 +264,7 @@
     <string name="no_body">(içerik yok)</string>
     <string name="attachments_count">%d ek</string>
     <string name="attachment_unnamed">Ek</string>
+    <string name="attachment_locked">Bu ek, şifreleme anahtarı bu cihazda kullanılamadığı için açılamıyor.</string>
     <string name="download_complete">İndirme tamamlandı</string>
     <string name="cannot_decode_image">Görsel çözümlenemiyor</string>
     <string name="no_app_to_open">Bu dosyayı açacak uygulama yok</string>

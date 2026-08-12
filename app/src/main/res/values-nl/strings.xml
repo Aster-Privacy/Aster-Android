@@ -264,6 +264,7 @@
     <string name="no_body">(geen inhoud)</string>
     <string name="attachments_count">%d bijlage(n)</string>
     <string name="attachment_unnamed">Bijlage</string>
+    <string name="attachment_locked">Deze bijlage kan niet worden geopend omdat de versleutelingssleutel niet beschikbaar is op dit apparaat.</string>
     <string name="download_complete">Download voltooid</string>
     <string name="cannot_decode_image">Kan afbeelding niet decoderen</string>
     <string name="no_app_to_open">Geen app om dit bestand te openen</string>
