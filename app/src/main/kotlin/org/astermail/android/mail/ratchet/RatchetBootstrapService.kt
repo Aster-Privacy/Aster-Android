@@ -91,8 +91,13 @@ class RatchetBootstrapService @Inject constructor(
                 )
             }
 
+            val identity_unconfirmed = capability != null && !capability.identity_verified
+
             val stored_generation = uploaded_generation(user_id)
-            if (stored_generation >= BUNDLE_UPLOAD_GENERATION && !pq_identity_generated) {
+            if (stored_generation >= BUNDLE_UPLOAD_GENERATION &&
+                !pq_identity_generated &&
+                !identity_unconfirmed
+            ) {
                 debug_log("skipped upload: already uploaded for user $user_id")
                 return
             }

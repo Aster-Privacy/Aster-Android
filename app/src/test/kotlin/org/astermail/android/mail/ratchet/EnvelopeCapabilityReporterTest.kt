@@ -230,7 +230,7 @@ class EnvelopeCapabilityReporterTest {
     }
 
     @Test
-    fun proves_key_possession_by_reporting_the_identity_fingerprint() = runTest {
+    fun reports_the_fingerprint_of_the_identity_key_it_holds() = runTest {
         val store = FakeStore()
         val api = FakeRatchetApi()
 
