@@ -769,15 +769,17 @@ trim_trailing_gap(wrapper);
   var proton=body.querySelector('div.protonmail_quote');
   if(proton&&!body.querySelector('details.aster-forwarded-collapse')){
 var meta=[];var prev=proton.previousSibling;
-while(prev){var pel=prev.nodeType===1?prev:null;var ptxt=(prev.textContent||'').trim();var is_sig=pel&&pel.classList&&pel.classList.contains('protonmail_signature_block');if(is_sig||!ptxt){meta.unshift(prev);prev=prev.previousSibling}else break}
+while(prev){var pel=prev.nodeType===1?prev:null;var ptxt=(prev.textContent||'').trim();var is_sig=pel&&pel.classList&&pel.classList.contains('protonmail_signature_block');var has_media=!!pel&&(['IMG','VIDEO','PICTURE'].indexOf(pel.tagName.toUpperCase())>=0||!!pel.querySelector('img,video,picture'));if(is_sig||(!ptxt&&!has_media)){meta.unshift(prev);prev=prev.previousSibling}else break}
 meta.push(proton);
 var hidden_sel='.aster_quote,.gmail_quote,.protonmail_quote,.yahoo_quoted,.moz-cite-prefix';
-var outside=false;var otw=document.createTreeWalker(body,NodeFilter.SHOW_TEXT,null,false);
+var media_tags=['IMG','VIDEO','PICTURE'];
+var outside=false;var otw=document.createTreeWalker(body,NodeFilter.SHOW_TEXT|NodeFilter.SHOW_ELEMENT,null,false);
 while(otw.nextNode()){
   var otn=otw.currentNode;var inside=false;
   for(var mi=0;mi<meta.length;mi++){var mn=meta[mi];if(mn===otn||(mn.nodeType===1&&mn.contains(otn))){inside=true;break}}
   if(inside)continue;
-  if((otn.textContent||'').trim().length){outside=true;break}
+  if(otn.nodeType===3){if((otn.textContent||'').trim().length){outside=true;break}continue}
+  if(media_tags.indexOf(otn.tagName.toUpperCase())>=0){outside=true;break}
 }
 if(!outside){
   if(proton.matches&&proton.matches(hidden_sel))proton.style.display='block';
