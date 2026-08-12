@@ -101,6 +101,9 @@ data class ExternalSendRequest(
     val acknowledge_server_readable: Boolean = true,
     val attachments: List<ExternalAttachmentPayload> = emptyList(),
     val suppress_branding: Boolean? = null,
+    val signed_mime: String? = null,
+    val signed_mime_signature: String? = null,
+    val signed_mime_micalg: String? = null,
 )
 
 @Serializable
