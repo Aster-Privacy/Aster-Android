@@ -174,6 +174,24 @@ data class CreateDraftResponse(
 )
 
 @Serializable
+data class UpdateDraftRequestBody(
+    val encrypted_content: String,
+    val content_nonce: String,
+    val content_hash: String,
+    val version: Int,
+    val size_bytes: Int = 0,
+    val has_attachments: Boolean = false,
+    val attachment_count: Int = 0,
+)
+
+@Serializable
+data class UpdateDraftResponse(
+    val success: Boolean = false,
+    val version: Int = 0,
+    val current_version: Int? = null,
+)
+
+@Serializable
 data class DraftsListResponse(
     val items: List<DraftItem> = emptyList(),
     val next_cursor: String? = null,

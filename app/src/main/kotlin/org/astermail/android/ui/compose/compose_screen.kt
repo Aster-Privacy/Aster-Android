@@ -131,6 +131,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -661,6 +662,7 @@ fun ComposeScreen(
     var draft_save_job by remember { mutableStateOf<Job?>(null) }
     var draft_loaded by remember { mutableStateOf(false) }
     var current_draft_id by rememberSaveable { mutableStateOf(if (mode == "draft") draft_id.orEmpty() else "") }
+    val draft_session_id = rememberSaveable { java.util.UUID.randomUUID().toString() }
     val prefs = settings_state.preferences
     val undo_send_enabled = prefs?.undo_send_enabled ?: true
     val undo_send_seconds = prefs?.undo_send_seconds ?: 10
@@ -814,6 +816,7 @@ fun ComposeScreen(
         draft_save_job?.cancel()
         draft_save_job = scope.launch {
             delay(3000)
+            if (sent || is_sending) return@launch
             if (subject.isBlank() && body.isBlank() && to_chips.isEmpty()) return@launch
             draft_status = context.getString(R.string.saving)
             val result = mail_vm.save_draft(
@@ -826,6 +829,8 @@ fun ComposeScreen(
                 draft_type = draft_save_type,
                 reply_to_id = draft_save_reply_to,
                 thread_token = draft_save_thread_token,
+                session_id = draft_session_id,
+                on_id_assigned = { assigned -> current_draft_id = assigned },
             )
             if (result.isSuccess) {
                 current_draft_id = result.getOrNull().orEmpty()
@@ -990,7 +995,7 @@ fun ComposeScreen(
     androidx.compose.runtime.DisposableEffect(lifecycle_owner_for_draft) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
             if (event == androidx.lifecycle.Lifecycle.Event.ON_PAUSE) {
-                if (!sent && (subject.isNotBlank() || body.isNotBlank() || to_chips.isNotEmpty())) {
+                if (!sent && !is_sending && (subject.isNotBlank() || body.isNotBlank() || to_chips.isNotEmpty())) {
                     draft_save_job?.cancel()
                     mail_vm.save_draft_and_finish(
                         subject = subject,
@@ -1002,6 +1007,7 @@ fun ComposeScreen(
                         draft_type = draft_save_type,
                         reply_to_id = draft_save_reply_to,
                         thread_token = draft_save_thread_token,
+                        session_id = draft_session_id,
                     ) { _ -> }
                 }
             }
@@ -1165,6 +1171,7 @@ fun ComposeScreen(
             return
         }
         scope.launch {
+            runCatching { draft_save_job?.cancelAndJoin() }
             val display_name = resolve_sender_display_name(snapshot_from)
             val resolved_thread_token = if (!reply_to.isNullOrBlank() && (mode == "reply" || mode == "reply_all")) {
                 mail_vm.get_or_create_thread_token(reply_to, thread_state.item?.thread_token)
@@ -1196,6 +1203,8 @@ fun ComposeScreen(
                             mail_vm.refresh_current_thread()
                         }
                         sent = true
+                        mail_vm.discard_sent_draft(current_draft_id, draft_session_id)
+                        current_draft_id = ""
                         on_sent()
                     } else {
                         send_error = resp.message ?: context.getString(R.string.save_failed)
@@ -1242,6 +1251,7 @@ fun ComposeScreen(
         }
 
         scope.launch {
+            runCatching { draft_save_job?.cancelAndJoin() }
             val prepared = try {
                 prepare_send_data()
             } catch (e: AttachmentEncodeException) {
@@ -1294,6 +1304,8 @@ fun ComposeScreen(
                 result.fold(
                     onSuccess = {
                         sent = true
+                        mail_vm.discard_sent_draft(current_draft_id, draft_session_id)
+                        current_draft_id = ""
                         on_sent()
                     },
                     onFailure = { t ->
@@ -1304,7 +1316,6 @@ fun ComposeScreen(
             }
 
             if (undo_send_enabled) {
-                draft_save_job?.cancel()
                 val resolved_thread_token = if (!reply_to.isNullOrBlank() && (mode == "reply" || mode == "reply_all")) {
                     runCatching { mail_vm.get_or_create_thread_token(reply_to, thread_state.item?.thread_token) }.getOrNull()
                 } else {
@@ -1333,6 +1344,7 @@ fun ComposeScreen(
                 result.fold(
                     onSuccess = {
                         sent = true
+                        mail_vm.release_draft_session(draft_session_id)
                         on_sent()
                     },
                     onFailure = { t ->
@@ -2417,6 +2429,7 @@ fun ComposeScreen(
                                     draft_type = draft_save_type,
                                     reply_to_id = draft_save_reply_to,
                                     thread_token = draft_save_thread_token,
+                                    session_id = draft_session_id,
                                 ) { ok ->
                                     if (ok) on_back()
                                 }

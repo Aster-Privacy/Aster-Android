@@ -38,6 +38,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.withLock
 import org.astermail.android.api.mail.BulkLabelRequest
 import org.astermail.android.api.mail.BulkPatchMetadataItem
 import org.astermail.android.api.mail.BulkPatchMetadataRequest
@@ -90,6 +91,7 @@ private const val OUTBOX_FILE_REF_PREFIX = "@file:"
 private const val EMPTY_ATTACHMENTS_JSON = "[]"
 private const val METADATA_PATCH_ATTEMPTS = 3
 private const val METADATA_PATCH_RETRY_DELAY_MS = 400L
+private const val DRAFT_UPDATE_CONFLICT_RETRIES = 2
 private const val METADATA_PATCH_BATCH_SIZE = 100
 private const val METADATA_RESOLVE_CONCURRENCY = 8
 private const val ENVELOPE_KEY_CACHE_MAX_ENTRIES = 32
@@ -369,6 +371,10 @@ class MailRepository @Inject constructor(
                 ): Boolean = size > 120
             },
         )
+    private val draft_save_mutex = kotlinx.coroutines.sync.Mutex()
+    private val draft_session_ids = java.util.concurrent.ConcurrentHashMap<String, String>()
+    private val draft_versions = java.util.concurrent.ConcurrentHashMap<String, Int>()
+
     fun get_user_email(): String? = session_key_store.get_user_email()
 
     private val _visible_order = kotlinx.coroutines.flow.MutableStateFlow<List<String>>(emptyList())
@@ -790,6 +796,8 @@ class MailRepository @Inject constructor(
         cached_metadata_key = null
         cached_sent_folder_token = null
         draft_item_cache.clear()
+        draft_versions.clear()
+        draft_session_ids.clear()
         ratchet_undecryptable_at.clear()
         ratchet_plaintext_cache.clear()
         InboundAttachmentKeyStore.clear()
@@ -1396,8 +1404,14 @@ class MailRepository @Inject constructor(
 
     suspend fun delete_draft(draft_id: String): Result<Unit> = runCatching {
         mail_api.delete_draft(draft_id)
-        draft_item_cache.remove(draft_id)
+        forget_draft(draft_id)
         Unit
+    }
+
+    private fun forget_draft(draft_id: String) {
+        draft_item_cache.remove(draft_id)
+        draft_versions.remove(draft_id)
+        draft_session_ids.entries.removeAll { it.value == draft_id }
     }
 
     suspend fun delete_permanent(item_id: String): Result<Unit> = runCatching {
@@ -2837,6 +2851,8 @@ class MailRepository @Inject constructor(
         draft_type: String = "new",
         reply_to_id: String? = null,
         thread_token: String? = null,
+        session_id: String? = null,
+        on_id_assigned: ((String) -> Unit)? = null,
     ): Result<String> = runCatching {
         val envelope = build_envelope_json(
             subject = subject,
@@ -2847,25 +2863,99 @@ class MailRepository @Inject constructor(
             cc = cc,
         )
         val (encrypted_envelope, envelope_nonce) = encrypt_envelope(envelope)
-        val response = mail_api.create_draft(
-            org.astermail.android.api.mail.CreateDraftRequestBody(
-                draft_type = normalize_draft_type(draft_type),
-                encrypted_content = encrypted_envelope,
-                content_nonce = envelope_nonce,
-                content_hash = content_hash_of(encrypted_envelope),
-                reply_to_id = reply_to_id?.takeIf { is_uuid(it) },
-                forward_from_id = null,
-                thread_token = thread_token?.takeIf { it.isNotBlank() },
-                size_bytes = encrypted_envelope.length,
-            ),
-        )
-        val new_id = response.id
-        if (!existing_draft_id.isNullOrBlank() && existing_draft_id != new_id) {
-            runCatching { mail_api.delete_draft(existing_draft_id) }
+        val content_hash = content_hash_of(encrypted_envelope)
+
+        draft_save_mutex.withLock {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+                val target_id = session_id?.let { draft_session_ids[it] }
+                    ?: existing_draft_id?.takeIf { it.isNotBlank() }
+
+                if (target_id != null && is_uuid(target_id)) {
+                    val updated = update_existing_draft(
+                        draft_id = target_id,
+                        encrypted_content = encrypted_envelope,
+                        content_nonce = envelope_nonce,
+                        content_hash = content_hash,
+                    )
+                    if (updated) {
+                        draft_item_cache.remove(target_id)
+                        session_id?.let { draft_session_ids[it] = target_id }
+                        on_id_assigned?.invoke(target_id)
+                        return@withContext target_id
+                    }
+                }
+
+                val response = mail_api.create_draft(
+                    org.astermail.android.api.mail.CreateDraftRequestBody(
+                        draft_type = normalize_draft_type(draft_type),
+                        encrypted_content = encrypted_envelope,
+                        content_nonce = envelope_nonce,
+                        content_hash = content_hash,
+                        reply_to_id = reply_to_id?.takeIf { is_uuid(it) },
+                        forward_from_id = null,
+                        thread_token = thread_token?.takeIf { it.isNotBlank() },
+                        size_bytes = encrypted_envelope.length,
+                    ),
+                )
+                val new_id = response.id
+                draft_versions[new_id] = response.version
+                session_id?.let { draft_session_ids[it] = new_id }
+                on_id_assigned?.invoke(new_id)
+                if (target_id != null && target_id != new_id) {
+                    runCatching { mail_api.delete_draft(target_id) }
+                    draft_versions.remove(target_id)
+                    draft_item_cache.remove(target_id)
+                }
+                draft_item_cache.remove(new_id)
+                new_id
+            }
         }
-        if (!existing_draft_id.isNullOrBlank()) draft_item_cache.remove(existing_draft_id)
-        draft_item_cache.remove(new_id)
-        new_id
+    }
+
+    private suspend fun update_existing_draft(
+        draft_id: String,
+        encrypted_content: String,
+        content_nonce: String,
+        content_hash: String,
+    ): Boolean {
+        var version = draft_versions[draft_id]
+            ?: draft_item_cache[draft_id]?.version
+            ?: runCatching { mail_api.get_draft(draft_id).version }.getOrElse { error ->
+                if (error is org.astermail.android.api.ApiError.NotFoundError) return false
+                throw error
+            }
+
+        repeat(DRAFT_UPDATE_CONFLICT_RETRIES) {
+            val response = runCatching {
+                mail_api.update_draft(
+                    draft_id,
+                    org.astermail.android.api.mail.UpdateDraftRequestBody(
+                        encrypted_content = encrypted_content,
+                        content_nonce = content_nonce,
+                        content_hash = content_hash,
+                        version = version,
+                        size_bytes = encrypted_content.length,
+                    ),
+                )
+            }.getOrElse { error ->
+                if (error is org.astermail.android.api.ApiError.NotFoundError) {
+                    draft_versions.remove(draft_id)
+                    return false
+                }
+                throw error
+            }
+            if (response.success) {
+                draft_versions[draft_id] = response.version
+                return true
+            }
+            val current = response.current_version ?: return false
+            version = current
+        }
+        return false
+    }
+
+    fun release_draft_session(session_id: String) {
+        draft_session_ids.remove(session_id)
     }
 
     private fun normalize_draft_type(mode: String): String = when (mode) {

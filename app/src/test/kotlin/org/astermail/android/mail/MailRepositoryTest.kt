@@ -28,7 +28,9 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.astermail.android.api.mail.BulkLabelRequest
 import org.astermail.android.api.mail.BulkLabelResponse
@@ -907,6 +909,163 @@ class MailRepositoryTest {
         )
 
         assertTrue(result.isFailure)
+    }
+
+    private val draft_uuid = "11111111-2222-3333-4444-555555555555"
+
+    @Test
+    fun `save_draft updates the same draft instead of creating another`() = runTest {
+        every { session_key_store.get_identity_key() } returns "test_identity_key"
+        coEvery { mail_api.create_draft(any()) } returns
+            org.astermail.android.api.mail.CreateDraftResponse(id = draft_uuid, version = 1)
+        val update_versions = mutableListOf<Int>()
+        coEvery { mail_api.update_draft(draft_uuid, any()) } answers {
+            update_versions.add(
+                secondArg<org.astermail.android.api.mail.UpdateDraftRequestBody>().version,
+            )
+            org.astermail.android.api.mail.UpdateDraftResponse(
+                success = true,
+                version = update_versions.size + 1,
+            )
+        }
+
+        val first = repo.save_draft(subject = "Hello", body_html = "<p>1</p>", session_id = "compose_1")
+        val second = repo.save_draft(subject = "Hello", body_html = "<p>12</p>", session_id = "compose_1")
+        val third = repo.save_draft(subject = "Hello", body_html = "<p>123</p>", session_id = "compose_1")
+
+        assertEquals(draft_uuid, first.getOrThrow())
+        assertEquals(draft_uuid, second.getOrThrow())
+        assertEquals(draft_uuid, third.getOrThrow())
+        assertEquals(listOf(1, 2), update_versions)
+        coVerify(exactly = 1) { mail_api.create_draft(any()) }
+        coVerify(exactly = 2) { mail_api.update_draft(draft_uuid, any()) }
+        coVerify(exactly = 0) { mail_api.delete_draft(any()) }
+    }
+
+    @Test
+    fun `save_draft reuses the session draft when the caller passes a stale id`() = runTest {
+        every { session_key_store.get_identity_key() } returns "test_identity_key"
+        coEvery { mail_api.create_draft(any()) } returns
+            org.astermail.android.api.mail.CreateDraftResponse(id = draft_uuid, version = 1)
+        coEvery { mail_api.update_draft(draft_uuid, any()) } returns
+            org.astermail.android.api.mail.UpdateDraftResponse(success = true, version = 2)
+
+        repo.save_draft(subject = "Hello", body_html = "<p>1</p>", session_id = "compose_2")
+        val second = repo.save_draft(
+            subject = "Hello",
+            body_html = "<p>12</p>",
+            existing_draft_id = null,
+            session_id = "compose_2",
+        )
+
+        assertEquals(draft_uuid, second.getOrThrow())
+        coVerify(exactly = 1) { mail_api.create_draft(any()) }
+    }
+
+    @Test
+    fun `save_draft retries the update once after a version conflict`() = runTest {
+        every { session_key_store.get_identity_key() } returns "test_identity_key"
+        coEvery { mail_api.create_draft(any()) } returns
+            org.astermail.android.api.mail.CreateDraftResponse(id = draft_uuid, version = 1)
+        val versions = mutableListOf<Int>()
+        coEvery { mail_api.update_draft(draft_uuid, any()) } answers {
+            val body = secondArg<org.astermail.android.api.mail.UpdateDraftRequestBody>()
+            versions.add(body.version)
+            if (body.version == 1) {
+                org.astermail.android.api.mail.UpdateDraftResponse(
+                    success = false,
+                    version = 1,
+                    current_version = 7,
+                )
+            } else {
+                org.astermail.android.api.mail.UpdateDraftResponse(success = true, version = 8)
+            }
+        }
+
+        repo.save_draft(subject = "Hello", body_html = "<p>1</p>", session_id = "compose_3")
+        val second = repo.save_draft(subject = "Hello", body_html = "<p>12</p>", session_id = "compose_3")
+
+        assertEquals(draft_uuid, second.getOrThrow())
+        assertEquals(listOf(1, 7), versions)
+        coVerify(exactly = 1) { mail_api.create_draft(any()) }
+    }
+
+    @Test
+    fun `save_draft recreates the draft when the server no longer has it`() = runTest {
+        every { session_key_store.get_identity_key() } returns "test_identity_key"
+        val second_uuid = "99999999-2222-3333-4444-555555555555"
+        var created = 0
+        coEvery { mail_api.create_draft(any()) } answers {
+            created += 1
+            org.astermail.android.api.mail.CreateDraftResponse(
+                id = if (created == 1) draft_uuid else second_uuid,
+                version = 1,
+            )
+        }
+        coEvery { mail_api.update_draft(draft_uuid, any()) } throws
+            org.astermail.android.api.ApiError.NotFoundError
+
+        repo.save_draft(subject = "Hello", body_html = "<p>1</p>", session_id = "compose_4")
+        val second = repo.save_draft(subject = "Hello", body_html = "<p>12</p>", session_id = "compose_4")
+
+        assertEquals(second_uuid, second.getOrThrow())
+        assertEquals(2, created)
+    }
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @Test
+    fun `save_draft keeps a single draft when the caller is cancelled mid save`() = runTest {
+        every { session_key_store.get_identity_key() } returns "test_identity_key"
+        val gate = CompletableDeferred<Unit>()
+        coEvery { mail_api.create_draft(any()) } coAnswers {
+            gate.await()
+            org.astermail.android.api.mail.CreateDraftResponse(id = draft_uuid, version = 1)
+        }
+        coEvery { mail_api.update_draft(draft_uuid, any()) } returns
+            org.astermail.android.api.mail.UpdateDraftResponse(success = true, version = 2)
+
+        var assigned: String? = null
+        val job = launch {
+            repo.save_draft(
+                subject = "Hello",
+                body_html = "<p>1</p>",
+                session_id = "compose_5",
+                on_id_assigned = { assigned = it },
+            )
+        }
+        advanceUntilIdle()
+        job.cancel()
+        gate.complete(Unit)
+        advanceUntilIdle()
+
+        assertEquals(draft_uuid, assigned)
+
+        val second = repo.save_draft(subject = "Hello", body_html = "<p>12</p>", session_id = "compose_5")
+
+        assertEquals(draft_uuid, second.getOrThrow())
+        coVerify(exactly = 1) { mail_api.create_draft(any()) }
+        coVerify(exactly = 1) { mail_api.update_draft(draft_uuid, any()) }
+    }
+
+    @Test
+    fun `release_draft_session drops the session mapping`() = runTest {
+        every { session_key_store.get_identity_key() } returns "test_identity_key"
+        val second_uuid = "88888888-2222-3333-4444-555555555555"
+        var created = 0
+        coEvery { mail_api.create_draft(any()) } answers {
+            created += 1
+            org.astermail.android.api.mail.CreateDraftResponse(
+                id = if (created == 1) draft_uuid else second_uuid,
+                version = 1,
+            )
+        }
+
+        repo.save_draft(subject = "Hello", body_html = "<p>1</p>", session_id = "compose_6")
+        repo.release_draft_session("compose_6")
+        val second = repo.save_draft(subject = "Hello", body_html = "<p>12</p>", session_id = "compose_6")
+
+        assertEquals(second_uuid, second.getOrThrow())
+        coVerify(exactly = 0) { mail_api.update_draft(any(), any()) }
     }
 
     @Test

@@ -2012,6 +2012,22 @@ class MailViewModel @Inject constructor(
     suspend fun load_thread_draft(thread_token: String): InboxItem? =
         repository.fetch_thread_draft(thread_token)
 
+    fun release_draft_session(session_id: String) {
+        repository.release_draft_session(session_id)
+    }
+
+    fun discard_sent_draft(draft_id: String, session_id: String? = null) {
+        session_id?.let { repository.release_draft_session(it) }
+        if (draft_id.isBlank()) return
+        viewModelScope.launch {
+            val deleted = repository.delete_draft(draft_id).isSuccess
+            if (deleted) {
+                runCatching { invalidate_caches(listOf("drafts")) }
+                runCatching { load_stats() }
+            }
+        }
+    }
+
     fun delete_thread_draft(draft_id: String, on_done: (Boolean) -> Unit) {
         viewModelScope.launch {
             val ok = repository.delete_draft(draft_id).isSuccess
@@ -2957,6 +2973,8 @@ class MailViewModel @Inject constructor(
         draft_type: String = "new",
         reply_to_id: String? = null,
         thread_token: String? = null,
+        session_id: String? = null,
+        on_id_assigned: ((String) -> Unit)? = null,
     ): Result<String> {
         val result = repository.save_draft(
             subject = subject,
@@ -2968,6 +2986,8 @@ class MailViewModel @Inject constructor(
             draft_type = draft_type,
             reply_to_id = reply_to_id,
             thread_token = thread_token,
+            session_id = session_id,
+            on_id_assigned = on_id_assigned,
         )
         if (result.isSuccess) invalidate_caches(listOf("drafts"))
         return result
@@ -2983,6 +3003,7 @@ class MailViewModel @Inject constructor(
         draft_type: String = "new",
         reply_to_id: String? = null,
         thread_token: String? = null,
+        session_id: String? = null,
         on_complete: (Boolean) -> Unit,
     ) {
         viewModelScope.launch {
@@ -2997,6 +3018,7 @@ class MailViewModel @Inject constructor(
                     draft_type = draft_type,
                     reply_to_id = reply_to_id,
                     thread_token = thread_token,
+                    session_id = session_id,
                 )
             }
             if (result.isSuccess) {

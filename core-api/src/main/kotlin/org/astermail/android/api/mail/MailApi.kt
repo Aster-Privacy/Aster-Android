@@ -70,6 +70,8 @@ interface MailApi {
 
     suspend fun create_draft(request: CreateDraftRequestBody): CreateDraftResponse
 
+    suspend fun update_draft(draft_id: String, request: UpdateDraftRequestBody): UpdateDraftResponse
+
     suspend fun get_draft(draft_id: String): DraftItem
 
     suspend fun get_thread_draft(thread_token: String): DraftItem?
@@ -238,6 +240,29 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun update_draft(
+        draft_id: String,
+        request: UpdateDraftRequestBody,
+    ): UpdateDraftResponse {
+        val response = client.http.put(
+            "${client.base_url}$base/drafts/${url_encode_path(draft_id)}",
+        ) {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        if (response.status.value == 409) {
+            return try {
+                response.body()
+            } catch (t: kotlin.coroutines.cancellation.CancellationException) {
+                throw t
+            } catch (_: Throwable) {
+                UpdateDraftResponse()
+            }
         }
         return decode_or_throw(response)
     }
