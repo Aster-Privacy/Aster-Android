@@ -810,24 +810,32 @@ if(gq)make_toggle(gq);
   if(!body.querySelector('.aster-quoted-wrapper')&&!body.querySelector('details.aster-forwarded-collapse')){
 var wrote_re=/(^|[\s> ])(On\s[^\n]{1,200}?\bwrote\s*:)/i;
 var wm_re=/(^|[\s> ])(Secured by Aster Mail)/i;
+var inline_tags={A:1,ABBR:1,B:1,BDI:1,BDO:1,BIG:1,CITE:1,CODE:1,EM:1,FONT:1,I:1,KBD:1,LABEL:1,MARK:1,NOBR:1,Q:1,S:1,SAMP:1,SMALL:1,SPAN:1,STRIKE:1,STRONG:1,SUB:1,SUP:1,TIME:1,TT:1,U:1,VAR:1,WBR:1};
+function block_ancestor(n){var p=n.parentNode;while(p&&p!==body&&p.nodeType===1&&inline_tags[p.tagName])p=p.parentNode;return p||body}
 var walker=document.createTreeWalker(body,NodeFilter.SHOW_TEXT);
-var marker=null;
-var wrote_node=null;var wrote_idx=-1;
+var runs=[];var joined='';var prev_block=null;
 while(walker.nextNode()){
-  var nd=walker.currentNode;var txt=nd.nodeValue||'';
-  var wm=wm_re.exec(txt);
-  if(wm){
-    var wm_idx=wm.index+(wm[1]?wm[1].length:0);
-    marker=(wm_idx>0)?nd.splitText(wm_idx):nd;
-    break;
-  }
-  if(wrote_node===null){
-    var mm=wrote_re.exec(txt);
-    if(mm){wrote_node=nd;wrote_idx=mm.index+(mm[1]?mm[1].length:0);}
-  }
+  var nd=walker.currentNode;var blk=block_ancestor(nd);
+  if(prev_block!==null&&blk!==prev_block)joined+='\n';
+  runs.push({node:nd,start:joined.length});
+  joined+=(nd.nodeValue||'');
+  prev_block=blk;
 }
-if(!marker&&wrote_node){
-  marker=(wrote_idx>0)?wrote_node.splitText(wrote_idx):wrote_node;
+function node_at(idx){
+  for(var ri=0;ri<runs.length;ri++){
+    var r=runs[ri];
+    if(idx<r.start)return {node:r.node,offset:0};
+    if(idx<r.start+(r.node.nodeValue||'').length)return {node:r.node,offset:idx-r.start};
+  }
+  return null;
+}
+var marker=null;var hit=-1;
+var wm=wm_re.exec(joined);
+if(wm){hit=wm.index+(wm[1]?wm[1].length:0)}
+else{var mm=wrote_re.exec(joined);if(mm){hit=mm.index+(mm[1]?mm[1].length:0)}}
+if(hit>=0){
+  var loc=node_at(hit);
+  if(loc)marker=(loc.offset>0)?loc.node.splitText(loc.offset):loc.node;
 }
 if(marker){
   var to_col=[];
@@ -851,6 +859,10 @@ if(marker){
     w2.appendChild(b2);w2.appendChild(c2);(document.getElementById('m')||body).appendChild(w2);trim_trailing_gap(w2);
   }
 }
+  }
+  if(!body.querySelector('.aster-quoted-wrapper')&&!body.querySelector('details.aster-forwarded-collapse')){
+var orphan=body.querySelector('blockquote.gmail_quote,blockquote.aster_quote,blockquote.protonmail_quote,div.yahoo_quoted,blockquote.yahoo_quoted');
+if(orphan)make_toggle(orphan);
   }
   try{
 body.querySelectorAll('.protonmail_signature_block-empty').forEach(function(el){el.remove()});
