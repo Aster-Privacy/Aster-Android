@@ -1,0 +1,7 @@
+Bug fixes and improvements:
+
+- When someone replies to you, their earlier message is tucked behind a collapsed quote again instead of running on below your reply
+- Drafts save in place as you write and clear once the message goes out, so you no longer end up with duplicates
+- Attachment details open correctly on encrypted messages, and an attachment you cannot open yet is now labeled as locked
+- Buttons in the message reader are larger and easier to hit, and a tap no longer falls through to the message underneath
+- Encryption key publishing is more reliable, so messages to other Aster users are less likely to stall
