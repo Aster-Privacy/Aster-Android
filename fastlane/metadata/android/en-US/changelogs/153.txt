@@ -1,0 +1,4 @@
+Bug fixes and improvements:
+
+- Your encryption keys are now signed with your account key when the app publishes them, so the server can confirm they belong to you
+- The app lock screen has a cleaner layout, and the backspace key matches the rest of the keypad
