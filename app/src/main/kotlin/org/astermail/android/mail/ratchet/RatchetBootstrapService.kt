@@ -36,7 +36,7 @@ import org.astermail.android.storage.SessionKeyStore
 private const val UPLOADED_FLAG_PREFS = "ratchet_bootstrap"
 private const val UPLOADED_FLAG_PREFIX = "uploaded_"
 private const val UPLOADED_GENERATION_PREFIX = "uploaded_generation_"
-private const val BUNDLE_UPLOAD_GENERATION = 2
+private const val BUNDLE_UPLOAD_GENERATION = 3
 
 @Singleton
 class RatchetBootstrapService @Inject constructor(
@@ -324,8 +324,30 @@ class RatchetBootstrapService @Inject constructor(
     }
 
     private fun signed_prekey_signature(identity_public_b64: String, signed_prekey_public_b64: String): String {
+        val pgp_signature = pgp_prekey_signature(identity_public_b64, signed_prekey_public_b64)
+        if (pgp_signature != null) {
+            return pgp_signature
+        }
         val input = (identity_public_b64 + signed_prekey_public_b64).toByteArray(Charsets.UTF_8)
         return RatchetCrypto.b64_encode(RatchetCrypto.sha256(input))
+    }
+
+    private fun pgp_prekey_signature(identity_public_b64: String, signed_prekey_public_b64: String): String? {
+        val identity_key = session_key_store.get_identity_key() ?: return null
+        if (!PrekeyBindingSigner.looks_like_armored_private_key(identity_key)) return null
+        val passphrase_bytes = session_key_store.get_passphrase() ?: return null
+        val passphrase = String(passphrase_bytes, Charsets.UTF_8).toCharArray()
+        return runCatching {
+            val armored = PrekeyBindingSigner.sign_cleartext(
+                armored_secret_key = identity_key,
+                passphrase = passphrase,
+                text = PrekeyBindingSigner.canonical_binding(identity_public_b64, signed_prekey_public_b64),
+            )
+            base64_encode(armored.toByteArray(Charsets.UTF_8))
+        }
+            .onFailure { debug_log("pgp prekey signature threw: ${it.javaClass.simpleName}: ${it.message}") }
+            .also { passphrase.fill(' ') }
+            .getOrNull()
     }
 
     private fun uploaded_generation(user_id: String): Int {

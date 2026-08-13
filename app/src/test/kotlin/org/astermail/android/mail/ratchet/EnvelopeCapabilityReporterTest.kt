@@ -240,6 +240,19 @@ class EnvelopeCapabilityReporterTest {
     }
 
     @Test
+    fun the_fingerprint_matches_the_shared_cross_client_vector() = runTest {
+        val store = FakeStore()
+        val api = FakeRatchetApi()
+
+        reporter(store, api, now = { 1_000L }).report_if_due(user_id, identity)
+
+        assertEquals(
+            "8LkxWgRZ2rerX6aQPnM8kXdhFUIWzZDl2XnabIUsYCo=",
+            api.requests[0].identity_fingerprint,
+        )
+    }
+
+    @Test
     fun a_missing_identity_key_reports_no_fingerprint() = runTest {
         val store = FakeStore()
         val api = FakeRatchetApi()
