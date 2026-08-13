@@ -39,10 +39,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.SecureFlagPolicy
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -117,15 +122,19 @@ class ComposeActivity : androidx.fragment.app.FragmentActivity() {
             aster_theme_root {
                 val lock_vm: AppLockViewModel = hiltViewModel()
                 val is_locked by lock_vm.store.is_locked.collectAsStateWithLifecycle()
-                ComposeScreen(
-                    on_back = { finish() },
-                    on_sent = { finish() },
-                    reply_to = reply_to,
-                    mode = mode,
-                    draft_id = draft_id,
-                    prefill_to = prefill_to,
-                    thread_ghost_email = thread_ghost_email,
-                )
+                Box(
+                    modifier = if (is_locked) Modifier.clearAndSetSemantics {} else Modifier,
+                ) {
+                    ComposeScreen(
+                        on_back = { finish() },
+                        on_sent = { finish() },
+                        reply_to = reply_to,
+                        mode = mode,
+                        draft_id = draft_id,
+                        prefill_to = prefill_to,
+                        thread_ghost_email = thread_ghost_email,
+                    )
+                }
                 if (is_locked) {
                     compose_locked_overlay()
                 }
@@ -164,33 +173,46 @@ class ComposeActivity : androidx.fragment.app.FragmentActivity() {
 @Composable
 private fun compose_locked_overlay() {
     val colors = AsterMaterial.colors
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colors.bg_primary),
-        contentAlignment = Alignment.Center,
+    Dialog(
+        onDismissRequest = {},
+        properties = DialogProperties(
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false,
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
+            securePolicy = SecureFlagPolicy.SecureOn,
+        ),
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.padding(24.dp),
+        org.astermail.android.ui.security.lock_dialog_window_effect()
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colors.bg_primary)
+                .pointerInput(Unit) {},
+            contentAlignment = Alignment.Center,
         ) {
-            Icon(
-                imageVector = TablerIcons.Lock,
-                contentDescription = null,
-                tint = colors.text_secondary,
-            )
-            Text(
-                text = stringResource(R.string.compose_locked_title),
-                color = colors.text_primary,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Text(
-                text = stringResource(R.string.compose_locked_message),
-                color = colors.text_secondary,
-                fontSize = 14.sp,
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.padding(24.dp),
+            ) {
+                Icon(
+                    imageVector = TablerIcons.Lock,
+                    contentDescription = null,
+                    tint = colors.text_secondary,
+                )
+                Text(
+                    text = stringResource(R.string.compose_locked_title),
+                    color = colors.text_primary,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = stringResource(R.string.compose_locked_message),
+                    color = colors.text_secondary,
+                    fontSize = 14.sp,
+                )
+            }
         }
     }
 }

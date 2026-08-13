@@ -34,8 +34,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import org.astermail.android.security.AppLockViewModel
 import org.astermail.android.security.LockdownStore
 import org.astermail.android.ui.common.nav_anim_duration_ms
@@ -427,19 +426,6 @@ private fun AsterNavHost() {
 
     val nav_scope = rememberCoroutineScope()
 
-    val process_owner = ProcessLifecycleOwner.get()
-    androidx.compose.runtime.DisposableEffect(process_owner) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_STOP -> lock_vm.store.lock()
-                Lifecycle.Event.ON_START -> lock_vm.store.check_on_foreground()
-                else -> {}
-            }
-        }
-        process_owner.lifecycle.addObserver(observer)
-        onDispose { process_owner.lifecycle.removeObserver(observer) }
-    }
-
     if (!is_ready) {
         androidx.compose.foundation.layout.Column(
             modifier = Modifier
@@ -539,6 +525,11 @@ private fun AsterNavHost() {
     NavHost(
         navController = nav_controller,
         startDestination = start,
+        modifier = if (is_locked && is_signed_in_state) {
+            Modifier.clearAndSetSemantics {}
+        } else {
+            Modifier
+        },
         enterTransition = {
             if (initialState.destination.route?.startsWith("compose") == true) {
                 androidx.compose.animation.EnterTransition.None
@@ -1296,7 +1287,7 @@ composable(routes.settings_detail("family")) {
         }
     }
 
-    if (is_signed_in_state) {
+    if (is_signed_in_state && !is_locked) {
         org.astermail.android.ui.account.PendingDeletionGate(
             on_reactivated = {
                 nav_controller.navigate(routes.inbox) {

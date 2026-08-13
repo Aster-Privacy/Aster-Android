@@ -61,23 +61,32 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
+import androidx.compose.ui.window.SecureFlagPolicy
+import androidx.core.view.WindowCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import kotlinx.coroutines.Dispatchers
@@ -94,6 +103,39 @@ import kotlin.math.roundToInt
 
 @Composable
 fun AppLockScreen(store: AppLockStore, on_sign_out: () -> Unit) {
+    Dialog(
+        onDismissRequest = {},
+        properties = DialogProperties(
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false,
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
+            securePolicy = SecureFlagPolicy.SecureOn,
+        ),
+    ) {
+        app_lock_content(store = store, on_sign_out = on_sign_out)
+    }
+}
+
+@Composable
+fun lock_dialog_window_effect() {
+    val view = LocalView.current
+    SideEffect {
+        val window = (view.parent as? DialogWindowProvider)?.window ?: return@SideEffect
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.setLayout(
+            android.view.WindowManager.LayoutParams.MATCH_PARENT,
+            android.view.WindowManager.LayoutParams.MATCH_PARENT,
+        )
+        window.setDimAmount(0f)
+        window.statusBarColor = android.graphics.Color.TRANSPARENT
+        window.navigationBarColor = android.graphics.Color.TRANSPARENT
+    }
+}
+
+@Composable
+private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
+    lock_dialog_window_effect()
     val colors = AsterMaterial.colors
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -182,7 +224,8 @@ fun AppLockScreen(store: AppLockStore, on_sign_out: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg_primary),
+            .background(colors.bg_primary)
+            .pointerInput(Unit) {},
         contentAlignment = Alignment.Center,
     ) {
         Column(
@@ -253,6 +296,7 @@ fun AppLockScreen(store: AppLockStore, on_sign_out: () -> Unit) {
                                 cursorBrush = SolidColor(colors.accent_blue),
                                 singleLine = true,
                                 visualTransformation = if (show_passphrase) VisualTransformation.None else PasswordVisualTransformation(),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                                 keyboardActions = KeyboardActions(onDone = { if (input.isNotEmpty()) attempt_verify(input) }),
                                 modifier = Modifier.fillMaxWidth().padding(end = 28.dp),
                             )

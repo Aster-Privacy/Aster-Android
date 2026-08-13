@@ -62,11 +62,25 @@ class AsterApplication : Application(), ImageLoaderFactory {
                 }
             }
         }
+        register_app_lock_lifecycle()
         runCatching { register_folder_lock_hooks() }
         runCatching { org.astermail.android.notifications.MailPollingWorker.create_channel(this) }
         runCatching { org.astermail.android.notifications.LoginAlertNotifier.create_channel(this) }
         runCatching { org.astermail.android.notifications.MailPollingWorker.enqueue(this) }
         runCatching { org.astermail.android.notifications.UnifiedPushState.sync_registration(this) }
+    }
+
+    private fun register_app_lock_lifecycle() {
+        val store = EntryPointAccessors.fromApplication(this, ImageLoaderEntryPoint::class.java).app_lock_store()
+        androidx.lifecycle.ProcessLifecycleOwner.get().lifecycle.addObserver(
+            androidx.lifecycle.LifecycleEventObserver { _, event ->
+                when (event) {
+                    androidx.lifecycle.Lifecycle.Event.ON_STOP -> store.lock()
+                    androidx.lifecycle.Lifecycle.Event.ON_START -> store.check_on_foreground()
+                    else -> {}
+                }
+            },
+        )
     }
 
     private fun register_folder_lock_hooks() {
@@ -113,6 +127,7 @@ class AsterApplication : Application(), ImageLoaderFactory {
         fun aster_profile_resolver(): org.astermail.android.mail.AsterProfileResolver
         fun labels_api(): org.astermail.android.api.labels.LabelsApi
         fun search_index_manager(): org.astermail.android.mail.SearchIndexManager
+        fun app_lock_store(): org.astermail.android.security.AppLockStore
     }
 
     override fun newImageLoader(): ImageLoader {
