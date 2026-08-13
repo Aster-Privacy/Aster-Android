@@ -17,4 +17,4 @@ Features:
 
 This F-Droid build contains no Firebase or Google Play Services dependencies. Push notifications are delivered via any UnifiedPush-compatible distributor (such as ntfy or Unified Push). Background polling provides a fallback when no distributor is installed.
 
-Source code: https://github.com/Aster-Community/Aster-Mail
+Source code: https://github.com/Aster-Privacy/Aster-Android

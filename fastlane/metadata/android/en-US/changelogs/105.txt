@@ -1,7 +1,7 @@
 Bug fixes and improvements:
 
-- Fixed a crash that could close the app when creating an alias or opening the Aliases screen.
-- Fixed some opened emails not being marked as read, especially when you opened and quickly left a message.
-- Fixed the inbox briefly showing already-deleted or archived emails when you opened the app.
-- Improved push notification reliability after the app has been closed for a long time.
-- Fixed password-protected messages: the password box no longer autocapitalizes or autocorrects, so the password always matches when the recipient opens it.
+- Fixed a crash when you created an alias or opened the Aliases screen
+- Fixed opened emails not always being marked as read
+- Fixed the inbox briefly showing deleted or archived emails at launch
+- Improved push notification reliability after the app has been closed a long time
+- Password boxes no longer autocapitalize or autocorrect, so protected messages open correctly
