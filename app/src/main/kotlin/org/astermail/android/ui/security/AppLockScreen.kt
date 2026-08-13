@@ -389,7 +389,7 @@ fun PinPad(
             PinIconKey(
                 icon = TablerIcons.Backspace,
                 enabled = enabled,
-                bg = Color.Transparent,
+                bg = colors.bg_secondary,
                 on_click = on_backspace,
             )
             PinKey(label = "0", enabled = enabled, bg = colors.bg_secondary, on_click = { on_digit("0") })
