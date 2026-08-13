@@ -12,7 +12,7 @@ jobs:
   validate-metadata:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ashutoshgngwr/validate-fastlane-supply-metadata@v2
         with:
           fastlaneDir: ./fastlane/metadata/android
