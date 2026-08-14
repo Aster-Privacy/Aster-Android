@@ -92,11 +92,15 @@ class RatchetDecryptorTest {
             skipped_message_keys = state.skipped_message_keys.toMutableList(),
         )
 
-    private fun envelope_json(sender_identity_raw: ByteArray, recipient_data: RatchetRecipientData): String {
+    private fun envelope_json(
+        sender_identity_raw: ByteArray,
+        recipient_data: RatchetRecipientData,
+        address: String = recipient_email,
+    ): String {
         val envelope = RatchetEnvelope(
             type = "double_ratchet_v2",
             sender_identity_key = RatchetCrypto.b64_encode(sender_identity_raw),
-            recipients = mapOf(recipient_email to recipient_data),
+            recipients = mapOf(address to recipient_data),
         )
         return json.encodeToString(envelope)
     }
@@ -131,7 +135,7 @@ class RatchetDecryptorTest {
         val receiver_keys: ReceiverKeys,
     )
 
-    private fun build_fixture(): Fixture {
+    private fun build_fixture(address: String = recipient_email): Fixture {
         val sender_identity_kp = RatchetCrypto.generate_p256_keypair()
         val receiver_identity_kp = RatchetCrypto.generate_p256_keypair()
         val receiver_spk_kp = RatchetCrypto.generate_p256_keypair()
@@ -142,7 +146,7 @@ class RatchetDecryptorTest {
         val receiver_spk_public_b64 = RatchetCrypto.b64_encode(receiver_spk_kp.public_raw)
         val receiver_identity_public_b64 = RatchetCrypto.b64_encode(receiver_identity_kp.public_raw)
 
-        val conversation_id = X3dh.derive_conversation_id(recipient_email, sender_email)
+        val conversation_id = X3dh.derive_conversation_id(address, sender_email)
 
         val sender_result = X3dh.perform_sender(
             sender_identity_jwk = sender_identity_jwk,
@@ -386,6 +390,62 @@ class RatchetDecryptorTest {
         val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email)
 
         assertEquals("third message", result)
+    }
+
+    @Test
+    fun `message addressed to an alias decrypts for the primary address`() = runTest {
+        val alias_email = "support@aster.cx"
+        val fixture = build_fixture(alias_email)
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "sent to the alias")
+        val body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc0), alias_email)
+
+        val state_store = mockk<RatchetStateStore>(relaxed = true)
+        coEvery { state_store.load(any()) } returns null
+        val syncer = mockk<RatchetStateSyncer>(relaxed = true)
+        coEvery { syncer.fetch_from_server(any()) } returns null
+        coEvery { syncer.sync(any(), any()) } returns true
+        val ratchet_api = mockk<RatchetApi>(relaxed = true)
+        val auth_repo = mockk<AuthRepository>(relaxed = true)
+        coEvery { auth_repo.try_refresh_vault_keys() } returns false
+
+        val session_key_store = SessionKeyStore(null)
+        seed_session_key_store(session_key_store, fixture.receiver_keys)
+
+        val decryptor = new_decryptor(state_store, session_key_store, ratchet_api, syncer, auth_repo)
+        val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email)
+
+        assertEquals("sent to the alias", result)
+    }
+
+    @Test
+    fun `envelope with no openable entry stays undecryptable`() = runTest {
+        val fixture = build_fixture("stranger@aster.cx")
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "not for you")
+        val body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc0), "stranger@aster.cx")
+
+        val state_store = mockk<RatchetStateStore>(relaxed = true)
+        coEvery { state_store.load(any()) } returns null
+        val syncer = mockk<RatchetStateSyncer>(relaxed = true)
+        coEvery { syncer.fetch_from_server(any()) } returns null
+        coEvery { syncer.sync(any(), any()) } returns true
+        val ratchet_api = mockk<RatchetApi>(relaxed = true)
+        val auth_repo = mockk<AuthRepository>(relaxed = true)
+        coEvery { auth_repo.try_refresh_vault_keys() } returns false
+
+        val session_key_store = SessionKeyStore(null)
+        val other_identity_kp = RatchetCrypto.generate_p256_keypair()
+        val other_spk_kp = RatchetCrypto.generate_p256_keypair()
+        session_key_store.put_ratchet_keys(
+            to_private_jwk(other_identity_kp),
+            RatchetCrypto.b64_encode(other_identity_kp.public_raw),
+            to_private_jwk(other_spk_kp),
+            RatchetCrypto.b64_encode(other_spk_kp.public_raw),
+        )
+
+        val decryptor = new_decryptor(state_store, session_key_store, ratchet_api, syncer, auth_repo)
+        val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email)
+
+        assertEquals(RATCHET_UNDECRYPTABLE_SENTINEL, result)
     }
 
     @Test

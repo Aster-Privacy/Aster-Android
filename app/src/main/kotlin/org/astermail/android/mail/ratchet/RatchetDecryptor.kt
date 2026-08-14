@@ -37,6 +37,7 @@ const val RATCHET_UNDECRYPTABLE_SENTINEL = "\u0000ASTER_RATCHET_UNDECRYPTABLE\u0
 private const val VAULT_REFRESH_COOLDOWN_MS = 5L * 60L * 1000L
 private const val FORCED_RECOVERY_WINDOW_MS = 30L * 1000L
 private const val PQ_SECRET_MISS_TTL_MS = 10L * 60L * 1000L
+private const val MAX_ALIAS_RECIPIENT_ATTEMPTS = 8
 
 @Singleton
 class RatchetDecryptor @Inject constructor(
@@ -121,11 +122,33 @@ class RatchetDecryptor @Inject constructor(
     private suspend fun decrypt(envelope: RatchetEnvelope, our_addresses: List<String>, sender_email: String): String? {
         val owned_lower = our_addresses.map { it.trim().lowercase() }.filter { it.isNotBlank() }.toSet()
         val matched = envelope.recipients.entries.firstOrNull { it.key.trim().lowercase() in owned_lower }
-        if (matched == null) {
-            return null
+        if (matched != null) {
+            return decrypt_entry(envelope, matched.key, matched.value, sender_email)
         }
-        val matched_address = matched.key
-        val recipient = matched.value
+
+        val sender_lower = sender_email.trim().lowercase()
+        val fallback = envelope.recipients.entries
+            .filter { it.key.trim().lowercase() !in owned_lower && it.key.trim().lowercase() != sender_lower }
+            .take(MAX_ALIAS_RECIPIENT_ATTEMPTS)
+
+        for (entry in fallback) {
+            val plaintext = try {
+                decrypt_entry(envelope, entry.key, entry.value, sender_email)
+            } catch (_: Throwable) {
+                null
+            }
+            if (plaintext != null) return plaintext
+        }
+
+        return null
+    }
+
+    private suspend fun decrypt_entry(
+        envelope: RatchetEnvelope,
+        matched_address: String,
+        recipient: RatchetRecipientData,
+        sender_email: String,
+    ): String? {
         val conversation_id = X3dh.derive_conversation_id(matched_address, sender_email)
 
         return conversation_locks.with_lock(conversation_id) {
