@@ -459,6 +459,14 @@ fun InboxScreen(
     }
     val emails = remember { mutableStateListOf<Email>() }
     val previous_api_emails = remember { mutableMapOf<String, Email>() }
+    var emails_folder by remember { mutableStateOf(current_folder) }
+    LaunchedEffect(current_folder) {
+        if (emails_folder != current_folder) {
+            emails.clear()
+            previous_api_emails.clear()
+            emails_folder = current_folder
+        }
+    }
     LaunchedEffect(api_emails) {
         val current = emails.toList()
         val merged = withContext(Dispatchers.Default) {
