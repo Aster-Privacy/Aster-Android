@@ -2,3 +2,4 @@ Bug fixes and improvements:
 
 - Fixed pull-to-refresh sometimes freezing or triggering unexpectedly
 - Fixed a crash that could occur when opening the Drafts folder
+- Mail from other Aster users sent to one of your aliases now decrypts correctly
