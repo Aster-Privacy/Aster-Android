@@ -1166,16 +1166,13 @@ fun InboxScreen(
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
 
-            val at_list_top by remember(list_state) {
-                derivedStateOf { !list_state.canScrollBackward }
-            }
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .pullToRefresh(
                         isRefreshing = is_refreshing && !select_mode,
                         state = pull_state,
-                        enabled = at_list_top && !select_mode,
+                        enabled = !select_mode,
                         onRefresh = { if (!select_mode) do_refresh() },
                     ),
             ) {
