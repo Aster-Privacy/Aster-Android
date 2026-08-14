@@ -1775,8 +1775,9 @@
     <string name="import_chunk_progress">%2$d 個中 %1$d 個目をアップロード中</string>
     <string name="import_job_created">インポートを開始しました</string>
     <string name="import_file_too_large">ファイルが大きすぎます (最大 10 GiB)</string>
-    <string name="attachment_too_large">「%1$s」は大きすぎます (最大 25 MB)</string>
-    <string name="attachment_total_too_large">添付ファイルの合計は 50 MB までです</string>
+    <string name="attachment_too_large">「%1$s」は 1 ファイルあたりの上限 %2$s を超えています</string>
+    <string name="attachment_too_large_upgradable">「%1$s」は現在のプランの 1 ファイルあたりの上限 %2$s を超えています。アップグレードすると %3$s まで拡張されます。</string>
+    <string name="attachment_total_too_large">添付ファイルの合計が上限 %1$s を超えています</string>
     <string name="attachment_already_attached">「%1$s」はすでに添付されています</string>
     <string name="attachment_read_failed">「%1$s」を読み込めませんでした</string>
     <string name="scheduled_send_no_attachments">予約送信はまだ添付ファイルに対応していません。削除するか、今すぐ送信してください。</string>

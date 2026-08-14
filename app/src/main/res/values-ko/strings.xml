@@ -1775,8 +1775,9 @@
     <string name="import_chunk_progress">%2$d개 중 %1$d개 업로드 중</string>
     <string name="import_job_created">가져오기를 시작했습니다</string>
     <string name="import_file_too_large">파일이 너무 큽니다 (최대 10GiB)</string>
-    <string name="attachment_too_large">\"%1$s\"이(가) 너무 큽니다 (최대 25MB)</string>
-    <string name="attachment_total_too_large">첨부파일 총 용량은 50MB를 넘을 수 없습니다</string>
+    <string name="attachment_too_large">\"%1$s\"이(가) 파일당 제한 %2$s을(를) 초과합니다</string>
+    <string name="attachment_too_large_upgradable">\"%1$s\"이(가) 현재 요금제의 파일당 제한 %2$s을(를) 초과합니다. 업그레이드하면 %3$s(으)로 늘어납니다.</string>
+    <string name="attachment_total_too_large">첨부파일 총 용량이 제한 %1$s을(를) 초과합니다</string>
     <string name="attachment_already_attached">\"%1$s\"은(는) 이미 첨부되어 있습니다</string>
     <string name="attachment_read_failed">\"%1$s\"을(를) 읽지 못했습니다</string>
     <string name="scheduled_send_no_attachments">예약 발송은 아직 첨부파일을 지원하지 않습니다. 첨부를 지우거나 지금 보내세요.</string>

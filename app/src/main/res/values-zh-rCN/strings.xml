@@ -1775,8 +1775,9 @@
     <string name="import_chunk_progress">正在上传第 %1$d 块，共 %2$d 块</string>
     <string name="import_job_created">已开始导入</string>
     <string name="import_file_too_large">文件过大（最大 10 GiB）</string>
-    <string name="attachment_too_large">“%1$s”过大（最大 25 MB）</string>
-    <string name="attachment_total_too_large">附件总大小不能超过 50 MB</string>
+    <string name="attachment_too_large">“%1$s”超出单个文件 %2$s 的上限</string>
+    <string name="attachment_too_large_upgradable">“%1$s”超出当前套餐单个文件 %2$s 的上限。升级后可提升到 %3$s。</string>
+    <string name="attachment_total_too_large">附件总大小超出 %1$s 的上限</string>
     <string name="attachment_already_attached">“%1$s”已经添加</string>
     <string name="attachment_read_failed">无法读取“%1$s”</string>
     <string name="scheduled_send_no_attachments">定时发送暂不支持附件。请先移除附件或立即发送。</string>

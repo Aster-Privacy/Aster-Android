@@ -857,8 +857,9 @@
     <string name="import_chunk_progress">Uploading chunk %1$d of %2$d</string>
     <string name="import_job_created">Import job started</string>
     <string name="import_file_too_large">File is too large (max 10 GiB)</string>
-    <string name="attachment_too_large">\"%1$s\" is too large (max 25 MB)</string>
-    <string name="attachment_total_too_large">Attachments can\'t add up to more than 50 MB</string>
+    <string name="attachment_too_large">\"%1$s\" is over the %2$s single-file limit</string>
+    <string name="attachment_too_large_upgradable">\"%1$s\" is over the %2$s single-file limit on your plan. Upgrading raises it to %3$s.</string>
+    <string name="attachment_total_too_large">Your attachments are over the %1$s total limit</string>
     <string name="attachment_already_attached">\"%1$s\" is already attached</string>
     <string name="attachment_read_failed">\"%1$s\" could not be read</string>
     <string name="scheduled_send_no_attachments">Scheduled emails can\'t include attachments yet. Remove them or send now.</string>

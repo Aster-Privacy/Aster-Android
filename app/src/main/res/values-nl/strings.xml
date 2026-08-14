@@ -1778,8 +1778,9 @@
     <string name="import_chunk_progress">Deel %1$d van %2$d uploaden</string>
     <string name="import_job_created">Import gestart</string>
     <string name="import_file_too_large">Bestand is te groot (max. 10 GiB)</string>
-    <string name="attachment_too_large">\"%1$s\" is te groot (max. 25 MB)</string>
-    <string name="attachment_total_too_large">Bijlagen mogen samen niet boven 50 MB uitkomen</string>
+    <string name="attachment_too_large">\"%1$s\" gaat over de limiet van %2$s per bestand</string>
+    <string name="attachment_too_large_upgradable">\"%1$s\" gaat over de limiet van %2$s per bestand in je abonnement. Upgraden verhoogt die naar %3$s.</string>
+    <string name="attachment_total_too_large">Je bijlagen gaan over de totale limiet van %1$s</string>
     <string name="attachment_already_attached">\"%1$s\" is al toegevoegd</string>
     <string name="attachment_read_failed">\"%1$s\" kon niet worden gelezen</string>
     <string name="scheduled_send_no_attachments">Geplande e-mails ondersteunen nog geen bijlagen. Verwijder ze of verstuur nu.</string>

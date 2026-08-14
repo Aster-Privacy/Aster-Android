@@ -1778,8 +1778,9 @@
     <string name="import_chunk_progress">Enviando parte %1$d de %2$d</string>
     <string name="import_job_created">Importação iniciada</string>
     <string name="import_file_too_large">Arquivo grande demais (máx. 10 GiB)</string>
-    <string name="attachment_too_large">\"%1$s\" é grande demais (máx. 25 MB)</string>
-    <string name="attachment_total_too_large">Os anexos não podem somar mais de 50 MB</string>
+    <string name="attachment_too_large">\"%1$s\" passa do limite de %2$s por arquivo</string>
+    <string name="attachment_too_large_upgradable">\"%1$s\" passa do limite de %2$s por arquivo do seu plano. Fazer upgrade eleva o limite para %3$s.</string>
+    <string name="attachment_total_too_large">Seus anexos passam do limite total de %1$s</string>
     <string name="attachment_already_attached">\"%1$s\" já está anexado</string>
     <string name="attachment_read_failed">Não foi possível ler \"%1$s\"</string>
     <string name="scheduled_send_no_attachments">E-mails agendados ainda não aceitam anexos. Remova-os ou envie agora.</string>

@@ -63,6 +63,7 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.AlertTriangle
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterButton
+import org.astermail.android.ui.upgrade.UpgradeStore
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.DialogConfirmStyle
 import org.astermail.android.settings.SettingsViewModel
@@ -245,6 +246,20 @@ fun StorageScreen(
                         ),
                         icon = TablerIcons.AlertTriangle,
                     )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                start = AsterSpacing.md,
+                                end = AsterSpacing.md,
+                                bottom = AsterSpacing.md,
+                            ),
+                    ) {
+                        AsterButton(
+                            label = stringResource(R.string.upgrade),
+                            onClick = { UpgradeStore.show_storage_full(null) },
+                        )
+                    }
                 }
             }
             v_gap(AsterSpacing.lg)

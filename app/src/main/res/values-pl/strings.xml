@@ -1784,8 +1784,9 @@
     <string name="import_chunk_progress">Wysyłanie części %1$d z %2$d</string>
     <string name="import_job_created">Import rozpoczęty</string>
     <string name="import_file_too_large">Plik jest za duży (maks. 10 GiB)</string>
-    <string name="attachment_too_large">\"%1$s\" jest za duży (maks. 25 MB)</string>
-    <string name="attachment_total_too_large">Załączniki nie mogą łącznie przekraczać 50 MB</string>
+    <string name="attachment_too_large">\"%1$s\" przekracza limit %2$s na plik</string>
+    <string name="attachment_too_large_upgradable">\"%1$s\" przekracza limit %2$s na plik w twoim planie. Wyższy plan podnosi go do %3$s.</string>
+    <string name="attachment_total_too_large">Twoje załączniki przekraczają łączny limit %1$s</string>
     <string name="attachment_already_attached">\"%1$s\" jest już załączony</string>
     <string name="attachment_read_failed">Nie udało się odczytać \"%1$s\"</string>
     <string name="scheduled_send_no_attachments">Zaplanowane wiadomości nie obsługują jeszcze załączników. Usuń je albo wyślij teraz.</string>

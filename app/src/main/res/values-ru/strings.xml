@@ -1784,8 +1784,9 @@
     <string name="import_chunk_progress">Загрузка части %1$d из %2$d</string>
     <string name="import_job_created">Импорт запущен</string>
     <string name="import_file_too_large">Файл слишком большой (до 10 ГиБ)</string>
-    <string name="attachment_too_large">\"%1$s\" слишком большой (до 25 МБ)</string>
-    <string name="attachment_total_too_large">Вложения не могут занимать больше 50 МБ в сумме</string>
+    <string name="attachment_too_large">\"%1$s\" превышает лимит %2$s на один файл</string>
+    <string name="attachment_too_large_upgradable">\"%1$s\" превышает лимит %2$s на один файл в вашем тарифе. Переход на более высокий тариф поднимает его до %3$s.</string>
+    <string name="attachment_total_too_large">Вложения превышают общий лимит %1$s</string>
     <string name="attachment_already_attached">\"%1$s\" уже прикреплён</string>
     <string name="attachment_read_failed">Не удалось прочитать \"%1$s\"</string>
     <string name="scheduled_send_no_attachments">Отложенная отправка пока не поддерживает вложения. Удалите их или отправьте сейчас.</string>

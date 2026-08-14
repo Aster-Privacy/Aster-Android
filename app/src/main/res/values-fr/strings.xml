@@ -2279,8 +2279,9 @@
     <string name="folder_decrypt_failed">Dossier (échec du déchiffrement)</string>
     <string name="settings_search_placeholder">Rechercher dans les paramètres</string>
     <string name="settings_search_hint">Saisissez du texte pour chercher dans tous les paramètres</string>
-    <string name="attachment_too_large">\"%1$s\" est trop volumineux (25 Mo max)</string>
-    <string name="attachment_total_too_large">Les pièces jointes ne peuvent pas dépasser 50 Mo au total</string>
+    <string name="attachment_too_large">\"%1$s\" dépasse la limite de %2$s par fichier</string>
+    <string name="attachment_too_large_upgradable">\"%1$s\" dépasse la limite de %2$s par fichier de votre offre. Passer à une offre supérieure la porte à %3$s.</string>
+    <string name="attachment_total_too_large">Vos pièces jointes dépassent la limite totale de %1$s</string>
     <string name="attachment_already_attached">\"%1$s\" est déjà joint</string>
     <string name="attachment_read_failed">Impossible de lire \"%1$s\"</string>
     <string name="scheduled_send_no_attachments">Les envois programmés n’acceptent pas encore de pièces jointes. Retirez-les ou envoyez maintenant.</string>

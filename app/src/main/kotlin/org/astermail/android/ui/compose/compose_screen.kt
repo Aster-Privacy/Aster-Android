@@ -146,6 +146,7 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterDragHandle
 import org.astermail.android.design.components.AsterIconButton
+import org.astermail.android.billing.AttachmentLimits
 import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.mail.MailViewModel
 import org.astermail.android.settings.DecryptedSignature
@@ -732,8 +733,12 @@ fun ComposeScreen(
                 org.astermail.android.share.import_shared_attachment(context, uri)
             }
             when (result) {
-                is org.astermail.android.share.AttachmentImport.TooLarge ->
-                    error = context.getString(R.string.attachment_too_large, result.name)
+                is org.astermail.android.share.AttachmentImport.TooLarge -> {
+                    error = oversized_attachment_message(context, result.name)
+                    if (AttachmentLimits.can_upgrade()) {
+                        org.astermail.android.ui.upgrade.UpgradeStore.show_plan_limit("attachments", null)
+                    }
+                }
                 is org.astermail.android.share.AttachmentImport.Failed ->
                     error = context.getString(R.string.attachment_read_failed, result.name)
                 is org.astermail.android.share.AttachmentImport.Imported -> {
@@ -741,8 +746,11 @@ fun ComposeScreen(
                     when {
                         existing_names.contains(item.name) ->
                             error = context.getString(R.string.attachment_already_attached, item.name)
-                        running_total + item.size > org.astermail.android.share.share_attachment_total_max_bytes ->
-                            error = context.getString(R.string.attachment_total_too_large)
+                        running_total + item.size > AttachmentLimits.total_max_bytes() ->
+                            error = context.getString(
+                                R.string.attachment_total_too_large,
+                                format_file_size(AttachmentLimits.total_max_bytes()),
+                            )
                         else -> {
                             existing_names.add(item.name)
                             running_total += item.size
@@ -1262,7 +1270,10 @@ fun ComposeScreen(
             } catch (e: OutOfMemoryError) {
                 is_sending = false
                 send_lock.set(false)
-                send_error = context.getString(R.string.attachment_total_too_large)
+                send_error = context.getString(
+                    R.string.attachment_total_too_large,
+                    format_file_size(AttachmentLimits.total_max_bytes()),
+                )
                 return@launch
             }
             val (body_html, attachment_payloads, suppress_branding) = prepared
@@ -2443,6 +2454,23 @@ fun ComposeScreen(
     }
 }
 
+private fun oversized_attachment_message(
+    context: android.content.Context,
+    file_name: String,
+): String {
+    val max_size = format_file_size(AttachmentLimits.max_bytes())
+    return if (AttachmentLimits.can_upgrade()) {
+        context.getString(
+            R.string.attachment_too_large_upgradable,
+            file_name,
+            max_size,
+            format_file_size(AttachmentLimits.paid_max_bytes),
+        )
+    } else {
+        context.getString(R.string.attachment_too_large, file_name, max_size)
+    }
+}
+
 private fun format_file_size(bytes: Long): String {
     return when {
         bytes < 1024 -> "$bytes B"
@@ -2908,7 +2936,7 @@ private fun build_attachment_from_uri(
             }
         }
     }
-    if (size > 25 * 1024 * 1024) return null
+    if (size > AttachmentLimits.max_bytes()) return null
     return AttachmentItem(uri, name, size, mime)
 }
 

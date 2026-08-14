@@ -1,20 +1,41 @@
-Aster Mail is a privacy-first email client for astermail.org accounts.
+Aster Mail is a private, encrypted email app for astermail.org accounts.
 
-Your messages are encrypted client-side before leaving your device. The server never sees your plaintext content - only you hold your keys.
+Your messages are encrypted on your device before they leave it. The server stores ciphertext and nothing else, so nobody at Aster can read your mail, scan it, or sell what is in it. There are no ads, no trackers, and no analytics anywhere in the app.
 
-Features:
-- End-to-end encrypted mail between Aster users using a post-quantum ratchet protocol
-- Zero-access architecture: server stores only encrypted ciphertext
-- Custom domain support with automatic DKIM signing
-- Push notifications via UnifiedPush (no Google services required) with polling fallback
-- Offline-capable with local encrypted storage
+Private by design
+- End-to-end encryption between Aster users, using a post-quantum ratchet protocol
+- Zero-access architecture: the server holds only encrypted content
+- No ads, no tracking, no telemetry, no profiling
+- Open source under AGPL-3.0, so anyone can audit what the app does
+
+Email aliases
+- Create an alias for each site you sign up for, and turn one off when it starts getting spam
+- See which alias a message arrived on, right in the message list
+- Import and export your aliases
+
+Your own domain
+- Send and receive on a custom domain, with DKIM signing handled for you
+- Buy a domain from inside the app
+
+Everyday mail
+- Folders, labels, categories, and search across your whole mailbox
+- Swipe actions and a toolbar you can customize
+- Templates, signatures, scheduled send, and auto-forwarding
+- Blocked senders, sender filters, and an allow list
+- Encrypted offline storage, so your mail is there without a connection
+
+Security
 - Biometric lock
-- Private mode notifications (hides sender and subject on lock screen)
-- Quiet hours for notification scheduling
-- Contact avatars with graceful fallback
-- Attachment support with external app handoff
-- AGPL-3.0 licensed
+- Two-factor authentication and a recovery key
+- Active session management, so you can sign out a device you no longer have
 
-This F-Droid build contains no Firebase or Google Play Services dependencies. Push notifications are delivered via any UnifiedPush-compatible distributor (such as ntfy or Unified Push). Background polling provides a fallback when no distributor is installed.
+Notifications
+- Private mode hides the sender and subject on your lock screen
+- Quiet hours schedule when notifications arrive
+- Per-folder muting
+
+This F-Droid build contains no Firebase or Google Play Services dependencies. Push notifications are delivered through any UnifiedPush-compatible distributor, such as ntfy. Background polling takes over when no distributor is installed.
+
+Aster Mail is free to use. Paid plans add storage, larger attachments, more aliases, and custom domains.
 
 Source code: https://github.com/Aster-Privacy/Aster-Android

@@ -29,9 +29,8 @@ import android.provider.OpenableColumns
 import androidx.core.content.FileProvider
 import androidx.core.content.IntentCompat
 import java.io.File
+import org.astermail.android.billing.AttachmentLimits
 
-const val share_attachment_max_bytes = 25L * 1024 * 1024
-const val share_attachment_total_max_bytes = 50L * 1024 * 1024
 private const val share_cache_dir_name = "shared_attachments"
 private const val share_cache_ttl_ms = 24L * 60 * 60 * 1000
 
@@ -207,7 +206,7 @@ fun import_shared_attachment(context: Context, uri: Uri): AttachmentImport {
             }
         }
     }
-    if (size > share_attachment_max_bytes) return AttachmentImport.TooLarge(name)
+    if (size > AttachmentLimits.max_bytes()) return AttachmentImport.TooLarge(name)
     val mime = resolver.getType(uri) ?: guess_mime_from_name(name)
     name = ensure_extension(name, mime)
     val target_dir = File(context.cacheDir, share_cache_dir_name)
@@ -224,7 +223,7 @@ fun import_shared_attachment(context: Context, uri: Uri): AttachmentImport {
         target.delete()
         return AttachmentImport.Failed(name)
     }
-    if (copied > share_attachment_max_bytes) {
+    if (copied > AttachmentLimits.max_bytes()) {
         target.delete()
         return AttachmentImport.TooLarge(name)
     }

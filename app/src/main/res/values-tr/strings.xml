@@ -1778,8 +1778,9 @@
     <string name="import_chunk_progress">%2$d parçadan %1$d. parça yükleniyor</string>
     <string name="import_job_created">İçe aktarma başlatıldı</string>
     <string name="import_file_too_large">Dosya çok büyük (en fazla 10 GiB)</string>
-    <string name="attachment_too_large">\"%1$s\" çok büyük (en fazla 25 MB)</string>
-    <string name="attachment_total_too_large">Ekler toplamda 50 MB’ı geçemez</string>
+    <string name="attachment_too_large">\"%1$s\" dosya başına %2$s sınırını aşıyor</string>
+    <string name="attachment_too_large_upgradable">\"%1$s\" planınızdaki dosya başına %2$s sınırını aşıyor. Yükseltmek sınırı %3$s değerine çıkarır.</string>
+    <string name="attachment_total_too_large">Ekleriniz toplam %1$s sınırını aşıyor</string>
     <string name="attachment_already_attached">\"%1$s\" zaten ekli</string>
     <string name="attachment_read_failed">\"%1$s\" okunamadı</string>
     <string name="scheduled_send_no_attachments">Zamanlanmış e-postalar henüz ek desteklemiyor. Ekleri kaldır ya da şimdi gönder.</string>

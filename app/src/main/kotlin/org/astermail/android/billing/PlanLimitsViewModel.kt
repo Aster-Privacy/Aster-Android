@@ -57,6 +57,12 @@ class PlanLimitsViewModel @Inject constructor(
             } catch (_: Throwable) {
                 _state.value = _state.value.copy(is_loading = false)
             }
+            try {
+                val plans = billing_api.get_available_plans().plans
+                val current = plans.firstOrNull { it.is_current }
+                if (current != null) AttachmentLimits.update(current.max_attachment_size_bytes)
+            } catch (_: Throwable) {
+            }
         }
     }
 

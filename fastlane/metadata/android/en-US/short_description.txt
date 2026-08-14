@@ -1,1 +1,1 @@
-Private, encrypted email with zero-access architecture
+Private email app with end-to-end encryption, aliases, and custom domains

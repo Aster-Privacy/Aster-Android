@@ -1779,8 +1779,9 @@
     <string name="import_chunk_progress">Subiendo parte %1$d de %2$d</string>
     <string name="import_job_created">Importación iniciada</string>
     <string name="import_file_too_large">El archivo es demasiado grande (máx. 10 GiB)</string>
-    <string name="attachment_too_large">\"%1$s\" es demasiado grande (máx. 25 MB)</string>
-    <string name="attachment_total_too_large">Los adjuntos no pueden sumar más de 50 MB</string>
+    <string name="attachment_too_large">\"%1$s\" supera el límite de %2$s por archivo</string>
+    <string name="attachment_too_large_upgradable">\"%1$s\" supera el límite de %2$s por archivo de tu plan. Mejorar el plan lo sube a %3$s.</string>
+    <string name="attachment_total_too_large">Tus adjuntos superan el límite total de %1$s</string>
     <string name="attachment_already_attached">\"%1$s\" ya está adjunto</string>
     <string name="attachment_read_failed">No se pudo leer \"%1$s\"</string>
     <string name="scheduled_send_no_attachments">Los correos programados aún no admiten adjuntos. Quítalos o envía ahora.</string>

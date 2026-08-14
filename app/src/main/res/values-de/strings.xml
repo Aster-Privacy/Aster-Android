@@ -1779,8 +1779,9 @@
     <string name="import_chunk_progress">Teil %1$d von %2$d wird hochgeladen</string>
     <string name="import_job_created">Import gestartet</string>
     <string name="import_file_too_large">Datei ist zu groß (max. 10 GiB)</string>
-    <string name="attachment_too_large">\"%1$s\" ist zu groß (max. 25 MB)</string>
-    <string name="attachment_total_too_large">Anhänge dürfen zusammen nicht über 50 MB liegen</string>
+    <string name="attachment_too_large">\"%1$s\" liegt über dem Einzeldateilimit von %2$s</string>
+    <string name="attachment_too_large_upgradable">\"%1$s\" liegt über dem Einzeldateilimit von %2$s in deinem Tarif. Ein Upgrade erhöht es auf %3$s.</string>
+    <string name="attachment_total_too_large">Deine Anhänge liegen über dem Gesamtlimit von %1$s</string>
     <string name="attachment_already_attached">\"%1$s\" ist bereits angehängt</string>
     <string name="attachment_read_failed">\"%1$s\" konnte nicht gelesen werden</string>
     <string name="scheduled_send_no_attachments">Geplante E-Mails unterstützen noch keine Anhänge. Entferne sie oder sende jetzt.</string>
