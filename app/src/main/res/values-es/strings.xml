@@ -480,8 +480,6 @@
     <string name="settings_encryption_subtitle">Claves PGP y recuperación</string>
     <string name="settings_aliases">Alias y dominios</string>
     <string name="settings_aliases_subtitle">Administrar direcciones</string>
-    <string name="settings_ghost_aliases">Ghost aliases</string>
-    <string name="settings_ghost_aliases_subtitle">Direcciones desechables de reenvío</string>
     <string name="settings_billing">Facturación</string>
     <string name="settings_billing_subtitle">Plan, facturas, métodos de pago</string>
     <string name="settings_referral">Recomienda a un amigo</string>
@@ -2203,6 +2201,8 @@
     <string name="domain_collapse">Plegar</string>
     <string name="domain_expand">Desplegar</string>
     <string name="domain_delete_domain">Eliminar dominio</string>
+    <string name="domain_delete_confirm_title">¿Eliminar dominio?</string>
+    <string name="domain_delete_confirm_message">¿Eliminar %1$s? El correo enviado a las direcciones de este dominio dejará de entregarse.</string>
     <string name="domain_dns_records">Registros DNS</string>
     <string name="domain_verifying">Verificando...</string>
     <string name="domain_adding">Añadiendo...</string>
@@ -2727,4 +2727,25 @@
     <string name="couldnt_remove_label">No se pudo quitar la etiqueta</string>
     <string name="unsnoozed_count">%d conversación(es) sin posponer</string>
     <string name="couldnt_unsnooze">No se pudo dejar de posponer</string>
+    <string name="domain_verify_slow">Aster no pudo terminar la comprobación de DNS. Puede que tus registros aún se estén verificando, así que inténtalo de nuevo en unos minutos.</string>
+    <string name="domain_records_verified">%1$d de %2$d registros verificados</string>
+    <string name="ext_sync_started">Sincronización iniciada</string>
+    <string name="ext_account_removed">Cuenta eliminada</string>
+    <string name="folder_created">Carpeta creada</string>
+    <string name="folder_locked">Carpeta bloqueada</string>
+    <string name="folder_unlocked">Carpeta desbloqueada</string>
+    <string name="folder_lock_set">Bloqueo de carpeta activado</string>
+    <string name="folder_lock_removed">Bloqueo de carpeta eliminado</string>
+    <string name="folder_notifications_muted">Notificaciones silenciadas para esta carpeta</string>
+    <string name="folder_notifications_unmuted">Notificaciones activadas para esta carpeta</string>
+    <string name="item_deleted">Eliminado</string>
+    <string name="item_renamed">Renombrado</string>
+    <string name="item_color_updated">Color actualizado</string>
+    <string name="sessions_active_section">Sesiones activas</string>
+    <string name="sign_out_others_action">Cerrar otras sesiones</string>
+    <string name="revoke_all_action">Revocar todo</string>
+    <string name="revoke_all_trusted_devices_confirm">Cada dispositivo de confianza tendrá que verificarse otra vez la próxima vez que inicie sesión.</string>
+    <string name="plan_price_per_month">al mes</string>
+    <string name="plan_price_per_year">al año</string>
+    <string name="plan_save_per_year">Ahorra %1$s al año</string>
 </resources>

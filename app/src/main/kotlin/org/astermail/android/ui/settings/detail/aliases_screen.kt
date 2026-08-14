@@ -32,6 +32,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -75,6 +76,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import org.astermail.android.settings.AliasDetailState
@@ -777,23 +779,30 @@ private fun alias_meta_row(
     color: Color,
     max_lines: Int = 1,
 ) {
+    val font_size = 12.sp
+    val line_height = font_size * 1.4f
+    val line_height_dp = with(LocalDensity.current) { line_height.toDp() }
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = color,
-            modifier = Modifier
-                .padding(top = 1.dp)
-                .size(13.dp),
-        )
+        Box(
+            modifier = Modifier.height(line_height_dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(13.dp),
+            )
+        }
         Text(
             text = text,
             color = color,
-            fontSize = 12.sp,
+            fontSize = font_size,
+            lineHeight = line_height,
             maxLines = max_lines,
             overflow = TextOverflow.Ellipsis,
         )
@@ -908,7 +917,18 @@ internal fun alias_list_row(
             }
         }
         if (expanded && panel_content != null) {
-            panel_content()
+            val panel_interaction = remember { MutableInteractionSource() }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        interactionSource = panel_interaction,
+                        indication = null,
+                        onClick = {},
+                    ),
+            ) {
+                panel_content()
+            }
         }
     }
 }
@@ -2085,7 +2105,26 @@ private fun domain_card(
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
+    val haptics = LocalHapticFeedback.current
     val is_active = domain.txt_verified && domain.mx_verified && domain.spf_verified && domain.dkim_verified
+    var confirm_delete by remember(domain.id) { mutableStateOf(false) }
+    var name_expanded by remember(domain.id) { mutableStateOf(false) }
+
+    if (confirm_delete) {
+        org.astermail.android.design.components.AsterAlertDialog(
+            on_dismiss = { confirm_delete = false },
+            title = stringResource(R.string.domain_delete_confirm_title),
+            message = stringResource(R.string.domain_delete_confirm_message, domain.domain_name),
+            confirm_label = stringResource(R.string.domain_delete_domain),
+            cancel_label = stringResource(R.string.cancel),
+            confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
+            on_confirm = {
+                confirm_delete = false
+                on_delete()
+            },
+        )
+    }
+
     AsterCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(AsterSpacing.lg)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -2097,7 +2136,21 @@ private fun domain_card(
                 )
                 Spacer(Modifier.width(AsterSpacing.sm))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = domain.domain_name, color = colors.text_primary, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        text = domain.domain_name,
+                        color = colors.text_primary,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = if (name_expanded) Int.MAX_VALUE else 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.combinedClickable(
+                            onClick = { name_expanded = !name_expanded },
+                            onLongClick = {
+                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                copy_dns_value(context, "domain", domain.domain_name)
+                            },
+                        ),
+                    )
                     Text(
                         text = if (is_active) stringResource(R.string.domain_status_active) else stringResource(R.string.domain_status_setup_required),
                         color = if (is_active) colors.success else colors.warning,
@@ -2112,7 +2165,7 @@ private fun domain_card(
                 AsterIconButton(
                     icon = TablerIcons.Trash,
                     content_description = stringResource(R.string.domain_delete_domain),
-                    onClick = on_delete,
+                    onClick = { confirm_delete = true },
                     tint = colors.danger,
                 )
             }
@@ -2141,13 +2194,28 @@ private fun domain_card(
                 )
                 v_gap(AsterSpacing.sm)
 
-                if (dns_records.isEmpty()) {
-                    dns_record_row("TXT", domain.txt_verified)
-                    dns_record_row("MX", domain.mx_verified)
-                    dns_record_row("SPF", domain.spf_verified)
-                    dns_record_row("DKIM", domain.dkim_verified)
-                    dns_record_row("DMARC", domain.dmarc_configured)
-                } else {
+                val record_states = listOf(
+                    "TXT" to domain.txt_verified,
+                    "MX" to domain.mx_verified,
+                    "SPF" to domain.spf_verified,
+                    "DKIM" to domain.dkim_verified,
+                    "DMARC" to domain.dmarc_configured,
+                )
+                Text(
+                    text = stringResource(
+                        R.string.domain_records_verified,
+                        record_states.count { it.second },
+                        record_states.size,
+                    ),
+                    color = colors.text_tertiary,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                v_gap(4.dp)
+                record_states.forEach { (label, verified) -> dns_record_row(label, verified) }
+
+                if (dns_records.isNotEmpty()) {
+                    v_gap(AsterSpacing.sm)
                     dns_records.forEachIndexed { index, record ->
                         if (index > 0) v_gap(AsterSpacing.sm)
                         dns_record_detail(
@@ -2241,6 +2309,7 @@ private fun dns_record_detail(record: DnsRecord, on_copy: (String, String) -> Un
 @Composable
 private fun dns_record_field(label: String, value: String, on_copy: () -> Unit) {
     val colors = AsterMaterial.colors
+    var value_expanded by remember(value) { mutableStateOf(false) }
     Row(
         modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
         verticalAlignment = Alignment.Top,
@@ -2256,7 +2325,11 @@ private fun dns_record_field(label: String, value: String, on_copy: () -> Unit) 
             color = colors.text_secondary,
             fontSize = 12.sp,
             fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-            modifier = Modifier.weight(1f),
+            maxLines = if (value_expanded) Int.MAX_VALUE else 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .weight(1f)
+                .clickable { value_expanded = !value_expanded },
         )
         AsterIconButton(
             icon = TablerIcons.Copy,

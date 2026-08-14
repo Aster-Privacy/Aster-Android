@@ -215,18 +215,20 @@ class ExternalAccountsViewModel @Inject constructor(
         }
     }
 
-    fun delete_account(account_token: String) {
+    fun delete_account(account_token: String, on_result: ((Boolean) -> Unit)? = null) {
         viewModelScope.launch {
             val result = runCatching { withContext(Dispatchers.IO) { api.delete_account(account_token) } }
             if (result.isFailure) {
                 _state.value = _state.value.copy(error = ExternalAccountsError.DELETE_FAILED)
+                on_result?.invoke(false)
             } else {
                 load()
+                on_result?.invoke(true)
             }
         }
     }
 
-    fun trigger_sync(account_token: String) {
+    fun trigger_sync(account_token: String, on_result: ((Boolean) -> Unit)? = null) {
         viewModelScope.launch {
             _state.value = _state.value.copy(
                 syncing_tokens = _state.value.syncing_tokens + account_token,
@@ -244,6 +246,7 @@ class ExternalAccountsViewModel @Inject constructor(
             } else {
                 load()
             }
+            on_result?.invoke(!failed)
         }
     }
 

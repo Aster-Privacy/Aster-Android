@@ -479,8 +479,6 @@
     <string name="settings_encryption_subtitle">PGP 密钥和恢复</string>
     <string name="settings_aliases">别名和域名</string>
     <string name="settings_aliases_subtitle">管理地址</string>
-    <string name="settings_ghost_aliases">幽灵别名</string>
-    <string name="settings_ghost_aliases_subtitle">一次性转发地址</string>
     <string name="settings_billing">账单</string>
     <string name="settings_billing_subtitle">方案、发票、支付方式</string>
     <string name="settings_referral">推荐好友</string>
@@ -2199,6 +2197,8 @@
     <string name="domain_collapse">收起</string>
     <string name="domain_expand">展开</string>
     <string name="domain_delete_domain">删除域名</string>
+    <string name="domain_delete_confirm_title">删除域名？</string>
+    <string name="domain_delete_confirm_message">删除 %1$s？发送至该域名下地址的邮件将不再送达。</string>
     <string name="domain_dns_records">DNS 记录</string>
     <string name="domain_verifying">正在验证...</string>
     <string name="domain_adding">正在添加...</string>
@@ -2718,4 +2718,25 @@
     <string name="couldnt_remove_label">无法移除标签</string>
     <string name="unsnoozed_count">已取消延后 %d 个会话</string>
     <string name="couldnt_unsnooze">无法取消延后</string>
+    <string name="domain_verify_slow">Aster 无法完成 DNS 检查。你的记录可能仍在验证中，请过几分钟再试。</string>
+    <string name="domain_records_verified">已验证 %2$d 条记录中的 %1$d 条</string>
+    <string name="ext_sync_started">已开始同步</string>
+    <string name="ext_account_removed">已移除账户</string>
+    <string name="folder_created">已创建文件夹</string>
+    <string name="folder_locked">已锁定文件夹</string>
+    <string name="folder_unlocked">已解锁文件夹</string>
+    <string name="folder_lock_set">已设置文件夹锁</string>
+    <string name="folder_lock_removed">已移除文件夹锁</string>
+    <string name="folder_notifications_muted">已静音此文件夹的通知</string>
+    <string name="folder_notifications_unmuted">已开启此文件夹的通知</string>
+    <string name="item_deleted">已删除</string>
+    <string name="item_renamed">已重命名</string>
+    <string name="item_color_updated">颜色已更新</string>
+    <string name="sessions_active_section">活跃会话</string>
+    <string name="sign_out_others_action">退出其他设备</string>
+    <string name="revoke_all_action">撤销全部</string>
+    <string name="revoke_all_trusted_devices_confirm">每台信任的设备在下次登录时都需要重新验证。</string>
+    <string name="plan_price_per_month">每月</string>
+    <string name="plan_price_per_year">每年</string>
+    <string name="plan_save_per_year">每年节省 %1$s</string>
 </resources>

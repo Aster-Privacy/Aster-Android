@@ -98,6 +98,9 @@ import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.AsterTopBar
 import org.astermail.android.mail_rules.MailRulesViewModel
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.ui.settings.detail.skeleton_card_list
+import org.astermail.android.ui.settings.detail.skeleton_hero_card
+import org.astermail.android.ui.settings.detail.skeleton_section_label
 import org.astermail.android.ui.settings.mail_rules.pickers.address_value_picker
 import org.astermail.android.ui.settings.mail_rules.pickers.alias_option
 import org.astermail.android.ui.settings.mail_rules.pickers.boolean_value_picker
@@ -145,6 +148,32 @@ fun RuleEditorScreen(
 
     val existing = remember(rule_id, state.rules) {
         rule_id?.let { id -> state.rules.firstOrNull { it.id == id } }
+    }
+
+    if (rule_id != null && existing == null && state.is_loading) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colors.bg_primary)
+                .systemBarsPadding()
+                .testTag("rule_editor_loading"),
+        ) {
+            AsterTopBar(
+                title = stringResource(R.string.mail_rules_edit_rule),
+                on_back = on_back,
+            )
+            AsterDivider()
+            Column(modifier = Modifier.fillMaxSize().padding(AsterSpacing.lg)) {
+                skeleton_hero_card(lines = 2)
+                Spacer(Modifier.height(AsterSpacing.lg))
+                skeleton_section_label()
+                skeleton_card_list(rows = 2)
+                Spacer(Modifier.height(AsterSpacing.lg))
+                skeleton_section_label()
+                skeleton_card_list(rows = 2)
+            }
+        }
+        return
     }
 
     var name by remember(existing) { mutableStateOf(existing?.name ?: "") }

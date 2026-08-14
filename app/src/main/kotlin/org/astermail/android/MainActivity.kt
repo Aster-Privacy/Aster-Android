@@ -133,7 +133,6 @@ import org.astermail.android.ui.settings.detail.DeveloperScreen
 import org.astermail.android.ui.settings.detail.FamilyScreen
 import org.astermail.android.ui.settings.detail.KidsReservedScreen
 import org.astermail.android.ui.settings.detail.FoldersScreen
-import org.astermail.android.ui.settings.detail.GhostAliasesScreen
 import org.astermail.android.ui.settings.detail.LabelsScreen
 import org.astermail.android.ui.settings.detail.LanguageScreen
 import org.astermail.android.ui.settings.detail.PrivacyScreen
@@ -1251,9 +1250,6 @@ private fun AsterNavHost() {
         }
         composable(routes.settings_detail("trusted_devices")) {
             TrustedDevicesScreen(on_back = { back(); Unit })
-        }
-        composable(routes.settings_detail("ghost_aliases")) {
-            GhostAliasesScreen(on_back = { back(); Unit })
         }
         composable(routes.settings_detail("referral")) {
             ReferralScreen(on_back = { back(); Unit })

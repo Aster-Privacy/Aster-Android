@@ -479,8 +479,6 @@
     <string name="settings_encryption_subtitle">PGPキーとリカバリ</string>
     <string name="settings_aliases">エイリアスとドメイン</string>
     <string name="settings_aliases_subtitle">アドレスの管理</string>
-    <string name="settings_ghost_aliases">ゴーストエイリアス</string>
-    <string name="settings_ghost_aliases_subtitle">使い捨て転送アドレス</string>
     <string name="settings_billing">請求</string>
     <string name="settings_billing_subtitle">プラン、請求書、支払い方法</string>
     <string name="settings_referral">友達を紹介</string>
@@ -2199,6 +2197,8 @@
     <string name="domain_collapse">折りたたむ</string>
     <string name="domain_expand">展開</string>
     <string name="domain_delete_domain">ドメインを削除</string>
+    <string name="domain_delete_confirm_title">ドメインを削除しますか？</string>
+    <string name="domain_delete_confirm_message">%1$s を削除しますか？このドメインのアドレス宛のメールは配信されなくなります。</string>
     <string name="domain_dns_records">DNS レコード</string>
     <string name="domain_verifying">確認中...</string>
     <string name="domain_adding">追加中...</string>
@@ -2718,4 +2718,25 @@
     <string name="couldnt_remove_label">ラベルを削除できませんでした</string>
     <string name="unsnoozed_count">%d件のスレッドのスヌーズを解除しました</string>
     <string name="couldnt_unsnooze">スヌーズを解除できませんでした</string>
+    <string name="domain_verify_slow">Aster は DNS チェックを完了できませんでした。レコードがまだ確認中の可能性があるため、数分後にもう一度お試しください。</string>
+    <string name="domain_records_verified">%2$d 件中 %1$d 件のレコードを確認しました</string>
+    <string name="ext_sync_started">同期を開始しました</string>
+    <string name="ext_account_removed">アカウントを削除しました</string>
+    <string name="folder_created">フォルダを作成しました</string>
+    <string name="folder_locked">フォルダをロックしました</string>
+    <string name="folder_unlocked">フォルダのロックを解除しました</string>
+    <string name="folder_lock_set">フォルダロックを設定しました</string>
+    <string name="folder_lock_removed">フォルダロックを削除しました</string>
+    <string name="folder_notifications_muted">このフォルダの通知をミュートしました</string>
+    <string name="folder_notifications_unmuted">このフォルダの通知をオンにしました</string>
+    <string name="item_deleted">削除しました</string>
+    <string name="item_renamed">名前を変更しました</string>
+    <string name="item_color_updated">色を更新しました</string>
+    <string name="sessions_active_section">アクティブなセッション</string>
+    <string name="sign_out_others_action">他のデバイスからサインアウト</string>
+    <string name="revoke_all_action">すべて取り消す</string>
+    <string name="revoke_all_trusted_devices_confirm">信頼済みデバイスは次回サインインするときに再度確認が必要になります。</string>
+    <string name="plan_price_per_month">月額</string>
+    <string name="plan_price_per_year">年額</string>
+    <string name="plan_save_per_year">年間 %1$s の節約</string>
 </resources>

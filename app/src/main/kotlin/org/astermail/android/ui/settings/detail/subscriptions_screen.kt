@@ -67,6 +67,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -373,22 +375,15 @@ fun SubscriptionsScreen(
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(AsterSpacing.lg)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (current_code != "free") {
-                            Icon(
-                                imageVector = TablerIcons.Star,
-                                contentDescription = null,
-                                tint = colors.accent_blue,
-                                modifier = Modifier.size(24.dp),
-                            )
-                            Spacer(Modifier.width(AsterSpacing.md))
-                        }
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(
+                            aster_plan_badge(
                                 text = sub?.effective_plan_name ?: plan_free_label,
-                                color = colors.text_primary,
-                                fontSize = 22.sp,
-                                fontWeight = FontWeight.Bold,
+                                accent = if (current_code == "free") colors.text_muted else colors.accent_blue,
+                                font_size = 13.sp,
+                                horizontal_padding = 10.dp,
+                                vertical_padding = 5.dp,
                             )
+                            Spacer(Modifier.height(AsterSpacing.sm))
                             Text(
                                 text = stringResource(R.string.current_plan),
                                 color = colors.text_tertiary,
@@ -904,14 +899,20 @@ private fun feature_row(@StringRes feature_res: Int) {
 }
 
 @Composable
-private fun aster_plan_badge(text: String, accent: androidx.compose.ui.graphics.Color) {
+private fun aster_plan_badge(
+    text: String,
+    accent: androidx.compose.ui.graphics.Color,
+    font_size: TextUnit = 10.sp,
+    horizontal_padding: Dp = 8.dp,
+    vertical_padding: Dp = 3.dp,
+) {
     Box(
         modifier = Modifier
             .clip(androidx.compose.foundation.shape.RoundedCornerShape(6.dp))
             .background(accent)
-            .padding(horizontal = 8.dp, vertical = 3.dp),
+            .padding(horizontal = horizontal_padding, vertical = vertical_padding),
     ) {
-        Text(text = text, color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+        Text(text = text, color = Color.White, fontSize = font_size, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -928,49 +929,65 @@ private fun plan_tier_card(
     val is_yearly = billing_interval == "year"
     val amount_cents = if (is_yearly) tier.yearly_cents else tier.monthly_cents
     AsterCard(modifier = Modifier.fillMaxWidth()) {
+        if (is_current || tier.recommended) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(if (is_current) colors.success else colors.accent_blue)
+                    .padding(vertical = 5.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = if (is_current) stringResource(R.string.current_plan) else stringResource(R.string.most_popular),
+                    color = Color.White,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+        }
         Column(modifier = Modifier.padding(AsterSpacing.lg)) {
-            Row(verticalAlignment = Alignment.Top) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = plan_name,
-                            color = colors.text_primary,
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        if (tier.recommended) {
-                            Spacer(Modifier.width(AsterSpacing.sm))
-                            aster_plan_badge(stringResource(R.string.most_popular), colors.accent_blue)
-                        }
-                        if (is_current) {
-                            Spacer(Modifier.width(AsterSpacing.sm))
-                            aster_plan_badge(stringResource(R.string.current_plan), colors.success)
-                        }
-                    }
+            Text(
+                text = plan_name,
+                color = colors.text_primary,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = stringResource(tier.tagline_res),
+                color = colors.text_tertiary,
+                fontSize = 12.sp,
+            )
+            Spacer(Modifier.height(AsterSpacing.md))
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(
+                    text = format_price(amount_cents, currency),
+                    color = colors.text_primary,
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(Modifier.width(AsterSpacing.xs))
+                Text(
+                    text = if (is_yearly) stringResource(R.string.plan_price_per_year) else stringResource(R.string.plan_price_per_month),
+                    color = colors.text_muted,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(bottom = 3.dp),
+                )
+            }
+            if (is_yearly) {
+                Spacer(Modifier.height(AsterSpacing.sm))
+                Box(
+                    modifier = Modifier
+                        .clip(SquircleShape(10.dp))
+                        .background(colors.success.copy(alpha = 0.15f))
+                        .padding(horizontal = AsterSpacing.sm, vertical = 3.dp),
+                ) {
                     Text(
-                        text = stringResource(tier.tagline_res),
-                        color = colors.text_tertiary,
+                        text = stringResource(R.string.plan_save_per_year, format_price(tier.save_cents, currency)),
+                        color = colors.success,
                         fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
                     )
-                }
-                Column(horizontalAlignment = Alignment.End) {
-                    Row(verticalAlignment = Alignment.Bottom) {
-                        Text(
-                            text = format_price(amount_cents, currency) + if (is_yearly) "/yr" else "/mo",
-                            color = colors.text_primary,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Spacer(Modifier.width(2.dp))
-                    }
-                    if (is_yearly) {
-                        Text(
-                            text = "Save ${format_price(tier.save_cents, currency)}/yr",
-                            color = colors.success,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    }
                 }
             }
             Spacer(Modifier.height(AsterSpacing.md))

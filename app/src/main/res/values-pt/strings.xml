@@ -479,8 +479,6 @@
     <string name="settings_encryption_subtitle">Chaves PGP e recuperação</string>
     <string name="settings_aliases">Aliases e domínios</string>
     <string name="settings_aliases_subtitle">Gerenciar endereços</string>
-    <string name="settings_ghost_aliases">Ghost aliases</string>
-    <string name="settings_ghost_aliases_subtitle">Endereços descartáveis de encaminhamento</string>
     <string name="settings_billing">Faturamento</string>
     <string name="settings_billing_subtitle">Plano, faturas, métodos de pagamento</string>
     <string name="settings_referral">Indicar um amigo</string>
@@ -2202,6 +2200,8 @@
     <string name="domain_collapse">Recolher</string>
     <string name="domain_expand">Expandir</string>
     <string name="domain_delete_domain">Excluir domínio</string>
+    <string name="domain_delete_confirm_title">Excluir domínio?</string>
+    <string name="domain_delete_confirm_message">Excluir %1$s? As mensagens enviadas para endereços deste domínio deixarão de ser entregues.</string>
     <string name="domain_dns_records">Registros DNS</string>
     <string name="domain_verifying">Verificando...</string>
     <string name="domain_adding">A adicionar...</string>
@@ -2726,4 +2726,25 @@
     <string name="couldnt_remove_label">Não foi possível remover a etiqueta</string>
     <string name="unsnoozed_count">Adiamento cancelado em %d conversa(s)</string>
     <string name="couldnt_unsnooze">Não foi possível cancelar o adiamento</string>
+    <string name="domain_verify_slow">O Aster não conseguiu concluir a verificação de DNS. Seus registros ainda podem estar em verificação, então tente novamente em alguns minutos.</string>
+    <string name="domain_records_verified">%1$d de %2$d registros verificados</string>
+    <string name="ext_sync_started">Sincronização iniciada</string>
+    <string name="ext_account_removed">Conta removida</string>
+    <string name="folder_created">Pasta criada</string>
+    <string name="folder_locked">Pasta bloqueada</string>
+    <string name="folder_unlocked">Pasta desbloqueada</string>
+    <string name="folder_lock_set">Bloqueio de pasta definido</string>
+    <string name="folder_lock_removed">Bloqueio de pasta removido</string>
+    <string name="folder_notifications_muted">Notificações silenciadas para esta pasta</string>
+    <string name="folder_notifications_unmuted">Notificações ativadas para esta pasta</string>
+    <string name="item_deleted">Excluído</string>
+    <string name="item_renamed">Renomeado</string>
+    <string name="item_color_updated">Cor atualizada</string>
+    <string name="sessions_active_section">Sessões ativas</string>
+    <string name="sign_out_others_action">Sair dos outros dispositivos</string>
+    <string name="revoke_all_action">Revogar tudo</string>
+    <string name="revoke_all_trusted_devices_confirm">Cada dispositivo confiável precisará se verificar novamente no próximo acesso.</string>
+    <string name="plan_price_per_month">por mês</string>
+    <string name="plan_price_per_year">por ano</string>
+    <string name="plan_save_per_year">Economize %1$s por ano</string>
 </resources>

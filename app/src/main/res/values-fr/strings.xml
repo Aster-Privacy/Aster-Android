@@ -506,8 +506,6 @@
     <string name="settings_encryption_subtitle">Clés PGP et récupération</string>
     <string name="settings_aliases">Alias &amp; domaines</string>
     <string name="settings_aliases_subtitle">Gérer les adresses</string>
-    <string name="settings_ghost_aliases">Alias fantômes</string>
-    <string name="settings_ghost_aliases_subtitle">Adresses de transfert jetables</string>
     <string name="settings_billing">Facturation</string>
     <string name="settings_billing_subtitle">Forfait, factures, moyens de paiement</string>
     <string name="settings_referral">Parrainer un ami</string>
@@ -1596,6 +1594,8 @@
     <string name="domain_collapse">Réduire</string>
     <string name="domain_expand">Développer</string>
     <string name="domain_delete_domain">Supprimer le domaine</string>
+    <string name="domain_delete_confirm_title">Supprimer le domaine ?</string>
+    <string name="domain_delete_confirm_message">Supprimer %1$s ? Les messages envoyés aux adresses de ce domaine ne seront plus distribués.</string>
     <string name="domain_dns_records">Enregistrements DNS</string>
     <string name="domain_verifying">Vérification...</string>
     <string name="domain_adding">Ajout en cours...</string>
@@ -2754,4 +2754,25 @@
     <string name="couldnt_remove_label">Impossible de retirer le libellé</string>
     <string name="unsnoozed_count">%d conversation(s) remise(s) en boîte de réception</string>
     <string name="couldnt_unsnooze">Impossible d\'annuler la mise en pause</string>
+    <string name="domain_verify_slow">Aster n\'a pas pu terminer la vérification DNS. Vos enregistrements sont peut-être encore en cours de vérification, réessayez dans quelques minutes.</string>
+    <string name="domain_records_verified">%1$d enregistrements vérifiés sur %2$d</string>
+    <string name="ext_sync_started">Synchronisation lancée</string>
+    <string name="ext_account_removed">Compte supprimé</string>
+    <string name="folder_created">Dossier créé</string>
+    <string name="folder_locked">Dossier verrouillé</string>
+    <string name="folder_unlocked">Dossier déverrouillé</string>
+    <string name="folder_lock_set">Verrouillage du dossier activé</string>
+    <string name="folder_lock_removed">Verrouillage du dossier supprimé</string>
+    <string name="folder_notifications_muted">Notifications désactivées pour ce dossier</string>
+    <string name="folder_notifications_unmuted">Notifications activées pour ce dossier</string>
+    <string name="item_deleted">Supprimé</string>
+    <string name="item_renamed">Renommé</string>
+    <string name="item_color_updated">Couleur mise à jour</string>
+    <string name="sessions_active_section">Sessions actives</string>
+    <string name="sign_out_others_action">Déconnecter les autres</string>
+    <string name="revoke_all_action">Tout révoquer</string>
+    <string name="revoke_all_trusted_devices_confirm">Chaque appareil de confiance devra se vérifier à nouveau lors de sa prochaine connexion.</string>
+    <string name="plan_price_per_month">par mois</string>
+    <string name="plan_price_per_year">par an</string>
+    <string name="plan_save_per_year">Économisez %1$s par an</string>
 </resources>

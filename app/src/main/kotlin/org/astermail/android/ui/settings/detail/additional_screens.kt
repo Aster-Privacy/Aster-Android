@@ -104,6 +104,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.parse_hex_color_safe
+import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
@@ -169,15 +170,23 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
     val colors = AsterMaterial.colors
 
     LaunchedEffect(Unit) { vm.load_sessions() }
+    val devices_load_settled = remember_load_settled(state.is_loading)
+    var show_revoke_all_confirm by remember { mutableStateOf(false) }
+    val scroll_state = rememberScrollState()
 
-    detail_scaffold(title = stringResource(R.string.trusted_devices), on_back = on_back) {
-        if (state.is_loading && state.sessions.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
-            }
+    detail_scaffold(
+        title = stringResource(R.string.trusted_devices),
+        on_back = on_back,
+        scroll_state = scroll_state,
+    ) {
+        section_header_action(
+            title = stringResource(R.string.devices_count, state.sessions.size),
+            action_label = stringResource(R.string.revoke_all_action),
+            enabled = state.sessions.size > 1,
+            on_click = { show_revoke_all_confirm = true },
+        )
+        if (state.sessions.isEmpty() && (state.is_loading || !devices_load_settled)) {
+            skeleton_card_list(rows = 6, leading_circle = true, trailing_width = 72.dp)
         } else if (state.sessions.isEmpty()) {
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 detail_row(
@@ -186,7 +195,6 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
                 )
             }
         } else {
-            section_label(stringResource(R.string.devices_count, state.sessions.size))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 state.sessions.forEachIndexed { idx, s ->
                     val dt = s.device_type.lowercase()
@@ -211,42 +219,23 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
                     if (idx < state.sessions.lastIndex) AsterDivider(modifier = Modifier)
                 }
             }
-            if (state.sessions.size > 1) {
-                v_gap(AsterSpacing.lg)
-                AsterSecondaryButton(
-                    label = stringResource(R.string.revoke_all_other),
-                    onClick = { vm.logout_others() },
-                )
-            }
         }
         v_gap(AsterSpacing.xxl)
     }
-}
 
-@Composable
-fun GhostAliasesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
-    val vm: SettingsViewModel = shared_settings_view_model()
-    val state by vm.state.collectAsStateWithLifecycle()
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-    val ghost_scroll = rememberScrollState()
-
-    LaunchedEffect(Unit) { vm.load_ghost_aliases() }
-
-    detail_scaffold(
-        title = stringResource(R.string.ghost_aliases),
-        on_back = on_back,
-        scroll_state = ghost_scroll,
-    ) {
-        section_label(stringResource(R.string.ghost_aliases_about))
-        ghost_tab(
-            vm = vm,
-            state = state,
-            context = context,
-            scope = scope,
-            scroll_state = ghost_scroll,
+    if (show_revoke_all_confirm) {
+        AsterAlertDialog(
+            on_dismiss = { show_revoke_all_confirm = false },
+            title = stringResource(R.string.revoke_all_other),
+            message = stringResource(R.string.revoke_all_trusted_devices_confirm),
+            confirm_label = stringResource(R.string.revoke_all_action),
+            cancel_label = stringResource(R.string.cancel),
+            confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
+            on_confirm = {
+                show_revoke_all_confirm = false
+                vm.logout_others()
+            },
         )
-        v_gap(AsterSpacing.xxl)
     }
 }
 

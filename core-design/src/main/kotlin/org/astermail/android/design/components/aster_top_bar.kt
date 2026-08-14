@@ -58,7 +58,7 @@ fun AsterTopBar(
         modifier = modifier
             .fillMaxWidth()
             .height(56.dp)
-            .padding(horizontal = AsterSpacing.xl),
+            .padding(horizontal = AsterSpacing.xs),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -73,14 +73,14 @@ fun AsterTopBar(
                     modifier = Modifier.testTag("back"),
                 )
             } else {
-                Box(modifier = Modifier.size(8.dp))
+                Box(modifier = Modifier.size(AsterSpacing.lg))
             }
             Text(
                 text = title,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = colors.text_primary,
-                modifier = Modifier.padding(start = if (on_back != null) AsterSpacing.sm else 0.dp),
+                modifier = Modifier.padding(start = if (on_back != null) AsterSpacing.xs else AsterSpacing.sm),
             )
         }
         Box(contentAlignment = Alignment.CenterEnd) {

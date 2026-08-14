@@ -42,6 +42,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
@@ -79,7 +80,6 @@ import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.shimmer_brush
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterIconButton
-import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.security.AppLockStore
 import org.astermail.android.security.AppLockViewModel
@@ -208,6 +208,8 @@ fun SecurityScreen(
 
     var score_expanded by remember { mutableStateOf(false) }
     var hardware_keys_expanded by remember { mutableStateOf(false) }
+    var show_revoke_all_confirm by remember { mutableStateOf(false) }
+    val scroll_state = rememberScrollState()
     val totp_sub = when {
         sec == null -> stringResource(R.string.two_factor_subtitle_add)
         sec.totp_enabled -> stringResource(R.string.enabled)
@@ -228,7 +230,11 @@ fun SecurityScreen(
         else -> stringResource(R.string.backup_email_short)
     }
 
-    detail_scaffold(title = stringResource(R.string.security), on_back = on_back) {
+    detail_scaffold(
+        title = stringResource(R.string.security),
+        on_back = on_back,
+        scroll_state = scroll_state,
+    ) {
 
         section_label(stringResource(R.string.section_account_protection))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
@@ -410,7 +416,12 @@ fun SecurityScreen(
 
         v_gap(AsterSpacing.lg)
 
-        section_label(stringResource(R.string.section_trusted_devices))
+        section_header_action(
+            title = stringResource(R.string.section_trusted_devices),
+            action_label = stringResource(R.string.revoke_all_action),
+            enabled = state.trusted_devices.isNotEmpty(),
+            on_click = { show_revoke_all_confirm = true },
+        )
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             if (state.trusted_devices.isEmpty()) {
                 detail_row(
@@ -429,27 +440,21 @@ fun SecurityScreen(
                 }
             }
         }
-        if (state.trusted_devices.isNotEmpty()) {
-            v_gap(AsterSpacing.sm)
-            AsterSecondaryButton(
-                label = stringResource(R.string.revoke_all_trusted_devices),
-                onClick = { vm.revoke_all_trusted_devices() },
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
 
         v_gap(AsterSpacing.lg)
 
         if (prefs == null) {
             section_label(stringResource(R.string.section_tracking_protection))
-            AsterCard(modifier = Modifier.fillMaxWidth()) {
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xl),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    androidx.compose.material3.CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
-                }
-            }
+            skeleton_card_list(rows = 3)
+            v_gap(AsterSpacing.lg)
+            section_label(stringResource(R.string.section_images))
+            skeleton_card_list(rows = 6)
+            v_gap(AsterSpacing.lg)
+            section_label(stringResource(R.string.section_html_content))
+            skeleton_card_list(rows = 1)
+            v_gap(AsterSpacing.lg)
+            section_label(stringResource(R.string.section_external_links))
+            skeleton_card_list(rows = 1)
         } else {
             section_label(stringResource(R.string.section_tracking_protection))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
@@ -635,15 +640,10 @@ fun SecurityScreen(
         v_gap(AsterSpacing.lg)
 
         section_label(stringResource(R.string.section_privacy_security))
-        AsterCard(modifier = Modifier.fillMaxWidth()) {
-            if (prefs == null) {
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xl),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    androidx.compose.material3.CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
-                }
-            } else {
+        if (prefs == null) {
+            skeleton_card_list(rows = 1)
+        } else {
+            AsterCard(modifier = Modifier.fillMaxWidth()) {
                 detail_row(
                     title = stringResource(R.string.send_read_receipts),
                     subtitle = stringResource(R.string.send_read_receipts_subtitle),
@@ -725,6 +725,21 @@ fun SecurityScreen(
             )
         }
         v_gap(AsterSpacing.xxl)
+    }
+
+    if (show_revoke_all_confirm) {
+        AsterAlertDialog(
+            on_dismiss = { show_revoke_all_confirm = false },
+            title = stringResource(R.string.revoke_all_trusted_devices),
+            message = stringResource(R.string.revoke_all_trusted_devices_confirm),
+            confirm_label = stringResource(R.string.revoke_all_action),
+            cancel_label = stringResource(R.string.cancel),
+            confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
+            on_confirm = {
+                show_revoke_all_confirm = false
+                vm.revoke_all_trusted_devices()
+            },
+        )
     }
 }
 

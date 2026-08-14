@@ -479,8 +479,6 @@
     <string name="settings_encryption_subtitle">PGP anahtarları ve kurtarma</string>
     <string name="settings_aliases">Takma adlar ve alan adları</string>
     <string name="settings_aliases_subtitle">Adresleri yönet</string>
-    <string name="settings_ghost_aliases">Ghost takma adlar</string>
-    <string name="settings_ghost_aliases_subtitle">Tek kullanımlık yönlendirme adresleri</string>
     <string name="settings_billing">Faturalandırma</string>
     <string name="settings_billing_subtitle">Plan, faturalar, ödeme yöntemleri</string>
     <string name="settings_referral">Arkadaşına öner</string>
@@ -2202,6 +2200,8 @@
     <string name="domain_collapse">Daralt</string>
     <string name="domain_expand">Genişlet</string>
     <string name="domain_delete_domain">Alan adını sil</string>
+    <string name="domain_delete_confirm_title">Alan adı silinsin mi?</string>
+    <string name="domain_delete_confirm_message">%1$s silinsin mi? Bu alan adındaki adreslere gönderilen postalar artık teslim edilmez.</string>
     <string name="domain_dns_records">DNS kayıtları</string>
     <string name="domain_verifying">Doğrulanıyor...</string>
     <string name="domain_adding">Ekleniyor...</string>
@@ -2726,4 +2726,25 @@
     <string name="couldnt_remove_label">Etiket kaldırılamadı</string>
     <string name="unsnoozed_count">%d konuşmanın ertelemesi kaldırıldı</string>
     <string name="couldnt_unsnooze">Erteleme kaldırılamadı</string>
+    <string name="domain_verify_slow">Aster DNS kontrolünü tamamlayamadı. Kayıtlarınız hâlâ doğrulanıyor olabilir, birkaç dakika sonra tekrar deneyin.</string>
+    <string name="domain_records_verified">%2$d kaydın %1$d tanesi doğrulandı</string>
+    <string name="ext_sync_started">Eşitleme başlatıldı</string>
+    <string name="ext_account_removed">Hesap kaldırıldı</string>
+    <string name="folder_created">Klasör oluşturuldu</string>
+    <string name="folder_locked">Klasör kilitlendi</string>
+    <string name="folder_unlocked">Klasörün kilidi açıldı</string>
+    <string name="folder_lock_set">Klasör kilidi ayarlandı</string>
+    <string name="folder_lock_removed">Klasör kilidi kaldırıldı</string>
+    <string name="folder_notifications_muted">Bu klasör için bildirimler sessize alındı</string>
+    <string name="folder_notifications_unmuted">Bu klasör için bildirimler açık</string>
+    <string name="item_deleted">Silindi</string>
+    <string name="item_renamed">Yeniden adlandırıldı</string>
+    <string name="item_color_updated">Renk güncellendi</string>
+    <string name="sessions_active_section">Aktif oturumlar</string>
+    <string name="sign_out_others_action">Diğerlerinden çıkış yap</string>
+    <string name="revoke_all_action">Tümünü iptal et</string>
+    <string name="revoke_all_trusted_devices_confirm">Her güvenilen cihazın bir sonraki girişinde yeniden doğrulanması gerekir.</string>
+    <string name="plan_price_per_month">aylık</string>
+    <string name="plan_price_per_year">yıllık</string>
+    <string name="plan_save_per_year">Yılda %1$s tasarruf edin</string>
 </resources>

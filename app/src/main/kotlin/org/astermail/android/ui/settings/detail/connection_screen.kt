@@ -30,20 +30,27 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -53,8 +60,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
+import org.astermail.android.design.SquircleShape
 import org.astermail.android.settings.SettingsViewModel
 
 @Composable
@@ -76,81 +82,110 @@ fun ConnectionScreen(
         )
         v_gap(AsterSpacing.lg)
         section_label(stringResource(R.string.connection_method_header))
-        AsterCard(modifier = Modifier.fillMaxWidth()) {
-            connection_option_row(
-                icon = TablerIcons.Bolt,
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = AsterSpacing.lg),
+            verticalArrangement = Arrangement.spacedBy(AsterSpacing.md),
+        ) {
+            connection_option_card(
+                image = R.drawable.settings_direct,
                 title = stringResource(R.string.connection_direct),
                 subtitle = stringResource(R.string.connection_direct_description),
                 selected = state.connection_method == "direct",
+                modifier = Modifier.fillMaxWidth(),
             ) { vm.update_connection_preference("direct") }
-            AsterDivider(modifier = Modifier)
-            connection_option_row(
-                icon = TablerIcons.Router,
+            connection_option_card(
+                image = R.drawable.settings_cdn,
                 title = stringResource(R.string.connection_cdn_relay),
                 subtitle = stringResource(R.string.connection_cdn_relay_description),
                 selected = state.connection_method == "cdn_relay",
+                modifier = Modifier.fillMaxWidth(),
             ) { vm.update_connection_preference("cdn_relay") }
-        }
-        if (state.connection_saving) {
-            v_gap(AsterSpacing.md)
-            Row(
-                modifier = Modifier.padding(horizontal = AsterSpacing.lg),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
-                Spacer(Modifier.width(AsterSpacing.sm))
-                Text(text = stringResource(R.string.connection_saving), color = colors.text_tertiary, fontSize = 13.sp)
-            }
         }
         v_gap(AsterSpacing.xxl)
     }
 }
 
 @Composable
-private fun connection_option_row(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+internal fun illustrated_option_card(
+    image: Int,
     title: String,
     subtitle: String,
     selected: Boolean,
+    modifier: Modifier = Modifier,
     on_click: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
+    val shape = SquircleShape(16.dp)
+    Column(
+        modifier = modifier
+            .clip(shape)
+            .background(colors.bg_card, shape)
+            .border(
+                width = if (selected) 2.dp else 1.dp,
+                color = if (selected) colors.accent_blue else colors.border_primary,
+                shape = shape,
+            )
             .clickable(onClick = on_click)
-            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(AsterSpacing.sm),
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = colors.text_secondary,
-            modifier = Modifier.size(20.dp),
-        )
-        Spacer(Modifier.width(AsterSpacing.md))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, color = colors.text_primary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
-            Text(text = subtitle, color = colors.text_tertiary, fontSize = 13.sp)
-        }
-        Spacer(Modifier.width(AsterSpacing.md))
         Box(
             modifier = Modifier
-                .size(20.dp)
-                .border(
-                    width = 2.dp,
-                    color = if (selected) colors.accent_blue else colors.border_primary,
-                    shape = CircleShape,
-                ),
-            contentAlignment = Alignment.Center,
+                .fillMaxWidth()
+                .aspectRatio(24f / 9f)
+                .clip(SquircleShape(12.dp))
+                .background(colors.bg_secondary),
         ) {
+            Image(
+                painter = painterResource(image),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxWidth().fillMaxHeight(),
+            )
             if (selected) {
                 Box(
                     modifier = Modifier
-                        .size(10.dp)
+                        .align(Alignment.TopEnd)
+                        .padding(AsterSpacing.xs)
+                        .size(22.dp)
                         .background(colors.accent_blue, CircleShape),
-                )
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = TablerIcons.Check,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(14.dp),
+                    )
+                }
             }
         }
+        Spacer(Modifier.height(AsterSpacing.sm))
+        Text(
+            text = title,
+            color = colors.text_primary,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(horizontal = AsterSpacing.xs),
+        )
+        Text(
+            text = subtitle,
+            color = colors.text_tertiary,
+            fontSize = 12.sp,
+            lineHeight = 16.sp,
+            modifier = Modifier.padding(horizontal = AsterSpacing.xs, vertical = 2.dp),
+        )
+        Spacer(Modifier.height(AsterSpacing.xs))
     }
 }
+
+@Composable
+private fun connection_option_card(
+    image: Int,
+    title: String,
+    subtitle: String,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    on_click: () -> Unit,
+) = illustrated_option_card(image, title, subtitle, selected, modifier, on_click)

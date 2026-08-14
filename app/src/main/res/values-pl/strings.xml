@@ -479,8 +479,6 @@
     <string name="settings_encryption_subtitle">Klucze PGP i odzyskiwanie</string>
     <string name="settings_aliases">Aliasy i domeny</string>
     <string name="settings_aliases_subtitle">Zarządzaj adresami</string>
-    <string name="settings_ghost_aliases">Ghost aliasy</string>
-    <string name="settings_ghost_aliases_subtitle">Jednorazowe adresy przekierowania</string>
     <string name="settings_billing">Rozliczenia</string>
     <string name="settings_billing_subtitle">Plan, faktury, metody płatności</string>
     <string name="settings_referral">Poleć znajomemu</string>
@@ -2208,6 +2206,8 @@
     <string name="domain_collapse">Zwiń</string>
     <string name="domain_expand">Rozwiń</string>
     <string name="domain_delete_domain">Usuń domenę</string>
+    <string name="domain_delete_confirm_title">Usunąć domenę?</string>
+    <string name="domain_delete_confirm_message">Usunąć %1$s? Poczta wysyłana na adresy w tej domenie przestanie być dostarczana.</string>
     <string name="domain_dns_records">Rekordy DNS</string>
     <string name="domain_verifying">Sprawdzanie...</string>
     <string name="domain_adding">Dodawanie...</string>
@@ -2742,4 +2742,25 @@
     <string name="couldnt_remove_label">Nie można usunąć etykiety</string>
     <string name="unsnoozed_count">Anulowano odłożenie %d konwersacji</string>
     <string name="couldnt_unsnooze">Nie można anulować odłożenia</string>
+    <string name="domain_verify_slow">Aster nie mógł zakończyć sprawdzania DNS. Twoje rekordy mogą być nadal weryfikowane, więc spróbuj ponownie za kilka minut.</string>
+    <string name="domain_records_verified">Zweryfikowano %1$d z %2$d rekordów</string>
+    <string name="ext_sync_started">Rozpoczęto synchronizację</string>
+    <string name="ext_account_removed">Konto usunięte</string>
+    <string name="folder_created">Folder utworzony</string>
+    <string name="folder_locked">Folder zablokowany</string>
+    <string name="folder_unlocked">Folder odblokowany</string>
+    <string name="folder_lock_set">Ustawiono blokadę folderu</string>
+    <string name="folder_lock_removed">Usunięto blokadę folderu</string>
+    <string name="folder_notifications_muted">Powiadomienia wyciszone dla tego folderu</string>
+    <string name="folder_notifications_unmuted">Powiadomienia włączone dla tego folderu</string>
+    <string name="item_deleted">Usunięto</string>
+    <string name="item_renamed">Zmieniono nazwę</string>
+    <string name="item_color_updated">Zmieniono kolor</string>
+    <string name="sessions_active_section">Aktywne sesje</string>
+    <string name="sign_out_others_action">Wyloguj inne urządzenia</string>
+    <string name="revoke_all_action">Odwołaj wszystkie</string>
+    <string name="revoke_all_trusted_devices_confirm">Każde zaufane urządzenie będzie musiało zweryfikować się ponownie przy następnym logowaniu.</string>
+    <string name="plan_price_per_month">miesięcznie</string>
+    <string name="plan_price_per_year">rocznie</string>
+    <string name="plan_save_per_year">Oszczędzasz %1$s rocznie</string>
 </resources>

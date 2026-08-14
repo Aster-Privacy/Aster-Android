@@ -24,6 +24,7 @@ package org.astermail.android.ui.settings.detail
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -485,6 +486,7 @@ internal fun alias_apply_existing_row(
     val colors = AsterMaterial.colors
     val active = is_alias_run_active(run)
     val enabled = !busy && !unsupported && (active || !nothing_to_apply)
+    val disabled_interaction = remember { MutableInteractionSource() }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
@@ -504,7 +506,11 @@ internal fun alias_apply_existing_row(
                     if (enabled) {
                         Modifier.clickable { if (active) on_cancel() else on_apply() }
                     } else {
-                        Modifier
+                        Modifier.clickable(
+                            interactionSource = disabled_interaction,
+                            indication = null,
+                            onClick = {},
+                        )
                     },
                 )
                 .padding(horizontal = 12.dp, vertical = 10.dp)

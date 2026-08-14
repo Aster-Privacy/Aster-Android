@@ -115,7 +115,6 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.snapshotFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -124,7 +123,6 @@ import coil.imageLoader
 import coil.request.ImageRequest
 import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.lifecycle.Lifecycle
@@ -209,6 +207,10 @@ private const val UNREAD_MISMATCH_GRACE_MS = 3000L
 private const val MIN_FILLED_ROWS = 15
 
 internal const val SELECT_ALL_DRAIN_LIMIT = 5000
+
+private val pull_refresh_travel = 56.dp
+
+private val pull_refresh_threshold = 56.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -1153,19 +1155,6 @@ fun InboxScreen(
         }
     }
 
-    val pull_active by rememberUpdatedState(is_refreshing && !select_mode)
-    LaunchedEffect(pull_state, list_state) {
-        snapshotFlow {
-            Triple(pull_active, list_state.isScrollInProgress, pull_state.distanceFraction)
-        }.distinctUntilChanged().collect { (active, dragging, fraction) ->
-            if (active || dragging || fraction <= 0f) return@collect
-            delay(160)
-            if (!pull_active && !list_state.isScrollInProgress && pull_state.distanceFraction > 0f) {
-                pull_state.animateToHidden()
-            }
-        }
-    }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -1181,6 +1170,7 @@ fun InboxScreen(
                         isRefreshing = is_refreshing && !select_mode,
                         state = pull_state,
                         enabled = !select_mode,
+                        threshold = pull_refresh_threshold,
                         onRefresh = { if (!select_mode) do_refresh() },
                     ),
             ) {
@@ -1188,7 +1178,7 @@ fun InboxScreen(
                     val refreshing_now = is_refreshing && !select_mode
                     val fraction = pull_state.distanceFraction
                     if (fraction > 0.01f || refreshing_now) {
-                        val travel_px = with(density) { 56.dp.toPx() }
+                        val travel_px = with(density) { pull_refresh_travel.toPx() }
                         Box(
                             modifier = Modifier
                                 .align(Alignment.TopCenter)
@@ -2002,7 +1992,7 @@ internal fun inbox_top_bar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = AsterSpacing.sm)
+                .padding(horizontal = AsterSpacing.xs)
                 .padding(top = AsterSpacing.sm, bottom = AsterSpacing.xs)
                 .height(52.dp),
             verticalAlignment = Alignment.CenterVertically,

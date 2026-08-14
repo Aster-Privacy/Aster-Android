@@ -479,8 +479,6 @@
     <string name="settings_encryption_subtitle">PGP 키 및 복구</string>
     <string name="settings_aliases">별칭 및 도메인</string>
     <string name="settings_aliases_subtitle">주소 관리</string>
-    <string name="settings_ghost_aliases">고스트 별칭</string>
-    <string name="settings_ghost_aliases_subtitle">일회용 전달 주소</string>
     <string name="settings_billing">청구</string>
     <string name="settings_billing_subtitle">플랜, 청구서, 결제 수단</string>
     <string name="settings_referral">친구 추천</string>
@@ -2199,6 +2197,8 @@
     <string name="domain_collapse">접기</string>
     <string name="domain_expand">펼치기</string>
     <string name="domain_delete_domain">도메인 삭제</string>
+    <string name="domain_delete_confirm_title">도메인을 삭제할까요?</string>
+    <string name="domain_delete_confirm_message">%1$s을(를) 삭제할까요? 이 도메인의 주소로 보낸 메일은 더 이상 전달되지 않습니다.</string>
     <string name="domain_dns_records">DNS 레코드</string>
     <string name="domain_verifying">확인 중...</string>
     <string name="domain_adding">추가하는 중...</string>
@@ -2718,4 +2718,25 @@
     <string name="couldnt_remove_label">라벨을 제거할 수 없음</string>
     <string name="unsnoozed_count">대화 %d개의 다시 알림 해제</string>
     <string name="couldnt_unsnooze">다시 알림을 해제할 수 없음</string>
+    <string name="domain_verify_slow">Aster가 DNS 확인을 완료하지 못했습니다. 레코드가 아직 확인 중일 수 있으니 몇 분 후에 다시 시도하세요.</string>
+    <string name="domain_records_verified">%2$d개 중 %1$d개 레코드 확인됨</string>
+    <string name="ext_sync_started">동기화를 시작했습니다</string>
+    <string name="ext_account_removed">계정이 삭제되었습니다</string>
+    <string name="folder_created">폴더가 생성되었습니다</string>
+    <string name="folder_locked">폴더가 잠겼습니다</string>
+    <string name="folder_unlocked">폴더 잠금이 해제되었습니다</string>
+    <string name="folder_lock_set">폴더 잠금이 설정되었습니다</string>
+    <string name="folder_lock_removed">폴더 잠금이 해제되었습니다</string>
+    <string name="folder_notifications_muted">이 폴더의 알림을 음소거했습니다</string>
+    <string name="folder_notifications_unmuted">이 폴더의 알림을 켰습니다</string>
+    <string name="item_deleted">삭제됨</string>
+    <string name="item_renamed">이름 변경됨</string>
+    <string name="item_color_updated">색상 변경됨</string>
+    <string name="sessions_active_section">활성 세션</string>
+    <string name="sign_out_others_action">다른 기기에서 로그아웃</string>
+    <string name="revoke_all_action">모두 취소</string>
+    <string name="revoke_all_trusted_devices_confirm">신뢰할 수 있는 기기는 다음 로그인 시 다시 인증해야 합니다.</string>
+    <string name="plan_price_per_month">월</string>
+    <string name="plan_price_per_year">연</string>
+    <string name="plan_save_per_year">연간 %1$s 절약</string>
 </resources>

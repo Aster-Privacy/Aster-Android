@@ -21,9 +21,19 @@
 
 package org.astermail.android.ui.settings.detail
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -31,6 +41,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,10 +52,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -52,12 +69,15 @@ import org.astermail.android.R
 import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.UpgradeGate
 import org.astermail.android.imports.ExternalAccountsError
 import org.astermail.android.imports.ExternalAccountsViewModel
+import org.astermail.android.ui.common.app_toast
+import org.astermail.android.ui.common.show_copied_toast
 
 @Composable
 fun ExternalAccountsScreen(
@@ -67,6 +87,11 @@ fun ExternalAccountsScreen(
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
+    val haptics = LocalHapticFeedback.current
+    val sync_started_message = stringResource(R.string.ext_sync_started)
+    val sync_failed_message = stringResource(R.string.ext_error_sync_failed)
+    val account_removed_message = stringResource(R.string.ext_account_removed)
+    val account_remove_failed_message = stringResource(R.string.ext_error_delete_failed)
     val state by vm.state.collectAsStateWithLifecycle()
     val plan_vm: PlanLimitsViewModel = hiltViewModel()
     val plan_state by plan_vm.state.collectAsStateWithLifecycle()
@@ -134,26 +159,29 @@ fun ExternalAccountsScreen(
                     color = colors.text_tertiary,
                     fontSize = 13.sp,
                 )
-                Spacer(Modifier.size(AsterSpacing.sm))
-                AsterButton(
+                Spacer(Modifier.size(AsterSpacing.md))
+                oauth_provider_row(
+                    icon_res = R.drawable.ic_brand_gmail,
                     label = stringResource(R.string.ext_oauth_connect_google),
-                    onClick = { vm.start_oauth("google") },
                     enabled = state.connecting_provider == null,
                     is_loading = state.connecting_provider == "google",
+                    on_click = { vm.start_oauth("google") },
                 )
-                v_gap(AsterSpacing.xs)
-                AsterButton(
+                Spacer(Modifier.size(AsterSpacing.sm))
+                oauth_provider_row(
+                    icon_res = R.drawable.ic_brand_outlook,
                     label = stringResource(R.string.ext_oauth_connect_microsoft),
-                    onClick = { vm.start_oauth("microsoft") },
                     enabled = state.connecting_provider == null,
                     is_loading = state.connecting_provider == "microsoft",
+                    on_click = { vm.start_oauth("microsoft") },
                 )
-                v_gap(AsterSpacing.xs)
-                AsterButton(
+                Spacer(Modifier.size(AsterSpacing.sm))
+                oauth_provider_row(
+                    icon_res = R.drawable.ic_brand_yahoo,
                     label = stringResource(R.string.ext_oauth_connect_yahoo),
-                    onClick = { vm.start_oauth("yahoo") },
                     enabled = state.connecting_provider == null,
                     is_loading = state.connecting_provider == "yahoo",
+                    on_click = { vm.start_oauth("yahoo") },
                 )
             }
         }
@@ -270,21 +298,49 @@ fun ExternalAccountsScreen(
                     )
                 } else {
                     for (acct in state.accounts) {
-                        Column(modifier = Modifier.fillMaxWidth().padding(vertical = AsterSpacing.xs)) {
-                            val decrypted_email = state.decrypted[acct.account_token]?.email
-                            val display_label = acct.oauth_email ?: decrypted_email ?: when (acct.protocol) {
-                                "oauth_google", "google" -> stringResource(R.string.ext_label_google_account)
-                                "oauth_microsoft", "microsoft" -> stringResource(R.string.ext_label_microsoft_account)
-                                "oauth_yahoo", "yahoo" -> stringResource(R.string.ext_label_yahoo_account)
-                                "oauth_imap", "imap" -> stringResource(R.string.ext_label_imap_account)
-                                else -> acct.protocol.ifBlank { stringResource(R.string.ext_label_linked_account) }
+                        val decrypted_email = state.decrypted[acct.account_token]?.email
+                        val account_email = acct.oauth_email ?: decrypted_email
+                        val display_label = account_email ?: when (acct.protocol) {
+                            "oauth_google", "google" -> stringResource(R.string.ext_label_google_account)
+                            "oauth_microsoft", "microsoft" -> stringResource(R.string.ext_label_microsoft_account)
+                            "oauth_yahoo", "yahoo" -> stringResource(R.string.ext_label_yahoo_account)
+                            "oauth_imap", "imap" -> stringResource(R.string.ext_label_imap_account)
+                            else -> acct.protocol.ifBlank { stringResource(R.string.ext_label_linked_account) }
+                        }
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .combinedClickable(
+                                    onClick = {},
+                                    onLongClick = {
+                                        if (!account_email.isNullOrBlank()) {
+                                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            copy_account_email(context, account_email)
+                                        }
+                                    },
+                                )
+                                .padding(vertical = AsterSpacing.xs),
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Image(
+                                    painter = painterResource(
+                                        provider_icon_res(
+                                            oauth_provider = acct.oauth_provider,
+                                            email = account_email,
+                                            protocol = acct.protocol,
+                                        ),
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                                Spacer(Modifier.width(AsterSpacing.sm))
+                                Text(
+                                    text = display_label,
+                                    color = colors.text_primary,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                )
                             }
-                            Text(
-                                text = display_label,
-                                color = colors.text_primary,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium,
-                            )
                             val last_sync = acct.last_sync_at
                             if (!last_sync.isNullOrBlank()) {
                                 val pretty = remember(last_sync) {
@@ -312,13 +368,21 @@ fun ExternalAccountsScreen(
                             Row(horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
                                 AsterButton(
                                     label = stringResource(R.string.ext_sync_now),
-                                    onClick = { vm.trigger_sync(acct.account_token) },
+                                    onClick = {
+                                        vm.trigger_sync(acct.account_token) { ok ->
+                                            app_toast.show(if (ok) sync_started_message else sync_failed_message)
+                                        }
+                                    },
                                     enabled = acct.account_token !in state.syncing_tokens,
                                     is_loading = acct.account_token in state.syncing_tokens,
                                 )
                                 AsterButton(
                                     label = stringResource(R.string.ext_delete),
-                                    onClick = { vm.delete_account(acct.account_token) },
+                                    onClick = {
+                                        vm.delete_account(acct.account_token) { ok ->
+                                            app_toast.show(if (ok) account_removed_message else account_remove_failed_message)
+                                        }
+                                    },
                                 )
                             }
                         }
@@ -342,4 +406,84 @@ fun ExternalAccountsScreen(
 
         v_gap(AsterSpacing.xxl)
     }
+}
+
+@Composable
+private fun oauth_provider_row(
+    @DrawableRes icon_res: Int,
+    label: String,
+    enabled: Boolean,
+    is_loading: Boolean,
+    on_click: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val shape = SquircleShape(18.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .border(1.dp, colors.text_tertiary.copy(alpha = 0.18f), shape)
+            .clickable(enabled = enabled && !is_loading, onClick = on_click)
+            .padding(horizontal = 14.dp, vertical = 12.dp)
+            .alpha(if (enabled) 1f else 0.5f),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(SquircleShape(8.dp))
+                .background(colors.text_tertiary.copy(alpha = 0.06f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Image(
+                painter = painterResource(id = icon_res),
+                contentDescription = null,
+                modifier = Modifier.size(24.dp),
+            )
+        }
+        Spacer(Modifier.size(AsterSpacing.md))
+        Text(
+            text = label,
+            color = colors.text_primary,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f),
+        )
+        if (is_loading) {
+            CircularProgressIndicator(
+                color = colors.accent_blue,
+                strokeWidth = 2.dp,
+                modifier = Modifier.size(18.dp),
+            )
+        }
+    }
+}
+
+@DrawableRes
+internal fun provider_icon_res(oauth_provider: String?, email: String?, protocol: String?): Int {
+    when (oauth_provider?.lowercase()) {
+        "google" -> return R.drawable.ic_brand_gmail
+        "microsoft" -> return R.drawable.ic_brand_outlook
+        "yahoo" -> return R.drawable.ic_brand_yahoo
+        "apple", "icloud" -> return R.drawable.ic_brand_icloud
+    }
+    when (protocol?.lowercase()) {
+        "oauth_google", "google" -> return R.drawable.ic_brand_gmail
+        "oauth_microsoft", "microsoft" -> return R.drawable.ic_brand_outlook
+        "oauth_yahoo", "yahoo" -> return R.drawable.ic_brand_yahoo
+    }
+    val lower = email?.lowercase().orEmpty()
+    return when {
+        lower.contains("gmail") || lower.contains("google") -> R.drawable.ic_brand_gmail
+        lower.contains("outlook") || lower.contains("hotmail") || lower.contains("live") -> R.drawable.ic_brand_outlook
+        lower.contains("yahoo") -> R.drawable.ic_brand_yahoo
+        lower.contains("icloud") || lower.contains("me.com") || lower.contains("mac.com") -> R.drawable.ic_brand_icloud
+        else -> R.drawable.ic_brand_imap
+    }
+}
+
+private fun copy_account_email(context: Context, email: String) {
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    clipboard.setPrimaryClip(ClipData.newPlainText("account", email))
+    show_copied_toast(context, email)
 }

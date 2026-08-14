@@ -23,6 +23,8 @@ package org.astermail.android.ui.settings.detail
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,7 +36,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -46,6 +47,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -82,6 +84,20 @@ internal fun format_bytes(bytes: Long): String {
 }
 
 @Composable
+private fun storage_skeleton() {
+    skeleton_hero_card(lines = 1, bar = true)
+    v_gap(AsterSpacing.lg)
+    skeleton_section_label()
+    skeleton_card_list(rows = 4)
+    v_gap(AsterSpacing.lg)
+    skeleton_section_label()
+    skeleton_card_list(rows = 3)
+    v_gap(AsterSpacing.lg)
+    skeleton_section_label()
+    skeleton_card_list(rows = 2)
+}
+
+@Composable
 fun StorageScreen(
     on_back: () -> Unit,
     on_open: (id: String) -> Unit = {},
@@ -97,6 +113,7 @@ fun StorageScreen(
     val colors = AsterMaterial.colors
     val context = LocalContext.current
 
+    val storage_load_settled = remember_load_settled(state.is_loading)
     var load_requested by remember { mutableStateOf(false) }
     var show_empty_trash_confirm by remember { mutableStateOf(false) }
     var show_empty_spam_confirm by remember { mutableStateOf(false) }
@@ -132,14 +149,9 @@ fun StorageScreen(
         val storage = state.storage
         val stats = inbox_state.stats
         val awaiting_first_load = storage == null && stats == null &&
-            (!load_requested || state.is_loading || state.error == null)
-        if (awaiting_first_load || (state.is_loading && storage == null && stats == null)) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
-            }
+            (!load_requested || state.is_loading || (state.error == null && !storage_load_settled))
+        if (awaiting_first_load) {
+            storage_skeleton()
         } else if (storage == null && stats == null) {
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 detail_row(
@@ -185,48 +197,59 @@ fun StorageScreen(
 
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(AsterSpacing.lg)) {
-                    Text(
-                        text = stringResource(R.string.storage_used_of_total, used, total),
-                        color = colors.text_primary,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Text(
-                        text = stringResource(R.string.storage_percent_of_plan, pct_label),
-                        color = colors.text_tertiary,
-                        fontSize = 13.sp,
-                    )
-                    Spacer(Modifier.size(AsterSpacing.md))
                     Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.storage_used_of_total, used, total),
+                            color = colors.text_primary,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Spacer(Modifier.width(AsterSpacing.sm))
+                        Text(
+                            text = pct_label,
+                            color = colors.text_muted,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
+                    Spacer(Modifier.height(AsterSpacing.md))
+                    val animated_fraction by animateFloatAsState(
+                        targetValue = display_fraction,
+                        animationSpec = tween(durationMillis = 420),
+                        label = "storage_bar",
+                    )
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(14.dp)
-                            .background(colors.bg_secondary, RoundedCornerShape(7.dp)),
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(999.dp))
+                            .background(colors.bg_hover),
                     ) {
-                        if (display_fraction > 0f) {
+                        if (animated_fraction > 0f) {
                             Box(
                                 modifier = Modifier
-                                    .weight(display_fraction)
-                                    .fillMaxWidth()
-                                    .height(14.dp)
-                                    .background(bar_color, RoundedCornerShape(7.dp)),
+                                    .fillMaxWidth(animated_fraction)
+                                    .height(8.dp)
+                                    .clip(RoundedCornerShape(999.dp))
+                                    .background(bar_color),
                             )
                         }
-                        if (display_fraction < 1f) {
-                            Box(modifier = Modifier.weight(1f - display_fraction))
-                        }
                     }
-                    Spacer(Modifier.size(AsterSpacing.sm))
+                    Spacer(Modifier.height(AsterSpacing.sm))
                     Row(modifier = Modifier.fillMaxWidth()) {
                         Text(
                             text = stringResource(R.string.storage_used_label, used),
-                            color = colors.text_tertiary,
+                            color = colors.text_muted,
                             fontSize = 12.sp,
                             modifier = Modifier.weight(1f),
                         )
                         Text(
                             text = stringResource(R.string.storage_free_label, format_bytes(free_bytes)),
-                            color = colors.text_tertiary,
+                            color = colors.text_muted,
                             fontSize = 12.sp,
                         )
                     }

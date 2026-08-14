@@ -26,11 +26,7 @@ import compose.icons.tablericons.*
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -64,7 +60,6 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDestructiveButton
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterButton
@@ -93,7 +88,19 @@ fun SessionsScreen(
     var pending_revoke_id by remember { mutableStateOf<String?>(null) }
     var show_logout_others_confirm by remember { mutableStateOf(false) }
 
-    detail_scaffold(title = stringResource(R.string.sessions), on_back = on_back) {
+    val scroll_state = rememberScrollState()
+
+    detail_scaffold(
+        title = stringResource(R.string.sessions),
+        on_back = on_back,
+        scroll_state = scroll_state,
+    ) {
+        section_header_action(
+            title = stringResource(R.string.sessions_active_section),
+            action_label = stringResource(R.string.sign_out_others_action),
+            enabled = state.sessions.size > 1,
+            on_click = { show_logout_others_confirm = true },
+        )
         if (state.sessions.isEmpty() && (state.is_loading || !sessions_load_settled)) {
             skeleton_card_list(rows = 3, leading_circle = true, trailing_width = 72.dp)
         } else if (state.error != null && state.sessions.isEmpty()) {
@@ -123,19 +130,6 @@ fun SessionsScreen(
                         on_revoke = { pending_revoke_id = s.id },
                     )
                     if (idx < state.sessions.lastIndex) AsterDivider()
-                }
-            }
-            AnimatedVisibility(
-                visible = state.sessions.size > 1,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut(),
-            ) {
-                Column {
-                    v_gap(AsterSpacing.lg)
-                    AsterDestructiveButton(
-                        label = stringResource(R.string.sign_out_all_other),
-                        onClick = { show_logout_others_confirm = true },
-                    )
                 }
             }
         }

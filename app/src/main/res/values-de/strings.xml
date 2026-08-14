@@ -480,8 +480,6 @@
     <string name="settings_encryption_subtitle">PGP-Schlüssel und Wiederherstellung</string>
     <string name="settings_aliases">Aliase und Domains</string>
     <string name="settings_aliases_subtitle">Adressen verwalten</string>
-    <string name="settings_ghost_aliases">Ghost Aliases</string>
-    <string name="settings_ghost_aliases_subtitle">Einweg-Weiterleitungsadressen</string>
     <string name="settings_billing">Abrechnung</string>
     <string name="settings_billing_subtitle">Plan, Rechnungen, Zahlungsmethoden</string>
     <string name="settings_referral">Freund empfehlen</string>
@@ -2203,6 +2201,8 @@
     <string name="domain_collapse">Einklappen</string>
     <string name="domain_expand">Ausklappen</string>
     <string name="domain_delete_domain">Domain löschen</string>
+    <string name="domain_delete_confirm_title">Domain löschen?</string>
+    <string name="domain_delete_confirm_message">%1$s löschen? E-Mails an Adressen dieser Domain werden nicht mehr zugestellt.</string>
     <string name="domain_dns_records">DNS-Einträge</string>
     <string name="domain_verifying">Wird geprüft...</string>
     <string name="domain_adding">Wird hinzugefügt ...</string>
@@ -2727,4 +2727,25 @@
     <string name="couldnt_remove_label">Label konnte nicht entfernt werden</string>
     <string name="unsnoozed_count">%d Konversation(en) nicht mehr zurückgestellt</string>
     <string name="couldnt_unsnooze">Zurückstellen konnte nicht aufgehoben werden</string>
+    <string name="domain_verify_slow">Aster konnte die DNS-Prüfung nicht abschließen. Die Einträge werden möglicherweise noch geprüft, versuche es in ein paar Minuten erneut.</string>
+    <string name="domain_records_verified">%1$d von %2$d Einträgen bestätigt</string>
+    <string name="ext_sync_started">Synchronisierung gestartet</string>
+    <string name="ext_account_removed">Konto entfernt</string>
+    <string name="folder_created">Ordner erstellt</string>
+    <string name="folder_locked">Ordner gesperrt</string>
+    <string name="folder_unlocked">Ordner entsperrt</string>
+    <string name="folder_lock_set">Ordnersperre eingerichtet</string>
+    <string name="folder_lock_removed">Ordnersperre entfernt</string>
+    <string name="folder_notifications_muted">Benachrichtigungen für diesen Ordner stummgeschaltet</string>
+    <string name="folder_notifications_unmuted">Benachrichtigungen für diesen Ordner aktiviert</string>
+    <string name="item_deleted">Gelöscht</string>
+    <string name="item_renamed">Umbenannt</string>
+    <string name="item_color_updated">Farbe aktualisiert</string>
+    <string name="sessions_active_section">Aktive Sitzungen</string>
+    <string name="sign_out_others_action">Andere abmelden</string>
+    <string name="revoke_all_action">Alle widerrufen</string>
+    <string name="revoke_all_trusted_devices_confirm">Jedes vertrauenswürdige Gerät muss sich bei der nächsten Anmeldung erneut verifizieren.</string>
+    <string name="plan_price_per_month">pro Monat</string>
+    <string name="plan_price_per_year">pro Jahr</string>
+    <string name="plan_save_per_year">Spare %1$s pro Jahr</string>
 </resources>

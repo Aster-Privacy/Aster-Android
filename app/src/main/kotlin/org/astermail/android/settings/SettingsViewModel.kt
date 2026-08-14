@@ -2188,15 +2188,34 @@ class SettingsViewModel @Inject constructor(
             if (result.success) {
                 DomainVerifyOutcome(true, context.getString(R.string.domain_verify_success))
             } else {
-                DomainVerifyOutcome(false, pending_records_message(result))
+                DomainVerifyOutcome(
+                    false,
+                    result.message.ifBlank { pending_records_message(result) },
+                )
             }
+        } catch (t: kotlin.coroutines.cancellation.CancellationException) {
+            throw t
         } catch (t: Throwable) {
-            if (t is ApiError.RateLimited) {
-                DomainVerifyOutcome(false, rate_limit_message(t), rate_limited = true)
-            } else {
-                DomainVerifyOutcome(false, user_facing_error(t))
+            when {
+                t is ApiError.RateLimited -> DomainVerifyOutcome(false, rate_limit_message(t), rate_limited = true)
+                is_transport_failure(t) -> {
+                    load_domains()
+                    DomainVerifyOutcome(false, context.getString(R.string.domain_verify_slow))
+                }
+                else -> DomainVerifyOutcome(false, user_facing_error(t))
             }
         }
+    }
+
+    private fun is_transport_failure(t: Throwable): Boolean {
+        if (t is ApiError) return t is ApiError.NetworkError || t is ApiError.ServerError
+        var cause: Throwable? = t
+        while (cause != null) {
+            if (cause is java.io.IOException) return true
+            if (cause::class.java.name.contains("Timeout", ignoreCase = true)) return true
+            cause = cause.cause
+        }
+        return false
     }
 
     private fun pending_records_message(
@@ -3335,6 +3354,7 @@ class SettingsViewModel @Inject constructor(
                 org.astermail.android.folders.folder_lock_store.lock(label_id)
                 _state.value = _state.value.copy(
                     labels = _state.value.labels.filter { it.id != label_id },
+                    action_result = context.getString(R.string.item_deleted),
                 )
                 on_result?.invoke(true)
             } catch (t: Throwable) {
@@ -3373,6 +3393,9 @@ class SettingsViewModel @Inject constructor(
                             encrypted_folder_key = response.encrypted_folder_key,
                             folder_key_nonce = response.folder_key_nonce,
                         )
+                        _state.value = _state.value.copy(
+                            action_result = context.getString(R.string.folder_unlocked),
+                        )
                     }
                     response.verified
                 }
@@ -3385,15 +3408,24 @@ class SettingsViewModel @Inject constructor(
 
     fun lock_folder(label_id: String) {
         org.astermail.android.folders.folder_lock_store.lock(label_id)
+        _state.value = _state.value.copy(
+            action_result = context.getString(R.string.folder_locked),
+        )
     }
 
     fun toggle_folder_notifications(label_token: String) {
         if (label_token.isBlank()) return
         val base = _state.value.preferences ?: UserPreferences()
         val muted = base.muted_folder_tokens
-        val next = if (label_token in muted) muted - label_token else muted + label_token
+        val is_muting = label_token !in muted
+        val next = if (is_muting) muted + label_token else muted - label_token
         org.astermail.android.notifications.MailPollingWorker.set_muted_folder_tokens(context, next)
         save_preferences(base.copy(muted_folder_tokens = next))
+        _state.value = _state.value.copy(
+            action_result = context.getString(
+                if (is_muting) R.string.folder_notifications_muted else R.string.folder_notifications_unmuted,
+            ),
+        )
     }
 
     fun load_tags(force: Boolean = true) {
@@ -3493,6 +3525,7 @@ class SettingsViewModel @Inject constructor(
                 optimistic_label_tokens.add(token)
                 _state.value = _state.value.copy(
                     labels = _state.value.labels + optimistic,
+                    action_result = context.getString(R.string.folder_created),
                 )
                 on_created?.invoke(token)
             } catch (_: Throwable) {
@@ -3521,6 +3554,9 @@ class SettingsViewModel @Inject constructor(
                         name_nonce = name_field.nonce_b64,
                     ),
                 )
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.item_renamed),
+                )
             } catch (_: Throwable) {
                 _state.value = _state.value.copy(
                     labels = previous,
@@ -3545,6 +3581,9 @@ class SettingsViewModel @Inject constructor(
                         encrypted_color = color_field.ciphertext_b64,
                         color_nonce = color_field.nonce_b64,
                     ),
+                )
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.item_color_updated),
                 )
             } catch (_: Throwable) {
                 _state.value = _state.value.copy(
@@ -3598,6 +3637,9 @@ class SettingsViewModel @Inject constructor(
             if (ok) {
                 org.astermail.android.folders.folder_lock_store.mark_unlocked(label_id)
                 load_labels(force = true)
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.folder_lock_set),
+                )
             } else {
                 _state.value = _state.value.copy(
                     action_result = context.getString(R.string.failed_update_folder),
@@ -3630,6 +3672,9 @@ class SettingsViewModel @Inject constructor(
             if (ok) {
                 org.astermail.android.folders.folder_lock_store.mark_unlocked(label_id)
                 load_labels(force = true)
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.folder_lock_removed),
+                )
             }
             on_result(ok)
         }

@@ -780,7 +780,6 @@
     <string name="settings_connection">Connection</string>
     <string name="connection_description">Choose how Aster Mail connects to our servers.</string>
     <string name="connection_method_header">Connection method</string>
-    <string name="connection_saving">Saving...</string>
     <string name="connection_direct">Direct</string>
     <string name="connection_direct_description">Connect straight to Aster servers for the fastest experience.</string>
     <string name="connection_cdn_relay">CDN relay</string>
@@ -788,8 +787,6 @@
     <string name="failed_save_connection_preference">Couldn\'t save connection preference</string>
     <string name="settings_aliases">Aliases &amp; domains</string>
     <string name="settings_aliases_subtitle">Manage addresses</string>
-    <string name="settings_ghost_aliases">Ghost aliases</string>
-    <string name="settings_ghost_aliases_subtitle">Disposable forwarding addresses</string>
     <string name="settings_billing">Billing</string>
     <string name="settings_billing_subtitle">Plan, invoices, payment methods</string>
     <string name="settings_referral">Refer a friend</string>
@@ -2242,6 +2239,8 @@
     <string name="domain_collapse">Collapse</string>
     <string name="domain_expand">Expand</string>
     <string name="domain_delete_domain">Delete domain</string>
+    <string name="domain_delete_confirm_title">Delete domain?</string>
+    <string name="domain_delete_confirm_message">Delete %1$s? Mail sent to addresses on this domain stops being delivered.</string>
     <string name="domain_dns_records">DNS Records</string>
     <string name="domain_verifying">Verifying...</string>
     <string name="domain_adding">Adding...</string>
@@ -2806,4 +2805,25 @@
         <item quantity="one">Moved %d message to trash</item>
         <item quantity="other">Moved %d messages to trash</item>
     </plurals>
+    <string name="domain_verify_slow">Aster couldn\'t finish the DNS check. Your records may still be verifying, so try again in a few minutes.</string>
+    <string name="domain_records_verified">%1$d of %2$d records verified</string>
+    <string name="ext_sync_started">Sync started</string>
+    <string name="ext_account_removed">Account removed</string>
+    <string name="folder_created">Folder created</string>
+    <string name="folder_locked">Folder locked</string>
+    <string name="folder_unlocked">Folder unlocked</string>
+    <string name="folder_lock_set">Folder lock set</string>
+    <string name="folder_lock_removed">Folder lock removed</string>
+    <string name="folder_notifications_muted">Notifications muted for this folder</string>
+    <string name="folder_notifications_unmuted">Notifications on for this folder</string>
+    <string name="item_deleted">Deleted</string>
+    <string name="item_renamed">Renamed</string>
+    <string name="item_color_updated">Color updated</string>
+    <string name="sessions_active_section">Active sessions</string>
+    <string name="sign_out_others_action">Sign out others</string>
+    <string name="revoke_all_action">Revoke all</string>
+    <string name="revoke_all_trusted_devices_confirm">Every trusted device needs to verify again the next time it signs in.</string>
+    <string name="plan_price_per_month">per month</string>
+    <string name="plan_price_per_year">per year</string>
+    <string name="plan_save_per_year">Save %1$s a year</string>
 </resources>

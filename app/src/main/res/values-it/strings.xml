@@ -479,8 +479,6 @@
     <string name="settings_encryption_subtitle">Chiavi PGP e recupero</string>
     <string name="settings_aliases">Alias e domini</string>
     <string name="settings_aliases_subtitle">Gestisci indirizzi</string>
-    <string name="settings_ghost_aliases">Ghost alias</string>
-    <string name="settings_ghost_aliases_subtitle">Indirizzi usa e getta con inoltro</string>
     <string name="settings_billing">Fatturazione</string>
     <string name="settings_billing_subtitle">Piano, fatture, metodi di pagamento</string>
     <string name="settings_referral">Invita un amico</string>
@@ -2202,6 +2200,8 @@
     <string name="domain_collapse">Comprimi</string>
     <string name="domain_expand">Espandi</string>
     <string name="domain_delete_domain">Elimina dominio</string>
+    <string name="domain_delete_confirm_title">Eliminare il dominio?</string>
+    <string name="domain_delete_confirm_message">Eliminare %1$s? La posta inviata agli indirizzi di questo dominio non verrà più recapitata.</string>
     <string name="domain_dns_records">Record DNS</string>
     <string name="domain_verifying">Verifica in corso...</string>
     <string name="domain_adding">Aggiunta in corso...</string>
@@ -2726,4 +2726,25 @@
     <string name="couldnt_remove_label">Impossibile rimuovere l\'etichetta</string>
     <string name="unsnoozed_count">Posticipo annullato per %d conversazione/i</string>
     <string name="couldnt_unsnooze">Impossibile annullare il posticipo</string>
+    <string name="domain_verify_slow">Aster non è riuscito a completare il controllo DNS. I tuoi record potrebbero essere ancora in verifica, quindi riprova tra qualche minuto.</string>
+    <string name="domain_records_verified">%1$d record su %2$d verificati</string>
+    <string name="ext_sync_started">Sincronizzazione avviata</string>
+    <string name="ext_account_removed">Account rimosso</string>
+    <string name="folder_created">Cartella creata</string>
+    <string name="folder_locked">Cartella bloccata</string>
+    <string name="folder_unlocked">Cartella sbloccata</string>
+    <string name="folder_lock_set">Blocco cartella impostato</string>
+    <string name="folder_lock_removed">Blocco cartella rimosso</string>
+    <string name="folder_notifications_muted">Notifiche silenziate per questa cartella</string>
+    <string name="folder_notifications_unmuted">Notifiche attive per questa cartella</string>
+    <string name="item_deleted">Eliminato</string>
+    <string name="item_renamed">Rinominato</string>
+    <string name="item_color_updated">Colore aggiornato</string>
+    <string name="sessions_active_section">Sessioni attive</string>
+    <string name="sign_out_others_action">Disconnetti gli altri</string>
+    <string name="revoke_all_action">Revoca tutto</string>
+    <string name="revoke_all_trusted_devices_confirm">Ogni dispositivo fidato dovrà verificarsi di nuovo al prossimo accesso.</string>
+    <string name="plan_price_per_month">al mese</string>
+    <string name="plan_price_per_year">all\'anno</string>
+    <string name="plan_save_per_year">Risparmia %1$s all\'anno</string>
 </resources>

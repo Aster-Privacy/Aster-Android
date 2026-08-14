@@ -383,7 +383,7 @@ private fun subscription_top_bar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = AsterSpacing.sm)
+                .padding(horizontal = AsterSpacing.xs)
                 .padding(top = AsterSpacing.sm, bottom = AsterSpacing.xs)
                 .height(52.dp),
             verticalAlignment = Alignment.CenterVertically,

@@ -50,8 +50,10 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ripple
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -93,13 +95,51 @@ private val dlg_red_border_bot = Color(0xFF991B1B)
 
 enum class DialogConfirmStyle { primary, destructive }
 
+private const val dialog_enter_ms = 210
+private const val dialog_exit_ms = 140
+private const val dialog_scrim_alpha = 0.46f
+private val dialog_enter_easing = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
+private val dialog_exit_easing = CubicBezierEasing(0.3f, 0f, 0.8f, 0.15f)
+
+private val dialog_properties = DialogProperties(
+    dismissOnBackPress = true,
+    dismissOnClickOutside = false,
+    usePlatformDefaultWidth = false,
+    decorFitsSystemWindows = false,
+)
+
 @Composable
-private fun disable_dialog_window_animation() {
+private fun prepare_dialog_window() {
     val view = androidx.compose.ui.platform.LocalView.current
     androidx.compose.runtime.SideEffect {
-        val provider = view.parent as? androidx.compose.ui.window.DialogWindowProvider
-        provider?.window?.setWindowAnimations(0)
+        val window = (view.parent as? androidx.compose.ui.window.DialogWindowProvider)?.window ?: return@SideEffect
+        window.setWindowAnimations(0)
+        window.setDimAmount(0f)
+        window.setLayout(
+            android.view.WindowManager.LayoutParams.MATCH_PARENT,
+            android.view.WindowManager.LayoutParams.MATCH_PARENT,
+        )
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+        window.statusBarColor = android.graphics.Color.TRANSPARENT
+        window.navigationBarColor = android.graphics.Color.TRANSPARENT
     }
+}
+
+@Composable
+private fun dialog_scrim(
+    progress: Float,
+    on_dismiss: () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    val interaction = remember { MutableInteractionSource() }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = dialog_scrim_alpha * progress))
+            .clickable(interactionSource = interaction, indication = null, onClick = on_dismiss),
+        contentAlignment = Alignment.Center,
+        content = { content() },
+    )
 }
 
 @Composable
@@ -113,32 +153,31 @@ fun AsterDialog(
     val colors = AsterMaterial.colors
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { visible = true }
-    val scale by animateFloatAsState(
-        targetValue = if (visible) 1f else 0.92f,
-        animationSpec = tween(durationMillis = 180),
-        finishedListener = { if (!visible) on_dismiss() },
-        label = "dialog_scale",
-    )
-    val alpha by animateFloatAsState(
+    val progress by animateFloatAsState(
         targetValue = if (visible) 1f else 0f,
-        animationSpec = tween(durationMillis = 180),
-        label = "dialog_alpha",
-    )
-    Dialog(
-        onDismissRequest = { visible = false },
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true,
-            usePlatformDefaultWidth = false,
+        animationSpec = tween(
+            durationMillis = if (visible) dialog_enter_ms else dialog_exit_ms,
+            easing = if (visible) dialog_enter_easing else dialog_exit_easing,
         ),
-    ) {
-        disable_dialog_window_animation()
+        finishedListener = { if (!visible) on_dismiss() },
+        label = "dialog_progress",
+    )
+    val scale = 0.94f + 0.06f * progress
+    val start_dismiss: () -> Unit = { visible = false }
+    Dialog(onDismissRequest = start_dismiss, properties = dialog_properties) {
+        prepare_dialog_window()
+        dialog_scrim(progress = progress, on_dismiss = start_dismiss) {
         Surface(
             modifier = Modifier
                 .widthIn(max = dialog_max_width)
                 .padding(horizontal = 16.dp)
                 .scale(scale)
-                .alpha(alpha),
+                .alpha(progress)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = {},
+                ),
             shape = dialog_shape,
             color = colors.bg_card,
             tonalElevation = 0.dp,
@@ -182,6 +221,7 @@ fun AsterDialog(
                 )
             }
         }
+        }
     }
 }
 
@@ -202,38 +242,36 @@ fun AsterAlertDialog(
     var visible by remember { mutableStateOf(false) }
     var pending_confirm by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { visible = true }
-    val scale by animateFloatAsState(
-        targetValue = if (visible) 1f else 0.92f,
-        animationSpec = tween(durationMillis = 180),
+    val progress by animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = tween(
+            durationMillis = if (visible) dialog_enter_ms else dialog_exit_ms,
+            easing = if (visible) dialog_enter_easing else dialog_exit_easing,
+        ),
         finishedListener = {
             if (!visible) {
                 if (pending_confirm) on_confirm() else on_dismiss()
             }
         },
-        label = "alert_scale",
+        label = "alert_progress",
     )
-    val alpha by animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
-        animationSpec = tween(durationMillis = 180),
-        label = "alert_alpha",
-    )
+    val scale = 0.94f + 0.06f * progress
     val start_dismiss: () -> Unit = { pending_confirm = false; visible = false }
     val start_confirm: () -> Unit = { pending_confirm = true; visible = false }
-    Dialog(
-        onDismissRequest = start_dismiss,
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true,
-            usePlatformDefaultWidth = false,
-        ),
-    ) {
-        disable_dialog_window_animation()
+    Dialog(onDismissRequest = start_dismiss, properties = dialog_properties) {
+        prepare_dialog_window()
+        dialog_scrim(progress = progress, on_dismiss = { if (!is_busy) start_dismiss() }) {
         Surface(
             modifier = Modifier
                 .widthIn(max = dialog_max_width)
                 .padding(horizontal = 16.dp)
                 .scale(scale)
-                .alpha(alpha),
+                .alpha(progress)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = {},
+                ),
             shape = dialog_shape,
             color = colors.bg_card,
             tonalElevation = 0.dp,
@@ -297,6 +335,7 @@ fun AsterAlertDialog(
                     }
                 }
             }
+        }
         }
     }
 }

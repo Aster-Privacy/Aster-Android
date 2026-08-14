@@ -479,8 +479,6 @@
     <string name="settings_encryption_subtitle">PGP-sleutels en herstel</string>
     <string name="settings_aliases">Aliassen en domeinen</string>
     <string name="settings_aliases_subtitle">Adressen beheren</string>
-    <string name="settings_ghost_aliases">Ghost-aliassen</string>
-    <string name="settings_ghost_aliases_subtitle">Wegwerp-doorstuuradresssen</string>
     <string name="settings_billing">Facturering</string>
     <string name="settings_billing_subtitle">Abonnement, facturen, betaalmethoden</string>
     <string name="settings_referral">Nodig een vriend uit</string>
@@ -2202,6 +2200,8 @@
     <string name="domain_collapse">Inklappen</string>
     <string name="domain_expand">Uitklappen</string>
     <string name="domain_delete_domain">Domein verwijderen</string>
+    <string name="domain_delete_confirm_title">Domein verwijderen?</string>
+    <string name="domain_delete_confirm_message">%1$s verwijderen? E-mail naar adressen op dit domein wordt niet meer bezorgd.</string>
     <string name="domain_dns_records">DNS-records</string>
     <string name="domain_verifying">Controleren...</string>
     <string name="domain_adding">Toevoegen...</string>
@@ -2726,4 +2726,25 @@
     <string name="couldnt_remove_label">Kan label niet verwijderen</string>
     <string name="unsnoozed_count">%d gesprek(ken) niet meer uitgesteld</string>
     <string name="couldnt_unsnooze">Kan uitstellen niet ongedaan maken</string>
+    <string name="domain_verify_slow">Aster kon de DNS-controle niet voltooien. Je records worden mogelijk nog geverifieerd, probeer het over een paar minuten opnieuw.</string>
+    <string name="domain_records_verified">%1$d van %2$d records geverifieerd</string>
+    <string name="ext_sync_started">Synchronisatie gestart</string>
+    <string name="ext_account_removed">Account verwijderd</string>
+    <string name="folder_created">Map aangemaakt</string>
+    <string name="folder_locked">Map vergrendeld</string>
+    <string name="folder_unlocked">Map ontgrendeld</string>
+    <string name="folder_lock_set">Mapvergrendeling ingesteld</string>
+    <string name="folder_lock_removed">Mapvergrendeling verwijderd</string>
+    <string name="folder_notifications_muted">Meldingen gedempt voor deze map</string>
+    <string name="folder_notifications_unmuted">Meldingen aan voor deze map</string>
+    <string name="item_deleted">Verwijderd</string>
+    <string name="item_renamed">Hernoemd</string>
+    <string name="item_color_updated">Kleur bijgewerkt</string>
+    <string name="sessions_active_section">Actieve sessies</string>
+    <string name="sign_out_others_action">Andere apparaten uitloggen</string>
+    <string name="revoke_all_action">Alles intrekken</string>
+    <string name="revoke_all_trusted_devices_confirm">Elk vertrouwd apparaat moet zich bij de volgende aanmelding opnieuw verifiëren.</string>
+    <string name="plan_price_per_month">per maand</string>
+    <string name="plan_price_per_year">per jaar</string>
+    <string name="plan_save_per_year">Bespaar %1$s per jaar</string>
 </resources>

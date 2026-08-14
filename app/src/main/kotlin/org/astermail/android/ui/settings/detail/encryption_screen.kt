@@ -604,24 +604,28 @@ fun EncryptionScreen(
                 }
             }
         } else {
-            AsterCard(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    storage_format_row(
-                        icon = TablerIcons.Server,
-                        label = stringResource(R.string.storage_format_aster),
-                        subtitle = stringResource(R.string.storage_format_aster_sub),
-                        selected = prefs.storage_format != "ipfs",
-                        on_select = { toggle { it.copy(storage_format = "aster") } },
-                    )
-                    AsterDivider()
-                    storage_format_row(
-                        icon = TablerIcons.World,
-                        label = stringResource(R.string.storage_format_ipfs),
-                        subtitle = stringResource(R.string.storage_format_ipfs_sub),
-                        selected = prefs.storage_format == "ipfs",
-                        on_select = { toggle { it.copy(storage_format = "ipfs") } },
-                    )
-                }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AsterSpacing.lg),
+                verticalArrangement = Arrangement.spacedBy(AsterSpacing.md),
+            ) {
+                illustrated_option_card(
+                    image = R.drawable.settings_aster_server,
+                    title = stringResource(R.string.storage_format_aster),
+                    subtitle = stringResource(R.string.storage_format_aster_sub),
+                    selected = prefs.storage_format != "ipfs",
+                    modifier = Modifier.fillMaxWidth(),
+                    on_click = { toggle { it.copy(storage_format = "aster") } },
+                )
+                illustrated_option_card(
+                    image = R.drawable.settings_decentralized,
+                    title = stringResource(R.string.storage_format_ipfs),
+                    subtitle = stringResource(R.string.storage_format_ipfs_sub),
+                    selected = prefs.storage_format == "ipfs",
+                    modifier = Modifier.fillMaxWidth(),
+                    on_click = { toggle { it.copy(storage_format = "ipfs") } },
+                )
             }
         }
 
@@ -862,37 +866,6 @@ internal fun format_fingerprint(hex: String): String {
     val clean = hex.filter { !it.isWhitespace() }
     if (clean.isEmpty()) return hex
     return clean.chunked(2).chunked(8).joinToString("\n") { line -> line.joinToString(" ") }
-}
-
-@Composable
-private fun storage_format_row(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    subtitle: String,
-    selected: Boolean,
-    on_select: () -> Unit,
-) {
-    val colors = AsterMaterial.colors
-    detail_row(
-        title = label,
-        subtitle = subtitle,
-        icon = icon,
-        on_click = on_select,
-        trailing = {
-            Box(
-                modifier = Modifier
-                    .size(20.dp)
-                    .clip(CircleShape)
-                    .background(if (selected) colors.accent_blue else Color.Transparent)
-                    .border(1.5.dp, if (selected) colors.accent_blue else colors.border_primary, CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (selected) {
-                    Icon(TablerIcons.Check, null, tint = Color.White, modifier = Modifier.size(13.dp))
-                }
-            }
-        },
-    )
 }
 
 private fun copy_to_clipboard(context: Context, label: String, value: String) {

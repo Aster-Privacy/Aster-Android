@@ -104,7 +104,6 @@ internal fun build_settings_sections(is_family: Boolean) = listOf(
             add(settings_row_item("connection", R.string.settings_connection, icon = TablerIcons.Router))
             add(settings_row_item("trusted_devices", R.string.trusted_devices, icon = TablerIcons.DeviceDesktop))
             add(settings_row_item("aliases", R.string.settings_aliases, icon = TablerIcons.At))
-            add(settings_row_item("ghost_aliases", R.string.settings_ghost_aliases, icon = TablerIcons.EyeOff))
             add(settings_row_item("billing", R.string.settings_plans_billing, icon = TablerIcons.CreditCard))
             add(settings_row_item("storage", R.string.settings_storage, icon = TablerIcons.Database))
             add(settings_row_item("referral", R.string.refer_a_friend, icon = TablerIcons.Users))

@@ -479,8 +479,6 @@
     <string name="settings_encryption_subtitle">Ключи PGP и восстановление</string>
     <string name="settings_aliases">Псевдонимы и домены</string>
     <string name="settings_aliases_subtitle">Управление адресами</string>
-    <string name="settings_ghost_aliases">Ghost-псевдонимы</string>
-    <string name="settings_ghost_aliases_subtitle">Одноразовые адреса пересылки</string>
     <string name="settings_billing">Оплата</string>
     <string name="settings_billing_subtitle">Тариф, счета, способы оплаты</string>
     <string name="settings_referral">Пригласить друга</string>
@@ -2208,6 +2206,8 @@
     <string name="domain_collapse">Свернуть</string>
     <string name="domain_expand">Развернуть</string>
     <string name="domain_delete_domain">Удалить домен</string>
+    <string name="domain_delete_confirm_title">Удалить домен?</string>
+    <string name="domain_delete_confirm_message">Удалить %1$s? Письма на адреса этого домена перестанут доставляться.</string>
     <string name="domain_dns_records">Записи DNS</string>
     <string name="domain_verifying">Проверяем...</string>
     <string name="domain_adding">Добавление...</string>
@@ -2742,4 +2742,25 @@
     <string name="couldnt_remove_label">Не удалось удалить метку</string>
     <string name="unsnoozed_count">Возвращено во входящие: %d разговоров</string>
     <string name="couldnt_unsnooze">Не удалось вернуть во входящие</string>
+    <string name="domain_verify_slow">Aster не смог завершить проверку DNS. Записи, возможно, ещё проверяются, поэтому повторите попытку через несколько минут.</string>
+    <string name="domain_records_verified">Проверено записей: %1$d из %2$d</string>
+    <string name="ext_sync_started">Синхронизация запущена</string>
+    <string name="ext_account_removed">Аккаунт удалён</string>
+    <string name="folder_created">Папка создана</string>
+    <string name="folder_locked">Папка заблокирована</string>
+    <string name="folder_unlocked">Папка разблокирована</string>
+    <string name="folder_lock_set">Блокировка папки установлена</string>
+    <string name="folder_lock_removed">Блокировка папки снята</string>
+    <string name="folder_notifications_muted">Уведомления для этой папки отключены</string>
+    <string name="folder_notifications_unmuted">Уведомления для этой папки включены</string>
+    <string name="item_deleted">Удалено</string>
+    <string name="item_renamed">Переименовано</string>
+    <string name="item_color_updated">Цвет обновлён</string>
+    <string name="sessions_active_section">Активные сессии</string>
+    <string name="sign_out_others_action">Выйти на других устройствах</string>
+    <string name="revoke_all_action">Отозвать все</string>
+    <string name="revoke_all_trusted_devices_confirm">Каждому доверенному устройству потребуется пройти проверку заново при следующем входе.</string>
+    <string name="plan_price_per_month">в месяц</string>
+    <string name="plan_price_per_year">в год</string>
+    <string name="plan_save_per_year">Экономия %1$s в год</string>
 </resources>

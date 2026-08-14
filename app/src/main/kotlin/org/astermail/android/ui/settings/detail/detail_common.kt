@@ -164,6 +164,41 @@ internal fun section_label(text: String) {
 }
 
 @Composable
+internal fun section_header_action(
+    title: String,
+    action_label: String,
+    enabled: Boolean,
+    on_click: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = AsterSpacing.md, bottom = AsterSpacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = title.uppercase(),
+            color = colors.text_tertiary,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f),
+        )
+        Spacer(Modifier.width(AsterSpacing.sm))
+        Text(
+            text = action_label,
+            color = if (enabled) colors.danger else colors.text_muted,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier
+                .clip(SquircleShape(10.dp))
+                .then(if (enabled) Modifier.clickable(onClick = on_click) else Modifier)
+                .padding(horizontal = AsterSpacing.sm, vertical = 3.dp),
+        )
+    }
+}
+
+@Composable
 internal fun info_dialog_button(title: String, description: String) {
     val colors = AsterMaterial.colors
     var show by remember { mutableStateOf(false) }

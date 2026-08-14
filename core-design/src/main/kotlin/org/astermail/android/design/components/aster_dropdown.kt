@@ -35,7 +35,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.mutableStateOf
@@ -74,6 +76,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -123,6 +126,7 @@ fun aster_dropdown_menu(
     modifier: Modifier = Modifier,
     offset: DpOffset = DpOffset(0.dp, 4.dp),
     min_width: androidx.compose.ui.unit.Dp = 200.dp,
+    max_width: androidx.compose.ui.unit.Dp = 320.dp,
     max_height: androidx.compose.ui.unit.Dp = 460.dp,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -170,6 +174,8 @@ fun aster_dropdown_menu(
                     .background(colors.dropdown_bg)
                     .border(1.dp, colors.border_primary, shape)
                     .defaultMinSize(minWidth = min_width)
+                    .widthIn(max = max_width)
+                    .width(IntrinsicSize.Max)
                     .heightIn(max = max_height)
                     .verticalScroll(rememberScrollState())
                     .padding(vertical = 6.dp),
@@ -233,6 +239,8 @@ fun aster_dropdown_item(
             color = content_color,
             fontSize = 15.sp,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
         if (count > 0) {

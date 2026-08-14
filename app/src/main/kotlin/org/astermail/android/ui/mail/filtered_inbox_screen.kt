@@ -31,12 +31,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
@@ -175,14 +176,25 @@ fun FilteredInboxScreen(
                     LazyColumn(
                         state = list_state,
                         modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(
+                            top = inbox_group_split,
+                            bottom = AsterSpacing.xxl,
+                        ),
                     ) {
-                        items(items = threads, key = { it.thread_id }, contentType = { "thread_row" }) { thread ->
+                        itemsIndexed(
+                            items = threads,
+                            key = { _, thread -> thread.thread_id },
+                            contentType = { _, _ -> "thread_row" },
+                        ) { row_index, thread ->
                             Box(modifier = Modifier.background(colors.bg_primary)) {
                                 ThreadInboxRow(
                                     thread = thread,
                                     on_click = { on_open_email(thread_open_target_id(thread)) },
                                     on_long_click = { on_open_email(thread_open_target_id(thread)) },
                                     on_toggle_star = { mail_vm.toggle_star(thread.newest.id) },
+                                    is_pinned = thread.is_pinned,
+                                    is_first = row_index == 0,
+                                    is_last = row_index == threads.lastIndex,
                                     user_prefs = settings_state.preferences,
                                 )
                             }

@@ -479,8 +479,6 @@
     <string name="settings_encryption_subtitle">مفاتيح PGP والاسترداد</string>
     <string name="settings_aliases">الأسماء المستعارة والنطاقات</string>
     <string name="settings_aliases_subtitle">إدارة العناوين</string>
-    <string name="settings_ghost_aliases">الأسماء المستعارة الشبحية</string>
-    <string name="settings_ghost_aliases_subtitle">عناوين تحويل مؤقتة</string>
     <string name="settings_billing">الفوترة</string>
     <string name="settings_billing_subtitle">الخطة، الفواتير، طرق الدفع</string>
     <string name="settings_referral">دعوة صديق</string>
@@ -2214,6 +2212,8 @@
     <string name="domain_collapse">طي</string>
     <string name="domain_expand">توسيع</string>
     <string name="domain_delete_domain">حذف النطاق</string>
+    <string name="domain_delete_confirm_title">حذف النطاق؟</string>
+    <string name="domain_delete_confirm_message">هل تريد حذف %1$s؟ سيتوقف تسليم البريد المُرسَل إلى العناوين على هذا النطاق.</string>
     <string name="domain_dns_records">سجلات DNS</string>
     <string name="domain_verifying">جارٍ التحقق...</string>
     <string name="domain_adding">جارٍ الإضافة...</string>
@@ -2758,4 +2758,25 @@
     <string name="couldnt_remove_label">تعذر إزالة التصنيف</string>
     <string name="unsnoozed_count">تم إلغاء تأجيل %d محادثة</string>
     <string name="couldnt_unsnooze">تعذر إلغاء التأجيل</string>
+    <string name="domain_verify_slow">تعذّر على Aster إكمال فحص DNS. قد تكون سجلاتك قيد التحقق، لذا حاول مرة أخرى بعد بضع دقائق.</string>
+    <string name="domain_records_verified">تم التحقق من %1$d من %2$d سجل</string>
+    <string name="ext_sync_started">بدأت المزامنة</string>
+    <string name="ext_account_removed">تمت إزالة الحساب</string>
+    <string name="folder_created">تم إنشاء المجلد</string>
+    <string name="folder_locked">تم قفل المجلد</string>
+    <string name="folder_unlocked">تم إلغاء قفل المجلد</string>
+    <string name="folder_lock_set">تم تعيين قفل المجلد</string>
+    <string name="folder_lock_removed">تمت إزالة قفل المجلد</string>
+    <string name="folder_notifications_muted">تم كتم الإشعارات لهذا المجلد</string>
+    <string name="folder_notifications_unmuted">الإشعارات مفعّلة لهذا المجلد</string>
+    <string name="item_deleted">تم الحذف</string>
+    <string name="item_renamed">تمت إعادة التسمية</string>
+    <string name="item_color_updated">تم تحديث اللون</string>
+    <string name="sessions_active_section">الجلسات النشطة</string>
+    <string name="sign_out_others_action">تسجيل الخروج من الأجهزة الأخرى</string>
+    <string name="revoke_all_action">إلغاء الكل</string>
+    <string name="revoke_all_trusted_devices_confirm">يحتاج كل جهاز موثوق إلى التحقق مرة أخرى عند تسجيل الدخول التالي.</string>
+    <string name="plan_price_per_month">شهريًا</string>
+    <string name="plan_price_per_year">سنويًا</string>
+    <string name="plan_save_per_year">وفّر %1$s سنويًا</string>
 </resources>

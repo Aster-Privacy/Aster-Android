@@ -87,6 +87,7 @@ import org.astermail.android.design.components.AsterCard
 
 private const val CHUNK_SIZE = 4 * 1024 * 1024
 private const val MAX_TOTAL_BYTES = 10L * 1024 * 1024 * 1024
+private const val max_visible_sync_jobs = 5
 
 data class ImportUiState(
     val is_uploading: Boolean = false,
@@ -545,7 +546,7 @@ fun ImportScreen(
                         fontSize = 13.sp,
                     )
                 } else {
-                    for (job in state.jobs) {
+                    for (job in state.jobs.take(max_visible_sync_jobs)) {
                         val is_expanded = state.expanded_job_id == job.id
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Row(
@@ -564,7 +565,7 @@ fun ImportScreen(
                                         fontWeight = FontWeight.Medium,
                                     )
                                     Text(
-                                        text = job.created_at,
+                                        text = relative_time_label(job.created_at),
                                         color = colors.text_tertiary,
                                         fontSize = 11.sp,
                                     )
