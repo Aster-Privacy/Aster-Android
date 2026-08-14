@@ -80,6 +80,7 @@ class AccountsViewModel @Inject constructor(
             return
         }
         account_store.set_current(account_id)
+        org.astermail.android.billing.AttachmentLimits.reset()
         refresh()
         viewModelScope.launch {
             val restored = auth_repository.try_restore_session(account_id)

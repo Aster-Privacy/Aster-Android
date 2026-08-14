@@ -686,6 +686,7 @@ class AuthRepository @Inject constructor(
         runCatching { session_key_store.clear() }
         runCatching { org.astermail.android.folders.folder_lock_store.lock_all() }
         runCatching { mail_repository.clear_caches() }
+        runCatching { org.astermail.android.billing.AttachmentLimits.reset() }
         runCatching { theme_store.clear() }
         cancel_all_notifications()
         runCatching {
