@@ -48,7 +48,7 @@ class SignedMimeInstrumentedTest {
             ProtectedMimeInput(
                 subject = "Signed and encrypted ✓",
                 body = body,
-                is_html = ProtectedMimeBuilder.body_looks_like_html(body),
+                is_html = true,
                 from = "emu@astermail.org",
                 to = listOf("recipient@example.com"),
                 cc = emptyList(),
@@ -84,6 +84,37 @@ class SignedMimeInstrumentedTest {
         assertEquals("pgp-sha512", signed!!.micalg)
         assertTrue(verify(mime, signed.signature, keys.armored_public_key))
         assertFalse(verify(mime + "x".toByteArray(), signed.signature, keys.armored_public_key))
+    }
+
+    @Test
+    fun keeps_an_html_alternative_for_a_body_without_visible_tags() {
+        val body = "Test test&nbsp;"
+        val text = ProtectedMimeBuilder.build(
+            ProtectedMimeInput(
+                subject = "Test",
+                body = body,
+                is_html = true,
+                from = "emu@astermail.org",
+                to = listOf("recipient@example.com"),
+                cc = emptyList(),
+                attachments = emptyList(),
+            ),
+        )
+
+        assertTrue(text.contains("multipart/alternative"))
+        assertTrue(text.contains("Content-Type: text/html; charset=utf-8"))
+        assertFalse(
+            text.contains("Content-Type: text/plain; charset=utf-8\r\nContent-Transfer-Encoding: 8bit"),
+        )
+
+        val marker = "Content-Type: text/html; charset=utf-8\r\nContent-Transfer-Encoding: base64\r\n\r\n"
+        val payload = text.substring(text.indexOf(marker) + marker.length).substringBefore("\r\n")
+        val decoded = String(
+            android.util.Base64.decode(payload, android.util.Base64.DEFAULT),
+            Charsets.UTF_8,
+        )
+
+        assertEquals(body, decoded)
     }
 
     @Test

@@ -73,15 +73,6 @@ object ProtectedMimeBuilder {
         return builder.toString()
     }
 
-    fun body_looks_like_html(body: String): Boolean {
-        return body.contains("<br") ||
-            body.contains("<a ") ||
-            body.contains("<p>") ||
-            body.contains("<div") ||
-            body.contains("<html") ||
-            body.contains("</")
-    }
-
     private fun protected_headers_part(input: ProtectedMimeInput): String {
         val builder = StringBuilder()
 

@@ -2328,6 +2328,12 @@ class MailRepository @Inject constructor(
     private fun clean_preview(body_text: String, body_html: String?): String =
         clean_body_preview(body_text, body_html)
 
+    private fun report_signing_skipped(reason: String) {
+        if (BuildConfig.DEBUG) {
+            android.util.Log.w("MailRepository", "outbound pgp message left unsigned: $reason")
+        }
+    }
+
     private fun build_signed_mime(
         subject: String,
         body_html: String,
@@ -2343,11 +2349,25 @@ class MailRepository @Inject constructor(
         if ((to + cc + bcc).none { it.isNotBlank() && !is_internal_recipient(it) }) return null
 
         val attachment_bytes = attachments.sumOf { it.size_bytes }
-        if (attachment_bytes > MAX_SIGNED_ATTACHMENT_BYTES) return null
+        if (attachment_bytes > MAX_SIGNED_ATTACHMENT_BYTES) {
+            report_signing_skipped("attachments_too_large")
+            return null
+        }
 
-        val identity_key = session_key_store.get_identity_key() ?: return null
-        if (!identity_key.contains("-----BEGIN PGP")) return null
-        val passphrase = session_key_store.get_passphrase() ?: return null
+        val identity_key = session_key_store.get_identity_key()
+        if (identity_key == null) {
+            report_signing_skipped("vault_identity_key_unavailable")
+            return null
+        }
+        if (!identity_key.contains("-----BEGIN PGP")) {
+            report_signing_skipped("vault_identity_key_not_pgp")
+            return null
+        }
+        val passphrase = session_key_store.get_passphrase()
+        if (passphrase == null) {
+            report_signing_skipped("vault_passphrase_unavailable")
+            return null
+        }
         val chars = String(passphrase, Charsets.UTF_8).toCharArray()
         passphrase.fill(0)
 
@@ -2356,7 +2376,7 @@ class MailRepository @Inject constructor(
                 ProtectedMimeInput(
                     subject = subject,
                     body = body_html,
-                    is_html = ProtectedMimeBuilder.body_looks_like_html(body_html),
+                    is_html = true,
                     from = from,
                     to = to,
                     cc = cc,
@@ -2371,7 +2391,12 @@ class MailRepository @Inject constructor(
                 ),
             )
             val mime_bytes = mime.toByteArray(Charsets.UTF_8)
-            val signed = PgpSigner.sign_detached(mime_bytes, identity_key, chars) ?: return null
+            val signed = PgpSigner.sign_detached(mime_bytes, identity_key, chars)
+
+            if (signed == null) {
+                report_signing_skipped("detached_signature_failed")
+                return null
+            }
 
             SignedMimePayload(
                 mime_base64 = android.util.Base64.encodeToString(mime_bytes, android.util.Base64.NO_WRAP),
@@ -2379,6 +2404,7 @@ class MailRepository @Inject constructor(
                 micalg = signed.micalg,
             )
         } catch (_: Throwable) {
+            report_signing_skipped("signed_mime_build_threw")
             null
         } finally {
             chars.fill('\u0000')

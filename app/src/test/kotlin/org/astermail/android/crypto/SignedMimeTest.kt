@@ -67,7 +67,7 @@ class SignedMimeTest {
     ) = ProtectedMimeInput(
         subject = subject,
         body = body,
-        is_html = ProtectedMimeBuilder.body_looks_like_html(body),
+        is_html = true,
         from = "jperry@astermail.org",
         to = listOf("recipient@example.com"),
         cc = emptyList(),
