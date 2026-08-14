@@ -193,6 +193,41 @@ class SignedMimeTest {
         java.io.File(out).writeText(json)
     }
 
+    @Test
+    fun writes_an_end_to_end_fixture_when_requested() {
+        val out = System.getenv("ASTER_SIGNED_MIME_E2E_FIXTURE_OUT") ?: return
+
+        val body = "Test test&nbsp;"
+        val sender = PgpKeyGenerator.generate("Alice", "alice@astermail.org", passphrase.toCharArray())
+        val mime = ProtectedMimeBuilder.build(
+            ProtectedMimeInput(
+                subject = "Test",
+                body = body,
+                is_html = true,
+                from = "alice@astermail.org",
+                to = listOf("external@example.org"),
+                cc = emptyList(),
+                attachments = emptyList(),
+            ),
+        ).toByteArray(Charsets.UTF_8)
+        val signed = PgpSigner.sign_detached(mime, sender.armored_private_key, passphrase.toCharArray())!!
+
+        val fields = linkedMapOf(
+            "mime_base64" to java.util.Base64.getEncoder().encodeToString(mime),
+            "signature" to signed.signature,
+            "micalg" to signed.micalg,
+            "sender_public_key" to sender.armored_public_key,
+            "expected_subject" to "Test",
+            "expected_html" to body,
+        )
+
+        val json = fields.entries.joinToString(",", "{", "}") { (key, value) ->
+            "\"$key\":\"${json_escape(value)}\""
+        }
+
+        java.io.File(out).writeText(json)
+    }
+
     private fun json_escape(value: String): String {
         val builder = StringBuilder()
 
