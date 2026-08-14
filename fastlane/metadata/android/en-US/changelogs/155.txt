@@ -1,0 +1,7 @@
+Bug fixes and improvements:
+
+- Setting up your own domain now works: you see whether verification succeeded and which DNS records are still missing
+- Your DNS records appear in the app with copy buttons
+- Mail from other Aster users sent to one of your aliases now decrypts correctly
+- Formatting stays intact when you send an encrypted message outside Aster
+- Attachment limits now match your plan
