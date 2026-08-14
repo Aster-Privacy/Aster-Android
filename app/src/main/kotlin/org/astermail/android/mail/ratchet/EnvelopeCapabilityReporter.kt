@@ -104,6 +104,7 @@ class EnvelopeCapabilityReporter(
                     max_envelope_marker = MAX_ENVELOPE_MARKER,
                     platform = PLATFORM,
                     identity_fingerprint = fingerprint.ifEmpty { null },
+                    x3dh_max_version = X3DH_MAX_VERSION,
                 ),
             )
         }.getOrNull()
@@ -126,6 +127,7 @@ class EnvelopeCapabilityReporter(
 
     companion object {
         const val MAX_ENVELOPE_MARKER: Int = 4
+        const val X3DH_MAX_VERSION: Int = 2
         const val PLATFORM: String = "android"
         const val REPORT_INTERVAL_MS: Long = 7L * 24 * 60 * 60 * 1000
         private const val IDENTITY_POINT_LEN: Int = 65

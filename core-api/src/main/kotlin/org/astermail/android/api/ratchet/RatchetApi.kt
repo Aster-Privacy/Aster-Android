@@ -98,6 +98,7 @@ data class ReportEnvelopeCapabilityRequest(
     val max_envelope_marker: Int,
     val platform: String? = null,
     val identity_fingerprint: String? = null,
+    val x3dh_max_version: Int = 1,
 )
 
 @Serializable
