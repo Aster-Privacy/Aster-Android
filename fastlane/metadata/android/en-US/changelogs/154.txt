@@ -1,0 +1,4 @@
+Bug fixes and improvements:
+
+- Fixed pull-to-refresh sometimes freezing or triggering unexpectedly
+- Fixed a crash that could occur when opening the Drafts folder
