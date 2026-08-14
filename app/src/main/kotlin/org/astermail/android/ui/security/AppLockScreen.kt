@@ -99,6 +99,8 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.security.AppLockStore
+import org.astermail.android.security.BiometricGatePreparation
+import org.astermail.android.security.BiometricUnlockGate
 import kotlin.math.roundToInt
 
 @Composable
@@ -155,6 +157,7 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
 
     val wrong_pin_str = stringResource(R.string.app_lock_wrong_pin)
     val locked_out_str = stringResource(R.string.app_lock_locked_out)
+    val biometric_failed_str = stringResource(R.string.app_lock_biometric_failed)
 
     LaunchedEffect(locked_out) {
         if (!locked_out) return@LaunchedEffect
@@ -173,17 +176,54 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
 
     fun launch_biometric() {
         val activity = context as? FragmentActivity ?: return
+        val preparation = BiometricUnlockGate.prepare(context)
+        val cipher = when (preparation) {
+            is BiometricGatePreparation.Enroll -> preparation.cipher
+            is BiometricGatePreparation.Verify -> preparation.cipher
+            BiometricGatePreparation.Unavailable -> {
+                biometric_available = false
+                error_msg = biometric_failed_str
+                return
+            }
+        }
         val executor = ContextCompat.getMainExecutor(context)
         val info = BiometricPrompt.PromptInfo.Builder()
             .setTitle(context.getString(R.string.app_lock_biometric_title))
             .setSubtitle(context.getString(R.string.app_lock_biometric_subtitle))
             .setNegativeButtonText(context.getString(R.string.app_lock_use_pin))
+            .setAllowedAuthenticators(BIOMETRIC_STRONG)
+            .setConfirmationRequired(false)
             .build()
         BiometricPrompt(activity, executor, object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                store.mark_session_unlocked()
+                val authenticated_cipher = result.cryptoObject?.cipher
+                if (authenticated_cipher == null) {
+                    error_msg = biometric_failed_str
+                    return
+                }
+                val ok = when (preparation) {
+                    is BiometricGatePreparation.Enroll ->
+                        BiometricUnlockGate.complete_enroll(context, authenticated_cipher)
+                    else ->
+                        BiometricUnlockGate.complete_verify(context, authenticated_cipher)
+                }
+                if (ok) {
+                    store.mark_session_unlocked()
+                } else {
+                    BiometricUnlockGate.reset(context)
+                    error_msg = biometric_failed_str
+                }
             }
-        }).authenticate(info)
+
+            override fun onAuthenticationError(code: Int, message: CharSequence) {
+                if (code == BiometricPrompt.ERROR_HW_NOT_PRESENT ||
+                    code == BiometricPrompt.ERROR_NO_BIOMETRICS ||
+                    code == BiometricPrompt.ERROR_HW_UNAVAILABLE
+                ) {
+                    biometric_available = false
+                }
+            }
+        }).authenticate(info, BiometricPrompt.CryptoObject(cipher))
     }
 
     LaunchedEffect(biometric_available) {

@@ -125,6 +125,7 @@ class AppLockStore @Inject constructor(@ApplicationContext private val context: 
             putLong(KEY_LOCKOUT_UNTIL, 0L)
             putLong(KEY_LOCKOUT_UNTIL_ELAPSED, 0L)
         }.apply()
+        runCatching { BiometricUnlockGate.reset(context) }
         _config_version.value += 1
         mark_session_unlocked()
     }
@@ -157,6 +158,7 @@ class AppLockStore @Inject constructor(@ApplicationContext private val context: 
             remove(KEY_LOCKOUT_UNTIL)
             remove(KEY_LOCKOUT_UNTIL_ELAPSED)
         }.apply()
+        runCatching { BiometricUnlockGate.reset(context) }
         session_unlocked = false
         _is_locked.value = false
         _config_version.value += 1

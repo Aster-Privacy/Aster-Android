@@ -38,14 +38,22 @@ object SecurePrefs {
         val app = context.applicationContext
         return try {
             create_encrypted(app, name)
+        } catch (strongbox: Throwable) {
+            open_after_failure(app, name)
+        }
+    }
+
+    private fun open_after_failure(app: Context, name: String): SharedPreferences {
+        return try {
+            create_encrypted(app, name, allow_strongbox = false)
         } catch (first: Throwable) {
             runCatching { app.deleteSharedPreferences(name) }
             try {
-                create_encrypted(app, name)
+                create_encrypted(app, name, allow_strongbox = false)
             } catch (second: Throwable) {
                 reset_key_material(app, name)
                 try {
-                    create_encrypted(app, name)
+                    create_encrypted(app, name, allow_strongbox = false)
                 } catch (third: Throwable) {
                     key_material_lost = true
                     InMemoryPrefs()
@@ -65,9 +73,18 @@ object SecurePrefs {
         }
     }
 
-    private fun create_encrypted(context: Context, name: String): SharedPreferences {
+    private fun strongbox_available(context: Context): Boolean =
+        android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P &&
+            context.packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_STRONGBOX_KEYSTORE)
+
+    private fun create_encrypted(
+        context: Context,
+        name: String,
+        allow_strongbox: Boolean = true,
+    ): SharedPreferences {
         val master_key = MasterKey.Builder(context)
             .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .setRequestStrongBoxBacked(allow_strongbox && strongbox_available(context))
             .build()
         return EncryptedSharedPreferences.create(
             context,
