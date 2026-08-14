@@ -40,7 +40,16 @@ Builds:
     rm:
       - app/google-services.json
 
+  - versionName: 0.6.143
+    versionCode: 153
+    commit: v0.6.143
+    subdir: app
+    gradle:
+      - fdroid
+    rm:
+      - app/google-services.json
+
 AutoUpdateMode: Version
 UpdateCheckMode: Tags v(.+)
-CurrentVersion: 0.6.65
-CurrentVersionCode: 72
+CurrentVersion: 0.6.143
+CurrentVersionCode: 153
