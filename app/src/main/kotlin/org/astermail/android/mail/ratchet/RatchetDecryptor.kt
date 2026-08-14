@@ -480,6 +480,14 @@ class RatchetDecryptor @Inject constructor(
             return emptyList()
         }
 
+        val pq_ciphertext_raw = pq_ciphertext?.let {
+            try {
+                RatchetCrypto.b64_decode(it)
+            } catch (_: Throwable) {
+                null
+            }
+        }
+
         fun derive(pq_shared: ByteArray?): RatchetState {
             val shared_secret = X3dh.perform_receiver(
                 receiver_identity_jwk = identity_jwk,
@@ -488,6 +496,8 @@ class RatchetDecryptor @Inject constructor(
                 sender_ephemeral_raw = sender_ephemeral_raw,
                 pq_shared_secret = pq_shared,
                 pq_from_identity = from_identity,
+                x3dh_version = recipient.x3dh_v,
+                pq_ciphertext = pq_ciphertext_raw,
             )
             return X3dh.init_receiver_state(
                 conversation_id = conversation_id,

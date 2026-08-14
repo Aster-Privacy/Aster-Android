@@ -49,6 +49,7 @@ data class RatchetRecipientData(
     val nonce: String,
     val pq_ciphertext: String? = null,
     val pq_key_id: Int? = null,
+    val x3dh_v: Int? = null,
     val recovery: RecoveryLaneData? = null,
 )
 

@@ -28,9 +28,14 @@ object X3dh {
     private val info_classical = "Aster Mail_X3DH_v1".toByteArray(Charsets.UTF_8)
     private val info_pq = "Aster Mail_PQXDH_v1".toByteArray(Charsets.UTF_8)
     private val info_pq_identity = "Aster Mail_PQXDH_identity_v1".toByteArray(Charsets.UTF_8)
+    private val info_classical_v2 = "Aster Mail_X3DH_v2".toByteArray(Charsets.UTF_8)
+    private val info_pq_v2 = "Aster Mail_PQXDH_v2".toByteArray(Charsets.UTF_8)
+    private val info_pq_identity_v2 = "Aster Mail_PQXDH_identity_v2".toByteArray(Charsets.UTF_8)
     private val salt = ByteArray(32)
 
     const val PQ_IDENTITY_KEY_ID = -1
+    const val VERSION_LEGACY = 1
+    const val VERSION_TRANSCRIPT_BOUND = 2
     const val ML_KEM_768_EK_LEN = 1184
 
     enum class PqMode { ONETIME, IDENTITY, NONE }
@@ -127,6 +132,8 @@ object X3dh {
         sender_ephemeral_raw: ByteArray,
         pq_shared_secret: ByteArray? = null,
         pq_from_identity: Boolean = false,
+        x3dh_version: Int? = null,
+        pq_ciphertext: ByteArray? = null,
     ): ByteArray {
         val identity_priv = RatchetCrypto.parse_p256_private_jwk(receiver_identity_jwk)
         val spk_priv = RatchetCrypto.parse_p256_private_jwk(receiver_signed_prekey_jwk)
@@ -138,14 +145,31 @@ object X3dh {
         val dh2 = RatchetCrypto.ecdh(identity_priv, sender_ephemeral_pub)
         val dh3 = RatchetCrypto.ecdh(spk_priv, sender_ephemeral_pub)
 
-        val combined = if (pq_shared_secret != null) {
-            dh1 + dh2 + dh3 + pq_shared_secret
+        val transcript_bound = x3dh_version == VERSION_TRANSCRIPT_BOUND
+
+        val transcript = if (transcript_bound) {
+            val receiver_identity_raw =
+                RatchetCrypto.p256_public_raw_from_private_jwk(receiver_identity_jwk)
+            if (pq_shared_secret != null && pq_ciphertext != null) {
+                sender_identity_raw + receiver_identity_raw + pq_ciphertext
+            } else {
+                sender_identity_raw + receiver_identity_raw
+            }
         } else {
-            dh1 + dh2 + dh3
+            ByteArray(0)
+        }
+
+        val combined = if (pq_shared_secret != null) {
+            dh1 + dh2 + dh3 + pq_shared_secret + transcript
+        } else {
+            dh1 + dh2 + dh3 + transcript
         }
         val info = when {
+            pq_shared_secret == null && transcript_bound -> info_classical_v2
             pq_shared_secret == null -> info_classical
+            pq_from_identity && transcript_bound -> info_pq_identity_v2
             pq_from_identity -> info_pq_identity
+            transcript_bound -> info_pq_v2
             else -> info_pq
         }
         val secret = RatchetCrypto.hkdf_sha256(combined, salt, info, 32)
