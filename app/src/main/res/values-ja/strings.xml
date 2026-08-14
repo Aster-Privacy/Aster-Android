@@ -2165,7 +2165,6 @@
     <string name="alias_status_disabled_badge">無効</string>
     <string name="alias_status_setup_required">設定が必要</string>
     <string name="alias_delete_confirm_message">%1$s を削除しますか？この操作は取り消せません。</string>
-    <string name="alias_domains_count">%1$d 件のドメイン</string>
     <string name="alias_action_add">追加</string>
     <string name="alias_directory_key_label">ディレクトリキー</string>
     <string name="alias_directory_example">anything%1$s%2$s@astermail.org</string>
@@ -2202,6 +2201,23 @@
     <string name="domain_delete_domain">ドメインを削除</string>
     <string name="domain_dns_records">DNS レコード</string>
     <string name="domain_verifying">確認中...</string>
+    <string name="domain_adding">追加中...</string>
+    <string name="domain_dns_instructions">これらのレコードを DNS プロバイダに追加してから、確認を実行してください。新しいレコードは通常、数分で反映されます。</string>
+    <string name="domain_record_host">ホスト</string>
+    <string name="domain_record_value">値</string>
+    <string name="domain_record_found">確認済み</string>
+    <string name="domain_record_required">必須</string>
+    <string name="domain_record_recommended">推奨</string>
+    <string name="domain_add_invalid">example.com のようなドメイン名を入力してください。</string>
+    <string name="domain_add_conflict">このドメインはすでに登録されています。ドメイン一覧を確認するか、別のアカウントで使用されている場合はサポートにお問い合わせください。</string>
+    <string name="domain_add_plan_limit">ご利用のプランはカスタムドメインの上限に達しています。プランをアップグレードすると、ドメインをさらに追加できます。</string>
+    <string name="domain_verify_success">ドメインの確認が完了し、使用できる状態になりました。</string>
+    <string name="domain_verify_pending">%1$s を待っています。DNS プロバイダでこれらのレコードを確認してから、もう一度実行してください。</string>
+    <string name="domain_verify_pending_generic">一部のレコードはまだ反映されていません。数分待ってから、もう一度実行してください。</string>
+    <string name="domain_verify_rate_limited">このドメインの確認回数の上限に達しました。しばらくしてからもう一度お試しください。</string>
+    <plurals name="domain_verify_rate_limited_minutes">
+        <item quantity="other">このドメインの確認回数の上限に達しました。%1$d 分後にもう一度お試しください。</item>
+    </plurals>
     <string name="create_alias_dialog_title">エイリアスを作成</string>
     <string name="create_alias_username_label">ユーザー名</string>
     <string name="create_alias_generate_random">ランダムに生成</string>

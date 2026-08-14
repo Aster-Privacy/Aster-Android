@@ -2205,7 +2205,6 @@
     <string name="alias_status_disabled_badge">Disabled</string>
     <string name="alias_status_setup_required">Setup required</string>
     <string name="alias_delete_confirm_message">Delete %1$s? This cannot be undone.</string>
-    <string name="alias_domains_count">%1$d domains</string>
     <string name="alias_action_add">Add</string>
     <string name="alias_directory_key_label">Directory key</string>
     <string name="alias_directory_example">anything%1$s%2$s@astermail.org</string>
@@ -2245,6 +2244,24 @@
     <string name="domain_delete_domain">Delete domain</string>
     <string name="domain_dns_records">DNS Records</string>
     <string name="domain_verifying">Verifying...</string>
+    <string name="domain_adding">Adding...</string>
+    <string name="domain_dns_instructions">Add these records at your DNS provider, then verify. New records usually take a few minutes to take effect.</string>
+    <string name="domain_record_host">Host</string>
+    <string name="domain_record_value">Value</string>
+    <string name="domain_record_found">Found</string>
+    <string name="domain_record_required">Required</string>
+    <string name="domain_record_recommended">Recommended</string>
+    <string name="domain_add_invalid">Enter a domain name like example.com.</string>
+    <string name="domain_add_conflict">This domain is already registered. Check your domain list, or contact support if another account is using it.</string>
+    <string name="domain_add_plan_limit">Your plan is at its custom domain limit. Upgrade your plan to add another domain.</string>
+    <string name="domain_verify_success">Your domain is verified and ready to use.</string>
+    <string name="domain_verify_pending">Waiting on %1$s. Check those records at your DNS provider, then verify again.</string>
+    <string name="domain_verify_pending_generic">Some records aren\'t visible yet. Wait a few minutes, then verify again.</string>
+    <string name="domain_verify_rate_limited">You\'ve reached the verification limit for this domain. Try again later.</string>
+    <plurals name="domain_verify_rate_limited_minutes">
+        <item quantity="one">You\'ve reached the verification limit for this domain. Try again in %1$d minute.</item>
+        <item quantity="other">You\'ve reached the verification limit for this domain. Try again in %1$d minutes.</item>
+    </plurals>
     <string name="create_alias_dialog_title">Create Alias</string>
     <string name="create_alias_username_label">Username</string>
     <string name="create_alias_generate_random">Generate random</string>

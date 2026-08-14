@@ -2168,7 +2168,6 @@
     <string name="alias_status_disabled_badge">Uitgeschakeld</string>
     <string name="alias_status_setup_required">Instellen nodig</string>
     <string name="alias_delete_confirm_message">%1$s verwijderen? Dit kun je niet ongedaan maken.</string>
-    <string name="alias_domains_count">%1$d domeinen</string>
     <string name="alias_action_add">Toevoegen</string>
     <string name="alias_directory_key_label">Directorysleutel</string>
     <string name="alias_directory_example">anything%1$s%2$s@astermail.org</string>
@@ -2205,6 +2204,24 @@
     <string name="domain_delete_domain">Domein verwijderen</string>
     <string name="domain_dns_records">DNS-records</string>
     <string name="domain_verifying">Controleren...</string>
+    <string name="domain_adding">Toevoegen...</string>
+    <string name="domain_dns_instructions">Voeg deze records toe bij je DNS-provider en start daarna de verificatie. Nieuwe records zijn meestal binnen een paar minuten actief.</string>
+    <string name="domain_record_host">Host</string>
+    <string name="domain_record_value">Waarde</string>
+    <string name="domain_record_found">Gevonden</string>
+    <string name="domain_record_required">Vereist</string>
+    <string name="domain_record_recommended">Aanbevolen</string>
+    <string name="domain_add_invalid">Voer een domeinnaam in zoals example.com.</string>
+    <string name="domain_add_conflict">Dit domein is al geregistreerd. Controleer je domeinlijst of neem contact op met de ondersteuning als een ander account het gebruikt.</string>
+    <string name="domain_add_plan_limit">Je abonnement heeft de limiet voor eigen domeinen bereikt. Upgrade je abonnement om nog een domein toe te voegen.</string>
+    <string name="domain_verify_success">Je domein is geverifieerd en klaar voor gebruik.</string>
+    <string name="domain_verify_pending">Wachten op %1$s. Controleer die records bij je DNS-provider en verifieer opnieuw.</string>
+    <string name="domain_verify_pending_generic">Sommige records zijn nog niet zichtbaar. Wacht een paar minuten en verifieer opnieuw.</string>
+    <string name="domain_verify_rate_limited">Je hebt de verificatielimiet voor dit domein bereikt. Probeer het later opnieuw.</string>
+    <plurals name="domain_verify_rate_limited_minutes">
+        <item quantity="one">Je hebt de verificatielimiet voor dit domein bereikt. Probeer het over %1$d minuut opnieuw.</item>
+        <item quantity="other">Je hebt de verificatielimiet voor dit domein bereikt. Probeer het over %1$d minuten opnieuw.</item>
+    </plurals>
     <string name="create_alias_dialog_title">Alias aanmaken</string>
     <string name="create_alias_username_label">Gebruikersnaam</string>
     <string name="create_alias_generate_random">Willekeurig genereren</string>

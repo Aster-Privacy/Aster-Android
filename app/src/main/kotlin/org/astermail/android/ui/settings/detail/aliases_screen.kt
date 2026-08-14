@@ -79,6 +79,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import org.astermail.android.settings.AliasDetailState
 import org.astermail.android.ui.common.show_copied_toast
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -154,6 +155,7 @@ fun AliasesScreen(
     var expanded_domain_id by remember { mutableStateOf<String?>(null) }
     var domain_dns by remember { mutableStateOf<Map<String, List<DnsRecord>>>(emptyMap()) }
     var verifying_domain_id by remember { mutableStateOf<String?>(null) }
+    var domain_verify_results by remember { mutableStateOf<Map<String, SettingsViewModel.DomainVerifyOutcome>>(emptyMap()) }
 
     val purchase_vm: DomainPurchaseViewModel = hiltViewModel()
     val purchase_state by purchase_vm.state.collectAsStateWithLifecycle()
@@ -270,9 +272,11 @@ fun AliasesScreen(
                         expanded_domain_id = expanded_domain_id,
                         domain_dns = domain_dns,
                         verifying_domain_id = verifying_domain_id,
+                        verify_results = domain_verify_results,
                         on_expanded_change = { expanded_domain_id = it },
                         on_dns_loaded = { id, records -> domain_dns = domain_dns + (id to records) },
                         on_verifying_change = { verifying_domain_id = it },
+                        on_verify_result = { id, outcome -> domain_verify_results = domain_verify_results + (id to outcome) },
                         on_show_add = { show_add_domain = true },
                         catch_all_locked = catch_all_locked,
                     )
@@ -324,9 +328,19 @@ fun AliasesScreen(
     if (show_add_domain) {
         add_domain_dialog(
             on_dismiss = { show_add_domain = false },
-            on_add = { domain_name, token ->
-                show_add_domain = false
-                vm.add_domain_now(domain_name, token) {}
+            on_add = { domain_name, token, on_result ->
+                vm.add_domain_now(domain_name, token) { domain, error ->
+                    on_result(error)
+                    if (domain != null) {
+                        show_add_domain = false
+                        selected_tab = 1
+                        expanded_domain_id = domain.id
+                        scope.launch {
+                            val records = vm.get_dns_records_now(domain.id)
+                            if (records.isNotEmpty()) domain_dns = domain_dns + (domain.id to records)
+                        }
+                    }
+                }
             },
         )
     }
@@ -1140,9 +1154,11 @@ private fun domains_tab(
     expanded_domain_id: String?,
     domain_dns: Map<String, List<DnsRecord>>,
     verifying_domain_id: String?,
+    verify_results: Map<String, SettingsViewModel.DomainVerifyOutcome>,
     on_expanded_change: (String?) -> Unit,
     on_dns_loaded: (String, List<DnsRecord>) -> Unit,
     on_verifying_change: (String?) -> Unit,
+    on_verify_result: (String, SettingsViewModel.DomainVerifyOutcome) -> Unit,
     on_show_add: () -> Unit,
     catch_all_locked: Boolean = false,
 ) {
@@ -1154,7 +1170,7 @@ private fun domains_tab(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = stringResource(R.string.alias_domains_count, state.domains.size),
+            text = pluralStringResource(R.plurals.domains_count_plural, state.domains.size, state.domains.size),
             color = colors.text_tertiary,
             fontSize = 13.sp,
         )
@@ -1198,11 +1214,18 @@ private fun domains_tab(
                 },
                 on_toggle_catch_all = { vm.toggle_domain_catch_all(domain.id) },
                 catch_all_locked = catch_all_locked,
+                verify_message = verify_results[domain.id]?.message,
+                verify_failed = verify_results[domain.id]?.verified == false,
                 on_verify = {
                     on_verifying_change(domain.id)
                     scope.launch {
                         try {
-                            vm.trigger_domain_verification_now(domain.id)
+                            val outcome = vm.trigger_domain_verification_now(domain.id)
+                            on_verify_result(domain.id, outcome)
+                            if (!outcome.rate_limited) {
+                                val records = vm.get_dns_records_now(domain.id)
+                                if (records.isNotEmpty()) on_dns_loaded(domain.id, records)
+                            }
                         } finally {
                             on_verifying_change(null)
                         }
@@ -2052,6 +2075,8 @@ private fun domain_card(
     is_expanded: Boolean,
     dns_records: List<DnsRecord>,
     is_verifying: Boolean,
+    verify_message: String?,
+    verify_failed: Boolean,
     on_expand: () -> Unit,
     on_toggle_catch_all: () -> Unit,
     on_verify: () -> Unit,
@@ -2059,6 +2084,7 @@ private fun domain_card(
     catch_all_locked: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
+    val context = LocalContext.current
     val is_active = domain.txt_verified && domain.mx_verified && domain.spf_verified && domain.dkim_verified
     AsterCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(AsterSpacing.lg)) {
@@ -2107,13 +2133,38 @@ private fun domain_card(
 
                 v_gap(AsterSpacing.md)
                 Text(stringResource(R.string.domain_dns_records), color = colors.text_secondary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                v_gap(4.dp)
+                Text(
+                    text = stringResource(R.string.domain_dns_instructions),
+                    color = colors.text_tertiary,
+                    fontSize = 12.sp,
+                )
                 v_gap(AsterSpacing.sm)
 
-                dns_record_row("TXT", domain.txt_verified)
-                dns_record_row("MX", domain.mx_verified)
-                dns_record_row("SPF", domain.spf_verified)
-                dns_record_row("DKIM", domain.dkim_verified)
-                dns_record_row("DMARC", domain.dmarc_configured)
+                if (dns_records.isEmpty()) {
+                    dns_record_row("TXT", domain.txt_verified)
+                    dns_record_row("MX", domain.mx_verified)
+                    dns_record_row("SPF", domain.spf_verified)
+                    dns_record_row("DKIM", domain.dkim_verified)
+                    dns_record_row("DMARC", domain.dmarc_configured)
+                } else {
+                    dns_records.forEachIndexed { index, record ->
+                        if (index > 0) v_gap(AsterSpacing.sm)
+                        dns_record_detail(
+                            record = record,
+                            on_copy = { label, value -> copy_dns_value(context, label, value) },
+                        )
+                    }
+                }
+
+                if (!verify_message.isNullOrBlank()) {
+                    v_gap(AsterSpacing.md)
+                    Text(
+                        text = verify_message,
+                        color = if (verify_failed) colors.warning else colors.success,
+                        fontSize = 12.sp,
+                    )
+                }
 
                 v_gap(AsterSpacing.md)
                 AsterSecondaryButton(
@@ -2123,6 +2174,95 @@ private fun domain_card(
                 )
             }
         }
+    }
+}
+
+private fun copy_dns_value(context: Context, label: String, value: String) {
+    val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    cm.setPrimaryClip(ClipData.newPlainText(label, value))
+    android.widget.Toast.makeText(
+        context,
+        context.getString(R.string.copied_to_clipboard),
+        android.widget.Toast.LENGTH_SHORT,
+    ).show()
+}
+
+@Composable
+private fun dns_record_detail(record: DnsRecord, on_copy: (String, String) -> Unit) {
+    val colors = AsterMaterial.colors
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(colors.bg_secondary, RoundedCornerShape(10.dp))
+            .padding(AsterSpacing.sm),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = if (record.verified) TablerIcons.Check else TablerIcons.Clock,
+                contentDescription = null,
+                tint = if (record.verified) colors.success else colors.text_muted,
+                modifier = Modifier.size(16.dp),
+            )
+            Spacer(Modifier.width(AsterSpacing.sm))
+            Text(
+                text = record.type.uppercase(),
+                color = colors.text_primary,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(Modifier.width(AsterSpacing.sm))
+            Text(
+                text = if (record.verified) {
+                    stringResource(R.string.domain_record_found)
+                } else if (record.required) {
+                    stringResource(R.string.domain_record_required)
+                } else {
+                    stringResource(R.string.domain_record_recommended)
+                },
+                color = if (record.verified) colors.success else colors.text_tertiary,
+                fontSize = 11.sp,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        v_gap(4.dp)
+        dns_record_field(
+            label = stringResource(R.string.domain_record_host),
+            value = record.name,
+            on_copy = { on_copy(record.type, record.name) },
+        )
+        dns_record_field(
+            label = stringResource(R.string.domain_record_value),
+            value = if (record.priority != null) "${record.priority} ${record.value}" else record.value,
+            on_copy = { on_copy(record.type, record.value) },
+        )
+    }
+}
+
+@Composable
+private fun dns_record_field(label: String, value: String, on_copy: () -> Unit) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Text(
+            text = label,
+            color = colors.text_tertiary,
+            fontSize = 11.sp,
+            modifier = Modifier.width(48.dp),
+        )
+        Text(
+            text = value,
+            color = colors.text_secondary,
+            fontSize = 12.sp,
+            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+            modifier = Modifier.weight(1f),
+        )
+        AsterIconButton(
+            icon = TablerIcons.Copy,
+            content_description = stringResource(R.string.copy_to_clipboard),
+            onClick = on_copy,
+        )
     }
 }
 
@@ -2380,25 +2520,44 @@ private fun create_alias_dialog(
 }
 
 @Composable
-private fun add_domain_dialog(on_dismiss: () -> Unit, on_add: (String, String) -> Unit) {
+private fun add_domain_dialog(
+    on_dismiss: () -> Unit,
+    on_add: (String, String, (String?) -> Unit) -> Unit,
+) {
     var domain_name by remember { mutableStateOf("") }
     var captcha_token by remember { mutableStateOf<String?>(null) }
     var captcha_reset by remember { mutableStateOf(0) }
+    var submitting by remember { mutableStateOf(false) }
+    var error_message by remember { mutableStateOf<String?>(null) }
     val colors = AsterMaterial.colors
+    val name_valid = remember(domain_name) { is_valid_domain_name(domain_name) }
 
     org.astermail.android.design.components.AsterDialog(
-        on_dismiss = on_dismiss,
+        on_dismiss = { if (!submitting) on_dismiss() },
         title = stringResource(R.string.add_custom_domain_dialog_title),
         body = {
             Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.md)) {
                 AsterTextField(
                     value = domain_name,
-                    onValueChange = { domain_name = it.trim().lowercase() },
+                    onValueChange = {
+                        domain_name = it.trim().lowercase()
+                        error_message = null
+                    },
                     label = stringResource(R.string.domain_name_label),
                     placeholder = stringResource(R.string.domain_placeholder),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
+                if (domain_name.isNotBlank() && !name_valid) {
+                    Text(
+                        text = stringResource(R.string.domain_add_invalid),
+                        color = colors.warning,
+                        fontSize = 12.sp,
+                    )
+                }
+                error_message?.let { message ->
+                    Text(text = message, color = colors.danger, fontSize = 12.sp)
+                }
                 TurnstileWidget(
                     on_token = { token -> captcha_token = token },
                     on_error = { captcha_token = null; captcha_reset++ },
@@ -2411,14 +2570,44 @@ private fun add_domain_dialog(on_dismiss: () -> Unit, on_add: (String, String) -
         footer = {
             org.astermail.android.design.components.AsterDialogOutlineButton(
                 label = stringResource(R.string.cancel),
-                onClick = on_dismiss,
+                onClick = { if (!submitting) on_dismiss() },
             )
             org.astermail.android.design.components.AsterDialogPrimaryButton(
-                label = stringResource(R.string.alias_action_add),
-                enabled = domain_name.isNotBlank() && captcha_token != null,
-                onClick = { val t = captcha_token; if (domain_name.isNotBlank() && t != null) on_add(domain_name, t) },
+                label = if (submitting) stringResource(R.string.domain_adding) else stringResource(R.string.alias_action_add),
+                enabled = name_valid && captcha_token != null && !submitting,
+                onClick = {
+                    val token = captcha_token
+                    if (name_valid && token != null && !submitting) {
+                        submitting = true
+                        error_message = null
+                        on_add(domain_name, token) { failure ->
+                            submitting = false
+                            if (failure != null) {
+                                error_message = failure
+                                captcha_token = null
+                                captcha_reset++
+                            }
+                        }
+                    }
+                },
             )
         },
     )
+}
+
+internal fun is_valid_domain_name(value: String): Boolean {
+    val name = value.trim().lowercase().removeSuffix(".")
+    if (name.length !in 4..253) return false
+    val labels = name.split('.')
+    if (labels.size < 2) return false
+    val tld = labels.last()
+    if (tld.length < 2 || !tld.all { it.isLetter() }) return false
+    return labels.all { label ->
+        label.isNotEmpty() &&
+            label.length <= 63 &&
+            !label.startsWith('-') &&
+            !label.endsWith('-') &&
+            label.all { it.isLetterOrDigit() || it == '-' }
+    }
 }
 

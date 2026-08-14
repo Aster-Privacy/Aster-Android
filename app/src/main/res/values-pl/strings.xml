@@ -2174,7 +2174,6 @@
     <string name="alias_status_disabled_badge">Wyłączony</string>
     <string name="alias_status_setup_required">Wymaga konfiguracji</string>
     <string name="alias_delete_confirm_message">Usunąć %1$s? Tej operacji nie można cofnąć.</string>
-    <string name="alias_domains_count">%1$d domen</string>
     <string name="alias_action_add">Dodaj</string>
     <string name="alias_directory_key_label">Klucz katalogu</string>
     <string name="alias_directory_example">anything%1$s%2$s@astermail.org</string>
@@ -2211,6 +2210,26 @@
     <string name="domain_delete_domain">Usuń domenę</string>
     <string name="domain_dns_records">Rekordy DNS</string>
     <string name="domain_verifying">Sprawdzanie...</string>
+    <string name="domain_adding">Dodawanie...</string>
+    <string name="domain_dns_instructions">Dodaj te rekordy u swojego dostawcy DNS, a następnie zweryfikuj. Nowe rekordy zwykle zaczynają działać w ciągu kilku minut.</string>
+    <string name="domain_record_host">Host</string>
+    <string name="domain_record_value">Wartość</string>
+    <string name="domain_record_found">Znaleziono</string>
+    <string name="domain_record_required">Wymagane</string>
+    <string name="domain_record_recommended">Zalecane</string>
+    <string name="domain_add_invalid">Wpisz nazwę domeny, na przykład example.com.</string>
+    <string name="domain_add_conflict">Ta domena jest już zarejestrowana. Sprawdź swoją listę domen lub skontaktuj się z pomocą techniczną, jeśli korzysta z niej inne konto.</string>
+    <string name="domain_add_plan_limit">Twój plan osiągnął limit domen własnych. Przejdź na wyższy plan, aby dodać kolejną domenę.</string>
+    <string name="domain_verify_success">Twoja domena jest zweryfikowana i gotowa do użycia.</string>
+    <string name="domain_verify_pending">Oczekiwanie na %1$s. Sprawdź te rekordy u swojego dostawcy DNS, a następnie zweryfikuj ponownie.</string>
+    <string name="domain_verify_pending_generic">Niektóre rekordy nie są jeszcze widoczne. Odczekaj kilka minut i zweryfikuj ponownie.</string>
+    <string name="domain_verify_rate_limited">Osiągnięto limit weryfikacji tej domeny. Spróbuj ponownie później.</string>
+    <plurals name="domain_verify_rate_limited_minutes">
+        <item quantity="one">Osiągnięto limit weryfikacji tej domeny. Spróbuj ponownie za %1$d minutę.</item>
+        <item quantity="few">Osiągnięto limit weryfikacji tej domeny. Spróbuj ponownie za %1$d minuty.</item>
+        <item quantity="many">Osiągnięto limit weryfikacji tej domeny. Spróbuj ponownie za %1$d minut.</item>
+        <item quantity="other">Osiągnięto limit weryfikacji tej domeny. Spróbuj ponownie za %1$d minuty.</item>
+    </plurals>
     <string name="create_alias_dialog_title">Utwórz alias</string>
     <string name="create_alias_username_label">Nazwa użytkownika</string>
     <string name="create_alias_generate_random">Wygeneruj losowo</string>

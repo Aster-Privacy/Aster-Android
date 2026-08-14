@@ -2174,7 +2174,6 @@
     <string name="alias_status_disabled_badge">Отключён</string>
     <string name="alias_status_setup_required">Нужна настройка</string>
     <string name="alias_delete_confirm_message">Удалить %1$s? Отменить это будет нельзя.</string>
-    <string name="alias_domains_count">%1$d доменов</string>
     <string name="alias_action_add">Добавить</string>
     <string name="alias_directory_key_label">Ключ каталога</string>
     <string name="alias_directory_example">anything%1$s%2$s@astermail.org</string>
@@ -2211,6 +2210,26 @@
     <string name="domain_delete_domain">Удалить домен</string>
     <string name="domain_dns_records">Записи DNS</string>
     <string name="domain_verifying">Проверяем...</string>
+    <string name="domain_adding">Добавление...</string>
+    <string name="domain_dns_instructions">Добавьте эти записи у своего DNS-провайдера, затем запустите проверку. Новые записи обычно вступают в силу за несколько минут.</string>
+    <string name="domain_record_host">Хост</string>
+    <string name="domain_record_value">Значение</string>
+    <string name="domain_record_found">Найдено</string>
+    <string name="domain_record_required">Обязательно</string>
+    <string name="domain_record_recommended">Рекомендуется</string>
+    <string name="domain_add_invalid">Введите доменное имя, например example.com.</string>
+    <string name="domain_add_conflict">Этот домен уже зарегистрирован. Проверьте список своих доменов или обратитесь в службу поддержки, если его использует другая учётная запись.</string>
+    <string name="domain_add_plan_limit">В вашем тарифе достигнут лимит собственных доменов. Перейдите на более высокий тариф, чтобы добавить ещё один домен.</string>
+    <string name="domain_verify_success">Ваш домен проверен и готов к работе.</string>
+    <string name="domain_verify_pending">Ожидание %1$s. Проверьте эти записи у своего DNS-провайдера, затем повторите проверку.</string>
+    <string name="domain_verify_pending_generic">Некоторые записи ещё не видны. Подождите несколько минут и повторите проверку.</string>
+    <string name="domain_verify_rate_limited">Вы достигли лимита проверок для этого домена. Повторите попытку позже.</string>
+    <plurals name="domain_verify_rate_limited_minutes">
+        <item quantity="one">Вы достигли лимита проверок для этого домена. Повторите попытку через %1$d минуту.</item>
+        <item quantity="few">Вы достигли лимита проверок для этого домена. Повторите попытку через %1$d минуты.</item>
+        <item quantity="many">Вы достигли лимита проверок для этого домена. Повторите попытку через %1$d минут.</item>
+        <item quantity="other">Вы достигли лимита проверок для этого домена. Повторите попытку через %1$d минуты.</item>
+    </plurals>
     <string name="create_alias_dialog_title">Создать псевдоним</string>
     <string name="create_alias_username_label">Имя пользователя</string>
     <string name="create_alias_generate_random">Сгенерировать случайно</string>

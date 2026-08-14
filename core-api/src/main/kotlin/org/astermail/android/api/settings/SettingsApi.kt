@@ -467,6 +467,21 @@ data class DnsRecord(
     @SerialName("host") val name: String,
     val value: String,
     @SerialName("is_verified") val verified: Boolean = false,
+    val purpose: String = "",
+    val priority: Int? = null,
+    val required: Boolean = false,
+)
+
+@Serializable
+data class DomainVerificationResult(
+    val success: Boolean = false,
+    val txt_verified: Boolean = false,
+    val mx_verified: Boolean = false,
+    val spf_verified: Boolean = false,
+    val dkim_verified: Boolean = false,
+    val dmarc_configured: Boolean = false,
+    val status: String = "",
+    val message: String = "",
 )
 
 @Serializable
@@ -597,7 +612,7 @@ interface SettingsApi {
     suspend fun list_domains(): DomainListResponse
     suspend fun add_domain(request: AddDomainRequest): CustomDomain
     suspend fun delete_domain(domain_id: String)
-    suspend fun trigger_domain_verification(domain_id: String): CustomDomain
+    suspend fun trigger_domain_verification(domain_id: String): DomainVerificationResult
     suspend fun get_dns_records(domain_id: String): DnsRecordsResponse
     suspend fun update_domain(domain_id: String, request: UpdateDomainRequest): CustomDomain
     suspend fun get_storage_overview(): StorageOverview
@@ -961,7 +976,7 @@ class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
         }
     }
 
-    override suspend fun trigger_domain_verification(domain_id: String): CustomDomain {
+    override suspend fun trigger_domain_verification(domain_id: String): DomainVerificationResult {
         val response = client.http.post("${client.base_url}/api/addresses/v1/domains/$domain_id/verify") {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }

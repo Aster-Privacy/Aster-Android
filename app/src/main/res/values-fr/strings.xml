@@ -1562,7 +1562,6 @@
     <string name="alias_status_disabled_badge">Désactivé</string>
     <string name="alias_status_setup_required">Configuration requise</string>
     <string name="alias_delete_confirm_message">Supprimer %1$s ? Cette action est irréversible.</string>
-    <string name="alias_domains_count">%1$d domaines</string>
     <string name="alias_action_add">Ajouter</string>
     <string name="alias_directory_key_label">Clé du répertoire</string>
     <string name="alias_directory_example">anything%1$s%2$s@astermail.org</string>
@@ -1599,6 +1598,24 @@
     <string name="domain_delete_domain">Supprimer le domaine</string>
     <string name="domain_dns_records">Enregistrements DNS</string>
     <string name="domain_verifying">Vérification...</string>
+    <string name="domain_adding">Ajout en cours...</string>
+    <string name="domain_dns_instructions">Ajoutez ces enregistrements chez votre fournisseur DNS, puis lancez la vérification. Les nouveaux enregistrements prennent effet en quelques minutes.</string>
+    <string name="domain_record_host">Hôte</string>
+    <string name="domain_record_value">Valeur</string>
+    <string name="domain_record_found">Trouvé</string>
+    <string name="domain_record_required">Requis</string>
+    <string name="domain_record_recommended">Recommandé</string>
+    <string name="domain_add_invalid">Saisissez un nom de domaine comme example.com.</string>
+    <string name="domain_add_conflict">Ce domaine est déjà enregistré. Consultez votre liste de domaines ou contactez l\'assistance si un autre compte l\'utilise.</string>
+    <string name="domain_add_plan_limit">Votre offre a atteint sa limite de domaines personnalisés. Passez à une offre supérieure pour ajouter un autre domaine.</string>
+    <string name="domain_verify_success">Votre domaine est vérifié et prêt à l\'emploi.</string>
+    <string name="domain_verify_pending">En attente de %1$s. Vérifiez ces enregistrements chez votre fournisseur DNS, puis relancez la vérification.</string>
+    <string name="domain_verify_pending_generic">Certains enregistrements ne sont pas encore visibles. Patientez quelques minutes, puis relancez la vérification.</string>
+    <string name="domain_verify_rate_limited">Vous avez atteint la limite de vérifications pour ce domaine. Réessayez plus tard.</string>
+    <plurals name="domain_verify_rate_limited_minutes">
+        <item quantity="one">Vous avez atteint la limite de vérifications pour ce domaine. Réessayez dans %1$d minute.</item>
+        <item quantity="other">Vous avez atteint la limite de vérifications pour ce domaine. Réessayez dans %1$d minutes.</item>
+    </plurals>
     <string name="create_alias_dialog_title">Créer un alias</string>
     <string name="create_alias_username_label">Nom d\'utilisateur</string>
     <string name="create_alias_generate_random">Générer aléatoirement</string>

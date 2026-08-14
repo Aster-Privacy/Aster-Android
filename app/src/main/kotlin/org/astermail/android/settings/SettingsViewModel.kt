@@ -2158,13 +2158,81 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    suspend fun trigger_domain_verification_now(domain_id: String) {
-        try {
-            val updated = settings_api.trigger_domain_verification(domain_id)
-            _state.update { s -> s.copy(domains = s.domains.map { if (it.id == domain_id) updated else it }) }
-        } catch (_: Throwable) {
-            _state.value = _state.value.copy(action_result = context.getString(R.string.something_went_wrong))
+    data class DomainVerifyOutcome(
+        val verified: Boolean,
+        val message: String,
+        val rate_limited: Boolean = false,
+    )
+
+    suspend fun trigger_domain_verification_now(domain_id: String): DomainVerifyOutcome {
+        return try {
+            val result = settings_api.trigger_domain_verification(domain_id)
+            _state.update { s ->
+                s.copy(
+                    domains = s.domains.map {
+                        if (it.id == domain_id) {
+                            it.copy(
+                                status = result.status.ifBlank { it.status },
+                                txt_verified = result.txt_verified,
+                                mx_verified = result.mx_verified,
+                                spf_verified = result.spf_verified,
+                                dkim_verified = result.dkim_verified,
+                                dmarc_configured = result.dmarc_configured,
+                            )
+                        } else {
+                            it
+                        }
+                    },
+                )
+            }
+            if (result.success) {
+                DomainVerifyOutcome(true, context.getString(R.string.domain_verify_success))
+            } else {
+                DomainVerifyOutcome(false, pending_records_message(result))
+            }
+        } catch (t: Throwable) {
+            if (t is ApiError.RateLimited) {
+                DomainVerifyOutcome(false, rate_limit_message(t), rate_limited = true)
+            } else {
+                DomainVerifyOutcome(false, user_facing_error(t))
+            }
         }
+    }
+
+    private fun pending_records_message(
+        result: org.astermail.android.api.settings.DomainVerificationResult,
+    ): String {
+        val pending = buildList {
+            if (!result.txt_verified) add("TXT")
+            if (!result.mx_verified) add("MX")
+            if (!result.spf_verified) add("SPF")
+            if (!result.dkim_verified) add("DKIM")
+        }
+        if (pending.isEmpty()) return context.getString(R.string.domain_verify_pending_generic)
+        return context.getString(R.string.domain_verify_pending, pending.joinToString(", "))
+    }
+
+    private fun rate_limit_message(error: ApiError.RateLimited): String {
+        val minutes = minutes_until(error.resets_at)
+        return if (minutes != null && minutes > 0) {
+            context.resources.getQuantityString(
+                R.plurals.domain_verify_rate_limited_minutes,
+                minutes,
+                minutes,
+            )
+        } else {
+            context.getString(R.string.domain_verify_rate_limited)
+        }
+    }
+
+    private fun minutes_until(timestamp: String?): Int? {
+        if (timestamp.isNullOrBlank()) return null
+        val millis = runCatching { java.time.OffsetDateTime.parse(timestamp).toInstant().toEpochMilli() }.getOrNull()
+            ?: runCatching { java.time.Instant.parse(timestamp).toEpochMilli() }.getOrNull()
+            ?: return null
+        val remaining = millis - System.currentTimeMillis()
+        if (remaining <= 0) return null
+        return ((remaining + 59_999) / 60_000).toInt()
     }
 
     sealed class AliasAvailability {
@@ -2575,33 +2643,29 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun add_domain_now(domain_name: String, captcha_token: String? = null, on_done: (Boolean) -> Unit) {
+    fun add_domain_now(
+        domain_name: String,
+        captcha_token: String? = null,
+        on_done: (CustomDomain?, String?) -> Unit,
+    ) {
         viewModelScope.launch {
             try {
                 val domain = settings_api.add_domain(AddDomainRequest(domain_name = domain_name, captcha_token = captcha_token))
                 _state.update { s -> s.copy(domains = s.domains + domain) }
-                on_done(true)
-            } catch (_: Throwable) {
-                _state.value = _state.value.copy(action_result = context.getString(R.string.something_went_wrong))
-                on_done(false)
+                on_done(domain, null)
+            } catch (t: Throwable) {
+                on_done(null, add_domain_error(t))
             }
         }
     }
 
-    fun trigger_domain_verification(domain_id: String, on_result: (CustomDomain) -> Unit) {
-        viewModelScope.launch {
-            try {
-                val updated = settings_api.trigger_domain_verification(domain_id)
-                _state.update { s ->
-                    s.copy(domains = s.domains.map { if (it.id == domain_id) updated else it })
-                }
-                on_result(updated)
-            } catch (t: Throwable) {
-                _state.value = _state.value.copy(
-                    action_result = user_facing_error(t),
-                )
-            }
-        }
+    private fun add_domain_error(t: Throwable): String = when (t) {
+        is ApiError.Conflict -> context.getString(R.string.domain_add_conflict)
+        is ApiError.ValidationError -> t.messages.firstOrNull { it.isNotBlank() }
+            ?: context.getString(R.string.domain_add_invalid)
+        is ApiError.PlanLimitExceeded -> t.detail.ifBlank { context.getString(R.string.domain_add_plan_limit) }
+        is ApiError.RateLimited -> rate_limit_message(t)
+        else -> user_facing_error(t)
     }
 
     fun load_storage(force: Boolean = false) {

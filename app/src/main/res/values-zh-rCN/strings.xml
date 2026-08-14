@@ -2165,7 +2165,6 @@
     <string name="alias_status_disabled_badge">已停用</string>
     <string name="alias_status_setup_required">需要设置</string>
     <string name="alias_delete_confirm_message">要删除 %1$s 吗？此操作无法撤销。</string>
-    <string name="alias_domains_count">%1$d 个域名</string>
     <string name="alias_action_add">添加</string>
     <string name="alias_directory_key_label">目录密钥</string>
     <string name="alias_directory_example">anything%1$s%2$s@astermail.org</string>
@@ -2202,6 +2201,23 @@
     <string name="domain_delete_domain">删除域名</string>
     <string name="domain_dns_records">DNS 记录</string>
     <string name="domain_verifying">正在验证...</string>
+    <string name="domain_adding">正在添加...</string>
+    <string name="domain_dns_instructions">在你的 DNS 服务商处添加这些记录，然后进行验证。新记录通常几分钟后生效。</string>
+    <string name="domain_record_host">主机</string>
+    <string name="domain_record_value">值</string>
+    <string name="domain_record_found">已找到</string>
+    <string name="domain_record_required">必需</string>
+    <string name="domain_record_recommended">建议</string>
+    <string name="domain_add_invalid">请输入域名，例如 example.com。</string>
+    <string name="domain_add_conflict">该域名已注册。请查看你的域名列表；如果被其他账户使用，请联系支持团队。</string>
+    <string name="domain_add_plan_limit">你的套餐已达到自定义域名上限。升级套餐即可添加更多域名。</string>
+    <string name="domain_verify_success">你的域名已验证，可以使用了。</string>
+    <string name="domain_verify_pending">正在等待 %1$s。请在 DNS 服务商处检查这些记录，然后重新验证。</string>
+    <string name="domain_verify_pending_generic">部分记录尚未生效。请等待几分钟后重新验证。</string>
+    <string name="domain_verify_rate_limited">你已达到该域名的验证次数上限。请稍后重试。</string>
+    <plurals name="domain_verify_rate_limited_minutes">
+        <item quantity="other">你已达到该域名的验证次数上限。请在 %1$d 分钟后重试。</item>
+    </plurals>
     <string name="create_alias_dialog_title">创建别名</string>
     <string name="create_alias_username_label">用户名</string>
     <string name="create_alias_generate_random">随机生成</string>

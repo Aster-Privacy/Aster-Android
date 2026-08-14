@@ -2168,7 +2168,6 @@
     <string name="alias_status_disabled_badge">Kapalı</string>
     <string name="alias_status_setup_required">Kurulum gerekli</string>
     <string name="alias_delete_confirm_message">%1$s silinsin mi? Bu geri alınamaz.</string>
-    <string name="alias_domains_count">%1$d alan adı</string>
     <string name="alias_action_add">Ekle</string>
     <string name="alias_directory_key_label">Dizin anahtarı</string>
     <string name="alias_directory_example">anything%1$s%2$s@astermail.org</string>
@@ -2205,6 +2204,24 @@
     <string name="domain_delete_domain">Alan adını sil</string>
     <string name="domain_dns_records">DNS kayıtları</string>
     <string name="domain_verifying">Doğrulanıyor...</string>
+    <string name="domain_adding">Ekleniyor...</string>
+    <string name="domain_dns_instructions">Bu kayıtları DNS sağlayıcınıza ekleyin, ardından doğrulayın. Yeni kayıtlar genellikle birkaç dakika içinde etkinleşir.</string>
+    <string name="domain_record_host">Ana makine</string>
+    <string name="domain_record_value">Değer</string>
+    <string name="domain_record_found">Bulundu</string>
+    <string name="domain_record_required">Gerekli</string>
+    <string name="domain_record_recommended">Önerilir</string>
+    <string name="domain_add_invalid">example.com gibi bir alan adı girin.</string>
+    <string name="domain_add_conflict">Bu alan adı zaten kayıtlı. Alan adı listenizi kontrol edin veya başka bir hesap kullanıyorsa destek ekibiyle iletişime geçin.</string>
+    <string name="domain_add_plan_limit">Planınız özel alan adı sınırına ulaştı. Başka bir alan adı eklemek için planınızı yükseltin.</string>
+    <string name="domain_verify_success">Alan adınız doğrulandı ve kullanıma hazır.</string>
+    <string name="domain_verify_pending">%1$s bekleniyor. Bu kayıtları DNS sağlayıcınızda kontrol edin, ardından yeniden doğrulayın.</string>
+    <string name="domain_verify_pending_generic">Bazı kayıtlar henüz görünmüyor. Birkaç dakika bekleyin, ardından yeniden doğrulayın.</string>
+    <string name="domain_verify_rate_limited">Bu alan adı için doğrulama sınırına ulaştınız. Daha sonra yeniden deneyin.</string>
+    <plurals name="domain_verify_rate_limited_minutes">
+        <item quantity="one">Bu alan adı için doğrulama sınırına ulaştınız. %1$d dakika sonra yeniden deneyin.</item>
+        <item quantity="other">Bu alan adı için doğrulama sınırına ulaştınız. %1$d dakika sonra yeniden deneyin.</item>
+    </plurals>
     <string name="create_alias_dialog_title">Takma ad oluştur</string>
     <string name="create_alias_username_label">Kullanıcı adı</string>
     <string name="create_alias_generate_random">Rastgele üret</string>

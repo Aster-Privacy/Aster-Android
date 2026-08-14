@@ -2165,7 +2165,6 @@
     <string name="alias_status_disabled_badge">중지됨</string>
     <string name="alias_status_setup_required">설정 필요</string>
     <string name="alias_delete_confirm_message">%1$s을(를) 삭제할까요? 되돌릴 수 없습니다.</string>
-    <string name="alias_domains_count">도메인 %1$d개</string>
     <string name="alias_action_add">추가</string>
     <string name="alias_directory_key_label">디렉터리 키</string>
     <string name="alias_directory_example">anything%1$s%2$s@astermail.org</string>
@@ -2202,6 +2201,23 @@
     <string name="domain_delete_domain">도메인 삭제</string>
     <string name="domain_dns_records">DNS 레코드</string>
     <string name="domain_verifying">확인 중...</string>
+    <string name="domain_adding">추가하는 중...</string>
+    <string name="domain_dns_instructions">DNS 공급업체에서 이 레코드를 추가한 다음 확인하세요. 새 레코드는 보통 몇 분 안에 적용됩니다.</string>
+    <string name="domain_record_host">호스트</string>
+    <string name="domain_record_value">값</string>
+    <string name="domain_record_found">확인됨</string>
+    <string name="domain_record_required">필수</string>
+    <string name="domain_record_recommended">권장</string>
+    <string name="domain_add_invalid">example.com과 같은 도메인 이름을 입력하세요.</string>
+    <string name="domain_add_conflict">이 도메인은 이미 등록되어 있습니다. 도메인 목록을 확인하거나, 다른 계정에서 사용 중이라면 고객 지원에 문의하세요.</string>
+    <string name="domain_add_plan_limit">현재 요금제의 사용자 지정 도메인 한도에 도달했습니다. 도메인을 더 추가하려면 요금제를 업그레이드하세요.</string>
+    <string name="domain_verify_success">도메인이 확인되어 사용할 준비가 되었습니다.</string>
+    <string name="domain_verify_pending">%1$s을(를) 기다리는 중입니다. DNS 공급업체에서 해당 레코드를 확인한 다음 다시 확인하세요.</string>
+    <string name="domain_verify_pending_generic">일부 레코드가 아직 표시되지 않습니다. 몇 분 기다린 다음 다시 확인하세요.</string>
+    <string name="domain_verify_rate_limited">이 도메인의 확인 횟수 한도에 도달했습니다. 나중에 다시 시도하세요.</string>
+    <plurals name="domain_verify_rate_limited_minutes">
+        <item quantity="other">이 도메인의 확인 횟수 한도에 도달했습니다. %1$d분 후에 다시 시도하세요.</item>
+    </plurals>
     <string name="create_alias_dialog_title">별칭 만들기</string>
     <string name="create_alias_username_label">사용자 이름</string>
     <string name="create_alias_generate_random">무작위로 만들기</string>

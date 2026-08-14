@@ -2168,7 +2168,6 @@
     <string name="alias_status_disabled_badge">Desativado</string>
     <string name="alias_status_setup_required">Precisa de configuração</string>
     <string name="alias_delete_confirm_message">Excluir %1$s? Isso não pode ser desfeito.</string>
-    <string name="alias_domains_count">%1$d domínios</string>
     <string name="alias_action_add">Adicionar</string>
     <string name="alias_directory_key_label">Chave do diretório</string>
     <string name="alias_directory_example">anything%1$s%2$s@astermail.org</string>
@@ -2205,6 +2204,24 @@
     <string name="domain_delete_domain">Excluir domínio</string>
     <string name="domain_dns_records">Registros DNS</string>
     <string name="domain_verifying">Verificando...</string>
+    <string name="domain_adding">A adicionar...</string>
+    <string name="domain_dns_instructions">Adicione estes registos no seu fornecedor de DNS e depois verifique. Os registos novos costumam demorar alguns minutos a ficar ativos.</string>
+    <string name="domain_record_host">Anfitrião</string>
+    <string name="domain_record_value">Valor</string>
+    <string name="domain_record_found">Encontrado</string>
+    <string name="domain_record_required">Obrigatório</string>
+    <string name="domain_record_recommended">Recomendado</string>
+    <string name="domain_add_invalid">Introduza um nome de domínio como example.com.</string>
+    <string name="domain_add_conflict">Este domínio já está registado. Consulte a sua lista de domínios ou contacte o suporte se outra conta o estiver a usar.</string>
+    <string name="domain_add_plan_limit">O seu plano atingiu o limite de domínios personalizados. Faça upgrade do plano para adicionar outro domínio.</string>
+    <string name="domain_verify_success">O seu domínio está verificado e pronto a usar.</string>
+    <string name="domain_verify_pending">A aguardar %1$s. Verifique esses registos no seu fornecedor de DNS e volte a verificar.</string>
+    <string name="domain_verify_pending_generic">Alguns registos ainda não estão visíveis. Aguarde alguns minutos e volte a verificar.</string>
+    <string name="domain_verify_rate_limited">Atingiu o limite de verificações deste domínio. Tente novamente mais tarde.</string>
+    <plurals name="domain_verify_rate_limited_minutes">
+        <item quantity="one">Atingiu o limite de verificações deste domínio. Tente novamente dentro de %1$d minuto.</item>
+        <item quantity="other">Atingiu o limite de verificações deste domínio. Tente novamente dentro de %1$d minutos.</item>
+    </plurals>
     <string name="create_alias_dialog_title">Criar alias</string>
     <string name="create_alias_username_label">Nome de usuário</string>
     <string name="create_alias_generate_random">Gerar aleatório</string>

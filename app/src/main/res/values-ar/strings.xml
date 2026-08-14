@@ -2180,7 +2180,6 @@
     <string name="alias_status_disabled_badge">معطّل</string>
     <string name="alias_status_setup_required">يحتاج إعدادًا</string>
     <string name="alias_delete_confirm_message">هل تريد حذف %1$s؟ لا يمكن التراجع عن هذا.</string>
-    <string name="alias_domains_count">%1$d نطاقات</string>
     <string name="alias_action_add">إضافة</string>
     <string name="alias_directory_key_label">مفتاح الدليل</string>
     <string name="alias_directory_example">anything%1$s%2$s@astermail.org</string>
@@ -2217,6 +2216,28 @@
     <string name="domain_delete_domain">حذف النطاق</string>
     <string name="domain_dns_records">سجلات DNS</string>
     <string name="domain_verifying">جارٍ التحقق...</string>
+    <string name="domain_adding">جارٍ الإضافة...</string>
+    <string name="domain_dns_instructions">أضف هذه السجلات لدى مزوّد DNS الخاص بك، ثم ابدأ التحقق. تستغرق السجلات الجديدة عادةً بضع دقائق حتى تصبح فعّالة.</string>
+    <string name="domain_record_host">المضيف</string>
+    <string name="domain_record_value">القيمة</string>
+    <string name="domain_record_found">تم العثور عليه</string>
+    <string name="domain_record_required">مطلوب</string>
+    <string name="domain_record_recommended">مُستحسن</string>
+    <string name="domain_add_invalid">أدخل اسم نطاق مثل example.com.</string>
+    <string name="domain_add_conflict">هذا النطاق مسجّل بالفعل. راجع قائمة نطاقاتك أو تواصل مع الدعم إذا كان حساب آخر يستخدمه.</string>
+    <string name="domain_add_plan_limit">وصلت خطتك إلى حد النطاقات المخصصة. قم بترقية خطتك لإضافة نطاق آخر.</string>
+    <string name="domain_verify_success">تم التحقق من نطاقك وهو جاهز للاستخدام.</string>
+    <string name="domain_verify_pending">في انتظار %1$s. تحقق من هذه السجلات لدى مزوّد DNS الخاص بك، ثم أعد التحقق.</string>
+    <string name="domain_verify_pending_generic">بعض السجلات غير ظاهرة بعد. انتظر بضع دقائق، ثم أعد التحقق.</string>
+    <string name="domain_verify_rate_limited">لقد وصلت إلى حد عمليات التحقق لهذا النطاق. حاول مرة أخرى لاحقًا.</string>
+    <plurals name="domain_verify_rate_limited_minutes">
+        <item quantity="zero">لقد وصلت إلى حد عمليات التحقق لهذا النطاق. حاول مرة أخرى خلال %1$d دقيقة.</item>
+        <item quantity="one">لقد وصلت إلى حد عمليات التحقق لهذا النطاق. حاول مرة أخرى خلال دقيقة واحدة.</item>
+        <item quantity="two">لقد وصلت إلى حد عمليات التحقق لهذا النطاق. حاول مرة أخرى خلال دقيقتين.</item>
+        <item quantity="few">لقد وصلت إلى حد عمليات التحقق لهذا النطاق. حاول مرة أخرى خلال %1$d دقائق.</item>
+        <item quantity="many">لقد وصلت إلى حد عمليات التحقق لهذا النطاق. حاول مرة أخرى خلال %1$d دقيقة.</item>
+        <item quantity="other">لقد وصلت إلى حد عمليات التحقق لهذا النطاق. حاول مرة أخرى خلال %1$d دقيقة.</item>
+    </plurals>
     <string name="create_alias_dialog_title">إنشاء اسم مستعار</string>
     <string name="create_alias_username_label">اسم المستخدم</string>
     <string name="create_alias_generate_random">توليد عشوائي</string>

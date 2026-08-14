@@ -75,7 +75,11 @@ sealed class ApiError(message: String) : Exception(message) {
     object NotFoundError : ApiError("not found")
     data class ServerError(val code: Int) : ApiError("server error $code")
     data class ValidationError(val messages: List<String>) : ApiError(messages.joinToString("; "))
-    object RateLimited : ApiError("rate limited")
+    data class Conflict(val detail: String) : ApiError(detail)
+    data class RateLimited(
+        val detail: String = "rate limited",
+        val resets_at: String? = null,
+    ) : ApiError(detail)
     data class UnknownError(val detail: String) : ApiError(detail)
 }
 
@@ -423,7 +427,11 @@ class ApiClient(
             422 -> ApiError.ValidationError(
                 parse_validation_messages(body).ifEmpty { listOf(detail.ifBlank { "unprocessable request" }) },
             )
-            429 -> ApiError.RateLimited
+            409 -> ApiError.Conflict(detail.ifBlank { "conflict" })
+            429 -> ApiError.RateLimited(
+                detail = detail.ifBlank { "rate limited" },
+                resets_at = parse_error_resets_at(body),
+            )
             in 500..599 -> ApiError.ServerError(code)
             else -> ApiError.UnknownError(body.ifBlank { "http $code" })
         }
@@ -452,6 +460,16 @@ class ApiClient(
         return try {
             val obj = json.parseToJsonElement(body) as? JsonObject ?: return null
             obj["code"]?.jsonPrimitive?.content
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    private fun parse_error_resets_at(body: String): String? {
+        if (body.isBlank()) return null
+        return try {
+            val obj = json.parseToJsonElement(body) as? JsonObject ?: return null
+            obj["resets_at"]?.jsonPrimitive?.content
         } catch (_: Throwable) {
             null
         }

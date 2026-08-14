@@ -2169,7 +2169,6 @@
     <string name="alias_status_disabled_badge">Deaktiviert</string>
     <string name="alias_status_setup_required">Einrichtung nötig</string>
     <string name="alias_delete_confirm_message">%1$s löschen? Das lässt sich nicht rückgängig machen.</string>
-    <string name="alias_domains_count">%1$d Domains</string>
     <string name="alias_action_add">Hinzufügen</string>
     <string name="alias_directory_key_label">Verzeichnisschlüssel</string>
     <string name="alias_directory_example">anything%1$s%2$s@astermail.org</string>
@@ -2206,6 +2205,24 @@
     <string name="domain_delete_domain">Domain löschen</string>
     <string name="domain_dns_records">DNS-Einträge</string>
     <string name="domain_verifying">Wird geprüft...</string>
+    <string name="domain_adding">Wird hinzugefügt ...</string>
+    <string name="domain_dns_instructions">Fügen Sie diese Einträge bei Ihrem DNS-Anbieter hinzu und starten Sie dann die Überprüfung. Neue Einträge sind meist nach wenigen Minuten wirksam.</string>
+    <string name="domain_record_host">Host</string>
+    <string name="domain_record_value">Wert</string>
+    <string name="domain_record_found">Gefunden</string>
+    <string name="domain_record_required">Erforderlich</string>
+    <string name="domain_record_recommended">Empfohlen</string>
+    <string name="domain_add_invalid">Geben Sie einen Domainnamen wie example.com ein.</string>
+    <string name="domain_add_conflict">Diese Domain ist bereits registriert. Prüfen Sie Ihre Domainliste, oder wenden Sie sich an den Support, falls ein anderes Konto sie verwendet.</string>
+    <string name="domain_add_plan_limit">Ihr Tarif hat die Grenze für eigene Domains erreicht. Führen Sie ein Upgrade durch, um eine weitere Domain hinzuzufügen.</string>
+    <string name="domain_verify_success">Ihre Domain ist überprüft und einsatzbereit.</string>
+    <string name="domain_verify_pending">Warten auf %1$s. Prüfen Sie diese Einträge bei Ihrem DNS-Anbieter und überprüfen Sie dann erneut.</string>
+    <string name="domain_verify_pending_generic">Einige Einträge sind noch nicht sichtbar. Warten Sie ein paar Minuten und überprüfen Sie dann erneut.</string>
+    <string name="domain_verify_rate_limited">Sie haben das Überprüfungslimit für diese Domain erreicht. Versuchen Sie es später erneut.</string>
+    <plurals name="domain_verify_rate_limited_minutes">
+        <item quantity="one">Sie haben das Überprüfungslimit für diese Domain erreicht. Versuchen Sie es in %1$d Minute erneut.</item>
+        <item quantity="other">Sie haben das Überprüfungslimit für diese Domain erreicht. Versuchen Sie es in %1$d Minuten erneut.</item>
+    </plurals>
     <string name="create_alias_dialog_title">Alias anlegen</string>
     <string name="create_alias_username_label">Benutzername</string>
     <string name="create_alias_generate_random">Zufällig erzeugen</string>
