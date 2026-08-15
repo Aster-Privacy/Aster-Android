@@ -4387,7 +4387,11 @@ internal fun email_html_view(
         settings_state.preferences?.font_choice,
     )
 
-    val translate_mode = settings_state.preferences?.translate_incoming ?: "off"
+    val translate_mode = if (org.astermail.android.translation.translation_supported) {
+        settings_state.preferences?.translate_incoming ?: "off"
+    } else {
+        "off"
+    }
     val translate_langs = settings_state.preferences?.translate_languages ?: emptyList()
     val translate_never_langs = settings_state.preferences?.translate_never_languages ?: emptyList()
     val ui_language = org.astermail.android.translation.normalize_language_code(

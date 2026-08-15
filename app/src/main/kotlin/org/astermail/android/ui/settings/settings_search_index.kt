@@ -30,7 +30,20 @@ internal data class settings_index_entry(
     val is_screen_title: Boolean,
 )
 
-internal val settings_search_index: List<settings_index_entry> = listOf(
+private val translation_search_titles = setOf(
+    R.string.section_translation,
+    R.string.translate_incoming_label,
+    R.string.translate_incoming_subtitle,
+    R.string.translate_mode_off,
+    R.string.translate_mode_ask,
+    R.string.translate_mode_always,
+    R.string.translate_my_languages_label,
+    R.string.translate_my_languages_subtitle,
+    R.string.translate_never_languages_label,
+    R.string.translate_never_languages_subtitle,
+)
+
+private val all_settings_search_index: List<settings_index_entry> = listOf(
     settings_index_entry("appearance", R.string.settings_appearance, R.string.settings_appearance, true),
     settings_index_entry("appearance", R.string.settings_appearance, R.string.theme, false),
     settings_index_entry("appearance", R.string.settings_appearance, R.string.theme_system, false),
@@ -816,3 +829,8 @@ internal val settings_search_index: List<settings_index_entry> = listOf(
     settings_index_entry("developer", R.string.developer, R.string.clear_local_cache, false),
     settings_index_entry("developer", R.string.developer, R.string.cache_resets_subtitle, false),
 )
+
+internal val settings_search_index: List<settings_index_entry> =
+    all_settings_search_index.filter {
+        org.astermail.android.translation.translation_supported || it.label_res !in translation_search_titles
+    }
