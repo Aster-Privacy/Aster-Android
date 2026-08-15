@@ -92,6 +92,18 @@ android {
     }
 }
 
+androidComponents {
+    onVariants(selector().withFlavor("distribution" to "fdroid")) { variant ->
+        val variant_name = variant.name.replaceFirstChar { it.uppercase() }
+        val art_profile_tasks = setOf(
+            "merge${variant_name}ArtProfile",
+            "expand${variant_name}ArtProfileWildcards",
+            "compile${variant_name}ArtProfile",
+        )
+        tasks.matching { it.name in art_profile_tasks }.configureEach { enabled = false }
+    }
+}
+
 composeCompiler {
     stabilityConfigurationFiles.add(rootProject.layout.projectDirectory.file("compose_stability.conf"))
     if (project.hasProperty("composeReports")) {
