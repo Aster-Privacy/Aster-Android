@@ -40,6 +40,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.withPermit
 import org.astermail.android.api.mail.BulkLabelRequest
 import org.astermail.android.api.mail.BulkPatchMetadataItem
 import org.astermail.android.api.mail.BulkPatchMetadataRequest
@@ -92,6 +93,9 @@ private const val STATUS_PENDING = "pending"
 private const val STATUS_FAILED = "failed"
 private const val SENDING_CLAIM_STALE_MS = 5 * 60 * 1000L
 private const val RATCHET_UNDECRYPTABLE_TTL_MS = 10L * 60L * 1000L
+private const val RATCHET_PREFETCH_CONCURRENCY = 4
+private const val RATCHET_PREFETCH_BUDGET_MS = 12_000L
+private const val RATCHET_INLINE_TIMEOUT_MS = 6_000L
 private const val OUTBOX_FILE_REF_PREFIX = "@file:"
 private const val EMPTY_ATTACHMENTS_JSON = "[]"
 private const val METADATA_PATCH_ATTEMPTS = 3
@@ -1492,9 +1496,18 @@ class MailRepository @Inject constructor(
 
     private suspend fun decrypt_items_parallel(items: List<MailItem>): List<InboxItem> =
         coroutineScope {
+            val overrides = prefetch_ratchet_plaintexts(items)
             val decrypted = items.map { item ->
-                async(Dispatchers.IO) { decrypt_inbox_item(item) }
-            }.awaitAll()
+                async(Dispatchers.IO) {
+                    try {
+                        decrypt_inbox_item(item, overrides[item.id])
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
+                    } catch (error: Throwable) {
+                        null
+                    }
+                }
+            }.awaitAll().filterNotNull()
             org.astermail.android.folders.record_item_folders(decrypted)
             val visible = org.astermail.android.folders.filter_locked_items(decrypted)
             prefetch_sender_profiles(visible.map { org.astermail.android.ui.mail.displayed_sender_email(it.display_sender_email, it.sender_email) })
@@ -1507,8 +1520,13 @@ class MailRepository @Inject constructor(
         AsterProfileResolverHolder.shared?.request_all(addresses)
     }
 
-    private fun decrypt_inbox_item(item: MailItem): InboxItem {
-        val envelope = try_decrypt_envelope(item.encrypted_envelope, item.envelope_nonce, item.id)
+    private fun decrypt_inbox_item(item: MailItem, ratchet_override: String? = null): InboxItem {
+        val envelope = try_decrypt_envelope(
+            item.encrypted_envelope,
+            item.envelope_nonce,
+            item.id,
+            ratchet_override = ratchet_override,
+        )
         val is_undecryptable = envelope?.is_undecryptable
             ?: !item.encrypted_envelope.isNullOrBlank()
         val enc_meta = item.encrypted_metadata
@@ -1650,6 +1668,8 @@ class MailRepository @Inject constructor(
         encrypted_envelope: String?,
         envelope_nonce: String?,
         message_id: String? = null,
+        ratchet_override: String? = null,
+        decrypt_body_fields: Boolean = true,
     ): DecryptedEnvelope? {
         if (encrypted_envelope.isNullOrBlank()) return null
         var unauthenticated = false
@@ -1700,7 +1720,11 @@ class MailRepository @Inject constructor(
             InboundAttachmentKeyStore.register_from_envelope_json(message_id, json_str)
             val parsed = parse_envelope_json(json_str)
             val envelope = if (unauthenticated) parsed?.copy(is_unauthenticated = true) else parsed
-            if (envelope != null) decrypt_pgp_body_fields(envelope, message_id) else null
+            when {
+                envelope == null -> null
+                !decrypt_body_fields -> envelope
+                else -> decrypt_pgp_body_fields(envelope, message_id, ratchet_override)
+            }
         } catch (_: Throwable) {
             null
         }
@@ -2467,44 +2491,100 @@ class MailRepository @Inject constructor(
         }
     }
 
-    private fun decrypt_pgp_body_fields(envelope: DecryptedEnvelope, message_id: String? = null): DecryptedEnvelope {
+    private fun ratchet_body_candidate(envelope: DecryptedEnvelope): String? {
+        val body_text = envelope.body_text
+        val body_html = envelope.body_html
+        return when {
+            ratchet_decryptor.looks_like_ratchet_envelope(body_text) -> body_text
+            body_html != null && ratchet_decryptor.looks_like_ratchet_envelope(body_html) -> body_html
+            else -> null
+        }
+    }
+
+    private suspend fun resolve_ratchet_body(
+        envelope: DecryptedEnvelope,
+        candidate: String,
+        message_id: String?,
+    ): String {
+        val cached = if (!message_id.isNullOrBlank()) ratchet_plaintext_cache.get(message_id) else null
+        if (cached != null) return cached
+        if (!message_id.isNullOrBlank() && ratchet_recently_undecryptable(message_id)) {
+            return org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL
+        }
+        val delivered_to = org.astermail.android.ui.mail.extract_delivered_to(envelope.raw_headers)
+        val our_addresses = buildList {
+            session_key_store.get_user_email()?.let { add(it) }
+            if (!delivered_to.isNullOrBlank()) add(delivered_to)
+        }
+        val result = ratchet_decryptor.try_decrypt(candidate, our_addresses, envelope.from_email)
+        if (!message_id.isNullOrBlank()) {
+            if (result != org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL) {
+                ratchet_undecryptable_at.remove(message_id)
+                ratchet_plaintext_cache.put(message_id, result)
+            } else {
+                ratchet_undecryptable_at[message_id] = System.currentTimeMillis()
+            }
+        }
+        return result
+    }
+
+    private suspend fun resolve_ratchet_plaintext(item: MailItem): String? {
+        val envelope = try_decrypt_envelope(
+            item.encrypted_envelope,
+            item.envelope_nonce,
+            item.id,
+            decrypt_body_fields = false,
+        ) ?: return null
+        val candidate = ratchet_body_candidate(envelope) ?: return null
+        val our_email = session_key_store.get_user_email()
+        if (our_email.isNullOrBlank() || envelope.from_email.isBlank()) return null
+        return resolve_ratchet_body(envelope, candidate, item.id)
+    }
+
+    private suspend fun prefetch_ratchet_plaintexts(items: List<MailItem>): Map<String, String> {
+        if (items.isEmpty()) return emptyMap()
+        val gate = kotlinx.coroutines.sync.Semaphore(RATCHET_PREFETCH_CONCURRENCY)
+        val resolved = java.util.concurrent.ConcurrentHashMap<String, String>()
+        val budget = RATCHET_PREFETCH_BUDGET_MS
+        runCatching {
+            kotlinx.coroutines.withTimeout(budget) {
+                coroutineScope {
+                    items.forEach { item ->
+                        launch(Dispatchers.IO) {
+                            gate.withPermit {
+                                runCatching { resolve_ratchet_plaintext(item) }
+                                    .getOrNull()
+                                    ?.let { resolved[item.id] = it }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return resolved
+    }
+
+    private fun decrypt_pgp_body_fields(
+        envelope: DecryptedEnvelope,
+        message_id: String? = null,
+        ratchet_override: String? = null,
+    ): DecryptedEnvelope {
         var body_text = envelope.body_text
         var body_html = envelope.body_html
         var is_undecryptable = false
         var is_unauthenticated = envelope.is_unauthenticated
 
-        val ratchet_candidate = when {
-            ratchet_decryptor.looks_like_ratchet_envelope(body_text) -> body_text
-            body_html != null && ratchet_decryptor.looks_like_ratchet_envelope(body_html!!) -> body_html!!
-            else -> null
-        }
+        val ratchet_candidate = ratchet_body_candidate(envelope)
         if (ratchet_candidate != null) {
             val our_email = session_key_store.get_user_email()
             val sender_email = envelope.from_email
             if (!our_email.isNullOrBlank() && sender_email.isNotBlank()) {
-                val decrypted = kotlinx.coroutines.runBlocking {
-                    val cached = if (!message_id.isNullOrBlank()) ratchet_plaintext_cache.get(message_id) else null
-                    if (cached != null) {
-                        cached
-                    } else if (!message_id.isNullOrBlank() && ratchet_recently_undecryptable(message_id)) {
-                        org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL
-                    } else {
-                        val delivered_to = org.astermail.android.ui.mail.extract_delivered_to(envelope.raw_headers)
-                        val our_addresses = buildList {
-                            add(our_email)
-                            if (!delivered_to.isNullOrBlank()) add(delivered_to)
+                val decrypted = ratchet_override ?: kotlinx.coroutines.runBlocking {
+                    runCatching {
+                        kotlinx.coroutines.withTimeout(RATCHET_INLINE_TIMEOUT_MS) {
+                            resolve_ratchet_body(envelope, ratchet_candidate, message_id)
                         }
-                        val result = ratchet_decryptor.try_decrypt(ratchet_candidate, our_addresses, sender_email)
-                        if (!message_id.isNullOrBlank()) {
-                            if (result != org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL) {
-                                ratchet_undecryptable_at.remove(message_id)
-                                ratchet_plaintext_cache.put(message_id, result)
-                            } else {
-                                ratchet_undecryptable_at[message_id] = System.currentTimeMillis()
-                            }
-                        }
-                        result
-                    }
+                    }.getOrDefault(org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL)
                 }
                 if (decrypted != org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL) {
                     is_unauthenticated = false

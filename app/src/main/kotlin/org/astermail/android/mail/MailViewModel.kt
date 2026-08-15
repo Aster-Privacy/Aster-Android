@@ -339,6 +339,7 @@ class MailViewModel @Inject constructor(
     private var silent_revalidate_job: Job? = null
     private var load_more_job: Job? = null
     private var load_more_generation = 0
+    private var inbox_load_generation = 0
     private var load_more_failures = 0
     private var refresh_job: Job? = null
     private var refresh_generation = 0
@@ -619,6 +620,7 @@ class MailViewModel @Inject constructor(
             current_folder = folder,
             stats = current.stats,
         )
+        val load_gen = ++inbox_load_generation
         inbox_load_job = viewModelScope.launch {
             if (_inbox_state.value.items.isEmpty()) {
                 val persisted = runCatching { search_index_manager.get_cached_items() }.getOrNull().orEmpty()
@@ -645,8 +647,10 @@ class MailViewModel @Inject constructor(
                 }
             }
             if (result.isFailure &&
+                load_gen == inbox_load_generation &&
                 _inbox_state.value.current_folder == folder &&
-                !is_offline_failure(result.exceptionOrNull())
+                !is_offline_failure(result.exceptionOrNull()) &&
+                !is_cancellation(result.exceptionOrNull())
             ) {
                 kotlinx.coroutines.delay(500L)
                 result = runCatching {
@@ -655,9 +659,8 @@ class MailViewModel @Inject constructor(
                     }
                 }
             }
-            if (_inbox_state.value.current_folder != folder) {
-                return@launch
-            }
+            if (_inbox_state.value.current_folder != folder) return@launch
+            if (is_cancellation(result.exceptionOrNull())) return@launch
             result.fold(
                 onSuccess = { page ->
                     if (BuildConfig.DEBUG && (folder.startsWith("label:") || folder.startsWith("tag:"))) {
@@ -695,6 +698,13 @@ class MailViewModel @Inject constructor(
                     )
                 },
             )
+        }
+        inbox_load_job?.invokeOnCompletion {
+            if (load_gen != inbox_load_generation) return@invokeOnCompletion
+            val state = _inbox_state.value
+            if (state.current_folder == folder && (state.is_loading || state.initial)) {
+                _inbox_state.value = state.copy(is_loading = false, initial = false)
+            }
         }
     }
 
@@ -2762,6 +2772,7 @@ class MailViewModel @Inject constructor(
         _inbox_state.update { it.copy(is_refreshing = true) }
         load_stats()
         val refresh_gen = ++refresh_generation
+        inbox_load_generation++
         inbox_load_job?.cancel()
         silent_revalidate_job?.cancel()
         refresh_job?.cancel()
@@ -2806,15 +2817,17 @@ class MailViewModel @Inject constructor(
                             is_refreshing = false,
                             is_loading = false,
                             initial = false,
-                            error = if (it.items.isEmpty()) friendly_load_error(t) else null,
+                            error = if (it.items.isEmpty() && !is_cancellation(t)) friendly_load_error(t) else null,
                         )
                     }
                 },
             )
         }
         refresh_job?.invokeOnCompletion {
-            if (refresh_gen == refresh_generation && _inbox_state.value.is_refreshing) {
-                _inbox_state.update { it.copy(is_refreshing = false) }
+            if (refresh_gen != refresh_generation) return@invokeOnCompletion
+            val state = _inbox_state.value
+            if (state.is_refreshing || state.is_loading || state.initial) {
+                _inbox_state.value = state.copy(is_refreshing = false, is_loading = false, initial = false)
             }
         }
     }
@@ -3121,6 +3134,9 @@ class MailViewModel @Inject constructor(
         is java.net.SocketTimeoutException -> true
         else -> false
     }
+
+    private fun is_cancellation(t: Throwable?): Boolean =
+        t is kotlinx.coroutines.CancellationException && t !is kotlinx.coroutines.TimeoutCancellationException
 
     private fun is_offline_failure(t: Throwable?): Boolean = when (t) {
         null -> false

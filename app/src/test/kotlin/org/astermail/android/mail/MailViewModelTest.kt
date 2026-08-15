@@ -240,6 +240,37 @@ class MailViewModelTest {
     }
 
     @Test
+    fun `a sent load that never answers still clears the skeleton`() = runTest {
+        coEvery { repository.fetch_sent(any(), any()) } coAnswers {
+            kotlinx.coroutines.awaitCancellation()
+        }
+
+        vm.load_inbox("sent")
+        advanceUntilIdle()
+
+        val state = vm.inbox_state.value
+        assertEquals("sent", state.current_folder)
+        assertFalse(state.is_loading)
+        assertFalse(state.initial)
+    }
+
+    @Test
+    fun `a sent load cancelled by refresh resolves the skeleton`() = runTest {
+        coEvery { repository.fetch_sent(any(), any()) } coAnswers {
+            kotlinx.coroutines.awaitCancellation()
+        }
+
+        vm.load_inbox("sent")
+        vm.refresh()
+        advanceUntilIdle()
+
+        val state = vm.inbox_state.value
+        assertFalse(state.is_loading)
+        assertFalse(state.initial)
+        assertFalse(state.is_refreshing)
+    }
+
+    @Test
     fun `load_more appends items and updates cursor`() = runTest {
         val page1 = fake_inbox_page(3, has_more = true, next_cursor = "cursor_1")
         coEvery { repository.fetch_inbox(any(), cursor = isNull(), any(), any()) } returns Result.success(page1)
