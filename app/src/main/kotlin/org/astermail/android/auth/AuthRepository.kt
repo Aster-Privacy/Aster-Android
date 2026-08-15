@@ -97,6 +97,7 @@ sealed interface LoginOutcome {
 class AuthRepository @Inject constructor(
     private val auth_api: AuthApi,
     private val recovery_api: RecoveryApi,
+    private val recovery_email_api: org.astermail.android.api.recovery_email.RecoveryEmailApi,
     private val settings_api: SettingsApi,
     private val labels_api: LabelsApi,
     private val encryption_api: org.astermail.android.api.encryption.EncryptionApi,
@@ -670,6 +671,24 @@ class AuthRepository @Inject constructor(
             val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager
             nm?.cancelAll()
         }
+    }
+
+    suspend fun save_recovery_email(email: String): Result<Unit> = runCatching {
+        val normalized = org.astermail.android.recovery.normalize_recovery_email(email)
+        val identity_key = session_key_store.get_identity_key()
+            ?: throw IllegalStateException(context.getString(R.string.something_went_wrong))
+        val encrypted = org.astermail.android.recovery.encrypt_recovery_email(normalized, identity_key)
+        recovery_email_api.save(
+            org.astermail.android.api.recovery_email.SaveRecoveryEmailRequest(
+                encrypted_email = encrypted.ciphertext_b64,
+                email_nonce = encrypted.nonce_b64,
+                email_hash = org.astermail.android.recovery.hash_recovery_email(normalized),
+                plaintext_email = normalized,
+                password_hash = null,
+                totp_code = null,
+            ),
+        )
+        Unit
     }
 
     suspend fun logout(): Result<Unit> = sign_out_internal(remove_account = true)

@@ -78,6 +78,7 @@
     <string name="recovery_email_already_in_use">そのメールアドレスは既に使用されています</string>
     <string name="recovery_email_saved">リカバリーメールを保存しました</string>
     <string name="recovery_email_status_verified">確認済み</string>
+    <string name="recovery_email_hidden">このアカウントに保存済み</string>
     <string name="recovery_email_status_unverified">確認待ち</string>
     <string name="skip_for_now">今はスキップ</string>
     <string name="save_recovery_phrase">リカバリフレーズを保存</string>

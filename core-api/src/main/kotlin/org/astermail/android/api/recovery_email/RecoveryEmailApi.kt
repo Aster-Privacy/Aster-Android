@@ -32,6 +32,7 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
 
@@ -41,6 +42,8 @@ data class RecoveryEmailStateResponse(
     val email_nonce: String? = null,
     val verified: Boolean = false,
     val has_server_enc: Boolean = false,
+    val exists: Boolean? = null,
+    val step_up_required: Boolean? = null,
 )
 
 @Serializable
@@ -49,7 +52,7 @@ data class SaveRecoveryEmailRequest(
     val email_nonce: String,
     val email_hash: String,
     val plaintext_email: String,
-    val password_hash: String,
+    val password_hash: String? = null,
     val totp_code: String? = null,
 )
 
@@ -61,8 +64,19 @@ data class RemoveRecoveryEmailRequest(
 
 @Serializable
 data class ResendRecoveryEmailRequest(
-    val plaintext_email: String,
+    val plaintext_email: String? = null,
 )
+
+@Serializable
+private data class RecoveryEmailErrorBody(
+    val error: String? = null,
+    val code: String? = null,
+)
+
+class RecoveryEmailError(
+    val code: String,
+    val user_message: String? = null,
+) : Throwable(user_message ?: code)
 
 @Serializable
 data class RecoveryEmailSuccessResponse(
@@ -72,7 +86,7 @@ data class RecoveryEmailSuccessResponse(
 interface RecoveryEmailApi {
     suspend fun get_state(): RecoveryEmailStateResponse
     suspend fun save(request: SaveRecoveryEmailRequest): RecoveryEmailSuccessResponse
-    suspend fun resend(plaintext_email: String): RecoveryEmailSuccessResponse
+    suspend fun resend(plaintext_email: String?): RecoveryEmailSuccessResponse
     suspend fun remove(request: RemoveRecoveryEmailRequest): RecoveryEmailSuccessResponse
 }
 
@@ -93,7 +107,7 @@ class RecoveryEmailApiImpl(private val client: ApiClient) : RecoveryEmailApi {
         return decode_or_throw(response)
     }
 
-    override suspend fun resend(plaintext_email: String): RecoveryEmailSuccessResponse {
+    override suspend fun resend(plaintext_email: String?): RecoveryEmailSuccessResponse {
         val response = client.http.post("${client.base_url}$base/resend") {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
@@ -115,9 +129,23 @@ class RecoveryEmailApiImpl(private val client: ApiClient) : RecoveryEmailApi {
         val status = response.status.value
         if (status !in 200..299) {
             val body = try { response.body<String>() } catch (_: Throwable) { "" }
-            when (status) {
-                409 -> throw ApiError.UnknownError(RECOVERY_EMAIL_IN_USE)
-                429 -> throw ApiError.UnknownError(RECOVERY_EMAIL_COOLDOWN)
+            val parsed = try {
+                error_json.decodeFromString<RecoveryEmailErrorBody>(body)
+            } catch (_: Throwable) {
+                null
+            }
+            val message = parsed?.error?.takeIf { it.isNotBlank() }
+            when {
+                parsed?.code == "STEP_UP_REQUIRED" ->
+                    throw RecoveryEmailError(STEP_UP_REQUIRED, message)
+                parsed?.code == "TOTP_REQUIRED" ->
+                    throw RecoveryEmailError(TOTP_REQUIRED, message)
+                parsed?.code == "INVALID_INPUT" ->
+                    throw RecoveryEmailError(INVALID_INPUT, message)
+                parsed?.code == "EMAIL_SEND_FAILED" ->
+                    throw RecoveryEmailError(EMAIL_SEND_FAILED, message)
+                status == 409 -> throw ApiError.UnknownError(RECOVERY_EMAIL_IN_USE)
+                status == 429 -> throw ApiError.UnknownError(RECOVERY_EMAIL_COOLDOWN)
                 else -> throw client.map_http_status(status, body)
             }
         }
@@ -133,5 +161,11 @@ class RecoveryEmailApiImpl(private val client: ApiClient) : RecoveryEmailApi {
     companion object {
         const val RECOVERY_EMAIL_IN_USE = "recovery_email_in_use"
         const val RECOVERY_EMAIL_COOLDOWN = "recovery_email_cooldown"
+        const val STEP_UP_REQUIRED = "step_up_required"
+        const val TOTP_REQUIRED = "totp_required"
+        const val INVALID_INPUT = "invalid_input"
+        const val EMAIL_SEND_FAILED = "email_send_failed"
+
+        private val error_json = Json { ignoreUnknownKeys = true }
     }
 }

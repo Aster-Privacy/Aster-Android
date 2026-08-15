@@ -78,6 +78,7 @@
     <string name="recovery_email_already_in_use">Esse e-mail já está em uso</string>
     <string name="recovery_email_saved">E-mail de recuperação salvo</string>
     <string name="recovery_email_status_verified">Verificado</string>
+    <string name="recovery_email_hidden">Salvo nesta conta</string>
     <string name="recovery_email_status_unverified">Verificação pendente</string>
     <string name="skip_for_now">Pular por enquanto</string>
     <string name="save_recovery_phrase">Salve sua frase de recuperação</string>

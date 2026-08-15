@@ -56,6 +56,12 @@ class AuthViewModel @Inject constructor(
     private val _recovery_codes = MutableStateFlow<List<String>?>(null)
     val recovery_codes: StateFlow<List<String>?> = _recovery_codes.asStateFlow()
 
+    private val _recovery_email_error = MutableStateFlow<String?>(null)
+    val recovery_email_error: StateFlow<String?> = _recovery_email_error.asStateFlow()
+
+    private val _is_saving_recovery_email = MutableStateFlow(false)
+    val is_saving_recovery_email: StateFlow<Boolean> = _is_saving_recovery_email.asStateFlow()
+
     val is_signed_in: StateFlow<Boolean> = repository.is_signed_in
 
     fun submit_login(email: String, password: String, captcha_token: String? = null) {
@@ -128,6 +134,32 @@ class AuthViewModel @Inject constructor(
     fun consume_recovery_codes() {
         _recovery_codes.value = null
     }
+
+    fun save_recovery_email(email: String, on_saved: () -> Unit) {
+        if (_is_saving_recovery_email.value) return
+        _recovery_email_error.value = null
+        _is_saving_recovery_email.value = true
+        viewModelScope.launch {
+            val result = kotlinx.coroutines.withContext(Dispatchers.IO) {
+                repository.save_recovery_email(email)
+            }
+            _is_saving_recovery_email.value = false
+            result.fold(
+                onSuccess = { on_saved() },
+                onFailure = { t -> _recovery_email_error.value = recovery_email_error_message(t) },
+            )
+        }
+    }
+
+    fun clear_recovery_email_error() {
+        _recovery_email_error.value = null
+    }
+
+    private fun recovery_email_error_message(t: Throwable): String =
+        (t as? org.astermail.android.api.recovery_email.RecoveryEmailError)
+            ?.user_message
+            ?.takeIf { it.isNotBlank() }
+            ?: map_error(t)
 
     fun reset_state() {
         _ui_state.value = AuthUiState.Idle

@@ -86,6 +86,18 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
         }
     }
 
+    LaunchedEffect(state.recovery_email_step_up_required, state.save_status) {
+        if (state.recovery_email_step_up_required &&
+            state.save_status == SaveStatus.ERROR &&
+            !show_step_up
+        ) {
+            step_up_is_remove = false
+            step_up_password = ""
+            step_up_code = ""
+            show_step_up = true
+        }
+    }
+
     LaunchedEffect(state.save_status) {
         if (state.save_status == SaveStatus.SAVED) {
             Toast.makeText(
@@ -123,7 +135,7 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
                     androidx.compose.foundation.layout.Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = state.recovery_email_address
-                                ?: stringResource(R.string.recovery_email),
+                                ?: stringResource(R.string.recovery_email_hidden),
                             color = colors.text_primary,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Medium,
@@ -173,10 +185,14 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
                 stringResource(R.string.save_recovery_email)
             },
             onClick = {
-                step_up_is_remove = false
-                step_up_password = ""
-                step_up_code = ""
-                show_step_up = true
+                if (state.recovery_email_step_up_required) {
+                    step_up_is_remove = false
+                    step_up_password = ""
+                    step_up_code = ""
+                    show_step_up = true
+                } else {
+                    vm.save_recovery_email(email, null, null)
+                }
             },
             enabled = email.trim().contains("@") && state.save_status != SaveStatus.SAVING,
             is_loading = state.save_status == SaveStatus.SAVING,

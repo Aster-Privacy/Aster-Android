@@ -122,6 +122,7 @@
     <string name="recovery_email_already_in_use">That email is already in use</string>
     <string name="recovery_email_saved">Recovery email saved</string>
     <string name="recovery_email_status_verified">Verified</string>
+    <string name="recovery_email_hidden">Saved on this account</string>
     <string name="recovery_email_status_unverified">Pending verification</string>
     <string name="skip_for_now">Skip for now</string>
     <string name="save_recovery_phrase">Save your recovery phrase</string>

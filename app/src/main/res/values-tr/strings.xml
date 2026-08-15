@@ -78,6 +78,7 @@
     <string name="recovery_email_already_in_use">Bu e-posta zaten kullanımda</string>
     <string name="recovery_email_saved">Kurtarma e-postası kaydedildi</string>
     <string name="recovery_email_status_verified">Doğrulandı</string>
+    <string name="recovery_email_hidden">Bu hesapta kayıtlı</string>
     <string name="recovery_email_status_unverified">Doğrulama bekleniyor</string>
     <string name="skip_for_now">Şimdilik atla</string>
     <string name="save_recovery_phrase">Kurtarma ifadenizi kaydedin</string>

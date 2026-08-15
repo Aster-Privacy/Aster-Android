@@ -58,6 +58,8 @@ import org.astermail.android.design.components.AsterTextField
 @Composable
 fun RegisterRecoveryEmailStep(
     state: RegisterFlowState,
+    error_message: String?,
+    is_saving: Boolean,
     on_continue: () -> Unit,
     on_skip: () -> Unit,
 ) {
@@ -90,6 +92,17 @@ fun RegisterRecoveryEmailStep(
 
         Spacer(Modifier.height(AsterSpacing.xxl))
 
+        androidx.compose.animation.AnimatedVisibility(
+            visible = error_message != null,
+            enter = androidx.compose.animation.expandVertically() + androidx.compose.animation.fadeIn(),
+            exit = androidx.compose.animation.shrinkVertically() + androidx.compose.animation.fadeOut(),
+        ) {
+            Column {
+                error_banner(message = error_message ?: "")
+                Spacer(Modifier.height(AsterSpacing.lg))
+            }
+        }
+
         AsterTextField(
             value = state.recovery_email.value,
             onValueChange = { state.recovery_email.value = it },
@@ -109,7 +122,7 @@ fun RegisterRecoveryEmailStep(
         AsterButton(
             label = stringResource(R.string.continue_action),
             onClick = on_continue,
-            enabled = state.recovery_email.value.isNotBlank(),
+            enabled = state.recovery_email.value.isNotBlank() && !is_saving,
         )
 
         Spacer(Modifier.height(AsterSpacing.sm))

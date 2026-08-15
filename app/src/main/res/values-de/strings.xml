@@ -79,6 +79,7 @@
     <string name="recovery_email_already_in_use">Diese E-Mail wird bereits verwendet</string>
     <string name="recovery_email_saved">Wiederherstellungs-E-Mail gespeichert</string>
     <string name="recovery_email_status_verified">Bestätigt</string>
+    <string name="recovery_email_hidden">In diesem Konto gespeichert</string>
     <string name="recovery_email_status_unverified">Bestätigung ausstehend</string>
     <string name="skip_for_now">Vorerst überspringen</string>
     <string name="save_recovery_phrase">Wiederherstellungsphrase speichern</string>

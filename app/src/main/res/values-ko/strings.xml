@@ -78,6 +78,7 @@
     <string name="recovery_email_already_in_use">이미 사용 중인 이메일입니다</string>
     <string name="recovery_email_saved">복구 이메일을 저장했습니다</string>
     <string name="recovery_email_status_verified">인증됨</string>
+    <string name="recovery_email_hidden">이 계정에 저장됨</string>
     <string name="recovery_email_status_unverified">인증 대기 중</string>
     <string name="skip_for_now">나중에 하기</string>
     <string name="save_recovery_phrase">복구 문구 저장</string>

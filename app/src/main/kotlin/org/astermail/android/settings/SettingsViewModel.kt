@@ -104,6 +104,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import org.astermail.android.api.recovery_email.RecoveryEmailApi
 import org.astermail.android.api.recovery_email.RecoveryEmailApiImpl
+import org.astermail.android.api.recovery_email.RecoveryEmailError
 import org.astermail.android.api.recovery_email.RemoveRecoveryEmailRequest
 import org.astermail.android.api.recovery_email.SaveRecoveryEmailRequest
 import org.astermail.android.api.security.AuditEvent
@@ -212,6 +213,7 @@ data class SettingsUiState(
     val recovery_email_address: String? = null,
     val recovery_email_set: Boolean = false,
     val recovery_email_verified: Boolean = false,
+    val recovery_email_step_up_required: Boolean = false,
     val login_alerts_enabled: Boolean? = null,
     val hardware_keys: List<HardwareKey> = emptyList(),
     val trusted_devices: List<TrustedDevice> = emptyList(),
@@ -3064,11 +3066,13 @@ class SettingsViewModel @Inject constructor(
                 } else {
                     null
                 }
-                val is_set = !enc.isNullOrBlank() && !nonce.isNullOrBlank()
+                val is_set = response.exists ?: (!enc.isNullOrBlank() && !nonce.isNullOrBlank())
                 _state.value = _state.value.copy(
                     recovery_email_address = address,
                     recovery_email_set = is_set,
                     recovery_email_verified = response.verified,
+                    recovery_email_step_up_required =
+                        response.step_up_required ?: response.verified,
                     security_status = _state.value.security_status?.copy(
                         recovery_email_set = is_set,
                         recovery_email_verified = response.verified,
@@ -3084,13 +3088,17 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun save_recovery_email(email: String, password: String, totp_code: String?) {
+    fun save_recovery_email(email: String, password: String?, totp_code: String?) {
         viewModelScope.launch {
             _state.value = _state.value.copy(save_status = SaveStatus.SAVING, error = null)
             val normalized = email.trim().lowercase()
             try {
-                val password_hash = auth_repository.derive_password_hash_b64(password)
-                    ?: throw IllegalStateException(context.getString(R.string.something_went_wrong))
+                val password_hash = password?.takeIf { it.isNotBlank() }?.let {
+                    auth_repository.derive_password_hash_b64(it)
+                        ?: throw IllegalStateException(
+                            context.getString(R.string.something_went_wrong),
+                        )
+                }
                 val identity_key = session_key_store.get_identity_key()
                     ?: throw IllegalStateException("no identity key")
                 val encrypted = encrypt_recovery_email(normalized, identity_key)
@@ -3109,6 +3117,7 @@ class SettingsViewModel @Inject constructor(
                     recovery_email_address = normalized,
                     recovery_email_set = true,
                     recovery_email_verified = false,
+                    recovery_email_step_up_required = false,
                     security_status = _state.value.security_status?.copy(
                         recovery_email_set = true,
                         recovery_email_verified = false,
@@ -3116,9 +3125,13 @@ class SettingsViewModel @Inject constructor(
                     save_status = SaveStatus.SAVED,
                 )
             } catch (t: Throwable) {
+                val needs_step_up = (t as? RecoveryEmailError)?.code ==
+                    RecoveryEmailApiImpl.STEP_UP_REQUIRED
                 _state.value = _state.value.copy(
                     save_status = SaveStatus.ERROR,
-                    error = recovery_email_error_message(t),
+                    recovery_email_step_up_required =
+                        needs_step_up || _state.value.recovery_email_step_up_required,
+                    error = if (needs_step_up) null else recovery_email_error_message(t),
                 )
             }
         }
@@ -3126,13 +3139,7 @@ class SettingsViewModel @Inject constructor(
 
     fun resend_recovery_verification() {
         viewModelScope.launch {
-            val email = _state.value.recovery_email_address
-            if (email.isNullOrBlank()) {
-                _state.value = _state.value.copy(
-                    action_result = context.getString(R.string.recovery_email_resend_failed),
-                )
-                return@launch
-            }
+            val email = _state.value.recovery_email_address?.takeIf { it.isNotBlank() }
             try {
                 recovery_email_api.resend(email)
                 _state.value = _state.value.copy(
@@ -3162,6 +3169,7 @@ class SettingsViewModel @Inject constructor(
                     recovery_email_address = null,
                     recovery_email_set = false,
                     recovery_email_verified = false,
+                    recovery_email_step_up_required = false,
                     security_status = _state.value.security_status?.copy(
                         recovery_email_set = false,
                         recovery_email_verified = false,
@@ -3178,6 +3186,15 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun recovery_email_error_message(t: Throwable): String {
+        (t as? RecoveryEmailError)?.let { error ->
+            return when (error.code) {
+                RecoveryEmailApiImpl.STEP_UP_REQUIRED ->
+                    error.user_message ?: context.getString(R.string.recovery_step_up_description)
+                RecoveryEmailApiImpl.TOTP_REQUIRED ->
+                    error.user_message ?: context.getString(R.string.totp_code_required_error)
+                else -> error.user_message ?: user_facing_error(t)
+            }
+        }
         val detail = (t as? ApiError.UnknownError)?.detail
         return when (detail) {
             RecoveryEmailApiImpl.RECOVERY_EMAIL_IN_USE ->
@@ -3188,27 +3205,15 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    private fun derive_recovery_email_key(identity_key: String): ByteArray {
-        val material = (identity_key + RECOVERY_EMAIL_KEY_SUFFIX).toByteArray(Charsets.UTF_8)
-        val key = MessageDigest.getInstance("SHA-256").digest(material)
-        material.fill(0)
-        return key
-    }
+    private fun derive_recovery_email_key(identity_key: String): ByteArray =
+        org.astermail.android.recovery.derive_recovery_email_key(identity_key)
 
     private fun encrypt_recovery_email(email: String, identity_key: String): EncryptedField {
-        val data = email.toByteArray(Charsets.UTF_8)
-        val nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
-        val key = derive_recovery_email_key(identity_key)
-        try {
-            val ct = AesGcm.encrypt(key, nonce, data)
-            data.fill(0)
-            return EncryptedField(
-                ciphertext_b64 = android.util.Base64.encodeToString(ct, android.util.Base64.NO_WRAP),
-                nonce_b64 = android.util.Base64.encodeToString(nonce, android.util.Base64.NO_WRAP),
-            )
-        } finally {
-            key.fill(0)
-        }
+        val encrypted = org.astermail.android.recovery.encrypt_recovery_email(email, identity_key)
+        return EncryptedField(
+            ciphertext_b64 = encrypted.ciphertext_b64,
+            nonce_b64 = encrypted.nonce_b64,
+        )
     }
 
     private fun decrypt_recovery_email(
@@ -3226,12 +3231,8 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    private fun hash_recovery_email(email: String): String {
-        val material = (RECOVERY_EMAIL_HASH_PREFIX + email.trim().lowercase())
-            .toByteArray(Charsets.UTF_8)
-        val digest = MessageDigest.getInstance("SHA-256").digest(material)
-        return android.util.Base64.encodeToString(digest, android.util.Base64.NO_WRAP)
-    }
+    private fun hash_recovery_email(email: String): String =
+        org.astermail.android.recovery.hash_recovery_email(email)
 
     suspend fun send_feedback(category: String, message: String) {
         settings_api.send_feedback(FeedbackRequest(category = category, message = message))
@@ -5304,8 +5305,6 @@ class SettingsViewModel @Inject constructor(
         private const val TAG_VERSION_CURRENT = "astermail-tags-v1"
         private const val FOLDER_VERSION_CURRENT = "astermail-labels-v1"
         private const val PREFERENCES_KEY_SUFFIX = "astermail-preferences-v1"
-        private const val RECOVERY_EMAIL_KEY_SUFFIX = "astermail-recovery-email-v1"
-        private const val RECOVERY_EMAIL_HASH_PREFIX = "aster-recovery-email-uniqueness-v1:"
         private val TAG_VERSIONS = listOf(TAG_VERSION_CURRENT)
         private val FOLDER_VERSIONS = listOf(FOLDER_VERSION_CURRENT, TAG_VERSION_CURRENT)
         private val ALIAS_VERSIONS = listOf("astermail-envelope-v1", "astermail-import-v1")

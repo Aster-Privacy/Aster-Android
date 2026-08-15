@@ -69,6 +69,8 @@ fun RegisterScreen(
     val state = remember_register_flow_state()
     val auth_state by view_model.ui_state.collectAsStateWithLifecycle()
     val recovery_codes by view_model.recovery_codes.collectAsStateWithLifecycle()
+    val recovery_email_error by view_model.recovery_email_error.collectAsStateWithLifecycle()
+    val is_saving_recovery_email by view_model.is_saving_recovery_email.collectAsStateWithLifecycle()
 
     LaunchedEffect(recovery_codes) {
         if (recovery_codes != null && state.step.value == RegisterStep.generating) {
@@ -157,11 +159,19 @@ fun RegisterScreen(
                     )
                     RegisterStep.recovery_email -> RegisterRecoveryEmailStep(
                         state = state,
+                        error_message = recovery_email_error,
+                        is_saving = is_saving_recovery_email,
                         on_continue = {
-                            view_model.consume_recovery_codes()
-                            state.step.value = RegisterStep.plan_selection
+                            view_model.save_recovery_email(state.recovery_email.value) {
+                                state.recovery_email_saved.value = true
+                                view_model.consume_recovery_codes()
+                                state.step.value = RegisterStep.plan_selection
+                            }
                         },
                         on_skip = {
+                            view_model.clear_recovery_email_error()
+                            state.recovery_email.value = ""
+                            state.recovery_email_saved.value = false
                             view_model.consume_recovery_codes()
                             state.step.value = RegisterStep.plan_selection
                         },
