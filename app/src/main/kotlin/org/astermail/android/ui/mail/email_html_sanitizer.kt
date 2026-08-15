@@ -443,7 +443,55 @@ object EmailHtmlSanitizer {
         out = out.replace(Regex("<meta\\b[^>]*http-equiv\\s*=\\s*[\"']?refresh[\"']?[^>]*/?>", RegexOption.IGNORE_CASE), "")
         out = out.replace(Regex("<link\\b[^>]*rel\\s*=\\s*[\"']?(?:import|prefetch|preload)[\"']?[^>]*/?>", RegexOption.IGNORE_CASE), "")
         out = out.replace(Regex("<form\\b[^>]*>|</form\\s*>", RegexOption.IGNORE_CASE), "")
-        return out
+        return neutralize_unterminated_comments(out)
+    }
+
+    private val comment_end_regex = Regex("--!?>")
+
+    private fun neutralize_unterminated_comments(html: String): String {
+        if (!html.contains("<!--")) return html
+
+        val out = StringBuilder()
+        var cursor = 0
+
+        while (true) {
+            val open = html.indexOf("<!--", cursor)
+
+            if (open < 0) break
+
+            val body_start = open + 4
+            val abrupt = when {
+                html.startsWith("->", body_start) -> 2
+                html.startsWith(">", body_start) -> 1
+                else -> 0
+            }
+
+            if (abrupt > 0) {
+                out.append(html, cursor, open)
+                cursor = body_start + abrupt
+                continue
+            }
+
+            val end = comment_end_regex.find(html, body_start)
+
+            if (end == null) {
+                out.append(html, cursor, open)
+                cursor = body_start
+                if (html.regionMatches(body_start, "[if", 0, 3, ignoreCase = true)) {
+                    val tail = html.indexOf('>', body_start)
+
+                    if (tail >= 0) cursor = tail + 1
+                }
+                break
+            }
+
+            out.append(html, cursor, end.range.last + 1)
+            cursor = end.range.last + 1
+        }
+
+        out.append(html, cursor, html.length)
+
+        return out.toString()
     }
 
     private fun scrub_attributes(doc: Document, clean_tracking_links: Boolean = true) {
