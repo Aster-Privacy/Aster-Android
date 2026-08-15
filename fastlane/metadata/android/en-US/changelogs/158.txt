@@ -1,0 +1,4 @@
+Bug fixes and improvements:
+
+- Replies to a ghost alias address now send, and they stay encrypted
+- The F-Droid build is reproducible, so anyone can rebuild it from source and confirm it matches the app you install
