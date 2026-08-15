@@ -1,7 +1,14 @@
 -keepattributes *Annotation*, InnerClasses, Signature, Exceptions
 -keep,allowobfuscation,allowshrinking class kotlin.coroutines.Continuation
 
--keep class org.astermail.android.crypto.** { *; }
+-assumenosideeffects class android.util.Log {
+    public static int v(...);
+    public static int d(...);
+    public static int i(...);
+    public static int w(...);
+    public static int e(...);
+    public static java.lang.String getStackTraceString(java.lang.Throwable);
+}
 
 -keep class org.bouncycastle.** { *; }
 -dontwarn org.bouncycastle.**
@@ -41,6 +48,9 @@
 -keep @androidx.room.Dao interface * { *; }
 
 # SQLCipher (native libs loaded via JNI)
+-keep class net.zetetic.** { *; }
+-keep interface net.zetetic.** { *; }
+-dontwarn net.zetetic.**
 -keep class net.sqlcipher.** { *; }
 -keep interface net.sqlcipher.** { *; }
 -dontwarn net.sqlcipher.**

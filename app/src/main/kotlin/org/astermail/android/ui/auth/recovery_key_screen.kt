@@ -74,6 +74,7 @@ fun RecoveryKeyScreen(
     mnemonic: String,
     on_continue: () -> Unit,
 ) {
+    org.astermail.android.ui.common.secure_screen()
     val colors = AsterMaterial.colors
     val context = LocalContext.current
     var saved by remember { mutableStateOf(false) }

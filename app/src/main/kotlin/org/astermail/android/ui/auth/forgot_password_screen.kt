@@ -113,6 +113,7 @@ fun ForgotPasswordScreen(
     start_with_code: Boolean = false,
     view_model: RecoveryViewModel = hiltViewModel(),
 ) {
+    org.astermail.android.ui.common.secure_screen()
     val colors = AsterMaterial.colors
     val state by view_model.state.collectAsStateWithLifecycle()
 

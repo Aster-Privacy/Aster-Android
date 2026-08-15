@@ -82,6 +82,7 @@ fun TwoFactorScreen(
     on_back: () -> Unit,
     on_open: (id: String) -> Unit = {},
 ) {
+    org.astermail.android.ui.common.secure_screen()
     val colors = AsterMaterial.colors
     val vm: TwoFactorViewModel = hiltViewModel()
     val state by vm.state.collectAsStateWithLifecycle()

@@ -118,6 +118,7 @@ class RatchetDecryptorTest {
         syncer,
         ConversationLocks(),
         dagger.Lazy { auth_repo },
+        mockk(relaxed = true),
     )
 
     private data class ReceiverKeys(

@@ -98,6 +98,7 @@ fun AppLockSetupSheet(
     on_dismiss: () -> Unit,
     on_success: () -> Unit,
 ) {
+    org.astermail.android.ui.common.secure_screen()
     val sheet_state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val colors = AsterMaterial.colors
     val scope = rememberCoroutineScope()

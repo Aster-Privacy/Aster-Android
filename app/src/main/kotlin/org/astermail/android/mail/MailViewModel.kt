@@ -109,7 +109,15 @@ class MailViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val repository: MailRepository,
     private val search_index_manager: SearchIndexManager,
+    private val identity_pins: org.astermail.android.mail.ratchet.RatchetIdentityPinStore,
 ) : ViewModel() {
+
+    val identity_changes: StateFlow<List<org.astermail.android.mail.ratchet.IdentityChange>> =
+        identity_pins.unacknowledged_changes
+
+    fun acknowledge_identity_change(sender_email: String) {
+        identity_pins.acknowledge_sender(sender_email)
+    }
 
     private val _inbox_state = MutableStateFlow(InboxUiState())
     val inbox_state: StateFlow<InboxUiState> = _inbox_state.asStateFlow()

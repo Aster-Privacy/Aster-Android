@@ -156,7 +156,7 @@ class SessionKeyStore(context: Context? = null) {
                 ratchet_signed_prekey_public_b64 = signed_prekey_public_b64
                 editor?.putString(key_ratchet_spk_pub, signed_prekey_public_b64)
             }
-            editor?.apply()
+            editor?.commit()
         }
     }
 
@@ -165,9 +165,9 @@ class SessionKeyStore(context: Context? = null) {
             ratchet_previous_keys_json = previous_keys_json
             val editor = prefs?.edit() ?: return
             if (previous_keys_json.isNullOrBlank()) {
-                editor.remove(key_ratchet_previous_keys).apply()
+                editor.remove(key_ratchet_previous_keys).commit()
             } else {
-                editor.putString(key_ratchet_previous_keys, previous_keys_json).apply()
+                editor.putString(key_ratchet_previous_keys, previous_keys_json).commit()
             }
         }
     }
@@ -187,7 +187,7 @@ class SessionKeyStore(context: Context? = null) {
             } else {
                 editor.putString(key_ratchet_pq_identity_pub, ratchet_pq_identity_public)
             }
-            editor.apply()
+            editor.commit()
         }
     }
 
@@ -203,7 +203,7 @@ class SessionKeyStore(context: Context? = null) {
 
     fun put_pq_secret(key_id: Int, secret: ByteArray) {
         synchronized(lock) {
-            prefs?.edit()?.putString("$key_pq_secret_prefix$key_id", encode_b64(secret))?.apply()
+            prefs?.edit()?.putString("$key_pq_secret_prefix$key_id", encode_b64(secret))?.commit()
         }
     }
 
@@ -224,7 +224,7 @@ class SessionKeyStore(context: Context? = null) {
         synchronized(lock) {
             key_material?.let { it.fill(0) }
             key_material = bytes.copyOf()
-            prefs?.edit()?.putString(key_session_key, encode_b64(bytes))?.apply()
+            prefs?.edit()?.putString(key_session_key, encode_b64(bytes))?.commit()
         }
     }
 
@@ -232,14 +232,14 @@ class SessionKeyStore(context: Context? = null) {
         synchronized(lock) {
             passphrase?.let { it.fill(0) }
             passphrase = bytes.copyOf()
-            prefs?.edit()?.putString(key_passphrase, encode_b64(bytes))?.apply()
+            prefs?.edit()?.putString(key_passphrase, encode_b64(bytes))?.commit()
         }
     }
 
     fun put_identity_key(key: String) {
         synchronized(lock) {
             identity_key = key
-            prefs?.edit()?.putString(key_identity, key)?.apply()
+            prefs?.edit()?.putString(key_identity, key)?.commit()
         }
     }
 
@@ -250,7 +250,7 @@ class SessionKeyStore(context: Context? = null) {
             prefs?.edit()
                 ?.putString(key_enc_vault, encrypted_vault_b64)
                 ?.putString(key_vault_nonce, vault_nonce_b64)
-                ?.apply()
+                ?.commit()
         }
     }
 
@@ -258,7 +258,7 @@ class SessionKeyStore(context: Context? = null) {
         synchronized(lock) {
             password_salt?.fill(0)
             password_salt = salt.copyOf()
-            prefs?.edit()?.putString(key_password_salt, encode_b64(salt))?.apply()
+            prefs?.edit()?.putString(key_password_salt, encode_b64(salt))?.commit()
         }
     }
 
@@ -281,7 +281,7 @@ class SessionKeyStore(context: Context? = null) {
             recovery_codes = codes.toList()
             prefs?.edit()
                 ?.putString(key_recovery_codes, codes.joinToString("\n"))
-                ?.apply()
+                ?.commit()
         }
     }
 
@@ -292,7 +292,7 @@ class SessionKeyStore(context: Context? = null) {
             keys.forEach { json_arr.put(it) }
             prefs?.edit()
                 ?.putString(key_previous_keys, json_arr.toString())
-                ?.apply()
+                ?.commit()
         }
     }
 
@@ -307,7 +307,7 @@ class SessionKeyStore(context: Context? = null) {
             legacy_keks = keys.toList()
             prefs?.edit()
                 ?.putString(key_legacy_keks, keys.joinToString("\n"))
-                ?.apply()
+                ?.commit()
         }
     }
 
@@ -321,7 +321,7 @@ class SessionKeyStore(context: Context? = null) {
         synchronized(lock) {
             data_kek?.fill(0)
             data_kek = kek.copyOf()
-            prefs?.edit()?.putString(key_data_kek, encode_b64(kek))?.apply()
+            prefs?.edit()?.putString(key_data_kek, encode_b64(kek))?.commit()
         }
     }
 
@@ -412,7 +412,7 @@ class SessionKeyStore(context: Context? = null) {
             ratchet_previous_keys_json = null
             ratchet_pq_identity_secret = null
             ratchet_pq_identity_public = null
-            prefs?.edit()?.clear()?.apply()
+            prefs?.edit()?.clear()?.commit()
         }
     }
 

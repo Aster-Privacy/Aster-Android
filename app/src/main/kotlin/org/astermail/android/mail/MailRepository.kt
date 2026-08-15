@@ -31,6 +31,7 @@ import org.astermail.android.crypto.AesGcm
 import org.astermail.android.crypto.PasswordKdf
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -120,6 +121,7 @@ data class DecryptedEnvelope(
     val list_unsubscribe: String? = null,
     val sender_verification: String? = null,
     val is_undecryptable: Boolean = false,
+    val is_unauthenticated: Boolean = false,
 )
 
 const val ASTER_SUBJECT_BUNDLE_MARKER = "ASTER_BUNDLE_V2"
@@ -812,6 +814,7 @@ class MailRepository @Inject constructor(
         ratchet_undecryptable_at.clear()
         ratchet_plaintext_cache.clear()
         InboundAttachmentKeyStore.clear()
+        org.astermail.android.ui.mail.InlineImageStore.clear()
     }
 
     suspend fun fetch_inbox(
@@ -1535,7 +1538,7 @@ class MailRepository @Inject constructor(
             is_read = resolve_read_state(item.item_type, item.is_read, meta?.is_read) ||
                 (meta?.is_trashed ?: item.is_trashed) == true,
             is_starred = meta?.is_starred ?: item.is_starred ?: false,
-            is_encrypted = item.encrypted_envelope != null,
+            is_encrypted = item.encrypted_envelope != null && envelope?.is_unauthenticated != true,
             has_attachments = meta?.has_attachments ?: false,
             is_trashed = meta?.is_trashed ?: item.is_trashed ?: false,
             is_archived = meta?.is_archived ?: item.is_archived ?: false,
@@ -1603,7 +1606,7 @@ class MailRepository @Inject constructor(
             timestamp = item.message_ts ?: item.created_at ?: "",
             body_text = envelope?.body_text ?: "",
             body_html = envelope?.body_html,
-            is_encrypted = item.encrypted_envelope != null,
+            is_encrypted = item.encrypted_envelope != null && envelope?.is_unauthenticated != true,
             is_read = resolve_read_state(item.item_type, null, meta?.is_read),
             raw_item = item,
             to_addresses = envelope?.to?.map { it.second } ?: emptyList(),
@@ -1646,6 +1649,7 @@ class MailRepository @Inject constructor(
         message_id: String? = null,
     ): DecryptedEnvelope? {
         if (encrypted_envelope.isNullOrBlank()) return null
+        var unauthenticated = false
         return try {
             val nonce_bytes = if (envelope_nonce.isNullOrBlank()) null
                 else android.util.Base64.decode(envelope_nonce, android.util.Base64.DEFAULT)
@@ -1675,6 +1679,7 @@ class MailRepository @Inject constructor(
                             return pgp_placeholder_envelope()
                         }
                     } else {
+                        unauthenticated = true
                         raw
                     }
                 }
@@ -1690,7 +1695,8 @@ class MailRepository @Inject constructor(
             val json_str = String(decrypted, Charsets.UTF_8)
             decrypted.fill(0)
             InboundAttachmentKeyStore.register_from_envelope_json(message_id, json_str)
-            val envelope = parse_envelope_json(json_str)
+            val parsed = parse_envelope_json(json_str)
+            val envelope = if (unauthenticated) parsed?.copy(is_unauthenticated = true) else parsed
             if (envelope != null) decrypt_pgp_body_fields(envelope, message_id) else null
         } catch (_: Throwable) {
             null
@@ -1780,6 +1786,26 @@ class MailRepository @Inject constructor(
                     } catch (_: Throwable) {
                     }
                 }
+            }
+        }
+
+        val data_kek = session_key_store.get_data_kek()
+        if (data_kek != null && data_kek.size == 32) {
+            try {
+                return aes_gcm_decrypt(ciphertext, data_kek, nonce)
+            } catch (_: Throwable) {
+            } finally {
+                data_kek.fill(0)
+            }
+        }
+
+        for (raw_key in kek_candidates()) {
+            if (raw_key.size != 32) continue
+            try {
+                val plaintext = aes_gcm_decrypt(ciphertext, raw_key, nonce)
+                promote_kek(raw_key)
+                return plaintext
+            } catch (_: Throwable) {
             }
         }
 
@@ -2442,6 +2468,7 @@ class MailRepository @Inject constructor(
         var body_text = envelope.body_text
         var body_html = envelope.body_html
         var is_undecryptable = false
+        var is_unauthenticated = envelope.is_unauthenticated
 
         val ratchet_candidate = when {
             ratchet_decryptor.looks_like_ratchet_envelope(body_text) -> body_text
@@ -2477,6 +2504,7 @@ class MailRepository @Inject constructor(
                     }
                 }
                 if (decrypted != org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL) {
+                    is_unauthenticated = false
                     body_text = decrypted
                     body_html = null
                 } else {
@@ -2531,13 +2559,15 @@ class MailRepository @Inject constructor(
             body_text != envelope.body_text ||
             body_html != envelope.body_html ||
             resolved_subject != envelope.subject ||
-            is_undecryptable != envelope.is_undecryptable
+            is_undecryptable != envelope.is_undecryptable ||
+            is_unauthenticated != envelope.is_unauthenticated
         ) {
             envelope.copy(
                 subject = resolved_subject,
                 body_text = body_text,
                 body_html = body_html,
                 is_undecryptable = is_undecryptable,
+                is_unauthenticated = is_unauthenticated,
             )
         } else {
             envelope
@@ -2830,10 +2860,17 @@ class MailRepository @Inject constructor(
         for (recipient in recipients.filter { is_internal_recipient(it) }) {
             val username = recipient.substringBefore('@').trim()
             if (username.isEmpty()) continue
-            val key = runCatching {
+            val key = try {
                 keys_api.get_recipient_public_key(username, recipient).public_key
-            }.getOrNull()
-            if (!key.isNullOrBlank()) keys.add(key)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (t: Throwable) {
+                throw IllegalStateException(context.getString(R.string.e2e_encryption_failed), t)
+            }
+            if (key.isNullOrBlank()) {
+                throw IllegalStateException(context.getString(R.string.e2e_encryption_failed))
+            }
+            keys.add(key)
         }
         return keys
     }
@@ -2843,6 +2880,10 @@ class MailRepository @Inject constructor(
         attachments: List<ExternalAttachmentPayload>,
     ): List<SendAttachmentPayload> {
         val recipient_keys = fetch_internal_public_keys(recipients)
+        val has_internal_recipients = recipients.any { is_internal_recipient(it) }
+        if (has_internal_recipients && recipient_keys.isEmpty()) {
+            throw IllegalStateException(context.getString(R.string.e2e_encryption_failed))
+        }
         return attachments.map { att ->
             try {
                 val raw = android.util.Base64.decode(att.data, android.util.Base64.DEFAULT)
@@ -3223,6 +3264,7 @@ class MailRepository @Inject constructor(
 
     companion object {
         private const val PBKDF2_ITERATIONS = 310000
+        private const val max_attachment_base64_chars = 300_000_000
         private val PLACEHOLDER_META_NONCE = ByteArray(12)
         const val DEFAULT_ATTACHMENT_CONTENT_TYPE = "application/octet-stream"
 
@@ -3308,6 +3350,9 @@ class MailRepository @Inject constructor(
             mail_item_id: String? = null,
             seq_num: Int? = null,
         ): ByteArray {
+            if (encrypted_data_b64.length > max_attachment_base64_chars) {
+                throw IllegalStateException("attachment payload exceeds the supported size")
+            }
             val resolved_key_b64 = if (session_key_b64.isBlank()) {
                 InboundAttachmentKeyStore.key(mail_item_id, seq_num).orEmpty()
             } else {

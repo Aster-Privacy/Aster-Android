@@ -581,6 +581,9 @@
     <string name="standard_point_server">The receiving mail server can read the contents</string>
     <string name="standard_point_storage">Stored encrypted once it reaches Aster</string>
     <string name="phishing_signal_authentication_failed">%1$s did not pass sender authentication</string>
+    <string name="identity_changed_title">Encryption key changed</string>
+    <string name="identity_changed_description">The encryption key for %1$s is different from the one you saw before. This happens when someone signs in on a new device or resets their account, but it can also mean someone is intercepting your messages. Confirm with them through another channel before you trust this conversation.</string>
+    <string name="identity_changed_dismiss">I verified this</string>
     <string name="sender_unverified_title">Sender could not be verified</string>
     <string name="sender_unverified_description">The checks that prove a message came from %1$s did not pass. Be careful with links, attachments and anything it asks you to do.</string>
     <string name="sender_authentication">Sender checks</string>

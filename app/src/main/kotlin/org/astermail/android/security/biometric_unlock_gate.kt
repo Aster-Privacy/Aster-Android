@@ -135,7 +135,7 @@ object BiometricUnlockGate {
             .putString(KEY_TOKEN_CIPHERTEXT, Base64.encodeToString(ciphertext, Base64.NO_WRAP))
             .putString(KEY_TOKEN_IV, Base64.encodeToString(cipher.iv, Base64.NO_WRAP))
             .putString(KEY_TOKEN_DIGEST, Base64.encodeToString(digest(token), Base64.NO_WRAP))
-            .apply()
+            .commit()
         token.fill(0)
         true
     } catch (t: Throwable) {

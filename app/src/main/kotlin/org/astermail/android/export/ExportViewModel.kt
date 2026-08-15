@@ -151,7 +151,9 @@ class ExportViewModel @Inject constructor(
     private suspend fun run_export() {
         try {
             val ts = System.currentTimeMillis()
-            val zip_file = File(context.cacheDir, "aster_export_$ts.zip")
+            val export_dir = File(context.cacheDir, "exports").apply { mkdirs() }
+            export_dir.listFiles()?.forEach { runCatching { it.delete() } }
+            val zip_file = File(export_dir, "aster_export_$ts.zip")
             var total_bytes = 0L
 
             val zos = ZipOutputStream(BufferedOutputStream(zip_file.outputStream()))

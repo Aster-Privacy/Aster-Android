@@ -86,6 +86,7 @@ fun RegisterPasswordStep(
     on_terms_click: () -> Unit = {},
     on_privacy_click: () -> Unit = {},
 ) {
+    org.astermail.android.ui.common.secure_screen()
     val colors = AsterMaterial.colors
     var password_visible by remember { mutableStateOf(false) }
     var confirm_visible by remember { mutableStateOf(false) }

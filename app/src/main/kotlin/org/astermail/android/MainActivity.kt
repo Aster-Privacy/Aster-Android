@@ -182,7 +182,9 @@ import org.astermail.android.ui.theme.local_accessibility
 import org.astermail.android.ui.theme.local_text_scale
 
 @AndroidEntryPoint
-class MainActivity : androidx.fragment.app.FragmentActivity() {
+class MainActivity :
+    androidx.fragment.app.FragmentActivity(),
+    org.astermail.android.ui.common.SecureFlagHost {
 
     companion object {
         const val EXTRA_OPEN_EMAIL_ID = "open_email_id"
@@ -273,9 +275,12 @@ class MainActivity : androidx.fragment.app.FragmentActivity() {
         super.onDestroy()
     }
 
-    private fun enforce_secure_flag() {
+    override fun enforce_secure_flag() {
         val app_lock_configured = runCatching { app_lock_store.is_configured() }.getOrDefault(true)
-        if (LockdownStore.is_enabled(applicationContext) || app_lock_configured) {
+        if (org.astermail.android.ui.common.SecureScreenGuard.is_active() ||
+            LockdownStore.is_enabled(applicationContext) ||
+            app_lock_configured
+        ) {
             window.setFlags(
                 android.view.WindowManager.LayoutParams.FLAG_SECURE,
                 android.view.WindowManager.LayoutParams.FLAG_SECURE,

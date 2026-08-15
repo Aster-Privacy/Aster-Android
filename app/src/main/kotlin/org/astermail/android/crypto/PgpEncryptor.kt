@@ -36,8 +36,10 @@ import org.bouncycastle.openpgp.PGPLiteralDataGenerator
 import org.bouncycastle.openpgp.PGPPublicKey
 import org.bouncycastle.openpgp.PGPPublicKeyRing
 import org.bouncycastle.openpgp.PGPPublicKeyRingCollection
+import org.bouncycastle.openpgp.PGPSignature
 import org.bouncycastle.openpgp.PGPUtil
 import org.bouncycastle.openpgp.operator.jcajce.JcaKeyFingerprintCalculator
+import org.bouncycastle.openpgp.operator.jcajce.JcaPGPContentVerifierBuilderProvider
 import org.bouncycastle.openpgp.operator.jcajce.JcePGPDataEncryptorBuilder
 import org.bouncycastle.openpgp.operator.jcajce.JcePublicKeyKeyEncryptionMethodGenerator
 
@@ -97,17 +99,56 @@ object PgpEncryptor {
                 ByteArrayInputStream(armored_public_key.toByteArray(Charsets.UTF_8)),
             )
             val rings = PGPPublicKeyRingCollection(stream, JcaKeyFingerprintCalculator())
-            var fallback: PGPPublicKey? = null
+            var expired_subkey: PGPPublicKey? = null
+            var master_fallback: PGPPublicKey? = null
+            var expired_master: PGPPublicKey? = null
             for (ring in rings) {
-                for (key in (ring as PGPPublicKeyRing)) {
+                val public_ring = ring as PGPPublicKeyRing
+                val master = public_ring.publicKey
+                if (master.hasRevocation()) continue
+                for (key in public_ring) {
                     if (!key.isEncryptionKey) continue
-                    if (!key.isMasterKey) return key
-                    if (fallback == null) fallback = key
+                    if (key.hasRevocation()) continue
+                    if (key.isMasterKey) {
+                        if (is_expired(key)) {
+                            if (expired_master == null) expired_master = key
+                        } else if (master_fallback == null) {
+                            master_fallback = key
+                        }
+                        continue
+                    }
+                    if (!has_valid_binding(key, master)) continue
+                    if (is_expired(key)) {
+                        if (expired_subkey == null) expired_subkey = key
+                        continue
+                    }
+                    return key
                 }
             }
-            fallback
+            master_fallback ?: expired_subkey ?: expired_master
         } catch (_: Throwable) {
             null
         }
+    }
+
+    private fun is_expired(key: PGPPublicKey): Boolean {
+        val seconds = key.validSeconds
+        if (seconds <= 0L) return false
+        val expires_at = key.creationTime.time + seconds * 1000L
+        return expires_at <= System.currentTimeMillis()
+    }
+
+    private fun has_valid_binding(subkey: PGPPublicKey, master: PGPPublicKey): Boolean {
+        val signatures = subkey.getSignaturesOfType(PGPSignature.SUBKEY_BINDING)
+        while (signatures.hasNext()) {
+            val signature = signatures.next() as? PGPSignature ?: continue
+            if (signature.keyID != master.keyID) continue
+            val verified = runCatching {
+                signature.init(JcaPGPContentVerifierBuilderProvider().setProvider(BouncyCastleProvider.PROVIDER_NAME), master)
+                signature.verifyCertification(master, subkey)
+            }.getOrDefault(false)
+            if (verified) return true
+        }
+        return false
     }
 }

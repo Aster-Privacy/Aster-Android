@@ -29,6 +29,10 @@ import org.unifiedpush.android.connector.data.PushMessage
 class AsterPushService : PushService() {
 
     override fun onMessage(message: PushMessage, instance: String) {
+        if (!message.decrypted) {
+            MailPollingWorker.enqueue_forced_notify(this)
+            return
+        }
         val result = runCatching {
             handle_push_payload(this, String(message.content, Charsets.UTF_8))
         }.getOrDefault(PushResult.NeedsFetch)

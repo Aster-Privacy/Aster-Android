@@ -121,6 +121,14 @@ fun TurnstileWidget(
                 WebView(context).apply {
                     settings.javaScriptEnabled = true
                     settings.domStorageEnabled = true
+                    settings.allowFileAccess = false
+                    settings.allowContentAccess = false
+                    @Suppress("DEPRECATION")
+                    settings.allowFileAccessFromFileURLs = false
+                    @Suppress("DEPRECATION")
+                    settings.allowUniversalAccessFromFileURLs = false
+                    settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
+                    settings.setGeolocationEnabled(false)
                     settings.userAgentString = (settings.userAgentString ?: "")
                         .replace("; wv", "")
                     webViewClient = AssetLoaderWebViewClient(asset_loader)

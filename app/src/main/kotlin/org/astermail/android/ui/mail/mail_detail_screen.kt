@@ -239,14 +239,18 @@ private fun external_display_url(url: String): String {
     }
 }
 
+private val IMG_WIDTH_PATTERN = Regex("""width\s*=\s*["']?(\d+)""", RegexOption.IGNORE_CASE)
+
+private val IMG_HEIGHT_PATTERN = Regex("""height\s*=\s*["']?(\d+)""", RegexOption.IGNORE_CASE)
+
 private fun count_external_content(html: String): ExternalContentCounts {
     var images = 0
     var trackers = 0
     val items = mutableListOf<ExternalContentItem>()
     IMG_TAG_PATTERN.findAll(html).forEach { match ->
         val tag = match.value
-        val width_match = Regex("""width\s*=\s*["']?(\d+)""", RegexOption.IGNORE_CASE).find(tag)
-        val height_match = Regex("""height\s*=\s*["']?(\d+)""", RegexOption.IGNORE_CASE).find(tag)
+        val width_match = IMG_WIDTH_PATTERN.find(tag)
+        val height_match = IMG_HEIGHT_PATTERN.find(tag)
         val w = width_match?.groupValues?.get(1)?.toIntOrNull()
         val h = height_match?.groupValues?.get(1)?.toIntOrNull()
         val is_tracker = w != null && h != null && w <= 2 && h <= 2
@@ -453,6 +457,10 @@ fun MailDetailScreen(
     val reactions_enabled = settings_state.preferences?.reactions_enabled != false
     val message_reactions by mail_vm.message_reactions.collectAsStateWithLifecycle()
     val decrypt_retry_active by mail_vm.decrypt_retry_active.collectAsStateWithLifecycle()
+    val identity_changes by mail_vm.identity_changes.collectAsStateWithLifecycle()
+    val identity_changed_senders = remember(identity_changes) {
+        identity_changes.mapNotNull { it.sender_email.trim().lowercase().takeIf { e -> e.isNotBlank() } }.toSet()
+    }
     var reaction_picker_open by remember { mutableStateOf(false) }
 
     LaunchedEffect(reactions_enabled) {
@@ -1129,6 +1137,12 @@ fun MailDetailScreen(
                             blocked_for_traffic = blocked_for_traffic_only,
                             on_retry_decrypt = { mail_vm.retry_decrypt_thread() },
                             retry_in_progress = decrypt_retry_active,
+                            identity_changed = identity_changed_senders.contains(
+                                msg.sender_email.trim().lowercase(),
+                            ),
+                            on_acknowledge_identity = {
+                                mail_vm.acknowledge_identity_change(msg.sender_email)
+                            },
                             on_load_external = {
                                 allow_external_ids = allow_external_ids + msg.id
                             },
@@ -1825,6 +1839,8 @@ internal fun expanded_message(
     is_system: Boolean = false,
     can_collapse: Boolean = true,
     show_header_reply: Boolean = true,
+    identity_changed: Boolean = false,
+    on_acknowledge_identity: () -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
@@ -2138,6 +2154,12 @@ internal fun expanded_message(
         ) {
             sender_unverified_banner(
                 sender = displayed_sender_email(msg.display_sender_email, msg.sender_email),
+            )
+        }
+        if (identity_changed) {
+            identity_changed_banner(
+                sender = displayed_sender_email(msg.display_sender_email, msg.sender_email),
+                on_acknowledge = on_acknowledge_identity,
             )
         }
 
@@ -5763,6 +5785,57 @@ private fun auth_result_label(result: String?): String = when (result?.lowercase
     "pass" -> stringResource(R.string.auth_result_pass)
     "fail", "softfail", "permerror", "temperror" -> stringResource(R.string.auth_result_fail)
     else -> stringResource(R.string.auth_result_missing)
+}
+
+@Composable
+private fun identity_changed_banner(sender: String, on_acknowledge: () -> Unit) {
+    val colors = AsterMaterial.colors
+    val shape = SquircleShape(16.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.md)
+            .padding(bottom = AsterSpacing.sm)
+            .clip(shape)
+            .background(colors.danger.copy(alpha = 0.10f))
+            .border(1.dp, colors.danger.copy(alpha = 0.35f), shape)
+            .padding(AsterSpacing.md),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Icon(
+            imageVector = TablerIcons.ShieldLock,
+            contentDescription = null,
+            tint = colors.danger,
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(Modifier.width(AsterSpacing.sm))
+        Column {
+            Text(
+                text = stringResource(R.string.identity_changed_title),
+                color = colors.danger,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = stringResource(R.string.identity_changed_description, sender),
+                color = colors.text_secondary,
+                fontSize = 12.sp,
+                lineHeight = 17.sp,
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.identity_changed_dismiss),
+                color = colors.danger,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .clip(SquircleShape(10.dp))
+                    .clickable { on_acknowledge() }
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+            )
+        }
+    }
 }
 
 @Composable

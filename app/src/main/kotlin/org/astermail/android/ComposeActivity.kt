@@ -62,7 +62,9 @@ import org.astermail.android.ui.common.aster_theme_root
 import org.astermail.android.ui.compose.ComposeScreen
 
 @AndroidEntryPoint
-class ComposeActivity : androidx.fragment.app.FragmentActivity() {
+class ComposeActivity :
+    androidx.fragment.app.FragmentActivity(),
+    org.astermail.android.ui.common.SecureFlagHost {
 
     companion object {
         private const val extra_reply_to = "reply_to"
@@ -157,9 +159,12 @@ class ComposeActivity : androidx.fragment.app.FragmentActivity() {
         super.onPause()
     }
 
-    private fun enforce_secure_flag() {
+    override fun enforce_secure_flag() {
         val app_lock_configured = runCatching { app_lock_store.is_configured() }.getOrDefault(true)
-        if (LockdownStore.is_enabled(applicationContext) || app_lock_configured) {
+        if (org.astermail.android.ui.common.SecureScreenGuard.is_active() ||
+            LockdownStore.is_enabled(applicationContext) ||
+            app_lock_configured
+        ) {
             window.setFlags(
                 android.view.WindowManager.LayoutParams.FLAG_SECURE,
                 android.view.WindowManager.LayoutParams.FLAG_SECURE,

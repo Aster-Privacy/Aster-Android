@@ -132,7 +132,9 @@ html,body{background-color:#ffffff!important}
         android.util.Base64.encodeToString(nonce_bytes, android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING)
     }
     val script_src = if (translate_mode != "off") {
-        "script-src 'nonce-$csp_nonce' 'wasm-unsafe-eval' https://mail-content.invalid; worker-src https://mail-content.invalid; connect-src https://mail-content.invalid"
+        "script-src 'nonce-$csp_nonce' 'wasm-unsafe-eval' https://mail-content.invalid/bergamot/; " +
+            "worker-src https://mail-content.invalid/bergamot/; " +
+            "connect-src https://mail-content.invalid/bergamot/ https://mail-content.invalid/models/bergamot/"
     } else {
         "script-src 'nonce-$csp_nonce'"
     }

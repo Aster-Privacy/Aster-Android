@@ -145,6 +145,9 @@
     <string name="settings_interval_default">mo</string>
 
     <string name="settings_diagnostics_clip_label">Diagnostics</string>
+    <string name="settings_diagnostics_secure_storage">Secure storage</string>
+    <string name="settings_diagnostics_storage_ok">Healthy</string>
+    <string name="settings_diagnostics_storage_degraded">Degraded, sign out and sign back in</string>
 
     <string name="log_out_confirm_title">Sign out?</string>
     <string name="log_out_confirm_message">Sign out of %1$s on this device?</string>

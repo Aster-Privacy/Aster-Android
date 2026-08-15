@@ -77,7 +77,7 @@ class RatchetPlaintextCache @Inject constructor(
     }
 
     fun clear() {
-        prefs.edit().clear().apply()
+        prefs.edit().clear().commit()
     }
 
     private fun key_for(message_id: String): String = "ratchet_plaintext_$message_id"

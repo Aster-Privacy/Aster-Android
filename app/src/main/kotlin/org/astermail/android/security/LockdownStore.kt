@@ -37,7 +37,7 @@ object LockdownStore {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
             .putBoolean(KEY_ENABLED, enabled)
-            .apply()
+            .commit()
     }
 
     fun register_listener(

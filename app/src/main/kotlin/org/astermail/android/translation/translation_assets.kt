@@ -33,7 +33,9 @@ object TranslationAssets {
     const val ASSET_PREFIX = "/bergamot/"
     const val MODEL_PREFIX = "/models/bergamot/v1/"
     private const val ASSET_DIR = "bergamot"
-    private const val MODEL_RELAY_BASE = "https://relay.astermail.org/models/bergamot/v1"
+    private const val MODEL_RELAY_HOST = "relay.astermail.org"
+    private const val MODEL_RELAY_BASE = "https://$MODEL_RELAY_HOST/models/bergamot/v1"
+    private const val MAX_REDIRECTS = 3
     private const val CACHE_DIR = "bergamot_models"
     private const val MAX_CACHE_BYTES = 600L * 1024L * 1024L
     private const val MAX_MODEL_BYTES = 128L * 1024L * 1024L
@@ -78,7 +80,8 @@ object TranslationAssets {
             target.setLastModified(System.currentTimeMillis())
         }
         return try {
-            response(mime_for(safe), target.readBytes())
+            if (target.length() > MAX_MODEL_BYTES) return null
+            response(mime_for(safe), target.inputStream())
         } catch (_: Throwable) {
             null
         }
@@ -105,11 +108,7 @@ object TranslationAssets {
         var connection: HttpURLConnection? = null
         return try {
             target.parentFile?.mkdirs()
-            connection = (URL(url).openConnection() as HttpURLConnection).apply {
-                connectTimeout = 20000
-                readTimeout = 60000
-                requestMethod = "GET"
-            }
+            connection = open_pinned_connection(url) ?: return false
             if (connection.responseCode != HttpURLConnection.HTTP_OK) return false
             if (connection.contentLengthLong > MAX_MODEL_BYTES) return false
             val tmp = File(target.parentFile, target.name + ".part")
@@ -126,6 +125,34 @@ object TranslationAssets {
         } finally {
             connection?.disconnect()
         }
+    }
+
+    private fun open_pinned_connection(initial_url: String): HttpURLConnection? {
+        var current = URL(initial_url)
+        var hops = 0
+        while (hops <= MAX_REDIRECTS) {
+            if (!current.protocol.equals("https", ignoreCase = true)) return null
+            if (!current.host.equals(MODEL_RELAY_HOST, ignoreCase = true)) return null
+            val connection = (current.openConnection() as HttpURLConnection).apply {
+                connectTimeout = 20000
+                readTimeout = 60000
+                requestMethod = "GET"
+                instanceFollowRedirects = false
+            }
+            val code = connection.responseCode
+            val is_redirect = code == HttpURLConnection.HTTP_MOVED_PERM ||
+                code == HttpURLConnection.HTTP_MOVED_TEMP ||
+                code == HttpURLConnection.HTTP_SEE_OTHER ||
+                code == 307 ||
+                code == 308
+            if (!is_redirect) return connection
+            val location = connection.getHeaderField("Location")
+            connection.disconnect()
+            if (location.isNullOrBlank()) return null
+            current = runCatching { URL(current, location) }.getOrNull() ?: return null
+            hops++
+        }
+        return null
     }
 
     private fun copy_capped(input: java.io.InputStream, output: java.io.OutputStream): Boolean {
@@ -152,7 +179,9 @@ object TranslationAssets {
 
     private fun sanitize(name: String): String? {
         if (name.isBlank()) return null
-        if (name.contains("..") || name.startsWith("/")) return null
+        if (name.contains("..") || name.startsWith("/") || name.contains('\\')) return null
+        if (name.any { it.code < 0x20 }) return null
+        if (!name.all { it.isLetterOrDigit() || it == '.' || it == '_' || it == '-' || it == '/' }) return null
         return name
     }
 
@@ -165,7 +194,10 @@ object TranslationAssets {
         else -> "application/octet-stream"
     }
 
-    private fun response(mime: String, bytes: ByteArray): WebResourceResponse {
+    private fun response(mime: String, bytes: ByteArray): WebResourceResponse =
+        response(mime, ByteArrayInputStream(bytes))
+
+    private fun response(mime: String, stream: java.io.InputStream): WebResourceResponse {
         val headers = mapOf(
             "Access-Control-Allow-Origin" to "*",
             "Cache-Control" to "no-store",
@@ -176,7 +208,7 @@ object TranslationAssets {
             200,
             "OK",
             headers,
-            ByteArrayInputStream(bytes),
+            stream,
         )
     }
 }

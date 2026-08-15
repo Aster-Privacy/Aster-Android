@@ -21,6 +21,8 @@
 
 package org.astermail.android.mail.ratchet
 
+import org.astermail.android.crypto.ratchet.RatchetCrypto
+
 object RatchetStateMerge {
 
     private const val MAX_MERGED_SKIPPED_KEYS = 1000
@@ -51,12 +53,25 @@ object RatchetStateMerge {
     private fun same_epoch(a: RatchetState, b: RatchetState): Boolean =
         a.dh_keypair.public_key == b.dh_keypair.public_key &&
             a.dh_remote_public == b.dh_remote_public &&
-            a.root_key == b.root_key
+            constant_time_equals(a.root_key, b.root_key)
+
+    private fun constant_time_equals(a: String, b: String): Boolean {
+        val left = a.toByteArray(Charsets.UTF_8)
+        val right = b.toByteArray(Charsets.UTF_8)
+        if (left.size != right.size) return false
+        var diff = 0
+        for (i in left.indices) diff = diff or (left[i].toInt() xor right[i].toInt())
+        return diff == 0
+    }
+
+    private fun root_key_tie_break(state: RatchetState): String =
+        java.util.Base64.getEncoder()
+            .encodeToString(RatchetCrypto.sha256(state.root_key.toByteArray(Charsets.UTF_8)))
 
     private fun pick_newer_epoch(local: RatchetState, remote: RatchetState): RatchetState = when {
         local.epoch != remote.epoch -> if (local.epoch > remote.epoch) local else remote
         local.updated_at != remote.updated_at -> if (local.updated_at > remote.updated_at) local else remote
-        else -> if (local.root_key > remote.root_key) local else remote
+        else -> if (root_key_tie_break(local) > root_key_tie_break(remote)) local else remote
     }
 
     fun merge(local: RatchetState, remote: RatchetState): RatchetState {

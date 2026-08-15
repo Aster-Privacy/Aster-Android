@@ -90,7 +90,7 @@ object StorageModule {
         }
         return try {
             val db = build_mail_database(context, meta)
-            runCatching { meta.edit().putBoolean(key_sqlcipher_migrated, true).apply() }
+            runCatching { meta.edit().putBoolean(key_sqlcipher_migrated, true).commit() }
             db
         } catch (first_error: Throwable) {
             if (org.astermail.android.BuildConfig.DEBUG) {
@@ -99,7 +99,7 @@ object StorageModule {
             runCatching { context.deleteDatabase(db_name) }
             try {
                 val db = build_mail_database(context, meta)
-                runCatching { meta.edit().putBoolean(key_sqlcipher_migrated, true).apply() }
+                runCatching { meta.edit().putBoolean(key_sqlcipher_migrated, true).commit() }
                 db
             } catch (second_error: Throwable) {
                 if (org.astermail.android.BuildConfig.DEBUG) {
@@ -139,6 +139,7 @@ object StorageModule {
     }
 
     private fun build_in_memory_database(context: Context): AsterDatabase {
+        org.astermail.android.storage.StorageHealth.mark_database_in_memory()
         return Room.inMemoryDatabaseBuilder(context, AsterDatabase::class.java)
             .fallbackToDestructiveMigration()
             .build()
@@ -151,7 +152,7 @@ object StorageModule {
         val key = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
         meta.edit()
             .putString(key_db_key, android.util.Base64.encodeToString(key, android.util.Base64.NO_WRAP))
-            .apply()
+            .commit()
         return key
     }
 

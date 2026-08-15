@@ -27,6 +27,9 @@ import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 
 private const val ANDROID_KEY_STORE = "AndroidKeyStore"
+private const val health_prefs_name = "aster_secure_prefs_health"
+private const val failure_key_prefix = "keystore_failure_"
+private const val key_material_lost_flag = "key_material_lost"
 
 object SecurePrefs {
 
@@ -37,33 +40,64 @@ object SecurePrefs {
     fun open(context: Context, name: String): SharedPreferences {
         val app = context.applicationContext
         return try {
-            create_encrypted(app, name)
+            create_encrypted(app, name).also { clear_failure_record(app, name) }
         } catch (strongbox: Throwable) {
             open_after_failure(app, name)
         }
     }
 
+    fun was_key_material_lost(context: Context): Boolean =
+        key_material_lost || health_prefs(context).getBoolean(key_material_lost_flag, false)
+
     private fun open_after_failure(app: Context, name: String): SharedPreferences {
         return try {
-            create_encrypted(app, name, allow_strongbox = false)
+            create_encrypted(app, name, allow_strongbox = false).also { clear_failure_record(app, name) }
         } catch (first: Throwable) {
             runCatching { app.deleteSharedPreferences(name) }
             try {
-                create_encrypted(app, name, allow_strongbox = false)
+                create_encrypted(app, name, allow_strongbox = false).also { clear_failure_record(app, name) }
             } catch (second: Throwable) {
+                if (!record_failure(app, name)) {
+                    StorageHealth.mark_secure_prefs_degraded()
+                    return InMemoryPrefs()
+                }
                 reset_key_material(app, name)
                 try {
-                    create_encrypted(app, name, allow_strongbox = false)
+                    create_encrypted(app, name, allow_strongbox = false).also { clear_failure_record(app, name) }
                 } catch (third: Throwable) {
                     key_material_lost = true
+                    StorageHealth.mark_key_material_lost()
                     InMemoryPrefs()
                 }
             }
         }
     }
 
+    private fun health_prefs(context: Context): SharedPreferences =
+        context.applicationContext.getSharedPreferences(health_prefs_name, Context.MODE_PRIVATE)
+
+    private fun record_failure(context: Context, name: String): Boolean {
+        val prefs = health_prefs(context)
+        val key = failure_key_prefix + name
+        val already_failed = prefs.getBoolean(key, false)
+        if (!already_failed) {
+            prefs.edit().putBoolean(key, true).apply()
+        }
+        return already_failed
+    }
+
+    private fun clear_failure_record(context: Context, name: String) {
+        val prefs = health_prefs(context)
+        val key = failure_key_prefix + name
+        if (prefs.contains(key)) {
+            prefs.edit().remove(key).commit()
+        }
+    }
+
     private fun reset_key_material(context: Context, name: String) {
         key_material_lost = true
+        StorageHealth.mark_key_material_lost()
+        runCatching { health_prefs(context).edit().putBoolean(key_material_lost_flag, true).commit() }
         runCatching { context.deleteSharedPreferences(name) }
         runCatching {
             val store = java.security.KeyStore.getInstance(ANDROID_KEY_STORE).apply { load(null) }

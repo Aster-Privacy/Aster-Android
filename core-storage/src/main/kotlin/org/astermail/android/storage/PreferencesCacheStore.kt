@@ -81,12 +81,12 @@ class PreferencesCacheStore(context: Context? = null) {
                 if (badge_key != null) remove(badge_key)
                 if (signature_key != null) remove(signature_key)
                 if (alias_key != null) remove(alias_key)
-            }?.apply()
+            }?.commit()
         }
     }
 
     fun clear_all() {
-        runCatching { prefs?.edit()?.clear()?.apply() }
+        runCatching { prefs?.edit()?.clear()?.commit() }
     }
 
     private fun entry_key(account_key: String?): String? {

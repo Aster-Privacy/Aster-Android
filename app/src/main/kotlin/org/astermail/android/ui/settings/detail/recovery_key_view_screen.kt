@@ -79,6 +79,7 @@ fun RecoveryKeyViewScreen(
     on_back: () -> Unit,
     on_open: (id: String) -> Unit = {},
 ) {
+    org.astermail.android.ui.common.secure_screen()
     val colors = AsterMaterial.colors
     val context = LocalContext.current
     val vm: SettingsViewModel = shared_settings_view_model()

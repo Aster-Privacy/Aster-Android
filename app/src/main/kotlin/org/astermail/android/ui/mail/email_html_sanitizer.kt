@@ -77,9 +77,16 @@ object EmailHtmlSanitizer {
     private fun raw_output_settings(): org.jsoup.nodes.Document.OutputSettings =
         org.jsoup.nodes.Document.OutputSettings().prettyPrint(false)
 
+    private const val max_sanitizer_input_chars = 4_000_000
+
     fun sanitize(raw_html: String, options: SanitizeOptions = SanitizeOptions()): String {
         if (raw_html.isBlank()) return ""
-        val pre = strip_dangerous_blocks(raw_html)
+        val bounded_html = if (raw_html.length > max_sanitizer_input_chars) {
+            raw_html.take(max_sanitizer_input_chars)
+        } else {
+            raw_html
+        }
+        val pre = strip_dangerous_blocks(bounded_html)
         val head_styles = extract_head_styles(pre)
         val body_only = extract_body_html(pre)
         val cleaned_body = Jsoup.clean(body_only, "https://mail-content.invalid/", safelist, raw_output_settings())
@@ -241,10 +248,13 @@ object EmailHtmlSanitizer {
         return doc.body().html()
     }
 
-    private val remote_url_prefix = Regex("^(?:https?:)?//", RegexOption.IGNORE_CASE)
+    private val remote_url_prefix = Regex(
+        """^(?!\s*(?:data:|cid:|#))\s*\S""",
+        RegexOption.IGNORE_CASE,
+    )
 
     private val css_remote_url = Regex(
-        """url\(\s*["']?(?:https?:)?//[^"')\s]+["']?\s*\)""",
+        """url\(\s*["']?(?!data:|cid:|#)[^"')\s]+["']?\s*\)""",
         RegexOption.IGNORE_CASE,
     )
 

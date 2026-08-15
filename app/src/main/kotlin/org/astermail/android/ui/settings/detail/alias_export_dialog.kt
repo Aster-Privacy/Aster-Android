@@ -127,7 +127,8 @@ private fun write_export_archive(
     sources: List<AliasExportSource>,
 ): File {
     val date_stamp = export_date_stamp()
-    val archive = File(context.cacheDir, "aster-aliases-export-$date_stamp.zip")
+    val export_dir = File(context.cacheDir, "exports").apply { mkdirs() }
+    val archive = File(export_dir, "aster-aliases-export-$date_stamp.zip")
     val stream = ZipOutputStream(archive.outputStream().buffered())
 
     try {

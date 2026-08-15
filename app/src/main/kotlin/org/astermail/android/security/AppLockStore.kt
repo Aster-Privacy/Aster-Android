@@ -124,7 +124,7 @@ class AppLockStore @Inject constructor(@ApplicationContext private val context: 
             putInt(KEY_LOCKOUT_COUNT, 0)
             putLong(KEY_LOCKOUT_UNTIL, 0L)
             putLong(KEY_LOCKOUT_UNTIL_ELAPSED, 0L)
-        }.apply()
+        }.commit()
         runCatching { BiometricUnlockGate.reset(context) }
         _config_version.value += 1
         mark_session_unlocked()
@@ -176,7 +176,7 @@ class AppLockStore @Inject constructor(@ApplicationContext private val context: 
             .putInt(KEY_LOCKOUT_COUNT, count)
             .putLong(KEY_LOCKOUT_UNTIL, until)
             .putLong(KEY_LOCKOUT_UNTIL_ELAPSED, until_elapsed)
-            .apply()
+            .commit()
     }
 
     private fun hash_pin(pin: String, salt: ByteArray): ByteArray =

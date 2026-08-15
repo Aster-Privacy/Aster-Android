@@ -160,7 +160,7 @@ class AccountStore(context: Context? = null) {
     fun clear_all() {
         synchronized(lock) {
             data = AccountsData()
-            runCatching { prefs?.edit()?.remove(key_accounts)?.apply() }
+            runCatching { prefs?.edit()?.remove(key_accounts)?.commit() }
             emit_current()
         }
     }

@@ -40,7 +40,7 @@ class TrustedDeviceStore(context: Context) {
 
     fun clear(user_email: String) {
         val key = key_for(user_email)
-        runCatching { prefs.edit().remove(key).apply() }
+        runCatching { prefs.edit().remove(key).commit() }
     }
 
     private fun key_for(user_email: String): String =

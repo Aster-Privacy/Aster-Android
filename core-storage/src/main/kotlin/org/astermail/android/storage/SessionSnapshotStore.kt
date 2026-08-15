@@ -103,7 +103,7 @@ class SessionSnapshotStore(context: Context? = null) {
                 key_identity, key_enc_vault, key_vault_nonce, key_password_salt,
                 key_user_id, key_user_email, key_recovery_codes, key_previous_keys, key_legacy_keks,
             ).forEach { e.remove("${account_id}_$it") }
-            e.apply()
+            e.commit()
         }
     }
 

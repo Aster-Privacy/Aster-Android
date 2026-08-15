@@ -1,5 +1,4 @@
 Bug fixes and improvements:
-
 - Connection and encryption settings show what each option does, and saving no longer flashes a message
 - Revoke all trusted devices from the top of the list, and long custom domains fit on one line
 - Dialogs open and close smoothly, and dropdowns size to their content

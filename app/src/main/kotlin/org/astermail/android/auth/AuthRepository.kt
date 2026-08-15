@@ -32,12 +32,15 @@ import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withTimeoutOrNull
 import org.astermail.android.crypto.AesGcm
+import org.astermail.android.crypto.AuthSaltCollisionException
+import org.astermail.android.crypto.AuthSaltGuard
 import org.astermail.android.crypto.hkdf_sha256
 import org.astermail.android.crypto.PasswordKdf
 import org.astermail.android.api.ApiClient
@@ -202,6 +205,7 @@ class AuthRepository @Inject constructor(
             dotted_hash to auth_api.get_user_salt(dotted_hash)
         }
         val salt_bytes = base64_decode(salt_resp.salt)
+        AuthSaltGuard.require_usable_auth_salt(salt_bytes, cached_vault_bytes())
         val password_bytes = password.toByteArray(Charsets.UTF_8)
         val password_hash_bytes = CryptoNative.derive_pbkdf2_hash(
             password_bytes,
@@ -273,12 +277,19 @@ class AuthRepository @Inject constructor(
         val previous_user_id = session_key_store.get_user_id()
         if (previous_user_id != null && previous_user_id != login_resp.user_id) {
             session_key_store.clear()
-            runCatching {
-                withTimeoutOrNull(3_000L) { database.decrypted_mail_dao().clear_all() }
+            if (!clear_decrypted_mail_cache_blocking()) {
+                throw ApiError.UnknownError("could not clear the previous account's local mail cache")
             }
+            runCatching { pending_send_dao_clear_all() }
             mail_repository.clear_caches()
             cancel_all_notifications()
             runCatching { org.astermail.android.notifications.MailPollingWorker.reset_new_mail_baseline(context) }
+        }
+        val served_vault_bytes = runCatching { base64_decode(login_resp.encrypted_vault) }.getOrNull()
+        if (AuthSaltGuard.collides_with_vault_salt(salt_bytes, served_vault_bytes)) {
+            runCatching { session_key_store.clear() }
+            runCatching { token_store.clear() }
+            throw AuthSaltCollisionException("auth salt equals the vault key salt")
         }
         token_store.save(access, login_resp.refresh_token ?: access)
         api_client.invalidate_bearer_cache()
@@ -520,7 +531,8 @@ class AuthRepository @Inject constructor(
     @OptIn(coil.annotation.ExperimentalCoilApi::class)
     suspend fun try_restore_session(account_id: String): Boolean {
         val snapshot = session_snapshot_store.load(account_id) ?: return false
-        runCatching { database.decrypted_mail_dao().clear_all() }
+        if (!clear_decrypted_mail_cache_blocking()) return false
+        runCatching { pending_send_dao_clear_all() }
         mail_repository.clear_caches()
         cancel_all_notifications()
         token_store.save(snapshot.token_access, snapshot.token_refresh)
@@ -639,6 +651,8 @@ class AuthRepository @Inject constructor(
         response.csrf_token?.let { api_client.set_csrf(it) }
         response.access_token?.let { token_store.save(it, token_store.refresh_token ?: it) }
 
+        runCatching { rewrap_server_pgp_key(new_password) }
+
         runCatching { session_key_store.get_user_id()?.let { save_session_snapshot(it) } }
         mail_repository.clear_caches()
         database.decrypted_mail_dao().clear_all()
@@ -674,6 +688,10 @@ class AuthRepository @Inject constructor(
     @OptIn(coil.annotation.ExperimentalCoilApi::class)
     private suspend fun sign_out_internal(remove_account: Boolean): Result<Unit> = runCatching {
         val current_id = session_key_store.get_user_id()
+        val current_email = session_key_store.get_user_email()
+        if (remove_account) {
+            current_email?.let { runCatching { trusted_device_store.clear(it) } }
+        }
         try {
             withTimeoutOrNull(5_000L) {
                 auth_api.logout()
@@ -888,6 +906,7 @@ class AuthRepository @Inject constructor(
             }.getOrNull()
         }
         val salt = server_salt ?: session_key_store.get_password_salt() ?: return null
+        AuthSaltGuard.require_usable_auth_salt(salt, cached_vault_bytes())
         val password_bytes = password.toByteArray(Charsets.UTF_8)
         val hash = CryptoNative.derive_pbkdf2_hash(password_bytes, salt, pbkdf2_iterations)
         password_bytes.fill(0)
@@ -943,6 +962,10 @@ class AuthRepository @Inject constructor(
             return
         }
 
+        republish_pgp_key_with_password(identity_key, String(passphrase_bytes, Charsets.UTF_8))
+    }
+
+    private suspend fun republish_pgp_key_with_password(identity_key: String, password: String) {
         val secret_ring = org.bouncycastle.openpgp.PGPSecretKeyRing(
             org.bouncycastle.openpgp.PGPUtil.getDecoderStream(identity_key.byteInputStream()),
             org.bouncycastle.openpgp.operator.bc.BcKeyFingerprintCalculator(),
@@ -962,10 +985,7 @@ class AuthRepository @Inject constructor(
         val key_id = String.format(Locale.US, "%016X", master_public.keyID)
 
         val (encrypted_private_key, private_key_nonce) =
-            encrypt_pgp_private_key_for_server(
-                identity_key,
-                String(passphrase_bytes, Charsets.UTF_8),
-            )
+            encrypt_pgp_private_key_for_server(identity_key, password)
 
         encryption_api.republish_pgp_key(
             org.astermail.android.api.encryption.RepublishPgpKeyRequest(
@@ -976,6 +996,12 @@ class AuthRepository @Inject constructor(
                 private_key_nonce = private_key_nonce,
             ),
         )
+    }
+
+    private suspend fun rewrap_server_pgp_key(new_password: String) {
+        val identity_key = session_key_store.get_identity_key() ?: return
+        if (!identity_key.trimStart().startsWith("-----BEGIN PGP PRIVATE KEY")) return
+        republish_pgp_key_with_password(identity_key, new_password)
     }
 
     private fun encrypt_pgp_private_key_for_server(
@@ -1112,6 +1138,24 @@ class AuthRepository @Inject constructor(
         val bytes = ByteArray(16).also { SecureRandom().nextBytes(it) }
         return base64_encode(bytes)
     }
+
+    private suspend fun clear_decrypted_mail_cache_blocking(): Boolean {
+        repeat(3) { attempt ->
+            val cleared = runCatching {
+                withTimeoutOrNull(5_000L) { database.decrypted_mail_dao().clear_all() } != null
+            }.getOrDefault(false)
+            if (cleared) return true
+            if (attempt < 2) delay(250L)
+        }
+        return false
+    }
+
+    private suspend fun pending_send_dao_clear_all() {
+        database.pending_send_dao().clear_all()
+    }
+
+    private fun cached_vault_bytes(): ByteArray? =
+        runCatching { session_key_store.get_encrypted_vault()?.first?.let { base64_decode(it) } }.getOrNull()
 
     private fun base64_encode(bytes: ByteArray): String =
         android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)

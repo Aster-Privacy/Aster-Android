@@ -66,6 +66,7 @@ fun RegisterRecoveryStep(
     codes: List<String>,
     on_continue: () -> Unit,
 ) {
+    org.astermail.android.ui.common.secure_screen()
     val colors = AsterMaterial.colors
     val context = LocalContext.current
     val copied_message = stringResource(R.string.copied_to_clipboard)

@@ -29,12 +29,28 @@ import org.bouncycastle.openpgp.PGPEncryptedDataList
 import org.bouncycastle.openpgp.PGPLiteralData
 import org.bouncycastle.openpgp.PGPObjectFactory
 import org.bouncycastle.openpgp.PGPCompressedData
+import org.bouncycastle.openpgp.PGPOnePassSignature
+import org.bouncycastle.openpgp.PGPOnePassSignatureList
 import org.bouncycastle.openpgp.PGPPublicKeyEncryptedData
+import org.bouncycastle.openpgp.PGPPublicKeyRingCollection
 import org.bouncycastle.openpgp.PGPSecretKeyRingCollection
+import org.bouncycastle.openpgp.PGPSignatureList
 import org.bouncycastle.openpgp.PGPUtil
 import org.bouncycastle.openpgp.operator.jcajce.JcaKeyFingerprintCalculator
 import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyDecryptorBuilder
 import org.bouncycastle.openpgp.operator.jcajce.JcePublicKeyDataDecryptorFactoryBuilder
+
+enum class PgpSignatureStatus {
+    NONE,
+    UNVERIFIED,
+    VALID,
+    INVALID,
+}
+
+data class PgpDecryptionResult(
+    val plaintext: String?,
+    val signature: PgpSignatureStatus,
+)
 
 object PgpDecryptor {
 
@@ -47,6 +63,27 @@ object PgpDecryptor {
         armored_ciphertext: String,
         armored_private_key: String,
         passphrase: CharArray,
+    ): String? = decrypt_with_status(armored_ciphertext, armored_private_key, passphrase, null).plaintext
+
+    fun decrypt_with_status(
+        armored_ciphertext: String,
+        armored_private_key: String,
+        passphrase: CharArray,
+        sender_public_key_armored: String?,
+    ): PgpDecryptionResult {
+        val verifier = sender_public_key_armored
+            ?.takeIf { it.isNotBlank() }
+            ?.let { runCatching { load_public_keys(it) }.getOrNull() }
+        val status = SignatureTracker(verifier)
+        val plaintext = decrypt_internal(armored_ciphertext, armored_private_key, passphrase, status)
+        return PgpDecryptionResult(plaintext, if (plaintext == null) PgpSignatureStatus.NONE else status.result())
+    }
+
+    private fun decrypt_internal(
+        armored_ciphertext: String,
+        armored_private_key: String,
+        passphrase: CharArray,
+        tracker: SignatureTracker,
     ): String? {
         return try {
             val key_stream = PGPUtil.getDecoderStream(
@@ -81,7 +118,7 @@ object PgpDecryptor {
                     .build(private_key)
 
                 val clear_stream = pbe.getDataStream(decryptor_factory)
-                val plaintext = extract_literal_data(clear_stream)
+                val plaintext = extract_literal_data(clear_stream, tracker)
                 if (plaintext != null) {
                     if (pbe.verify()) return plaintext
                     return null
@@ -102,42 +139,107 @@ object PgpDecryptor {
         return null
     }
 
-    private fun extract_literal_data(stream: InputStream): String? {
+    private fun extract_literal_data(stream: InputStream, tracker: SignatureTracker): String? {
         val factory = PGPObjectFactory(stream, JcaKeyFingerprintCalculator())
+        return extract_from_factory(factory, 0, tracker)
+    }
+
+    private fun extract_from_factory(
+        factory: PGPObjectFactory,
+        depth: Int,
+        tracker: SignatureTracker,
+    ): String? {
+        if (depth > max_compression_depth) {
+            throw IllegalStateException("pgp message nests compression too deeply")
+        }
         var obj = factory.nextObject()
+        var plaintext: String? = null
         while (obj != null) {
-            when (obj) {
-                is PGPCompressedData -> {
+            when {
+                obj is PGPOnePassSignatureList -> tracker.begin(obj)
+                obj is PGPLiteralData -> plaintext = read_literal(obj, tracker)
+                obj is PGPSignatureList -> {
+                    tracker.finish(obj)
+                    if (plaintext != null) return plaintext
+                }
+                obj is PGPCompressedData -> {
                     val inner = PGPObjectFactory(obj.dataStream, JcaKeyFingerprintCalculator())
-                    val result = extract_from_factory(inner)
+                    val result = extract_from_factory(inner, depth + 1, tracker)
                     if (result != null) return result
                 }
-                is PGPLiteralData -> {
-                    return read_literal(obj)
-                }
             }
             obj = factory.nextObject()
         }
-        return null
+        return plaintext
     }
 
-    private fun extract_from_factory(factory: PGPObjectFactory): String? {
-        var obj = factory.nextObject()
-        while (obj != null) {
-            if (obj is PGPLiteralData) return read_literal(obj)
-            if (obj is PGPCompressedData) {
-                val inner = PGPObjectFactory(obj.dataStream, JcaKeyFingerprintCalculator())
-                val result = extract_from_factory(inner)
-                if (result != null) return result
-            }
-            obj = factory.nextObject()
-        }
-        return null
-    }
-
-    private fun read_literal(literal: PGPLiteralData): String {
+    private fun read_literal(literal: PGPLiteralData, tracker: SignatureTracker): String {
         val out = ByteArrayOutputStream()
-        literal.inputStream.use { it.copyTo(out) }
+        val buffer = ByteArray(1 shl 16)
+        var total = 0L
+        literal.inputStream.use { input ->
+            while (true) {
+                val read = input.read(buffer)
+                if (read <= 0) break
+                total += read
+                if (total > max_decompressed_bytes) {
+                    throw IllegalStateException("decrypted pgp message exceeds size limit")
+                }
+                tracker.update(buffer, read)
+                out.write(buffer, 0, read)
+            }
+        }
+        buffer.fill(0)
         return out.toString(Charsets.UTF_8.name())
     }
+
+    private fun load_public_keys(armored: String): PGPPublicKeyRingCollection =
+        PGPPublicKeyRingCollection(
+            PGPUtil.getDecoderStream(ByteArrayInputStream(armored.toByteArray(Charsets.UTF_8))),
+            JcaKeyFingerprintCalculator(),
+        )
+
+    private class SignatureTracker(private val keys: PGPPublicKeyRingCollection?) {
+        private var one_pass: PGPOnePassSignature? = null
+        private var saw_signature = false
+        private var verified: Boolean? = null
+
+        fun begin(list: PGPOnePassSignatureList) {
+            if (list.isEmpty) return
+            saw_signature = true
+            val key_rings = keys ?: return
+            val candidate = list[0]
+            val key = runCatching { key_rings.getPublicKey(candidate.keyID) }.getOrNull() ?: return
+            runCatching {
+                candidate.init(
+                    org.bouncycastle.openpgp.operator.jcajce.JcaPGPContentVerifierBuilderProvider()
+                        .setProvider(BouncyCastleProvider.PROVIDER_NAME),
+                    key,
+                )
+                one_pass = candidate
+            }
+        }
+
+        fun update(buffer: ByteArray, length: Int) {
+            val active = one_pass ?: return
+            runCatching { active.update(buffer, 0, length) }
+        }
+
+        fun finish(list: PGPSignatureList) {
+            if (!list.isEmpty) saw_signature = true
+            val active = one_pass ?: return
+            if (list.isEmpty) return
+            verified = runCatching { active.verify(list[0]) }.getOrDefault(false)
+        }
+
+        fun result(): PgpSignatureStatus = when {
+            !saw_signature -> PgpSignatureStatus.NONE
+            verified == true -> PgpSignatureStatus.VALID
+            verified == false -> PgpSignatureStatus.INVALID
+            else -> PgpSignatureStatus.UNVERIFIED
+        }
+    }
+
+    private const val max_decompressed_bytes = 48L * 1024 * 1024
+    private const val max_compression_depth = 4
 }

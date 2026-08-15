@@ -46,11 +46,19 @@ fun DiagnosticsScreen(
     on_open: (id: String) -> Unit = {},
 ) {
     val context = LocalContext.current
+    val storage_healthy = org.astermail.android.storage.StorageHealth.is_healthy() &&
+        !org.astermail.android.storage.SecurePrefs.was_key_material_lost(context)
+    val storage_status = if (storage_healthy) {
+        stringResource(R.string.settings_diagnostics_storage_ok)
+    } else {
+        stringResource(R.string.settings_diagnostics_storage_degraded)
+    }
     val diag_text = buildString {
         appendLine("App: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
         appendLine("Package: ${BuildConfig.APPLICATION_ID}")
         appendLine("Device: ${Build.MANUFACTURER} ${Build.MODEL}")
         appendLine("Android: ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})")
+        appendLine("Secure storage: $storage_status")
     }
 
     val copied_text = stringResource(R.string.copied_to_clipboard)
@@ -65,6 +73,8 @@ fun DiagnosticsScreen(
             detail_row(title = stringResource(R.string.device), subtitle = "${Build.MANUFACTURER} ${Build.MODEL}")
             AsterDivider()
             detail_row(title = stringResource(R.string.android), subtitle = "${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})")
+            AsterDivider()
+            detail_row(title = stringResource(R.string.settings_diagnostics_secure_storage), subtitle = storage_status)
         }
         v_gap(AsterSpacing.lg)
         AsterSecondaryButton(

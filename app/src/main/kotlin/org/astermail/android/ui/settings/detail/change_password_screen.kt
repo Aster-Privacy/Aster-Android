@@ -55,6 +55,7 @@ fun ChangePasswordScreen(
     on_open: (id: String) -> Unit = {},
     view_model: ChangePasswordViewModel = hiltViewModel(),
 ) {
+    org.astermail.android.ui.common.secure_screen()
     val colors = AsterMaterial.colors
     val state by view_model.state.collectAsStateWithLifecycle()
 

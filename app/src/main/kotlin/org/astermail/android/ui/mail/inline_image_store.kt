@@ -54,6 +54,13 @@ internal object InlineImageStore {
     @Synchronized
     fun get(key: String): InlineImageEntry? = entries[key]
 
+    @Synchronized
+    fun clear() {
+        entries.values.forEach { it.bytes.fill(0) }
+        entries.clear()
+        total_bytes = 0
+    }
+
     fun url_for(key: String): String = INLINE_IMAGE_URL_PREFIX + key
 
     fun key_for_path(path: String?): String? {

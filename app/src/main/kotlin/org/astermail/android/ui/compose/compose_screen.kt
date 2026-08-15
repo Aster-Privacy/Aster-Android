@@ -460,7 +460,9 @@ fun ComposeScreen(
             runCatching { to_focus_requester.requestFocus() }
         }
     }
-    var cc_expanded by remember { mutableStateOf(!share_payload?.cc.isNullOrEmpty()) }
+    var cc_expanded by remember {
+        mutableStateOf(!share_payload?.cc.isNullOrEmpty() || !share_payload?.bcc.isNullOrEmpty())
+    }
     var cc_chips by remember { mutableStateOf(share_payload?.cc.orEmpty()) }
     var cc_input by remember { mutableStateOf("") }
     var bcc_chips by remember { mutableStateOf(share_payload?.bcc.orEmpty()) }
@@ -3357,16 +3359,32 @@ internal fun signature_html_web_preview(html: String, modifier: Modifier = Modif
                 settings.javaScriptEnabled = false
                 settings.allowFileAccess = false
                 settings.allowContentAccess = false
+                settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
+                webViewClient = object : android.webkit.WebViewClient() {
+                    override fun shouldOverrideUrlLoading(
+                        view: android.webkit.WebView,
+                        request: android.webkit.WebResourceRequest,
+                    ): Boolean = true
+                }
                 isVerticalScrollBarEnabled = false
                 isHorizontalScrollBarEnabled = false
                 setBackgroundColor(android.graphics.Color.WHITE)
             }
         },
         update = { wv ->
+            val safe_html = org.astermail.android.ui.mail.EmailHtmlSanitizer.sanitize(
+                html,
+                org.astermail.android.ui.mail.EmailHtmlSanitizer.SanitizeOptions(
+                    clean_tracking_links = false,
+                    remove_tracking_pixels = false,
+                    block_remote_fonts = false,
+                    block_remote_css = false,
+                ),
+            )
             val doc = "<!DOCTYPE html><html><head>" +
                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">" +
                 "<style>body{margin:10px;font-family:sans-serif;font-size:14px;color:#222222;background:#ffffff;}img{max-width:100%;height:auto;}</style>" +
-                "</head><body>" + html + "</body></html>"
+                "</head><body>" + safe_html + "</body></html>"
             if (wv.tag != html) {
                 wv.tag = html
                 wv.loadDataWithBaseURL(null, doc, "text/html", "utf-8", null)

@@ -98,6 +98,7 @@ fun SignInScreen(
     prefill_email: String = "",
     view_model: AuthViewModel = hiltViewModel(),
 ) {
+    org.astermail.android.ui.common.secure_screen()
     val colors = AsterMaterial.colors
     val state by view_model.ui_state.collectAsStateWithLifecycle()
 

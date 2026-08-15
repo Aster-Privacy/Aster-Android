@@ -240,6 +240,9 @@ fun import_shared_attachment(context: Context, uri: Uri): AttachmentImport {
 }
 
 private fun is_private_app_file(context: Context, uri: Uri): Boolean {
+    if (uri.scheme.equals("content", ignoreCase = true)) {
+        return uri.authority == context.packageName + ".fileprovider"
+    }
     if (!uri.scheme.equals("file", ignoreCase = true)) return false
     val path = runCatching { File(uri.path.orEmpty()).canonicalPath }.getOrNull() ?: return true
     val private_roots = listOfNotNull(

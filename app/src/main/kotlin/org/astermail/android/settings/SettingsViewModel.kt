@@ -1068,7 +1068,9 @@ class SettingsViewModel @Inject constructor(
                 _state.update { it.copy(mail_rules = response.rules) }
             } catch (t: Throwable) {
                 last_mail_rules_load_ms = 0L
-                android.util.Log.w("SettingsVM", "load_mail_rules failed", t)
+                if (org.astermail.android.BuildConfig.DEBUG) {
+                    android.util.Log.w("SettingsVM", "load_mail_rules failed", t)
+                }
             }
         }
     }

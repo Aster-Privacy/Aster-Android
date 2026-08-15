@@ -232,33 +232,61 @@ class ContactsRepository @Inject constructor(
     private fun decrypt_contact_identity_fallback(item: ContactItem): Contact? {
         val encrypted_data = item.encrypted_data ?: return null
         val data_nonce = item.data_nonce ?: return null
-        val identity_key = session_key_store.get_identity_key() ?: return null
         val ciphertext = android.util.Base64.decode(encrypted_data, android.util.Base64.DEFAULT)
         val nonce = android.util.Base64.decode(data_nonce, android.util.Base64.DEFAULT)
+        val plaintext = decrypt_with_candidates(ciphertext, nonce) ?: return null
+        val json_str = String(plaintext, Charsets.UTF_8)
+        plaintext.fill(0)
+        return parse_contact_json(item.id, json_str)
+    }
 
-        for (version in ENVELOPE_VERSIONS) {
+    private fun decrypt_with_candidates(ciphertext: ByteArray, nonce: ByteArray): ByteArray? {
+        for (key in read_key_candidates()) {
             try {
-                val material = (identity_key + version).toByteArray(Charsets.UTF_8)
-                val key = MessageDigest.getInstance("SHA-256").digest(material)
-                val decrypted = aes_gcm_decrypt(ciphertext, key, nonce)
-                val json_str = String(decrypted, Charsets.UTF_8)
-                decrypted.fill(0)
-                return parse_contact_json(item.id, json_str)
+                return aes_gcm_decrypt(ciphertext, key, nonce)
             } catch (_: Throwable) {
+            } finally {
+                key.fill(0)
             }
         }
         return null
+    }
+
+    private fun read_key_candidates(): Sequence<ByteArray> = sequence {
+        val identity_keys = buildList {
+            session_key_store.get_identity_key()?.let { add(it) }
+            session_key_store.get_previous_keys()?.forEach { add(it) }
+        }
+        for (identity_key in identity_keys) {
+            for (version in ENVELOPE_VERSIONS) {
+                val material = (identity_key + version).toByteArray(Charsets.UTF_8)
+                val digest = MessageDigest.getInstance("SHA-256").digest(material)
+                material.fill(0)
+                yield(digest)
+            }
+        }
+        session_key_store.get_data_kek()?.let { if (it.size == 32) yield(it) }
+        session_key_store.get_legacy_keks().orEmpty().forEach { kek_b64 ->
+            val raw = runCatching {
+                android.util.Base64.decode(kek_b64, android.util.Base64.DEFAULT)
+            }.getOrNull()
+            if (raw != null && raw.size == 32) yield(raw)
+        }
     }
 
     private fun decrypt_group(group: ContactGroupEncrypted): ContactGroup? {
         return try {
             val ciphertext = android.util.Base64.decode(group.encrypted_name, android.util.Base64.DEFAULT)
             val nonce = android.util.Base64.decode(group.name_nonce, android.util.Base64.DEFAULT)
-            val key = derive_contacts_key()
             val name_bytes = try {
-                aes_gcm_decrypt(ciphertext, key, nonce)
-            } finally {
-                key.fill(0)
+                val key = derive_contacts_key()
+                try {
+                    aes_gcm_decrypt(ciphertext, key, nonce)
+                } finally {
+                    key.fill(0)
+                }
+            } catch (_: Throwable) {
+                decrypt_with_candidates(ciphertext, nonce) ?: return null
             }
             val name = String(name_bytes, Charsets.UTF_8)
             name_bytes.fill(0)

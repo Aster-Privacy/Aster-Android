@@ -47,6 +47,7 @@ class RatchetDecryptor @Inject constructor(
     private val syncer: RatchetStateSyncer,
     private val conversation_locks: ConversationLocks,
     private val auth_repository: dagger.Lazy<org.astermail.android.auth.AuthRepository>,
+    private val identity_pins: RatchetIdentityPinStore,
 ) {
 
     private data class ReceiverKeySet(
@@ -159,7 +160,10 @@ class RatchetDecryptor @Inject constructor(
 
             var state = state_store.load(conversation_id)
             val state_loaded_locally = state != null
-            if (state != null && is_fresh_bootstrap) {
+            val replayed_bootstrap = is_fresh_bootstrap && state != null && runCatching {
+                identity_pins.is_replayed_bootstrap(conversation_id, recipient.ephemeral_key.orEmpty())
+            }.getOrDefault(false)
+            if (state != null && is_fresh_bootstrap && !replayed_bootstrap) {
                 state = null
             }
             if (state == null) {
@@ -237,15 +241,49 @@ class RatchetDecryptor @Inject constructor(
                     conversation_id,
                     envelope.sender_identity_key,
                 )
-                if (final_recovery != null) return@with_lock final_recovery
+                if (final_recovery != null) {
+                    record_identity_pin(conversation_id, sender_email, envelope.sender_identity_key)
+                    return@with_lock final_recovery
+                }
                 decrypt_error?.let { throw it }
                 return@with_lock null
+            }
+
+            record_identity_pin(conversation_id, sender_email, envelope.sender_identity_key)
+            if (is_fresh_bootstrap) {
+                runCatching {
+                    identity_pins.record_bootstrap(conversation_id, recipient.ephemeral_key.orEmpty())
+                }
+            }
+            if (recipient.pq_ciphertext != null || recipient.recovery?.kem_ct != null) {
+                runCatching { identity_pins.record_post_quantum(conversation_id) }
+            }
+            recipient.x3dh_v?.let { version ->
+                runCatching { identity_pins.record_x3dh_version(conversation_id, version) }
             }
 
             val final_state = state ?: return@with_lock null
             state_store.save(final_state)
             syncer.sync(conversation_id, final_state)
             plaintext
+        }
+    }
+
+    private suspend fun record_identity_pin(
+        conversation_id: String,
+        sender_email: String,
+        sender_identity_key: String,
+    ) {
+        val outcome = runCatching {
+            identity_pins.record(
+                conversation_id = conversation_id,
+                sender_email = sender_email,
+                sender_identity_key_b64 = sender_identity_key,
+                observed_at = System.currentTimeMillis(),
+            )
+        }.getOrNull()
+        if (outcome == IdentityPinOutcome.CHANGED && org.astermail.android.BuildConfig.DEBUG) {
+            android.util.Log.w("AsterRatchet", "sender identity key changed for conversation")
         }
     }
 
@@ -365,6 +403,12 @@ class RatchetDecryptor @Inject constructor(
         sender_identity_key: String,
     ): String? {
         val lane = recipient.recovery ?: return null
+        if (lane.kem_ct == null && identity_pins.is_post_quantum_established(conversation_id)) {
+            if (org.astermail.android.BuildConfig.DEBUG) {
+                android.util.Log.w("AsterRatchet", "refusing a classical recovery lane on a post-quantum session")
+            }
+            return null
+        }
 
         val data = RecoveryLane.Data(
             v = lane.v,
@@ -473,6 +517,13 @@ class RatchetDecryptor @Inject constructor(
         keys: ReceiverKeySet,
     ): List<RatchetState> {
         val ephemeral_b64 = recipient.ephemeral_key ?: return emptyList()
+        val offered_x3dh_version = recipient.x3dh_v ?: 1
+        if (offered_x3dh_version < identity_pins.highest_x3dh_version(conversation_id)) {
+            if (org.astermail.android.BuildConfig.DEBUG) {
+                android.util.Log.w("AsterRatchet", "refusing a downgraded x3dh handshake")
+            }
+            return emptyList()
+        }
         val identity_jwk = keys.identity_jwk
         val spk_jwk = keys.signed_prekey_jwk
         val spk_pub_b64 = keys.signed_prekey_public_b64

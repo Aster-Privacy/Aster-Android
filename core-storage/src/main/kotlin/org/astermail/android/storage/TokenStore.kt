@@ -46,11 +46,13 @@ class TokenStore(context: Context) {
         get() = runCatching { prefs.getString(key_csrf, null) }.getOrNull()
 
     suspend fun save(access: String, refresh: String) {
-        runCatching {
-            prefs.edit()
-                .putString(key_access, access)
-                .putString(key_refresh, refresh)
-                .apply()
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            runCatching {
+                prefs.edit()
+                    .putString(key_access, access)
+                    .putString(key_refresh, refresh)
+                    .commit()
+            }
         }
         _tokens.value = Tokens(access, refresh)
     }
@@ -64,12 +66,14 @@ class TokenStore(context: Context) {
     }
 
     suspend fun clear() {
-        runCatching {
-            prefs.edit()
-                .remove(key_access)
-                .remove(key_refresh)
-                .remove(key_csrf)
-                .apply()
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            runCatching {
+                prefs.edit()
+                    .remove(key_access)
+                    .remove(key_refresh)
+                    .remove(key_csrf)
+                    .commit()
+            }
         }
         _tokens.value = null
     }

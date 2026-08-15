@@ -28,6 +28,20 @@ import org.json.JSONObject
 
 enum class PushResult { Shown, NeedsFetch, Ignore }
 
+private const val max_alert_field_length = 96
+
+private fun sanitize_alert_field(raw: String): String {
+    val collapsed = raw
+        .filter { it.code in 0x20..0x7e || it.code > 0xa0 }
+        .replace(Regex("\\s+"), " ")
+        .trim()
+    return if (collapsed.length > max_alert_field_length) {
+        collapsed.take(max_alert_field_length)
+    } else {
+        collapsed
+    }
+}
+
 fun handle_push_payload(context: Context, payload: String): PushResult {
     val obj = JSONObject(payload)
     val type = obj.optString("type")
@@ -41,10 +55,10 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
         LoginAlertNotifier.enqueue(
             context = context,
             session_id = session_id,
-            device = obj.optString("device", ""),
-            browser = obj.optString("browser", ""),
-            location = obj.optString("location", ""),
-            time = obj.optString("time", ""),
+            device = sanitize_alert_field(obj.optString("device", "")),
+            browser = sanitize_alert_field(obj.optString("browser", "")),
+            location = sanitize_alert_field(obj.optString("location", "")),
+            time = sanitize_alert_field(obj.optString("time", "")),
         )
         return PushResult.Shown
     }

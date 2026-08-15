@@ -169,7 +169,7 @@ class ApiClient(
                 pingInterval(java.time.Duration.ofSeconds(20))
                 connectionPool(okhttp3.ConnectionPool(5, 90, java.util.concurrent.TimeUnit.SECONDS))
             }
-            addInterceptor(okhttp3.Interceptor { chain ->
+            addNetworkInterceptor(okhttp3.Interceptor { chain ->
                 val original = chain.request()
                 val method = original.method
                 val is_safe = method == "GET" || method == "HEAD" || method == "OPTIONS"

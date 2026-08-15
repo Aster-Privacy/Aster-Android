@@ -26,6 +26,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.astermail.android.api.keys.KeysApi
 import org.astermail.android.api.ratchet.PrekeyBundleResponse
 import org.astermail.android.api.ratchet.RatchetApi
 import org.astermail.android.crypto.ratchet.RatchetCrypto
@@ -49,6 +50,8 @@ class RatchetEncryptor @Inject constructor(
     private val ratchet_api: RatchetApi,
     private val syncer: RatchetStateSyncer,
     private val conversation_locks: ConversationLocks,
+    private val keys_api: KeysApi,
+    private val identity_pins: RatchetIdentityPinStore,
 ) {
 
     private val json = Json {
@@ -129,6 +132,67 @@ class RatchetEncryptor @Inject constructor(
         return json.encodeToString(envelope)
     }
 
+    private val verifying_key_cache = mutableMapOf<String, String>()
+
+    private suspend fun verify_prekey_binding(
+        username: String,
+        recipient_email: String,
+        bundle: PrekeyBundleResponse,
+    ) {
+        val signature = bundle.signed_prekey_signature
+        val signed = signature.isNotBlank() && PrekeyBindingVerifier.is_pgp_signature(signature)
+        if (!signed) {
+            if (identity_pins.is_prekey_binding_verified(recipient_email)) {
+                throw RatchetEncryptionException(
+                    recipient_email,
+                    "recipient prekey bundle lost its signature after a verified one was seen",
+                )
+            }
+            if (BuildConfig.DEBUG) {
+                android.util.Log.w("AsterRatchet", "prekey bundle carries a legacy unsigned binding")
+            }
+            return
+        }
+
+        val verifying_key = fetch_verifying_key(username, recipient_email)
+            ?: throw RatchetEncryptionException(
+                recipient_email,
+                "cannot verify the recipient prekey signature without their public key",
+            )
+
+        val result = PrekeyBindingVerifier.verify(
+            signature_block = signature,
+            recipient_public_key_armored = verifying_key,
+            kem_identity_key_b64 = bundle.kem_identity_key,
+            signed_prekey_b64 = bundle.signed_prekey,
+        )
+        if (result == PrekeyBindingResult.INVALID) {
+            verifying_key_cache.remove(recipient_email.lowercase())
+            throw RatchetEncryptionException(
+                recipient_email,
+                "recipient prekey signature did not verify",
+            )
+        }
+        if (result == PrekeyBindingResult.VERIFIED) {
+            runCatching { identity_pins.record_prekey_binding_verified(recipient_email) }
+        }
+    }
+
+    private suspend fun fetch_verifying_key(username: String, recipient_email: String): String? {
+        val cache_key = recipient_email.lowercase()
+        verifying_key_cache[cache_key]?.let { return it }
+        repeat(2) {
+            val key = runCatching {
+                keys_api.get_recipient_public_key(username, recipient_email).public_key
+            }.getOrNull()
+            if (!key.isNullOrBlank()) {
+                verifying_key_cache[cache_key] = key
+                return key
+            }
+        }
+        return null
+    }
+
     private suspend fun encrypt_for_recipient(
         sender_email: String,
         sender_identity_public: String,
@@ -197,15 +261,7 @@ class RatchetEncryptor @Inject constructor(
                 return null
             }
 
-            if (BuildConfig.DEBUG && resolved_bundle.signed_prekey_signature.isNotBlank()) {
-                val provided = runCatching { RatchetCrypto.b64_decode(resolved_bundle.signed_prekey_signature) }.getOrNull()
-                if (provided != null && provided.size == 32) {
-                    val sig_input = (resolved_bundle.kem_identity_key + resolved_bundle.signed_prekey).toByteArray(Charsets.UTF_8)
-                    if (!RatchetCrypto.sha256(sig_input).contentEquals(provided)) {
-                        android.util.Log.w("AsterRatchet", "prekey bundle hash inconsistent")
-                    }
-                }
-            }
+            verify_prekey_binding(username, recipient_email, resolved_bundle)
 
             bundle = resolved_bundle
 
