@@ -1,0 +1,7 @@
+Bug fixes and improvements:
+
+- Your downloaded mail no longer disappears if the app closes while it sets up encrypted storage
+- Screenshots are blocked on your recovery key, password, and two-factor screens
+- A banner tells you when a contact's encryption identity changes
+- Aster refuses unsigned encryption keys for a contact whose keys were signed before
+- Diagnostics shows whether secure storage is working
