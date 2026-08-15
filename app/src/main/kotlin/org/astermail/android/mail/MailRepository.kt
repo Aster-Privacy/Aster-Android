@@ -131,7 +131,10 @@ const val BUNDLE_MARKER_DELIMITER = '\u0001'
 const val ASTER_SUBJECT_BUNDLE_PREFIX =
     "$BUNDLE_MARKER_DELIMITER$ASTER_SUBJECT_BUNDLE_MARKER$BUNDLE_MARKER_DELIMITER"
 
-val ASTER_INTERNAL_DOMAINS = listOf("astermail.org", "aster.cx", "gs-cloud.space")
+const val ASTER_GHOST_ALIAS_DOMAIN = "realiased.me"
+
+val ASTER_INTERNAL_DOMAINS =
+    listOf("astermail.org", "aster.cx", "gs-cloud.space", ASTER_GHOST_ALIAS_DOMAIN)
 
 fun is_internal_recipient(email: String): Boolean {
     val normalized = email.trim().lowercase()

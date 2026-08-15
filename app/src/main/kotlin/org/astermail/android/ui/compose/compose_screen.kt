@@ -148,6 +148,7 @@ import org.astermail.android.design.components.AsterDragHandle
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.billing.AttachmentLimits
 import org.astermail.android.billing.PlanLimitsViewModel
+import org.astermail.android.mail.ASTER_INTERNAL_DOMAINS
 import org.astermail.android.mail.MailViewModel
 import org.astermail.android.settings.DecryptedSignature
 import org.astermail.android.settings.SettingsViewModel
@@ -2714,7 +2715,7 @@ private fun chip_input(
     }
 }
 
-private val internal_domains = listOf("astermail.org", "aster.cx", "gs-cloud.space")
+private val internal_domains = ASTER_INTERNAL_DOMAINS
 
 private val pgp_provider_domains = listOf(
     "protonmail.com",
