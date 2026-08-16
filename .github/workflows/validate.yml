@@ -1,0 +1,49 @@
+name: validate
+
+on:
+  push:
+    branches:
+      - '**'
+    paths:
+      - '**/*.kt'
+      - '**/*.kts'
+      - '**/*.toml'
+      - 'gradle/**'
+      - 'gradlew'
+      - '.github/workflows/validate.yml'
+  pull_request:
+    paths:
+      - '**/*.kt'
+      - '**/*.kts'
+      - '**/*.toml'
+      - 'gradle/**'
+      - 'gradlew'
+      - '.github/workflows/validate.yml'
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    env:
+      ASTER_UNSIGNED: '1'
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: compile both flavors and run unit tests
+        run: ./gradlew -Pfdroid compileFullDebugKotlin testFdroidDebugUnitTest testDebugUnitTest
+
+      - name: upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: '**/build/reports/tests/**'
