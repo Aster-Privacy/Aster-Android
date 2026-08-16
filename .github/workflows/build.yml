@@ -2,6 +2,8 @@ name: build
 
 on:
   push:
+    branches:
+      - '**'
     paths:
       - '**/*.kt'
       - '**/*.kts'
@@ -19,8 +21,13 @@ on:
       - '.github/workflows/build.yml'
   workflow_dispatch:
 
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
+    if: "!startsWith(github.event.head_commit.message, 'chore(release)')"
     runs-on: ubuntu-latest
     env:
       ASTER_UNSIGNED: '1'
