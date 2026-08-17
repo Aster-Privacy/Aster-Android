@@ -26,6 +26,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
+import org.astermail.android.api.keys.CurrentVaultResult
 import org.astermail.android.api.keys.KeysApi
 import org.astermail.android.api.ratchet.RatchetApi
 import org.astermail.android.api.ratchet.UploadPrekeyBundleRequest
@@ -71,6 +72,11 @@ class RatchetBootstrapService @Inject constructor(
                 debug_log("aborted: no user_id in session key store")
                 return
             }
+            if (!sync_vault_with_server()) {
+                debug_log("aborted: could not verify the server vault")
+                return
+            }
+            reconcile_session_keys_with_vault()
             val keys = ensure_local_ratchet_keys()
             if (keys == null) {
                 debug_log("aborted: ensure_local_ratchet_keys returned null")
@@ -133,6 +139,147 @@ class RatchetBootstrapService @Inject constructor(
             }
         } finally {
             in_flight.set(false)
+        }
+    }
+
+    private suspend fun sync_vault_with_server(): Boolean {
+        val result = runCatching { keys_api.fetch_current_vault() }
+            .getOrDefault(CurrentVaultResult.Unavailable)
+        return when (result) {
+            is CurrentVaultResult.Available -> adopt_server_vault(result.encrypted_vault, result.vault_nonce)
+            CurrentVaultResult.Missing -> true
+            CurrentVaultResult.Unavailable -> false
+        }
+    }
+
+    private fun adopt_server_vault(encrypted_vault_b64: String, vault_nonce_b64: String): Boolean {
+        val cached = session_key_store.get_encrypted_vault()
+        if (cached != null && cached.first == encrypted_vault_b64 && cached.second == vault_nonce_b64) {
+            return true
+        }
+        val passphrase = session_key_store.get_passphrase() ?: return false
+        val decryptable = runCatching {
+            val plain = CryptoNative.decrypt_vault_with_password(
+                base64_decode(encrypted_vault_b64),
+                base64_decode(vault_nonce_b64),
+                passphrase,
+            )
+            plain.fill(0)
+            true
+        }.getOrDefault(false)
+        if (!decryptable) {
+            debug_log("server vault did not decrypt with the stored passphrase")
+            return false
+        }
+        session_key_store.put_encrypted_vault(encrypted_vault_b64, vault_nonce_b64)
+        debug_log("adopted newer server vault into the session cache")
+        return true
+    }
+
+    private suspend fun reconcile_session_keys_with_vault() {
+        val vault_state = read_vault_ratchet_identity()
+        if (vault_state !is VaultRatchetIdentity.Present) return
+        val local_identity_jwk = session_key_store.get_ratchet_identity_jwk()
+        if (local_identity_jwk == null || local_identity_jwk == vault_state.identity_jwk) return
+
+        retain_replaced_local_identity_in_vault(local_identity_jwk)
+
+        val identity_public_b64 = runCatching {
+            RatchetCrypto.b64_encode(RatchetCrypto.p256_public_raw_from_private_jwk(vault_state.identity_jwk))
+        }.getOrNull() ?: return
+        val vault_spk_jwk = vault_state.signed_prekey_jwk
+        val vault_spk_public = vault_state.signed_prekey_public_b64
+        if (vault_spk_jwk != null && vault_spk_public != null) {
+            session_key_store.put_ratchet_keys(
+                identity_jwk = vault_state.identity_jwk,
+                identity_public_b64 = identity_public_b64,
+                signed_prekey_jwk = vault_spk_jwk,
+                signed_prekey_public_b64 = vault_spk_public,
+            )
+        } else {
+            val fresh_prekey = RatchetCrypto.generate_p256_keypair()
+            session_key_store.put_ratchet_keys(
+                identity_jwk = vault_state.identity_jwk,
+                identity_public_b64 = identity_public_b64,
+                signed_prekey_jwk = RatchetCrypto.p256_private_to_jwk(fresh_prekey.private_key),
+                signed_prekey_public_b64 = RatchetCrypto.b64_encode(fresh_prekey.public_raw),
+            )
+        }
+        adopt_vault_pq_identity()
+        debug_log("adopted the vault ratchet identity over stale session keys")
+    }
+
+    private fun adopt_vault_pq_identity() {
+        val (encrypted_vault_b64, vault_nonce_b64) = session_key_store.get_encrypted_vault() ?: return
+        val passphrase = session_key_store.get_passphrase() ?: return
+        val vault_json = runCatching {
+            val plain = CryptoNative.decrypt_vault_with_password(
+                base64_decode(encrypted_vault_b64),
+                base64_decode(vault_nonce_b64),
+                passphrase,
+            )
+            val json = org.json.JSONObject(String(plain, Charsets.UTF_8))
+            plain.fill(0)
+            json
+        }.getOrNull() ?: return
+        val pq_secret = vault_json.optString("ratchet_pq_identity_key", "")
+            .ifBlank {
+                vault_json.optString("ratchet_pq_identity_seed", "")
+                    .takeIf { it.isNotBlank() }
+                    ?.let { expand_pq_identity_secret(it) }
+                    .orEmpty()
+            }
+        val pq_public = vault_json.optString("ratchet_pq_identity_public", "")
+        if (pq_secret.isNotBlank() && pq_public.isNotBlank()) {
+            session_key_store.put_ratchet_pq_identity(pq_secret, pq_public)
+        }
+    }
+
+    private suspend fun retain_replaced_local_identity_in_vault(replaced_identity_jwk: String) {
+        val (encrypted_vault_b64, vault_nonce_b64) = session_key_store.get_encrypted_vault() ?: return
+        val passphrase = session_key_store.get_passphrase() ?: return
+        val vault_json = runCatching {
+            val plain = CryptoNative.decrypt_vault_with_password(
+                base64_decode(encrypted_vault_b64),
+                base64_decode(vault_nonce_b64),
+                passphrase,
+            )
+            val json = org.json.JSONObject(String(plain, Charsets.UTF_8))
+            plain.fill(0)
+            json
+        }.getOrNull() ?: return
+        if (vault_json.optString("ratchet_identity_key", "") == replaced_identity_jwk) return
+        val previous = vault_json.optJSONArray("ratchet_previous_keys") ?: org.json.JSONArray()
+        for (i in 0 until previous.length()) {
+            val existing = previous.optJSONObject(i)?.optString("ratchet_identity_key", "")
+            if (existing == replaced_identity_jwk) return
+        }
+        val entry = org.json.JSONObject().put("ratchet_identity_key", replaced_identity_jwk)
+        val vault_pq_secret = vault_json.optString("ratchet_pq_identity_key", "")
+        session_key_store.get_ratchet_pq_identity_secret()
+            ?.takeIf { it.isNotBlank() && it != vault_pq_secret }
+            ?.let { entry.put("ratchet_pq_identity_key", it) }
+        val merged = org.json.JSONArray().put(entry)
+        for (i in 0 until minOf(previous.length(), 31)) {
+            merged.put(previous.get(i))
+        }
+        vault_json.put("ratchet_previous_keys", merged)
+
+        val updated_plain = vault_json.toString().toByteArray(Charsets.UTF_8)
+        val sealed = runCatching {
+            CryptoNative.encrypt_vault_with_password(updated_plain, passphrase)
+        }.getOrNull()
+        updated_plain.fill(0)
+        if (sealed == null) return
+
+        val new_ct_b64 = base64_encode(sealed.encrypted_vault)
+        val new_nonce_b64 = base64_encode(sealed.vault_nonce)
+        val ok = runCatching {
+            keys_api.update_vault(new_ct_b64, new_nonce_b64, session_key_store.get_user_id())
+        }.getOrDefault(false)
+        if (ok) {
+            session_key_store.put_encrypted_vault(new_ct_b64, new_nonce_b64)
+            debug_log("retained the replaced local ratchet identity in the vault")
         }
     }
 
@@ -255,6 +402,12 @@ class RatchetBootstrapService @Inject constructor(
             plain.fill(0)
             json
         }.getOrNull() ?: return false
+
+        val vault_identity_jwk = vault_json.optString("ratchet_identity_key", "")
+        if (vault_identity_jwk.isNotBlank() && vault_identity_jwk != identity_jwk) {
+            debug_log("skipped vault write: the vault holds a different ratchet identity")
+            return false
+        }
 
         val identity_current = vault_json.optString("ratchet_identity_key", "") == identity_jwk &&
             vault_json.optString("ratchet_signed_prekey", "") == spk_jwk &&

@@ -53,6 +53,20 @@ data class UpdateVaultResponse(
 )
 
 @Serializable
+data class CurrentVaultResponse(
+    val encrypted_vault: String,
+    val vault_nonce: String,
+    val vault_format: Int = 1,
+    val updated_at: String? = null,
+)
+
+sealed class CurrentVaultResult {
+    data class Available(val encrypted_vault: String, val vault_nonce: String) : CurrentVaultResult()
+    object Missing : CurrentVaultResult()
+    object Unavailable : CurrentVaultResult()
+}
+
+@Serializable
 data class ExternalKeyInfo(
     val email: String,
     val found: Boolean,
@@ -69,6 +83,7 @@ interface KeysApi {
     suspend fun get_recipient_public_key(username: String, email: String? = null): PublicKeyResponse
     suspend fun discover_external_key(email: String): ExternalKeyInfo
     suspend fun update_vault(encrypted_vault: String, vault_nonce: String, expected_user_id: String?): Boolean
+    suspend fun fetch_current_vault(): CurrentVaultResult
 }
 
 class KeysApiImpl(private val client: ApiClient) : KeysApi {
@@ -103,5 +118,18 @@ class KeysApiImpl(private val client: ApiClient) : KeysApi {
             setBody(UpdateVaultRequest(encrypted_vault, vault_nonce, expected_user_id))
         }
         return response.status.value in 200..299
+    }
+
+    override suspend fun fetch_current_vault(): CurrentVaultResult {
+        val response = runCatching { client.http.get("${client.base_url}$base/vault") }
+            .getOrNull() ?: return CurrentVaultResult.Unavailable
+        return when (response.status.value) {
+            in 200..299 -> runCatching<CurrentVaultResult> {
+                val body: CurrentVaultResponse = response.body()
+                CurrentVaultResult.Available(body.encrypted_vault, body.vault_nonce)
+            }.getOrDefault(CurrentVaultResult.Unavailable)
+            404, 405 -> CurrentVaultResult.Missing
+            else -> CurrentVaultResult.Unavailable
+        }
     }
 }
