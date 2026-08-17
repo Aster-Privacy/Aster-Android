@@ -1,0 +1,8 @@
+Bug fixes and improvements:
+
+- Unread messages now stay unread after you reopen the app
+- Your inbox keeps its order during refresh, and messages no longer disappear from the list
+- Folders show a loading animation instead of a blank screen
+- Fixes messages that could not be decrypted on some devices
+- Saves the recovery email you enter during sign-up
+- Fixes emails that appeared empty because of broken formatting
