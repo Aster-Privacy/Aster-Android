@@ -336,13 +336,18 @@ class AuthRepository @Inject constructor(
 
         val profile = runCatching { withTimeoutOrNull(8_000L) { auth_api.me() } }.getOrNull()
         profile?.let { LockdownStore.set_enabled(context, it.lockdown_mode_enabled) }
+        val previous_account = if (profile == null) {
+            account_store.get_all().firstOrNull { it.id == login_resp.user_id }
+        } else {
+            null
+        }
         account_store.add_or_update(
             StoredAccount(
                 id = login_resp.user_id,
                 email = login_resp.email,
-                display_name = profile?.display_name,
-                profile_color = profile?.profile_color,
-                profile_picture = profile?.profile_picture,
+                display_name = profile?.display_name ?: previous_account?.display_name,
+                profile_color = profile?.profile_color ?: previous_account?.profile_color,
+                profile_picture = profile?.profile_picture ?: previous_account?.profile_picture,
                 added_at = System.currentTimeMillis(),
             ),
         )

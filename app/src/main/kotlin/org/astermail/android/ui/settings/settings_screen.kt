@@ -175,17 +175,19 @@ fun SettingsScreen(
             val live_account by settings_vm.account_store.current_account.collectAsStateWithLifecycle(
                 initialValue = settings_vm.account_store.get_current()
             )
+            val cached_display_name = live_account?.display_name?.takeIf { it.isNotBlank() }
             profile_header(
                 account_store = settings_vm.account_store,
                 profile_picture_url = settings_state.user?.profile_picture,
-                display_name = live_account?.display_name?.takeIf { it.isNotBlank() }
+                display_name = cached_display_name
                     ?: settings_state.user?.display_name?.ifBlank { null }
                     ?: settings_state.user?.username
                     ?: "",
                 username = settings_state.user?.username ?: live_account?.email?.substringBefore("@") ?: "",
                 email = settings_state.user?.email ?: live_account?.email ?: "",
                 subscription = settings_state.subscription,
-                profile_loading = settings_state.user == null && live_account == null,
+                profile_loading = (settings_state.user == null && live_account == null) ||
+                    (settings_state.user == null && cached_display_name == null && settings_state.is_loading),
                 plan_loading = settings_state.subscription == null,
                 on_click = { on_open("profile") },
                 on_upgrade = { on_open("billing") },
