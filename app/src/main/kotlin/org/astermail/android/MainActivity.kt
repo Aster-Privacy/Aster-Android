@@ -779,12 +779,18 @@ private fun AsterNavHost() {
             val name = java.net.URLDecoder.decode(
                 entry.arguments?.getString("folder_name").orEmpty(), "UTF-8",
             )
+            val inbox_entry = remember(nav_controller) {
+                try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
+            }
+            val shared_mail_vm: org.astermail.android.mail.MailViewModel =
+                if (inbox_entry != null) hiltViewModel(inbox_entry) else hiltViewModel()
             FilteredInboxScreen(
                 filter_type = FilterType.folder,
                 filter_value = id,
                 filter_display_name = name,
                 on_open_drawer = { nav_controller.popBackStack() },
                 on_open_email = { eid -> open_mail_detail(nav_controller, eid) },
+                mail_vm = shared_mail_vm,
             )
         }
         composable(
@@ -800,12 +806,18 @@ private fun AsterNavHost() {
             val name = java.net.URLDecoder.decode(
                 entry.arguments?.getString("label_name").orEmpty(), "UTF-8",
             )
+            val inbox_entry = remember(nav_controller) {
+                try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
+            }
+            val shared_mail_vm: org.astermail.android.mail.MailViewModel =
+                if (inbox_entry != null) hiltViewModel(inbox_entry) else hiltViewModel()
             FilteredInboxScreen(
                 filter_type = FilterType.label,
                 filter_value = id,
                 filter_display_name = name,
                 on_open_drawer = { nav_controller.popBackStack() },
                 on_open_email = { eid -> open_mail_detail(nav_controller, eid) },
+                mail_vm = shared_mail_vm,
             )
         }
         composable(
@@ -821,12 +833,18 @@ private fun AsterNavHost() {
             val name = java.net.URLDecoder.decode(
                 entry.arguments?.getString("alias_name").orEmpty(), "UTF-8",
             )
+            val inbox_entry = remember(nav_controller) {
+                try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
+            }
+            val shared_mail_vm: org.astermail.android.mail.MailViewModel =
+                if (inbox_entry != null) hiltViewModel(inbox_entry) else hiltViewModel()
             FilteredInboxScreen(
                 filter_type = FilterType.alias,
                 filter_value = id,
                 filter_display_name = name,
                 on_open_drawer = { nav_controller.popBackStack() },
                 on_open_email = { eid -> open_mail_detail(nav_controller, eid) },
+                mail_vm = shared_mail_vm,
             )
         }
         composable(

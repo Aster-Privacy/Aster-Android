@@ -957,7 +957,7 @@ class MailRepository @Inject constructor(
             tag_token = tag_token,
             is_snoozed = if (is_received) false else null,
             is_archived = if (is_plain_inbox) false else null,
-            is_trashed = if (is_plain_inbox) false else null,
+            is_trashed = if (is_plain_inbox || (is_token_scope && include_trash != true)) false else null,
             is_spam = if (is_plain_inbox) false else null,
             include_spam = include_spam,
             include_trash = include_trash,
@@ -967,24 +967,31 @@ class MailRepository @Inject constructor(
             skip_total = if (cursor != null || (offset ?: 0) > 0) true else null,
         )
         val filtered_raw = if (is_received) {
-            val now_iso = java.time.Instant.now().toString()
+            val now_ms = System.currentTimeMillis()
             response.items.filter { raw ->
                 val until = raw.snoozed_until ?: raw.metadata?.snoozed_until
-                until == null || until <= now_iso
+                until == null || (parse_timestamp_ms(until) ?: 0L) <= now_ms
             }
         } else response.items
-        val items = decrypt_items_parallel(filtered_raw)
+        val batch = decrypt_items_batch(filtered_raw)
         val next_cursor = if (is_token_scope && response.next_cursor == null && response.has_more) {
             ((offset ?: 0) + response.items.size).toString()
         } else {
             response.next_cursor
         }
         InboxPage(
-            items = items,
+            items = batch.visible,
             has_more = response.has_more,
             next_cursor = next_cursor,
             total = response.total.takeIf { it >= 0 },
+            raw_ids = batch.server_ids,
         )
+    }
+
+    private fun parse_timestamp_ms(value: String): Long? = runCatching {
+        java.time.Instant.parse(value).toEpochMilli()
+    }.getOrElse {
+        runCatching { java.time.OffsetDateTime.parse(value).toInstant().toEpochMilli() }.getOrNull()
     }
 
     suspend fun fetch_sent(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> {
@@ -999,32 +1006,33 @@ class MailRepository @Inject constructor(
             items = items,
             has_more = response.has_more,
             next_cursor = response.next_cursor,
-            total = items.size,
+            total = null,
+            raw_ids = items.mapTo(HashSet()) { it.id },
         )
     }
 
     suspend fun fetch_starred(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
         val response = mail_api.list_messages(limit = limit, cursor = cursor, is_starred = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping)
-        val items = decrypt_items_parallel(response.items)
-        InboxPage(items, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 })
+        val batch = decrypt_items_batch(response.items)
+        InboxPage(batch.visible, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 }, batch.server_ids)
     }
 
     suspend fun fetch_trash(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
         val response = mail_api.list_messages(limit = limit, cursor = cursor, is_trashed = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping)
-        val items = decrypt_items_parallel(response.items)
-        InboxPage(items, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 })
+        val batch = decrypt_items_batch(response.items)
+        InboxPage(batch.visible, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 }, batch.server_ids)
     }
 
     suspend fun fetch_spam(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
         val response = mail_api.list_messages(limit = limit, cursor = cursor, is_spam = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping)
-        val items = decrypt_items_parallel(response.items)
-        InboxPage(items, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 })
+        val batch = decrypt_items_batch(response.items)
+        InboxPage(batch.visible, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 }, batch.server_ids)
     }
 
     suspend fun fetch_archive(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
         val response = mail_api.list_messages(limit = limit, cursor = cursor, is_archived = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping)
-        val items = decrypt_items_parallel(response.items)
-        InboxPage(items, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 })
+        val batch = decrypt_items_batch(response.items)
+        InboxPage(batch.visible, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 }, batch.server_ids)
     }
 
     suspend fun fetch_scheduled(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> =
@@ -1032,8 +1040,8 @@ class MailRepository @Inject constructor(
 
     suspend fun fetch_snoozed(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
         val response = mail_api.list_messages(limit = limit, cursor = cursor, is_snoozed = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping)
-        val items = decrypt_items_parallel(response.items)
-        InboxPage(items, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 })
+        val batch = decrypt_items_batch(response.items)
+        InboxPage(batch.visible, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 }, batch.server_ids)
     }
 
     suspend fun fetch_thread_draft(thread_token: String): InboxItem? {
@@ -1580,7 +1588,7 @@ class MailRepository @Inject constructor(
         val user_email = get_user_email() ?: ""
         return InboxItem(
             id = draft.id,
-            thread_token = draft.thread_token ?: draft.id,
+            thread_token = draft.thread_token?.takeIf { it.isNotBlank() } ?: draft.id,
             thread_message_count = 1,
             sender_name = context.getString(R.string.sender_draft),
             sender_email = user_email,
@@ -1610,6 +1618,14 @@ class MailRepository @Inject constructor(
         decrypt_items_parallel(items)
 
     private suspend fun decrypt_items_parallel(items: List<MailItem>): List<InboxItem> =
+        decrypt_items_batch(items).visible
+
+    private data class DecryptBatch(
+        val visible: List<InboxItem>,
+        val server_ids: Set<String>,
+    )
+
+    private suspend fun decrypt_items_batch(items: List<MailItem>): DecryptBatch =
         coroutineScope {
             val overrides = prefetch_ratchet_plaintexts(items)
             val decrypted = items.map { item ->
@@ -1627,7 +1643,14 @@ class MailRepository @Inject constructor(
             org.astermail.android.folders.record_item_folders(healed)
             val visible = org.astermail.android.folders.filter_locked_items(healed)
             prefetch_sender_profiles(visible.map { org.astermail.android.ui.mail.displayed_sender_email(it.display_sender_email, it.sender_email) })
-            visible
+            val locked_ids = if (visible.size == healed.size) {
+                emptySet()
+            } else {
+                val shown = visible.mapTo(HashSet()) { it.id }
+                healed.asSequence().map { it.id }.filterNot { it in shown }.toHashSet()
+            }
+            val server_ids = items.asSequence().map { it.id }.filterNot { it in locked_ids }.toHashSet()
+            DecryptBatch(visible, server_ids)
         }
 
     private fun prefetch_sender_profiles(emails: List<String>) {
@@ -3647,4 +3670,5 @@ data class InboxPage(
     val has_more: Boolean,
     val next_cursor: String?,
     val total: Int?,
+    val raw_ids: Set<String> = emptySet(),
 )

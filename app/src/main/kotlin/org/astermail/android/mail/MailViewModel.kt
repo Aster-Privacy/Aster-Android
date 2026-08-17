@@ -54,7 +54,6 @@ private const val PULL_REFRESH_BACKSTOP_MS = 20_000L
 private const val WARM_CACHE_MIN_ITEMS = 8
 private const val WARM_CACHE_WINDOW = 200
 private const val BULK_ACTION_CONCURRENCY = 6
-private const val CARRIED_ITEM_STALE_MS = 20 * 60 * 1000L
 private const val RESTORE_PROTECTION_MS = 15_000L
 private const val STATS_TTL_MS = 30_000L
 private const val STATS_DEBOUNCE_MS = 1_200L
@@ -476,41 +475,61 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    internal data class MergeResult(
+        val items: List<InboxItem>,
+        val carried_deeper: Boolean,
+    )
+
+    private fun parse_item_timestamp_ms(value: String): Long = runCatching {
+        java.time.Instant.parse(value).toEpochMilli()
+    }.getOrElse {
+        runCatching { java.time.OffsetDateTime.parse(value).toInstant().toEpochMilli() }.getOrDefault(0L)
+    }
+
     private fun merge_with_previous(
-        page_items: List<InboxItem>,
+        page: InboxPage,
         previous_items: List<InboxItem>,
         folder: String,
-        total: Int?,
-    ): List<InboxItem> {
+    ): MergeResult {
         val now = System.currentTimeMillis()
-        page_items.forEach { item_last_confirmed[it.id] = now }
+        page.items.forEach { item_last_confirmed[it.id] = now }
         val live_items = if (pending_removed_ids.isEmpty()) {
-            page_items
+            page.items
         } else {
-            page_items.filter { it.id !in pending_removed_ids }
+            page.items.filter { it.id !in pending_removed_ids }
         }
-        if (previous_items.isEmpty()) return live_items
-        if (list_order != null) return live_items
-        if (total != null && total <= live_items.size) return live_items
-        val page_ids = live_items.map { it.id }.toHashSet()
-        val cap = (total ?: previous_items.size).coerceAtLeast(live_items.size)
-        val min_page_timestamp = live_items.minOfOrNull { it.timestamp }
-        val carried = previous_items.asSequence()
-            .filter { it.id !in page_ids }
-            .filter { it.id !in pending_removed_ids }
-            .filter {
-                restore_protected(it.id, now) ||
-                    min_page_timestamp == null ||
-                    it.timestamp < min_page_timestamp
+        if (previous_items.isEmpty()) return MergeResult(live_items, false)
+        val previous_by_id = previous_items.associateBy { it.id }
+        val adjusted = live_items.map { item ->
+            val prev = previous_by_id[item.id]
+            if (item.is_undecryptable && prev != null && !prev.is_undecryptable) {
+                item.copy(category = prev.category)
+            } else {
+                item
             }
-            .filter { folder_matches(folder, it) }
-            .filter {
-                restore_protected(it.id, now) ||
-                    now - (item_last_confirmed[it.id] ?: 0L) <= CARRIED_ITEM_STALE_MS
-            }
-            .toList()
-        val combined = live_items + carried
-        return if (combined.size > cap) combined.take(cap) else combined
+        }
+        val page_ids = adjusted.mapTo(HashSet()) { it.id }
+        val ascending = list_order != null
+        val whole_scope = !page.has_more
+        val boundary = if (ascending) {
+            live_items.maxOfOrNull { parse_item_timestamp_ms(it.timestamp) }
+        } else {
+            live_items.minOfOrNull { parse_item_timestamp_ms(it.timestamp) }
+        }
+        var carried_deeper = false
+        val carried = previous_items.filter { prev ->
+            if (prev.id in page_ids || prev.id in pending_removed_ids) return@filter false
+            if (!folder_matches(folder, prev)) return@filter false
+            if (restore_protected(prev.id, now)) return@filter true
+            if (prev.id in page.raw_ids) return@filter true
+            if (whole_scope) return@filter false
+            val ts = parse_item_timestamp_ms(prev.timestamp)
+            val deeper = boundary == null || if (ascending) ts >= boundary else ts <= boundary
+            if (deeper) carried_deeper = true
+            deeper
+        }
+        carried.forEach { item_last_confirmed[it.id] = now }
+        return MergeResult(adjusted + carried, carried_deeper)
     }
 
     private val demo_dismissed_prefs by lazy {
@@ -601,6 +620,8 @@ class MailViewModel @Inject constructor(
                 ),
                 is_loading = false,
                 initial = false,
+                is_refreshing = false,
+                is_loading_more = false,
                 error = null,
                 current_folder = folder,
                 stats = current.stats ?: cached.stats,
@@ -669,19 +690,19 @@ class MailViewModel @Inject constructor(
                             "label_load folder=$folder api_items=${page.items.size} archived_in_api=${page.items.count { it.is_archived }} total=${page.total}",
                         )
                     }
-                    val previous = _inbox_state.value.items
-                    val combined = merge_with_previous(page.items, previous, folder, page.total)
+                    val prior = _inbox_state.value
+                    val merge = merge_with_previous(page, prior.items, folder)
                     val merged_items = apply_demo_overlay(
-                        apply_pin_overrides(apply_star_overrides(apply_read_overrides(combined))),
+                        apply_pin_overrides(apply_star_overrides(apply_read_overrides(merge.items))),
                         folder,
                     )
-                    _inbox_state.value = _inbox_state.value.copy(
+                    _inbox_state.value = prior.copy(
                         items = merged_items,
                         is_loading = false,
                         initial = false,
-                        has_more = page.has_more,
-                        next_cursor = page.next_cursor,
-                        total = page.total ?: _inbox_state.value.total,
+                        has_more = if (merge.carried_deeper) prior.has_more else page.has_more,
+                        next_cursor = if (merge.carried_deeper) prior.next_cursor else page.next_cursor,
+                        total = page.total ?: prior.total,
                     )
                     folder_cache[folder] = _inbox_state.value
                     folder_cache_time[folder] = System.currentTimeMillis()
@@ -719,34 +740,41 @@ class MailViewModel @Inject constructor(
     fun foreground_fallback_tick() {
         if (!foreground_check()) return
         val s = _inbox_state.value
-        if (s.is_loading || s.is_loading_more) return
+        if (s.is_loading || s.is_loading_more || s.is_refreshing) return
         silent_revalidate(s.current_folder)
     }
 
     private fun silent_revalidate(folder: String) {
+        if (_inbox_state.value.is_refreshing) return
         silent_revalidate_job?.cancel()
+        val gen = account_generation
+        val load_gen = inbox_load_generation
+        val refresh_gen = refresh_generation
         silent_revalidate_job = viewModelScope.launch {
             val result = runCatching {
                 kotlinx.coroutines.withTimeout(INBOX_FETCH_BACKSTOP_MS) {
                     fetch_for_folder(folder).getOrThrow()
                 }
             }
+            if (account_generation != gen) return@launch
+            if (inbox_load_generation != load_gen || refresh_generation != refresh_gen) return@launch
             if (_inbox_state.value.current_folder != folder) return@launch
+            if (_inbox_state.value.is_refreshing) return@launch
             result.onSuccess { page ->
-                val previous = _inbox_state.value.items
-                val combined = merge_with_previous(page.items, previous, folder, page.total)
+                val prior = _inbox_state.value
+                val merge = merge_with_previous(page, prior.items, folder)
                 val merged_items = apply_demo_overlay(
-                    apply_pin_overrides(apply_star_overrides(apply_read_overrides(combined))),
+                    apply_pin_overrides(apply_star_overrides(apply_read_overrides(merge.items))),
                     folder,
                 )
-                _inbox_state.value = _inbox_state.value.copy(
+                _inbox_state.value = prior.copy(
                     items = merged_items,
                     is_loading = false,
                     initial = false,
                     error = null,
-                    has_more = page.has_more,
-                    next_cursor = page.next_cursor,
-                    total = page.total ?: _inbox_state.value.total,
+                    has_more = if (merge.carried_deeper) prior.has_more else page.has_more,
+                    next_cursor = if (merge.carried_deeper) prior.next_cursor else page.next_cursor,
+                    total = page.total ?: prior.total,
                 )
                 folder_cache[folder] = _inbox_state.value
                 folder_cache_time[folder] = System.currentTimeMillis()
@@ -963,19 +991,22 @@ class MailViewModel @Inject constructor(
 
     private fun refresh_thread_after_send() {
         send_guard_until = System.currentTimeMillis() + SEND_GUARD_WINDOW_MS
-        if (_thread_state.value.item == null) return
+        val target_id = _thread_state.value.item?.id ?: return
         viewModelScope.launch {
             val before_ids = _thread_state.value.messages.map { it.id }.toSet()
             refresh_current_thread()
             repeat(3) { attempt ->
                 kotlinx.coroutines.delay(if (attempt == 0) 1_500L else 4_000L)
                 val cur = _thread_state.value
-                if (cur.item == null) return@launch
+                if (cur.item == null || cur.item.id != target_id) return@launch
                 if (cur.messages.any { it.id !in before_ids }) return@launch
                 refresh_current_thread()
             }
         }
     }
+
+    private var thread_load_job: kotlinx.coroutines.Job? = null
+    private var thread_load_generation = 0L
 
     fun load_thread(item_id: String) {
         if (item_id == DEMO_PHISH_ITEM_ID) {
@@ -1005,17 +1036,22 @@ class MailViewModel @Inject constructor(
                 ThreadUiState(is_loading = true)
             }
         }
-        viewModelScope.launch(Dispatchers.IO) {
+        thread_load_job?.cancel()
+        val thread_gen = ++thread_load_generation
+        thread_load_job = viewModelScope.launch(Dispatchers.IO) {
+            try {
             val item_result = withTimeoutOrNull(15_000) {
                 repository.fetch_single_message(item_id)
             } ?: Result.failure(Exception(context.getString(R.string.something_went_wrong)))
+            if (thread_gen != thread_load_generation) return@launch
             val item = item_result.getOrNull()
             val thread_token = item?.thread_token
             if (thread_token != null) {
-                val fallback = listOf(single_message_from_item(item))
+                val fallback = listOf(message_from_item_safe(item))
                 val result = withTimeoutOrNull(15_000) {
                     repository.fetch_thread(thread_token)
                 } ?: Result.failure(Exception(context.getString(R.string.something_went_wrong)))
+                if (thread_gen != thread_load_generation) return@launch
                 val previous = if (cur_thread.item?.id == item_id) cur_thread.messages else emptyList()
                 result.fold(
                     onSuccess = { messages ->
@@ -1051,7 +1087,7 @@ class MailViewModel @Inject constructor(
                     },
                 )
             } else if (item != null) {
-                val msgs = listOf(single_message_from_item(item))
+                val msgs = listOf(message_from_item_safe(item))
                 _thread_state.value = ThreadUiState(
                     messages = msgs,
                     item = item,
@@ -1069,12 +1105,25 @@ class MailViewModel @Inject constructor(
                     )
                 }
             }
+            } finally {
+                if (thread_gen == thread_load_generation) {
+                    _thread_state.update { if (it.is_loading) it.copy(is_loading = false) else it }
+                }
+            }
         }
     }
 
     private suspend fun single_message_from_item(item: InboxItem): ThreadMessageDecrypted {
         val thread_item = thread_item_from_mail_item(item.raw_item)
         return repository.decrypt_single_thread_message(thread_item)
+    }
+
+    private suspend fun message_from_item_safe(item: InboxItem): ThreadMessageDecrypted = try {
+        single_message_from_item(item)
+    } catch (cancelled: kotlinx.coroutines.CancellationException) {
+        throw cancelled
+    } catch (error: Throwable) {
+        seed_message_from_inbox_item(item)
     }
 
     private fun seed_message_from_inbox_item(item: InboxItem): ThreadMessageDecrypted {
@@ -1806,6 +1855,7 @@ class MailViewModel @Inject constructor(
 
     fun mark_unread_bulk(item_ids: List<String>) {
         if (item_ids.isEmpty()) return
+        val prior_reads = snapshot_read_states(item_ids)
         item_ids.forEach { read_overrides[it] = false }
         _inbox_state.value = _inbox_state.value.copy(
             items = _inbox_state.value.items.map {
@@ -1829,10 +1879,27 @@ class MailViewModel @Inject constructor(
         invalidate_caches(listOf("starred"))
         viewModelScope.launch {
             repository.mark_unread_bulk(item_ids).fold(
-                onSuccess = { emit_toast(context.getString(R.string.marked_unread_count, item_ids.size)) },
-                onFailure = { emit_toast(context.getString(R.string.failed_mark_read)) },
+                onSuccess = {
+                    persist_read_state(item_ids, false)
+                    emit_toast(context.getString(R.string.marked_unread_count, item_ids.size))
+                },
+                onFailure = {
+                    revert_read_override_batch(prior_reads)
+                    emit_toast(context.getString(R.string.failed_mark_read))
+                },
             )
         }
+    }
+
+    private fun snapshot_read_states(item_ids: List<String>): Map<String, Boolean> {
+        val id_set = item_ids.toHashSet()
+        val prior = HashMap<String, Boolean>()
+        _inbox_state.value.items.forEach { if (it.id in id_set && it.id !in prior) prior[it.id] = it.is_read }
+        folder_cache.values.forEach { cached ->
+            cached.items.forEach { if (it.id in id_set && it.id !in prior) prior[it.id] = it.is_read }
+        }
+        _search_state.value.all_items.forEach { if (it.id in id_set && it.id !in prior) prior[it.id] = it.is_read }
+        return prior
     }
 
     private suspend fun run_bulk_action(
@@ -1889,6 +1956,14 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    private fun invalidate_caches_except_current(folders: List<String>) {
+        val current = _inbox_state.value.current_folder
+        invalidate_caches(folders.filter { it != current })
+        if (folder_cache_time.containsKey(current)) {
+            folder_cache[current] = _inbox_state.value
+        }
+    }
+
     private fun lookup_raw_items(item_ids: List<String>): List<org.astermail.android.api.mail.MailItem?> {
         val all_items = _inbox_state.value.items +
             folder_cache.values.flatMap { it.items }
@@ -1923,7 +1998,7 @@ class MailViewModel @Inject constructor(
         pending_removed_ids.addAll(item_ids)
         val affected_label_caches = removed_items.flatMap { it.labels }.map { "label:$it" }
         val affected_tag_caches = removed_items.flatMap { it.tag_tokens }.map { "tag:$it" }
-        invalidate_caches(listOf("archive", "inbox") + all_mail_folder_ids + affected_label_caches + affected_tag_caches)
+        invalidate_caches_except_current(listOf("archive", "inbox") + all_mail_folder_ids + affected_label_caches + affected_tag_caches)
         viewModelScope.launch {
             try {
                 repository.archive(item_ids, raw_items).fold(
@@ -1986,7 +2061,7 @@ class MailViewModel @Inject constructor(
         adjust_stats_for_removed(removed_items)
         val search_removed = remove_search_items(item_ids)
         pending_removed_ids.addAll(item_ids)
-        invalidate_caches(listOf("trash", "inbox"))
+        invalidate_caches_except_current(listOf("trash", "inbox"))
         viewModelScope.launch {
             try {
                 repository.trash(item_ids, raw_items).fold(
@@ -2100,7 +2175,7 @@ class MailViewModel @Inject constructor(
             items = previous.filter { it.id !in item_ids },
         )
         pending_removed_ids.addAll(item_ids)
-        invalidate_caches(listOf("spam", "inbox"))
+        invalidate_caches_except_current(listOf("spam", "inbox"))
         viewModelScope.launch {
             try {
                 val sender_emails =
@@ -2366,6 +2441,7 @@ class MailViewModel @Inject constructor(
     fun mark_read_bulk(item_ids: List<String>) {
         if (item_ids.isEmpty()) return
         MailPollingWorker.cancel_message_notifications(context, item_ids)
+        val prior_reads = snapshot_read_states(item_ids)
         item_ids.forEach { read_overrides[it] = true }
         _inbox_state.value = _inbox_state.value.copy(
             items = _inbox_state.value.items.map {
@@ -2389,9 +2465,41 @@ class MailViewModel @Inject constructor(
         invalidate_caches(listOf("starred"))
         viewModelScope.launch {
             repository.mark_read_bulk(item_ids).fold(
-                onSuccess = { emit_toast(context.getString(R.string.marked_read_count, item_ids.size)) },
-                onFailure = { emit_toast(context.getString(R.string.failed_mark_read)) },
+                onSuccess = {
+                    persist_read_state(item_ids, true)
+                    emit_toast(context.getString(R.string.marked_read_count, item_ids.size))
+                },
+                onFailure = {
+                    revert_read_override_batch(prior_reads)
+                    emit_toast(context.getString(R.string.failed_mark_read))
+                },
             )
+        }
+    }
+
+    private fun persist_read_state(item_ids: List<String>, is_read: Boolean) {
+        viewModelScope.launch {
+            item_ids.forEach { id ->
+                runCatching { search_index_manager.update_read(id, is_read) }
+            }
+        }
+    }
+
+    private fun revert_read_override_batch(prior: Map<String, Boolean>) {
+        prior.keys.forEach { read_overrides.remove(it) }
+        _inbox_state.value = _inbox_state.value.copy(
+            items = _inbox_state.value.items.map { item -> prior[item.id]?.let { item.copy(is_read = it) } ?: item },
+        )
+        folder_cache.replaceAll { _, cached ->
+            cached.copy(items = cached.items.map { item -> prior[item.id]?.let { item.copy(is_read = it) } ?: item })
+        }
+        _search_state.value = _search_state.value.copy(
+            all_items = _search_state.value.all_items.map { item -> prior[item.id]?.let { item.copy(is_read = it) } ?: item },
+        )
+        val thread = _thread_state.value
+        val thread_prior = thread.item?.let { prior[it.id] }
+        if (thread.item != null && thread_prior != null) {
+            _thread_state.value = thread.copy(item = thread.item.copy(is_read = thread_prior))
         }
     }
 
@@ -2409,6 +2517,7 @@ class MailViewModel @Inject constructor(
             }
             result.fold(
                 onSuccess = {
+                    persist_read_state(prior_reads.keys.toList(), true)
                     invalidate_caches(listOf(folder))
                     emit_toast(context.getString(R.string.all_marked_read))
                 },
@@ -2433,6 +2542,7 @@ class MailViewModel @Inject constructor(
             }
             result.fold(
                 onSuccess = {
+                    persist_read_state(prior_reads.keys.toList(), false)
                     invalidate_caches(listOf(folder))
                     emit_toast(context.getString(R.string.all_marked_unread))
                 },
@@ -2465,11 +2575,17 @@ class MailViewModel @Inject constructor(
         viewModelScope.launch {
             repository.bulk_scope_action(folder, action).fold(
                 onSuccess = {
+                    if (!removes) {
+                        persist_read_state(snapshot.map { it.id }, action == "mark_read")
+                    }
                     invalidate_caches(listOf(folder))
                     load_stats(force = true)
                     refresh()
                 },
                 onFailure = {
+                    if (!removes) {
+                        snapshot.forEach { read_overrides.remove(it.id) }
+                    }
                     _inbox_state.update {
                         it.copy(
                             items = snapshot,
@@ -2767,14 +2883,14 @@ class MailViewModel @Inject constructor(
         if (_inbox_state.value.is_refreshing && refresh_job?.isActive == true) return
         val gen = account_generation
         load_more_failures = 0
-        folder_cache.remove(folder)
-        folder_cache_time.remove(folder)
-        _inbox_state.update { it.copy(is_refreshing = true) }
+        _inbox_state.update { it.copy(is_refreshing = true, is_loading_more = false) }
         load_stats()
         val refresh_gen = ++refresh_generation
         inbox_load_generation++
+        load_more_generation++
         inbox_load_job?.cancel()
         silent_revalidate_job?.cancel()
+        load_more_job?.cancel()
         refresh_job?.cancel()
         refresh_job = viewModelScope.launch {
             val result = runCatching {
@@ -2790,21 +2906,21 @@ class MailViewModel @Inject constructor(
             }
             result.fold(
                 onSuccess = { page ->
-                    val previous = _inbox_state.value.items
-                    val combined = merge_with_previous(page.items, previous, folder, page.total)
+                    val prior = _inbox_state.value
+                    val merge = merge_with_previous(page, prior.items, folder)
                     val merged_items = apply_demo_overlay(
-                        apply_pin_overrides(apply_star_overrides(apply_read_overrides(combined))),
+                        apply_pin_overrides(apply_star_overrides(apply_read_overrides(merge.items))),
                         folder,
                     )
-                    _inbox_state.value = _inbox_state.value.copy(
+                    _inbox_state.value = prior.copy(
                         items = merged_items,
                         is_loading = false,
                         is_refreshing = false,
                         initial = false,
                         error = null,
-                        has_more = page.has_more,
-                        next_cursor = page.next_cursor,
-                        total = page.total ?: _inbox_state.value.total,
+                        has_more = if (merge.carried_deeper) prior.has_more else page.has_more,
+                        next_cursor = if (merge.carried_deeper) prior.next_cursor else page.next_cursor,
+                        total = page.total ?: prior.total,
                     )
                     folder_cache[folder] = _inbox_state.value
                     folder_cache_time[folder] = System.currentTimeMillis()
@@ -3228,6 +3344,11 @@ fun org.astermail.android.storage.search.DecryptedMailEntity.to_inbox_item(): In
         has_recipient_key = has_recipient_key,
         thread_token = thread_token,
         routing_token = routing_token,
+        metadata = if (is_pinned) {
+            org.astermail.android.api.mail.MailItemMetadata(is_pinned = true)
+        } else {
+            null
+        },
     ),
 )
 

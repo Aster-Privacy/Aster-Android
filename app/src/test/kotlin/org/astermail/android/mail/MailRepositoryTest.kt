@@ -237,7 +237,7 @@ class MailRepositoryTest {
                 offset = any(),
                 item_type = any(),
                 is_starred = any(),
-                is_trashed = null,
+                is_trashed = false,
                 is_archived = null,
                 is_spam = null,
                 label_token = "work",

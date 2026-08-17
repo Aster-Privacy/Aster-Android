@@ -1123,9 +1123,9 @@ private val iso_timestamp_parser: ThreadLocal<SimpleDateFormat> = ThreadLocal.wi
 }
 
 private fun parse_iso_timestamp(raw: String): Long = try {
-    iso_timestamp_parser.get()!!.parse(raw.take(19))?.time ?: System.currentTimeMillis()
+    iso_timestamp_parser.get()!!.parse(raw.take(19))?.time ?: 0L
 } catch (_: Throwable) {
-    System.currentTimeMillis()
+    0L
 }
 
 fun inbox_item_to_email(
@@ -1140,7 +1140,7 @@ fun inbox_item_to_email(
     val matched_tags = tags.filter { it.tag_token in item.tag_tokens }
     return Email(
         id = item.id,
-        thread_id = item.thread_token ?: item.id,
+        thread_id = item.thread_token?.takeIf { it.isNotBlank() } ?: item.id,
         thread_message_count = item.thread_message_count.coerceAtLeast(1),
         sender_name = display_name,
         sender_email = item.sender_email,

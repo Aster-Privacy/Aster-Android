@@ -1621,10 +1621,10 @@ class MailViewModelTest {
 
         // c is archived out-of-band (e.g. from the web client). The server's fresh page
         // correctly omits it, but this device's in-memory list still holds it with
-        // is_archived = false. total drops to 4 (one page short of the full 5), so
-        // merge_with_previous's "trust the page" early-return does NOT fire and the
-        // carry-forward path actually runs.
-        val revalidate_page = InboxPage(listOf(e, d, b), has_more = false, next_cursor = null, total = 4)
+        // is_archived = false. The page is a partial window (has_more = true) whose
+        // oldest item is b, so c falls inside the window and must be dropped, while
+        // a is older than the window and must be carried forward.
+        val revalidate_page = InboxPage(listOf(e, d, b), has_more = true, next_cursor = "rc1", total = 4)
         coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(revalidate_page)
 
         vm.load_inbox(force = true)
@@ -1633,6 +1633,68 @@ class MailViewModelTest {
         val ids = vm.inbox_state.value.items.map { it.id }
         assertTrue("archived item 'c' must not reappear in inbox, got $ids", "c" !in ids)
         assertEquals(listOf("e", "d", "b", "a"), ids)
+    }
+
+    @Test
+    fun `reload keeps an item the server returned but the client filtered when it is in raw_ids`() = runTest {
+        val page1 = fake_inbox_page(3)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page1)
+
+        vm.load_inbox()
+        advanceUntilIdle()
+        assertEquals(3, vm.inbox_state.value.items.size)
+
+        val filtered_page = InboxPage(
+            items = page1.items.filter { it.id != "id_2" },
+            has_more = false,
+            next_cursor = null,
+            total = 3,
+            raw_ids = setOf("id_1", "id_2", "id_3"),
+        )
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(filtered_page)
+
+        vm.load_inbox(force = true)
+        advanceUntilIdle()
+
+        val ids = vm.inbox_state.value.items.map { it.id }
+        assertTrue("id_2 is on the server (raw_ids) and must stay, got $ids", "id_2" in ids)
+    }
+
+    @Test
+    fun `reload that carries deeper items preserves the prior cursor`() = runTest {
+        val page1 = fake_inbox_page(3, has_more = true, next_cursor = "c1")
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page1)
+
+        vm.load_inbox()
+        advanceUntilIdle()
+        assertEquals("c1", vm.inbox_state.value.next_cursor)
+
+        val fresh = InboxItem(
+            id = "id_9", thread_token = "t9", thread_message_count = 1,
+            sender_name = "S9", sender_email = "s9@x.com",
+            subject = "Sub9", preview = "P9", timestamp = "2026-04-26T10:09:00Z",
+            is_read = false, is_starred = false, is_encrypted = true,
+            has_attachments = false, is_trashed = false, is_archived = false,
+            is_spam = false, labels = emptyList(), raw_item = mockk(relaxed = true),
+        )
+        val shallow_page = InboxPage(
+            items = listOf(fresh),
+            has_more = true,
+            next_cursor = "cx",
+            total = 4,
+            raw_ids = setOf("id_9"),
+        )
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(shallow_page)
+
+        vm.load_inbox(force = true)
+        advanceUntilIdle()
+
+        val state = vm.inbox_state.value
+        val ids = state.items.map { it.id }
+        assertTrue("older loaded items must be carried, got $ids", ids.containsAll(listOf("id_1", "id_2", "id_3")))
+        assertTrue("fresh item must be present, got $ids", "id_9" in ids)
+        assertTrue(state.has_more)
+        assertEquals("c1", state.next_cursor)
     }
 
     @Test

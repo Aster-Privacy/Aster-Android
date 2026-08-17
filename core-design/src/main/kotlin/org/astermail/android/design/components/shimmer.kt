@@ -42,12 +42,16 @@ private fun mix(from: Color, to: Color, amount: Float): Color = Color(
 )
 
 @Composable
-fun shimmer_brush(): Brush {
+fun shimmer_brush(animated: Boolean = true): Brush {
     val colors = AsterMaterial.colors
     val surface = colors.bg_card
     val lift = if (colors.is_dark) Color.White else Color.Black
     val base = mix(mix(surface, lift, if (colors.is_dark) 0.07f else 0.09f), colors.accent_blue, 0.05f)
     val highlight = mix(mix(surface, lift, if (colors.is_dark) 0.16f else 0.03f), colors.accent_blue, 0.13f)
+
+    if (!animated) {
+        return Brush.linearGradient(colors = listOf(base, base))
+    }
 
     val transition = rememberInfiniteTransition(label = "shimmer")
     val shimmer_offset by transition.animateFloat(

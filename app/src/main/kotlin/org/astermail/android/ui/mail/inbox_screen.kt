@@ -187,16 +187,16 @@ fun build_thread_rows(
     }
     val sorted = when (sort_mode) {
         InboxSortMode.newest -> grouped.sortedWith(
-            compareByDescending<ThreadRow> { it.is_pinned }.thenByDescending { it.newest.received_at },
+            compareByDescending<ThreadRow> { it.is_pinned }.thenByDescending { it.newest.received_at }.thenByDescending { it.thread_id },
         )
         InboxSortMode.oldest -> grouped.sortedWith(
-            compareByDescending<ThreadRow> { it.is_pinned }.thenBy { it.newest.received_at },
+            compareByDescending<ThreadRow> { it.is_pinned }.thenBy { it.newest.received_at }.thenBy { it.thread_id },
         )
         InboxSortMode.unread_first -> grouped.sortedWith(
-            compareByDescending<ThreadRow> { it.is_pinned }.thenByDescending { it.has_unread }.thenByDescending { it.newest.received_at },
+            compareByDescending<ThreadRow> { it.is_pinned }.thenByDescending { it.has_unread }.thenByDescending { it.newest.received_at }.thenByDescending { it.thread_id },
         )
         InboxSortMode.starred_first -> grouped.sortedWith(
-            compareByDescending<ThreadRow> { it.is_pinned }.thenByDescending { it.is_starred }.thenByDescending { it.newest.received_at },
+            compareByDescending<ThreadRow> { it.is_pinned }.thenByDescending { it.is_starred }.thenByDescending { it.newest.received_at }.thenByDescending { it.thread_id },
         )
     }
     return ThreadRowResult(sorted, resolved)
@@ -205,6 +205,12 @@ fun build_thread_rows(
 private const val UNREAD_MISMATCH_GRACE_MS = 3000L
 
 private const val MIN_FILLED_ROWS = 15
+
+private const val CATEGORY_DRAIN_MAX_ITEMS = 200
+
+private const val LOCAL_READ_MUTATION_TTL_MS = 15_000L
+
+private const val MIN_SKELETON_MS = 350L
 
 internal const val SELECT_ALL_DRAIN_LIMIT = 5000
 
@@ -461,23 +467,31 @@ fun InboxScreen(
     }
     val emails = remember { mutableStateListOf<Email>() }
     val previous_api_emails = remember { mutableMapOf<String, Email>() }
+    val local_read_mutations = remember { mutableMapOf<String, Long>() }
+    fun note_read_mutation(id: String) {
+        local_read_mutations[id] = android.os.SystemClock.uptimeMillis()
+    }
     var emails_folder by remember { mutableStateOf(current_folder) }
     LaunchedEffect(current_folder) {
         if (emails_folder != current_folder) {
             emails.clear()
             previous_api_emails.clear()
+            local_read_mutations.clear()
             emails_folder = current_folder
         }
     }
     LaunchedEffect(api_emails) {
         val current = emails.toList()
+        val now_ms = android.os.SystemClock.uptimeMillis()
+        local_read_mutations.entries.removeAll { now_ms - it.value > LOCAL_READ_MUTATION_TTL_MS }
+        val sticky_read_ids = local_read_mutations.keys.toSet()
         val merged = withContext(Dispatchers.Default) {
             val by_id = current.associateBy { it.id }
             api_emails.map { server ->
                 val local = by_id[server.id] ?: return@map server
                 val previous = previous_api_emails[server.id] ?: return@map server
                 server.copy(
-                    is_read = if (previous.is_read == server.is_read) local.is_read else server.is_read,
+                    is_read = if (previous.is_read == server.is_read && server.id in sticky_read_ids) local.is_read else server.is_read,
                     is_starred = if (previous.is_starred == server.is_starred) local.is_starred else server.is_starred,
                     is_pinned = if (previous.is_pinned == server.is_pinned) local.is_pinned else server.is_pinned,
                 )
@@ -559,6 +573,7 @@ fun InboxScreen(
         }
     }
     var threads by remember { mutableStateOf<List<ThreadRow>>(emptyList()) }
+    var threads_pending by remember { mutableStateOf(true) }
     var threads_folder by remember { mutableStateOf(current_folder) }
     val grouping_enabled = settings_state.preferences?.conversation_grouping != false
     LaunchedEffect(
@@ -571,6 +586,7 @@ fun InboxScreen(
         cached_participants,
         grouping_enabled,
     ) {
+        threads_pending = true
         if (threads_folder != current_folder) {
             threads = emptyList()
             threads_folder = current_folder
@@ -592,10 +608,18 @@ fun InboxScreen(
         sticky_participants.keys.retainAll(computed.participants.keys)
         sticky_participants.putAll(computed.participants)
         threads = computed.rows
+        threads_pending = false
     }
 
-    LaunchedEffect(sort_mode) {
-        mail_vm.set_list_order(if (sort_mode == InboxSortMode.oldest) "asc" else null)
+    LaunchedEffect(sort_mode, sort_mode_user_set, settings_state.preferences?.conversation_order) {
+        val prefs_order = settings_state.preferences?.conversation_order
+        if (!sort_mode_user_set && prefs_order == null) return@LaunchedEffect
+        val oldest = if (sort_mode_user_set) {
+            sort_mode == InboxSortMode.oldest
+        } else {
+            prefs_order == "oldest"
+        }
+        mail_vm.set_list_order(if (oldest) "asc" else null)
     }
 
     LaunchedEffect(settings_state.preferences?.inbox_page_size) {
@@ -742,7 +766,7 @@ fun InboxScreen(
             } else {
                 threads.size
             }
-            if (visible_rows < MIN_FILLED_ROWS) mail_vm.load_more()
+            if (visible_rows < MIN_FILLED_ROWS && s.items.size < CATEGORY_DRAIN_MAX_ITEMS) mail_vm.load_more()
         }
     }
 
@@ -755,11 +779,15 @@ fun InboxScreen(
         if (target_read) {
             mail_vm.mark_all_read_scope(current_folder)
             for (i in emails.indices) {
-                if (!emails[i].is_read) emails[i] = emails[i].copy(is_read = true)
+                if (!emails[i].is_read) {
+                    note_read_mutation(emails[i].id)
+                    emails[i] = emails[i].copy(is_read = true)
+                }
             }
         } else {
             mail_vm.mark_all_unread_scope(current_folder)
             for (i in emails.indices) {
+                note_read_mutation(emails[i].id)
                 emails[i] = emails[i].copy(is_read = false)
             }
         }
@@ -951,6 +979,7 @@ fun InboxScreen(
         }
         for (i in emails.indices) {
             if ((emails[i].thread_id in thread_ids || emails[i].id in thread_ids) && !emails[i].is_read) {
+                note_read_mutation(emails[i].id)
                 emails[i] = emails[i].copy(is_read = true)
             }
         }
@@ -967,6 +996,7 @@ fun InboxScreen(
         }
         for (i in emails.indices) {
             if ((emails[i].thread_id in thread_ids || emails[i].id in thread_ids) && emails[i].is_read) {
+                note_read_mutation(emails[i].id)
                 emails[i] = emails[i].copy(is_read = false)
             }
         }
@@ -1213,7 +1243,7 @@ fun InboxScreen(
                         }
                     }
                 }
-                val hidden_by_category = threads.isEmpty() && inbox_state.items.isNotEmpty()
+                val hidden_by_category = threads.isEmpty() && !threads_pending && inbox_state.items.isNotEmpty()
                 val unread_mismatch = threads.isEmpty() &&
                     inbox_state.items.isEmpty() &&
                     !inbox_state.is_loading &&
@@ -1229,8 +1259,28 @@ fun InboxScreen(
                         contradicts_unread = true
                     }
                 }
-                if (inbox_state.initial || (inbox_state.is_loading && threads.isEmpty())) {
-                    Box(Modifier.padding(top = header_height_dp)) { inbox_skeleton() }
+                val skeleton_target = inbox_state.initial ||
+                    ((inbox_state.is_loading || threads_pending) && threads.isEmpty())
+                var show_skeleton by remember { mutableStateOf(skeleton_target) }
+                var skeleton_shown_at by remember { mutableStateOf(0L) }
+                LaunchedEffect(skeleton_target) {
+                    if (skeleton_target) {
+                        if (!show_skeleton) {
+                            show_skeleton = true
+                            skeleton_shown_at = android.os.SystemClock.uptimeMillis()
+                        }
+                    } else if (show_skeleton) {
+                        val shown_for = android.os.SystemClock.uptimeMillis() - skeleton_shown_at
+                        if (shown_for < MIN_SKELETON_MS) {
+                            kotlinx.coroutines.delay(MIN_SKELETON_MS - shown_for)
+                        }
+                        show_skeleton = false
+                    }
+                }
+                if (skeleton_target || (show_skeleton && threads.isEmpty())) {
+                    Box(Modifier.padding(top = header_height_dp)) {
+                        inbox_skeleton(list_density = settings_state.preferences?.mail_list_density)
+                    }
                 } else if (threads.isEmpty() && inbox_state.error != null) {
                     Box(Modifier.padding(top = header_height_dp)) {
                         inbox_error_state(inbox_state.error.orEmpty()) {
@@ -1456,6 +1506,7 @@ fun InboxScreen(
                                         } else {
                                             execute_swipe_action(
                                                 swipe_config.start_action, ids, mail_vm, emails, thread.thread_id, current_folder,
+                                                on_read_mutation = { mutated -> mutated.forEach { note_read_mutation(it) } },
                                             ) { snooze_ids ->
                                                 swipe_snooze_ids = snooze_ids
                                             }
@@ -1476,6 +1527,7 @@ fun InboxScreen(
                                         } else {
                                             execute_swipe_action(
                                                 swipe_config.end_action, ids, mail_vm, emails, thread.thread_id, current_folder,
+                                                on_read_mutation = { mutated -> mutated.forEach { note_read_mutation(it) } },
                                             ) { snooze_ids ->
                                                 swipe_snooze_ids = snooze_ids
                                             }
@@ -1488,18 +1540,21 @@ fun InboxScreen(
                         }
 
                         if (inbox_state.is_loading_more) {
-                            item(key = "_loading_more") {
+                            items(
+                                count = 3,
+                                key = { "_loading_more_$it" },
+                                contentType = { "skeleton_row" },
+                            ) { skeleton_index ->
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .animateItem()
-                                        .padding(vertical = AsterSpacing.lg),
-                                    contentAlignment = Alignment.Center,
+                                        .padding(top = if (skeleton_index == 0) inbox_group_split else 0.dp),
                                 ) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(24.dp),
-                                        color = colors.accent_blue,
-                                        strokeWidth = 2.dp,
+                                    inbox_skeleton_row(
+                                        list_density = settings_state.preferences?.mail_list_density,
+                                        is_first = false,
+                                        is_last = skeleton_index == 2,
                                     )
                                 }
                             }
@@ -2687,6 +2742,7 @@ private fun execute_swipe_action(
     emails: MutableList<Email>,
     thread_id: String,
     current_folder: String,
+    on_read_mutation: (List<String>) -> Unit = {},
     on_snooze: (List<String>) -> Unit = {},
 ) {
     when (action) {
@@ -2707,11 +2763,14 @@ private fun execute_swipe_action(
             } else {
                 mail_vm.mark_read_bulk(ids)
             }
+            val mutated = ArrayList<String>()
             for (i in emails.indices) {
                 if ((emails[i].thread_id == thread_id || emails[i].id == thread_id)) {
+                    mutated.add(emails[i].id)
                     emails[i] = emails[i].copy(is_read = !was_read)
                 }
             }
+            on_read_mutation(mutated)
         }
         "snooze" -> on_snooze(ids)
         "star" -> {

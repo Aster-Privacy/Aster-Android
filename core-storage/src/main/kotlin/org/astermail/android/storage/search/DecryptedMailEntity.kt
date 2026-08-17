@@ -51,4 +51,5 @@ data class DecryptedMailEntity(
     val routing_token: String? = null,
     val is_external: Boolean = false,
     val has_recipient_key: Boolean? = null,
+    val is_pinned: Boolean = false,
 )

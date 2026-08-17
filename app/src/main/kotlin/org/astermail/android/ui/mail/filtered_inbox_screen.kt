@@ -74,10 +74,10 @@ fun FilteredInboxScreen(
     filter_display_name: String,
     on_open_drawer: () -> Unit,
     on_open_email: (String) -> Unit,
+    mail_vm: MailViewModel = hiltViewModel(),
 ) {
     val colors = AsterMaterial.colors
     val list_state = rememberLazyListState()
-    val mail_vm: MailViewModel = hiltViewModel()
     val inbox_state by mail_vm.inbox_state.collectAsStateWithLifecycle()
     val settings_vm = org.astermail.android.settings.shared_settings_view_model()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
@@ -117,7 +117,7 @@ fun FilteredInboxScreen(
     val grouping_enabled = settings_state.preferences?.conversation_grouping != false
     val threads = remember(filtered_emails, grouping_enabled) {
         val rows = if (grouping_enabled) group_by_thread(filtered_emails) else flat_thread_rows(filtered_emails)
-        rows.sortedByDescending { it.newest.received_at }
+        rows.sortedWith(compareByDescending<ThreadRow> { it.newest.received_at }.thenByDescending { it.thread_id })
     }
 
     LaunchedEffect(
@@ -154,12 +154,10 @@ fun FilteredInboxScreen(
             )
             AsterDivider(modifier = Modifier.fillMaxWidth())
             if (inbox_state.is_loading || inbox_state.current_folder != requested_folder) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    inbox_skeleton()
-                }
+                inbox_skeleton(
+                    modifier = Modifier.padding(top = inbox_group_split),
+                    list_density = settings_state.preferences?.mail_list_density,
+                )
             } else if (threads.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
