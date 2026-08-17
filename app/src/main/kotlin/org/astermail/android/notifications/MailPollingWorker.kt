@@ -214,6 +214,7 @@ class MailPollingWorker(
         var newest: org.astermail.android.mail.InboxItem? = null
         var sender: String? = null
         var fetched_any_page = false
+        var forced_heal_armed = false
         repeat(3) { attempt ->
             if (newest != null) return@repeat
             if (attempt > 0) kotlinx.coroutines.delay(1_500L)
@@ -247,6 +248,16 @@ class MailPollingWorker(
                     candidate = folder_page?.items?.let { pick_notifiable_candidate(context, it) }
                     if (candidate != null) break
                 }
+            }
+
+            if (candidate?.is_undecryptable == true &&
+                !forced_heal_armed &&
+                attempt < 2 &&
+                repo.is_sealed_inbound_nonce(candidate.raw_item.envelope_nonce)
+            ) {
+                forced_heal_armed = true
+                repo.begin_decrypt_retry()
+                return@repeat
             }
 
             val candidate_sender = if (candidate?.is_undecryptable == true) {

@@ -853,7 +853,7 @@ class AuthRepository @Inject constructor(
                 val vault_json = String(vault_plain, Charsets.UTF_8)
                 vault_plain.fill(0)
                 val vault_obj = org.json.JSONObject(vault_json)
-                val old_identity_key = session_key_store.get_identity_key()
+                val before = vault_key_snapshot(session_key_store)
                 val new_identity_key = vault_obj.optString("identity_key", "")
                     .ifBlank { vault_obj.optString("identity_private_key", "") }
                 if (new_identity_key.isNotBlank()) {
@@ -861,17 +861,8 @@ class AuthRepository @Inject constructor(
                 }
                 absorb_previous_keys_and_keks(vault_obj)
                 absorb_data_kek(vault_obj)
-                val old_ratchet_identity = session_key_store.get_ratchet_identity_public_b64()
-                val old_ratchet_previous = session_key_store.get_ratchet_previous_keys_json()
                 extract_ratchet_keys(vault_obj)
-                val new_ratchet_identity = session_key_store.get_ratchet_identity_public_b64()
-                val new_ratchet_previous = session_key_store.get_ratchet_previous_keys_json()
-                val identity_changed = new_identity_key.isNotBlank() && new_identity_key != old_identity_key
-                val ratchet_changed =
-                    !new_ratchet_identity.isNullOrBlank() && new_ratchet_identity != old_ratchet_identity
-                val previous_changed =
-                    !new_ratchet_previous.isNullOrBlank() && new_ratchet_previous != old_ratchet_previous
-                identity_changed || ratchet_changed || previous_changed
+                vault_keys_changed(before, vault_key_snapshot(session_key_store))
             } finally {
                 passphrase.fill(0)
             }

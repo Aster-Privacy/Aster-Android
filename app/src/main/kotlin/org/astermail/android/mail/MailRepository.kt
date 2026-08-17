@@ -104,6 +104,9 @@ private const val DRAFT_UPDATE_CONFLICT_RETRIES = 2
 private const val METADATA_PATCH_BATCH_SIZE = 100
 private const val METADATA_RESOLVE_CONCURRENCY = 8
 private const val ENVELOPE_KEY_CACHE_MAX_ENTRIES = 32
+private const val ENVELOPE_HEAL_COOLDOWN_MS = 5L * 60L * 1000L
+private const val ENVELOPE_HEAL_FORCED_WINDOW_MS = 30_000L
+private const val ENVELOPE_HEAL_RECENT_CHANGE_MS = 10_000L
 private const val MAX_SIGNED_ATTACHMENT_BYTES = 11L * 1024L * 1024L
 
 private data class SignedMimePayload(
@@ -379,6 +382,10 @@ class MailRepository @Inject constructor(
     private val pbkdf2_key_cache = BoundedKeyCache(ENVELOPE_KEY_CACHE_MAX_ENTRIES)
     private val identity_key_cache = BoundedKeyCache(ENVELOPE_KEY_CACHE_MAX_ENTRIES)
     private val ratchet_undecryptable_at = java.util.concurrent.ConcurrentHashMap<String, Long>()
+    private val envelope_heal_mutex = kotlinx.coroutines.sync.Mutex()
+    @Volatile private var last_envelope_heal_at = 0L
+    @Volatile private var last_envelope_heal_changed = false
+    @Volatile private var forced_envelope_heal_until = 0L
     @Volatile private var cached_kek_candidates: List<ByteArray>? = null
     @Volatile private var cached_kek_source: List<String>? = null
     @Volatile private var cached_metadata_key: ByteArray? = null
@@ -796,7 +803,109 @@ class MailRepository @Inject constructor(
 
     fun begin_decrypt_retry() {
         ratchet_undecryptable_at.clear()
+        forced_envelope_heal_until = System.currentTimeMillis() + ENVELOPE_HEAL_FORCED_WINDOW_MS
         ratchet_decryptor.begin_forced_recovery()
+    }
+
+    fun is_sealed_inbound_nonce(envelope_nonce: String?): Boolean {
+        if (envelope_nonce.isNullOrBlank()) return false
+        val nonce = runCatching {
+            android.util.Base64.decode(envelope_nonce, android.util.Base64.DEFAULT)
+        }.getOrNull() ?: return false
+        return nonce.size == 12
+    }
+
+    private suspend fun heal_envelope_keys(): Boolean {
+        val now = System.currentTimeMillis()
+        if (now >= forced_envelope_heal_until && now - last_envelope_heal_at < ENVELOPE_HEAL_COOLDOWN_MS) {
+            return last_envelope_heal_changed && now - last_envelope_heal_at < ENVELOPE_HEAL_RECENT_CHANGE_MS
+        }
+        return envelope_heal_mutex.withLock {
+            val at_lock = System.currentTimeMillis()
+            if (at_lock >= forced_envelope_heal_until && at_lock - last_envelope_heal_at < ENVELOPE_HEAL_COOLDOWN_MS) {
+                return@withLock last_envelope_heal_changed &&
+                    at_lock - last_envelope_heal_at < ENVELOPE_HEAL_RECENT_CHANGE_MS
+            }
+            forced_envelope_heal_until = 0L
+            val changed = runCatching { auth_repository.get().try_refresh_vault_keys() }.getOrDefault(false)
+            last_envelope_heal_at = System.currentTimeMillis()
+            last_envelope_heal_changed = changed
+            if (changed) identity_key_cache.clear()
+            changed
+        }
+    }
+
+    private suspend fun heal_undecryptable_items(
+        decrypted: List<InboxItem>,
+        overrides: Map<String, String>,
+    ): List<InboxItem> {
+        val needs_heal = decrypted.any {
+            it.is_undecryptable && is_sealed_inbound_nonce(it.raw_item.envelope_nonce)
+        }
+        if (!needs_heal || !heal_envelope_keys()) return decrypted
+        return decrypted.map { existing ->
+            if (existing.is_undecryptable && is_sealed_inbound_nonce(existing.raw_item.envelope_nonce)) {
+                runCatching { decrypt_inbox_item(existing.raw_item, overrides[existing.id]) }
+                    .getOrNull() ?: existing
+            } else {
+                existing
+            }
+        }
+    }
+
+    private suspend fun heal_undecryptable_thread_messages(
+        decrypted: List<ThreadMessageDecrypted>,
+    ): List<ThreadMessageDecrypted> {
+        val needs_heal = decrypted.any {
+            it.is_undecryptable && is_sealed_inbound_nonce(it.raw_item.envelope_nonce)
+        }
+        if (!needs_heal || !heal_envelope_keys()) return decrypted
+        return decrypted.map { existing ->
+            if (existing.is_undecryptable && is_sealed_inbound_nonce(existing.raw_item.envelope_nonce)) {
+                runCatching { decrypt_thread_message(existing.raw_item) }.getOrNull() ?: existing
+            } else {
+                existing
+            }
+        }
+    }
+
+    data class HealingEnvelopeResult(
+        val envelope: DecryptedEnvelope?,
+        val heal_pending: Boolean,
+    )
+
+    suspend fun decrypt_envelope_with_heal(
+        encrypted_envelope: String?,
+        envelope_nonce: String?,
+        message_id: String? = null,
+    ): HealingEnvelopeResult {
+        val envelope = try_decrypt_envelope(encrypted_envelope, envelope_nonce, message_id)
+        if (envelope != null || !is_sealed_inbound_nonce(envelope_nonce)) {
+            return HealingEnvelopeResult(envelope, false)
+        }
+        if (!heal_envelope_keys()) return HealingEnvelopeResult(null, true)
+        return HealingEnvelopeResult(
+            try_decrypt_envelope(encrypted_envelope, envelope_nonce, message_id),
+            false,
+        )
+    }
+
+    private fun attachment_meta_needs_heal(meta: AttachmentMeta): Boolean =
+        meta.is_placeholder || meta.session_key.isBlank()
+
+    private suspend fun heal_attachment_keys_for_message(mail_item_id: String?): Boolean {
+        if (mail_item_id.isNullOrBlank()) return false
+        val item = resolve_raw_item(mail_item_id) ?: return false
+        if (!is_sealed_inbound_nonce(item.envelope_nonce)) return false
+        return decrypt_envelope_with_heal(item.encrypted_envelope, item.envelope_nonce, item.id).envelope != null
+    }
+
+    private suspend fun heal_attachment_keys_for_messages(mail_item_ids: Collection<String>): Boolean {
+        var healed = false
+        for (id in mail_item_ids) {
+            if (heal_attachment_keys_for_message(id)) healed = true
+        }
+        return healed
     }
 
     private fun ratchet_recently_undecryptable(message_id: String): Boolean {
@@ -994,8 +1103,9 @@ class MailRepository @Inject constructor(
             val decrypted = response.messages.map { msg ->
                 async(Dispatchers.IO) { decrypt_thread_message(msg) }
             }.awaitAll()
-            prefetch_sender_profiles(decrypted.map { org.astermail.android.ui.mail.displayed_sender_email(it.display_sender_email, it.sender_email) })
-            decrypted
+            val healed = heal_undecryptable_thread_messages(decrypted)
+            prefetch_sender_profiles(healed.map { org.astermail.android.ui.mail.displayed_sender_email(it.display_sender_email, it.sender_email) })
+            healed
         }
     }
 
@@ -1027,7 +1137,12 @@ class MailRepository @Inject constructor(
 
     suspend fun fetch_single_message(item_id: String): Result<InboxItem> = runCatching {
         val item = mail_api.get_message(item_id)
-        decrypt_inbox_item(item)
+        val decrypted = decrypt_inbox_item(item)
+        if (decrypted.is_undecryptable && is_sealed_inbound_nonce(item.envelope_nonce) && heal_envelope_keys()) {
+            runCatching { decrypt_inbox_item(item) }.getOrElse { decrypted }
+        } else {
+            decrypted
+        }
     }
 
     suspend fun get_stats(): Result<MailUserStatsResponse> = runCatching {
@@ -1508,8 +1623,9 @@ class MailRepository @Inject constructor(
                     }
                 }
             }.awaitAll().filterNotNull()
-            org.astermail.android.folders.record_item_folders(decrypted)
-            val visible = org.astermail.android.folders.filter_locked_items(decrypted)
+            val healed = heal_undecryptable_items(decrypted, overrides)
+            org.astermail.android.folders.record_item_folders(healed)
+            val visible = org.astermail.android.folders.filter_locked_items(healed)
             prefetch_sender_profiles(visible.map { org.astermail.android.ui.mail.displayed_sender_email(it.display_sender_email, it.sender_email) })
             visible
         }
@@ -1590,7 +1706,14 @@ class MailRepository @Inject constructor(
     }
 
     suspend fun decrypt_single_thread_message(item: ThreadMessageItem): ThreadMessageDecrypted =
-        withContext(Dispatchers.IO) { decrypt_thread_message(item) }
+        withContext(Dispatchers.IO) {
+            val decrypted = decrypt_thread_message(item)
+            if (decrypted.is_undecryptable && is_sealed_inbound_nonce(item.envelope_nonce) && heal_envelope_keys()) {
+                runCatching { decrypt_thread_message(item) }.getOrElse { decrypted }
+            } else {
+                decrypted
+            }
+        }
 
     private fun merge_server_flags(meta: MailItemMetadata, item: MailItem): MailItemMetadata = meta.copy(
         is_read = item.is_read ?: meta.is_read,
@@ -1661,8 +1784,8 @@ class MailRepository @Inject constructor(
     fun notification_preview(envelope: DecryptedEnvelope): String =
         clean_preview(envelope.body_text, envelope.body_html)
 
-    fun decrypt_item_for_export(item: MailItem): DecryptedEnvelope? =
-        try_decrypt_envelope(item.encrypted_envelope, item.envelope_nonce, item.id)
+    suspend fun decrypt_item_for_export(item: MailItem): DecryptedEnvelope? =
+        decrypt_envelope_with_heal(item.encrypted_envelope, item.envelope_nonce, item.id).envelope
 
     private fun try_decrypt_envelope(
         encrypted_envelope: String?,
@@ -1725,7 +1848,10 @@ class MailRepository @Inject constructor(
                 !decrypt_body_fields -> envelope
                 else -> decrypt_pgp_body_fields(envelope, message_id, ratchet_override)
             }
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            if (org.astermail.android.BuildConfig.DEBUG) {
+                android.util.Log.w("MailRepository", "envelope decrypt failed: ${t.javaClass.simpleName}")
+            }
             null
         }
     }
@@ -2125,15 +2251,15 @@ class MailRepository @Inject constructor(
     ): Map<String, List<org.astermail.android.ui.mail.MessageAttachment>> {
         return try {
             val response = mail_api.batch_attachment_meta(mail_item_ids)
-            response.items.mapValues { (_, items) ->
-                items.map { att ->
-                    val meta = decrypt_attachment_meta(
-                        att.encrypted_meta,
-                        att.meta_nonce,
-                        att.mail_item_id,
-                        att.seq_num,
-                        att.size_bytes,
-                    )
+            var metas = decrypt_batch_attachment_metas(response.items)
+            val stale_parents = metas.filterValues { list ->
+                list.any { (_, meta) -> attachment_meta_needs_heal(meta) }
+            }.keys
+            if (stale_parents.isNotEmpty() && heal_attachment_keys_for_messages(stale_parents)) {
+                metas = decrypt_batch_attachment_metas(response.items)
+            }
+            metas.mapValues { (_, list) ->
+                list.map { (att, meta) ->
                     org.astermail.android.ui.mail.MessageAttachment(
                         id = att.id,
                         filename = meta.filename,
@@ -2153,20 +2279,50 @@ class MailRepository @Inject constructor(
         }
     }
 
-    suspend fun fetch_attachments_for_message(
-        mail_item_id: String,
-    ): List<org.astermail.android.ui.mail.MessageAttachment> {
-        return try {
-            val api_response = mail_api.list_attachments(mail_item_id)
-            val api_attachments = api_response.attachments
-            api_attachments.map { att ->
-                val meta = decrypt_attachment_meta(
+    private fun decrypt_batch_attachment_metas(
+        items: Map<String, List<org.astermail.android.api.mail.AttachmentMetaItem>>,
+    ): Map<String, List<Pair<org.astermail.android.api.mail.AttachmentMetaItem, AttachmentMeta>>> =
+        items.mapValues { (_, rows) ->
+            rows.map { att ->
+                att to decrypt_attachment_meta(
                     att.encrypted_meta,
                     att.meta_nonce,
                     att.mail_item_id,
                     att.seq_num,
                     att.size_bytes,
                 )
+            }
+        }
+
+    suspend fun fetch_attachments_for_message(
+        mail_item_id: String,
+    ): List<org.astermail.android.ui.mail.MessageAttachment> {
+        return try {
+            val api_response = mail_api.list_attachments(mail_item_id)
+            val api_attachments = api_response.attachments
+            var metas = api_attachments.map { att ->
+                decrypt_attachment_meta(
+                    att.encrypted_meta,
+                    att.meta_nonce,
+                    att.mail_item_id,
+                    att.seq_num,
+                    att.size_bytes,
+                )
+            }
+            if (metas.any { attachment_meta_needs_heal(it) } &&
+                heal_attachment_keys_for_message(mail_item_id)
+            ) {
+                metas = api_attachments.map { att ->
+                    decrypt_attachment_meta(
+                        att.encrypted_meta,
+                        att.meta_nonce,
+                        att.mail_item_id,
+                        att.seq_num,
+                        att.size_bytes,
+                    )
+                }
+            }
+            api_attachments.zip(metas) { att, meta ->
                 org.astermail.android.ui.mail.MessageAttachment(
                     id = att.id,
                     filename = meta.filename,
@@ -2190,13 +2346,24 @@ class MailRepository @Inject constructor(
     ): Pair<org.astermail.android.ui.mail.MessageAttachment, ByteArray>? {
         return try {
             val att = mail_api.get_attachment(attachment_id)
-            val meta = decrypt_attachment_meta(
+            var meta = decrypt_attachment_meta(
                 att.encrypted_meta,
                 att.meta_nonce,
                 att.mail_item_id,
                 att.seq_num,
                 att.size_bytes,
             )
+            if (attachment_meta_needs_heal(meta) &&
+                heal_attachment_keys_for_message(att.mail_item_id)
+            ) {
+                meta = decrypt_attachment_meta(
+                    att.encrypted_meta,
+                    att.meta_nonce,
+                    att.mail_item_id,
+                    att.seq_num,
+                    att.size_bytes,
+                )
+            }
             val data = decrypt_attachment_data(
                 att.encrypted_data,
                 att.data_nonce,

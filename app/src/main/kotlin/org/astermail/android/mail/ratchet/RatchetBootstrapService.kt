@@ -264,6 +264,10 @@ class RatchetBootstrapService @Inject constructor(
 
         if (identity_current && generated == null) return false
 
+        if (!identity_current) {
+            retain_replaced_ratchet_identity(vault_json, identity_jwk)
+        }
+
         vault_json.put("ratchet_identity_key", identity_jwk)
         vault_json.put("ratchet_signed_prekey", spk_jwk)
         vault_json.put("ratchet_signed_prekey_public", spk_pub)
@@ -290,6 +294,31 @@ class RatchetBootstrapService @Inject constructor(
         session_key_store.put_ratchet_pq_identity(generated.secret_b64, generated.public_b64)
         debug_log("generated pq identity for user ${session_key_store.get_user_id()}")
         return true
+    }
+
+    private fun retain_replaced_ratchet_identity(
+        vault_json: org.json.JSONObject,
+        new_identity_jwk: String,
+    ) {
+        val replaced_jwk = vault_json.optString("ratchet_identity_key", "")
+        if (replaced_jwk.isBlank() || replaced_jwk == new_identity_jwk) return
+        val previous = vault_json.optJSONArray("ratchet_previous_keys") ?: org.json.JSONArray()
+        for (i in 0 until previous.length()) {
+            val existing = previous.optJSONObject(i)?.optString("ratchet_identity_key", "")
+            if (existing == replaced_jwk) return
+        }
+        val entry = org.json.JSONObject().put("ratchet_identity_key", replaced_jwk)
+        vault_json.optString("ratchet_pq_identity_key", "")
+            .takeIf { it.isNotBlank() }
+            ?.let { entry.put("ratchet_pq_identity_key", it) }
+        vault_json.optString("ratchet_pq_identity_seed", "")
+            .takeIf { it.isNotBlank() }
+            ?.let { entry.put("ratchet_pq_identity_seed", it) }
+        val merged = org.json.JSONArray().put(entry)
+        for (i in 0 until minOf(previous.length(), 31)) {
+            merged.put(previous.get(i))
+        }
+        vault_json.put("ratchet_previous_keys", merged)
     }
 
     private data class GeneratedPqIdentity(val secret_b64: String, val public_b64: String)

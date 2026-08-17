@@ -175,6 +175,7 @@ class SubscriptionScanner @Inject constructor(
         var pages = 0
         var newest_seen = ""
         var stop = false
+        var heal_pending_failure = false
 
         while (pages < max_pages && !stop) {
             val response = runCatching {
@@ -193,11 +194,16 @@ class SubscriptionScanner @Inject constructor(
                 }
                 if (created_at > newest_seen) newest_seen = created_at
 
-                val envelope = repository.decrypt_envelope_public(
+                val decrypt_result = repository.decrypt_envelope_with_heal(
                     item.encrypted_envelope,
                     item.envelope_nonce,
                     item.id,
-                ) ?: continue
+                )
+                val envelope = decrypt_result.envelope
+                if (envelope == null) {
+                    if (decrypt_result.heal_pending) heal_pending_failure = true
+                    continue
+                }
 
                 val email = envelope.from_email.trim().lowercase()
                 if (email.isEmpty() || !email.contains('@')) continue
@@ -254,7 +260,7 @@ class SubscriptionScanner @Inject constructor(
             if (!response.has_more || cursor.isNullOrBlank()) break
         }
 
-        if (newest_seen.isNotEmpty()) save_watermark(newest_seen)
+        if (newest_seen.isNotEmpty() && !heal_pending_failure) save_watermark(newest_seen)
         senders.values.toList()
     }
 }

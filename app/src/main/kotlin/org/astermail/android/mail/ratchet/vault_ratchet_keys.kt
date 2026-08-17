@@ -81,5 +81,7 @@ fun apply_vault_ratchet_keys(keys: VaultRatchetKeys, session_key_store: SessionK
             )
         }
     }
-    session_key_store.put_ratchet_previous_keys(keys.previous_keys_json)
+    keys.previous_keys_json
+        ?.takeIf { it.isNotBlank() && it != "[]" }
+        ?.let { session_key_store.put_ratchet_previous_keys(it) }
 }

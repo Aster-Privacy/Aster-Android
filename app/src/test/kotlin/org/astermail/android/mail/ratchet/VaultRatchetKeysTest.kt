@@ -137,6 +137,28 @@ class VaultRatchetKeysTest {
     }
 
     @Test
+    fun `missing previous keys does not wipe stored previous keys`() {
+        val store = SessionKeyStore(null)
+        store.put_ratchet_previous_keys("""[{"ratchet_identity_key":"old_jwk"}]""")
+        apply_vault_ratchet_keys(
+            parse_vault_ratchet_keys(vault("ratchet_identity_key" to "identity_jwk_value")),
+            store,
+        )
+        assertEquals(true, store.get_ratchet_previous_keys_json()?.contains("old_jwk"))
+    }
+
+    @Test
+    fun `empty previous keys array does not wipe stored previous keys`() {
+        val store = SessionKeyStore(null)
+        store.put_ratchet_previous_keys("""[{"ratchet_identity_key":"old_jwk"}]""")
+        val obj = JSONObject()
+        obj.put("ratchet_identity_key", "identity_jwk_value")
+        obj.put("ratchet_previous_keys", org.json.JSONArray())
+        apply_vault_ratchet_keys(parse_vault_ratchet_keys(obj), store)
+        assertEquals(true, store.get_ratchet_previous_keys_json()?.contains("old_jwk"))
+    }
+
+    @Test
     fun `previous keys array is carried through`() {
         val obj = JSONObject()
         obj.put("ratchet_identity_key", "identity_jwk_value")
