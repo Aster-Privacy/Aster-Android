@@ -1,0 +1,4 @@
+Bug fixes and improvements:
+
+- The app now picks up your latest encryption keys when it starts, so mail opens correctly after you update your keys on another device
+- A device with outdated keys no longer replaces the newer keys your other devices use
