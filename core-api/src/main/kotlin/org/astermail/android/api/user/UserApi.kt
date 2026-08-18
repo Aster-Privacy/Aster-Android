@@ -105,6 +105,9 @@ class UserApiImpl(private val client: ApiClient) : UserApi {
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(UpdateProfilePictureRequest(profile_picture))
         }
+        if (response.status.value == 413) {
+            throw ApiError.ValidationError(listOf("image too large"))
+        }
         if (response.status.value !in 200..299) {
             throw client.map_http_status(response.status.value, "")
         }

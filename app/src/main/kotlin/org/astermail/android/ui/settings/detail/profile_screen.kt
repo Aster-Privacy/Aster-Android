@@ -24,7 +24,9 @@ package org.astermail.android.ui.settings.detail
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
 import android.net.Uri
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -457,35 +459,60 @@ private fun badge_toggle_row(
     }
 }
 
-private val MAX_RAW_BYTES = 6 * 1024 * 1024
+private const val MAX_AVATAR_DIMENSION = 256
+
+private fun decode_avatar_bitmap(context: Context, uri: Uri): Bitmap? {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        val source = ImageDecoder.createSource(context.contentResolver, uri)
+        return ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
+            decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+            val largest = maxOf(info.size.width, info.size.height)
+            if (largest > MAX_AVATAR_DIMENSION) {
+                val scale = MAX_AVATAR_DIMENSION.toFloat() / largest
+                decoder.setTargetSize(
+                    (info.size.width * scale).toInt().coerceAtLeast(1),
+                    (info.size.height * scale).toInt().coerceAtLeast(1),
+                )
+            }
+        }
+    }
+    val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return null
+    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+    if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+    var sample = 1
+    while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= MAX_AVATAR_DIMENSION) {
+        sample *= 2
+    }
+    val decoded = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = sample }) ?: return null
+    val largest = maxOf(decoded.width, decoded.height)
+    if (largest <= MAX_AVATAR_DIMENSION) return decoded
+    val scale = MAX_AVATAR_DIMENSION.toFloat() / largest
+    val scaled = Bitmap.createScaledBitmap(
+        decoded,
+        (decoded.width * scale).toInt().coerceAtLeast(1),
+        (decoded.height * scale).toInt().coerceAtLeast(1),
+        true,
+    )
+    if (scaled !== decoded) decoded.recycle()
+    return scaled
+}
 
 private fun read_image_as_data_uri(context: Context, uri: Uri): String? {
     return try {
-        val stream = context.contentResolver.openInputStream(uri) ?: return null
-        val bytes = stream.use { it.readBytes() }
-        val mime = context.contentResolver.getType(uri) ?: "image/jpeg"
-        val allowed = setOf("image/jpeg", "image/png", "image/webp")
-
-        val (final_bytes, final_mime) = if (bytes.size <= MAX_RAW_BYTES) {
-            Pair(bytes, if (mime in allowed) mime else "image/jpeg")
+        val bitmap = decode_avatar_bitmap(context, uri) ?: return null
+        val format = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Bitmap.CompressFormat.WEBP_LOSSY
         } else {
-            val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size) ?: return null
-            var compressed: ByteArray? = null
-            for (quality in listOf(80, 60, 40, 20)) {
-                val out = ByteArrayOutputStream()
-                bitmap.compress(Bitmap.CompressFormat.JPEG, quality, out)
-                val candidate = out.toByteArray()
-                if (candidate.size <= MAX_RAW_BYTES) {
-                    compressed = candidate
-                    break
-                }
-            }
-            bitmap.recycle()
-            Pair(compressed ?: return null, "image/jpeg")
+            @Suppress("DEPRECATION")
+            Bitmap.CompressFormat.WEBP
         }
-
-        val b64 = android.util.Base64.encodeToString(final_bytes, android.util.Base64.NO_WRAP)
-        "data:$final_mime;base64,$b64"
+        val out = ByteArrayOutputStream()
+        val compressed = bitmap.compress(format, 80, out)
+        bitmap.recycle()
+        if (!compressed) return null
+        val b64 = android.util.Base64.encodeToString(out.toByteArray(), android.util.Base64.NO_WRAP)
+        "data:image/webp;base64,$b64"
     } catch (_: Throwable) {
         null
     }
