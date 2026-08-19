@@ -77,6 +77,11 @@ import org.astermail.android.design.MaterialThemeGenerator
 import org.astermail.android.design.FONT_OPTIONS
 import org.astermail.android.design.preview_font_family_for
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.api.preferences.compose_font_size_labels
+import org.astermail.android.api.preferences.effective_compose_font_color
+import org.astermail.android.api.preferences.effective_compose_font_size
+import org.astermail.android.api.preferences.normalize_compose_font_color
+import org.astermail.android.api.preferences.normalize_compose_font_size
 import org.astermail.android.api.preferences.effective_theme_values
 import org.astermail.android.api.preferences.theme_sync_enabled
 import org.astermail.android.api.preferences.with_theme_sync_enabled
@@ -97,8 +102,20 @@ private val quick_seed_colors = listOf(
     "#14b88a", "#f5be0b", "#068fd4", "#84cc16", "#e0399d",
 )
 
+private val quick_compose_text_colors = listOf(
+    "#1a73e8", "#0f172a", "#475569", "#b91c1c", "#c2410c",
+    "#15803d", "#0f766e", "#7c3aed", "#be185d", "#a16207",
+)
+
 private fun parse_hex_color(hex: String): Color =
     try { Color(android.graphics.Color.parseColor(hex)) } catch (_: Throwable) { Color.Gray }
+
+private fun compose_font_size_label_res(label: String): Int = when (label) {
+    "small" -> R.string.compose_size_small
+    "large" -> R.string.compose_size_large
+    "huge" -> R.string.compose_size_huge
+    else -> R.string.compose_size_normal
+}
 
 private fun font_label_res(id: String): Int = when (id) {
     "default" -> R.string.font_option_default
@@ -265,6 +282,25 @@ fun AppearanceScreen(
         val base = prefs ?: return
         if (base.mail_list_density != value) {
             settings_vm.save_preferences(base.copy(mail_list_density = value))
+        }
+    }
+
+    val compose_font_size = effective_compose_font_size(prefs)
+    val compose_font_color = effective_compose_font_color(prefs)
+
+    fun apply_compose_font_size(label: String) {
+        val base = prefs ?: return
+        val next = normalize_compose_font_size(label)
+        if (base.compose_font_size != next) {
+            settings_vm.save_preferences(base.copy(compose_font_size = next))
+        }
+    }
+
+    fun apply_compose_font_color(hex: String) {
+        val base = prefs ?: return
+        val next = normalize_compose_font_color(hex)
+        if (base.compose_font_color != next) {
+            settings_vm.save_preferences(base.copy(compose_font_color = next))
         }
     }
 
@@ -470,6 +506,100 @@ fun AppearanceScreen(
                 prefs?.mail_list_density == "comfortable",
             ) { apply_density("comfortable") }
         }
+
+        v_gap(AsterSpacing.xxl)
+        section_label(stringResource(R.string.section_compose_text))
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = stringResource(R.string.compose_text_size),
+                color = colors.text_primary,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 2.dp),
+            )
+            Text(
+                text = stringResource(R.string.compose_text_size_subtitle),
+                color = colors.text_tertiary,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(start = AsterSpacing.lg, end = AsterSpacing.lg, bottom = 4.dp),
+            )
+            compose_font_size_labels.forEachIndexed { index, label ->
+                compose_choice_row(
+                    label = stringResource(compose_font_size_label_res(label)),
+                    selected = compose_font_size == label,
+                    test_tag = "compose_size_$label",
+                    on_click = { apply_compose_font_size(label) },
+                )
+                if (index < compose_font_size_labels.size - 1) AsterDivider(modifier = Modifier)
+            }
+        }
+
+        v_gap(AsterSpacing.xxl)
+        section_label(stringResource(R.string.compose_text_color))
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(AsterSpacing.lg)) {
+                Text(
+                    text = stringResource(R.string.compose_text_color_subtitle),
+                    color = colors.text_tertiary,
+                    fontSize = 12.sp,
+                )
+                v_gap(AsterSpacing.sm)
+                var compose_color_input by remember(compose_font_color) { mutableStateOf(compose_font_color) }
+                val compose_color_valid = normalize_compose_font_color(compose_color_input).isNotEmpty()
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .background(
+                                if (compose_color_valid) parse_hex_color(compose_color_input) else colors.text_primary,
+                                CircleShape,
+                            )
+                            .border(1.dp, colors.border_primary, CircleShape),
+                    )
+                    Spacer(Modifier.width(AsterSpacing.md))
+                    AsterTextField(
+                        value = compose_color_input,
+                        onValueChange = { value ->
+                            compose_color_input = value
+                            if (normalize_compose_font_color(value).isNotEmpty()) apply_compose_font_color(value)
+                        },
+                        placeholder = stringResource(R.string.compose_text_color_placeholder),
+                        modifier = Modifier.weight(1f).testTag("compose_color_input"),
+                    )
+                }
+                if (!compose_color_valid && compose_color_input.isNotBlank()) {
+                    v_gap(AsterSpacing.xs)
+                    Text(
+                        text = stringResource(R.string.compose_text_color_invalid),
+                        color = colors.danger,
+                        fontSize = 12.sp,
+                    )
+                }
+                v_gap(AsterSpacing.md)
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    quick_compose_text_colors.forEach { hex ->
+                        val is_selected = hex == compose_font_color
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .background(parse_hex_color(hex), CircleShape)
+                                .border(if (is_selected) 2.dp else 0.dp, colors.text_primary, CircleShape)
+                                .clickable {
+                                    compose_color_input = hex
+                                    apply_compose_font_color(hex)
+                                },
+                        )
+                    }
+                }
+            }
+            AsterDivider(modifier = Modifier)
+            compose_choice_row(
+                label = stringResource(R.string.compose_text_color_theme_default),
+                selected = compose_font_color.isEmpty(),
+                test_tag = "compose_color_theme_default",
+                on_click = { apply_compose_font_color("") },
+            )
+        }
         v_gap(AsterSpacing.xxl)
     }
 
@@ -614,6 +744,51 @@ internal fun theme_swatch(
             maxLines = 1,
             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        )
+    }
+}
+
+@Composable
+private fun compose_choice_row(
+    label: String,
+    selected: Boolean,
+    test_tag: String,
+    on_click: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = on_click)
+            .testTag(test_tag)
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(20.dp)
+                .border(
+                    width = 2.dp,
+                    color = if (selected) colors.accent_blue else colors.border_primary,
+                    shape = CircleShape,
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (selected) {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .background(colors.accent_blue, CircleShape),
+                )
+            }
+        }
+        Spacer(Modifier.width(AsterSpacing.md))
+        Text(
+            text = label,
+            color = colors.text_primary,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f),
         )
     }
 }

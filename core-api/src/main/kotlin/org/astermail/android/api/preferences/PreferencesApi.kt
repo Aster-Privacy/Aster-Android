@@ -146,6 +146,8 @@ data class UserPreferences(
     val reactions_enabled: Boolean = true,
     val email_font_choice: String = "match_app",
     val mail_list_density: String = "compact",
+    val compose_font_size: String = "normal",
+    val compose_font_color: String = "",
 )
 
 @Serializable

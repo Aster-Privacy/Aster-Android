@@ -2749,4 +2749,16 @@
     <string name="plan_price_per_month">pro Monat</string>
     <string name="plan_price_per_year">pro Jahr</string>
     <string name="plan_save_per_year">Spare %1$s pro Jahr</string>
+    <string name="section_compose_text">Text beim Verfassen</string>
+    <string name="compose_text_size">Textgröße</string>
+    <string name="compose_text_size_subtitle">Wählen Sie die Größe, mit der neue Nachrichten beginnen.</string>
+    <string name="compose_size_small">Klein</string>
+    <string name="compose_size_normal">Normal</string>
+    <string name="compose_size_large">Groß</string>
+    <string name="compose_size_huge">Sehr groß</string>
+    <string name="compose_text_color">Textfarbe</string>
+    <string name="compose_text_color_subtitle">Geben Sie eine Hex-Farbe für neue Nachrichten ein, oder verwenden Sie die Standardfarbe des Designs.</string>
+    <string name="compose_text_color_placeholder">#1a73e8</string>
+    <string name="compose_text_color_invalid">Geben Sie eine gültige Hex-Farbe ein, zum Beispiel #1a73e8</string>
+    <string name="compose_text_color_theme_default">Standard des Designs verwenden</string>
 </resources>

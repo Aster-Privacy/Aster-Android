@@ -2740,4 +2740,16 @@
     <string name="plan_price_per_month">每月</string>
     <string name="plan_price_per_year">每年</string>
     <string name="plan_save_per_year">每年节省 %1$s</string>
+    <string name="section_compose_text">撰写文字</string>
+    <string name="compose_text_size">文字大小</string>
+    <string name="compose_text_size_subtitle">选择新邮件开始时使用的大小。</string>
+    <string name="compose_size_small">小</string>
+    <string name="compose_size_normal">普通</string>
+    <string name="compose_size_large">大</string>
+    <string name="compose_size_huge">超大</string>
+    <string name="compose_text_color">文字颜色</string>
+    <string name="compose_text_color_subtitle">为新邮件输入十六进制颜色，或使用主题默认值。</string>
+    <string name="compose_text_color_placeholder">#1a73e8</string>
+    <string name="compose_text_color_invalid">请输入有效的十六进制颜色，例如 #1a73e8</string>
+    <string name="compose_text_color_theme_default">使用主题默认值</string>
 </resources>

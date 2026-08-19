@@ -2748,4 +2748,16 @@
     <string name="plan_price_per_month">per maand</string>
     <string name="plan_price_per_year">per jaar</string>
     <string name="plan_save_per_year">Bespaar %1$s per jaar</string>
+    <string name="section_compose_text">Opsteltekst</string>
+    <string name="compose_text_size">Tekstgrootte</string>
+    <string name="compose_text_size_subtitle">Kies de grootte waarmee nieuwe berichten beginnen.</string>
+    <string name="compose_size_small">Klein</string>
+    <string name="compose_size_normal">Normaal</string>
+    <string name="compose_size_large">Groot</string>
+    <string name="compose_size_huge">Zeer groot</string>
+    <string name="compose_text_color">Tekstkleur</string>
+    <string name="compose_text_color_subtitle">Voer een hexadecimale kleur in voor nieuwe berichten of gebruik de themawaarde.</string>
+    <string name="compose_text_color_placeholder">#1a73e8</string>
+    <string name="compose_text_color_invalid">Voer een geldige hexadecimale kleur in, zoals #1a73e8</string>
+    <string name="compose_text_color_theme_default">Themawaarde gebruiken</string>
 </resources>

@@ -629,6 +629,46 @@ fun ComposeScreen(
     val show_format_bar = remember { mutableStateOf(false) }
     var link_dialog_text by remember { mutableStateOf<String?>(null) }
 
+    val compose_default_size_label = org.astermail.android.api.preferences
+        .effective_compose_font_size(settings_state.preferences)
+    val compose_default_size_px = org.astermail.android.api.preferences
+        .compose_font_size_px(compose_default_size_label)
+        .takeIf { compose_default_size_label != org.astermail.android.api.preferences.compose_font_size_default }
+    val compose_default_color_argb = org.astermail.android.api.preferences
+        .compose_font_color_argb(
+            org.astermail.android.api.preferences.effective_compose_font_color(settings_state.preferences),
+        )
+    val compose_defaults_allowed = mode != "draft"
+
+    val apply_compose_defaults: (android.text.Editable) -> Unit = apply_defaults@{ editable ->
+        if (!compose_defaults_allowed) return@apply_defaults
+        editable.getSpans(0, editable.length, android.text.style.AbsoluteSizeSpan::class.java)
+            .forEach { editable.removeSpan(it) }
+        editable.getSpans(0, editable.length, android.text.style.ForegroundColorSpan::class.java)
+            .forEach { editable.removeSpan(it) }
+        compose_default_size_px?.let {
+            editable.setSpan(
+                android.text.style.AbsoluteSizeSpan(it, true),
+                0,
+                editable.length,
+                android.text.Spanned.SPAN_INCLUSIVE_INCLUSIVE,
+            )
+        }
+        compose_default_color_argb?.let {
+            editable.setSpan(
+                android.text.style.ForegroundColorSpan(it),
+                0,
+                editable.length,
+                android.text.Spanned.SPAN_INCLUSIVE_INCLUSIVE,
+            )
+        }
+    }
+
+    LaunchedEffect(compose_default_size_px, compose_default_color_argb, body_editor_ref.value) {
+        val editable = body_editor_ref.value?.text ?: return@LaunchedEffect
+        apply_compose_defaults(editable)
+    }
+
     val insert_image_inline: (Uri) -> Boolean = insert@{ uri ->
         val img = build_attachment_from_uri(context, uri) ?: return@insert false
         val et = body_editor_ref.value ?: return@insert false
@@ -1038,7 +1078,9 @@ fun ComposeScreen(
     fun get_body_with_formatting(): String {
         val et = body_editor_ref.value ?: return body
         val editable = et.text ?: return body
-        val has_spans = editable.getSpans(0, editable.length, android.text.style.StyleSpan::class.java).isNotEmpty() ||
+        val has_spans = editable.getSpans(0, editable.length, android.text.style.AbsoluteSizeSpan::class.java).isNotEmpty() ||
+            editable.getSpans(0, editable.length, android.text.style.ForegroundColorSpan::class.java).isNotEmpty() ||
+            editable.getSpans(0, editable.length, android.text.style.StyleSpan::class.java).isNotEmpty() ||
             editable.getSpans(0, editable.length, android.text.style.UnderlineSpan::class.java).isNotEmpty() ||
             editable.getSpans(0, editable.length, android.text.style.StrikethroughSpan::class.java).isNotEmpty() ||
             editable.getSpans(0, editable.length, android.text.style.BulletSpan::class.java).isNotEmpty() ||
@@ -1829,6 +1871,7 @@ fun ComposeScreen(
                                 override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
                             })
                             setText(body)
+                            text?.let { apply_compose_defaults(it) }
                             val has_signature = body.startsWith("\n\n") && body.length > 2
                             setSelection(if (has_signature) 0 else text?.length ?: 0)
                             body_editor_ref.value = this
@@ -1843,6 +1886,7 @@ fun ComposeScreen(
                             et.suspend_text_watcher = true
                             et.setText(body)
                             et.suspend_text_watcher = false
+                            et.text?.let { apply_compose_defaults(it) }
                             et.setSelection(sel)
                         }
                     },
@@ -3837,48 +3881,45 @@ private fun safe_href(raw: String): String? {
     return escape_html(trimmed)
 }
 
+private fun inline_style_at(editable: android.text.Editable, index: Int): inline_style_state {
+    val styles = editable.getSpans(index, index + 1, android.text.style.StyleSpan::class.java)
+    return inline_style_state(
+        font_size_px = editable
+            .getSpans(index, index + 1, android.text.style.AbsoluteSizeSpan::class.java)
+            .lastOrNull()
+            ?.size,
+        font_color = editable
+            .getSpans(index, index + 1, android.text.style.ForegroundColorSpan::class.java)
+            .lastOrNull()
+            ?.let { serializable_font_color(it.foregroundColor) },
+        href = editable
+            .getSpans(index, index + 1, android.text.style.URLSpan::class.java)
+            .firstNotNullOfOrNull { safe_href(it.url ?: "") },
+        bold = styles.any {
+            it.style == android.graphics.Typeface.BOLD || it.style == android.graphics.Typeface.BOLD_ITALIC
+        },
+        italic = styles.any {
+            it.style == android.graphics.Typeface.ITALIC || it.style == android.graphics.Typeface.BOLD_ITALIC
+        },
+        underline = editable
+            .getSpans(index, index + 1, android.text.style.UnderlineSpan::class.java)
+            .isNotEmpty(),
+        strike = editable
+            .getSpans(index, index + 1, android.text.style.StrikethroughSpan::class.java)
+            .isNotEmpty(),
+    )
+}
+
 private fun render_inline_html(editable: android.text.Editable, start: Int, end: Int): String {
     if (start >= end) return ""
-    val sb = StringBuilder()
-    var href: String? = null
-    var bold = false
-    var italic = false
-    var underline = false
-    var strike = false
-    for (i in start until end) {
-        val styles = editable.getSpans(i, i + 1, android.text.style.StyleSpan::class.java)
-        val next_bold = styles.any { it.style == android.graphics.Typeface.BOLD || it.style == android.graphics.Typeface.BOLD_ITALIC }
-        val next_italic = styles.any { it.style == android.graphics.Typeface.ITALIC || it.style == android.graphics.Typeface.BOLD_ITALIC }
-        val next_underline = editable.getSpans(i, i + 1, android.text.style.UnderlineSpan::class.java).isNotEmpty()
-        val next_strike = editable.getSpans(i, i + 1, android.text.style.StrikethroughSpan::class.java).isNotEmpty()
-        val next_href = editable.getSpans(i, i + 1, android.text.style.URLSpan::class.java)
-            .firstNotNullOfOrNull { safe_href(it.url ?: "") }
-        if (strike && !next_strike) { sb.append("</s>"); strike = false }
-        if (underline && !next_underline) { sb.append("</u>"); underline = false }
-        if (italic && !next_italic) { sb.append("</i>"); italic = false }
-        if (bold && !next_bold) { sb.append("</b>"); bold = false }
-        if (href != null && next_href != href) {
-            if (strike) { sb.append("</s>"); strike = false }
-            if (underline) { sb.append("</u>"); underline = false }
-            if (italic) { sb.append("</i>"); italic = false }
-            if (bold) { sb.append("</b>"); bold = false }
-            sb.append("</a>")
-            href = null
-        }
-        if (href == null && next_href != null) { sb.append("<a href=\"$next_href\">"); href = next_href }
-        if (!bold && next_bold) { sb.append("<b>"); bold = true }
-        if (!italic && next_italic) { sb.append("<i>"); italic = true }
-        if (!underline && next_underline) { sb.append("<u>"); underline = true }
-        if (!strike && next_strike) { sb.append("<s>"); strike = true }
-        val ch = editable[i]
-        if (ch == IMG_MARKER) sb.append(ch) else sb.append(escape_html(ch.toString()))
-    }
-    if (strike) sb.append("</s>")
-    if (underline) sb.append("</u>")
-    if (italic) sb.append("</i>")
-    if (bold) sb.append("</b>")
-    if (href != null) sb.append("</a>")
-    return sb.toString()
+    return render_inline_style_html(
+        length = end - start,
+        style_at = { offset -> inline_style_at(editable, start + offset) },
+        char_at = { offset ->
+            val ch = editable[start + offset]
+            if (ch == IMG_MARKER) ch.toString() else escape_html(ch.toString())
+        },
+    )
 }
 
 private fun render_spanned_html(editable: android.text.Editable): String {

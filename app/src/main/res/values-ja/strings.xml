@@ -2740,4 +2740,16 @@
     <string name="plan_price_per_month">月額</string>
     <string name="plan_price_per_year">年額</string>
     <string name="plan_save_per_year">年間 %1$s の節約</string>
+    <string name="section_compose_text">作成時のテキスト</string>
+    <string name="compose_text_size">文字サイズ</string>
+    <string name="compose_text_size_subtitle">新しいメッセージの初期文字サイズを選択します。</string>
+    <string name="compose_size_small">小</string>
+    <string name="compose_size_normal">標準</string>
+    <string name="compose_size_large">大</string>
+    <string name="compose_size_huge">特大</string>
+    <string name="compose_text_color">文字の色</string>
+    <string name="compose_text_color_subtitle">新しいメッセージの16進カラーを入力するか、テーマの既定値を使用します。</string>
+    <string name="compose_text_color_placeholder">#1a73e8</string>
+    <string name="compose_text_color_invalid">#1a73e8 のような有効な16進カラーを入力してください</string>
+    <string name="compose_text_color_theme_default">テーマの既定値を使用</string>
 </resources>

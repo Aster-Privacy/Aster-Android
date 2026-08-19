@@ -2776,4 +2776,16 @@
     <string name="plan_price_per_month">par mois</string>
     <string name="plan_price_per_year">par an</string>
     <string name="plan_save_per_year">Économisez %1$s par an</string>
+    <string name="section_compose_text">Texte de rédaction</string>
+    <string name="compose_text_size">Taille du texte</string>
+    <string name="compose_text_size_subtitle">Choisissez la taille utilisée au début des nouveaux messages.</string>
+    <string name="compose_size_small">Petite</string>
+    <string name="compose_size_normal">Normale</string>
+    <string name="compose_size_large">Grande</string>
+    <string name="compose_size_huge">Très grande</string>
+    <string name="compose_text_color">Couleur du texte</string>
+    <string name="compose_text_color_subtitle">Saisissez une couleur hexadécimale pour les nouveaux messages, ou utilisez la valeur du thème.</string>
+    <string name="compose_text_color_placeholder">#1a73e8</string>
+    <string name="compose_text_color_invalid">Saisissez une couleur hexadécimale valide, comme #1a73e8</string>
+    <string name="compose_text_color_theme_default">Utiliser la valeur du thème</string>
 </resources>

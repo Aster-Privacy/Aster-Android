@@ -2740,4 +2740,16 @@
     <string name="plan_price_per_month">월</string>
     <string name="plan_price_per_year">연</string>
     <string name="plan_save_per_year">연간 %1$s 절약</string>
+    <string name="section_compose_text">작성 텍스트</string>
+    <string name="compose_text_size">텍스트 크기</string>
+    <string name="compose_text_size_subtitle">새 메시지가 시작할 크기를 선택하세요.</string>
+    <string name="compose_size_small">작게</string>
+    <string name="compose_size_normal">보통</string>
+    <string name="compose_size_large">크게</string>
+    <string name="compose_size_huge">아주 크게</string>
+    <string name="compose_text_color">텍스트 색상</string>
+    <string name="compose_text_color_subtitle">새 메시지에 사용할 16진수 색상을 입력하거나 테마 기본값을 사용하세요.</string>
+    <string name="compose_text_color_placeholder">#1a73e8</string>
+    <string name="compose_text_color_invalid">#1a73e8과 같은 유효한 16진수 색상을 입력하세요</string>
+    <string name="compose_text_color_theme_default">테마 기본값 사용</string>
 </resources>

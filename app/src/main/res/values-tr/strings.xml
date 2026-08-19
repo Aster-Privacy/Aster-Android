@@ -2748,4 +2748,16 @@
     <string name="plan_price_per_month">aylık</string>
     <string name="plan_price_per_year">yıllık</string>
     <string name="plan_save_per_year">Yılda %1$s tasarruf edin</string>
+    <string name="section_compose_text">Oluşturma metni</string>
+    <string name="compose_text_size">Metin boyutu</string>
+    <string name="compose_text_size_subtitle">Yeni iletilerin başlayacağı boyutu seçin.</string>
+    <string name="compose_size_small">Küçük</string>
+    <string name="compose_size_normal">Normal</string>
+    <string name="compose_size_large">Büyük</string>
+    <string name="compose_size_huge">Çok büyük</string>
+    <string name="compose_text_color">Metin rengi</string>
+    <string name="compose_text_color_subtitle">Yeni iletiler için bir onaltılık renk girin veya tema varsayılanını kullanın.</string>
+    <string name="compose_text_color_placeholder">#1a73e8</string>
+    <string name="compose_text_color_invalid">#1a73e8 gibi geçerli bir onaltılık renk girin</string>
+    <string name="compose_text_color_theme_default">Tema varsayılanını kullan</string>
 </resources>

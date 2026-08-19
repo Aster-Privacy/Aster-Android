@@ -2780,4 +2780,16 @@
     <string name="plan_price_per_month">شهريًا</string>
     <string name="plan_price_per_year">سنويًا</string>
     <string name="plan_save_per_year">وفّر %1$s سنويًا</string>
+    <string name="section_compose_text">نص الإنشاء</string>
+    <string name="compose_text_size">حجم النص</string>
+    <string name="compose_text_size_subtitle">اختر الحجم الذي تبدأ به الرسائل الجديدة.</string>
+    <string name="compose_size_small">صغير</string>
+    <string name="compose_size_normal">عادي</string>
+    <string name="compose_size_large">كبير</string>
+    <string name="compose_size_huge">كبير جداً</string>
+    <string name="compose_text_color">لون النص</string>
+    <string name="compose_text_color_subtitle">أدخل لونًا سداسي عشريًا للرسائل الجديدة، أو استخدم قيمة المظهر.</string>
+    <string name="compose_text_color_placeholder">#1a73e8</string>
+    <string name="compose_text_color_invalid">أدخل لونًا سداسي عشريًا صالحًا، مثل #1a73e8</string>
+    <string name="compose_text_color_theme_default">استخدام قيمة المظهر</string>
 </resources>

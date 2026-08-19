@@ -2764,4 +2764,16 @@
     <string name="plan_price_per_month">в месяц</string>
     <string name="plan_price_per_year">в год</string>
     <string name="plan_save_per_year">Экономия %1$s в год</string>
+    <string name="section_compose_text">Текст при написании</string>
+    <string name="compose_text_size">Размер текста</string>
+    <string name="compose_text_size_subtitle">Выберите размер, с которого начинаются новые письма.</string>
+    <string name="compose_size_small">Маленький</string>
+    <string name="compose_size_normal">Обычный</string>
+    <string name="compose_size_large">Большой</string>
+    <string name="compose_size_huge">Очень большой</string>
+    <string name="compose_text_color">Цвет текста</string>
+    <string name="compose_text_color_subtitle">Укажите шестнадцатеричный цвет для новых писем или используйте значение темы.</string>
+    <string name="compose_text_color_placeholder">#1a73e8</string>
+    <string name="compose_text_color_invalid">Укажите корректный шестнадцатеричный цвет, например #1a73e8</string>
+    <string name="compose_text_color_theme_default">Использовать значение темы</string>
 </resources>

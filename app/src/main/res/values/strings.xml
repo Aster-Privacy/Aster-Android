@@ -2830,4 +2830,16 @@
     <string name="plan_price_per_month">per month</string>
     <string name="plan_price_per_year">per year</string>
     <string name="plan_save_per_year">Save %1$s a year</string>
+    <string name="section_compose_text">Compose text</string>
+    <string name="compose_text_size">Text size</string>
+    <string name="compose_text_size_subtitle">Choose the size new messages start with.</string>
+    <string name="compose_size_small">Small</string>
+    <string name="compose_size_normal">Normal</string>
+    <string name="compose_size_large">Large</string>
+    <string name="compose_size_huge">Huge</string>
+    <string name="compose_text_color">Text color</string>
+    <string name="compose_text_color_subtitle">Enter a hex color for new messages, or use the theme default.</string>
+    <string name="compose_text_color_placeholder">#1a73e8</string>
+    <string name="compose_text_color_invalid">Enter a valid hex color, like #1a73e8</string>
+    <string name="compose_text_color_theme_default">Use theme default</string>
 </resources>
