@@ -2577,7 +2577,7 @@ class MailRepository @Inject constructor(
         }
     }
 
-    private fun build_signed_mime(
+    private suspend fun build_signed_mime(
         subject: String,
         body_html: String,
         from: String,
@@ -2597,13 +2597,20 @@ class MailRepository @Inject constructor(
             return null
         }
 
-        val identity_key = session_key_store.get_identity_key()
-        if (identity_key == null) {
+        val vault_identity_key = session_key_store.get_identity_key()
+        if (vault_identity_key == null) {
             report_signing_skipped("vault_identity_key_unavailable")
             return null
         }
-        if (!identity_key.contains("-----BEGIN PGP")) {
+        if (!vault_identity_key.contains("-----BEGIN PGP")) {
             report_signing_skipped("vault_identity_key_not_pgp")
+            return null
+        }
+        val identity_key = runCatching {
+            auth_repository.get().select_signing_identity_key()
+        }.getOrNull()
+        if (identity_key == null) {
+            report_signing_skipped("published_key_mismatch_unhealed")
             return null
         }
         val passphrase = session_key_store.get_passphrase()

@@ -125,6 +125,8 @@ class AuthRepository @Inject constructor(
     )
     private val pgp_publish_attempted_user_ids =
         java.util.Collections.synchronizedSet(mutableSetOf<String>())
+    private val signing_heal_attempted_user_ids =
+        java.util.Collections.synchronizedSet(mutableSetOf<String>())
     fun trigger_ratchet_bootstrap() {
         if (!_is_signed_in.value) return
         if (BuildConfig.DEBUG) android.util.Log.w("RatchetBootstrap", "trigger_ratchet_bootstrap firing")
@@ -978,6 +980,61 @@ class AuthRepository @Inject constructor(
         }
 
         republish_pgp_key_with_password(identity_key, String(passphrase_bytes, Charsets.UTF_8))
+    }
+
+    suspend fun select_signing_identity_key(): String? {
+        val identity_key = session_key_store.get_identity_key() ?: return null
+        if (!identity_key.trimStart().startsWith("-----BEGIN PGP PRIVATE KEY")) return null
+
+        val published_fingerprint = try {
+            encryption_api.get_pgp_key_info().fingerprint
+        } catch (_: Throwable) {
+            return identity_key
+        }
+        if (published_fingerprint.isBlank()) return identity_key
+
+        matching_signing_key(published_fingerprint)?.let { return it }
+
+        if (try_refresh_vault_keys()) {
+            matching_signing_key(published_fingerprint)?.let { return it }
+        }
+
+        val current_identity = session_key_store.get_identity_key() ?: return null
+        if (!current_identity.trimStart().startsWith("-----BEGIN PGP PRIVATE KEY")) return null
+
+        val user_id = session_key_store.get_user_id() ?: return null
+        if (!signing_heal_attempted_user_ids.add(user_id)) return null
+
+        val passphrase_bytes = session_key_store.get_passphrase() ?: return null
+        return try {
+            republish_pgp_key_with_password(current_identity, String(passphrase_bytes, Charsets.UTF_8))
+            current_identity
+        } catch (_: Throwable) {
+            null
+        } finally {
+            passphrase_bytes.fill(0)
+        }
+    }
+
+    private fun matching_signing_key(published_fingerprint: String): String? {
+        val candidates = buildList {
+            session_key_store.get_identity_key()?.let { add(it) }
+            session_key_store.get_previous_keys()?.let { addAll(it) }
+        }.filter { it.trimStart().startsWith("-----BEGIN PGP PRIVATE KEY") }
+
+        return candidates.firstOrNull { candidate ->
+            pgp_key_fingerprint(candidate)?.equals(published_fingerprint, ignoreCase = true) == true
+        }
+    }
+
+    private fun pgp_key_fingerprint(armored_private_key: String): String? = try {
+        val secret_ring = org.bouncycastle.openpgp.PGPSecretKeyRing(
+            org.bouncycastle.openpgp.PGPUtil.getDecoderStream(armored_private_key.byteInputStream()),
+            org.bouncycastle.openpgp.operator.bc.BcKeyFingerprintCalculator(),
+        )
+        String.format(Locale.US, "%040X", BigInteger(1, secret_ring.publicKey.fingerprint))
+    } catch (_: Throwable) {
+        null
     }
 
     private suspend fun republish_pgp_key_with_password(identity_key: String, password: String) {
