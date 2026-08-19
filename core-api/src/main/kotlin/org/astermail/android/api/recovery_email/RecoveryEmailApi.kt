@@ -57,6 +57,12 @@ data class SaveRecoveryEmailRequest(
 )
 
 @Serializable
+data class BackfillServerEncRequest(
+    val plaintext_email: String,
+    val email_hash: String,
+)
+
+@Serializable
 data class RemoveRecoveryEmailRequest(
     val password_hash: String,
     val totp_code: String? = null,
@@ -88,6 +94,9 @@ interface RecoveryEmailApi {
     suspend fun save(request: SaveRecoveryEmailRequest): RecoveryEmailSuccessResponse
     suspend fun resend(plaintext_email: String?): RecoveryEmailSuccessResponse
     suspend fun remove(request: RemoveRecoveryEmailRequest): RecoveryEmailSuccessResponse
+    suspend fun backfill_server_enc(
+        request: BackfillServerEncRequest,
+    ): RecoveryEmailSuccessResponse
 }
 
 class RecoveryEmailApiImpl(private val client: ApiClient) : RecoveryEmailApi {
@@ -118,6 +127,17 @@ class RecoveryEmailApiImpl(private val client: ApiClient) : RecoveryEmailApi {
 
     override suspend fun remove(request: RemoveRecoveryEmailRequest): RecoveryEmailSuccessResponse {
         val response = client.http.delete("${client.base_url}$base") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun backfill_server_enc(
+        request: BackfillServerEncRequest,
+    ): RecoveryEmailSuccessResponse {
+        val response = client.http.post("${client.base_url}$base/server-enc") {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)

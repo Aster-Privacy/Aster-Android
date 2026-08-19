@@ -3220,16 +3220,11 @@ class SettingsViewModel @Inject constructor(
         ciphertext_b64: String,
         nonce_b64: String,
         identity_key: String,
-    ): String {
-        val ciphertext = android.util.Base64.decode(ciphertext_b64, android.util.Base64.DEFAULT)
-        val nonce = android.util.Base64.decode(nonce_b64, android.util.Base64.DEFAULT)
-        val key = derive_recovery_email_key(identity_key)
-        try {
-            return String(aes_gcm_decrypt(ciphertext, key, nonce), Charsets.UTF_8)
-        } finally {
-            key.fill(0)
-        }
-    }
+    ): String = org.astermail.android.recovery.decrypt_recovery_email(
+        ciphertext_b64,
+        nonce_b64,
+        identity_key,
+    )
 
     private fun hash_recovery_email(email: String): String =
         org.astermail.android.recovery.hash_recovery_email(email)

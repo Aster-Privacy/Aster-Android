@@ -54,6 +54,21 @@ fun encrypt_recovery_email(email: String, identity_key: String): EncryptedRecove
     }
 }
 
+fun decrypt_recovery_email(
+    ciphertext_b64: String,
+    nonce_b64: String,
+    identity_key: String,
+): String {
+    val ciphertext = Base64.decode(ciphertext_b64, Base64.DEFAULT)
+    val nonce = Base64.decode(nonce_b64, Base64.DEFAULT)
+    val key = derive_recovery_email_key(identity_key)
+    try {
+        return String(AesGcm.decrypt(key, nonce, ciphertext), Charsets.UTF_8)
+    } finally {
+        key.fill(0)
+    }
+}
+
 fun hash_recovery_email(email: String): String {
     val material = (RECOVERY_EMAIL_HASH_PREFIX + email.trim().lowercase())
         .toByteArray(Charsets.UTF_8)

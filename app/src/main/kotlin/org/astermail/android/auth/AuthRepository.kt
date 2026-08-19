@@ -125,6 +125,8 @@ class AuthRepository @Inject constructor(
     )
     private val pgp_publish_attempted_user_ids =
         java.util.Collections.synchronizedSet(mutableSetOf<String>())
+    private val recovery_email_backfill_attempted_user_ids =
+        java.util.Collections.synchronizedSet(mutableSetOf<String>())
     private val signing_heal_attempted_user_ids =
         java.util.Collections.synchronizedSet(mutableSetOf<String>())
     fun trigger_ratchet_bootstrap() {
@@ -184,6 +186,7 @@ class AuthRepository @Inject constructor(
             token_store.save(response.access_token, new_refresh)
             api_client.invalidate_bearer_cache()
             runCatching { session_key_store.get_user_id()?.let { save_session_snapshot(it) } }
+            background_scope.launch { runCatching { backfill_server_recovery_email() } }
             RefreshOutcome.Success
         } catch (e: CancellationException) {
             throw e
@@ -268,6 +271,27 @@ class AuthRepository @Inject constructor(
             }
         }
         complete_login(outcome.response, challenge.password_bytes, challenge.password_hash_bytes, challenge.salt_bytes)
+    }
+
+    private suspend fun backfill_server_recovery_email() {
+        val user_id = session_key_store.get_user_id() ?: return
+        if (!recovery_email_backfill_attempted_user_ids.add(user_id)) return
+        val state = recovery_email_api.get_state()
+        if (state.has_server_enc || !state.verified) return
+        val ciphertext = state.encrypted_email ?: return
+        val nonce = state.email_nonce ?: return
+        val identity_key = session_key_store.get_identity_key()?.takeIf { it.isNotBlank() } ?: return
+        val plaintext = org.astermail.android.recovery.decrypt_recovery_email(
+            ciphertext,
+            nonce,
+            identity_key,
+        )
+        recovery_email_api.backfill_server_enc(
+            org.astermail.android.api.recovery_email.BackfillServerEncRequest(
+                plaintext_email = plaintext,
+                email_hash = org.astermail.android.recovery.hash_recovery_email(plaintext),
+            ),
+        )
     }
 
     private suspend fun complete_login(
@@ -358,6 +382,7 @@ class AuthRepository @Inject constructor(
         runCatching { UnifiedPushState.clear_backend_registration(context) }
         runCatching { UnifiedPushState.sync_registration(context) }
         background_scope.launch { runCatching { ensure_pgp_key_published() } }
+        background_scope.launch { runCatching { backfill_server_recovery_email() } }
         background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
     }
 
