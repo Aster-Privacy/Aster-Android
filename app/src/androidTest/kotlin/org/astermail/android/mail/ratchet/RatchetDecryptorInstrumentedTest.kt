@@ -23,6 +23,7 @@ package org.astermail.android.mail.ratchet
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -265,6 +266,7 @@ class RatchetDecryptorInstrumentedTest {
             real_syncer,
             ConversationLocks(),
             dagger.Lazy<AuthRepository> { throw IllegalStateException("vault refresh should not be needed for this recovery path") },
+            mockk(relaxed = true),
         )
 
         val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email)
