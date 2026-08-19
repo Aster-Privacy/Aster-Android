@@ -1,0 +1,5 @@
+Bug fixes and improvements:
+
+- Encrypted messages sent to contacts outside Aster Mail now include a valid digital signature, so their mail apps can verify the sender.
+- You can now set a default font size and text color for new messages.
+- Your recovery email now appears correctly in settings after you sign in.
