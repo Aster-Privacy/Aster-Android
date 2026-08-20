@@ -1391,7 +1391,7 @@ fun InboxScreen(
                                         while (true) {
                                             val event = awaitPointerEvent(PointerEventPass.Initial)
                                             val change = event.changes.firstOrNull() ?: break
-                                            change.consume()
+                                            if (drag_started) change.consume()
                                             if (!change.pressed) break
                                             drag_travel += (change.position - change.previousPosition).getDistance()
                                             if (drag_travel < drag_start_slop) continue
@@ -1406,6 +1406,7 @@ fun InboxScreen(
                                                 drag_viewport_height.floatValue = size.height.toFloat()
                                                 drag_started = true
                                                 drag_selecting = true
+                                                change.consume()
                                             }
                                             drag_pointer_y.floatValue = change.position.y
                                             apply_drag_selection(change.position.y)
@@ -1436,14 +1437,13 @@ fun InboxScreen(
                                 derivedStateOf { select_mode && selected_ids.contains(thread.thread_id) }
                             }
                             if (select_mode) {
-                                val toggle_label = stringResource(if (is_selected) R.string.inbox_a11y_deselect_thread else R.string.inbox_a11y_select_thread)
                                 Box(
                                     modifier = Modifier
                                         .animateItem()
-                                        .fillMaxWidth()
-                                        .clickable(onClickLabel = toggle_label) { toggle_selection(thread.thread_id) },
+                                        .fillMaxWidth(),
                                 ) {
                                     ThreadInboxRow(
+                                        modifier = Modifier.fillMaxWidth(),
                                         thread = thread,
                                         on_click = { toggle_selection(thread.thread_id) },
                                         on_long_click = { toggle_selection(thread.thread_id) },
@@ -1455,6 +1455,7 @@ fun InboxScreen(
                                             }
                                         },
                                         is_selected = is_selected,
+                                        select_mode = true,
                                         haptic_enabled = haptic_enabled,
                                         is_first = row_index == 0,
                                         is_last = row_index == visible_threads.lastIndex,

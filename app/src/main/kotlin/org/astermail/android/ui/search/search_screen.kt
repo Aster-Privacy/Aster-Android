@@ -1235,9 +1235,6 @@ internal fun search_results_list(
                             if (!live_select_mode) {
                                 base.clear()
                                 live_enter_select_mode(id)
-                            } else if (!base.contains(id)) {
-                                base.add(id)
-                                live_set_selection(base.toList())
                             }
                             base.remove(id)
                             drag_pre_selected.clear()
@@ -1292,6 +1289,7 @@ internal fun search_results_list(
                 is_first = index == 0,
                 is_last = index == items.lastIndex,
                 is_selected = is_selected,
+                select_mode = select_mode,
                 list_density = settings_state?.preferences?.mail_list_density,
             )
         }

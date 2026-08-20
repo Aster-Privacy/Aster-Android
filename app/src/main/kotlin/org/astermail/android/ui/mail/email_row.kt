@@ -108,6 +108,7 @@ fun EmailRow(
     is_first: Boolean = true,
     is_last: Boolean = true,
     is_selected: Boolean = false,
+    select_mode: Boolean = false,
     list_density: String? = null,
 ) {
     val colors = AsterMaterial.colors
@@ -132,10 +133,20 @@ fun EmailRow(
         email.received_at.format_relative_time(yesterday_label)
     }
     val group_shape = remember(is_first, is_last) { inbox_group_shape(is_first, is_last) }
+    val select_tap_label = stringResource(
+        if (is_selected) R.string.inbox_a11y_deselect_thread else R.string.inbox_a11y_select_thread,
+    )
 
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .then(
+                if (select_mode) {
+                    Modifier.select_tap(click_label = select_tap_label, on_tap = on_click)
+                } else {
+                    Modifier
+                },
+            )
             .padding(
                 start = inbox_card_horizontal_margin,
                 end = inbox_card_horizontal_margin,
@@ -143,13 +154,19 @@ fun EmailRow(
             )
             .clip(group_shape)
             .drawBehind { drawRect(row_bg.value) }
-            .combinedClickable(
-                interactionSource = interaction_source,
-                indication = androidx.compose.material3.ripple(),
-                onClick = on_click,
-                onLongClick = {
-                    if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                    on_long_click()
+            .then(
+                if (select_mode) {
+                    Modifier
+                } else {
+                    Modifier.combinedClickable(
+                        interactionSource = interaction_source,
+                        indication = androidx.compose.material3.ripple(),
+                        onClick = on_click,
+                        onLongClick = {
+                            if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                            on_long_click()
+                        },
+                    )
                 },
             )
             .defaultMinSize(minHeight = metrics.min_height)
@@ -241,6 +258,7 @@ fun EmailRow(
                     }
                     star_button(
                         is_starred = email.is_starred,
+                        interactive = !select_mode,
                         on_toggle = {
                             if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                             on_toggle_star()
@@ -307,7 +325,12 @@ private fun unread_dot(modifier: Modifier = Modifier) {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun star_button(is_starred: Boolean, on_toggle: () -> Unit, modifier: Modifier = Modifier) {
+private fun star_button(
+    is_starred: Boolean,
+    on_toggle: () -> Unit,
+    modifier: Modifier = Modifier,
+    interactive: Boolean = true,
+) {
     val colors = AsterMaterial.colors
     val tint by animateColorAsState(
         targetValue = if (is_starred) colors.star else colors.text_tertiary,
@@ -334,13 +357,19 @@ private fun star_button(is_starred: Boolean, on_toggle: () -> Unit, modifier: Mo
                     scaleX = star_scale.value
                     scaleY = star_scale.value
                 }
-                .combinedClickable(
-                    onClick = on_toggle,
-                    onLongClick = {
-                        haptics.performHapticFeedback(
-                            androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress,
+                .then(
+                    if (interactive) {
+                        Modifier.combinedClickable(
+                            onClick = on_toggle,
+                            onLongClick = {
+                                haptics.performHapticFeedback(
+                                    androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress,
+                                )
+                                tooltip_visible = true
+                            },
                         )
-                        tooltip_visible = true
+                    } else {
+                        Modifier
                     },
                 ),
             contentAlignment = Alignment.Center,
@@ -364,6 +393,7 @@ fun ThreadInboxRow(
     on_toggle_star: () -> Unit,
     modifier: Modifier = Modifier,
     is_selected: Boolean = false,
+    select_mode: Boolean = false,
     is_pinned: Boolean = false,
     haptic_enabled: Boolean = true,
     is_first: Boolean = true,
@@ -393,10 +423,20 @@ fun ThreadInboxRow(
         email.received_at.format_relative_time(yesterday_label)
     }
     val group_shape = remember(is_first, is_last) { inbox_group_shape(is_first, is_last) }
+    val select_tap_label = stringResource(
+        if (is_selected) R.string.inbox_a11y_deselect_thread else R.string.inbox_a11y_select_thread,
+    )
 
     Box(
         modifier = modifier
             .fillMaxWidth()
+            .then(
+                if (select_mode) {
+                    Modifier.select_tap(click_label = select_tap_label, on_tap = on_click)
+                } else {
+                    Modifier
+                },
+            )
             .padding(
                 start = inbox_card_horizontal_margin,
                 end = inbox_card_horizontal_margin,
@@ -408,13 +448,19 @@ fun ThreadInboxRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .combinedClickable(
-                interactionSource = interaction_source,
-                indication = androidx.compose.material3.ripple(),
-                onClick = on_click,
-                onLongClick = {
-                    if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                    on_long_click()
+            .then(
+                if (select_mode) {
+                    Modifier
+                } else {
+                    Modifier.combinedClickable(
+                        interactionSource = interaction_source,
+                        indication = androidx.compose.material3.ripple(),
+                        onClick = on_click,
+                        onLongClick = {
+                            if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                            on_long_click()
+                        },
+                    )
                 },
             )
             .defaultMinSize(minHeight = metrics.min_height)
@@ -543,6 +589,7 @@ fun ThreadInboxRow(
                 Spacer(Modifier.width(AsterSpacing.sm))
                 star_button(
                     is_starred = thread.is_starred,
+                    interactive = !select_mode,
                     on_toggle = {
                         if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                         on_toggle_star()
