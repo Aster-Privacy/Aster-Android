@@ -2823,8 +2823,11 @@ class MailRepository @Inject constructor(
         val bundle = extract_subject_bundle(body_text)
         body_text = bundle.body
         if (ratchet_decrypted && body_html == null && looks_like_html_body(body_text)) {
-            body_html = body_text
-            body_text = html_to_plain_text(body_text)
+            val plain = html_to_plain_text(body_text)
+            if (plain.isNotBlank()) {
+                body_html = body_text
+                body_text = plain
+            }
         }
         if (bundle.subject != null && resolved_subject.isBlank()) {
             resolved_subject = bundle.subject

@@ -40,7 +40,7 @@ fun Modifier.select_tap(
 ): Modifier {
     val current_tap = rememberUpdatedState(on_tap)
     return this
-        .semantics {
+        .semantics(mergeDescendants = true) {
             role = Role.Button
             onClick(label = click_label) {
                 current_tap.value()

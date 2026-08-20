@@ -80,7 +80,20 @@ private val HTML_TAG_PATTERN = Regex(
     RegexOption.IGNORE_CASE,
 )
 
-fun looks_like_html_body(text: String): Boolean = HTML_TAG_PATTERN.containsMatchIn(text)
+private val HTML_DOCUMENT_PATTERN = Regex("<\\s*(?:html|body)\\b[^>]*>", RegexOption.IGNORE_CASE)
+
+private val HTML_CLOSING_PATTERN = Regex(
+    "</\\s*(?:html|body|div|p|span|a|blockquote|table|tbody|tr|td|th|ul|ol|li|h[1-6]|b|i|u|em|strong|pre|code|font)\\s*>",
+    RegexOption.IGNORE_CASE,
+)
+
+private val HTML_BREAK_PATTERN = Regex("<\\s*br\\s*/?>", RegexOption.IGNORE_CASE)
+
+fun looks_like_html_body(text: String): Boolean {
+    if (HTML_DOCUMENT_PATTERN.containsMatchIn(text)) return true
+    if (!HTML_TAG_PATTERN.containsMatchIn(text)) return false
+    return HTML_CLOSING_PATTERN.containsMatchIn(text) || HTML_BREAK_PATTERN.containsMatchIn(text)
+}
 
 fun html_to_plain_text(html: String): String {
     var text = html

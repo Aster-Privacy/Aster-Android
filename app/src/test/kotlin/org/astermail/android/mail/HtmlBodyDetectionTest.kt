@@ -42,6 +42,19 @@ class HtmlBodyDetectionTest {
     }
 
     @Test
+    fun leaves_plain_text_that_mentions_markup_alone() {
+        assertFalse(looks_like_html_body("Wrap the label in a <span> and it lines up."))
+        assertFalse(looks_like_html_body("The template starts with <div class=\"row\"> on line 4."))
+        assertFalse(looks_like_html_body("Compare <p> against <li> when the list wraps."))
+    }
+
+    @Test
+    fun treats_a_full_document_as_html() {
+        assertTrue(looks_like_html_body("<html><head></head><body>Hi</body></html>"))
+        assertTrue(looks_like_html_body("<body style=\"margin:0\">Hi"))
+    }
+
+    @Test
     fun converts_html_to_readable_plain_text() {
         val html = "<div>Thanks, I have found it<br><br>Secured by Aster Mail</div>" +
             "<div>On Wed, Aug 19, 2026, Aster Team &lt;hello@astermail.org&gt; wrote:</div>"

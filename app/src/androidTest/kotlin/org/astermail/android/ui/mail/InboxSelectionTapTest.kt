@@ -30,9 +30,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.click
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -105,7 +108,7 @@ class InboxSelectionTapTest {
 
     private fun tap_star_center() {
         val star = compose_rule
-            .onNodeWithContentDescription(context.getString(R.string.not_starred))
+            .onNodeWithContentDescription(context.getString(R.string.not_starred), useUnmergedTree = true)
             .fetchSemanticsNode()
         val bounds = star.boundsInRoot
         compose_rule.onNodeWithTag("row_host").performTouchInput {
@@ -135,5 +138,22 @@ class InboxSelectionTapTest {
         tap_star_center()
         assertEquals(listOf("m1"), star_toggles)
         assertEquals(emptyList<String>(), selection_log)
+    }
+
+    //
+    // Selection mode must keep exposing the row as one clickable node, so screen
+    // readers still announce the sender and subject together.
+    //
+    @Test
+    fun the_row_stays_one_clickable_node_for_screen_readers() {
+        set_harness(select_mode = true)
+        compose_rule.onNode(hasClickAction()).assertTextContains("Subject m1", substring = true)
+
+        star_toggles.clear()
+        selection_log.clear()
+        compose_rule.onNode(hasClickAction()).performClick()
+        compose_rule.waitForIdle()
+
+        assertEquals(listOf("m1"), selection_log)
     }
 }
