@@ -2054,6 +2054,8 @@
     <string name="show_message_size">Show message size</string>
     <string name="show_alias_indicators">Show alias indicators</string>
     <string name="show_alias_indicators_subtitle">Mark messages that arrived through one of your aliases</string>
+    <string name="show_sender_pictures">Sender pictures</string>
+    <string name="show_sender_pictures_subtitle">Show a photo or initials for each sender in your inbox</string>
     <string name="show_message_size_subtitle">Display the size of each email in the inbox list</string>
     <string name="force_dark_emails">Force dark mode for emails</string>
     <string name="force_dark_emails_subtitle">Always render email content in dark mode</string>

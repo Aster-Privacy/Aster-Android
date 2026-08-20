@@ -173,6 +173,7 @@ fun BehaviorScreen(
     var inbox_page_size by remember(prefs_loaded) { mutableIntStateOf(prefs?.inbox_page_size ?: 50) }
     var show_message_size by remember(prefs_loaded) { mutableStateOf(prefs?.show_message_size ?: false) }
     var show_alias_indicators by remember(prefs_loaded) { mutableStateOf(prefs?.show_alias_indicators ?: true) }
+    var show_profile_pictures by remember(prefs_loaded) { mutableStateOf(prefs?.show_profile_pictures ?: true) }
     var force_dark_emails by remember(prefs_loaded) { mutableStateOf(prefs?.force_dark_emails ?: false) }
     var default_reply by remember(prefs_loaded) { mutableStateOf(prefs?.default_reply_behavior ?: "reply") }
     var auto_save_recipients by remember(prefs_loaded) { mutableStateOf(prefs?.auto_save_recent_recipients ?: true) }
@@ -212,6 +213,7 @@ fun BehaviorScreen(
                 inbox_page_size = prefs.inbox_page_size
                 show_message_size = prefs.show_message_size
                 show_alias_indicators = prefs.show_alias_indicators
+                show_profile_pictures = prefs.show_profile_pictures
                 force_dark_emails = prefs.force_dark_emails
                 default_reply = prefs.default_reply_behavior
                 auto_save_recipients = prefs.auto_save_recent_recipients
@@ -249,6 +251,7 @@ fun BehaviorScreen(
                 inbox_page_size = inbox_page_size.coerceIn(10, 100),
                 show_message_size = show_message_size,
                 show_alias_indicators = show_alias_indicators,
+                show_profile_pictures = show_profile_pictures,
                 force_dark_emails = force_dark_emails,
                 default_reply_behavior = default_reply,
                 auto_save_recent_recipients = auto_save_recipients,
@@ -364,6 +367,13 @@ fun BehaviorScreen(
                     subtitle = stringResource(R.string.show_alias_indicators_subtitle),
                     checked = show_alias_indicators,
                     on_change = { show_alias_indicators = it; save_trigger++ },
+                )
+                AsterDivider(modifier = Modifier)
+                behavior_toggle(
+                    title = stringResource(R.string.show_sender_pictures),
+                    subtitle = stringResource(R.string.show_sender_pictures_subtitle),
+                    checked = show_profile_pictures,
+                    on_change = { show_profile_pictures = it; save_trigger++ },
                 )
                 AsterDivider(modifier = Modifier)
                 behavior_toggle(

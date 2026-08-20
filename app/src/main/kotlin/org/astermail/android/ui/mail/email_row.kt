@@ -97,6 +97,37 @@ import org.astermail.android.api.preferences.UserPreferences
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
+private fun inbox_leading_slot(
+    show_pictures: Boolean,
+    is_selected: Boolean,
+    avatar_size: androidx.compose.ui.unit.Dp,
+    avatar: @Composable () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    if (is_selected) {
+        Box(
+            modifier = Modifier
+                .size(if (show_pictures) avatar_size else 24.dp)
+                .clip(CircleShape)
+                .background(colors.accent_blue),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = TablerIcons.Check,
+                contentDescription = stringResource(R.string.selected),
+                tint = Color.White,
+                modifier = Modifier.size(if (show_pictures) 20.dp else 16.dp),
+            )
+        }
+    } else if (show_pictures) {
+        avatar()
+    } else {
+        return
+    }
+    Spacer(Modifier.width(AsterSpacing.md))
+}
+
+@Composable
 fun EmailRow(
     email: Email,
     on_click: () -> Unit,
@@ -110,6 +141,7 @@ fun EmailRow(
     is_selected: Boolean = false,
     select_mode: Boolean = false,
     list_density: String? = null,
+    show_sender_pictures: Boolean = true,
 ) {
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
@@ -178,30 +210,13 @@ fun EmailRow(
             ),
         verticalAlignment = Alignment.Top,
     ) {
-        if (is_selected) {
-            Box(
-                modifier = Modifier
-                    .size(metrics.avatar_size)
-                    .clip(CircleShape)
-                    .background(colors.accent_blue),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = TablerIcons.Check,
-                    contentDescription = stringResource(R.string.selected),
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-        } else {
+        inbox_leading_slot(show_sender_pictures, is_selected, metrics.avatar_size) {
             SenderAvatar(
                 email = displayed_sender_email(email.display_sender_email, email.sender_email),
                 name = displayed_sender_name(email.display_sender_name, email.sender_name),
                 size = metrics.avatar_size,
             )
         }
-
-        Spacer(Modifier.width(AsterSpacing.md))
 
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -472,22 +487,11 @@ fun ThreadInboxRow(
             ),
         verticalAlignment = Alignment.Top,
     ) {
-        if (is_selected) {
-            Box(
-                modifier = Modifier
-                    .size(metrics.avatar_size)
-                    .clip(CircleShape)
-                    .background(colors.accent_blue),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = TablerIcons.Check,
-                    contentDescription = stringResource(R.string.selected),
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-        } else {
+        inbox_leading_slot(
+            user_prefs?.show_profile_pictures != false,
+            is_selected,
+            metrics.avatar_size,
+        ) {
             val participants = androidx.compose.runtime.remember(
                 thread.thread_id, thread.participants, email.sender_name, email.sender_email,
                 email.display_sender_name, email.display_sender_email,
@@ -501,7 +505,6 @@ fun ThreadInboxRow(
             }
             StackedAvatars(participants = participants, size = metrics.avatar_size)
         }
-        Spacer(Modifier.width(AsterSpacing.md))
         Column(modifier = Modifier.weight(1f)) {
             val others_template = stringResource(R.string.participants_and_others)
             val participants_text = remember(

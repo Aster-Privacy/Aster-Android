@@ -1291,6 +1291,7 @@ internal fun search_results_list(
                 is_selected = is_selected,
                 select_mode = select_mode,
                 list_density = settings_state?.preferences?.mail_list_density,
+                show_sender_pictures = settings_state?.preferences?.show_profile_pictures != false,
             )
         }
     }
