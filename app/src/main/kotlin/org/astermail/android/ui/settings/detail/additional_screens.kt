@@ -179,6 +179,16 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
         on_back = on_back,
         scroll_state = scroll_state,
     ) {
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            detail_row(
+                title = stringResource(R.string.link_device_title),
+                subtitle = stringResource(R.string.link_device_row_subtitle),
+                icon = TablerIcons.DeviceDesktop,
+                on_click = { on_open("link_device") },
+            )
+        }
+        v_gap(AsterSpacing.lg)
+
         section_header_action(
             title = stringResource(R.string.devices_count, state.sessions.size),
             action_label = stringResource(R.string.revoke_all_action),

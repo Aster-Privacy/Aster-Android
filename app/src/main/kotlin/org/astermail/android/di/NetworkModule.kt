@@ -88,6 +88,8 @@ import org.astermail.android.api.scheduled.ScheduledApi
 import org.astermail.android.api.scheduled.ScheduledApiImpl
 import org.astermail.android.api.send.SendApi
 import org.astermail.android.api.send.SendApiImpl
+import org.astermail.android.api.devices.DeviceCodeApi
+import org.astermail.android.api.devices.DeviceCodeApiImpl
 import org.astermail.android.api.security.SecurityApi
 import org.astermail.android.api.security.SecurityApiImpl
 import org.astermail.android.api.signatures.SignaturesApi
@@ -303,6 +305,10 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provide_security_api(client: ApiClient): SecurityApi = SecurityApiImpl(client)
+
+    @Provides
+    @Singleton
+    fun provide_device_code_api(client: ApiClient): DeviceCodeApi = DeviceCodeApiImpl(client)
 
     @Provides
     @Singleton

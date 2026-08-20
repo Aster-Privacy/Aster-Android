@@ -131,6 +131,7 @@ import org.astermail.android.ui.settings.detail.AccessibilityScreen
 import org.astermail.android.ui.settings.detail.ApiKeysScreen
 import org.astermail.android.ui.settings.detail.DeveloperScreen
 import org.astermail.android.ui.settings.detail.FamilyScreen
+import org.astermail.android.ui.settings.detail.LinkDeviceScreen
 import org.astermail.android.ui.settings.detail.KidsReservedScreen
 import org.astermail.android.ui.settings.detail.FoldersScreen
 import org.astermail.android.ui.settings.detail.LabelsScreen
@@ -1272,7 +1273,10 @@ private fun AsterNavHost() {
             SenderFiltersScreen(on_back = { back(); Unit }, on_open = open_detail)
         }
         composable(routes.settings_detail("trusted_devices")) {
-            TrustedDevicesScreen(on_back = { back(); Unit })
+            TrustedDevicesScreen(on_back = { back(); Unit }, on_open = open_detail)
+        }
+        composable(routes.settings_detail("link_device")) {
+            LinkDeviceScreen(on_back = { back(); Unit })
         }
         composable(routes.settings_detail("referral")) {
             ReferralScreen(on_back = { back(); Unit })
