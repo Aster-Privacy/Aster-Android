@@ -75,6 +75,51 @@ fun strip_body_html(html: String): String {
     return text.trim()
 }
 
+private val HTML_TAG_PATTERN = Regex(
+    "<\\s*(?:/?)(?:html|body|div|p|br|span|a|blockquote|table|tbody|tr|td|th|ul|ol|li|h[1-6]|img|b|i|u|em|strong|pre|code|font|hr)\\b[^>]*>",
+    RegexOption.IGNORE_CASE,
+)
+
+fun looks_like_html_body(text: String): Boolean = HTML_TAG_PATTERN.containsMatchIn(text)
+
+fun html_to_plain_text(html: String): String {
+    var text = html
+    text = text.replace(Regex("<style[^>]*>[\\s\\S]*?</style>", RegexOption.IGNORE_CASE), " ")
+    text = text.replace(Regex("<script[^>]*>[\\s\\S]*?</script>", RegexOption.IGNORE_CASE), " ")
+    text = text.replace(Regex("<head[^>]*>[\\s\\S]*?</head>", RegexOption.IGNORE_CASE), " ")
+    text = text.replace(Regex("<br\\s*/?>", RegexOption.IGNORE_CASE), "\n")
+    text = text.replace(Regex("</(?:p|div|li|tr|h[1-6]|blockquote|pre)>", RegexOption.IGNORE_CASE), "\n")
+    text = text.replace(Regex("<hr\\s*/?>", RegexOption.IGNORE_CASE), "\n")
+    text = text.replace(Regex("<[^>]+>"), "")
+    text = decode_html_entities(text)
+    text = text.replace("\r\n", "\n").replace('\r', '\n')
+    text = text.replace(Regex("[ \\t\\u00A0]+"), " ")
+    text = text.replace(Regex("[ \\t]*\\n[ \\t]*"), "\n")
+    text = text.replace(Regex("\\n{3,}"), "\n\n")
+    return text.trim()
+}
+
+fun decode_html_entities(input: String): String {
+    var text = input
+    text = text.replace("&nbsp;", " ")
+    text = text.replace("&lt;", "<")
+    text = text.replace("&gt;", ">")
+    text = text.replace("&quot;", "\"")
+    text = text.replace("&#39;", "'")
+    text = text.replace("&apos;", "'")
+    text = text.replace("&mdash;", "-")
+    text = text.replace("&ndash;", "-")
+    text = text.replace("&hellip;", "...")
+    text = text.replace(Regex("&#(\\d+);")) { m ->
+        m.groupValues[1].toIntOrNull()?.let { code -> runCatching { String(Character.toChars(code)) }.getOrNull() } ?: m.value
+    }
+    text = text.replace(Regex("&#x([0-9a-fA-F]+);")) { m ->
+        m.groupValues[1].toIntOrNull(16)?.let { code -> runCatching { String(Character.toChars(code)) }.getOrNull() } ?: m.value
+    }
+    text = text.replace("&amp;", "&")
+    return text
+}
+
 fun take_whole_chars(text: String, max_length: Int): String {
     if (max_length <= 0) return ""
     if (text.length <= max_length) return text

@@ -2770,6 +2770,7 @@ class MailRepository @Inject constructor(
         var body_html = envelope.body_html
         var is_undecryptable = false
         var is_unauthenticated = envelope.is_unauthenticated
+        var ratchet_decrypted = false
 
         val ratchet_candidate = ratchet_body_candidate(envelope)
         if (ratchet_candidate != null) {
@@ -2787,6 +2788,7 @@ class MailRepository @Inject constructor(
                     is_unauthenticated = false
                     body_text = decrypted
                     body_html = null
+                    ratchet_decrypted = true
                 } else {
                     body_text = ""
                     body_html = null
@@ -2820,6 +2822,10 @@ class MailRepository @Inject constructor(
         var resolved_subject = envelope.subject
         val bundle = extract_subject_bundle(body_text)
         body_text = bundle.body
+        if (ratchet_decrypted && body_html == null && looks_like_html_body(body_text)) {
+            body_html = body_text
+            body_text = html_to_plain_text(body_text)
+        }
         if (bundle.subject != null && resolved_subject.isBlank()) {
             resolved_subject = bundle.subject
         }

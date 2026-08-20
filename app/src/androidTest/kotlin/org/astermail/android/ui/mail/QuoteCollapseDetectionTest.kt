@@ -39,6 +39,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.astermail.android.mail.build_plain_text_html
 import org.junit.runner.RunWith
 
 private const val PROBE_JS = """(function(){
@@ -69,6 +70,25 @@ class QuoteCollapseDetectionTest {
         append("<div dir=\"auto\">On Wed, Aug 12, 2026, 4:23 PM, Aster Team ")
         append("&lt;<a href=\"mailto:hello@astermail.org\">hello@astermail.org</a>&gt; wrote:Hi Lyria,")
         append("<br>Thanks for the screenshots, they made the problem obvious.</div>")
+    }
+
+    private val plain_text_reply = build_plain_text_html(
+        buildString {
+            append("Thanks, I have found it :-)\n\n")
+            append("Secured by Aster Mail\n\n")
+            append("On Wed, Aug 19, 2026, 12:26 PM, Aster Team <hello@astermail.org> wrote:\n\n")
+            append("Hi,\n\n")
+            append("The archive lives in the folder list under More.\n")
+            append("Let us know if anything else looks off.\n")
+        },
+    )
+
+    private val br_only_reply = buildString {
+        append("<div dir=\"auto\">Thanks, I have found it :-)<br><br>")
+        append("Secured by Aster Mail<br><br>")
+        append("On Wed, Aug 19, 2026, 12:26 PM, Aster Team ")
+        append("&lt;<a href=\"mailto:hello@astermail.org\">hello@astermail.org</a>&gt; wrote:<br><br>")
+        append("Hi,<br>The archive lives in the folder list under More.</div>")
     }
 
     private val orphan_blockquote = buildString {
@@ -168,6 +188,37 @@ class QuoteCollapseDetectionTest {
         assertFalse(
             "the quoted original is still visible [${probe.visible_text}]",
             probe.visible_text.contains("original message that must collapse"),
+        )
+    }
+
+    @Test
+    fun collapses_a_plain_text_reply_that_only_has_line_breaks() {
+        val probe = probe_all(listOf(plain_text_reply)).first()
+
+        assertTrue("plain text quote was not collapsible [${probe.visible_text}]", probe.has_toggle)
+        assertEquals("none", probe.quoted_display)
+        assertFalse(
+            "the quoted original is still visible [${probe.visible_text}]",
+            probe.visible_text.contains("The archive lives in the folder list"),
+        )
+        assertTrue(
+            "the new reply text was collapsed too [${probe.visible_text}]",
+            probe.visible_text.contains("I have found it"),
+        )
+    }
+
+    @Test
+    fun collapses_an_html_reply_separated_only_by_br_tags() {
+        val probe = probe_all(listOf(br_only_reply)).first()
+
+        assertTrue("br separated quote was not collapsible [${probe.visible_text}]", probe.has_toggle)
+        assertFalse(
+            "the quoted original is still visible [${probe.visible_text}]",
+            probe.visible_text.contains("The archive lives in the folder list"),
+        )
+        assertTrue(
+            "the new reply text was collapsed too [${probe.visible_text}]",
+            probe.visible_text.contains("I have found it"),
         )
     }
 

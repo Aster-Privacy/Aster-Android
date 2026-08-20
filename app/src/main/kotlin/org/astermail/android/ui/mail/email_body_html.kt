@@ -814,11 +814,14 @@ var wrote_re=/(^|[\s> ])(On\s[^\n]{1,200}?\bwrote\s*:)/i;
 var wm_re=/(^|[\s> ])(Secured by Aster Mail)/i;
 var inline_tags={A:1,ABBR:1,B:1,BDI:1,BDO:1,BIG:1,CITE:1,CODE:1,EM:1,FONT:1,I:1,KBD:1,LABEL:1,MARK:1,NOBR:1,Q:1,S:1,SAMP:1,SMALL:1,SPAN:1,STRIKE:1,STRONG:1,SUB:1,SUP:1,TIME:1,TT:1,U:1,VAR:1,WBR:1};
 function block_ancestor(n){var p=n.parentNode;while(p&&p!==body&&p.nodeType===1&&inline_tags[p.tagName])p=p.parentNode;return p||body}
-var walker=document.createTreeWalker(body,NodeFilter.SHOW_TEXT);
-var runs=[];var joined='';var prev_block=null;
+var walker=document.createTreeWalker(body,NodeFilter.SHOW_TEXT|NodeFilter.SHOW_ELEMENT);
+var runs=[];var joined='';var prev_block=null;var pending_break=false;
 while(walker.nextNode()){
-  var nd=walker.currentNode;var blk=block_ancestor(nd);
-  if(prev_block!==null&&blk!==prev_block)joined+='\n';
+  var nd=walker.currentNode;
+  if(nd.nodeType===1){if(nd.tagName==='BR')pending_break=true;continue}
+  var blk=block_ancestor(nd);
+  if(prev_block!==null&&blk!==prev_block)pending_break=true;
+  if(pending_break){joined+='\n';pending_break=false}
   runs.push({node:nd,start:joined.length});
   joined+=(nd.nodeValue||'');
   prev_block=blk;
