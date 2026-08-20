@@ -1,0 +1,10 @@
+New in this version:
+
+- Turn sender pictures on or off in Settings > Behavior. The setting syncs across your devices.
+- Approve a new desktop or Bridge device from your phone by entering the code shown on that device.
+
+Fixed:
+
+- Every tap now registers when you select messages in the inbox.
+- Replies to plain text messages collapse the quoted history instead of showing it in full.
+- Message rows stay readable to screen readers, and the app detects formatted messages more reliably.
