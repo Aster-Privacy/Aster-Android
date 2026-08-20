@@ -34,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -53,6 +54,8 @@ import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.devices.LinkDeviceError
 import org.astermail.android.devices.LinkDeviceStep
 import org.astermail.android.devices.LinkDeviceViewModel
+
+private const val MAX_MACHINE_NAME_CHARS = 64
 
 @Composable
 fun LinkDeviceScreen(
@@ -123,11 +126,15 @@ fun LinkDeviceScreen(
                                 .padding(start = AsterSpacing.md),
                         ) {
                             Text(
-                                text = device?.machine_name?.takeIf { it.isNotBlank() }
+                                text = device?.machine_name
+                                    ?.take(MAX_MACHINE_NAME_CHARS)
+                                    ?.takeIf { it.isNotBlank() }
                                     ?: stringResource(R.string.link_device_unnamed),
                                 color = colors.text_primary,
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Medium,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
                             )
                             Text(
                                 text = stringResource(
@@ -174,7 +181,7 @@ fun LinkDeviceScreen(
                 Text(
                     text = stringResource(
                         R.string.link_device_success_description,
-                        state.linked_device_name.ifBlank {
+                        state.linked_device_name.take(MAX_MACHINE_NAME_CHARS).ifBlank {
                             stringResource(R.string.link_device_unnamed)
                         },
                     ),

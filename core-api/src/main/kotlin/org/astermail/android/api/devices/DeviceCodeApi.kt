@@ -76,7 +76,9 @@ interface DeviceCodeApi {
 }
 
 fun normalize_device_code(raw: String): String =
-    raw.filter { it.isLetterOrDigit() }.uppercase().take(DEVICE_CODE_LENGTH)
+    raw.filter { it in 'a'..'z' || it in 'A'..'Z' || it in '0'..'9' }
+        .uppercase()
+        .take(DEVICE_CODE_LENGTH)
 
 fun format_device_code(raw: String): String {
     val normalized = normalize_device_code(raw)

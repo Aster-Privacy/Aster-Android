@@ -36,6 +36,14 @@ class DeviceCodeApiTest {
     }
 
     @Test
+    fun normalize_keeps_ascii_only_so_it_matches_the_server() {
+        assertEquals("QEME77E", normalize_device_code("qeme-77eé"))
+        assertEquals("QEME77E", normalize_device_code("qeme-77e٠"))
+        assertEquals("", normalize_device_code("فقك"))
+        assertEquals("TITLE123", normalize_device_code("title123"))
+    }
+
+    @Test
     fun format_groups_the_code_in_two_blocks() {
         assertEquals("", format_device_code(""))
         assertEquals("QEME", format_device_code("qeme"))
