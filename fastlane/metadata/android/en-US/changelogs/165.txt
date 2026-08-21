@@ -1,0 +1,6 @@
+Bug fixes and improvements:
+
+- Your messages stay readable after you change your account password.
+- An alias locked by a password change comes back on its own.
+- If a key rotation locks an alias, the app now tells you why and what to do.
+- The plan details show the correct daily send limit for paid plans.
