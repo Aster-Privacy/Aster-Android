@@ -1587,6 +1587,9 @@
     <string name="plan_ended_on">Your %1$s plan ended on %2$s</string>
     <string name="plan_ended_resubscribe_note">Resubscribe to get your storage, aliases, and other plan features back.</string>
     <string name="resubscribe">Resubscribe</string>
+    <string name="plan_changed">Plan changed</string>
+    <string name="change_plan_failed">Could not change plan</string>
+    <string name="downgrade_confirm_message">Your plan changes to %1$s at %2$s. Features above the %1$s plan stop working.</string>
     <string name="default_payment_updated">Default payment method updated</string>
     <string name="payment_method_removed">Payment method removed</string>
     <string name="session_expired_sign_in">Session expired - please sign in again</string>

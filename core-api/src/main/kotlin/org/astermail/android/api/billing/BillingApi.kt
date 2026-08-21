@@ -161,6 +161,18 @@ data class SwitchBillingResponse(
 )
 
 @Serializable
+data class ChangePlanRequest(
+    val plan_code: String,
+    val billing_interval: String,
+)
+
+@Serializable
+data class ChangePlanResponse(
+    val plan_code: String = "",
+    val billing_interval: String = "",
+)
+
+@Serializable
 data class LimitInfo(
     val limit: Int = 0,
     val current: Int = 0,
@@ -377,6 +389,7 @@ interface BillingApi {
     suspend fun cancel_subscription(request: CancelSubscriptionRequest): CancelSubscriptionResponse
     suspend fun reactivate_subscription(): ReactivateResponse
     suspend fun switch_billing_interval(request: SwitchBillingRequest): SwitchBillingResponse
+    suspend fun change_plan(request: ChangePlanRequest): ChangePlanResponse
     suspend fun list_payment_methods(): PaymentMethodsListResponse
     suspend fun set_default_payment_method(request: SetDefaultPaymentMethodRequest): GenericSuccessResponse
     suspend fun detach_payment_method(request: DetachPaymentMethodRequest): GenericSuccessResponse
@@ -449,6 +462,15 @@ class BillingApiImpl(private val client: ApiClient) : BillingApi {
 
     override suspend fun switch_billing_interval(request: SwitchBillingRequest): SwitchBillingResponse {
         val response = client.http.post("${client.base_url}$base/switch-billing") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun change_plan(request: ChangePlanRequest): ChangePlanResponse {
+        val response = client.http.post("${client.base_url}$base/change-plan") {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)

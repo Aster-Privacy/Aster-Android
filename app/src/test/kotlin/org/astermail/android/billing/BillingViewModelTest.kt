@@ -24,6 +24,7 @@ package org.astermail.android.billing
 import android.app.Application
 import app.cash.turbine.test
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -33,6 +34,8 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.astermail.android.api.billing.BillingApi
+import org.astermail.android.api.billing.ChangePlanRequest
+import org.astermail.android.api.billing.ChangePlanResponse
 import org.astermail.android.api.billing.PlanInfo
 import org.astermail.android.api.billing.SubscriptionResponse
 import org.astermail.android.auth.AuthRepository
@@ -128,5 +131,16 @@ class BillingViewModelTest {
             expectNoEvents()
             cancelAndConsumeRemainingEvents()
         }
+    }
+
+    @Test
+    fun `change plan posts the plan and reloads the subscription`() = runTest {
+        coEvery { billing_api.get_subscription() } returns paid_sub
+        coEvery { billing_api.change_plan(any()) } returns ChangePlanResponse(plan_code = "star", billing_interval = "year")
+        vm.change_plan("star", "year")
+        advanceUntilIdle()
+
+        coVerify { billing_api.change_plan(ChangePlanRequest(plan_code = "star", billing_interval = "year")) }
+        coVerify { billing_api.get_subscription() }
     }
 }

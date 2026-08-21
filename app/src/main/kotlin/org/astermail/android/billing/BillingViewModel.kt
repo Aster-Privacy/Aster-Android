@@ -42,6 +42,7 @@ import org.astermail.android.api.billing.AvailablePlan
 import org.astermail.android.api.billing.BillingApi
 import org.astermail.android.api.billing.BillingHistoryItem
 import org.astermail.android.api.billing.CancelSubscriptionRequest
+import org.astermail.android.api.billing.ChangePlanRequest
 import org.astermail.android.api.billing.CheckoutSessionRequest
 import org.astermail.android.api.billing.DetachPaymentMethodRequest
 import org.astermail.android.api.billing.PaymentMethodItem
@@ -269,6 +270,24 @@ class BillingViewModel @Inject constructor(
                     is_acting = false,
                     acting_action = null,
                     error = org.astermail.android.api.user_facing_error(t, ctx.getString(R.string.switch_failed)),
+                )
+            }
+        }
+    }
+
+    fun change_plan(plan_code: String, billing_interval: String) {
+        if (_state.value.is_acting) return
+        viewModelScope.launch {
+            _state.value = _state.value.copy(is_acting = true, acting_action = "change_$plan_code", error = null, info = null)
+            try {
+                billing_api.change_plan(ChangePlanRequest(plan_code = plan_code, billing_interval = billing_interval))
+                _state.value = _state.value.copy(is_acting = false, acting_action = null, info = ctx.getString(R.string.plan_changed))
+                load_subscription()
+            } catch (t: Throwable) {
+                _state.value = _state.value.copy(
+                    is_acting = false,
+                    acting_action = null,
+                    error = org.astermail.android.api.user_facing_error(t, ctx.getString(R.string.change_plan_failed)),
                 )
             }
         }

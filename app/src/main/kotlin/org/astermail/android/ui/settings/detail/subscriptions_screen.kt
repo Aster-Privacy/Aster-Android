@@ -248,6 +248,8 @@ private val plan_tiers = listOf(
     ),
 )
 
+private fun tier_rank(code: String): Int = plan_tiers.indexOfFirst { it.code == code }
+
 private fun plan_code_of(plan_name: String?): String {
     val lower = plan_name?.trim()?.lowercase().orEmpty()
     return when {
@@ -357,6 +359,7 @@ fun SubscriptionsScreen(
     var show_crypto_coins by remember { mutableStateOf(false) }
     var pending_term_months by remember { mutableStateOf(1) }
     var show_switch_yearly by remember { mutableStateOf(false) }
+    var pending_downgrade_code by remember { mutableStateOf<String?>(null) }
 
     val sub = state.subscription
     val current_code = sub?.plan?.code ?: plan_code_of(sub?.effective_plan_name)
@@ -568,16 +571,26 @@ fun SubscriptionsScreen(
             on_select = { billing_interval = it },
         )
         v_gap(AsterSpacing.md)
+        val current_rank = tier_rank(current_code)
+        val paid_stripe_current = current_rank >= 0 && (sub?.effective_price_cents ?: 0) > 0
         plan_tiers.forEach { tier ->
+            val is_downgrade = paid_stripe_current && tier_rank(tier.code) < current_rank
             plan_tier_card(
                 tier = tier,
                 billing_interval = billing_interval,
                 is_current = tier.code == current_code,
+                is_downgrade = is_downgrade,
+                monthly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, tier.code, "month"),
+                yearly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, tier.code, "year"),
                 currency = detected_currency,
                 on_choose = {
-                    pending_plan_code = tier.code
-                    pending_addon_id = null
-                    show_payment_picker = true
+                    if (is_downgrade) {
+                        pending_downgrade_code = tier.code
+                    } else {
+                        pending_plan_code = tier.code
+                        pending_addon_id = null
+                        show_payment_picker = true
+                    }
                 },
             )
             v_gap(AsterSpacing.md)
@@ -694,6 +707,38 @@ fun SubscriptionsScreen(
             on_crypto = {
                 show_payment_picker = false
                 show_crypto_terms = true
+            },
+        )
+    }
+
+    val downgrade_tier = pending_downgrade_code?.let { code -> plan_tiers.firstOrNull { it.code == code } }
+    if (downgrade_tier != null) {
+        val downgrade_name = stringResource(downgrade_tier.name_res)
+        val downgrade_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, downgrade_tier.code, billing_interval)
+            ?: if (billing_interval == "year") downgrade_tier.yearly_cents else downgrade_tier.monthly_cents
+        val interval_label = if (billing_interval == "year") stringResource(R.string.plan_price_per_year) else stringResource(R.string.plan_price_per_month)
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { pending_downgrade_code = null },
+            title = stringResource(R.string.downgrade_to, downgrade_name),
+            message = stringResource(
+                R.string.downgrade_confirm_message,
+                downgrade_name,
+                format_price(downgrade_cents, detected_currency) + " " + interval_label,
+            ),
+            footer = {
+                org.astermail.android.design.components.AsterDialogOutlineButton(
+                    label = stringResource(R.string.cancel),
+                    onClick = { pending_downgrade_code = null },
+                    modifier = Modifier.weight(1f),
+                )
+                org.astermail.android.design.components.AsterDialogPrimaryButton(
+                    label = stringResource(R.string.downgrade),
+                    onClick = {
+                        pending_downgrade_code = null
+                        billing_vm.change_plan(downgrade_tier.code, billing_interval)
+                    },
+                    modifier = Modifier.weight(1f),
+                )
             },
         )
     }
@@ -1061,13 +1106,19 @@ private fun plan_tier_card(
     tier: plan_tier,
     billing_interval: String,
     is_current: Boolean,
+    is_downgrade: Boolean = false,
+    monthly_cents: Int? = null,
+    yearly_cents: Int? = null,
     currency: String = "usd",
     on_choose: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
     val plan_name = stringResource(tier.name_res)
     val is_yearly = billing_interval == "year"
-    val amount_cents = if (is_yearly) tier.yearly_cents else tier.monthly_cents
+    val monthly = monthly_cents ?: tier.monthly_cents
+    val yearly = yearly_cents ?: tier.yearly_cents
+    val save_cents = if (monthly_cents != null && yearly_cents != null) (monthly * 12 - yearly).coerceAtLeast(0) else tier.save_cents
+    val amount_cents = if (is_yearly) yearly else monthly
     AsterCard(modifier = Modifier.fillMaxWidth()) {
         if (is_current || tier.recommended) {
             Box(
@@ -1123,7 +1174,7 @@ private fun plan_tier_card(
                         .padding(horizontal = AsterSpacing.sm, vertical = 3.dp),
                 ) {
                     Text(
-                        text = stringResource(R.string.plan_save_per_year, format_price(tier.save_cents, currency)),
+                        text = stringResource(R.string.plan_save_per_year, format_price(save_cents, currency)),
                         color = colors.success,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -1154,7 +1205,7 @@ private fun plan_tier_card(
                 )
             } else {
                 AsterButton(
-                    label = stringResource(R.string.upgrade_to, plan_name),
+                    label = if (is_downgrade) stringResource(R.string.downgrade_to, plan_name) else stringResource(R.string.upgrade_to, plan_name),
                     onClick = on_choose,
                 )
             }
