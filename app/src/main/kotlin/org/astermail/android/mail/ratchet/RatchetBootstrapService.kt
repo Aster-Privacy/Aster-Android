@@ -255,6 +255,9 @@ class RatchetBootstrapService @Inject constructor(
             if (existing == replaced_identity_jwk) return
         }
         val entry = org.json.JSONObject().put("ratchet_identity_key", replaced_identity_jwk)
+        runCatching { RatchetCrypto.p256_public_raw_from_private_jwk(replaced_identity_jwk) }
+            .getOrNull()
+            ?.let { entry.put("ratchet_identity_public", base64_encode(it)) }
         val vault_pq_secret = vault_json.optString("ratchet_pq_identity_key", "")
         session_key_store.get_ratchet_pq_identity_secret()
             ?.takeIf { it.isNotBlank() && it != vault_pq_secret }
@@ -275,7 +278,12 @@ class RatchetBootstrapService @Inject constructor(
         val new_ct_b64 = base64_encode(sealed.encrypted_vault)
         val new_nonce_b64 = base64_encode(sealed.vault_nonce)
         val ok = runCatching {
-            keys_api.update_vault(new_ct_b64, new_nonce_b64, session_key_store.get_user_id())
+            keys_api.update_vault(
+                new_ct_b64,
+                new_nonce_b64,
+                session_key_store.get_user_id(),
+                collect_vault_key_fingerprints(vault_json),
+            )
         }.getOrDefault(false)
         if (ok) {
             session_key_store.put_encrypted_vault(new_ct_b64, new_nonce_b64)
@@ -424,6 +432,9 @@ class RatchetBootstrapService @Inject constructor(
         vault_json.put("ratchet_identity_key", identity_jwk)
         vault_json.put("ratchet_signed_prekey", spk_jwk)
         vault_json.put("ratchet_signed_prekey_public", spk_pub)
+        runCatching { RatchetCrypto.p256_public_raw_from_private_jwk(identity_jwk) }
+            .getOrNull()
+            ?.let { vault_json.put("ratchet_identity_public", base64_encode(it)) }
 
         val updated_plain = vault_json.toString().toByteArray(Charsets.UTF_8)
         val sealed = runCatching {
@@ -436,7 +447,12 @@ class RatchetBootstrapService @Inject constructor(
         val new_nonce_b64 = base64_encode(sealed.vault_nonce)
 
         val ok = runCatching {
-            keys_api.update_vault(new_ct_b64, new_nonce_b64, session_key_store.get_user_id())
+            keys_api.update_vault(
+                new_ct_b64,
+                new_nonce_b64,
+                session_key_store.get_user_id(),
+                collect_vault_key_fingerprints(vault_json),
+            )
         }.getOrDefault(false)
         if (!ok) return false
 

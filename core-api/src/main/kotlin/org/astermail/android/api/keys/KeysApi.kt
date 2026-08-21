@@ -45,6 +45,7 @@ data class UpdateVaultRequest(
     val encrypted_vault: String,
     val vault_nonce: String,
     val expected_user_id: String? = null,
+    val vault_key_fingerprints: List<String>? = null,
 )
 
 @Serializable
@@ -82,7 +83,12 @@ data class DiscoverKeyRequest(val email: String)
 interface KeysApi {
     suspend fun get_recipient_public_key(username: String, email: String? = null): PublicKeyResponse
     suspend fun discover_external_key(email: String): ExternalKeyInfo
-    suspend fun update_vault(encrypted_vault: String, vault_nonce: String, expected_user_id: String?): Boolean
+    suspend fun update_vault(
+        encrypted_vault: String,
+        vault_nonce: String,
+        expected_user_id: String?,
+        vault_key_fingerprints: List<String>? = null,
+    ): Boolean
     suspend fun fetch_current_vault(): CurrentVaultResult
 }
 
@@ -111,11 +117,23 @@ class KeysApiImpl(private val client: ApiClient) : KeysApi {
         return response.body()
     }
 
-    override suspend fun update_vault(encrypted_vault: String, vault_nonce: String, expected_user_id: String?): Boolean {
+    override suspend fun update_vault(
+        encrypted_vault: String,
+        vault_nonce: String,
+        expected_user_id: String?,
+        vault_key_fingerprints: List<String>?,
+    ): Boolean {
         val response = client.http.put("${client.base_url}$base/vault") {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
-            setBody(UpdateVaultRequest(encrypted_vault, vault_nonce, expected_user_id))
+            setBody(
+                UpdateVaultRequest(
+                    encrypted_vault,
+                    vault_nonce,
+                    expected_user_id,
+                    vault_key_fingerprints?.takeIf { it.isNotEmpty() },
+                ),
+            )
         }
         return response.status.value in 200..299
     }
