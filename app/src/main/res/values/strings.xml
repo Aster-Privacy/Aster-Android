@@ -1580,6 +1580,10 @@
     <string name="payment_failed_update_card">Update card</string>
     <string name="payment_failed_dismiss">Dismiss</string>
     <string name="resume_plan">Resume plan</string>
+    <string name="switch_yearly_save">Switch to yearly and save %d%%</string>
+    <string name="switch_yearly_title">Switch to yearly billing</string>
+    <string name="switch_yearly_message">Your plan bills %1$s per year, which saves %2$d%% compared with monthly billing.</string>
+    <string name="switch_yearly_confirm">Switch to yearly</string>
     <string name="default_payment_updated">Default payment method updated</string>
     <string name="payment_method_removed">Payment method removed</string>
     <string name="session_expired_sign_in">Session expired - please sign in again</string>

@@ -284,6 +284,7 @@ fun SubscriptionsScreen(
 
     LaunchedEffect(Unit) {
         vm.load_subscription()
+        billing_vm.load_plans()
         billing_vm.load_storage_addons()
         billing_vm.load_crypto_native_coins()
         billing_vm.load_pending_crypto_invoices()
@@ -354,6 +355,7 @@ fun SubscriptionsScreen(
     var show_crypto_terms by remember { mutableStateOf(false) }
     var show_crypto_coins by remember { mutableStateOf(false) }
     var pending_term_months by remember { mutableStateOf(1) }
+    var show_switch_yearly by remember { mutableStateOf(false) }
 
     val sub = state.subscription
     val current_code = sub?.plan?.code ?: plan_code_of(sub?.effective_plan_name)
@@ -369,6 +371,14 @@ fun SubscriptionsScreen(
     var billing_interval by remember { mutableStateOf("year") }
     val plan_load_settled = remember_load_settled(state.is_loading)
 
+    val api_monthly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, current_code, "month")
+    val api_yearly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, current_code, "year")
+    val yearly_savings = org.astermail.android.billing.yearly_savings_percent(api_monthly_cents, api_yearly_cents)
+    val offer_yearly_switch = current_code != "free" &&
+        sub?.effective_interval == "month" &&
+        sub.cancel_at_period_end != true &&
+        yearly_savings != null &&
+        api_yearly_cents != null
     val payment_failed_due = sub?.let {
         org.astermail.android.billing.payment_failed_due_date(
             status = it.status,
@@ -450,6 +460,32 @@ fun SubscriptionsScreen(
                             onClick = { if (!billing_state.is_acting) billing_vm.reactivate_subscription() },
                             enabled = !billing_state.is_acting,
                         )
+                    }
+                    if (offer_yearly_switch) {
+                        Spacer(Modifier.size(AsterSpacing.md))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(SquircleShape(10.dp))
+                                .background(colors.success.copy(alpha = 0.12f))
+                                .clickable(enabled = !billing_state.is_acting) { show_switch_yearly = true }
+                                .padding(horizontal = AsterSpacing.md, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = stringResource(R.string.switch_yearly_save, yearly_savings ?: 0),
+                                color = colors.success,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Icon(
+                                imageVector = TablerIcons.ChevronRight,
+                                contentDescription = null,
+                                tint = colors.success,
+                                modifier = Modifier.size(16.dp),
+                            )
+                        }
                     }
                     if (current_code != "free") {
                         Spacer(Modifier.size(AsterSpacing.lg))
@@ -617,6 +653,30 @@ fun SubscriptionsScreen(
             on_crypto = {
                 show_payment_picker = false
                 show_crypto_terms = true
+            },
+        )
+    }
+
+    if (show_switch_yearly) {
+        val yearly_price = format_price(api_yearly_cents ?: 0, detected_currency)
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { show_switch_yearly = false },
+            title = stringResource(R.string.switch_yearly_title),
+            message = stringResource(R.string.switch_yearly_message, yearly_price, yearly_savings ?: 0),
+            footer = {
+                org.astermail.android.design.components.AsterDialogOutlineButton(
+                    label = stringResource(R.string.cancel),
+                    onClick = { show_switch_yearly = false },
+                    modifier = Modifier.weight(1f),
+                )
+                org.astermail.android.design.components.AsterDialogPrimaryButton(
+                    label = stringResource(R.string.switch_yearly_confirm),
+                    onClick = {
+                        show_switch_yearly = false
+                        billing_vm.switch_billing("year")
+                    },
+                    modifier = Modifier.weight(1f),
+                )
             },
         )
     }

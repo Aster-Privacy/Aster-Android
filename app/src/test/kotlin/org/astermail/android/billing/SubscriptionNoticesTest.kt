@@ -23,6 +23,7 @@ package org.astermail.android.billing
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.astermail.android.api.billing.AvailablePlan
 import org.junit.Test
 
 class SubscriptionNoticesTest {
@@ -53,5 +54,26 @@ class SubscriptionNoticesTest {
     fun `no banner without a failed payment or for an ended subscription`() {
         assertNull(payment_failed_due_date("active", null, "2026-08-27", "2026-09-01"))
         assertNull(payment_failed_due_date("canceled", "2026-08-20", "2026-08-27", "2026-09-01"))
+    }
+
+    private val plans = listOf(
+        AvailablePlan(code = "star", price_cents = 299, billing_period = "month"),
+        AvailablePlan(code = "star", price_cents = 2899, billing_period = "year"),
+        AvailablePlan(code = "free", price_cents = 0, billing_period = "month"),
+    )
+
+    @Test
+    fun `reads plan prices from the plans response`() {
+        assertEquals(299, api_plan_price_cents(plans, "star", "month"))
+        assertEquals(2899, api_plan_price_cents(plans, "star", "year"))
+        assertNull(api_plan_price_cents(plans, "nova", "month"))
+        assertNull(api_plan_price_cents(plans, "free", "month"))
+    }
+
+    @Test
+    fun `yearly savings percent compares against twelve monthly payments`() {
+        assertEquals(19, yearly_savings_percent(299, 2899))
+        assertNull(yearly_savings_percent(299, 3588))
+        assertNull(yearly_savings_percent(null, 2899))
     }
 }

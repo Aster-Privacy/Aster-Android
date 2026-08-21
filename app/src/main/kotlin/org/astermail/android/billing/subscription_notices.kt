@@ -24,6 +24,7 @@ package org.astermail.android.billing
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import org.astermail.android.api.billing.AvailablePlan
 
 private val ACTIVE_STATUSES = setOf("active", "trialing", "past_due")
 
@@ -41,4 +42,14 @@ fun payment_failed_due_date(
     if (status !in ACTIVE_STATUSES) return null
     val raw = grace_period_end?.takeIf { it.isNotBlank() } ?: current_period_end?.takeIf { it.isNotBlank() }
     return raw?.take(10)
+}
+
+fun api_plan_price_cents(plans: List<AvailablePlan>, code: String, billing_interval: String): Int? =
+    plans.firstOrNull { it.code == code && it.billing_period == billing_interval && it.price_cents > 0 }?.price_cents
+
+fun yearly_savings_percent(monthly_cents: Int?, yearly_cents: Int?): Int? {
+    if (monthly_cents == null || yearly_cents == null) return null
+    val full_year = monthly_cents * 12
+    if (full_year <= 0 || yearly_cents >= full_year) return null
+    return ((full_year - yearly_cents) * 100.0 / full_year).toInt()
 }
