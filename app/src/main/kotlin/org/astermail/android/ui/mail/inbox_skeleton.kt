@@ -42,11 +42,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.shimmer_brush
 import org.astermail.android.ui.theme.local_accessibility
+
+const val inbox_skeleton_tag = "inbox_skeleton"
+const val inbox_skeleton_row_tag = "inbox_skeleton_row"
 
 @Composable
 fun inbox_skeleton(
@@ -55,7 +59,9 @@ fun inbox_skeleton(
     row_count: Int = 10,
 ) {
     LazyColumn(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .testTag(inbox_skeleton_tag),
         userScrollEnabled = false,
     ) {
         items(row_count) { index ->
@@ -83,6 +89,7 @@ fun inbox_skeleton_row(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .testTag(inbox_skeleton_row_tag)
             .padding(
                 start = inbox_card_horizontal_margin,
                 end = inbox_card_horizontal_margin,
