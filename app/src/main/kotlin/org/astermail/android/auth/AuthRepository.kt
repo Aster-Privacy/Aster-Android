@@ -654,6 +654,8 @@ class AuthRepository @Inject constructor(
             vault_obj.put("previous_keys", rotated)
         }
 
+        val preserved_data_kek = ensure_master_key_vault(vault_obj, current_password_bytes)
+
         val updated_vault_bytes = vault_obj.toString().toByteArray(Charsets.UTF_8)
         val new_envelope = CryptoNative.encrypt_vault_with_password(updated_vault_bytes, new_password_bytes)
         updated_vault_bytes.fill(0)
@@ -670,9 +672,11 @@ class AuthRepository @Inject constructor(
                 new_password_salt = base64_encode(new_salt),
                 new_encrypted_vault = base64_encode(new_envelope.encrypted_vault),
                 new_vault_nonce = base64_encode(new_envelope.vault_nonce),
+                vault_format = MASTER_KEY_VAULT_FORMAT,
             ),
         )
 
+        session_key_store.put_data_kek(preserved_data_kek)
         session_key_store.put(new_password_hash)
         session_key_store.put_passphrase(new_password_bytes)
         session_key_store.put_password_salt(new_salt)
@@ -696,6 +700,7 @@ class AuthRepository @Inject constructor(
         current_password_bytes.fill(0)
         new_password_bytes.fill(0)
         stored_salt.fill(0)
+        preserved_data_kek.fill(0)
     }
 
     private fun cancel_all_notifications() {
@@ -820,6 +825,17 @@ class AuthRepository @Inject constructor(
             if (keks.isNotEmpty()) session_key_store.put_legacy_keks(keks)
         }
     }
+
+    private fun ensure_master_key_vault(
+        vault_obj: org.json.JSONObject,
+        current_password_bytes: ByteArray,
+    ): ByteArray =
+        ensure_master_key_vault(
+            vault_obj = vault_obj,
+            derive_storage_key = { CryptoNative.derive_storage_key(current_password_bytes) },
+            encode = ::base64_encode,
+            decode = ::base64_decode,
+        )
 
     private fun absorb_data_kek(vault_obj: org.json.JSONObject) {
         val data_kek = vault_obj.optString("data_kek", "")

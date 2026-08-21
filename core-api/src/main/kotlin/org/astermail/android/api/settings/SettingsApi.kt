@@ -65,6 +65,7 @@ data class ChangePasswordRequest(
     val new_password_salt: String,
     val new_encrypted_vault: String,
     val new_vault_nonce: String,
+    val vault_format: Int? = null,
 )
 
 @Serializable

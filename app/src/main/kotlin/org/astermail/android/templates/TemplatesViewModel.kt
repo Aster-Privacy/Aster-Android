@@ -202,6 +202,10 @@ class TemplatesViewModel @Inject constructor(
     }
 
     private fun derive_key(): ByteArray? {
+        session_key_store.get_data_kek()?.let { kek ->
+            if (kek.size == 32) return kek
+            kek.fill(0)
+        }
         val passphrase = session_key_store.get_passphrase() ?: return null
         return try {
             CryptoNative.derive_storage_key(passphrase)
