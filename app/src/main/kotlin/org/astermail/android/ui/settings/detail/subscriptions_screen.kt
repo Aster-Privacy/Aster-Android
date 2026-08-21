@@ -301,6 +301,13 @@ fun SubscriptionsScreen(
         billing_vm.clear_messages()
     }
 
+    LaunchedEffect(billing_state.info) {
+        val info = billing_state.info ?: return@LaunchedEffect
+        android.widget.Toast.makeText(context, info, android.widget.Toast.LENGTH_SHORT).show()
+        billing_vm.clear_messages()
+        vm.load_subscription()
+    }
+
     LaunchedEffect(billing_state.checkout_url) {
         val url = billing_state.checkout_url ?: return@LaunchedEffect
         runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
@@ -423,12 +430,25 @@ fun SubscriptionsScreen(
                         }
                     }
                     val period_end = sub?.current_period_end
+                    val ends_at_period_end = sub?.cancel_at_period_end == true
                     if (period_end != null) {
                         Spacer(Modifier.size(AsterSpacing.sm))
                         Text(
-                            text = stringResource(R.string.renews_format, period_end.take(10)),
-                            color = colors.text_tertiary,
+                            text = if (ends_at_period_end) {
+                                stringResource(R.string.ends_date, period_end.take(10))
+                            } else {
+                                stringResource(R.string.renews_format, period_end.take(10))
+                            },
+                            color = if (ends_at_period_end) colors.danger else colors.text_tertiary,
                             fontSize = 13.sp,
+                        )
+                    }
+                    if (ends_at_period_end && current_code != "free") {
+                        Spacer(Modifier.size(AsterSpacing.lg))
+                        AsterButton(
+                            label = if (billing_state.acting_action == "reactivate") stringResource(R.string.loading) else stringResource(R.string.resume_plan),
+                            onClick = { if (!billing_state.is_acting) billing_vm.reactivate_subscription() },
+                            enabled = !billing_state.is_acting,
                         )
                     }
                     if (current_code != "free") {
