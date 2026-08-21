@@ -2784,4 +2784,7 @@
     <string name="link_device_error_session">Je sessie is vergrendeld. Log opnieuw in en koppel daarna het apparaat.</string>
     <string name="link_device_error_unavailable">Apparaten koppelen is nu niet beschikbaar. Probeer het later opnieuw.</string>
     <string name="link_device_error_failed">Het apparaat kon niet worden gekoppeld. Probeer het opnieuw.</string>
+    <string name="alias_locked_title">Vergrendeld door een wachtwoordwijziging</string>
+    <string name="alias_locked_body">Deze alias ontvangt nog steeds e-mail, maar de gegevens zijn versleuteld met je vorige wachtwoord. Je kunt de alias niet hernoemen en er niet vanaf verzenden. Verwijder de alias en maak een nieuwe aan om vanaf die naam te verzenden.</string>
+    <string name="password_change_web_required">Gebruik de Aster Mail-webapp om het wachtwoord van dit account te wijzigen.</string>
 </resources>

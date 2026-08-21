@@ -2784,4 +2784,7 @@
     <string name="link_device_error_session">Oturumun kilitli. Yeniden oturum aç, sonra cihazı bağla.</string>
     <string name="link_device_error_unavailable">Cihaz bağlama şu anda kullanılamıyor. Daha sonra yeniden dene.</string>
     <string name="link_device_error_failed">Cihaz bağlanamadı. Yeniden dene.</string>
+    <string name="alias_locked_title">Parola değişikliği nedeniyle kilitli</string>
+    <string name="alias_locked_body">Bu takma ad posta almaya devam ediyor, ancak bilgileri önceki parolanızla şifrelenmiş. Adını değiştiremez ve buradan gönderemezsiniz. Bu takma adı silin ve o adla göndermek için yeni bir takma ad oluşturun.</string>
+    <string name="password_change_web_required">Bu hesabın parolasını değiştirmek için Aster Mail web uygulamasını kullanın.</string>
 </resources>

@@ -2812,4 +2812,7 @@
     <string name="link_device_error_session">Ta session est verrouillée. Reconnecte-toi, puis associe l\'appareil.</string>
     <string name="link_device_error_unavailable">L\'association d\'appareils est indisponible pour le moment. Réessaie plus tard.</string>
     <string name="link_device_error_failed">L\'appareil n\'a pas pu être associé. Réessaie.</string>
+    <string name="alias_locked_title">Verrouillé par un changement de mot de passe</string>
+    <string name="alias_locked_body">Cet alias reçoit toujours des messages, mais ses informations sont chiffrées avec votre ancien mot de passe. Vous ne pouvez ni le renommer ni envoyer depuis celui-ci. Supprimez-le et créez un nouvel alias pour envoyer sous ce nom.</string>
+    <string name="password_change_web_required">Pour changer le mot de passe de ce compte, utilisez l’application web Aster Mail.</string>
 </resources>

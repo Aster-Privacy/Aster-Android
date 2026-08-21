@@ -102,4 +102,32 @@ class VaultMasterKeyUpgradeTest {
         assertEquals(MAX_LEGACY_KEKS, list.length())
         assertEquals(encode(previous), list.getJSONObject(0).getString("k"))
     }
+
+    @Test(expected = UnsupportedVaultKdfException::class)
+    fun `a vault on an unsupported storage kdf refuses to fabricate a data key`() {
+        val vault_obj = JSONObject().put("kdf_version", 2)
+
+        upgrade(vault_obj)
+    }
+
+    @Test
+    fun `an unsupported storage kdf is left untouched when it refuses`() {
+        val vault_obj = JSONObject().put("kdf_version", 2)
+
+        runCatching { upgrade(vault_obj) }
+
+        assertTrue(vault_obj.optString("data_kek", "").isBlank())
+        assertEquals(1, vault_obj.optInt("vault_format", 1))
+    }
+
+    @Test
+    fun `an unsupported storage kdf still returns an already stored data key`() {
+        val existing = ByteArray(32) { 9 }
+        val vault_obj = JSONObject()
+            .put("kdf_version", 2)
+            .put("data_kek", encode(existing))
+            .put("vault_format", MASTER_KEY_VAULT_FORMAT)
+
+        assertArrayEquals(existing, upgrade(vault_obj))
+    }
 }

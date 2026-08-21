@@ -2870,4 +2870,7 @@
     <string name="link_device_error_session">Your session is locked. Sign in again, then link the device.</string>
     <string name="link_device_error_unavailable">Device linking is unavailable right now. Try again later.</string>
     <string name="link_device_error_failed">The device could not be linked. Try again.</string>
+    <string name="alias_locked_title">Locked by a password change</string>
+    <string name="alias_locked_body">This alias still receives mail, but its details were encrypted with your previous password. You can’t rename it or send from it. Delete it and create a new alias to send from that name.</string>
+    <string name="password_change_web_required">To change your password for this account, use the Aster Mail web app.</string>
 </resources>

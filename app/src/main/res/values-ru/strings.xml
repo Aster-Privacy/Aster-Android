@@ -2800,4 +2800,7 @@
     <string name="link_device_error_session">Ваш сеанс заблокирован. Войдите снова, затем привяжите устройство.</string>
     <string name="link_device_error_unavailable">Привязка устройств сейчас недоступна. Повторите попытку позже.</string>
     <string name="link_device_error_failed">Не удалось привязать устройство. Повторите попытку.</string>
+    <string name="alias_locked_title">Заблокирован из-за смены пароля</string>
+    <string name="alias_locked_body">Этот псевдоним по-прежнему получает почту, но его данные зашифрованы прежним паролем. Переименовать его и отправлять с него нельзя. Удалите его и создайте новый псевдоним, чтобы отправлять письма с этого имени.</string>
+    <string name="password_change_web_required">Чтобы изменить пароль этой учётной записи, используйте веб-приложение Aster Mail.</string>
 </resources>

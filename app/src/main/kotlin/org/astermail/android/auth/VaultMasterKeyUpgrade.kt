@@ -27,6 +27,15 @@ import java.time.Instant
 
 const val MASTER_KEY_VAULT_FORMAT = 2
 const val MAX_LEGACY_KEKS = 16
+const val SUPPORTED_STORAGE_KDF_VERSION = 1
+
+class UnsupportedVaultKdfException(val kdf_version: Int) : Exception(
+    "vault uses storage kdf version $kdf_version",
+)
+
+fun vault_storage_kdf_version(vault_obj: JSONObject): Int =
+    vault_obj.optInt("kdf_version", SUPPORTED_STORAGE_KDF_VERSION)
+        .coerceAtLeast(SUPPORTED_STORAGE_KDF_VERSION)
 
 fun ensure_master_key_vault(
     vault_obj: JSONObject,
@@ -45,6 +54,11 @@ fun ensure_master_key_vault(
             )
             return decoded
         }
+    }
+
+    val kdf_version = vault_storage_kdf_version(vault_obj)
+    if (kdf_version > SUPPORTED_STORAGE_KDF_VERSION) {
+        throw UnsupportedVaultKdfException(kdf_version)
     }
 
     val storage_key = derive_storage_key()

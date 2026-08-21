@@ -2800,4 +2800,7 @@
     <string name="link_device_error_session">Twoja sesja jest zablokowana. Zaloguj się ponownie, a potem połącz urządzenie.</string>
     <string name="link_device_error_unavailable">Łączenie urządzeń jest teraz niedostępne. Spróbuj później.</string>
     <string name="link_device_error_failed">Nie udało się połączyć urządzenia. Spróbuj ponownie.</string>
+    <string name="alias_locked_title">Zablokowany przez zmianę hasła</string>
+    <string name="alias_locked_body">Ten alias nadal odbiera pocztę, ale jego dane są zaszyfrowane poprzednim hasłem. Nie możesz zmienić jego nazwy ani wysyłać z niego wiadomości. Usuń go i utwórz nowy alias, aby wysyłać z tej nazwy.</string>
+    <string name="password_change_web_required">Aby zmienić hasło do tego konta, użyj aplikacji internetowej Aster Mail.</string>
 </resources>

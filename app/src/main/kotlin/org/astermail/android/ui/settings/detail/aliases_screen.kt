@@ -835,6 +835,7 @@ internal fun alias_list_row(
             .border(1.dp, colors.border_secondary, shape)
             .combinedClickable(
                 onClick = {
+                    if (alias.decryption_failed) return@combinedClickable
                     if (on_toggle_expanded != null) on_toggle_expanded() else on_edit_note?.invoke()
                 },
                 onLongClick = {
@@ -857,40 +858,57 @@ internal fun alias_list_row(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                val display_name_val = alias.encrypted_display_name
-                if (!display_name_val.isNullOrBlank()) {
+                if (alias.decryption_failed) {
                     Spacer(Modifier.height(3.dp))
                     alias_meta_row(
-                        icon = TablerIcons.Id,
-                        text = display_name_val,
-                        color = colors.text_secondary,
+                        icon = TablerIcons.Lock,
+                        text = stringResource(R.string.alias_locked_title),
+                        color = colors.danger,
+                        max_lines = 1,
                     )
-                }
-                if (on_edit_note != null) {
                     Spacer(Modifier.height(3.dp))
-                    alias_meta_row(
-                        icon = TablerIcons.Edit,
-                        text = if (note_val.isNullOrBlank()) {
-                            stringResource(R.string.alias_note_add)
-                        } else {
-                            note_val
+                    Text(
+                        text = stringResource(R.string.alias_locked_body),
+                        color = colors.text_tertiary,
+                        fontSize = 11.sp,
+                        lineHeight = 15.sp,
+                    )
+                } else {
+                    val display_name_val = alias.encrypted_display_name
+                    if (!display_name_val.isNullOrBlank()) {
+                        Spacer(Modifier.height(3.dp))
+                        alias_meta_row(
+                            icon = TablerIcons.Id,
+                            text = display_name_val,
+                            color = colors.text_secondary,
+                        )
+                    }
+                    if (on_edit_note != null) {
+                        Spacer(Modifier.height(3.dp))
+                        alias_meta_row(
+                            icon = TablerIcons.Edit,
+                            text = if (note_val.isNullOrBlank()) {
+                                stringResource(R.string.alias_note_add)
+                            } else {
+                                note_val
+                            },
+                            color = if (note_val.isNullOrBlank()) colors.text_muted else colors.text_tertiary,
+                            max_lines = 3,
+                        )
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = when {
+                            !alias.is_enabled -> stringResource(R.string.alias_status_disabled_badge)
+                            delivery_folder_name != null ->
+                                stringResource(R.string.forwards_to_folder, delivery_folder_name)
+                            else -> stringResource(R.string.forwards_to_inbox)
                         },
-                        color = if (note_val.isNullOrBlank()) colors.text_muted else colors.text_tertiary,
-                        max_lines = 3,
+                        color = if (alias.is_enabled) colors.text_tertiary else colors.danger,
+                        fontSize = 11.sp,
+                        maxLines = 1,
                     )
                 }
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = when {
-                        !alias.is_enabled -> stringResource(R.string.alias_status_disabled_badge)
-                        delivery_folder_name != null ->
-                            stringResource(R.string.forwards_to_folder, delivery_folder_name)
-                        else -> stringResource(R.string.forwards_to_inbox)
-                    },
-                    color = if (alias.is_enabled) colors.text_tertiary else colors.danger,
-                    fontSize = 11.sp,
-                    maxLines = 1,
-                )
             }
             AsterSwitch(
                 checked = alias.is_enabled,

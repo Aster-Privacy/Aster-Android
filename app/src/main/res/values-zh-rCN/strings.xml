@@ -2776,4 +2776,7 @@
     <string name="link_device_error_session">你的会话已锁定。请重新登录，然后关联设备。</string>
     <string name="link_device_error_unavailable">目前无法关联设备。请稍后再试。</string>
     <string name="link_device_error_failed">无法关联该设备。请重试。</string>
+    <string name="alias_locked_title">因更改密码而锁定</string>
+    <string name="alias_locked_body">此别名仍可接收邮件，但其详细信息使用你以前的密码加密。你无法重命名该别名，也无法用它发送邮件。删除它并创建新别名，即可用该名称发送邮件。</string>
+    <string name="password_change_web_required">若要更改此账户的密码，请使用 Aster Mail 网页版应用。</string>
 </resources>

@@ -2776,4 +2776,7 @@
     <string name="link_device_error_session">セッションがロックされています。サインインし直してからデバイスをリンクしてください。</string>
     <string name="link_device_error_unavailable">現在、デバイスのリンクを利用できません。あとでやり直してください。</string>
     <string name="link_device_error_failed">デバイスをリンクできませんでした。やり直してください。</string>
+    <string name="alias_locked_title">パスワードの変更によりロックされています</string>
+    <string name="alias_locked_body">このエイリアスは引き続きメールを受信しますが、詳細情報は以前のパスワードで暗号化されています。名前の変更も、このエイリアスからの送信もできません。削除して新しいエイリアスを作成すると、その名前で送信できます。</string>
+    <string name="password_change_web_required">このアカウントのパスワードを変更するには、Aster Mail の Web アプリを使用してください。</string>
 </resources>

@@ -654,7 +654,15 @@ class AuthRepository @Inject constructor(
             vault_obj.put("previous_keys", rotated)
         }
 
-        val preserved_data_kek = ensure_master_key_vault(vault_obj, current_password_bytes)
+        val preserved_data_kek = try {
+            ensure_master_key_vault(vault_obj, current_password_bytes)
+        } catch (_: UnsupportedVaultKdfException) {
+            current_password_bytes.fill(0)
+            new_password_bytes.fill(0)
+            throw ApiError.ValidationError(
+                listOf(context.getString(R.string.password_change_web_required)),
+            )
+        }
 
         val updated_vault_bytes = vault_obj.toString().toByteArray(Charsets.UTF_8)
         val new_envelope = CryptoNative.encrypt_vault_with_password(updated_vault_bytes, new_password_bytes)

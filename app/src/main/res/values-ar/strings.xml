@@ -2816,4 +2816,7 @@
     <string name="link_device_error_session">جلستك مقفلة. سجّل الدخول مرة أخرى ثم اربط الجهاز.</string>
     <string name="link_device_error_unavailable">ربط الأجهزة غير متاح حاليًا. أعد المحاولة لاحقًا.</string>
     <string name="link_device_error_failed">تعذّر ربط الجهاز. أعد المحاولة.</string>
+    <string name="alias_locked_title">مقفل بسبب تغيير كلمة المرور</string>
+    <string name="alias_locked_body">لا يزال هذا الاسم المستعار يستقبل البريد، لكن تفاصيله مشفّرة بكلمة المرور السابقة. لا يمكنك إعادة تسميته أو الإرسال منه. احذفه وأنشئ اسمًا مستعارًا جديدًا للإرسال بهذا الاسم.</string>
+    <string name="password_change_web_required">لتغيير كلمة المرور لهذا الحساب، استخدم تطبيق الويب Aster Mail.</string>
 </resources>

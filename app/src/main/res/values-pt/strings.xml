@@ -2784,4 +2784,7 @@
     <string name="link_device_error_session">Sua sessão está bloqueada. Entre novamente e vincule o dispositivo.</string>
     <string name="link_device_error_unavailable">A vinculação de dispositivos está indisponível agora. Tente mais tarde.</string>
     <string name="link_device_error_failed">Não foi possível vincular o dispositivo. Tente de novo.</string>
+    <string name="alias_locked_title">Bloqueado por uma alteração de palavra-passe</string>
+    <string name="alias_locked_body">Este alias continua a receber correio, mas os respetivos dados estão cifrados com a palavra-passe anterior. Não pode mudar o nome nem enviar a partir dele. Elimine-o e crie um novo alias para enviar com esse nome.</string>
+    <string name="password_change_web_required">Para alterar a palavra-passe desta conta, use a aplicação web do Aster Mail.</string>
 </resources>
