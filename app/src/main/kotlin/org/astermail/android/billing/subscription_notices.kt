@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import org.astermail.android.api.billing.AvailablePlan
+import org.astermail.android.api.billing.BillingHistoryItem
 
 private val ACTIVE_STATUSES = setOf("active", "trialing", "past_due")
 
@@ -52,4 +53,20 @@ fun yearly_savings_percent(monthly_cents: Int?, yearly_cents: Int?): Int? {
     val full_year = monthly_cents * 12
     if (full_year <= 0 || yearly_cents >= full_year) return null
     return ((full_year - yearly_cents) * 100.0 / full_year).toInt()
+}
+
+data class lapsed_plan(val plan_name: String, val ended_on: String)
+
+fun lapsed_paid_plan(
+    current_plan_code: String,
+    history: List<BillingHistoryItem>,
+    today: String,
+): lapsed_plan? {
+    if (current_plan_code != "free") return null
+    val latest = history
+        .filter { it.amount_cents > 0 && !it.plan_name.isNullOrBlank() && !it.period_end.isNullOrBlank() }
+        .maxByOrNull { it.period_end.orEmpty() } ?: return null
+    val ended_on = latest.period_end.orEmpty().take(10)
+    if (ended_on >= today.take(10)) return null
+    return lapsed_plan(plan_name = latest.plan_name.orEmpty(), ended_on = ended_on)
 }

@@ -285,6 +285,7 @@ fun SubscriptionsScreen(
     LaunchedEffect(Unit) {
         vm.load_subscription()
         billing_vm.load_plans()
+        billing_vm.load_history()
         billing_vm.load_storage_addons()
         billing_vm.load_crypto_native_coins()
         billing_vm.load_pending_crypto_invoices()
@@ -379,6 +380,15 @@ fun SubscriptionsScreen(
         sub.cancel_at_period_end != true &&
         yearly_savings != null &&
         api_yearly_cents != null
+    val lapsed = if (sub != null) {
+        org.astermail.android.billing.lapsed_paid_plan(
+            current_plan_code = current_code,
+            history = billing_state.history,
+            today = java.time.LocalDate.now().toString(),
+        )?.takeIf { plan_tiers.any { tier -> tier.code == plan_code_of(it.plan_name) } }
+    } else {
+        null
+    }
     val payment_failed_due = sub?.let {
         org.astermail.android.billing.payment_failed_due_date(
             status = it.status,
@@ -495,6 +505,37 @@ fun SubscriptionsScreen(
                             enabled = !billing_state.is_acting,
                         )
                     }
+                }
+            }
+        }
+        if (lapsed != null) {
+            v_gap(AsterSpacing.lg)
+            AsterCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(AsterSpacing.lg)) {
+                    Text(
+                        text = stringResource(R.string.plan_ended_on, lapsed.plan_name, lapsed.ended_on),
+                        color = colors.text_primary,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Spacer(Modifier.height(AsterSpacing.xs))
+                    Text(
+                        text = stringResource(R.string.plan_ended_resubscribe_note),
+                        color = colors.text_tertiary,
+                        fontSize = 13.sp,
+                    )
+                    Spacer(Modifier.height(AsterSpacing.md))
+                    AsterButton(
+                        label = stringResource(R.string.resubscribe),
+                        onClick = {
+                            if (!billing_state.is_acting) {
+                                pending_plan_code = plan_code_of(lapsed.plan_name)
+                                pending_addon_id = null
+                                show_payment_picker = true
+                            }
+                        },
+                        enabled = !billing_state.is_acting,
+                    )
                 }
             }
         }

@@ -1584,6 +1584,9 @@
     <string name="switch_yearly_title">Switch to yearly billing</string>
     <string name="switch_yearly_message">Your plan bills %1$s per year, which saves %2$d%% compared with monthly billing.</string>
     <string name="switch_yearly_confirm">Switch to yearly</string>
+    <string name="plan_ended_on">Your %1$s plan ended on %2$s</string>
+    <string name="plan_ended_resubscribe_note">Resubscribe to get your storage, aliases, and other plan features back.</string>
+    <string name="resubscribe">Resubscribe</string>
     <string name="default_payment_updated">Default payment method updated</string>
     <string name="payment_method_removed">Payment method removed</string>
     <string name="session_expired_sign_in">Session expired - please sign in again</string>

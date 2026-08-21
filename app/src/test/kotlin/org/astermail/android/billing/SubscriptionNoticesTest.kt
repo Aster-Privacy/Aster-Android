@@ -24,6 +24,7 @@ package org.astermail.android.billing
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.astermail.android.api.billing.AvailablePlan
+import org.astermail.android.api.billing.BillingHistoryItem
 import org.junit.Test
 
 class SubscriptionNoticesTest {
@@ -75,5 +76,24 @@ class SubscriptionNoticesTest {
         assertEquals(19, yearly_savings_percent(299, 2899))
         assertNull(yearly_savings_percent(299, 3588))
         assertNull(yearly_savings_percent(null, 2899))
+    }
+
+    private val history = listOf(
+        BillingHistoryItem(id = "a", amount_cents = 899, plan_name = "Nova", period_end = "2026-06-01T00:00:00Z"),
+        BillingHistoryItem(id = "b", amount_cents = 899, plan_name = "Nova", period_end = "2026-07-01T00:00:00Z"),
+        BillingHistoryItem(id = "c", amount_cents = 0, plan_name = "Free", period_end = "2026-12-01T00:00:00Z"),
+    )
+
+    @Test
+    fun `lapsed plan comes from the latest paid history item`() {
+        val lapsed = lapsed_paid_plan("free", history, "2026-08-21")
+        assertEquals(lapsed_plan(plan_name = "Nova", ended_on = "2026-07-01"), lapsed)
+    }
+
+    @Test
+    fun `no lapsed plan while paid or before the period ends`() {
+        assertNull(lapsed_paid_plan("nova", history, "2026-08-21"))
+        assertNull(lapsed_paid_plan("free", history, "2026-06-15"))
+        assertNull(lapsed_paid_plan("free", emptyList(), "2026-08-21"))
     }
 }
