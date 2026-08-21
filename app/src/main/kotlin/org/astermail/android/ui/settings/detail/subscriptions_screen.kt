@@ -362,7 +362,26 @@ fun SubscriptionsScreen(
     var billing_interval by remember { mutableStateOf("year") }
     val plan_load_settled = remember_load_settled(state.is_loading)
 
+    val payment_failed_due = sub?.let {
+        org.astermail.android.billing.payment_failed_due_date(
+            status = it.status,
+            payment_failed_at = it.payment_failed_at,
+            grace_period_end = it.grace_period_end,
+            current_period_end = it.current_period_end,
+        )
+    }
+
     detail_scaffold(title = stringResource(R.string.plan_billing), on_back = on_back, scroll_state = scroll_state) {
+        if (payment_failed_due != null && !org.astermail.android.billing.payment_failed_banner_session.dismissed) {
+            org.astermail.android.ui.common.payment_failed_banner(
+                plan_name = sub?.effective_plan_name ?: plan_free_label,
+                due_date = payment_failed_due,
+                is_loading = billing_state.is_acting && billing_state.acting_action == "portal",
+                on_update_card = { if (!billing_state.is_acting) billing_vm.open_portal() },
+                on_dismiss = { org.astermail.android.billing.payment_failed_banner_session.dismissed = true },
+            )
+            v_gap(AsterSpacing.md)
+        }
         if (sub == null && (state.is_loading || !plan_load_settled)) {
             skeleton_hero_card(lines = 2)
             v_gap(AsterSpacing.lg)

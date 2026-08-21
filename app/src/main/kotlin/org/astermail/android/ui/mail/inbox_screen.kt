@@ -283,6 +283,24 @@ fun InboxScreen(
         ((settings_state.subscription?.effective_price_cents ?: 0) > 0 &&
             settings_state.subscription?.status !in setOf("canceled", "cancelled", "incomplete_expired", "unpaid"))
     val show_upgrade_button = plan_known && fresh_check_complete && !has_paid_plan
+    val billing_vm: org.astermail.android.billing.BillingViewModel = hiltViewModel()
+    val billing_state by billing_vm.state.collectAsStateWithLifecycle()
+    val banner_context = LocalContext.current
+    LaunchedEffect(billing_state.portal_url) {
+        val url = billing_state.portal_url ?: return@LaunchedEffect
+        runCatching { banner_context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))) }
+        billing_vm.consume_portal_url()
+    }
+    val payment_failed_due = settings_state.subscription?.let { sub ->
+        org.astermail.android.billing.payment_failed_due_date(
+            status = sub.status,
+            payment_failed_at = sub.payment_failed_at,
+            grace_period_end = sub.grace_period_end,
+            current_period_end = sub.current_period_end,
+        )
+    }
+    val show_payment_failed_banner = payment_failed_due != null &&
+        !org.astermail.android.billing.payment_failed_banner_session.dismissed
     val prefetch_context = LocalContext.current
     val toast_context = LocalContext.current
 
@@ -1422,6 +1440,18 @@ fun InboxScreen(
                             },
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(top = header_height_dp, bottom = 96.dp + nav_bar_bottom),
                     ) {
+                        if (show_payment_failed_banner && !select_mode) {
+                            item(key = "_payment_failed_banner", contentType = "payment_failed_banner") {
+                                org.astermail.android.ui.common.payment_failed_banner(
+                                    plan_name = settings_state.subscription?.effective_plan_name.orEmpty(),
+                                    due_date = payment_failed_due.orEmpty(),
+                                    is_loading = billing_state.is_acting && billing_state.acting_action == "portal",
+                                    on_update_card = { if (!billing_state.is_acting) billing_vm.open_portal() },
+                                    on_dismiss = { org.astermail.android.billing.payment_failed_banner_session.dismissed = true },
+                                    modifier = Modifier.padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.xs),
+                                )
+                            }
+                        }
                         val spam_retention_days = settings_state.preferences?.auto_delete_spam_days ?: 0
                         if (current_folder == "spam" && !select_mode && spam_retention_days > 0) {
                             item(key = "_spam_retention_notice", contentType = "spam_notice") {

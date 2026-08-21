@@ -1576,6 +1576,9 @@
     <string name="subscription_cancelled">Subscription cancelled</string>
     <string name="subscription_reactivated">Subscription reactivated</string>
     <string name="billing_changed_to">Billing changed to %s</string>
+    <string name="payment_failed_banner_message">Your last payment did not go through. Update your card by %1$s to keep your %2$s plan.</string>
+    <string name="payment_failed_update_card">Update card</string>
+    <string name="payment_failed_dismiss">Dismiss</string>
     <string name="default_payment_updated">Default payment method updated</string>
     <string name="payment_method_removed">Payment method removed</string>
     <string name="session_expired_sign_in">Session expired - please sign in again</string>
