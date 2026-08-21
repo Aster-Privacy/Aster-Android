@@ -235,6 +235,7 @@ data class SettingsUiState(
     val connection_method: String = "direct",
     val connection_loading: Boolean = false,
     val connection_saving: Boolean = false,
+    val product_updates: Boolean = true,
 )
 
 enum class SaveStatus { IDLE, SAVING, SAVED, ERROR }
@@ -327,6 +328,7 @@ class SettingsViewModel @Inject constructor(
     private var load_preferences_job: kotlinx.coroutines.Job? = null
     private var last_preferences_load_ms = 0L
     private var last_default_sender_load_ms = 0L
+    private var last_product_updates_load_ms = 0L
     private var last_profile_load_ms = 0L
     private var last_aliases_load_ms = 0L
     private var last_mail_rules_load_ms = 0L
@@ -542,6 +544,38 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun load_product_updates() {
+        val now = System.currentTimeMillis()
+        if (now - last_product_updates_load_ms < PREFERENCES_TTL_MS) return
+        last_product_updates_load_ms = now
+        viewModelScope.launch {
+            try {
+                val response = preferences_api.get_product_updates()
+                _state.value = _state.value.copy(product_updates = response.subscribed)
+            } catch (t: Throwable) {
+                last_product_updates_load_ms = 0L
+                if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_product_updates", t)
+            }
+        }
+    }
+
+    fun set_product_updates(subscribed: Boolean) {
+        val previous = _state.value.product_updates
+        _state.value = _state.value.copy(product_updates = subscribed)
+        viewModelScope.launch {
+            try {
+                preferences_api.set_product_updates(
+                    org.astermail.android.api.preferences.SetProductUpdatesRequest(subscribed = subscribed),
+                )
+            } catch (t: Throwable) {
+                _state.value = _state.value.copy(
+                    product_updates = previous,
+                    error = user_facing_error(t),
+                )
+            }
+        }
+    }
+
     fun set_default_sender(sender_id: String?) {
         _state.value = _state.value.copy(default_sender_id = sender_id)
         viewModelScope.launch {
@@ -711,6 +745,7 @@ class SettingsViewModel @Inject constructor(
         last_tags_load_ms = 0L
         last_preferences_load_ms = 0L
         last_default_sender_load_ms = 0L
+        last_product_updates_load_ms = 0L
         last_profile_load_ms = 0L
         last_aliases_load_ms = 0L
         last_mail_rules_load_ms = 0L

@@ -1005,6 +1005,8 @@
     <string name="new_emails">New emails</string>
     <string name="replies">Replies</string>
     <string name="mentions">Mentions</string>
+    <string name="product_updates">Product updates</string>
+    <string name="product_updates_subtitle">A message in your inbox when a notable feature ships. Security and policy announcements always arrive.</string>
     <string name="quiet_hours">Quiet hours</string>
     <string name="quiet_hours_subtitle">Silence notifications 22:00 - 07:00</string>
 

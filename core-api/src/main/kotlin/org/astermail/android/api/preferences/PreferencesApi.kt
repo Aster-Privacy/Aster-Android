@@ -172,6 +172,16 @@ data class SetDefaultSenderRequest(
     val sender_id: String? = null,
 )
 
+@Serializable
+data class ProductUpdatesResponse(
+    val subscribed: Boolean = true,
+)
+
+@Serializable
+data class SetProductUpdatesRequest(
+    val subscribed: Boolean,
+)
+
 interface PreferencesApi {
     suspend fun get_preferences(): UserPreferences
     suspend fun get_preferences_raw(): String
@@ -181,6 +191,8 @@ interface PreferencesApi {
     suspend fun save_encrypted_preferences(request: SaveEncryptedPreferencesRequest)
     suspend fun get_default_sender(): DefaultSenderResponse
     suspend fun set_default_sender(request: SetDefaultSenderRequest): DefaultSenderResponse
+    suspend fun get_product_updates(): ProductUpdatesResponse
+    suspend fun set_product_updates(request: SetProductUpdatesRequest)
 }
 
 class PreferencesApiImpl(private val client: ApiClient) : PreferencesApi {
@@ -250,6 +262,23 @@ class PreferencesApiImpl(private val client: ApiClient) : PreferencesApi {
             setBody(request)
         }
         return decode_or_throw(response)
+    }
+
+    override suspend fun get_product_updates(): ProductUpdatesResponse {
+        val response = client.http.get("${client.base_url}$base/product-updates")
+        return decode_or_throw(response)
+    }
+
+    override suspend fun set_product_updates(request: SetProductUpdatesRequest) {
+        val response = client.http.put("${client.base_url}$base/product-updates") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        if (response.status.value !in 200..299) {
+            val body = try { response.body<String>() } catch (_: Throwable) { "" }
+            throw client.map_http_status(response.status.value, body)
+        }
     }
 
     private suspend inline fun <reified T> decode_or_throw(response: HttpResponse): T {

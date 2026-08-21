@@ -113,6 +113,7 @@ fun NotificationsScreen(
     val quiet_hours_locked = plan_vm.is_feature_locked("has_quiet_hours") && !plan_state.is_loading
 
     LaunchedEffect(Unit) { vm.load_preferences() }
+    LaunchedEffect(Unit) { vm.load_product_updates() }
 
     val prefs_seeded = prefs != null && state.preferences_authoritative
     var push by remember(prefs_seeded) { mutableStateOf(prefs?.push_notifications ?: true) }
@@ -252,6 +253,12 @@ fun NotificationsScreen(
                 switch_row(stringResource(R.string.replies), null, replies) { replies = it; save_trigger++ }
                 AsterDivider(modifier = Modifier)
                 switch_row(stringResource(R.string.mentions), null, mentions) { mentions = it; save_trigger++ }
+                AsterDivider(modifier = Modifier)
+                switch_row(
+                    stringResource(R.string.product_updates),
+                    stringResource(R.string.product_updates_subtitle),
+                    state.product_updates,
+                ) { vm.set_product_updates(it) }
             }
             v_gap(AsterSpacing.lg)
             section_label(stringResource(R.string.quiet_hours))
