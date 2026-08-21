@@ -2786,6 +2786,12 @@
     <string name="link_device_error_unavailable">La vinculación de dispositivos no está disponible ahora mismo. Inténtalo más tarde.</string>
     <string name="link_device_error_failed">No se pudo vincular el dispositivo. Inténtalo de nuevo.</string>
     <string name="alias_locked_title">Bloqueado por un cambio de contraseña</string>
-    <string name="alias_locked_body">Este alias sigue recibiendo correo, pero sus datos están cifrados con tu contraseña anterior. No puedes cambiarle el nombre ni enviar desde él. Elimínalo y crea un alias nuevo para enviar con ese nombre.</string>
+    <string name="alias_locked_body">Este alias sigue recibiendo correo, pero su etiqueta se cifró con tu contraseña anterior, así que este dispositivo no puede leerla. Si recuerdas la dirección, puedes restaurar la etiqueta.</string>
+    <string name="alias_restore_action">Restaurar este alias</string>
+    <string name="alias_restore_prompt">Escribe la dirección. Aster la compara con este alias antes de restaurar la etiqueta.</string>
+    <string name="alias_restore_placeholder">Dirección</string>
+    <string name="alias_restore_confirm">Restaurar</string>
+    <string name="alias_restore_mismatch">Esa dirección no coincide con este alias. Consulta el encabezado de un mensaje que haya entregado.</string>
+    <string name="alias_restore_failed">El alias no se restauró. Vuelve a intentarlo.</string>
     <string name="password_change_web_required">Para cambiar la contraseña de esta cuenta, usa la app web de Aster Mail.</string>
 </resources>

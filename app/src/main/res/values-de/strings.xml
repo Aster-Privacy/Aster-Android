@@ -2786,6 +2786,12 @@
     <string name="link_device_error_unavailable">Das Verknüpfen von Geräten ist derzeit nicht verfügbar. Versuche es später erneut.</string>
     <string name="link_device_error_failed">Das Gerät konnte nicht verknüpft werden. Versuche es erneut.</string>
     <string name="alias_locked_title">Durch eine Passwortänderung gesperrt</string>
-    <string name="alias_locked_body">Dieser Alias empfängt weiterhin E-Mails, seine Details sind aber mit deinem vorherigen Passwort verschlüsselt. Du kannst ihn weder umbenennen noch darüber senden. Lösche ihn und erstelle einen neuen Alias, um über diesen Namen zu senden.</string>
+    <string name="alias_locked_body">Dieser Alias empfängt weiterhin E-Mails, seine Bezeichnung wurde aber mit deinem vorherigen Passwort verschlüsselt, daher kann dieses Gerät sie nicht lesen. Wenn du die Adresse noch weißt, kannst du die Bezeichnung wiederherstellen.</string>
+    <string name="alias_restore_action">Alias wiederherstellen</string>
+    <string name="alias_restore_prompt">Gib die Adresse ein. Aster gleicht sie mit diesem Alias ab, bevor die Bezeichnung wiederhergestellt wird.</string>
+    <string name="alias_restore_placeholder">Adresse</string>
+    <string name="alias_restore_confirm">Wiederherstellen</string>
+    <string name="alias_restore_mismatch">Diese Adresse passt nicht zu diesem Alias. Sieh in der Kopfzeile einer zugestellten Nachricht nach.</string>
+    <string name="alias_restore_failed">Der Alias wurde nicht wiederhergestellt. Versuch es noch einmal.</string>
     <string name="password_change_web_required">Um das Passwort für dieses Konto zu ändern, verwende die Aster Mail Web-App.</string>
 </resources>

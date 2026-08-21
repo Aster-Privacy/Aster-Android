@@ -2817,6 +2817,12 @@
     <string name="link_device_error_unavailable">ربط الأجهزة غير متاح حاليًا. أعد المحاولة لاحقًا.</string>
     <string name="link_device_error_failed">تعذّر ربط الجهاز. أعد المحاولة.</string>
     <string name="alias_locked_title">مقفل بسبب تغيير كلمة المرور</string>
-    <string name="alias_locked_body">لا يزال هذا الاسم المستعار يستقبل البريد، لكن تفاصيله مشفّرة بكلمة المرور السابقة. لا يمكنك إعادة تسميته أو الإرسال منه. احذفه وأنشئ اسمًا مستعارًا جديدًا للإرسال بهذا الاسم.</string>
+    <string name="alias_locked_body">لا يزال هذا الاسم المستعار يستقبل البريد، لكن تم تشفير تسميته بكلمة المرور السابقة، لذا لا يستطيع هذا الجهاز قراءتها. إذا كنت تتذكر العنوان، يمكنك استعادة التسمية.</string>
+    <string name="alias_restore_action">استعادة هذا الاسم المستعار</string>
+    <string name="alias_restore_prompt">أدخل العنوان. يطابقه Aster مع هذا الاسم المستعار قبل استعادة التسمية.</string>
+    <string name="alias_restore_placeholder">العنوان</string>
+    <string name="alias_restore_confirm">استعادة</string>
+    <string name="alias_restore_mismatch">هذا العنوان لا يطابق الاسم المستعار. تحقق من ترويسة رسالة تم تسليمها.</string>
+    <string name="alias_restore_failed">تعذّرت استعادة الاسم المستعار. حاول مرة أخرى.</string>
     <string name="password_change_web_required">لتغيير كلمة المرور لهذا الحساب، استخدم تطبيق الويب Aster Mail.</string>
 </resources>

@@ -2801,6 +2801,12 @@
     <string name="link_device_error_unavailable">Привязка устройств сейчас недоступна. Повторите попытку позже.</string>
     <string name="link_device_error_failed">Не удалось привязать устройство. Повторите попытку.</string>
     <string name="alias_locked_title">Заблокирован из-за смены пароля</string>
-    <string name="alias_locked_body">Этот псевдоним по-прежнему получает почту, но его данные зашифрованы прежним паролем. Переименовать его и отправлять с него нельзя. Удалите его и создайте новый псевдоним, чтобы отправлять письма с этого имени.</string>
+    <string name="alias_locked_body">Этот псевдоним по-прежнему получает почту, но его название зашифровано прежним паролем, поэтому это устройство не может его прочитать. Если вы помните адрес, название можно восстановить.</string>
+    <string name="alias_restore_action">Восстановить псевдоним</string>
+    <string name="alias_restore_prompt">Введите адрес. Aster сверит его с этим псевдонимом, прежде чем восстановить название.</string>
+    <string name="alias_restore_placeholder">Адрес</string>
+    <string name="alias_restore_confirm">Восстановить</string>
+    <string name="alias_restore_mismatch">Этот адрес не совпадает с псевдонимом. Проверьте заголовок доставленного сообщения.</string>
+    <string name="alias_restore_failed">Не удалось восстановить псевдоним. Повторите попытку.</string>
     <string name="password_change_web_required">Чтобы изменить пароль этой учётной записи, используйте веб-приложение Aster Mail.</string>
 </resources>

@@ -2785,6 +2785,12 @@
     <string name="link_device_error_unavailable">Cihaz bağlama şu anda kullanılamıyor. Daha sonra yeniden dene.</string>
     <string name="link_device_error_failed">Cihaz bağlanamadı. Yeniden dene.</string>
     <string name="alias_locked_title">Parola değişikliği nedeniyle kilitli</string>
-    <string name="alias_locked_body">Bu takma ad posta almaya devam ediyor, ancak bilgileri önceki parolanızla şifrelenmiş. Adını değiştiremez ve buradan gönderemezsiniz. Bu takma adı silin ve o adla göndermek için yeni bir takma ad oluşturun.</string>
+    <string name="alias_locked_body">Bu takma ad posta almaya devam ediyor, ancak etiketi önceki parolanızla şifrelendiği için bu cihaz etiketi okuyamıyor. Adresi hatırlıyorsanız etiketi geri getirebilirsiniz.</string>
+    <string name="alias_restore_action">Bu takma adı geri getir</string>
+    <string name="alias_restore_prompt">Adresi yazın. Aster, etiketi geri getirmeden önce bu takma adla karşılaştırır.</string>
+    <string name="alias_restore_placeholder">Adres</string>
+    <string name="alias_restore_confirm">Geri getir</string>
+    <string name="alias_restore_mismatch">Bu adres takma adla eşleşmiyor. Gelen bir iletinin başlığını kontrol edin.</string>
+    <string name="alias_restore_failed">Takma ad geri getirilemedi. Yeniden deneyin.</string>
     <string name="password_change_web_required">Bu hesabın parolasını değiştirmek için Aster Mail web uygulamasını kullanın.</string>
 </resources>

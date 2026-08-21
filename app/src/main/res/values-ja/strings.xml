@@ -2777,6 +2777,12 @@
     <string name="link_device_error_unavailable">現在、デバイスのリンクを利用できません。あとでやり直してください。</string>
     <string name="link_device_error_failed">デバイスをリンクできませんでした。やり直してください。</string>
     <string name="alias_locked_title">パスワードの変更によりロックされています</string>
-    <string name="alias_locked_body">このエイリアスは引き続きメールを受信しますが、詳細情報は以前のパスワードで暗号化されています。名前の変更も、このエイリアスからの送信もできません。削除して新しいエイリアスを作成すると、その名前で送信できます。</string>
+    <string name="alias_locked_body">このエイリアスは引き続きメールを受信しますが、ラベルは以前のパスワードで暗号化されているため、この端末では読み取れません。アドレスを覚えていれば、ラベルを復元できます。</string>
+    <string name="alias_restore_action">このエイリアスを復元</string>
+    <string name="alias_restore_prompt">アドレスを入力してください。Aster がこのエイリアスと照合してからラベルを復元します。</string>
+    <string name="alias_restore_placeholder">アドレス</string>
+    <string name="alias_restore_confirm">復元</string>
+    <string name="alias_restore_mismatch">このアドレスはエイリアスと一致しません。届いたメッセージのヘッダーを確認してください。</string>
+    <string name="alias_restore_failed">エイリアスを復元できませんでした。もう一度お試しください。</string>
     <string name="password_change_web_required">このアカウントのパスワードを変更するには、Aster Mail の Web アプリを使用してください。</string>
 </resources>

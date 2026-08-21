@@ -173,6 +173,8 @@ data class AliasInfo(
     val websites_nonce: String? = null,
     val websites: List<String> = emptyList(),
     val alias_address_hash: String = "",
+    val routing_address_hash: String = "",
+    val orphaned_by_key_rotation: Boolean = false,
     val domain: String = "",
     val is_enabled: Boolean = true,
     val is_random: Boolean = false,
@@ -190,6 +192,26 @@ data class AliasInfo(
         else -> id
     }
 }
+
+@Serializable
+data class RekeyAliasEntry(
+    val id: String,
+    val encrypted_local_part: String,
+    val local_part_nonce: String,
+    val alias_address_hash: String,
+)
+
+@Serializable
+data class RekeyAliasesRequest(
+    val re_encrypted_aliases: List<RekeyAliasEntry> = emptyList(),
+)
+
+@Serializable
+data class RekeyAliasesResponse(
+    val success: Boolean = false,
+    val aliases_updated: Int = 0,
+    val contacts_updated: Int = 0,
+)
 
 @Serializable
 data class AliasListResponse(
@@ -590,6 +612,7 @@ interface SettingsApi {
     suspend fun allow_sender(request: AllowSenderRequest)
     suspend fun remove_allowed_sender(sender_token: String)
     suspend fun list_aliases(limit: Int = 100, offset: Int = 0): AliasListResponse
+    suspend fun rekey_aliases(request: RekeyAliasesRequest): RekeyAliasesResponse
     suspend fun delete_alias(alias_id: String)
     suspend fun list_deleted_aliases(): ListDeletedAliasesResponse
     suspend fun restore_deleted_alias(deleted_id: String)
@@ -754,6 +777,15 @@ class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
         if (response.status.value !in 200..299) {
             throw client.map_http_status(response.status.value, "")
         }
+    }
+
+    override suspend fun rekey_aliases(request: RekeyAliasesRequest): RekeyAliasesResponse {
+        val response = client.http.post("${client.base_url}$auth_base/me/rekey") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
     }
 
     override suspend fun list_aliases(limit: Int, offset: Int): AliasListResponse {

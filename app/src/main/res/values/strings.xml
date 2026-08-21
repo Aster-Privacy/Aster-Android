@@ -2871,6 +2871,12 @@
     <string name="link_device_error_unavailable">Device linking is unavailable right now. Try again later.</string>
     <string name="link_device_error_failed">The device could not be linked. Try again.</string>
     <string name="alias_locked_title">Locked by a password change</string>
-    <string name="alias_locked_body">This alias still receives mail, but its details were encrypted with your previous password. You can’t rename it or send from it. Delete it and create a new alias to send from that name.</string>
+    <string name="alias_locked_body">This alias still receives mail, but its label was encrypted with your previous password, so this device can’t read it. If you remember the address, you can restore the label.</string>
+    <string name="alias_restore_action">Restore this alias</string>
+    <string name="alias_restore_prompt">Enter the address. Aster checks it against this alias before restoring the label.</string>
+    <string name="alias_restore_placeholder">Address</string>
+    <string name="alias_restore_confirm">Restore</string>
+    <string name="alias_restore_mismatch">That address doesn’t match this alias. Check the header of a message it delivered.</string>
+    <string name="alias_restore_failed">The alias didn’t restore. Another attempt should do it.</string>
     <string name="password_change_web_required">To change your password for this account, use the Aster Mail web app.</string>
 </resources>

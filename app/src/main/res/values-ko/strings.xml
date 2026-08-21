@@ -2777,6 +2777,12 @@
     <string name="link_device_error_unavailable">지금은 기기를 연결할 수 없습니다. 나중에 다시 시도하세요.</string>
     <string name="link_device_error_failed">기기를 연결하지 못했습니다. 다시 시도하세요.</string>
     <string name="alias_locked_title">비밀번호 변경으로 잠김</string>
-    <string name="alias_locked_body">이 별칭은 계속 메일을 받지만 세부 정보가 이전 비밀번호로 암호화되어 있습니다. 이름을 바꾸거나 이 별칭으로 보낼 수 없습니다. 삭제한 다음 새 별칭을 만들어 그 이름으로 보내세요.</string>
+    <string name="alias_locked_body">이 별칭은 계속 메일을 받지만 라벨이 이전 비밀번호로 암호화되어 있어 이 기기에서는 읽을 수 없습니다. 주소를 기억한다면 라벨을 복원할 수 있습니다.</string>
+    <string name="alias_restore_action">이 별칭 복원</string>
+    <string name="alias_restore_prompt">주소를 입력하세요. Aster가 이 별칭과 대조한 다음 라벨을 복원합니다.</string>
+    <string name="alias_restore_placeholder">주소</string>
+    <string name="alias_restore_confirm">복원</string>
+    <string name="alias_restore_mismatch">이 주소는 별칭과 일치하지 않습니다. 도착한 메시지의 헤더를 확인하세요.</string>
+    <string name="alias_restore_failed">별칭을 복원하지 못했습니다. 다시 시도해 주세요.</string>
     <string name="password_change_web_required">이 계정의 비밀번호를 변경하려면 Aster Mail 웹 앱을 사용하세요.</string>
 </resources>

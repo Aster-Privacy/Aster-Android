@@ -535,6 +535,7 @@ private fun aliases_tab(
                             }
                         },
                         on_edit_note = { note_editing = alias.id to (alias.encrypted_note ?: "") },
+                        on_restore = { claimed -> vm.restore_orphaned_alias(alias.id, claimed) },
                         expanded = expanded,
                         on_toggle_expanded = { vm.toggle_alias_expanded(alias.id) },
                         panel_content = {
@@ -818,6 +819,7 @@ internal fun alias_list_row(
     on_toggle: () -> Unit,
     on_delete: () -> Unit,
     on_edit_note: (() -> Unit)? = null,
+    on_restore: (suspend (String) -> SettingsViewModel.AliasRestoreResult)? = null,
     delivery_folder_name: String? = null,
     expanded: Boolean = false,
     on_toggle_expanded: (() -> Unit)? = null,
@@ -873,6 +875,9 @@ internal fun alias_list_row(
                         fontSize = 11.sp,
                         lineHeight = 15.sp,
                     )
+                    if (on_restore != null && alias.routing_address_hash.isNotBlank()) {
+                        alias_restore_section(alias = alias, on_restore = on_restore)
+                    }
                 } else {
                     val display_name_val = alias.encrypted_display_name
                     if (!display_name_val.isNullOrBlank()) {
@@ -948,6 +953,84 @@ internal fun alias_list_row(
                 panel_content()
             }
         }
+    }
+}
+
+@Composable
+private fun alias_restore_section(
+    alias: org.astermail.android.api.settings.AliasInfo,
+    on_restore: suspend (String) -> SettingsViewModel.AliasRestoreResult,
+) {
+    val colors = AsterMaterial.colors
+    val scope = rememberCoroutineScope()
+    var open by remember(alias.id) { mutableStateOf(false) }
+    var claimed_local_part by remember(alias.id) { mutableStateOf("") }
+    var restoring by remember(alias.id) { mutableStateOf(false) }
+    var restore_error by remember(alias.id) { mutableStateOf<String?>(null) }
+    val mismatch_text = stringResource(R.string.alias_restore_mismatch)
+    val failed_text = stringResource(R.string.alias_restore_failed)
+
+    Spacer(Modifier.height(AsterSpacing.sm))
+    if (!open) {
+        AsterGhostButton(
+            label = stringResource(R.string.alias_restore_action),
+            onClick = { open = true },
+            modifier = Modifier.testTag("alias_restore_open_${alias.id}"),
+        )
+        return
+    }
+    Text(
+        text = stringResource(R.string.alias_restore_prompt),
+        color = colors.text_tertiary,
+        fontSize = 11.sp,
+        lineHeight = 15.sp,
+    )
+    Spacer(Modifier.height(AsterSpacing.sm))
+    AsterTextField(
+        value = claimed_local_part,
+        onValueChange = {
+            claimed_local_part = it.substringBefore("@").trim().lowercase()
+            restore_error = null
+        },
+        label = stringResource(R.string.alias_restore_placeholder),
+        placeholder = "name@${alias.domain}",
+        singleLine = true,
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("alias_restore_input_${alias.id}"),
+    )
+    Spacer(Modifier.height(AsterSpacing.sm))
+    AsterButton(
+        label = stringResource(R.string.alias_restore_confirm),
+        onClick = {
+            if (restoring || claimed_local_part.isBlank()) return@AsterButton
+            scope.launch {
+                restoring = true
+                restore_error = null
+                when (val outcome = on_restore(claimed_local_part)) {
+                    is SettingsViewModel.AliasRestoreResult.Restored -> open = false
+                    is SettingsViewModel.AliasRestoreResult.AddressMismatch ->
+                        restore_error = mismatch_text
+                    is SettingsViewModel.AliasRestoreResult.Unverifiable ->
+                        restore_error = failed_text
+                    is SettingsViewModel.AliasRestoreResult.Failed ->
+                        restore_error = outcome.message.ifBlank { failed_text }
+                }
+                restoring = false
+            }
+        },
+        enabled = !restoring && claimed_local_part.isNotBlank(),
+        is_loading = restoring,
+        modifier = Modifier.testTag("alias_restore_confirm_${alias.id}"),
+    )
+    restore_error?.let { message ->
+        Spacer(Modifier.height(AsterSpacing.xs))
+        Text(
+            text = message,
+            color = colors.danger,
+            fontSize = 11.sp,
+            lineHeight = 15.sp,
+        )
     }
 }
 

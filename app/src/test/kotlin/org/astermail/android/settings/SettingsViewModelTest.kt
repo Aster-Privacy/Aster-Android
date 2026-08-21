@@ -734,6 +734,83 @@ class SettingsViewModelTest {
         assertEquals(1, vm.state.value.aliases.size)
     }
 
+    private fun routing_hash_of(address: String): String =
+        java.util.Base64.getEncoder().encodeToString(
+            java.security.MessageDigest.getInstance("SHA-256")
+                .digest(address.toByteArray(Charsets.UTF_8)),
+        )
+
+    private fun orphaned_alias(routing_hash: String): AliasInfo = AliasInfo(
+        id = "a1",
+        encrypted_local_part = java.util.Base64.getEncoder().encodeToString(ByteArray(24) { 7 }),
+        local_part_nonce = java.util.Base64.getEncoder().encodeToString(ByteArray(12) { 3 }),
+        routing_address_hash = routing_hash,
+        orphaned_by_key_rotation = true,
+        domain = "astermail.org",
+    )
+
+    @Test
+    fun `restore_orphaned_alias re-encrypts the label when the address matches`() = runTest {
+        val alias = orphaned_alias(routing_hash_of("spamme@astermail.org"))
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns
+            AliasListResponse(listOf(alias))
+        coEvery { settings_api.rekey_aliases(any()) } returns
+            org.astermail.android.api.settings.RekeyAliasesResponse(success = true, aliases_updated = 1)
+        every { session_key_store.get_identity_key() } returns null
+
+        vm.load_aliases()
+        advanceUntilIdle()
+        assertTrue(vm.state.value.aliases.first().decryption_failed)
+        assertTrue(vm.alias_is_restorable(vm.state.value.aliases.first()))
+
+        val outcome = vm.restore_orphaned_alias("a1", " SpamMe ")
+        advanceUntilIdle()
+
+        assertEquals(SettingsViewModel.AliasRestoreResult.Restored, outcome)
+        val request = io.mockk.slot<org.astermail.android.api.settings.RekeyAliasesRequest>()
+        coVerify { settings_api.rekey_aliases(capture(request)) }
+        val entry = request.captured.re_encrypted_aliases.single()
+        assertEquals("a1", entry.id)
+        assertTrue(entry.encrypted_local_part.isNotBlank())
+        assertTrue(entry.local_part_nonce.isNotBlank())
+        assertTrue(entry.alias_address_hash.isNotBlank())
+    }
+
+    @Test
+    fun `restore_orphaned_alias rejects an address that does not match`() = runTest {
+        val alias = orphaned_alias(routing_hash_of("spamme@astermail.org"))
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns
+            AliasListResponse(listOf(alias))
+        every { session_key_store.get_identity_key() } returns null
+
+        vm.load_aliases()
+        advanceUntilIdle()
+
+        val outcome = vm.restore_orphaned_alias("a1", "notmine")
+        advanceUntilIdle()
+
+        assertEquals(SettingsViewModel.AliasRestoreResult.AddressMismatch, outcome)
+        coVerify(exactly = 0) { settings_api.rekey_aliases(any()) }
+    }
+
+    @Test
+    fun `restore_orphaned_alias needs a routing hash from the server`() = runTest {
+        val alias = orphaned_alias("")
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns
+            AliasListResponse(listOf(alias))
+        every { session_key_store.get_identity_key() } returns null
+
+        vm.load_aliases()
+        advanceUntilIdle()
+        assertFalse(vm.alias_is_restorable(vm.state.value.aliases.first()))
+
+        val outcome = vm.restore_orphaned_alias("a1", "spamme")
+        advanceUntilIdle()
+
+        assertEquals(SettingsViewModel.AliasRestoreResult.Unverifiable, outcome)
+        coVerify(exactly = 0) { settings_api.rekey_aliases(any()) }
+    }
+
     @Test
     fun `delete_alias removes from list`() = runTest {
         val aliases = listOf(

@@ -128,6 +128,8 @@ import org.astermail.android.api.settings.BulkCreateAliasItem
 import org.astermail.android.api.settings.BulkCreateAliasRequest
 import org.astermail.android.api.settings.BlockedSenderInfo
 import org.astermail.android.api.settings.CheckAliasAvailabilityRequest
+import org.astermail.android.api.settings.RekeyAliasEntry
+import org.astermail.android.api.settings.RekeyAliasesRequest
 import org.astermail.android.api.settings.CreateAliasRequest
 import org.astermail.android.api.settings.CreateDirectoryRequest
 import org.astermail.android.api.settings.CreateDomainAddressRequest
@@ -2291,6 +2293,53 @@ class SettingsViewModel @Inject constructor(
         val remaining = millis - System.currentTimeMillis()
         if (remaining <= 0) return null
         return ((remaining + 59_999) / 60_000).toInt()
+    }
+
+    sealed class AliasRestoreResult {
+        object Restored : AliasRestoreResult()
+        object AddressMismatch : AliasRestoreResult()
+        object Unverifiable : AliasRestoreResult()
+        data class Failed(val message: String) : AliasRestoreResult()
+    }
+
+    fun alias_is_restorable(alias: AliasInfo): Boolean =
+        alias.decryption_failed && alias.routing_address_hash.isNotBlank()
+
+    suspend fun restore_orphaned_alias(alias_id: String, claimed_local_part: String): AliasRestoreResult {
+        val alias = _state.value.aliases.firstOrNull { it.id == alias_id }
+            ?: return AliasRestoreResult.Unverifiable
+        if (alias.routing_address_hash.isBlank()) return AliasRestoreResult.Unverifiable
+        val local_part = claimed_local_part.trim().lowercase()
+        if (local_part.isBlank()) return AliasRestoreResult.AddressMismatch
+        return try {
+            withContext(default_dispatcher) {
+                val routing_hash = compute_routing_address_hash(local_part, alias.domain)
+                if (routing_hash != alias.routing_address_hash) {
+                    return@withContext AliasRestoreResult.AddressMismatch
+                }
+                val address_hash = compute_alias_address_hash(local_part, alias.domain)
+                val (ciphertext, nonce) = encrypt_alias_field(local_part)
+                val response = settings_api.rekey_aliases(
+                    RekeyAliasesRequest(
+                        re_encrypted_aliases = listOf(
+                            RekeyAliasEntry(
+                                id = alias.id,
+                                encrypted_local_part = ciphertext,
+                                local_part_nonce = nonce,
+                                alias_address_hash = address_hash,
+                            )
+                        )
+                    )
+                )
+                if (!response.success) {
+                    AliasRestoreResult.Failed(user_facing_error(IllegalStateException("rekey rejected")))
+                } else {
+                    AliasRestoreResult.Restored
+                }
+            }.also { if (it is AliasRestoreResult.Restored) load_aliases(force = true) }
+        } catch (t: Throwable) {
+            AliasRestoreResult.Failed(user_facing_error(t))
+        }
     }
 
     sealed class AliasAvailability {

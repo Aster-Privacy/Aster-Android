@@ -2777,6 +2777,12 @@
     <string name="link_device_error_unavailable">目前无法关联设备。请稍后再试。</string>
     <string name="link_device_error_failed">无法关联该设备。请重试。</string>
     <string name="alias_locked_title">因更改密码而锁定</string>
-    <string name="alias_locked_body">此别名仍可接收邮件，但其详细信息使用你以前的密码加密。你无法重命名该别名，也无法用它发送邮件。删除它并创建新别名，即可用该名称发送邮件。</string>
+    <string name="alias_locked_body">此别名仍可接收邮件，但它的标签使用你以前的密码加密，因此本设备无法读取。如果你还记得该地址，可以恢复标签。</string>
+    <string name="alias_restore_action">恢复此别名</string>
+    <string name="alias_restore_prompt">输入地址。Aster 会先与此别名核对，然后恢复标签。</string>
+    <string name="alias_restore_placeholder">地址</string>
+    <string name="alias_restore_confirm">恢复</string>
+    <string name="alias_restore_mismatch">该地址与此别名不符。请查看已送达邮件的标头。</string>
+    <string name="alias_restore_failed">别名未能恢复。请再试一次。</string>
     <string name="password_change_web_required">若要更改此账户的密码，请使用 Aster Mail 网页版应用。</string>
 </resources>

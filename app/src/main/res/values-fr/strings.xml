@@ -2813,6 +2813,12 @@
     <string name="link_device_error_unavailable">L\'association d\'appareils est indisponible pour le moment. Réessaie plus tard.</string>
     <string name="link_device_error_failed">L\'appareil n\'a pas pu être associé. Réessaie.</string>
     <string name="alias_locked_title">Verrouillé par un changement de mot de passe</string>
-    <string name="alias_locked_body">Cet alias reçoit toujours des messages, mais ses informations sont chiffrées avec votre ancien mot de passe. Vous ne pouvez ni le renommer ni envoyer depuis celui-ci. Supprimez-le et créez un nouvel alias pour envoyer sous ce nom.</string>
+    <string name="alias_locked_body">Cet alias reçoit toujours des messages, mais son libellé a été chiffré avec votre mot de passe précédent, cet appareil ne peut donc pas le lire. Si vous vous souvenez de l’adresse, vous pouvez restaurer le libellé.</string>
+    <string name="alias_restore_action">Restaurer cet alias</string>
+    <string name="alias_restore_prompt">Saisissez l’adresse. Aster la compare à cet alias avant de restaurer le libellé.</string>
+    <string name="alias_restore_placeholder">Adresse</string>
+    <string name="alias_restore_confirm">Restaurer</string>
+    <string name="alias_restore_mismatch">Cette adresse ne correspond pas à cet alias. Consultez l’en-tête d’un message qu’il a distribué.</string>
+    <string name="alias_restore_failed">L’alias n’a pas été restauré. Réessayez.</string>
     <string name="password_change_web_required">Pour changer le mot de passe de ce compte, utilisez l’application web Aster Mail.</string>
 </resources>

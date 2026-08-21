@@ -2801,6 +2801,12 @@
     <string name="link_device_error_unavailable">Łączenie urządzeń jest teraz niedostępne. Spróbuj później.</string>
     <string name="link_device_error_failed">Nie udało się połączyć urządzenia. Spróbuj ponownie.</string>
     <string name="alias_locked_title">Zablokowany przez zmianę hasła</string>
-    <string name="alias_locked_body">Ten alias nadal odbiera pocztę, ale jego dane są zaszyfrowane poprzednim hasłem. Nie możesz zmienić jego nazwy ani wysyłać z niego wiadomości. Usuń go i utwórz nowy alias, aby wysyłać z tej nazwy.</string>
+    <string name="alias_locked_body">Ten alias nadal odbiera pocztę, ale jego etykieta została zaszyfrowana poprzednim hasłem, więc to urządzenie nie może jej odczytać. Jeśli pamiętasz adres, możesz odzyskać etykietę.</string>
+    <string name="alias_restore_action">Odzyskaj ten alias</string>
+    <string name="alias_restore_prompt">Wpisz adres. Aster porówna go z tym aliasem przed odzyskaniem etykiety.</string>
+    <string name="alias_restore_placeholder">Adres</string>
+    <string name="alias_restore_confirm">Odzyskaj</string>
+    <string name="alias_restore_mismatch">Ten adres nie pasuje do tego aliasu. Sprawdź nagłówek dostarczonej wiadomości.</string>
+    <string name="alias_restore_failed">Nie udało się odzyskać aliasu. Spróbuj ponownie.</string>
     <string name="password_change_web_required">Aby zmienić hasło do tego konta, użyj aplikacji internetowej Aster Mail.</string>
 </resources>

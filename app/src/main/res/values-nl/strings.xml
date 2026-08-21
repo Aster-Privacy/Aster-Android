@@ -2785,6 +2785,12 @@
     <string name="link_device_error_unavailable">Apparaten koppelen is nu niet beschikbaar. Probeer het later opnieuw.</string>
     <string name="link_device_error_failed">Het apparaat kon niet worden gekoppeld. Probeer het opnieuw.</string>
     <string name="alias_locked_title">Vergrendeld door een wachtwoordwijziging</string>
-    <string name="alias_locked_body">Deze alias ontvangt nog steeds e-mail, maar de gegevens zijn versleuteld met je vorige wachtwoord. Je kunt de alias niet hernoemen en er niet vanaf verzenden. Verwijder de alias en maak een nieuwe aan om vanaf die naam te verzenden.</string>
+    <string name="alias_locked_body">Deze alias ontvangt nog steeds e-mail, maar het label is versleuteld met je vorige wachtwoord, dus dit apparaat kan het niet lezen. Als je het adres nog weet, kun je het label herstellen.</string>
+    <string name="alias_restore_action">Deze alias herstellen</string>
+    <string name="alias_restore_prompt">Voer het adres in. Aster vergelijkt het met deze alias voordat het label wordt hersteld.</string>
+    <string name="alias_restore_placeholder">Adres</string>
+    <string name="alias_restore_confirm">Herstellen</string>
+    <string name="alias_restore_mismatch">Dit adres komt niet overeen met deze alias. Kijk in de header van een bezorgd bericht.</string>
+    <string name="alias_restore_failed">De alias is niet hersteld. Probeer het opnieuw.</string>
     <string name="password_change_web_required">Gebruik de Aster Mail-webapp om het wachtwoord van dit account te wijzigen.</string>
 </resources>
