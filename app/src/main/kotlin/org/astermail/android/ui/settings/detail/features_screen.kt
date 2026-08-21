@@ -107,7 +107,7 @@ private fun build_features(): List<feature_row> = listOf(
     category(R.string.settings_cat_storage_limits),
     row(R.string.settings_feat_secure_storage, gb(10), gb(50), gb(500), tb(5)),
     row(R.string.settings_feat_max_attachment, mb(25), mb(50), mb(100), mb(250)),
-    row(R.string.settings_feat_daily_send, emails(200), emails(2000), emails(2000), emails(2000)),
+    row(R.string.settings_feat_daily_send, emails(200), emails(1000), emails(1000), emails(1000)),
     row(R.string.settings_feat_email_retention, unlimited, unlimited, unlimited, unlimited),
 
     category(R.string.settings_cat_email_features),
