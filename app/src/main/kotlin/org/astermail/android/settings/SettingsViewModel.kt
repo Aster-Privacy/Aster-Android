@@ -238,6 +238,7 @@ data class SettingsUiState(
     val connection_loading: Boolean = false,
     val connection_saving: Boolean = false,
     val product_updates: Boolean = true,
+    val product_updates_available: Boolean = false,
 )
 
 enum class SaveStatus { IDLE, SAVING, SAVED, ERROR }
@@ -553,7 +554,10 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val response = preferences_api.get_product_updates()
-                _state.value = _state.value.copy(product_updates = response.subscribed)
+                _state.value = _state.value.copy(
+                    product_updates = response.subscribed,
+                    product_updates_available = true,
+                )
             } catch (t: Throwable) {
                 last_product_updates_load_ms = 0L
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_product_updates", t)

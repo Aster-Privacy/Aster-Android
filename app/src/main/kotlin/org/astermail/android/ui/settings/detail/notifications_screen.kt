@@ -253,12 +253,14 @@ fun NotificationsScreen(
                 switch_row(stringResource(R.string.replies), null, replies) { replies = it; save_trigger++ }
                 AsterDivider(modifier = Modifier)
                 switch_row(stringResource(R.string.mentions), null, mentions) { mentions = it; save_trigger++ }
-                AsterDivider(modifier = Modifier)
-                switch_row(
-                    stringResource(R.string.product_updates),
-                    stringResource(R.string.product_updates_subtitle),
-                    state.product_updates,
-                ) { vm.set_product_updates(it) }
+                if (state.product_updates_available) {
+                    AsterDivider(modifier = Modifier)
+                    switch_row(
+                        stringResource(R.string.product_updates),
+                        stringResource(R.string.product_updates_subtitle),
+                        state.product_updates,
+                    ) { vm.set_product_updates(it) }
+                }
             }
             v_gap(AsterSpacing.lg)
             section_label(stringResource(R.string.quiet_hours))
