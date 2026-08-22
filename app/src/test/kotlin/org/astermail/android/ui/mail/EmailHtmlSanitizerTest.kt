@@ -304,4 +304,35 @@ class EmailHtmlSanitizerTest {
         assertEquals("evil.com", EmailHtmlSanitizer.url_host("https://user:pw@evil.com/path"))
         assertEquals("[::1]", EmailHtmlSanitizer.url_host("http://[::1]:9000/x"))
     }
+
+    @Test
+    fun repair_comment_markup_keeps_body_after_unterminated_conditional() {
+        val html = "<div>MID: 6425522</div>" +
+            "<!--[if mso]>" +
+            "<div><a href=\"https://my.account.sony.com/verify\">Verify Now</a></div>" +
+            "<div>You can review or update your registration details.</div>"
+
+        val repaired = EmailHtmlSanitizer.repair_comment_markup(html)
+
+        assertTrue(repaired.contains("Verify Now"))
+        assertTrue(repaired.contains("registration details"))
+        assertFalse(repaired.contains("[if mso]"))
+    }
+
+    @Test
+    fun repair_comment_markup_keeps_body_after_unterminated_plain_comment() {
+        val repaired = EmailHtmlSanitizer.repair_comment_markup("<p>before</p><!-- never closed<p>after</p>")
+
+        assertTrue(repaired.contains("after"))
+    }
+
+    @Test
+    fun repair_comment_markup_still_drops_a_well_formed_conditional() {
+        val repaired = EmailHtmlSanitizer.repair_comment_markup(
+            "<p>keep</p><!--[if mso]><p>drop</p><![endif]-->",
+        )
+
+        assertTrue(repaired.contains("keep"))
+        assertFalse(repaired.contains("drop"))
+    }
 }

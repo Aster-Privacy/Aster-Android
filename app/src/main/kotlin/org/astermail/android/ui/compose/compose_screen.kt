@@ -1973,7 +1973,11 @@ fun ComposeScreen(
                                 },
                                 update = { tv ->
                                     tv.text = android.text.Html.fromHtml(
-                                        STYLE_SCRIPT_TAG_RE.replace(quoted_html, ""),
+                                        STYLE_SCRIPT_TAG_RE.replace(
+                                            org.astermail.android.ui.mail.EmailHtmlSanitizer
+                                                .repair_comment_markup(quoted_html),
+                                            "",
+                                        ),
                                         android.text.Html.FROM_HTML_MODE_COMPACT,
                                     ).toString().trim()
                                 },
@@ -4029,7 +4033,8 @@ private fun build_quoted_body(
 ): String {
     val raw = msg.body_html ?: msg.body_text
     val plain_raw = if (raw.contains("<") && raw.contains(">")) {
-        val without_style_script = STYLE_SCRIPT_TAG_RE.replace(raw, "")
+        val repaired = org.astermail.android.ui.mail.EmailHtmlSanitizer.repair_comment_markup(raw)
+        val without_style_script = STYLE_SCRIPT_TAG_RE.replace(repaired, "")
         android.text.Html.fromHtml(without_style_script, android.text.Html.FROM_HTML_MODE_LEGACY).toString().trimEnd()
     } else raw
     val plain = strip_watermarks(plain_raw)
