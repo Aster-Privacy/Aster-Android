@@ -256,6 +256,7 @@ fun AliasesScreen(
                     restore_locked = alias_restore_locked,
                     export_locked = alias_export_locked,
                     instant_delete_locked = instant_alias_delete_locked,
+                    alias_limit = plan_state.limits?.limits?.get("max_email_aliases")?.limit,
                     on_upgrade = { on_open("billing") },
                 )
                 1 -> tab_scroll {
@@ -289,6 +290,7 @@ fun AliasesScreen(
                         state = state,
                         scope = scope,
                         locked = alias_directories_locked,
+                        required_plan_name = org.astermail.android.billing.plan_display_name(plan_state.plans, "nova"),
                         on_upgrade = { on_open("billing") },
                     )
                 }
@@ -398,6 +400,7 @@ private fun aliases_tab(
     restore_locked: Boolean = false,
     export_locked: Boolean = false,
     instant_delete_locked: Boolean = false,
+    alias_limit: Int? = null,
     on_upgrade: () -> Unit = {},
 ) {
     var pending_delete by remember { mutableStateOf<Pair<String, String>?>(null) }
@@ -447,6 +450,15 @@ private fun aliases_tab(
                     color = colors.text_tertiary,
                     fontSize = 13.sp,
                 )
+                if (org.astermail.android.billing.alias_upsell_due(state.aliases.size, alias_limit)) {
+                    Text(
+                        text = stringResource(R.string.alias_limit_upsell, state.aliases.size, alias_limit ?: 0),
+                        color = colors.accent_blue,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.clickable(onClick = on_upgrade),
+                    )
+                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     TextButton(onClick = { show_import = true }) {
                         Text(
@@ -1366,14 +1378,19 @@ private fun directories_tab(
     scope: kotlinx.coroutines.CoroutineScope,
     locked: Boolean = false,
     on_upgrade: () -> Unit = {},
+    required_plan_name: String? = null,
 ) {
     if (locked) {
+        val gate_plan = org.astermail.android.billing.required_plan_name(
+            required_plan_name,
+            stringResource(R.string.plan_name_nova),
+        )
         UpgradeGate(
             title = stringResource(R.string.alias_directories),
             description = stringResource(R.string.alias_directories_description),
-            plan_name = "Nova",
+            plan_name = gate_plan,
             on_upgrade = on_upgrade,
-            requires_label = stringResource(R.string.requires_plan, "Nova"),
+            requires_label = stringResource(R.string.requires_plan, gate_plan),
             button_label = stringResource(R.string.upgrade),
         )
         return

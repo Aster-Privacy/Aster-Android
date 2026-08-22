@@ -288,7 +288,7 @@ fun InboxScreen(
     val banner_context = LocalContext.current
     LaunchedEffect(billing_state.portal_url) {
         val url = billing_state.portal_url ?: return@LaunchedEffect
-        runCatching { banner_context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))) }
+        org.astermail.android.billing.open_billing_tab(banner_context, url)
         billing_vm.consume_portal_url()
     }
     val payment_failed_due = settings_state.subscription?.let { sub ->
@@ -300,6 +300,11 @@ fun InboxScreen(
         )
     }
     val show_payment_failed_banner = payment_failed_due != null
+    LaunchedEffect(Unit) { billing_vm.load_onboarding_checklist() }
+    val onboarding = billing_state.onboarding
+    val show_onboarding_checklist = onboarding != null &&
+        onboarding.dismissed_at == null &&
+        onboarding.tasks.values.any { !it }
     val prefetch_context = LocalContext.current
     val toast_context = LocalContext.current
 
@@ -1439,13 +1444,29 @@ fun InboxScreen(
                             },
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(top = header_height_dp, bottom = 96.dp + nav_bar_bottom),
                     ) {
+                        if (show_onboarding_checklist && !select_mode) {
+                            item(key = "_onboarding_checklist", contentType = "onboarding_checklist") {
+                                org.astermail.android.ui.common.onboarding_checklist_card(
+                                    tasks = onboarding?.tasks.orEmpty(),
+                                    on_open_settings = on_open_settings,
+                                    on_dismiss = { billing_vm.dismiss_onboarding_checklist() },
+                                    modifier = Modifier.padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.xs),
+                                )
+                            }
+                        }
                         if (show_payment_failed_banner && !select_mode) {
                             item(key = "_payment_failed_banner", contentType = "payment_failed_banner") {
                                 org.astermail.android.ui.common.payment_failed_banner(
                                     plan_name = settings_state.subscription?.effective_plan_name.orEmpty(),
                                     due_date = payment_failed_due.orEmpty(),
                                     is_loading = billing_state.is_acting && billing_state.acting_action == "portal",
-                                    on_update_card = { if (!billing_state.is_acting) billing_vm.open_portal() },
+                                    on_update_card = {
+                                        if (org.astermail.android.billing.is_crypto_provider(settings_state.subscription?.payment_provider)) {
+                                            org.astermail.android.billing.open_billing_in_app(banner_context)
+                                        } else if (!billing_state.is_acting) {
+                                            billing_vm.open_portal()
+                                        }
+                                    },
                                     modifier = Modifier.padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.xs),
                                     days_left = org.astermail.android.billing.payment_failed_days_left(
                                         payment_failed_due,
