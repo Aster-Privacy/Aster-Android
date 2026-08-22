@@ -66,6 +66,8 @@ data class SubscriptionResponse(
     val currency: String? = null,
     val payment_failed_at: String? = null,
     val grace_period_end: String? = null,
+    val payment_provider: String? = null,
+    val has_stripe_subscription: Boolean? = null,
 )
 
 @Serializable

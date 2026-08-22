@@ -22,6 +22,7 @@
 package org.astermail.android.billing
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.astermail.android.api.billing.AvailablePlan
@@ -131,5 +132,30 @@ class SubscriptionNoticesTest {
         assertEquals("$12.34", format_money(1234, "USD", java.util.Locale.US))
         assertTrue(format_money(1234, "usd", java.util.Locale.GERMANY).contains("12,34"))
         assertTrue(format_money(1234, "bogus", java.util.Locale.US).contains("12.34"))
+    }
+
+    @Test
+    fun `save offers only reach card paid subscriptions in good standing`() {
+        fun gate(
+            status: String? = "active",
+            payment_failed_at: String? = null,
+            grace_period_end: String? = null,
+            cancel_at_period_end: Boolean = false,
+            payment_provider: String? = "stripe",
+            has_stripe_subscription: Boolean? = true,
+            plan_code: String? = "nova",
+        ) = can_offer_save_offers(
+            plan_code, status, payment_failed_at, grace_period_end, cancel_at_period_end, payment_provider, has_stripe_subscription,
+        )
+        assertTrue(gate())
+        assertTrue(gate(status = "trialing", payment_provider = null, has_stripe_subscription = null))
+        assertFalse(gate(status = "past_due"))
+        assertFalse(gate(payment_failed_at = "2026-08-20T00:00:00Z"))
+        assertFalse(gate(grace_period_end = "2026-08-27"))
+        assertFalse(gate(cancel_at_period_end = true))
+        assertFalse(gate(payment_provider = "stripe_crypto"))
+        assertFalse(gate(payment_provider = "crypto_native"))
+        assertFalse(gate(has_stripe_subscription = false))
+        assertFalse(gate(plan_code = "free"))
     }
 }

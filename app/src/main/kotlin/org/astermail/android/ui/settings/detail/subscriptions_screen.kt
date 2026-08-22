@@ -361,9 +361,17 @@ fun SubscriptionsScreen(
     val api_monthly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, current_code, "month")
     val api_yearly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, current_code, "year")
     val yearly_savings = org.astermail.android.billing.yearly_savings_percent(api_monthly_cents, api_yearly_cents)
-    val offer_yearly_switch = current_code != "free" &&
-        sub?.effective_interval == "month" &&
-        sub.cancel_at_period_end != true &&
+    val save_offers_allowed = sub != null && org.astermail.android.billing.can_offer_save_offers(
+        plan_code = current_code,
+        status = sub.status,
+        payment_failed_at = sub.payment_failed_at,
+        grace_period_end = sub.grace_period_end,
+        cancel_at_period_end = sub.cancel_at_period_end,
+        payment_provider = sub.payment_provider,
+        has_stripe_subscription = sub.has_stripe_subscription,
+    )
+    val offer_yearly_switch = save_offers_allowed &&
+        current_interval == "month" &&
         yearly_savings != null &&
         api_yearly_cents != null
     val lapsed = if (sub != null) {

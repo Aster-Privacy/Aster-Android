@@ -28,6 +28,29 @@ import org.astermail.android.api.billing.AvailablePlan
 import org.astermail.android.api.billing.BillingHistoryItem
 
 private val ACTIVE_STATUSES = setOf("active", "trialing", "past_due")
+private val GOOD_STANDING_STATUSES = setOf("active", "trialing")
+private val CRYPTO_PROVIDERS = setOf("stripe_crypto", "crypto_native")
+
+fun is_crypto_provider(payment_provider: String?): Boolean =
+    payment_provider?.trim()?.lowercase() in CRYPTO_PROVIDERS
+
+fun can_offer_save_offers(
+    plan_code: String?,
+    status: String?,
+    payment_failed_at: String?,
+    grace_period_end: String?,
+    cancel_at_period_end: Boolean,
+    payment_provider: String?,
+    has_stripe_subscription: Boolean?,
+): Boolean {
+    if (plan_code.isNullOrBlank() || plan_code == "free") return false
+    if (status?.trim()?.lowercase() !in GOOD_STANDING_STATUSES) return false
+    if (!payment_failed_at.isNullOrBlank() || !grace_period_end.isNullOrBlank()) return false
+    if (cancel_at_period_end) return false
+    if (is_crypto_provider(payment_provider)) return false
+    if (has_stripe_subscription == false) return false
+    return true
+}
 
 object payment_failed_banner_session {
     var dismissed by mutableStateOf(false)
