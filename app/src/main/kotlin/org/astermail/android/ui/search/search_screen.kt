@@ -96,6 +96,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
@@ -108,6 +109,10 @@ import org.astermail.android.design.components.aster_dropdown_menu
 import org.astermail.android.mail.InboxItem
 import org.astermail.android.mail.MailViewModel
 import org.astermail.android.ui.mail.EmailRow
+import org.astermail.android.ui.mail.ThreadInboxRow
+import org.astermail.android.ui.mail.ThreadRow
+import org.astermail.android.ui.mail.flat_thread_rows
+import org.astermail.android.ui.mail.group_by_thread
 import org.astermail.android.ui.mail.inbox_card_read_color
 import org.astermail.android.ui.mail.inbox_item_to_email
 import org.astermail.android.ui.mail.search_field_bg_color
@@ -464,7 +469,8 @@ fun SearchScreen(
         val settled = computed
         last_results = if (!has_query) emptyList() else settled?.results ?: last_results
     }
-    val results_pending = has_query && computed == null
+    val corpus_loading = !search_state.is_indexed && search_state.error == null
+    val results_pending = has_query && (computed == null || corpus_loading)
     val hidden_spam_trash = computed?.hidden_spam_trash ?: 0
     val chip_people = remember(visible_corpus) {
         collect_chip_people(visible_corpus)
@@ -479,50 +485,74 @@ fun SearchScreen(
     val filtered = remember(visible_results, lock_revision) {
         org.astermail.android.folders.filter_locked_items(visible_results)
     }
+    val grouping_enabled = settings_state.preferences?.conversation_grouping != false
+    val result_threads = remember(filtered, grouping_enabled) {
+        val emails = filtered.map { inbox_item_to_email(it) }
+        val rows = if (grouping_enabled) group_by_thread(emails) else flat_thread_rows(emails)
+        rows.sortedWith(
+            compareByDescending<ThreadRow> { it.newest.received_at }.thenByDescending { it.thread_id },
+        )
+    }
+    val thread_member_ids = remember(result_threads, visible_corpus, grouping_enabled) {
+        if (!grouping_enabled) {
+            emptyMap()
+        } else {
+            val by_thread = visible_corpus.groupBy { item ->
+                item.thread_token?.takeIf { it.isNotBlank() } ?: item.id
+            }
+            result_threads.associate { row ->
+                row.newest.id to (by_thread[row.thread_id]?.map { it.id } ?: listOf(row.newest.id))
+            }
+        }
+    }
+    fun expand_selection(ids: List<String>): List<String> =
+        if (!grouping_enabled) ids else ids.flatMap { thread_member_ids[it] ?: listOf(it) }.distinct()
 
-    LaunchedEffect(filtered, results_pending) {
+    LaunchedEffect(result_threads, results_pending) {
         if (select_mode && !results_pending) {
-            if (filtered.isEmpty()) {
+            if (result_threads.isEmpty()) {
                 exit_select_mode()
             } else {
-                val visible = filtered.map { it.id }.toHashSet()
+                val visible = result_threads.map { it.newest.id }.toHashSet()
                 selected_ids.removeAll { it !in visible }
             }
         }
     }
 
     fun mark_read_selected() {
-        val ids = filtered.filter { it.id in selected_ids && !it.is_read }.map { it.id }
+        val target = expand_selection(selected_ids.toList()).toSet()
+        val ids = visible_corpus.filter { it.id in target && !it.is_read }.map { it.id }
         if (ids.isNotEmpty()) mail_vm.mark_read_bulk(ids)
         exit_select_mode()
     }
 
     fun archive_selected() {
-        val ids = selected_ids.toList()
-        mail_vm.archive(ids, ids.size)
+        val ids = expand_selection(selected_ids.toList())
+        mail_vm.archive(ids, selected_ids.size)
         exit_select_mode()
     }
 
     fun delete_selected() {
-        val ids = selected_ids.toList()
-        mail_vm.trash(ids, ids.size)
+        val ids = expand_selection(selected_ids.toList())
+        mail_vm.trash(ids, selected_ids.size)
         exit_select_mode()
     }
 
     fun mark_unread_selected() {
-        val ids = filtered.filter { it.id in selected_ids && it.is_read }.map { it.id }
+        val target = expand_selection(selected_ids.toList()).toSet()
+        val ids = visible_corpus.filter { it.id in target && it.is_read }.map { it.id }
         if (ids.isNotEmpty()) mail_vm.mark_unread_bulk(ids)
         exit_select_mode()
     }
 
     fun star_selected() {
-        mail_vm.star_bulk(selected_ids.toList())
+        mail_vm.star_bulk(expand_selection(selected_ids.toList()))
         exit_select_mode()
     }
 
     fun mark_spam_selected() {
-        val ids = selected_ids.toList()
-        mail_vm.mark_spam(ids, ids.size)
+        val ids = expand_selection(selected_ids.toList())
+        mail_vm.mark_spam(ids, selected_ids.size)
         exit_select_mode()
     }
 
@@ -558,15 +588,17 @@ fun SearchScreen(
                 selected_count = selected_ids.size,
                 on_close = ::exit_select_mode,
                 on_select_all = {
-                    val all_selected = filtered.isNotEmpty() && selected_ids.size >= filtered.size
+                    val all_selected = result_threads.isNotEmpty() &&
+                        selected_ids.size >= result_threads.size
                     selected_ids.clear()
                     if (all_selected) {
                         exit_select_mode()
                     } else {
-                        selected_ids.addAll(filtered.map { it.id })
+                        selected_ids.addAll(result_threads.map { it.newest.id })
                     }
                 },
-                all_selected = filtered.isNotEmpty() && selected_ids.size >= filtered.size,
+                all_selected = result_threads.isNotEmpty() &&
+                    selected_ids.size >= result_threads.size,
             )
         } else {
             search_input_bar(
@@ -757,9 +789,9 @@ fun SearchScreen(
                     lineHeight = 18.sp,
                 )
             }
-        } else if (filtered.isEmpty() && results_pending) {
+        } else if (result_threads.isEmpty() && results_pending) {
             org.astermail.android.ui.mail.inbox_skeleton(Modifier.weight(1f))
-        } else if (filtered.isEmpty()) {
+        } else if (result_threads.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -781,15 +813,15 @@ fun SearchScreen(
                     )
                 }
             }
-        } else if (filtered.isNotEmpty()) {
+        } else if (result_threads.isNotEmpty()) {
             Text(
-                text = stringResource(R.string.results_count, filtered.size),
+                text = pluralStringResource(R.plurals.results_count, result_threads.size, result_threads.size),
                 color = colors.text_muted,
                 fontSize = 12.sp,
                 modifier = Modifier.padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
             )
             search_results_list(
-                items = filtered,
+                threads = result_threads,
                 select_mode = select_mode,
                 selected_ids = selected_ids,
                 on_open_email = on_open_email,
@@ -847,7 +879,7 @@ fun SearchScreen(
             on_pick = { picked ->
                 val display = picked.encrypted_name?.takeIf { it.isNotBlank() } ?: unnamed_folder_label
                 show_folder_sheet = false
-                mail_vm.apply_label_bulk(selected_ids.toList(), picked.label_token, display)
+                mail_vm.apply_label_bulk(expand_selection(selected_ids.toList()), picked.label_token, display)
                 exit_select_mode()
             },
         )
@@ -855,7 +887,8 @@ fun SearchScreen(
 
     if (show_label_sheet) {
         val tag_items = org.astermail.android.labels.tag_rows(settings_state.tags)
-        val selected_items = search_state.all_items.filter { it.id in selected_ids }
+        val expanded_selection = expand_selection(selected_ids.toList()).toSet()
+        val selected_items = search_state.all_items.filter { it.id in expanded_selection }
         val applied_tags = if (selected_items.isEmpty()) {
             emptySet()
         } else {
@@ -870,9 +903,9 @@ fun SearchScreen(
                 val display = picked.encrypted_name.takeIf { it.isNotBlank() } ?: picked.tag_token
                 show_label_sheet = false
                 if (picked.tag_token in applied_tags) {
-                    mail_vm.remove_tag_bulk(selected_ids.toList(), picked.tag_token, display)
+                    mail_vm.remove_tag_bulk(expanded_selection.toList(), picked.tag_token, display)
                 } else {
-                    mail_vm.apply_tag_bulk(selected_ids.toList(), picked.tag_token, display)
+                    mail_vm.apply_tag_bulk(expanded_selection.toList(), picked.tag_token, display)
                 }
                 exit_select_mode()
             },
@@ -885,7 +918,7 @@ fun SearchScreen(
             on_close = { show_snooze_sheet = false },
             on_pick = { iso, label ->
                 show_snooze_sheet = false
-                mail_vm.snooze_bulk(selected_ids.toList(), iso, label)
+                mail_vm.snooze_bulk(expand_selection(selected_ids.toList()), iso, label)
                 exit_select_mode()
             },
         )
@@ -1142,7 +1175,7 @@ private fun search_input_bar(
 
 @Composable
 internal fun search_results_list(
-    items: List<InboxItem>,
+    threads: List<ThreadRow>,
     select_mode: Boolean,
     selected_ids: List<String>,
     on_open_email: (String) -> Unit,
@@ -1159,7 +1192,7 @@ internal fun search_results_list(
     val settings_state = settings_vm?.state?.collectAsStateWithLifecycle()?.value
     val live_select_mode by rememberUpdatedState(select_mode)
     val live_selected_set by rememberUpdatedState(selected_set)
-    val live_items by rememberUpdatedState(items)
+    val live_threads by rememberUpdatedState(threads)
     val live_enter_select_mode by rememberUpdatedState(on_enter_select_mode)
     val live_set_selection by rememberUpdatedState(on_set_selection)
     val id_at_offset: (Float) -> String? = remember(list_state) {
@@ -1178,7 +1211,7 @@ internal fun search_results_list(
 
     fun index_at_offset(y: Float): Int? {
         val id = id_at_offset(y) ?: return null
-        val idx = live_items.indexOfFirst { it.id == id }
+        val idx = live_threads.indexOfFirst { it.newest.id == id }
         return if (idx >= 0) idx else null
     }
 
@@ -1190,7 +1223,7 @@ internal fun search_results_list(
         drag_last_index.intValue = idx
         val target = LinkedHashSet(drag_pre_selected)
         for (i in minOf(anchor, idx)..maxOf(anchor, idx)) {
-            live_items.getOrNull(i)?.id?.let { target.add(it) }
+            live_threads.getOrNull(i)?.newest?.id?.let { target.add(it) }
         }
         if (target != live_selected_set) {
             haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -1228,7 +1261,7 @@ internal fun search_results_list(
                 detectDragGesturesAfterLongPress(
                     onDragStart = { offset ->
                         val idx = index_at_offset(offset.y)
-                        val id = idx?.let { live_items.getOrNull(it)?.id }
+                        val id = idx?.let { live_threads.getOrNull(it)?.newest?.id }
                         if (id != null) {
                             haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                             val base = LinkedHashSet(live_selected_set)
@@ -1270,28 +1303,28 @@ internal fun search_results_list(
         contentPadding = PaddingValues(bottom = AsterSpacing.lg),
     ) {
         itemsIndexed(
-            items = items,
-            key = { _, item -> item.id },
+            items = threads,
+            key = { _, thread -> thread.newest.id },
             contentType = { _, _ -> "search_row" },
-        ) { index, item ->
-            val email = remember(item) { inbox_item_to_email(item) }
-            val is_selected = select_mode && selected_set.contains(item.id)
-            EmailRow(
-                email = email,
+        ) { index, thread ->
+            val row_id = thread.newest.id
+            val is_selected = select_mode && selected_set.contains(row_id)
+            ThreadInboxRow(
+                thread = thread,
                 on_click = {
-                    if (select_mode) on_toggle_selection(item.id) else on_open_email(item.id)
+                    if (select_mode) on_toggle_selection(row_id) else on_open_email(row_id)
                 },
                 on_long_click = {
-                    if (select_mode) on_toggle_selection(item.id) else on_enter_select_mode(item.id)
+                    if (select_mode) on_toggle_selection(row_id) else on_enter_select_mode(row_id)
                 },
-                on_toggle_star = { on_toggle_star(item.id) },
-                modifier = Modifier.testTag("search_row_${item.id}"),
+                on_toggle_star = { on_toggle_star(row_id) },
+                modifier = Modifier.testTag("search_row_$row_id"),
                 is_first = index == 0,
-                is_last = index == items.lastIndex,
+                is_last = index == threads.lastIndex,
                 is_selected = is_selected,
                 select_mode = select_mode,
-                list_density = settings_state?.preferences?.mail_list_density,
-                show_sender_pictures = settings_state?.preferences?.show_profile_pictures != false,
+                is_pinned = thread.is_pinned,
+                user_prefs = settings_state?.preferences,
             )
         }
     }

@@ -119,7 +119,9 @@ class SearchSelectionDeleteTest {
                 )
             }
             search_results_list(
-                items = items.toList(),
+                threads = org.astermail.android.ui.mail.flat_thread_rows(
+                    items.map { org.astermail.android.ui.mail.inbox_item_to_email(it) },
+                ),
                 select_mode = select_mode,
                 selected_ids = selected_ids,
                 on_open_email = {},

@@ -2204,7 +2204,7 @@ internal fun inbox_top_bar(
                     }
                     overflow_menu_item(
                         label = stringResource(R.string.select),
-                        icon = TablerIcons.Selector,
+                        icon = TablerIcons.SquareCheck,
                     ) {
                         overflow_menu_open = false
                         on_enter_select_mode()
