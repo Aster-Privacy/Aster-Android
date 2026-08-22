@@ -1318,7 +1318,7 @@
     <string name="settings_plan_free_tagline">Всё необходимое для начала работы с защищённой зашифрованной почтой.</string>
     <string name="settings_plan_star_tagline">Больше места, больше псевдонимов и первый пользовательский домен.</string>
     <string name="settings_plan_nova_tagline">Больше места, пользовательские домены и неограниченные псевдонимы.</string>
-    <string name="settings_plan_supernova_tagline">Максимальное место, неограниченное всё и выделенная поддержка.</string>
+    <string name="settings_plan_supernova_tagline">Максимальное место, самые высокие лимиты и выделенная поддержка.</string>
     <string name="settings_plan_lead_star">Всё из Star, плюс:</string>
     <string name="settings_plan_lead_nova">Всё из Nova, плюс:</string>
     <string name="settings_plan_bullet_e2ee">Сквозное шифрование</string>
@@ -1327,7 +1327,7 @@
     <string name="settings_plan_bullet_star_attachments">Вложения до 50 МБ</string>
     <string name="settings_plan_bullet_star_aliases">15 псевдонимов</string>
     <string name="settings_plan_bullet_star_domains">5 пользовательских доменов</string>
-    <string name="settings_plan_bullet_unlimited_daily_emails">Неограниченная ежедневная отправка</string>
+    <string name="settings_plan_bullet_daily_send_limits">Более высокие суточные лимиты отправки</string>
     <string name="settings_plan_bullet_star_templates">10 шаблонов писем</string>
     <string name="settings_plan_bullet_tracker_protection">Защита от трекеров</string>
     <string name="settings_plan_bullet_vacation_reply">Автоответ на время отпуска</string>
@@ -1363,10 +1363,11 @@
     <string name="settings_billing_monthly">Ежемесячно</string>
     <string name="settings_billing_yearly">Ежегодно</string>
     <string name="settings_prices_usd_note">Цены указаны в долларах США. Итоговая сумма определяется при оплате.</string>
+    <string name="settings_prices_currency_note">Цены указаны в %1$s. Итоговая сумма подтверждается при оплате.</string>
     <string name="plan_desc_free">Всё необходимое для начала работы с защищённой зашифрованной почтой.</string>
     <string name="plan_desc_star">Больше места, больше псевдонимов и первый пользовательский домен.</string>
     <string name="plan_desc_nova">Больше места, пользовательские домены и неограниченные псевдонимы.</string>
-    <string name="plan_desc_supernova">Максимальное место, неограниченное всё и выделенная поддержка.</string>
+    <string name="plan_desc_supernova">Максимальное место, самые высокие лимиты и выделенная поддержка.</string>
     <string name="set_as_primary">Сделать основным адресом</string>
     <string name="primary_badge">Основной</string>
     <string name="also_receives_at">Также получает на %1$s</string>
@@ -2818,7 +2819,7 @@
     <string name="payment_failed_one_day_left">Остался 1 день, чтобы обновить карту.</string>
     <string name="device_verification_failed">Не удалось подтвердить это устройство для этого изменения. Войдите снова на этом устройстве и повторите попытку.</string>
     <string name="cancel_reason_title">Перед уходом</string>
-    <string name="cancel_reason_description">Почему вы решили отменить подписку? Выберите причину, чтобы продолжить.</string>
+    <string name="cancel_reason_description">Почему вы решили отменить подписку? Ответ необязателен.</string>
     <string name="cancel_reason_too_expensive">Слишком дорого</string>
     <string name="cancel_reason_not_using">Пользуюсь недостаточно часто</string>
     <string name="cancel_reason_missing_feature">Не хватает нужной функции</string>

@@ -33,6 +33,9 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -173,7 +176,7 @@ private val plan_tiers = listOf(
             R.string.settings_plan_bullet_star_attachments,
             R.string.settings_plan_bullet_star_aliases,
             R.string.settings_plan_bullet_star_domains,
-            R.string.settings_plan_bullet_unlimited_daily_emails,
+            R.string.settings_plan_bullet_daily_send_limits,
             R.string.settings_plan_bullet_star_templates,
             R.string.settings_plan_bullet_tracker_protection,
             R.string.settings_plan_bullet_vacation_reply,
@@ -197,7 +200,7 @@ private val plan_tiers = listOf(
             R.string.settings_plan_bullet_nova_attachments,
             R.string.settings_plan_bullet_unlimited_aliases,
             R.string.settings_plan_bullet_nova_domains,
-            R.string.settings_plan_bullet_unlimited_daily_emails,
+            R.string.settings_plan_bullet_daily_send_limits,
             R.string.settings_plan_bullet_unlimited_templates,
             R.string.settings_plan_bullet_unlimited_signatures,
             R.string.settings_plan_bullet_tracker_protection,
@@ -221,7 +224,7 @@ private val plan_tiers = listOf(
             R.string.settings_plan_bullet_supernova_attachments,
             R.string.settings_plan_bullet_unlimited_aliases,
             R.string.settings_plan_bullet_unlimited_domains,
-            R.string.settings_plan_bullet_unlimited_daily_emails,
+            R.string.settings_plan_bullet_daily_send_limits,
             R.string.settings_plan_bullet_tracker_protection,
             R.string.settings_plan_bullet_receipt_tracking,
             R.string.settings_plan_bullet_external_accounts,
@@ -348,6 +351,7 @@ fun SubscriptionsScreen(
     var show_crypto_coins by remember { mutableStateOf(false) }
     var pending_term_months by remember { mutableStateOf(1) }
     var show_switch_yearly by remember { mutableStateOf(false) }
+    var resume_cancel_flow by remember { mutableStateOf(false) }
 
     LaunchedEffect(billing_state.error, show_cancel_flow) {
         val err = billing_state.error ?: return@LaunchedEffect
@@ -386,7 +390,7 @@ fun SubscriptionsScreen(
     val api_monthly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, current_code, "month")
     val api_yearly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, current_code, "year")
     val yearly_savings = org.astermail.android.billing.yearly_savings_percent(api_monthly_cents, api_yearly_cents)
-    val save_offers_allowed = sub != null && org.astermail.android.billing.can_offer_save_offers(
+    val plan_alternatives_allowed = sub != null && org.astermail.android.billing.can_offer_plan_alternatives(
         plan_code = current_code,
         status = sub.status,
         payment_failed_at = sub.payment_failed_at,
@@ -395,7 +399,7 @@ fun SubscriptionsScreen(
         payment_provider = sub.payment_provider,
         has_stripe_subscription = sub.has_stripe_subscription,
     )
-    val offer_yearly_switch = save_offers_allowed &&
+    val offer_yearly_switch = plan_alternatives_allowed &&
         current_interval == "month" &&
         yearly_savings != null &&
         api_yearly_cents != null
@@ -619,9 +623,13 @@ fun SubscriptionsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .heightIn(min = 48.dp)
                                 .clip(SquircleShape(10.dp))
                                 .background(colors.success.copy(alpha = 0.12f))
-                                .clickable(enabled = !billing_state.is_acting) { show_switch_yearly = true }
+                                .clickable(
+                                    enabled = !billing_state.is_acting,
+                                    role = Role.Button,
+                                ) { show_switch_yearly = true }
                                 .padding(horizontal = AsterSpacing.md, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -647,9 +655,13 @@ fun SubscriptionsScreen(
                             color = colors.accent_blue,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.clickable {
-                                org.astermail.android.billing.open_billing_tab(context, org.astermail.android.billing.FAMILY_MANAGE_URL)
-                            },
+                            modifier = Modifier
+                                .heightIn(min = 48.dp)
+                                .clip(SquircleShape(10.dp))
+                                .clickable(role = Role.Button) {
+                                    org.astermail.android.billing.open_billing_tab(context, org.astermail.android.billing.FAMILY_MANAGE_URL)
+                                }
+                                .padding(vertical = 14.dp),
                         )
                     }
                     if (current_code != "free" && !is_crypto_sub) {
@@ -674,9 +686,13 @@ fun SubscriptionsScreen(
                                 fontWeight = FontWeight.Medium,
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .heightIn(min = 48.dp)
                                     .clip(SquircleShape(10.dp))
-                                    .clickable(enabled = !billing_state.is_acting) { show_cancel_flow = true }
-                                    .padding(vertical = 10.dp),
+                                    .clickable(
+                                        enabled = !billing_state.is_acting,
+                                        role = Role.Button,
+                                    ) { show_cancel_flow = true }
+                                    .padding(vertical = 14.dp),
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                             )
                         }
@@ -696,20 +712,26 @@ fun SubscriptionsScreen(
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier.weight(1f),
                         )
-                        Icon(
-                            imageVector = TablerIcons.X,
-                            contentDescription = stringResource(R.string.dismiss),
-                            tint = colors.text_muted,
+                        Box(
                             modifier = Modifier
-                                .size(18.dp)
-                                .clickable {
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .clickable(role = Role.Button) {
                                     org.astermail.android.billing.PaymentFailedNotifier.dismiss_lapse(
                                         context,
                                         org.astermail.android.billing.lapse_dismissal_key(lapsed),
                                     )
                                     lapsed_dismissed = true
                                 },
-                        )
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = TablerIcons.X,
+                                contentDescription = stringResource(R.string.dismiss),
+                                tint = colors.text_muted,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
                     }
                     Spacer(Modifier.height(AsterSpacing.xs))
                     Text(
@@ -853,7 +875,11 @@ fun SubscriptionsScreen(
 
         v_gap(AsterSpacing.xs)
         Text(
-            text = stringResource(R.string.settings_prices_usd_note),
+            text = if (detected_currency.equals("usd", ignoreCase = true)) {
+                stringResource(R.string.settings_prices_usd_note)
+            } else {
+                stringResource(R.string.settings_prices_currency_note, detected_currency.uppercase())
+            },
             color = colors.text_tertiary,
             fontSize = 12.sp,
             modifier = Modifier.fillMaxWidth(),
@@ -1009,9 +1035,13 @@ fun SubscriptionsScreen(
             yearly_savings = if (offer_yearly_switch) yearly_savings else null,
             on_switch_yearly = {
                 show_cancel_flow = false
+                resume_cancel_flow = true
                 show_switch_yearly = true
             },
-            on_dismiss = { show_cancel_flow = false },
+            on_dismiss = {
+                show_cancel_flow = false
+                resume_cancel_flow = false
+            },
             on_confirm = { password, reason, reason_text -> billing_vm.cancel_subscription(password, reason, reason_text) },
         )
     }
@@ -1021,8 +1051,15 @@ fun SubscriptionsScreen(
         LaunchedEffect(current_code) { billing_vm.load_plan_change_preview(current_code, "year") }
         DisposableEffect(Unit) { onDispose { billing_vm.clear_plan_change_preview() } }
         val preview = billing_state.plan_change_preview
+        val close_switch_yearly = {
+            show_switch_yearly = false
+            if (resume_cancel_flow) {
+                resume_cancel_flow = false
+                show_cancel_flow = true
+            }
+        }
         org.astermail.android.design.components.AsterDialog(
-            on_dismiss = { show_switch_yearly = false },
+            on_dismiss = close_switch_yearly,
             title = stringResource(R.string.switch_yearly_title),
             message = if (preview != null) {
                 stringResource(
@@ -1042,13 +1079,14 @@ fun SubscriptionsScreen(
             footer = {
                 org.astermail.android.design.components.AsterDialogOutlineButton(
                     label = stringResource(R.string.cancel),
-                    onClick = { show_switch_yearly = false },
+                    onClick = close_switch_yearly,
                     modifier = Modifier.weight(1f),
                 )
                 org.astermail.android.design.components.AsterDialogPrimaryButton(
                     label = stringResource(R.string.switch_yearly_confirm),
                     onClick = {
                         show_switch_yearly = false
+                        resume_cancel_flow = false
                         billing_vm.switch_billing("year")
                     },
                     enabled = !billing_state.plan_change_preview_loading,
@@ -1109,7 +1147,7 @@ private fun cancel_subscription_flow(
     yearly_savings: Int?,
     on_switch_yearly: () -> Unit,
     on_dismiss: () -> Unit,
-    on_confirm: (password: String, reason: String, reason_text: String?) -> Unit,
+    on_confirm: (password: String, reason: String?, reason_text: String?) -> Unit,
 ) {
     val colors = AsterMaterial.colors
     var reason by remember { mutableStateOf<String?>(null) }
@@ -1172,9 +1210,10 @@ private fun cancel_subscription_flow(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .heightIn(min = 48.dp)
                                 .clip(SquircleShape(10.dp))
                                 .background(colors.success.copy(alpha = 0.12f))
-                                .clickable(onClick = on_switch_yearly)
+                                .clickable(role = Role.Button, onClick = on_switch_yearly)
                                 .padding(horizontal = AsterSpacing.md, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -1215,15 +1254,23 @@ private fun cancel_subscription_flow(
             title = stringResource(R.string.cancel_reason_title),
             message = stringResource(R.string.cancel_reason_description),
             body = {
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    modifier = Modifier.selectableGroup(),
+                ) {
                     org.astermail.android.billing.CANCEL_REASONS.forEach { option ->
                         val active = reason == option
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .heightIn(min = 48.dp)
                                 .clip(SquircleShape(10.dp))
                                 .background(if (active) colors.accent_blue.copy(alpha = 0.10f) else Color.Transparent)
-                                .clickable { reason = option }
+                                .selectable(
+                                    selected = active,
+                                    role = Role.RadioButton,
+                                    onClick = { reason = if (active) null else option },
+                                )
                                 .padding(horizontal = AsterSpacing.sm, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
@@ -1262,7 +1309,6 @@ private fun cancel_subscription_flow(
                 org.astermail.android.design.components.AsterDialogPrimaryButton(
                     label = stringResource(R.string.next),
                     onClick = { password_step = true },
-                    enabled = reason != null,
                     modifier = Modifier.weight(1f),
                 )
             },
@@ -1294,9 +1340,8 @@ private fun cancel_subscription_flow(
                 org.astermail.android.design.components.AsterDialogDestructiveButton(
                     label = stringResource(R.string.cancel_subscription),
                     onClick = {
-                        val chosen = reason ?: return@AsterDialogDestructiveButton
                         submitted = true
-                        on_confirm(password, chosen, reason_text)
+                        on_confirm(password, reason, reason_text)
                     },
                     enabled = password.isNotBlank() && !cancelling,
                     is_loading = cancelling,
@@ -1701,7 +1746,10 @@ private fun plan_tier_card(
                     color = colors.text_secondary,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.clickable(enabled = plans_failed, onClick = on_see_pricing),
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .clickable(enabled = plans_failed, role = Role.Button, onClick = on_see_pricing)
+                        .padding(vertical = 14.dp),
                 )
             }
             if (is_yearly && save_cents != null) {
@@ -1796,18 +1844,28 @@ private fun notice_row(
                 color = colors.accent_blue,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.clickable(onClick = on_action),
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .clip(SquircleShape(10.dp))
+                    .clickable(role = Role.Button, onClick = on_action)
+                    .padding(vertical = 14.dp),
             )
         }
         if (on_dismiss != null) {
-            Icon(
-                imageVector = TablerIcons.X,
-                contentDescription = stringResource(R.string.dismiss),
-                tint = colors.text_muted,
+            Box(
                 modifier = Modifier
-                    .size(16.dp)
-                    .clickable(onClick = on_dismiss),
-            )
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .clickable(role = Role.Button, onClick = on_dismiss),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = TablerIcons.X,
+                    contentDescription = stringResource(R.string.dismiss),
+                    tint = colors.text_muted,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
         }
     }
 }

@@ -1312,7 +1312,7 @@
     <string name="settings_plan_free_tagline">プライベートな暗号化メールを始めるために必要なすべて。</string>
     <string name="settings_plan_star_tagline">より多くのストレージ、エイリアス、そして最初のカスタムドメイン。</string>
     <string name="settings_plan_nova_tagline">より多くのストレージ、カスタムドメイン、無制限のエイリアス。</string>
-    <string name="settings_plan_supernova_tagline">最大ストレージ、すべて無制限、専任サポート。</string>
+    <string name="settings_plan_supernova_tagline">最大ストレージ、最も高い上限、専任サポート。</string>
     <string name="settings_plan_lead_star">Starのすべて、さらに：</string>
     <string name="settings_plan_lead_nova">Novaのすべて、さらに：</string>
     <string name="settings_plan_bullet_e2ee">エンドツーエンド暗号化</string>
@@ -1321,7 +1321,7 @@
     <string name="settings_plan_bullet_star_attachments">50 MBまでの添付ファイル</string>
     <string name="settings_plan_bullet_star_aliases">15個のメールエイリアス</string>
     <string name="settings_plan_bullet_star_domains">5つのカスタムドメイン</string>
-    <string name="settings_plan_bullet_unlimited_daily_emails">無制限の毎日のメール送信</string>
+    <string name="settings_plan_bullet_daily_send_limits">1日あたりの送信上限が拡大</string>
     <string name="settings_plan_bullet_star_templates">10個のメールテンプレート</string>
     <string name="settings_plan_bullet_tracker_protection">トラッカー保護</string>
     <string name="settings_plan_bullet_vacation_reply">休暇中の自動返信</string>
@@ -1357,10 +1357,11 @@
     <string name="settings_billing_monthly">月払い</string>
     <string name="settings_billing_yearly">年払い</string>
     <string name="settings_prices_usd_note">価格はUSDで表示されています。最終金額はチェックアウト時に決定されます。</string>
+    <string name="settings_prices_currency_note">価格は %1$s で表示されています。最終金額はチェックアウト時に確定します。</string>
     <string name="plan_desc_free">プライベートな暗号化メールを始めるために必要なすべて。</string>
     <string name="plan_desc_star">より多くのストレージ、エイリアス、そして最初のカスタムドメイン。</string>
     <string name="plan_desc_nova">より多くのストレージ、カスタムドメイン、無制限のエイリアス。</string>
-    <string name="plan_desc_supernova">最大ストレージ、すべて無制限、専任サポート。</string>
+    <string name="plan_desc_supernova">最大ストレージ、最も高い上限、専任サポート。</string>
     <string name="set_as_primary">プライマリアドレスに設定</string>
     <string name="primary_badge">プライマリ</string>
     <string name="also_receives_at">%1$s でも受信します</string>
@@ -2794,7 +2795,7 @@
     <string name="payment_failed_one_day_left">カードの更新期限まであと 1 日です。</string>
     <string name="device_verification_failed">この変更のためにこのデバイスを確認できませんでした。このデバイスでもう一度サインインしてから、再試行してください。</string>
     <string name="cancel_reason_title">ご解約の前に</string>
-    <string name="cancel_reason_description">解約を決めた理由は何ですか。続行するには理由を選択してください。</string>
+    <string name="cancel_reason_description">解約を決めた理由は何ですか。回答は任意です。</string>
     <string name="cancel_reason_too_expensive">料金が高い</string>
     <string name="cancel_reason_not_using">あまり使っていない</string>
     <string name="cancel_reason_missing_feature">必要な機能がない</string>

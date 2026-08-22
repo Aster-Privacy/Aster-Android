@@ -1315,7 +1315,7 @@
     <string name="settings_plan_free_tagline">Alles, was Sie für den Einstieg in private, verschlüsselte E-Mails benötigen.</string>
     <string name="settings_plan_star_tagline">Mehr Speicher, mehr Aliase und Ihre erste benutzerdefinierte Domain.</string>
     <string name="settings_plan_nova_tagline">Mehr Speicher, benutzerdefinierte Domains und unbegrenzte Aliase.</string>
-    <string name="settings_plan_supernova_tagline">Maximaler Speicher, alles unbegrenzt und dedizierter Support.</string>
+    <string name="settings_plan_supernova_tagline">Maximaler Speicher, die höchsten Limits und dedizierter Support.</string>
     <string name="settings_plan_lead_star">Alles in Star, plus:</string>
     <string name="settings_plan_lead_nova">Alles in Nova, plus:</string>
     <string name="settings_plan_bullet_e2ee">Ende-zu-Ende-Verschlüsselung</string>
@@ -1324,7 +1324,7 @@
     <string name="settings_plan_bullet_star_attachments">Anhänge bis zu 50 MB</string>
     <string name="settings_plan_bullet_star_aliases">15 E-Mail-Aliase</string>
     <string name="settings_plan_bullet_star_domains">5 benutzerdefinierte Domains</string>
-    <string name="settings_plan_bullet_unlimited_daily_emails">Unbegrenzte tägliche E-Mails</string>
+    <string name="settings_plan_bullet_daily_send_limits">Höhere tägliche Sendelimits</string>
     <string name="settings_plan_bullet_star_templates">10 E-Mail-Vorlagen</string>
     <string name="settings_plan_bullet_tracker_protection">Tracker-Schutz</string>
     <string name="settings_plan_bullet_vacation_reply">Automatische Urlaubsantwort</string>
@@ -1360,10 +1360,11 @@
     <string name="settings_billing_monthly">Monatlich</string>
     <string name="settings_billing_yearly">Jährlich</string>
     <string name="settings_prices_usd_note">Preise in USD. Der endgültige Betrag wird beim Bezahlen festgelegt.</string>
+    <string name="settings_prices_currency_note">Preise in %1$s. Der endgültige Betrag wird beim Bezahlen bestätigt.</string>
     <string name="plan_desc_free">Alles, was Sie für den Einstieg in private, verschlüsselte E-Mails benötigen.</string>
     <string name="plan_desc_star">Mehr Speicher, mehr Aliase und Ihre erste benutzerdefinierte Domain.</string>
     <string name="plan_desc_nova">Mehr Speicher, benutzerdefinierte Domains und unbegrenzte Aliase.</string>
-    <string name="plan_desc_supernova">Maximaler Speicher, alles unbegrenzt und dedizierter Support.</string>
+    <string name="plan_desc_supernova">Maximaler Speicher, die höchsten Limits und dedizierter Support.</string>
     <string name="set_as_primary">Als primäre Adresse festlegen</string>
     <string name="primary_badge">Primär</string>
     <string name="also_receives_at">Empfängt auch an %1$s</string>
@@ -2803,7 +2804,7 @@
     <string name="payment_failed_one_day_left">Noch 1 Tag, um deine Karte zu aktualisieren.</string>
     <string name="device_verification_failed">Dieses Gerät konnte für diese Änderung nicht verifiziert werden. Melde dich auf diesem Gerät erneut an und versuche es dann noch einmal.</string>
     <string name="cancel_reason_title">Bevor Sie gehen</string>
-    <string name="cancel_reason_description">Warum möchtest du kündigen? Wähle einen Grund, um fortzufahren.</string>
+    <string name="cancel_reason_description">Warum möchtest du kündigen? Die Antwort ist freiwillig.</string>
     <string name="cancel_reason_too_expensive">Zu teuer</string>
     <string name="cancel_reason_not_using">Ich nutze es zu wenig</string>
     <string name="cancel_reason_missing_feature">Eine benötigte Funktion fehlt</string>

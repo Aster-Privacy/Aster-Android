@@ -1314,7 +1314,7 @@
     <string name="settings_plan_free_tagline">Tudo o que você precisa para começar com e-mail privado e criptografado.</string>
     <string name="settings_plan_star_tagline">Mais armazenamento, mais aliases e seu primeiro domínio próprio.</string>
     <string name="settings_plan_nova_tagline">Mais armazenamento, domínios próprios e aliases ilimitados.</string>
-    <string name="settings_plan_supernova_tagline">Armazenamento máximo, tudo ilimitado e suporte dedicado.</string>
+    <string name="settings_plan_supernova_tagline">Armazenamento máximo, os limites mais altos e suporte dedicado.</string>
     <string name="settings_plan_lead_star">Tudo do Star, mais:</string>
     <string name="settings_plan_lead_nova">Tudo do Nova, mais:</string>
     <string name="settings_plan_bullet_e2ee">Criptografia de ponta a ponta</string>
@@ -1323,7 +1323,7 @@
     <string name="settings_plan_bullet_star_attachments">Anexos de até 50 MB</string>
     <string name="settings_plan_bullet_star_aliases">15 aliases de e-mail</string>
     <string name="settings_plan_bullet_star_domains">5 domínios próprios</string>
-    <string name="settings_plan_bullet_unlimited_daily_emails">E-mails diários ilimitados</string>
+    <string name="settings_plan_bullet_daily_send_limits">Limites diários de envio maiores</string>
     <string name="settings_plan_bullet_star_templates">10 modelos de e-mail</string>
     <string name="settings_plan_bullet_tracker_protection">Proteção contra rastreadores</string>
     <string name="settings_plan_bullet_vacation_reply">Resposta automática de férias</string>
@@ -1359,10 +1359,11 @@
     <string name="settings_billing_monthly">Mensal</string>
     <string name="settings_billing_yearly">Anual</string>
     <string name="settings_prices_usd_note">Preços exibidos em USD. O valor final é definido no pagamento.</string>
+    <string name="settings_prices_currency_note">Preços exibidos em %1$s. O valor final é confirmado no pagamento.</string>
     <string name="plan_desc_free">Tudo o que você precisa para começar com e-mail privado e criptografado.</string>
     <string name="plan_desc_star">Mais armazenamento, mais aliases e seu primeiro domínio próprio.</string>
     <string name="plan_desc_nova">Mais armazenamento, domínios próprios e aliases ilimitados.</string>
-    <string name="plan_desc_supernova">Armazenamento máximo, tudo ilimitado e suporte dedicado.</string>
+    <string name="plan_desc_supernova">Armazenamento máximo, os limites mais altos e suporte dedicado.</string>
     <string name="set_as_primary">Definir como endereço principal</string>
     <string name="primary_badge">Principal</string>
     <string name="also_receives_at">Também recebe em %1$s</string>
@@ -2802,7 +2803,7 @@
     <string name="payment_failed_one_day_left">Falta 1 dia para atualizar seu cartão.</string>
     <string name="device_verification_failed">Não foi possível verificar este dispositivo para essa alteração. Entre novamente neste dispositivo e tente de novo.</string>
     <string name="cancel_reason_title">Antes de sair</string>
-    <string name="cancel_reason_description">O que fez você decidir cancelar? Escolha um motivo para continuar.</string>
+    <string name="cancel_reason_description">O que fez você decidir cancelar? Responder é opcional.</string>
     <string name="cancel_reason_too_expensive">Demasiado caro</string>
     <string name="cancel_reason_not_using">Não uso o suficiente</string>
     <string name="cancel_reason_missing_feature">Falta uma funcionalidade de que preciso</string>

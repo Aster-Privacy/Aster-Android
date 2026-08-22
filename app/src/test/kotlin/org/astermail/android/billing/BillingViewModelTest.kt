@@ -204,10 +204,49 @@ class BillingViewModelTest {
     }
 
     @Test
-    fun `cancel ignores unknown reasons`() = runTest {
+    fun `cancel proceeds without a reason`() = runTest {
+        coEvery { auth_repository.derive_password_hash_b64("pw") } returns "hash"
+        coEvery { billing_api.cancel_subscription(any()) } returns CancelSubscriptionResponse(cancel_at_period_end = true)
+        vm.cancel_subscription("pw")
+        advanceUntilIdle()
+        vm.state.test {
+            var latest = awaitItem()
+            while (latest.is_acting) latest = awaitItem()
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify {
+            billing_api.cancel_subscription(
+                CancelSubscriptionRequest(
+                    password_hash = "hash",
+                    cancel_reason = null,
+                    cancel_reason_text = null,
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun `cancel drops unknown reasons but still cancels`() = runTest {
+        coEvery { auth_repository.derive_password_hash_b64("pw") } returns "hash"
+        coEvery { billing_api.cancel_subscription(any()) } returns CancelSubscriptionResponse(cancel_at_period_end = true)
         vm.cancel_subscription("pw", "because")
         advanceUntilIdle()
-        coVerify(exactly = 0) { billing_api.cancel_subscription(any()) }
+        vm.state.test {
+            var latest = awaitItem()
+            while (latest.is_acting) latest = awaitItem()
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify {
+            billing_api.cancel_subscription(
+                CancelSubscriptionRequest(
+                    password_hash = "hash",
+                    cancel_reason = null,
+                    cancel_reason_text = null,
+                ),
+            )
+        }
     }
 
     @Test

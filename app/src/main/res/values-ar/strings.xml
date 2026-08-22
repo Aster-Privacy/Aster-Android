@@ -1322,7 +1322,7 @@
     <string name="settings_plan_free_tagline">كل ما تحتاجه لبدء البريد الخاص والمشفر.</string>
     <string name="settings_plan_star_tagline">مساحة أكبر، أسماء مستعارة أكثر، ونطاقك المخصص الأول.</string>
     <string name="settings_plan_nova_tagline">مساحة أكبر، نطاقات مخصصة، وأسماء مستعارة غير محدودة.</string>
-    <string name="settings_plan_supernova_tagline">أقصى مساحة، كل شيء غير محدود، ودعم مخصص.</string>
+    <string name="settings_plan_supernova_tagline">أقصى مساحة، وأعلى الحدود، ودعم مخصص.</string>
     <string name="settings_plan_lead_star">كل شيء في Star، بالإضافة إلى:</string>
     <string name="settings_plan_lead_nova">كل شيء في Nova، بالإضافة إلى:</string>
     <string name="settings_plan_bullet_e2ee">تشفير من طرف إلى طرف</string>
@@ -1331,7 +1331,7 @@
     <string name="settings_plan_bullet_star_attachments">مرفقات حتى 50 ميغابايت</string>
     <string name="settings_plan_bullet_star_aliases">15 اسماً مستعاراً للبريد</string>
     <string name="settings_plan_bullet_star_domains">5 نطاقات مخصصة</string>
-    <string name="settings_plan_bullet_unlimited_daily_emails">رسائل يومية غير محدودة</string>
+    <string name="settings_plan_bullet_daily_send_limits">حدود إرسال يومية أعلى</string>
     <string name="settings_plan_bullet_star_templates">10 قوالب بريد</string>
     <string name="settings_plan_bullet_tracker_protection">حماية من المتتبعين</string>
     <string name="settings_plan_bullet_vacation_reply">رد تلقائي لفترة الإجازة</string>
@@ -1367,10 +1367,11 @@
     <string name="settings_billing_monthly">شهري</string>
     <string name="settings_billing_yearly">سنوي</string>
     <string name="settings_prices_usd_note">الأسعار بالدولار الأمريكي. المبلغ النهائي يُحدد عند الدفع.</string>
+    <string name="settings_prices_currency_note">الأسعار بعملة %1$s. يُؤكَّد المبلغ النهائي عند الدفع.</string>
     <string name="plan_desc_free">كل ما تحتاجه لبدء البريد الخاص والمشفر.</string>
     <string name="plan_desc_star">مساحة أكبر، أسماء مستعارة أكثر، ونطاقك المخصص الأول.</string>
     <string name="plan_desc_nova">مساحة أكبر، نطاقات مخصصة، وأسماء مستعارة غير محدودة.</string>
-    <string name="plan_desc_supernova">أقصى مساحة، كل شيء غير محدود، ودعم مخصص.</string>
+    <string name="plan_desc_supernova">أقصى مساحة، وأعلى الحدود، ودعم مخصص.</string>
     <string name="set_as_primary">تعيين كعنوان أساسي</string>
     <string name="primary_badge">أساسي</string>
     <string name="also_receives_at">يستقبل أيضًا على %1$s</string>
@@ -2834,7 +2835,7 @@
     <string name="payment_failed_one_day_left">يتبقى يوم واحد لتحديث بطاقتك.</string>
     <string name="device_verification_failed">تعذر التحقق من هذا الجهاز لإجراء هذا التغيير. سجّل الدخول مرة أخرى على هذا الجهاز، ثم أعد المحاولة.</string>
     <string name="cancel_reason_title">قبل أن تغادر</string>
-    <string name="cancel_reason_description">ما الذي دفعك إلى الإلغاء؟ اختر سببًا للمتابعة.</string>
+    <string name="cancel_reason_description">ما الذي دفعك إلى الإلغاء؟ الإجابة اختيارية.</string>
     <string name="cancel_reason_too_expensive">مكلف جدًا</string>
     <string name="cancel_reason_not_using">لا أستخدمه بما فيه الكفاية</string>
     <string name="cancel_reason_missing_feature">تنقصه ميزة أحتاجها</string>

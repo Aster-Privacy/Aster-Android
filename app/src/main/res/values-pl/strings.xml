@@ -1318,7 +1318,7 @@
     <string name="settings_plan_free_tagline">Wszystko, czego potrzebujesz, by zacząć z prywatną, szyfrowaną pocztą.</string>
     <string name="settings_plan_star_tagline">Więcej miejsca, więcej aliasów i twoja pierwsza własna domena.</string>
     <string name="settings_plan_nova_tagline">Więcej miejsca, własne domeny i nieograniczone aliasy.</string>
-    <string name="settings_plan_supernova_tagline">Maksymalne miejsce, wszystko bez limitów i dedykowane wsparcie.</string>
+    <string name="settings_plan_supernova_tagline">Maksymalne miejsce, najwyższe limity i dedykowane wsparcie.</string>
     <string name="settings_plan_lead_star">Wszystko ze Star, a do tego:</string>
     <string name="settings_plan_lead_nova">Wszystko z Nova, a do tego:</string>
     <string name="settings_plan_bullet_e2ee">Szyfrowanie end-to-end</string>
@@ -1327,7 +1327,7 @@
     <string name="settings_plan_bullet_star_attachments">Załączniki do 50 MB</string>
     <string name="settings_plan_bullet_star_aliases">15 aliasów e-mail</string>
     <string name="settings_plan_bullet_star_domains">5 własnych domen</string>
-    <string name="settings_plan_bullet_unlimited_daily_emails">Nieograniczona liczba wiadomości dziennie</string>
+    <string name="settings_plan_bullet_daily_send_limits">Wyższe dzienne limity wysyłki</string>
     <string name="settings_plan_bullet_star_templates">10 szablonów wiadomości</string>
     <string name="settings_plan_bullet_tracker_protection">Ochrona przed trackerami</string>
     <string name="settings_plan_bullet_vacation_reply">Automatyczna odpowiedź urlopowa</string>
@@ -1363,10 +1363,11 @@
     <string name="settings_billing_monthly">Miesięcznie</string>
     <string name="settings_billing_yearly">Rocznie</string>
     <string name="settings_prices_usd_note">Ceny podane w USD. Ostateczna kwota jest ustalana przy płatności.</string>
+    <string name="settings_prices_currency_note">Ceny podane w %1$s. Ostateczna kwota jest potwierdzana przy płatności.</string>
     <string name="plan_desc_free">Wszystko, czego potrzebujesz, by zacząć z prywatną, szyfrowaną pocztą.</string>
     <string name="plan_desc_star">Więcej miejsca, więcej aliasów i twoja pierwsza własna domena.</string>
     <string name="plan_desc_nova">Więcej miejsca, własne domeny i nieograniczone aliasy.</string>
-    <string name="plan_desc_supernova">Maksymalne miejsce, wszystko bez limitów i dedykowane wsparcie.</string>
+    <string name="plan_desc_supernova">Maksymalne miejsce, najwyższe limity i dedykowane wsparcie.</string>
     <string name="set_as_primary">Ustaw jako adres główny</string>
     <string name="primary_badge">Główny</string>
     <string name="also_receives_at">Odbiera również na %1$s</string>
@@ -2818,7 +2819,7 @@
     <string name="payment_failed_one_day_left">Masz jeszcze 1 dzień na aktualizację karty.</string>
     <string name="device_verification_failed">Nie udało się zweryfikować tego urządzenia dla tej zmiany. Zaloguj się ponownie na tym urządzeniu i spróbuj jeszcze raz.</string>
     <string name="cancel_reason_title">Zanim odejdziesz</string>
-    <string name="cancel_reason_description">Co skłoniło Cię do rezygnacji? Wybierz powód, aby kontynuować.</string>
+    <string name="cancel_reason_description">Co skłoniło Cię do rezygnacji? Odpowiedź jest opcjonalna.</string>
     <string name="cancel_reason_too_expensive">Zbyt drogo</string>
     <string name="cancel_reason_not_using">Za rzadko z tego korzystam</string>
     <string name="cancel_reason_missing_feature">Brakuje funkcji, której potrzebuję</string>

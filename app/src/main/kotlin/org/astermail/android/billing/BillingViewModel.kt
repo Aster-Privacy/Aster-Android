@@ -252,9 +252,9 @@ class BillingViewModel @Inject constructor(
         }
     }
 
-    fun cancel_subscription(password: String, reason: String, reason_text: String? = null) {
+    fun cancel_subscription(password: String, reason: String? = null, reason_text: String? = null) {
         if (_state.value.is_acting) return
-        if (reason !in CANCEL_REASONS) return
+        val chosen_reason = reason?.takeIf { it in CANCEL_REASONS }
         viewModelScope.launch {
             _state.value = _state.value.copy(is_acting = true, acting_action = "cancel", error = null, info = null)
             val password_hash = withContext(Dispatchers.Default) {
@@ -272,7 +272,7 @@ class BillingViewModel @Inject constructor(
                 val response = billing_api.cancel_subscription(
                     CancelSubscriptionRequest(
                         password_hash = password_hash,
-                        cancel_reason = reason,
+                        cancel_reason = chosen_reason,
                         cancel_reason_text = clamp_cancel_reason_text(reason_text),
                     ),
                 )

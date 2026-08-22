@@ -1314,7 +1314,7 @@
     <string name="settings_plan_free_tagline">Alles wat je nodig hebt om te beginnen met privé, versleutelde e-mail.</string>
     <string name="settings_plan_star_tagline">Meer opslag, meer aliassen en je eerste eigen domein.</string>
     <string name="settings_plan_nova_tagline">Meer opslag, eigen domeinen en onbeperkte aliassen.</string>
-    <string name="settings_plan_supernova_tagline">Maximale opslag, alles onbeperkt en toegewijde ondersteuning.</string>
+    <string name="settings_plan_supernova_tagline">Maximale opslag, de hoogste limieten en toegewijde ondersteuning.</string>
     <string name="settings_plan_lead_star">Alles uit Star, plus:</string>
     <string name="settings_plan_lead_nova">Alles uit Nova, plus:</string>
     <string name="settings_plan_bullet_e2ee">Eind-tot-eindversleuteling</string>
@@ -1323,7 +1323,7 @@
     <string name="settings_plan_bullet_star_attachments">Bijlagen tot 50 MB</string>
     <string name="settings_plan_bullet_star_aliases">15 e-mailaliassen</string>
     <string name="settings_plan_bullet_star_domains">5 eigen domeinen</string>
-    <string name="settings_plan_bullet_unlimited_daily_emails">Onbeperkt e-mails per dag</string>
+    <string name="settings_plan_bullet_daily_send_limits">Hogere dagelijkse verzendlimieten</string>
     <string name="settings_plan_bullet_star_templates">10 e-mailsjablonen</string>
     <string name="settings_plan_bullet_tracker_protection">Trackerbescherming</string>
     <string name="settings_plan_bullet_vacation_reply">Automatisch vakantieantwoord</string>
@@ -1359,10 +1359,11 @@
     <string name="settings_billing_monthly">Maandelijks</string>
     <string name="settings_billing_yearly">Jaarlijks</string>
     <string name="settings_prices_usd_note">Prijzen worden getoond in USD. Het eindbedrag wordt bij het afrekenen bepaald.</string>
+    <string name="settings_prices_currency_note">Prijzen worden getoond in %1$s. Het eindbedrag wordt bij het afrekenen bevestigd.</string>
     <string name="plan_desc_free">Alles wat je nodig hebt om te beginnen met privé, versleutelde e-mail.</string>
     <string name="plan_desc_star">Meer opslag, meer aliassen en je eerste eigen domein.</string>
     <string name="plan_desc_nova">Meer opslag, eigen domeinen en onbeperkte aliassen.</string>
-    <string name="plan_desc_supernova">Maximale opslag, alles onbeperkt en toegewijde ondersteuning.</string>
+    <string name="plan_desc_supernova">Maximale opslag, de hoogste limieten en toegewijde ondersteuning.</string>
     <string name="set_as_primary">Instellen als primair adres</string>
     <string name="primary_badge">Primair</string>
     <string name="also_receives_at">Ontvangt ook op %1$s</string>
@@ -2802,7 +2803,7 @@
     <string name="payment_failed_one_day_left">Nog 1 dag om je kaart bij te werken.</string>
     <string name="device_verification_failed">Dit apparaat kon niet worden geverifieerd voor die wijziging. Meld je opnieuw aan op dit apparaat en probeer het dan opnieuw.</string>
     <string name="cancel_reason_title">Voordat je gaat</string>
-    <string name="cancel_reason_description">Waarom wil je opzeggen? Kies een reden om door te gaan.</string>
+    <string name="cancel_reason_description">Waarom wil je opzeggen? Antwoorden is optioneel.</string>
     <string name="cancel_reason_too_expensive">Te duur</string>
     <string name="cancel_reason_not_using">Ik gebruik het te weinig</string>
     <string name="cancel_reason_missing_feature">Een functie die ik nodig heb ontbreekt</string>

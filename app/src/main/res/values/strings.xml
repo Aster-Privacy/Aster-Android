@@ -1812,7 +1812,7 @@
     <string name="plan_desc_free">Everything you need to get started with private, encrypted email.</string>
     <string name="plan_desc_star">More storage, more aliases, and your first custom domain.</string>
     <string name="plan_desc_nova">More storage, custom domains, and unlimited aliases.</string>
-    <string name="plan_desc_supernova">Maximum storage, unlimited everything, and dedicated support.</string>
+    <string name="plan_desc_supernova">Maximum storage, the highest limits, and dedicated support.</string>
     <plurals name="aliases_count_plural">
         <item quantity="one">%d alias</item>
         <item quantity="other">%d aliases</item>
@@ -2901,7 +2901,7 @@
     <string name="payment_failed_one_day_left">1 day left to update your card.</string>
     <string name="device_verification_failed">This device could not be verified for that change. Sign in again on this device, then try again.</string>
     <string name="cancel_reason_title">Before you go</string>
-    <string name="cancel_reason_description">What made you decide to cancel? Choose a reason to continue.</string>
+    <string name="cancel_reason_description">What made you decide to cancel? Answering is optional.</string>
     <string name="cancel_reason_too_expensive">Too expensive</string>
     <string name="cancel_reason_not_using">I am not using it enough</string>
     <string name="cancel_reason_missing_feature">Missing a feature I need</string>

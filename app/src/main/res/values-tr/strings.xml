@@ -1314,7 +1314,7 @@
     <string name="settings_plan_free_tagline">Özel, şifreli e-postaya başlamak için ihtiyacınız olan her şey.</string>
     <string name="settings_plan_star_tagline">Daha fazla alan, daha fazla takma ad ve ilk özel alan adınız.</string>
     <string name="settings_plan_nova_tagline">Daha fazla alan, özel alan adları ve sınırsız takma ad.</string>
-    <string name="settings_plan_supernova_tagline">Maksimum alan, her şey sınırsız ve özel destek.</string>
+    <string name="settings_plan_supernova_tagline">Maksimum alan, en yüksek limitler ve özel destek.</string>
     <string name="settings_plan_lead_star">Star\'daki her şey, artı:</string>
     <string name="settings_plan_lead_nova">Nova\'daki her şey, artı:</string>
     <string name="settings_plan_bullet_e2ee">Uçtan uca şifreleme</string>
@@ -1323,7 +1323,7 @@
     <string name="settings_plan_bullet_star_attachments">50 MB\'a kadar ek</string>
     <string name="settings_plan_bullet_star_aliases">15 e-posta takma adı</string>
     <string name="settings_plan_bullet_star_domains">5 özel alan adı</string>
-    <string name="settings_plan_bullet_unlimited_daily_emails">Sınırsız günlük e-posta</string>
+    <string name="settings_plan_bullet_daily_send_limits">Daha yüksek günlük gönderim limitleri</string>
     <string name="settings_plan_bullet_star_templates">10 e-posta şablonu</string>
     <string name="settings_plan_bullet_tracker_protection">İzleyici koruması</string>
     <string name="settings_plan_bullet_vacation_reply">Tatil otomatik yanıtı</string>
@@ -1359,10 +1359,11 @@
     <string name="settings_billing_monthly">Aylık</string>
     <string name="settings_billing_yearly">Yıllık</string>
     <string name="settings_prices_usd_note">Fiyatlar USD cinsinden gösterilmektedir. Kesin tutar ödeme sırasında belirlenir.</string>
+    <string name="settings_prices_currency_note">Fiyatlar %1$s cinsinden gösterilmektedir. Kesin tutar ödeme sırasında onaylanır.</string>
     <string name="plan_desc_free">Özel, şifreli e-postaya başlamak için ihtiyacınız olan her şey.</string>
     <string name="plan_desc_star">Daha fazla alan, daha fazla takma ad ve ilk özel alan adınız.</string>
     <string name="plan_desc_nova">Daha fazla alan, özel alan adları ve sınırsız takma ad.</string>
-    <string name="plan_desc_supernova">Maksimum alan, her şey sınırsız ve özel destek.</string>
+    <string name="plan_desc_supernova">Maksimum alan, en yüksek limitler ve özel destek.</string>
     <string name="set_as_primary">Birincil adres olarak ayarla</string>
     <string name="primary_badge">Birincil</string>
     <string name="also_receives_at">Ayrıca %1$s adresinde alır</string>
@@ -2802,7 +2803,7 @@
     <string name="payment_failed_one_day_left">Kartınızı güncellemek için 1 gününüz kaldı.</string>
     <string name="device_verification_failed">Bu değişiklik için bu cihaz doğrulanamadı. Bu cihazda yeniden oturum açıp tekrar deneyin.</string>
     <string name="cancel_reason_title">Gitmeden önce</string>
-    <string name="cancel_reason_description">İptal etmeye neden karar verdiniz? Devam etmek için bir neden seçin.</string>
+    <string name="cancel_reason_description">İptal etmeye neden karar verdiniz? Yanıtlamak isteğe bağlıdır.</string>
     <string name="cancel_reason_too_expensive">Çok pahalı</string>
     <string name="cancel_reason_not_using">Yeterince kullanmıyorum</string>
     <string name="cancel_reason_missing_feature">İhtiyacım olan bir özellik eksik</string>
