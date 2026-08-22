@@ -92,10 +92,7 @@ import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterTextField
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.text.input.KeyboardType
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
 
@@ -1042,7 +1039,7 @@ fun SubscriptionsScreen(
                 show_cancel_flow = false
                 resume_cancel_flow = false
             },
-            on_confirm = { password, reason, reason_text -> billing_vm.cancel_subscription(password, reason, reason_text) },
+            on_confirm = { reason, reason_text -> billing_vm.cancel_subscription(reason, reason_text) },
         )
     }
 
@@ -1141,20 +1138,20 @@ private fun cancel_reason_label(reason: String): Int = when (reason) {
     else -> R.string.cancel_reason_other
 }
 
+private enum class CancelStep { reason, impact, confirm }
+
 @Composable
 private fun cancel_subscription_flow(
     billing_state: org.astermail.android.billing.BillingUiState,
     yearly_savings: Int?,
     on_switch_yearly: () -> Unit,
     on_dismiss: () -> Unit,
-    on_confirm: (password: String, reason: String?, reason_text: String?) -> Unit,
+    on_confirm: (reason: String?, reason_text: String?) -> Unit,
 ) {
     val colors = AsterMaterial.colors
     var reason by remember { mutableStateOf<String?>(null) }
     var reason_text by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var impact_step by remember { mutableStateOf(true) }
-    var password_step by remember { mutableStateOf(false) }
+    var step by remember { mutableStateOf(CancelStep.reason) }
     var submitted by remember { mutableStateOf(false) }
     val cancelling = billing_state.is_acting && billing_state.acting_action == "cancel"
     LaunchedEffect(cancelling, billing_state.error) {
@@ -1162,7 +1159,7 @@ private fun cancel_subscription_flow(
             if (billing_state.error == null) on_dismiss() else submitted = false
         }
     }
-    if (impact_step) {
+    if (step == CancelStep.impact) {
         val impact = billing_state.cancel_impact
         val lines = buildList {
             if (impact != null) {
@@ -1236,19 +1233,19 @@ private fun cancel_subscription_flow(
             },
             footer = {
                 org.astermail.android.design.components.AsterDialogOutlineButton(
-                    label = stringResource(R.string.keep_plan),
-                    onClick = on_dismiss,
+                    label = stringResource(R.string.back),
+                    onClick = { step = CancelStep.reason },
                     modifier = Modifier.weight(1f),
                 )
                 org.astermail.android.design.components.AsterDialogPrimaryButton(
                     label = stringResource(R.string.next),
-                    onClick = { impact_step = false },
+                    onClick = { step = CancelStep.confirm },
                     enabled = !billing_state.cancel_impact_loading,
                     modifier = Modifier.weight(1f),
                 )
             },
         )
-    } else if (!password_step) {
+    } else if (step == CancelStep.reason) {
         org.astermail.android.design.components.AsterDialog(
             on_dismiss = on_dismiss,
             title = stringResource(R.string.cancel_reason_title),
@@ -1302,38 +1299,32 @@ private fun cancel_subscription_flow(
             },
             footer = {
                 org.astermail.android.design.components.AsterDialogOutlineButton(
-                    label = stringResource(R.string.back),
-                    onClick = { impact_step = true },
+                    label = stringResource(R.string.keep_plan),
+                    onClick = on_dismiss,
                     modifier = Modifier.weight(1f),
                 )
                 org.astermail.android.design.components.AsterDialogPrimaryButton(
                     label = stringResource(R.string.next),
-                    onClick = { password_step = true },
+                    onClick = { step = CancelStep.impact },
                     modifier = Modifier.weight(1f),
                 )
             },
         )
     } else {
+        val failure = if (submitted) null else billing_state.error
         org.astermail.android.design.components.AsterDialog(
             on_dismiss = { if (!cancelling) on_dismiss() },
             title = stringResource(R.string.cancel_subscription_title),
             message = stringResource(R.string.cancel_subscription_description),
-            body = {
-                AsterTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = stringResource(R.string.password),
-                    error_text = if (!submitted) billing_state.error else null,
-                    enabled = !cancelling,
-                    visual_transformation = PasswordVisualTransformation(),
-                    keyboard_options = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    content_type = androidx.compose.ui.autofill.ContentType.Password,
-                )
+            body = if (failure == null) {
+                null
+            } else {
+                { Text(text = failure, color = colors.danger, fontSize = 13.sp) }
             },
             footer = {
                 org.astermail.android.design.components.AsterDialogOutlineButton(
                     label = stringResource(R.string.back),
-                    onClick = { password_step = false },
+                    onClick = { step = CancelStep.impact },
                     enabled = !cancelling,
                     modifier = Modifier.weight(1f),
                 )
@@ -1341,9 +1332,9 @@ private fun cancel_subscription_flow(
                     label = stringResource(R.string.cancel_subscription),
                     onClick = {
                         submitted = true
-                        on_confirm(password, reason, reason_text)
+                        on_confirm(reason, reason_text)
                     },
-                    enabled = password.isNotBlank() && !cancelling,
+                    enabled = !cancelling,
                     is_loading = cancelling,
                     modifier = Modifier.weight(1f),
                 )

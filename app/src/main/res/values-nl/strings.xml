@@ -824,7 +824,7 @@
     <string name="unlimited_domains">Onbeperkte domeinen</string>
     <string name="domains_count">%d domeinen</string>
     <string name="cancel_subscription_title">Abonnement annuleren</string>
-    <string name="cancel_subscription_description">Bevestig je wachtwoord om te annuleren. Je abonnement blijft actief tot het einde van de huidige factureringsperiode.</string>
+    <string name="cancel_subscription_description">Je abonnement blijft actief tot het einde van de huidige factureringsperiode. Daarna ga je over naar het gratis abonnement.</string>
     <string name="keep_plan">Abonnement behouden</string>
     <string name="unable_to_load">Kan niet laden</string>
     <string name="default_label">Standaard</string>

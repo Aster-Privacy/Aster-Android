@@ -825,7 +825,7 @@
     <string name="unlimited_domains">Unbegrenzte Domains</string>
     <string name="domains_count">%d Domains</string>
     <string name="cancel_subscription_title">Abonnement kündigen</string>
-    <string name="cancel_subscription_description">Bestätigen Sie Ihr Passwort zum Kündigen. Ihr Plan bleibt bis zum Ende des aktuellen Abrechnungszeitraums aktiv.</string>
+    <string name="cancel_subscription_description">Ihr Plan bleibt bis zum Ende des aktuellen Abrechnungszeitraums aktiv. Danach wechseln Sie zum kostenlosen Plan.</string>
     <string name="keep_plan">Plan behalten</string>
     <string name="unable_to_load">Laden nicht möglich</string>
     <string name="default_label">Standard</string>

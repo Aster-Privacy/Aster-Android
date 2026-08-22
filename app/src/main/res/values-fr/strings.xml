@@ -867,7 +867,7 @@
     <string name="unlimited_domains">Domaines illimités</string>
     <string name="domains_count">%d domaines</string>
     <string name="cancel_subscription_title">Annuler l\'abonnement</string>
-    <string name="cancel_subscription_description">Confirmez votre mot de passe pour annuler. Votre forfait restera actif jusqu\'à la fin de la période de facturation en cours.</string>
+    <string name="cancel_subscription_description">Votre forfait reste actif jusqu\'à la fin de la période de facturation en cours. Vous passez ensuite au forfait gratuit.</string>
     <string name="keep_plan">Garder le forfait</string>
     <string name="unable_to_load">Impossible de charger</string>
     <string name="default_label">Par défaut</string>

@@ -824,7 +824,7 @@
     <string name="unlimited_domains">무제한 도메인</string>
     <string name="domains_count">도메인 %d개</string>
     <string name="cancel_subscription_title">구독 취소</string>
-    <string name="cancel_subscription_description">비밀번호를 입력하여 취소를 확인하세요. 현재 청구 기간이 끝날 때까지 플랜이 유지됩니다.</string>
+    <string name="cancel_subscription_description">현재 청구 기간이 끝날 때까지 플랜이 유지되며, 그 후에는 무료 플랜으로 전환됩니다.</string>
     <string name="keep_plan">플랜 유지</string>
     <string name="unable_to_load">불러올 수 없음</string>
     <string name="default_label">기본</string>

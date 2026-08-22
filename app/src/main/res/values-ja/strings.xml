@@ -824,7 +824,7 @@
     <string name="unlimited_domains">無制限のドメイン</string>
     <string name="domains_count">%d個のドメイン</string>
     <string name="cancel_subscription_title">サブスクリプションをキャンセル</string>
-    <string name="cancel_subscription_description">パスワードを入力してキャンセルを確認してください。現在の請求期間の終了までプランは有効です。</string>
+    <string name="cancel_subscription_description">現在の請求期間の終了までプランは有効です。その後は無料プランに切り替わります。</string>
     <string name="keep_plan">プランを維持</string>
     <string name="unable_to_load">読み込めません</string>
     <string name="default_label">デフォルト</string>

@@ -1254,7 +1254,7 @@
     <string name="unlimited_domains">Unlimited domains</string>
     <string name="domains_count">%d domains</string>
     <string name="cancel_subscription_title">Cancel subscription</string>
-    <string name="cancel_subscription_description">Confirm your password to cancel. Your plan will remain active until the end of the current billing period.</string>
+    <string name="cancel_subscription_description">Your plan stays active until the end of the current billing period. After that, you move to the free plan.</string>
     <string name="keep_plan">Keep plan</string>
     <string name="unable_to_load">Unable to load</string>
     <string name="default_label">Default</string>

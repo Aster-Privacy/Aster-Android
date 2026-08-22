@@ -824,7 +824,7 @@
     <string name="unlimited_domains">Nieograniczone domeny</string>
     <string name="domains_count">%d domen</string>
     <string name="cancel_subscription_title">Anuluj subskrypcję</string>
-    <string name="cancel_subscription_description">Potwierdź hasło, aby anulować. Twój plan pozostanie aktywny do końca bieżącego okresu rozliczeniowego.</string>
+    <string name="cancel_subscription_description">Twój plan pozostaje aktywny do końca bieżącego okresu rozliczeniowego. Potem przechodzisz na plan bezpłatny.</string>
     <string name="keep_plan">Zachowaj plan</string>
     <string name="unable_to_load">Nie udało się załadować</string>
     <string name="default_label">Domyślna</string>

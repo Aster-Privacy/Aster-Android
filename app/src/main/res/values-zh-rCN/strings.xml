@@ -824,7 +824,7 @@
     <string name="unlimited_domains">无限域名</string>
     <string name="domains_count">%d 个域名</string>
     <string name="cancel_subscription_title">取消订阅</string>
-    <string name="cancel_subscription_description">输入密码确认取消。您的方案将在当前计费周期结束前保持有效。</string>
+    <string name="cancel_subscription_description">您的方案将在当前计费周期结束前保持有效，之后转为免费方案。</string>
     <string name="keep_plan">保留方案</string>
     <string name="unable_to_load">无法加载</string>
     <string name="default_label">默认</string>

@@ -141,7 +141,6 @@ data class BillingHistoryResponse(
 
 @Serializable
 data class CancelSubscriptionRequest(
-    val password_hash: String,
     val cancel_reason: String? = null,
     val cancel_reason_text: String? = null,
 )

@@ -824,7 +824,7 @@
     <string name="unlimited_domains">Domini illimitati</string>
     <string name="domains_count">%d domini</string>
     <string name="cancel_subscription_title">Cancella abbonamento</string>
-    <string name="cancel_subscription_description">Conferma la tua password per cancellare. Il tuo piano rimarra attivo fino alla fine del periodo di fatturazione corrente.</string>
+    <string name="cancel_subscription_description">Il tuo piano resta attivo fino alla fine del periodo di fatturazione corrente. Poi passi al piano gratuito.</string>
     <string name="keep_plan">Mantieni piano</string>
     <string name="unable_to_load">Impossibile caricare</string>
     <string name="default_label">Predefinito</string>

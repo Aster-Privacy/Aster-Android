@@ -824,7 +824,7 @@
     <string name="unlimited_domains">نطاقات غير محدودة</string>
     <string name="domains_count">%d نطاقات</string>
     <string name="cancel_subscription_title">إلغاء الاشتراك</string>
-    <string name="cancel_subscription_description">أكد كلمة المرور للإلغاء. ستبقى خطتك نشطة حتى نهاية فترة الفوترة الحالية.</string>
+    <string name="cancel_subscription_description">تظل خطتك نشطة حتى نهاية فترة الفوترة الحالية، ثم تنتقل إلى الخطة المجانية.</string>
     <string name="keep_plan">الاحتفاظ بالخطة</string>
     <string name="unable_to_load">تعذر التحميل</string>
     <string name="default_label">افتراضي</string>

@@ -824,7 +824,7 @@
     <string name="unlimited_domains">Неограниченные домены</string>
     <string name="domains_count">%d доменов</string>
     <string name="cancel_subscription_title">Отменить подписку</string>
-    <string name="cancel_subscription_description">Подтвердите пароль для отмены. Ваш тариф останется активным до конца текущего расчётного периода.</string>
+    <string name="cancel_subscription_description">Ваш тариф остаётся активным до конца текущего расчётного периода. Затем вы перейдёте на бесплатный тариф.</string>
     <string name="keep_plan">Сохранить тариф</string>
     <string name="unable_to_load">Не удалось загрузить</string>
     <string name="default_label">По умолчанию</string>

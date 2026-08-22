@@ -180,10 +180,9 @@ class BillingViewModelTest {
     }
 
     @Test
-    fun `cancel sends the password hash with the chosen reason`() = runTest {
-        coEvery { auth_repository.derive_password_hash_b64("pw") } returns "hash"
+    fun `cancel sends the chosen reason without any credential`() = runTest {
         coEvery { billing_api.cancel_subscription(any()) } returns CancelSubscriptionResponse(cancel_at_period_end = true)
-        vm.cancel_subscription("pw", "too_expensive", "  " + "x".repeat(2500) + "  ")
+        vm.cancel_subscription("too_expensive", "  " + "x".repeat(2500) + "  ")
         advanceUntilIdle()
         vm.state.test {
             var latest = awaitItem()
@@ -194,20 +193,19 @@ class BillingViewModelTest {
         coVerify {
             billing_api.cancel_subscription(
                 CancelSubscriptionRequest(
-                    password_hash = "hash",
                     cancel_reason = "too_expensive",
                     cancel_reason_text = "x".repeat(2000),
                 ),
             )
         }
+        coVerify(exactly = 0) { auth_repository.derive_password_hash_b64(any()) }
         assertFalse(vm.state.value.is_acting)
     }
 
     @Test
     fun `cancel proceeds without a reason`() = runTest {
-        coEvery { auth_repository.derive_password_hash_b64("pw") } returns "hash"
         coEvery { billing_api.cancel_subscription(any()) } returns CancelSubscriptionResponse(cancel_at_period_end = true)
-        vm.cancel_subscription("pw")
+        vm.cancel_subscription()
         advanceUntilIdle()
         vm.state.test {
             var latest = awaitItem()
@@ -218,19 +216,18 @@ class BillingViewModelTest {
         coVerify {
             billing_api.cancel_subscription(
                 CancelSubscriptionRequest(
-                    password_hash = "hash",
                     cancel_reason = null,
                     cancel_reason_text = null,
                 ),
             )
         }
+        coVerify(exactly = 0) { auth_repository.derive_password_hash_b64(any()) }
     }
 
     @Test
     fun `cancel drops unknown reasons but still cancels`() = runTest {
-        coEvery { auth_repository.derive_password_hash_b64("pw") } returns "hash"
         coEvery { billing_api.cancel_subscription(any()) } returns CancelSubscriptionResponse(cancel_at_period_end = true)
-        vm.cancel_subscription("pw", "because")
+        vm.cancel_subscription("because")
         advanceUntilIdle()
         vm.state.test {
             var latest = awaitItem()
@@ -241,7 +238,6 @@ class BillingViewModelTest {
         coVerify {
             billing_api.cancel_subscription(
                 CancelSubscriptionRequest(
-                    password_hash = "hash",
                     cancel_reason = null,
                     cancel_reason_text = null,
                 ),

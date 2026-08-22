@@ -824,7 +824,7 @@
     <string name="unlimited_domains">Sınırsız alan adı</string>
     <string name="domains_count">%d alan adı</string>
     <string name="cancel_subscription_title">Aboneliği iptal et</string>
-    <string name="cancel_subscription_description">İptal etmek için parolanızı onaylayın. Planınız mevcut faturalandırma döneminin sonuna kadar aktif kalacaktır.</string>
+    <string name="cancel_subscription_description">Planınız mevcut faturalandırma döneminin sonuna kadar aktif kalır. Sonrasında ücretsiz plana geçersiniz.</string>
     <string name="keep_plan">Planı koru</string>
     <string name="unable_to_load">Yüklenemedi</string>
     <string name="default_label">Varsayılan</string>

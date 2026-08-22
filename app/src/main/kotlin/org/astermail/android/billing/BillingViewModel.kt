@@ -32,7 +32,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -40,7 +39,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.astermail.android.api.billing.AvailablePlan
 import org.astermail.android.api.billing.BillingApi
 import org.astermail.android.api.billing.BillingHistoryItem
@@ -252,26 +250,14 @@ class BillingViewModel @Inject constructor(
         }
     }
 
-    fun cancel_subscription(password: String, reason: String? = null, reason_text: String? = null) {
+    fun cancel_subscription(reason: String? = null, reason_text: String? = null) {
         if (_state.value.is_acting) return
         val chosen_reason = reason?.takeIf { it in CANCEL_REASONS }
         viewModelScope.launch {
             _state.value = _state.value.copy(is_acting = true, acting_action = "cancel", error = null, info = null)
-            val password_hash = withContext(Dispatchers.Default) {
-                auth_repository.derive_password_hash_b64(password)
-            }
-            if (password_hash == null) {
-                _state.value = _state.value.copy(
-                    is_acting = false,
-                    acting_action = null,
-                    error = ctx.getString(R.string.session_expired_sign_in),
-                )
-                return@launch
-            }
             try {
                 val response = billing_api.cancel_subscription(
                     CancelSubscriptionRequest(
-                        password_hash = password_hash,
                         cancel_reason = chosen_reason,
                         cancel_reason_text = clamp_cancel_reason_text(reason_text),
                     ),
