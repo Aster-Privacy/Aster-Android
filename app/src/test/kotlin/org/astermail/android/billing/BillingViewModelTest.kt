@@ -45,6 +45,7 @@ import org.astermail.android.auth.AuthRepository
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -207,5 +208,23 @@ class BillingViewModelTest {
         vm.cancel_subscription("pw", "because")
         advanceUntilIdle()
         coVerify(exactly = 0) { billing_api.cancel_subscription(any()) }
+    }
+
+    @Test
+    fun `keeps the last known subscription when a refresh fails`() = runTest {
+        coEvery { billing_api.get_subscription() } returns paid_sub
+        vm.load_subscription()
+        advanceUntilIdle()
+        assertEquals("pro", vm.state.value.subscription?.plan?.code)
+
+        coEvery { billing_api.get_subscription() } throws RuntimeException("offline")
+        vm.load_subscription()
+        advanceUntilIdle()
+
+        assertEquals("pro", vm.state.value.subscription?.plan?.code)
+        assertNotNull(vm.state.value.subscription_error)
+
+        vm.clear_subscription_error()
+        assertNull(vm.state.value.subscription_error)
     }
 }

@@ -33,6 +33,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -76,7 +79,20 @@ data class BillingUiState(
     val plan_change_preview: PlanChangePreviewResponse? = null,
     val plan_change_preview_loading: Boolean = false,
     val plan_change_preview_failed: Boolean = false,
+    val subscription_error: String? = null,
+    val plans_failed: Boolean = false,
+    val checking_payment: Boolean = false,
+    val checkout_abandoned_plan: String? = null,
+    val cancel_impact: org.astermail.android.api.billing.CancelImpactResponse? = null,
+    val cancel_impact_loading: Boolean = false,
+    val credits: org.astermail.android.api.billing.CreditBalanceResponse? = null,
+    val academic: org.astermail.android.api.billing.AcademicDiscountStatusResponse? = null,
+    val onboarding: org.astermail.android.api.billing.OnboardingChecklistResponse? = null,
 )
+
+const val CHECKOUT_POLL_INTERVAL_MS = 3_000L
+const val CHECKOUT_POLL_TIMEOUT_MS = 60_000L
+const val SIGN_IN_WAIT_TIMEOUT_MS = 15_000L
 
 @HiltViewModel
 class BillingViewModel @Inject constructor(
@@ -97,6 +113,25 @@ class BillingViewModel @Inject constructor(
 
     private var pending_crypto_invoices_in_flight = false
 
+    private var poll_job: Job? = null
+
+    private var pending_checkout_plan: String? = null
+
+    private var snapshot_before_checkout: String? = null
+
+    init {
+        viewModelScope.launch {
+            billing_return_store.outcome.collect { outcome ->
+                if (outcome == null) return@collect
+                billing_return_store.outcome.value = null
+                on_billing_return(outcome)
+            }
+        }
+    }
+
+    private fun subscription_signature(sub: SubscriptionResponse?): String =
+        "${sub?.plan?.code}|${sub?.status}|${sub?.current_period_end}|${sub?.storage?.limit_bytes}|${sub?.cancel_at_period_end}"
+
     private fun is_active_paid(sub: SubscriptionResponse?): Boolean {
         if (sub == null) return false
         val active = sub.status == "active" || sub.status == "trialing"
@@ -115,17 +150,18 @@ class BillingViewModel @Inject constructor(
     }
 
     private suspend fun reload_subscription() {
-        _state.update { it.copy(is_loading = true, error = null) }
+        _state.update { it.copy(is_loading = true, subscription_error = null) }
         try {
             val sub = billing_api.get_subscription()
-            _state.update { it.copy(subscription = sub, is_loading = false, error = null) }
+            _state.update { it.copy(subscription = sub, is_loading = false, subscription_error = null) }
+            PaymentFailedNotifier.observe(ctx, sub.status, sub.payment_failed_at, sub.current_period_end, sub.plan.name)
         } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
             if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_subscription failed", t)
             _state.update {
                 it.copy(
                     is_loading = false,
-                    subscription = null,
-                    error = null,
+                    subscription_error = localized_api_error(ctx, t, ctx.getString(R.string.subscription_refresh_failed)),
                 )
             }
         }
@@ -135,8 +171,11 @@ class BillingViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val response = billing_api.get_available_plans()
-                _state.update { it.copy(available_plans = response.plans) }
-            } catch (_: Throwable) {
+                _state.update { it.copy(available_plans = response.plans, plans_failed = response.plans.isEmpty()) }
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_available_plans failed", t)
+                _state.update { it.copy(plans_failed = true) }
             }
         }
     }
@@ -146,7 +185,9 @@ class BillingViewModel @Inject constructor(
             try {
                 val limits = billing_api.get_plan_limits()
                 _state.update { it.copy(limits = limits) }
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_plan_limits failed", t)
             }
         }
     }
@@ -156,7 +197,9 @@ class BillingViewModel @Inject constructor(
             try {
                 val response = billing_api.get_billing_history(page = 1, per_page = 20)
                 _state.update { it.copy(history = response.items) }
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_billing_history failed", t)
             }
         }
     }
@@ -165,6 +208,10 @@ class BillingViewModel @Inject constructor(
         if (_state.value.is_acting) return
         viewModelScope.launch {
             _state.value = _state.value.copy(is_acting = true, acting_action = "checkout_$plan_code", error = null, checkout_url = null)
+            if (!await_signed_in()) {
+                _state.value = _state.value.copy(is_acting = false, acting_action = null, error = ctx.getString(R.string.session_expired_sign_in))
+                return@launch
+            }
             try {
                 val response = billing_api.create_checkout_session(
                     CheckoutSessionRequest(
@@ -172,9 +219,12 @@ class BillingViewModel @Inject constructor(
                         billing_interval = billing_interval,
                         currency = currency,
                         test_mode = org.astermail.android.BuildConfig.DEBUG,
+                        success_url = BILLING_RETURN_SUCCESS,
+                        cancel_url = BILLING_RETURN_CANCELLED,
                     ),
                 )
-                _state.value = _state.value.copy(is_acting = false, acting_action = null, checkout_url = response.url)
+                pending_checkout_plan = plan_code
+                _state.value = _state.value.copy(is_acting = false, acting_action = null, checkout_url = response.url, checkout_abandoned_plan = null)
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_acting = false,
@@ -271,7 +321,7 @@ class BillingViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     is_acting = false,
                     acting_action = null,
-                    info = ctx.getString(R.string.billing_changed_to, response.billing_interval),
+                    info = ctx.getString(R.string.billing_changed_to, billing_interval_label(ctx, response.billing_interval)),
                 )
                 load_subscription()
             } catch (t: Throwable) {
@@ -303,10 +353,114 @@ class BillingViewModel @Inject constructor(
     }
 
     private fun billing_error(t: Throwable, fallback: String): String = when (t) {
-        is org.astermail.android.api.ApiError.StepUpRequired -> ctx.getString(R.string.device_verification_failed)
-        is org.astermail.android.api.ApiError.UnauthorizedError ->
-            if (_state.value.acting_action == "cancel") ctx.getString(R.string.incorrect_password) else fallback
-        else -> org.astermail.android.api.user_facing_error(t, fallback)
+        is org.astermail.android.api.ApiError.InvalidCredentials -> ctx.getString(R.string.incorrect_password)
+        is org.astermail.android.api.ApiError.UnauthorizedError -> ctx.getString(R.string.session_expired_sign_in)
+        else -> localized_api_error(ctx, t, fallback)
+    }
+
+    fun load_cancel_impact() {
+        viewModelScope.launch {
+            _state.update { it.copy(cancel_impact = null, cancel_impact_loading = true) }
+            try {
+                val impact = billing_api.get_cancel_impact()
+                _state.update { it.copy(cancel_impact = impact, cancel_impact_loading = false) }
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_cancel_impact failed", t)
+                _state.update { it.copy(cancel_impact_loading = false) }
+            }
+        }
+    }
+
+    fun load_credits_and_discounts() {
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(credits = billing_api.get_credit_balance()) }
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_credit_balance failed", t)
+            }
+            try {
+                _state.update { it.copy(academic = billing_api.get_academic_discount_status()) }
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_academic_discount_status failed", t)
+            }
+        }
+    }
+
+    fun load_onboarding_checklist() {
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(onboarding = billing_api.get_onboarding_checklist()) }
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_onboarding_checklist failed", t)
+            }
+        }
+    }
+
+    fun dismiss_onboarding_checklist() {
+        val current = _state.value.onboarding ?: return
+        _state.update { it.copy(onboarding = current.copy(dismissed_at = "local")) }
+        viewModelScope.launch {
+            try {
+                billing_api.dismiss_onboarding_checklist()
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "dismiss_onboarding_checklist failed", t)
+            }
+        }
+    }
+
+    fun on_billing_return(outcome: billing_return_outcome) {
+        when (outcome) {
+            billing_return_outcome.success -> poll_after_return()
+            billing_return_outcome.cancelled -> {
+                _state.update { it.copy(awaiting_checkout = false, checkout_abandoned_plan = pending_checkout_plan) }
+            }
+            billing_return_outcome.open -> load_subscription()
+        }
+    }
+
+    fun clear_checkout_abandoned() {
+        _state.update { it.copy(checkout_abandoned_plan = null) }
+    }
+
+    private fun poll_after_return() {
+        if (poll_job?.isActive == true) return
+        val was_checkout = _state.value.awaiting_checkout
+        _state.update { it.copy(awaiting_checkout = false, awaiting_portal = false, checking_payment = true) }
+        poll_job = viewModelScope.launch {
+            val before = snapshot_before_checkout
+            val deadline = CHECKOUT_POLL_TIMEOUT_MS
+            var elapsed = 0L
+            var changed = false
+            while (true) {
+                reload_subscription()
+                if (before == null || subscription_signature(_state.value.subscription) != before) {
+                    changed = true
+                    break
+                }
+                if (elapsed >= deadline) break
+                delay(CHECKOUT_POLL_INTERVAL_MS)
+                elapsed += CHECKOUT_POLL_INTERVAL_MS
+            }
+            load_payment_methods()
+            load_storage_addons()
+            val now_paid = is_active_paid(_state.value.subscription)
+            _state.update {
+                it.copy(
+                    checking_payment = false,
+                    checkout_abandoned_plan = if (!changed && pending_checkout_plan != null) pending_checkout_plan else it.checkout_abandoned_plan,
+                    info = if (changed && now_paid) ctx.getString(R.string.payment_confirmed) else it.info,
+                )
+            }
+            if (changed) pending_checkout_plan = null
+            if (was_checkout && changed && !paid_before_checkout && now_paid) {
+                _review_request.emit(Unit)
+            }
+        }
     }
 
     fun load_plan_change_preview(plan_code: String, billing_interval: String) {
@@ -336,9 +490,15 @@ class BillingViewModel @Inject constructor(
             _state.value = _state.value.copy(is_acting = true, acting_action = "crypto_$plan_code", error = null, checkout_url = null)
             try {
                 val response = billing_api.create_crypto_checkout_session(
-                    org.astermail.android.api.billing.CryptoCheckoutRequest(plan_code = plan_code, term_months = term_months)
+                    org.astermail.android.api.billing.CryptoCheckoutRequest(
+                        plan_code = plan_code,
+                        term_months = term_months,
+                        success_url = BILLING_RETURN_SUCCESS,
+                        cancel_url = BILLING_RETURN_CANCELLED,
+                    )
                 )
-                _state.value = _state.value.copy(is_acting = false, acting_action = null, checkout_url = response.url)
+                pending_checkout_plan = plan_code
+                _state.value = _state.value.copy(is_acting = false, acting_action = null, checkout_url = response.url, checkout_abandoned_plan = null)
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_acting = false, acting_action = null,
@@ -354,7 +514,12 @@ class BillingViewModel @Inject constructor(
             _state.value = _state.value.copy(is_acting = true, acting_action = "crypto_addon_$addon_id", error = null, checkout_url = null)
             try {
                 val response = billing_api.purchase_storage_addon_crypto(
-                    org.astermail.android.api.billing.CryptoAddonCheckoutRequest(addon_id = addon_id, term_months = term_months)
+                    org.astermail.android.api.billing.CryptoAddonCheckoutRequest(
+                        addon_id = addon_id,
+                        term_months = term_months,
+                        success_url = BILLING_RETURN_SUCCESS,
+                        cancel_url = BILLING_RETURN_CANCELLED,
+                    )
                 )
                 _state.value = _state.value.copy(is_acting = false, acting_action = null, checkout_url = response.url)
             } catch (t: Throwable) {
@@ -443,7 +608,10 @@ class BillingViewModel @Inject constructor(
             try {
                 val response = billing_api.get_storage_addons()
                 _state.value = _state.value.copy(storage_addons = response)
-            } catch (_: Throwable) {}
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_storage_addons failed", t)
+            }
         }
     }
 
@@ -468,6 +636,7 @@ class BillingViewModel @Inject constructor(
 
     fun consume_checkout_url() {
         paid_before_checkout = is_active_paid(_state.value.subscription)
+        snapshot_before_checkout = subscription_signature(_state.value.subscription)
         _state.value = _state.value.copy(checkout_url = null, awaiting_checkout = true)
     }
 
@@ -477,21 +646,28 @@ class BillingViewModel @Inject constructor(
 
     fun on_resume() {
         val s = _state.value
-        if (s.awaiting_checkout || s.awaiting_portal) {
-            val was_checkout = s.awaiting_checkout
-            _state.value = s.copy(awaiting_checkout = false, awaiting_portal = false)
+        if (s.awaiting_checkout) {
+            poll_after_return()
+        } else if (s.awaiting_portal) {
+            _state.value = s.copy(awaiting_portal = false)
             viewModelScope.launch {
                 reload_subscription()
                 load_payment_methods()
-                if (was_checkout && !paid_before_checkout && is_active_paid(_state.value.subscription)) {
-                    _review_request.emit(Unit)
-                }
             }
         }
     }
 
+    suspend fun await_signed_in(): Boolean =
+        kotlinx.coroutines.withTimeoutOrNull(SIGN_IN_WAIT_TIMEOUT_MS) {
+            auth_repository.is_signed_in.first { it }
+        } ?: false
+
     fun clear_messages() {
         _state.value = _state.value.copy(error = null, info = null)
+    }
+
+    fun clear_subscription_error() {
+        _state.value = _state.value.copy(subscription_error = null)
     }
 
     fun load_payment_methods() {
@@ -499,7 +675,9 @@ class BillingViewModel @Inject constructor(
             try {
                 val response = billing_api.list_payment_methods()
                 _state.value = _state.value.copy(payment_methods = response.payment_methods)
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "list_payment_methods failed", t)
             }
         }
     }

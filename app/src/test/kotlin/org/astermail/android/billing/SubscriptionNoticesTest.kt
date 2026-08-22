@@ -177,4 +177,17 @@ class SubscriptionNoticesTest {
         assertEquals(MAX_CANCEL_REASON_TEXT, clamp_cancel_reason_text("y".repeat(5000))?.length)
         assertEquals(8, CANCEL_REASONS.size)
     }
+
+    @Test
+    fun `billing intervals normalize to month or year`() {
+        assertEquals("year", normalize_billing_interval("year"))
+        assertEquals("year", normalize_billing_interval("YEARLY"))
+        assertEquals("year", normalize_billing_interval(" annual "))
+        assertEquals("year", normalize_billing_interval("annually"))
+        assertEquals("month", normalize_billing_interval("month"))
+        assertEquals("month", normalize_billing_interval("Monthly"))
+        assertEquals("month", normalize_billing_interval(null))
+        assertEquals("month", normalize_billing_interval("   "))
+        assertEquals("quarter", normalize_billing_interval("quarter"))
+    }
 }

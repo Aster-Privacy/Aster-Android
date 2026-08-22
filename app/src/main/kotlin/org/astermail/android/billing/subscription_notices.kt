@@ -55,10 +55,40 @@ fun payment_failed_due_date(
     grace_period_end: String?,
     current_period_end: String?,
 ): String? {
-    if (payment_failed_at.isNullOrBlank()) return null
     if (status !in ACTIVE_STATUSES) return null
+    if (payment_failed_at.isNullOrBlank() && status != "past_due") return null
     val raw = grace_period_end?.takeIf { it.isNotBlank() } ?: current_period_end?.takeIf { it.isNotBlank() }
-    return raw?.take(10)
+    return raw?.take(10) ?: ""
+}
+
+fun payment_failure_key(status: String?, payment_failed_at: String?, current_period_end: String?): String? {
+    if (status !in ACTIVE_STATUSES) return null
+    if (payment_failed_at.isNullOrBlank() && status != "past_due") return null
+    return "${payment_failed_at.orEmpty()}|${current_period_end.orEmpty()}"
+}
+
+const val CRYPTO_RENEWAL_WINDOW_DAYS = 7L
+
+fun crypto_renewal_due(
+    payment_provider: String?,
+    paid_until: String?,
+    status: String?,
+    today: String,
+): Int? {
+    if (!is_crypto_provider(payment_provider)) return null
+    if (status !in ACTIVE_STATUSES) return null
+    val end = paid_until?.takeIf { it.isNotBlank() }?.take(10) ?: return null
+    val days = runCatching {
+        java.time.temporal.ChronoUnit.DAYS.between(java.time.LocalDate.parse(today), java.time.LocalDate.parse(end))
+    }.getOrNull() ?: return null
+    return if (days in 0..CRYPTO_RENEWAL_WINDOW_DAYS) days.toInt() else null
+}
+
+fun lapse_dismissal_key(lapsed: lapsed_plan): String = "${lapsed.plan_name}|${lapsed.ended_on}"
+
+fun alias_upsell_due(current: Int?, limit: Int?): Boolean {
+    if (current == null || limit == null || limit <= 0) return false
+    return current * 100 >= limit * 80 && current < limit
 }
 
 val CANCEL_REASONS = listOf(
@@ -87,8 +117,15 @@ fun payment_failed_days_left(due_date: String?, today: String): Int? {
     return days.toInt().takeIf { it >= 1 }
 }
 
-fun normalize_billing_interval(raw: String?): String =
-    if (raw?.trim()?.lowercase()?.startsWith("year") == true) "year" else "month"
+fun normalize_billing_interval(raw: String?): String {
+    val value = raw?.trim()?.lowercase().orEmpty()
+    return when {
+        value.isBlank() -> "month"
+        value.startsWith("year") || value == "annual" || value == "annually" || value == "yearly" -> "year"
+        value.startsWith("month") || value == "monthly" -> "month"
+        else -> value
+    }
+}
 
 fun api_plan_price_cents(plans: List<AvailablePlan>, code: String, billing_interval: String): Int? =
     plans.firstOrNull { it.code == code && it.billing_period == billing_interval && it.price_cents > 0 }?.price_cents
@@ -139,3 +176,9 @@ fun plan_code_from_name(plan_name: String?): String {
         else -> lower
     }
 }
+
+fun required_plan_name(from_payload: String?, fallback: String): String =
+    from_payload?.trim()?.takeIf { it.isNotBlank() } ?: fallback
+
+fun plan_display_name(plans: List<AvailablePlan>, code: String): String? =
+    plans.firstOrNull { it.code.equals(code, ignoreCase = true) && it.name.isNotBlank() }?.name
