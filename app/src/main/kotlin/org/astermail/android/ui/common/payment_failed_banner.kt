@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -42,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import compose.icons.TablerIcons
 import compose.icons.tablericons.AlertTriangle
-import compose.icons.tablericons.X
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
@@ -55,16 +53,26 @@ fun payment_failed_banner(
     due_date: String,
     is_loading: Boolean,
     on_update_card: () -> Unit,
-    on_dismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    days_left: Int? = null,
 ) {
     val colors = AsterMaterial.colors
+    val message = if (days_left != null && due_date.isNotBlank()) {
+        stringResource(R.string.payment_failed_banner_message, due_date, plan_name)
+    } else {
+        stringResource(R.string.payment_failed_banner_overdue, plan_name)
+    }
+    val days_text = when {
+        days_left == null -> null
+        days_left == 1 -> stringResource(R.string.payment_failed_one_day_left)
+        else -> stringResource(R.string.payment_failed_days_left, days_left)
+    }
     Column(
         modifier = modifier
             .fillMaxWidth()
             .clip(SquircleShape(12.dp))
             .background(colors.danger.copy(alpha = 0.12f))
-            .padding(start = 14.dp, end = 4.dp, top = 6.dp, bottom = 12.dp),
+            .padding(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 12.dp),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -77,27 +85,27 @@ fun payment_failed_banner(
                 modifier = Modifier.size(18.dp),
             )
             Text(
-                text = stringResource(R.string.payment_failed_banner_message, due_date, plan_name),
+                text = message,
                 color = colors.text_primary,
                 fontSize = 13.sp,
                 lineHeight = 17.sp,
                 modifier = Modifier.weight(1f),
             )
-            IconButton(onClick = on_dismiss) {
-                Icon(
-                    imageVector = TablerIcons.X,
-                    contentDescription = stringResource(R.string.payment_failed_dismiss),
-                    tint = colors.text_muted,
-                    modifier = Modifier.size(16.dp),
-                )
-            }
+        }
+        if (days_text != null) {
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = days_text,
+                color = colors.danger,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(start = 28.dp),
+            )
         }
         Spacer(Modifier.height(AsterSpacing.xs))
         AsterSecondaryButton(
             label = if (is_loading) stringResource(R.string.loading) else stringResource(R.string.payment_failed_update_card),
             onClick = on_update_card,
             enabled = !is_loading,
-            modifier = Modifier.padding(end = 10.dp),
         )
     }
 }

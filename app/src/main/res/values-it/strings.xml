@@ -2797,4 +2797,7 @@
     <string name="plan_change_preview_loading">Calcolo dell’importo dovuto oggi…</string>
     <string name="plan_change_due_today">Dovuto oggi: %1$s</string>
     <string name="plan_change_preview_failed">Impossibile calcolare l’importo dovuto oggi. Viene mostrato il prezzo completo.</string>
+    <string name="payment_failed_banner_overdue">L’ultimo pagamento non è andato a buon fine. Aggiorna subito la carta per mantenere il piano %1$s.</string>
+    <string name="payment_failed_days_left">Hai ancora %1$d giorni per aggiornare la carta.</string>
+    <string name="payment_failed_one_day_left">Hai ancora 1 giorno per aggiornare la carta.</string>
 </resources>

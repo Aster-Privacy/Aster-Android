@@ -299,8 +299,7 @@ fun InboxScreen(
             current_period_end = sub.current_period_end,
         )
     }
-    val show_payment_failed_banner = payment_failed_due != null &&
-        !org.astermail.android.billing.payment_failed_banner_session.dismissed
+    val show_payment_failed_banner = payment_failed_due != null
     val prefetch_context = LocalContext.current
     val toast_context = LocalContext.current
 
@@ -1447,8 +1446,11 @@ fun InboxScreen(
                                     due_date = payment_failed_due.orEmpty(),
                                     is_loading = billing_state.is_acting && billing_state.acting_action == "portal",
                                     on_update_card = { if (!billing_state.is_acting) billing_vm.open_portal() },
-                                    on_dismiss = { org.astermail.android.billing.payment_failed_banner_session.dismissed = true },
                                     modifier = Modifier.padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.xs),
+                                    days_left = org.astermail.android.billing.payment_failed_days_left(
+                                        payment_failed_due,
+                                        java.time.LocalDate.now().toString(),
+                                    ),
                                 )
                             }
                         }

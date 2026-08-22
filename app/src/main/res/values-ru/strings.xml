@@ -2813,4 +2813,7 @@
     <string name="plan_change_preview_loading">Рассчитываем сумму к оплате сегодня…</string>
     <string name="plan_change_due_today">К оплате сегодня: %1$s</string>
     <string name="plan_change_preview_failed">Не удалось рассчитать сумму к оплате сегодня. Показана полная цена.</string>
+    <string name="payment_failed_banner_overdue">Последний платёж не прошёл. Обновите карту сейчас, чтобы сохранить тариф %1$s.</string>
+    <string name="payment_failed_days_left">Осталось %1$d дн., чтобы обновить карту.</string>
+    <string name="payment_failed_one_day_left">Остался 1 день, чтобы обновить карту.</string>
 </resources>

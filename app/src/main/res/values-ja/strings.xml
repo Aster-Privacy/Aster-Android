@@ -2789,4 +2789,7 @@
     <string name="plan_change_preview_loading">本日のお支払い額を計算しています…</string>
     <string name="plan_change_due_today">本日のお支払い: %1$s</string>
     <string name="plan_change_preview_failed">本日のお支払い額を計算できませんでした。通常価格を表示しています。</string>
+    <string name="payment_failed_banner_overdue">前回のお支払いが完了しませんでした。%1$s プランを維持するには、今すぐカードを更新してください。</string>
+    <string name="payment_failed_days_left">カードの更新期限まであと %1$d 日です。</string>
+    <string name="payment_failed_one_day_left">カードの更新期限まであと 1 日です。</string>
 </resources>

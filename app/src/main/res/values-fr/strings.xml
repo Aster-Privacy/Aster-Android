@@ -2825,4 +2825,7 @@
     <string name="plan_change_preview_loading">Calcul du montant dû aujourd’hui…</string>
     <string name="plan_change_due_today">Dû aujourd’hui : %1$s</string>
     <string name="plan_change_preview_failed">Le montant dû aujourd’hui n’a pas pu être calculé. Le prix complet est affiché.</string>
+    <string name="payment_failed_banner_overdue">Votre dernier paiement a échoué. Mettez à jour votre carte maintenant pour conserver votre forfait %1$s.</string>
+    <string name="payment_failed_days_left">Il vous reste %1$d jours pour mettre à jour votre carte.</string>
+    <string name="payment_failed_one_day_left">Il vous reste 1 jour pour mettre à jour votre carte.</string>
 </resources>

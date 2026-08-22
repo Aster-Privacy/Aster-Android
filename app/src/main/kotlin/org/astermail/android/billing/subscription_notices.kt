@@ -21,9 +21,6 @@
 
 package org.astermail.android.billing
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import org.astermail.android.api.billing.AvailablePlan
 import org.astermail.android.api.billing.BillingHistoryItem
 
@@ -52,10 +49,6 @@ fun can_offer_save_offers(
     return true
 }
 
-object payment_failed_banner_session {
-    var dismissed by mutableStateOf(false)
-}
-
 fun payment_failed_due_date(
     status: String?,
     payment_failed_at: String?,
@@ -66,6 +59,16 @@ fun payment_failed_due_date(
     if (status !in ACTIVE_STATUSES) return null
     val raw = grace_period_end?.takeIf { it.isNotBlank() } ?: current_period_end?.takeIf { it.isNotBlank() }
     return raw?.take(10)
+}
+
+fun payment_failed_days_left(due_date: String?, today: String): Int? {
+    val due = due_date?.takeIf { it.length >= 10 } ?: return null
+    val days = try {
+        java.time.temporal.ChronoUnit.DAYS.between(java.time.LocalDate.parse(today.take(10)), java.time.LocalDate.parse(due.take(10)))
+    } catch (_: Throwable) {
+        return null
+    }
+    return days.toInt().takeIf { it >= 1 }
 }
 
 fun normalize_billing_interval(raw: String?): String =

@@ -2797,4 +2797,7 @@
     <string name="plan_change_preview_loading">Bugün ödenecek tutar hesaplanıyor…</string>
     <string name="plan_change_due_today">Bugün ödenecek: %1$s</string>
     <string name="plan_change_preview_failed">Bugün ödenecek tutar hesaplanamadı. Tam fiyat gösteriliyor.</string>
+    <string name="payment_failed_banner_overdue">Son ödemeniz gerçekleşmedi. %1$s planınızı korumak için kartınızı şimdi güncelleyin.</string>
+    <string name="payment_failed_days_left">Kartınızı güncellemek için %1$d gününüz kaldı.</string>
+    <string name="payment_failed_one_day_left">Kartınızı güncellemek için 1 gününüz kaldı.</string>
 </resources>

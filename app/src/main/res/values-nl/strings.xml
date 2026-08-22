@@ -2797,4 +2797,7 @@
     <string name="plan_change_preview_loading">Het bedrag dat je vandaag betaalt wordt berekend…</string>
     <string name="plan_change_due_today">Vandaag te betalen: %1$s</string>
     <string name="plan_change_preview_failed">Het bedrag dat je vandaag betaalt kon niet worden berekend. De volledige prijs wordt getoond.</string>
+    <string name="payment_failed_banner_overdue">Je laatste betaling is mislukt. Werk je kaart nu bij om je %1$s-abonnement te behouden.</string>
+    <string name="payment_failed_days_left">Nog %1$d dagen om je kaart bij te werken.</string>
+    <string name="payment_failed_one_day_left">Nog 1 dag om je kaart bij te werken.</string>
 </resources>

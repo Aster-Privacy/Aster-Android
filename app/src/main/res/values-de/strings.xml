@@ -2798,4 +2798,7 @@
     <string name="plan_change_preview_loading">Der heute fällige Betrag wird berechnet…</string>
     <string name="plan_change_due_today">Heute fällig: %1$s</string>
     <string name="plan_change_preview_failed">Der heute fällige Betrag konnte nicht berechnet werden. Es wird der volle Preis angezeigt.</string>
+    <string name="payment_failed_banner_overdue">Deine letzte Zahlung ist fehlgeschlagen. Aktualisiere jetzt deine Karte, um deinen %1$s-Tarif zu behalten.</string>
+    <string name="payment_failed_days_left">Noch %1$d Tage, um deine Karte zu aktualisieren.</string>
+    <string name="payment_failed_one_day_left">Noch 1 Tag, um deine Karte zu aktualisieren.</string>
 </resources>

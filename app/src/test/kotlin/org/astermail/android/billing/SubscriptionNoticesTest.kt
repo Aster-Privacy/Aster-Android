@@ -158,4 +158,14 @@ class SubscriptionNoticesTest {
         assertFalse(gate(has_stripe_subscription = false))
         assertFalse(gate(plan_code = "free"))
     }
+
+    @Test
+    fun `days left never reports zero or negative days`() {
+        assertEquals(7, payment_failed_days_left("2026-08-27", "2026-08-20"))
+        assertEquals(1, payment_failed_days_left("2026-08-21", "2026-08-20"))
+        assertNull(payment_failed_days_left("2026-08-20", "2026-08-20"))
+        assertNull(payment_failed_days_left("2026-08-19", "2026-08-20"))
+        assertNull(payment_failed_days_left(null, "2026-08-20"))
+        assertNull(payment_failed_days_left("garbage", "2026-08-20"))
+    }
 }

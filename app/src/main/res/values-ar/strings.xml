@@ -2829,4 +2829,7 @@
     <string name="plan_change_preview_loading">جارٍ حساب المبلغ المستحق اليوم…</string>
     <string name="plan_change_due_today">المستحق اليوم: %1$s</string>
     <string name="plan_change_preview_failed">تعذر حساب المبلغ المستحق اليوم. يُعرض السعر الكامل.</string>
+    <string name="payment_failed_banner_overdue">لم تتم عملية الدفع الأخيرة. حدّث بطاقتك الآن للاحتفاظ بخطة %1$s.</string>
+    <string name="payment_failed_days_left">تبقى %1$d يومًا لتحديث بطاقتك.</string>
+    <string name="payment_failed_one_day_left">يتبقى يوم واحد لتحديث بطاقتك.</string>
 </resources>

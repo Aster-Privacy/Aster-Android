@@ -393,13 +393,16 @@ fun SubscriptionsScreen(
     }
 
     detail_scaffold(title = stringResource(R.string.plan_billing), on_back = on_back, scroll_state = scroll_state) {
-        if (payment_failed_due != null && !org.astermail.android.billing.payment_failed_banner_session.dismissed) {
+        if (payment_failed_due != null) {
             org.astermail.android.ui.common.payment_failed_banner(
                 plan_name = sub?.effective_plan_name ?: plan_free_label,
                 due_date = payment_failed_due,
                 is_loading = billing_state.is_acting && billing_state.acting_action == "portal",
                 on_update_card = { if (!billing_state.is_acting) billing_vm.open_portal() },
-                on_dismiss = { org.astermail.android.billing.payment_failed_banner_session.dismissed = true },
+                days_left = org.astermail.android.billing.payment_failed_days_left(
+                    payment_failed_due,
+                    java.time.LocalDate.now().toString(),
+                ),
             )
             v_gap(AsterSpacing.md)
         }

@@ -2789,4 +2789,7 @@
     <string name="plan_change_preview_loading">正在计算今天应付金额…</string>
     <string name="plan_change_due_today">今天应付：%1$s</string>
     <string name="plan_change_preview_failed">无法计算今天应付金额。当前显示完整价格。</string>
+    <string name="payment_failed_banner_overdue">您的上次付款未成功。请立即更新您的卡，以保留 %1$s 套餐。</string>
+    <string name="payment_failed_days_left">还有 %1$d 天可更新您的卡。</string>
+    <string name="payment_failed_one_day_left">还有 1 天可更新您的卡。</string>
 </resources>
