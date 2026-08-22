@@ -45,6 +45,9 @@ fun payment_failed_due_date(
     return raw?.take(10)
 }
 
+fun normalize_billing_interval(raw: String?): String =
+    if (raw?.trim()?.lowercase()?.startsWith("year") == true) "year" else "month"
+
 fun api_plan_price_cents(plans: List<AvailablePlan>, code: String, billing_interval: String): Int? =
     plans.firstOrNull { it.code == code && it.billing_period == billing_interval && it.price_cents > 0 }?.price_cents
 

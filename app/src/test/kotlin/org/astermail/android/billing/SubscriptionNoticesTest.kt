@@ -64,6 +64,14 @@ class SubscriptionNoticesTest {
     )
 
     @Test
+    fun `normalizes the billing interval to month or year`() {
+        assertEquals("year", normalize_billing_interval("year"))
+        assertEquals("year", normalize_billing_interval("Yearly"))
+        assertEquals("month", normalize_billing_interval("month"))
+        assertEquals("month", normalize_billing_interval(null))
+    }
+
+    @Test
     fun `reads plan prices from the plans response`() {
         assertEquals(299, api_plan_price_cents(plans, "star", "month"))
         assertEquals(2899, api_plan_price_cents(plans, "star", "year"))

@@ -375,6 +375,7 @@ fun SubscriptionsScreen(
     var billing_interval by remember { mutableStateOf("year") }
     val plan_load_settled = remember_load_settled(state.is_loading)
 
+    val current_interval = org.astermail.android.billing.normalize_billing_interval(sub?.effective_interval)
     val api_monthly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, current_code, "month")
     val api_yearly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, current_code, "year")
     val yearly_savings = org.astermail.android.billing.yearly_savings_percent(api_monthly_cents, api_yearly_cents)
@@ -714,9 +715,10 @@ fun SubscriptionsScreen(
     val downgrade_tier = pending_downgrade_code?.let { code -> plan_tiers.firstOrNull { it.code == code } }
     if (downgrade_tier != null) {
         val downgrade_name = stringResource(downgrade_tier.name_res)
-        val downgrade_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, downgrade_tier.code, billing_interval)
-            ?: if (billing_interval == "year") downgrade_tier.yearly_cents else downgrade_tier.monthly_cents
-        val interval_label = if (billing_interval == "year") stringResource(R.string.plan_price_per_year) else stringResource(R.string.plan_price_per_month)
+        var downgrade_interval by remember(downgrade_tier.code) { mutableStateOf(current_interval) }
+        val downgrade_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, downgrade_tier.code, downgrade_interval)
+            ?: if (downgrade_interval == "year") downgrade_tier.yearly_cents else downgrade_tier.monthly_cents
+        val interval_label = if (downgrade_interval == "year") stringResource(R.string.plan_price_per_year) else stringResource(R.string.plan_price_per_month)
         org.astermail.android.design.components.AsterDialog(
             on_dismiss = { pending_downgrade_code = null },
             title = stringResource(R.string.downgrade_to, downgrade_name),
@@ -725,6 +727,12 @@ fun SubscriptionsScreen(
                 downgrade_name,
                 format_price(downgrade_cents, detected_currency) + " " + interval_label,
             ),
+            body = {
+                billing_interval_toggle(
+                    selected = downgrade_interval,
+                    on_select = { downgrade_interval = it },
+                )
+            },
             footer = {
                 org.astermail.android.design.components.AsterDialogOutlineButton(
                     label = stringResource(R.string.cancel),
@@ -735,7 +743,7 @@ fun SubscriptionsScreen(
                     label = stringResource(R.string.downgrade),
                     onClick = {
                         pending_downgrade_code = null
-                        billing_vm.change_plan(downgrade_tier.code, billing_interval)
+                        billing_vm.change_plan(downgrade_tier.code, downgrade_interval)
                     },
                     modifier = Modifier.weight(1f),
                 )
