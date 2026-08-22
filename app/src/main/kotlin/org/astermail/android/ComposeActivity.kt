@@ -129,7 +129,7 @@ class ComposeActivity :
                 ) {
                     ComposeScreen(
                         on_back = { finish() },
-                        on_sent = { finish() },
+                        on_sent = { close_to_main_task() },
                         reply_to = reply_to,
                         mode = mode,
                         draft_id = draft_id,
@@ -142,6 +142,35 @@ class ComposeActivity :
                 }
             }
         }
+    }
+
+    private fun close_to_main_task() {
+        if (!bring_main_task_forward()) {
+            runCatching {
+                startActivity(
+                    Intent(this, MainActivity::class.java)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                )
+            }
+        }
+        finish()
+    }
+
+    private fun bring_main_task_forward(): Boolean {
+        val manager = getSystemService(Context.ACTIVITY_SERVICE) as? android.app.ActivityManager
+            ?: return false
+        val main_class_name = MainActivity::class.java.name
+        val main_task = runCatching {
+            manager.appTasks.firstOrNull { task ->
+                val info = task.taskInfo
+                info.baseActivity?.className == main_class_name ||
+                    info.topActivity?.className == main_class_name
+            }
+        }.getOrNull() ?: return false
+        return runCatching {
+            main_task.moveToFront()
+            true
+        }.getOrDefault(false)
     }
 
     override fun onDestroy() {
