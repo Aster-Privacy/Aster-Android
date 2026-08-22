@@ -507,7 +507,13 @@ fun SubscriptionsScreen(
                             onClick = { if (!billing_state.is_acting) billing_vm.open_portal() },
                             enabled = !billing_state.is_acting,
                         )
-                        if (sub != null && !sub.cancel_at_period_end && sub.status in setOf("active", "trialing", "past_due")) {
+                        if (
+                            sub != null &&
+                                !sub.cancel_at_period_end &&
+                                sub.status in setOf("active", "trialing", "past_due") &&
+                                !org.astermail.android.billing.is_crypto_provider(sub.payment_provider) &&
+                                sub.has_stripe_subscription != false
+                        ) {
                             Spacer(Modifier.size(AsterSpacing.sm))
                             Text(
                                 text = stringResource(R.string.cancel_subscription),
