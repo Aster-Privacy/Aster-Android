@@ -2816,4 +2816,5 @@
     <string name="payment_failed_banner_overdue">Последний платёж не прошёл. Обновите карту сейчас, чтобы сохранить тариф %1$s.</string>
     <string name="payment_failed_days_left">Осталось %1$d дн., чтобы обновить карту.</string>
     <string name="payment_failed_one_day_left">Остался 1 день, чтобы обновить карту.</string>
+    <string name="device_verification_failed">Не удалось подтвердить это устройство для этого изменения. Войдите снова на этом устройстве и повторите попытку.</string>
 </resources>

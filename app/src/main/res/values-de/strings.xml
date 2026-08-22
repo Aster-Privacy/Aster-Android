@@ -2801,4 +2801,5 @@
     <string name="payment_failed_banner_overdue">Deine letzte Zahlung ist fehlgeschlagen. Aktualisiere jetzt deine Karte, um deinen %1$s-Tarif zu behalten.</string>
     <string name="payment_failed_days_left">Noch %1$d Tage, um deine Karte zu aktualisieren.</string>
     <string name="payment_failed_one_day_left">Noch 1 Tag, um deine Karte zu aktualisieren.</string>
+    <string name="device_verification_failed">Dieses Gerät konnte für diese Änderung nicht verifiziert werden. Melde dich auf diesem Gerät erneut an und versuche es dann noch einmal.</string>
 </resources>

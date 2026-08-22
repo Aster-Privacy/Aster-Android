@@ -2800,4 +2800,5 @@
     <string name="payment_failed_banner_overdue">Je laatste betaling is mislukt. Werk je kaart nu bij om je %1$s-abonnement te behouden.</string>
     <string name="payment_failed_days_left">Nog %1$d dagen om je kaart bij te werken.</string>
     <string name="payment_failed_one_day_left">Nog 1 dag om je kaart bij te werken.</string>
+    <string name="device_verification_failed">Dit apparaat kon niet worden geverifieerd voor die wijziging. Meld je opnieuw aan op dit apparaat en probeer het dan opnieuw.</string>
 </resources>

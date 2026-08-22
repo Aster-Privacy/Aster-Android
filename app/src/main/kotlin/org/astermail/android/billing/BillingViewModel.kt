@@ -179,7 +179,7 @@ class BillingViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     is_acting = false,
                     acting_action = null,
-                    error = org.astermail.android.api.user_facing_error(t, ctx.getString(R.string.could_not_start_checkout)),
+                    error = billing_error(t, ctx.getString(R.string.could_not_start_checkout)),
                 )
             }
         }
@@ -196,7 +196,7 @@ class BillingViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     is_acting = false,
                     acting_action = null,
-                    error = org.astermail.android.api.user_facing_error(t, ctx.getString(R.string.could_not_open_portal)),
+                    error = billing_error(t, ctx.getString(R.string.could_not_open_portal)),
                 )
             }
         }
@@ -231,7 +231,7 @@ class BillingViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     is_acting = false,
                     acting_action = null,
-                    error = org.astermail.android.api.user_facing_error(t, ctx.getString(R.string.cancel_failed)),
+                    error = billing_error(t, ctx.getString(R.string.cancel_failed)),
                 )
             }
         }
@@ -249,7 +249,7 @@ class BillingViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     is_acting = false,
                     acting_action = null,
-                    error = org.astermail.android.api.user_facing_error(t, ctx.getString(R.string.reactivate_failed)),
+                    error = billing_error(t, ctx.getString(R.string.reactivate_failed)),
                 )
             }
         }
@@ -273,7 +273,7 @@ class BillingViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     is_acting = false,
                     acting_action = null,
-                    error = org.astermail.android.api.user_facing_error(t, ctx.getString(R.string.switch_failed)),
+                    error = billing_error(t, ctx.getString(R.string.switch_failed)),
                 )
             }
         }
@@ -291,10 +291,17 @@ class BillingViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     is_acting = false,
                     acting_action = null,
-                    error = org.astermail.android.api.user_facing_error(t, ctx.getString(R.string.change_plan_failed)),
+                    error = billing_error(t, ctx.getString(R.string.change_plan_failed)),
                 )
             }
         }
+    }
+
+    private fun billing_error(t: Throwable, fallback: String): String = when (t) {
+        is org.astermail.android.api.ApiError.StepUpRequired -> ctx.getString(R.string.device_verification_failed)
+        is org.astermail.android.api.ApiError.UnauthorizedError ->
+            if (_state.value.acting_action == "cancel") ctx.getString(R.string.incorrect_password) else fallback
+        else -> org.astermail.android.api.user_facing_error(t, fallback)
     }
 
     fun load_plan_change_preview(plan_code: String, billing_interval: String) {
@@ -330,7 +337,7 @@ class BillingViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_acting = false, acting_action = null,
-                    error = org.astermail.android.api.user_facing_error(t, ctx.getString(R.string.could_not_start_checkout)),
+                    error = billing_error(t, ctx.getString(R.string.could_not_start_checkout)),
                 )
             }
         }
@@ -348,7 +355,7 @@ class BillingViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_acting = false, acting_action = null,
-                    error = org.astermail.android.api.user_facing_error(t, ctx.getString(R.string.could_not_start_checkout)),
+                    error = billing_error(t, ctx.getString(R.string.could_not_start_checkout)),
                 )
             }
         }
@@ -416,7 +423,7 @@ class BillingViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_acting = false, acting_action = null,
-                    error = org.astermail.android.api.user_facing_error(t, ctx.getString(R.string.could_not_start_checkout)),
+                    error = billing_error(t, ctx.getString(R.string.could_not_start_checkout)),
                 )
             }
         }
@@ -448,7 +455,7 @@ class BillingViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     is_acting = false,
                     acting_action = null,
-                    error = org.astermail.android.api.user_facing_error(t, ctx.getString(R.string.could_not_start_checkout)),
+                    error = billing_error(t, ctx.getString(R.string.could_not_start_checkout)),
                 )
             }
         }
@@ -510,7 +517,7 @@ class BillingViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     is_acting = false,
                     acting_action = null,
-                    error = org.astermail.android.api.user_facing_error(t, ctx.getString(R.string.set_default_failed)),
+                    error = billing_error(t, ctx.getString(R.string.set_default_failed)),
                 )
             }
         }
@@ -532,7 +539,7 @@ class BillingViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     is_acting = false,
                     acting_action = null,
-                    error = org.astermail.android.api.user_facing_error(t, ctx.getString(R.string.remove_payment_failed)),
+                    error = billing_error(t, ctx.getString(R.string.remove_payment_failed)),
                 )
             }
         }

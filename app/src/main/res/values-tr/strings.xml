@@ -2800,4 +2800,5 @@
     <string name="payment_failed_banner_overdue">Son ödemeniz gerçekleşmedi. %1$s planınızı korumak için kartınızı şimdi güncelleyin.</string>
     <string name="payment_failed_days_left">Kartınızı güncellemek için %1$d gününüz kaldı.</string>
     <string name="payment_failed_one_day_left">Kartınızı güncellemek için 1 gününüz kaldı.</string>
+    <string name="device_verification_failed">Bu değişiklik için bu cihaz doğrulanamadı. Bu cihazda yeniden oturum açıp tekrar deneyin.</string>
 </resources>

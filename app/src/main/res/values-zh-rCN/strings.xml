@@ -2792,4 +2792,5 @@
     <string name="payment_failed_banner_overdue">您的上次付款未成功。请立即更新您的卡，以保留 %1$s 套餐。</string>
     <string name="payment_failed_days_left">还有 %1$d 天可更新您的卡。</string>
     <string name="payment_failed_one_day_left">还有 1 天可更新您的卡。</string>
+    <string name="device_verification_failed">无法为此更改验证此设备。请在此设备上重新登录，然后重试。</string>
 </resources>

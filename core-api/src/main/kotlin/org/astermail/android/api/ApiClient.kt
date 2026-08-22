@@ -81,7 +81,20 @@ sealed class ApiError(message: String) : Exception(message) {
         val resets_at: String? = null,
     ) : ApiError(detail)
     data class UnknownError(val detail: String) : ApiError(detail)
+    data class StepUpRequired(val detail: String = "step up required") : ApiError(detail)
 }
+
+const val FINGERPRINT_MISMATCH_CODE = "FINGERPRINT_MISMATCH"
+
+fun map_unauthorized(server_code: String?, detail: String): ApiError =
+    if (server_code == FINGERPRINT_MISMATCH_CODE) {
+        ApiError.StepUpRequired(detail.ifBlank { "step up required" })
+    } else {
+        ApiError.UnauthorizedError
+    }
+
+fun should_emit_unauthorized(server_code: String?): Boolean =
+    server_code != "INVALID_CREDENTIALS" && server_code != FINGERPRINT_MISMATCH_CODE
 
 object DualStackDns : okhttp3.Dns {
     override fun lookup(hostname: String): List<java.net.InetAddress> {
@@ -417,8 +430,8 @@ class ApiClient(
         }
         return when (code) {
             400 -> ApiError.ValidationError(parse_validation_messages(body).ifEmpty { listOf(detail.ifBlank { "bad request" }) })
-            401 -> ApiError.UnauthorizedError.also {
-                if (server_code != "INVALID_CREDENTIALS") AuthEventBus.emit_unauthorized()
+            401 -> map_unauthorized(server_code, detail).also {
+                if (should_emit_unauthorized(server_code)) AuthEventBus.emit_unauthorized()
             }
             403 -> ApiError.ForbiddenError(detail.ifBlank { "forbidden" })
             404 -> ApiError.NotFoundError

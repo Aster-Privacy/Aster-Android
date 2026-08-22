@@ -2832,4 +2832,5 @@
     <string name="payment_failed_banner_overdue">لم تتم عملية الدفع الأخيرة. حدّث بطاقتك الآن للاحتفاظ بخطة %1$s.</string>
     <string name="payment_failed_days_left">تبقى %1$d يومًا لتحديث بطاقتك.</string>
     <string name="payment_failed_one_day_left">يتبقى يوم واحد لتحديث بطاقتك.</string>
+    <string name="device_verification_failed">تعذر التحقق من هذا الجهاز لإجراء هذا التغيير. سجّل الدخول مرة أخرى على هذا الجهاز، ثم أعد المحاولة.</string>
 </resources>

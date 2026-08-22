@@ -2800,4 +2800,5 @@
     <string name="payment_failed_banner_overdue">Seu último pagamento não foi concluído. Atualize seu cartão agora para manter seu plano %1$s.</string>
     <string name="payment_failed_days_left">Faltam %1$d dias para atualizar seu cartão.</string>
     <string name="payment_failed_one_day_left">Falta 1 dia para atualizar seu cartão.</string>
+    <string name="device_verification_failed">Não foi possível verificar este dispositivo para essa alteração. Entre novamente neste dispositivo e tente de novo.</string>
 </resources>

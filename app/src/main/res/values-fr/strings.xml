@@ -2828,4 +2828,5 @@
     <string name="payment_failed_banner_overdue">Votre dernier paiement a échoué. Mettez à jour votre carte maintenant pour conserver votre forfait %1$s.</string>
     <string name="payment_failed_days_left">Il vous reste %1$d jours pour mettre à jour votre carte.</string>
     <string name="payment_failed_one_day_left">Il vous reste 1 jour pour mettre à jour votre carte.</string>
+    <string name="device_verification_failed">Cet appareil n’a pas pu être vérifié pour cette modification. Reconnectez-vous sur cet appareil, puis réessayez.</string>
 </resources>

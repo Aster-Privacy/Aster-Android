@@ -2816,4 +2816,5 @@
     <string name="payment_failed_banner_overdue">Ostatnia płatność nie powiodła się. Zaktualizuj kartę teraz, aby zachować plan %1$s.</string>
     <string name="payment_failed_days_left">Masz jeszcze %1$d dni na aktualizację karty.</string>
     <string name="payment_failed_one_day_left">Masz jeszcze 1 dzień na aktualizację karty.</string>
+    <string name="device_verification_failed">Nie udało się zweryfikować tego urządzenia dla tej zmiany. Zaloguj się ponownie na tym urządzeniu i spróbuj jeszcze raz.</string>
 </resources>
