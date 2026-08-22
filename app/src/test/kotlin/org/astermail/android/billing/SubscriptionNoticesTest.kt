@@ -23,6 +23,7 @@ package org.astermail.android.billing
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.astermail.android.api.billing.AvailablePlan
 import org.astermail.android.api.billing.BillingHistoryItem
 import org.junit.Test
@@ -103,5 +104,24 @@ class SubscriptionNoticesTest {
         assertNull(lapsed_paid_plan("nova", history, "2026-08-21"))
         assertNull(lapsed_paid_plan("free", history, "2026-06-15"))
         assertNull(lapsed_paid_plan("free", emptyList(), "2026-08-21"))
+    }
+
+    @Test
+    fun `ranks every plan tier including duo and family`() {
+        val ordered = listOf("free", "star", "nova", "duo", "supernova", "family").map { plan_tier_rank(it) }
+        assertEquals(listOf(0, 1, 2, 3, 4, 5), ordered)
+        assertTrue(plan_tier_rank("duo") > plan_tier_rank("nova"))
+        assertTrue(plan_tier_rank("family") > plan_tier_rank("supernova"))
+        assertEquals(-1, plan_tier_rank("unknown"))
+        assertEquals(-1, plan_tier_rank(null))
+    }
+
+    @Test
+    fun `derives plan codes from display names`() {
+        assertEquals("family", plan_code_from_name("Aster Family"))
+        assertEquals("duo", plan_code_from_name("Duo"))
+        assertEquals("supernova", plan_code_from_name("Supernova"))
+        assertEquals("nova", plan_code_from_name("Nova"))
+        assertEquals("free", plan_code_from_name(null))
     }
 }

@@ -248,18 +248,9 @@ private val plan_tiers = listOf(
     ),
 )
 
-private fun tier_rank(code: String): Int = plan_tiers.indexOfFirst { it.code == code }
+private fun tier_rank(code: String): Int = org.astermail.android.billing.plan_tier_rank(code)
 
-private fun plan_code_of(plan_name: String?): String {
-    val lower = plan_name?.trim()?.lowercase().orEmpty()
-    return when {
-        lower.contains("supernova") -> "supernova"
-        lower.contains("nova") -> "nova"
-        lower.contains("star") -> "star"
-        lower.isBlank() || lower.contains("free") -> "free"
-        else -> lower
-    }
-}
+private fun plan_code_of(plan_name: String?): String = org.astermail.android.billing.plan_code_from_name(plan_name)
 
 private fun Context.findActivity(): Activity? {
     var ctx: Context? = this

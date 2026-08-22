@@ -73,3 +73,27 @@ fun lapsed_paid_plan(
     if (ended_on >= today.take(10)) return null
     return lapsed_plan(plan_name = latest.plan_name.orEmpty(), ended_on = ended_on)
 }
+
+private val PLAN_TIER_RANKS = mapOf(
+    "free" to 0,
+    "star" to 1,
+    "nova" to 2,
+    "duo" to 3,
+    "supernova" to 4,
+    "family" to 5,
+)
+
+fun plan_tier_rank(code: String?): Int = PLAN_TIER_RANKS[code?.trim()?.lowercase()] ?: -1
+
+fun plan_code_from_name(plan_name: String?): String {
+    val lower = plan_name?.trim()?.lowercase().orEmpty()
+    return when {
+        lower.contains("supernova") -> "supernova"
+        lower.contains("family") -> "family"
+        lower.contains("duo") -> "duo"
+        lower.contains("nova") -> "nova"
+        lower.contains("star") -> "star"
+        lower.isBlank() || lower.contains("free") -> "free"
+        else -> lower
+    }
+}
