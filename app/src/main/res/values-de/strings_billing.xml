@@ -4,7 +4,7 @@
     <string name="academic_status_none">Nicht angewendet</string>
     <string name="academic_status_pending">Warten auf Verifizierung</string>
     <string name="academic_status_verified">Verifiziert</string>
-    <string name="alias_limit_upsell">%1$d von %2$d Aliassen belegt. Für mehr upgraden.</string>
+    <string name="alias_limit_notice">%1$d von %2$d Aliassen belegt. Für mehr upgraden.</string>
     <string name="cancel_impact_catch_all">Catch-all-Adressen empfangen keine Mails mehr.</string>
     <string name="cancel_impact_intro">Wenn dein Tarif endet, ändert sich Folgendes:</string>
     <string name="cancel_impact_none">An deinem Konto ändert sich vorerst nichts.</string>

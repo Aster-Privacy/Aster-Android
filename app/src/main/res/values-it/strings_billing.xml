@@ -4,7 +4,7 @@
     <string name="academic_status_none">Non applicato</string>
     <string name="academic_status_pending">In attesa di verifica</string>
     <string name="academic_status_verified">Verificato</string>
-    <string name="alias_limit_upsell">%1$d alias usati su %2$d. Passa a un piano superiore per averne di più.</string>
+    <string name="alias_limit_notice">%1$d alias usati su %2$d. Passa a un piano superiore per averne di più.</string>
     <string name="cancel_impact_catch_all">Gli indirizzi catch-all smettono di ricevere posta.</string>
     <string name="cancel_impact_intro">Quando il piano termina, cambia questo:</string>
     <string name="cancel_impact_none">Nel tuo account non cambia nulla per il momento.</string>

@@ -4,7 +4,7 @@
     <string name="academic_status_none">Not applied</string>
     <string name="academic_status_pending">Waiting for verification</string>
     <string name="academic_status_verified">Verified</string>
-    <string name="alias_limit_upsell">%1$d of %2$d aliases used. Upgrade for more.</string>
+    <string name="alias_limit_notice">%1$d of %2$d aliases used. Upgrade for more.</string>
     <string name="cancel_impact_catch_all">Catch-all addresses stop receiving mail.</string>
     <string name="cancel_impact_intro">When your plan ends, this changes:</string>
     <string name="cancel_impact_none">Nothing on your account changes right away.</string>

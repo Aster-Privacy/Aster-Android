@@ -135,7 +135,7 @@ class SubscriptionNoticesTest {
     }
 
     @Test
-    fun `save offers only reach card paid subscriptions in good standing`() {
+    fun `plan alternatives only reach card paid subscriptions in good standing`() {
         fun gate(
             status: String? = "active",
             payment_failed_at: String? = null,
@@ -144,7 +144,7 @@ class SubscriptionNoticesTest {
             payment_provider: String? = "stripe",
             has_stripe_subscription: Boolean? = true,
             plan_code: String? = "nova",
-        ) = can_offer_save_offers(
+        ) = can_offer_plan_alternatives(
             plan_code, status, payment_failed_at, grace_period_end, cancel_at_period_end, payment_provider, has_stripe_subscription,
         )
         assertTrue(gate())
@@ -176,6 +176,27 @@ class SubscriptionNoticesTest {
         assertEquals("hi", clamp_cancel_reason_text("  hi  "))
         assertEquals(MAX_CANCEL_REASON_TEXT, clamp_cancel_reason_text("y".repeat(5000))?.length)
         assertEquals(8, CANCEL_REASONS.size)
+    }
+
+    @Test
+    fun `top tier plans have nothing higher to move to`() {
+        assertFalse(has_higher_plan_tier("supernova"))
+        assertFalse(has_higher_plan_tier(" Supernova "))
+        assertFalse(has_higher_plan_tier("family_full"))
+        assertTrue(has_higher_plan_tier("free"))
+        assertTrue(has_higher_plan_tier("star"))
+        assertTrue(has_higher_plan_tier("nova"))
+        assertTrue(has_higher_plan_tier(null))
+    }
+
+    @Test
+    fun `alias limit notice appears only near a real limit`() {
+        assertTrue(alias_limit_near(8, 10))
+        assertFalse(alias_limit_near(7, 10))
+        assertFalse(alias_limit_near(10, 10))
+        assertFalse(alias_limit_near(1, 0))
+        assertFalse(alias_limit_near(null, 10))
+        assertFalse(alias_limit_near(8, null))
     }
 
     @Test

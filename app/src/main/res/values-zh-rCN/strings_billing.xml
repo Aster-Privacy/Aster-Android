@@ -4,7 +4,7 @@
     <string name="academic_status_none">未使用</string>
     <string name="academic_status_pending">等待验证</string>
     <string name="academic_status_verified">已验证</string>
-    <string name="alias_limit_upsell">已使用 %1$d 个别名，共 %2$d 个。升级可获得更多。</string>
+    <string name="alias_limit_notice">已使用 %1$d 个别名，共 %2$d 个。升级可获得更多。</string>
     <string name="cancel_impact_catch_all">通配地址将停止接收邮件。</string>
     <string name="cancel_impact_intro">套餐结束后，以下内容会发生变化：</string>
     <string name="cancel_impact_none">您的账户不会立即发生变化。</string>

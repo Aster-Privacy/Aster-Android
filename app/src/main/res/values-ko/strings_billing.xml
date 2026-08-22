@@ -4,7 +4,7 @@
     <string name="academic_status_none">적용 안 됨</string>
     <string name="academic_status_pending">확인 대기 중</string>
     <string name="academic_status_verified">확인됨</string>
-    <string name="alias_limit_upsell">별칭 %2$d개 중 %1$d개를 사용 중입니다. 업그레이드하면 더 쓸 수 있습니다.</string>
+    <string name="alias_limit_notice">별칭 %2$d개 중 %1$d개를 사용 중입니다. 업그레이드하면 더 쓸 수 있습니다.</string>
     <string name="cancel_impact_catch_all">캐치올 주소가 메일을 받지 못합니다.</string>
     <string name="cancel_impact_intro">요금제가 끝나면 다음이 바뀝니다:</string>
     <string name="cancel_impact_none">계정에서 바로 바뀌는 것은 없습니다.</string>

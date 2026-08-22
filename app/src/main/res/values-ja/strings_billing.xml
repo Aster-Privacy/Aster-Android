@@ -4,7 +4,7 @@
     <string name="academic_status_none">未適用</string>
     <string name="academic_status_pending">確認待ち</string>
     <string name="academic_status_verified">確認済み</string>
-    <string name="alias_limit_upsell">エイリアスの使用状況は %1$d／%2$d 個です。アップグレードするとさらに使えます。</string>
+    <string name="alias_limit_notice">エイリアスの使用状況は %1$d／%2$d 個です。アップグレードするとさらに使えます。</string>
     <string name="cancel_impact_catch_all">キャッチオールアドレスはメールを受信しなくなります。</string>
     <string name="cancel_impact_intro">プランが終了すると、次のように変わります。</string>
     <string name="cancel_impact_none">アカウントの内容はすぐには変わりません。</string>

@@ -4,7 +4,7 @@
     <string name="academic_status_none">Не применена</string>
     <string name="academic_status_pending">Ожидает проверки</string>
     <string name="academic_status_verified">Подтверждена</string>
-    <string name="alias_limit_upsell">Использовано псевдонимов: %1$d из %2$d. Перейдите на более высокий тариф, чтобы получить больше.</string>
+    <string name="alias_limit_notice">Использовано псевдонимов: %1$d из %2$d. Перейдите на более высокий тариф, чтобы получить больше.</string>
     <string name="cancel_impact_catch_all">Адреса для приёма всей почты перестанут получать письма.</string>
     <string name="cancel_impact_intro">После окончания тарифа изменится следующее:</string>
     <string name="cancel_impact_none">В вашей учётной записи ничего не изменится сразу.</string>

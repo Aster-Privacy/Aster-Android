@@ -31,7 +31,7 @@ private val CRYPTO_PROVIDERS = setOf("stripe_crypto", "crypto_native")
 fun is_crypto_provider(payment_provider: String?): Boolean =
     payment_provider?.trim()?.lowercase() in CRYPTO_PROVIDERS
 
-fun can_offer_save_offers(
+fun can_offer_plan_alternatives(
     plan_code: String?,
     status: String?,
     payment_failed_at: String?,
@@ -86,9 +86,17 @@ fun crypto_renewal_due(
 
 fun lapse_dismissal_key(lapsed: lapsed_plan): String = "${lapsed.plan_name}|${lapsed.ended_on}"
 
-fun alias_upsell_due(current: Int?, limit: Int?): Boolean {
+fun alias_limit_near(current: Int?, limit: Int?): Boolean {
     if (current == null || limit == null || limit <= 0) return false
     return current * 100 >= limit * 80 && current < limit
+}
+
+private val TOP_PLAN_CODES = setOf("supernova", "family_full")
+
+fun has_higher_plan_tier(plan_code: String?): Boolean {
+    val code = plan_code?.trim()?.lowercase().orEmpty()
+    if (code.isBlank()) return true
+    return code !in TOP_PLAN_CODES
 }
 
 val CANCEL_REASONS = listOf(

@@ -4,7 +4,7 @@
     <string name="academic_status_none">Non appliquée</string>
     <string name="academic_status_pending">En attente de vérification</string>
     <string name="academic_status_verified">Vérifiée</string>
-    <string name="alias_limit_upsell">%1$d alias sur %2$d utilisés. Passez à une offre supérieure pour en obtenir plus.</string>
+    <string name="alias_limit_notice">%1$d alias sur %2$d utilisés. Passez à une offre supérieure pour en obtenir plus.</string>
     <string name="cancel_impact_catch_all">Les adresses fourre-tout ne reçoivent plus de courrier.</string>
     <string name="cancel_impact_intro">À la fin de votre offre, voici ce qui change :</string>
     <string name="cancel_impact_none">Rien ne change immédiatement sur votre compte.</string>

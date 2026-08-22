@@ -4,7 +4,7 @@
     <string name="academic_status_none">Niet toegepast</string>
     <string name="academic_status_pending">Wachten op verificatie</string>
     <string name="academic_status_verified">Geverifieerd</string>
-    <string name="alias_limit_upsell">%1$d van %2$d aliassen gebruikt. Upgrade voor meer.</string>
+    <string name="alias_limit_notice">%1$d van %2$d aliassen gebruikt. Upgrade voor meer.</string>
     <string name="cancel_impact_catch_all">Catch-all-adressen ontvangen geen mail meer.</string>
     <string name="cancel_impact_intro">Wanneer je abonnement eindigt, verandert dit:</string>
     <string name="cancel_impact_none">Er verandert direct niets aan je account.</string>

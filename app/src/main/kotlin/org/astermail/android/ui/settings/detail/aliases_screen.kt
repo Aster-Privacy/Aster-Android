@@ -450,9 +450,9 @@ private fun aliases_tab(
                     color = colors.text_tertiary,
                     fontSize = 13.sp,
                 )
-                if (org.astermail.android.billing.alias_upsell_due(state.aliases.size, alias_limit)) {
+                if (org.astermail.android.billing.alias_limit_near(state.aliases.size, alias_limit)) {
                     Text(
-                        text = stringResource(R.string.alias_limit_upsell, state.aliases.size, alias_limit ?: 0),
+                        text = stringResource(R.string.alias_limit_notice, state.aliases.size, alias_limit ?: 0),
                         color = colors.accent_blue,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,

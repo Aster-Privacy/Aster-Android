@@ -4,7 +4,7 @@
     <string name="academic_status_none">Uygulanmadı</string>
     <string name="academic_status_pending">Doğrulama bekleniyor</string>
     <string name="academic_status_verified">Doğrulandı</string>
-    <string name="alias_limit_upsell">%1$d / %2$d takma ad kullanıldı. Daha fazlası için yükseltin.</string>
+    <string name="alias_limit_notice">%1$d / %2$d takma ad kullanıldı. Daha fazlası için yükseltin.</string>
     <string name="cancel_impact_catch_all">Tüm postaları yakalayan adresler posta almayı durdurur.</string>
     <string name="cancel_impact_intro">Planınız sona erdiğinde şunlar değişir:</string>
     <string name="cancel_impact_none">Hesabınızda hemen bir değişiklik olmaz.</string>

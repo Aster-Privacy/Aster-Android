@@ -4,7 +4,7 @@
     <string name="academic_status_none">No aplicado</string>
     <string name="academic_status_pending">Esperando la verificación</string>
     <string name="academic_status_verified">Verificado</string>
-    <string name="alias_limit_upsell">Has usado %1$d de %2$d alias. Mejora tu plan para obtener más.</string>
+    <string name="alias_limit_notice">Has usado %1$d de %2$d alias. Mejora tu plan para obtener más.</string>
     <string name="cancel_impact_catch_all">Las direcciones genéricas dejan de recibir correo.</string>
     <string name="cancel_impact_intro">Cuando termine tu plan, esto cambia:</string>
     <string name="cancel_impact_none">Nada de tu cuenta cambia de inmediato.</string>

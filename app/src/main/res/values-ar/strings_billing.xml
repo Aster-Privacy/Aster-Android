@@ -4,7 +4,7 @@
     <string name="academic_status_none">غير مُطبَّق</string>
     <string name="academic_status_pending">في انتظار التحقق</string>
     <string name="academic_status_verified">تم التحقق</string>
-    <string name="alias_limit_upsell">استُخدم %1$d من %2$d من الأسماء المستعارة. قم بالترقية للمزيد.</string>
+    <string name="alias_limit_notice">استُخدم %1$d من %2$d من الأسماء المستعارة. قم بالترقية للمزيد.</string>
     <string name="cancel_impact_catch_all">تتوقف العناوين الشاملة عن استقبال البريد.</string>
     <string name="cancel_impact_intro">عند انتهاء خطتك، يتغير ما يلي:</string>
     <string name="cancel_impact_none">لا يتغير شيء في حسابك على الفور.</string>
