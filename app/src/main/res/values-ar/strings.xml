@@ -2844,4 +2844,17 @@
     <string name="cancel_reason_just_testing">كنت أجربه فقط</string>
     <string name="cancel_reason_other">شيء آخر</string>
     <string name="cancel_reason_text_placeholder">هل تود إضافة شيء؟ (اختياري)</string>
+    <string name="change_plan_failed">تعذّر تغيير الخطة</string>
+    <string name="crypto_term_24_months">24 شهرًا</string>
+    <string name="downgrade_confirm_message">تتغير خطتك إلى %1$s في %2$s. تتوقف الميزات الأعلى من خطة %1$s عن العمل.</string>
+    <string name="payment_failed_banner_message">لم تتم عملية الدفع الأخيرة. حدّث بطاقتك بحلول %1$s للاحتفاظ بخطة %2$s.</string>
+    <string name="payment_failed_update_card">تحديث البطاقة</string>
+    <string name="plan_changed">تم تغيير الخطة</string>
+    <string name="plan_ended_on">انتهت خطة %1$s في %2$s</string>
+    <string name="plan_ended_resubscribe_note">أعد الاشتراك لاستعادة سعة التخزين والأسماء المستعارة وبقية ميزات خطتك.</string>
+    <string name="resume_plan">استئناف الخطة</string>
+    <string name="switch_yearly_confirm">التبديل إلى السنوي</string>
+    <string name="switch_yearly_message">تُفوتر خطتك %1$s سنويًا، ما يوفّر %2$d%% مقارنة بالفوترة الشهرية.</string>
+    <string name="switch_yearly_save">بدّل إلى السنوي ووفّر %d%%</string>
+    <string name="switch_yearly_title">التبديل إلى الفوترة السنوية</string>
 </resources>

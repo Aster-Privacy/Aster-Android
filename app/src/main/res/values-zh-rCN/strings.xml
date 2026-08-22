@@ -2804,4 +2804,17 @@
     <string name="cancel_reason_just_testing">只是试用一下</string>
     <string name="cancel_reason_other">其他原因</string>
     <string name="cancel_reason_text_placeholder">还有什么想补充的吗？（选填）</string>
+    <string name="change_plan_failed">无法更改套餐</string>
+    <string name="crypto_term_24_months">24 个月</string>
+    <string name="downgrade_confirm_message">您的套餐将变更为 %1$s，生效时间为 %2$s。高于 %1$s 套餐的功能将停止可用。</string>
+    <string name="payment_failed_banner_message">您上次的付款未成功。请在 %1$s 之前更新银行卡，以继续使用 %2$s 套餐。</string>
+    <string name="payment_failed_update_card">更新银行卡</string>
+    <string name="plan_changed">套餐已更改</string>
+    <string name="plan_ended_on">您的 %1$s 套餐已于 %2$s 结束</string>
+    <string name="plan_ended_resubscribe_note">重新订阅即可恢复存储空间、别名和其他套餐功能。</string>
+    <string name="resume_plan">恢复套餐</string>
+    <string name="switch_yearly_confirm">切换为按年付费</string>
+    <string name="switch_yearly_message">您的套餐将按每年 %1$s 结算，比按月付费节省 %2$d%%。</string>
+    <string name="switch_yearly_save">切换为按年付费，节省 %d%%</string>
+    <string name="switch_yearly_title">切换为按年结算</string>
 </resources>

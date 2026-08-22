@@ -2804,4 +2804,17 @@
     <string name="cancel_reason_just_testing">試しに使っていただけ</string>
     <string name="cancel_reason_other">その他</string>
     <string name="cancel_reason_text_placeholder">他に伝えたいことがあれば（任意）</string>
+    <string name="change_plan_failed">プランを変更できませんでした</string>
+    <string name="crypto_term_24_months">24 か月</string>
+    <string name="downgrade_confirm_message">プランは %1$s に変わります（%2$s）。%1$s プランを超える機能は使えなくなります。</string>
+    <string name="payment_failed_banner_message">前回のお支払いを処理できませんでした。%1$s までにカード情報を更新して、%2$s プランを継続してください。</string>
+    <string name="payment_failed_update_card">カードを更新</string>
+    <string name="plan_changed">プランを変更しました</string>
+    <string name="plan_ended_on">%1$s プランは %2$s に終了しました</string>
+    <string name="plan_ended_resubscribe_note">再登録すると、保存容量やエイリアスなどのプラン機能をもう一度使えます。</string>
+    <string name="resume_plan">プランを再開</string>
+    <string name="switch_yearly_confirm">年払いに変更</string>
+    <string name="switch_yearly_message">年 %1$s の請求になり、月払いに比べて %2$d%% お得です。</string>
+    <string name="switch_yearly_save">年払いに変更して %d%% お得に</string>
+    <string name="switch_yearly_title">年払いに変更</string>
 </resources>

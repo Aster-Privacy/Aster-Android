@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="cancel_impact_aliases">
+        <item quantity="other">%d 個のエイリアスがメールを受信しなくなります。</item>
+    </plurals>
+    <plurals name="cancel_impact_domains">
+        <item quantity="other">%d 個の独自ドメインが停止されます。</item>
+    </plurals>
+    <plurals name="cancel_impact_templates">
+        <item quantity="other">%d 個のテンプレートが使えなくなります。</item>
+    </plurals>
+    <plurals name="cancel_impact_signatures">
+        <item quantity="other">%d 個の署名が使えなくなります。</item>
+    </plurals>
+    <plurals name="cancel_impact_family">
+        <item quantity="other">%d 人のメンバーがアカウントを失います。</item>
+    </plurals>
+    <plurals name="crypto_renewal_days">
+        <item quantity="other">プランは %1$d 日後の %2$s に終了します。</item>
+    </plurals>
+</resources>

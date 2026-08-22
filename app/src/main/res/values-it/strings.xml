@@ -2812,4 +2812,17 @@
     <string name="cancel_reason_just_testing">Lo stavo solo provando</string>
     <string name="cancel_reason_other">Altro</string>
     <string name="cancel_reason_text_placeholder">Vuoi aggiungere qualcosa? (facoltativo)</string>
+    <string name="change_plan_failed">Impossibile cambiare piano</string>
+    <string name="crypto_term_24_months">24 mesi</string>
+    <string name="downgrade_confirm_message">Il tuo piano passa a %1$s il %2$s. Le funzioni superiori al piano %1$s smettono di funzionare.</string>
+    <string name="payment_failed_banner_message">Il tuo ultimo pagamento non è andato a buon fine. Aggiorna la tua carta entro il %1$s per mantenere il piano %2$s.</string>
+    <string name="payment_failed_update_card">Aggiorna la carta</string>
+    <string name="plan_changed">Piano cambiato</string>
+    <string name="plan_ended_on">Il tuo piano %1$s è terminato il %2$s</string>
+    <string name="plan_ended_resubscribe_note">Riattiva l\'abbonamento per riavere lo spazio di archiviazione, gli alias e le altre funzioni del piano.</string>
+    <string name="resume_plan">Riprendi il piano</string>
+    <string name="switch_yearly_confirm">Passa all\'annuale</string>
+    <string name="switch_yearly_message">Il tuo piano viene fatturato %1$s all\'anno, con un risparmio del %2$d%% rispetto alla fatturazione mensile.</string>
+    <string name="switch_yearly_save">Passa all\'annuale e risparmia il %d%%</string>
+    <string name="switch_yearly_title">Passa alla fatturazione annuale</string>
 </resources>

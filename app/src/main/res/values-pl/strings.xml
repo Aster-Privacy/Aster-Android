@@ -2828,4 +2828,17 @@
     <string name="cancel_reason_just_testing">Tylko testowałem</string>
     <string name="cancel_reason_other">Coś innego</string>
     <string name="cancel_reason_text_placeholder">Chcesz coś dodać? (opcjonalnie)</string>
+    <string name="change_plan_failed">Nie można zmienić planu</string>
+    <string name="crypto_term_24_months">24 miesiące</string>
+    <string name="downgrade_confirm_message">Twój plan zmienia się na %1$s w dniu %2$s. Funkcje wykraczające poza plan %1$s przestają działać.</string>
+    <string name="payment_failed_banner_message">Twoja ostatnia płatność nie powiodła się. Zaktualizuj kartę do %1$s, aby zachować plan %2$s.</string>
+    <string name="payment_failed_update_card">Zaktualizuj kartę</string>
+    <string name="plan_changed">Plan zmieniony</string>
+    <string name="plan_ended_on">Twój plan %1$s zakończył się %2$s</string>
+    <string name="plan_ended_resubscribe_note">Wykup subskrypcję ponownie, aby odzyskać przestrzeń dyskową, aliasy i pozostałe funkcje planu.</string>
+    <string name="resume_plan">Wznów plan</string>
+    <string name="switch_yearly_confirm">Przejdź na płatność roczną</string>
+    <string name="switch_yearly_message">Twój plan kosztuje %1$s rocznie, co pozwala zaoszczędzić %2$d%% w porównaniu z płatnością miesięczną.</string>
+    <string name="switch_yearly_save">Przejdź na płatność roczną i zaoszczędź %d%%</string>
+    <string name="switch_yearly_title">Zmień rozliczenie na roczne</string>
 </resources>

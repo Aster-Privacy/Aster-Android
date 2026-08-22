@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="cancel_impact_aliases">
+        <item quantity="one">%d alias ontvangt geen mail meer.</item>
+        <item quantity="other">%d aliassen ontvangen geen mail meer.</item>
+    </plurals>
+    <plurals name="cancel_impact_domains">
+        <item quantity="one">%d aangepast domein wordt opgeschort.</item>
+        <item quantity="other">%d aangepaste domeinen worden opgeschort.</item>
+    </plurals>
+    <plurals name="cancel_impact_templates">
+        <item quantity="one">%d sjabloon werkt niet meer.</item>
+        <item quantity="other">%d sjablonen werken niet meer.</item>
+    </plurals>
+    <plurals name="cancel_impact_signatures">
+        <item quantity="one">%d handtekening werkt niet meer.</item>
+        <item quantity="other">%d handtekeningen werken niet meer.</item>
+    </plurals>
+    <plurals name="cancel_impact_family">
+        <item quantity="one">%d lid verliest het account.</item>
+        <item quantity="other">%d leden verliezen hun account.</item>
+    </plurals>
+    <plurals name="crypto_renewal_days">
+        <item quantity="one">Je abonnement eindigt over %1$d dag, op %2$s.</item>
+        <item quantity="other">Je abonnement eindigt over %1$d dagen, op %2$s.</item>
+    </plurals>
+</resources>

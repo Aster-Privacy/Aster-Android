@@ -2828,4 +2828,17 @@
     <string name="cancel_reason_just_testing">Просто пробовал</string>
     <string name="cancel_reason_other">Другое</string>
     <string name="cancel_reason_text_placeholder">Хотите что-то добавить? (необязательно)</string>
+    <string name="change_plan_failed">Не удалось сменить тариф</string>
+    <string name="crypto_term_24_months">24 месяца</string>
+    <string name="downgrade_confirm_message">Ваш тариф изменится на %1$s %2$s. Функции, доступные сверх тарифа %1$s, перестанут работать.</string>
+    <string name="payment_failed_banner_message">Ваш последний платёж не прошёл. Обновите данные карты до %1$s, чтобы сохранить тариф %2$s.</string>
+    <string name="payment_failed_update_card">Обновить карту</string>
+    <string name="plan_changed">Тариф изменён</string>
+    <string name="plan_ended_on">Ваш тариф %1$s закончился %2$s</string>
+    <string name="plan_ended_resubscribe_note">Оформите подписку снова, чтобы вернуть хранилище, псевдонимы и другие возможности тарифа.</string>
+    <string name="resume_plan">Возобновить тариф</string>
+    <string name="switch_yearly_confirm">Перейти на годовую оплату</string>
+    <string name="switch_yearly_message">Оплата тарифа составит %1$s в год, что экономит %2$d%% по сравнению с ежемесячной оплатой.</string>
+    <string name="switch_yearly_save">Перейдите на годовую оплату и сэкономьте %d%%</string>
+    <string name="switch_yearly_title">Переход на годовую оплату</string>
 </resources>

@@ -2804,4 +2804,17 @@
     <string name="cancel_reason_just_testing">그냥 사용해 본 것뿐</string>
     <string name="cancel_reason_other">기타</string>
     <string name="cancel_reason_text_placeholder">덧붙이실 말씀이 있나요? (선택)</string>
+    <string name="change_plan_failed">요금제를 변경하지 못했습니다</string>
+    <string name="crypto_term_24_months">24개월</string>
+    <string name="downgrade_confirm_message">%2$s에 요금제가 %1$s(으)로 바뀝니다. %1$s 요금제보다 상위인 기능은 작동을 멈춥니다.</string>
+    <string name="payment_failed_banner_message">마지막 결제가 처리되지 않았습니다. %2$s 요금제를 유지하려면 %1$s까지 카드를 업데이트하세요.</string>
+    <string name="payment_failed_update_card">카드 업데이트</string>
+    <string name="plan_changed">요금제가 변경되었습니다</string>
+    <string name="plan_ended_on">%1$s 요금제가 %2$s에 끝났습니다</string>
+    <string name="plan_ended_resubscribe_note">다시 구독하면 저장 공간, 별칭 등 요금제 기능을 되찾을 수 있습니다.</string>
+    <string name="resume_plan">요금제 다시 시작</string>
+    <string name="switch_yearly_confirm">연간 결제로 전환</string>
+    <string name="switch_yearly_message">연 %1$s로 결제되며, 월간 결제보다 %2$d%% 절약됩니다.</string>
+    <string name="switch_yearly_save">연간 결제로 전환하고 %d%% 절약하기</string>
+    <string name="switch_yearly_title">연간 결제로 전환</string>
 </resources>

@@ -2813,4 +2813,17 @@
     <string name="cancel_reason_just_testing">Ich habe es nur ausprobiert</string>
     <string name="cancel_reason_other">Etwas anderes</string>
     <string name="cancel_reason_text_placeholder">Möchten Sie etwas ergänzen? (optional)</string>
+    <string name="change_plan_failed">Tarif konnte nicht geändert werden</string>
+    <string name="crypto_term_24_months">24 Monate</string>
+    <string name="downgrade_confirm_message">Dein Tarif wechselt zu %1$s am %2$s. Funktionen oberhalb des %1$s-Tarifs sind dann nicht mehr verfügbar.</string>
+    <string name="payment_failed_banner_message">Deine letzte Zahlung ist fehlgeschlagen. Aktualisiere deine Karte bis %1$s, um deinen %2$s-Tarif zu behalten.</string>
+    <string name="payment_failed_update_card">Karte aktualisieren</string>
+    <string name="plan_changed">Tarif geändert</string>
+    <string name="plan_ended_on">Dein %1$s-Tarif endete am %2$s</string>
+    <string name="plan_ended_resubscribe_note">Schließe erneut ab, um Speicher, Aliase und weitere Tariffunktionen zurückzubekommen.</string>
+    <string name="resume_plan">Tarif fortsetzen</string>
+    <string name="switch_yearly_confirm">Zu jährlich wechseln</string>
+    <string name="switch_yearly_message">Dein Tarif kostet %1$s pro Jahr, was %2$d%% gegenüber der monatlichen Abrechnung spart.</string>
+    <string name="switch_yearly_save">Zu jährlich wechseln und %d%% sparen</string>
+    <string name="switch_yearly_title">Zu jährlicher Abrechnung wechseln</string>
 </resources>

@@ -2840,4 +2840,17 @@
     <string name="cancel_reason_just_testing">Je faisais juste un essai</string>
     <string name="cancel_reason_other">Autre chose</string>
     <string name="cancel_reason_text_placeholder">Quelque chose à ajouter ? (facultatif)</string>
+    <string name="change_plan_failed">Impossible de changer d\'offre</string>
+    <string name="crypto_term_24_months">24 mois</string>
+    <string name="downgrade_confirm_message">Votre offre passe à %1$s le %2$s. Les fonctionnalités supérieures à l\'offre %1$s cessent de fonctionner.</string>
+    <string name="payment_failed_banner_message">Votre dernier paiement n\'a pas abouti. Mettez votre carte à jour avant le %1$s pour conserver votre offre %2$s.</string>
+    <string name="payment_failed_update_card">Mettre la carte à jour</string>
+    <string name="plan_changed">Offre modifiée</string>
+    <string name="plan_ended_on">Votre offre %1$s s\'est terminée le %2$s</string>
+    <string name="plan_ended_resubscribe_note">Réabonnez-vous pour récupérer votre stockage, vos alias et les autres fonctionnalités de votre offre.</string>
+    <string name="resume_plan">Reprendre l\'offre</string>
+    <string name="switch_yearly_confirm">Passer à la facturation annuelle</string>
+    <string name="switch_yearly_message">Votre offre est facturée %1$s par an, ce qui vous fait économiser %2$d%% par rapport à la facturation mensuelle.</string>
+    <string name="switch_yearly_save">Passez à l\'année et économisez %d%%</string>
+    <string name="switch_yearly_title">Passer à la facturation annuelle</string>
 </resources>

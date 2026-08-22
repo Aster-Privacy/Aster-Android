@@ -2812,4 +2812,17 @@
     <string name="cancel_reason_just_testing">Estava apenas a experimentar</string>
     <string name="cancel_reason_other">Outro motivo</string>
     <string name="cancel_reason_text_placeholder">Quer acrescentar alguma coisa? (opcional)</string>
+    <string name="change_plan_failed">Não foi possível mudar de plano</string>
+    <string name="crypto_term_24_months">24 meses</string>
+    <string name="downgrade_confirm_message">O seu plano muda para %1$s em %2$s. Os recursos acima do plano %1$s deixam de funcionar.</string>
+    <string name="payment_failed_banner_message">O seu último pagamento não foi concluído. Atualize o seu cartão até %1$s para manter o plano %2$s.</string>
+    <string name="payment_failed_update_card">Atualizar cartão</string>
+    <string name="plan_changed">Plano alterado</string>
+    <string name="plan_ended_on">O seu plano %1$s terminou em %2$s</string>
+    <string name="plan_ended_resubscribe_note">Assine de novo para recuperar o seu armazenamento, os aliases e os outros recursos do plano.</string>
+    <string name="resume_plan">Retomar plano</string>
+    <string name="switch_yearly_confirm">Mudar para anual</string>
+    <string name="switch_yearly_message">O seu plano é cobrado em %1$s por ano, o que economiza %2$d%% em relação ao faturamento mensal.</string>
+    <string name="switch_yearly_save">Mudar para anual e economizar %d%%</string>
+    <string name="switch_yearly_title">Mudar para faturamento anual</string>
 </resources>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="cancel_impact_aliases">
+        <item quantity="one">%d псевдоним перестанет получать почту.</item>
+        <item quantity="few">%d псевдонима перестанут получать почту.</item>
+        <item quantity="many">%d псевдонимов перестанут получать почту.</item>
+        <item quantity="other">%d псевдонимов перестанут получать почту.</item>
+    </plurals>
+    <plurals name="cancel_impact_domains">
+        <item quantity="one">%d личный домен будет приостановлен.</item>
+        <item quantity="few">%d личных домена будут приостановлены.</item>
+        <item quantity="many">%d личных доменов будут приостановлены.</item>
+        <item quantity="other">%d личных доменов будут приостановлены.</item>
+    </plurals>
+    <plurals name="cancel_impact_templates">
+        <item quantity="one">%d шаблон перестанет работать.</item>
+        <item quantity="few">%d шаблона перестанут работать.</item>
+        <item quantity="many">%d шаблонов перестанут работать.</item>
+        <item quantity="other">%d шаблонов перестанут работать.</item>
+    </plurals>
+    <plurals name="cancel_impact_signatures">
+        <item quantity="one">%d подпись перестанет работать.</item>
+        <item quantity="few">%d подписи перестанут работать.</item>
+        <item quantity="many">%d подписей перестанут работать.</item>
+        <item quantity="other">%d подписей перестанут работать.</item>
+    </plurals>
+    <plurals name="cancel_impact_family">
+        <item quantity="one">%d участник потеряет свою учётную запись.</item>
+        <item quantity="few">%d участника потеряют свои учётные записи.</item>
+        <item quantity="many">%d участников потеряют свои учётные записи.</item>
+        <item quantity="other">%d участников потеряют свои учётные записи.</item>
+    </plurals>
+    <plurals name="crypto_renewal_days">
+        <item quantity="one">Ваш тариф заканчивается через %1$d день, %2$s.</item>
+        <item quantity="few">Ваш тариф заканчивается через %1$d дня, %2$s.</item>
+        <item quantity="many">Ваш тариф заканчивается через %1$d дней, %2$s.</item>
+        <item quantity="other">Ваш тариф заканчивается через %1$d дней, %2$s.</item>
+    </plurals>
+</resources>

@@ -2812,4 +2812,17 @@
     <string name="cancel_reason_just_testing">Ik was het alleen aan het uitproberen</string>
     <string name="cancel_reason_other">Iets anders</string>
     <string name="cancel_reason_text_placeholder">Wil je iets toevoegen? (optioneel)</string>
+    <string name="change_plan_failed">Kon abonnement niet wijzigen</string>
+    <string name="crypto_term_24_months">24 maanden</string>
+    <string name="downgrade_confirm_message">Je abonnement wijzigt naar %1$s op %2$s. Functies boven het %1$s-abonnement werken niet meer.</string>
+    <string name="payment_failed_banner_message">Je laatste betaling is niet gelukt. Werk je kaart bij vóór %1$s om je %2$s-abonnement te behouden.</string>
+    <string name="payment_failed_update_card">Kaart bijwerken</string>
+    <string name="plan_changed">Abonnement gewijzigd</string>
+    <string name="plan_ended_on">Je %1$s-abonnement is geëindigd op %2$s</string>
+    <string name="plan_ended_resubscribe_note">Neem opnieuw een abonnement om je opslag, aliassen en andere abonnementsfuncties terug te krijgen.</string>
+    <string name="resume_plan">Abonnement hervatten</string>
+    <string name="switch_yearly_confirm">Overschakelen naar jaarlijks</string>
+    <string name="switch_yearly_message">Je abonnement wordt %1$s per jaar gefactureerd, wat %2$d%% bespaart ten opzichte van maandelijkse facturering.</string>
+    <string name="switch_yearly_save">Schakel over naar jaarlijks en bespaar %d%%</string>
+    <string name="switch_yearly_title">Overschakelen naar jaarlijkse facturering</string>
 </resources>

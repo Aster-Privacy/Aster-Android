@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="cancel_impact_aliases">
+        <item quantity="one">%d alias ne reçoit plus de courrier.</item>
+        <item quantity="other">%d alias ne reçoivent plus de courrier.</item>
+    </plurals>
+    <plurals name="cancel_impact_domains">
+        <item quantity="one">%d domaine personnalisé est suspendu.</item>
+        <item quantity="other">%d domaines personnalisés sont suspendus.</item>
+    </plurals>
+    <plurals name="cancel_impact_templates">
+        <item quantity="one">%d modèle ne fonctionne plus.</item>
+        <item quantity="other">%d modèles ne fonctionnent plus.</item>
+    </plurals>
+    <plurals name="cancel_impact_signatures">
+        <item quantity="one">%d signature ne fonctionne plus.</item>
+        <item quantity="other">%d signatures ne fonctionnent plus.</item>
+    </plurals>
+    <plurals name="cancel_impact_family">
+        <item quantity="one">%d membre perd son compte.</item>
+        <item quantity="other">%d membres perdent leur compte.</item>
+    </plurals>
+    <plurals name="crypto_renewal_days">
+        <item quantity="one">Votre offre se termine dans %1$d jour, le %2$s.</item>
+        <item quantity="other">Votre offre se termine dans %1$d jours, le %2$s.</item>
+    </plurals>
+</resources>

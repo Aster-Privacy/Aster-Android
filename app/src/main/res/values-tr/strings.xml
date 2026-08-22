@@ -2812,4 +2812,17 @@
     <string name="cancel_reason_just_testing">Sadece deniyordum</string>
     <string name="cancel_reason_other">Başka bir şey</string>
     <string name="cancel_reason_text_placeholder">Eklemek istediğiniz bir şey var mı? (isteğe bağlı)</string>
+    <string name="change_plan_failed">Plan değiştirilemedi</string>
+    <string name="crypto_term_24_months">24 ay</string>
+    <string name="downgrade_confirm_message">Planınız %1$s planına %2$s tarihinde geçer. %1$s planının üzerindeki özellikler çalışmayı durdurur.</string>
+    <string name="payment_failed_banner_message">Son ödemeniz gerçekleşmedi. %1$s tarihine kadar kartınızı güncelleyerek %2$s planınızı sürdürün.</string>
+    <string name="payment_failed_update_card">Kartı güncelle</string>
+    <string name="plan_changed">Plan değiştirildi</string>
+    <string name="plan_ended_on">%1$s planınız %2$s tarihinde sona erdi</string>
+    <string name="plan_ended_resubscribe_note">Depolama alanınızı, takma adlarınızı ve diğer plan özelliklerinizi geri almak için yeniden abone olun.</string>
+    <string name="resume_plan">Planı sürdür</string>
+    <string name="switch_yearly_confirm">Yıllığa geç</string>
+    <string name="switch_yearly_message">Planınız yılda %1$s olarak faturalandırılır ve aylık faturalandırmaya göre %2$d%% tasarruf sağlar.</string>
+    <string name="switch_yearly_save">Yıllığa geçin, %d%% tasarruf edin</string>
+    <string name="switch_yearly_title">Yıllık faturalandırmaya geç</string>
 </resources>
