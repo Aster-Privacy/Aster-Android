@@ -55,6 +55,7 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -1269,7 +1270,7 @@ fun ComposeScreen(
                     is_sending = false
                     send_lock.set(false)
                     send_error = org.astermail.android.billing.localized_api_error(context, t, context.getString(R.string.send_failed))
-                    send_error_upgrade = org.astermail.android.billing.is_upgrade_error(t)
+                    send_error_upgrade = org.astermail.android.billing.is_upgrade_error(t, plan_state.limits?.plan_code)
                 },
             )
         }
@@ -1369,7 +1370,7 @@ fun ComposeScreen(
                     },
                     onFailure = { t ->
                         send_error = org.astermail.android.billing.localized_api_error(context, t, context.getString(R.string.send_failed))
-                    send_error_upgrade = org.astermail.android.billing.is_upgrade_error(t)
+                    send_error_upgrade = org.astermail.android.billing.is_upgrade_error(t, plan_state.limits?.plan_code)
                     },
                 )
                 return@launch
@@ -1409,7 +1410,7 @@ fun ComposeScreen(
                     },
                     onFailure = { t ->
                         send_error = org.astermail.android.billing.localized_api_error(context, t, context.getString(R.string.send_failed))
-                    send_error_upgrade = org.astermail.android.billing.is_upgrade_error(t)
+                    send_error_upgrade = org.astermail.android.billing.is_upgrade_error(t, plan_state.limits?.plan_code)
                     },
                 )
             } else {
@@ -1786,18 +1787,19 @@ fun ComposeScreen(
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 modifier = Modifier
-                                    .padding(top = 2.dp)
-                                    .clickable {
+                                    .heightIn(min = 48.dp)
+                                    .clickable(role = Role.Button) {
                                         org.astermail.android.billing.open_billing_in_app(context)
-                                    },
+                                    }
+                                    .padding(top = 2.dp),
                             )
                         }
                     }
                     Box(
                         modifier = Modifier
-                            .size(24.dp)
+                            .size(48.dp)
                             .clip(CircleShape)
-                            .clickable { send_error = null },
+                            .clickable(role = Role.Button) { send_error = null },
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(

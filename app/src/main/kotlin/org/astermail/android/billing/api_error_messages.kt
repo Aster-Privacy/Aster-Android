@@ -50,8 +50,12 @@ fun localized_api_error(context: Context, t: Throwable, fallback: String): Strin
     }
 }
 
-fun is_upgrade_error(t: Throwable?): Boolean =
-    t is ApiError.SendQuotaReached || t is ApiError.PlanLimitExceeded || t is ApiError.PaymentRequired
+fun is_upgrade_error(t: Throwable?, plan_code: String? = null): Boolean {
+    val remediable = t is ApiError.SendQuotaReached ||
+        t is ApiError.PlanLimitExceeded ||
+        t is ApiError.PaymentRequired
+    return remediable && has_higher_plan_tier(plan_code)
+}
 
 fun is_billing_link_error(t: Throwable?): Boolean = t is ApiError.PaymentRequired
 
