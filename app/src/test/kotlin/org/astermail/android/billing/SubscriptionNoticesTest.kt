@@ -124,4 +124,12 @@ class SubscriptionNoticesTest {
         assertEquals("nova", plan_code_from_name("Nova"))
         assertEquals("free", plan_code_from_name(null))
     }
+
+    @Test
+    fun `formats money with the subscription currency`() {
+        assertEquals("€12.34", format_money(1234, "eur", java.util.Locale.US))
+        assertEquals("$12.34", format_money(1234, "USD", java.util.Locale.US))
+        assertTrue(format_money(1234, "usd", java.util.Locale.GERMANY).contains("12,34"))
+        assertTrue(format_money(1234, "bogus", java.util.Locale.US).contains("12.34"))
+    }
 }

@@ -404,8 +404,7 @@ private fun plan_card(
             Spacer(Modifier.height(4.dp))
 
             val price_text = if (plan.price_cents > 0) {
-                val amount = plan.price_cents / 100.0
-                "$%.2f".format(amount) + " / " + (plan.billing_period ?: billing_interval)
+                org.astermail.android.billing.format_money(plan.price_cents.toLong(), "usd") + " / " + (plan.billing_period ?: billing_interval)
             } else {
                 stringResource(R.string.free_forever)
             }

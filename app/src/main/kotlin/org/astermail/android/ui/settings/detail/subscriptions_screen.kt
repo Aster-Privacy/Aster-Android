@@ -115,17 +115,8 @@ private fun detect_currency(): String {
     }
 }
 
-private fun format_price(cents: Int, currency: String): String {
-    val amount = cents / 100.0
-    return try {
-        val cur = java.util.Currency.getInstance(currency.uppercase())
-        val fmt = java.text.NumberFormat.getCurrencyInstance(Locale.US)
-        fmt.currency = cur
-        fmt.format(amount)
-    } catch (_: Throwable) {
-        "$%.2f".format(amount)
-    }
-}
+private fun format_price(cents: Int, currency: String): String =
+    org.astermail.android.billing.format_money(cents.toLong(), currency)
 
 private data class plan_tier(
     val code: String,
@@ -435,7 +426,7 @@ fun SubscriptionsScreen(
                             Text(
                                 text = stringResource(
                                     R.string.settings_price_per_interval,
-                                    sub.effective_price_cents / 100.0,
+                                    format_price(sub.effective_price_cents, sub.currency ?: detected_currency),
                                     sub.effective_interval ?: default_interval,
                                 ),
                                 color = colors.text_primary,

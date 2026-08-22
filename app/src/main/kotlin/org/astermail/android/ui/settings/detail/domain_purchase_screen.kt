@@ -79,17 +79,8 @@ import org.astermail.android.settings.DomainPurchaseErrorKind
 import org.astermail.android.settings.DomainPurchaseUiState
 import org.astermail.android.settings.DomainPurchaseViewModel
 
-internal fun format_domain_price(cents: Int, currency: String): String {
-    val amount = cents / 100.0
-    return try {
-        val cur = java.util.Currency.getInstance(currency.uppercase())
-        val fmt = java.text.NumberFormat.getCurrencyInstance(java.util.Locale.US)
-        fmt.currency = cur
-        fmt.format(amount)
-    } catch (_: Throwable) {
-        "$%.2f".format(amount)
-    }
-}
+internal fun format_domain_price(cents: Int, currency: String): String =
+    org.astermail.android.billing.format_money(cents.toLong(), currency)
 
 internal fun open_url(context: android.content.Context, url: String) {
     try {
