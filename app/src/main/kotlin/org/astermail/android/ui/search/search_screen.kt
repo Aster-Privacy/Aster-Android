@@ -487,26 +487,13 @@ fun SearchScreen(
     }
     val grouping_enabled = settings_state.preferences?.conversation_grouping != false
     val result_threads = remember(filtered, grouping_enabled) {
-        val emails = filtered.map { inbox_item_to_email(it) }
-        val rows = if (grouping_enabled) group_by_thread(emails) else flat_thread_rows(emails)
-        rows.sortedWith(
-            compareByDescending<ThreadRow> { it.newest.received_at }.thenByDescending { it.thread_id },
-        )
+        search_result_threads(filtered, grouping_enabled)
     }
     val thread_member_ids = remember(result_threads, visible_corpus, grouping_enabled) {
-        if (!grouping_enabled) {
-            emptyMap()
-        } else {
-            val by_thread = visible_corpus.groupBy { item ->
-                item.thread_token?.takeIf { it.isNotBlank() } ?: item.id
-            }
-            result_threads.associate { row ->
-                row.newest.id to (by_thread[row.thread_id]?.map { it.id } ?: listOf(row.newest.id))
-            }
-        }
+        search_thread_member_ids(result_threads, visible_corpus, grouping_enabled)
     }
     fun expand_selection(ids: List<String>): List<String> =
-        if (!grouping_enabled) ids else ids.flatMap { thread_member_ids[it] ?: listOf(it) }.distinct()
+        expand_thread_selection(ids, thread_member_ids, grouping_enabled)
 
     LaunchedEffect(result_threads, results_pending) {
         if (select_mode && !results_pending) {
@@ -815,7 +802,7 @@ fun SearchScreen(
             }
         } else if (result_threads.isNotEmpty()) {
             Text(
-                text = pluralStringResource(R.plurals.results_count, result_threads.size, result_threads.size),
+                text = pluralStringResource(R.plurals.search_results_count, result_threads.size, result_threads.size),
                 color = colors.text_muted,
                 fontSize = 12.sp,
                 modifier = Modifier.padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
