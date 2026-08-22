@@ -169,5 +169,5 @@ class VacationReplyViewModel @Inject constructor(
     }
 
     private fun readable(t: Throwable): String =
-        t.message?.takeIf { it.isNotBlank() } ?: context.getString(R.string.something_went_wrong)
+        org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong))
 }

@@ -3326,7 +3326,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun user_facing_error(t: Throwable): String =
-        org.astermail.android.api.user_facing_error(t, context.getString(R.string.something_went_wrong))
+        org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong))
 
     fun load_labels(folder_type: String? = null, force: Boolean = false) {
         val now = System.currentTimeMillis()

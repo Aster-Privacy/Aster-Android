@@ -273,6 +273,6 @@ class TwoFactorViewModel @Inject constructor(
     private fun readable(t: Throwable): String = when (t) {
         is org.astermail.android.api.ApiError.UnauthorizedError ->
             context.getString(R.string.error_invalid_credentials)
-        else -> t.message?.takeIf { it.isNotBlank() } ?: context.getString(R.string.something_went_wrong)
+        else -> org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong))
     }
 }

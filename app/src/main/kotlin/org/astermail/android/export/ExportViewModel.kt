@@ -179,9 +179,7 @@ class ExportViewModel @Inject constructor(
             _state.update {
                 it.copy(
                     is_running = false,
-                    error = org.astermail.android.api.user_facing_error(
-                        t,
-                        context.getString(R.string.something_went_wrong),
+                    error = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong),
                     ),
                 )
             }

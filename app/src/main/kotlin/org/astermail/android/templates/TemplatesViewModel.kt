@@ -246,5 +246,5 @@ class TemplatesViewModel @Inject constructor(
     private fun next_order(): Int = (_state.value.items.maxOfOrNull { it.sort_order } ?: 0) + 1
 
     private fun readable_error(t: Throwable): String =
-        t.message?.takeIf { it.isNotBlank() } ?: context.getString(R.string.something_went_wrong)
+        org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong))
 }

@@ -954,7 +954,7 @@ class MailViewModel @Inject constructor(
                 },
                 onFailure = { t ->
                     _thread_state.value = ThreadUiState(
-                        error = org.astermail.android.api.user_facing_error(t, context.getString(R.string.something_went_wrong)),
+                        error = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)),
                     )
                 },
             )
@@ -1078,7 +1078,7 @@ class MailViewModel @Inject constructor(
                         val kept = previous.ifEmpty { fallback }
                         _thread_state.value = ThreadUiState(
                             messages = kept,
-                            error = org.astermail.android.api.user_facing_error(t, context.getString(R.string.something_went_wrong)),
+                            error = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)),
                             item = item,
                             attachments = if (cur_thread.item?.id == item_id) cur_thread.attachments else emptyMap(),
                         )
@@ -1418,7 +1418,7 @@ class MailViewModel @Inject constructor(
                     emit_toast(context.getString(R.string.snoozed_until, label))
                 },
                 onFailure = { t ->
-                    emit_toast(org.astermail.android.api.user_facing_error(t, context.getString(R.string.couldnt_snooze)))
+                    emit_toast(org.astermail.android.localized_api_error(context, t, context.getString(R.string.couldnt_snooze)))
                 },
             )
         }
@@ -1497,7 +1497,7 @@ class MailViewModel @Inject constructor(
                     if (prev_thread_labels != null && th.item?.id == item_id) {
                         _thread_state.value = th.copy(item = th.item.copy(labels = prev_thread_labels))
                     }
-                    emit_toast(org.astermail.android.api.user_facing_error(it, context.getString(R.string.couldnt_apply_label)))
+                    emit_toast(org.astermail.android.localized_api_error(context, it, context.getString(R.string.couldnt_apply_label)))
                 },
             )
         }
@@ -1536,7 +1536,7 @@ class MailViewModel @Inject constructor(
                     if (prev_thread_labels != null && th.item?.id == item_id) {
                         _thread_state.value = th.copy(item = th.item.copy(labels = prev_thread_labels))
                     }
-                    emit_toast(org.astermail.android.api.user_facing_error(it, context.getString(R.string.couldnt_remove_label)))
+                    emit_toast(org.astermail.android.localized_api_error(context, it, context.getString(R.string.couldnt_remove_label)))
                 },
             )
         }
@@ -1587,7 +1587,7 @@ class MailViewModel @Inject constructor(
                     if (prev_thread_item != null && th.item?.id == item_id) {
                         _thread_state.value = th.copy(item = prev_thread_item)
                     }
-                    emit_toast(org.astermail.android.api.user_facing_error(it, context.getString(R.string.couldnt_apply_label)))
+                    emit_toast(org.astermail.android.localized_api_error(context, it, context.getString(R.string.couldnt_apply_label)))
                 },
             )
         }
@@ -1638,7 +1638,7 @@ class MailViewModel @Inject constructor(
                     if (prev_thread_item != null && th.item?.id == item_id) {
                         _thread_state.value = th.copy(item = prev_thread_item)
                     }
-                    emit_toast(org.astermail.android.api.user_facing_error(it, context.getString(R.string.couldnt_remove_label)))
+                    emit_toast(org.astermail.android.localized_api_error(context, it, context.getString(R.string.couldnt_remove_label)))
                 },
             )
         }
@@ -2822,7 +2822,7 @@ class MailViewModel @Inject constructor(
                             val keep = _search_state.value.all_items
                             _search_state.value = _search_state.value.copy(
                                 is_indexing = false,
-                                error = if (keep.isNotEmpty()) null else (org.astermail.android.api.user_facing_error(t, context.getString(R.string.something_went_wrong))),
+                                error = if (keep.isNotEmpty()) null else (org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong))),
                             )
                         },
                     )
@@ -2831,7 +2831,7 @@ class MailViewModel @Inject constructor(
                 val keep = _search_state.value.all_items
                 _search_state.value = _search_state.value.copy(
                     is_indexing = false,
-                    error = if (keep.isNotEmpty()) null else (org.astermail.android.api.user_facing_error(t, context.getString(R.string.something_went_wrong))),
+                    error = if (keep.isNotEmpty()) null else (org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong))),
                 )
             }
         }

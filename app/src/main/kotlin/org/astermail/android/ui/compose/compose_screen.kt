@@ -1266,7 +1266,7 @@ fun ComposeScreen(
                 onFailure = { t ->
                     is_sending = false
                     send_lock.set(false)
-                    send_error = org.astermail.android.api.user_facing_error(t, context.getString(R.string.save_failed))
+                    send_error = org.astermail.android.localized_api_error(context, t, context.getString(R.string.save_failed))
                 },
             )
         }
@@ -1365,7 +1365,7 @@ fun ComposeScreen(
                         on_sent()
                     },
                     onFailure = { t ->
-                        send_error = org.astermail.android.api.user_facing_error(t, context.getString(R.string.save_failed))
+                        send_error = org.astermail.android.localized_api_error(context, t, context.getString(R.string.save_failed))
                     },
                 )
                 return@launch
@@ -1404,7 +1404,7 @@ fun ComposeScreen(
                         on_sent()
                     },
                     onFailure = { t ->
-                        send_error = org.astermail.android.api.user_facing_error(t, context.getString(R.string.save_failed))
+                        send_error = org.astermail.android.localized_api_error(context, t, context.getString(R.string.save_failed))
                     },
                 )
             } else {

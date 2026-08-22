@@ -191,7 +191,7 @@ class ContactsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_syncing = false,
-                    error = org.astermail.android.api.user_facing_error(t, context.getString(R.string.something_went_wrong)),
+                    error = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)),
                 )
             }
         }
@@ -330,7 +330,7 @@ class ContactsViewModel @Inject constructor(
             t is javax.net.ssl.SSLException -> context.getString(R.string.error_ssl)
             "timeout" in msg || "timed out" in msg -> context.getString(R.string.error_timeout)
             "connection" in msg && ("refused" in msg || "reset" in msg) -> context.getString(R.string.error_no_connection)
-            else -> org.astermail.android.api.user_facing_error(t, context.getString(R.string.something_went_wrong))
+            else -> org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong))
         }
     }
 }

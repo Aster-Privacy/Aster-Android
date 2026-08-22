@@ -227,9 +227,7 @@ class ImportViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_uploading = false,
-                    error = org.astermail.android.api.user_facing_error(
-                        t,
-                        context.getString(R.string.something_went_wrong),
+                    error = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong),
                     ),
                 )
             }
