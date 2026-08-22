@@ -2817,4 +2817,15 @@
     <string name="payment_failed_days_left">Masz jeszcze %1$d dni na aktualizację karty.</string>
     <string name="payment_failed_one_day_left">Masz jeszcze 1 dzień na aktualizację karty.</string>
     <string name="device_verification_failed">Nie udało się zweryfikować tego urządzenia dla tej zmiany. Zaloguj się ponownie na tym urządzeniu i spróbuj jeszcze raz.</string>
+    <string name="cancel_reason_title">Zanim odejdziesz</string>
+    <string name="cancel_reason_description">Co skłoniło Cię do rezygnacji? Wybierz powód, aby kontynuować.</string>
+    <string name="cancel_reason_too_expensive">Zbyt drogo</string>
+    <string name="cancel_reason_not_using">Za rzadko z tego korzystam</string>
+    <string name="cancel_reason_missing_feature">Brakuje funkcji, której potrzebuję</string>
+    <string name="cancel_reason_switched_provider">Przeszedłem do innego dostawcy</string>
+    <string name="cancel_reason_bugs">Zbyt wiele błędów lub problemów</string>
+    <string name="cancel_reason_privacy_trust">Obawy o prywatność lub zaufanie</string>
+    <string name="cancel_reason_just_testing">Tylko testowałem</string>
+    <string name="cancel_reason_other">Coś innego</string>
+    <string name="cancel_reason_text_placeholder">Chcesz coś dodać? (opcjonalnie)</string>
 </resources>

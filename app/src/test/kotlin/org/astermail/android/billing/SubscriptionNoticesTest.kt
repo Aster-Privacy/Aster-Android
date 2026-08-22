@@ -168,4 +168,13 @@ class SubscriptionNoticesTest {
         assertNull(payment_failed_days_left(null, "2026-08-20"))
         assertNull(payment_failed_days_left("garbage", "2026-08-20"))
     }
+
+    @Test
+    fun `cancel reason text is trimmed and capped`() {
+        assertNull(clamp_cancel_reason_text(null))
+        assertNull(clamp_cancel_reason_text("   "))
+        assertEquals("hi", clamp_cancel_reason_text("  hi  "))
+        assertEquals(MAX_CANCEL_REASON_TEXT, clamp_cancel_reason_text("y".repeat(5000))?.length)
+        assertEquals(8, CANCEL_REASONS.size)
+    }
 }

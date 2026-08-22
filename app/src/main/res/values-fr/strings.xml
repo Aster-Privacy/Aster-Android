@@ -2829,4 +2829,15 @@
     <string name="payment_failed_days_left">Il vous reste %1$d jours pour mettre à jour votre carte.</string>
     <string name="payment_failed_one_day_left">Il vous reste 1 jour pour mettre à jour votre carte.</string>
     <string name="device_verification_failed">Cet appareil n’a pas pu être vérifié pour cette modification. Reconnectez-vous sur cet appareil, puis réessayez.</string>
+    <string name="cancel_reason_title">Avant de partir</string>
+    <string name="cancel_reason_description">Qu’est-ce qui vous a décidé à annuler ? Choisissez une raison pour continuer.</string>
+    <string name="cancel_reason_too_expensive">Trop cher</string>
+    <string name="cancel_reason_not_using">Je ne l\'utilise pas assez</string>
+    <string name="cancel_reason_missing_feature">Il manque une fonctionnalité dont j\'ai besoin</string>
+    <string name="cancel_reason_switched_provider">Je suis passé à un autre fournisseur</string>
+    <string name="cancel_reason_bugs">Trop de bugs ou de problèmes</string>
+    <string name="cancel_reason_privacy_trust">Doutes sur la confidentialité ou la confiance</string>
+    <string name="cancel_reason_just_testing">Je faisais juste un essai</string>
+    <string name="cancel_reason_other">Autre chose</string>
+    <string name="cancel_reason_text_placeholder">Quelque chose à ajouter ? (facultatif)</string>
 </resources>

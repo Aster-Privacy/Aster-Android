@@ -2801,4 +2801,15 @@
     <string name="payment_failed_days_left">Kartınızı güncellemek için %1$d gününüz kaldı.</string>
     <string name="payment_failed_one_day_left">Kartınızı güncellemek için 1 gününüz kaldı.</string>
     <string name="device_verification_failed">Bu değişiklik için bu cihaz doğrulanamadı. Bu cihazda yeniden oturum açıp tekrar deneyin.</string>
+    <string name="cancel_reason_title">Gitmeden önce</string>
+    <string name="cancel_reason_description">İptal etmeye neden karar verdiniz? Devam etmek için bir neden seçin.</string>
+    <string name="cancel_reason_too_expensive">Çok pahalı</string>
+    <string name="cancel_reason_not_using">Yeterince kullanmıyorum</string>
+    <string name="cancel_reason_missing_feature">İhtiyacım olan bir özellik eksik</string>
+    <string name="cancel_reason_switched_provider">Başka bir sağlayıcıya geçtim</string>
+    <string name="cancel_reason_bugs">Çok fazla hata veya sorun</string>
+    <string name="cancel_reason_privacy_trust">Gizlilik veya güven endişeleri</string>
+    <string name="cancel_reason_just_testing">Sadece deniyordum</string>
+    <string name="cancel_reason_other">Başka bir şey</string>
+    <string name="cancel_reason_text_placeholder">Eklemek istediğiniz bir şey var mı? (isteğe bağlı)</string>
 </resources>

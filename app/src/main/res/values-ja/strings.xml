@@ -2793,4 +2793,15 @@
     <string name="payment_failed_days_left">カードの更新期限まであと %1$d 日です。</string>
     <string name="payment_failed_one_day_left">カードの更新期限まであと 1 日です。</string>
     <string name="device_verification_failed">この変更のためにこのデバイスを確認できませんでした。このデバイスでもう一度サインインしてから、再試行してください。</string>
+    <string name="cancel_reason_title">ご解約の前に</string>
+    <string name="cancel_reason_description">解約を決めた理由は何ですか。続行するには理由を選択してください。</string>
+    <string name="cancel_reason_too_expensive">料金が高い</string>
+    <string name="cancel_reason_not_using">あまり使っていない</string>
+    <string name="cancel_reason_missing_feature">必要な機能がない</string>
+    <string name="cancel_reason_switched_provider">他のサービスに乗り換えた</string>
+    <string name="cancel_reason_bugs">不具合や問題が多い</string>
+    <string name="cancel_reason_privacy_trust">プライバシーや信頼性への不安</string>
+    <string name="cancel_reason_just_testing">試しに使っていただけ</string>
+    <string name="cancel_reason_other">その他</string>
+    <string name="cancel_reason_text_placeholder">他に伝えたいことがあれば（任意）</string>
 </resources>

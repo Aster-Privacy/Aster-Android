@@ -2802,4 +2802,15 @@
     <string name="payment_failed_days_left">Noch %1$d Tage, um deine Karte zu aktualisieren.</string>
     <string name="payment_failed_one_day_left">Noch 1 Tag, um deine Karte zu aktualisieren.</string>
     <string name="device_verification_failed">Dieses Gerät konnte für diese Änderung nicht verifiziert werden. Melde dich auf diesem Gerät erneut an und versuche es dann noch einmal.</string>
+    <string name="cancel_reason_title">Bevor Sie gehen</string>
+    <string name="cancel_reason_description">Warum möchtest du kündigen? Wähle einen Grund, um fortzufahren.</string>
+    <string name="cancel_reason_too_expensive">Zu teuer</string>
+    <string name="cancel_reason_not_using">Ich nutze es zu wenig</string>
+    <string name="cancel_reason_missing_feature">Eine benötigte Funktion fehlt</string>
+    <string name="cancel_reason_switched_provider">Zu einem anderen Anbieter gewechselt</string>
+    <string name="cancel_reason_bugs">Zu viele Fehler oder Probleme</string>
+    <string name="cancel_reason_privacy_trust">Bedenken bei Datenschutz oder Vertrauen</string>
+    <string name="cancel_reason_just_testing">Ich habe es nur ausprobiert</string>
+    <string name="cancel_reason_other">Etwas anderes</string>
+    <string name="cancel_reason_text_placeholder">Möchten Sie etwas ergänzen? (optional)</string>
 </resources>

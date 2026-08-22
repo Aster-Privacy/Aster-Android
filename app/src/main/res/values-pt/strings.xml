@@ -2801,4 +2801,15 @@
     <string name="payment_failed_days_left">Faltam %1$d dias para atualizar seu cartão.</string>
     <string name="payment_failed_one_day_left">Falta 1 dia para atualizar seu cartão.</string>
     <string name="device_verification_failed">Não foi possível verificar este dispositivo para essa alteração. Entre novamente neste dispositivo e tente de novo.</string>
+    <string name="cancel_reason_title">Antes de sair</string>
+    <string name="cancel_reason_description">O que fez você decidir cancelar? Escolha um motivo para continuar.</string>
+    <string name="cancel_reason_too_expensive">Demasiado caro</string>
+    <string name="cancel_reason_not_using">Não uso o suficiente</string>
+    <string name="cancel_reason_missing_feature">Falta uma funcionalidade de que preciso</string>
+    <string name="cancel_reason_switched_provider">Mudei para outro fornecedor</string>
+    <string name="cancel_reason_bugs">Demasiados erros ou problemas</string>
+    <string name="cancel_reason_privacy_trust">Dúvidas de privacidade ou confiança</string>
+    <string name="cancel_reason_just_testing">Estava apenas a experimentar</string>
+    <string name="cancel_reason_other">Outro motivo</string>
+    <string name="cancel_reason_text_placeholder">Quer acrescentar alguma coisa? (opcional)</string>
 </resources>

@@ -2833,4 +2833,15 @@
     <string name="payment_failed_days_left">تبقى %1$d يومًا لتحديث بطاقتك.</string>
     <string name="payment_failed_one_day_left">يتبقى يوم واحد لتحديث بطاقتك.</string>
     <string name="device_verification_failed">تعذر التحقق من هذا الجهاز لإجراء هذا التغيير. سجّل الدخول مرة أخرى على هذا الجهاز، ثم أعد المحاولة.</string>
+    <string name="cancel_reason_title">قبل أن تغادر</string>
+    <string name="cancel_reason_description">ما الذي دفعك إلى الإلغاء؟ اختر سببًا للمتابعة.</string>
+    <string name="cancel_reason_too_expensive">مكلف جدًا</string>
+    <string name="cancel_reason_not_using">لا أستخدمه بما فيه الكفاية</string>
+    <string name="cancel_reason_missing_feature">تنقصه ميزة أحتاجها</string>
+    <string name="cancel_reason_switched_provider">انتقلت إلى مزود آخر</string>
+    <string name="cancel_reason_bugs">أخطاء أو مشكلات كثيرة</string>
+    <string name="cancel_reason_privacy_trust">مخاوف تتعلق بالخصوصية أو الثقة</string>
+    <string name="cancel_reason_just_testing">كنت أجربه فقط</string>
+    <string name="cancel_reason_other">شيء آخر</string>
+    <string name="cancel_reason_text_placeholder">هل تود إضافة شيء؟ (اختياري)</string>
 </resources>

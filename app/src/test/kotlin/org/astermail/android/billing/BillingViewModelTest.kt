@@ -34,6 +34,8 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.astermail.android.api.billing.BillingApi
+import org.astermail.android.api.billing.CancelSubscriptionRequest
+import org.astermail.android.api.billing.CancelSubscriptionResponse
 import org.astermail.android.api.billing.ChangePlanRequest
 import org.astermail.android.api.billing.ChangePlanResponse
 import org.astermail.android.api.billing.PlanChangePreviewResponse
@@ -174,5 +176,36 @@ class BillingViewModelTest {
         assertNull(vm.state.value.plan_change_preview)
         assertTrue(vm.state.value.plan_change_preview_failed)
         assertFalse(vm.state.value.plan_change_preview_loading)
+    }
+
+    @Test
+    fun `cancel sends the password hash with the chosen reason`() = runTest {
+        coEvery { auth_repository.derive_password_hash_b64("pw") } returns "hash"
+        coEvery { billing_api.cancel_subscription(any()) } returns CancelSubscriptionResponse(cancel_at_period_end = true)
+        vm.cancel_subscription("pw", "too_expensive", "  " + "x".repeat(2500) + "  ")
+        advanceUntilIdle()
+        vm.state.test {
+            var latest = awaitItem()
+            while (latest.is_acting) latest = awaitItem()
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify {
+            billing_api.cancel_subscription(
+                CancelSubscriptionRequest(
+                    password_hash = "hash",
+                    cancel_reason = "too_expensive",
+                    cancel_reason_text = "x".repeat(2000),
+                ),
+            )
+        }
+        assertFalse(vm.state.value.is_acting)
+    }
+
+    @Test
+    fun `cancel ignores unknown reasons`() = runTest {
+        vm.cancel_subscription("pw", "because")
+        advanceUntilIdle()
+        coVerify(exactly = 0) { billing_api.cancel_subscription(any()) }
     }
 }

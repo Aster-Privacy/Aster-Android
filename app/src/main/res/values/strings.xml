@@ -2900,4 +2900,15 @@
     <string name="payment_failed_days_left">%1$d days left to update your card.</string>
     <string name="payment_failed_one_day_left">1 day left to update your card.</string>
     <string name="device_verification_failed">This device could not be verified for that change. Sign in again on this device, then try again.</string>
+    <string name="cancel_reason_title">Before you go</string>
+    <string name="cancel_reason_description">What made you decide to cancel? Choose a reason to continue.</string>
+    <string name="cancel_reason_too_expensive">Too expensive</string>
+    <string name="cancel_reason_not_using">I am not using it enough</string>
+    <string name="cancel_reason_missing_feature">Missing a feature I need</string>
+    <string name="cancel_reason_switched_provider">Switched to another provider</string>
+    <string name="cancel_reason_bugs">Too many bugs or problems</string>
+    <string name="cancel_reason_privacy_trust">Privacy or trust concerns</string>
+    <string name="cancel_reason_just_testing">I was just testing it out</string>
+    <string name="cancel_reason_other">Something else</string>
+    <string name="cancel_reason_text_placeholder">Anything you want to add? (optional)</string>
 </resources>

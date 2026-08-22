@@ -2801,4 +2801,15 @@
     <string name="payment_failed_days_left">Nog %1$d dagen om je kaart bij te werken.</string>
     <string name="payment_failed_one_day_left">Nog 1 dag om je kaart bij te werken.</string>
     <string name="device_verification_failed">Dit apparaat kon niet worden geverifieerd voor die wijziging. Meld je opnieuw aan op dit apparaat en probeer het dan opnieuw.</string>
+    <string name="cancel_reason_title">Voordat je gaat</string>
+    <string name="cancel_reason_description">Waarom wil je opzeggen? Kies een reden om door te gaan.</string>
+    <string name="cancel_reason_too_expensive">Te duur</string>
+    <string name="cancel_reason_not_using">Ik gebruik het te weinig</string>
+    <string name="cancel_reason_missing_feature">Een functie die ik nodig heb ontbreekt</string>
+    <string name="cancel_reason_switched_provider">Overgestapt naar een andere aanbieder</string>
+    <string name="cancel_reason_bugs">Te veel bugs of problemen</string>
+    <string name="cancel_reason_privacy_trust">Zorgen over privacy of vertrouwen</string>
+    <string name="cancel_reason_just_testing">Ik was het alleen aan het uitproberen</string>
+    <string name="cancel_reason_other">Iets anders</string>
+    <string name="cancel_reason_text_placeholder">Wil je iets toevoegen? (optioneel)</string>
 </resources>

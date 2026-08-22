@@ -61,6 +61,22 @@ fun payment_failed_due_date(
     return raw?.take(10)
 }
 
+val CANCEL_REASONS = listOf(
+    "too_expensive",
+    "not_using",
+    "missing_feature",
+    "switched_provider",
+    "bugs",
+    "privacy_trust",
+    "just_testing",
+    "other",
+)
+
+const val MAX_CANCEL_REASON_TEXT = 2000
+
+fun clamp_cancel_reason_text(input: String?): String? =
+    input?.trim()?.take(MAX_CANCEL_REASON_TEXT)?.takeIf { it.isNotEmpty() }
+
 fun payment_failed_days_left(due_date: String?, today: String): Int? {
     val due = due_date?.takeIf { it.length >= 10 } ?: return null
     val days = try {

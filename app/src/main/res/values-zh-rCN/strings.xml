@@ -2793,4 +2793,15 @@
     <string name="payment_failed_days_left">还有 %1$d 天可更新您的卡。</string>
     <string name="payment_failed_one_day_left">还有 1 天可更新您的卡。</string>
     <string name="device_verification_failed">无法为此更改验证此设备。请在此设备上重新登录，然后重试。</string>
+    <string name="cancel_reason_title">在您离开之前</string>
+    <string name="cancel_reason_description">是什么让您决定取消？请选择一个原因以继续。</string>
+    <string name="cancel_reason_too_expensive">价格太高</string>
+    <string name="cancel_reason_not_using">使用得不够多</string>
+    <string name="cancel_reason_missing_feature">缺少我需要的功能</string>
+    <string name="cancel_reason_switched_provider">已改用其他服务商</string>
+    <string name="cancel_reason_bugs">问题或故障太多</string>
+    <string name="cancel_reason_privacy_trust">对隐私或信任有顾虑</string>
+    <string name="cancel_reason_just_testing">只是试用一下</string>
+    <string name="cancel_reason_other">其他原因</string>
+    <string name="cancel_reason_text_placeholder">还有什么想补充的吗？（选填）</string>
 </resources>

@@ -2817,4 +2817,15 @@
     <string name="payment_failed_days_left">Осталось %1$d дн., чтобы обновить карту.</string>
     <string name="payment_failed_one_day_left">Остался 1 день, чтобы обновить карту.</string>
     <string name="device_verification_failed">Не удалось подтвердить это устройство для этого изменения. Войдите снова на этом устройстве и повторите попытку.</string>
+    <string name="cancel_reason_title">Перед уходом</string>
+    <string name="cancel_reason_description">Почему вы решили отменить подписку? Выберите причину, чтобы продолжить.</string>
+    <string name="cancel_reason_too_expensive">Слишком дорого</string>
+    <string name="cancel_reason_not_using">Пользуюсь недостаточно часто</string>
+    <string name="cancel_reason_missing_feature">Не хватает нужной функции</string>
+    <string name="cancel_reason_switched_provider">Перешёл к другому провайдеру</string>
+    <string name="cancel_reason_bugs">Слишком много ошибок или проблем</string>
+    <string name="cancel_reason_privacy_trust">Сомнения в приватности или доверии</string>
+    <string name="cancel_reason_just_testing">Просто пробовал</string>
+    <string name="cancel_reason_other">Другое</string>
+    <string name="cancel_reason_text_placeholder">Хотите что-то добавить? (необязательно)</string>
 </resources>

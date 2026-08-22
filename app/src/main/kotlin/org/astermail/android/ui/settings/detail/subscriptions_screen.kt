@@ -88,6 +88,11 @@ import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterSecondaryButton
+import org.astermail.android.design.components.AsterTextField
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.text.input.KeyboardType
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
 
@@ -338,6 +343,7 @@ fun SubscriptionsScreen(
     var pending_addon_id by remember { mutableStateOf<String?>(null) }
     var show_payment_picker by remember { mutableStateOf(false) }
     var show_crypto_terms by remember { mutableStateOf(false) }
+    var show_cancel_flow by remember { mutableStateOf(false) }
     var show_crypto_coins by remember { mutableStateOf(false) }
     var pending_term_months by remember { mutableStateOf(1) }
     var show_switch_yearly by remember { mutableStateOf(false) }
@@ -501,6 +507,21 @@ fun SubscriptionsScreen(
                             onClick = { if (!billing_state.is_acting) billing_vm.open_portal() },
                             enabled = !billing_state.is_acting,
                         )
+                        if (sub != null && !sub.cancel_at_period_end && sub.status in setOf("active", "trialing", "past_due")) {
+                            Spacer(Modifier.size(AsterSpacing.sm))
+                            Text(
+                                text = stringResource(R.string.cancel_subscription),
+                                color = colors.danger,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(SquircleShape(10.dp))
+                                    .clickable(enabled = !billing_state.is_acting) { show_cancel_flow = true }
+                                    .padding(vertical = 10.dp),
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            )
+                        }
                     }
                 }
             }
@@ -752,6 +773,14 @@ fun SubscriptionsScreen(
         )
     }
 
+    if (show_cancel_flow) {
+        cancel_subscription_flow(
+            billing_state = billing_state,
+            on_dismiss = { show_cancel_flow = false },
+            on_confirm = { password, reason, reason_text -> billing_vm.cancel_subscription(password, reason, reason_text) },
+        )
+    }
+
     if (show_switch_yearly) {
         val yearly_price = format_price(api_yearly_cents ?: 0, detected_currency)
         LaunchedEffect(current_code) { billing_vm.load_plan_change_preview(current_code, "year") }
@@ -822,6 +851,134 @@ fun SubscriptionsScreen(
                 pending_plan_code?.let {
                     billing_vm.create_crypto_native_invoice(it, pending_term_months, coin.currency, coin.chain)
                 }
+            },
+        )
+    }
+}
+
+@StringRes
+private fun cancel_reason_label(reason: String): Int = when (reason) {
+    "too_expensive" -> R.string.cancel_reason_too_expensive
+    "not_using" -> R.string.cancel_reason_not_using
+    "missing_feature" -> R.string.cancel_reason_missing_feature
+    "switched_provider" -> R.string.cancel_reason_switched_provider
+    "bugs" -> R.string.cancel_reason_bugs
+    "privacy_trust" -> R.string.cancel_reason_privacy_trust
+    "just_testing" -> R.string.cancel_reason_just_testing
+    else -> R.string.cancel_reason_other
+}
+
+@Composable
+private fun cancel_subscription_flow(
+    billing_state: org.astermail.android.billing.BillingUiState,
+    on_dismiss: () -> Unit,
+    on_confirm: (password: String, reason: String, reason_text: String?) -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    var reason by remember { mutableStateOf<String?>(null) }
+    var reason_text by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var password_step by remember { mutableStateOf(false) }
+    var submitted by remember { mutableStateOf(false) }
+    val cancelling = billing_state.is_acting && billing_state.acting_action == "cancel"
+    LaunchedEffect(cancelling, billing_state.error) {
+        if (submitted && !cancelling) {
+            if (billing_state.error == null) on_dismiss() else submitted = false
+        }
+    }
+    if (!password_step) {
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = on_dismiss,
+            title = stringResource(R.string.cancel_reason_title),
+            message = stringResource(R.string.cancel_reason_description),
+            body = {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    org.astermail.android.billing.CANCEL_REASONS.forEach { option ->
+                        val active = reason == option
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(SquircleShape(10.dp))
+                                .background(if (active) colors.accent_blue.copy(alpha = 0.10f) else Color.Transparent)
+                                .clickable { reason = option }
+                                .padding(horizontal = AsterSpacing.sm, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .clip(CircleShape)
+                                    .border(if (active) 6.dp else 1.5.dp, if (active) colors.accent_blue else colors.input_border, CircleShape),
+                            )
+                            Text(
+                                text = stringResource(cancel_reason_label(option)),
+                                color = colors.text_primary,
+                                fontSize = 14.sp,
+                                fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal,
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(AsterSpacing.xs))
+                    AsterTextField(
+                        value = reason_text,
+                        onValueChange = { reason_text = it.take(org.astermail.android.billing.MAX_CANCEL_REASON_TEXT) },
+                        placeholder = stringResource(R.string.cancel_reason_text_placeholder),
+                        singleLine = false,
+                        min_lines = 2,
+                        max_lines = 4,
+                    )
+                }
+            },
+            footer = {
+                org.astermail.android.design.components.AsterDialogOutlineButton(
+                    label = stringResource(R.string.keep_plan),
+                    onClick = on_dismiss,
+                    modifier = Modifier.weight(1f),
+                )
+                org.astermail.android.design.components.AsterDialogPrimaryButton(
+                    label = stringResource(R.string.next),
+                    onClick = { password_step = true },
+                    enabled = reason != null,
+                    modifier = Modifier.weight(1f),
+                )
+            },
+        )
+    } else {
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { if (!cancelling) on_dismiss() },
+            title = stringResource(R.string.cancel_subscription_title),
+            message = stringResource(R.string.cancel_subscription_description),
+            body = {
+                AsterTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = stringResource(R.string.password),
+                    error_text = if (!submitted) billing_state.error else null,
+                    enabled = !cancelling,
+                    visual_transformation = PasswordVisualTransformation(),
+                    keyboard_options = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    content_type = androidx.compose.ui.autofill.ContentType.Password,
+                )
+            },
+            footer = {
+                org.astermail.android.design.components.AsterDialogOutlineButton(
+                    label = stringResource(R.string.back),
+                    onClick = { password_step = false },
+                    enabled = !cancelling,
+                    modifier = Modifier.weight(1f),
+                )
+                org.astermail.android.design.components.AsterDialogDestructiveButton(
+                    label = stringResource(R.string.cancel_subscription),
+                    onClick = {
+                        val chosen = reason ?: return@AsterDialogDestructiveButton
+                        submitted = true
+                        on_confirm(password, chosen, reason_text)
+                    },
+                    enabled = password.isNotBlank() && !cancelling,
+                    is_loading = cancelling,
+                    modifier = Modifier.weight(1f),
+                )
             },
         )
     }
