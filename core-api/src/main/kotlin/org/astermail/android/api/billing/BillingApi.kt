@@ -28,9 +28,11 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.encodeURLPathPart
+import io.ktor.http.isSuccess
 import kotlinx.serialization.Serializable
 import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
@@ -68,6 +70,8 @@ data class SubscriptionResponse(
     val grace_period_end: String? = null,
     val payment_provider: String? = null,
     val has_stripe_subscription: Boolean? = null,
+    val paid_until: String? = null,
+    val active_discount_description: String? = null,
 )
 
 @Serializable
@@ -98,6 +102,8 @@ data class CheckoutSessionRequest(
     val billing_interval: String = "month",
     val currency: String? = null,
     val test_mode: Boolean = false,
+    val success_url: String? = null,
+    val cancel_url: String? = null,
 )
 
 @Serializable
@@ -289,12 +295,56 @@ data class PurchaseAddonResponse(
 data class CryptoCheckoutRequest(
     val plan_code: String,
     val term_months: Int,
+    val success_url: String? = null,
+    val cancel_url: String? = null,
 )
 
 @Serializable
 data class CryptoAddonCheckoutRequest(
     val addon_id: String,
     val term_months: Int,
+    val success_url: String? = null,
+    val cancel_url: String? = null,
+)
+
+@Serializable
+data class CancelImpactResponse(
+    val plan_code: String = "",
+    val plan_name: String = "",
+    val effective_at: String? = null,
+    val storage_used_bytes: Long = 0,
+    val storage_limit_bytes: Long = 0,
+    val storage_limit_after_bytes: Long = 0,
+    val storage_over_limit: Boolean = false,
+    val aliases_to_disable: Int = 0,
+    val alias_grace_days: Int = 0,
+    val domains_to_suspend: Int = 0,
+    val templates_to_disable: Int = 0,
+    val signatures_to_disable: Int = 0,
+    val catch_all_to_revoke: Int = 0,
+    val family_members_affected: Int = 0,
+    val family_addresses_released: Int = 0,
+    val family_grace_days: Int = 0,
+    val features_lost: List<String> = emptyList(),
+)
+
+@Serializable
+data class CreditBalanceResponse(
+    val balance_cents: Long = 0,
+    val use_credits_for_renewals: Boolean = false,
+)
+
+@Serializable
+data class AcademicDiscountStatusResponse(
+    val status: String = "none",
+    val promo_code: String? = null,
+    val code_expires_at: String? = null,
+)
+
+@Serializable
+data class OnboardingChecklistResponse(
+    val dismissed_at: String? = null,
+    val tasks: Map<String, Boolean> = emptyMap(),
 )
 
 @Serializable
@@ -392,6 +442,11 @@ data class CryptoNativePendingInvoicesResponse(
 
 interface BillingApi {
     suspend fun get_subscription(): SubscriptionResponse
+    suspend fun get_cancel_impact(): CancelImpactResponse
+    suspend fun get_credit_balance(): CreditBalanceResponse
+    suspend fun get_academic_discount_status(): AcademicDiscountStatusResponse
+    suspend fun get_onboarding_checklist(): OnboardingChecklistResponse
+    suspend fun dismiss_onboarding_checklist()
     suspend fun get_available_plans(): AvailablePlansResponse
     suspend fun get_plan_limits(): PlanLimitsResponse
     suspend fun create_checkout_session(request: CheckoutSessionRequest): CheckoutSessionResponse
@@ -421,6 +476,25 @@ class BillingApiImpl(private val client: ApiClient) : BillingApi {
 
     override suspend fun get_subscription(): SubscriptionResponse =
         decode_or_throw(client.http.get("${client.base_url}$base/subscription"))
+
+    override suspend fun get_cancel_impact(): CancelImpactResponse =
+        decode_or_throw(client.http.get("${client.base_url}$base/cancel-impact"))
+
+    override suspend fun get_credit_balance(): CreditBalanceResponse =
+        decode_or_throw(client.http.get("${client.base_url}$base/credits"))
+
+    override suspend fun get_academic_discount_status(): AcademicDiscountStatusResponse =
+        decode_or_throw(client.http.get("${client.base_url}$base/discounts/academic/status"))
+
+    override suspend fun get_onboarding_checklist(): OnboardingChecklistResponse =
+        decode_or_throw(client.http.get("${client.base_url}/api/core/v1/onboarding/checklist"))
+
+    override suspend fun dismiss_onboarding_checklist() {
+        val response = client.http.post("${client.base_url}/api/core/v1/onboarding/checklist/dismiss") {
+            header("X-CSRF-Token", client.get_csrf())
+        }
+        if (!response.status.isSuccess()) throw client.map_http_status(response.status.value, response.bodyAsText())
+    }
 
     override suspend fun get_available_plans(): AvailablePlansResponse =
         decode_or_throw(client.http.get("${client.base_url}$base/plans"))
