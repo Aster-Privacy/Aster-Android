@@ -2793,4 +2793,8 @@
     <string name="alias_restore_mismatch">Bu adres takma adla eşleşmiyor. Gelen bir iletinin başlığını kontrol edin.</string>
     <string name="alias_restore_failed">Takma ad geri getirilemedi. Yeniden deneyin.</string>
     <string name="password_change_web_required">Bu hesabın parolasını değiştirmek için Aster Mail web uygulamasını kullanın.</string>
+    <string name="switch_yearly_due_today">Bugün %1$s ödenir; bu tutar mevcut dönemin kalan kısmına göre orantılıdır. Sonrasında planınız yılda %2$s olarak faturalandırılır ve aylık faturalandırmaya göre %%%3$d tasarruf sağlar.</string>
+    <string name="plan_change_preview_loading">Bugün ödenecek tutar hesaplanıyor…</string>
+    <string name="plan_change_due_today">Bugün ödenecek: %1$s</string>
+    <string name="plan_change_preview_failed">Bugün ödenecek tutar hesaplanamadı. Tam fiyat gösteriliyor.</string>
 </resources>

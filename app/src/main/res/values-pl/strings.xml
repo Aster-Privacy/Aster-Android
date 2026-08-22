@@ -2809,4 +2809,8 @@
     <string name="alias_restore_mismatch">Ten adres nie pasuje do tego aliasu. Sprawdź nagłówek dostarczonej wiadomości.</string>
     <string name="alias_restore_failed">Nie udało się odzyskać aliasu. Spróbuj ponownie.</string>
     <string name="password_change_web_required">Aby zmienić hasło do tego konta, użyj aplikacji internetowej Aster Mail.</string>
+    <string name="switch_yearly_due_today">Dziś do zapłaty: %1$s, proporcjonalnie do pozostałej części bieżącego okresu. Potem plan kosztuje %2$s rocznie, co oznacza oszczędność %3$d%% w porównaniu z rozliczeniem miesięcznym.</string>
+    <string name="plan_change_preview_loading">Obliczanie kwoty do zapłaty dziś…</string>
+    <string name="plan_change_due_today">Do zapłaty dziś: %1$s</string>
+    <string name="plan_change_preview_failed">Nie udało się obliczyć kwoty do zapłaty dziś. Wyświetlana jest pełna cena.</string>
 </resources>

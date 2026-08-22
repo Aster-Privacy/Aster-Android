@@ -719,6 +719,10 @@ fun SubscriptionsScreen(
         val downgrade_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, downgrade_tier.code, downgrade_interval)
             ?: if (downgrade_interval == "year") downgrade_tier.yearly_cents else downgrade_tier.monthly_cents
         val interval_label = if (downgrade_interval == "year") stringResource(R.string.plan_price_per_year) else stringResource(R.string.plan_price_per_month)
+        LaunchedEffect(downgrade_tier.code, downgrade_interval) {
+            billing_vm.load_plan_change_preview(downgrade_tier.code, downgrade_interval)
+        }
+        DisposableEffect(Unit) { onDispose { billing_vm.clear_plan_change_preview() } }
         org.astermail.android.design.components.AsterDialog(
             on_dismiss = { pending_downgrade_code = null },
             title = stringResource(R.string.downgrade_to, downgrade_name),
@@ -728,10 +732,13 @@ fun SubscriptionsScreen(
                 format_price(downgrade_cents, detected_currency) + " " + interval_label,
             ),
             body = {
-                billing_interval_toggle(
-                    selected = downgrade_interval,
-                    on_select = { downgrade_interval = it },
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
+                    billing_interval_toggle(
+                        selected = downgrade_interval,
+                        on_select = { downgrade_interval = it },
+                    )
+                    plan_change_preview_text(billing_state)
+                }
             },
             footer = {
                 org.astermail.android.design.components.AsterDialogOutlineButton(
@@ -745,6 +752,7 @@ fun SubscriptionsScreen(
                         pending_downgrade_code = null
                         billing_vm.change_plan(downgrade_tier.code, downgrade_interval)
                     },
+                    enabled = !billing_state.plan_change_preview_loading,
                     modifier = Modifier.weight(1f),
                 )
             },
@@ -753,10 +761,27 @@ fun SubscriptionsScreen(
 
     if (show_switch_yearly) {
         val yearly_price = format_price(api_yearly_cents ?: 0, detected_currency)
+        LaunchedEffect(current_code) { billing_vm.load_plan_change_preview(current_code, "year") }
+        DisposableEffect(Unit) { onDispose { billing_vm.clear_plan_change_preview() } }
+        val preview = billing_state.plan_change_preview
         org.astermail.android.design.components.AsterDialog(
             on_dismiss = { show_switch_yearly = false },
             title = stringResource(R.string.switch_yearly_title),
-            message = stringResource(R.string.switch_yearly_message, yearly_price, yearly_savings ?: 0),
+            message = if (preview != null) {
+                stringResource(
+                    R.string.switch_yearly_due_today,
+                    format_price(preview.amount_due_cents.toInt(), preview.currency),
+                    yearly_price,
+                    yearly_savings ?: 0,
+                )
+            } else {
+                stringResource(R.string.switch_yearly_message, yearly_price, yearly_savings ?: 0)
+            },
+            body = if (preview == null) {
+                { plan_change_preview_text(billing_state) }
+            } else {
+                null
+            },
             footer = {
                 org.astermail.android.design.components.AsterDialogOutlineButton(
                     label = stringResource(R.string.cancel),
@@ -769,6 +794,7 @@ fun SubscriptionsScreen(
                         show_switch_yearly = false
                         billing_vm.switch_billing("year")
                     },
+                    enabled = !billing_state.plan_change_preview_loading,
                     modifier = Modifier.weight(1f),
                 )
             },
@@ -806,6 +832,27 @@ fun SubscriptionsScreen(
             },
         )
     }
+}
+
+@Composable
+private fun plan_change_preview_text(billing_state: org.astermail.android.billing.BillingUiState) {
+    val colors = AsterMaterial.colors
+    val preview = billing_state.plan_change_preview
+    val text = when {
+        billing_state.plan_change_preview_loading -> stringResource(R.string.plan_change_preview_loading)
+        preview != null -> stringResource(
+            R.string.plan_change_due_today,
+            format_price(preview.amount_due_cents.toInt(), preview.currency),
+        )
+        billing_state.plan_change_preview_failed -> stringResource(R.string.plan_change_preview_failed)
+        else -> return
+    }
+    Text(
+        text = text,
+        color = if (preview != null) colors.text_primary else colors.text_tertiary,
+        fontSize = 13.sp,
+        fontWeight = if (preview != null) FontWeight.SemiBold else FontWeight.Normal,
+    )
 }
 
 @Composable

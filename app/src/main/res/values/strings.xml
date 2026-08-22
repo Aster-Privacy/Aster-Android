@@ -2893,4 +2893,8 @@
     <string name="alias_restore_mismatch">That address doesn’t match this alias. Check the header of a message it delivered.</string>
     <string name="alias_restore_failed">The alias didn’t restore. Another attempt should do it.</string>
     <string name="password_change_web_required">To change your password for this account, use the Aster Mail web app.</string>
+    <string name="switch_yearly_due_today">%1$s is due today, prorated for the rest of your current period. After that, your plan bills %2$s per year, which saves %3$d%% compared with monthly billing.</string>
+    <string name="plan_change_preview_loading">Calculating the amount due today…</string>
+    <string name="plan_change_due_today">Due today: %1$s</string>
+    <string name="plan_change_preview_failed">The amount due today could not be calculated. The full price is shown.</string>
 </resources>

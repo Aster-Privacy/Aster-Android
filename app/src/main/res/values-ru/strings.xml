@@ -2809,4 +2809,8 @@
     <string name="alias_restore_mismatch">Этот адрес не совпадает с псевдонимом. Проверьте заголовок доставленного сообщения.</string>
     <string name="alias_restore_failed">Не удалось восстановить псевдоним. Повторите попытку.</string>
     <string name="password_change_web_required">Чтобы изменить пароль этой учётной записи, используйте веб-приложение Aster Mail.</string>
+    <string name="switch_yearly_due_today">Сегодня к оплате %1$s, пропорционально оставшейся части текущего периода. Далее тариф стоит %2$s в год, что на %3$d%% дешевле ежемесячной оплаты.</string>
+    <string name="plan_change_preview_loading">Рассчитываем сумму к оплате сегодня…</string>
+    <string name="plan_change_due_today">К оплате сегодня: %1$s</string>
+    <string name="plan_change_preview_failed">Не удалось рассчитать сумму к оплате сегодня. Показана полная цена.</string>
 </resources>

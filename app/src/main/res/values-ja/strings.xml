@@ -2785,4 +2785,8 @@
     <string name="alias_restore_mismatch">このアドレスはエイリアスと一致しません。届いたメッセージのヘッダーを確認してください。</string>
     <string name="alias_restore_failed">エイリアスを復元できませんでした。もう一度お試しください。</string>
     <string name="password_change_web_required">このアカウントのパスワードを変更するには、Aster Mail の Web アプリを使用してください。</string>
+    <string name="switch_yearly_due_today">本日のお支払いは %1$s です（現在の期間の残りに応じた日割り額）。以降、プランは年額 %2$s で請求され、月払いと比べて %3$d%% お得です。</string>
+    <string name="plan_change_preview_loading">本日のお支払い額を計算しています…</string>
+    <string name="plan_change_due_today">本日のお支払い: %1$s</string>
+    <string name="plan_change_preview_failed">本日のお支払い額を計算できませんでした。通常価格を表示しています。</string>
 </resources>

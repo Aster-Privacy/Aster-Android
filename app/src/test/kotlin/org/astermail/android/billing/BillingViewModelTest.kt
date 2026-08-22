@@ -36,10 +36,15 @@ import kotlinx.coroutines.test.setMain
 import org.astermail.android.api.billing.BillingApi
 import org.astermail.android.api.billing.ChangePlanRequest
 import org.astermail.android.api.billing.ChangePlanResponse
+import org.astermail.android.api.billing.PlanChangePreviewResponse
 import org.astermail.android.api.billing.PlanInfo
 import org.astermail.android.api.billing.SubscriptionResponse
 import org.astermail.android.auth.AuthRepository
 import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -142,5 +147,32 @@ class BillingViewModelTest {
 
         coVerify { billing_api.change_plan(ChangePlanRequest(plan_code = "star", billing_interval = "year")) }
         coVerify { billing_api.get_subscription() }
+    }
+
+    @Test
+    fun `plan change preview exposes the prorated amount due today`() = runTest {
+        coEvery { billing_api.preview_plan_change("star", "year") } returns
+            PlanChangePreviewResponse(credit_cents = 150, amount_due_cents = 2749, currency = "eur")
+        vm.load_plan_change_preview("star", "year")
+        advanceUntilIdle()
+
+        val preview = vm.state.value.plan_change_preview
+        assertEquals(2749L, preview?.amount_due_cents)
+        assertEquals("eur", preview?.currency)
+        assertFalse(vm.state.value.plan_change_preview_loading)
+
+        vm.clear_plan_change_preview()
+        assertNull(vm.state.value.plan_change_preview)
+    }
+
+    @Test
+    fun `plan change preview failure falls back without an amount`() = runTest {
+        coEvery { billing_api.preview_plan_change(any(), any()) } throws RuntimeException("boom")
+        vm.load_plan_change_preview("star", "year")
+        advanceUntilIdle()
+
+        assertNull(vm.state.value.plan_change_preview)
+        assertTrue(vm.state.value.plan_change_preview_failed)
+        assertFalse(vm.state.value.plan_change_preview_loading)
     }
 }

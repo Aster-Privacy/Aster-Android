@@ -2785,4 +2785,8 @@
     <string name="alias_restore_mismatch">该地址与此别名不符。请查看已送达邮件的标头。</string>
     <string name="alias_restore_failed">别名未能恢复。请再试一次。</string>
     <string name="password_change_web_required">若要更改此账户的密码，请使用 Aster Mail 网页版应用。</string>
+    <string name="switch_yearly_due_today">今天需支付 %1$s（按当前周期剩余时间按比例计算）。此后，您的套餐按每年 %2$s 计费，比按月计费节省 %3$d%%。</string>
+    <string name="plan_change_preview_loading">正在计算今天应付金额…</string>
+    <string name="plan_change_due_today">今天应付：%1$s</string>
+    <string name="plan_change_preview_failed">无法计算今天应付金额。当前显示完整价格。</string>
 </resources>

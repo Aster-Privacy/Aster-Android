@@ -2785,4 +2785,8 @@
     <string name="alias_restore_mismatch">이 주소는 별칭과 일치하지 않습니다. 도착한 메시지의 헤더를 확인하세요.</string>
     <string name="alias_restore_failed">별칭을 복원하지 못했습니다. 다시 시도해 주세요.</string>
     <string name="password_change_web_required">이 계정의 비밀번호를 변경하려면 Aster Mail 웹 앱을 사용하세요.</string>
+    <string name="switch_yearly_due_today">오늘 %1$s이(가) 청구됩니다(현재 기간의 남은 일수에 따라 일할 계산). 이후 요금제는 연 %2$s로 청구되며 월별 결제보다 %3$d%% 절약됩니다.</string>
+    <string name="plan_change_preview_loading">오늘 청구 금액을 계산하는 중…</string>
+    <string name="plan_change_due_today">오늘 청구 금액: %1$s</string>
+    <string name="plan_change_preview_failed">오늘 청구 금액을 계산할 수 없습니다. 전체 가격이 표시됩니다.</string>
 </resources>

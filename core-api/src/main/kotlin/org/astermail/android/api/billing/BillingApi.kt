@@ -173,6 +173,13 @@ data class ChangePlanResponse(
 )
 
 @Serializable
+data class PlanChangePreviewResponse(
+    val credit_cents: Long = 0,
+    val amount_due_cents: Long = 0,
+    val currency: String = "usd",
+)
+
+@Serializable
 data class LimitInfo(
     val limit: Int = 0,
     val current: Int = 0,
@@ -390,6 +397,7 @@ interface BillingApi {
     suspend fun reactivate_subscription(): ReactivateResponse
     suspend fun switch_billing_interval(request: SwitchBillingRequest): SwitchBillingResponse
     suspend fun change_plan(request: ChangePlanRequest): ChangePlanResponse
+    suspend fun preview_plan_change(plan_code: String, billing_interval: String): PlanChangePreviewResponse
     suspend fun list_payment_methods(): PaymentMethodsListResponse
     suspend fun set_default_payment_method(request: SetDefaultPaymentMethodRequest): GenericSuccessResponse
     suspend fun detach_payment_method(request: DetachPaymentMethodRequest): GenericSuccessResponse
@@ -474,6 +482,14 @@ class BillingApiImpl(private val client: ApiClient) : BillingApi {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun preview_plan_change(plan_code: String, billing_interval: String): PlanChangePreviewResponse {
+        val response = client.http.get("${client.base_url}$base/change-plan-preview") {
+            parameter("plan_code", plan_code)
+            parameter("billing_interval", billing_interval)
         }
         return decode_or_throw(response)
     }

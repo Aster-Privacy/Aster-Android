@@ -2794,4 +2794,8 @@
     <string name="alias_restore_mismatch">Diese Adresse passt nicht zu diesem Alias. Sieh in der Kopfzeile einer zugestellten Nachricht nach.</string>
     <string name="alias_restore_failed">Der Alias wurde nicht wiederhergestellt. Versuch es noch einmal.</string>
     <string name="password_change_web_required">Um das Passwort für dieses Konto zu ändern, verwende die Aster Mail Web-App.</string>
+    <string name="switch_yearly_due_today">%1$s ist heute fällig, anteilig für den Rest deines aktuellen Abrechnungszeitraums. Danach kostet dein Tarif %2$s pro Jahr, was %3$d%% gegenüber der monatlichen Abrechnung spart.</string>
+    <string name="plan_change_preview_loading">Der heute fällige Betrag wird berechnet…</string>
+    <string name="plan_change_due_today">Heute fällig: %1$s</string>
+    <string name="plan_change_preview_failed">Der heute fällige Betrag konnte nicht berechnet werden. Es wird der volle Preis angezeigt.</string>
 </resources>

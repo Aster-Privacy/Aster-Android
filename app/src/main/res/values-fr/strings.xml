@@ -2821,4 +2821,8 @@
     <string name="alias_restore_mismatch">Cette adresse ne correspond pas à cet alias. Consultez l’en-tête d’un message qu’il a distribué.</string>
     <string name="alias_restore_failed">L’alias n’a pas été restauré. Réessayez.</string>
     <string name="password_change_web_required">Pour changer le mot de passe de ce compte, utilisez l’application web Aster Mail.</string>
+    <string name="switch_yearly_due_today">%1$s sont dus aujourd’hui, au prorata du reste de votre période en cours. Ensuite, votre forfait est facturé %2$s par an, soit %3$d%% d’économie par rapport à la facturation mensuelle.</string>
+    <string name="plan_change_preview_loading">Calcul du montant dû aujourd’hui…</string>
+    <string name="plan_change_due_today">Dû aujourd’hui : %1$s</string>
+    <string name="plan_change_preview_failed">Le montant dû aujourd’hui n’a pas pu être calculé. Le prix complet est affiché.</string>
 </resources>

@@ -46,6 +46,7 @@ import org.astermail.android.api.billing.ChangePlanRequest
 import org.astermail.android.api.billing.CheckoutSessionRequest
 import org.astermail.android.api.billing.DetachPaymentMethodRequest
 import org.astermail.android.api.billing.PaymentMethodItem
+import org.astermail.android.api.billing.PlanChangePreviewResponse
 import org.astermail.android.api.billing.PlanLimitsResponse
 import org.astermail.android.api.billing.SetDefaultPaymentMethodRequest
 import org.astermail.android.api.billing.SubscriptionResponse
@@ -72,6 +73,9 @@ data class BillingUiState(
     val crypto_native_coins: List<org.astermail.android.api.billing.CryptoNativeCoin> = emptyList(),
     val pending_crypto_invoices: List<org.astermail.android.api.billing.CryptoNativePendingInvoice> = emptyList(),
     val created_crypto_invoice_id: String? = null,
+    val plan_change_preview: PlanChangePreviewResponse? = null,
+    val plan_change_preview_loading: Boolean = false,
+    val plan_change_preview_failed: Boolean = false,
 )
 
 @HiltViewModel
@@ -290,6 +294,27 @@ class BillingViewModel @Inject constructor(
                     error = org.astermail.android.api.user_facing_error(t, ctx.getString(R.string.change_plan_failed)),
                 )
             }
+        }
+    }
+
+    fun load_plan_change_preview(plan_code: String, billing_interval: String) {
+        viewModelScope.launch {
+            _state.update {
+                it.copy(plan_change_preview = null, plan_change_preview_loading = true, plan_change_preview_failed = false)
+            }
+            try {
+                val preview = billing_api.preview_plan_change(plan_code, billing_interval)
+                _state.update { it.copy(plan_change_preview = preview, plan_change_preview_loading = false) }
+            } catch (t: Throwable) {
+                if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "preview_plan_change failed", t)
+                _state.update { it.copy(plan_change_preview_loading = false, plan_change_preview_failed = true) }
+            }
+        }
+    }
+
+    fun clear_plan_change_preview() {
+        _state.update {
+            it.copy(plan_change_preview = null, plan_change_preview_loading = false, plan_change_preview_failed = false)
         }
     }
 

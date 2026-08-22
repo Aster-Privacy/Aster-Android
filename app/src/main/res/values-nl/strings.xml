@@ -2793,4 +2793,8 @@
     <string name="alias_restore_mismatch">Dit adres komt niet overeen met deze alias. Kijk in de header van een bezorgd bericht.</string>
     <string name="alias_restore_failed">De alias is niet hersteld. Probeer het opnieuw.</string>
     <string name="password_change_web_required">Gebruik de Aster Mail-webapp om het wachtwoord van dit account te wijzigen.</string>
+    <string name="switch_yearly_due_today">Vandaag betaal je %1$s, naar rato van de rest van je huidige periode. Daarna kost je abonnement %2$s per jaar, wat %3$d%% bespaart ten opzichte van maandelijkse facturering.</string>
+    <string name="plan_change_preview_loading">Het bedrag dat je vandaag betaalt wordt berekend…</string>
+    <string name="plan_change_due_today">Vandaag te betalen: %1$s</string>
+    <string name="plan_change_preview_failed">Het bedrag dat je vandaag betaalt kon niet worden berekend. De volledige prijs wordt getoond.</string>
 </resources>
