@@ -181,7 +181,7 @@ class AuthViewModel @Inject constructor(
     }
 
     private fun map_error(t: Throwable): String = when (t) {
-        is ApiError.UnauthorizedError -> ctx.getString(R.string.error_invalid_credentials)
+        is ApiError.InvalidCredentials, is ApiError.UnauthorizedError -> ctx.getString(R.string.error_invalid_credentials)
         is ApiError.ForbiddenError -> if (t.detail.contains("captcha", ignoreCase = true)) {
             ctx.getString(R.string.error_captcha_failed)
         } else {

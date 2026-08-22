@@ -38,7 +38,7 @@ class ApiErrorMappingTest {
 
     @Test
     fun invalid_credentials_do_not_sign_out_either() {
-        assertEquals(ApiError.UnauthorizedError, map_unauthorized("INVALID_CREDENTIALS", ""))
+        assertEquals(ApiError.InvalidCredentials, map_unauthorized("INVALID_CREDENTIALS", ""))
         assertFalse(should_emit_unauthorized("INVALID_CREDENTIALS"))
     }
 
