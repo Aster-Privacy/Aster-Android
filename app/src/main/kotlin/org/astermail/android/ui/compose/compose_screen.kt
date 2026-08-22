@@ -618,6 +618,7 @@ fun ComposeScreen(
     var is_sending by remember { mutableStateOf(false) }
     var sent by remember { mutableStateOf(false) }
     var send_error by remember { mutableStateOf<String?>(null) }
+    var send_error_upgrade by remember { mutableStateOf(false) }
     var attachments by remember { mutableStateOf(listOf<AttachmentItem>()) }
     var inline_images by remember { mutableStateOf(listOf<AttachmentItem>()) }
     val body_editor_ref = remember { androidx.compose.runtime.mutableStateOf<RichBodyEditText?>(null) }
@@ -1260,13 +1261,15 @@ fun ComposeScreen(
                         current_draft_id = ""
                         on_sent()
                     } else {
-                        send_error = resp.message ?: context.getString(R.string.save_failed)
+                        send_error = resp.message ?: context.getString(R.string.send_failed)
+                        send_error_upgrade = false
                     }
                 },
                 onFailure = { t ->
                     is_sending = false
                     send_lock.set(false)
-                    send_error = org.astermail.android.api.user_facing_error(t, context.getString(R.string.save_failed))
+                    send_error = org.astermail.android.billing.localized_api_error(context, t, context.getString(R.string.send_failed))
+                    send_error_upgrade = org.astermail.android.billing.is_upgrade_error(t)
                 },
             )
         }
@@ -1365,7 +1368,8 @@ fun ComposeScreen(
                         on_sent()
                     },
                     onFailure = { t ->
-                        send_error = org.astermail.android.api.user_facing_error(t, context.getString(R.string.save_failed))
+                        send_error = org.astermail.android.billing.localized_api_error(context, t, context.getString(R.string.send_failed))
+                    send_error_upgrade = org.astermail.android.billing.is_upgrade_error(t)
                     },
                 )
                 return@launch
@@ -1404,7 +1408,8 @@ fun ComposeScreen(
                         on_sent()
                     },
                     onFailure = { t ->
-                        send_error = org.astermail.android.api.user_facing_error(t, context.getString(R.string.save_failed))
+                        send_error = org.astermail.android.billing.localized_api_error(context, t, context.getString(R.string.send_failed))
+                    send_error_upgrade = org.astermail.android.billing.is_upgrade_error(t)
                     },
                 )
             } else {
@@ -1768,12 +1773,26 @@ fun ComposeScreen(
                         .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(
-                        text = send_error ?: "",
-                        color = colors.danger,
-                        fontSize = 13.sp,
-                        modifier = Modifier.weight(1f),
-                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = send_error ?: "",
+                            color = colors.danger,
+                            fontSize = 13.sp,
+                        )
+                        if (send_error_upgrade) {
+                            Text(
+                                text = stringResource(R.string.upgrade_view_plans),
+                                color = colors.accent_blue,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier
+                                    .padding(top = 2.dp)
+                                    .clickable {
+                                        org.astermail.android.billing.open_billing_in_app(context)
+                                    },
+                            )
+                        }
+                    }
                     Box(
                         modifier = Modifier
                             .size(24.dp)
