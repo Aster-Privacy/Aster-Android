@@ -79,7 +79,7 @@
     <string name="settings_plan_bullet_family_members">До 6 участников, отдельные аккаунты</string>
     <string name="settings_plan_bullet_shared_aliases">Общие семейные псевдонимы</string>
     <string name="settings_price_per_month">$%1$.2f / мес.</string>
-    <string name="settings_price_per_interval">$%1$.2f / %2$s</string>
+    <string name="settings_price_per_interval">%1$s / %2$s</string>
     <string name="settings_price_per_mo">$%1$.2f</string>
     <string name="settings_price_per_yr">$%1$.2f</string>
     <string name="settings_save_amount">$%1$.2f</string>

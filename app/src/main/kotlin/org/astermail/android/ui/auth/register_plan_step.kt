@@ -24,8 +24,6 @@ package org.astermail.android.ui.auth
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -52,7 +50,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -81,86 +78,6 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterSecondaryButton
 
-private val fallback_plans = listOf(
-    AvailablePlan(
-        id = "free",
-        code = "free",
-        name = "Free",
-        description = "Get started with Aster",
-        storage_limit_bytes = 10L * 1024 * 1024 * 1024,
-        max_email_aliases = 5,
-        max_custom_domains = 1,
-        price_cents = 0,
-        billing_period = "month",
-    ),
-    AvailablePlan(
-        id = "star_m",
-        code = "star",
-        name = "Star",
-        description = "More storage, more aliases, and your first custom domain.",
-        storage_limit_bytes = 50L * 1024 * 1024 * 1024,
-        max_email_aliases = 15,
-        max_custom_domains = 5,
-        price_cents = 299,
-        billing_period = "month",
-    ),
-    AvailablePlan(
-        id = "star_y",
-        code = "star",
-        name = "Star",
-        description = "More storage, more aliases, and your first custom domain.",
-        storage_limit_bytes = 50L * 1024 * 1024 * 1024,
-        max_email_aliases = 15,
-        max_custom_domains = 5,
-        price_cents = 2899,
-        billing_period = "year",
-    ),
-    AvailablePlan(
-        id = "nova_m",
-        code = "nova",
-        name = "Nova",
-        description = "More storage, custom domains, and unlimited aliases.",
-        storage_limit_bytes = 500L * 1024 * 1024 * 1024,
-        max_email_aliases = -1,
-        max_custom_domains = 30,
-        price_cents = 899,
-        billing_period = "month",
-    ),
-    AvailablePlan(
-        id = "nova_y",
-        code = "nova",
-        name = "Nova",
-        description = "More storage, custom domains, and unlimited aliases.",
-        storage_limit_bytes = 500L * 1024 * 1024 * 1024,
-        max_email_aliases = -1,
-        max_custom_domains = 30,
-        price_cents = 8699,
-        billing_period = "year",
-    ),
-    AvailablePlan(
-        id = "supernova_m",
-        code = "supernova",
-        name = "Supernova",
-        description = "Maximum storage, unlimited everything, and dedicated support.",
-        storage_limit_bytes = 5L * 1024 * 1024 * 1024 * 1024,
-        max_email_aliases = -1,
-        max_custom_domains = -1,
-        price_cents = 1799,
-        billing_period = "month",
-    ),
-    AvailablePlan(
-        id = "supernova_y",
-        code = "supernova",
-        name = "Supernova",
-        description = "Maximum storage, unlimited everything, and dedicated support.",
-        storage_limit_bytes = 5L * 1024 * 1024 * 1024 * 1024,
-        max_email_aliases = -1,
-        max_custom_domains = -1,
-        price_cents = 17399,
-        billing_period = "year",
-    ),
-)
-
 @Composable
 fun RegisterPlanStep(
     on_continue: () -> Unit,
@@ -171,27 +88,24 @@ fun RegisterPlanStep(
     val context = LocalContext.current
     var selected_code by remember { mutableStateOf("free") }
     var billing_interval by remember { mutableStateOf("year") }
-    var retry_count by remember { mutableIntStateOf(0) }
-    var used_fallback by remember { mutableStateOf(false) }
+    var plans_unavailable by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
+        billing_vm.load_subscription()
         billing_vm.load_plans()
         delay(2000)
         if (billing_vm.state.value.available_plans.isEmpty()) {
             billing_vm.load_plans()
             delay(3000)
             if (billing_vm.state.value.available_plans.isEmpty()) {
-                used_fallback = true
+                plans_unavailable = true
             }
         }
     }
 
     LaunchedEffect(state.checkout_url) {
         val url = state.checkout_url ?: return@LaunchedEffect
-        try {
-            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-        } catch (_: Throwable) {
-        }
+        org.astermail.android.billing.open_billing_tab(context, url)
         billing_vm.consume_checkout_url()
     }
 
@@ -213,8 +127,9 @@ fun RegisterPlanStep(
         }
     }
 
-    val api_plans = state.available_plans
-    val plans = if (api_plans.isNotEmpty()) api_plans else if (used_fallback) fallback_plans else emptyList()
+    val plans = state.available_plans
+    val plans_failed = plans.isEmpty() && (plans_unavailable || state.plans_failed)
+    val currency = state.subscription?.currency?.takeIf { it.isNotBlank() } ?: "usd"
 
     val has_yearly = plans.any { it.billing_period == "year" && it.price_cents > 0 }
     val has_monthly = plans.any { it.billing_period == "month" && it.price_cents > 0 }
@@ -252,7 +167,64 @@ fun RegisterPlanStep(
 
         Spacer(Modifier.height(AsterSpacing.xl))
 
-        if (plans.isEmpty()) {
+        val abandoned_plan = state.checkout_abandoned_plan
+        if (abandoned_plan != null && !state.checking_payment) {
+            val abandoned_name = org.astermail.android.billing.plan_display_name(plans, abandoned_plan) ?: abandoned_plan
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(colors.accent_blue.copy(alpha = 0.08f), SquircleShape(18.dp))
+                    .padding(AsterSpacing.lg),
+            ) {
+                Text(
+                    text = stringResource(R.string.finish_plan_setup_title, abandoned_name),
+                    color = colors.text_primary,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.finish_plan_setup_message),
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
+                )
+            }
+            Spacer(Modifier.height(AsterSpacing.lg))
+        }
+        if (state.checking_payment) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                Spacer(Modifier.size(AsterSpacing.sm))
+                Text(text = stringResource(R.string.confirming_payment), color = colors.text_tertiary, fontSize = 13.sp)
+            }
+            Spacer(Modifier.height(AsterSpacing.lg))
+        }
+        if (plans_failed) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(colors.bg_card, SquircleShape(18.dp))
+                    .border(1.dp, colors.border_secondary, SquircleShape(18.dp))
+                    .padding(AsterSpacing.lg),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = stringResource(R.string.plans_unavailable),
+                    color = colors.text_secondary,
+                    fontSize = 14.sp,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(Modifier.height(AsterSpacing.md))
+                AsterSecondaryButton(
+                    label = stringResource(R.string.see_pricing),
+                    onClick = { org.astermail.android.billing.open_billing_tab(context, org.astermail.android.billing.PRICING_URL) },
+                )
+            }
+        } else if (plans.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
                 contentAlignment = Alignment.Center,
@@ -281,6 +253,7 @@ fun RegisterPlanStep(
                     plan = plan,
                     is_selected = selected_code == plan.code,
                     billing_interval = effective_interval,
+                    currency = currency,
                     on_select = { selected_code = plan.code },
                 )
                 Spacer(Modifier.height(AsterSpacing.md))
@@ -289,7 +262,17 @@ fun RegisterPlanStep(
 
         Spacer(Modifier.height(AsterSpacing.xl))
 
-        if (selected_code == "free") {
+        if (state.error != null) {
+            Text(
+                text = state.error ?: "",
+                color = colors.danger,
+                fontSize = 13.sp,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(AsterSpacing.md))
+        }
+
+        if (selected_code == "free" || plans_failed) {
             AsterButton(
                 label = stringResource(R.string.continue_with_free),
                 onClick = on_continue,
@@ -297,12 +280,7 @@ fun RegisterPlanStep(
         } else {
             AsterButton(
                 label = stringResource(R.string.continue_with_upgrade),
-                onClick = {
-                    if (used_fallback && api_plans.isEmpty()) {
-                        billing_vm.load_plans()
-                    }
-                    billing_vm.start_checkout(selected_code, effective_interval)
-                },
+                onClick = { billing_vm.start_checkout(selected_code, effective_interval, currency) },
                 is_loading = state.is_acting,
             )
             Spacer(Modifier.height(AsterSpacing.sm))
@@ -358,9 +336,11 @@ private fun plan_card(
     plan: AvailablePlan,
     is_selected: Boolean,
     billing_interval: String,
+    currency: String,
     on_select: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
+    val context = LocalContext.current
     val border_color = if (is_selected) colors.accent_blue else colors.border_secondary
 
     Box(
@@ -382,6 +362,8 @@ private fun plan_card(
                     "star" -> stringResource(R.string.plan_name_star)
                     "nova" -> stringResource(R.string.plan_name_nova)
                     "supernova" -> stringResource(R.string.plan_name_supernova)
+                    "duo" -> stringResource(R.string.plan_name_duo)
+                    "family" -> stringResource(R.string.plan_name_family)
                     else -> plan.name
                 }
                 Text(
@@ -404,8 +386,11 @@ private fun plan_card(
             Spacer(Modifier.height(4.dp))
 
             val price_text = if (plan.price_cents > 0) {
-                val amount = plan.price_cents / 100.0
-                "$%.2f".format(amount) + " / " + (plan.billing_period ?: billing_interval)
+                stringResource(
+                    R.string.settings_price_per_interval,
+                    org.astermail.android.billing.format_money(plan.price_cents.toLong(), currency),
+                    org.astermail.android.billing.billing_interval_label(context, plan.billing_period ?: billing_interval),
+                )
             } else {
                 stringResource(R.string.free_forever)
             }
@@ -416,6 +401,8 @@ private fun plan_card(
                 "star" -> stringResource(R.string.plan_desc_star)
                 "nova" -> stringResource(R.string.plan_desc_nova)
                 "supernova" -> stringResource(R.string.plan_desc_supernova)
+                "duo" -> stringResource(R.string.settings_plan_duo_tagline)
+                "family" -> stringResource(R.string.settings_plan_family_tagline)
                 else -> plan.description
             }
             if (!localized_desc.isNullOrBlank()) {

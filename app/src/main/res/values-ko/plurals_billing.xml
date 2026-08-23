@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="cancel_impact_aliases">
+        <item quantity="other">별칭 %d개가 메일을 받지 못합니다.</item>
+    </plurals>
+    <plurals name="cancel_impact_domains">
+        <item quantity="other">내 도메인 %d개가 정지됩니다.</item>
+    </plurals>
+    <plurals name="cancel_impact_templates">
+        <item quantity="other">서식 %d개를 쓸 수 없게 됩니다.</item>
+    </plurals>
+    <plurals name="cancel_impact_signatures">
+        <item quantity="other">서명 %d개를 쓸 수 없게 됩니다.</item>
+    </plurals>
+    <plurals name="cancel_impact_family">
+        <item quantity="other">구성원 %d명이 계정을 잃습니다.</item>
+    </plurals>
+    <plurals name="crypto_renewal_days">
+        <item quantity="other">요금제가 %1$d일 뒤인 %2$s에 끝납니다.</item>
+    </plurals>
+</resources>

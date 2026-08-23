@@ -283,6 +283,28 @@ fun InboxScreen(
         ((settings_state.subscription?.effective_price_cents ?: 0) > 0 &&
             settings_state.subscription?.status !in setOf("canceled", "cancelled", "incomplete_expired", "unpaid"))
     val show_upgrade_button = plan_known && fresh_check_complete && !has_paid_plan
+    val billing_vm: org.astermail.android.billing.BillingViewModel = hiltViewModel()
+    val billing_state by billing_vm.state.collectAsStateWithLifecycle()
+    val banner_context = LocalContext.current
+    LaunchedEffect(billing_state.portal_url) {
+        val url = billing_state.portal_url ?: return@LaunchedEffect
+        org.astermail.android.billing.open_billing_tab(banner_context, url)
+        billing_vm.consume_portal_url()
+    }
+    val payment_failed_due = settings_state.subscription?.let { sub ->
+        org.astermail.android.billing.payment_failed_due_date(
+            status = sub.status,
+            payment_failed_at = sub.payment_failed_at,
+            grace_period_end = sub.grace_period_end,
+            current_period_end = sub.current_period_end,
+        )
+    }
+    val show_payment_failed_banner = payment_failed_due != null
+    LaunchedEffect(Unit) { billing_vm.load_onboarding_checklist() }
+    val onboarding = billing_state.onboarding
+    val show_onboarding_checklist = onboarding != null &&
+        onboarding.dismissed_at == null &&
+        onboarding.tasks.values.any { !it }
     val prefetch_context = LocalContext.current
     val toast_context = LocalContext.current
 
@@ -1422,6 +1444,37 @@ fun InboxScreen(
                             },
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(top = header_height_dp, bottom = 96.dp + nav_bar_bottom),
                     ) {
+                        if (show_onboarding_checklist && !select_mode) {
+                            item(key = "_onboarding_checklist", contentType = "onboarding_checklist") {
+                                org.astermail.android.ui.common.onboarding_checklist_card(
+                                    tasks = onboarding?.tasks.orEmpty(),
+                                    on_open_settings = on_open_settings,
+                                    on_dismiss = { billing_vm.dismiss_onboarding_checklist() },
+                                    modifier = Modifier.padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.xs),
+                                )
+                            }
+                        }
+                        if (show_payment_failed_banner && !select_mode) {
+                            item(key = "_payment_failed_banner", contentType = "payment_failed_banner") {
+                                org.astermail.android.ui.common.payment_failed_banner(
+                                    plan_name = settings_state.subscription?.effective_plan_name.orEmpty(),
+                                    due_date = payment_failed_due.orEmpty(),
+                                    is_loading = billing_state.is_acting && billing_state.acting_action == "portal",
+                                    on_update_card = {
+                                        if (org.astermail.android.billing.is_crypto_provider(settings_state.subscription?.payment_provider)) {
+                                            org.astermail.android.billing.open_billing_in_app(banner_context)
+                                        } else if (!billing_state.is_acting) {
+                                            billing_vm.open_portal()
+                                        }
+                                    },
+                                    modifier = Modifier.padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.xs),
+                                    days_left = org.astermail.android.billing.payment_failed_days_left(
+                                        payment_failed_due,
+                                        java.time.LocalDate.now().toString(),
+                                    ),
+                                )
+                            }
+                        }
                         val spam_retention_days = settings_state.preferences?.auto_delete_spam_days ?: 0
                         if (current_folder == "spam" && !select_mode && spam_retention_days > 0) {
                             item(key = "_spam_retention_notice", contentType = "spam_notice") {

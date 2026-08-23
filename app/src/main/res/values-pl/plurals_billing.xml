@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="cancel_impact_aliases">
+        <item quantity="one">%d alias przestaje odbierać pocztę.</item>
+        <item quantity="few">%d aliasy przestają odbierać pocztę.</item>
+        <item quantity="many">%d aliasów przestaje odbierać pocztę.</item>
+        <item quantity="other">%d aliasów przestaje odbierać pocztę.</item>
+    </plurals>
+    <plurals name="cancel_impact_domains">
+        <item quantity="one">%d domena własna zostaje zawieszona.</item>
+        <item quantity="few">%d domeny własne zostają zawieszone.</item>
+        <item quantity="many">%d domen własnych zostaje zawieszonych.</item>
+        <item quantity="other">%d domen własnych zostaje zawieszonych.</item>
+    </plurals>
+    <plurals name="cancel_impact_templates">
+        <item quantity="one">%d szablon przestaje działać.</item>
+        <item quantity="few">%d szablony przestają działać.</item>
+        <item quantity="many">%d szablonów przestaje działać.</item>
+        <item quantity="other">%d szablonów przestaje działać.</item>
+    </plurals>
+    <plurals name="cancel_impact_signatures">
+        <item quantity="one">%d podpis przestaje działać.</item>
+        <item quantity="few">%d podpisy przestają działać.</item>
+        <item quantity="many">%d podpisów przestaje działać.</item>
+        <item quantity="other">%d podpisów przestaje działać.</item>
+    </plurals>
+    <plurals name="cancel_impact_family">
+        <item quantity="one">%d członek traci swoje konto.</item>
+        <item quantity="few">%d członkowie tracą swoje konta.</item>
+        <item quantity="many">%d członków traci swoje konta.</item>
+        <item quantity="other">%d członków traci swoje konta.</item>
+    </plurals>
+    <plurals name="crypto_renewal_days">
+        <item quantity="one">Twój plan kończy się za %1$d dzień, %2$s.</item>
+        <item quantity="few">Twój plan kończy się za %1$d dni, %2$s.</item>
+        <item quantity="many">Twój plan kończy się za %1$d dni, %2$s.</item>
+        <item quantity="other">Twój plan kończy się za %1$d dni, %2$s.</item>
+    </plurals>
+</resources>

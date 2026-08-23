@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="cancel_impact_aliases">
+        <item quantity="zero">%d اسم مستعار يتوقف عن استقبال البريد.</item>
+        <item quantity="one">اسم مستعار واحد يتوقف عن استقبال البريد.</item>
+        <item quantity="two">اسمان مستعاران يتوقفان عن استقبال البريد.</item>
+        <item quantity="few">%d أسماء مستعارة تتوقف عن استقبال البريد.</item>
+        <item quantity="many">%d اسمًا مستعارًا تتوقف عن استقبال البريد.</item>
+        <item quantity="other">%d اسم مستعار يتوقف عن استقبال البريد.</item>
+    </plurals>
+    <plurals name="cancel_impact_domains">
+        <item quantity="zero">%d نطاق مخصص يُعلَّق.</item>
+        <item quantity="one">نطاق مخصص واحد يُعلَّق.</item>
+        <item quantity="two">نطاقان مخصصان يُعلَّقان.</item>
+        <item quantity="few">%d نطاقات مخصصة تُعلَّق.</item>
+        <item quantity="many">%d نطاقًا مخصصًا تُعلَّق.</item>
+        <item quantity="other">%d نطاق مخصص يُعلَّق.</item>
+    </plurals>
+    <plurals name="cancel_impact_templates">
+        <item quantity="zero">%d قالب يتوقف عن العمل.</item>
+        <item quantity="one">قالب واحد يتوقف عن العمل.</item>
+        <item quantity="two">قالبان يتوقفان عن العمل.</item>
+        <item quantity="few">%d قوالب تتوقف عن العمل.</item>
+        <item quantity="many">%d قالبًا تتوقف عن العمل.</item>
+        <item quantity="other">%d قالب يتوقف عن العمل.</item>
+    </plurals>
+    <plurals name="cancel_impact_signatures">
+        <item quantity="zero">%d توقيع يتوقف عن العمل.</item>
+        <item quantity="one">توقيع واحد يتوقف عن العمل.</item>
+        <item quantity="two">توقيعان يتوقفان عن العمل.</item>
+        <item quantity="few">%d توقيعات تتوقف عن العمل.</item>
+        <item quantity="many">%d توقيعًا تتوقف عن العمل.</item>
+        <item quantity="other">%d توقيع يتوقف عن العمل.</item>
+    </plurals>
+    <plurals name="cancel_impact_family">
+        <item quantity="zero">%d عضو يفقد حسابه.</item>
+        <item quantity="one">عضو واحد يفقد حسابه.</item>
+        <item quantity="two">عضوان يفقدان حسابيهما.</item>
+        <item quantity="few">%d أعضاء يفقدون حساباتهم.</item>
+        <item quantity="many">%d عضوًا يفقدون حساباتهم.</item>
+        <item quantity="other">%d عضو يفقد حسابه.</item>
+    </plurals>
+    <plurals name="crypto_renewal_days">
+        <item quantity="zero">تنتهي خطتك خلال %1$d يوم، في %2$s.</item>
+        <item quantity="one">تنتهي خطتك خلال %1$d يوم، في %2$s.</item>
+        <item quantity="two">تنتهي خطتك خلال %1$d يومين، في %2$s.</item>
+        <item quantity="few">تنتهي خطتك خلال %1$d أيام، في %2$s.</item>
+        <item quantity="many">تنتهي خطتك خلال %1$d يومًا، في %2$s.</item>
+        <item quantity="other">تنتهي خطتك خلال %1$d يوم، في %2$s.</item>
+    </plurals>
+</resources>

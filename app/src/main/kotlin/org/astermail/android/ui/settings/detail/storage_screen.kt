@@ -132,7 +132,7 @@ fun StorageScreen(
 
     LaunchedEffect(billing_state.portal_url) {
         val url = billing_state.portal_url ?: return@LaunchedEffect
-        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+        org.astermail.android.billing.open_billing_tab(context, url)
         billing_vm.consume_portal_url()
     }
 

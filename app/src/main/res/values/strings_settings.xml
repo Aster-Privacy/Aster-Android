@@ -80,7 +80,7 @@
     <string name="settings_plan_free_tagline">Everything you need to get started with private, encrypted email.</string>
     <string name="settings_plan_star_tagline">More storage, more aliases, and your first custom domain.</string>
     <string name="settings_plan_nova_tagline">More storage, custom domains, and unlimited aliases.</string>
-    <string name="settings_plan_supernova_tagline">Maximum storage, unlimited everything, and dedicated support.</string>
+    <string name="settings_plan_supernova_tagline">Maximum storage, the highest limits, and dedicated support.</string>
 
     <string name="settings_plan_lead_star">Everything in Star, plus:</string>
     <string name="settings_plan_lead_nova">Everything in Nova, plus:</string>
@@ -92,7 +92,7 @@
     <string name="settings_plan_bullet_star_attachments">Up to 50 MB attachments</string>
     <string name="settings_plan_bullet_star_aliases">15 email aliases</string>
     <string name="settings_plan_bullet_star_domains">5 custom domains</string>
-    <string name="settings_plan_bullet_unlimited_daily_emails">Unlimited daily emails</string>
+    <string name="settings_plan_bullet_daily_send_limits">Higher daily sending limits</string>
     <string name="settings_plan_bullet_star_templates">10 email templates</string>
     <string name="settings_plan_bullet_tracker_protection">Tracker protection</string>
     <string name="settings_plan_bullet_vacation_reply">Vacation auto-reply</string>
@@ -132,7 +132,7 @@
     <string name="settings_plan_bullet_shared_aliases">Shared family aliases</string>
 
     <string name="settings_price_per_month">$%1$.2f / mo</string>
-    <string name="settings_price_per_interval">$%1$.2f / %2$s</string>
+    <string name="settings_price_per_interval">%1$s / %2$s</string>
     <string name="settings_price_per_mo">$%1$.2f</string>
     <string name="settings_price_per_yr">$%1$.2f</string>
     <string name="settings_suffix_per_mo">/mo</string>
@@ -142,6 +142,7 @@
     <string name="settings_billing_monthly">Monthly</string>
     <string name="settings_billing_yearly">Yearly</string>
     <string name="settings_prices_usd_note">Prices shown in USD. Final amount determined at checkout.</string>
+    <string name="settings_prices_currency_note">Prices shown in %1$s. Your final amount is confirmed at checkout.</string>
     <string name="settings_interval_default">mo</string>
 
     <string name="settings_diagnostics_clip_label">Diagnostics</string>

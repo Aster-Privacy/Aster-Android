@@ -22,6 +22,7 @@
 package org.astermail.android.billing
 
 import androidx.lifecycle.ViewModel
+import org.astermail.android.BuildConfig
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -34,7 +35,9 @@ import org.astermail.android.api.billing.PlanLimitsResponse
 
 data class PlanLimitsUiState(
     val limits: PlanLimitsResponse? = null,
+    val plans: List<org.astermail.android.api.billing.AvailablePlan> = emptyList(),
     val is_loading: Boolean = true,
+    val load_failed: Boolean = false,
 )
 
 @HiltViewModel
@@ -53,15 +56,21 @@ class PlanLimitsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val response = billing_api.get_plan_limits()
-                _state.value = PlanLimitsUiState(limits = response, is_loading = false)
-            } catch (_: Throwable) {
-                _state.value = _state.value.copy(is_loading = false)
+                _state.value = _state.value.copy(limits = response, is_loading = false, load_failed = false)
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                if (BuildConfig.DEBUG) android.util.Log.w("PlanLimitsVM", "get_plan_limits failed", t)
+                _state.value = _state.value.copy(is_loading = false, load_failed = true)
             }
             try {
                 val plans = billing_api.get_available_plans().plans
+                _state.value = _state.value.copy(plans = plans)
                 val current = plans.firstOrNull { it.is_current }
                 if (current != null) AttachmentLimits.update(current.max_attachment_size_bytes)
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                if (BuildConfig.DEBUG) android.util.Log.w("PlanLimitsVM", "get_available_plans failed", t)
+                _state.value = _state.value.copy(load_failed = true)
             }
         }
     }

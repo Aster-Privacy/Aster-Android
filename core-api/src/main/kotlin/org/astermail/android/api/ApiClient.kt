@@ -69,6 +69,10 @@ import org.astermail.android.api.mail_rules.Condition as MailRuleCondition
 sealed class ApiError(message: String) : Exception(message) {
     object NetworkError : ApiError("network error")
     object UnauthorizedError : ApiError("unauthorized")
+    object InvalidCredentials : ApiError("invalid credentials")
+    data class PaymentRequired(val detail: String = "") : ApiError(detail)
+    data class AttachmentTooLarge(val detail: String = "") : ApiError(detail)
+    data class SendQuotaReached(val detail: String = "") : ApiError(detail)
     data class ForbiddenError(val detail: String = "forbidden") : ApiError(detail)
     data class PlanLimitExceeded(val detail: String, val resource: String?) : ApiError(detail)
     data class StorageQuotaExceeded(val detail: String) : ApiError(detail)
@@ -81,7 +85,22 @@ sealed class ApiError(message: String) : Exception(message) {
         val resets_at: String? = null,
     ) : ApiError(detail)
     data class UnknownError(val detail: String) : ApiError(detail)
+    data class StepUpRequired(val detail: String = "step up required") : ApiError(detail)
 }
+
+const val FINGERPRINT_MISMATCH_CODE = "FINGERPRINT_MISMATCH"
+const val INVALID_CREDENTIALS_CODE = "INVALID_CREDENTIALS"
+const val STORAGE_QUOTA_CODE = "STORAGE_QUOTA_EXCEEDED"
+
+fun map_unauthorized(server_code: String?, detail: String): ApiError =
+    when (server_code) {
+        FINGERPRINT_MISMATCH_CODE -> ApiError.StepUpRequired(detail.ifBlank { "step up required" })
+        INVALID_CREDENTIALS_CODE -> ApiError.InvalidCredentials
+        else -> ApiError.UnauthorizedError
+    }
+
+fun should_emit_unauthorized(server_code: String?): Boolean =
+    server_code != INVALID_CREDENTIALS_CODE && server_code != FINGERPRINT_MISMATCH_CODE
 
 object DualStackDns : okhttp3.Dns {
     override fun lookup(hostname: String): List<java.net.InetAddress> {
@@ -401,39 +420,33 @@ class ApiClient(
         val detail = parse_error_message(body) ?: ""
         if (server_code == "PLAN_LIMIT_EXCEEDED") {
             return ApiError.PlanLimitExceeded(
-                detail = detail.ifBlank { "plan limit reached" },
+                detail = detail,
                 resource = parse_error_resource(body),
             ).also { emit_plan_limit(it) }
         }
-        if (server_code == "STORAGE_QUOTA_EXCEEDED") {
-            return ApiError.StorageQuotaExceeded(
-                detail = detail.ifBlank { "storage full" },
-            ).also { emit_storage_full(it) }
+        if (server_code == STORAGE_QUOTA_CODE) {
+            return ApiError.StorageQuotaExceeded(detail).also { emit_storage_full(it) }
         }
         if (server_code == "EXTERNAL_SEND_QUOTA_REACHED") {
-            return ApiError.ValidationError(
-                listOf(detail.ifBlank { "You've reached this account's daily limit for messages to addresses outside Aster. Messages to other Aster addresses aren't affected." }),
-            )
+            return ApiError.SendQuotaReached(detail)
         }
         return when (code) {
-            400 -> ApiError.ValidationError(parse_validation_messages(body).ifEmpty { listOf(detail.ifBlank { "bad request" }) })
-            401 -> ApiError.UnauthorizedError.also {
-                if (server_code != "INVALID_CREDENTIALS") AuthEventBus.emit_unauthorized()
+            400 -> ApiError.ValidationError(parse_validation_messages(body).ifEmpty { listOf(detail) })
+            401 -> map_unauthorized(server_code, detail).also {
+                if (should_emit_unauthorized(server_code)) AuthEventBus.emit_unauthorized()
             }
-            403 -> ApiError.ForbiddenError(detail.ifBlank { "forbidden" })
+            402 -> ApiError.PaymentRequired(detail)
+            403 -> ApiError.ForbiddenError(detail)
             404 -> ApiError.NotFoundError
-            413 -> ApiError.StorageQuotaExceeded(detail.ifBlank { "storage full" })
-                .also { emit_storage_full(it) }
-            422 -> ApiError.ValidationError(
-                parse_validation_messages(body).ifEmpty { listOf(detail.ifBlank { "unprocessable request" }) },
-            )
-            409 -> ApiError.Conflict(detail.ifBlank { "conflict" })
+            413 -> ApiError.AttachmentTooLarge(detail)
+            422 -> ApiError.ValidationError(parse_validation_messages(body).ifEmpty { listOf(detail) })
+            409 -> ApiError.Conflict(detail)
             429 -> ApiError.RateLimited(
-                detail = detail.ifBlank { "rate limited" },
+                detail = detail,
                 resets_at = parse_error_resets_at(body),
             )
             in 500..599 -> ApiError.ServerError(code)
-            else -> ApiError.UnknownError(body.ifBlank { "http $code" })
+            else -> ApiError.UnknownError(detail)
         }
     }
 

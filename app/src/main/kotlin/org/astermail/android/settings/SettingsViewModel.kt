@@ -2809,6 +2809,13 @@ class SettingsViewModel @Inject constructor(
                     android.util.Log.i("SettingsVM", "subscription loaded status=${sub.status} plan=${sub.plan_name}")
                 }
                 _state.value = _state.value.copy(subscription = sub, is_loading = false)
+                org.astermail.android.billing.PaymentFailedNotifier.observe(
+                    context,
+                    sub.status,
+                    sub.payment_failed_at,
+                    sub.current_period_end,
+                    sub.effective_plan_name,
+                )
             } catch (t: Throwable) {
                 if (org.astermail.android.BuildConfig.DEBUG) {
                     android.util.Log.w("SettingsVM", "load_subscription failed", t)
