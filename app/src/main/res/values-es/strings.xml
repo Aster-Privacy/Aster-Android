@@ -1045,6 +1045,7 @@
     <string name="could_not_start_checkout">No se pudo iniciar el proceso de pago</string>
     <string name="could_not_open_portal">No se pudo abrir el portal de facturación</string>
     <string name="cancel_failed">No se pudo cancelar la suscripción</string>
+    <string name="billing_action_in_progress">Otro cambio de facturación sigue en curso. Espera a que termine e inténtalo de nuevo.</string>
     <string name="reactivate_failed">No se pudo reactivar la suscripción</string>
     <string name="switch_failed">No se pudo cambiar el intervalo de facturación</string>
     <string name="set_default_failed">No se pudo establecer el método de pago predeterminado</string>

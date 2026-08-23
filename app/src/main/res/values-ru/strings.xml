@@ -1044,6 +1044,7 @@
     <string name="could_not_start_checkout">Не удалось начать оформление</string>
     <string name="could_not_open_portal">Не удалось открыть портал оплаты</string>
     <string name="cancel_failed">Не удалось отменить подписку</string>
+    <string name="billing_action_in_progress">Другое изменение оплаты ещё выполняется. Дождитесь его завершения и повторите попытку.</string>
     <string name="reactivate_failed">Не удалось возобновить подписку</string>
     <string name="switch_failed">Не удалось изменить интервал оплаты</string>
     <string name="set_default_failed">Не удалось установить способ оплаты по умолчанию</string>

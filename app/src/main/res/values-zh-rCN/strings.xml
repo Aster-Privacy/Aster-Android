@@ -1044,6 +1044,7 @@
     <string name="could_not_start_checkout">无法开始结账</string>
     <string name="could_not_open_portal">无法打开账单门户</string>
     <string name="cancel_failed">无法取消订阅</string>
+    <string name="billing_action_in_progress">另一项计费更改仍在进行中。请等待其完成后重试。</string>
     <string name="reactivate_failed">无法重新激活订阅</string>
     <string name="switch_failed">无法更改计费周期</string>
     <string name="set_default_failed">无法设置默认支付方式</string>

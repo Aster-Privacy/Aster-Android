@@ -1044,6 +1044,7 @@
     <string name="could_not_start_checkout">결제를 시작할 수 없습니다</string>
     <string name="could_not_open_portal">청구 포털을 열 수 없습니다</string>
     <string name="cancel_failed">구독을 취소할 수 없습니다</string>
+    <string name="billing_action_in_progress">다른 결제 변경이 아직 진행 중입니다. 완료될 때까지 기다린 후 다시 시도하세요.</string>
     <string name="reactivate_failed">구독을 재활성화할 수 없습니다</string>
     <string name="switch_failed">청구 간격을 변경할 수 없습니다</string>
     <string name="set_default_failed">기본 결제 수단을 설정할 수 없습니다</string>

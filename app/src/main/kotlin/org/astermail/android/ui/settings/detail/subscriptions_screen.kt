@@ -1146,7 +1146,7 @@ private fun cancel_subscription_flow(
     yearly_savings: Int?,
     on_switch_yearly: () -> Unit,
     on_dismiss: () -> Unit,
-    on_confirm: (reason: String?, reason_text: String?) -> Unit,
+    on_confirm: (reason: String?, reason_text: String?) -> Boolean,
 ) {
     val colors = AsterMaterial.colors
     var reason by remember { mutableStateOf<String?>(null) }
@@ -1330,10 +1330,7 @@ private fun cancel_subscription_flow(
                 )
                 org.astermail.android.design.components.AsterDialogDestructiveButton(
                     label = stringResource(R.string.cancel_subscription),
-                    onClick = {
-                        submitted = true
-                        on_confirm(reason, reason_text)
-                    },
+                    onClick = { submitted = on_confirm(reason, reason_text) },
                     enabled = !cancelling,
                     is_loading = cancelling,
                     modifier = Modifier.weight(1f),

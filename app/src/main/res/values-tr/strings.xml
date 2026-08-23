@@ -1044,6 +1044,7 @@
     <string name="could_not_start_checkout">Ödeme başlatılamadı</string>
     <string name="could_not_open_portal">Faturalandırma portalı açılamadı</string>
     <string name="cancel_failed">Abonelik iptal edilemedi</string>
+    <string name="billing_action_in_progress">Başka bir faturalandırma değişikliği hâlâ devam ediyor. Bitmesini bekleyin, sonra tekrar deneyin.</string>
     <string name="reactivate_failed">Abonelik yeniden etkinleştirilemedi</string>
     <string name="switch_failed">Faturalandırma dönemi değiştirilemedi</string>
     <string name="set_default_failed">Varsayılan ödeme yöntemi ayarlanamadı</string>

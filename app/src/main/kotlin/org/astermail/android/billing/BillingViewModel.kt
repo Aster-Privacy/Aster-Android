@@ -250,11 +250,14 @@ class BillingViewModel @Inject constructor(
         }
     }
 
-    fun cancel_subscription(reason: String? = null, reason_text: String? = null) {
-        if (_state.value.is_acting) return
+    fun cancel_subscription(reason: String? = null, reason_text: String? = null): Boolean {
+        if (_state.value.is_acting) {
+            _state.value = _state.value.copy(error = ctx.getString(R.string.billing_action_in_progress), info = null)
+            return false
+        }
         val chosen_reason = reason?.takeIf { it in CANCEL_REASONS }
+        _state.value = _state.value.copy(is_acting = true, acting_action = "cancel", error = null, info = null)
         viewModelScope.launch {
-            _state.value = _state.value.copy(is_acting = true, acting_action = "cancel", error = null, info = null)
             try {
                 val response = billing_api.cancel_subscription(
                     CancelSubscriptionRequest(
@@ -276,6 +279,7 @@ class BillingViewModel @Inject constructor(
                 )
             }
         }
+        return true
     }
 
     fun reactivate_subscription() {

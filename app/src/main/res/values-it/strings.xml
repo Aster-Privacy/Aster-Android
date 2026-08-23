@@ -1044,6 +1044,7 @@
     <string name="could_not_start_checkout">Impossibile avviare il checkout</string>
     <string name="could_not_open_portal">Impossibile aprire il portale di fatturazione</string>
     <string name="cancel_failed">Impossibile cancellare l\'abbonamento</string>
+    <string name="billing_action_in_progress">Un\'altra modifica di fatturazione è ancora in corso. Attendi che finisca, poi riprova.</string>
     <string name="reactivate_failed">Impossibile riattivare l\'abbonamento</string>
     <string name="switch_failed">Impossibile cambiare l\'intervallo di fatturazione</string>
     <string name="set_default_failed">Impossibile impostare il metodo di pagamento predefinito</string>

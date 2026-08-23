@@ -25,7 +25,9 @@ import android.app.Application
 import app.cash.turbine.test
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -33,6 +35,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import org.astermail.android.R
 import org.astermail.android.api.billing.BillingApi
 import org.astermail.android.api.billing.CancelSubscriptionRequest
 import org.astermail.android.api.billing.CancelSubscriptionResponse
@@ -40,6 +43,7 @@ import org.astermail.android.api.billing.ChangePlanRequest
 import org.astermail.android.api.billing.ChangePlanResponse
 import org.astermail.android.api.billing.PlanChangePreviewResponse
 import org.astermail.android.api.billing.PlanInfo
+import org.astermail.android.api.billing.PortalSessionResponse
 import org.astermail.android.api.billing.SubscriptionResponse
 import org.astermail.android.auth.AuthRepository
 import org.junit.After
@@ -243,6 +247,42 @@ class BillingViewModelTest {
                 ),
             )
         }
+    }
+
+    @Test
+    fun `cancel refused during another billing action reports it instead of hanging`() = runTest {
+        every { application.getString(R.string.billing_action_in_progress) } returns "Another billing change is still in progress."
+        val gate = CompletableDeferred<PortalSessionResponse>()
+        coEvery { billing_api.create_portal_session() } coAnswers { gate.await() }
+        vm.open_portal()
+        advanceUntilIdle()
+        assertTrue(vm.state.value.is_acting)
+        assertEquals("portal", vm.state.value.acting_action)
+
+        val started = vm.cancel_subscription("too_expensive", "no longer needed")
+        advanceUntilIdle()
+
+        assertFalse(started)
+        assertEquals("Another billing change is still in progress.", vm.state.value.error)
+        assertEquals("portal", vm.state.value.acting_action)
+        coVerify(exactly = 0) { billing_api.cancel_subscription(any()) }
+
+        gate.complete(PortalSessionResponse(url = "https://billing.invalid/portal"))
+        advanceUntilIdle()
+    }
+
+    @Test
+    fun `cancel marks itself acting before the request is dispatched`() = runTest {
+        coEvery { billing_api.cancel_subscription(any()) } returns CancelSubscriptionResponse(cancel_at_period_end = true)
+
+        val started = vm.cancel_subscription()
+
+        assertTrue(started)
+        assertTrue(vm.state.value.is_acting)
+        assertEquals("cancel", vm.state.value.acting_action)
+        assertNull(vm.state.value.error)
+        advanceUntilIdle()
+        assertFalse(vm.state.value.is_acting)
     }
 
     @Test

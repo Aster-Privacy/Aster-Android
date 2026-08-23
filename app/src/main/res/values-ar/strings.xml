@@ -1044,6 +1044,7 @@
     <string name="could_not_start_checkout">تعذر بدء عملية الدفع</string>
     <string name="could_not_open_portal">تعذر فتح بوابة الفوترة</string>
     <string name="cancel_failed">تعذر إلغاء الاشتراك</string>
+    <string name="billing_action_in_progress">لا يزال هناك تغيير آخر في الفوترة قيد التنفيذ. انتظر حتى ينتهي، ثم حاول مرة أخرى.</string>
     <string name="reactivate_failed">تعذر إعادة تفعيل الاشتراك</string>
     <string name="switch_failed">تعذر تغيير فترة الفوترة</string>
     <string name="set_default_failed">تعذر تعيين طريقة الدفع الافتراضية</string>

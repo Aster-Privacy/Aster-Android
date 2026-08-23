@@ -1045,6 +1045,7 @@
     <string name="could_not_start_checkout">Bezahlvorgang konnte nicht gestartet werden</string>
     <string name="could_not_open_portal">Abrechnungsportal konnte nicht geöffnet werden</string>
     <string name="cancel_failed">Abonnement konnte nicht gekündigt werden</string>
+    <string name="billing_action_in_progress">Eine andere Abrechnungsänderung läuft noch. Warten Sie, bis sie abgeschlossen ist, und versuchen Sie es dann erneut.</string>
     <string name="reactivate_failed">Abonnement konnte nicht reaktiviert werden</string>
     <string name="switch_failed">Abrechnungsintervall konnte nicht geändert werden</string>
     <string name="set_default_failed">Standard-Zahlungsmethode konnte nicht festgelegt werden</string>

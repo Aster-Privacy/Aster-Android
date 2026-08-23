@@ -1044,6 +1044,7 @@
     <string name="could_not_start_checkout">Nie udało się rozpocząć procesu płatności</string>
     <string name="could_not_open_portal">Nie udało się otworzyć portalu rozliczeń</string>
     <string name="cancel_failed">Nie udało się anulować subskrypcji</string>
+    <string name="billing_action_in_progress">Inna zmiana rozliczeń jest wciąż w toku. Poczekaj, aż się zakończy, i spróbuj ponownie.</string>
     <string name="reactivate_failed">Nie udało się reaktywować subskrypcji</string>
     <string name="switch_failed">Nie udało się zmienić okresu rozliczeniowego</string>
     <string name="set_default_failed">Nie udało się ustawić domyślnej metody płatności</string>

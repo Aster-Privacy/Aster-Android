@@ -1044,6 +1044,7 @@
     <string name="could_not_start_checkout">Kon checkout niet starten</string>
     <string name="could_not_open_portal">Kon factureringsportaal niet openen</string>
     <string name="cancel_failed">Kon abonnement niet annuleren</string>
+    <string name="billing_action_in_progress">Er loopt nog een andere factureringswijziging. Wacht tot deze klaar is en probeer het opnieuw.</string>
     <string name="reactivate_failed">Kon abonnement niet heractiveren</string>
     <string name="switch_failed">Kon factureringsinterval niet wijzigen</string>
     <string name="set_default_failed">Kon standaard betaalmethode niet instellen</string>

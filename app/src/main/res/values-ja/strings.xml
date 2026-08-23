@@ -1044,6 +1044,7 @@
     <string name="could_not_start_checkout">チェックアウトを開始できませんでした</string>
     <string name="could_not_open_portal">請求ポータルを開けませんでした</string>
     <string name="cancel_failed">サブスクリプションをキャンセルできませんでした</string>
+    <string name="billing_action_in_progress">別の請求の変更がまだ進行中です。完了するまで待ってから、もう一度お試しください。</string>
     <string name="reactivate_failed">サブスクリプションを再アクティブ化できませんでした</string>
     <string name="switch_failed">請求間隔を変更できませんでした</string>
     <string name="set_default_failed">デフォルトの支払い方法を設定できませんでした</string>

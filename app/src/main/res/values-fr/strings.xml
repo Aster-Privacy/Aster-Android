@@ -1098,6 +1098,7 @@
     <string name="could_not_start_checkout">Impossible de démarrer le paiement</string>
     <string name="could_not_open_portal">Impossible d\'ouvrir le portail de facturation</string>
     <string name="cancel_failed">Impossible d\'annuler l\'abonnement</string>
+    <string name="billing_action_in_progress">Une autre modification de facturation est encore en cours. Attendez qu\'elle se termine, puis réessayez.</string>
     <string name="reactivate_failed">Impossible de réactiver l\'abonnement</string>
     <string name="switch_failed">Impossible de changer l\'intervalle de facturation</string>
     <string name="set_default_failed">Impossible de définir le moyen de paiement par défaut</string>

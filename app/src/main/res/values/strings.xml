@@ -1596,6 +1596,7 @@
     <string name="could_not_start_checkout">Could not start checkout</string>
     <string name="could_not_open_portal">Could not open billing portal</string>
     <string name="cancel_failed">Could not cancel subscription</string>
+    <string name="billing_action_in_progress">Another billing change is still in progress. Wait for it to finish, then try again.</string>
     <string name="reactivate_failed">Could not reactivate subscription</string>
     <string name="switch_failed">Could not change billing interval</string>
     <string name="set_default_failed">Could not set default payment method</string>

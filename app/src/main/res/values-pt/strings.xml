@@ -1044,6 +1044,7 @@
     <string name="could_not_start_checkout">Não foi possível iniciar o checkout</string>
     <string name="could_not_open_portal">Não foi possível abrir o portal de faturamento</string>
     <string name="cancel_failed">Não foi possível cancelar a assinatura</string>
+    <string name="billing_action_in_progress">Outra alteração de faturamento ainda está em andamento. Aguarde a conclusão e tente novamente.</string>
     <string name="reactivate_failed">Não foi possível reativar a assinatura</string>
     <string name="switch_failed">Não foi possível alterar o intervalo de faturamento</string>
     <string name="set_default_failed">Não foi possível definir o método de pagamento padrão</string>
