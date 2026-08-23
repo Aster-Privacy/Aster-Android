@@ -134,7 +134,6 @@ private data class plan_tier(
     val monthly_cents: Int,
     val yearly_cents: Int,
     val save_cents: Int,
-    val recommended: Boolean,
     @StringRes val lead_res: Int?,
     val features: List<Int>,
 )
@@ -176,7 +175,6 @@ private val plan_tiers = listOf(
         monthly_cents = 299,
         yearly_cents = 2899,
         save_cents = 689,
-        recommended = false,
         lead_res = null,
         features = listOf(
             R.string.settings_plan_bullet_star_storage,
@@ -203,7 +201,6 @@ private val plan_tiers = listOf(
         monthly_cents = 899,
         yearly_cents = 8699,
         save_cents = 2089,
-        recommended = true,
         lead_res = R.string.settings_plan_lead_star,
         features = listOf(
             R.string.settings_plan_bullet_nova_storage,
@@ -230,7 +227,6 @@ private val plan_tiers = listOf(
         monthly_cents = 1799,
         yearly_cents = 17399,
         save_cents = 4189,
-        recommended = false,
         lead_res = R.string.settings_plan_lead_nova,
         features = listOf(
             R.string.settings_plan_bullet_supernova_storage,
@@ -284,6 +280,7 @@ fun SubscriptionsScreen(
 
     LaunchedEffect(Unit) {
         vm.load_subscription()
+        vm.load_storage()
         billing_vm.load_storage_addons()
         billing_vm.load_crypto_native_coins()
         billing_vm.load_pending_crypto_invoices()
@@ -357,6 +354,18 @@ fun SubscriptionsScreen(
             else -> plan_tiers.firstOrNull { it.code == current_code }?.features ?: free_features
         }
     }
+    val storage_overview = state.storage
+    val recommendation = compute_plan_recommendation(
+        current_plan_code = current_code,
+        storage_used_bytes = storage_overview?.used_bytes ?: 0L,
+        storage_limit_bytes = storage_overview?.total_bytes ?: 0L,
+    )
+    val current_plan_name = sub?.effective_plan_name
+        ?: plan_tiers.firstOrNull { it.code == current_code }?.let { stringResource(it.name_res) }
+    val recommended_tier_name = plan_tiers
+        .firstOrNull { it.code == recommendation.recommended_plan_code }
+        ?.let { stringResource(it.name_res) }
+
     val default_interval = stringResource(R.string.settings_interval_default)
     val plan_free_label = stringResource(R.string.plan_name_free)
     var billing_interval by remember { mutableStateOf("year") }
@@ -452,11 +461,17 @@ fun SubscriptionsScreen(
             on_select = { billing_interval = it },
         )
         v_gap(AsterSpacing.md)
+        plan_recommendation_banner(
+            recommendation = recommendation,
+            current_plan_name = current_plan_name,
+            recommended_tier_name = recommended_tier_name,
+        )
         plan_tiers.forEach { tier ->
             plan_tier_card(
                 tier = tier,
                 billing_interval = billing_interval,
                 is_current = tier.code == current_code,
+                is_recommended = recommendation.recommended_plan_code == tier.code,
                 currency = detected_currency,
                 on_choose = {
                     pending_plan_code = tier.code
@@ -479,6 +494,12 @@ fun SubscriptionsScreen(
                         text = stringResource(R.string.storage_addons_description),
                         color = colors.text_secondary,
                         fontSize = 13.sp,
+                    )
+                    Spacer(Modifier.height(AsterSpacing.xs))
+                    Text(
+                        text = stringResource(R.string.settings_storage_addons_monthly_note),
+                        color = colors.text_tertiary,
+                        fontSize = 12.sp,
                     )
                     Spacer(Modifier.height(AsterSpacing.md))
                     addons!!.available_addons.forEachIndexed { idx, addon ->
@@ -917,10 +938,62 @@ private fun aster_plan_badge(
 }
 
 @Composable
+internal fun plan_recommendation_banner(
+    recommendation: plan_recommendation,
+    current_plan_name: String?,
+    recommended_tier_name: String?,
+) {
+    val colors = AsterMaterial.colors
+    if (!recommendation.is_paid || current_plan_name.isNullOrBlank()) return
+
+    val show_storage_tight =
+        !recommendation.is_top_tier &&
+            recommendation.storage_is_tight &&
+            recommended_tier_name != null
+
+    AsterCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(AsterSpacing.lg)) {
+            Text(
+                text = if (recommendation.is_top_tier) {
+                    stringResource(R.string.settings_plan_top_tier_title)
+                } else {
+                    stringResource(R.string.settings_plan_current_title, current_plan_name)
+                },
+                color = colors.text_primary,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(Modifier.height(AsterSpacing.xs))
+            Text(
+                text = when {
+                    recommendation.is_top_tier -> stringResource(
+                        R.string.settings_plan_top_tier_note,
+                        current_plan_name,
+                    )
+                    show_storage_tight -> stringResource(
+                        R.string.settings_plan_storage_tight_note,
+                        recommendation.storage_percent.toInt(),
+                        recommended_tier_name.orEmpty(),
+                    )
+                    else -> stringResource(
+                        R.string.settings_plan_current_note,
+                        recommendation.storage_percent.toInt(),
+                    )
+                },
+                color = colors.text_secondary,
+                fontSize = 13.sp,
+            )
+        }
+    }
+    v_gap(AsterSpacing.md)
+}
+
+@Composable
 private fun plan_tier_card(
     tier: plan_tier,
     billing_interval: String,
     is_current: Boolean,
+    is_recommended: Boolean = false,
     currency: String = "usd",
     on_choose: () -> Unit,
 ) {
@@ -929,7 +1002,7 @@ private fun plan_tier_card(
     val is_yearly = billing_interval == "year"
     val amount_cents = if (is_yearly) tier.yearly_cents else tier.monthly_cents
     AsterCard(modifier = Modifier.fillMaxWidth()) {
-        if (is_current || tier.recommended) {
+        if (is_current || is_recommended) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

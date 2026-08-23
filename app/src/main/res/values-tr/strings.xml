@@ -2793,4 +2793,10 @@
     <string name="alias_restore_mismatch">Bu adres takma adla eşleşmiyor. Gelen bir iletinin başlığını kontrol edin.</string>
     <string name="alias_restore_failed">Takma ad geri getirilemedi. Yeniden deneyin.</string>
     <string name="password_change_web_required">Bu hesabın parolasını değiştirmek için Aster Mail web uygulamasını kullanın.</string>
+    <string name="settings_plan_top_tier_title">En üst plandasınız</string>
+    <string name="settings_plan_top_tier_note">%1$s, tüm planlar arasında en fazla depolama alanını içerir. Daha fazla alana ihtiyacınız olursa ek depolama ekleyebilirsiniz.</string>
+    <string name="settings_plan_current_title">%1$s planındasınız</string>
+    <string name="settings_plan_current_note">Depolama alanınızın %%%1$d kadarını kullandınız, bol bol yeriniz var.</string>
+    <string name="settings_plan_storage_tight_note">Depolama alanınızın %%%1$d kadarını kullandınız. %2$s size daha fazla alan sunar.</string>
+    <string name="settings_storage_addons_monthly_note">Ek depolama, planınız yıllık faturalandırılsa bile aylık faturalandırılır.</string>
 </resources>

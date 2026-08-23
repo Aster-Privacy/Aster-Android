@@ -2793,4 +2793,10 @@
     <string name="alias_restore_mismatch">Dit adres komt niet overeen met deze alias. Kijk in de header van een bezorgd bericht.</string>
     <string name="alias_restore_failed">De alias is niet hersteld. Probeer het opnieuw.</string>
     <string name="password_change_web_required">Gebruik de Aster Mail-webapp om het wachtwoord van dit account te wijzigen.</string>
+    <string name="settings_plan_top_tier_title">Je hebt het hoogste abonnement</string>
+    <string name="settings_plan_top_tier_note">%1$s bevat de meeste opslag van alle abonnementen. Als je meer ruimte nodig hebt, kun je extra opslag toevoegen.</string>
+    <string name="settings_plan_current_title">Je hebt %1$s</string>
+    <string name="settings_plan_current_note">Je hebt %1$d%% van je opslag gebruikt, dus je hebt nog ruimte over.</string>
+    <string name="settings_plan_storage_tight_note">Je hebt %1$d%% van je opslag gebruikt. %2$s geeft je meer ruimte.</string>
+    <string name="settings_storage_addons_monthly_note">Extra opslag wordt maandelijks gefactureerd, ook als je abonnement jaarlijks wordt gefactureerd.</string>
 </resources>

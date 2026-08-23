@@ -2821,4 +2821,10 @@
     <string name="alias_restore_mismatch">Cette adresse ne correspond pas à cet alias. Consultez l’en-tête d’un message qu’il a distribué.</string>
     <string name="alias_restore_failed">L’alias n’a pas été restauré. Réessayez.</string>
     <string name="password_change_web_required">Pour changer le mot de passe de ce compte, utilisez l’application web Aster Mail.</string>
+    <string name="settings_plan_top_tier_title">Vous avez le forfait le plus élevé</string>
+    <string name="settings_plan_top_tier_note">%1$s inclut le plus grand stockage de tous les forfaits. Si vous avez besoin de plus d\'espace, vous pouvez ajouter du stockage supplémentaire.</string>
+    <string name="settings_plan_current_title">Vous utilisez %1$s</string>
+    <string name="settings_plan_current_note">Vous avez utilisé %1$d %% de votre stockage, il vous reste donc de la place.</string>
+    <string name="settings_plan_storage_tight_note">Vous avez utilisé %1$d%% de votre stockage. %2$s vous offre plus d\'espace.</string>
+    <string name="settings_storage_addons_monthly_note">Le stockage supplémentaire est facturé chaque mois, même si votre forfait est facturé chaque année.</string>
 </resources>

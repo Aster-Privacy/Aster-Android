@@ -2785,4 +2785,10 @@
     <string name="alias_restore_mismatch">このアドレスはエイリアスと一致しません。届いたメッセージのヘッダーを確認してください。</string>
     <string name="alias_restore_failed">エイリアスを復元できませんでした。もう一度お試しください。</string>
     <string name="password_change_web_required">このアカウントのパスワードを変更するには、Aster Mail の Web アプリを使用してください。</string>
+    <string name="settings_plan_top_tier_title">最上位プランをご利用中です</string>
+    <string name="settings_plan_top_tier_note">%1$sはすべてのプランの中で最大の容量を含みます。さらに容量が必要な場合は、追加ストレージを購入できます。</string>
+    <string name="settings_plan_current_title">%1$sをご利用中です</string>
+    <string name="settings_plan_current_note">ストレージの%1$d%%を使用しています。まだ十分な空きがあります。</string>
+    <string name="settings_plan_storage_tight_note">ストレージの%1$d%%を使用しています。%2$sならもっと余裕があります。</string>
+    <string name="settings_storage_addons_monthly_note">追加ストレージは、プランが年払いの場合でも月ごとに請求されます。</string>
 </resources>

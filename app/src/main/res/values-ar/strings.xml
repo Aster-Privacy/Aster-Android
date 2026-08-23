@@ -2825,4 +2825,10 @@
     <string name="alias_restore_mismatch">هذا العنوان لا يطابق الاسم المستعار. تحقق من ترويسة رسالة تم تسليمها.</string>
     <string name="alias_restore_failed">تعذّرت استعادة الاسم المستعار. حاول مرة أخرى.</string>
     <string name="password_change_web_required">لتغيير كلمة المرور لهذا الحساب، استخدم تطبيق الويب Aster Mail.</string>
+    <string name="settings_plan_top_tier_title">أنت على أعلى خطة</string>
+    <string name="settings_plan_top_tier_note">تتضمن %1$s أكبر مساحة تخزين بين جميع الخطط. إذا كنت بحاجة إلى مساحة أكبر، يمكنك إضافة تخزين إضافي.</string>
+    <string name="settings_plan_current_title">أنت على خطة %1$s</string>
+    <string name="settings_plan_current_note">لقد استخدمت %1$d%% من مساحة التخزين، ولا تزال لديك مساحة وافرة.</string>
+    <string name="settings_plan_storage_tight_note">لقد استخدمت %1$d%% من مساحة التخزين. توفر لك %2$s مساحة أكبر.</string>
+    <string name="settings_storage_addons_monthly_note">تتم فوترة التخزين الإضافي شهريًا، حتى إذا كانت خطتك تُفوتر سنويًا.</string>
 </resources>

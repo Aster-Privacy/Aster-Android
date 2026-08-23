@@ -2793,4 +2793,10 @@
     <string name="alias_restore_mismatch">Questo indirizzo non corrisponde all’alias. Controlla l’intestazione di un messaggio che ha consegnato.</string>
     <string name="alias_restore_failed">L’alias non è stato ripristinato. Riprova.</string>
     <string name="password_change_web_required">Per cambiare la password di questo account, usa l’app web di Aster Mail.</string>
+    <string name="settings_plan_top_tier_title">Hai il piano più alto</string>
+    <string name="settings_plan_top_tier_note">%1$s include lo spazio di archiviazione più ampio tra tutti i piani. Se ti serve più spazio, puoi aggiungere spazio extra.</string>
+    <string name="settings_plan_current_title">Hai %1$s</string>
+    <string name="settings_plan_current_note">Hai usato il %1$d%% del tuo spazio, quindi hai ancora spazio in abbondanza.</string>
+    <string name="settings_plan_storage_tight_note">Hai usato il %1$d%% del tuo spazio. %2$s ti offre più spazio.</string>
+    <string name="settings_storage_addons_monthly_note">Lo spazio aggiuntivo viene fatturato ogni mese, anche se il tuo piano è fatturato ogni anno.</string>
 </resources>

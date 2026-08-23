@@ -2809,4 +2809,10 @@
     <string name="alias_restore_mismatch">Этот адрес не совпадает с псевдонимом. Проверьте заголовок доставленного сообщения.</string>
     <string name="alias_restore_failed">Не удалось восстановить псевдоним. Повторите попытку.</string>
     <string name="password_change_web_required">Чтобы изменить пароль этой учётной записи, используйте веб-приложение Aster Mail.</string>
+    <string name="settings_plan_top_tier_title">У вас самый высокий тарифный план</string>
+    <string name="settings_plan_top_tier_note">%1$s включает максимальный объём хранилища среди всех тарифов. Если нужно больше места, можно добавить дополнительное хранилище.</string>
+    <string name="settings_plan_current_title">У вас тариф %1$s</string>
+    <string name="settings_plan_current_note">Использовано %1$d%% хранилища, свободного места ещё достаточно.</string>
+    <string name="settings_plan_storage_tight_note">Использовано %1$d%% хранилища. %2$s даёт больше места.</string>
+    <string name="settings_storage_addons_monthly_note">Дополнительное хранилище оплачивается ежемесячно, даже если тариф оплачивается ежегодно.</string>
 </resources>

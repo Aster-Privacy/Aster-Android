@@ -2794,4 +2794,10 @@
     <string name="alias_restore_mismatch">Diese Adresse passt nicht zu diesem Alias. Sieh in der Kopfzeile einer zugestellten Nachricht nach.</string>
     <string name="alias_restore_failed">Der Alias wurde nicht wiederhergestellt. Versuch es noch einmal.</string>
     <string name="password_change_web_required">Um das Passwort für dieses Konto zu ändern, verwende die Aster Mail Web-App.</string>
+    <string name="settings_plan_top_tier_title">Du hast den höchsten Tarif</string>
+    <string name="settings_plan_top_tier_note">%1$s bietet den größten Speicher aller Tarife. Wenn du mehr Platz brauchst, kannst du zusätzlichen Speicher hinzufügen.</string>
+    <string name="settings_plan_current_title">Du nutzt %1$s</string>
+    <string name="settings_plan_current_note">Du hast %1$d%% deines Speichers belegt und hast noch reichlich Platz.</string>
+    <string name="settings_plan_storage_tight_note">Du hast %1$d%% deines Speichers belegt. %2$s bietet dir mehr Platz.</string>
+    <string name="settings_storage_addons_monthly_note">Zusätzlicher Speicher wird monatlich abgerechnet, auch wenn dein Tarif jährlich abgerechnet wird.</string>
 </resources>

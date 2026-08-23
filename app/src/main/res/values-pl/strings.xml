@@ -2809,4 +2809,10 @@
     <string name="alias_restore_mismatch">Ten adres nie pasuje do tego aliasu. Sprawdź nagłówek dostarczonej wiadomości.</string>
     <string name="alias_restore_failed">Nie udało się odzyskać aliasu. Spróbuj ponownie.</string>
     <string name="password_change_web_required">Aby zmienić hasło do tego konta, użyj aplikacji internetowej Aster Mail.</string>
+    <string name="settings_plan_top_tier_title">Masz najwyższy plan</string>
+    <string name="settings_plan_top_tier_note">%1$s zawiera najwięcej miejsca ze wszystkich planów. Jeśli potrzebujesz więcej miejsca, możesz dodać dodatkową przestrzeń.</string>
+    <string name="settings_plan_current_title">Masz plan %1$s</string>
+    <string name="settings_plan_current_note">Wykorzystano %1$d%% miejsca, więc masz go jeszcze sporo.</string>
+    <string name="settings_plan_storage_tight_note">Wykorzystano %1$d%% miejsca. %2$s daje więcej przestrzeni.</string>
+    <string name="settings_storage_addons_monthly_note">Dodatkowa przestrzeń jest rozliczana co miesiąc, nawet jeśli plan rozliczasz rocznie.</string>
 </resources>
