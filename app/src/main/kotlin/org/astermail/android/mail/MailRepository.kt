@@ -353,10 +353,13 @@ class MailRepository @Inject constructor(
     private val ratchet_decryptor: org.astermail.android.mail.ratchet.RatchetDecryptor,
     private val ratchet_encryptor: org.astermail.android.mail.ratchet.RatchetEncryptor,
     private val ratchet_plaintext_cache: org.astermail.android.mail.ratchet.RatchetPlaintextCache,
-    private val pending_send_dao: PendingSendDao,
+    private val pending_send_dao_provider: dagger.Lazy<PendingSendDao>,
     @ApplicationContext private val context: Context,
     private val auth_repository: dagger.Lazy<org.astermail.android.auth.AuthRepository>,
 ) {
+    private val pending_send_dao: PendingSendDao
+        get() = pending_send_dao_provider.get()
+
     @Volatile
     private var custom_categories: List<org.astermail.android.api.preferences.CustomCategoryRule> =
         emptyList()

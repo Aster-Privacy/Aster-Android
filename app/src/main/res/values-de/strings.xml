@@ -2828,4 +2828,10 @@
     <string name="switch_yearly_message">Dein Tarif kostet %1$s pro Jahr, was %2$d%% gegenüber der monatlichen Abrechnung spart.</string>
     <string name="switch_yearly_save">Zu jährlich wechseln und %d%% sparen</string>
     <string name="switch_yearly_title">Zu jährlicher Abrechnung wechseln</string>
+    <string name="settings_plan_top_tier_title">Du hast den höchsten Tarif</string>
+    <string name="settings_plan_top_tier_note">%1$s bietet den größten Speicher aller Tarife. Wenn du mehr Platz brauchst, kannst du zusätzlichen Speicher hinzufügen.</string>
+    <string name="settings_plan_current_title">Du nutzt %1$s</string>
+    <string name="settings_plan_current_note">Du hast %1$d%% deines Speichers belegt und hast noch reichlich Platz.</string>
+    <string name="settings_plan_storage_tight_note">Du hast %1$d%% deines Speichers belegt. %2$s bietet dir mehr Platz.</string>
+    <string name="settings_storage_addons_monthly_note">Zusätzlicher Speicher wird monatlich abgerechnet, auch wenn dein Tarif jährlich abgerechnet wird.</string>
 </resources>

@@ -43,7 +43,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -89,6 +93,24 @@ fun FilteredInboxScreen(
     }
     LaunchedEffect(requested_folder) {
         mail_vm.load_inbox(requested_folder, force = true)
+    }
+
+    val lifecycle_owner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycle_owner, requested_folder) {
+        var was_backgrounded = false
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_PAUSE) {
+                was_backgrounded = true
+                return@LifecycleEventObserver
+            }
+            if (event == Lifecycle.Event.ON_RESUME) {
+                if (!was_backgrounded) return@LifecycleEventObserver
+                was_backgrounded = false
+                mail_vm.load_inbox(requested_folder, force = true)
+            }
+        }
+        lifecycle_owner.lifecycle.addObserver(observer)
+        onDispose { lifecycle_owner.lifecycle.removeObserver(observer) }
     }
 
     LaunchedEffect(list_state, requested_folder) {

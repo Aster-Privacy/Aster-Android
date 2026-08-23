@@ -106,7 +106,7 @@ class DraftAutoSaveInstrumentedTest {
             ratchet_decryptor = mockk(relaxed = true),
             ratchet_encryptor = mockk(relaxed = true),
             ratchet_plaintext_cache = mockk(relaxed = true),
-            pending_send_dao = FakePendingSendDao(),
+            pending_send_dao_provider = dagger.Lazy { FakePendingSendDao() },
             context = InstrumentationRegistry.getInstrumentation().targetContext,
             auth_repository = dagger.Lazy { mockk(relaxed = true) },
         )

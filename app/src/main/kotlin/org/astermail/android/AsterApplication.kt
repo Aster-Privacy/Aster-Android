@@ -41,33 +41,73 @@ import org.astermail.android.api.BuildConfig as ApiBuildConfig
 import org.astermail.android.security.LockdownStore
 import org.astermail.android.storage.TokenStore
 
+private val secure_prefs_namespaces = listOf(
+    "aster_tokens_v1",
+    "aster_session_keys_v1",
+    "aster_accounts_v1",
+    "aster_app_lock",
+    "aster_db_meta",
+    "aster_session_snapshots_v1",
+    "aster_trusted_devices_v1",
+    "aster_preferences_cache",
+    "aster_ratchet_state_v1",
+    "aster_ratchet_identity_pins",
+    "aster_ratchet_plaintext_v1",
+    "aster_unifiedpush_secure",
+    "aster_app_lock_biometric",
+)
+
 @HiltAndroidApp
 class AsterApplication : Application(), ImageLoaderFactory {
 
     override fun onCreate() {
         super.onCreate()
+        start_secure_prefs_warm()
         runCatching {
             val ep = EntryPointAccessors.fromApplication(this, ImageLoaderEntryPoint::class.java)
-            val resolver = ep.aster_profile_resolver()
-            org.astermail.android.mail.AsterProfileResolverHolder.shared = resolver
-            runCatching {
-                val account_store = org.astermail.android.storage.AccountStore(applicationContext)
-                for (acc in account_store.get_all()) {
-                    resolver.prime(
-                        email = acc.email,
-                        display_name = acc.display_name,
-                        profile_picture = acc.profile_picture,
-                        profile_color = acc.profile_color,
-                    )
-                }
-            }
+            org.astermail.android.mail.AsterProfileResolverHolder.shared = ep.aster_profile_resolver()
         }
         register_app_lock_lifecycle()
         runCatching { register_folder_lock_hooks() }
-        runCatching { org.astermail.android.notifications.MailPollingWorker.create_channel(this) }
-        runCatching { org.astermail.android.notifications.LoginAlertNotifier.create_channel(this) }
-        runCatching { org.astermail.android.notifications.MailPollingWorker.enqueue(this) }
-        runCatching { org.astermail.android.notifications.UnifiedPushState.sync_registration(this) }
+        start_deferred_startup()
+    }
+
+    private fun start_secure_prefs_warm() {
+        Thread {
+            runCatching {
+                org.astermail.android.storage.SecurePrefs.warm(this, secure_prefs_namespaces)
+            }
+        }.apply { name = "aster-prefs-warm" }.start()
+    }
+
+    private fun start_deferred_startup() {
+        Thread {
+            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND)
+            runCatching { prime_profile_resolver() }
+            runCatching { org.astermail.android.notifications.MailPollingWorker.create_channel(this) }
+            runCatching { org.astermail.android.notifications.LoginAlertNotifier.create_channel(this) }
+            runCatching { org.astermail.android.notifications.MailPollingWorker.enqueue(this) }
+            runCatching { org.astermail.android.notifications.UnifiedPushState.sync_registration(this) }
+            runCatching {
+                EntryPointAccessors.fromApplication(this, ImageLoaderEntryPoint::class.java)
+                    .database()
+                    .get()
+            }
+        }.apply { name = "aster-startup" }.start()
+    }
+
+    private fun prime_profile_resolver() {
+        val ep = EntryPointAccessors.fromApplication(this, ImageLoaderEntryPoint::class.java)
+        val resolver = ep.aster_profile_resolver()
+        org.astermail.android.mail.AsterProfileResolverHolder.shared = resolver
+        for (acc in ep.account_store().get_all()) {
+            resolver.prime(
+                email = acc.email,
+                display_name = acc.display_name,
+                profile_picture = acc.profile_picture,
+                profile_color = acc.profile_color,
+            )
+        }
     }
 
     private fun register_app_lock_lifecycle() {
@@ -124,6 +164,8 @@ class AsterApplication : Application(), ImageLoaderFactory {
     @InstallIn(SingletonComponent::class)
     interface ImageLoaderEntryPoint {
         fun token_store(): TokenStore
+        fun account_store(): org.astermail.android.storage.AccountStore
+        fun database(): dagger.Lazy<org.astermail.android.storage.search.AsterDatabase>
         fun aster_profile_resolver(): org.astermail.android.mail.AsterProfileResolver
         fun labels_api(): org.astermail.android.api.labels.LabelsApi
         fun search_index_manager(): org.astermail.android.mail.SearchIndexManager

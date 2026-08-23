@@ -152,7 +152,7 @@ class MailRepositoryTest {
             ratchet_decryptor = ratchet_decryptor,
             ratchet_encryptor = ratchet_encryptor,
             ratchet_plaintext_cache = ratchet_plaintext_cache,
-            pending_send_dao = pending_send_dao,
+            pending_send_dao_provider = dagger.Lazy { pending_send_dao },
             context = context,
             auth_repository = dagger.Lazy { mockk(relaxed = true) },
         )

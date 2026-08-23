@@ -2843,4 +2843,10 @@
     <string name="switch_yearly_message">Twój plan kosztuje %1$s rocznie, co pozwala zaoszczędzić %2$d%% w porównaniu z płatnością miesięczną.</string>
     <string name="switch_yearly_save">Przejdź na płatność roczną i zaoszczędź %d%%</string>
     <string name="switch_yearly_title">Zmień rozliczenie na roczne</string>
+    <string name="settings_plan_top_tier_title">Masz najwyższy plan</string>
+    <string name="settings_plan_top_tier_note">%1$s zawiera najwięcej miejsca ze wszystkich planów. Jeśli potrzebujesz więcej miejsca, możesz dodać dodatkową przestrzeń.</string>
+    <string name="settings_plan_current_title">Masz plan %1$s</string>
+    <string name="settings_plan_current_note">Wykorzystano %1$d%% miejsca, więc masz go jeszcze sporo.</string>
+    <string name="settings_plan_storage_tight_note">Wykorzystano %1$d%% miejsca. %2$s daje więcej przestrzeni.</string>
+    <string name="settings_storage_addons_monthly_note">Dodatkowa przestrzeń jest rozliczana co miesiąc, nawet jeśli plan rozliczasz rocznie.</string>
 </resources>

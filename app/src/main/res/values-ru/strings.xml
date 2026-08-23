@@ -2843,4 +2843,10 @@
     <string name="switch_yearly_message">Оплата тарифа составит %1$s в год, что экономит %2$d%% по сравнению с ежемесячной оплатой.</string>
     <string name="switch_yearly_save">Перейдите на годовую оплату и сэкономьте %d%%</string>
     <string name="switch_yearly_title">Переход на годовую оплату</string>
+    <string name="settings_plan_top_tier_title">У вас самый высокий тарифный план</string>
+    <string name="settings_plan_top_tier_note">%1$s включает максимальный объём хранилища среди всех тарифов. Если нужно больше места, можно добавить дополнительное хранилище.</string>
+    <string name="settings_plan_current_title">У вас тариф %1$s</string>
+    <string name="settings_plan_current_note">Использовано %1$d%% хранилища, свободного места ещё достаточно.</string>
+    <string name="settings_plan_storage_tight_note">Использовано %1$d%% хранилища. %2$s даёт больше места.</string>
+    <string name="settings_storage_addons_monthly_note">Дополнительное хранилище оплачивается ежемесячно, даже если тариф оплачивается ежегодно.</string>
 </resources>

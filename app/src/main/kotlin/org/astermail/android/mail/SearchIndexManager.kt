@@ -48,14 +48,14 @@ data class IndexProgress(
 
 @Singleton
 class SearchIndexManager @Inject constructor(
-    private val db: AsterDatabase,
+    private val db_provider: dagger.Lazy<AsterDatabase>,
     private val mail_api: MailApi,
     private val repository: MailRepository,
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val mutex = Mutex()
-    private val dao: DecryptedMailDao = db.decrypted_mail_dao()
+    private val dao: DecryptedMailDao by lazy { db_provider.get().decrypted_mail_dao() }
 
     private val _index_ready = MutableStateFlow(false)
     val index_ready: StateFlow<Boolean> = _index_ready.asStateFlow()

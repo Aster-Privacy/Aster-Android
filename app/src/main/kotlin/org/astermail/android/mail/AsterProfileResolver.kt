@@ -50,8 +50,11 @@ object AsterProfileResolverHolder {
 
 @Singleton
 class AsterProfileResolver @Inject constructor(
-    private val auth_api: AuthApi,
+    private val auth_api_provider: dagger.Lazy<AuthApi>,
 ) {
+    private val auth_api: AuthApi
+        get() = auth_api_provider.get()
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val _profiles = MutableStateFlow<Map<String, PublicProfile?>>(emptyMap())
     val profiles: StateFlow<Map<String, PublicProfile?>> = _profiles.asStateFlow()

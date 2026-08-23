@@ -387,13 +387,15 @@ fun InboxScreen(
 
     val lifecycle_owner = LocalLifecycleOwner.current
     DisposableEffect(lifecycle_owner) {
-        var initial_resume_replayed = false
+        var was_backgrounded = false
         val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_PAUSE) {
+                was_backgrounded = true
+                return@LifecycleEventObserver
+            }
             if (event == Lifecycle.Event.ON_RESUME) {
-                if (!initial_resume_replayed) {
-                    initial_resume_replayed = true
-                    return@LifecycleEventObserver
-                }
+                if (!was_backgrounded) return@LifecycleEventObserver
+                was_backgrounded = false
                 settings_vm.load_preferences()
                 settings_vm.load_tags()
                 mail_vm.load_inbox(current_folder, force = true)

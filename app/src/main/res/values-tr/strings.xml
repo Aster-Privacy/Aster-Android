@@ -2827,4 +2827,10 @@
     <string name="switch_yearly_message">Planınız yılda %1$s olarak faturalandırılır ve aylık faturalandırmaya göre %2$d%% tasarruf sağlar.</string>
     <string name="switch_yearly_save">Yıllığa geçin, %d%% tasarruf edin</string>
     <string name="switch_yearly_title">Yıllık faturalandırmaya geç</string>
+    <string name="settings_plan_top_tier_title">En üst plandasınız</string>
+    <string name="settings_plan_top_tier_note">%1$s, tüm planlar arasında en fazla depolama alanını içerir. Daha fazla alana ihtiyacınız olursa ek depolama ekleyebilirsiniz.</string>
+    <string name="settings_plan_current_title">%1$s planındasınız</string>
+    <string name="settings_plan_current_note">Depolama alanınızın %%%1$d kadarını kullandınız, bol bol yeriniz var.</string>
+    <string name="settings_plan_storage_tight_note">Depolama alanınızın %%%1$d kadarını kullandınız. %2$s size daha fazla alan sunar.</string>
+    <string name="settings_storage_addons_monthly_note">Ek depolama, planınız yıllık faturalandırılsa bile aylık faturalandırılır.</string>
 </resources>

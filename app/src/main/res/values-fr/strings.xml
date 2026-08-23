@@ -2854,4 +2854,10 @@
     <string name="switch_yearly_message">Votre offre est facturée %1$s par an, ce qui vous fait économiser %2$d%% par rapport à la facturation mensuelle.</string>
     <string name="switch_yearly_save">Passez à l\'année et économisez %d%%</string>
     <string name="switch_yearly_title">Passer à la facturation annuelle</string>
+    <string name="settings_plan_top_tier_title">Vous avez le forfait le plus élevé</string>
+    <string name="settings_plan_top_tier_note">%1$s inclut le plus grand stockage de tous les forfaits. Si vous avez besoin de plus d\'espace, vous pouvez ajouter du stockage supplémentaire.</string>
+    <string name="settings_plan_current_title">Vous utilisez %1$s</string>
+    <string name="settings_plan_current_note">Vous avez utilisé %1$d %% de votre stockage, il vous reste donc de la place.</string>
+    <string name="settings_plan_storage_tight_note">Vous avez utilisé %1$d%% de votre stockage. %2$s vous offre plus d\'espace.</string>
+    <string name="settings_storage_addons_monthly_note">Le stockage supplémentaire est facturé chaque mois, même si votre forfait est facturé chaque année.</string>
 </resources>

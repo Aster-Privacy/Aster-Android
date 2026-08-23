@@ -127,7 +127,6 @@ private data class plan_tier(
     val code: String,
     @StringRes val name_res: Int,
     @StringRes val tagline_res: Int,
-    val recommended: Boolean,
     @StringRes val lead_res: Int?,
     val features: List<Int>,
 )
@@ -166,7 +165,6 @@ private val plan_tiers = listOf(
         code = "star",
         name_res = R.string.plan_name_star,
         tagline_res = R.string.settings_plan_star_tagline,
-        recommended = false,
         lead_res = null,
         features = listOf(
             R.string.settings_plan_bullet_star_storage,
@@ -190,7 +188,6 @@ private val plan_tiers = listOf(
         code = "nova",
         name_res = R.string.plan_name_nova,
         tagline_res = R.string.settings_plan_nova_tagline,
-        recommended = true,
         lead_res = R.string.settings_plan_lead_star,
         features = listOf(
             R.string.settings_plan_bullet_nova_storage,
@@ -214,7 +211,6 @@ private val plan_tiers = listOf(
         code = "supernova",
         name_res = R.string.plan_name_supernova,
         tagline_res = R.string.settings_plan_supernova_tagline,
-        recommended = false,
         lead_res = R.string.settings_plan_lead_nova,
         features = listOf(
             R.string.settings_plan_bullet_supernova_storage,
@@ -234,7 +230,6 @@ private val plan_tiers = listOf(
         code = "duo",
         name_res = R.string.plan_name_duo,
         tagline_res = R.string.settings_plan_duo_tagline,
-        recommended = false,
         lead_res = null,
         features = duo_features,
     ),
@@ -242,7 +237,6 @@ private val plan_tiers = listOf(
         code = "family",
         name_res = R.string.plan_name_family,
         tagline_res = R.string.settings_plan_family_tagline,
-        recommended = false,
         lead_res = null,
         features = family_features,
     ),
@@ -279,6 +273,7 @@ fun SubscriptionsScreen(
 
     LaunchedEffect(Unit) {
         vm.load_subscription()
+        vm.load_storage()
         billing_vm.load_subscription()
         billing_vm.load_plans()
         billing_vm.load_history()
@@ -378,6 +373,18 @@ fun SubscriptionsScreen(
             else -> plan_tiers.firstOrNull { it.code == current_code }?.features ?: free_features
         }
     }
+    val storage_overview = state.storage
+    val recommendation = compute_plan_recommendation(
+        current_plan_code = current_code,
+        storage_used_bytes = storage_overview?.used_bytes ?: 0L,
+        storage_limit_bytes = storage_overview?.total_bytes ?: 0L,
+    )
+    val current_plan_name = sub?.effective_plan_name
+        ?: plan_tiers.firstOrNull { it.code == current_code }?.let { stringResource(it.name_res) }
+    val recommended_tier_name = plan_tiers
+        .firstOrNull { it.code == recommendation.recommended_plan_code }
+        ?.let { stringResource(it.name_res) }
+
     val default_interval = stringResource(R.string.settings_interval_default)
     val plan_free_label = stringResource(R.string.plan_name_free)
     var billing_interval by remember { mutableStateOf("year") }
@@ -780,6 +787,11 @@ fun SubscriptionsScreen(
             on_select = { billing_interval = it },
         )
         v_gap(AsterSpacing.md)
+        plan_recommendation_banner(
+            recommendation = recommendation,
+            current_plan_name = current_plan_name,
+            recommended_tier_name = recommended_tier_name,
+        )
         val current_rank = tier_rank(current_code)
         val paid_stripe_current = current_rank >= 0 && (sub?.effective_price_cents ?: 0) > 0
         plan_tiers.forEach { tier ->
@@ -789,6 +801,7 @@ fun SubscriptionsScreen(
                 billing_interval = billing_interval,
                 is_current = tier.code == current_code,
                 is_downgrade = is_downgrade,
+                is_recommended = recommendation.recommended_plan_code == tier.code,
                 monthly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, tier.code, "month"),
                 yearly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, tier.code, "year"),
                 currency = detected_currency,
@@ -819,6 +832,12 @@ fun SubscriptionsScreen(
                         text = stringResource(R.string.storage_addons_description),
                         color = colors.text_secondary,
                         fontSize = 13.sp,
+                    )
+                    Spacer(Modifier.height(AsterSpacing.xs))
+                    Text(
+                        text = stringResource(R.string.settings_storage_addons_monthly_note),
+                        color = colors.text_tertiary,
+                        fontSize = 12.sp,
                     )
                     Spacer(Modifier.height(AsterSpacing.md))
                     addons!!.available_addons.forEachIndexed { idx, addon ->
@@ -1663,11 +1682,63 @@ private fun aster_plan_badge(
 }
 
 @Composable
+internal fun plan_recommendation_banner(
+    recommendation: plan_recommendation,
+    current_plan_name: String?,
+    recommended_tier_name: String?,
+) {
+    val colors = AsterMaterial.colors
+    if (!recommendation.is_paid || current_plan_name.isNullOrBlank()) return
+
+    val show_storage_tight =
+        !recommendation.is_top_tier &&
+            recommendation.storage_is_tight &&
+            recommended_tier_name != null
+
+    AsterCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(AsterSpacing.lg)) {
+            Text(
+                text = if (recommendation.is_top_tier) {
+                    stringResource(R.string.settings_plan_top_tier_title)
+                } else {
+                    stringResource(R.string.settings_plan_current_title, current_plan_name)
+                },
+                color = colors.text_primary,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(Modifier.height(AsterSpacing.xs))
+            Text(
+                text = when {
+                    recommendation.is_top_tier -> stringResource(
+                        R.string.settings_plan_top_tier_note,
+                        current_plan_name,
+                    )
+                    show_storage_tight -> stringResource(
+                        R.string.settings_plan_storage_tight_note,
+                        recommendation.storage_percent.toInt(),
+                        recommended_tier_name.orEmpty(),
+                    )
+                    else -> stringResource(
+                        R.string.settings_plan_current_note,
+                        recommendation.storage_percent.toInt(),
+                    )
+                },
+                color = colors.text_secondary,
+                fontSize = 13.sp,
+            )
+        }
+    }
+    v_gap(AsterSpacing.md)
+}
+
+@Composable
 private fun plan_tier_card(
     tier: plan_tier,
     billing_interval: String,
     is_current: Boolean,
     is_downgrade: Boolean = false,
+    is_recommended: Boolean = false,
     monthly_cents: Int? = null,
     yearly_cents: Int? = null,
     currency: String,
@@ -1682,7 +1753,7 @@ private fun plan_tier_card(
     val amount_cents = if (is_yearly) yearly_cents else monthly_cents
     val price_known = amount_cents != null
     AsterCard(modifier = Modifier.fillMaxWidth()) {
-        if (is_current || tier.recommended) {
+        if (is_current || is_recommended) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

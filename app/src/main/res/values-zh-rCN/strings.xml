@@ -2819,4 +2819,10 @@
     <string name="switch_yearly_message">您的套餐将按每年 %1$s 结算，比按月付费节省 %2$d%%。</string>
     <string name="switch_yearly_save">切换为按年付费，节省 %d%%</string>
     <string name="switch_yearly_title">切换为按年结算</string>
+    <string name="settings_plan_top_tier_title">你已使用最高级方案</string>
+    <string name="settings_plan_top_tier_note">%1$s 包含所有方案中最大的存储空间。如果需要更多空间，可以添加额外存储。</string>
+    <string name="settings_plan_current_title">你正在使用 %1$s</string>
+    <string name="settings_plan_current_note">你已使用 %1$d%% 的存储空间，空间仍然充足。</string>
+    <string name="settings_plan_storage_tight_note">你已使用 %1$d%% 的存储空间。%2$s 可提供更多空间。</string>
+    <string name="settings_storage_addons_monthly_note">即使你的方案按年计费，额外存储也按月计费。</string>
 </resources>

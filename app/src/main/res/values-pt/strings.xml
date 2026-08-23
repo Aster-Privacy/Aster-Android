@@ -2827,4 +2827,10 @@
     <string name="switch_yearly_message">O seu plano é cobrado em %1$s por ano, o que economiza %2$d%% em relação ao faturamento mensal.</string>
     <string name="switch_yearly_save">Mudar para anual e economizar %d%%</string>
     <string name="switch_yearly_title">Mudar para faturamento anual</string>
+    <string name="settings_plan_top_tier_title">Você está no plano mais alto</string>
+    <string name="settings_plan_top_tier_note">%1$s inclui o maior armazenamento de todos os planos. Se precisar de mais espaço, pode adicionar armazenamento extra.</string>
+    <string name="settings_plan_current_title">Você está no %1$s</string>
+    <string name="settings_plan_current_note">Você usou %1$d%% do seu armazenamento, então ainda tem espaço de sobra.</string>
+    <string name="settings_plan_storage_tight_note">Você usou %1$d%% do seu armazenamento. %2$s oferece mais espaço.</string>
+    <string name="settings_storage_addons_monthly_note">O armazenamento adicional é cobrado mensalmente, mesmo que seu plano seja cobrado anualmente.</string>
 </resources>

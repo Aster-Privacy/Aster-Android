@@ -55,9 +55,15 @@ class AuthGateViewModel @Inject constructor(
 
     init {
         if (auth_repository.is_signed_in.value) {
-            runCatching { auth_repository.try_recover_identity_key() }
+            viewModelScope.launch {
+                withContext(Dispatchers.Default) {
+                    runCatching { auth_repository.try_recover_identity_key() }
+                }
+                _is_ready.value = true
+            }
+        } else {
+            _is_ready.value = true
         }
-        _is_ready.value = true
         if (auth_repository.is_signed_in.value) {
             viewModelScope.launch {
                 val csrf_ok = auth_repository.ensure_csrf_ready()

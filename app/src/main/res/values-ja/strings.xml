@@ -2819,4 +2819,10 @@
     <string name="switch_yearly_message">年 %1$s の請求になり、月払いに比べて %2$d%% お得です。</string>
     <string name="switch_yearly_save">年払いに変更して %d%% お得に</string>
     <string name="switch_yearly_title">年払いに変更</string>
+    <string name="settings_plan_top_tier_title">最上位プランをご利用中です</string>
+    <string name="settings_plan_top_tier_note">%1$sはすべてのプランの中で最大の容量を含みます。さらに容量が必要な場合は、追加ストレージを購入できます。</string>
+    <string name="settings_plan_current_title">%1$sをご利用中です</string>
+    <string name="settings_plan_current_note">ストレージの%1$d%%を使用しています。まだ十分な空きがあります。</string>
+    <string name="settings_plan_storage_tight_note">ストレージの%1$d%%を使用しています。%2$sならもっと余裕があります。</string>
+    <string name="settings_storage_addons_monthly_note">追加ストレージは、プランが年払いの場合でも月ごとに請求されます。</string>
 </resources>

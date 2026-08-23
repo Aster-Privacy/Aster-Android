@@ -2819,4 +2819,10 @@
     <string name="switch_yearly_message">연 %1$s로 결제되며, 월간 결제보다 %2$d%% 절약됩니다.</string>
     <string name="switch_yearly_save">연간 결제로 전환하고 %d%% 절약하기</string>
     <string name="switch_yearly_title">연간 결제로 전환</string>
+    <string name="settings_plan_top_tier_title">최상위 요금제를 사용 중입니다</string>
+    <string name="settings_plan_top_tier_note">%1$s은 모든 요금제 중 가장 큰 저장 공간을 포함합니다. 공간이 더 필요하면 추가 저장 공간을 구매할 수 있습니다.</string>
+    <string name="settings_plan_current_title">%1$s 요금제를 사용 중입니다</string>
+    <string name="settings_plan_current_note">저장 공간의 %1$d%%를 사용했으며, 아직 여유가 넉넉합니다.</string>
+    <string name="settings_plan_storage_tight_note">저장 공간의 %1$d%%를 사용했습니다. %2$s에서는 공간이 더 넉넉합니다.</string>
+    <string name="settings_storage_addons_monthly_note">추가 저장 공간은 요금제를 연간 결제하더라도 매월 청구됩니다.</string>
 </resources>
