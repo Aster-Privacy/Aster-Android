@@ -398,6 +398,7 @@ fun InboxScreen(
                 was_backgrounded = false
                 settings_vm.load_preferences()
                 settings_vm.load_tags()
+                settings_vm.load_subscription(force = false)
                 mail_vm.load_inbox(current_folder, force = true)
                 mail_vm.load_stats(force = true)
             }
