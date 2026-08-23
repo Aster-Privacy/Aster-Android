@@ -2865,4 +2865,5 @@
     <string name="settings_plan_current_note">لقد استخدمت %1$d%% من مساحة التخزين، ولا تزال لديك مساحة وافرة.</string>
     <string name="settings_plan_storage_tight_note">لقد استخدمت %1$d%% من مساحة التخزين. توفر لك %2$s مساحة أكبر.</string>
     <string name="settings_storage_addons_monthly_note">تتم فوترة التخزين الإضافي شهريًا، حتى إذا كانت خطتك تُفوتر سنويًا.</string>
+    <string name="autorenew_notice_short">تتجدد خطتك تلقائيًا عند الدفع بالبطاقة. لتجنب الرسوم التالية، ألغِ الخطة من الإعدادات قبل تاريخ التجديد.</string>
 </resources>

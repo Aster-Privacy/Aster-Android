@@ -2849,4 +2849,5 @@
     <string name="settings_plan_current_note">Wykorzystano %1$d%% miejsca, więc masz go jeszcze sporo.</string>
     <string name="settings_plan_storage_tight_note">Wykorzystano %1$d%% miejsca. %2$s daje więcej przestrzeni.</string>
     <string name="settings_storage_addons_monthly_note">Dodatkowa przestrzeń jest rozliczana co miesiąc, nawet jeśli plan rozliczasz rocznie.</string>
+    <string name="autorenew_notice_short">Przy płatności kartą plan odnawia się automatycznie. Aby uniknąć kolejnej opłaty, anuluj go w Ustawieniach przed datą odnowienia.</string>
 </resources>

@@ -2833,4 +2833,5 @@
     <string name="settings_plan_current_note">Hai usato il %1$d%% del tuo spazio, quindi hai ancora spazio in abbondanza.</string>
     <string name="settings_plan_storage_tight_note">Hai usato il %1$d%% del tuo spazio. %2$s ti offre più spazio.</string>
     <string name="settings_storage_addons_monthly_note">Lo spazio aggiuntivo viene fatturato ogni mese, anche se il tuo piano è fatturato ogni anno.</string>
+    <string name="autorenew_notice_short">Il tuo piano si rinnova automaticamente quando paghi con carta. Per evitare il prossimo addebito, annullalo in Impostazioni prima della data di rinnovo.</string>
 </resources>

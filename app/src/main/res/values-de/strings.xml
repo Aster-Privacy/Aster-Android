@@ -2834,4 +2834,5 @@
     <string name="settings_plan_current_note">Du hast %1$d%% deines Speichers belegt und hast noch reichlich Platz.</string>
     <string name="settings_plan_storage_tight_note">Du hast %1$d%% deines Speichers belegt. %2$s bietet dir mehr Platz.</string>
     <string name="settings_storage_addons_monthly_note">Zusätzlicher Speicher wird monatlich abgerechnet, auch wenn dein Tarif jährlich abgerechnet wird.</string>
+    <string name="autorenew_notice_short">Ihr Tarif verlängert sich automatisch, wenn Sie mit Karte bezahlen. Um die nächste Abbuchung zu vermeiden, kündigen Sie ihn vor dem Verlängerungsdatum in den Einstellungen.</string>
 </resources>

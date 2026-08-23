@@ -2918,4 +2918,5 @@
     <string name="settings_plan_current_note">You\'ve used %1$d%% of your storage, so you have room to spare.</string>
     <string name="settings_plan_storage_tight_note">You\'ve used %1$d%% of your storage. %2$s gives you more room.</string>
     <string name="settings_storage_addons_monthly_note">Storage add-ons are billed monthly, even if your plan is billed yearly.</string>
+    <string name="autorenew_notice_short">Your plan renews automatically when you pay by card. To avoid the next charge, cancel in Settings before your renewal date.</string>
 </resources>

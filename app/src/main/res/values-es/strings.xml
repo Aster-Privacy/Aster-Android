@@ -2834,4 +2834,5 @@
     <string name="settings_plan_current_note">Has usado el %1$d%% de tu almacenamiento, así que te queda espacio de sobra.</string>
     <string name="settings_plan_storage_tight_note">Has usado el %1$d%% de tu almacenamiento. %2$s te da más espacio.</string>
     <string name="settings_storage_addons_monthly_note">El almacenamiento adicional se cobra mensualmente, aunque tu plan se cobre anualmente.</string>
+    <string name="autorenew_notice_short">Tu plan se renueva automáticamente cuando pagas con tarjeta. Para evitar el próximo cobro, cancélalo en Ajustes antes de la fecha de renovación.</string>
 </resources>

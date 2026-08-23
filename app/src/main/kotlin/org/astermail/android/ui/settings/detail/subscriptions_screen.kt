@@ -1445,6 +1445,12 @@ private fun payment_method_dialog(
                     subtitle = stringResource(R.string.payment_method_crypto_subtitle),
                     onClick = on_crypto,
                 )
+                Text(
+                    text = stringResource(R.string.autorenew_notice_short),
+                    color = colors.text_tertiary,
+                    fontSize = 11.sp,
+                    lineHeight = 15.sp,
+                )
             }
         },
         footer = {

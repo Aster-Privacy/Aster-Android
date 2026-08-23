@@ -2833,4 +2833,5 @@
     <string name="settings_plan_current_note">Je hebt %1$d%% van je opslag gebruikt, dus je hebt nog ruimte over.</string>
     <string name="settings_plan_storage_tight_note">Je hebt %1$d%% van je opslag gebruikt. %2$s geeft je meer ruimte.</string>
     <string name="settings_storage_addons_monthly_note">Extra opslag wordt maandelijks gefactureerd, ook als je abonnement jaarlijks wordt gefactureerd.</string>
+    <string name="autorenew_notice_short">Je abonnement wordt automatisch verlengd als je met een kaart betaalt. Zeg op in Instellingen vóór de verlengingsdatum om de volgende afschrijving te voorkomen.</string>
 </resources>

@@ -2825,4 +2825,5 @@
     <string name="settings_plan_current_note">ストレージの%1$d%%を使用しています。まだ十分な空きがあります。</string>
     <string name="settings_plan_storage_tight_note">ストレージの%1$d%%を使用しています。%2$sならもっと余裕があります。</string>
     <string name="settings_storage_addons_monthly_note">追加ストレージは、プランが年払いの場合でも月ごとに請求されます。</string>
+    <string name="autorenew_notice_short">カードでお支払いの場合、プランは自動更新されます。次回の請求を止めるには、更新日より前に「設定」で解約してください。</string>
 </resources>

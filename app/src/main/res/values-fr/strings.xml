@@ -2860,4 +2860,5 @@
     <string name="settings_plan_current_note">Vous avez utilisé %1$d %% de votre stockage, il vous reste donc de la place.</string>
     <string name="settings_plan_storage_tight_note">Vous avez utilisé %1$d%% de votre stockage. %2$s vous offre plus d\'espace.</string>
     <string name="settings_storage_addons_monthly_note">Le stockage supplémentaire est facturé chaque mois, même si votre forfait est facturé chaque année.</string>
+    <string name="autorenew_notice_short">Votre forfait se renouvelle automatiquement lorsque vous payez par carte. Pour éviter le prochain prélèvement, annulez-le dans Réglages avant la date de renouvellement.</string>
 </resources>

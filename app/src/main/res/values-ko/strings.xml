@@ -2825,4 +2825,5 @@
     <string name="settings_plan_current_note">저장 공간의 %1$d%%를 사용했으며, 아직 여유가 넉넉합니다.</string>
     <string name="settings_plan_storage_tight_note">저장 공간의 %1$d%%를 사용했습니다. %2$s에서는 공간이 더 넉넉합니다.</string>
     <string name="settings_storage_addons_monthly_note">추가 저장 공간은 요금제를 연간 결제하더라도 매월 청구됩니다.</string>
+    <string name="autorenew_notice_short">카드로 결제하면 요금제가 자동으로 갱신됩니다. 다음 결제를 방지하려면 갱신일 전에 설정에서 해지하세요.</string>
 </resources>
