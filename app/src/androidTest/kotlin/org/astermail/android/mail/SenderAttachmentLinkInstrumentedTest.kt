@@ -60,7 +60,7 @@ class SenderAttachmentLinkInstrumentedTest {
             ratchet_decryptor = mockk(relaxed = true),
             ratchet_encryptor = mockk(relaxed = true),
             ratchet_plaintext_cache = mockk(relaxed = true),
-            pending_send_dao = mockk(relaxed = true),
+            pending_send_dao_provider = dagger.Lazy { mockk(relaxed = true) },
             context = ApplicationProvider.getApplicationContext(),
             auth_repository = mockk(relaxed = true),
         )

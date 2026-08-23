@@ -105,7 +105,7 @@ class AuthRepository @Inject constructor(
     private val token_store: TokenStore,
     private val session_key_store: SessionKeyStore,
     private val account_store: AccountStore,
-    private val database: org.astermail.android.storage.search.AsterDatabase,
+    private val database_provider: dagger.Lazy<org.astermail.android.storage.search.AsterDatabase>,
     private val session_snapshot_store: SessionSnapshotStore,
     private val trusted_device_store: TrustedDeviceStore,
     private val mail_repository: org.astermail.android.mail.MailRepository,
@@ -113,6 +113,9 @@ class AuthRepository @Inject constructor(
     private val ratchet_bootstrap_service: org.astermail.android.mail.ratchet.RatchetBootstrapService,
     @ApplicationContext private val context: Context,
 ) {
+
+    private val database: org.astermail.android.storage.search.AsterDatabase
+        get() = database_provider.get()
 
     private val _is_signed_in = MutableStateFlow(token_store.access_token != null)
     val is_signed_in: StateFlow<Boolean> = _is_signed_in.asStateFlow()

@@ -182,6 +182,7 @@ dependencies {
     testImplementation(libs.json)
     testImplementation(libs.okhttp.mockwebserver)
     androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.security.crypto)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.mockk.android)
     androidTestImplementation(libs.kotlinx.coroutines.test)

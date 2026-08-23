@@ -104,7 +104,7 @@ class DecryptedMailCachePurgeInstrumentedTest {
             ),
         )
         val manager = SearchIndexManager(
-            database,
+            dagger.Lazy { database },
             mockk<MailApi>(relaxed = true),
             mockk<MailRepository>(relaxed = true),
             ApplicationProvider.getApplicationContext(),
