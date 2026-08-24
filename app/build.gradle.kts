@@ -154,8 +154,8 @@ dependencies {
 
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
-    implementation("net.zetetic:sqlcipher-android:4.16.0")
-    implementation("androidx.sqlite:sqlite:2.4.0")
+    implementation("net.zetetic:sqlcipher-android:4.18.0")
+    implementation("androidx.sqlite:sqlite:2.7.0")
 
     implementation(libs.work.runtime.ktx)
 
@@ -191,7 +191,7 @@ dependencies {
     androidTestImplementation(libs.okhttp.mockwebserver)
     debugImplementation("androidx.compose.ui:ui-test-manifest")
     "androidTestFullImplementation"("com.google.android.play:review:2.0.2")
-    "androidTestFullImplementation"("androidx.test:core-ktx:1.6.1")
+    "androidTestFullImplementation"("androidx.test:core-ktx:1.7.0")
 }
 
 if (!is_fdroid_build) {
