@@ -175,6 +175,7 @@ import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.mail.AttachmentKeyUnavailableException
 import org.astermail.android.mail.DecryptedReaction
 import org.astermail.android.mail.MailViewModel
+import org.astermail.android.mail.can_move_to_inbox
 import org.astermail.android.mail.body_starts_with
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
@@ -1737,6 +1738,7 @@ fun MailDetailScreen(
     }
 
     if (show_folder_sheet) {
+        val source_folder = inbox_state_for_folder.current_folder
         val settings_state by settings_vm.state.collectAsStateWithLifecycle()
         val unnamed_folder_label = stringResource(R.string.unnamed_folder)
         val folder_decrypt_failed_label = stringResource(R.string.folder_decrypt_failed)
@@ -1756,6 +1758,15 @@ fun MailDetailScreen(
                     ?: unnamed_folder_label
                 mail_vm.apply_label(email_id, picked.label_token, display)
                 show_folder_sheet = false
+            },
+            on_move_to_inbox = if (can_move_to_inbox(source_folder)) {
+                {
+                    mail_vm.move_to_inbox(listOf(email_id), source_folder)
+                    show_folder_sheet = false
+                    on_back()
+                }
+            } else {
+                null
             },
         )
     }
@@ -3730,6 +3741,7 @@ internal fun label_picker_sheet(
     on_close: () -> Unit,
     on_pick: (org.astermail.android.api.labels.LabelItem) -> Unit,
     applied_tokens: Set<String> = emptySet(),
+    on_move_to_inbox: (() -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
@@ -3757,6 +3769,15 @@ internal fun label_picker_sheet(
                     bottom = AsterSpacing.sm,
                 ),
             )
+            if (on_move_to_inbox != null) {
+                sheet_row(
+                    label = stringResource(R.string.folder_inbox),
+                    tint = colors.text_primary,
+                    icon = TablerIcons.Inbox,
+                    on_click = on_move_to_inbox,
+                )
+                AsterDivider(modifier = Modifier.padding(horizontal = AsterSpacing.xl))
+            }
             if (items.isEmpty()) {
                 Text(
                     text = empty_message,

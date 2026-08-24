@@ -2329,6 +2329,44 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    fun move_to_inbox(item_ids: List<String>, from_folder: String) {
+        if (item_ids.isEmpty()) return
+        when {
+            from_folder == "trash" -> restore_trash(item_ids)
+            from_folder == "spam" -> unmark_spam(item_ids)
+            folder_label_token(from_folder) != null ->
+                move_label_items_to_inbox(item_ids, folder_label_token(from_folder)!!)
+            else -> unarchive(item_ids)
+        }
+    }
+
+    private fun move_label_items_to_inbox(item_ids: List<String>, label_token: String) {
+        val previous = _inbox_state.value.items
+        val removed_items = previous.filter { it.id in item_ids }
+        val raw_items = lookup_raw_items(item_ids)
+        _inbox_state.value = _inbox_state.value.copy(
+            items = previous.filter { it.id !in item_ids },
+        )
+        pending_removed_ids.addAll(item_ids)
+        invalidate_caches(listOf("inbox", "archive", "label:$label_token"))
+        viewModelScope.launch {
+            try {
+                val removed = item_ids.all { repository.remove_label_from_item(it, label_token).isSuccess }
+                val restored = repository.unarchive(item_ids, raw_items).isSuccess
+                if (removed && restored) {
+                    runCatching { search_index_manager.mark_unarchived(item_ids) }
+                    emit_toast(context.getString(R.string.moved_to_inbox))
+                    load_stats()
+                } else {
+                    undo_local_restore(removed_items)
+                    emit_toast(context.getString(R.string.couldnt_move_to_inbox))
+                }
+            } finally {
+                pending_removed_ids.removeAll(item_ids.toSet())
+            }
+        }
+    }
+
     fun unarchive(item_ids: List<String>) {
         if (item_ids.isEmpty()) return
         val previous = _inbox_state.value.items
