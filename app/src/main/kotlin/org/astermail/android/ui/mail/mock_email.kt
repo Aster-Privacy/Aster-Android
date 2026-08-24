@@ -1241,6 +1241,8 @@ private fun strip_html_simple(text: String): String {
 
 private val time_of_day_format: ThreadLocal<SimpleDateFormat> =
     ThreadLocal.withInitial { SimpleDateFormat("h:mm a", Locale.getDefault()) }
+private val time_of_day_format_24h: ThreadLocal<SimpleDateFormat> =
+    ThreadLocal.withInitial { SimpleDateFormat("HH:mm", Locale.getDefault()) }
 private val weekday_format: ThreadLocal<SimpleDateFormat> =
     ThreadLocal.withInitial { SimpleDateFormat("EEE", Locale.getDefault()) }
 private val short_date_format: ThreadLocal<SimpleDateFormat> =
@@ -1249,14 +1251,20 @@ private val long_date_format: ThreadLocal<SimpleDateFormat> =
     ThreadLocal.withInitial { SimpleDateFormat("MMM d, yyyy", Locale.getDefault()) }
 private val full_datetime_format: ThreadLocal<SimpleDateFormat> =
     ThreadLocal.withInitial { SimpleDateFormat("MMM d, yyyy h:mm a", Locale.getDefault()) }
+private val full_datetime_format_24h: ThreadLocal<SimpleDateFormat> =
+    ThreadLocal.withInitial { SimpleDateFormat("MMM d, yyyy HH:mm", Locale.getDefault()) }
 
-fun Long.format_relative_time(yesterday_label: String = "Yesterday"): String {
+fun Long.format_relative_time(
+    yesterday_label: String = "Yesterday",
+    use_24h: Boolean = false,
+): String {
     val now = Calendar.getInstance()
     val then = Calendar.getInstance().apply { timeInMillis = this@format_relative_time }
     val same_year = now.get(Calendar.YEAR) == then.get(Calendar.YEAR)
     val same_day = same_year && now.get(Calendar.DAY_OF_YEAR) == then.get(Calendar.DAY_OF_YEAR)
     if (same_day) {
-        return time_of_day_format.get()!!.format(Date(this))
+        val formatter = if (use_24h) time_of_day_format_24h else time_of_day_format
+        return formatter.get()!!.format(Date(this))
     }
     val yesterday = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -1) }
     val is_yesterday = yesterday.get(Calendar.YEAR) == then.get(Calendar.YEAR) &&
@@ -1270,8 +1278,9 @@ fun Long.format_relative_time(yesterday_label: String = "Yesterday"): String {
     return formatter.get()!!.format(Date(this))
 }
 
-fun Long.format_full_datetime(): String {
-    return full_datetime_format.get()!!.format(Date(this))
+fun Long.format_full_datetime(use_24h: Boolean = false): String {
+    val formatter = if (use_24h) full_datetime_format_24h else full_datetime_format
+    return formatter.get()!!.format(Date(this))
 }
 
 private fun html_to_plain_text(html: String): String {

@@ -161,8 +161,9 @@ fun EmailRow(
     )
     val interaction_source = remember { MutableInteractionSource() }
     val yesterday_label = stringResource(R.string.yesterday)
-    val relative_time = remember(email.received_at, yesterday_label) {
-        email.received_at.format_relative_time(yesterday_label)
+    val uses_24h = android.text.format.DateFormat.is24HourFormat(LocalContext.current)
+    val relative_time = remember(email.received_at, yesterday_label, uses_24h) {
+        email.received_at.format_relative_time(yesterday_label, uses_24h)
     }
     val group_shape = remember(is_first, is_last) { inbox_group_shape(is_first, is_last) }
     val select_tap_label = stringResource(
@@ -434,8 +435,9 @@ fun ThreadInboxRow(
     )
     val interaction_source = remember { MutableInteractionSource() }
     val yesterday_label = stringResource(R.string.yesterday)
-    val relative_time = remember(email.received_at, yesterday_label) {
-        email.received_at.format_relative_time(yesterday_label)
+    val uses_24h = android.text.format.DateFormat.is24HourFormat(LocalContext.current)
+    val relative_time = remember(email.received_at, yesterday_label, uses_24h) {
+        email.received_at.format_relative_time(yesterday_label, uses_24h)
     }
     val group_shape = remember(is_first, is_last) { inbox_group_shape(is_first, is_last) }
     val select_tap_label = stringResource(

@@ -1989,7 +1989,10 @@ internal fun expanded_message(
             Spacer(Modifier.width(AsterSpacing.sm))
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = msg.timestamp.format_relative_time(stringResource(R.string.yesterday)),
+                    text = msg.timestamp.format_relative_time(
+                        stringResource(R.string.yesterday),
+                        android.text.format.DateFormat.is24HourFormat(LocalContext.current),
+                    ),
                     color = colors.text_muted,
                     fontSize = 12.sp,
                     maxLines = 1,
@@ -2061,7 +2064,9 @@ internal fun expanded_message(
                 reply_to = details_reply_to,
                 is_encrypted = msg.is_e2e_encrypted,
                 tracker_count = tracker_count,
-                date_text = msg.timestamp.format_full_datetime(),
+                date_text = msg.timestamp.format_full_datetime(
+                    android.text.format.DateFormat.is24HourFormat(LocalContext.current),
+                ),
                 received_on = received_on,
                 authentication = if (msg.item_type == "received" &&
                     (msg.spf_result != null || msg.dkim_result != null || msg.dmarc_result != null)
@@ -3431,7 +3436,10 @@ private fun collapsed_message(
                     )
                     Spacer(Modifier.width(AsterSpacing.sm))
                     Text(
-                        text = msg.timestamp.format_relative_time(stringResource(R.string.yesterday)),
+                        text = msg.timestamp.format_relative_time(
+                            stringResource(R.string.yesterday),
+                            android.text.format.DateFormat.is24HourFormat(LocalContext.current),
+                        ),
                         color = colors.text_muted,
                         fontSize = 12.sp,
                         maxLines = 1,
