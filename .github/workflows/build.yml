@@ -1,14 +1,7 @@
 name: build
 
 on:
-  push:
-    paths:
-      - '**/*.kt'
-      - '**/*.kts'
-      - '**/*.toml'
-      - 'gradle/**'
-      - 'gradlew'
-      - '.github/workflows/build.yml'
+  workflow_dispatch:
   pull_request:
     paths:
       - '**/*.kt'
@@ -17,7 +10,13 @@ on:
       - 'gradle/**'
       - 'gradlew'
       - '.github/workflows/build.yml'
-  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
 jobs:
   build:
@@ -32,12 +31,12 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
-      - run: ./gradlew assembleFullRelease assembleFdroidRelease
-      - uses: actions/upload-artifact@v4
+
+      - name: build both flavors in one invocation
+        run: ./gradlew -Pfdroid assembleFullRelease assembleFdroidRelease
+
+      - name: upload unsigned fdroid apk
+        uses: actions/upload-artifact@v4
         with:
-          name: full-release
-          path: app/build/outputs/apk/full/release/*.apk
-      - uses: actions/upload-artifact@v4
-        with:
-          name: fdroid-release
-          path: app/build/outputs/apk/fdroid/release/*.apk
+          name: fdroid-unsigned
+          path: app/build/outputs/apk/fdroid/release/app-fdroid-release-unsigned.apk

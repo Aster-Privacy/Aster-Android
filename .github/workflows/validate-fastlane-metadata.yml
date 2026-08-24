@@ -5,6 +5,8 @@ on:
     paths:
       - 'fastlane/metadata/**'
   push:
+    branches:
+      - '**'
     paths:
       - 'fastlane/metadata/**'
 
