@@ -92,11 +92,11 @@ class LabelIconCatalogTest {
     }
 
     @Test
-    fun no_two_catalog_keys_share_a_misleading_glyph() {
+    fun every_catalog_entry_has_its_own_glyph() {
         val duplicates = label_icon_catalog
             .groupBy { it.second }
             .filterValues { it.size > 1 }
             .mapValues { entry -> entry.value.map { it.first }.sorted() }
-        assertTrue(duplicates.toString(), duplicates.values.all { it == listOf("document", "draft") })
+        assertTrue(duplicates.toString(), duplicates.isEmpty())
     }
 }

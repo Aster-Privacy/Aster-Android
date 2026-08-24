@@ -33,6 +33,7 @@ import compose.icons.tablericons.Building
 import compose.icons.tablericons.CircleCheck
 import compose.icons.tablericons.Clock
 import compose.icons.tablericons.Code
+import compose.icons.tablericons.Edit
 import compose.icons.tablericons.CurrencyDollar
 import compose.icons.tablericons.EyeOff
 import compose.icons.tablericons.FileText
@@ -60,7 +61,7 @@ val label_icon_catalog: List<Pair<String, ImageVector>> = listOf(
     "archive" to TablerIcons.Archive,
     "trash" to TablerIcons.Trash,
     "send" to TablerIcons.Send,
-    "draft" to TablerIcons.FileText,
+    "draft" to TablerIcons.Edit,
     "star" to TablerIcons.Star,
     "flag" to TablerIcons.Flag,
     "bolt" to TablerIcons.Bolt,
