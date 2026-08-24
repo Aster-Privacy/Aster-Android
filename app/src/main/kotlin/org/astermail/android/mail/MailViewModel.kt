@@ -3234,6 +3234,57 @@ class MailViewModel @Inject constructor(
         )
     }
 
+    fun cancel_scheduled(id: String) {
+        viewModelScope.launch {
+            repository.cancel_scheduled(id).fold(
+                onSuccess = {
+                    drop_scheduled_locally(id)
+                    emit_toast(context.getString(R.string.scheduled_send_canceled))
+                    load_stats()
+                },
+                onFailure = { error -> emit_toast(friendly_load_error(error)) },
+            )
+        }
+    }
+
+    fun send_scheduled_now(id: String) {
+        viewModelScope.launch {
+            repository.send_scheduled_now(id).fold(
+                onSuccess = {
+                    drop_scheduled_locally(id)
+                    emit_toast(context.getString(R.string.scheduled_sending_now))
+                    load_stats()
+                },
+                onFailure = { error -> emit_toast(friendly_load_error(error)) },
+            )
+        }
+    }
+
+    fun reschedule_scheduled(id: String, scheduled_at: String) {
+        viewModelScope.launch {
+            repository.reschedule_scheduled(id, scheduled_at).fold(
+                onSuccess = { updated_at ->
+                    _inbox_state.update { state ->
+                        state.copy(
+                            items = state.items.map { item ->
+                                if (item.id == id) item.copy(timestamp = updated_at) else item
+                            },
+                        )
+                    }
+                    emit_toast(context.getString(R.string.scheduled_send_time_updated))
+                    refresh()
+                },
+                onFailure = { error -> emit_toast(friendly_load_error(error)) },
+            )
+        }
+    }
+
+    private fun drop_scheduled_locally(id: String) {
+        _inbox_state.update { state ->
+            state.copy(items = state.items.filterNot { it.id == id })
+        }
+    }
+
     private fun thread_item_from_mail_item(
         raw: org.astermail.android.api.mail.MailItem,
     ): org.astermail.android.api.mail.ThreadMessageItem =

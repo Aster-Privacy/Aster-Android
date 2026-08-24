@@ -62,6 +62,8 @@ import org.astermail.android.api.labels.LabelsApi
 import org.astermail.android.crypto.ratchet.RatchetCrypto
 import org.astermail.android.api.scheduled.CreateScheduledRequest
 import org.astermail.android.api.scheduled.ScheduledApi
+import org.astermail.android.api.scheduled.ScheduledDetailResponse
+import org.astermail.android.api.scheduled.ScheduledSummary
 import org.astermail.android.api.send.ExternalAttachmentPayload
 import org.astermail.android.api.send.ExternalSendRequest
 import org.astermail.android.api.send.SendApi
@@ -104,6 +106,8 @@ private const val DRAFT_UPDATE_CONFLICT_RETRIES = 2
 private const val METADATA_PATCH_BATCH_SIZE = 100
 private const val METADATA_RESOLVE_CONCURRENCY = 8
 private const val ENVELOPE_KEY_CACHE_MAX_ENTRIES = 32
+private const val SCHEDULED_KEY_VERSION = "astermail-scheduled-v1"
+private val ACTIVE_SCHEDULED_STATUSES = setOf("pending", "sending", "failed")
 private const val ENVELOPE_HEAL_COOLDOWN_MS = 5L * 60L * 1000L
 private const val ENVELOPE_HEAL_FORCED_WINDOW_MS = 30_000L
 private const val ENVELOPE_HEAL_RECENT_CHANGE_MS = 10_000L
@@ -1038,8 +1042,123 @@ class MailRepository @Inject constructor(
         InboxPage(batch.visible, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 }, batch.server_ids)
     }
 
-    suspend fun fetch_scheduled(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> =
-        fetch_inbox(limit, cursor, "scheduled", order = order)
+    suspend fun fetch_scheduled(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
+        val offset = cursor?.toIntOrNull() ?: 0
+        val response = scheduled_api.list_scheduled(limit = limit, offset = offset)
+        val active = response.items.filter { it.status in ACTIVE_SCHEDULED_STATUSES }
+        val items = coroutineScope {
+            active.map { summary ->
+                async(Dispatchers.IO) { runCatching { load_scheduled_item(summary) }.getOrNull() }
+            }.awaitAll().filterNotNull()
+        }
+        val ordered = if (order == "oldest") items.sortedBy { it.timestamp } else items
+        val consumed = offset + response.items.size
+        val has_more = response.items.isNotEmpty() && consumed < response.total
+        InboxPage(
+            items = ordered,
+            has_more = has_more,
+            next_cursor = if (has_more) consumed.toString() else null,
+            total = response.total.toInt().takeIf { it >= 0 },
+            raw_ids = items.mapTo(HashSet()) { it.id },
+        )
+    }
+
+    suspend fun cancel_scheduled(id: String): Result<Unit> = runCatching {
+        scheduled_api.delete_scheduled(id)
+    }
+
+    suspend fun reschedule_scheduled(id: String, scheduled_at: String): Result<String> = runCatching {
+        scheduled_api.reschedule(id, scheduled_at).scheduled_at ?: scheduled_at
+    }
+
+    suspend fun send_scheduled_now(id: String): Result<Unit> = runCatching {
+        scheduled_api.send_now(id)
+        Unit
+    }
+
+    private suspend fun load_scheduled_item(summary: ScheduledSummary): InboxItem {
+        val detail = scheduled_api.get_scheduled(summary.id)
+        val envelope = decrypt_scheduled_envelope(detail)
+        val recipients = envelope?.optJSONArray("to_recipients")?.let { array ->
+            (0 until array.length()).mapNotNull { index -> array.optString(index).takeIf { it.isNotBlank() } }
+        }.orEmpty()
+        val label = recipients.joinToString(", ").ifBlank { context.getString(R.string.no_recipients) }
+        val body = envelope?.optString("body").orEmpty()
+        return InboxItem(
+            id = summary.id,
+            thread_token = detail.thread_token?.takeIf { it.isNotBlank() } ?: summary.id,
+            thread_message_count = 1,
+            sender_name = label,
+            sender_email = recipients.firstOrNull() ?: "",
+            subject = envelope?.optString("subject")?.takeIf { it.isNotBlank() }
+                ?: context.getString(R.string.no_subject),
+            preview = if (body.isBlank()) "" else clean_preview("", body),
+            timestamp = detail.scheduled_at,
+            is_read = true,
+            is_starred = false,
+            is_encrypted = true,
+            has_attachments = detail.has_attachments,
+            is_trashed = false,
+            is_archived = false,
+            is_spam = false,
+            labels = emptyList(),
+            to_addresses = recipients,
+            is_undecryptable = envelope == null,
+            raw_item = MailItem(
+                id = summary.id,
+                item_type = "scheduled",
+                thread_token = detail.thread_token,
+                created_at = detail.created_at,
+                scheduled_at = detail.scheduled_at,
+                send_status = detail.status,
+                is_external = detail.is_external,
+                metadata = MailItemMetadata(
+                    has_attachments = detail.has_attachments,
+                    attachment_count = detail.attachment_count,
+                    scheduled_at = detail.scheduled_at,
+                    send_status = detail.status,
+                    item_type = "scheduled",
+                    created_at = detail.created_at,
+                ),
+            ),
+        )
+    }
+
+    private fun decrypt_scheduled_envelope(detail: ScheduledDetailResponse): org.json.JSONObject? {
+        val ciphertext = runCatching {
+            android.util.Base64.decode(detail.encrypted_envelope, android.util.Base64.DEFAULT)
+        }.getOrNull() ?: return null
+        val nonce = runCatching {
+            android.util.Base64.decode(detail.envelope_nonce, android.util.Base64.DEFAULT)
+        }.getOrNull() ?: return null
+        val key = scheduled_envelope_key(detail) ?: return null
+        val plaintext = try {
+            AesGcm.decrypt(key, nonce, ciphertext)
+        } catch (error: Throwable) {
+            return null
+        } finally {
+            key.fill(0)
+        }
+        return try {
+            org.json.JSONObject(String(plaintext, Charsets.UTF_8))
+        } catch (error: Throwable) {
+            null
+        } finally {
+            plaintext.fill(0)
+        }
+    }
+
+    private fun scheduled_envelope_key(detail: ScheduledDetailResponse): ByteArray? {
+        val ephemeral = detail.ephemeral_key?.takeIf { it.isNotBlank() }
+        if (ephemeral != null) {
+            return runCatching { android.util.Base64.decode(ephemeral, android.util.Base64.DEFAULT) }.getOrNull()
+        }
+        val identity_key = session_key_store.get_identity_key() ?: return null
+        return runCatching {
+            MessageDigest.getInstance("SHA-256")
+                .digest((identity_key + SCHEDULED_KEY_VERSION).toByteArray(Charsets.UTF_8))
+        }.getOrNull()
+    }
 
     suspend fun fetch_snoozed(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
         val response = mail_api.list_messages(limit = limit, cursor = cursor, is_snoozed = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping)

@@ -237,6 +237,15 @@
     <string name="archive_to_clean">Archive emails to keep your inbox clean</string>
     <string name="no_scheduled">No scheduled messages</string>
     <string name="scheduled_messages_here">Messages you schedule will appear here</string>
+    <string name="scheduled_send_now">Send now</string>
+    <string name="scheduled_reschedule">Reschedule</string>
+    <string name="scheduled_cancel_send">Cancel send</string>
+    <string name="scheduled_send_canceled">Scheduled send canceled</string>
+    <string name="scheduled_send_time_updated">Send time updated</string>
+    <string name="scheduled_sending_now">Sending now</string>
+    <string name="scheduled_for">Scheduled for %1$s</string>
+    <string name="scheduled_time_in_past">Choose a time in the future</string>
+    <string name="scheduled_recipients">To: %1$s</string>
     <string name="nothing_snoozed">Nothing sleeping right now</string>
     <string name="snoozed_wake_here">Snoozed emails will wake up here</string>
     <string name="no_messages">No messages</string>
@@ -359,6 +368,7 @@
     <string name="sender_blocked">Sender blocked</string>
     <string name="message_unavailable">Message unavailable</string>
     <string name="no_subject">(no subject)</string>
+    <string name="no_recipients">No recipients</string>
     <string name="open_external_link">Open external link?</string>
     <string name="leaving_aster_warning">You are about to leave Aster and open this link in your browser:</string>
     <string name="reply">Reply</string>

@@ -529,6 +529,7 @@ fun InboxScreen(
     var scope_selection_confirmed by remember { mutableStateOf(false) }
     val selected_ids = remember { mutableStateListOf<String>() }
     var show_empty_trash_dialog by remember { mutableStateOf(false) }
+    var scheduled_action_target by remember { mutableStateOf<Email?>(null) }
     var show_selection_overflow by remember { mutableStateOf(false) }
     var show_bulk_folder_sheet by remember { mutableStateOf(false) }
     var show_bulk_label_sheet by remember { mutableStateOf(false) }
@@ -924,6 +925,7 @@ fun InboxScreen(
     }
 
     fun archive_selected() {
+        if (current_folder == "scheduled") return
         val ids = selected_email_ids()
         val thread_count = selected_ids.size
         val to_remove = selected_ids.toSet()
@@ -936,6 +938,12 @@ fun InboxScreen(
         val ids = selected_email_ids()
         val thread_count = selected_ids.size
         val to_remove = selected_ids.toSet()
+        if (current_folder == "scheduled") {
+            ids.forEach { mail_vm.cancel_scheduled(it) }
+            emails.removeAll { (it.thread_id in to_remove || it.id in to_remove) }
+            exit_select_mode()
+            return
+        }
         mail_vm.trash(ids, thread_count)
         emails.removeAll { (it.thread_id in to_remove || it.id in to_remove) }
         exit_select_mode()
@@ -1491,7 +1499,13 @@ fun InboxScreen(
                                     is_first = row_index == 0,
                                     is_last = row_index == visible_threads.lastIndex,
                                     is_pinned = thread.is_pinned,
-                                    on_click = { on_open_email(thread_open_target_id(thread)) },
+                                    on_click = {
+                                        if (current_folder == "scheduled") {
+                                            scheduled_action_target = thread.newest
+                                        } else {
+                                            on_open_email(thread_open_target_id(thread))
+                                        }
+                                    },
                                     on_long_click = {
                                         select_mode = true
                                         selected_ids.clear()
@@ -1840,6 +1854,28 @@ fun InboxScreen(
                     swipe_snooze_ids = emptyList()
                     mail_vm.snooze_bulk(pending_snooze_ids, iso, label)
                     emails.removeAll { pending_snooze_ids.contains(it.id) }
+                },
+            )
+        }
+
+        val scheduled_target = scheduled_action_target
+        if (scheduled_target != null) {
+            scheduled_actions_dialog(
+                email = scheduled_target,
+                on_dismiss = { scheduled_action_target = null },
+                on_send_now = {
+                    scheduled_action_target = null
+                    emails.removeAll { it.id == scheduled_target.id }
+                    mail_vm.send_scheduled_now(scheduled_target.id)
+                },
+                on_reschedule = { iso ->
+                    scheduled_action_target = null
+                    mail_vm.reschedule_scheduled(scheduled_target.id, iso)
+                },
+                on_cancel_send = {
+                    scheduled_action_target = null
+                    emails.removeAll { it.id == scheduled_target.id }
+                    mail_vm.cancel_scheduled(scheduled_target.id)
                 },
             )
         }
@@ -2780,6 +2816,13 @@ private fun execute_swipe_action(
     on_read_mutation: (List<String>) -> Unit = {},
     on_snooze: (List<String>) -> Unit = {},
 ) {
+    if (current_folder == "scheduled") {
+        if (action == "delete" || action == "trash" || action == "delete_permanent") {
+            ids.forEach { mail_vm.cancel_scheduled(it) }
+            emails.removeAll { (it.thread_id == thread_id || it.id == thread_id) }
+        }
+        return
+    }
     when (action) {
         "archive" -> {
             if (current_folder == "archive") return
