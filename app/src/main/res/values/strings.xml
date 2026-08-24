@@ -220,6 +220,8 @@
     <string name="all_caught_up">You\'re all caught up</string>
     <string name="nothing_in_this_tab">Nothing in this tab</string>
     <string name="other_tabs_have_mail">Your other tabs still have mail.</string>
+    <string name="nothing_in_category">Nothing in %1</string>
+    <string name="other_categories_have_mail">Your other categories still have mail.</string>
     <string name="new_messages_here">New messages will appear here</string>
     <string name="nothing_sent_yet">Nothing sent yet</string>
     <string name="sent_messages_here">Messages you send will appear here</string>

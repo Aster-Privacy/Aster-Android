@@ -574,6 +574,16 @@ fun InboxScreen(
             )
         }
     }
+    val active_category_label = if (categories_enabled) {
+        val customs = org.astermail.android.mail.sanitize_custom_categories(
+            settings_state.preferences?.custom_categories.orEmpty(),
+        )
+        org.astermail.android.mail.category_entries(active_tabs, customs)
+            .firstOrNull { it.id == active_category }
+            ?.label
+    } else {
+        null
+    }
     var threads by remember { mutableStateOf<List<ThreadRow>>(emptyList()) }
     var threads_pending by remember { mutableStateOf(true) }
     var threads_folder by remember { mutableStateOf(current_folder) }
@@ -1298,7 +1308,7 @@ fun InboxScreen(
                 } else if (hidden_by_category) {
                     org.astermail.android.ui.common.overscroll_stretch(
                         modifier = Modifier.padding(top = header_height_dp),
-                    ) { empty_category_state() }
+                    ) { empty_category_state(active_category_label) }
                 } else if (threads.isEmpty()) {
                     org.astermail.android.ui.common.overscroll_stretch(
                         modifier = Modifier.padding(top = header_height_dp),
@@ -1625,6 +1635,7 @@ fun InboxScreen(
                 } else {
                     inbox_top_bar(
                         folder_title = display_title ?: folder_display_name(current_folder),
+                        search_scope_title = active_category_label,
                         unread_count = folder_count,
                         on_open_drawer = on_open_drawer,
                         on_open_search = on_open_search,
@@ -2014,6 +2025,7 @@ private fun all_mail_scope_chip(
 @Composable
 internal fun inbox_top_bar(
     folder_title: String,
+    search_scope_title: String? = null,
     unread_count: Int,
     on_open_drawer: () -> Unit,
     on_open_search: () -> Unit,
@@ -2075,7 +2087,11 @@ internal fun inbox_top_bar(
                 horizontalArrangement = Arrangement.Center,
             ) {
                 Text(
-                    text = stringResource(R.string.inbox_search_in_folder, folder_title.lowercase(java.util.Locale.getDefault())),
+                    text = if (search_scope_title != null) {
+                        stringResource(R.string.inbox_search_in_category, search_scope_title)
+                    } else {
+                        stringResource(R.string.inbox_search_in_folder, folder_title.lowercase(java.util.Locale.getDefault()))
+                    },
                     color = colors.text_secondary,
                     fontSize = 16.sp,
                     maxLines = 1,
@@ -2887,7 +2903,7 @@ private fun spam_retention_banner(days: Int) {
 }
 
 @Composable
-private fun empty_category_state() {
+private fun empty_category_state(category_label: String? = null) {
     val colors = AsterMaterial.colors
     Column(
         modifier = Modifier
@@ -2907,13 +2923,21 @@ private fun empty_category_state() {
                 modifier = Modifier.size(48.dp),
             )
             Text(
-                text = stringResource(R.string.nothing_in_this_tab),
+                text = if (category_label != null) {
+                    stringResource(R.string.nothing_in_category, category_label)
+                } else {
+                    stringResource(R.string.nothing_in_this_tab)
+                },
                 style = MaterialTheme.typography.titleMedium,
                 color = colors.text_primary,
                 fontWeight = FontWeight.SemiBold,
             )
             Text(
-                text = stringResource(R.string.other_tabs_have_mail),
+                text = if (category_label != null) {
+                    stringResource(R.string.other_categories_have_mail)
+                } else {
+                    stringResource(R.string.other_tabs_have_mail)
+                },
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.text_muted,
             )
