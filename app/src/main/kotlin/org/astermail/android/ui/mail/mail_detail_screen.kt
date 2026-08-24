@@ -3896,6 +3896,13 @@ internal fun tag_picker_sheet(
     }
 }
 
+private const val SNOOZE_MORNING_HOUR = 9
+
+private const val SNOOZE_LATER_TODAY_OFFSET_HOURS = 4L
+
+private fun at_snooze_morning(value: java.time.ZonedDateTime): java.time.ZonedDateTime =
+    value.withHour(SNOOZE_MORNING_HOUR).withMinute(0).withSecond(0).withNano(0)
+
 internal fun snooze_options(
     later_today_label: String,
     tomorrow_morning_label: String,
@@ -3903,14 +3910,15 @@ internal fun snooze_options(
     next_week_label: String,
 ): List<Pair<String, String>> {
     val now = java.time.ZonedDateTime.now(java.time.ZoneId.systemDefault())
-    val later_today = now.withHour(18).withMinute(0).withSecond(0).withNano(0).let {
-        if (it.isBefore(now.plusHours(1))) now.plusHours(3) else it
+    val later_today = now.plusHours(SNOOZE_LATER_TODAY_OFFSET_HOURS)
+    val tomorrow = at_snooze_morning(now.plusDays(1))
+    val days_until_saturday = if (now.dayOfWeek == java.time.DayOfWeek.SATURDAY) {
+        7L
+    } else {
+        ((java.time.DayOfWeek.SATURDAY.value - now.dayOfWeek.value + 7) % 7).toLong()
     }
-    val tomorrow = now.plusDays(1).withHour(8).withMinute(0).withSecond(0).withNano(0)
-    val this_weekend = now.with(java.time.DayOfWeek.SATURDAY).withHour(8).withMinute(0).withSecond(0).withNano(0).let {
-        if (it.isBefore(now.plusHours(2)) || it.toLocalDate() == tomorrow.toLocalDate()) it.plusWeeks(1) else it
-    }
-    val next_week = now.plusWeeks(1).with(java.time.DayOfWeek.MONDAY).withHour(8).withMinute(0).withSecond(0).withNano(0)
+    val this_weekend = at_snooze_morning(now.plusDays(days_until_saturday))
+    val next_week = at_snooze_morning(now.plusDays(7))
     val fmt = java.time.format.DateTimeFormatter.ISO_INSTANT
     fun iso(z: java.time.ZonedDateTime) = fmt.format(z.toInstant())
     return listOf(
