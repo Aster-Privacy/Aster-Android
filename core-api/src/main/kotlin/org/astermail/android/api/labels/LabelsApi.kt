@@ -213,15 +213,31 @@ interface LabelsApi {
 }
 
 class LabelsApiImpl(private val client: ApiClient) : LabelsApi {
+    private val label_page_size = 500
+    private val label_page_cap = 10
     private val labels_base = "/api/mail/v1/labels"
     private val billing_base = "/api/payments/v1"
 
     override suspend fun list_labels(include_counts: Boolean, folder_type: String?): LabelsListResponse {
-        val response = client.http.get("${client.base_url}$labels_base") {
-            parameter("include_counts", include_counts)
-            folder_type?.let { parameter("folder_type", it) }
+        val collected = mutableListOf<LabelItem>()
+        var total = 0L
+        var offset = 0
+        repeat(label_page_cap) {
+            val response = client.http.get("${client.base_url}$labels_base") {
+                parameter("include_counts", include_counts)
+                parameter("limit", label_page_size)
+                parameter("offset", offset)
+                folder_type?.let { parameter("folder_type", it) }
+            }
+            val page: LabelsListResponse = decode_or_throw(response)
+            collected += page.labels
+            total = page.total
+            if (!page.has_more || page.labels.isEmpty()) {
+                return LabelsListResponse(labels = collected, total = total, has_more = false)
+            }
+            offset += label_page_size
         }
-        return decode_or_throw(response)
+        return LabelsListResponse(labels = collected, total = total, has_more = true)
     }
 
     override suspend fun get_label(label_id: String): LabelItem {
