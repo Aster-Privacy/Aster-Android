@@ -2800,4 +2800,10 @@
     <string name="settings_plan_current_note">Du hast %1$d%% deines Speichers belegt und hast noch reichlich Platz.</string>
     <string name="settings_plan_storage_tight_note">Du hast %1$d%% deines Speichers belegt. %2$s bietet dir mehr Platz.</string>
     <string name="settings_storage_addons_monthly_note">Zusätzlicher Speicher wird monatlich abgerechnet, auch wenn dein Tarif jährlich abgerechnet wird.</string>
+    <string name="label_icon_group_essentials">GRUNDLAGEN</string>
+    <string name="label_icon_group_mail">MAIL</string>
+    <string name="label_icon_group_money">GELD</string>
+    <string name="label_icon_group_work">ARBEIT</string>
+    <string name="label_icon_group_school">SCHULE</string>
+    <string name="label_icon_group_everyday">ALLTAG</string>
 </resources>

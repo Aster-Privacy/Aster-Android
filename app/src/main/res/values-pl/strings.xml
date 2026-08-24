@@ -2815,4 +2815,10 @@
     <string name="settings_plan_current_note">Wykorzystano %1$d%% miejsca, więc masz go jeszcze sporo.</string>
     <string name="settings_plan_storage_tight_note">Wykorzystano %1$d%% miejsca. %2$s daje więcej przestrzeni.</string>
     <string name="settings_storage_addons_monthly_note">Dodatkowa przestrzeń jest rozliczana co miesiąc, nawet jeśli plan rozliczasz rocznie.</string>
+    <string name="label_icon_group_essentials">PODSTAWOWE</string>
+    <string name="label_icon_group_mail">POCZTA</string>
+    <string name="label_icon_group_money">PIENIĄDZE</string>
+    <string name="label_icon_group_work">PRACA</string>
+    <string name="label_icon_group_school">SZKOŁA</string>
+    <string name="label_icon_group_everyday">CODZIENNE</string>
 </resources>

@@ -2791,4 +2791,10 @@
     <string name="settings_plan_current_note">저장 공간의 %1$d%%를 사용했으며, 아직 여유가 넉넉합니다.</string>
     <string name="settings_plan_storage_tight_note">저장 공간의 %1$d%%를 사용했습니다. %2$s에서는 공간이 더 넉넉합니다.</string>
     <string name="settings_storage_addons_monthly_note">추가 저장 공간은 요금제를 연간 결제하더라도 매월 청구됩니다.</string>
+    <string name="label_icon_group_essentials">기본</string>
+    <string name="label_icon_group_mail">메일</string>
+    <string name="label_icon_group_money">돈</string>
+    <string name="label_icon_group_work">업무</string>
+    <string name="label_icon_group_school">학교</string>
+    <string name="label_icon_group_everyday">일상</string>
 </resources>

@@ -2827,4 +2827,10 @@
     <string name="settings_plan_current_note">Vous avez utilisé %1$d %% de votre stockage, il vous reste donc de la place.</string>
     <string name="settings_plan_storage_tight_note">Vous avez utilisé %1$d%% de votre stockage. %2$s vous offre plus d\'espace.</string>
     <string name="settings_storage_addons_monthly_note">Le stockage supplémentaire est facturé chaque mois, même si votre forfait est facturé chaque année.</string>
+    <string name="label_icon_group_essentials">ESSENTIELS</string>
+    <string name="label_icon_group_mail">COURRIER</string>
+    <string name="label_icon_group_money">ARGENT</string>
+    <string name="label_icon_group_work">TRAVAIL</string>
+    <string name="label_icon_group_school">ÉCOLE</string>
+    <string name="label_icon_group_everyday">QUOTIDIEN</string>
 </resources>

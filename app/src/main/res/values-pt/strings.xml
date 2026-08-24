@@ -2799,4 +2799,10 @@
     <string name="settings_plan_current_note">Você usou %1$d%% do seu armazenamento, então ainda tem espaço de sobra.</string>
     <string name="settings_plan_storage_tight_note">Você usou %1$d%% do seu armazenamento. %2$s oferece mais espaço.</string>
     <string name="settings_storage_addons_monthly_note">O armazenamento adicional é cobrado mensalmente, mesmo que seu plano seja cobrado anualmente.</string>
+    <string name="label_icon_group_essentials">ESSENCIAIS</string>
+    <string name="label_icon_group_mail">CORREIO</string>
+    <string name="label_icon_group_money">DINHEIRO</string>
+    <string name="label_icon_group_work">TRABALHO</string>
+    <string name="label_icon_group_school">ESCOLA</string>
+    <string name="label_icon_group_everyday">DIA A DIA</string>
 </resources>

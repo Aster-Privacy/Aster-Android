@@ -2815,4 +2815,10 @@
     <string name="settings_plan_current_note">Использовано %1$d%% хранилища, свободного места ещё достаточно.</string>
     <string name="settings_plan_storage_tight_note">Использовано %1$d%% хранилища. %2$s даёт больше места.</string>
     <string name="settings_storage_addons_monthly_note">Дополнительное хранилище оплачивается ежемесячно, даже если тариф оплачивается ежегодно.</string>
+    <string name="label_icon_group_essentials">ОСНОВНЫЕ</string>
+    <string name="label_icon_group_mail">ПОЧТА</string>
+    <string name="label_icon_group_money">ДЕНЬГИ</string>
+    <string name="label_icon_group_work">РАБОТА</string>
+    <string name="label_icon_group_school">УЧЁБА</string>
+    <string name="label_icon_group_everyday">ПОВСЕДНЕВНОЕ</string>
 </resources>

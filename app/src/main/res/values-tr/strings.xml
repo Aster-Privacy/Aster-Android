@@ -2799,4 +2799,10 @@
     <string name="settings_plan_current_note">Depolama alanınızın %%%1$d kadarını kullandınız, bol bol yeriniz var.</string>
     <string name="settings_plan_storage_tight_note">Depolama alanınızın %%%1$d kadarını kullandınız. %2$s size daha fazla alan sunar.</string>
     <string name="settings_storage_addons_monthly_note">Ek depolama, planınız yıllık faturalandırılsa bile aylık faturalandırılır.</string>
+    <string name="label_icon_group_essentials">TEMEL</string>
+    <string name="label_icon_group_mail">POSTA</string>
+    <string name="label_icon_group_money">PARA</string>
+    <string name="label_icon_group_work">İŞ</string>
+    <string name="label_icon_group_school">OKUL</string>
+    <string name="label_icon_group_everyday">GÜNLÜK</string>
 </resources>

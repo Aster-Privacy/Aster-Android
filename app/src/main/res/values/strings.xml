@@ -2888,4 +2888,10 @@
     <string name="settings_plan_current_note">You\'ve used %1$d%% of your storage, so you have room to spare.</string>
     <string name="settings_plan_storage_tight_note">You\'ve used %1$d%% of your storage. %2$s gives you more room.</string>
     <string name="settings_storage_addons_monthly_note">Storage add-ons are billed monthly, even if your plan is billed yearly.</string>
+    <string name="label_icon_group_essentials">ESSENTIALS</string>
+    <string name="label_icon_group_mail">MAIL</string>
+    <string name="label_icon_group_money">MONEY</string>
+    <string name="label_icon_group_work">WORK</string>
+    <string name="label_icon_group_school">SCHOOL</string>
+    <string name="label_icon_group_everyday">EVERYDAY</string>
 </resources>

@@ -2799,4 +2799,10 @@
     <string name="settings_plan_current_note">Hai usato il %1$d%% del tuo spazio, quindi hai ancora spazio in abbondanza.</string>
     <string name="settings_plan_storage_tight_note">Hai usato il %1$d%% del tuo spazio. %2$s ti offre più spazio.</string>
     <string name="settings_storage_addons_monthly_note">Lo spazio aggiuntivo viene fatturato ogni mese, anche se il tuo piano è fatturato ogni anno.</string>
+    <string name="label_icon_group_essentials">ESSENZIALI</string>
+    <string name="label_icon_group_mail">POSTA</string>
+    <string name="label_icon_group_money">DENARO</string>
+    <string name="label_icon_group_work">LAVORO</string>
+    <string name="label_icon_group_school">SCUOLA</string>
+    <string name="label_icon_group_everyday">QUOTIDIANO</string>
 </resources>

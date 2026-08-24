@@ -2799,4 +2799,10 @@
     <string name="settings_plan_current_note">Je hebt %1$d%% van je opslag gebruikt, dus je hebt nog ruimte over.</string>
     <string name="settings_plan_storage_tight_note">Je hebt %1$d%% van je opslag gebruikt. %2$s geeft je meer ruimte.</string>
     <string name="settings_storage_addons_monthly_note">Extra opslag wordt maandelijks gefactureerd, ook als je abonnement jaarlijks wordt gefactureerd.</string>
+    <string name="label_icon_group_essentials">BASIS</string>
+    <string name="label_icon_group_mail">MAIL</string>
+    <string name="label_icon_group_money">GELD</string>
+    <string name="label_icon_group_work">WERK</string>
+    <string name="label_icon_group_school">SCHOOL</string>
+    <string name="label_icon_group_everyday">DAGELIJKS</string>
 </resources>

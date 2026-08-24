@@ -2791,4 +2791,10 @@
     <string name="settings_plan_current_note">你已使用 %1$d%% 的存储空间，空间仍然充足。</string>
     <string name="settings_plan_storage_tight_note">你已使用 %1$d%% 的存储空间。%2$s 可提供更多空间。</string>
     <string name="settings_storage_addons_monthly_note">即使你的方案按年计费，额外存储也按月计费。</string>
+    <string name="label_icon_group_essentials">基本</string>
+    <string name="label_icon_group_mail">邮件</string>
+    <string name="label_icon_group_money">金钱</string>
+    <string name="label_icon_group_work">工作</string>
+    <string name="label_icon_group_school">学校</string>
+    <string name="label_icon_group_everyday">日常</string>
 </resources>
