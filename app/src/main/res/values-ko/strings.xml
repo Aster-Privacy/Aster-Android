@@ -2817,6 +2817,7 @@
     <string name="resume_plan">요금제 다시 시작</string>
     <string name="switch_yearly_confirm">연간 결제로 전환</string>
     <string name="switch_yearly_message">연 %1$s로 결제되며, 월간 결제보다 %2$d%% 절약됩니다.</string>
+    <string name="cancel_offer_switch_plan">%1$s(%2$s)(으)로 변경</string>
     <string name="switch_yearly_save">연간 결제로 전환하고 %d%% 절약하기</string>
     <string name="switch_yearly_title">연간 결제로 전환</string>
     <string name="settings_plan_top_tier_title">최상위 요금제를 사용 중입니다</string>

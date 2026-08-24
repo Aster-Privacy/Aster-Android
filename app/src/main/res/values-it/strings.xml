@@ -2825,6 +2825,7 @@
     <string name="resume_plan">Riprendi il piano</string>
     <string name="switch_yearly_confirm">Passa all\'annuale</string>
     <string name="switch_yearly_message">Il tuo piano viene fatturato %1$s all\'anno, con un risparmio del %2$d%% rispetto alla fatturazione mensile.</string>
+    <string name="cancel_offer_switch_plan">Passa a %1$s per %2$s</string>
     <string name="switch_yearly_save">Passa all\'annuale e risparmia il %d%%</string>
     <string name="switch_yearly_title">Passa alla fatturazione annuale</string>
     <string name="settings_plan_top_tier_title">Hai il piano più alto</string>

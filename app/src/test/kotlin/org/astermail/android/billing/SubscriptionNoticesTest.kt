@@ -211,4 +211,17 @@ class SubscriptionNoticesTest {
         assertEquals("month", normalize_billing_interval("   "))
         assertEquals("quarter", normalize_billing_interval("quarter"))
     }
+
+    @Test
+    fun `cheaper plan stays inside its own ladder`() {
+        assertEquals("star", cheaper_plan_code("nova"))
+        assertEquals("nova", cheaper_plan_code("supernova"))
+        assertEquals("nova", cheaper_plan_code(" SUPERNOVA "))
+        assertEquals("duo", cheaper_plan_code("family"))
+        assertNull(cheaper_plan_code("star"))
+        assertNull(cheaper_plan_code("duo"))
+        assertNull(cheaper_plan_code("free"))
+        assertNull(cheaper_plan_code(null))
+        assertNull(cheaper_plan_code("unknown_plan"))
+    }
 }

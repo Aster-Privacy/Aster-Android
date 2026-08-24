@@ -2857,6 +2857,7 @@
     <string name="resume_plan">استئناف الخطة</string>
     <string name="switch_yearly_confirm">التبديل إلى السنوي</string>
     <string name="switch_yearly_message">تُفوتر خطتك %1$s سنويًا، ما يوفّر %2$d%% مقارنة بالفوترة الشهرية.</string>
+    <string name="cancel_offer_switch_plan">التبديل إلى %1$s مقابل %2$s</string>
     <string name="switch_yearly_save">بدّل إلى السنوي ووفّر %d%%</string>
     <string name="switch_yearly_title">التبديل إلى الفوترة السنوية</string>
     <string name="settings_plan_top_tier_title">أنت على أعلى خطة</string>

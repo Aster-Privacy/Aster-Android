@@ -2826,6 +2826,7 @@
     <string name="resume_plan">Tarif fortsetzen</string>
     <string name="switch_yearly_confirm">Zu jährlich wechseln</string>
     <string name="switch_yearly_message">Dein Tarif kostet %1$s pro Jahr, was %2$d%% gegenüber der monatlichen Abrechnung spart.</string>
+    <string name="cancel_offer_switch_plan">Zu %1$s für %2$s wechseln</string>
     <string name="switch_yearly_save">Zu jährlich wechseln und %d%% sparen</string>
     <string name="switch_yearly_title">Zu jährlicher Abrechnung wechseln</string>
     <string name="settings_plan_top_tier_title">Du hast den höchsten Tarif</string>

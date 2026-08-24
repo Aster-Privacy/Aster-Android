@@ -2841,6 +2841,7 @@
     <string name="resume_plan">Возобновить тариф</string>
     <string name="switch_yearly_confirm">Перейти на годовую оплату</string>
     <string name="switch_yearly_message">Оплата тарифа составит %1$s в год, что экономит %2$d%% по сравнению с ежемесячной оплатой.</string>
+    <string name="cancel_offer_switch_plan">Перейти на %1$s за %2$s</string>
     <string name="switch_yearly_save">Перейдите на годовую оплату и сэкономьте %d%%</string>
     <string name="switch_yearly_title">Переход на годовую оплату</string>
     <string name="settings_plan_top_tier_title">У вас самый высокий тарифный план</string>

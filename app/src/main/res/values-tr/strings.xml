@@ -2825,6 +2825,7 @@
     <string name="resume_plan">Planı sürdür</string>
     <string name="switch_yearly_confirm">Yıllığa geç</string>
     <string name="switch_yearly_message">Planınız yılda %1$s olarak faturalandırılır ve aylık faturalandırmaya göre %2$d%% tasarruf sağlar.</string>
+    <string name="cancel_offer_switch_plan">%2$s karşılığında %1$s planına geç</string>
     <string name="switch_yearly_save">Yıllığa geçin, %d%% tasarruf edin</string>
     <string name="switch_yearly_title">Yıllık faturalandırmaya geç</string>
     <string name="settings_plan_top_tier_title">En üst plandasınız</string>

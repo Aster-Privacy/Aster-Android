@@ -2841,6 +2841,7 @@
     <string name="resume_plan">Wznów plan</string>
     <string name="switch_yearly_confirm">Przejdź na płatność roczną</string>
     <string name="switch_yearly_message">Twój plan kosztuje %1$s rocznie, co pozwala zaoszczędzić %2$d%% w porównaniu z płatnością miesięczną.</string>
+    <string name="cancel_offer_switch_plan">Przejdź na %1$s za %2$s</string>
     <string name="switch_yearly_save">Przejdź na płatność roczną i zaoszczędź %d%%</string>
     <string name="switch_yearly_title">Zmień rozliczenie na roczne</string>
     <string name="settings_plan_top_tier_title">Masz najwyższy plan</string>

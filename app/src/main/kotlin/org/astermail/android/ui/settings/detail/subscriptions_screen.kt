@@ -407,6 +407,28 @@ fun SubscriptionsScreen(
         current_interval == "month" &&
         yearly_savings != null &&
         api_yearly_cents != null
+    val cancel_offer_code = if (plan_alternatives_allowed) {
+        org.astermail.android.billing.cheaper_plan_code(current_code)
+    } else {
+        null
+    }
+    val cancel_offer_label = cancel_offer_code
+        ?.let { code -> plan_tiers.firstOrNull { it.code == code } }
+        ?.let { tier ->
+            val cents = org.astermail.android.billing.api_plan_price_cents(
+                billing_state.available_plans,
+                tier.code,
+                current_interval,
+            )
+            cents?.let {
+                context.getString(
+                    R.string.cancel_offer_switch_plan,
+                    context.getString(tier.name_res),
+                    format_price(it, detected_currency) + " " +
+                        org.astermail.android.billing.billing_interval_per_label(context, current_interval),
+                )
+            }
+        }
     val lapsed = if (sub != null) {
         org.astermail.android.billing.lapsed_paid_plan(
             current_plan_code = current_code,
@@ -1009,7 +1031,13 @@ fun SubscriptionsScreen(
         }
         DisposableEffect(Unit) { onDispose { billing_vm.clear_plan_change_preview() } }
         org.astermail.android.design.components.AsterDialog(
-            on_dismiss = { pending_downgrade_code = null },
+            on_dismiss = {
+                pending_downgrade_code = null
+                if (resume_cancel_flow) {
+                    resume_cancel_flow = false
+                    show_cancel_flow = true
+                }
+            },
             title = stringResource(R.string.downgrade_to, downgrade_name),
             message = stringResource(
                 R.string.downgrade_confirm_message,
@@ -1028,13 +1056,20 @@ fun SubscriptionsScreen(
             footer = {
                 org.astermail.android.design.components.AsterDialogOutlineButton(
                     label = stringResource(R.string.cancel),
-                    onClick = { pending_downgrade_code = null },
+                    onClick = {
+                        pending_downgrade_code = null
+                        if (resume_cancel_flow) {
+                            resume_cancel_flow = false
+                            show_cancel_flow = true
+                        }
+                    },
                     modifier = Modifier.weight(1f),
                 )
                 org.astermail.android.design.components.AsterDialogPrimaryButton(
                     label = stringResource(R.string.downgrade),
                     onClick = {
                         pending_downgrade_code = null
+                        resume_cancel_flow = false
                         billing_vm.change_plan(downgrade_tier.code, downgrade_interval)
                     },
                     enabled = !billing_state.plan_change_preview_loading,
@@ -1049,6 +1084,12 @@ fun SubscriptionsScreen(
         cancel_subscription_flow(
             billing_state = billing_state,
             yearly_savings = if (offer_yearly_switch) yearly_savings else null,
+            downgrade_offer_label = cancel_offer_label,
+            on_switch_plan = {
+                show_cancel_flow = false
+                resume_cancel_flow = true
+                pending_downgrade_code = cancel_offer_code
+            },
             on_switch_yearly = {
                 show_cancel_flow = false
                 resume_cancel_flow = true
@@ -1163,6 +1204,8 @@ private enum class CancelStep { reason, impact, confirm }
 private fun cancel_subscription_flow(
     billing_state: org.astermail.android.billing.BillingUiState,
     yearly_savings: Int?,
+    downgrade_offer_label: String?,
+    on_switch_plan: () -> Unit,
     on_switch_yearly: () -> Unit,
     on_dismiss: () -> Unit,
     on_confirm: (reason: String?, reason_text: String?) -> Boolean,
@@ -1219,6 +1262,33 @@ private fun cancel_subscription_flow(
                                 modifier = Modifier.size(16.dp),
                             )
                             Text(text = line, color = colors.text_primary, fontSize = 13.sp)
+                        }
+                    }
+                    if (downgrade_offer_label != null) {
+                        Spacer(Modifier.height(AsterSpacing.xs))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 48.dp)
+                                .clip(SquircleShape(10.dp))
+                                .background(colors.accent_blue.copy(alpha = 0.12f))
+                                .clickable(role = Role.Button, onClick = on_switch_plan)
+                                .padding(horizontal = AsterSpacing.md, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = downgrade_offer_label,
+                                color = colors.accent_blue,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Icon(
+                                imageVector = TablerIcons.ChevronRight,
+                                contentDescription = null,
+                                tint = colors.accent_blue,
+                                modifier = Modifier.size(16.dp),
+                            )
                         }
                     }
                     if (yearly_savings != null) {

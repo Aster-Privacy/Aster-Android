@@ -2852,6 +2852,7 @@
     <string name="resume_plan">Reprendre l\'offre</string>
     <string name="switch_yearly_confirm">Passer à la facturation annuelle</string>
     <string name="switch_yearly_message">Votre offre est facturée %1$s par an, ce qui vous fait économiser %2$d%% par rapport à la facturation mensuelle.</string>
+    <string name="cancel_offer_switch_plan">Passer à %1$s pour %2$s</string>
     <string name="switch_yearly_save">Passez à l\'année et économisez %d%%</string>
     <string name="switch_yearly_title">Passer à la facturation annuelle</string>
     <string name="settings_plan_top_tier_title">Vous avez le forfait le plus élevé</string>

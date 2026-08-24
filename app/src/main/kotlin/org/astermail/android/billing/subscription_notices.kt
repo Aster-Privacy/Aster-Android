@@ -172,6 +172,20 @@ private val PLAN_TIER_RANKS = mapOf(
 
 fun plan_tier_rank(code: String?): Int = PLAN_TIER_RANKS[code?.trim()?.lowercase()] ?: -1
 
+private val INDIVIDUAL_PLAN_LADDER = listOf("star", "nova", "supernova")
+
+private val FAMILY_PLAN_LADDER = listOf("duo", "family")
+
+fun cheaper_plan_code(code: String?): String? {
+    val normalized = code?.trim()?.lowercase() ?: return null
+    for (ladder in listOf(INDIVIDUAL_PLAN_LADDER, FAMILY_PLAN_LADDER)) {
+        val index = ladder.indexOf(normalized)
+        if (index > 0) return ladder[index - 1]
+    }
+
+    return null
+}
+
 fun plan_code_from_name(plan_name: String?): String {
     val lower = plan_name?.trim()?.lowercase().orEmpty()
     return when {

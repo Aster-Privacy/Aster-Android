@@ -2817,6 +2817,7 @@
     <string name="resume_plan">恢复套餐</string>
     <string name="switch_yearly_confirm">切换为按年付费</string>
     <string name="switch_yearly_message">您的套餐将按每年 %1$s 结算，比按月付费节省 %2$d%%。</string>
+    <string name="cancel_offer_switch_plan">改用 %1$s，%2$s</string>
     <string name="switch_yearly_save">切换为按年付费，节省 %d%%</string>
     <string name="switch_yearly_title">切换为按年结算</string>
     <string name="settings_plan_top_tier_title">你已使用最高级方案</string>

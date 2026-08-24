@@ -2817,6 +2817,7 @@
     <string name="resume_plan">プランを再開</string>
     <string name="switch_yearly_confirm">年払いに変更</string>
     <string name="switch_yearly_message">年 %1$s の請求になり、月払いに比べて %2$d%% お得です。</string>
+    <string name="cancel_offer_switch_plan">%1$s（%2$s）に変更</string>
     <string name="switch_yearly_save">年払いに変更して %d%% お得に</string>
     <string name="switch_yearly_title">年払いに変更</string>
     <string name="settings_plan_top_tier_title">最上位プランをご利用中です</string>

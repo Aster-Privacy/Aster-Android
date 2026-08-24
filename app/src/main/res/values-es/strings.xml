@@ -2826,6 +2826,7 @@
     <string name="resume_plan">Reanudar plan</string>
     <string name="switch_yearly_confirm">Cambiar a anual</string>
     <string name="switch_yearly_message">Tu plan se factura a %1$s al año, lo que ahorra un %2$d%% respecto a la facturación mensual.</string>
+    <string name="cancel_offer_switch_plan">Cambiar a %1$s por %2$s</string>
     <string name="switch_yearly_save">Cambia a anual y ahorra un %d%%</string>
     <string name="switch_yearly_title">Cambiar a facturación anual</string>
     <string name="settings_plan_top_tier_title">Tienes el plan más alto</string>

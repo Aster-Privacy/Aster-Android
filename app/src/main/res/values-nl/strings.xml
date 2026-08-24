@@ -2825,6 +2825,7 @@
     <string name="resume_plan">Abonnement hervatten</string>
     <string name="switch_yearly_confirm">Overschakelen naar jaarlijks</string>
     <string name="switch_yearly_message">Je abonnement wordt %1$s per jaar gefactureerd, wat %2$d%% bespaart ten opzichte van maandelijkse facturering.</string>
+    <string name="cancel_offer_switch_plan">Overstappen naar %1$s voor %2$s</string>
     <string name="switch_yearly_save">Schakel over naar jaarlijks en bespaar %d%%</string>
     <string name="switch_yearly_title">Overschakelen naar jaarlijkse facturering</string>
     <string name="settings_plan_top_tier_title">Je hebt het hoogste abonnement</string>
