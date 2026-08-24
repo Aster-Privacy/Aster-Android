@@ -254,7 +254,13 @@ fun ComposeScreen(
                 ?: target
         } else null
     }
-    val alias_options = remember(user_email, settings_state.aliases, settings_state.custom_domain_addresses, thread_ghost_match) {
+    val alias_options = remember(
+        user_email,
+        settings_state.aliases,
+        settings_state.custom_domain_addresses,
+        settings_state.ghost_aliases,
+        thread_ghost_match,
+    ) {
         val options = mutableListOf<String>()
         if (user_email.isNotBlank()) options.add(user_email)
         settings_state.aliases
@@ -267,6 +273,12 @@ fun ComposeScreen(
             .filter { it.is_enabled && !it.decryption_failed && is_sendable_address(it.address) }
             .forEach { addr_info ->
                 val addr = addr_info.address
+                if (addr.isNotBlank() && addr !in options) options.add(addr)
+            }
+        settings_state.ghost_aliases
+            .filter { it.is_enabled && !it.decryption_failed && is_sendable_address(it.address) }
+            .forEach { ghost ->
+                val addr = ghost.address
                 if (addr.isNotBlank() && addr !in options) options.add(addr)
             }
         if (thread_ghost_match != null && thread_ghost_match !in options) options.add(thread_ghost_match)
