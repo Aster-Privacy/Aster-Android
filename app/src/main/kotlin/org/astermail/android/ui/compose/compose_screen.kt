@@ -2786,6 +2786,14 @@ private val pgp_provider_domains = listOf(
     "hushmail.com",
 )
 
+private fun derive_contact_name(email: String): String {
+    val local_part = email.substringBefore('@')
+    val derived = local_part.split(".", "_", "-")
+        .filter { it.isNotBlank() }
+        .joinToString(" ") { part -> part.replaceFirstChar { ch -> ch.uppercase() } }
+    return derived.ifBlank { local_part }
+}
+
 private fun is_internal_email(email: String): Boolean {
     val lower = email.lowercase()
     return internal_domains.any { lower.endsWith("@$it") }
@@ -2811,52 +2819,126 @@ private fun encryption_level_for(email: String): EncryptionLevel {
 @Composable
 private fun recipient_chip(text: String, on_remove: () -> Unit) {
     val colors = AsterMaterial.colors
+    val context = LocalContext.current
+    val contacts_vm: ContactsViewModel = hiltViewModel()
+    val contacts_state by contacts_vm.state.collectAsStateWithLifecycle()
+    val copy_action = org.astermail.android.ui.common.remember_copy_action()
+    val normalized = remember(text) { text.trim() }
+    val saved_contact = remember(normalized, contacts_state.contacts) {
+        contacts_state.contacts.firstOrNull { it.email.equals(normalized, ignoreCase = true) }
+    }
     val level = encryption_level_for(text)
     val is_encrypted = level == EncryptionLevel.END_TO_END
     val accent = if (is_encrypted) colors.accent_blue else colors.text_muted
     var show_tooltip by remember { mutableStateOf(false) }
-    Row(
-        modifier = Modifier
-            .background(colors.bg_hover, SquircleShape(AsterRadius.pill))
-            .padding(start = 6.dp, end = 2.dp, top = 2.dp, bottom = 2.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            imageVector = TablerIcons.Lock,
-            contentDescription = if (is_encrypted) stringResource(R.string.end_to_end_encrypted) else stringResource(R.string.protected_in_transit),
-            tint = accent,
+    var menu_open by remember { mutableStateOf(false) }
+    Box {
+        Row(
             modifier = Modifier
-                .size(12.dp)
-                .clickable { show_tooltip = !show_tooltip },
-        )
-        Spacer(Modifier.width(6.dp))
-        org.astermail.android.ui.mail.SenderAvatar(
-            email = text,
-            size = 20.dp,
-        )
-        Spacer(Modifier.width(6.dp))
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelLarge,
-            color = colors.text_primary,
-            fontWeight = FontWeight.Medium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.widthIn(max = 220.dp),
-        )
-        Spacer(Modifier.width(2.dp))
-        Box(
-            modifier = Modifier
-                .size(22.dp)
-                .clip(CircleShape)
-                .clickable(onClick = on_remove),
-            contentAlignment = Alignment.Center,
+                .clip(SquircleShape(AsterRadius.pill))
+                .background(colors.bg_hover)
+                .clickable { menu_open = true }
+                .padding(start = 6.dp, end = 2.dp, top = 2.dp, bottom = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                imageVector = TablerIcons.X,
-                contentDescription = "${stringResource(R.string.remove)} $text",
-                tint = colors.text_tertiary,
-                modifier = Modifier.size(14.dp),
+                imageVector = TablerIcons.Lock,
+                contentDescription = if (is_encrypted) stringResource(R.string.end_to_end_encrypted) else stringResource(R.string.protected_in_transit),
+                tint = accent,
+                modifier = Modifier
+                    .size(12.dp)
+                    .clickable { show_tooltip = !show_tooltip },
+            )
+            Spacer(Modifier.width(6.dp))
+            org.astermail.android.ui.mail.SenderAvatar(
+                email = text,
+                size = 20.dp,
+            )
+            Spacer(Modifier.width(6.dp))
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelLarge,
+                color = colors.text_primary,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.widthIn(max = 220.dp),
+            )
+            Spacer(Modifier.width(2.dp))
+            Box(
+                modifier = Modifier
+                    .size(22.dp)
+                    .clip(CircleShape)
+                    .clickable(onClick = on_remove),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = TablerIcons.X,
+                    contentDescription = "${stringResource(R.string.remove)} $text",
+                    tint = colors.text_tertiary,
+                    modifier = Modifier.size(14.dp),
+                )
+            }
+        }
+        val copied_label = stringResource(R.string.copied_value, normalized)
+        aster_dropdown_menu(
+            expanded = menu_open,
+            on_dismiss = { menu_open = false },
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AsterSpacing.md + 8.dp, vertical = AsterSpacing.sm),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                org.astermail.android.ui.mail.SenderAvatar(email = normalized, size = 24.dp)
+                Spacer(Modifier.width(AsterSpacing.sm))
+                Text(
+                    text = normalized,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = colors.text_secondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            org.astermail.android.design.components.aster_dropdown_divider()
+            aster_dropdown_item(
+                label = stringResource(R.string.copy),
+                icon = TablerIcons.Copy,
+                on_click = {
+                    menu_open = false
+                    copy_action("email_address", normalized, copied_label)
+                },
+            )
+            if (saved_contact == null) {
+                aster_dropdown_item(
+                    label = stringResource(R.string.add_to_contacts),
+                    icon = TablerIcons.UserPlus,
+                    on_click = {
+                        menu_open = false
+                        contacts_vm.save_contact(
+                            Contact(
+                                id = "",
+                                name = derive_contact_name(normalized),
+                                email = normalized,
+                            ),
+                        )
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.contact_added_named, normalized),
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    },
+                )
+            }
+            aster_dropdown_item(
+                label = stringResource(R.string.remove),
+                icon = TablerIcons.Trash,
+                destructive = true,
+                on_click = {
+                    menu_open = false
+                    on_remove()
+                },
             )
         }
     }
