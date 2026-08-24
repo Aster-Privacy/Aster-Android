@@ -1821,7 +1821,7 @@ class MailRepository @Inject constructor(
                 (meta?.is_trashed ?: item.is_trashed) == true,
             is_starred = meta?.is_starred ?: item.is_starred ?: false,
             is_encrypted = item.encrypted_envelope != null && envelope?.is_unauthenticated != true,
-            has_attachments = meta?.has_attachments ?: false,
+            has_attachments = (meta?.has_attachments ?: false) || (item.has_attachments ?: false),
             is_trashed = meta?.is_trashed ?: item.is_trashed ?: false,
             is_archived = meta?.is_archived ?: item.is_archived ?: false,
             is_spam = meta?.is_spam ?: item.is_spam ?: false,
