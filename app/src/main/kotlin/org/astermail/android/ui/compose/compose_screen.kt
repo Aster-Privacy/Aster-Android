@@ -149,6 +149,7 @@ import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.billing.AttachmentLimits
 import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.mail.ASTER_INTERNAL_DOMAINS
+import org.astermail.android.mail.is_sendable_address
 import org.astermail.android.mail.MailViewModel
 import org.astermail.android.settings.DecryptedSignature
 import org.astermail.android.settings.SettingsViewModel
@@ -257,13 +258,13 @@ fun ComposeScreen(
         val options = mutableListOf<String>()
         if (user_email.isNotBlank()) options.add(user_email)
         settings_state.aliases
-            .filter { it.is_enabled && it.address.contains('@') }
+            .filter { it.is_enabled && !it.decryption_failed && is_sendable_address(it.address) }
             .forEach { alias ->
                 val addr = alias.address
                 if (addr.isNotBlank() && addr !in options) options.add(addr)
             }
         settings_state.custom_domain_addresses
-            .filter { it.is_enabled && it.address.contains('@') }
+            .filter { it.is_enabled && !it.decryption_failed && is_sendable_address(it.address) }
             .forEach { addr_info ->
                 val addr = addr_info.address
                 if (addr.isNotBlank() && addr !in options) options.add(addr)
