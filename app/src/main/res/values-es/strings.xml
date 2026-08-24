@@ -1278,6 +1278,7 @@
     <string name="snooze_tomorrow_morning">Mañana por la mañana</string>
     <string name="snooze_this_weekend">Este fin de semana</string>
     <string name="snooze_next_week">La próxima semana</string>
+    <string name="snooze_next_month">El próximo mes</string>
     <string name="aster_email">Correo Aster</string>
     <string name="pgp_encrypted_subject">Mensaje cifrado</string>
     <string name="pgp_encrypted_body">Este mensaje está cifrado con PGP. Abre la app web de Aster en un dispositivo que tenga la clave PGP correspondiente para leerlo.</string>

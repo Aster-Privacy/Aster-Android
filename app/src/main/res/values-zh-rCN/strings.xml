@@ -1276,6 +1276,7 @@
     <string name="snooze_tomorrow_morning">明天早上</string>
     <string name="snooze_this_weekend">本周末</string>
     <string name="snooze_next_week">下周</string>
+    <string name="snooze_next_month">下个月</string>
     <string name="aster_email">Aster 邮件</string>
     <string name="pgp_encrypted_subject">加密消息</string>
     <string name="pgp_encrypted_body">此消息已使用 PGP 加密。请在持有匹配 PGP 密钥的设备上打开 Aster 网页版以阅读。</string>

@@ -1276,6 +1276,7 @@
     <string name="snooze_tomorrow_morning">明日の朝</string>
     <string name="snooze_this_weekend">今週末</string>
     <string name="snooze_next_week">来週</string>
+    <string name="snooze_next_month">来月</string>
     <string name="aster_email">Aster メール</string>
     <string name="pgp_encrypted_subject">暗号化されたメッセージ</string>
     <string name="pgp_encrypted_body">このメッセージはPGPで暗号化されています。一致するPGPキーを保持しているデバイスでAsterのWebアプリを開いて読んでください。</string>

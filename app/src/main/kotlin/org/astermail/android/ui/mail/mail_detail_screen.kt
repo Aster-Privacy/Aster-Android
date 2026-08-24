@@ -3704,8 +3704,21 @@ internal fun snooze_sheet(
     val tomorrow_morning = stringResource(R.string.snooze_tomorrow_morning)
     val this_weekend_label = stringResource(R.string.snooze_this_weekend)
     val next_week_label = stringResource(R.string.snooze_next_week)
-    val options = remember(later_today, tomorrow_morning, this_weekend_label, next_week_label) {
-        snooze_options(later_today, tomorrow_morning, this_weekend_label, next_week_label)
+    val next_month_label = stringResource(R.string.snooze_next_month)
+    val options = remember(
+        later_today,
+        tomorrow_morning,
+        this_weekend_label,
+        next_week_label,
+        next_month_label,
+    ) {
+        snooze_options(
+            later_today,
+            tomorrow_morning,
+            this_weekend_label,
+            next_week_label,
+            next_month_label,
+        )
     }
     ModalBottomSheet(
         onDismissRequest = on_close,
@@ -3908,6 +3921,7 @@ internal fun snooze_options(
     tomorrow_morning_label: String,
     this_weekend_label: String,
     next_week_label: String,
+    next_month_label: String,
 ): List<Pair<String, String>> {
     val now = java.time.ZonedDateTime.now(java.time.ZoneId.systemDefault())
     val later_today = now.plusHours(SNOOZE_LATER_TODAY_OFFSET_HOURS)
@@ -3919,6 +3933,12 @@ internal fun snooze_options(
     }
     val this_weekend = at_snooze_morning(now.plusDays(days_until_saturday))
     val next_week = at_snooze_morning(now.plusDays(7))
+    val next_month_base = now.plusMonths(1)
+    val next_month = at_snooze_morning(
+        next_month_base.withDayOfMonth(
+            minOf(now.dayOfMonth, next_month_base.toLocalDate().lengthOfMonth()),
+        ),
+    )
     val fmt = java.time.format.DateTimeFormatter.ISO_INSTANT
     fun iso(z: java.time.ZonedDateTime) = fmt.format(z.toInstant())
     return listOf(
@@ -3926,6 +3946,7 @@ internal fun snooze_options(
         tomorrow_morning_label to iso(tomorrow),
         this_weekend_label to iso(this_weekend),
         next_week_label to iso(next_week),
+        next_month_label to iso(next_month),
     )
 }
 

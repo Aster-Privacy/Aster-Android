@@ -1281,6 +1281,7 @@
     <string name="snooze_tomorrow_morning">صباح الغد</string>
     <string name="snooze_this_weekend">نهاية هذا الأسبوع</string>
     <string name="snooze_next_week">الأسبوع القادم</string>
+    <string name="snooze_next_month">الشهر القادم</string>
     <string name="aster_email">بريد Aster</string>
     <string name="pgp_encrypted_subject">رسالة مشفرة</string>
     <string name="pgp_encrypted_body">هذه الرسالة مشفرة بـ PGP. افتح تطبيق ويب Aster على جهاز يحتوي على مفتاح PGP المطابق لقراءتها.</string>

@@ -1277,6 +1277,7 @@
     <string name="snooze_tomorrow_morning">Morgenochtend</string>
     <string name="snooze_this_weekend">Dit weekend</string>
     <string name="snooze_next_week">Volgende week</string>
+    <string name="snooze_next_month">Volgende maand</string>
     <string name="aster_email">Aster-e-mail</string>
     <string name="pgp_encrypted_subject">Versleuteld bericht</string>
     <string name="pgp_encrypted_body">Dit bericht is versleuteld met PGP. Open de Aster-webapp op een apparaat met de bijbehorende PGP-sleutel om het te lezen.</string>

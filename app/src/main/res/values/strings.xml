@@ -1784,6 +1784,7 @@
     <string name="snooze_tomorrow_morning">Tomorrow morning</string>
     <string name="snooze_this_weekend">This weekend</string>
     <string name="snooze_next_week">Next week</string>
+    <string name="snooze_next_month">Next month</string>
     <string name="aster_email">Aster email</string>
     <string name="pgp_encrypted_subject">Encrypted message</string>
     <string name="pgp_encrypted_body">This message is PGP-encrypted. Open the Aster web app to read it on a device that holds the matching PGP key.</string>
