@@ -87,6 +87,7 @@ data class UserPreferences(
     val block_remote_css: Boolean = true,
     val html_rendering_mode: String = "html",
     val auto_save_recent_recipients: Boolean = true,
+    val signature_mode: String = "auto",
     val undo_send_enabled: Boolean = true,
     val undo_send_seconds: Int = 10,
     val confirm_delete: Boolean = false,

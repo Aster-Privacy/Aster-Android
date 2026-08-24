@@ -539,11 +539,12 @@ fun ComposeScreen(
         settings_state.aliases.firstOrNull { it.address == from_alias }?.id
             ?: settings_state.custom_domain_addresses.firstOrNull { it.address == from_alias }?.id
     }
+    val signature_auto_enabled = (settings_state.preferences?.signature_mode ?: "auto") == "auto"
     LaunchedEffect(signature_loaded, mode, prefill) {
         if (!signature_loaded || signature_applied) return@LaunchedEffect
         if (mode == "draft") { signature_applied = true; return@LaunchedEffect }
         if (prefill.body.isNotBlank()) { signature_applied = true; return@LaunchedEffect }
-        val resolved_sig = settings_vm.signature_for(current_alias_id)
+        val resolved_sig = if (signature_auto_enabled) settings_vm.signature_for(current_alias_id) else null
         val resolved = resolved_sig?.takeIf { !it.is_html }?.content.orEmpty()
         val show_branding = settings_state.preferences?.show_aster_branding == true
         val watermark = if (show_branding) "\n\n${context.getString(R.string.compose_footer_secured_by_plain)}" else ""
@@ -562,11 +563,11 @@ fun ComposeScreen(
         applied_signature = resolved
         signature_applied = true
     }
-    LaunchedEffect(current_alias_id, signature_applied) {
+    LaunchedEffect(current_alias_id, signature_applied, signature_auto_enabled) {
         if (!signature_applied) return@LaunchedEffect
         if (mode == "draft") return@LaunchedEffect
         if (manual_signature_id != "auto") return@LaunchedEffect
-        val resolved_sig = settings_vm.signature_for(current_alias_id)
+        val resolved_sig = if (signature_auto_enabled) settings_vm.signature_for(current_alias_id) else null
         val resolved = resolved_sig?.takeIf { !it.is_html }?.content.orEmpty()
         val resolved_html = resolved_sig?.takeIf { it.is_html }?.content.orEmpty()
         if (resolved == applied_signature && resolved_html == signature_html) return@LaunchedEffect
