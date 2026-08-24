@@ -73,6 +73,7 @@ class BillingViewModelTest {
         application = mockk(relaxed = true)
         billing_api = mockk(relaxed = true)
         auth_repository = mockk(relaxed = true)
+        every { auth_repository.cached_password_hash_b64() } returns "cached_hash"
         vm = BillingViewModel(application, billing_api, auth_repository)
     }
 
@@ -184,7 +185,7 @@ class BillingViewModelTest {
     }
 
     @Test
-    fun `cancel sends the chosen reason without any credential`() = runTest {
+    fun `cancel sends the chosen reason without asking for the password`() = runTest {
         coEvery { billing_api.cancel_subscription(any()) } returns CancelSubscriptionResponse(cancel_at_period_end = true)
         vm.cancel_subscription("too_expensive", "  " + "x".repeat(2500) + "  ")
         advanceUntilIdle()
@@ -197,6 +198,7 @@ class BillingViewModelTest {
         coVerify {
             billing_api.cancel_subscription(
                 CancelSubscriptionRequest(
+                    password_hash = "cached_hash",
                     cancel_reason = "too_expensive",
                     cancel_reason_text = "x".repeat(2000),
                 ),
@@ -220,6 +222,7 @@ class BillingViewModelTest {
         coVerify {
             billing_api.cancel_subscription(
                 CancelSubscriptionRequest(
+                    password_hash = "cached_hash",
                     cancel_reason = null,
                     cancel_reason_text = null,
                 ),
@@ -242,11 +245,24 @@ class BillingViewModelTest {
         coVerify {
             billing_api.cancel_subscription(
                 CancelSubscriptionRequest(
+                    password_hash = "cached_hash",
                     cancel_reason = null,
                     cancel_reason_text = null,
                 ),
             )
         }
+    }
+
+    @Test
+    fun `cancel reports a signed out session instead of failing silently`() = runTest {
+        every { application.getString(R.string.session_expired_sign_in) } returns "Your session expired. Sign in again."
+        every { auth_repository.cached_password_hash_b64() } returns null
+        vm.cancel_subscription()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { billing_api.cancel_subscription(any()) }
+        assertEquals("Your session expired. Sign in again.", vm.state.value.error)
+        assertFalse(vm.state.value.is_acting)
     }
 
     @Test
