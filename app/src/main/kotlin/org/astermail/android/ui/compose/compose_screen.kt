@@ -2369,7 +2369,7 @@ fun ComposeScreen(
                             val cal = java.util.Calendar.getInstance()
                             cal.set(year, month, day, hour, minute, 0)
                             cal.set(java.util.Calendar.MILLISECOND, 0)
-                            if (cal.timeInMillis <= System.currentTimeMillis()) {
+                            if (cal.timeInMillis < System.currentTimeMillis() + minimum_schedule_lead_ms) {
                                 show_schedule_picker = false
                                 send_error = context.getString(R.string.schedule_time_in_past)
                             } else {
@@ -2380,7 +2380,7 @@ fun ComposeScreen(
                         },
                         calendar.get(java.util.Calendar.HOUR_OF_DAY),
                         calendar.get(java.util.Calendar.MINUTE),
-                        true,
+                        android.text.format.DateFormat.is24HourFormat(picker_context),
                     )
                     time_picker.setOnCancelListener { show_schedule_picker = false }
                     time_picker.show()
@@ -4028,6 +4028,8 @@ private fun toggle_sheet_row(
         }
     }
 }
+
+private const val minimum_schedule_lead_ms = 60_000L
 
 private const val undo_send_min_seconds = 1
 private const val undo_send_max_seconds = 30

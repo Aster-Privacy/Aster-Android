@@ -34,6 +34,8 @@ import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.DialogConfirmStyle
 
+private const val minimum_schedule_lead_ms = 60_000L
+
 @Composable
 fun scheduled_actions_dialog(
     email: Email,
@@ -59,7 +61,7 @@ fun scheduled_actions_dialog(
                             set(year, month, day, hour, minute, 0)
                             set(java.util.Calendar.MILLISECOND, 0)
                         }
-                        if (picked.timeInMillis <= System.currentTimeMillis()) {
+                        if (picked.timeInMillis < System.currentTimeMillis() + minimum_schedule_lead_ms) {
                             android.widget.Toast.makeText(
                                 context,
                                 context.getString(R.string.scheduled_time_in_past),
