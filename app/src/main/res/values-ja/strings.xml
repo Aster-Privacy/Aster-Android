@@ -2827,4 +2827,9 @@
     <string name="settings_plan_storage_tight_note">ストレージの%1$d%%を使用しています。%2$sならもっと余裕があります。</string>
     <string name="settings_storage_addons_monthly_note">追加ストレージは、プランが年払いの場合でも月ごとに請求されます。</string>
     <string name="autorenew_notice_short">カードでお支払いの場合、プランは自動更新されます。次回の請求を止めるには、更新日より前に「設定」で解約してください。</string>
+    <string name="account_suspended_title">アカウントが停止されています</string>
+    <string name="account_suspended_message">利用規約違反のためアカウントが停止されているため、現在サインインできません。</string>
+    <string name="account_suspended_appeal">誤りだと思われる場合は、この措置に異議を申し立てできます。</string>
+    <string name="account_suspended_appeal_action">異議を申し立てる</string>
+    <string name="account_suspended_back">サインインに戻る</string>
 </resources>

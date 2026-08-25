@@ -2835,4 +2835,9 @@
     <string name="settings_plan_storage_tight_note">Je hebt %1$d%% van je opslag gebruikt. %2$s geeft je meer ruimte.</string>
     <string name="settings_storage_addons_monthly_note">Extra opslag wordt maandelijks gefactureerd, ook als je abonnement jaarlijks wordt gefactureerd.</string>
     <string name="autorenew_notice_short">Je abonnement wordt automatisch verlengd als je met een kaart betaalt. Zeg op in Instellingen vóór de verlengingsdatum om de volgende afschrijving te voorkomen.</string>
+    <string name="account_suspended_title">Account opgeschort</string>
+    <string name="account_suspended_message">Je account is opgeschort wegens schending van de Servicevoorwaarden, dus je kunt nu niet inloggen.</string>
+    <string name="account_suspended_appeal">Als je denkt dat dit een vergissing is, kun je bezwaar maken.</string>
+    <string name="account_suspended_appeal_action">Bezwaar maken</string>
+    <string name="account_suspended_back">Terug naar inloggen</string>
 </resources>

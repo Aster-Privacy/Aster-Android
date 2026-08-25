@@ -2827,4 +2827,9 @@
     <string name="settings_plan_storage_tight_note">저장 공간의 %1$d%%를 사용했습니다. %2$s에서는 공간이 더 넉넉합니다.</string>
     <string name="settings_storage_addons_monthly_note">추가 저장 공간은 요금제를 연간 결제하더라도 매월 청구됩니다.</string>
     <string name="autorenew_notice_short">카드로 결제하면 요금제가 자동으로 갱신됩니다. 다음 결제를 방지하려면 갱신일 전에 설정에서 해지하세요.</string>
+    <string name="account_suspended_title">계정이 정지되었습니다</string>
+    <string name="account_suspended_message">서비스 약관 위반으로 계정이 정지되어 지금은 로그인할 수 없습니다.</string>
+    <string name="account_suspended_appeal">잘못된 조치라고 생각되면 이의를 제기할 수 있습니다.</string>
+    <string name="account_suspended_appeal_action">이의 제기</string>
+    <string name="account_suspended_back">로그인으로 돌아가기</string>
 </resources>

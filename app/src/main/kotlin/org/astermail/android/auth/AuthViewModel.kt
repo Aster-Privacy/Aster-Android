@@ -38,6 +38,7 @@ sealed interface AuthUiState {
     data object Idle : AuthUiState
     data object Loading : AuthUiState
     data class Error(val message: String) : AuthUiState
+    data object AccountSuspended : AuthUiState
     data object Success : AuthUiState
     data class TotpChallenge(val challenge: org.astermail.android.auth.TotpChallenge) : AuthUiState
 }
@@ -80,7 +81,7 @@ class AuthViewModel @Inject constructor(
                         is LoginOutcome.NeedsTotp -> AuthUiState.TotpChallenge(outcome.challenge)
                     }
                 },
-                onFailure = { AuthUiState.Error(map_error(it)) },
+                onFailure = { failure_state(it) },
             )
         }
     }
@@ -96,7 +97,7 @@ class AuthViewModel @Inject constructor(
             }
             _ui_state.value = result.fold(
                 onSuccess = { AuthUiState.Success },
-                onFailure = { AuthUiState.Error(map_error(it)) },
+                onFailure = { failure_state(it) },
             )
         }
     }
@@ -179,6 +180,13 @@ class AuthViewModel @Inject constructor(
         if (local.isBlank() || domain.isBlank()) return false
         return domain.contains('.')
     }
+
+    private fun failure_state(t: Throwable): AuthUiState =
+        if (t is ApiError.ForbiddenError && t.code == org.astermail.android.api.ACCOUNT_SUSPENDED_CODE) {
+            AuthUiState.AccountSuspended
+        } else {
+            AuthUiState.Error(map_error(t))
+        }
 
     private fun map_error(t: Throwable): String = when (t) {
         is ApiError.InvalidCredentials, is ApiError.UnauthorizedError -> ctx.getString(R.string.error_invalid_credentials)

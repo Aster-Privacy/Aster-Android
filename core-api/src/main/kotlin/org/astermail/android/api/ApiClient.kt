@@ -73,7 +73,10 @@ sealed class ApiError(message: String) : Exception(message) {
     data class PaymentRequired(val detail: String = "") : ApiError(detail)
     data class AttachmentTooLarge(val detail: String = "") : ApiError(detail)
     data class SendQuotaReached(val detail: String = "") : ApiError(detail)
-    data class ForbiddenError(val detail: String = "forbidden") : ApiError(detail)
+    data class ForbiddenError(
+        val detail: String = "forbidden",
+        val code: String? = null,
+    ) : ApiError(detail)
     data class PlanLimitExceeded(val detail: String, val resource: String?) : ApiError(detail)
     data class StorageQuotaExceeded(val detail: String) : ApiError(detail)
     object NotFoundError : ApiError("not found")
@@ -91,6 +94,7 @@ sealed class ApiError(message: String) : Exception(message) {
 const val FINGERPRINT_MISMATCH_CODE = "FINGERPRINT_MISMATCH"
 const val INVALID_CREDENTIALS_CODE = "INVALID_CREDENTIALS"
 const val STORAGE_QUOTA_CODE = "STORAGE_QUOTA_EXCEEDED"
+const val ACCOUNT_SUSPENDED_CODE = "ACCOUNT_SUSPENDED"
 
 fun map_unauthorized(server_code: String?, detail: String): ApiError =
     when (server_code) {
@@ -436,7 +440,7 @@ class ApiClient(
                 if (should_emit_unauthorized(server_code)) AuthEventBus.emit_unauthorized()
             }
             402 -> ApiError.PaymentRequired(detail)
-            403 -> ApiError.ForbiddenError(detail)
+            403 -> ApiError.ForbiddenError(detail, server_code)
             404 -> ApiError.NotFoundError
             413 -> ApiError.AttachmentTooLarge(detail)
             422 -> ApiError.ValidationError(parse_validation_messages(body).ifEmpty { listOf(detail) })

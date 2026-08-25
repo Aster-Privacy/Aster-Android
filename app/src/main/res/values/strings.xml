@@ -2920,4 +2920,9 @@
     <string name="settings_plan_storage_tight_note">You\'ve used %1$d%% of your storage. %2$s gives you more room.</string>
     <string name="settings_storage_addons_monthly_note">Storage add-ons are billed monthly, even if your plan is billed yearly.</string>
     <string name="autorenew_notice_short">Your plan renews automatically when you pay by card. To avoid the next charge, cancel in Settings before your renewal date.</string>
+    <string name="account_suspended_title">Account suspended</string>
+    <string name="account_suspended_message">Your account is suspended for violating the Terms of Service, so you can\'t sign in right now.</string>
+    <string name="account_suspended_appeal">If you think this is a mistake, you can appeal the decision.</string>
+    <string name="account_suspended_appeal_action">Appeal this decision</string>
+    <string name="account_suspended_back">Back to sign in</string>
 </resources>

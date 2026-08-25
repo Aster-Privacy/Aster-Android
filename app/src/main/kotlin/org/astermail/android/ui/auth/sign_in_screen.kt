@@ -136,6 +136,11 @@ fun SignInScreen(
         }
     }
 
+    if (state is AuthUiState.AccountSuspended) {
+        account_suspended_screen(on_back = { view_model.reset_state() })
+        return
+    }
+
     val active_totp_challenge = cached_totp_challenge
     BackHandler {
         if (active_totp_challenge != null) {

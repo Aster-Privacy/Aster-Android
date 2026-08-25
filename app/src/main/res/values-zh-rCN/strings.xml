@@ -2827,4 +2827,9 @@
     <string name="settings_plan_storage_tight_note">你已使用 %1$d%% 的存储空间。%2$s 可提供更多空间。</string>
     <string name="settings_storage_addons_monthly_note">即使你的方案按年计费，额外存储也按月计费。</string>
     <string name="autorenew_notice_short">使用银行卡付款时，方案将自动续订。若要避免下次扣款，请在续订日期前于“设置”中取消。</string>
+    <string name="account_suspended_title">账号已停用</string>
+    <string name="account_suspended_message">你的账号因违反服务条款已被停用，因此现在无法登录。</string>
+    <string name="account_suspended_appeal">如果你认为这是误判，可以提出申诉。</string>
+    <string name="account_suspended_appeal_action">提出申诉</string>
+    <string name="account_suspended_back">返回登录</string>
 </resources>

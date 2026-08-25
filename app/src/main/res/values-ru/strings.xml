@@ -2851,4 +2851,9 @@
     <string name="settings_plan_storage_tight_note">Использовано %1$d%% хранилища. %2$s даёт больше места.</string>
     <string name="settings_storage_addons_monthly_note">Дополнительное хранилище оплачивается ежемесячно, даже если тариф оплачивается ежегодно.</string>
     <string name="autorenew_notice_short">При оплате картой тариф продлевается автоматически. Чтобы избежать следующего списания, отмените его в Настройках до даты продления.</string>
+    <string name="account_suspended_title">Аккаунт заблокирован</string>
+    <string name="account_suspended_message">Ваш аккаунт заблокирован за нарушение Условий использования, поэтому сейчас войти не получится.</string>
+    <string name="account_suspended_appeal">Если вы считаете, что это ошибка, вы можете обжаловать решение.</string>
+    <string name="account_suspended_appeal_action">Обжаловать решение</string>
+    <string name="account_suspended_back">Вернуться ко входу</string>
 </resources>

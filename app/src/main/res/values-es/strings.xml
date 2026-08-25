@@ -2836,4 +2836,9 @@
     <string name="settings_plan_storage_tight_note">Has usado el %1$d%% de tu almacenamiento. %2$s te da más espacio.</string>
     <string name="settings_storage_addons_monthly_note">El almacenamiento adicional se cobra mensualmente, aunque tu plan se cobre anualmente.</string>
     <string name="autorenew_notice_short">Tu plan se renueva automáticamente cuando pagas con tarjeta. Para evitar el próximo cobro, cancélalo en Ajustes antes de la fecha de renovación.</string>
+    <string name="account_suspended_title">Cuenta suspendida</string>
+    <string name="account_suspended_message">Tu cuenta está suspendida por incumplir los Términos del servicio, así que ahora no puedes iniciar sesión.</string>
+    <string name="account_suspended_appeal">Si crees que se trata de un error, puedes apelar la decisión.</string>
+    <string name="account_suspended_appeal_action">Apelar la decisión</string>
+    <string name="account_suspended_back">Volver al inicio de sesión</string>
 </resources>

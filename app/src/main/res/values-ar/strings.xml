@@ -2867,4 +2867,9 @@
     <string name="settings_plan_storage_tight_note">لقد استخدمت %1$d%% من مساحة التخزين. توفر لك %2$s مساحة أكبر.</string>
     <string name="settings_storage_addons_monthly_note">تتم فوترة التخزين الإضافي شهريًا، حتى إذا كانت خطتك تُفوتر سنويًا.</string>
     <string name="autorenew_notice_short">تتجدد خطتك تلقائيًا عند الدفع بالبطاقة. لتجنب الرسوم التالية، ألغِ الخطة من الإعدادات قبل تاريخ التجديد.</string>
+    <string name="account_suspended_title">الحساب موقوف</string>
+    <string name="account_suspended_message">تم إيقاف حسابك بسبب مخالفة شروط الخدمة، لذا لا يمكنك تسجيل الدخول الآن.</string>
+    <string name="account_suspended_appeal">إذا كنت تعتقد أن هذا خطأ، يمكنك تقديم اعتراض.</string>
+    <string name="account_suspended_appeal_action">تقديم اعتراض</string>
+    <string name="account_suspended_back">العودة إلى تسجيل الدخول</string>
 </resources>

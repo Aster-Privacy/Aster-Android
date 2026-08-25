@@ -2851,4 +2851,9 @@
     <string name="settings_plan_storage_tight_note">Wykorzystano %1$d%% miejsca. %2$s daje więcej przestrzeni.</string>
     <string name="settings_storage_addons_monthly_note">Dodatkowa przestrzeń jest rozliczana co miesiąc, nawet jeśli plan rozliczasz rocznie.</string>
     <string name="autorenew_notice_short">Przy płatności kartą plan odnawia się automatycznie. Aby uniknąć kolejnej opłaty, anuluj go w Ustawieniach przed datą odnowienia.</string>
+    <string name="account_suspended_title">Konto zawieszone</string>
+    <string name="account_suspended_message">Twoje konto zostało zawieszone z powodu naruszenia Warunków korzystania z usługi, więc nie możesz się teraz zalogować.</string>
+    <string name="account_suspended_appeal">Jeśli uważasz, że to pomyłka, możesz odwołać się od tej decyzji.</string>
+    <string name="account_suspended_appeal_action">Odwołaj się od decyzji</string>
+    <string name="account_suspended_back">Powrót do logowania</string>
 </resources>

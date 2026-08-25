@@ -2835,4 +2835,9 @@
     <string name="settings_plan_storage_tight_note">Depolama alanınızın %%%1$d kadarını kullandınız. %2$s size daha fazla alan sunar.</string>
     <string name="settings_storage_addons_monthly_note">Ek depolama, planınız yıllık faturalandırılsa bile aylık faturalandırılır.</string>
     <string name="autorenew_notice_short">Kartla ödeme yaptığınızda paketiniz otomatik olarak yenilenir. Sonraki ücretlendirmeyi önlemek için yenileme tarihinden önce Ayarlar\'dan iptal edin.</string>
+    <string name="account_suspended_title">Hesap askıya alındı</string>
+    <string name="account_suspended_message">Hesabınız Hizmet Koşulları\'nı ihlal ettiği için askıya alındı, bu nedenle şu anda giriş yapamazsınız.</string>
+    <string name="account_suspended_appeal">Bunun bir hata olduğunu düşünüyorsanız karara itiraz edebilirsiniz.</string>
+    <string name="account_suspended_appeal_action">Karara itiraz et</string>
+    <string name="account_suspended_back">Girişe dön</string>
 </resources>
