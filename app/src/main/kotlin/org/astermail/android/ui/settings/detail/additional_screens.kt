@@ -1420,6 +1420,7 @@ fun PrivacyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
             base.copy(
                 block_trackers = block_trackers,
                 load_remote_images = if (remote_images) "always" else "never",
+                block_external_images = !remote_images,
                 send_read_receipts = send_receipts,
                 warn_suspicious_links = link_warnings,
                 strip_exif = strip_exif,

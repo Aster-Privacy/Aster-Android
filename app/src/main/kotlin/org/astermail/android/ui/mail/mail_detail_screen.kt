@@ -449,7 +449,10 @@ fun MailDetailScreen(
     val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
     val swipe_threshold_px = with(density) { 200.dp.toPx() }
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
-    val privacy_blocks_external = settings_state.preferences?.block_external_images ?: true
+    val remote_images_always = settings_state.preferences?.load_remote_images == "always" ||
+        settings_state.preferences?.block_external_content == false
+    val privacy_blocks_external =
+        (settings_state.preferences?.block_external_images ?: true) && !remote_images_always
     val traffic_blocks_external = settings_state.preferences?.low_network_mode == true
     val block_external_images = privacy_blocks_external || traffic_blocks_external
     val blocked_for_traffic_only = traffic_blocks_external && !privacy_blocks_external
@@ -1151,7 +1154,12 @@ fun MailDetailScreen(
                                 allow_external_ids = allow_external_ids + msg.id
                                 val base = settings_state.preferences
                                 if (base != null) {
-                                    settings_vm.save_preferences(base.copy(block_external_images = false))
+                                    settings_vm.save_preferences(
+                                        base.copy(
+                                            block_external_images = false,
+                                            load_remote_images = "always",
+                                        ),
+                                    )
                                 }
                             },
                             on_disable_low_network = {
