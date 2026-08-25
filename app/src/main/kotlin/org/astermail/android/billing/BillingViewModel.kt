@@ -256,13 +256,18 @@ class BillingViewModel @Inject constructor(
             return false
         }
         val chosen_reason = reason?.takeIf { it in CANCEL_REASONS }
-        val password_hash = auth_repository.cached_password_hash_b64()
-        if (password_hash == null) {
-            _state.value = _state.value.copy(error = ctx.getString(R.string.session_expired_sign_in), info = null)
-            return false
-        }
         _state.value = _state.value.copy(is_acting = true, acting_action = "cancel", error = null, info = null)
         viewModelScope.launch {
+            val password_hash = auth_repository.stored_password_hash_b64()
+            if (password_hash == null) {
+                _state.value = _state.value.copy(
+                    is_acting = false,
+                    acting_action = null,
+                    error = ctx.getString(R.string.session_expired_sign_in),
+                    info = null,
+                )
+                return@launch
+            }
             try {
                 val response = billing_api.cancel_subscription(
                     CancelSubscriptionRequest(

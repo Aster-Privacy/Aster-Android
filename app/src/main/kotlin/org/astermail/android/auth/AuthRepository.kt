@@ -975,6 +975,14 @@ class AuthRepository @Inject constructor(
         return encoded
     }
 
+    suspend fun stored_password_hash_b64(): String? {
+        cached_password_hash_b64()?.let { return it }
+        val stored = session_key_store.get_passphrase() ?: return null
+        val password = String(stored, Charsets.UTF_8)
+        stored.fill(0)
+        return runCatching { derive_password_hash_b64(password) }.getOrNull()
+    }
+
     suspend fun derive_password_hash_b64(password: String): String? {
         val server_salt = session_key_store.get_user_email()?.let { email ->
             runCatching {

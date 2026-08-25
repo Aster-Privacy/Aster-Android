@@ -73,7 +73,7 @@ class BillingViewModelTest {
         application = mockk(relaxed = true)
         billing_api = mockk(relaxed = true)
         auth_repository = mockk(relaxed = true)
-        every { auth_repository.cached_password_hash_b64() } returns "cached_hash"
+        coEvery { auth_repository.stored_password_hash_b64() } returns "cached_hash"
         vm = BillingViewModel(application, billing_api, auth_repository)
     }
 
@@ -256,7 +256,7 @@ class BillingViewModelTest {
     @Test
     fun `cancel reports a signed out session instead of failing silently`() = runTest {
         every { application.getString(R.string.session_expired_sign_in) } returns "Your session expired. Sign in again."
-        every { auth_repository.cached_password_hash_b64() } returns null
+        coEvery { auth_repository.stored_password_hash_b64() } returns null
         vm.cancel_subscription()
         advanceUntilIdle()
 
