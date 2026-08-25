@@ -444,6 +444,7 @@ fun ComposeScreen(
     var show_template_sheet by remember { mutableStateOf(false) }
     var show_signature_sheet by remember { mutableStateOf(false) }
     var manual_signature_id by remember { mutableStateOf<String?>("auto") }
+    var signature_placement_override by remember { mutableStateOf<Int?>(null) }
     var scheduled_send by remember { mutableStateOf(false) }
     var show_schedule_picker by remember { mutableStateOf(false) }
     var scheduled_at_iso by remember { mutableStateOf<String?>(null) }
@@ -522,7 +523,8 @@ fun ComposeScreen(
     }
     fun draft_body_with_signature(): String =
         if (signature_html.isNotBlank()) {
-            body + "<br><br><div class=\"aster_signature\">" + signature_html + "</div>"
+            val separator = if (settings_state.preferences?.show_signature_separator != false) "--<br>" else ""
+            body + "<br><br><div class=\"aster_signature\">" + separator + signature_html + "</div>"
         } else {
             body
         }
@@ -540,12 +542,17 @@ fun ComposeScreen(
             ?: settings_state.custom_domain_addresses.firstOrNull { it.address == from_alias }?.id
     }
     val signature_auto_enabled = (settings_state.preferences?.signature_mode ?: "auto") == "auto"
+    val signature_separator_enabled = settings_state.preferences?.show_signature_separator != false
     LaunchedEffect(signature_loaded, mode, prefill) {
         if (!signature_loaded || signature_applied) return@LaunchedEffect
         if (mode == "draft") { signature_applied = true; return@LaunchedEffect }
         if (prefill.body.isNotBlank()) { signature_applied = true; return@LaunchedEffect }
         val resolved_sig = if (signature_auto_enabled) settings_vm.signature_for(current_alias_id) else null
-        val resolved = resolved_sig?.takeIf { !it.is_html }?.content.orEmpty()
+        val resolved = decorate_plain_signature(
+            resolved_sig?.takeIf { !it.is_html }?.content.orEmpty(),
+            signature_separator_enabled,
+        )
+        signature_placement_override = resolved_sig?.placement
         val show_branding = settings_state.preferences?.show_aster_branding == true
         val watermark = if (show_branding) "\n\n${context.getString(R.string.compose_footer_secured_by_plain)}" else ""
         val new_body = share_body_prefix +
@@ -568,8 +575,12 @@ fun ComposeScreen(
         if (mode == "draft") return@LaunchedEffect
         if (manual_signature_id != "auto") return@LaunchedEffect
         val resolved_sig = if (signature_auto_enabled) settings_vm.signature_for(current_alias_id) else null
-        val resolved = resolved_sig?.takeIf { !it.is_html }?.content.orEmpty()
+        val resolved = decorate_plain_signature(
+            resolved_sig?.takeIf { !it.is_html }?.content.orEmpty(),
+            signature_separator_enabled,
+        )
         val resolved_html = resolved_sig?.takeIf { it.is_html }?.content.orEmpty()
+        signature_placement_override = resolved_sig?.placement
         if (resolved == applied_signature && resolved_html == signature_html) return@LaunchedEffect
         signature_html = resolved_html
         val watermark = context.getString(R.string.compose_footer_secured_by_plain)
@@ -1113,6 +1124,25 @@ fun ComposeScreen(
             if (strip_branding) raw_formatted_body.replace(footer_secured_by_plain, "")
             else raw_formatted_body.removeSuffix(footer_secured_by_plain)
         ).trimEnd('\n', ' ')
+        val signature_below = quoted_html != null &&
+            signature_below_quote(
+                signature_placement_override,
+                settings_state.preferences?.signature_placement,
+            )
+        val moved_plain_signature = if (
+            signature_below &&
+            applied_signature.isNotBlank() &&
+            body_without_footer.endsWith(applied_signature)
+        ) {
+            applied_signature
+        } else {
+            ""
+        }
+        val body_for_html = if (moved_plain_signature.isBlank()) {
+            body_without_footer
+        } else {
+            body_without_footer.dropLast(moved_plain_signature.length).trimEnd('\n', ' ')
+        }
         val strip_metadata_enabled = settings_state.preferences?.strip_exif_on_compose != false
         val unstripped_names = mutableListOf<String>()
 
@@ -1140,7 +1170,7 @@ fun ComposeScreen(
         }
         val tokenized = StringBuilder()
         var marker_idx = 0
-        for (ch in body_without_footer) {
+        for (ch in body_for_html) {
             if (ch == IMG_MARKER) {
                 tokenized.append("[[ASTER_IMG_${marker_idx}]]")
                 marker_idx++
@@ -1209,12 +1239,24 @@ fun ComposeScreen(
                 qh +
                 "</blockquote></div>"
         }.orEmpty()
+        val html_separator = if (signature_separator_enabled) "--<br>" else ""
         val signature_block = if (signature_html.isNotBlank()) {
-            "<br><br><div class=\"aster_signature\">" + signature_html + "</div>"
+            "<br><br><div class=\"aster_signature\">" + html_separator + signature_html + "</div>"
         } else {
             ""
         }
-        val body_html = with_images + signature_block + quote_block
+        val moved_signature_block = if (moved_plain_signature.isBlank()) {
+            ""
+        } else {
+            "<br><div class=\"aster_signature\">" +
+                moved_plain_signature.split("\n").joinToString("<br>") { escape_html(it) } +
+                "</div>"
+        }
+        val body_html = if (signature_below) {
+            with_images + quote_block + signature_block + moved_signature_block
+        } else {
+            with_images + signature_block + quote_block
+        }
 
         return Triple(body_html, attachment_payloads, !branding_footer_kept)
     }
@@ -2230,8 +2272,12 @@ fun ComposeScreen(
                 show_signature_sheet = false
                 val picked = if (picked_id == null) null
                     else signatures_list.firstOrNull { it.id == picked_id }
-                val new_content = picked?.takeIf { !it.is_html }?.content.orEmpty()
+                val new_content = decorate_plain_signature(
+                    picked?.takeIf { !it.is_html }?.content.orEmpty(),
+                    signature_separator_enabled,
+                )
                 signature_html = picked?.takeIf { it.is_html }?.content.orEmpty()
+                signature_placement_override = picked?.placement
                 val watermark = context.getString(R.string.compose_footer_secured_by_plain)
                 val watermark_suffix = "\n\n${watermark}"
                 val kept_suffix = if (body.endsWith(watermark_suffix)) watermark_suffix else ""
@@ -3953,6 +3999,15 @@ private fun toggle_sheet_row(
         }
     }
 }
+
+private fun signature_below_quote(placement: Int?, preference: String?): Boolean {
+    if (placement == 1) return false
+    if (placement == 0) return true
+    return preference != "above"
+}
+
+private fun decorate_plain_signature(content: String, separator_enabled: Boolean): String =
+    if (content.isBlank() || !separator_enabled) content else "--\n" + content
 
 private fun escape_html(s: String): String =
     s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")

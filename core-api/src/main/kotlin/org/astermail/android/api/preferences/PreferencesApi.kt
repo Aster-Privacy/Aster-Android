@@ -88,6 +88,8 @@ data class UserPreferences(
     val html_rendering_mode: String = "html",
     val auto_save_recent_recipients: Boolean = true,
     val signature_mode: String = "auto",
+    val signature_placement: String = "below",
+    val show_signature_separator: Boolean = true,
     val undo_send_enabled: Boolean = true,
     val undo_send_seconds: Int = 10,
     val confirm_delete: Boolean = false,
