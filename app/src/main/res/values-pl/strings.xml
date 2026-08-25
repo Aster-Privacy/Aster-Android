@@ -2856,4 +2856,6 @@
     <string name="account_suspended_appeal">Jeśli uważasz, że to pomyłka, możesz odwołać się od tej decyzji.</string>
     <string name="account_suspended_appeal_action">Odwołaj się od decyzji</string>
     <string name="account_suspended_back">Powrót do logowania</string>
+    <string name="default_payment_settled">Domyślna metoda płatności zaktualizowana. Zaległa należność została opłacona.</string>
+    <string name="default_payment_still_due">Twoja karta została zapisana, ale zaległa należność nie została opłacona. Wypróbuj inną kartę, aby zachować swój plan.</string>
 </resources>

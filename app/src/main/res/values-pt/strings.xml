@@ -2840,4 +2840,6 @@
     <string name="account_suspended_appeal">Se você acha que isso é um engano, pode recorrer da decisão.</string>
     <string name="account_suspended_appeal_action">Recorrer da decisão</string>
     <string name="account_suspended_back">Voltar ao login</string>
+    <string name="default_payment_settled">Método de pagamento padrão atualizado. O seu saldo pendente está pago.</string>
+    <string name="default_payment_still_due">O seu cartão foi salvo, mas o seu saldo pendente não foi pago. Tente outro cartão para manter o seu plano.</string>
 </resources>

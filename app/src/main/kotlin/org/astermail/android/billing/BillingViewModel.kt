@@ -683,15 +683,39 @@ class BillingViewModel @Inject constructor(
         viewModelScope.launch {
             _state.value = _state.value.copy(is_acting = true, acting_action = "set_default_$payment_method_id")
             try {
-                billing_api.set_default_payment_method(SetDefaultPaymentMethodRequest(payment_method_id))
+                val response = billing_api.set_default_payment_method(
+                    SetDefaultPaymentMethodRequest(payment_method_id),
+                )
+                val methods = _state.value.payment_methods.map {
+                    it.copy(is_default = it.id == payment_method_id)
+                }
+
+                if (response.retry_attempted && !response.retry_succeeded) {
+                    _state.value = _state.value.copy(
+                        is_acting = false,
+                        acting_action = null,
+                        error = ctx.getString(R.string.default_payment_still_due),
+                        payment_methods = methods,
+                    )
+                    return@launch
+                }
+
+                val info = if (response.retry_succeeded) {
+                    R.string.default_payment_settled
+                } else {
+                    R.string.default_payment_updated
+                }
+
                 _state.value = _state.value.copy(
                     is_acting = false,
                     acting_action = null,
-                    info = ctx.getString(R.string.default_payment_updated),
-                    payment_methods = _state.value.payment_methods.map {
-                        it.copy(is_default = it.id == payment_method_id)
-                    },
+                    info = ctx.getString(info),
+                    payment_methods = methods,
                 )
+
+                if (response.retry_succeeded) {
+                    load_subscription()
+                }
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_acting = false,

@@ -2925,4 +2925,6 @@
     <string name="account_suspended_appeal">If you think this is a mistake, you can appeal the decision.</string>
     <string name="account_suspended_appeal_action">Appeal this decision</string>
     <string name="account_suspended_back">Back to sign in</string>
+    <string name="default_payment_settled">Default payment method updated. Your outstanding balance is paid.</string>
+    <string name="default_payment_still_due">Your card is saved, but your outstanding balance was not paid. Try a different card to keep your plan.</string>
 </resources>

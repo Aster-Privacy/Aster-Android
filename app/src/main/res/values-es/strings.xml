@@ -2841,4 +2841,6 @@
     <string name="account_suspended_appeal">Si crees que se trata de un error, puedes apelar la decisión.</string>
     <string name="account_suspended_appeal_action">Apelar la decisión</string>
     <string name="account_suspended_back">Volver al inicio de sesión</string>
+    <string name="default_payment_settled">Método de pago predeterminado actualizado. Tu saldo pendiente está pagado.</string>
+    <string name="default_payment_still_due">Tu tarjeta está guardada, pero tu saldo pendiente no se ha pagado. Prueba con otra tarjeta para mantener tu plan.</string>
 </resources>

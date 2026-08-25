@@ -2832,4 +2832,6 @@
     <string name="account_suspended_appeal">如果你认为这是误判，可以提出申诉。</string>
     <string name="account_suspended_appeal_action">提出申诉</string>
     <string name="account_suspended_back">返回登录</string>
+    <string name="default_payment_settled">默认支付方式已更新。未付款项已结清。</string>
+    <string name="default_payment_still_due">您的银行卡已保存，但未付款项尚未结清。请更换其他银行卡以保留您的套餐。</string>
 </resources>

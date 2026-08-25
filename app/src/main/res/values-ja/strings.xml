@@ -2832,4 +2832,6 @@
     <string name="account_suspended_appeal">誤りだと思われる場合は、この措置に異議を申し立てできます。</string>
     <string name="account_suspended_appeal_action">異議を申し立てる</string>
     <string name="account_suspended_back">サインインに戻る</string>
+    <string name="default_payment_settled">デフォルトのお支払い方法を更新しました。未払い残高のお支払いが完了しました。</string>
+    <string name="default_payment_still_due">カードを保存しましたが、未払い残高のお支払いは完了していません。プランを維持するには別のカードをお試しください。</string>
 </resources>

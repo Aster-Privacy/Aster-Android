@@ -2872,4 +2872,6 @@
     <string name="account_suspended_appeal">إذا كنت تعتقد أن هذا خطأ، يمكنك تقديم اعتراض.</string>
     <string name="account_suspended_appeal_action">تقديم اعتراض</string>
     <string name="account_suspended_back">العودة إلى تسجيل الدخول</string>
+    <string name="default_payment_settled">تم تحديث طريقة الدفع الافتراضية. تم سداد المبلغ المستحق.</string>
+    <string name="default_payment_still_due">تم حفظ بطاقتك، لكن لم يتم سداد المبلغ المستحق. جرّب بطاقة أخرى للاحتفاظ بخطتك.</string>
 </resources>

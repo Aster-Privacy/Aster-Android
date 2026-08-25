@@ -2840,4 +2840,6 @@
     <string name="account_suspended_appeal">Se pensi che si tratti di un errore, puoi contestare la decisione.</string>
     <string name="account_suspended_appeal_action">Contesta la decisione</string>
     <string name="account_suspended_back">Torna all\'accesso</string>
+    <string name="default_payment_settled">Metodo di pagamento predefinito aggiornato. Il tuo saldo in sospeso è stato pagato.</string>
+    <string name="default_payment_still_due">La tua carta è stata salvata, ma il tuo saldo in sospeso non è stato pagato. Prova un\'altra carta per mantenere il tuo piano.</string>
 </resources>

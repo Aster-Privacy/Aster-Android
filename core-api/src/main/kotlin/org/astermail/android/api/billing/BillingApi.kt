@@ -253,6 +253,13 @@ data class GenericSuccessResponse(
 )
 
 @Serializable
+data class PaymentMethodActionResponse(
+    val success: Boolean = true,
+    val retry_attempted: Boolean = false,
+    val retry_succeeded: Boolean = false,
+)
+
+@Serializable
 data class StorageAddonItem(
     val id: String = "",
     val name: String = "",
@@ -458,7 +465,7 @@ interface BillingApi {
     suspend fun change_plan(request: ChangePlanRequest): ChangePlanResponse
     suspend fun preview_plan_change(plan_code: String, billing_interval: String): PlanChangePreviewResponse
     suspend fun list_payment_methods(): PaymentMethodsListResponse
-    suspend fun set_default_payment_method(request: SetDefaultPaymentMethodRequest): GenericSuccessResponse
+    suspend fun set_default_payment_method(request: SetDefaultPaymentMethodRequest): PaymentMethodActionResponse
     suspend fun detach_payment_method(request: DetachPaymentMethodRequest): GenericSuccessResponse
     suspend fun get_storage_addons(): StorageAddonsResponse
     suspend fun purchase_storage_addon(request: PurchaseAddonRequest): PurchaseAddonResponse
@@ -575,7 +582,7 @@ class BillingApiImpl(private val client: ApiClient) : BillingApi {
     override suspend fun list_payment_methods(): PaymentMethodsListResponse =
         decode_or_throw(client.http.get("${client.base_url}$base/payment-methods"))
 
-    override suspend fun set_default_payment_method(request: SetDefaultPaymentMethodRequest): GenericSuccessResponse {
+    override suspend fun set_default_payment_method(request: SetDefaultPaymentMethodRequest): PaymentMethodActionResponse {
         val response = client.http.post("${client.base_url}$base/payment-methods/default") {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }

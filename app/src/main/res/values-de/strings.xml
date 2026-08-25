@@ -2841,4 +2841,6 @@
     <string name="account_suspended_appeal">Wenn Sie glauben, dass dies ein Fehler ist, können Sie Einspruch einlegen.</string>
     <string name="account_suspended_appeal_action">Einspruch einlegen</string>
     <string name="account_suspended_back">Zurück zur Anmeldung</string>
+    <string name="default_payment_settled">Standard-Zahlungsmethode aktualisiert. Ihr offener Betrag ist bezahlt.</string>
+    <string name="default_payment_still_due">Ihre Karte ist gespeichert, aber Ihr offener Betrag wurde nicht bezahlt. Versuchen Sie es mit einer anderen Karte, um Ihren Tarif zu behalten.</string>
 </resources>

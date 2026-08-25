@@ -2840,4 +2840,6 @@
     <string name="account_suspended_appeal">Bunun bir hata olduğunu düşünüyorsanız karara itiraz edebilirsiniz.</string>
     <string name="account_suspended_appeal_action">Karara itiraz et</string>
     <string name="account_suspended_back">Girişe dön</string>
+    <string name="default_payment_settled">Varsayılan ödeme yöntemi güncellendi. Ödenmemiş tutarınız ödendi.</string>
+    <string name="default_payment_still_due">Kartınız kaydedildi ancak ödenmemiş tutarınız ödenmedi. Planınızı korumak için başka bir kart deneyin.</string>
 </resources>

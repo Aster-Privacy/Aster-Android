@@ -2832,4 +2832,6 @@
     <string name="account_suspended_appeal">잘못된 조치라고 생각되면 이의를 제기할 수 있습니다.</string>
     <string name="account_suspended_appeal_action">이의 제기</string>
     <string name="account_suspended_back">로그인으로 돌아가기</string>
+    <string name="default_payment_settled">기본 결제 수단이 업데이트되었습니다. 미결제 금액이 결제되었습니다.</string>
+    <string name="default_payment_still_due">카드가 저장되었지만 미결제 금액이 결제되지 않았습니다. 요금제를 유지하려면 다른 카드를 사용해 보세요.</string>
 </resources>

@@ -2867,4 +2867,6 @@
     <string name="account_suspended_appeal">Si vous pensez qu\'il s\'agit d\'une erreur, vous pouvez contester cette décision.</string>
     <string name="account_suspended_appeal_action">Contester cette décision</string>
     <string name="account_suspended_back">Retour à la connexion</string>
+    <string name="default_payment_settled">Moyen de paiement par défaut mis à jour. Votre solde impayé est réglé.</string>
+    <string name="default_payment_still_due">Votre carte est enregistrée, mais votre solde impayé n\'a pas été réglé. Essayez une autre carte pour conserver votre offre.</string>
 </resources>
