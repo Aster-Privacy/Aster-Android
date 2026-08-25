@@ -3244,7 +3244,7 @@ class MailViewModel @Inject constructor(
                     load_stats()
                 },
                 onFailure = { error ->
-                    emit_toast(friendly_load_error(error))
+                    emit_toast(scheduled_action_error(error))
                     refresh()
                 },
             )
@@ -3260,7 +3260,7 @@ class MailViewModel @Inject constructor(
                     load_stats()
                 },
                 onFailure = { error ->
-                    emit_toast(friendly_load_error(error))
+                    emit_toast(scheduled_action_error(error))
                     refresh()
                 },
             )
@@ -3282,12 +3282,19 @@ class MailViewModel @Inject constructor(
                     refresh()
                 },
                 onFailure = { error ->
-                    emit_toast(friendly_load_error(error))
+                    emit_toast(scheduled_action_error(error))
                     refresh()
                 },
             )
         }
     }
+
+    private fun scheduled_action_error(error: Throwable): String =
+        if (error is org.astermail.android.api.ApiError.Conflict) {
+            context.getString(R.string.scheduled_already_sending)
+        } else {
+            friendly_load_error(error)
+        }
 
     private fun drop_scheduled_locally(id: String) {
         _inbox_state.update { state ->

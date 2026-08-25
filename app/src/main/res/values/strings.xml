@@ -241,6 +241,7 @@
     <string name="scheduled_reschedule">Reschedule</string>
     <string name="scheduled_cancel_send">Cancel send</string>
     <string name="scheduled_send_canceled">Scheduled send canceled</string>
+    <string name="scheduled_already_sending">This email is already sending, so you can no longer change it.</string>
     <string name="scheduled_send_time_updated">Send time updated</string>
     <string name="scheduled_sending_now">Sending now</string>
     <string name="scheduled_for">Scheduled for %1$s</string>
