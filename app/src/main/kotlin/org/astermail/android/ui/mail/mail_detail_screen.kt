@@ -1228,8 +1228,10 @@ fun MailDetailScreen(
                                 show_toast(context.getString(R.string.downloading_file, att.filename))
                                 mail_vm.download_attachment(att) { result ->
                                     result.onSuccess { (resolved_att, bytes) ->
-                                        val saved = save_attachment_to_storage(context, resolved_att, bytes)
-                                        show_toast(if (saved) context.getString(R.string.saved_file, resolved_att.filename) else context.getString(R.string.failed_to_save))
+                                        scope.launch {
+                                            val saved = save_attachment_to_storage(context, resolved_att, bytes)
+                                            show_toast(if (saved) context.getString(R.string.saved_file, resolved_att.filename) else context.getString(R.string.failed_to_save))
+                                        }
                                     }.onFailure { error ->
                                         show_toast(
                                             if (error is AttachmentKeyUnavailableException) context.getString(R.string.attachment_locked)
@@ -1597,15 +1599,17 @@ fun MailDetailScreen(
                     preview_bytes = null
                 },
                 on_download = {
-                    val saved = save_attachment_to_storage(context, att, byt)
-                    Toast.makeText(
-                        context,
-                        if (saved) context.getString(R.string.saved_file, att.filename) else context.getString(R.string.failed_to_save),
-                        Toast.LENGTH_SHORT,
-                    ).show()
-                    if (saved) {
-                        preview_attachment = null
-                        preview_bytes = null
+                    scope.launch {
+                        val saved = save_attachment_to_storage(context, att, byt)
+                        Toast.makeText(
+                            context,
+                            if (saved) context.getString(R.string.saved_file, att.filename) else context.getString(R.string.failed_to_save),
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                        if (saved) {
+                            preview_attachment = null
+                            preview_bytes = null
+                        }
                     }
                 },
             )
@@ -5351,12 +5355,12 @@ private fun safe_view_mime(filename: String, declared: String): String {
     return if (mime.lowercase() in blocked) "application/octet-stream" else mime
 }
 
-private fun save_attachment_to_storage(
+private suspend fun save_attachment_to_storage(
     context: android.content.Context,
     attachment: MessageAttachment,
     bytes: ByteArray,
-): Boolean {
-    return try {
+): Boolean = withContext(Dispatchers.IO) {
+    try {
         val safe_name = sanitize_filename(attachment.filename)
         val mime = safe_view_mime(safe_name, attachment.content_type)
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
@@ -5385,7 +5389,7 @@ private fun save_attachment_to_storage(
             dir.mkdirs()
             val file = java.io.File(dir, safe_name)
             if (!file.canonicalPath.startsWith(dir.canonicalPath + java.io.File.separator)) {
-                return false
+                return@withContext false
             }
             file.writeBytes(bytes)
             val uri = android.net.Uri.fromFile(file)
