@@ -98,4 +98,7 @@
     <string name="category_tutorial_text">入力したドメインかキーワードのどれかに一致すると、そのメールはカスタムカテゴリに入ります。カスタムカテゴリは標準のカテゴリより優先され、判定はすべて端末内で行われます。</string>
     <string name="rules_create_first_folder_hint">フォルダを作成すると、このルールで一致するメールを移動できます。</string>
     <string name="rules_create_first_label_hint">ラベルを作成すると、このルールで一致するメールに適用できます。</string>
+    <string name="muted_categories">ミュート中のカテゴリ</string>
+    <string name="muted_categories_description">カテゴリをオンにすると、その通知をミュートします。ミュートしたカテゴリもメールを受信し、受信トレイに表示されます。</string>
+    <string name="muted_categories_empty">ミュートするカテゴリを選ぶには、受信トレイのカテゴリをオンにします。</string>
 </resources>

@@ -2805,4 +2805,5 @@
     <string name="label_icon_group_work">WERK</string>
     <string name="label_icon_group_school">SCHOOL</string>
     <string name="label_icon_group_everyday">DAGELIJKS</string>
+    <string name="check_for_older_messages">Zoeken naar oudere berichten</string>
 </resources>

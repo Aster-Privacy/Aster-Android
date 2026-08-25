@@ -333,6 +333,7 @@ class MailPollingWorker(
         private const val KEY_PRIVATE_NOTIFICATIONS = "private_notifications"
         private const val KEY_NOTIFY_NEW_EMAIL = "notify_new_email"
         private const val KEY_MUTED_FOLDER_TOKENS = "muted_folder_tokens"
+        private const val KEY_MUTED_NOTIFICATION_CATEGORIES = "muted_notification_categories"
         private const val KEY_PROTECTED_FOLDER_TOKENS = "protected_folder_tokens"
         private const val KEY_PROTECTED_FOLDER_TOKENS_KNOWN = "protected_folder_tokens_known"
         private const val KEY_QUIET_HOURS_ENABLED = "quiet_hours_enabled"
@@ -443,6 +444,29 @@ class MailPollingWorker(
                     tokens.filter { it.isNotBlank() }.distinct().joinToString("\n"),
                 )
                 .apply()
+        }
+
+        fun muted_notification_categories(context: Context): Set<String> =
+            stored_token_set(context, KEY_MUTED_NOTIFICATION_CATEGORIES)
+
+        fun set_muted_notification_categories(context: Context, categories: Collection<String>) {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .putString(
+                    KEY_MUTED_NOTIFICATION_CATEGORIES,
+                    categories.filter { it.isNotBlank() && it != "primary" }
+                        .distinct()
+                        .joinToString("\n"),
+                )
+                .apply()
+        }
+
+        fun is_item_in_muted_category(
+            item: org.astermail.android.mail.InboxItem,
+            muted: Set<String>,
+        ): Boolean {
+            if (muted.isEmpty()) return false
+            return org.astermail.android.mail.category_for_tab(item.category) in muted
         }
 
         fun is_item_in_muted_folder(

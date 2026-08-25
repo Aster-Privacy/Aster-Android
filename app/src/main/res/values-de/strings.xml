@@ -2806,4 +2806,5 @@
     <string name="label_icon_group_work">ARBEIT</string>
     <string name="label_icon_group_school">SCHULE</string>
     <string name="label_icon_group_everyday">ALLTAG</string>
+    <string name="check_for_older_messages">Nach älteren E-Mails suchen</string>
 </resources>

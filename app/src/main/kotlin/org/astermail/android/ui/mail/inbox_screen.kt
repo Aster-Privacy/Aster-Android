@@ -86,6 +86,7 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -560,9 +561,14 @@ fun InboxScreen(
         (settings_state.preferences?.inbox_categories_enabled ?: true)
     val active_category = inbox_category
     val emails_fingerprint by remember { derivedStateOf { emails_fingerprint_of(emails) } }
+    val plan_vm_categories: org.astermail.android.billing.PlanLimitsViewModel = hiltViewModel()
+    val plan_state_categories by plan_vm_categories.state.collectAsStateWithLifecycle()
+    val custom_category_limit =
+        plan_state_categories.limits?.limits?.get("max_custom_categories")?.limit ?: -1
     val active_tabs = remember(
         settings_state.preferences?.enabled_categories,
         settings_state.preferences?.custom_categories,
+        custom_category_limit,
     ) {
         val prefs = settings_state.preferences
         if (prefs == null) {
@@ -571,7 +577,7 @@ fun InboxScreen(
             org.astermail.android.mail.active_category_tabs(
                 prefs.enabled_categories,
                 org.astermail.android.mail.sanitize_custom_categories(prefs.custom_categories),
-                -1,
+                custom_category_limit,
             )
         }
     }
@@ -1264,6 +1270,9 @@ fun InboxScreen(
                     }
                 }
                 val hidden_by_category = threads.isEmpty() && !threads_pending && inbox_state.items.isNotEmpty()
+                val category_drain_active = categories_enabled &&
+                    inbox_state.has_more &&
+                    (inbox_state.is_loading_more || inbox_state.items.size < CATEGORY_DRAIN_MAX_ITEMS)
                 val unread_mismatch = threads.isEmpty() &&
                     inbox_state.items.isEmpty() &&
                     !inbox_state.is_loading &&
@@ -1313,10 +1322,23 @@ fun InboxScreen(
                             mail_vm.load_inbox(current_folder, force = true)
                         }
                     }
+                } else if (hidden_by_category && category_drain_active) {
+                    Box(Modifier.padding(top = header_height_dp)) {
+                        inbox_skeleton(list_density = settings_state.preferences?.mail_list_density)
+                    }
                 } else if (hidden_by_category) {
                     org.astermail.android.ui.common.overscroll_stretch(
                         modifier = Modifier.padding(top = header_height_dp),
-                    ) { empty_category_state(active_category_label) }
+                    ) {
+                        empty_category_state(
+                            category_label = active_category_label,
+                            on_load_more = if (inbox_state.has_more) {
+                                { mail_vm.load_more() }
+                            } else {
+                                null
+                            },
+                        )
+                    }
                 } else if (threads.isEmpty()) {
                     org.astermail.android.ui.common.overscroll_stretch(
                         modifier = Modifier.padding(top = header_height_dp),
@@ -2919,7 +2941,10 @@ private fun spam_retention_banner(days: Int) {
 }
 
 @Composable
-private fun empty_category_state(category_label: String? = null) {
+private fun empty_category_state(
+    category_label: String? = null,
+    on_load_more: (() -> Unit)? = null,
+) {
     val colors = AsterMaterial.colors
     Column(
         modifier = Modifier
@@ -2957,6 +2982,19 @@ private fun empty_category_state(category_label: String? = null) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.text_muted,
             )
+            if (on_load_more != null) {
+                TextButton(
+                    onClick = on_load_more,
+                    modifier = Modifier.testTag("category_load_more"),
+                ) {
+                    Text(
+                        text = stringResource(R.string.check_for_older_messages),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.accent_blue,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+            }
         }
     }
 }
@@ -3112,6 +3150,7 @@ fun emails_fingerprint_of(emails: List<Email>): Int {
         hash = 31 * hash + e.label_names.hashCode()
         hash = 31 * hash + e.label_colors.hashCode()
         hash = 31 * hash + e.label_icons.hashCode()
+        hash = 31 * hash + e.category.hashCode()
     }
     return hash
 }

@@ -98,4 +98,7 @@
     <string name="category_tutorial_text">Bir e-posta, girdiğin alan adlarından ya da anahtar sözcüklerden birine uyduğu anda kendi kategorine düşer. Kendi kategorilerin hazır kategorilerin önüne geçer ve tüm eşleştirme cihazında yapılır.</string>
     <string name="rules_create_first_folder_hint">Bir klasör oluşturun, bu kural eşleşen e-postaları oraya taşıyabilsin.</string>
     <string name="rules_create_first_label_hint">Bir etiket oluşturun, bu kural eşleşen e-postalara uygulayabilsin.</string>
+    <string name="muted_categories">Sessize alınan kategoriler</string>
+    <string name="muted_categories_description">Bir kategorinin bildirimlerini susturmak için onu aç. Sessize alınan kategoriler posta almaya devam eder ve gelen kutunda görünür.</string>
+    <string name="muted_categories_empty">Hangi kategorileri sessize alacağını seçmek için gelen kutusu kategorilerini aç.</string>
 </resources>

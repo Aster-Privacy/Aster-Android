@@ -98,4 +98,7 @@
     <string name="category_tutorial_text">Eine Mail landet in deiner Kategorie, sobald sie zu einer deiner Domains oder zu einem Stichwort passt. Eigene Kategorien haben Vorrang vor den vorgegebenen, und die Zuordnung passiert komplett auf deinem Gerät.</string>
     <string name="rules_create_first_folder_hint">Erstelle einen Ordner, und diese Regel kann passende E-Mails dorthin verschieben.</string>
     <string name="rules_create_first_label_hint">Erstelle ein Label, und diese Regel kann es passenden E-Mails zuweisen.</string>
+    <string name="muted_categories">Stummgeschaltete Kategorien</string>
+    <string name="muted_categories_description">Aktiviere eine Kategorie, um ihre Benachrichtigungen stummzuschalten. Stummgeschaltete Kategorien empfangen weiterhin E-Mails und erscheinen in deinem Posteingang.</string>
+    <string name="muted_categories_empty">Aktiviere Posteingangskategorien, um zu wählen, welche du stummschaltest.</string>
 </resources>

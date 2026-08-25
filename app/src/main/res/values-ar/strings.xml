@@ -2837,4 +2837,5 @@
     <string name="label_icon_group_work">عمل</string>
     <string name="label_icon_group_school">دراسة</string>
     <string name="label_icon_group_everyday">يومي</string>
+    <string name="check_for_older_messages">البحث عن رسائل أقدم</string>
 </resources>

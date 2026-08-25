@@ -90,6 +90,9 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
     if (MailPollingWorker.muted_folder_tokens(context).isNotEmpty()) {
         return PushResult.NeedsFetch
     }
+    if (MailPollingWorker.muted_notification_categories(context).isNotEmpty()) {
+        return PushResult.NeedsFetch
+    }
     val item_id = obj.optString("item_id", "")
     if (item_id.isBlank()) return PushResult.NeedsFetch
     if (MailPollingWorker.was_item_notified(context, item_id)) {

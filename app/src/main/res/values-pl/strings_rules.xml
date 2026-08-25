@@ -98,4 +98,7 @@
     <string name="category_tutorial_text">Wiadomość trafia do twojej kategorii, gdy pasuje do dowolnej podanej domeny albo słowa kluczowego. Własne kategorie mają pierwszeństwo przed wbudowanymi, a całe dopasowanie odbywa się na twoim urządzeniu.</string>
     <string name="rules_create_first_folder_hint">Utwórz folder, a ta reguła będzie mogła przenosić do niego pasujące wiadomości.</string>
     <string name="rules_create_first_label_hint">Utwórz etykietę, a ta reguła będzie mogła stosować ją do pasujących wiadomości.</string>
+    <string name="muted_categories">Wyciszone kategorie</string>
+    <string name="muted_categories_description">Włącz kategorię, aby wyciszyć jej powiadomienia. Wyciszone kategorie nadal odbierają pocztę i pojawiają się w skrzynce odbiorczej.</string>
+    <string name="muted_categories_empty">Włącz kategorie skrzynki odbiorczej, aby wybrać, które wyciszyć.</string>
 </resources>

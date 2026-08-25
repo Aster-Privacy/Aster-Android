@@ -252,6 +252,7 @@ private const val key_folders_collapsed = "folders_collapsed"
 private const val key_labels_collapsed = "labels_collapsed"
 private const val key_aliases_collapsed = "aliases_collapsed"
 private const val key_expanded_folders = "expanded_folders"
+private const val key_categories_collapsed = "categories_collapsed"
 
 @Composable
 fun DrawerContent(
@@ -292,6 +293,7 @@ fun DrawerContent(
     initial_folders_collapsed: Boolean = false,
     initial_labels_collapsed: Boolean = false,
     initial_aliases_collapsed: Boolean = false,
+    initial_categories_collapsed: Boolean = false,
     preferences_loaded: Boolean = false,
     totp_enabled: Boolean = false,
     purge_locked_folder_default: Boolean = false,
@@ -317,6 +319,9 @@ fun DrawerContent(
     var aliases_expanded by rememberSaveable {
         mutableStateOf(!sidebar_prefs.getBoolean(key_aliases_collapsed, false))
     }
+    var categories_expanded by rememberSaveable {
+        mutableStateOf(!sidebar_prefs.getBoolean(key_categories_collapsed, false))
+    }
     var aliases_show_all by remember { mutableStateOf(false) }
     val aliases_collapsed_count = 5
     var folders_show_all by rememberSaveable { mutableStateOf(false) }
@@ -331,11 +336,15 @@ fun DrawerContent(
             if (!sidebar_prefs.contains(key_folders_collapsed)) folders_expanded = !initial_folders_collapsed
             if (!sidebar_prefs.contains(key_labels_collapsed)) labels_expanded = !initial_labels_collapsed
             if (!sidebar_prefs.contains(key_aliases_collapsed)) aliases_expanded = !initial_aliases_collapsed
+            if (!sidebar_prefs.contains(key_categories_collapsed)) {
+                categories_expanded = !initial_categories_collapsed
+            }
             sidebar_prefs.edit()
                 .putBoolean(key_more_collapsed, !more_expanded)
                 .putBoolean(key_folders_collapsed, !folders_expanded)
                 .putBoolean(key_labels_collapsed, !labels_expanded)
                 .putBoolean(key_aliases_collapsed, !aliases_expanded)
+                .putBoolean(key_categories_collapsed, !categories_expanded)
                 .apply()
             prefs_synced = true
         }
@@ -375,7 +384,7 @@ fun DrawerContent(
 
     val core_items = remember(categories_enabled, inbox_unread, drafts_count, spam_count, trash_count, label_inbox, label_sent, label_drafts, label_starred, label_archive, label_spam, label_trash, label_all_mail) {
         listOfNotNull(
-            if (categories_enabled) null else drawer_folder_item("inbox", label_inbox, TablerIcons.Inbox, inbox_unread),
+            drawer_folder_item("inbox", label_inbox, TablerIcons.Inbox, inbox_unread),
             drawer_folder_item("sent", label_sent, TablerIcons.Send),
             drawer_folder_item("drafts", label_drafts, TablerIcons.FileText, drafts_count),
             drawer_folder_item("starred", label_starred, TablerIcons.Star),
@@ -420,34 +429,76 @@ fun DrawerContent(
         ) {
             Spacer(Modifier.height(AsterSpacing.sm))
 
-            if (categories_enabled) {
-                category_entries.forEach { entry ->
+            val category_children = if (categories_enabled) {
+                category_entries.filter { it.id != "primary" }
+            } else {
+                emptyList()
+            }
+
+            core_items.forEach { item ->
+                if (item.id == "inbox" && categories_enabled) {
                     drawer_row(
-                        icon = category_icon(entry.icon),
-                        label = entry.label,
-                        count = category_unread[entry.id] ?: 0,
+                        icon = item.icon,
+                        label = item.label,
+                        count = if (categories_expanded && category_unread.isNotEmpty()) {
+                            category_unread["primary"] ?: 0
+                        } else {
+                            item.count
+                        },
                         is_unread_count = true,
-                        selected = selected_id == "inbox" && entry.id == selected_category,
+                        selected = selected_id == "inbox" && selected_category == "primary",
                         on_click = {
-                            on_select_category(entry.id)
+                            on_select_category("primary")
+                            on_close()
+                        },
+                        show_expand_slot = true,
+                        can_expand = category_children.isNotEmpty(),
+                        expanded = categories_expanded,
+                        on_toggle_expand = {
+                            categories_expanded = !categories_expanded
+                            sidebar_prefs.edit()
+                                .putBoolean(key_categories_collapsed, !categories_expanded)
+                                .apply()
+                            on_sidebar_toggle("sidebar_categories_collapsed", !categories_expanded)
+                        },
+                    )
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = categories_expanded && category_children.isNotEmpty(),
+                        enter = section_expand_enter(),
+                        exit = section_expand_exit(),
+                    ) {
+                        androidx.compose.foundation.layout.Column {
+                            category_children.forEachIndexed { index, entry ->
+                                drawer_row(
+                                    icon = category_icon(entry.icon),
+                                    label = entry.label,
+                                    count = category_unread[entry.id] ?: 0,
+                                    is_unread_count = true,
+                                    selected = selected_id == "inbox" && entry.id == selected_category,
+                                    on_click = {
+                                        on_select_category(entry.id)
+                                        on_close()
+                                    },
+                                    depth = 1,
+                                    has_next = index < category_children.lastIndex,
+                                    show_expand_slot = true,
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    drawer_row(
+                        icon = item.icon,
+                        label = item.label,
+                        count = item.count,
+                        is_unread_count = item.id == "inbox",
+                        selected = item.id == selected_id,
+                        on_click = {
+                            on_select(item.id)
                             on_close()
                         },
                     )
                 }
-            }
-
-            core_items.forEach { item ->
-                drawer_row(
-                    icon = item.icon,
-                    label = item.label,
-                    count = item.count,
-                    is_unread_count = item.id == "inbox",
-                    selected = item.id == selected_id,
-                    on_click = {
-                        on_select(item.id)
-                        on_close()
-                    },
-                )
             }
 
             collapsible_section_header(

@@ -98,4 +98,7 @@
     <string name="category_tutorial_text">Un\'email finisce nella tua categoria appena corrisponde a uno dei domini o a una delle parole chiave. Le categorie personali hanno la precedenza su quelle predefinite e tutto l\'abbinamento avviene sul tuo dispositivo.</string>
     <string name="rules_create_first_folder_hint">Crea una cartella e questa regola potrà spostarci le email corrispondenti.</string>
     <string name="rules_create_first_label_hint">Crea un\'etichetta e questa regola potrà applicarla alle email corrispondenti.</string>
+    <string name="muted_categories">Categorie silenziate</string>
+    <string name="muted_categories_description">Attiva una categoria per silenziare le sue notifiche. Le categorie silenziate continuano a ricevere email e appaiono nella tua casella di posta.</string>
+    <string name="muted_categories_empty">Attiva le categorie della casella di posta per scegliere quali silenziare.</string>
 </resources>

@@ -2806,4 +2806,5 @@
     <string name="label_icon_group_work">TRABAJO</string>
     <string name="label_icon_group_school">ESCUELA</string>
     <string name="label_icon_group_everyday">COTIDIANO</string>
+    <string name="check_for_older_messages">Buscar mensajes más antiguos</string>
 </resources>

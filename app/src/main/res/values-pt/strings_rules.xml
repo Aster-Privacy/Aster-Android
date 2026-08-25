@@ -98,4 +98,7 @@
     <string name="category_tutorial_text">Um e-mail entra na sua categoria assim que combina com algum dos domínios ou palavras-chave. As categorias personalizadas têm prioridade sobre as prontas e toda a comparação acontece no seu aparelho.</string>
     <string name="rules_create_first_folder_hint">Crie uma pasta e esta regra poderá mover os e-mails correspondentes para ela.</string>
     <string name="rules_create_first_label_hint">Crie uma etiqueta e esta regra poderá aplicá-la aos e-mails correspondentes.</string>
+    <string name="muted_categories">Categorias silenciadas</string>
+    <string name="muted_categories_description">Ativa uma categoria para silenciar as notificações dela. As categorias silenciadas continuam a receber correio e aparecem na tua caixa de entrada.</string>
+    <string name="muted_categories_empty">Ativa as categorias da caixa de entrada para escolheres quais silenciar.</string>
 </resources>

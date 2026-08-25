@@ -98,4 +98,7 @@
     <string name="category_tutorial_text">Un message rejoint votre catégorie dès qu\'il correspond à l\'un de vos domaines ou mots-clés. Les catégories personnalisées passent avant celles fournies, et toute la correspondance se fait sur votre appareil.</string>
     <string name="rules_create_first_folder_hint">Créez un dossier et cette règle pourra y déplacer les e-mails correspondants.</string>
     <string name="rules_create_first_label_hint">Créez un libellé et cette règle pourra l\'appliquer aux e-mails correspondants.</string>
+    <string name="muted_categories">Catégories en sourdine</string>
+    <string name="muted_categories_description">Activez une catégorie pour mettre ses notifications en sourdine. Les catégories en sourdine continuent de recevoir des e-mails et apparaissent dans votre boîte de réception.</string>
+    <string name="muted_categories_empty">Activez les catégories de boîte de réception pour choisir celles à mettre en sourdine.</string>
 </resources>

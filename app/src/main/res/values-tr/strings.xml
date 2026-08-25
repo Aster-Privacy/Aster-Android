@@ -2805,4 +2805,5 @@
     <string name="label_icon_group_work">İŞ</string>
     <string name="label_icon_group_school">OKUL</string>
     <string name="label_icon_group_everyday">GÜNLÜK</string>
+    <string name="check_for_older_messages">Daha eski iletileri denetle</string>
 </resources>

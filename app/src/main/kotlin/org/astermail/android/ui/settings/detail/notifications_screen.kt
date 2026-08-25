@@ -262,6 +262,46 @@ fun NotificationsScreen(
                     ) { vm.set_product_updates(it) }
                 }
             }
+            if (prefs.inbox_categories_enabled) {
+                val muted_categories = prefs.muted_notification_categories
+                val rows = buildList {
+                    org.astermail.android.mail.BUILTIN_CATEGORIES
+                        .filter { it.removable && it.id in prefs.enabled_categories }
+                        .forEach { add(it.id to context.getString(it.label_res)) }
+                    prefs.custom_categories
+                        .filter { it.enabled && it.id.isNotBlank() && it.name.isNotBlank() }
+                        .forEach { add(it.id to it.name) }
+                }
+                v_gap(AsterSpacing.lg)
+                section_label(stringResource(R.string.muted_categories))
+                Text(
+                    text = stringResource(R.string.muted_categories_description),
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(
+                        start = AsterSpacing.lg,
+                        end = AsterSpacing.lg,
+                        bottom = AsterSpacing.sm,
+                    ),
+                )
+                if (rows.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.muted_categories_empty),
+                        color = colors.text_tertiary,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(horizontal = AsterSpacing.lg),
+                    )
+                } else {
+                    AsterCard(modifier = Modifier.fillMaxWidth()) {
+                        rows.forEachIndexed { index, (id, label) ->
+                            switch_row(label, null, id in muted_categories) {
+                                vm.toggle_category_notifications(id)
+                            }
+                            if (index < rows.size - 1) AsterDivider(modifier = Modifier)
+                        }
+                    }
+                }
+            }
             v_gap(AsterSpacing.lg)
             section_label(stringResource(R.string.quiet_hours))
             if (quiet_hours_locked) {

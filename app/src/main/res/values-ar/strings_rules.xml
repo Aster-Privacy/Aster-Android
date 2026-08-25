@@ -98,4 +98,7 @@
     <string name="category_tutorial_text">تُصنَّف الرسالة ضمن فئتك المخصصة إذا طابقت أي نطاق أو كلمة مفتاحية أدخلتها. تسبق الفئات المخصصة الفئات المدمجة، وتجري المطابقة كاملة على جهازك.</string>
     <string name="rules_create_first_folder_hint">أنشئ مجلدًا وستتمكن هذه القاعدة من نقل الرسائل المطابقة إليه.</string>
     <string name="rules_create_first_label_hint">أنشئ تصنيفًا وستتمكن هذه القاعدة من تطبيقه على الرسائل المطابقة.</string>
+    <string name="muted_categories">الفئات المكتومة</string>
+    <string name="muted_categories_description">فعّل فئة لكتم إشعاراتها. تستمر الفئات المكتومة في استقبال البريد وتظهر في صندوق الوارد.</string>
+    <string name="muted_categories_empty">فعّل فئات صندوق الوارد لاختيار الفئات التي تكتمها.</string>
 </resources>

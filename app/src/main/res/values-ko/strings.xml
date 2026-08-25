@@ -2797,4 +2797,5 @@
     <string name="label_icon_group_work">업무</string>
     <string name="label_icon_group_school">학교</string>
     <string name="label_icon_group_everyday">일상</string>
+    <string name="check_for_older_messages">이전 메일 확인</string>
 </resources>

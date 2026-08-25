@@ -98,4 +98,7 @@
     <string name="category_tutorial_text">Un correo entra en tu categoría en cuanto coincide con alguno de tus dominios o palabras clave. Las categorías propias tienen prioridad sobre las incluidas y todo el emparejamiento ocurre en tu dispositivo.</string>
     <string name="rules_create_first_folder_hint">Crea una carpeta y esta regla podrá mover allí los correos coincidentes.</string>
     <string name="rules_create_first_label_hint">Crea una etiqueta y esta regla podrá aplicarla a los correos coincidentes.</string>
+    <string name="muted_categories">Categorías silenciadas</string>
+    <string name="muted_categories_description">Activa una categoría para silenciar sus avisos. Las categorías silenciadas siguen recibiendo correo y aparecen en tu bandeja de entrada.</string>
+    <string name="muted_categories_empty">Activa las categorías de la bandeja de entrada para elegir cuáles silenciar.</string>
 </resources>

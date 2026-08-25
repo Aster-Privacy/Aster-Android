@@ -2821,4 +2821,5 @@
     <string name="label_icon_group_work">PRACA</string>
     <string name="label_icon_group_school">SZKOŁA</string>
     <string name="label_icon_group_everyday">CODZIENNE</string>
+    <string name="check_for_older_messages">Sprawdź starsze wiadomości</string>
 </resources>

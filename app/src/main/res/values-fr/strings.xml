@@ -2833,4 +2833,5 @@
     <string name="label_icon_group_work">TRAVAIL</string>
     <string name="label_icon_group_school">ÉCOLE</string>
     <string name="label_icon_group_everyday">QUOTIDIEN</string>
+    <string name="check_for_older_messages">Rechercher des messages plus anciens</string>
 </resources>

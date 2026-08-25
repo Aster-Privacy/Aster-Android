@@ -133,7 +133,10 @@ class MailViewModel @Inject constructor(
     fun set_custom_categories(
         rules: List<org.astermail.android.api.preferences.CustomCategoryRule>,
     ) {
-        repository.set_custom_categories(rules)
+        if (!repository.set_custom_categories(rules)) return
+        folder_cache.clear()
+        folder_cache_time.clear()
+        refresh()
     }
 
     fun set_conversation_grouping(enabled: Boolean) {

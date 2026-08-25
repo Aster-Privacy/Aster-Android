@@ -1414,7 +1414,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     }
 
     val prefs = settings_state.preferences
-    val categories_enabled = prefs?.inbox_categories_enabled ?: false
+    val categories_enabled = prefs?.inbox_categories_enabled ?: true
 
     androidx.compose.runtime.LaunchedEffect(prefs?.show_alias_indicators) {
         org.astermail.android.ui.mail.alias_indicator_store.set_enabled(
@@ -1477,10 +1477,10 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     }
     val category_unread = androidx.compose.runtime.remember(
         inbox_state.items,
-        selected_folder,
+        inbox_state.current_folder,
         active_category_tabs,
     ) {
-        if (selected_folder == "inbox") {
+        if (inbox_state.current_folder == "inbox") {
             org.astermail.android.mail.category_unread_counts(inbox_state.items, active_category_tabs)
         } else {
             emptyMap()
@@ -1490,6 +1490,15 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         active_category_tabs,
         prefs?.custom_categories ?: emptyList(),
     )
+
+    androidx.compose.runtime.LaunchedEffect(category_entries, categories_enabled) {
+        if (categories_enabled &&
+            inbox_category != "primary" &&
+            category_entries.none { it.id == inbox_category }
+        ) {
+            inbox_category = "primary"
+        }
+    }
     val category_titles = category_entries.associate { it.id to it.label }
     val theme_vm_inbox: ThemeViewModel = hiltViewModel()
 
@@ -1945,6 +1954,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 initial_folders_collapsed = prefs?.sidebar_folders_collapsed ?: false,
                 initial_labels_collapsed = prefs?.sidebar_labels_collapsed ?: false,
                 initial_aliases_collapsed = prefs?.sidebar_aliases_collapsed ?: false,
+                initial_categories_collapsed = prefs?.sidebar_categories_collapsed ?: false,
                 preferences_loaded = prefs != null,
                 totp_enabled = settings_state.security_status?.totp_enabled == true,
                 purge_locked_folder_default = prefs?.purge_locked_folder_on_delete ?: false,

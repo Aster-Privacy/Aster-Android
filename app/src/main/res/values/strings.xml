@@ -2894,4 +2894,5 @@
     <string name="label_icon_group_work">WORK</string>
     <string name="label_icon_group_school">SCHOOL</string>
     <string name="label_icon_group_everyday">EVERYDAY</string>
+    <string name="check_for_older_messages">Check for older messages</string>
 </resources>

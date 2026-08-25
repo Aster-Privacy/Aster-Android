@@ -366,8 +366,11 @@ class MailRepository @Inject constructor(
 
     fun set_custom_categories(
         rules: List<org.astermail.android.api.preferences.CustomCategoryRule>,
-    ) {
-        custom_categories = sanitize_custom_categories(rules)
+    ): Boolean {
+        val sanitized = sanitize_custom_categories(rules)
+        if (custom_categories == sanitized) return false
+        custom_categories = sanitized
+        return true
     }
 
     @Volatile

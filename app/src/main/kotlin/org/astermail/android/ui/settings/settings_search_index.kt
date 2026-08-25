@@ -656,6 +656,7 @@ private val all_settings_search_index: List<settings_index_entry> = listOf(
     settings_index_entry("notifications", R.string.notifications, R.string.upgrade, false),
     settings_index_entry("notifications", R.string.notifications, R.string.quiet_hours_start, false),
     settings_index_entry("notifications", R.string.notifications, R.string.quiet_hours_end, false),
+    settings_index_entry("notifications", R.string.notifications, R.string.muted_categories, false),
     settings_index_entry("feedback", R.string.feedback, R.string.feedback, true),
     settings_index_entry("feedback", R.string.feedback, R.string.feedback_sent, false),
     settings_index_entry("feedback", R.string.feedback, R.string.feedback_failed, false),

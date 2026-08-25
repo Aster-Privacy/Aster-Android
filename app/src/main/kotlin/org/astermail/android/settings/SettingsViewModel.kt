@@ -3514,6 +3514,17 @@ class SettingsViewModel @Inject constructor(
         )
     }
 
+    fun toggle_category_notifications(category_id: String) {
+        if (category_id.isBlank() || category_id == "primary") return
+        val base = _state.value.preferences ?: UserPreferences()
+        val muted = base.muted_notification_categories
+        val is_muting = category_id !in muted
+        val next = if (is_muting) muted + category_id else muted - category_id
+        org.astermail.android.notifications.MailPollingWorker
+            .set_muted_notification_categories(context, next)
+        save_preferences(base.copy(muted_notification_categories = next))
+    }
+
     fun load_tags(force: Boolean = true) {
         val now = System.currentTimeMillis()
         if (!force && last_tags_load_ms > 0L && now - last_tags_load_ms < TAGS_TTL_MS) return
@@ -3990,6 +4001,30 @@ class SettingsViewModel @Inject constructor(
         return key
     }
 
+    private fun mirror_notification_preferences(prefs: UserPreferences) {
+        val result = runCatching {
+            org.astermail.android.notifications.MailPollingWorker
+                .set_muted_folder_tokens(context, prefs.muted_folder_tokens)
+            org.astermail.android.notifications.MailPollingWorker
+                .set_muted_notification_categories(context, prefs.muted_notification_categories)
+            org.astermail.android.notifications.MailPollingWorker
+                .set_notify_new_email(context, prefs.notify_new_email)
+            org.astermail.android.notifications.MailPollingWorker
+                .set_push_enabled(context, prefs.push_notifications)
+            org.astermail.android.notifications.MailPollingWorker.set_quiet_hours(
+                context,
+                prefs.quiet_hours_enabled,
+                prefs.quiet_hours_start.takeIf { it.isNotBlank() } ?: "22:00",
+                prefs.quiet_hours_end.takeIf { it.isNotBlank() } ?: "07:00",
+            )
+        }
+        val failure = result.exceptionOrNull() ?: return
+        if (failure is kotlinx.coroutines.CancellationException) throw failure
+        if (org.astermail.android.BuildConfig.DEBUG) {
+            android.util.Log.w("SettingsVM", "mirror_notification_preferences", failure)
+        }
+    }
+
     fun load_preferences(force: Boolean = false) {
         val now = System.currentTimeMillis()
         if (!force &&
@@ -4444,7 +4479,8 @@ class SettingsViewModel @Inject constructor(
             "sidebar_folders_collapsed" -> current.copy(sidebar_folders_collapsed = value)
             "sidebar_labels_collapsed" -> current.copy(sidebar_labels_collapsed = value)
             "sidebar_aliases_collapsed" -> current.copy(sidebar_aliases_collapsed = value)
-            else -> current
+            "sidebar_categories_collapsed" -> current.copy(sidebar_categories_collapsed = value)
+            else -> return
         }
         _state.value = _state.value.copy(preferences = updated)
         save_preferences(updated)

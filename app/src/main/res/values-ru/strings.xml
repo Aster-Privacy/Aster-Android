@@ -2821,4 +2821,5 @@
     <string name="label_icon_group_work">РАБОТА</string>
     <string name="label_icon_group_school">УЧЁБА</string>
     <string name="label_icon_group_everyday">ПОВСЕДНЕВНОЕ</string>
+    <string name="check_for_older_messages">Найти более старые письма</string>
 </resources>

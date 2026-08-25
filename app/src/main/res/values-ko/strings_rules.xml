@@ -98,4 +98,7 @@
     <string name="category_tutorial_text">입력한 도메인이나 키워드 중 하나라도 맞으면 그 메일은 내 카테고리로 들어갑니다. 내 카테고리가 기본 카테고리보다 우선하며, 분류는 모두 기기 안에서 이루어집니다.</string>
     <string name="rules_create_first_folder_hint">폴더를 만들면 이 규칙으로 일치하는 메일을 옮길 수 있습니다.</string>
     <string name="rules_create_first_label_hint">라벨을 만들면 이 규칙으로 일치하는 메일에 적용할 수 있습니다.</string>
+    <string name="muted_categories">음소거된 카테고리</string>
+    <string name="muted_categories_description">카테고리를 켜면 해당 알림이 음소거됩니다. 음소거된 카테고리도 메일을 계속 받고 받은 편지함에 표시됩니다.</string>
+    <string name="muted_categories_empty">음소거할 카테고리를 선택하려면 받은 편지함 카테고리를 켜세요.</string>
 </resources>

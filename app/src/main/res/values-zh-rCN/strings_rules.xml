@@ -98,4 +98,7 @@
     <string name="category_tutorial_text">只要邮件符合你填写的任一域名或关键词，就会归入你的分类。自定义分类优先于内置分类，全部匹配都在本机完成。</string>
     <string name="rules_create_first_folder_hint">创建一个文件夹，此规则即可将匹配的邮件移入其中。</string>
     <string name="rules_create_first_label_hint">创建一个标签，此规则即可将其应用到匹配的邮件。</string>
+    <string name="muted_categories">已静音的类别</string>
+    <string name="muted_categories_description">开启某个类别即可静音它的通知。静音的类别仍会收到邮件并显示在收件箱中。</string>
+    <string name="muted_categories_empty">开启收件箱类别，以选择要静音的类别。</string>
 </resources>
