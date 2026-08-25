@@ -1818,13 +1818,13 @@ class MailRepository @Inject constructor(
             },
             timestamp = item.message_ts ?: item.created_at ?: "",
             is_read = resolve_read_state(item.item_type, item.is_read, meta?.is_read) ||
-                (meta?.is_trashed ?: item.is_trashed) == true,
-            is_starred = meta?.is_starred ?: item.is_starred ?: false,
+                (meta?.is_trashed ?: false) || (item.is_trashed ?: false),
+            is_starred = item.is_starred ?: meta?.is_starred ?: false,
             is_encrypted = item.encrypted_envelope != null && envelope?.is_unauthenticated != true,
             has_attachments = (meta?.has_attachments ?: false) || (item.has_attachments ?: false),
-            is_trashed = meta?.is_trashed ?: item.is_trashed ?: false,
-            is_archived = meta?.is_archived ?: item.is_archived ?: false,
-            is_spam = meta?.is_spam ?: item.is_spam ?: false,
+            is_trashed = (meta?.is_trashed ?: false) || (item.is_trashed ?: false),
+            is_archived = (meta?.is_archived ?: false) || (item.is_archived ?: false),
+            is_spam = (meta?.is_spam ?: false) || (item.is_spam ?: false),
             labels = item.labels?.mapNotNull { it.folder_token } ?: emptyList(),
             tag_tokens = item.tag_tokens ?: emptyList(),
             category = if (envelope != null) {
