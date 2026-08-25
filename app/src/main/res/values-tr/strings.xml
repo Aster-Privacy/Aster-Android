@@ -2844,4 +2844,6 @@
     <string name="default_payment_still_due">Kartınız kaydedildi ancak ödenmemiş tutarınız ödenmedi. Planınızı korumak için başka bir kart deneyin.</string>
     <string name="alias_grace_ends">%1$s tarihinde sona erer</string>
     <string name="alias_grace_upgrade_hint">Bu takma adı etkin tutmak için planınızı yükseltin</string>
+    <string name="domain_grace_ends">%1$s tarihinde sona erer</string>
+    <string name="domain_grace_upgrade_hint">Bu alan adını etkin tutmak için planınızı yükseltin</string>
 </resources>

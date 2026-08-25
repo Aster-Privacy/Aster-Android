@@ -2836,4 +2836,6 @@
     <string name="default_payment_still_due">카드가 저장되었지만 미결제 금액이 결제되지 않았습니다. 요금제를 유지하려면 다른 카드를 사용해 보세요.</string>
     <string name="alias_grace_ends">%1$s에 종료</string>
     <string name="alias_grace_upgrade_hint">이 별칭을 계속 사용하려면 요금제를 업그레이드하세요</string>
+    <string name="domain_grace_ends">%1$s에 종료</string>
+    <string name="domain_grace_upgrade_hint">이 도메인을 계속 사용하려면 요금제를 업그레이드하세요</string>
 </resources>

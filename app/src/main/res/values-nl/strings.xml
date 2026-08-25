@@ -2844,4 +2844,6 @@
     <string name="default_payment_still_due">Je kaart is opgeslagen, maar je openstaande bedrag is niet betaald. Probeer een andere kaart om je abonnement te behouden.</string>
     <string name="alias_grace_ends">Eindigt op %1$s</string>
     <string name="alias_grace_upgrade_hint">Upgrade je abonnement om deze alias actief te houden</string>
+    <string name="domain_grace_ends">Eindigt op %1$s</string>
+    <string name="domain_grace_upgrade_hint">Upgrade je abonnement om dit domein actief te houden</string>
 </resources>

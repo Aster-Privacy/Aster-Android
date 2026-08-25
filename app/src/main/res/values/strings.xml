@@ -2929,4 +2929,6 @@
     <string name="default_payment_still_due">Your card is saved, but your outstanding balance was not paid. Try a different card to keep your plan.</string>
     <string name="alias_grace_ends">Ends %1$s</string>
     <string name="alias_grace_upgrade_hint">Upgrade to keep this alias active</string>
+    <string name="domain_grace_ends">Ends %1$s</string>
+    <string name="domain_grace_upgrade_hint">Upgrade to keep this domain active</string>
 </resources>

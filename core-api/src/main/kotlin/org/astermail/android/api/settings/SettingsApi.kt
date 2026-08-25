@@ -467,6 +467,7 @@ data class CustomDomain(
     val verification_token: String = "",
     val created_at: String = "",
     val verified_at: String? = null,
+    val downgrade_grace_expires_at: String? = null,
 )
 
 @Serializable

@@ -2860,4 +2860,6 @@
     <string name="default_payment_still_due">Twoja karta została zapisana, ale zaległa należność nie została opłacona. Wypróbuj inną kartę, aby zachować swój plan.</string>
     <string name="alias_grace_ends">Kończy się %1$s</string>
     <string name="alias_grace_upgrade_hint">Ulepsz plan, aby zachować ten alias</string>
+    <string name="domain_grace_ends">Kończy się %1$s</string>
+    <string name="domain_grace_upgrade_hint">Ulepsz plan, aby zachować tę domenę</string>
 </resources>

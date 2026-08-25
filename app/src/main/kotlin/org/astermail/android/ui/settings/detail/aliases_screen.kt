@@ -860,7 +860,7 @@ internal fun alias_list_row(
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
     ) {
         val grace_ends = remember(alias.downgrade_grace_expires_at) {
-            format_alias_grace_end(alias.downgrade_grace_expires_at)
+            format_grace_end(alias.downgrade_grace_expires_at)
         }
 
         Row(
@@ -2245,6 +2245,9 @@ private fun domain_card(
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
     val is_active = domain.txt_verified && domain.mx_verified && domain.spf_verified && domain.dkim_verified
+    val grace_ends = remember(domain.downgrade_grace_expires_at) {
+        format_grace_end(domain.downgrade_grace_expires_at)
+    }
     var confirm_delete by remember(domain.id) { mutableStateOf(false) }
     var name_expanded by remember(domain.id) { mutableStateOf(false) }
 
@@ -2294,6 +2297,18 @@ private fun domain_card(
                         color = if (is_active) colors.success else colors.warning,
                         fontSize = 12.sp,
                     )
+                    if (grace_ends != null) {
+                        Text(
+                            text = stringResource(R.string.domain_grace_ends, grace_ends),
+                            color = colors.warning,
+                            fontSize = 12.sp,
+                        )
+                        Text(
+                            text = stringResource(R.string.domain_grace_upgrade_hint),
+                            color = colors.warning,
+                            fontSize = 11.sp,
+                        )
+                    }
                 }
                 AsterIconButton(
                     icon = if (is_expanded) TablerIcons.ChevronUp else TablerIcons.ChevronDown,
@@ -2822,7 +2837,7 @@ internal fun is_valid_domain_name(value: String): Boolean {
     }
 }
 
-private fun format_alias_grace_end(value: String?): String? {
+private fun format_grace_end(value: String?): String? {
     if (value.isNullOrBlank()) return null
 
     val millis = runCatching { java.time.OffsetDateTime.parse(value).toInstant().toEpochMilli() }

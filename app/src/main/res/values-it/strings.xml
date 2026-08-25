@@ -2844,4 +2844,6 @@
     <string name="default_payment_still_due">La tua carta è stata salvata, ma il tuo saldo in sospeso non è stato pagato. Prova un\'altra carta per mantenere il tuo piano.</string>
     <string name="alias_grace_ends">Termina il %1$s</string>
     <string name="alias_grace_upgrade_hint">Passa a un piano superiore per mantenere attivo questo alias</string>
+    <string name="domain_grace_ends">Termina il %1$s</string>
+    <string name="domain_grace_upgrade_hint">Passa a un piano superiore per mantenere attivo questo dominio</string>
 </resources>

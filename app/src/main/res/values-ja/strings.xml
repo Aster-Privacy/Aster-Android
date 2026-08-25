@@ -2836,4 +2836,6 @@
     <string name="default_payment_still_due">カードを保存しましたが、未払い残高のお支払いは完了していません。プランを維持するには別のカードをお試しください。</string>
     <string name="alias_grace_ends">%1$sに終了</string>
     <string name="alias_grace_upgrade_hint">このエイリアスを使い続けるにはプランをアップグレードしてください</string>
+    <string name="domain_grace_ends">%1$sに終了</string>
+    <string name="domain_grace_upgrade_hint">このドメインを使い続けるにはプランをアップグレードしてください</string>
 </resources>

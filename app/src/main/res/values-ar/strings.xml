@@ -2876,4 +2876,6 @@
     <string name="default_payment_still_due">تم حفظ بطاقتك، لكن لم يتم سداد المبلغ المستحق. جرّب بطاقة أخرى للاحتفاظ بخطتك.</string>
     <string name="alias_grace_ends">ينتهي في %1$s</string>
     <string name="alias_grace_upgrade_hint">قم بترقية خطتك للحفاظ على هذا الاسم المستعار نشطًا</string>
+    <string name="domain_grace_ends">ينتهي في %1$s</string>
+    <string name="domain_grace_upgrade_hint">قم بترقية خطتك للحفاظ على هذا النطاق نشطًا</string>
 </resources>
