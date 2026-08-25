@@ -2834,4 +2834,6 @@
     <string name="account_suspended_back">返回登录</string>
     <string name="default_payment_settled">默认支付方式已更新。未付款项已结清。</string>
     <string name="default_payment_still_due">您的银行卡已保存，但未付款项尚未结清。请更换其他银行卡以保留您的套餐。</string>
+    <string name="alias_grace_ends">%1$s 结束</string>
+    <string name="alias_grace_upgrade_hint">升级套餐即可继续使用此别名</string>
 </resources>

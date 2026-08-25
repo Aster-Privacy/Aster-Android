@@ -2843,4 +2843,6 @@
     <string name="account_suspended_back">Zurück zur Anmeldung</string>
     <string name="default_payment_settled">Standard-Zahlungsmethode aktualisiert. Ihr offener Betrag ist bezahlt.</string>
     <string name="default_payment_still_due">Ihre Karte ist gespeichert, aber Ihr offener Betrag wurde nicht bezahlt. Versuchen Sie es mit einer anderen Karte, um Ihren Tarif zu behalten.</string>
+    <string name="alias_grace_ends">Endet am %1$s</string>
+    <string name="alias_grace_upgrade_hint">Führen Sie ein Upgrade durch, um diesen Alias aktiv zu halten</string>
 </resources>

@@ -184,6 +184,7 @@ data class AliasInfo(
     val profile_picture: String? = null,
     val created_at: String = "",
     val updated_at: String = "",
+    val downgrade_grace_expires_at: String? = null,
     val decryption_failed: Boolean = false,
 ) {
     val address: String get() = when {

@@ -2927,4 +2927,6 @@
     <string name="account_suspended_back">Back to sign in</string>
     <string name="default_payment_settled">Default payment method updated. Your outstanding balance is paid.</string>
     <string name="default_payment_still_due">Your card is saved, but your outstanding balance was not paid. Try a different card to keep your plan.</string>
+    <string name="alias_grace_ends">Ends %1$s</string>
+    <string name="alias_grace_upgrade_hint">Upgrade to keep this alias active</string>
 </resources>

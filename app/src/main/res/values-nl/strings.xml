@@ -2842,4 +2842,6 @@
     <string name="account_suspended_back">Terug naar inloggen</string>
     <string name="default_payment_settled">Standaard betaalmethode bijgewerkt. Je openstaande bedrag is betaald.</string>
     <string name="default_payment_still_due">Je kaart is opgeslagen, maar je openstaande bedrag is niet betaald. Probeer een andere kaart om je abonnement te behouden.</string>
+    <string name="alias_grace_ends">Eindigt op %1$s</string>
+    <string name="alias_grace_upgrade_hint">Upgrade je abonnement om deze alias actief te houden</string>
 </resources>

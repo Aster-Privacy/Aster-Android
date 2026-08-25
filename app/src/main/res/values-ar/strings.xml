@@ -2874,4 +2874,6 @@
     <string name="account_suspended_back">العودة إلى تسجيل الدخول</string>
     <string name="default_payment_settled">تم تحديث طريقة الدفع الافتراضية. تم سداد المبلغ المستحق.</string>
     <string name="default_payment_still_due">تم حفظ بطاقتك، لكن لم يتم سداد المبلغ المستحق. جرّب بطاقة أخرى للاحتفاظ بخطتك.</string>
+    <string name="alias_grace_ends">ينتهي في %1$s</string>
+    <string name="alias_grace_upgrade_hint">قم بترقية خطتك للحفاظ على هذا الاسم المستعار نشطًا</string>
 </resources>

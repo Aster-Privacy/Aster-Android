@@ -2843,4 +2843,6 @@
     <string name="account_suspended_back">Volver al inicio de sesión</string>
     <string name="default_payment_settled">Método de pago predeterminado actualizado. Tu saldo pendiente está pagado.</string>
     <string name="default_payment_still_due">Tu tarjeta está guardada, pero tu saldo pendiente no se ha pagado. Prueba con otra tarjeta para mantener tu plan.</string>
+    <string name="alias_grace_ends">Finaliza el %1$s</string>
+    <string name="alias_grace_upgrade_hint">Mejora tu plan para mantener este alias activo</string>
 </resources>

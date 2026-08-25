@@ -2842,4 +2842,6 @@
     <string name="account_suspended_back">Torna all\'accesso</string>
     <string name="default_payment_settled">Metodo di pagamento predefinito aggiornato. Il tuo saldo in sospeso è stato pagato.</string>
     <string name="default_payment_still_due">La tua carta è stata salvata, ma il tuo saldo in sospeso non è stato pagato. Prova un\'altra carta per mantenere il tuo piano.</string>
+    <string name="alias_grace_ends">Termina il %1$s</string>
+    <string name="alias_grace_upgrade_hint">Passa a un piano superiore per mantenere attivo questo alias</string>
 </resources>

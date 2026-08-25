@@ -2834,4 +2834,6 @@
     <string name="account_suspended_back">サインインに戻る</string>
     <string name="default_payment_settled">デフォルトのお支払い方法を更新しました。未払い残高のお支払いが完了しました。</string>
     <string name="default_payment_still_due">カードを保存しましたが、未払い残高のお支払いは完了していません。プランを維持するには別のカードをお試しください。</string>
+    <string name="alias_grace_ends">%1$sに終了</string>
+    <string name="alias_grace_upgrade_hint">このエイリアスを使い続けるにはプランをアップグレードしてください</string>
 </resources>

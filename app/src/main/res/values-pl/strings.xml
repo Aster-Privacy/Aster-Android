@@ -2858,4 +2858,6 @@
     <string name="account_suspended_back">Powrót do logowania</string>
     <string name="default_payment_settled">Domyślna metoda płatności zaktualizowana. Zaległa należność została opłacona.</string>
     <string name="default_payment_still_due">Twoja karta została zapisana, ale zaległa należność nie została opłacona. Wypróbuj inną kartę, aby zachować swój plan.</string>
+    <string name="alias_grace_ends">Kończy się %1$s</string>
+    <string name="alias_grace_upgrade_hint">Ulepsz plan, aby zachować ten alias</string>
 </resources>

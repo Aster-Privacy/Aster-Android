@@ -2842,4 +2842,6 @@
     <string name="account_suspended_back">Voltar ao login</string>
     <string name="default_payment_settled">Método de pagamento padrão atualizado. O seu saldo pendente está pago.</string>
     <string name="default_payment_still_due">O seu cartão foi salvo, mas o seu saldo pendente não foi pago. Tente outro cartão para manter o seu plano.</string>
+    <string name="alias_grace_ends">Termina em %1$s</string>
+    <string name="alias_grace_upgrade_hint">Faça upgrade do seu plano para manter este alias ativo</string>
 </resources>

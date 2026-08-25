@@ -859,6 +859,10 @@ internal fun alias_list_row(
             )
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
     ) {
+        val grace_ends = remember(alias.downgrade_grace_expires_at) {
+            format_alias_grace_end(alias.downgrade_grace_expires_at)
+        }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -916,19 +920,35 @@ internal fun alias_list_row(
                     Spacer(Modifier.height(4.dp))
                     Text(
                         text = when {
+                            grace_ends != null ->
+                                stringResource(R.string.alias_grace_ends, grace_ends)
                             !alias.is_enabled -> stringResource(R.string.alias_status_disabled_badge)
                             delivery_folder_name != null ->
                                 stringResource(R.string.forwards_to_folder, delivery_folder_name)
                             else -> stringResource(R.string.forwards_to_inbox)
                         },
-                        color = if (alias.is_enabled) colors.text_tertiary else colors.danger,
+                        color = when {
+                            grace_ends != null -> colors.warning
+                            alias.is_enabled -> colors.text_tertiary
+                            else -> colors.danger
+                        },
                         fontSize = 11.sp,
                         maxLines = 1,
                     )
+                    if (grace_ends != null) {
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = stringResource(R.string.alias_grace_upgrade_hint),
+                            color = colors.warning,
+                            fontSize = 11.sp,
+                            maxLines = 2,
+                        )
+                    }
                 }
             }
             AsterSwitch(
                 checked = alias.is_enabled,
+                enabled = grace_ends == null,
                 onCheckedChange = { on_toggle() },
             )
             Spacer(Modifier.width(AsterSpacing.sm))
@@ -2802,3 +2822,14 @@ internal fun is_valid_domain_name(value: String): Boolean {
     }
 }
 
+private fun format_alias_grace_end(value: String?): String? {
+    if (value.isNullOrBlank()) return null
+
+    val millis = runCatching { java.time.OffsetDateTime.parse(value).toInstant().toEpochMilli() }
+        .getOrNull()
+        ?: runCatching { java.time.Instant.parse(value).toEpochMilli() }.getOrNull()
+        ?: return null
+
+    return java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM)
+        .format(java.util.Date(millis))
+}
