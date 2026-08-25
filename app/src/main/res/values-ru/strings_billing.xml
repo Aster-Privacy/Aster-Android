@@ -42,6 +42,7 @@
     <string name="onboarding_task_install">Установите Aster на компьютер</string>
     <string name="onboarding_task_recovery">Добавьте адрес для восстановления</string>
     <string name="payment_confirmed">Платёж подтверждён</string>
+    <string name="payment_processing_delayed">Ваш платеж обрабатывается. Активация может занять некоторое время.</string>
     <string name="payment_failed_notification_body">Обновите данные карты, чтобы сохранить тариф %1$s.</string>
     <string name="payment_failed_notification_body_generic">Обновите данные карты, чтобы сохранить тариф.</string>
     <string name="payment_failed_notification_title">Платёж не прошёл</string>

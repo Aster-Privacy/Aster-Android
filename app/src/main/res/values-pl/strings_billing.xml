@@ -42,6 +42,7 @@
     <string name="onboarding_task_install">Zainstaluj Aster na komputerze</string>
     <string name="onboarding_task_recovery">Dodaj awaryjny adres e-mail</string>
     <string name="payment_confirmed">Płatność potwierdzona</string>
+    <string name="payment_processing_delayed">Twoja płatność jest przetwarzana. Aktywacja może chwilę potrwać.</string>
     <string name="payment_failed_notification_body">Zaktualizuj kartę, aby zachować plan %1$s.</string>
     <string name="payment_failed_notification_body_generic">Zaktualizuj kartę, aby zachować swój plan.</string>
     <string name="payment_failed_notification_title">Twoja płatność nie powiodła się</string>

@@ -42,6 +42,7 @@
     <string name="onboarding_task_install">ثبّت Aster على حاسوبك</string>
     <string name="onboarding_task_recovery">أضف عنوان بريد للاسترداد</string>
     <string name="payment_confirmed">تم تأكيد الدفع</string>
+    <string name="payment_processing_delayed">تتم معالجة الدفعة. قد يستغرق تفعيلها لحظة.</string>
     <string name="payment_failed_notification_body">حدّث بطاقتك للاحتفاظ بخطة %1$s.</string>
     <string name="payment_failed_notification_body_generic">حدّث بطاقتك للاحتفاظ بخطتك.</string>
     <string name="payment_failed_notification_title">لم تتم عملية الدفع</string>

@@ -42,6 +42,7 @@
     <string name="onboarding_task_install">Installer Aster sur votre ordinateur</string>
     <string name="onboarding_task_recovery">Ajouter une adresse e-mail de récupération</string>
     <string name="payment_confirmed">Paiement confirmé</string>
+    <string name="payment_processing_delayed">Votre paiement est en cours de traitement. Son activation peut prendre un moment.</string>
     <string name="payment_failed_notification_body">Mettez votre carte à jour pour conserver votre offre %1$s.</string>
     <string name="payment_failed_notification_body_generic">Mettez votre carte à jour pour conserver votre offre.</string>
     <string name="payment_failed_notification_title">Votre paiement n\'a pas abouti</string>

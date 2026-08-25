@@ -42,6 +42,7 @@
     <string name="onboarding_task_install">Installiere Aster auf deinem Computer</string>
     <string name="onboarding_task_recovery">Füge eine Wiederherstellungsadresse hinzu</string>
     <string name="payment_confirmed">Zahlung bestätigt</string>
+    <string name="payment_processing_delayed">Ihre Zahlung wird verarbeitet. Es kann einen Moment dauern, bis sie aktiv ist.</string>
     <string name="payment_failed_notification_body">Aktualisiere deine Karte, um deinen %1$s-Tarif zu behalten.</string>
     <string name="payment_failed_notification_body_generic">Aktualisiere deine Karte, um deinen Tarif zu behalten.</string>
     <string name="payment_failed_notification_title">Deine Zahlung ist fehlgeschlagen</string>

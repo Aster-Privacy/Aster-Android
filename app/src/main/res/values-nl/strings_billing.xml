@@ -42,6 +42,7 @@
     <string name="onboarding_task_install">Installeer Aster op je computer</string>
     <string name="onboarding_task_recovery">Voeg een herstel-e-mailadres toe</string>
     <string name="payment_confirmed">Betaling bevestigd</string>
+    <string name="payment_processing_delayed">Je betaling wordt verwerkt. Het kan even duren voordat die actief is.</string>
     <string name="payment_failed_notification_body">Werk je kaart bij om je %1$s-abonnement te behouden.</string>
     <string name="payment_failed_notification_body_generic">Werk je kaart bij om je abonnement te behouden.</string>
     <string name="payment_failed_notification_title">Je betaling is niet gelukt</string>

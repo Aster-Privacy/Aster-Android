@@ -42,6 +42,7 @@
     <string name="onboarding_task_install">パソコンに Aster をインストールする</string>
     <string name="onboarding_task_recovery">リカバリー用のメールアドレスを追加する</string>
     <string name="payment_confirmed">お支払いを確認しました</string>
+    <string name="payment_processing_delayed">お支払いを処理しています。反映まで少し時間がかかることがあります。</string>
     <string name="payment_failed_notification_body">%1$s プランを継続するには、カード情報を更新してください。</string>
     <string name="payment_failed_notification_body_generic">プランを継続するには、カード情報を更新してください。</string>
     <string name="payment_failed_notification_title">お支払いを処理できませんでした</string>

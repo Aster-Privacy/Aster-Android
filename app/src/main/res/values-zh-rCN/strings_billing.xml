@@ -42,6 +42,7 @@
     <string name="onboarding_task_install">在电脑上安装 Aster</string>
     <string name="onboarding_task_recovery">添加恢复邮箱地址</string>
     <string name="payment_confirmed">付款已确认</string>
+    <string name="payment_processing_delayed">正在处理您的付款，可能需要片刻才能生效。</string>
     <string name="payment_failed_notification_body">请更新银行卡以继续使用 %1$s 套餐。</string>
     <string name="payment_failed_notification_body_generic">请更新银行卡以继续使用当前套餐。</string>
     <string name="payment_failed_notification_title">您的付款未成功</string>

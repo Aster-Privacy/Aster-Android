@@ -411,7 +411,7 @@ class BillingViewModel @Inject constructor(
 
     fun on_billing_return(outcome: billing_return_outcome) {
         when (outcome) {
-            billing_return_outcome.success -> poll_after_return()
+            billing_return_outcome.success -> poll_after_return(returned_paid = true)
             billing_return_outcome.cancelled -> {
                 _state.update { it.copy(awaiting_checkout = false, checkout_abandoned_plan = pending_checkout_plan) }
             }
@@ -423,7 +423,7 @@ class BillingViewModel @Inject constructor(
         _state.update { it.copy(checkout_abandoned_plan = null) }
     }
 
-    private fun poll_after_return() {
+    private fun poll_after_return(returned_paid: Boolean = false) {
         if (poll_job?.isActive == true) return
         val was_checkout = _state.value.awaiting_checkout
         _state.update { it.copy(awaiting_checkout = false, awaiting_portal = false, checking_payment = true) }
@@ -448,8 +448,16 @@ class BillingViewModel @Inject constructor(
             _state.update {
                 it.copy(
                     checking_payment = false,
-                    checkout_abandoned_plan = if (!changed && pending_checkout_plan != null) pending_checkout_plan else it.checkout_abandoned_plan,
-                    info = if (changed && now_paid) ctx.getString(R.string.payment_confirmed) else it.info,
+                    checkout_abandoned_plan = if (!changed && !returned_paid && pending_checkout_plan != null) {
+                        pending_checkout_plan
+                    } else {
+                        it.checkout_abandoned_plan
+                    },
+                    info = when {
+                        changed && now_paid -> ctx.getString(R.string.payment_confirmed)
+                        !changed && returned_paid -> ctx.getString(R.string.payment_processing_delayed)
+                        else -> it.info
+                    },
                 )
             }
             if (changed) pending_checkout_plan = null
