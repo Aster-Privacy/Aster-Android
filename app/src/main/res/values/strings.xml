@@ -874,6 +874,7 @@
     <string name="attachment_too_large">\"%1$s\" is over the %2$s single-file limit</string>
     <string name="attachment_too_large_upgradable">\"%1$s\" is over the %2$s single-file limit on your plan. Upgrading raises it to %3$s.</string>
     <string name="attachment_total_too_large">Your attachments are over the %1$s total limit</string>
+    <string name="attachment_too_many">You can attach up to %1$d files to one email</string>
     <string name="attachment_already_attached">\"%1$s\" is already attached</string>
     <string name="attachment_read_failed">\"%1$s\" could not be read</string>
     <string name="scheduled_send_no_attachments">Scheduled emails can\'t include attachments yet. Remove them or send now.</string>

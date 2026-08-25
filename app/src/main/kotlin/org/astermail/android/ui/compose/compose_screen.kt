@@ -819,6 +819,11 @@ fun ComposeScreen(
                 is org.astermail.android.share.AttachmentImport.Imported -> {
                     val item = result.attachment
                     when {
+                        attachments.size + accepted.size >= AttachmentLimits.max_per_send ->
+                            error = context.getString(
+                                R.string.attachment_too_many,
+                                AttachmentLimits.max_per_send,
+                            )
                         existing_names.contains(item.name) ->
                             error = context.getString(R.string.attachment_already_attached, item.name)
                         running_total + item.size > AttachmentLimits.total_max_bytes() ->
