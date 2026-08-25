@@ -180,12 +180,16 @@ class ContactsViewModel @Inject constructor(
                     }
                 }
                 var imported = 0
+                var failed = 0
                 for (contact in new_contacts) {
-                    repository.create_contact(contact).onSuccess { imported++ }
+                    repository.create_contact(contact)
+                        .onSuccess { imported++ }
+                        .onFailure { failed++ }
                 }
                 _state.value = _state.value.copy(
                     is_syncing = false,
-                    sync_message = if (imported > 0) context.getString(R.string.imported_contacts, imported) else context.getString(R.string.no_new_contacts),
+                    sync_message = if (imported > 0) context.getString(R.string.imported_contacts, imported) else if (failed == 0) context.getString(R.string.no_new_contacts) else null,
+                    error = if (imported == 0 && failed > 0) context.getString(R.string.something_went_wrong) else null,
                 )
                 load_contacts()
             } catch (t: Throwable) {
