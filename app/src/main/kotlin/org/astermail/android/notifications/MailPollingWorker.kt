@@ -54,6 +54,7 @@ import org.astermail.android.api.ApiError
 import org.astermail.android.api.BuildConfig
 import org.astermail.android.api.TokenProvider
 import org.astermail.android.api.auth.AuthApiImpl
+import org.astermail.android.api.billing.BillingApiImpl
 import org.astermail.android.api.mail.MailApiImpl
 import org.astermail.android.mail.MailRepository
 import org.astermail.android.storage.TokenStore
@@ -129,9 +130,37 @@ class MailPollingWorker(
             allow_cleartext_for_test = BuildConfig.API_BASE_URL.startsWith("http://"),
         )
         try {
+            check_billing_state(prefs, client)
+
             return poll_and_notify(context, prefs, MailApiImpl(client))
         } finally {
             client.close()
+        }
+    }
+
+    private suspend fun check_billing_state(
+        prefs: android.content.SharedPreferences,
+        client: ApiClient,
+    ) {
+        val now = System.currentTimeMillis()
+        val last = prefs.getLong(KEY_LAST_BILLING_CHECK_MS, 0L)
+
+        if (now - last < BILLING_CHECK_INTERVAL_MS) return
+
+        prefs.edit().putLong(KEY_LAST_BILLING_CHECK_MS, now).apply()
+
+        runCatching {
+            val subscription = kotlinx.coroutines.withTimeout(20_000L) {
+                BillingApiImpl(client).get_subscription()
+            }
+
+            org.astermail.android.billing.PaymentFailedNotifier.observe(
+                context,
+                subscription.status,
+                subscription.payment_failed_at,
+                subscription.current_period_end,
+                subscription.plan.name,
+            )
         }
     }
 
@@ -339,6 +368,8 @@ class MailPollingWorker(
         private const val KEY_QUIET_HOURS_START = "quiet_hours_start"
         private const val KEY_QUIET_HOURS_END = "quiet_hours_end"
         private const val KEY_LAST_WORK_START_MS = "last_work_start_ms"
+        private const val KEY_LAST_BILLING_CHECK_MS = "last_billing_check_ms"
+        private const val BILLING_CHECK_INTERVAL_MS = 12L * 60L * 60L * 1000L
         private const val WORKER_IN_FLIGHT_GRACE_MS = 90_000L
         private const val KEY_LAST_MESSAGE_NOTIFY_MS = "last_message_notify_ms"
         const val MESSAGE_NOTIFY_DEDUPE_WINDOW_MS = 90_000L
