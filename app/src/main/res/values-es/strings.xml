@@ -2847,4 +2847,5 @@
     <string name="alias_grace_upgrade_hint">Mejora tu plan para mantener este alias activo</string>
     <string name="domain_grace_ends">Finaliza el %1$s</string>
     <string name="domain_grace_upgrade_hint">Mejora tu plan para mantener este dominio activo</string>
+    <string name="error_family_2fa_required">Tu plan familiar requiere autenticación de dos factores. Para seguir usando esta cuenta, actívala en Ajustes &gt; Seguridad.</string>
 </resources>

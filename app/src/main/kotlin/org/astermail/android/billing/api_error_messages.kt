@@ -26,9 +26,11 @@ import kotlinx.coroutines.CancellationException
 import org.astermail.android.R
 import org.astermail.android.api.ApiError
 import org.astermail.android.api.server_supplied_detail
+import org.astermail.android.localized_server_code
 
 fun localized_api_error(context: Context, t: Throwable, fallback: String): String {
     if (t is CancellationException) throw t
+    localized_server_code(context, t)?.let { return it }
     server_supplied_detail(t)?.let { return it }
     return when (t) {
         is ApiError.NetworkError -> context.getString(R.string.error_network)

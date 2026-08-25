@@ -2862,4 +2862,5 @@
     <string name="alias_grace_upgrade_hint">Перейдите на платный тариф, чтобы сохранить этот псевдоним</string>
     <string name="domain_grace_ends">Заканчивается %1$s</string>
     <string name="domain_grace_upgrade_hint">Перейдите на платный тариф, чтобы сохранить этот домен</string>
+    <string name="error_family_2fa_required">Семейный тариф требует двухфакторной аутентификации. Чтобы продолжить пользоваться этой учетной записью, включите ее в разделе Настройки &gt; Безопасность.</string>
 </resources>

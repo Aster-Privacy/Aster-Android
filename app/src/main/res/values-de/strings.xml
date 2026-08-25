@@ -2847,4 +2847,5 @@
     <string name="alias_grace_upgrade_hint">Führen Sie ein Upgrade durch, um diesen Alias aktiv zu halten</string>
     <string name="domain_grace_ends">Endet am %1$s</string>
     <string name="domain_grace_upgrade_hint">Führen Sie ein Upgrade durch, um diese Domain aktiv zu halten</string>
+    <string name="error_family_2fa_required">Ihr Familientarif erfordert eine Zwei-Faktor-Authentifizierung. Um dieses Konto weiter zu nutzen, aktivieren Sie sie unter Einstellungen &gt; Sicherheit.</string>
 </resources>

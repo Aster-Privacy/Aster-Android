@@ -26,8 +26,19 @@ import kotlinx.coroutines.CancellationException
 import org.astermail.android.api.ApiError
 import org.astermail.android.api.server_supplied_detail
 
+const val FAMILY_2FA_REQUIRED_CODE = "FAMILY_2FA_REQUIRED"
+
+fun localized_server_code(context: Context, t: Throwable): String? {
+    val forbidden = t as? ApiError.ForbiddenError ?: return null
+    return when (forbidden.code) {
+        FAMILY_2FA_REQUIRED_CODE -> context.getString(R.string.error_family_2fa_required)
+        else -> null
+    }
+}
+
 fun localized_api_error(context: Context, t: Throwable, fallback: String): String {
     if (t is CancellationException) throw t
+    localized_server_code(context, t)?.let { return it }
     server_supplied_detail(t)?.let { return it }
     return when (t) {
         is ApiError.NetworkError -> context.getString(R.string.error_no_connection)

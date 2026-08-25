@@ -2838,4 +2838,5 @@
     <string name="alias_grace_upgrade_hint">升级套餐即可继续使用此别名</string>
     <string name="domain_grace_ends">%1$s 结束</string>
     <string name="domain_grace_upgrade_hint">升级套餐即可继续使用此域名</string>
+    <string name="error_family_2fa_required">家庭套餐需要双重认证。若要继续使用此账户，请在“设置”&gt;“安全”中开启。</string>
 </resources>

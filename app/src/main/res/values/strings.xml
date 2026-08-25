@@ -2931,4 +2931,5 @@
     <string name="alias_grace_upgrade_hint">Upgrade to keep this alias active</string>
     <string name="domain_grace_ends">Ends %1$s</string>
     <string name="domain_grace_upgrade_hint">Upgrade to keep this domain active</string>
+    <string name="error_family_2fa_required">Your family plan requires two-factor authentication. To keep using this account, turn it on in Settings &gt; Security.</string>
 </resources>

@@ -2873,4 +2873,5 @@
     <string name="alias_grace_upgrade_hint">Passez à une offre supérieure pour conserver cet alias</string>
     <string name="domain_grace_ends">Se termine le %1$s</string>
     <string name="domain_grace_upgrade_hint">Passez à une offre supérieure pour conserver ce domaine</string>
+    <string name="error_family_2fa_required">Votre forfait Famille exige une authentification à deux facteurs. Pour continuer à utiliser ce compte, activez-la dans Réglages &gt; Sécurité.</string>
 </resources>
