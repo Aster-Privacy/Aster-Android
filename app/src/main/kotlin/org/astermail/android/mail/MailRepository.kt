@@ -517,7 +517,7 @@ class MailRepository @Inject constructor(
         draft_id: String? = null,
         allow_non_post_quantum: Boolean = false,
     ): Result<String> {
-        val delay_ms = undo_seconds.coerceAtLeast(1) * 1000L
+        val delay_ms = undo_seconds.coerceIn(1, 30) * 1000L
         val pending_id = java.util.UUID.randomUUID().toString()
         val pending = PendingUndoSend(
             started_at_ms = System.currentTimeMillis(),

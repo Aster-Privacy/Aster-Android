@@ -733,8 +733,8 @@ fun ComposeScreen(
     var current_draft_id by rememberSaveable { mutableStateOf(if (mode == "draft") draft_id.orEmpty() else "") }
     val draft_session_id = rememberSaveable { java.util.UUID.randomUUID().toString() }
     val prefs = settings_state.preferences
-    val undo_send_enabled = prefs?.undo_send_enabled ?: true
-    val undo_send_seconds = prefs?.undo_send_seconds ?: 10
+    val undo_send_seconds = effective_undo_send_seconds(prefs?.undo_send_seconds)
+    val undo_send_enabled = (prefs?.undo_send_enabled ?: true) && undo_send_seconds > 0
 
     LaunchedEffect(mode, draft_id, thread_state) {
         if (mode == "draft" && !draft_id.isNullOrBlank() && !draft_loaded) {
@@ -4000,6 +4000,16 @@ private fun toggle_sheet_row(
             )
         }
     }
+}
+
+private const val undo_send_min_seconds = 1
+private const val undo_send_max_seconds = 30
+private const val undo_send_default_seconds = 10
+
+private fun effective_undo_send_seconds(seconds: Int?): Int {
+    val value = seconds ?: undo_send_default_seconds
+    if (value <= 0) return 0
+    return value.coerceIn(undo_send_min_seconds, undo_send_max_seconds)
 }
 
 private fun signature_below_quote(placement: Int?, preference: String?): Boolean {
