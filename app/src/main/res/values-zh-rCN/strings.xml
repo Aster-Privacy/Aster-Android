@@ -1782,6 +1782,8 @@
     <string name="attachment_read_failed">无法读取“%1$s”</string>
     <string name="scheduled_send_no_attachments">定时发送暂不支持附件。请先移除附件或立即发送。</string>
     <string name="cannot_mix_recipients">Aster 用户和外部地址不能放在同一封邮件中，分两封发送就可以。</string>
+    <string name="too_many_recipients_in_field">收件人、抄送和密件抄送字段各最多容纳 %1$d 个地址。将其中一些移到另一封邮件后再发送。</string>
+    <string name="too_many_recipients_in_message">一封邮件在收件人、抄送和密件抄送中最多共发给 %1$d 个地址。将名单拆成多封较小的邮件即可发送。</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>

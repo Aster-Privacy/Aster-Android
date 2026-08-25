@@ -1786,6 +1786,8 @@
     <string name="attachment_read_failed">No se pudo leer \"%1$s\"</string>
     <string name="scheduled_send_no_attachments">Los correos programados aún no admiten adjuntos. Quítalos o envía ahora.</string>
     <string name="cannot_mix_recipients">No puedes enviar a usuarios de Aster y a direcciones externas en un mismo correo. Enviarlos como dos mensajes separados funcionará.</string>
+    <string name="too_many_recipients_in_field">Cada uno de los campos Para, Cc y Cco admite un máximo de %1$d direcciones. Mueve algunas a un segundo mensaje para enviar este.</string>
+    <string name="too_many_recipients_in_message">Un mensaje llega a un máximo de %1$d direcciones entre Para, Cc y Cco. Dividir la lista en mensajes más pequeños funcionará.</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>

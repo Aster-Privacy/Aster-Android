@@ -880,6 +880,8 @@
     <string name="attachment_read_failed">\"%1$s\" could not be read</string>
     <string name="scheduled_send_no_attachments">Scheduled emails can\'t include attachments yet. Remove them or send now.</string>
     <string name="cannot_mix_recipients">Aster users and outside addresses cannot go in the same email. Sending them as two separate messages will work.</string>
+    <string name="too_many_recipients_in_field">Each of the To, Cc, and Bcc fields holds at most %1$d addresses. Move some of them to a second message to send this one.</string>
+    <string name="too_many_recipients_in_message">One message reaches at most %1$d addresses across To, Cc, and Bcc. Splitting the list into smaller messages will send.</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>

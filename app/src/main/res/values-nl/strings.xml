@@ -1785,6 +1785,8 @@
     <string name="attachment_read_failed">\"%1$s\" kon niet worden gelezen</string>
     <string name="scheduled_send_no_attachments">Geplande e-mails ondersteunen nog geen bijlagen. Verwijder ze of verstuur nu.</string>
     <string name="cannot_mix_recipients">Aster-gebruikers en externe adressen kunnen niet in dezelfde e-mail. Ze als twee aparte berichten verzenden werkt.</string>
+    <string name="too_many_recipients_in_field">Elk van de velden Aan, Cc en Bcc bevat maximaal %1$d adressen. Verplaats er een paar naar een tweede bericht om dit bericht te verzenden.</string>
+    <string name="too_many_recipients_in_message">Eén bericht bereikt maximaal %1$d adressen in Aan, Cc en Bcc samen. De lijst opsplitsen in kleinere berichten werkt.</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>

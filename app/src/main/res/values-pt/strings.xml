@@ -1785,6 +1785,8 @@
     <string name="attachment_read_failed">Não foi possível ler \"%1$s\"</string>
     <string name="scheduled_send_no_attachments">E-mails agendados ainda não aceitam anexos. Remova-os ou envie agora.</string>
     <string name="cannot_mix_recipients">Usuários do Aster e endereços externos não podem ir no mesmo e-mail. Enviá-los em duas mensagens separadas vai funcionar.</string>
+    <string name="too_many_recipients_in_field">Cada um dos campos Para, Cc e Cco aceita no máximo %1$d endereços. Mova alguns para uma segunda mensagem para enviar esta.</string>
+    <string name="too_many_recipients_in_message">Uma mensagem alcança no máximo %1$d endereços entre Para, Cc e Cco. Dividir a lista em mensagens menores vai funcionar.</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>

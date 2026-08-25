@@ -1782,6 +1782,8 @@
     <string name="attachment_read_failed">「%1$s」を読み込めませんでした</string>
     <string name="scheduled_send_no_attachments">予約送信はまだ添付ファイルに対応していません。削除するか、今すぐ送信してください。</string>
     <string name="cannot_mix_recipients">Aster ユーザーと外部アドレスを同じメールに含めることはできません。2 通の別々のメッセージとして送信することで届けられます。</string>
+    <string name="too_many_recipients_in_field">宛先、Cc、Bcc の各フィールドには最大で %1$d 件のアドレスを入力できます。いくつかを 2 通目のメッセージに移してください。</string>
+    <string name="too_many_recipients_in_message">1 通のメッセージで送れるのは宛先、Cc、Bcc を合わせて最大 %1$d 件です。リストを小さく分けると送信できます。</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>

@@ -1797,6 +1797,8 @@
     <string name="attachment_read_failed">تعذّرت قراءة \"%1$s\"</string>
     <string name="scheduled_send_no_attachments">الرسائل المجدولة لا تدعم المرفقات بعد. أزِلها أو أرسل الآن.</string>
     <string name="cannot_mix_recipients">مستخدمو Aster والعناوين الخارجية لا يجتمعون في رسالة واحدة. إرسالهما رسالتين منفصلتين سيعمل.</string>
+    <string name="too_many_recipients_in_field">يتسع كل حقل من حقول إلى ونسخة ونسخة مخفية لـ %1$d عنوانًا كحد أقصى. انقل بعضها إلى رسالة ثانية لإرسال هذه.</string>
+    <string name="too_many_recipients_in_message">تصل الرسالة الواحدة إلى %1$d عنوانًا كحد أقصى عبر إلى ونسخة ونسخة مخفية. تقسيم القائمة إلى رسائل أصغر سينجح.</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>

@@ -1791,6 +1791,8 @@
     <string name="attachment_read_failed">Nie udało się odczytać \"%1$s\"</string>
     <string name="scheduled_send_no_attachments">Zaplanowane wiadomości nie obsługują jeszcze załączników. Usuń je albo wyślij teraz.</string>
     <string name="cannot_mix_recipients">Użytkownicy Aster i adresy zewnętrzne nie mogą znaleźć się w tej samej wiadomości. Wysłanie ich jako dwóch oddzielnych wiadomości zadziała.</string>
+    <string name="too_many_recipients_in_field">Każde z pól Do, DW i UDW mieści najwyżej %1$d adresów. Przenieś część z nich do drugiej wiadomości, aby wysłać tę.</string>
+    <string name="too_many_recipients_in_message">Jedna wiadomość dociera najwyżej do %1$d adresów łącznie w polach Do, DW i UDW. Podzielenie listy na mniejsze wiadomości zadziała.</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>

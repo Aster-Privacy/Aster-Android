@@ -1364,6 +1364,29 @@ fun ComposeScreen(
         val snap_subject = subject
         val snap_from = from_alias
 
+        if (snap_to.size > max_recipients_per_field ||
+            snap_cc.size > max_recipients_per_field ||
+            snap_bcc.size > max_recipients_per_field
+        ) {
+            is_sending = false
+            send_lock.set(false)
+            send_error = context.getString(
+                R.string.too_many_recipients_in_field,
+                max_recipients_per_field,
+            )
+            return
+        }
+
+        if (snap_to.size + snap_cc.size + snap_bcc.size > max_recipients_per_send) {
+            is_sending = false
+            send_lock.set(false)
+            send_error = context.getString(
+                R.string.too_many_recipients_in_message,
+                max_recipients_per_send,
+            )
+            return
+        }
+
         if (settings_state.preferences?.auto_save_recent_recipients != false) {
             contacts_vm.auto_save_recipients(
                 recipients = snap_to + snap_cc + snap_bcc,
@@ -4030,6 +4053,8 @@ private fun toggle_sheet_row(
 }
 
 private const val minimum_schedule_lead_ms = 60_000L
+private const val max_recipients_per_field = 50
+private const val max_recipients_per_send = 100
 
 private const val undo_send_min_seconds = 1
 private const val undo_send_max_seconds = 30
