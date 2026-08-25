@@ -87,6 +87,7 @@ data class UserPreferences(
     val block_remote_css: Boolean = true,
     val html_rendering_mode: String = "html",
     val auto_save_recent_recipients: Boolean = true,
+    val auto_save_drafts: Boolean = true,
     val signature_mode: String = "auto",
     val signature_placement: String = "below",
     val show_signature_separator: Boolean = true,

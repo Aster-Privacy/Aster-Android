@@ -890,6 +890,7 @@ fun ComposeScreen(
 
     fun schedule_draft_save() {
         draft_save_job?.cancel()
+        if (settings_state.preferences?.auto_save_drafts == false) return
         draft_save_job = scope.launch {
             delay(3000)
             if (sent || is_sending) return@launch
@@ -1071,6 +1072,7 @@ fun ComposeScreen(
     androidx.compose.runtime.DisposableEffect(lifecycle_owner_for_draft) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
             if (event == androidx.lifecycle.Lifecycle.Event.ON_PAUSE) {
+                if (settings_state.preferences?.auto_save_drafts == false) return@LifecycleEventObserver
                 if (!sent && !is_sending && (subject.isNotBlank() || body.isNotBlank() || to_chips.isNotEmpty())) {
                     draft_save_job?.cancel()
                     mail_vm.save_draft_and_finish(
