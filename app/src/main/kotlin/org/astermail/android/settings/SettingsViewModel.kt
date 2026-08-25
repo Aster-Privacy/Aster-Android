@@ -35,9 +35,12 @@ import javax.crypto.spec.SecretKeySpec
 import org.astermail.android.crypto.AesGcm
 import org.astermail.android.crypto.hkdf_sha256
 import javax.inject.Inject
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -4355,12 +4358,20 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    private val _preference_save_failures = Channel<String>(Channel.BUFFERED)
+    val preference_save_failures: Flow<String> = _preference_save_failures.receiveAsFlow()
+
+    private fun report_preference_save_failure(message: String) {
+        _preference_save_failures.trySend(message)
+    }
+
     fun save_preferences(prefs: UserPreferences) {
         if (!prefs_load_succeeded) {
             _state.value = _state.value.copy(
                 save_status = SaveStatus.ERROR,
                 error = context.getString(R.string.preferences_locked_retry),
             )
+            report_preference_save_failure(context.getString(R.string.preferences_locked_retry))
             return
         }
         load_preferences_job?.cancel()
@@ -4399,6 +4410,7 @@ class SettingsViewModel @Inject constructor(
                         save_status = SaveStatus.ERROR,
                         error = context.getString(R.string.preferences_locked_retry),
                     )
+                    report_preference_save_failure(context.getString(R.string.preferences_locked_retry))
                     return@launch
                 } else {
                     val raw = last_preferences_raw_json
@@ -4414,10 +4426,12 @@ class SettingsViewModel @Inject constructor(
                     _state.value = _state.value.copy(save_status = SaveStatus.SAVED)
                 }
             } catch (t: Throwable) {
+                val message = user_facing_error(t)
                 _state.value = _state.value.copy(
                     save_status = SaveStatus.ERROR,
-                    error = user_facing_error(t),
+                    error = message,
                 )
+                report_preference_save_failure(message)
             }
         }
     }
