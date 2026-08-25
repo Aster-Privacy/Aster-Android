@@ -1048,8 +1048,11 @@ class MailRepository @Inject constructor(
         val active = response.items.filter { it.status in ACTIVE_SCHEDULED_STATUSES }
         val items = coroutineScope {
             active.map { summary ->
-                async(Dispatchers.IO) { runCatching { load_scheduled_item(summary) }.getOrNull() }
-            }.awaitAll().filterNotNull()
+                async(Dispatchers.IO) {
+                    runCatching { load_scheduled_item(summary) }
+                        .getOrElse { placeholder_scheduled_item(summary) }
+                }
+            }.awaitAll()
         }
         val ordered = if (order == "oldest") items.sortedBy { it.timestamp } else items
         val consumed = offset + response.items.size
@@ -1075,6 +1078,44 @@ class MailRepository @Inject constructor(
         scheduled_api.send_now(id)
         Unit
     }
+
+    private fun placeholder_scheduled_item(summary: ScheduledSummary): InboxItem = InboxItem(
+        id = summary.id,
+        thread_token = summary.id,
+        thread_message_count = 1,
+        sender_name = context.getString(R.string.no_recipients),
+        sender_email = "",
+        subject = context.getString(R.string.no_subject),
+        preview = "",
+        timestamp = summary.scheduled_at,
+        is_read = true,
+        is_starred = false,
+        is_encrypted = true,
+        has_attachments = summary.has_attachments,
+        is_trashed = false,
+        is_archived = false,
+        is_spam = false,
+        labels = emptyList(),
+        to_addresses = emptyList(),
+        is_undecryptable = true,
+        raw_item = MailItem(
+            id = summary.id,
+            item_type = "scheduled",
+            thread_token = null,
+            created_at = summary.created_at,
+            scheduled_at = summary.scheduled_at,
+            send_status = summary.status,
+            is_external = summary.is_external,
+            metadata = MailItemMetadata(
+                has_attachments = summary.has_attachments,
+                attachment_count = 0,
+                scheduled_at = summary.scheduled_at,
+                send_status = summary.status,
+                item_type = "scheduled",
+                created_at = summary.created_at,
+            ),
+        ),
+    )
 
     private suspend fun load_scheduled_item(summary: ScheduledSummary): InboxItem {
         val detail = scheduled_api.get_scheduled(summary.id)
