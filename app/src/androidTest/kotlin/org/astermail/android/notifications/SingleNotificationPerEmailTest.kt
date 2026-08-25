@@ -156,6 +156,57 @@ class SingleNotificationPerEmailTest {
         assertTrue(MailPollingWorker.claim_item_notification(context, item_id))
     }
 
+    private fun generic_post_time(): Long =
+        manager.activeNotifications.first { it.id == MailPollingWorker.NOTIFICATION_ID }.postTime
+
+    private fun inbox_item(id: String) = org.astermail.android.mail.InboxItem(
+        id = id,
+        thread_token = null,
+        thread_message_count = 1,
+        sender_name = "Alice",
+        sender_email = "alice@example.com",
+        subject = "Subject $id",
+        preview = "Preview",
+        timestamp = "now",
+        is_read = false,
+        is_starred = false,
+        is_encrypted = false,
+        has_attachments = false,
+        is_trashed = false,
+        is_archived = false,
+        is_spam = false,
+        labels = emptyList(),
+        raw_item = org.astermail.android.api.mail.MailItem(id = id),
+    )
+
+    @Test
+    fun a_second_generic_alert_re_posts_instead_of_being_swallowed() {
+        assertTrue(MailPollingWorker.show_generic(context, 1))
+        Thread.sleep(500)
+        val first_post = generic_post_time()
+
+        Thread.sleep(6_000)
+        assertTrue(MailPollingWorker.show_generic(context, 1))
+        Thread.sleep(500)
+
+        assertTrue(
+            "a later arrival must re-alert instead of being swallowed",
+            generic_post_time() > first_post,
+        )
+    }
+
+    @Test
+    fun a_burst_of_unread_mail_offers_every_message_for_notification() {
+        val ids = List(3) { "burst-$it-" + System.nanoTime() }
+        val items = ids.map { inbox_item(it) }
+
+        assertEquals(ids, MailPollingWorker.pick_notifiable_candidates(context, items, 5).map { it.id })
+        assertEquals(2, MailPollingWorker.pick_notifiable_candidates(context, items, 2).size)
+
+        ids.forEach { assertTrue(MailPollingWorker.claim_item_notification(context, it)) }
+        assertTrue(MailPollingWorker.pick_notifiable_candidates(context, items, 5).isEmpty())
+    }
+
     @Test
     fun second_email_brings_back_the_group_summary() {
         val first = "first-" + System.nanoTime()
