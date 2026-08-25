@@ -586,6 +586,8 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun set_default_sender(sender_id: String?) {
+        val previous_sender_id = _state.value.default_sender_id
+
         _state.value = _state.value.copy(default_sender_id = sender_id)
         viewModelScope.launch {
             try {
@@ -594,7 +596,7 @@ class SettingsViewModel @Inject constructor(
                 )
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
-                    default_sender_id = null,
+                    default_sender_id = previous_sender_id,
                     error = user_facing_error(t),
                 )
             }
