@@ -69,13 +69,19 @@ import org.astermail.android.api.mail_rules.Condition as MailRuleCondition
 sealed class ApiError(message: String) : Exception(message) {
     object NetworkError : ApiError("network error")
     object UnauthorizedError : ApiError("unauthorized")
-    data class ForbiddenError(val detail: String = "forbidden") : ApiError(detail)
+    data class ForbiddenError(
+        val detail: String = "forbidden",
+        val server_code: String? = null,
+    ) : ApiError(detail)
     data class PlanLimitExceeded(val detail: String, val resource: String?) : ApiError(detail)
     data class StorageQuotaExceeded(val detail: String) : ApiError(detail)
     object NotFoundError : ApiError("not found")
     data class ServerError(val code: Int) : ApiError("server error $code")
     data class ValidationError(val messages: List<String>) : ApiError(messages.joinToString("; "))
-    data class Conflict(val detail: String) : ApiError(detail)
+    data class Conflict(
+        val detail: String,
+        val server_code: String? = null,
+    ) : ApiError(detail)
     data class RateLimited(
         val detail: String = "rate limited",
         val resets_at: String? = null,
@@ -420,14 +426,14 @@ class ApiClient(
             401 -> ApiError.UnauthorizedError.also {
                 if (server_code != "INVALID_CREDENTIALS") AuthEventBus.emit_unauthorized()
             }
-            403 -> ApiError.ForbiddenError(detail.ifBlank { "forbidden" })
+            403 -> ApiError.ForbiddenError(detail.ifBlank { "forbidden" }, server_code)
             404 -> ApiError.NotFoundError
             413 -> ApiError.StorageQuotaExceeded(detail.ifBlank { "storage full" })
                 .also { emit_storage_full(it) }
             422 -> ApiError.ValidationError(
                 parse_validation_messages(body).ifEmpty { listOf(detail.ifBlank { "unprocessable request" }) },
             )
-            409 -> ApiError.Conflict(detail.ifBlank { "conflict" })
+            409 -> ApiError.Conflict(detail.ifBlank { "conflict" }, server_code)
             429 -> ApiError.RateLimited(
                 detail = detail.ifBlank { "rate limited" },
                 resets_at = parse_error_resets_at(body),

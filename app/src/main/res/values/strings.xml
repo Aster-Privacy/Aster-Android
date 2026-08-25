@@ -1732,6 +1732,12 @@
     <string name="error_timeout">Connection timed out. Please try again.</string>
     <string name="error_ssl">Secure connection failed. Please try again.</string>
     <string name="error_generic">Something went wrong. Please try again.</string>
+    <string name="error_account_suspended">Your account is suspended for violating the Terms of Service.</string>
+    <string name="error_account_locked">Your account is temporarily locked. Try again later.</string>
+    <string name="error_account_probation">Your account has temporary restrictions.</string>
+    <string name="error_verification_required">To keep using this account, verify your recovery email.</string>
+    <string name="error_client_upgrade_required">This app version can\'t make this change. Update to the latest version, then try again.</string>
+    <string name="error_alias_reencryption_incomplete">Some aliases didn\'t finish re-encrypting, so nothing changed. Try again.</string>
     <string name="error_too_many_attempts">Too many attempts. Please wait a moment and try again.</string>
 
     <!-- Recovery -->
