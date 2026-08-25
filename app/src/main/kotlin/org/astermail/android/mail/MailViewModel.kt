@@ -2453,6 +2453,7 @@ class MailViewModel @Inject constructor(
             return
         }
         val previous = _inbox_state.value.items
+        val removed_items = previous.filter { it.id == item_id }
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id != item_id },
         )
@@ -2466,7 +2467,7 @@ class MailViewModel @Inject constructor(
                         load_stats()
                     },
                     onFailure = {
-                        _inbox_state.value = _inbox_state.value.copy(items = previous)
+                        undo_local_restore(removed_items)
                         emit_toast(context.getString(R.string.failed_to_delete))
                     },
                 )
