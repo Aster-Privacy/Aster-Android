@@ -3242,7 +3242,10 @@ class MailViewModel @Inject constructor(
                     emit_toast(context.getString(R.string.scheduled_send_canceled))
                     load_stats()
                 },
-                onFailure = { error -> emit_toast(friendly_load_error(error)) },
+                onFailure = { error ->
+                    emit_toast(friendly_load_error(error))
+                    refresh()
+                },
             )
         }
     }
@@ -3255,7 +3258,10 @@ class MailViewModel @Inject constructor(
                     emit_toast(context.getString(R.string.scheduled_sending_now))
                     load_stats()
                 },
-                onFailure = { error -> emit_toast(friendly_load_error(error)) },
+                onFailure = { error ->
+                    emit_toast(friendly_load_error(error))
+                    refresh()
+                },
             )
         }
     }
@@ -3274,7 +3280,10 @@ class MailViewModel @Inject constructor(
                     emit_toast(context.getString(R.string.scheduled_send_time_updated))
                     refresh()
                 },
-                onFailure = { error -> emit_toast(friendly_load_error(error)) },
+                onFailure = { error ->
+                    emit_toast(friendly_load_error(error))
+                    refresh()
+                },
             )
         }
     }
