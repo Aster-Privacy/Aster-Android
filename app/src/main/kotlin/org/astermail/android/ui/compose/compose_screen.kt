@@ -648,6 +648,7 @@ fun ComposeScreen(
     var quoted_expanded by remember { mutableStateOf(false) }
     var is_sending by remember { mutableStateOf(false) }
     var sent by remember { mutableStateOf(false) }
+    var discarded by remember { mutableStateOf(false) }
     var send_error by remember { mutableStateOf<String?>(null) }
     var attachments by remember { mutableStateOf(listOf<AttachmentItem>()) }
     var inline_images by remember { mutableStateOf(listOf<AttachmentItem>()) }
@@ -896,6 +897,7 @@ fun ComposeScreen(
 
     fun schedule_draft_save() {
         draft_save_job?.cancel()
+        if (discarded) return
         if (settings_state.preferences?.auto_save_drafts == false) return
         draft_save_job = scope.launch {
             delay(3000)
@@ -1079,7 +1081,7 @@ fun ComposeScreen(
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
             if (event == androidx.lifecycle.Lifecycle.Event.ON_PAUSE) {
                 if (settings_state.preferences?.auto_save_drafts == false) return@LifecycleEventObserver
-                if (!sent && !is_sending && (subject.isNotBlank() || body.isNotBlank() || to_chips.isNotEmpty())) {
+                if (!sent && !discarded && !is_sending && (subject.isNotBlank() || body.isNotBlank() || to_chips.isNotEmpty())) {
                     draft_save_job?.cancel()
                     mail_vm.save_draft_and_finish(
                         subject = subject,
@@ -2531,6 +2533,12 @@ fun ComposeScreen(
                         label = stringResource(R.string.discard),
                         onClick = {
                             show_discard_dialog = false
+                            discarded = true
+                            draft_save_job?.cancel()
+                            if (current_draft_id.isNotBlank()) {
+                                mail_vm.discard_sent_draft(current_draft_id, draft_session_id)
+                                current_draft_id = ""
+                            }
                             on_back()
                         },
                         modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
