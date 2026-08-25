@@ -92,8 +92,12 @@ class MailPollingWorker(
         }
 
         if (inputData.getBoolean(KEY_FORCE_NOTIFY, false)) {
-            notify_for_new_mail(1)
-            return Result.success()
+            val notified = notify_for_new_mail(1)
+            return if (!notified && runAttemptCount < FORCE_NOTIFY_MAX_ATTEMPTS) {
+                Result.retry()
+            } else {
+                Result.success()
+            }
         }
 
         lateinit var client: ApiClient
@@ -157,10 +161,8 @@ class MailPollingWorker(
 
         val has_baseline = prefs.contains(KEY_CACHED_UNREAD)
         val cached_unread = prefs.getInt(KEY_CACHED_UNREAD, new_unread)
-        val last_notified = prefs.getInt(KEY_LAST_NOTIFIED_COUNT, -1)
 
-        val has_pending_new_mail = has_baseline && new_unread > cached_unread &&
-            new_unread != last_notified
+        val has_pending_new_mail = has_baseline && new_unread > cached_unread
         val suppressed_by_quiet_hours = has_pending_new_mail && is_quiet_hours_now(context)
         var deferred = false
         if (has_pending_new_mail && !suppressed_by_quiet_hours) {
@@ -192,7 +194,6 @@ class MailPollingWorker(
 
     private suspend fun notify_for_new_mail_locked(arrived: Int): Boolean {
         if (!is_notify_new_email(context)) return true
-        if (message_notified_recently(context)) return false
         val entry = try {
             EntryPointAccessors.fromApplication(
                 context.applicationContext,
@@ -280,7 +281,7 @@ class MailPollingWorker(
         val fresh = newest
         if (fresh == null || sender.isNullOrBlank()) {
             if (!fetched_any_page) {
-                show_generic(context, arrived)
+                return show_generic(context, arrived)
             }
             return true
         }
@@ -295,7 +296,7 @@ class MailPollingWorker(
             fresh.preview
         }
         val message_id = message_notification_id(fresh.id.hashCode())
-        show_message(
+        val posted = show_message(
             context = context,
             sender = sender!!,
             subject = subject,
@@ -303,6 +304,10 @@ class MailPollingWorker(
             message_id = message_id,
             item_id = fresh.id,
         )
+        if (!posted) {
+            release_item_claim(context, fresh.id)
+            return false
+        }
         return true
     }
 
@@ -345,6 +350,9 @@ class MailPollingWorker(
         private const val KEY_LAST_GENERIC_COUNT = "last_generic_notify_count"
         private const val KEY_LAST_GENERIC_MS = "last_generic_notify_ms"
         private const val GENERIC_NOTIFY_COOLDOWN_MS = 60_000L
+        private const val NOTIFIED_ITEM_SEPARATOR = "\n"
+        private const val FORCE_NOTIFY_MAX_ATTEMPTS = 3
+        private const val FORCE_NOTIFY_BACKOFF_MS = 10_000L
         private val notify_lock = Mutex()
         private const val SENDER_MAX_LENGTH = 80
         private const val SUBJECT_MAX_LENGTH = 120
@@ -473,6 +481,8 @@ class MailPollingWorker(
                 .remove(KEY_LAST_NOTIFIED_COUNT)
                 .remove(KEY_NOTIFIED_ITEM_IDS)
                 .remove(KEY_LAST_MESSAGE_NOTIFY_MS)
+                .remove(KEY_LAST_GENERIC_COUNT)
+                .remove(KEY_LAST_GENERIC_MS)
                 .apply()
         }
 
@@ -542,10 +552,15 @@ class MailPollingWorker(
                 .setConstraints(constraints)
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .setInputData(Data.Builder().putBoolean(KEY_FORCE_NOTIFY, true).build())
+                .setBackoffCriteria(
+                    BackoffPolicy.LINEAR,
+                    FORCE_NOTIFY_BACKOFF_MS,
+                    TimeUnit.MILLISECONDS,
+                )
                 .build()
             WorkManager.getInstance(context).enqueueUniqueWork(
                 WORK_NAME_IMMEDIATE,
-                ExistingWorkPolicy.REPLACE,
+                ExistingWorkPolicy.APPEND_OR_REPLACE,
                 request,
             )
         }
@@ -587,21 +602,14 @@ class MailPollingWorker(
             return active_mail_notifications >= 2
         }
 
-        private fun message_notified_recently(context: Context): Boolean {
-            val last = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                .getLong(KEY_LAST_MESSAGE_NOTIFY_MS, 0L)
-            return is_within_message_dedupe_window(last, System.currentTimeMillis())
-        }
-
         @Synchronized
-        fun show_generic(context: Context, unread_count: Int) {
-            if (!can_post(context)) return
-            if (message_notified_recently(context)) return
+        fun show_generic(context: Context, unread_count: Int): Boolean {
+            if (!can_post(context)) return false
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             val now = System.currentTimeMillis()
             val repeat_of_last = prefs.getInt(KEY_LAST_GENERIC_COUNT, -1) == unread_count &&
                 now - prefs.getLong(KEY_LAST_GENERIC_MS, 0L) < GENERIC_NOTIFY_COOLDOWN_MS
-            if (repeat_of_last) return
+            if (repeat_of_last) return true
             prefs.edit()
                 .putInt(KEY_LAST_GENERIC_COUNT, unread_count)
                 .putLong(KEY_LAST_GENERIC_MS, now)
@@ -618,6 +626,26 @@ class MailPollingWorker(
             val manager = NotificationManagerCompat.from(context)
             manager.notify(NOTIFICATION_ID, notification)
             post_group_summary(context, manager, NOTIFICATION_ID)
+            return true
+        }
+
+        @Synchronized
+        fun show_generic_for_item(context: Context, item_id: String): Boolean {
+            if (!can_post(context)) return false
+            if (item_id.isBlank()) return show_generic(context, 1)
+            val notification = base_builder(context)
+                .setWhen(System.currentTimeMillis())
+                .setShowWhen(true)
+                .setContentTitle(context.getString(R.string.app_name))
+                .setContentText(context.getString(R.string.notif_new_message))
+                .setVisibility(NotificationCompat.VISIBILITY_SECRET)
+                .setGroup(GROUP_KEY_NEW_MAIL)
+                .build()
+            val manager = NotificationManagerCompat.from(context)
+            val notification_id = message_notification_id(item_id.hashCode())
+            manager.notify(notification_id, notification)
+            post_group_summary(context, manager, notification_id)
+            return true
         }
 
         fun show_message(
@@ -627,8 +655,8 @@ class MailPollingWorker(
             preview: String,
             message_id: Int,
             item_id: String = "",
-        ) {
-            if (!can_post(context)) return
+        ): Boolean {
+            if (!can_post(context)) return false
             val private_mode = is_private_notifications(context)
             val safe_sender = org.astermail.android.mail.safe_display_text(sender, SENDER_MAX_LENGTH)
                 .ifBlank { context.getString(R.string.app_name) }
@@ -685,6 +713,7 @@ class MailPollingWorker(
                 .commit()
             manager.notify(message_id, builder.build())
             post_group_summary(context, manager, message_id)
+            return true
         }
 
         private fun add_message_actions(
@@ -812,6 +841,15 @@ class MailPollingWorker(
             while (updated.size > NOTIFIED_ITEM_IDS_MAX) updated.removeAt(0)
             prefs.edit().putString(KEY_NOTIFIED_ITEM_IDS, updated.joinToString("\n")).commit()
             return true
+        }
+
+        @Synchronized
+        fun release_item_claim(context: Context, item_id: String) {
+            if (item_id.isBlank()) return
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val stored = prefs.getString(KEY_NOTIFIED_ITEM_IDS, "") ?: ""
+            val ids = stored.split(NOTIFIED_ITEM_SEPARATOR).filter { it.isNotBlank() && it != item_id }
+            prefs.edit().putString(KEY_NOTIFIED_ITEM_IDS, ids.joinToString(NOTIFIED_ITEM_SEPARATOR)).commit()
         }
 
         @Synchronized

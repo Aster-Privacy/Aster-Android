@@ -46,8 +46,11 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
     val obj = JSONObject(payload)
     val type = obj.optString("type")
     if (type == "test") {
-        MailPollingWorker.show_generic(context, 1)
-        return PushResult.Shown
+        return if (MailPollingWorker.show_generic(context, 1)) {
+            PushResult.Shown
+        } else {
+            PushResult.Ignore
+        }
     }
     if (type == "login_alert") {
         val session_id = obj.optString("session_id", "")
@@ -80,7 +83,21 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
     }
     val app_lock_configured = runCatching { entry.app_lock_store().is_configured() }.getOrDefault(true)
     if (org.astermail.android.security.LockdownStore.is_enabled(context) || app_lock_configured) {
-        MailPollingWorker.show_generic(context, 1)
+        val locked_item_id = obj.optString("item_id", "")
+        if (locked_item_id.isBlank()) {
+            return if (MailPollingWorker.show_generic(context, 1)) {
+                PushResult.Shown
+            } else {
+                PushResult.Ignore
+            }
+        }
+        if (!MailPollingWorker.claim_item_notification(context, locked_item_id)) {
+            return PushResult.Ignore
+        }
+        if (!MailPollingWorker.show_generic_for_item(context, locked_item_id)) {
+            MailPollingWorker.release_item_claim(context, locked_item_id)
+            return PushResult.Ignore
+        }
         return PushResult.Shown
     }
     if (type == "wake") return PushResult.NeedsFetch
@@ -121,7 +138,7 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
     if (!MailPollingWorker.claim_item_notification(context, item_id)) {
         return PushResult.Ignore
     }
-    MailPollingWorker.show_message(
+    val posted = MailPollingWorker.show_message(
         context = context,
         sender = sender,
         subject = subject,
@@ -129,5 +146,9 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
         message_id = notification_id,
         item_id = item_id,
     )
+    if (!posted) {
+        MailPollingWorker.release_item_claim(context, item_id)
+        return PushResult.NeedsFetch
+    }
     return PushResult.Shown
 }

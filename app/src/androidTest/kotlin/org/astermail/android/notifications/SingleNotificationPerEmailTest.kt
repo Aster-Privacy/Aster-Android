@@ -105,16 +105,55 @@ class SingleNotificationPerEmailTest {
     }
 
     @Test
-    fun generic_fallback_is_suppressed_right_after_a_message_notification() {
+    fun generic_fallback_still_alerts_after_a_message_notification() {
         val item_id = "generic-" + System.nanoTime()
         post_message(item_id)
         Thread.sleep(500)
 
-        MailPollingWorker.show_generic(context, 1)
+        assertTrue(MailPollingWorker.show_generic(context, 1))
+        Thread.sleep(1_000)
+
+        assertTrue(MailPollingWorker.NOTIFICATION_ID in active_ids())
+    }
+
+    @Test
+    fun a_message_notification_replaces_the_generic_fallback() {
+        assertTrue(MailPollingWorker.show_generic(context, 1))
+        Thread.sleep(500)
+        assertTrue(MailPollingWorker.NOTIFICATION_ID in active_ids())
+
+        val item_id = "replaces-" + System.nanoTime()
+        post_message(item_id)
         Thread.sleep(1_000)
 
         assertFalse(MailPollingWorker.NOTIFICATION_ID in active_ids())
-        assertEquals(1, active_ids().size)
+        assertEquals(setOf(MailPollingWorker.message_notification_id(item_id.hashCode())), active_ids())
+    }
+
+    @Test
+    fun each_locked_item_gets_its_own_alert() {
+        val first = "locked-first-" + System.nanoTime()
+        val second = "locked-second-" + System.nanoTime()
+
+        assertTrue(MailPollingWorker.show_generic_for_item(context, first))
+        assertTrue(MailPollingWorker.show_generic_for_item(context, second))
+        Thread.sleep(1_000)
+
+        assertTrue(MailPollingWorker.message_notification_id(first.hashCode()) in active_ids())
+        assertTrue(MailPollingWorker.message_notification_id(second.hashCode()) in active_ids())
+    }
+
+    @Test
+    fun a_released_claim_can_be_taken_again() {
+        val item_id = "claim-" + System.nanoTime()
+
+        assertTrue(MailPollingWorker.claim_item_notification(context, item_id))
+        assertFalse(MailPollingWorker.claim_item_notification(context, item_id))
+
+        MailPollingWorker.release_item_claim(context, item_id)
+
+        assertFalse(MailPollingWorker.was_item_notified(context, item_id))
+        assertTrue(MailPollingWorker.claim_item_notification(context, item_id))
     }
 
     @Test
