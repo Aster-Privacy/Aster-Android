@@ -1389,6 +1389,14 @@ fun ComposeScreen(
             }
             val (body_html, attachment_payloads, suppress_branding) = prepared
 
+            val all_recipients = snap_to + snap_cc + snap_bcc
+            if (all_recipients.any { is_internal_email(it) } && all_recipients.any { !is_internal_email(it) }) {
+                is_sending = false
+                send_lock.set(false)
+                send_error = context.getString(R.string.cannot_mix_recipients)
+                return@launch
+            }
+
             if (!allow_non_post_quantum && !scheduled_send) {
                 val missing = mail_vm.check_post_quantum_coverage(
                     recipients = snap_to + snap_cc + snap_bcc,

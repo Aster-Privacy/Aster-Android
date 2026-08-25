@@ -1785,6 +1785,7 @@
     <string name="attachment_already_attached">\"%1$s\" ist bereits angehängt</string>
     <string name="attachment_read_failed">\"%1$s\" konnte nicht gelesen werden</string>
     <string name="scheduled_send_no_attachments">Geplante E-Mails unterstützen noch keine Anhänge. Entferne sie oder sende jetzt.</string>
+    <string name="cannot_mix_recipients">Aster-Nutzer und externe Adressen lassen sich nicht in derselben E-Mail kombinieren. Ein Versand als zwei getrennte Nachrichten funktioniert.</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>

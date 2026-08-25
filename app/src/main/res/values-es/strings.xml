@@ -1785,6 +1785,7 @@
     <string name="attachment_already_attached">\"%1$s\" ya está adjunto</string>
     <string name="attachment_read_failed">No se pudo leer \"%1$s\"</string>
     <string name="scheduled_send_no_attachments">Los correos programados aún no admiten adjuntos. Quítalos o envía ahora.</string>
+    <string name="cannot_mix_recipients">No puedes enviar a usuarios de Aster y a direcciones externas en un mismo correo. Enviarlos como dos mensajes separados funcionará.</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>

@@ -1790,6 +1790,7 @@
     <string name="attachment_already_attached">\"%1$s\" уже прикреплён</string>
     <string name="attachment_read_failed">Не удалось прочитать \"%1$s\"</string>
     <string name="scheduled_send_no_attachments">Отложенная отправка пока не поддерживает вложения. Удалите их или отправьте сейчас.</string>
+    <string name="cannot_mix_recipients">Пользователи Aster и внешние адреса не могут быть в одном письме. Отправка их отдельными сообщениями обычно решает вопрос.</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>

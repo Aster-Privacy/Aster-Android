@@ -1784,6 +1784,7 @@
     <string name="attachment_already_attached">\"%1$s\" zaten ekli</string>
     <string name="attachment_read_failed">\"%1$s\" okunamadı</string>
     <string name="scheduled_send_no_attachments">Zamanlanmış e-postalar henüz ek desteklemiyor. Ekleri kaldır ya da şimdi gönder.</string>
+    <string name="cannot_mix_recipients">Aster kullanıcıları ile dış adresler aynı e-postaya konulamaz. Onları iki ayrı mesaj olarak göndermek işe yarar.</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>

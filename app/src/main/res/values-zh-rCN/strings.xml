@@ -1781,6 +1781,7 @@
     <string name="attachment_already_attached">“%1$s”已经添加</string>
     <string name="attachment_read_failed">无法读取“%1$s”</string>
     <string name="scheduled_send_no_attachments">定时发送暂不支持附件。请先移除附件或立即发送。</string>
+    <string name="cannot_mix_recipients">Aster 用户和外部地址不能放在同一封邮件中，分两封发送就可以。</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>

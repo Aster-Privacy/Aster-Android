@@ -1784,6 +1784,7 @@
     <string name="attachment_already_attached">\"%1$s\" já está anexado</string>
     <string name="attachment_read_failed">Não foi possível ler \"%1$s\"</string>
     <string name="scheduled_send_no_attachments">E-mails agendados ainda não aceitam anexos. Remova-os ou envie agora.</string>
+    <string name="cannot_mix_recipients">Usuários do Aster e endereços externos não podem ir no mesmo e-mail. Enviá-los em duas mensagens separadas vai funcionar.</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>

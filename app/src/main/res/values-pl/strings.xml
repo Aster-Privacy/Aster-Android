@@ -1790,6 +1790,7 @@
     <string name="attachment_already_attached">\"%1$s\" jest już załączony</string>
     <string name="attachment_read_failed">Nie udało się odczytać \"%1$s\"</string>
     <string name="scheduled_send_no_attachments">Zaplanowane wiadomości nie obsługują jeszcze załączników. Usuń je albo wyślij teraz.</string>
+    <string name="cannot_mix_recipients">Użytkownicy Aster i adresy zewnętrzne nie mogą znaleźć się w tej samej wiadomości. Wysłanie ich jako dwóch oddzielnych wiadomości zadziała.</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>

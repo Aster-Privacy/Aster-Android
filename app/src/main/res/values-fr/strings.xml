@@ -2304,6 +2304,7 @@
     <string name="attachment_already_attached">\"%1$s\" est déjà joint</string>
     <string name="attachment_read_failed">Impossible de lire \"%1$s\"</string>
     <string name="scheduled_send_no_attachments">Les envois programmés n’acceptent pas encore de pièces jointes. Retirez-les ou envoyez maintenant.</string>
+    <string name="cannot_mix_recipients">Les utilisateurs Aster et les adresses externes ne peuvent pas figurer dans le même message. Les envoyer en deux messages séparés fonctionnera.</string>
     <string name="theme_dynamic">Couleurs du fond d’écran</string>
     <string name="theme_dynamic_subtitle">Suivre les couleurs de votre appareil</string>
     <string name="block_sender_confirm_message">Les nouveaux messages de cette adresse iront directement dans le spam. Vous pouvez annuler dans Réglages, sous Expéditeurs bloqués.</string>

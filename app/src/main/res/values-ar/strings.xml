@@ -1796,6 +1796,7 @@
     <string name="attachment_already_attached">\"%1$s\" مرفق بالفعل</string>
     <string name="attachment_read_failed">تعذّرت قراءة \"%1$s\"</string>
     <string name="scheduled_send_no_attachments">الرسائل المجدولة لا تدعم المرفقات بعد. أزِلها أو أرسل الآن.</string>
+    <string name="cannot_mix_recipients">مستخدمو Aster والعناوين الخارجية لا يجتمعون في رسالة واحدة. إرسالهما رسالتين منفصلتين سيعمل.</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>

@@ -1784,6 +1784,7 @@
     <string name="attachment_already_attached">\"%1$s\" è già allegato</string>
     <string name="attachment_read_failed">Impossibile leggere \"%1$s\"</string>
     <string name="scheduled_send_no_attachments">Le email programmate non supportano ancora gli allegati. Rimuovili o invia ora.</string>
+    <string name="cannot_mix_recipients">Gli utenti Aster e gli indirizzi esterni non possono andare nella stessa email. Inviarli come due messaggi separati funzionerà.</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>
