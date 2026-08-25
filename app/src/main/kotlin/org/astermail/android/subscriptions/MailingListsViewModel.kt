@@ -39,6 +39,9 @@ import org.astermail.android.api.subscriptions.SubscriptionsApi
 import org.astermail.android.api.subscriptions.TrackSubscriptionRequest
 import org.astermail.android.api.subscriptions.UnsubscribeRequest
 
+private const val subscription_page_size = 100
+private const val max_subscription_pages = 50
+
 data class MailingListsState(
     val is_loading: Boolean = false,
     val is_scanning: Boolean = false,
@@ -64,10 +67,10 @@ class MailingListsViewModel @Inject constructor(
         _state.value = _state.value.copy(is_loading = true, error = null)
         viewModelScope.launch {
             try {
-                val response = api.list(limit = 200)
+                val items = load_all_subscriptions()
                 val stats = try { api.stats() } catch (_: Throwable) { null }
                 _state.value = _state.value.copy(
-                    items = response.subscriptions,
+                    items = items,
                     stats = stats,
                     is_loading = false,
                     error = null,
@@ -79,6 +82,18 @@ class MailingListsViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    private suspend fun load_all_subscriptions(): List<MailingListSubscription> {
+        val collected = mutableListOf<MailingListSubscription>()
+        var page = 0
+        while (page < max_subscription_pages) {
+            val response = api.list(limit = subscription_page_size, offset = page * subscription_page_size)
+            collected += response.subscriptions
+            page++
+            if (!response.has_more || response.subscriptions.size < subscription_page_size) break
+        }
+        return collected
     }
 
     fun scan(force_full: Boolean = false) {
