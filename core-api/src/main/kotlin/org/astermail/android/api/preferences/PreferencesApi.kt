@@ -89,6 +89,8 @@ data class UserPreferences(
     val auto_save_recent_recipients: Boolean = true,
     val auto_save_drafts: Boolean = true,
     val signature_mode: String = "auto",
+    val signature_in_replies: Boolean = true,
+    val signature_in_forwards: Boolean = true,
     val signature_placement: String = "below",
     val show_signature_separator: Boolean = true,
     val undo_send_enabled: Boolean = true,

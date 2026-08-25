@@ -541,7 +541,13 @@ fun ComposeScreen(
         settings_state.aliases.firstOrNull { it.address == from_alias }?.id
             ?: settings_state.custom_domain_addresses.firstOrNull { it.address == from_alias }?.id
     }
-    val signature_auto_enabled = (settings_state.preferences?.signature_mode ?: "auto") == "auto"
+    val signature_scope_allowed = when (mode) {
+        "reply", "reply_all" -> settings_state.preferences?.signature_in_replies != false
+        "forward" -> settings_state.preferences?.signature_in_forwards != false
+        else -> true
+    }
+    val signature_auto_enabled =
+        (settings_state.preferences?.signature_mode ?: "auto") == "auto" && signature_scope_allowed
     val signature_separator_enabled = settings_state.preferences?.show_signature_separator != false
     LaunchedEffect(signature_loaded, mode, prefill) {
         if (!signature_loaded || signature_applied) return@LaunchedEffect

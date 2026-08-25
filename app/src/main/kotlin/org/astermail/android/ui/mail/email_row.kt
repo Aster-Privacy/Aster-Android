@@ -567,7 +567,7 @@ fun ThreadInboxRow(
                     base
                 }
             }
-            val has_preview = email.preview.isNotBlank()
+            val has_preview = email.preview.isNotBlank() && user_prefs?.show_email_preview != false
             val trailing_controls: @Composable () -> Unit = {
                 if (user_prefs?.show_message_size == true && email.size_bytes > 0) {
                     Spacer(Modifier.width(4.dp))
