@@ -174,6 +174,8 @@ data class CreateAttachmentRequestBody(
 class MailApiImpl(private val client: ApiClient) : MailApi {
     private val base = "/api/mail/v1"
     private val large_payload_timeout_ms = 60_000L
+    private val thread_messages_page_size = 100
+    private val thread_messages_page_cap = 50
 
     override suspend fun list_messages(
         limit: Int?,
@@ -287,12 +289,28 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
     }
 
     override suspend fun get_thread_messages(thread_token: String): ThreadWithMessages {
-        val response = client.http.get(
-            "${client.base_url}$base/messages/threads/${url_encode_path(thread_token)}/messages",
-        ) {
-            timeout { requestTimeoutMillis = large_payload_timeout_ms }
+        val collected = mutableListOf<ThreadMessageItem>()
+        val seen_cursors = mutableSetOf<String>()
+        var thread: MailThread? = null
+        var cursor: String? = null
+        repeat(thread_messages_page_cap) {
+            val response = client.http.get(
+                "${client.base_url}$base/messages/threads/${url_encode_path(thread_token)}/messages",
+            ) {
+                parameter("limit", thread_messages_page_size)
+                cursor?.let { parameter("cursor", it) }
+                timeout { requestTimeoutMillis = large_payload_timeout_ms }
+            }
+            val page: ThreadWithMessages = decode_or_throw(response)
+            thread = page.thread ?: thread
+            collected += page.messages
+            val next = page.next_cursor
+            if (!page.has_more || page.messages.isEmpty() || next.isNullOrBlank() || !seen_cursors.add(next)) {
+                return ThreadWithMessages(thread = thread, messages = collected, has_more = false)
+            }
+            cursor = next
         }
-        return decode_or_throw(response)
+        return ThreadWithMessages(thread = thread, messages = collected, has_more = true)
     }
 
     override suspend fun mark_thread_read(thread_token: String) {

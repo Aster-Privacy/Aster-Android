@@ -254,6 +254,8 @@ data class SpamSignalItem(
 data class ThreadWithMessages(
     val thread: MailThread? = null,
     val messages: List<ThreadMessageItem> = emptyList(),
+    val has_more: Boolean = false,
+    val next_cursor: String? = null,
 )
 
 @Serializable
