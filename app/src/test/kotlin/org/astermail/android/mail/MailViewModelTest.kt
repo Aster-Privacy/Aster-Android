@@ -39,6 +39,7 @@ import org.astermail.android.api.mail.MailUserStatsResponse
 import org.astermail.android.api.mail.ThreadMessageItem
 import org.astermail.android.api.mail.ThreadWithMessages
 import org.astermail.android.api.send.SimpleSendResponse
+import org.astermail.android.ui.mail.MessageAttachment
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -76,6 +77,11 @@ class MailViewModelTest {
             "Something went wrong"
         repository = mockk(relaxed = true)
         search_index_manager = mockk(relaxed = true)
+        every { repository.durable_async<Any?>(any()) } answers {
+            kotlinx.coroutines.CompletableDeferred(
+                kotlinx.coroutines.runBlocking { firstArg<suspend () -> Any?>().invoke() },
+            )
+        }
         every { repository.send_result_events } returns
             kotlinx.coroutines.flow.MutableSharedFlow()
         every { repository.new_mail_events } returns
@@ -83,6 +89,10 @@ class MailViewModelTest {
         every { repository.pending_undo_send } returns
             kotlinx.coroutines.flow.MutableStateFlow(null)
         coEvery { repository.get_stats() } returns Result.success(MailUserStatsResponse())
+        coEvery { repository.fetch_attachment_metas_for_messages(any()) } returns
+            Result.success(emptyMap())
+        coEvery { repository.fetch_attachments_for_message(any()) } returns
+            Result.success(emptyList())
         identity_pins = mockk(relaxed = true)
         every { identity_pins.unacknowledged_changes } returns
             kotlinx.coroutines.flow.MutableStateFlow(emptyList())
@@ -534,6 +544,98 @@ class MailViewModelTest {
         assertEquals(2, failures)
         assertEquals(total, state.items.size)
         assertFalse(state.has_more)
+    }
+
+    @Test
+    fun `a cancelled load_more page is not counted as a load failure`() = runTest {
+        val page1 = fake_inbox_page(3, has_more = true, next_cursor = "c1")
+        coEvery { repository.fetch_inbox(any(), cursor = isNull(), any(), any()) } returns
+            Result.success(page1)
+
+        vm.load_inbox()
+        advanceUntilIdle()
+        assertEquals(3, vm.inbox_state.value.items.size)
+
+        coEvery { repository.fetch_inbox(any(), cursor = eq("c1"), any(), any()) } returns
+            Result.failure(kotlinx.coroutines.CancellationException("scope closed"))
+
+        repeat(3) {
+            vm.load_more()
+            advanceUntilIdle()
+        }
+
+        val next_page = InboxPage(
+            items = listOf(
+                InboxItem(
+                    id = "id_9", thread_token = "t9", thread_message_count = 1,
+                    sender_name = "S9", sender_email = "s9@x.com",
+                    subject = "Sub9", preview = "P9", timestamp = "2026-04-26T10:09:00Z",
+                    is_read = false, is_starred = false, is_encrypted = true,
+                    has_attachments = false, is_trashed = false, is_archived = false,
+                    is_spam = false, labels = emptyList(), raw_item = mockk(relaxed = true),
+                ),
+            ),
+            has_more = false,
+            next_cursor = null,
+            total = 4,
+        )
+        coEvery { repository.fetch_inbox(any(), cursor = eq("c1"), any(), any()) } returns
+            Result.success(next_page)
+
+        vm.load_more()
+        advanceUntilIdle()
+
+        val state = vm.inbox_state.value
+        assertEquals(4, state.items.size)
+        assertEquals("id_9", state.items.last().id)
+        assertFalse(state.is_loading_more)
+    }
+
+    @Test
+    fun `load_more retries again once the failure cooldown has passed`() = runTest {
+        val page1 = fake_inbox_page(3, has_more = true, next_cursor = "c1")
+        coEvery { repository.fetch_inbox(any(), cursor = isNull(), any(), any()) } returns
+            Result.success(page1)
+
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        coEvery { repository.fetch_inbox(any(), cursor = eq("c1"), any(), any()) } returns
+            Result.failure(RuntimeException("offline"))
+
+        repeat(3) {
+            vm.load_more()
+            advanceUntilIdle()
+        }
+        assertEquals(3, vm.inbox_state.value.items.size)
+
+        val next_page = InboxPage(
+            items = listOf(
+                InboxItem(
+                    id = "id_9", thread_token = "t9", thread_message_count = 1,
+                    sender_name = "S9", sender_email = "s9@x.com",
+                    subject = "Sub9", preview = "P9", timestamp = "2026-04-26T10:09:00Z",
+                    is_read = false, is_starred = false, is_encrypted = true,
+                    has_attachments = false, is_trashed = false, is_archived = false,
+                    is_spam = false, labels = emptyList(), raw_item = mockk(relaxed = true),
+                ),
+            ),
+            has_more = false,
+            next_cursor = null,
+            total = 4,
+        )
+        coEvery { repository.fetch_inbox(any(), cursor = eq("c1"), any(), any()) } returns
+            Result.success(next_page)
+
+        vm.load_more()
+        advanceUntilIdle()
+        assertEquals(3, vm.inbox_state.value.items.size)
+
+        vm.load_more_clock_ms = { System.currentTimeMillis() + 10_000_000L }
+        vm.load_more()
+        advanceUntilIdle()
+
+        assertEquals(4, vm.inbox_state.value.items.size)
     }
 
     @Test
@@ -1167,7 +1269,7 @@ class MailViewModelTest {
 
         val state = vm.thread_state.value
         assertFalse(state.is_loading)
-        assertEquals("not found", state.error)
+        assertEquals("Something went wrong", state.error)
         assertTrue(state.messages.isEmpty())
     }
 
@@ -1236,6 +1338,88 @@ class MailViewModelTest {
         val state = vm.thread_state.value
         assertEquals("thread api down", state.error)
         assertEquals(1, state.messages.size)
+    }
+
+    private fun thread_message(id: String, has_attachments: Boolean) = ThreadMessageDecrypted(
+        id = id,
+        sender_name = "Alice",
+        sender_email = "alice@example.com",
+        to_label = "me",
+        timestamp = "2026-04-26T10:00:00Z",
+        body_text = "Hello",
+        body_html = "<p>Hello</p>",
+        is_encrypted = true,
+        is_read = true,
+        raw_item = mockk(relaxed = true),
+        has_attachments = has_attachments,
+    )
+
+    private suspend fun load_thread_with_attachment_failure(): MailViewModel {
+        val inbox_item = fake_inbox_page(1).items[0].copy(has_attachments = true)
+        coEvery { repository.fetch_single_message("id_1") } returns Result.success(inbox_item)
+        coEvery { repository.fetch_thread("thread_1") } returns
+            Result.success(listOf(thread_message("msg_1", true)))
+        coEvery { repository.fetch_attachment_metas_for_messages(any()) } returns
+            Result.failure(RuntimeException("meta api down"))
+        vm.load_thread("id_1")
+        return vm
+    }
+
+    @Test
+    fun `attachment meta failure marks the thread as failed instead of showing none`() = runTest {
+        load_thread_with_attachment_failure()
+        advanceUntilIdle()
+
+        val state = vm.thread_state.value
+        assertTrue(state.attachments_failed)
+        assertTrue(state.attachments.isEmpty())
+    }
+
+    @Test
+    fun `retry_thread_attachments clears the failure and loads the attachments`() = runTest {
+        load_thread_with_attachment_failure()
+        advanceUntilIdle()
+        assertTrue(vm.thread_state.value.attachments_failed)
+
+        val attachment = MessageAttachment(
+            id = "att_1",
+            filename = "report.pdf",
+            content_type = "application/pdf",
+            size_bytes = 10,
+            mail_item_id = "msg_1",
+            seq_num = 0,
+        )
+        coEvery { repository.fetch_attachment_metas_for_messages(any()) } returns
+            Result.success(mapOf("msg_1" to listOf(attachment)))
+
+        vm.retry_thread_attachments()
+        advanceUntilIdle()
+
+        val state = vm.thread_state.value
+        assertFalse(state.attachments_failed)
+        assertEquals(listOf("report.pdf"), state.attachments["msg_1"]?.map { it.filename })
+    }
+
+    @Test
+    fun `download_attachment surfaces the repository failure to the caller`() = runTest {
+        val attachment = MessageAttachment(
+            id = "att_1",
+            filename = "report.pdf",
+            content_type = "application/pdf",
+            size_bytes = 10,
+            mail_item_id = "msg_1",
+            seq_num = 0,
+        )
+        val cause = AttachmentKeyUnavailableException()
+        coEvery { repository.download_attachment("att_1") } returns Result.failure(cause)
+
+        var seen: Result<Pair<MessageAttachment, ByteArray>>? = null
+        vm.download_attachment(attachment) { seen = it }
+        advanceUntilIdle()
+
+        assertNotNull(seen)
+        assertTrue(seen!!.isFailure)
+        assertTrue(seen!!.exceptionOrNull() is AttachmentKeyUnavailableException)
     }
 
     @Test
@@ -1578,9 +1762,26 @@ class MailViewModelTest {
         coVerify {
             search_index_manager.reconcile_inbox_window(
                 setOf("id_1", "id_2", "id_3"),
+                any(),
                 "2026-04-26T10:01:00Z",
             )
         }
+    }
+
+    @Test
+    fun `newest first still reconciles the cache window`() = runTest {
+        val page = fake_inbox_page(3)
+        val reconciled = mutableListOf<String>()
+
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+        coEvery {
+            search_index_manager.reconcile_inbox_window(any(), any(), capture(reconciled))
+        } returns Unit
+
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        assertEquals(listOf("2026-04-26T10:01:00Z"), reconciled)
     }
 
     @Test

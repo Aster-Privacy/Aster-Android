@@ -24,6 +24,7 @@ package org.astermail.android.mail.ratchet
 import android.util.Base64
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -111,6 +112,7 @@ class RatchetDecryptorTest {
         ratchet_api: RatchetApi,
         syncer: RatchetStateSyncer,
         auth_repo: AuthRepository,
+        plaintext_cache: RatchetPlaintextCache = mockk(relaxed = true),
     ): RatchetDecryptor = RatchetDecryptor(
         state_store,
         session_key_store,
@@ -119,6 +121,7 @@ class RatchetDecryptorTest {
         ConversationLocks(),
         dagger.Lazy { auth_repo },
         mockk(relaxed = true),
+        plaintext_cache,
     )
 
     private data class ReceiverKeys(
@@ -477,5 +480,68 @@ class RatchetDecryptorTest {
             nonce = sealed.nonce,
             rid = sealed.rid,
         )
+    }
+
+    @Test
+    fun `plaintext is cached before the advanced ratchet state is persisted`() = runTest {
+        val fixture = build_fixture()
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "hello kchaos")
+        val body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc0))
+
+        val state_store = mockk<RatchetStateStore>(relaxed = true)
+        coEvery { state_store.load(any()) } returns null
+        val syncer = mockk<RatchetStateSyncer>(relaxed = true)
+        coEvery { syncer.fetch_from_server(any()) } returns null
+        coEvery { syncer.sync(any(), any()) } returns true
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+
+        val session_key_store = SessionKeyStore(null)
+        seed_session_key_store(session_key_store, fixture.receiver_keys)
+
+        val decryptor = new_decryptor(
+            state_store,
+            session_key_store,
+            mockk(relaxed = true),
+            syncer,
+            mockk(relaxed = true),
+            plaintext_cache,
+        )
+        val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_1")
+
+        assertEquals("hello kchaos", result)
+        coVerifyOrder {
+            plaintext_cache.put("msg_1", "hello kchaos")
+            state_store.save(any())
+            syncer.sync(any(), any())
+        }
+    }
+
+    @Test
+    fun `plaintext survives a failure while persisting the advanced ratchet state`() = runTest {
+        val fixture = build_fixture()
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "durable body")
+        val body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc0))
+
+        val state_store = mockk<RatchetStateStore>(relaxed = true)
+        coEvery { state_store.load(any()) } returns null
+        coEvery { state_store.save(any()) } throws RuntimeException("process died")
+        val syncer = mockk<RatchetStateSyncer>(relaxed = true)
+        coEvery { syncer.fetch_from_server(any()) } returns null
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+
+        val session_key_store = SessionKeyStore(null)
+        seed_session_key_store(session_key_store, fixture.receiver_keys)
+
+        val decryptor = new_decryptor(
+            state_store,
+            session_key_store,
+            mockk(relaxed = true),
+            syncer,
+            mockk(relaxed = true),
+            plaintext_cache,
+        )
+        decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_2")
+
+        coVerify(exactly = 1) { plaintext_cache.put("msg_2", "durable body") }
     }
 }

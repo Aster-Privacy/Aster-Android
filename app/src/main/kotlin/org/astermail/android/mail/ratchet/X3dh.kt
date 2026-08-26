@@ -209,7 +209,7 @@ object X3dh {
     }
 
     fun derive_conversation_id(email_a: String, email_b: String): String {
-        val sorted = listOf(email_a.lowercase(), email_b.lowercase()).sorted()
+        val sorted = listOf(email_a.lowercase(java.util.Locale.ROOT), email_b.lowercase(java.util.Locale.ROOT)).sorted()
         val input = sorted.joinToString(":").toByteArray(Charsets.UTF_8)
         return RatchetCrypto.b64_encode(RatchetCrypto.sha256(input))
     }

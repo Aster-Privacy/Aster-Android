@@ -113,7 +113,7 @@ class RatchetEncryptor @Inject constructor(
             } catch (e: Throwable) {
                 throw RatchetEncryptionException(recipient_email, "ratchet encryption failed for recipient", e)
             } ?: throw RatchetEncryptionException(recipient_email, "no prekey bundle available for recipient")
-            per_recipient[recipient_email.lowercase()] = data
+            per_recipient[recipient_email.lowercase(java.util.Locale.ROOT)] = data
         }
 
         if (!allow_non_post_quantum) {
@@ -167,7 +167,7 @@ class RatchetEncryptor @Inject constructor(
             signed_prekey_b64 = bundle.signed_prekey,
         )
         if (result == PrekeyBindingResult.INVALID) {
-            verifying_key_cache.remove(recipient_email.lowercase())
+            verifying_key_cache.remove(recipient_email.lowercase(java.util.Locale.ROOT))
             throw RatchetEncryptionException(
                 recipient_email,
                 "recipient prekey signature did not verify",
@@ -179,7 +179,7 @@ class RatchetEncryptor @Inject constructor(
     }
 
     private suspend fun fetch_verifying_key(username: String, recipient_email: String): String? {
-        val cache_key = recipient_email.lowercase()
+        val cache_key = recipient_email.lowercase(java.util.Locale.ROOT)
         verifying_key_cache[cache_key]?.let { return it }
         repeat(2) {
             val key = runCatching {

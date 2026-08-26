@@ -172,6 +172,25 @@ class SettingsModelsTest {
     }
 
     @Test
+    fun `ChangePasswordResponse parses rotated refresh token`() {
+        val response = Json { ignoreUnknownKeys = true }.decodeFromString(
+            ChangePasswordResponse.serializer(),
+            """{"success":true,"message":"ok","csrf_token":"c","access_token":"a","refresh_token":"r"}""",
+        )
+        assertEquals("a", response.access_token)
+        assertEquals("r", response.refresh_token)
+    }
+
+    @Test
+    fun `ChangePasswordResponse refresh token absent stays null`() {
+        val response = Json { ignoreUnknownKeys = true }.decodeFromString(
+            ChangePasswordResponse.serializer(),
+            """{"success":true,"access_token":"a"}""",
+        )
+        assertNull(response.refresh_token)
+    }
+
+    @Test
     fun `UpdateProfileColorRequest stores color`() {
         val request = UpdateProfileColorRequest(profile_color = "#FF5733")
         assertEquals("#FF5733", request.profile_color)

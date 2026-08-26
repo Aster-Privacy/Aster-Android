@@ -32,7 +32,7 @@ object DoubleRatchet {
     private val kdf_info_chain = "Aster Mail_Chain_KDF".toByteArray(Charsets.UTF_8)
     private const val max_skip = 1000
     private const val max_total_skipped = 2000
-    private const val skipped_key_ttl_ms = 7L * 24 * 60 * 60 * 1000
+    private const val skipped_key_ttl_ms = 30L * 24 * 60 * 60 * 1000
 
     fun serialize_header_for_ad(header: MessageHeader): ByteArray {
         val dh_public = RatchetCrypto.b64_decode(header.dh_public)

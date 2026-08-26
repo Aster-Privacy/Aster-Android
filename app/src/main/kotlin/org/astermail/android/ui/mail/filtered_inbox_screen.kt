@@ -60,6 +60,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
@@ -133,8 +134,9 @@ fun FilteredInboxScreen(
         }
     }
 
+    val email_label_context = androidx.compose.ui.platform.LocalContext.current
     val filtered_emails = remember(inbox_state.items, filter_type, filter_value, settings_state.tags) {
-        inbox_state.items.map { inbox_item_to_email(it, settings_state.tags) }
+        inbox_state.items.map { inbox_item_to_email(it, settings_state.tags, context = email_label_context) }
     }
     val grouping_enabled = settings_state.preferences?.conversation_grouping != false
     val threads = remember(filtered_emails, grouping_enabled) {
@@ -180,6 +182,10 @@ fun FilteredInboxScreen(
                     modifier = Modifier.padding(top = inbox_group_split),
                     list_density = settings_state.preferences?.mail_list_density,
                 )
+            } else if (threads.isEmpty() && inbox_state.error != null) {
+                inbox_error_state(inbox_state.error.orEmpty()) {
+                    mail_vm.load_inbox(requested_folder, force = true)
+                }
             } else if (threads.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -211,7 +217,16 @@ fun FilteredInboxScreen(
                                     thread = thread,
                                     on_click = { on_open_email(thread_open_target_id(thread)) },
                                     on_long_click = { on_open_email(thread_open_target_id(thread)) },
-                                    on_toggle_star = { mail_vm.toggle_star(thread.newest.id) },
+                                    on_toggle_star = {
+                                        val star_target = !thread.is_starred
+                                        val star_ids = filtered_emails
+                                            .filter { it.thread_id == thread.thread_id || it.id == thread.thread_id }
+                                            .map { it.id }
+                                        mail_vm.toggle_thread_star(
+                                            star_ids.ifEmpty { listOf(thread.newest.id) },
+                                            star_target,
+                                        )
+                                    },
                                     is_pinned = thread.is_pinned,
                                     is_first = row_index == 0,
                                     is_last = row_index == threads.lastIndex,
@@ -237,7 +252,7 @@ private fun subtitle_for(filter_type: FilterType, count: Int): String {
         FilterType.label -> stringResource(R.string.type_label)
         FilterType.alias -> stringResource(R.string.type_alias)
     }
-    return stringResource(R.string.messages_in_type, count, type_label)
+    return pluralStringResource(R.plurals.messages_in_type, count, count, type_label)
 }
 
 
@@ -257,8 +272,9 @@ private fun filtered_top_bar(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AsterIconButton(
-                icon = TablerIcons.Menu2,
-                content_description = stringResource(R.string.open_drawer),
+                icon = TablerIcons.ArrowLeft,
+                auto_mirror = true,
+                content_description = stringResource(R.string.back),
                 onClick = on_open_drawer,
             )
             Spacer(Modifier.width(AsterSpacing.xs))

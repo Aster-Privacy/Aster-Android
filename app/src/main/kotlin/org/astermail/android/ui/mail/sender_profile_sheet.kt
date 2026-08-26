@@ -201,8 +201,15 @@ fun sender_profile_sheet(
                     colors.text_primary,
                     TablerIcons.UserMinus,
                 ) {
-                    contacts_vm.delete_contact(existing_contact.id)
-                    on_result(context.getString(R.string.contact_removed_named, normalized))
+                    contacts_vm.delete_contact(existing_contact.id) { removed ->
+                        on_result(
+                            if (removed) {
+                                context.getString(R.string.contact_removed_named, normalized)
+                            } else {
+                                context.getString(R.string.contact_remove_failed, normalized)
+                            },
+                        )
+                    }
                     on_close()
                 }
             } else {
@@ -217,8 +224,15 @@ fun sender_profile_sheet(
                             name = sender_name.ifBlank { normalized.substringBefore('@') },
                             email = normalized,
                         ),
-                    )
-                    on_result(context.getString(R.string.contact_added_named, normalized))
+                    ) { saved ->
+                        on_result(
+                            if (saved) {
+                                context.getString(R.string.contact_added_named, normalized)
+                            } else {
+                                context.getString(R.string.contact_add_failed, normalized)
+                            },
+                        )
+                    }
                     on_close()
                 }
             }

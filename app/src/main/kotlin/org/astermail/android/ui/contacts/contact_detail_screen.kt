@@ -26,6 +26,7 @@ import compose.icons.tablericons.*
 
 import android.content.ClipData
 import android.content.Intent
+import android.widget.Toast
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -109,9 +110,32 @@ fun ContactDetailScreen(
         }
     }
 
+    var delete_requested by remember { mutableStateOf(false) }
+    var show_delete_confirm by remember { mutableStateOf(false) }
+    var favorite_pending by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) { vm.load_contacts() }
     val contact = ui_state.selected_contact ?: ui_state.contacts.firstOrNull { it.id == contact_id }
     var is_favorite by remember(contact) { mutableStateOf(contact?.is_favorite == true) }
+
+    LaunchedEffect(ui_state.error) {
+        val message = ui_state.error ?: return@LaunchedEffect
+        if (!delete_requested && !favorite_pending) return@LaunchedEffect
+        if (favorite_pending) {
+            favorite_pending = false
+            is_favorite = contact?.is_favorite == true
+        }
+        delete_requested = false
+        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+        vm.clear_flags()
+    }
+
+    LaunchedEffect(ui_state.save_success) {
+        if (ui_state.save_success && favorite_pending) {
+            favorite_pending = false
+            vm.clear_flags()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -128,6 +152,7 @@ fun ContactDetailScreen(
         ) {
             AsterIconButton(
                 icon = TablerIcons.ArrowLeft,
+                auto_mirror = true,
                 content_description = stringResource(R.string.back),
                 onClick = on_back,
                 modifier = Modifier.testTag("back"),
@@ -136,11 +161,12 @@ fun ContactDetailScreen(
             AsterIconButton(
                 icon = if (is_favorite) TablerIcons.Star else TablerIcons.Star,
                 content_description = if (is_favorite) stringResource(R.string.unfavorite) else stringResource(R.string.favorite),
+                enabled = contact != null && !favorite_pending,
                 onClick = {
+                    val target = contact ?: return@AsterIconButton
                     is_favorite = !is_favorite
-                    contact?.let { c ->
-                        vm.save_contact(c.copy(is_favorite = is_favorite), c.id)
-                    }
+                    favorite_pending = true
+                    vm.save_contact(target.copy(is_favorite = is_favorite), target.id)
                 },
                 tint = if (is_favorite) colors.warning else Color.Unspecified,
             )
@@ -154,7 +180,7 @@ fun ContactDetailScreen(
 
         if (contact == null) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                if (ui_state.is_loading || ui_state.contacts.isEmpty()) {
+                if (ui_state.is_loading) {
                     androidx.compose.material3.CircularProgressIndicator(
                         color = colors.accent_blue,
                         modifier = Modifier.size(28.dp),
@@ -222,7 +248,16 @@ fun ContactDetailScreen(
                     val phone = contact.phone.ifBlank { contact.work_phone }
                     if (phone.isNotBlank()) {
                         val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${phone}"))
-                        context.startActivity(intent)
+
+                        try {
+                            context.startActivity(intent)
+                        } catch (_: Throwable) {
+                            android.widget.Toast.makeText(
+                                context,
+                                context.getString(R.string.could_not_open_link),
+                                android.widget.Toast.LENGTH_SHORT,
+                            ).show()
+                        }
                     }
                 }
                 QuickAction(TablerIcons.Copy, stringResource(R.string.copy), Modifier.weight(1f)) {
@@ -305,7 +340,15 @@ fun ContactDetailScreen(
                 fun open_contact_url(url: String) {
                     val uri = Uri.parse(url)
                     if (uri.scheme?.lowercase() !in setOf("http", "https")) return
-                    runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, uri)) }
+                    try {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+                    } catch (_: Throwable) {
+                        android.widget.Toast.makeText(
+                            context,
+                            context.getString(R.string.could_not_open_link),
+                            android.widget.Toast.LENGTH_SHORT,
+                        ).show()
+                    }
                 }
                 DetailCard(title = stringResource(R.string.social)) {
                     if (contact.website.isNotBlank()) {
@@ -354,7 +397,26 @@ fun ContactDetailScreen(
             Box(modifier = Modifier.padding(horizontal = AsterSpacing.lg)) {
                 AsterDestructiveButton(
                     label = stringResource(R.string.delete_contact),
-                    onClick = { vm.delete_contact(contact_id) },
+                    onClick = { show_delete_confirm = true },
+                    enabled = !ui_state.is_loading,
+                )
+            }
+            if (show_delete_confirm) {
+                org.astermail.android.design.components.AsterAlertDialog(
+                    on_dismiss = { show_delete_confirm = false },
+                    title = stringResource(R.string.delete_contact),
+                    message = stringResource(
+                        R.string.alias_delete_confirm_message,
+                        contact.name.takeIf { it.isNotBlank() } ?: contact.email,
+                    ),
+                    confirm_label = stringResource(R.string.delete),
+                    cancel_label = stringResource(R.string.cancel),
+                    confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
+                    on_confirm = {
+                        show_delete_confirm = false
+                        delete_requested = true
+                        vm.delete_contact(contact_id)
+                    },
                 )
             }
         }

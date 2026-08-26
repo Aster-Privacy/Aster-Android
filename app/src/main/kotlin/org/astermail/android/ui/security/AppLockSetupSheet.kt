@@ -64,6 +64,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -86,6 +87,7 @@ import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.security.AppLockStore
 import kotlin.math.roundToInt
+import org.astermail.android.design.mirror_in_rtl
 
 private enum class SetupStep {
     choose_mode, choose_digits, set_pin, confirm_pin, set_text, confirm_text,
@@ -230,7 +232,7 @@ fun AppLockSetupSheet(
                             imageVector = TablerIcons.ArrowLeft,
                             contentDescription = null,
                             tint = colors.text_primary,
-                            modifier = Modifier.size(18.dp),
+                            modifier = Modifier.size(18.dp).mirror_in_rtl(),
                         )
                     }
                     Spacer(Modifier.width(AsterSpacing.sm))
@@ -448,7 +450,7 @@ fun AppLockVerifySheet(
             )
             if (locked_out) {
                 Text(
-                    text = stringResource(R.string.app_lock_try_again_in, lockout_secs),
+                    text = pluralStringResource(R.plurals.app_lock_try_again_in, lockout_secs.toInt(), lockout_secs),
                     color = colors.danger,
                     fontSize = 13.sp,
                 )

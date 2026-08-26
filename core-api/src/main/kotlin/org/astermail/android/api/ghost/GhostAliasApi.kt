@@ -54,8 +54,6 @@ data class GhostAlias(
     val address: String get() = decrypted_address.ifBlank {
         if (domain.isNotBlank()) "ghost@$domain" else id.take(12)
     }
-    val note: String get() = ""
-    val forward_count: Int get() = 0
     val enabled: Boolean get() = is_enabled
 }
 

@@ -29,6 +29,8 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
+import org.astermail.android.util.clip_units
 
 data class Email(
     val id: String,
@@ -195,7 +197,7 @@ data class ThreadMessage(
     val is_encrypted: Boolean = true,
     val trackers_blocked: Int = 0,
     val is_read: Boolean = true,
-    val preview: String = body.take(80),
+    val preview: String = body.clip_units(80),
     val attachments: List<MessageAttachment> = emptyList(),
     val raw_headers: List<Pair<String, String>> = emptyList(),
     val is_undecryptable: Boolean = false,
@@ -1132,10 +1134,13 @@ fun inbox_item_to_email(
     item: org.astermail.android.mail.InboxItem,
     tags: List<org.astermail.android.api.tags.TagItem> = emptyList(),
     folder_chip: list_folder_chip? = null,
+    context: android.content.Context? = null,
 ): Email {
     val ts = parse_iso_timestamp(item.timestamp)
+    val unknown_sender_label = context?.getString(org.astermail.android.R.string.unknown) ?: "Unknown"
+    val no_subject_label = context?.getString(org.astermail.android.R.string.no_subject) ?: "(no subject)"
     val display_name = item.sender_name.ifBlank {
-        item.sender_email.substringBefore('@').ifBlank { "Unknown" }
+        item.sender_email.substringBefore('@').ifBlank { unknown_sender_label }
     }
     val matched_tags = tags.filter { it.tag_token in item.tag_tokens }
     return Email(
@@ -1144,7 +1149,7 @@ fun inbox_item_to_email(
         thread_message_count = item.thread_message_count.coerceAtLeast(1),
         sender_name = display_name,
         sender_email = item.sender_email,
-        subject = item.subject.ifBlank { "(no subject)" },
+        subject = item.subject.ifBlank { no_subject_label },
         preview = strip_html_simple(item.preview).ifBlank { item.subject.ifBlank { "" } },
         received_at = ts,
         is_read = item.is_read,
@@ -1239,39 +1244,161 @@ private fun strip_html_simple(text: String): String {
     return t.trim()
 }
 
-private val time_of_day_format: ThreadLocal<SimpleDateFormat> =
-    ThreadLocal.withInitial { SimpleDateFormat("h:mm a", Locale.getDefault()) }
-private val weekday_format: ThreadLocal<SimpleDateFormat> =
-    ThreadLocal.withInitial { SimpleDateFormat("EEE", Locale.getDefault()) }
-private val short_date_format: ThreadLocal<SimpleDateFormat> =
-    ThreadLocal.withInitial { SimpleDateFormat("MMM d", Locale.getDefault()) }
-private val long_date_format: ThreadLocal<SimpleDateFormat> =
-    ThreadLocal.withInitial { SimpleDateFormat("MMM d, yyyy", Locale.getDefault()) }
-private val full_datetime_format: ThreadLocal<SimpleDateFormat> =
-    ThreadLocal.withInitial { SimpleDateFormat("MMM d, yyyy h:mm a", Locale.getDefault()) }
+object AsterTimePreferences {
+    @Volatile
+    var use_24h: Boolean = false
+        private set
+
+    @Volatile
+    var generation: Int = 0
+        private set
+
+    @Volatile
+    var time_zone: TimeZone? = null
+        private set
+
+    @Volatile
+    private var device_use_24h: Boolean = false
+
+    @Volatile
+    private var account_time_format: String? = null
+
+    @Synchronized
+    fun set_use_24h(value: Boolean) {
+        device_use_24h = value
+        apply_resolved_use_24h()
+    }
+
+    @Synchronized
+    fun set_account_time_format(value: String?) {
+        val normalized = when (value) {
+            "12h", "24h" -> value
+            else -> null
+        }
+        if (normalized == account_time_format) return
+        account_time_format = normalized
+        apply_resolved_use_24h()
+    }
+
+    @Synchronized
+    fun set_account_time_zone(value: String?) {
+        val resolved = resolve_time_zone(value)
+        if (resolved?.id == time_zone?.id) return
+        time_zone = resolved
+        generation += 1
+    }
+
+    fun account_calendar(): Calendar {
+        return time_zone?.let { Calendar.getInstance(it) } ?: Calendar.getInstance()
+    }
+
+    fun account_zone_id(): java.time.ZoneId {
+        return time_zone?.toZoneId() ?: java.time.ZoneId.systemDefault()
+    }
+
+    private fun resolve_time_zone(value: String?): TimeZone? {
+        val trimmed = value?.trim().orEmpty()
+        if (trimmed.isEmpty() || trimmed == "auto") return null
+        if (!TimeZone.getAvailableIDs().contains(trimmed)) return null
+        return TimeZone.getTimeZone(trimmed)
+    }
+
+    private fun apply_resolved_use_24h() {
+        val resolved = when (account_time_format) {
+            "24h" -> true
+            "12h" -> false
+            else -> device_use_24h
+        }
+        if (resolved == use_24h) return
+        use_24h = resolved
+        generation += 1
+    }
+}
+
+private class cached_date_format(
+    val generation: Int,
+    val locale: Locale,
+    val format: SimpleDateFormat,
+)
+
+private val time_of_day_holder = ThreadLocal<cached_date_format>()
+private val weekday_holder = ThreadLocal<cached_date_format>()
+private val short_date_holder = ThreadLocal<cached_date_format>()
+private val long_date_holder = ThreadLocal<cached_date_format>()
+private val full_datetime_holder = ThreadLocal<cached_date_format>()
+
+private fun localized_format(
+    holder: ThreadLocal<cached_date_format>,
+    skeleton_12h: String,
+    skeleton_24h: String,
+): SimpleDateFormat {
+    val locale = Locale.getDefault()
+    val generation = AsterTimePreferences.generation
+    val cached = holder.get()
+    if (cached != null && cached.generation == generation && cached.locale == locale) {
+        return cached.format
+    }
+    val skeleton = if (AsterTimePreferences.use_24h) skeleton_24h else skeleton_12h
+    val pattern = android.text.format.DateFormat.getBestDateTimePattern(locale, skeleton)
+    val format = SimpleDateFormat(pattern, locale)
+    AsterTimePreferences.time_zone?.let { format.timeZone = it }
+    holder.set(cached_date_format(generation, locale, format))
+    return format
+}
+
+private fun time_of_day_format() = localized_format(time_of_day_holder, "hm", "Hm")
+
+private fun weekday_format() = localized_format(weekday_holder, "EEE", "EEE")
+
+private fun short_date_format() = localized_format(short_date_holder, "MMMd", "MMMd")
+
+private fun long_date_format() = localized_format(long_date_holder, "yMMMd", "yMMMd")
+
+private fun full_datetime_format() =
+    localized_format(full_datetime_holder, "yMMMdhm", "yMMMdHm")
+
+private fun start_of_day_millis(source: Calendar): Long {
+    val start = source.clone() as Calendar
+    start.set(Calendar.HOUR_OF_DAY, 0)
+    start.set(Calendar.MINUTE, 0)
+    start.set(Calendar.SECOND, 0)
+    start.set(Calendar.MILLISECOND, 0)
+    return start.timeInMillis
+}
+
+private fun calendar_days_between(from: Calendar, to: Calendar): Int {
+    val span = start_of_day_millis(to) - start_of_day_millis(from)
+    return Math.round(span / 86_400_000.0).toInt()
+}
 
 fun Long.format_relative_time(yesterday_label: String = "Yesterday"): String {
-    val now = Calendar.getInstance()
-    val then = Calendar.getInstance().apply { timeInMillis = this@format_relative_time }
+    val now = AsterTimePreferences.account_calendar()
+    val then = AsterTimePreferences.account_calendar()
+        .apply { timeInMillis = this@format_relative_time }
     val same_year = now.get(Calendar.YEAR) == then.get(Calendar.YEAR)
     val same_day = same_year && now.get(Calendar.DAY_OF_YEAR) == then.get(Calendar.DAY_OF_YEAR)
     if (same_day) {
-        return time_of_day_format.get()!!.format(Date(this))
+        return time_of_day_format().format(Date(this))
     }
-    val yesterday = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -1) }
+    val yesterday = AsterTimePreferences.account_calendar()
+        .apply { add(Calendar.DAY_OF_YEAR, -1) }
     val is_yesterday = yesterday.get(Calendar.YEAR) == then.get(Calendar.YEAR) &&
         yesterday.get(Calendar.DAY_OF_YEAR) == then.get(Calendar.DAY_OF_YEAR)
     if (is_yesterday) return yesterday_label
-    val diff_days = ((now.timeInMillis - this) / (1000L * 60 * 60 * 24)).toInt()
+    val diff_days = calendar_days_between(then, now)
     if (diff_days in 2..6) {
-        return weekday_format.get()!!.format(Date(this))
+        return weekday_format().format(Date(this))
     }
-    val formatter = if (same_year) short_date_format else long_date_format
-    return formatter.get()!!.format(Date(this))
+    val formatter = if (same_year) short_date_format() else long_date_format()
+    return formatter.format(Date(this))
 }
 
 fun Long.format_full_datetime(): String {
-    return full_datetime_format.get()!!.format(Date(this))
+    return full_datetime_format().format(Date(this))
+}
+
+fun Long.format_long_date(): String {
+    return long_date_format().format(Date(this))
 }
 
 private fun html_to_plain_text(html: String): String {

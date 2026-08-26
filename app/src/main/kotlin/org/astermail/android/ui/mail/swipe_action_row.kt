@@ -37,6 +37,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -66,7 +67,7 @@ const val swipe_dominance_ratio = 2f
 const val swipe_commit_fraction = 0.4f
 
 fun is_removing_swipe_action(action: String): Boolean = action in setOf(
-    "archive", "trash", "spam", "move_to_inbox", "unarchive",
+    "archive", "trash", "delete", "spam", "move_to_inbox", "unarchive",
     "restore_trash", "unmark_spam", "delete_permanent",
 )
 
@@ -87,6 +88,7 @@ fun swipe_action_row(
     background_padding: PaddingValues = PaddingValues(0.dp),
     haptic_enabled: Boolean = true,
     list_scrolling: () -> Boolean = { false },
+    reset_token: Int = 0,
     content: @Composable () -> Unit,
 ) {
     val haptics = LocalHapticFeedback.current
@@ -94,6 +96,12 @@ fun swipe_action_row(
     val offset_x = remember { Animatable(0f) }
     val start_enabled = start_action != "none"
     val end_enabled = end_action != "none"
+
+    LaunchedEffect(reset_token) {
+        if (reset_token == 0) return@LaunchedEffect
+        is_dismissed = false
+        offset_x.animateTo(0f, tween(220))
+    }
 
     Box(
         modifier = modifier

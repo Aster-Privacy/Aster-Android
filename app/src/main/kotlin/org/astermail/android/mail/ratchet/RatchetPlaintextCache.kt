@@ -69,20 +69,48 @@ class RatchetPlaintextCache @Inject constructor(
             val nonce = RatchetCrypto.random_bytes(12)
             val ciphertext = RatchetCrypto.aes_gcm_encrypt(plaintext.toByteArray(Charsets.UTF_8), key, nonce, null)
             val encoded = RatchetCrypto.b64_encode(nonce) + ":" + RatchetCrypto.b64_encode(ciphertext)
-            mutex.withLock { prefs.edit().putString(key_for(message_id), encoded).apply() }
+            mutex.withLock { store_bounded(message_id, encoded) }
         } catch (_: Throwable) {
         } finally {
             key.fill(0)
         }
     }
 
+    private fun store_bounded(message_id: String, encoded: String) {
+        val retained = current_index().filter { it != message_id }.toMutableList()
+        retained.add(message_id)
+        val overflow = retained.size - max_entries
+        val evicted = if (overflow > 0) retained.subList(0, overflow).toList() else emptyList()
+        if (overflow > 0) repeat(overflow) { retained.removeAt(0) }
+
+        val editor = prefs.edit()
+        evicted.forEach { editor.remove(key_for(it)) }
+        editor.putString(key_for(message_id), encoded)
+        editor.putString(index_key, retained.joinToString(index_separator))
+        editor.commit()
+    }
+
+    private fun current_index(): List<String> {
+        val stored = prefs.getString(index_key, null)
+        if (stored != null) {
+            return stored.split(index_separator).filter { it.isNotEmpty() }
+        }
+        return prefs.all.keys
+            .filter { it.startsWith(entry_prefix) }
+            .map { it.removePrefix(entry_prefix) }
+    }
+
     fun clear() {
         prefs.edit().clear().commit()
     }
 
-    private fun key_for(message_id: String): String = "ratchet_plaintext_$message_id"
+    private fun key_for(message_id: String): String = entry_prefix + message_id
 
     companion object {
         private const val prefs_name = "aster_ratchet_plaintext_v1"
+        private const val entry_prefix = "ratchet_plaintext_"
+        private const val index_key = "aster_plaintext_index_v1"
+        private const val index_separator = "\u001F"
+        internal const val max_entries = 2000
     }
 }

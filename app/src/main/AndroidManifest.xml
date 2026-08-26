@@ -28,6 +28,7 @@
 
         <activity
             android:name=".MainActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|uiMode|density|fontScale"
             android:exported="true"
             android:launchMode="singleTop"
             android:taskAffinity=""
@@ -81,6 +82,7 @@
 
         <activity
             android:name=".ComposeActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|uiMode|density|fontScale"
             android:exported="false"
             android:documentLaunchMode="intoExisting"
             android:autoRemoveFromRecents="true"

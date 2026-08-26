@@ -136,6 +136,7 @@ fun pending_send_preview_screen(
         ) {
             AsterIconButton(
                 icon = TablerIcons.ArrowLeft,
+                auto_mirror = true,
                 content_description = stringResource(R.string.back),
                 onClick = on_back,
                 modifier = Modifier.align(Alignment.CenterStart),

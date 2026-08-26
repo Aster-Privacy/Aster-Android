@@ -42,7 +42,7 @@ private val ASTER_DOMAINS = setOf("astermail.org", "aster.cx")
 
 private const val PROFILE_RESOLVE_TTL_MS = 30L * 60L * 1000L
 
-fun is_aster_domain(domain: String): Boolean = ASTER_DOMAINS.contains(domain.lowercase())
+fun is_aster_domain(domain: String): Boolean = ASTER_DOMAINS.contains(domain.lowercase(java.util.Locale.ROOT))
 
 object AsterProfileResolverHolder {
     @Volatile var shared: AsterProfileResolver? = null
@@ -72,7 +72,7 @@ class AsterProfileResolver @Inject constructor(
     }
 
     fun prime(email: String, display_name: String?, profile_picture: String?, profile_color: String? = null) {
-        val lower = email.trim().lowercase()
+        val lower = email.trim().lowercase(java.util.Locale.ROOT)
         if (lower.isEmpty() || !lower.contains('@')) return
         val domain = lower.substringAfter('@', "")
         if (!is_aster_domain(domain)) return
@@ -90,7 +90,7 @@ class AsterProfileResolver @Inject constructor(
     }
 
     fun request(email: String) {
-        val lower = email.trim().lowercase()
+        val lower = email.trim().lowercase(java.util.Locale.ROOT)
         if (lower.isEmpty() || !lower.contains('@')) return
         val domain = lower.substringAfter('@', "")
         if (!is_aster_domain(domain)) return

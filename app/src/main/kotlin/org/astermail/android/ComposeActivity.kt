@@ -107,6 +107,10 @@ class ComposeActivity :
             runOnUiThread { enforce_secure_flag() }
         }
 
+    override fun attachBaseContext(new_base: Context) {
+        super.attachBaseContext(org.astermail.android.settings.app_language.apply(new_base))
+    }
+
     override fun onCreate(saved_instance_state: Bundle?) {
         super.onCreate(saved_instance_state)
         enforce_secure_flag()

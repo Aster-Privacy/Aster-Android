@@ -74,6 +74,7 @@ data class ChangePasswordResponse(
     val message: String? = null,
     val csrf_token: String? = null,
     val access_token: String? = null,
+    val refresh_token: String? = null,
 )
 
 @Serializable
@@ -541,6 +542,7 @@ data class SubscriptionInfo(
     val currency: String? = "usd",
     val interval: String? = null,
     val current_period_end: String? = null,
+    val cancel_at_period_end: Boolean = false,
     val plan: SubscriptionPlanNested? = null,
 ) {
     val effective_price_cents: Int

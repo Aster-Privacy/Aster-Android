@@ -28,14 +28,14 @@ fun archived_action_message(context: Context, count: Int, message_scope: Boolean
     if (message_scope) {
         context.resources.getQuantityString(R.plurals.archived_messages, count, count)
     } else {
-        context.getString(R.string.archived_conversations, count)
+        context.resources.getQuantityString(R.plurals.archived_conversations, count, count)
     }
 
 fun trashed_action_message(context: Context, count: Int, message_scope: Boolean): String =
     if (message_scope) {
         context.resources.getQuantityString(R.plurals.moved_messages_to_trash, count, count)
     } else {
-        context.getString(R.string.moved_to_trash, count)
+        context.resources.getQuantityString(R.plurals.moved_to_trash, count, count)
     }
 
 fun batch_action_key(action: String, message_scope: Boolean): String =

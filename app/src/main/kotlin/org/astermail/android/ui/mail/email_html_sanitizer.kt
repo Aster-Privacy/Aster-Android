@@ -408,7 +408,10 @@ object EmailHtmlSanitizer {
             )
             .addAttributes(":all", "style", "class", "id", "dir", "lang", "title", "align")
             .addAttributes("a", "target", "rel", "name")
-            .addAttributes("img", "src", "alt", "width", "height", "loading", "srcset")
+            .addAttributes(
+                "img", "src", "alt", "width", "height", "loading", "srcset",
+                "sizes", "border", "hspace", "vspace",
+            )
             .addAttributes(
                 "table", "border", "cellpadding", "cellspacing", "bgcolor",
                 "background", "width", "height", "align",
@@ -504,10 +507,18 @@ object EmailHtmlSanitizer {
         return out.toString()
     }
 
+    private val safe_image_data_uri = Regex(
+        "^\\s*data:image/(?:jpeg|jpg|png|gif|webp|avif|bmp|tiff|heic|heif|x-icon|vnd\\.microsoft\\.icon)[;,]",
+        RegexOption.IGNORE_CASE,
+    )
+
+    private fun is_safe_image_data_uri(value: String): Boolean = safe_image_data_uri.containsMatchIn(value)
+
     private fun scrub_attributes(doc: Document, clean_tracking_links: Boolean = true) {
         val js_uri = Regex("^\\s*javascript\\s*:", RegexOption.IGNORE_CASE)
         val data_html_uri = Regex("^\\s*data\\s*:\\s*text/html", RegexOption.IGNORE_CASE)
         val vbscript_uri = Regex("^\\s*vbscript\\s*:", RegexOption.IGNORE_CASE)
+        val data_uri = Regex("^\\s*data\\s*:", RegexOption.IGNORE_CASE)
         for (el in doc.allElements) {
             val to_remove = mutableListOf<String>()
             for (attr in el.attributes()) {
@@ -521,6 +532,8 @@ object EmailHtmlSanitizer {
                 if (key_lower == "href" || key_lower == "src" || key_lower == "action" || key_lower == "background") {
                     val v = attr.value
                     if (js_uri.containsMatchIn(v) || data_html_uri.containsMatchIn(v) || vbscript_uri.containsMatchIn(v)) {
+                        to_remove.add(attr.key)
+                    } else if (data_uri.containsMatchIn(v) && !is_safe_image_data_uri(v)) {
                         to_remove.add(attr.key)
                     }
                 }

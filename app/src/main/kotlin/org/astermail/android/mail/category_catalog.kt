@@ -81,7 +81,7 @@ fun is_valid_match_keyword(value: String): Boolean = KEYWORD_PATTERN.matches(val
 private fun clean_terms(values: List<String>, is_valid: (String) -> Boolean): List<String> {
     val seen = LinkedHashSet<String>()
     for (raw in values) {
-        val value = raw.trim().lowercase().take(MAX_MATCH_TERM_LENGTH)
+        val value = raw.trim().lowercase(java.util.Locale.ROOT).take(MAX_MATCH_TERM_LENGTH)
         if (value.isEmpty() || seen.contains(value) || !is_valid(value)) continue
         seen.add(value)
         if (seen.size >= MAX_MATCH_TERMS) break

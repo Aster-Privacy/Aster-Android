@@ -29,6 +29,37 @@ import org.junit.Test
 class EmailHtmlSanitizerTest {
 
     @Test
+    fun keeps_an_inline_raster_image_data_url() {
+        val html = """<img src="data:image/png;base64,iVBORw0KGgo=">"""
+        val out = EmailHtmlSanitizer.sanitize(html)
+        assertTrue(out.contains("data:image/png;base64,"))
+    }
+
+    @Test
+    fun drops_a_scalable_vector_data_url_that_the_web_client_also_blocks() {
+        val html = """<img src="data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=">"""
+        val out = EmailHtmlSanitizer.sanitize(html)
+        assertFalse(out.contains("svg+xml"))
+    }
+
+    @Test
+    fun drops_a_data_url_background_that_is_not_an_image() {
+        val html = """<td background="data:application/octet-stream;base64,AAAA">cell</td>"""
+        val out = EmailHtmlSanitizer.sanitize(html)
+        assertFalse(out.contains("octet-stream"))
+    }
+
+    @Test
+    fun keeps_the_layout_attributes_newsletters_rely_on() {
+        val html = """<img src="cid:hero" alt="hero" align="left" border="0" hspace="8" vspace="4">"""
+        val out = EmailHtmlSanitizer.sanitize(html)
+        assertTrue(out.contains("align=\"left\""))
+        assertTrue(out.contains("border=\"0\""))
+        assertTrue(out.contains("hspace=\"8\""))
+        assertTrue(out.contains("vspace=\"4\""))
+    }
+
+    @Test
     fun keeps_downlevel_revealed_button_and_drops_mso_fallback() {
         val html = """
             <html><body>

@@ -74,19 +74,19 @@ private fun domain_in_set(domain: String, set: Set<String>): Boolean {
 private fun sender_domain(email: String): String {
     val at = email.indexOf('@')
     if (at == -1) return ""
-    return email.substring(at + 1).lowercase().trimEnd('.', '>')
+    return email.substring(at + 1).lowercase(java.util.Locale.ROOT).trimEnd('.', '>')
 }
 
 private fun get_localpart(email: String): String {
     val at = email.indexOf('@')
-    return (if (at == -1) email else email.substring(0, at)).lowercase()
+    return (if (at == -1) email else email.substring(0, at)).lowercase(java.util.Locale.ROOT)
 }
 
 private val AT_DOMAIN_REGEX = Regex("""@([^@>\s]+)""")
 
 private fun domain_of_value(value: String): String {
     val match = AT_DOMAIN_REGEX.find(value) ?: return ""
-    return match.groupValues[1].lowercase().trimEnd('.', '>')
+    return match.groupValues[1].lowercase(java.util.Locale.ROOT).trimEnd('.', '>')
 }
 
 private val DKIM_D_REGEX = Regex("""(?:^|;)\s*d=\s*([^;\s]+)""", RegexOption.IGNORE_CASE)
@@ -94,14 +94,14 @@ private val DKIM_D_REGEX = Regex("""(?:^|;)\s*d=\s*([^;\s]+)""", RegexOption.IGN
 private fun dkim_domain(headers: Map<String, String>): String {
     val sig = headers["dkim-signature"] ?: ""
     val match = DKIM_D_REGEX.find(sig) ?: return ""
-    return match.groupValues[1].lowercase().trimEnd('.', '>')
+    return match.groupValues[1].lowercase(java.util.Locale.ROOT).trimEnd('.', '>')
 }
 
 private fun build_header_lookup(raw_headers: List<Pair<String, String>>): Map<String, String> {
     val lookup = HashMap<String, String>()
     for ((name, value) in raw_headers) {
         if (name.isNotEmpty()) {
-            lookup[name.lowercase()] = value.take(MAX_HEADER_VALUE)
+            lookup[name.lowercase(java.util.Locale.ROOT)] = value.take(MAX_HEADER_VALUE)
         }
     }
     return lookup
@@ -120,7 +120,7 @@ private fun match_custom_category(
     custom_categories: List<CustomCategoryRule>,
 ): String? {
     if (custom_categories.isEmpty()) return null
-    val lower_subject = subject.lowercase()
+    val lower_subject = subject.lowercase(java.util.Locale.ROOT)
     for (rule in custom_categories) {
         if (!rule.enabled) continue
         val domain_match = rule.match_domains.any { suffix ->
@@ -164,7 +164,7 @@ fun classify(
     val localpart = get_localpart(email)
     val subject = envelope.subject.take(MAX_SUBJECT)
     val headers = build_header_lookup(envelope.raw_headers)
-    val precedence = (headers["precedence"] ?: "").lowercase()
+    val precedence = (headers["precedence"] ?: "").lowercase(java.util.Locale.ROOT)
 
     val auth_domains = mutableListOf(from_domain)
     val dkim = dkim_domain(headers)
@@ -223,7 +223,7 @@ fun classify(
     val has_unsubscribe =
         !envelope.list_unsubscribe.isNullOrEmpty() ||
             headers.containsKey("list-unsubscribe")
-    val auto_submitted = (headers["auto-submitted"] ?: "").lowercase()
+    val auto_submitted = (headers["auto-submitted"] ?: "").lowercase(java.util.Locale.ROOT)
     val bulk_precedence =
         precedence == "bulk" || precedence == "list" || precedence == "auto_replied"
     val is_automated =

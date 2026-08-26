@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.mirror_in_rtl
 
 @Composable
 fun AsterIconButton(
@@ -41,6 +42,7 @@ fun AsterIconButton(
     enabled: Boolean = true,
     tint: Color = Color.Unspecified,
     icon_size: Int = 22,
+    auto_mirror: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
     val resolved_tint = if (tint == Color.Unspecified) colors.text_secondary else tint
@@ -56,7 +58,11 @@ fun AsterIconButton(
         Icon(
             imageVector = icon,
             contentDescription = content_description,
-            modifier = Modifier.size(icon_size.dp),
+            modifier = if (auto_mirror) {
+                Modifier.size(icon_size.dp).mirror_in_rtl()
+            } else {
+                Modifier.size(icon_size.dp)
+            },
         )
     }
 }

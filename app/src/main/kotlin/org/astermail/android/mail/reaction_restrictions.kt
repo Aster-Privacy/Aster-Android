@@ -50,7 +50,7 @@ fun reaction_restriction_string(restriction: ReactionRestriction): Int = when (r
     ReactionRestriction.no_recipient -> R.string.cannot_react_no_recipient
 }
 
-private fun normalize(value: String?): String = value?.trim()?.lowercase().orEmpty()
+private fun normalize(value: String?): String = value?.trim()?.lowercase(java.util.Locale.ROOT).orEmpty()
 
 private val ANGLED_ADDRESS = Regex("<([^>]+)>")
 

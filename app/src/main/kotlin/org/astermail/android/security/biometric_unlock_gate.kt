@@ -98,6 +98,8 @@ object BiometricUnlockGate {
         return p.contains(KEY_TOKEN_CIPHERTEXT) && p.contains(KEY_TOKEN_IV) && p.contains(KEY_TOKEN_DIGEST)
     }
 
+    fun is_enrolled(context: Context): Boolean = has_token(context)
+
     fun prepare(context: Context): BiometricGatePreparation = try {
         if (has_token(context)) {
             val key = load_key()

@@ -79,7 +79,7 @@ object MimeParser {
         for (line in headers.split("\n")) {
             if (line.isBlank()) continue
             if (line.startsWith(" ") || line.startsWith("\t")) continue
-            val name = line.substringBefore(':').trim().lowercase()
+            val name = line.substringBefore(':').trim().lowercase(java.util.Locale.ROOT)
             val value = line.substringAfter(':').trim()
             if (name == "content-type" && media_type_pattern.containsMatchIn(value)) {
                 has_mime_header = true
@@ -177,7 +177,7 @@ object MimeParser {
                 if (current_key.isNotEmpty()) current_value += " " + line.trim()
             } else {
                 if (current_key.isNotEmpty()) {
-                    headers[current_key.lowercase()] = current_value
+                    headers[current_key.lowercase(java.util.Locale.ROOT)] = current_value
                 }
                 val colon = line.indexOf(':')
                 if (colon > 0) {
@@ -187,7 +187,7 @@ object MimeParser {
             }
         }
         if (current_key.isNotEmpty()) {
-            headers[current_key.lowercase()] = current_value
+            headers[current_key.lowercase(java.util.Locale.ROOT)] = current_value
         }
         return headers
     }
@@ -204,7 +204,7 @@ object MimeParser {
         charset: java.nio.charset.Charset = Charsets.UTF_8,
     ): String {
         if (encoding == null) return body.trim()
-        return when (encoding.lowercase().trim().trimEnd(';')) {
+        return when (encoding.lowercase(java.util.Locale.ROOT).trim().trimEnd(';')) {
             "quoted-printable" -> decode_quoted_printable(body, charset).trim()
             "base64" -> decode_base64(body, charset).trim()
             else -> body.trim()

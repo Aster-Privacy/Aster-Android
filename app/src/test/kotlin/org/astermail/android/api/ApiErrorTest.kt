@@ -156,11 +156,9 @@ class ApiErrorTest {
     fun `GhostAlias defaults`() {
         val alias = GhostAlias()
         assertEquals("", alias.id)
-        assertEquals("", alias.note)
         assertTrue(alias.enabled)
         assertNull(alias.expires_at)
         assertNull(alias.created_at)
-        assertEquals(0, alias.forward_count)
     }
 
     @Test
@@ -179,7 +177,6 @@ class ApiErrorTest {
         assertEquals("random123@astermail.org", alias.address)
         assertFalse(alias.enabled)
         assertEquals("2026-05-01T00:00:00Z", alias.expires_at)
-        assertEquals(0, alias.forward_count)
     }
 
     @Test
@@ -492,9 +489,9 @@ class ApiErrorTest {
         val prefs = UserPreferences()
         assertEquals("en", prefs.language)
         assertEquals("system", prefs.theme)
-        assertEquals("", prefs.time_zone)
-        assertEquals("", prefs.date_format)
-        assertEquals("12h", prefs.time_format)
+        assertEquals("auto", prefs.time_zone)
+        assertEquals("MM/DD/YYYY", prefs.date_format)
+        assertEquals("auto", prefs.time_format)
         assertTrue(prefs.push_notifications)
         assertTrue(prefs.sound)
         assertTrue(prefs.vibrate)

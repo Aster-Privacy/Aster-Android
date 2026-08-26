@@ -267,6 +267,7 @@ class RatchetDecryptorInstrumentedTest {
             ConversationLocks(),
             dagger.Lazy<AuthRepository> { throw IllegalStateException("vault refresh should not be needed for this recovery path") },
             mockk(relaxed = true),
+            mockk(relaxed = true),
         )
 
         val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email)

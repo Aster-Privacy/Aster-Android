@@ -290,7 +290,13 @@ internal fun advanced_search_sheet(
 
         val days = PRESET_DAYS[preset]
 
-        if (days != null) next = next + SearchOperator(false, "before", "${days}d")
+        if (days != null) {
+            next = next + SearchOperator(false, "before", "${days}d")
+        } else if (preset == DatePreset.CUSTOM) {
+            next = next + operators.filter {
+                !it.negated && (it.key == "before" || it.key == "after")
+            }
+        }
         if (include_spam_trash) next = next + SearchOperator(false, "in", "anywhere")
 
         return next

@@ -40,21 +40,21 @@ val toolbar_action_catalog: List<ToolbarAction> = listOf(
     ToolbarAction("trash", R.string.move_to_trash, TablerIcons.Trash),
     ToolbarAction("archive", R.string.swipe_archive, TablerIcons.Archive),
     ToolbarAction("folder", R.string.move_to_folder, TablerIcons.Folder),
-    ToolbarAction("label", R.string.label, TablerIcons.Tag),
+    ToolbarAction("label", R.string.add_label, TablerIcons.Tag),
     ToolbarAction("star", R.string.star, TablerIcons.Star),
     ToolbarAction("snooze", R.string.snooze, TablerIcons.Clock),
-    ToolbarAction("spam", R.string.report_spam, TablerIcons.AlertOctagon),
+    ToolbarAction("spam", R.string.report_spam, TablerIcons.Ban),
     ToolbarAction("reply", R.string.reply, TablerIcons.ArrowBackUp),
     ToolbarAction("forward", R.string.forward, TablerIcons.MailForward),
 )
 
 val selection_toolbar_action_catalog: List<ToolbarAction> = listOf(
-    ToolbarAction("trash", R.string.delete_action, TablerIcons.Trash),
+    ToolbarAction("trash", R.string.move_to_trash, TablerIcons.Trash),
     ToolbarAction("folder", R.string.move_to_folder, TablerIcons.Folder),
     ToolbarAction("label", R.string.add_label, TablerIcons.Tag),
-    ToolbarAction("read", R.string.mark_read_action, TablerIcons.MailOpened),
+    ToolbarAction("read", R.string.mark_as_read, TablerIcons.MailOpened),
     ToolbarAction("unread", R.string.mark_as_unread, TablerIcons.Mail),
-    ToolbarAction("archive", R.string.archive_action, TablerIcons.Archive),
+    ToolbarAction("archive", R.string.swipe_archive, TablerIcons.Archive),
     ToolbarAction("star", R.string.star, TablerIcons.Star),
     ToolbarAction("snooze", R.string.snooze, TablerIcons.Clock),
     ToolbarAction("spam", R.string.report_spam, TablerIcons.Ban),
@@ -112,3 +112,10 @@ fun toolbar_action_by_id(id: String): ToolbarAction? = toolbar_action_catalog.fi
 
 fun selection_toolbar_action_by_id(id: String): ToolbarAction? =
     selection_toolbar_action_catalog.find { it.id == id }
+
+private val star_off_toolbar_action = ToolbarAction("star", R.string.unstar, TablerIcons.StarOff)
+
+fun selection_toolbar_action_for(id: String, selection_all_starred: Boolean): ToolbarAction? {
+    val base = selection_toolbar_action_by_id(id) ?: return null
+    return if (base.id == "star" && selection_all_starred) star_off_toolbar_action else base
+}

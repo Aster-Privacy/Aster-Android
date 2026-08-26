@@ -26,6 +26,7 @@ import org.astermail.android.api.settings.AliasInfo
 import org.astermail.android.api.settings.CustomDomainAddressInfo
 
 private const val GHOST_PREFIX = "ghost-"
+private const val DOMAIN_PREFIX = "domain-"
 
 fun resolve_primary_sender_email(
     default_sender_id: String?,
@@ -41,6 +42,10 @@ fun resolve_primary_sender_email(
         ghost_aliases.firstOrNull { it.id == gid }?.let { return it.address }
     }
     custom_domain_addresses.firstOrNull { it.id == default_sender_id }?.let { return it.address }
+    if (default_sender_id.startsWith(DOMAIN_PREFIX)) {
+        val did = default_sender_id.removePrefix(DOMAIN_PREFIX)
+        custom_domain_addresses.firstOrNull { it.id == did }?.let { return it.address }
+    }
     return user_email
 }
 

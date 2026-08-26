@@ -106,7 +106,7 @@ class UserApiImpl(private val client: ApiClient) : UserApi {
             setBody(UpdateProfilePictureRequest(profile_picture))
         }
         if (response.status.value == 413) {
-            throw ApiError.ValidationError(listOf("image too large"))
+            throw ApiError.ValidationError(listOf("image too large"), "IMAGE_TOO_LARGE")
         }
         if (response.status.value !in 200..299) {
             throw client.map_http_status(response.status.value, "")

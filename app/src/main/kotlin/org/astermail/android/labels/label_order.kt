@@ -34,9 +34,19 @@ fun label_rows(labels: List<LabelItem>): List<LabelItem> = labels
     .filter { !it.encrypted_name.isNullOrBlank() && !looks_encrypted(it.encrypted_name) }
     .sortedWith(compareBy({ it.sort_order }, { it.created_at.orEmpty() }, { it.label_token }))
 
-fun tag_rows(tags: List<TagItem>): List<TagItem> = tags
-    .filter { it.encrypted_name.isNotBlank() && !looks_encrypted(it.encrypted_name) }
+fun tag_rows(tags: List<TagItem>, keep_tokens: Set<String> = emptySet()): List<TagItem> = tags
+    .filter {
+        (it.encrypted_name.isNotBlank() && !looks_encrypted(it.encrypted_name)) ||
+            it.tag_token in keep_tokens
+    }
     .sortedWith(compareBy({ it.sort_order }, { it.created_at.orEmpty() }, { it.tag_token }))
+
+fun tag_display_name(tag: TagItem, unknown_label: String): String =
+    if (tag.encrypted_name.isBlank() || looks_encrypted(tag.encrypted_name)) {
+        unknown_label
+    } else {
+        tag.encrypted_name
+    }
 
 fun <T> move_row(rows: List<T>, index: Int, direction: Int): List<T>? {
     if (direction == 0) return null

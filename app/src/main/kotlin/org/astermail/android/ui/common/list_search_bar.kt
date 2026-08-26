@@ -32,10 +32,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -65,6 +67,7 @@ fun list_search_bar(
     test_tag: String = "list_search_bar",
 ) {
     val colors = AsterMaterial.colors
+    val keyboard = LocalSoftwareKeyboardController.current
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -97,6 +100,7 @@ fun list_search_bar(
                 onValueChange = on_query_change,
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
                 textStyle = TextStyle(color = colors.text_primary, fontSize = 16.sp),
                 cursorBrush = SolidColor(colors.accent_blue),
                 modifier = Modifier.fillMaxWidth().testTag("${test_tag}_input"),

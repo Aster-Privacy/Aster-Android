@@ -64,14 +64,18 @@ data class RegenerateRecoveryCodesResponse(
 
 @Serializable
 data class EncryptionSettings(
-    val auto_discover_keys: Boolean = true,
+    val auto_discover_keys: Boolean = false,
     val encrypt_by_default: Boolean = false,
+    val require_encryption: Boolean = false,
+    val ipfs_storage_enabled: Boolean = false,
 )
 
 @Serializable
 data class UpdateEncryptionSettingsRequest(
     val auto_discover_keys: Boolean? = null,
     val encrypt_by_default: Boolean? = null,
+    val require_encryption: Boolean? = null,
+    val ipfs_storage_enabled: Boolean? = null,
 )
 
 @Serializable

@@ -156,7 +156,6 @@ import org.astermail.android.ui.settings.detail.BlockedSendersScreen
 import org.astermail.android.ui.settings.detail.ChangePasswordScreen
 import org.astermail.android.ui.settings.detail.DeleteAccountScreen
 import org.astermail.android.ui.settings.detail.DiagnosticsScreen
-import org.astermail.android.ui.settings.detail.ConnectionScreen
 import org.astermail.android.ui.settings.detail.EncryptionScreen
 import org.astermail.android.ui.settings.detail.ExportScreen
 import org.astermail.android.ui.settings.detail.ExternalAccountsScreen
@@ -205,6 +204,10 @@ class MainActivity :
         android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
             runOnUiThread { enforce_secure_flag() }
         }
+
+    override fun attachBaseContext(new_base: android.content.Context) {
+        super.attachBaseContext(org.astermail.android.settings.app_language.apply(new_base))
+    }
 
     override fun onCreate(saved_instance_state: Bundle?) {
         super.onCreate(saved_instance_state)
@@ -263,6 +266,9 @@ class MainActivity :
     override fun onResume() {
         super.onResume()
         enforce_secure_flag()
+        org.astermail.android.ui.mail.AsterTimePreferences.set_use_24h(
+            android.text.format.DateFormat.is24HourFormat(this),
+        )
     }
 
     override fun onPause() {
@@ -656,10 +662,26 @@ private fun AsterNavHost() {
                     }
                 },
                 on_terms_click = {
-                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://astermail.org/terms")))
+                    try {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://astermail.org/terms")))
+                    } catch (_: Throwable) {
+                        android.widget.Toast.makeText(
+                            context,
+                            context.getString(R.string.could_not_open_link),
+                            android.widget.Toast.LENGTH_SHORT,
+                        ).show()
+                    }
                 },
                 on_privacy_click = {
-                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://astermail.org/privacy")))
+                    try {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://astermail.org/privacy")))
+                    } catch (_: Throwable) {
+                        android.widget.Toast.makeText(
+                            context,
+                            context.getString(R.string.could_not_open_link),
+                            android.widget.Toast.LENGTH_SHORT,
+                        ).show()
+                    }
                 },
             )
         }
@@ -1049,7 +1071,7 @@ private fun AsterNavHost() {
             )
         }
         composable(routes.settings_detail("signature")) {
-            SignatureScreen(on_back = { back(); Unit })
+            SignatureScreen(on_back = { back(); Unit }, on_open = open_detail)
         }
         composable(routes.settings_detail("security")) {
             SecurityScreen(
@@ -1097,9 +1119,6 @@ private fun AsterNavHost() {
         composable(routes.settings_detail("encryption")) {
             EncryptionScreen(on_back = { back(); Unit }, on_open = open_detail)
         }
-        composable(routes.settings_detail("connection")) {
-            ConnectionScreen(on_back = { back(); Unit })
-        }
         composable(routes.settings_detail("theme")) {
             AppearanceScreen(on_back = { back(); Unit }, on_open = open_detail)
         }
@@ -1115,6 +1134,7 @@ private fun AsterNavHost() {
         ) { entry ->
             AliasesScreen(
                 on_back = { back(); Unit },
+                on_open = open_detail,
                 open_create = entry.arguments?.getBoolean("create") ?: false,
                 on_open_buy_domain = { nav_controller.navigate(routes.settings_detail("buy_domain")) },
                 on_open_domain_order = { id -> nav_controller.navigate(routes.domain_order_for(id)) },
@@ -1209,7 +1229,7 @@ private fun AsterNavHost() {
             AccessibilityScreen(on_back = { back(); Unit })
         }
         composable(routes.settings_detail("behavior")) {
-            BehaviorScreen(on_back = { back(); Unit })
+            BehaviorScreen(on_back = { back(); Unit }, on_open = open_detail)
         }
         composable(routes.settings_detail("swipe_actions")) {
             SwipeActionsScreen(on_back = { back(); Unit })
@@ -1414,7 +1434,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     }
 
     val prefs = settings_state.preferences
-    val categories_enabled = prefs?.inbox_categories_enabled ?: false
+    val categories_enabled = prefs?.inbox_categories_enabled ?: true
 
     androidx.compose.runtime.LaunchedEffect(prefs?.show_alias_indicators) {
         org.astermail.android.ui.mail.alias_indicator_store.set_enabled(
@@ -1426,6 +1446,11 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         org.astermail.android.folders.folder_lock_store.set_lock_mode(
             prefs?.folder_lock_mode ?: org.astermail.android.folders.folder_lock_mode_session,
         )
+    }
+
+    androidx.compose.runtime.LaunchedEffect(prefs?.time_format, prefs?.time_zone) {
+        org.astermail.android.ui.mail.AsterTimePreferences.set_account_time_format(prefs?.time_format)
+        org.astermail.android.ui.mail.AsterTimePreferences.set_account_time_zone(prefs?.time_zone)
     }
 
     androidx.compose.runtime.LaunchedEffect(
@@ -1477,10 +1502,10 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     }
     val category_unread = androidx.compose.runtime.remember(
         inbox_state.items,
-        selected_folder,
+        inbox_state.current_folder,
         active_category_tabs,
     ) {
-        if (selected_folder == "inbox") {
+        if (inbox_state.current_folder == "inbox") {
             org.astermail.android.mail.category_unread_counts(inbox_state.items, active_category_tabs)
         } else {
             emptyMap()
@@ -1490,6 +1515,15 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         active_category_tabs,
         prefs?.custom_categories ?: emptyList(),
     )
+
+    androidx.compose.runtime.LaunchedEffect(category_entries, categories_enabled) {
+        if (categories_enabled &&
+            inbox_category != "primary" &&
+            category_entries.none { it.id == inbox_category }
+        ) {
+            inbox_category = "primary"
+        }
+    }
     val category_titles = category_entries.associate { it.id to it.label }
     val theme_vm_inbox: ThemeViewModel = hiltViewModel()
 
@@ -1573,6 +1607,11 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
             can_move_up = sibling_index > 0,
             can_move_down = sibling_index >= 0 && sibling_index < siblings.lastIndex,
             can_have_children = node.depth < org.astermail.android.folders.max_folder_depth,
+            parent_token = label.parent_token?.takeIf { it.isNotBlank() },
+            blocked_parent_tokens = org.astermail.android.folders.descendant_tokens(
+                settings_state.labels,
+                label.label_token,
+            ),
         )
     }
 
@@ -1945,6 +1984,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 initial_folders_collapsed = prefs?.sidebar_folders_collapsed ?: false,
                 initial_labels_collapsed = prefs?.sidebar_labels_collapsed ?: false,
                 initial_aliases_collapsed = prefs?.sidebar_aliases_collapsed ?: false,
+                initial_categories_collapsed = prefs?.sidebar_categories_collapsed ?: false,
                 preferences_loaded = prefs != null,
                 totp_enabled = settings_state.security_status?.totp_enabled == true,
                 purge_locked_folder_default = prefs?.purge_locked_folder_on_delete ?: false,
@@ -2114,9 +2154,10 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
             verifying = unlock_verifying,
             error_text = unlock_error,
             on_dismiss = {
-                pending_unlock_folder = null
-                unlock_verifying = false
-                unlock_error = null
+                if (!unlock_verifying) {
+                    pending_unlock_folder = null
+                    unlock_error = null
+                }
             },
             on_submit = { password ->
                 val label_id = label?.id
@@ -2172,7 +2213,7 @@ private fun format_unit(value: Double, suffix: String): String {
     val text = if (rounded == rounded.toLong().toDouble()) {
         rounded.toLong().toString()
     } else {
-        "%.1f".format(java.util.Locale.US, rounded)
+        "%.1f".format(java.util.Locale.getDefault(), rounded)
     }
     return "$text $suffix"
 }

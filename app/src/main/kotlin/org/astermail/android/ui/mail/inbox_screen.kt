@@ -86,6 +86,7 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -109,6 +110,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.wrapContentWidth
@@ -149,6 +151,7 @@ import org.astermail.android.mail.normalize_swipe_action
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.ui.icons.all_mail_icon
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.design.mirror_in_rtl
 
 enum class InboxSortMode { newest, oldest, unread_first, starred_first }
 
@@ -465,14 +468,19 @@ fun InboxScreen(
                 if (!it.has_attachments && it.id in attachment_ids) it.copy(has_attachments = true) else it,
                 settings_state.tags,
                 folder_chip = all_mail_folder_chip?.invoke(it),
+                context = toast_context,
             )
         }
     }
     val emails = remember { mutableStateListOf<Email>() }
     val previous_api_emails = remember { mutableMapOf<String, Email>() }
     val local_read_mutations = remember { mutableMapOf<String, Long>() }
+    val local_star_mutations = remember { mutableMapOf<String, Long>() }
     fun note_read_mutation(id: String) {
         local_read_mutations[id] = android.os.SystemClock.uptimeMillis()
+    }
+    fun note_star_mutation(id: String) {
+        local_star_mutations[id] = android.os.SystemClock.uptimeMillis()
     }
     var emails_folder by remember { mutableStateOf(current_folder) }
     LaunchedEffect(current_folder) {
@@ -480,6 +488,7 @@ fun InboxScreen(
             emails.clear()
             previous_api_emails.clear()
             local_read_mutations.clear()
+            local_star_mutations.clear()
             emails_folder = current_folder
         }
     }
@@ -487,7 +496,9 @@ fun InboxScreen(
         val current = emails.toList()
         val now_ms = android.os.SystemClock.uptimeMillis()
         local_read_mutations.entries.removeAll { now_ms - it.value > LOCAL_READ_MUTATION_TTL_MS }
+        local_star_mutations.entries.removeAll { now_ms - it.value > LOCAL_READ_MUTATION_TTL_MS }
         val sticky_read_ids = local_read_mutations.keys.toSet()
+        val sticky_star_ids = local_star_mutations.keys.toSet()
         val merged = withContext(Dispatchers.Default) {
             val by_id = current.associateBy { it.id }
             api_emails.map { server ->
@@ -495,8 +506,11 @@ fun InboxScreen(
                 val previous = previous_api_emails[server.id] ?: return@map server
                 server.copy(
                     is_read = if (previous.is_read == server.is_read && server.id in sticky_read_ids) local.is_read else server.is_read,
-                    is_starred = if (previous.is_starred == server.is_starred) local.is_starred else server.is_starred,
-                    is_pinned = if (previous.is_pinned == server.is_pinned) local.is_pinned else server.is_pinned,
+                    is_starred = if (previous.is_starred == server.is_starred && server.id in sticky_star_ids) {
+                        local.is_starred
+                    } else {
+                        server.is_starred
+                    },
                 )
             }
         }
@@ -529,7 +543,10 @@ fun InboxScreen(
     var scope_selection_confirmed by remember { mutableStateOf(false) }
     val selected_ids = remember { mutableStateListOf<String>() }
     var show_empty_trash_dialog by remember { mutableStateOf(false) }
+    var show_bulk_delete_permanent_dialog by remember { mutableStateOf(false) }
+    var bulk_delete_permanent_is_scope by remember { mutableStateOf(false) }
     var show_selection_overflow by remember { mutableStateOf(false) }
+    var scheduled_sheet_item by remember { mutableStateOf<org.astermail.android.mail.InboxItem?>(null) }
     var show_bulk_folder_sheet by remember { mutableStateOf(false) }
     var show_bulk_label_sheet by remember { mutableStateOf(false) }
     var show_bulk_snooze_sheet by remember { mutableStateOf(false) }
@@ -546,6 +563,8 @@ fun InboxScreen(
     var confirm_action_pending by remember { mutableStateOf<String?>(null) }
     var confirm_item_ids_pending by remember { mutableStateOf<List<String>>(emptyList()) }
     var confirm_thread_id_pending by remember { mutableStateOf<String?>(null) }
+    var swipe_reset_thread_id by remember { mutableStateOf<String?>(null) }
+    var swipe_reset_nonce by remember { mutableIntStateOf(0) }
 
     val scrolled_elevation by remember(list_state) {
         derivedStateOf {
@@ -560,9 +579,14 @@ fun InboxScreen(
         (settings_state.preferences?.inbox_categories_enabled ?: true)
     val active_category = inbox_category
     val emails_fingerprint by remember { derivedStateOf { emails_fingerprint_of(emails) } }
+    val plan_vm_categories: org.astermail.android.billing.PlanLimitsViewModel = hiltViewModel()
+    val plan_state_categories by plan_vm_categories.state.collectAsStateWithLifecycle()
+    val custom_category_limit =
+        plan_state_categories.limits?.limits?.get("max_custom_categories")?.limit ?: -1
     val active_tabs = remember(
         settings_state.preferences?.enabled_categories,
         settings_state.preferences?.custom_categories,
+        custom_category_limit,
     ) {
         val prefs = settings_state.preferences
         if (prefs == null) {
@@ -571,7 +595,7 @@ fun InboxScreen(
             org.astermail.android.mail.active_category_tabs(
                 prefs.enabled_categories,
                 org.astermail.android.mail.sanitize_custom_categories(prefs.custom_categories),
-                -1,
+                custom_category_limit,
             )
         }
     }
@@ -624,13 +648,16 @@ fun InboxScreen(
         threads_pending = false
     }
 
-    LaunchedEffect(sort_mode, sort_mode_user_set, settings_state.preferences?.conversation_order) {
-        val prefs_order = settings_state.preferences?.conversation_order
-        if (!sort_mode_user_set && prefs_order == null) return@LaunchedEffect
+    val prefs_sort_oldest_first = settings_state.preferences?.let {
+        org.astermail.android.api.preferences.resolve_inbox_sort_oldest_first(it)
+    }
+
+    LaunchedEffect(sort_mode, sort_mode_user_set, prefs_sort_oldest_first) {
+        if (!sort_mode_user_set && prefs_sort_oldest_first == null) return@LaunchedEffect
         val oldest = if (sort_mode_user_set) {
             sort_mode == InboxSortMode.oldest
         } else {
-            prefs_order == "oldest"
+            prefs_sort_oldest_first == true
         }
         mail_vm.set_list_order(if (oldest) "asc" else null)
     }
@@ -657,11 +684,12 @@ fun InboxScreen(
         }
     }
 
-    LaunchedEffect(settings_state.preferences?.conversation_order) {
+    LaunchedEffect(prefs_sort_oldest_first) {
         if (!sort_mode_user_set) {
-            sort_mode = when (settings_state.preferences?.conversation_order) {
-                "oldest" -> InboxSortMode.oldest
-                else -> InboxSortMode.newest
+            sort_mode = if (prefs_sort_oldest_first == true) {
+                InboxSortMode.oldest
+            } else {
+                InboxSortMode.newest
             }
         }
     }
@@ -724,6 +752,11 @@ fun InboxScreen(
         scope_selection_confirmed &&
         mail_vm.folder_supports_scope_selection(current_folder)
     val selection_count = scope_selection_count(scope_selection, folder_total, selected_ids.size)
+    val selection_all_starred = selected_ids.isNotEmpty() &&
+        selected_ids.toSet().let { ids ->
+            val picked = emails.filter { it.thread_id in ids || it.id in ids }
+            picked.isNotEmpty() && picked.none { !it.is_starred }
+        }
     val can_offer_scope_selection = select_mode &&
         select_all_active &&
         !scope_selection_confirmed &&
@@ -1023,9 +1056,22 @@ fun InboxScreen(
         for (i in emails.indices) {
             if ((emails[i].thread_id in thread_ids || emails[i].id in thread_ids) && emails[i].is_starred != new_starred) {
                 emails[i] = emails[i].copy(is_starred = new_starred)
+                note_star_mutation(emails[i].id)
             }
         }
         exit_select_mode()
+    }
+
+    fun apply_thread_star(thread: ThreadRow) {
+        val target = !thread.is_starred
+        val ids = emails.filter { it.thread_id == thread.thread_id || it.id == thread.thread_id }.map { it.id }
+        mail_vm.toggle_thread_star(ids.ifEmpty { listOf(thread.newest.id) }, target)
+        for (i in emails.indices) {
+            if ((emails[i].thread_id == thread.thread_id || emails[i].id == thread.thread_id) && emails[i].is_starred != target) {
+                emails[i] = emails[i].copy(is_starred = target)
+                note_star_mutation(emails[i].id)
+            }
+        }
     }
 
     fun notify_if_scope_incomplete(applied: Int) {
@@ -1043,17 +1089,17 @@ fun InboxScreen(
         exit_select_mode()
     }
 
+    fun move_selected_to_folder(label_token: String, display_name: String) {
+        val ids = selected_email_ids()
+        notify_if_scope_incomplete(ids.size)
+        mail_vm.move_to_folder_bulk(ids, label_token, display_name)
+        exit_select_mode()
+    }
+
     fun move_selected_to_inbox() {
         val ids = selected_email_ids()
         notify_if_scope_incomplete(ids.size)
         mail_vm.move_to_inbox(ids, current_folder)
-        exit_select_mode()
-    }
-
-    fun move_selected_to_folder(label_token: String, display_name: String) {
-        val ids = selected_email_ids()
-        notify_if_scope_incomplete(ids.size)
-        mail_vm.apply_label_bulk(ids, label_token, display_name)
         exit_select_mode()
     }
 
@@ -1113,14 +1159,14 @@ fun InboxScreen(
     }
 
     fun run_selection_action(action_id: String) {
+        if (action_id == "delete_permanent") {
+            bulk_delete_permanent_is_scope = scope_selection && current_folder == "trash"
+            show_bulk_delete_permanent_dialog = true
+            return
+        }
         if (scope_selection && action_id == "star") {
             val thread_ids = selected_ids.toSet()
             mail_vm.star_scope(current_folder, emails.any { (it.thread_id in thread_ids || it.id in thread_ids) && !it.is_starred })
-            exit_select_mode()
-            return
-        }
-        if (scope_selection && action_id == "delete_permanent" && current_folder == "trash") {
-            mail_vm.empty_trash()
             exit_select_mode()
             return
         }
@@ -1264,6 +1310,9 @@ fun InboxScreen(
                     }
                 }
                 val hidden_by_category = threads.isEmpty() && !threads_pending && inbox_state.items.isNotEmpty()
+                val category_drain_active = categories_enabled &&
+                    inbox_state.has_more &&
+                    (inbox_state.is_loading_more || inbox_state.items.size < CATEGORY_DRAIN_MAX_ITEMS)
                 val unread_mismatch = threads.isEmpty() &&
                     inbox_state.items.isEmpty() &&
                     !inbox_state.is_loading &&
@@ -1313,10 +1362,23 @@ fun InboxScreen(
                             mail_vm.load_inbox(current_folder, force = true)
                         }
                     }
+                } else if (hidden_by_category && category_drain_active) {
+                    Box(Modifier.padding(top = header_height_dp)) {
+                        inbox_skeleton(list_density = settings_state.preferences?.mail_list_density)
+                    }
                 } else if (hidden_by_category) {
                     org.astermail.android.ui.common.overscroll_stretch(
                         modifier = Modifier.padding(top = header_height_dp),
-                    ) { empty_category_state(active_category_label) }
+                    ) {
+                        empty_category_state(
+                            category_label = active_category_label,
+                            on_load_more = if (inbox_state.has_more) {
+                                { mail_vm.load_more() }
+                            } else {
+                                null
+                            },
+                        )
+                    }
                 } else if (threads.isEmpty()) {
                     org.astermail.android.ui.common.overscroll_stretch(
                         modifier = Modifier.padding(top = header_height_dp),
@@ -1352,6 +1414,11 @@ fun InboxScreen(
                                 start_label = restore_label_outer, end_label = delete_forever_label_outer,
                                 start_icon = TablerIcons.Inbox, end_icon = TablerIcons.Trash,
                                 start_action = "restore_trash", end_action = "delete_permanent",
+                            )
+                            "scheduled" -> SwipeConfig(
+                                start_label = "", end_label = "",
+                                start_icon = TablerIcons.Clock, end_icon = TablerIcons.Clock,
+                                start_action = "none", end_action = "none",
                             )
                             "spam" -> SwipeConfig(
                                 start_label = not_spam_label_outer, end_label = delete_label_outer,
@@ -1467,13 +1534,7 @@ fun InboxScreen(
                                         thread = thread,
                                         on_click = { toggle_selection(thread.thread_id) },
                                         on_long_click = { toggle_selection(thread.thread_id) },
-                                        on_toggle_star = {
-                                            val idx = emails.indexOfFirst { (it.thread_id == thread.thread_id || it.id == thread.thread_id) }
-                                            if (idx >= 0) {
-                                                emails[idx] = emails[idx].copy(is_starred = !emails[idx].is_starred)
-                                                mail_vm.toggle_star(thread.newest.id)
-                                            }
-                                        },
+                                        on_toggle_star = { apply_thread_star(thread) },
                                         is_selected = is_selected,
                                         select_mode = true,
                                         haptic_enabled = haptic_enabled,
@@ -1491,19 +1552,21 @@ fun InboxScreen(
                                     is_first = row_index == 0,
                                     is_last = row_index == visible_threads.lastIndex,
                                     is_pinned = thread.is_pinned,
-                                    on_click = { on_open_email(thread_open_target_id(thread)) },
-                                    on_long_click = {
-                                        select_mode = true
-                                        selected_ids.clear()
-                                        selected_ids.add(thread.thread_id)
-                                    },
-                                    on_toggle_star = {
-                                        val idx = emails.indexOfFirst { (it.thread_id == thread.thread_id || it.id == thread.thread_id) }
-                                        if (idx >= 0) {
-                                            emails[idx] = emails[idx].copy(is_starred = !emails[idx].is_starred)
-                                            mail_vm.toggle_star(thread.newest.id)
+                                    on_click = {
+                                        if (current_folder == "scheduled") {
+                                            scheduled_sheet_item = inbox_state.items.find { it.id == thread.newest.id }
+                                        } else {
+                                            on_open_email(thread_open_target_id(thread))
                                         }
                                     },
+                                    on_long_click = {
+                                        if (current_folder != "scheduled") {
+                                            select_mode = true
+                                            selected_ids.clear()
+                                            selected_ids.add(thread.thread_id)
+                                        }
+                                    },
+                                    on_toggle_star = { apply_thread_star(thread) },
                                     swipe_start_action = swipe_config.start_action,
                                     swipe_end_action = swipe_config.end_action,
                                     swipe_start_label = swipe_config.start_label,
@@ -1519,7 +1582,7 @@ fun InboxScreen(
                                         val needs_confirm = (swipe_config.start_action == "archive" && prefs?.confirm_archive == true) ||
                                             (swipe_config.start_action == "delete" && prefs?.confirm_delete == true) ||
                                             (swipe_config.start_action == "spam" && prefs?.confirm_spam == true) ||
-                                            (swipe_config.start_action == "delete_permanent" && prefs?.confirm_delete == true)
+                                            swipe_config.start_action == "delete_permanent"
                                         if (needs_confirm) {
                                             confirm_action_pending = swipe_config.start_action
                                             confirm_item_ids_pending = ids
@@ -1528,6 +1591,7 @@ fun InboxScreen(
                                             execute_swipe_action(
                                                 swipe_config.start_action, ids, mail_vm, emails, thread.thread_id, current_folder,
                                                 on_read_mutation = { mutated -> mutated.forEach { note_read_mutation(it) } },
+                                                on_star_mutation = { mutated -> mutated.forEach { note_star_mutation(it) } },
                                             ) { snooze_ids ->
                                                 swipe_snooze_ids = snooze_ids
                                             }
@@ -1540,7 +1604,7 @@ fun InboxScreen(
                                         val needs_confirm = (swipe_config.end_action == "archive" && prefs?.confirm_archive == true) ||
                                             (swipe_config.end_action == "delete" && prefs?.confirm_delete == true) ||
                                             (swipe_config.end_action == "spam" && prefs?.confirm_spam == true) ||
-                                            (swipe_config.end_action == "delete_permanent" && prefs?.confirm_delete == true)
+                                            swipe_config.end_action == "delete_permanent"
                                         if (needs_confirm) {
                                             confirm_action_pending = swipe_config.end_action
                                             confirm_item_ids_pending = ids
@@ -1549,6 +1613,7 @@ fun InboxScreen(
                                             execute_swipe_action(
                                                 swipe_config.end_action, ids, mail_vm, emails, thread.thread_id, current_folder,
                                                 on_read_mutation = { mutated -> mutated.forEach { note_read_mutation(it) } },
+                                                on_star_mutation = { mutated -> mutated.forEach { note_star_mutation(it) } },
                                             ) { snooze_ids ->
                                                 swipe_snooze_ids = snooze_ids
                                             }
@@ -1556,6 +1621,7 @@ fun InboxScreen(
                                     },
                                     haptic_enabled = haptic_enabled,
                                     user_prefs = settings_state.preferences,
+                                    swipe_reset_token = if (swipe_reset_thread_id == thread.thread_id) swipe_reset_nonce else 0,
                                 )
                             }
                         }
@@ -1592,7 +1658,7 @@ fun InboxScreen(
                                 ) {
                                     Spacer(Modifier.height(AsterSpacing.xl))
                                     Text(
-                                        text = stringResource(R.string.all_caught_up),
+                                        text = stringResource(R.string.no_more_messages),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = colors.text_muted,
                                     )
@@ -1719,6 +1785,7 @@ fun InboxScreen(
                 on_action = ::run_selection_action,
                 on_more = { show_selection_overflow = true },
                 current_folder = current_folder,
+                selection_all_starred = selection_all_starred,
             )
         }
 
@@ -1755,9 +1822,45 @@ fun InboxScreen(
                     run_selection_action(id)
                 },
                 show_unsnooze = current_folder == "snoozed",
+                current_folder = current_folder,
+                selection_all_starred = selection_all_starred,
                 on_customize = {
                     show_selection_overflow = false
                     on_customize_toolbar()
+                },
+            )
+        }
+
+        scheduled_sheet_item?.let { scheduled_item ->
+            val picker_context = LocalContext.current
+            val picker_theme = org.astermail.android.ui.common.picker_theme_res()
+            scheduled_actions_sheet(
+                item = scheduled_item,
+                on_close = { scheduled_sheet_item = null },
+                on_send_now = {
+                    scheduled_sheet_item = null
+                    mail_vm.send_scheduled_now(scheduled_item.id)
+                },
+                on_reschedule = {
+                    scheduled_sheet_item = null
+                    show_reschedule_picker(
+                        context = picker_context,
+                        theme_res = picker_theme,
+                        initial_iso = scheduled_item.timestamp,
+                        on_picked = { iso -> mail_vm.reschedule_scheduled(scheduled_item.id, iso) },
+                        on_cancel = {},
+                        on_invalid = {
+                            android.widget.Toast.makeText(
+                                picker_context,
+                                picker_context.getString(R.string.schedule_time_in_past),
+                                android.widget.Toast.LENGTH_SHORT,
+                            ).show()
+                        },
+                    )
+                },
+                on_delete = {
+                    scheduled_sheet_item = null
+                    mail_vm.delete_scheduled(scheduled_item.id)
                 },
             )
         }
@@ -1796,7 +1899,6 @@ fun InboxScreen(
         }
 
         if (show_bulk_label_sheet) {
-            val tag_items = org.astermail.android.labels.tag_rows(settings_state.tags)
             val selected = selected_email_ids().toSet()
             val selected_items = inbox_state.items.filter { it.id in selected }
             val applied_tags = if (selected_items.isEmpty()) {
@@ -1804,13 +1906,15 @@ fun InboxScreen(
             } else {
                 selected_items.map { it.tag_tokens.toSet() }.reduce { acc, tokens -> acc intersect tokens }
             }
+            val tag_items = org.astermail.android.labels.tag_rows(settings_state.tags, applied_tags)
+            val unknown_label = stringResource(R.string.unknown)
             tag_picker_sheet(
                 title = stringResource(R.string.edit_labels),
                 empty_message = stringResource(R.string.no_labels_yet_create),
                 items = tag_items,
                 on_close = { show_bulk_label_sheet = false },
                 on_pick = { picked ->
-                    val display = picked.encrypted_name.takeIf { it.isNotBlank() } ?: picked.tag_token
+                    val display = org.astermail.android.labels.tag_display_name(picked, unknown_label)
                     show_bulk_label_sheet = false
                     if (picked.tag_token in applied_tags) {
                         unlabel_selected(picked.tag_token, display)
@@ -1844,6 +1948,29 @@ fun InboxScreen(
             )
         }
 
+        if (show_bulk_delete_permanent_dialog) {
+            org.astermail.android.design.components.AsterAlertDialog(
+                on_dismiss = { show_bulk_delete_permanent_dialog = false },
+                title = stringResource(R.string.confirm_delete_permanent_title),
+                message = stringResource(
+                    if (bulk_delete_permanent_is_scope) R.string.empty_trash_confirm
+                    else R.string.confirm_delete_permanent_message,
+                ),
+                confirm_label = stringResource(R.string.swipe_delete_forever),
+                cancel_label = stringResource(R.string.cancel),
+                confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
+                on_confirm = {
+                    show_bulk_delete_permanent_dialog = false
+                    if (bulk_delete_permanent_is_scope) {
+                        mail_vm.empty_trash()
+                        exit_select_mode()
+                    } else {
+                        apply_selection_action("delete_permanent")
+                    }
+                },
+            )
+        }
+
         if (show_empty_trash_dialog) {
             org.astermail.android.design.components.AsterAlertDialog(
                 on_dismiss = { show_empty_trash_dialog = false },
@@ -1864,6 +1991,10 @@ fun InboxScreen(
             val pending_ids = confirm_item_ids_pending
             val pending_thread = confirm_thread_id_pending
             fun dismiss_confirm() {
+                if (pending_thread != null) {
+                    swipe_reset_thread_id = pending_thread
+                    swipe_reset_nonce += 1
+                }
                 confirm_action_pending = null
                 confirm_item_ids_pending = emptyList()
                 confirm_thread_id_pending = null
@@ -1889,7 +2020,11 @@ fun InboxScreen(
                 confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
                 on_confirm = {
                     if (pending_thread != null) {
-                        execute_swipe_action(pending_action, pending_ids, mail_vm, emails, pending_thread, current_folder)
+                        execute_swipe_action(
+                            pending_action, pending_ids, mail_vm, emails, pending_thread, current_folder,
+                            on_read_mutation = { mutated -> mutated.forEach { note_read_mutation(it) } },
+                            on_star_mutation = { mutated -> mutated.forEach { note_star_mutation(it) } },
+                        )
                     }
                     dismiss_confirm()
                 },
@@ -1986,7 +2121,7 @@ private fun folder_tree_dropdown_items(
                                 node.name,
                             ),
                             tint = colors.text_muted,
-                            modifier = Modifier.size(16.dp),
+                            modifier = Modifier.size(16.dp).mirror_in_rtl(),
                         )
                     }
                 } else {
@@ -2420,6 +2555,7 @@ internal fun select_mode_bottom_bar(
     on_action: (String) -> Unit,
     on_more: () -> Unit,
     current_folder: String,
+    selection_all_starred: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
@@ -2464,6 +2600,13 @@ internal fun select_mode_bottom_bar(
                             tint = colors.danger,
                             test_tag = "sel_action_delete_permanent",
                         )
+                        bottom_select_action(
+                            icon = TablerIcons.Dots,
+                            label = stringResource(R.string.more_actions),
+                            enabled = enabled,
+                            onClick = on_more,
+                            test_tag = "sel_action_more",
+                        )
                     }
                     "archive" -> {
                         bottom_select_action(
@@ -2495,6 +2638,13 @@ internal fun select_mode_bottom_bar(
                             tint = colors.danger,
                             test_tag = "sel_action_trash",
                         )
+                        bottom_select_action(
+                            icon = TablerIcons.Dots,
+                            label = stringResource(R.string.more_actions),
+                            enabled = enabled,
+                            onClick = on_more,
+                            test_tag = "sel_action_more",
+                        )
                     }
                     "spam" -> {
                         bottom_select_action(
@@ -2519,10 +2669,17 @@ internal fun select_mode_bottom_bar(
                             tint = colors.danger,
                             test_tag = "sel_action_trash",
                         )
+                        bottom_select_action(
+                            icon = TablerIcons.Dots,
+                            label = stringResource(R.string.more_actions),
+                            enabled = enabled,
+                            onClick = on_more,
+                            test_tag = "sel_action_more",
+                        )
                     }
                     else -> {
                         custom_actions.forEach { action_id ->
-                            val action = selection_toolbar_action_by_id(action_id) ?: return@forEach
+                            val action = selection_toolbar_action_for(action_id, selection_all_starred) ?: return@forEach
                             bottom_select_action(
                                 icon = action.icon,
                                 label = stringResource(action.label_res),
@@ -2600,6 +2757,8 @@ internal fun selection_overflow_sheet(
     on_action: (String) -> Unit,
     on_customize: (() -> Unit)? = null,
     show_unsnooze: Boolean = false,
+    current_folder: String = "inbox",
+    selection_all_starred: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
     val state = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -2616,19 +2775,46 @@ internal fun selection_overflow_sheet(
                 .navigationBarsPadding()
                 .padding(top = AsterSpacing.xs),
         ) {
-            overflow_sheet_row("star", TablerIcons.Star, stringResource(R.string.star), colors.text_primary) { on_action("star") }
+            val in_trash = current_folder == "trash"
+            val in_spam = current_folder == "spam"
+            val in_archive = current_folder == "archive"
+            overflow_sheet_row(
+                "star",
+                if (selection_all_starred) TablerIcons.StarOff else TablerIcons.Star,
+                if (selection_all_starred) stringResource(R.string.unstar) else stringResource(R.string.star),
+                colors.text_primary,
+            ) { on_action("star") }
             overflow_sheet_row("read", TablerIcons.MailOpened, stringResource(R.string.mark_as_read), colors.text_primary) { on_action("read") }
             overflow_sheet_row("unread", TablerIcons.Mail, stringResource(R.string.mark_as_unread), colors.text_primary) { on_action("unread") }
-            overflow_sheet_row("archive", TablerIcons.Archive, stringResource(R.string.archive_action), colors.text_primary) { on_action("archive") }
-            overflow_sheet_row("snooze", TablerIcons.Clock, stringResource(R.string.snooze), colors.text_primary) { on_action("snooze") }
+            if (in_trash) {
+                overflow_sheet_row("restore", TablerIcons.Inbox, stringResource(R.string.swipe_restore), colors.text_primary) { on_action("restore") }
+            }
+            if (in_spam) {
+                overflow_sheet_row("not_spam", TablerIcons.Inbox, stringResource(R.string.swipe_not_spam), colors.text_primary) { on_action("not_spam") }
+            }
+            if (in_archive) {
+                overflow_sheet_row("unarchive", TablerIcons.Inbox, stringResource(R.string.swipe_restore), colors.text_primary) { on_action("unarchive") }
+            }
+            if (!in_trash && !in_spam && !in_archive) {
+                overflow_sheet_row("archive", TablerIcons.Archive, stringResource(R.string.archive_action), colors.text_primary) { on_action("archive") }
+            }
+            if (!in_trash && !in_spam) {
+                overflow_sheet_row("snooze", TablerIcons.Clock, stringResource(R.string.snooze), colors.text_primary) { on_action("snooze") }
+            }
             if (show_unsnooze) {
                 overflow_sheet_row("unsnooze", TablerIcons.BellOff, stringResource(R.string.unsnooze), colors.text_primary) { on_action("unsnooze") }
             }
             overflow_sheet_row("folder", TablerIcons.Folder, stringResource(R.string.move_to_folder), colors.text_primary) { on_action("folder") }
             overflow_sheet_row("label", TablerIcons.Tag, stringResource(R.string.add_label), colors.text_primary) { on_action("label") }
             AsterDivider()
-            overflow_sheet_row("trash", TablerIcons.Trash, stringResource(R.string.delete_action), colors.danger) { on_action("trash") }
-            overflow_sheet_row("spam", TablerIcons.Ban, stringResource(R.string.report_spam), colors.danger) { on_action("spam") }
+            if (in_trash) {
+                overflow_sheet_row("delete_permanent", TablerIcons.TrashOff, stringResource(R.string.swipe_delete_forever), colors.danger) { on_action("delete_permanent") }
+            } else {
+                overflow_sheet_row("trash", TablerIcons.Trash, stringResource(R.string.delete_action), colors.danger) { on_action("trash") }
+            }
+            if (!in_spam) {
+                overflow_sheet_row("spam", TablerIcons.Ban, stringResource(R.string.report_spam), colors.danger) { on_action("spam") }
+            }
             if (on_customize != null) {
                 AsterDivider()
                 overflow_sheet_row("customize", TablerIcons.Settings, stringResource(R.string.customize_toolbar), colors.text_secondary, on_customize)
@@ -2670,6 +2856,138 @@ private fun overflow_sheet_row(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun scheduled_actions_sheet(
+    item: org.astermail.android.mail.InboxItem,
+    on_close: () -> Unit,
+    on_send_now: () -> Unit,
+    on_reschedule: () -> Unit,
+    on_delete: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val state = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    androidx.compose.material3.ModalBottomSheet(
+        onDismissRequest = on_close,
+        sheetState = state,
+        containerColor = colors.bg_card,
+        tonalElevation = 0.dp,
+        dragHandle = { org.astermail.android.design.components.AsterDragHandle() },
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(top = AsterSpacing.xs),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AsterSpacing.xl, vertical = AsterSpacing.sm),
+            ) {
+                Text(
+                    text = item.subject.ifBlank { stringResource(R.string.scheduled_no_subject) },
+                    color = colors.text_primary,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (item.to_addresses.isNotEmpty()) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = stringResource(R.string.scheduled_to, item.to_addresses.joinToString(", ")),
+                        color = colors.text_secondary,
+                        fontSize = 13.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = stringResource(R.string.scheduled_send_time, format_scheduled_time(item.timestamp)),
+                    color = colors.text_secondary,
+                    fontSize = 13.sp,
+                )
+                if (item.raw_item.send_status == "failed") {
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text = stringResource(R.string.scheduled_send_failed),
+                        color = colors.danger,
+                        fontSize = 13.sp,
+                    )
+                }
+            }
+            AsterDivider()
+            overflow_sheet_row("scheduled_send_now", TablerIcons.Send, stringResource(R.string.scheduled_send_now), colors.text_primary, on_send_now)
+            overflow_sheet_row("scheduled_reschedule", TablerIcons.Clock, stringResource(R.string.scheduled_reschedule), colors.text_primary, on_reschedule)
+            AsterDivider()
+            overflow_sheet_row("scheduled_delete", TablerIcons.Trash, stringResource(R.string.scheduled_delete), colors.danger, on_delete)
+            Spacer(Modifier.height(AsterSpacing.md))
+        }
+    }
+}
+
+internal fun format_scheduled_time(raw: String): String {
+    val trimmed = raw.trim()
+    if (trimmed.isEmpty()) return ""
+    val instant = runCatching { java.time.OffsetDateTime.parse(trimmed).toInstant() }
+        .recoverCatching { java.time.Instant.parse(trimmed) }
+        .getOrNull() ?: return trimmed
+    return runCatching {
+        java.time.format.DateTimeFormatter
+            .ofLocalizedDateTime(java.time.format.FormatStyle.MEDIUM, java.time.format.FormatStyle.SHORT)
+            .withZone(AsterTimePreferences.account_zone_id())
+            .format(instant)
+    }.getOrDefault(trimmed)
+}
+
+internal fun show_reschedule_picker(
+    context: android.content.Context,
+    theme_res: Int,
+    initial_iso: String,
+    on_picked: (String) -> Unit,
+    on_cancel: () -> Unit,
+    on_invalid: () -> Unit = on_cancel,
+) {
+    val initial = runCatching { java.time.OffsetDateTime.parse(initial_iso).toInstant() }
+        .recoverCatching { java.time.Instant.parse(initial_iso) }
+        .getOrNull()
+    val calendar = AsterTimePreferences.account_calendar()
+    if (initial != null) calendar.timeInMillis = initial.toEpochMilli()
+    val date_picker = android.app.DatePickerDialog(
+        context,
+        theme_res,
+        { _, year, month, day ->
+            val time_picker = android.app.TimePickerDialog(
+                context,
+                theme_res,
+                { _, hour, minute ->
+                    val cal = AsterTimePreferences.account_calendar()
+                    cal.set(year, month, day, hour, minute, 0)
+                    cal.set(java.util.Calendar.MILLISECOND, 0)
+                    if (cal.timeInMillis <= System.currentTimeMillis()) {
+                        on_invalid()
+                    } else {
+                        on_picked(java.time.Instant.ofEpochMilli(cal.timeInMillis).toString())
+                    }
+                },
+                calendar.get(java.util.Calendar.HOUR_OF_DAY),
+                calendar.get(java.util.Calendar.MINUTE),
+                AsterTimePreferences.use_24h,
+            )
+            time_picker.setOnCancelListener { on_cancel() }
+            time_picker.show()
+        },
+        calendar.get(java.util.Calendar.YEAR),
+        calendar.get(java.util.Calendar.MONTH),
+        calendar.get(java.util.Calendar.DAY_OF_MONTH),
+    )
+    date_picker.datePicker.minDate = System.currentTimeMillis()
+    date_picker.setOnCancelListener { on_cancel() }
+    date_picker.show()
+}
+
 @Composable
 private fun swipeable_thread_row(
     thread: ThreadRow,
@@ -2693,6 +3011,7 @@ private fun swipeable_thread_row(
     is_last: Boolean = true,
     user_prefs: org.astermail.android.api.preferences.UserPreferences? = null,
     list_scrolling: () -> Boolean = { false },
+    swipe_reset_token: Int = 0,
 ) {
     swipe_action_row(
         start_action = swipe_start_action,
@@ -2714,6 +3033,7 @@ private fun swipeable_thread_row(
         ),
         haptic_enabled = haptic_enabled,
         list_scrolling = list_scrolling,
+        reset_token = swipe_reset_token,
     ) {
         ThreadInboxRow(
             thread = thread,
@@ -2778,6 +3098,7 @@ private fun execute_swipe_action(
     thread_id: String,
     current_folder: String,
     on_read_mutation: (List<String>) -> Unit = {},
+    on_star_mutation: (List<String>) -> Unit = {},
     on_snooze: (List<String>) -> Unit = {},
 ) {
     when (action) {
@@ -2809,12 +3130,16 @@ private fun execute_swipe_action(
         }
         "snooze" -> on_snooze(ids)
         "star" -> {
-            ids.forEach { mail_vm.toggle_star(it) }
+            val target = !emails.filter { (it.thread_id == thread_id || it.id == thread_id) }.all { it.is_starred }
+            mail_vm.toggle_thread_star(ids, target)
+            val mutated = ArrayList<String>()
             for (i in emails.indices) {
-                if ((emails[i].thread_id == thread_id || emails[i].id == thread_id)) {
-                    emails[i] = emails[i].copy(is_starred = !emails[i].is_starred)
+                if ((emails[i].thread_id == thread_id || emails[i].id == thread_id) && emails[i].is_starred != target) {
+                    emails[i] = emails[i].copy(is_starred = target)
+                    mutated.add(emails[i].id)
                 }
             }
+            on_star_mutation(mutated)
         }
         "spam" -> {
             if (current_folder == "spam") return
@@ -2857,7 +3182,7 @@ private data class SwipeConfig(
 )
 
 @Composable
-private fun inbox_error_state(message: String, on_retry: () -> Unit) {
+internal fun inbox_error_state(message: String, on_retry: () -> Unit) {
     val colors = AsterMaterial.colors
     Column(
         modifier = Modifier.fillMaxSize().padding(AsterSpacing.lg),
@@ -2910,7 +3235,7 @@ private fun spam_retention_banner(days: Int) {
             modifier = Modifier.size(18.dp),
         )
         Text(
-            text = stringResource(R.string.spam_auto_delete_notice, days),
+            text = pluralStringResource(R.plurals.spam_auto_delete_notice, days, days),
             color = colors.text_muted,
             fontSize = 12.sp,
             lineHeight = 16.sp,
@@ -2919,7 +3244,10 @@ private fun spam_retention_banner(days: Int) {
 }
 
 @Composable
-private fun empty_category_state(category_label: String? = null) {
+private fun empty_category_state(
+    category_label: String? = null,
+    on_load_more: (() -> Unit)? = null,
+) {
     val colors = AsterMaterial.colors
     Column(
         modifier = Modifier
@@ -2957,6 +3285,19 @@ private fun empty_category_state(category_label: String? = null) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.text_muted,
             )
+            if (on_load_more != null) {
+                TextButton(
+                    onClick = on_load_more,
+                    modifier = Modifier.testTag("category_load_more"),
+                ) {
+                    Text(
+                        text = stringResource(R.string.check_for_older_messages),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.accent_blue,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+            }
         }
     }
 }
@@ -3112,6 +3453,7 @@ fun emails_fingerprint_of(emails: List<Email>): Int {
         hash = 31 * hash + e.label_names.hashCode()
         hash = 31 * hash + e.label_colors.hashCode()
         hash = 31 * hash + e.label_icons.hashCode()
+        hash = 31 * hash + e.category.hashCode()
     }
     return hash
 }

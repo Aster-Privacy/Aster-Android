@@ -90,9 +90,13 @@ class RecoveryModelsTest {
     }
 
     @Test
-    fun `InitiateEmailRecoveryRequest stores email`() {
-        val request = InitiateEmailRecoveryRequest(email = "alice@astermail.org")
-        assertEquals("alice@astermail.org", request.email)
+    fun `InitiateEmailRecoveryRequest stores username and domain`() {
+        val request = InitiateEmailRecoveryRequest(
+            username = "alice",
+            email_domain = "astermail.org",
+        )
+        assertEquals("alice", request.username)
+        assertEquals("astermail.org", request.email_domain)
     }
 
     @Test
