@@ -1324,6 +1324,7 @@
     <string name="scan_failed">Échec de l\'analyse</string>
     <string name="toast_unsubscribed">Désabonné</string>
     <string name="unsubscribe_failed">Échec du désabonnement</string>
+    <string name="unsubscribe_manual_required">Cet expéditeur ne prend pas en charge la désinscription automatique. Le lien dans l’e-mail vous permet de le faire vous-même.</string>
     <string name="bulk_unsubscribe_failed">Échec du désabonnement groupé</string>
     <plurals name="unsubscribed_count">
         <item quantity="one">%d expéditeur désabonné</item>
@@ -2279,6 +2280,8 @@
     <string name="storage_plan_section">Votre formule</string>
     <string name="storage_plan_row">Formule</string>
     <string name="storage_included_row">Inclus dans la formule</string>
+    <string name="storage_family_share_row">Votre part du forfait famille</string>
+    <string name="storage_family_share_note">Votre forfait famille comprend %1$s au total. Voici la part qui vous est réservée.</string>
     <string name="storage_addons_row">Stockage supplémentaire</string>
     <string name="storage_total_row">Stockage total</string>
     <string name="storage_available_row">Encore disponible</string>

@@ -1269,6 +1269,7 @@
     <string name="scan_failed">Scan fehlgeschlagen</string>
     <string name="toast_unsubscribed">Abgemeldet</string>
     <string name="unsubscribe_failed">Abmeldung fehlgeschlagen</string>
+    <string name="unsubscribe_manual_required">Dieser Absender unterstützt keine automatische Abmeldung. Über den Link in der E-Mail kannst du dich selbst abmelden.</string>
     <string name="bulk_unsubscribe_failed">Massenabmeldung fehlgeschlagen</string>
     <plurals name="unsubscribed_count">
         <item quantity="one">%d Absender abgemeldet</item>
@@ -1779,6 +1780,8 @@
     <string name="storage_plan_section">Dein Tarif</string>
     <string name="storage_plan_row">Tarif</string>
     <string name="storage_included_row">Im Tarif enthalten</string>
+    <string name="storage_family_share_row">Dein Anteil am Familientarif</string>
+    <string name="storage_family_share_note">Der Familientarif umfasst insgesamt %1$s. Das ist der für dich reservierte Anteil.</string>
     <string name="storage_addons_row">Zusatzspeicher</string>
     <string name="storage_total_row">Gesamtspeicher</string>
     <string name="storage_available_row">Noch verfügbar</string>

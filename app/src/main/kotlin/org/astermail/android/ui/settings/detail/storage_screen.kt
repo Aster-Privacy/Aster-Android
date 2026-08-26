@@ -238,20 +238,6 @@ fun StorageScreen(
                             )
                         }
                     }
-                    Spacer(Modifier.height(AsterSpacing.sm))
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = stringResource(R.string.storage_used_label, used),
-                            color = colors.text_muted,
-                            fontSize = 12.sp,
-                            modifier = Modifier.weight(1f),
-                        )
-                        Text(
-                            text = stringResource(R.string.storage_free_label, format_bytes(free_bytes)),
-                            color = colors.text_muted,
-                            fontSize = 12.sp,
-                        )
-                    }
                 }
             }
             if (over_limit || fraction >= 0.9f) {
@@ -290,6 +276,8 @@ fun StorageScreen(
                 total_bytes = total_bytes,
                 addon_bytes = storage?.addon_bytes ?: 0L,
                 free_bytes = free_bytes,
+                family_allocation_bytes = storage?.family_allocation_bytes ?: 0L,
+                plan_limit_bytes = storage?.plan_limit_bytes ?: 0L,
             )
             storage_distribution_section(stats, on_open_folder)
             storage_mailbox_section(stats, used_bytes)

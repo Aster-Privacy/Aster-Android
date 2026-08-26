@@ -1267,6 +1267,7 @@
     <string name="scan_failed">스캔에 실패했습니다</string>
     <string name="toast_unsubscribed">구독이 취소되었습니다</string>
     <string name="unsubscribe_failed">구독 취소에 실패했습니다</string>
+    <string name="unsubscribe_manual_required">이 발신자는 자동 수신 거부를 지원하지 않습니다. 메일에 있는 링크에서 직접 해지할 수 있습니다.</string>
     <string name="bulk_unsubscribe_failed">일괄 구독 취소에 실패했습니다</string>
     <plurals name="unsubscribed_count">
         <item quantity="other">발신자 %d명 구독 취소</item>
@@ -1775,6 +1776,8 @@
     <string name="storage_plan_section">내 요금제</string>
     <string name="storage_plan_row">요금제</string>
     <string name="storage_included_row">요금제 기본 용량</string>
+    <string name="storage_family_share_row">가족 요금제에서 내 몫</string>
+    <string name="storage_family_share_note">가족 요금제의 총 용량은 %1$s입니다. 이 중 이만큼이 회원님에게 할당되어 있습니다.</string>
     <string name="storage_addons_row">추가 저장용량</string>
     <string name="storage_total_row">전체 저장용량</string>
     <string name="storage_available_row">남은 용량</string>

@@ -1492,6 +1492,8 @@
     <string name="storage_plan_section">Your plan</string>
     <string name="storage_plan_row">Plan</string>
     <string name="storage_included_row">Included with plan</string>
+    <string name="storage_family_share_row">Your share of the family plan</string>
+    <string name="storage_family_share_note">Your family plan includes %1$s in total. This is the part set aside for you.</string>
     <string name="storage_addons_row">Storage add-ons</string>
     <string name="storage_total_row">Total storage</string>
     <string name="storage_available_row">Still available</string>

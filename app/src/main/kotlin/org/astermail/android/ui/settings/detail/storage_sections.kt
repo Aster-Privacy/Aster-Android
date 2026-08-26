@@ -272,8 +272,17 @@ internal fun storage_plan_section(
     total_bytes: Long,
     addon_bytes: Long,
     free_bytes: Long,
+    family_allocation_bytes: Long,
+    plan_limit_bytes: Long,
 ) {
+    val is_family_share = family_allocation_bytes > 0
     val included = (total_bytes - addon_bytes).coerceAtLeast(0L)
+    val base_label = if (is_family_share) {
+        stringResource(R.string.storage_family_share_row)
+    } else {
+        stringResource(R.string.storage_included_row)
+    }
+    val show_base_row = is_family_share || addon_bytes > 0
     section_label(stringResource(R.string.storage_plan_section))
     AsterCard(modifier = Modifier.fillMaxWidth()) {
         stat_row(
@@ -281,11 +290,13 @@ internal fun storage_plan_section(
             value = plan_name ?: stringResource(R.string.plan_free),
             emphasis = true,
         )
-        AsterDivider()
-        stat_row(
-            label = stringResource(R.string.storage_included_row),
-            value = format_bytes(included),
-        )
+        if (show_base_row) {
+            AsterDivider()
+            stat_row(
+                label = base_label,
+                value = format_bytes(included),
+            )
+        }
         if (addon_bytes > 0) {
             AsterDivider()
             stat_row(
@@ -293,15 +304,28 @@ internal fun storage_plan_section(
                 value = format_bytes(addon_bytes),
             )
         }
-        AsterDivider()
-        stat_row(
-            label = stringResource(R.string.storage_total_row),
-            value = format_bytes(total_bytes),
-        )
+        if (!show_base_row || addon_bytes > 0) {
+            AsterDivider()
+            stat_row(
+                label = stringResource(R.string.storage_total_row),
+                value = format_bytes(total_bytes),
+            )
+        }
         AsterDivider()
         stat_row(
             label = stringResource(R.string.storage_available_row),
             value = format_bytes(free_bytes),
+        )
+    }
+    if (is_family_share && plan_limit_bytes > family_allocation_bytes) {
+        v_gap(AsterSpacing.sm)
+        Text(
+            text = stringResource(
+                R.string.storage_family_share_note,
+                format_bytes(plan_limit_bytes),
+            ),
+            color = AsterMaterial.colors.text_muted,
+            fontSize = 12.sp,
         )
     }
     v_gap(AsterSpacing.lg)

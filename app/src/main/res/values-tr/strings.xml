@@ -1268,6 +1268,7 @@
     <string name="scan_failed">Tarama başarısız</string>
     <string name="toast_unsubscribed">Abonelik iptal edildi</string>
     <string name="unsubscribe_failed">Abonelik iptali başarısız</string>
+    <string name="unsubscribe_manual_required">Bu gönderen otomatik abonelik iptalini desteklemiyor. E-postadaki bağlantı ile kendiniz iptal edebilirsiniz.</string>
     <string name="bulk_unsubscribe_failed">Toplu abonelik iptali başarısız</string>
     <plurals name="unsubscribed_count">
         <item quantity="one">%d göndericinin aboneliği iptal edildi</item>
@@ -1778,6 +1779,8 @@
     <string name="storage_plan_section">Planın</string>
     <string name="storage_plan_row">Plan</string>
     <string name="storage_included_row">Plana dahil</string>
+    <string name="storage_family_share_row">Aile planındaki payınız</string>
+    <string name="storage_family_share_note">Aile planınız toplam %1$s içerir. Bu, size ayrılan bölümdür.</string>
     <string name="storage_addons_row">Ek depolama</string>
     <string name="storage_total_row">Toplam depolama</string>
     <string name="storage_available_row">Kalan alan</string>
