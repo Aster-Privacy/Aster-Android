@@ -2949,4 +2949,8 @@
     <string name="domain_purchase_manage_auto_renew_note">Bu alan adı otomatik olarak yenilenmez. Elinde tutmak için bitiş tarihinden önce yenile.</string>
     <string name="domain_purchase_manage_support_note">Bu alan adını başka bir kayıt şirketine taşımak veya geri ödeme sormak için destek ile iletişime geç.</string>
     <string name="domain_purchase_n_years">%1$d yıl</string>
+    <string name="twin_address_title">Eşleşen adresiniz</string>
+    <string name="twin_address_reserved_description">%1$s hesabınız için ayrıldı, bu yüzden başka kimse kaydedemez. Bu adresten gönderip almak istediğinizde takma ad olarak oluşturun.</string>
+    <string name="twin_address_available_description">%1$s, diğer Aster alan adındaki eşleşen adrestir. Bu adresten gönderip almak için takma ad olarak oluşturun.</string>
+    <string name="twin_address_create">Takma ad oluştur</string>
 </resources>

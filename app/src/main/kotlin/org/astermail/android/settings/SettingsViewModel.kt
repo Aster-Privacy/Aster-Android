@@ -215,6 +215,7 @@ data class SettingsUiState(
     val deleted_aliases_loading: Boolean = false,
     val alias_preferences: AliasPreferences? = null,
     val alias_preferences_load_failed: Boolean = false,
+    val twin_address: org.astermail.android.api.settings.TwinAddressResponse? = null,
     val expanded_alias_ids: Set<String> = emptySet(),
     val alias_details: Map<String, AliasDetailState> = emptyMap(),
     val mail_rules: List<org.astermail.android.api.mail_rules.MailRule> = emptyList(),
@@ -2547,6 +2548,18 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     alias_preferences_load_failed = _state.value.alias_preferences == null,
                 )
+            }
+        }
+    }
+
+    fun load_twin_address() {
+        viewModelScope.launch {
+            try {
+                _state.value = _state.value.copy(twin_address = settings_api.get_twin_address())
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_twin_address", t)
+                _state.value = _state.value.copy(twin_address = null)
             }
         }
     }

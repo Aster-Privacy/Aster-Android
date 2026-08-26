@@ -159,6 +159,7 @@ fun AliasesScreen(
     var selected_tab by remember { mutableStateOf(0) }
     var pending_delete_alias by remember { mutableStateOf<Pair<String, String>?>(null) }
     var show_create_alias by remember { mutableStateOf(false) }
+    var create_alias_prefill by remember { mutableStateOf<Pair<String, String>?>(null) }
     var show_add_domain by remember { mutableStateOf(false) }
     var expanded_domain_id by remember { mutableStateOf<String?>(null) }
     var domain_dns by remember { mutableStateOf<Map<String, List<DnsRecord>>>(emptyMap()) }
@@ -211,6 +212,7 @@ fun AliasesScreen(
         vm.load_labels(folder_type = "folder")
         vm.load_alias_preferences()
         vm.load_mail_rules()
+        vm.load_twin_address()
     }
 
     LaunchedEffect(open_create) {
@@ -258,7 +260,14 @@ fun AliasesScreen(
                     state = state,
                     context = context,
                     scope = scope,
-                    on_show_create = { show_create_alias = true },
+                    on_show_create = {
+                        create_alias_prefill = null
+                        show_create_alias = true
+                    },
+                    on_claim_twin = { local_part, domain ->
+                        create_alias_prefill = local_part to domain
+                        show_create_alias = true
+                    },
                     restore_locked = alias_restore_locked,
                     export_locked = alias_export_locked,
                     instant_delete_locked = instant_alias_delete_locked,
@@ -317,9 +326,13 @@ fun AliasesScreen(
 
     if (show_create_alias) {
         create_alias_dialog(
-            on_dismiss = { show_create_alias = false },
+            on_dismiss = {
+                show_create_alias = false
+                create_alias_prefill = null
+            },
             on_create = { local_part, domain, token, display_name, note ->
                 show_create_alias = false
+                create_alias_prefill = null
                 scope.launch {
                     val domain_id = domain.domain_id
                     if (domain_id == null) {
@@ -327,8 +340,11 @@ fun AliasesScreen(
                     } else {
                         vm.create_domain_address_now(local_part, domain_id, domain.domain_name, token, display_name)
                     }
+                    vm.load_twin_address()
                 }
             },
+            initial_local_part = create_alias_prefill?.first.orEmpty(),
+            initial_domain = create_alias_prefill?.second,
             vm = vm,
         )
     }
@@ -401,6 +417,7 @@ private fun aliases_tab(
     context: Context,
     scope: kotlinx.coroutines.CoroutineScope,
     on_show_create: () -> Unit,
+    on_claim_twin: (String, String) -> Unit = { _, _ -> },
     restore_locked: Boolean = false,
     export_locked: Boolean = false,
     instant_delete_locked: Boolean = false,
@@ -484,6 +501,15 @@ private fun aliases_tab(
                     on_query_change = { alias_query = it },
                     placeholder = stringResource(R.string.search_aliases),
                     test_tag = "alias_search_bar",
+                )
+            }
+            val twin = state.twin_address
+            if (twin != null && (twin.state == "reserved" || twin.state == "available")) {
+                v_gap(AsterSpacing.sm)
+                twin_address_card(
+                    address = twin.address,
+                    is_reserved = twin.state == "reserved",
+                    on_claim = { on_claim_twin(twin.local_part, twin.domain) },
                 )
             }
         }
@@ -2526,12 +2552,59 @@ private fun resolve_default_alias_domain(
         ?: "astermail.org"
 
 @Composable
+private fun twin_address_card(
+    address: String,
+    is_reserved: Boolean,
+    on_claim: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val shape = RoundedCornerShape(12.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(colors.bg_secondary)
+            .border(1.dp, colors.border_secondary, shape)
+            .padding(AsterSpacing.md)
+            .testTag("twin_address_card"),
+    ) {
+        Text(
+            text = stringResource(R.string.twin_address_title),
+            color = colors.text_primary,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+        v_gap(AsterSpacing.xs)
+        Text(
+            text = stringResource(
+                if (is_reserved) R.string.twin_address_reserved_description
+                else R.string.twin_address_available_description,
+                address,
+            ),
+            color = colors.text_secondary,
+            fontSize = 13.sp,
+        )
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            TextButton(onClick = on_claim, modifier = Modifier.testTag("twin_address_create")) {
+                Text(
+                    stringResource(R.string.twin_address_create),
+                    color = colors.accent_blue,
+                    fontSize = 14.sp,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun create_alias_dialog(
     on_dismiss: () -> Unit,
     on_create: (String, AliasDomainOption, String, String?, String?) -> Unit,
     vm: SettingsViewModel,
+    initial_local_part: String = "",
+    initial_domain: String? = null,
 ) {
-    var local_part by remember { mutableStateOf("") }
+    var local_part by remember { mutableStateOf(initial_local_part) }
     var display_name by remember { mutableStateOf("") }
     var note by remember { mutableStateOf("") }
     var selected_domain by remember { mutableStateOf<AliasDomainOption?>(null) }
@@ -2546,7 +2619,7 @@ private fun create_alias_dialog(
     val available_domains = remember(settings_state.domains) {
         alias_domain_options(settings_state.domains)
     }
-    val preferred_domain = resolve_default_alias_domain(
+    val preferred_domain = initial_domain ?: resolve_default_alias_domain(
         settings_state.alias_preferences?.alias_default_domain,
         available_domains,
     )

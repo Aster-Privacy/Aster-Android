@@ -2936,4 +2936,8 @@
     <string name="domain_purchase_manage_auto_renew_note">此域名不会自动续期。若要继续使用，请在到期日前续期。</string>
     <string name="domain_purchase_manage_support_note">如需将此域名转移到其他注册商或咨询退款，请联系支持团队。</string>
     <string name="domain_purchase_n_years">%1$d 年</string>
+    <string name="twin_address_title">你的对应地址</string>
+    <string name="twin_address_reserved_description">%1$s 已为你的账户保留，其他人无法注册。想用它收发邮件时，可以将它创建为别名。</string>
+    <string name="twin_address_available_description">%1$s 是另一个 Aster 域名上的对应地址。将它创建为别名即可用它收发邮件。</string>
+    <string name="twin_address_create">创建别名</string>
 </resources>

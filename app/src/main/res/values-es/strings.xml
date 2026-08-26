@@ -2950,4 +2950,8 @@
     <string name="domain_purchase_manage_auto_renew_note">Este dominio no se renueva automáticamente. Para conservarlo, renuévalo antes de la fecha de caducidad.</string>
     <string name="domain_purchase_manage_support_note">Para transferir este dominio a otro registrador o preguntar por un reembolso, contacta con soporte.</string>
     <string name="domain_purchase_n_years">%1$d años</string>
+    <string name="twin_address_title">Tu dirección coincidente</string>
+    <string name="twin_address_reserved_description">%1$s está reservada para tu cuenta, así que nadie más puede registrarla. Créala como alias cuando quieras enviar y recibir desde ella.</string>
+    <string name="twin_address_available_description">%1$s es la dirección coincidente en el otro dominio de Aster. Créala como alias para enviar y recibir desde ella.</string>
+    <string name="twin_address_create">Crear alias</string>
 </resources>

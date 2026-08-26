@@ -2949,4 +2949,8 @@
     <string name="domain_purchase_manage_auto_renew_note">Questo dominio non si rinnova automaticamente. Per conservarlo, rinnovalo prima della data di scadenza.</string>
     <string name="domain_purchase_manage_support_note">Per trasferire questo dominio a un altro registrar o chiedere un rimborso, contatta l\'assistenza.</string>
     <string name="domain_purchase_n_years">%1$d anni</string>
+    <string name="twin_address_title">Il tuo indirizzo corrispondente</string>
+    <string name="twin_address_reserved_description">%1$s è riservato al tuo account, quindi nessun altro può registrarlo. Crealo come alias quando vuoi inviare e ricevere da questo indirizzo.</string>
+    <string name="twin_address_available_description">%1$s è l’indirizzo corrispondente sull’altro dominio Aster. Crealo come alias per inviare e ricevere da questo indirizzo.</string>
+    <string name="twin_address_create">Crea alias</string>
 </resources>
