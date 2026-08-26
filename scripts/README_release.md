@@ -22,15 +22,25 @@ Add `--dry-run` to build, sign, and verify without pushing or publishing anythin
 | CI gate | Refuses to start if the latest checks on `origin/main` are failing. Override with `ASTER_SKIP_CI_CHECK=1` only when you know why. |
 | Clean clone | Clones `origin/main` into `../.release_work`. Your working tree is never packaged, so another session's uncommitted edits can't reach an APK. |
 | Bump | Sets `versionName` and `versionCode` in `app/build.gradle.kts`, commits, tags. |
-| Build | `assembleFullRelease bundleFullRelease` first, then `assembleFdroidRelease` in a **separate** gradle invocation. |
+| Build | `assembleFullRelease bundleFullRelease` locally. The fdroid APK is **not** built here. |
+| F-Droid APK | Waits for the `release_fdroid` run on the new tag, downloads its unsigned Linux-built APK, checks the versionCode, and signs it locally. |
 | Sign | Signs the fdroid APK with `apksigner --alignment-preserved`. Never runs `zipalign`. |
 | Verify | Both APKs must carry cert SHA-256 `88b0a8a6…`, and the fdroid APK must have zero `0xd935` padded entries. |
 | Publish | Creates the GitHub release with all three APK names, then re-uploads `Aster-Mail.apk` to the current Aster-Mail **Latest** release, which is what astermail.org serves. |
 | Play | Uploads the AAB with `fastlane supply` if a service account is configured, otherwise copies the AAB to `~/Downloads` and says so. |
 | Audit | Runs `Claude/scripts/audit_android_channels.sh` and prints the per-channel result. |
 
-Why two gradle invocations: `is_fdroid_build` is true when **any** task name contains `fdroid`, so
-`assembleFullRelease assembleFdroidRelease` in one call silently strips signing from the full flavor.
+## Why the F-Droid APK is built in CI
+
+F-Droid rebuilds the app from source on Linux and byte-compares the result against the APK on the
+tag. A Windows build never matches that rebuild, so an APK built on the release machine fails their
+reproducibility check and the recipe cannot be published. `release_fdroid.yml` builds the fdroid
+flavor on `ubuntu-latest` and uploads it unsigned; `release.sh` downloads that artifact and signs it
+here. The key never goes near CI.
+
+Never add an fdroid task to the local gradle invocation. `is_fdroid_build` is true when **any** task
+name contains `fdroid`, so `assembleFullRelease assembleFdroidRelease` in one call silently strips
+signing from the full flavor.
 
 ## Why signing is local and not in CI
 
