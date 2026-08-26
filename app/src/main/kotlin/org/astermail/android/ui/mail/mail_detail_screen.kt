@@ -168,7 +168,9 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
 import org.astermail.android.looks_encrypted
-import org.astermail.android.api.subscriptions.ProxyUnsubscribeRequest
+import org.astermail.android.subscriptions.MailingListsViewModel
+import org.astermail.android.ui.common.TopToastState
+import org.astermail.android.ui.common.app_toast
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterColors
 import org.astermail.android.design.AsterMaterial
@@ -449,6 +451,7 @@ fun MailDetailScreen(
     on_navigate: ((String) -> Unit)? = null,
     mail_vm: MailViewModel = hiltViewModel(),
     settings_vm: SettingsViewModel = shared_settings_view_model(),
+    subscriptions_vm: MailingListsViewModel = hiltViewModel(),
 ) {
     val colors = AsterMaterial.colors
     val density = LocalDensity.current
@@ -1216,19 +1219,38 @@ fun MailDetailScreen(
                                 if (!url.startsWith("aster:") || is_system_sender) pending_link = url
                             },
                             on_image_click = { src -> lightbox_src = src },
-                            on_unsubscribe = { url ->
+                            on_unsubscribe = { info ->
                                 dismissed_unsub_ids = dismissed_unsub_ids + msg.id
                                 scope.launch {
-                                    if (!is_safe_unsubscribe_url(url)) {
+                                    val outcome = execute_unsubscribe(info) { request ->
+                                        subscriptions_vm.proxy_unsubscribe(request)
+                                    }
+                                    if (outcome == UnsubscribeOutcome.unsubscribed) {
+                                        show_toast(context.getString(R.string.toast_unsubscribed))
+                                        return@launch
+                                    }
+                                    val manual_url = get_manual_unsubscribe_url(info)
+                                        ?.takeIf { is_safe_unsubscribe_url(it) }
+                                    if (manual_url == null) {
                                         show_toast(context.getString(R.string.could_not_unsubscribe))
                                         return@launch
                                     }
-                                    try {
-                                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-                                        show_toast(context.getString(R.string.opening_unsubscribe))
-                                    } catch (_: Throwable) {
-                                        show_toast(context.getString(R.string.could_not_unsubscribe))
-                                    }
+                                    app_toast.show(
+                                        TopToastState(
+                                            message = context.getString(R.string.unsubscribe_manual_required),
+                                            undo_label = context.getString(R.string.open_unsubscribe_page),
+                                            duration_ms = 15000L,
+                                            on_undo = {
+                                                try {
+                                                    context.startActivity(
+                                                        Intent(Intent.ACTION_VIEW, Uri.parse(manual_url)),
+                                                    )
+                                                } catch (_: Throwable) {
+                                                    show_toast(context.getString(R.string.could_not_unsubscribe))
+                                                }
+                                            },
+                                        ),
+                                    )
                                 }
                             },
                             on_collapse = {
@@ -1907,7 +1929,7 @@ internal fun expanded_message(
     on_disable_low_network: () -> Unit = {},
     show_unsub: Boolean = true,
     on_dismiss_unsub: () -> Unit = {},
-    on_unsubscribe: (String) -> Unit = {},
+    on_unsubscribe: (UnsubscribeInfo) -> Unit = {},
     on_body_ready: () -> Unit = {},
     on_retry_decrypt: () -> Unit = {},
     retry_in_progress: Boolean = false,
@@ -2182,7 +2204,7 @@ internal fun expanded_message(
             if (msg.body_html != null) count_external_content(msg.body_html) else ExternalContentCounts(0, 0, 0, 0)
         }
 
-        val show_unsub_banner = show_unsub && unsub_info.has_unsubscribe && unsub_info.unsubscribe_link != null
+        val show_unsub_banner = show_unsub && unsub_info.has_unsubscribe
         val show_external_banner = external_counts.total > 0 && !allow_external
 
         AnimatedVisibility(
@@ -2194,7 +2216,7 @@ internal fun expanded_message(
                 on_track(msg.sender_email, msg.sender_name, unsub_info.unsubscribe_link)
             }
             unsubscribe_banner(
-                on_unsubscribe = { unsub_info.unsubscribe_link?.let { on_unsubscribe(it) } },
+                on_unsubscribe = { on_unsubscribe(unsub_info) },
             )
         }
 

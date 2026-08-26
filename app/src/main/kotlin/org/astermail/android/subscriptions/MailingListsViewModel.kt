@@ -35,6 +35,7 @@ import org.astermail.android.R
 import org.astermail.android.api.subscriptions.BulkUnsubscribeRequest
 import org.astermail.android.api.subscriptions.MailingListStats
 import org.astermail.android.api.subscriptions.MailingListSubscription
+import org.astermail.android.api.subscriptions.ProxyUnsubscribeRequest
 import org.astermail.android.api.subscriptions.SubscriptionsApi
 import org.astermail.android.api.subscriptions.TrackSubscriptionRequest
 import org.astermail.android.api.subscriptions.UnsubscribeRequest
@@ -126,6 +127,16 @@ class MailingListsViewModel @Inject constructor(
                     error = org.astermail.android.localized_api_error(context, t, context.getString(R.string.scan_failed)),
                 )
             }
+        }
+    }
+
+    suspend fun proxy_unsubscribe(request: ProxyUnsubscribeRequest): Boolean {
+        return try {
+            api.proxy_unsubscribe(request).success
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (_: Throwable) {
+            false
         }
     }
 

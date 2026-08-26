@@ -393,6 +393,7 @@
     <string name="open_with">Open with...</string>
     <string name="opening_unsubscribe">Opening unsubscribe page</string>
     <string name="could_not_unsubscribe">Could not unsubscribe</string>
+    <string name="unsubscribe_manual_required">This sender does not support automatic unsubscribe. The link in the email lets you do it yourself.</string>
     <string name="failed_to_load_preview">Failed to load preview</string>
     <string name="downloading_file">Downloading %s...</string>
     <string name="saved_file">Saved %s</string>
