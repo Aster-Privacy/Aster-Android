@@ -1862,6 +1862,37 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    private fun apply_move_labels(id_set: Set<String>, folder_token: String, from_label: String?) {
+        val next = { labels: List<String> ->
+            val without = if (from_label != null && from_label != folder_token) labels - from_label else labels
+            (without + folder_token).distinct()
+        }
+        _inbox_state.value = _inbox_state.value.copy(
+            items = _inbox_state.value.items.map {
+                if (it.id in id_set) it.copy(labels = next(it.labels)) else it
+            },
+        )
+        val thread = _thread_state.value
+        val thread_item = thread.item
+        if (thread_item != null && thread_item.id in id_set) {
+            _thread_state.value = thread.copy(item = thread_item.copy(labels = next(thread_item.labels)))
+        }
+    }
+
+    private fun revert_move_labels(items: List<InboxItem>) {
+        if (items.isEmpty()) return
+        val by_id = items.associate { it.id to it.labels }
+        _inbox_state.value = _inbox_state.value.copy(
+            items = _inbox_state.value.items.map { by_id[it.id]?.let { labels -> it.copy(labels = labels) } ?: it },
+        )
+        val thread = _thread_state.value
+        val thread_item = thread.item
+        val restored = thread_item?.let { by_id[it.id] }
+        if (thread_item != null && restored != null) {
+            _thread_state.value = thread.copy(item = thread_item.copy(labels = restored))
+        }
+    }
+
     fun move_to_folder_bulk(item_ids: List<String>, folder_token: String, display_name: String) {
         val ids = item_ids.filter { it != DEMO_PHISH_ITEM_ID }
         if (ids.isEmpty()) return
@@ -1871,10 +1902,12 @@ class MailViewModel @Inject constructor(
             current_folder in all_mail_folder_ids
         val previous = _inbox_state.value.items
         val removed_items = previous.filter { it.id in id_set }
+        val from_label = folder_label_token(current_folder)
         var search_removed: List<InboxItem> = emptyList()
+        apply_move_labels(id_set, folder_token, from_label)
         if (!stays_visible) {
             _inbox_state.value = _inbox_state.value.copy(
-                items = previous.filter { it.id !in id_set },
+                items = _inbox_state.value.items.filter { it.id !in id_set },
             )
             adjust_stats_for_removed(removed_items)
             search_removed = remove_search_items(ids)
@@ -1886,11 +1919,18 @@ class MailViewModel @Inject constructor(
         )
         viewModelScope.launch {
             try {
-                val failed_ids = repository.move_to_folder_bulk(ids, folder_token)
+                val failed_ids = repository.move_to_folder_bulk(ids, folder_token, from_label)
                 if (failed_ids.isEmpty()) {
+                    runCatching {
+                        search_index_manager.add_label_token(ids, folder_token)
+                        if (from_label != null && from_label != folder_token) {
+                            search_index_manager.remove_label_token(ids, from_label)
+                        }
+                    }
                     emit_toast(context.getString(R.string.moved_to_folder, display_name))
                     load_stats(force = true)
                 } else {
+                    revert_move_labels(removed_items.filter { it.id in failed_ids })
                     if (!stays_visible) {
                         undo_local_restore(removed_items.filter { it.id in failed_ids })
                         undo_search_restore(search_removed.filter { it.id in failed_ids })
@@ -3758,7 +3798,7 @@ fun org.astermail.android.storage.search.DecryptedMailEntity.to_inbox_item(): In
 )
 
 internal fun folder_matches_item(folder: String, item: InboxItem): Boolean = when (folder) {
-    "inbox" -> !item.is_trashed && !item.is_archived && !item.is_spam
+    "inbox" -> !item.is_trashed && !item.is_archived && !item.is_spam && item.labels.isEmpty()
     "starred" -> item.is_starred && !item.is_trashed
     "trash" -> item.is_trashed
     "spam" -> item.is_spam

@@ -388,6 +388,41 @@ class MailRepositoryTest {
     }
 
     @Test
+    fun `move_to_folder_bulk adds the destination label and drops the source label`() = runTest {
+        coEvery { mail_api.bulk_add_label(any()) } returns BulkLabelResponse(status = "ok", affected = 1)
+        coEvery { mail_api.bulk_remove_label(any()) } returns BulkLabelResponse(status = "ok", affected = 1)
+
+        val failed = repo.move_to_folder_bulk(listOf("m1"), "bills", "myfeed")
+
+        assertTrue(failed.isEmpty())
+        coVerify { mail_api.bulk_add_label(BulkLabelRequest(ids = listOf("m1"), label_token = "bills")) }
+        coVerify { mail_api.bulk_remove_label(BulkLabelRequest(ids = listOf("m1"), label_token = "myfeed")) }
+    }
+
+    @Test
+    fun `move_to_folder_bulk from the inbox only adds the destination label`() = runTest {
+        coEvery { mail_api.bulk_add_label(any()) } returns BulkLabelResponse(status = "ok", affected = 1)
+
+        val failed = repo.move_to_folder_bulk(listOf("m1"), "bills", null)
+
+        assertTrue(failed.isEmpty())
+        coVerify { mail_api.bulk_add_label(BulkLabelRequest(ids = listOf("m1"), label_token = "bills")) }
+        coVerify(exactly = 0) { mail_api.bulk_remove_label(any()) }
+    }
+
+    @Test
+    fun `move_to_folder_bulk keeps the source label when the destination fails`() = runTest {
+        coEvery { mail_api.bulk_add_label(any()) } throws RuntimeException("boom")
+        coEvery { mail_api.add_label_to_item(any(), any()) } throws RuntimeException("boom")
+
+        val failed = repo.move_to_folder_bulk(listOf("m1"), "bills", "myfeed")
+
+        assertEquals(setOf("m1"), failed)
+        coVerify(exactly = 0) { mail_api.bulk_remove_label(any()) }
+        coVerify(exactly = 0) { mail_api.remove_label_from_item(any(), any()) }
+    }
+
+    @Test
     fun `archive calls bulk_action with archive action`() = runTest {
         coEvery { mail_api.bulk_action(any()) } returns BulkScopeResponse(affected_count = 3)
 

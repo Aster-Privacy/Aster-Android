@@ -213,6 +213,16 @@ class SearchIndexManager @Inject constructor(
         dao.remove_tag_token(ids, token)
     }
 
+    suspend fun add_label_token(ids: List<String>, token: String) {
+        if (ids.isEmpty() || token.isBlank()) return
+        dao.add_label_token(ids, token)
+    }
+
+    suspend fun remove_label_token(ids: List<String>, token: String) {
+        if (ids.isEmpty() || token.isBlank()) return
+        dao.remove_label_token(ids, token)
+    }
+
     suspend fun clear() {
         build_job?.cancel()
         mutex.withLock {

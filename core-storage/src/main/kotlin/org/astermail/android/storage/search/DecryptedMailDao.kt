@@ -103,6 +103,21 @@ interface DecryptedMailDao {
     )
     suspend fun remove_tag_token(ids: List<String>, token: String)
 
+    @Query(
+        "UPDATE decrypted_mail_cache SET labels = CASE " +
+            "WHEN labels IS NULL OR TRIM(labels) = '' THEN :token " +
+            "WHEN instr(',' || labels || ',', ',' || :token || ',') > 0 THEN labels " +
+            "ELSE labels || ',' || :token END WHERE id IN (:ids)",
+    )
+    suspend fun add_label_token(ids: List<String>, token: String)
+
+    @Query(
+        "UPDATE decrypted_mail_cache SET labels = " +
+            "TRIM(REPLACE(',' || labels || ',', ',' || :token || ',', ','), ',') " +
+            "WHERE id IN (:ids) AND labels IS NOT NULL",
+    )
+    suspend fun remove_label_token(ids: List<String>, token: String)
+
     @Query("UPDATE decrypted_mail_cache SET is_read = :is_read WHERE id = :id")
     suspend fun update_read(id: String, is_read: Boolean)
 
