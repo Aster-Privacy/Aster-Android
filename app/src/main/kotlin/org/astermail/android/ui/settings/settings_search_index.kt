@@ -41,6 +41,10 @@ private val translation_search_titles = setOf(
     R.string.translate_my_languages_subtitle,
     R.string.translate_never_languages_label,
     R.string.translate_never_languages_subtitle,
+    R.string.translate_wifi_only_label,
+    R.string.translate_wifi_only_subtitle,
+    R.string.translation_storage_label,
+    R.string.translation_storage_subtitle,
 )
 
 private val all_settings_search_index: List<settings_index_entry> = listOf(
@@ -560,6 +564,10 @@ private val all_settings_search_index: List<settings_index_entry> = listOf(
     settings_index_entry("behavior", R.string.settings_behavior, R.string.translate_my_languages_subtitle, false),
     settings_index_entry("behavior", R.string.settings_behavior, R.string.translate_never_languages_label, false),
     settings_index_entry("behavior", R.string.settings_behavior, R.string.translate_never_languages_subtitle, false),
+    settings_index_entry("behavior", R.string.settings_behavior, R.string.translate_wifi_only_label, false),
+    settings_index_entry("behavior", R.string.settings_behavior, R.string.translate_wifi_only_subtitle, false),
+    settings_index_entry("behavior", R.string.settings_behavior, R.string.translation_storage_label, false),
+    settings_index_entry("behavior", R.string.settings_behavior, R.string.translation_storage_subtitle, false),
     settings_index_entry("behavior", R.string.settings_behavior, R.string.section_composing_replies, false),
     settings_index_entry("behavior", R.string.settings_behavior, R.string.default_reply, false),
     settings_index_entry("behavior", R.string.settings_behavior, R.string.reply_to_sender, false),

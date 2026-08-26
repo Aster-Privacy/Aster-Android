@@ -40,6 +40,9 @@ object TranslationAssets {
     private const val MAX_CACHE_BYTES = 600L * 1024L * 1024L
     private const val MAX_MODEL_BYTES = 128L * 1024L * 1024L
     private const val EVICTION_GRACE_MS = 60_000L
+    private const val REGISTRY_NAME = "registry.json"
+    private const val REGISTRY_REVISION = "3"
+    private const val MAX_REGISTRY_BYTES = 1L * 1024L * 1024L
 
     private val model_lock = Any()
 
@@ -74,7 +77,7 @@ object TranslationAssets {
         val target = File(cache_root, safe)
         synchronized(model_lock) {
             if (!target.exists() || target.length() == 0L) {
-                if (!download(safe, target)) return null
+                if (!fetch_model(context, cache_root, safe, target)) return null
                 trim_cache(cache_root)
             }
             target.setLastModified(System.currentTimeMillis())
@@ -103,28 +106,83 @@ object TranslationAssets {
         }
     }
 
-    private fun download(relative: String, target: File): Boolean {
-        val url = "$MODEL_RELAY_BASE/$relative"
+    private fun fetch_model(
+        context: Context,
+        cache_root: File,
+        safe: String,
+        target: File,
+    ): Boolean {
+        if (safe == REGISTRY_NAME) return download(safe, target, null)
+        if (TranslationDownloadPolicy.download_blocked(context)) return false
+        val expected = registry_hash(cache_root, safe) ?: return false
+        return download(safe, target, expected)
+    }
+
+    private fun registry_hash(cache_root: File, safe: String): String? {
+        val registry = File(cache_root, REGISTRY_NAME)
+        if (!registry.exists() || registry.length() == 0L) {
+            if (!download(REGISTRY_NAME, registry, null)) return null
+        }
+        if (registry.length() > MAX_REGISTRY_BYTES) return null
+        val hashes = read_registry_hashes(registry.readText()) ?: return null
+        val hash = hashes[safe]
+        if (hash == null) {
+            registry.delete()
+            return null
+        }
+        return hash
+    }
+
+    internal fun read_registry_hashes(text: String): Map<String, String>? {
+        return try {
+            val root = org.json.JSONObject(text)
+            val hashes = HashMap<String, String>()
+            for (pair in root.keys()) {
+                val entry = root.optJSONObject(pair) ?: continue
+                for (kind in entry.keys()) {
+                    val file = entry.optJSONObject(kind) ?: continue
+                    val name = file.optString("name")
+                    val hash = file.optString("expectedSha256Hash")
+                    if (name.isNotBlank() && hash.length == 64) {
+                        hashes[name] = hash.lowercase()
+                    }
+                }
+            }
+            if (hashes.isEmpty()) null else hashes
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    private fun download(relative: String, target: File, expected_hash: String?): Boolean {
+        val suffix = if (relative == REGISTRY_NAME) "?r=$REGISTRY_REVISION" else ""
+        val url = "$MODEL_RELAY_BASE/$relative$suffix"
         var connection: HttpURLConnection? = null
+        val tmp = File(target.parentFile, target.name + ".part")
         return try {
             target.parentFile?.mkdirs()
             connection = open_pinned_connection(url) ?: return false
             if (connection.responseCode != HttpURLConnection.HTTP_OK) return false
             if (connection.contentLengthLong > MAX_MODEL_BYTES) return false
-            val tmp = File(target.parentFile, target.name + ".part")
+            val digest = java.security.MessageDigest.getInstance("SHA-256")
             val copied = connection.inputStream.use { input ->
-                tmp.outputStream().use { output -> copy_capped(input, output) }
+                tmp.outputStream().use { output -> copy_capped(input, output, digest) }
             }
-            if (!copied) {
-                tmp.delete()
-                return false
-            }
+            if (!copied) return false
+            if (expected_hash != null && hex(digest.digest()) != expected_hash) return false
             tmp.renameTo(target)
         } catch (_: Throwable) {
             false
         } finally {
             connection?.disconnect()
+            if (tmp.exists()) tmp.delete()
         }
+    }
+
+    private fun hex(bytes: ByteArray): String {
+        val out = StringBuilder(bytes.size * 2)
+        for (byte in bytes) out.append("%02x".format(byte))
+        return out.toString()
     }
 
     private fun open_pinned_connection(initial_url: String): HttpURLConnection? {
@@ -155,7 +213,11 @@ object TranslationAssets {
         return null
     }
 
-    private fun copy_capped(input: java.io.InputStream, output: java.io.OutputStream): Boolean {
+    private fun copy_capped(
+        input: java.io.InputStream,
+        output: java.io.OutputStream,
+        digest: java.security.MessageDigest,
+    ): Boolean {
         val buffer = ByteArray(64 * 1024)
         var total = 0L
         while (true) {
@@ -163,6 +225,7 @@ object TranslationAssets {
             if (read < 0) return true
             total += read
             if (total > MAX_MODEL_BYTES) return false
+            digest.update(buffer, 0, read)
             output.write(buffer, 0, read)
         }
     }

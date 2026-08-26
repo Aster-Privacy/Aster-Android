@@ -36,6 +36,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -75,8 +76,11 @@ import org.astermail.android.api.preferences.UserPreferences
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterCard
+import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.translation.TranslationAssets
+import org.astermail.android.translation.TranslationDownloadPolicy
 import org.astermail.android.translation.language_display_name
 import org.astermail.android.translation.translation_language_codes
 import org.astermail.android.translation.translation_supported
@@ -208,6 +212,15 @@ fun BehaviorScreen(
     var translate_incoming by remember(prefs_loaded) { mutableStateOf(prefs?.translate_incoming ?: "off") }
     var translate_languages by remember(prefs_loaded) { mutableStateOf((prefs?.translate_languages ?: emptyList()).toSet()) }
     var translate_never by remember(prefs_loaded) { mutableStateOf((prefs?.translate_never_languages ?: emptyList()).toSet()) }
+    val context = LocalContext.current
+    var pending_translate_mode by remember { mutableStateOf<String?>(null) }
+    var translate_wifi_only by remember { mutableStateOf(TranslationDownloadPolicy.wifi_only(context)) }
+    var translate_pack_bytes by remember { mutableStateOf(0L) }
+    var translate_pack_trigger by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(translate_pack_trigger, translate_incoming) {
+        translate_pack_bytes = TranslationAssets.cached_bytes(context)
+    }
     var save_trigger by remember { mutableIntStateOf(0) }
     var loaded_signature by remember { mutableStateOf<Int?>(null) }
     var reseed_token by remember { mutableIntStateOf(0) }
@@ -489,90 +502,20 @@ fun BehaviorScreen(
                 )
             }
 
-            if (translation_supported) {
-                v_gap(AsterSpacing.lg)
-
-                section_label(stringResource(R.string.section_translation))
-                AsterCard(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = stringResource(R.string.translate_incoming_label),
-                        color = colors.text_primary,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),
-                    )
-                    Text(
-                        text = stringResource(R.string.translate_incoming_subtitle),
-                        color = colors.text_tertiary,
-                        fontSize = 13.sp,
-                        modifier = Modifier.padding(start = AsterSpacing.lg, end = AsterSpacing.lg, bottom = 4.dp),
-                    )
-                    listOf(
-                        "off" to stringResource(R.string.translate_mode_off),
-                        "ask" to stringResource(R.string.translate_mode_ask),
-                        "always" to stringResource(R.string.translate_mode_always),
-                    ).forEachIndexed { i, (id, label) ->
-                        behavior_option(label, translate_incoming == id) { translate_incoming = id; save_trigger++ }
-                        if (i < 2) AsterDivider(modifier = Modifier)
-                    }
-                }
-                if (translate_incoming != "off") {
-                    v_gap(AsterSpacing.md)
-                    AsterCard(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = stringResource(R.string.translate_my_languages_label),
-                            color = colors.text_primary,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),
-                        )
-                        Text(
-                            text = stringResource(R.string.translate_my_languages_subtitle),
-                            color = colors.text_tertiary,
-                            fontSize = 13.sp,
-                            modifier = Modifier.padding(start = AsterSpacing.lg, end = AsterSpacing.lg, bottom = 4.dp),
-                        )
-                        translation_language_codes.forEachIndexed { i, code ->
-                            behavior_option(language_display_name(code), translate_languages.contains(code)) {
-                                translate_languages = if (translate_languages.contains(code)) {
-                                    translate_languages - code
-                                } else {
-                                    translate_languages + code
-                                }
-                                save_trigger++
-                            }
-                            if (i < translation_language_codes.size - 1) AsterDivider(modifier = Modifier)
-                        }
-                    }
-                    v_gap(AsterSpacing.md)
-                    AsterCard(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = stringResource(R.string.translate_never_languages_label),
-                            color = colors.text_primary,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),
-                        )
-                        Text(
-                            text = stringResource(R.string.translate_never_languages_subtitle),
-                            color = colors.text_tertiary,
-                            fontSize = 13.sp,
-                            modifier = Modifier.padding(start = AsterSpacing.lg, end = AsterSpacing.lg, bottom = 4.dp),
-                        )
-                        translation_language_codes.forEachIndexed { i, code ->
-                            behavior_option(language_display_name(code), translate_never.contains(code)) {
-                                translate_never = if (translate_never.contains(code)) {
-                                    translate_never - code
-                                } else {
-                                    translate_never + code
-                                }
-                                save_trigger++
-                            }
-                            if (i < translation_language_codes.size - 1) AsterDivider(modifier = Modifier)
-                        }
-                    }
-                }
-            }
+            translation_settings_section(
+                context = context,
+                translate_incoming = translate_incoming,
+                translate_languages = translate_languages,
+                translate_never = translate_never,
+                wifi_only = translate_wifi_only,
+                pack_bytes = translate_pack_bytes,
+                on_request_mode = { pending_translate_mode = it },
+                on_mode_change = { translate_incoming = it; save_trigger++ },
+                on_languages_change = { translate_languages = it; save_trigger++ },
+                on_never_change = { translate_never = it; save_trigger++ },
+                on_wifi_only_change = { translate_wifi_only = it },
+                on_packs_cleared = { translate_pack_trigger++ },
+            )
 
             v_gap(AsterSpacing.lg)
 
@@ -748,4 +691,199 @@ fun BehaviorScreen(
         }
         v_gap(AsterSpacing.xxl)
     }
+
+    val confirm_mode = pending_translate_mode
+    if (confirm_mode != null) {
+        AsterAlertDialog(
+            on_dismiss = { pending_translate_mode = null },
+            title = stringResource(R.string.translate_confirm_title),
+            message = stringResource(R.string.translate_confirm_message),
+            confirm_label = stringResource(R.string.translate_confirm_enable),
+            cancel_label = stringResource(R.string.cancel),
+            on_confirm = {
+                translate_incoming = confirm_mode
+                save_trigger++
+                pending_translate_mode = null
+            },
+        )
+    }
+}
+
+@Composable
+internal fun ColumnScope.translation_settings_section(
+    context: android.content.Context,
+    translate_incoming: String,
+    translate_languages: Set<String>,
+    translate_never: Set<String>,
+    wifi_only: Boolean,
+    pack_bytes: Long,
+    on_request_mode: (String) -> Unit,
+    on_mode_change: (String) -> Unit,
+    on_languages_change: (Set<String>) -> Unit,
+    on_never_change: (Set<String>) -> Unit,
+    on_wifi_only_change: (Boolean) -> Unit,
+    on_packs_cleared: () -> Unit,
+) {
+    if (!translation_supported) return
+    val colors = AsterMaterial.colors
+            
+                v_gap(AsterSpacing.lg)
+
+                section_label(stringResource(R.string.section_translation))
+                AsterCard(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = stringResource(R.string.translate_incoming_label),
+                        color = colors.text_primary,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),
+                    )
+                    Text(
+                        text = stringResource(R.string.translate_incoming_subtitle),
+                        color = colors.text_tertiary,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(start = AsterSpacing.lg, end = AsterSpacing.lg, bottom = 4.dp),
+                    )
+                    listOf(
+                        "off" to stringResource(R.string.translate_mode_off),
+                        "ask" to stringResource(R.string.translate_mode_ask),
+                        "always" to stringResource(R.string.translate_mode_always),
+                    ).forEachIndexed { i, (id, label) ->
+                        behavior_option(label, translate_incoming == id) {
+                            if (id != "off" && translate_incoming == "off") {
+                                on_request_mode(id)
+                            } else {
+                                on_mode_change(id)
+                            }
+                        }
+                        if (i < 2) AsterDivider(modifier = Modifier)
+                    }
+                }
+                if (translate_incoming != "off") {
+                    v_gap(AsterSpacing.md)
+                    AsterCard(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = stringResource(R.string.translate_my_languages_label),
+                            color = colors.text_primary,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),
+                        )
+                        Text(
+                            text = stringResource(R.string.translate_my_languages_subtitle),
+                            color = colors.text_tertiary,
+                            fontSize = 13.sp,
+                            modifier = Modifier.padding(start = AsterSpacing.lg, end = AsterSpacing.lg, bottom = 4.dp),
+                        )
+                        translation_language_codes.forEachIndexed { i, code ->
+                            behavior_option(language_display_name(code), translate_languages.contains(code)) {
+                                on_languages_change(
+                                    if (translate_languages.contains(code)) {
+                                        translate_languages - code
+                                    } else {
+                                        translate_languages + code
+                                    },
+                                )
+                            }
+                            if (i < translation_language_codes.size - 1) AsterDivider(modifier = Modifier)
+                        }
+                    }
+                    v_gap(AsterSpacing.md)
+                    AsterCard(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = stringResource(R.string.translate_never_languages_label),
+                            color = colors.text_primary,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),
+                        )
+                        Text(
+                            text = stringResource(R.string.translate_never_languages_subtitle),
+                            color = colors.text_tertiary,
+                            fontSize = 13.sp,
+                            modifier = Modifier.padding(start = AsterSpacing.lg, end = AsterSpacing.lg, bottom = 4.dp),
+                        )
+                        translation_language_codes.forEachIndexed { i, code ->
+                            behavior_option(language_display_name(code), translate_never.contains(code)) {
+                                on_never_change(
+                                    if (translate_never.contains(code)) {
+                                        translate_never - code
+                                    } else {
+                                        translate_never + code
+                                    },
+                                )
+                            }
+                            if (i < translation_language_codes.size - 1) AsterDivider(modifier = Modifier)
+                        }
+                    }
+                    v_gap(AsterSpacing.md)
+                    AsterCard(modifier = Modifier.fillMaxWidth()) {
+                        behavior_toggle(
+                            title = stringResource(R.string.translate_wifi_only_label),
+                            subtitle = stringResource(R.string.translate_wifi_only_subtitle),
+                            checked = wifi_only,
+                        ) {
+                            on_wifi_only_change(it)
+                            TranslationDownloadPolicy.set_wifi_only(context, it)
+                        }
+                    }
+                    v_gap(AsterSpacing.md)
+                    AsterCard(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = stringResource(R.string.translation_storage_label),
+                            color = colors.text_primary,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),
+                        )
+                        Text(
+                            text = stringResource(R.string.translation_storage_subtitle),
+                            color = colors.text_tertiary,
+                            fontSize = 13.sp,
+                            modifier = Modifier.padding(start = AsterSpacing.lg, end = AsterSpacing.lg, bottom = AsterSpacing.md),
+                        )
+                        AsterDivider(modifier = Modifier)
+                        if (pack_bytes <= 0L) {
+                            Text(
+                                text = stringResource(R.string.translation_storage_empty),
+                                color = colors.text_tertiary,
+                                fontSize = 13.sp,
+                                modifier = Modifier.padding(AsterSpacing.lg),
+                            )
+                        } else {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = stringResource(
+                                        R.string.translation_storage_used,
+                                        android.text.format.Formatter.formatShortFileSize(context, pack_bytes),
+                                    ),
+                                    color = colors.text_primary,
+                                    fontSize = 15.sp,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                Text(
+                                    text = stringResource(R.string.translation_storage_remove_all),
+                                    color = colors.accent_blue,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    modifier = Modifier.clickable {
+                                        TranslationAssets.clear_cache(context)
+                                        TranslationDownloadPolicy.clear_consent(context)
+                                        on_packs_cleared()
+                                        Toast.makeText(
+                                            context,
+                                            context.getString(R.string.translation_storage_removed),
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                    },
+                                )
+                            }
+                        }
+                    }
+                }
 }
