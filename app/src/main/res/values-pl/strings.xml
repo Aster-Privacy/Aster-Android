@@ -2947,4 +2947,17 @@
     <string name="theme_sync_across_devices">Synchronizuj motyw między urządzeniami</string>
     <string name="theme_sync_across_devices_subtitle">Wyłącz tę opcję, aby zachować osobny motyw na tym urządzeniu.</string>
     <string name="view_encryption_details">Zobacz szczegóły szyfrowania</string>
+    <string name="contact_support">Skontaktuj się z pomocą techniczną</string>
+    <string name="domain_purchase_manage">Zarządzaj</string>
+    <string name="domain_purchase_manage_description">Sprawdź tę rejestrację i odnów ją przed wygaśnięciem.</string>
+    <string name="domain_purchase_manage_status">Stan</string>
+    <string name="domain_purchase_manage_status_active">Aktywna</string>
+    <string name="domain_purchase_manage_status_expiring">Wkrótce wygasa</string>
+    <string name="domain_purchase_manage_registered">Zarejestrowano</string>
+    <string name="domain_purchase_manage_expires">Wygasa</string>
+    <string name="domain_purchase_manage_term">Okres</string>
+    <string name="domain_purchase_manage_paid">Zapłacono</string>
+    <string name="domain_purchase_manage_auto_renew_note">Ta domena nie odnawia się automatycznie. Aby ją zachować, odnów ją przed datą wygaśnięcia.</string>
+    <string name="domain_purchase_manage_support_note">Aby przenieść tę domenę do innego rejestratora lub zapytać o zwrot środków, skontaktuj się z pomocą techniczną.</string>
+    <string name="domain_purchase_n_years">%1$d lata</string>
 </resources>

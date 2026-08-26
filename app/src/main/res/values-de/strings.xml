@@ -2922,4 +2922,17 @@
     <string name="theme_sync_across_devices">Design geräteübergreifend synchronisieren</string>
     <string name="theme_sync_across_devices_subtitle">Deaktiviere dies, um auf diesem Gerät ein eigenes Design zu behalten.</string>
     <string name="view_encryption_details">Verschlüsselungsdetails ansehen</string>
+    <string name="contact_support">Support kontaktieren</string>
+    <string name="domain_purchase_manage">Verwalten</string>
+    <string name="domain_purchase_manage_description">Prüfe diese Registrierung und verlängere sie, bevor sie abläuft.</string>
+    <string name="domain_purchase_manage_status">Status</string>
+    <string name="domain_purchase_manage_status_active">Aktiv</string>
+    <string name="domain_purchase_manage_status_expiring">Läuft bald ab</string>
+    <string name="domain_purchase_manage_registered">Registriert</string>
+    <string name="domain_purchase_manage_expires">Läuft ab</string>
+    <string name="domain_purchase_manage_term">Laufzeit</string>
+    <string name="domain_purchase_manage_paid">Bezahlt</string>
+    <string name="domain_purchase_manage_auto_renew_note">Diese Domain wird nicht automatisch verlängert. Verlängere sie vor dem Ablaufdatum, um sie zu behalten.</string>
+    <string name="domain_purchase_manage_support_note">Wende dich an den Support, um diese Domain zu einem anderen Registrar zu übertragen oder eine Rückerstattung anzufragen.</string>
+    <string name="domain_purchase_n_years">%1$d Jahre</string>
 </resources>

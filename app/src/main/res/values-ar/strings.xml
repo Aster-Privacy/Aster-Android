@@ -2973,4 +2973,17 @@
     <string name="theme_sync_across_devices">مزامنة المظهر بين الأجهزة</string>
     <string name="theme_sync_across_devices_subtitle">أوقف هذا للاحتفاظ بمظهر منفصل على هذا الجهاز.</string>
     <string name="view_encryption_details">عرض تفاصيل التشفير</string>
+    <string name="contact_support">تواصل مع الدعم</string>
+    <string name="domain_purchase_manage">إدارة</string>
+    <string name="domain_purchase_manage_description">راجع هذا التسجيل وجدّده قبل انتهاء صلاحيته.</string>
+    <string name="domain_purchase_manage_status">الحالة</string>
+    <string name="domain_purchase_manage_status_active">نشط</string>
+    <string name="domain_purchase_manage_status_expiring">ينتهي قريبًا</string>
+    <string name="domain_purchase_manage_registered">تاريخ التسجيل</string>
+    <string name="domain_purchase_manage_expires">ينتهي في</string>
+    <string name="domain_purchase_manage_term">المدة</string>
+    <string name="domain_purchase_manage_paid">المدفوع</string>
+    <string name="domain_purchase_manage_auto_renew_note">لا يتجدد هذا النطاق تلقائيًا. للاحتفاظ به، جدّده قبل تاريخ انتهاء الصلاحية.</string>
+    <string name="domain_purchase_manage_support_note">لنقل هذا النطاق إلى مسجّل آخر أو للسؤال عن استرداد المبلغ، تواصل مع الدعم.</string>
+    <string name="domain_purchase_n_years">%1$d سنوات</string>
 </resources>

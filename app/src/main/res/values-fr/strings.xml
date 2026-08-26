@@ -2949,4 +2949,17 @@
     <string name="theme_sync_across_devices">Synchroniser le thème entre les appareils</string>
     <string name="theme_sync_across_devices_subtitle">Désactivez cette option pour conserver un thème distinct sur cet appareil.</string>
     <string name="view_encryption_details">Voir les détails du chiffrement</string>
+    <string name="contact_support">Contacter l\'assistance</string>
+    <string name="domain_purchase_manage">Gérer</string>
+    <string name="domain_purchase_manage_description">Vérifiez cet enregistrement et renouvelez-le avant son expiration.</string>
+    <string name="domain_purchase_manage_status">Statut</string>
+    <string name="domain_purchase_manage_status_active">Actif</string>
+    <string name="domain_purchase_manage_status_expiring">Expire bientôt</string>
+    <string name="domain_purchase_manage_registered">Enregistré</string>
+    <string name="domain_purchase_manage_expires">Expire le</string>
+    <string name="domain_purchase_manage_term">Durée</string>
+    <string name="domain_purchase_manage_paid">Payé</string>
+    <string name="domain_purchase_manage_auto_renew_note">Ce domaine ne se renouvelle pas automatiquement. Pour le conserver, renouvelez-le avant la date d\'expiration.</string>
+    <string name="domain_purchase_manage_support_note">Pour transférer ce domaine vers un autre bureau d\'enregistrement ou demander un remboursement, contactez l\'assistance.</string>
+    <string name="domain_purchase_n_years">%1$d ans</string>
 </resources>

@@ -2921,4 +2921,17 @@
     <string name="theme_sync_across_devices">Temayı cihazlar arasında eşitle</string>
     <string name="theme_sync_across_devices_subtitle">Bu cihazda ayrı bir tema tutmak için bunu kapatın.</string>
     <string name="view_encryption_details">Şifreleme ayrıntılarını görüntüle</string>
+    <string name="contact_support">Destek ile iletişime geç</string>
+    <string name="domain_purchase_manage">Yönet</string>
+    <string name="domain_purchase_manage_description">Bu kaydı gözden geçir ve süresi dolmadan yenile.</string>
+    <string name="domain_purchase_manage_status">Durum</string>
+    <string name="domain_purchase_manage_status_active">Etkin</string>
+    <string name="domain_purchase_manage_status_expiring">Yakında sona eriyor</string>
+    <string name="domain_purchase_manage_registered">Kaydedildi</string>
+    <string name="domain_purchase_manage_expires">Bitiş</string>
+    <string name="domain_purchase_manage_term">Süre</string>
+    <string name="domain_purchase_manage_paid">Ödenen</string>
+    <string name="domain_purchase_manage_auto_renew_note">Bu alan adı otomatik olarak yenilenmez. Elinde tutmak için bitiş tarihinden önce yenile.</string>
+    <string name="domain_purchase_manage_support_note">Bu alan adını başka bir kayıt şirketine taşımak veya geri ödeme sormak için destek ile iletişime geç.</string>
+    <string name="domain_purchase_n_years">%1$d yıl</string>
 </resources>
