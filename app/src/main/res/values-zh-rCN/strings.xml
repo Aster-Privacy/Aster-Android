@@ -1267,6 +1267,7 @@
     <string name="scan_failed">扫描失败</string>
     <string name="toast_unsubscribed">已退订</string>
     <string name="unsubscribe_failed">退订失败</string>
+    <string name="unsubscribe_manual_required">此发件人不支持自动退订。你可以通过邮件中的链接自行退订。</string>
     <string name="bulk_unsubscribe_failed">批量退订失败</string>
     <plurals name="unsubscribed_count">
         <item quantity="other">已退订 %d 个发件人</item>
@@ -1819,6 +1820,8 @@
     <string name="storage_plan_section">你的方案</string>
     <string name="storage_plan_row">方案</string>
     <string name="storage_included_row">方案自带容量</string>
+    <string name="storage_family_share_row">你在家庭套餐中的份额</string>
+    <string name="storage_family_share_note">你的家庭套餐共含 %1$s。这是分配给你的部分。</string>
     <string name="storage_addons_row">扩容包</string>
     <string name="storage_total_row">总容量</string>
     <string name="storage_available_row">剩余可用</string>

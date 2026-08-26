@@ -1267,6 +1267,7 @@
     <string name="scan_failed">スキャンに失敗しました</string>
     <string name="toast_unsubscribed">登録解除しました</string>
     <string name="unsubscribe_failed">登録解除に失敗しました</string>
+    <string name="unsubscribe_manual_required">この送信者は自動配信停止に対応していません。メール内のリンクから自分で手続きできます。</string>
     <string name="bulk_unsubscribe_failed">一括登録解除に失敗しました</string>
     <plurals name="unsubscribed_count">
         <item quantity="other">%d 件の送信者の登録を解除しました</item>
@@ -1819,6 +1820,8 @@
     <string name="storage_plan_section">ご利用のプラン</string>
     <string name="storage_plan_row">プラン</string>
     <string name="storage_included_row">プランに含まれる容量</string>
+    <string name="storage_family_share_row">ファミリープランのうちあなたの割り当て</string>
+    <string name="storage_family_share_note">ファミリープランの合計容量は %1$s です。そのうちこの分があなたに割り当てられています。</string>
     <string name="storage_addons_row">追加ストレージ</string>
     <string name="storage_total_row">合計容量</string>
     <string name="storage_available_row">残り容量</string>

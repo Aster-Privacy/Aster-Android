@@ -1272,6 +1272,7 @@
     <string name="scan_failed">فشل الفحص</string>
     <string name="toast_unsubscribed">تم إلغاء الاشتراك</string>
     <string name="unsubscribe_failed">فشل إلغاء الاشتراك</string>
+    <string name="unsubscribe_manual_required">لا يدعم هذا المرسل إلغاء الاشتراك التلقائي. يتيح لك الرابط الموجود في الرسالة إلغاء الاشتراك بنفسك.</string>
     <string name="bulk_unsubscribe_failed">فشل إلغاء الاشتراك المجمع</string>
     <plurals name="unsubscribed_count">
         <item quantity="zero">لا مرسلين</item>
@@ -1834,6 +1835,8 @@
     <string name="storage_plan_section">خطتك</string>
     <string name="storage_plan_row">الخطة</string>
     <string name="storage_included_row">مشمول في الخطة</string>
+    <string name="storage_family_share_row">حصتك من خطة العائلة</string>
+    <string name="storage_family_share_note">تتضمن خطة العائلة %1$s إجمالاً. هذا هو الجزء المخصص لك.</string>
     <string name="storage_addons_row">إضافات التخزين</string>
     <string name="storage_total_row">إجمالي التخزين</string>
     <string name="storage_available_row">المتبقّي</string>

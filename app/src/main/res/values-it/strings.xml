@@ -1268,6 +1268,7 @@
     <string name="scan_failed">Scansione fallita</string>
     <string name="toast_unsubscribed">Annullato</string>
     <string name="unsubscribe_failed">Annullamento fallito</string>
+    <string name="unsubscribe_manual_required">Questo mittente non supporta la disiscrizione automatica. Il link nell’email ti permette di farlo da te.</string>
     <string name="bulk_unsubscribe_failed">Annullamento di massa fallito</string>
     <plurals name="unsubscribed_count">
         <item quantity="one">%d mittente annullato</item>
@@ -1822,6 +1823,8 @@
     <string name="storage_plan_section">Il tuo piano</string>
     <string name="storage_plan_row">Piano</string>
     <string name="storage_included_row">Incluso nel piano</string>
+    <string name="storage_family_share_row">La tua quota del piano famiglia</string>
+    <string name="storage_family_share_note">Il tuo piano famiglia include %1$s in totale. Questa è la quota riservata a te.</string>
     <string name="storage_addons_row">Spazio aggiuntivo</string>
     <string name="storage_total_row">Spazio totale</string>
     <string name="storage_available_row">Ancora disponibile</string>

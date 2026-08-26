@@ -524,6 +524,8 @@ data class StorageOverview(
     val percentage_used: Double = 0.0,
     val is_over_limit: Boolean = false,
     val addon_bytes: Long = 0,
+    val plan_limit_bytes: Long = 0,
+    val family_allocation_bytes: Long? = null,
 )
 
 @Serializable

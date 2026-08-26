@@ -1268,6 +1268,7 @@
     <string name="scan_failed">Scan mislukt</string>
     <string name="toast_unsubscribed">Afgemeld</string>
     <string name="unsubscribe_failed">Afmelden mislukt</string>
+    <string name="unsubscribe_manual_required">Deze afzender ondersteunt geen automatische afmelding. Via de link in de e-mail meld je je zelf af.</string>
     <string name="bulk_unsubscribe_failed">Bulk afmelden mislukt</string>
     <plurals name="unsubscribed_count">
         <item quantity="one">%d afzender afgemeld</item>
@@ -1822,6 +1823,8 @@
     <string name="storage_plan_section">Je abonnement</string>
     <string name="storage_plan_row">Abonnement</string>
     <string name="storage_included_row">Inbegrepen bij je abonnement</string>
+    <string name="storage_family_share_row">Jouw deel van het gezinsabonnement</string>
+    <string name="storage_family_share_note">Je gezinsabonnement bevat in totaal %1$s. Dit is het deel dat voor jou is gereserveerd.</string>
     <string name="storage_addons_row">Extra opslag</string>
     <string name="storage_total_row">Totale opslag</string>
     <string name="storage_available_row">Nog beschikbaar</string>

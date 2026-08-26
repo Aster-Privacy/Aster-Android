@@ -1270,6 +1270,7 @@
     <string name="scan_failed">Сканирование не удалось</string>
     <string name="toast_unsubscribed">Отписано</string>
     <string name="unsubscribe_failed">Не удалось отписаться</string>
+    <string name="unsubscribe_manual_required">Этот отправитель не поддерживает автоматическую отписку. Ссылка в письме позволяет отписаться вручную.</string>
     <string name="bulk_unsubscribe_failed">Массовая отписка не удалась</string>
     <plurals name="unsubscribed_count">
         <item quantity="one">Отписан %d отправитель</item>
@@ -1828,6 +1829,8 @@
     <string name="storage_plan_section">Ваш тариф</string>
     <string name="storage_plan_row">Тариф</string>
     <string name="storage_included_row">Входит в тариф</string>
+    <string name="storage_family_share_row">Ваша доля семейного тарифа</string>
+    <string name="storage_family_share_note">Семейный тариф включает %1$s в общей сложности. Это часть, выделенная вам.</string>
     <string name="storage_addons_row">Дополнительное место</string>
     <string name="storage_total_row">Всего места</string>
     <string name="storage_available_row">Ещё доступно</string>

@@ -1269,6 +1269,7 @@
     <string name="scan_failed">Escaneo fallido</string>
     <string name="toast_unsubscribed">Cancelado</string>
     <string name="unsubscribe_failed">Error al cancelar suscripción</string>
+    <string name="unsubscribe_manual_required">Este remitente no admite la baja automática. El enlace del correo te permite darte de baja tú mismo.</string>
     <string name="bulk_unsubscribe_failed">Error al cancelar suscripciones</string>
     <plurals name="unsubscribed_count">
         <item quantity="one">Cancelado %d remitente</item>
@@ -1823,6 +1824,8 @@
     <string name="storage_plan_section">Tu plan</string>
     <string name="storage_plan_row">Plan</string>
     <string name="storage_included_row">Incluido en el plan</string>
+    <string name="storage_family_share_row">Tu parte del plan familiar</string>
+    <string name="storage_family_share_note">Tu plan familiar incluye %1$s en total. Esta es la parte reservada para ti.</string>
     <string name="storage_addons_row">Almacenamiento extra</string>
     <string name="storage_total_row">Almacenamiento total</string>
     <string name="storage_available_row">Todavía disponible</string>
