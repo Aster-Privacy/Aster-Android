@@ -186,6 +186,12 @@ class BillingViewModel @Inject constructor(
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_plan_limits failed", t)
+                _state.update {
+                    it.copy(
+                        error = org.astermail.android.localized_api_error(ctx, t, ctx.getString(R.string.failed_to_load),
+                        ),
+                    )
+                }
             }
         }
     }
@@ -198,6 +204,12 @@ class BillingViewModel @Inject constructor(
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_billing_history failed", t)
+                _state.update {
+                    it.copy(
+                        error = org.astermail.android.localized_api_error(ctx, t, ctx.getString(R.string.failed_to_load),
+                        ),
+                    )
+                }
             }
         }
     }
@@ -550,7 +562,7 @@ class BillingViewModel @Inject constructor(
                     crypto_native_coins = response.coins,
                 )
             } catch (t: Throwable) {
-                _state.value = _state.value.copy(crypto_native_enabled = false, crypto_native_coins = emptyList())
+                if (t is kotlinx.coroutines.CancellationException) throw t
             }
         }
     }
@@ -569,7 +581,7 @@ class BillingViewModel @Inject constructor(
                     },
                 )
             } catch (t: Throwable) {
-                _state.value = _state.value.copy(pending_crypto_invoices = emptyList())
+                if (t is kotlinx.coroutines.CancellationException) throw t
             } finally {
                 pending_crypto_invoices_in_flight = false
             }
@@ -620,6 +632,12 @@ class BillingViewModel @Inject constructor(
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_storage_addons failed", t)
+                _state.update {
+                    it.copy(
+                        error = org.astermail.android.localized_api_error(ctx, t, ctx.getString(R.string.failed_to_load),
+                        ),
+                    )
+                }
             }
         }
     }
@@ -687,6 +705,12 @@ class BillingViewModel @Inject constructor(
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "list_payment_methods failed", t)
+                _state.update {
+                    it.copy(
+                        error = org.astermail.android.localized_api_error(ctx, t, ctx.getString(R.string.failed_to_load),
+                        ),
+                    )
+                }
             }
         }
     }

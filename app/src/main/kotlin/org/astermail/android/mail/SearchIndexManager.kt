@@ -36,6 +36,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.astermail.android.api.mail.MailApi
+import org.astermail.android.api.mail.MailItem
 import org.astermail.android.storage.search.AsterDatabase
 import org.astermail.android.storage.search.DecryptedMailDao
 import org.astermail.android.storage.search.DecryptedMailEntity
@@ -137,20 +138,51 @@ class SearchIndexManager @Inject constructor(
     }
 
     private suspend fun purge_bundle_poisoned() {
+        runCatching { dao.clear_armored_previews() }
         runCatching { dao.delete_bundle_poisoned() }
         runCatching { dao.delete_blank_rows() }
     }
 
-    suspend fun reconcile_inbox_window(returned_ids: Set<String>, min_timestamp: String) {
+    suspend fun reconcile_inbox_window(
+        returned_ids: Set<String>,
+        returned_thread_tokens: Set<String>,
+        min_timestamp: String,
+    ) {
         if (returned_ids.isEmpty() || min_timestamp.isBlank()) return
-        val stale = dao.ids_newer_than(min_timestamp).filterNot { it in returned_ids }
+        clear_window_absences(returned_ids)
+        val stale = dao.inbox_window_rows_newer_than(min_timestamp)
+            .filterNot { it.id in returned_ids }
+            .filterNot { it.thread_token != null && it.thread_token in returned_thread_tokens }
+            .map { it.id }
         if (stale.isEmpty()) return
-        val snoozed_ids = runCatching {
-            mail_api.list_messages(limit = 100, item_type = "received", is_snoozed = true)
-                .items.map { it.id }.toHashSet()
+        val snoozed = runCatching {
+            mail_api.list_messages(limit = 200, item_type = "received", is_snoozed = true)
         }.getOrNull() ?: return
-        val removable = stale.filterNot { it in snoozed_ids }
+        if (snoozed.has_more) return
+        val snoozed_ids = snoozed.items.map { it.id }.toHashSet()
+        val candidates = stale.filterNot { it in snoozed_ids }
+        val removable = record_window_absences(candidates)
         if (removable.isNotEmpty()) dao.remove_items(removable)
+    }
+
+    private val window_absences = mutableMapOf<String, Int>()
+
+    private fun record_window_absences(ids: List<String>): List<String> {
+        val confirmed = mutableListOf<String>()
+        for (id in ids) {
+            val count = (window_absences[id] ?: 0) + 1
+            if (count >= WINDOW_ABSENCES_BEFORE_REMOVAL) {
+                window_absences.remove(id)
+                confirmed.add(id)
+            } else {
+                window_absences[id] = count
+            }
+        }
+        return confirmed
+    }
+
+    private fun clear_window_absences(ids: Set<String>) {
+        for (id in ids) window_absences.remove(id)
     }
 
     suspend fun update_read(id: String, is_read: Boolean) = dao.update_read(id, is_read)
@@ -170,6 +202,16 @@ class SearchIndexManager @Inject constructor(
     suspend fun mark_restored(ids: List<String>) = dao.mark_restored(ids)
 
     suspend fun remove_items(ids: List<String>) = dao.remove_items(ids)
+
+    suspend fun add_tag_token(ids: List<String>, token: String) {
+        if (ids.isEmpty() || token.isBlank()) return
+        dao.add_tag_token(ids, token)
+    }
+
+    suspend fun remove_tag_token(ids: List<String>, token: String) {
+        if (ids.isEmpty() || token.isBlank()) return
+        dao.remove_tag_token(ids, token)
+    }
 
     suspend fun clear() {
         build_job?.cancel()
@@ -212,9 +254,11 @@ class SearchIndexManager @Inject constructor(
             var total_target = 0
             var processed = 0
             val started_at = System.currentTimeMillis()
+            var walk_complete = true
             for (scope in index_scopes) {
                 var cursor: String? = null
                 var page = 0
+                var scope_complete = false
                 while (page < max_pages) {
                     if (System.currentTimeMillis() - started_at > build_budget_ms) break
                     val response = mail_api.list_messages(
@@ -232,8 +276,12 @@ class SearchIndexManager @Inject constructor(
                     val new_items = response.items.filter { it.id !in existing_ids }
                     val known_ids = response.items.map { it.id }.filter { it in existing_ids }
                     if (known_ids.isNotEmpty()) {
+                        val known_set = known_ids.toHashSet()
+                        val known_items = response.items.filter { it.id in known_set }
+                        refresh_known_flags(known_items)
                         when (scope.is_trashed) {
                             true -> dao.mark_trashed(known_ids)
+                            false -> dao.mark_untrashed(known_ids)
                             else -> {}
                         }
                         when (scope.is_archived) {
@@ -243,6 +291,7 @@ class SearchIndexManager @Inject constructor(
                         }
                         when (scope.is_spam) {
                             true -> dao.mark_spam(known_ids)
+                            false -> dao.mark_unspam(known_ids)
                             else -> {}
                         }
                     }
@@ -265,14 +314,22 @@ class SearchIndexManager @Inject constructor(
                             started_at_ms = started_at,
                         )
                     }
-                    if (!response.has_more || response.next_cursor == null) break
+                    if (!response.has_more) {
+                        scope_complete = true
+                        break
+                    }
+                    if (response.next_cursor == null) break
                     cursor = response.next_cursor
                     page++
                 }
+                if (!scope_complete) walk_complete = false
             }
             enrich_attachment_flags(my_epoch)
-            if (epoch.get() == my_epoch) _index_ready.value = true
-        } catch (_: Throwable) {
+            if (epoch.get() == my_epoch && walk_complete) _index_ready.value = true
+        } catch (error: Throwable) {
+            if (org.astermail.android.BuildConfig.DEBUG) {
+                android.util.Log.w("SearchIndexManager", "index build aborted", error)
+            }
         } finally {
             withContext(NonCancellable) {
                 mutex.withLock { is_building = false }
@@ -283,6 +340,7 @@ class SearchIndexManager @Inject constructor(
 
     private companion object {
         const val KEY_INDEX_PAUSED = "index_paused"
+        const val WINDOW_ABSENCES_BEFORE_REMOVAL = 2
     }
 
     data class AttachmentProbeResult(
@@ -290,11 +348,13 @@ class SearchIndexManager @Inject constructor(
         val failed: List<String>,
     )
 
-    suspend fun known_attachment_ids(): Set<String> {
+    suspend fun known_attachment_ids(): Set<String>? {
         return try {
             dao.ids_with_attachments().toSet()
+        } catch (cancelled: kotlin.coroutines.cancellation.CancellationException) {
+            throw cancelled
         } catch (_: Throwable) {
-            emptySet()
+            null
         }
     }
 
@@ -316,6 +376,21 @@ class SearchIndexManager @Inject constructor(
 
     suspend fun resolve_attachment_ids(ids: List<String>): Set<String> {
         return probe_attachment_ids(ids).found
+    }
+
+    private suspend fun refresh_known_flags(items: List<MailItem>) {
+        val read = items.filter { it.is_read == true }.map { it.id }
+        val unread = items.filter { it.is_read == false }.map { it.id }
+        val starred = items.filter { it.is_starred == true }.map { it.id }
+        val unstarred = items.filter { it.is_starred == false }.map { it.id }
+        val pinned = items.filter { it.is_pinned == true }.map { it.id }
+        val unpinned = items.filter { it.is_pinned == false }.map { it.id }
+        if (read.isNotEmpty()) dao.set_read(read, true)
+        if (unread.isNotEmpty()) dao.set_read(unread, false)
+        if (starred.isNotEmpty()) dao.set_starred(starred, true)
+        if (unstarred.isNotEmpty()) dao.set_starred(unstarred, false)
+        if (pinned.isNotEmpty()) dao.set_pinned(pinned, true)
+        if (unpinned.isNotEmpty()) dao.set_pinned(unpinned, false)
     }
 
     private suspend fun enrich_attachment_flags(my_epoch: Int) {
@@ -368,6 +443,7 @@ class SearchIndexManager @Inject constructor(
                 is_external = item.raw_item.is_external,
                 has_recipient_key = item.raw_item.has_recipient_key,
                 is_pinned = item.raw_item.metadata?.is_pinned ?: false,
+                tag_tokens = item.tag_tokens.joinToString(",").ifBlank { null },
             )
         }
         mutex.withLock {

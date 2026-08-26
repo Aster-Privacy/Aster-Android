@@ -167,6 +167,10 @@ fun RegisterPlanStep(
 
         Spacer(Modifier.height(AsterSpacing.xl))
 
+        state.error?.let { message ->
+            error_banner(message = message)
+            Spacer(Modifier.height(AsterSpacing.lg))
+        }
         val abandoned_plan = state.checkout_abandoned_plan
         if (abandoned_plan != null && !state.checking_payment) {
             val abandoned_name = org.astermail.android.billing.plan_display_name(plans, abandoned_plan) ?: abandoned_plan
@@ -254,7 +258,10 @@ fun RegisterPlanStep(
                     is_selected = selected_code == plan.code,
                     billing_interval = effective_interval,
                     currency = currency,
-                    on_select = { selected_code = plan.code },
+                    on_select = {
+                        selected_code = plan.code
+                        billing_vm.clear_messages()
+                    },
                 )
                 Spacer(Modifier.height(AsterSpacing.md))
             }
@@ -280,7 +287,13 @@ fun RegisterPlanStep(
         } else {
             AsterButton(
                 label = stringResource(R.string.continue_with_upgrade),
-                onClick = { billing_vm.start_checkout(selected_code, effective_interval, currency) },
+                onClick = {
+                    billing_vm.clear_messages()
+                    if (plans.isEmpty()) {
+                        billing_vm.load_plans()
+                    }
+                    billing_vm.start_checkout(selected_code, effective_interval, currency)
+                },
                 is_loading = state.is_acting,
             )
             Spacer(Modifier.height(AsterSpacing.sm))
@@ -443,4 +456,21 @@ private fun format_plan_bytes(bytes: Long): String {
     }
     return if (unit == 0) "%d %s".format(bytes, units[unit])
     else "%.1f %s".format(size, units[unit])
+}
+
+private fun format_plan_price(cents: Int): String {
+    val amount = cents / 100.0
+    return try {
+        val fmt = java.text.NumberFormat.getCurrencyInstance(java.util.Locale.getDefault())
+        fmt.currency = java.util.Currency.getInstance("USD")
+        fmt.format(amount)
+    } catch (_: Throwable) {
+        "$%.2f".format(amount)
+    }
+}
+
+@Composable
+private fun plan_interval_label(interval: String): String = when (interval.lowercase()) {
+    "year", "yearly", "annual" -> stringResource(R.string.billing_period_year)
+    else -> stringResource(R.string.billing_period_month)
 }

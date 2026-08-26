@@ -56,8 +56,13 @@ class KidsSeatsStringsTest {
             val two = digits.format(2)
 
             val used = context.getString(R.string.kids_seats_used, 5, 6)
-            val free = context.getString(R.string.kids_seats_free, 1)
-            val breakdown = context.getString(R.string.kids_seats_breakdown, 3, 0, 2)
+            val free = context.resources.getQuantityString(R.plurals.kids_seats_free, 1, 1)
+            val breakdown = context.getString(
+                R.string.kids_seats_breakdown,
+                context.resources.getQuantityString(R.plurals.kids_seats_members, 3, 3),
+                context.resources.getQuantityString(R.plurals.kids_seats_invitations, 0, 0),
+                context.resources.getQuantityString(R.plurals.kids_seats_reserved, 2, 2),
+            )
 
             assertTrue(tag, used.isNotBlank())
             assertTrue("$tag: $used", used.contains(five) && used.contains(six))

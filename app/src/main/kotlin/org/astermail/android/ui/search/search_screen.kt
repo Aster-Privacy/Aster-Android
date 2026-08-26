@@ -193,7 +193,18 @@ private fun matches_item(
     }
     if (!filter_ok) return false
 
+    val attachment_type_ops = parsed.operators.filter {
+        !it.negated && it.key == "has" && ATTACHMENT_EXTENSIONS.containsKey(it.value)
+    }
+
+    if (attachment_type_ops.isNotEmpty() &&
+        attachment_type_ops.none { matches_attachment_type(item, it.value) }
+    ) {
+        return false
+    }
+
     for (op in parsed.operators) {
+        if (attachment_type_ops.contains(op)) continue
         val pass = evaluate_operator(item, op)
         if (!pass) return false
     }
@@ -252,14 +263,13 @@ private fun evaluate_operator(item: InboxItem, op: SearchOperator): Boolean {
             if (target != null) parse_item_timestamp(item.timestamp) > target else true
         }
         "date" -> {
-            val now = System.currentTimeMillis()
             val ts = parse_item_timestamp(item.timestamp)
             when (op.value) {
-                "today" -> now - ts < 86_400_000L
-                "yesterday" -> (now - ts) in 86_400_000L..172_800_000L
-                "this_week" -> now - ts < 7 * 86_400_000L
-                "last_week" -> (now - ts) in (7 * 86_400_000L)..(14 * 86_400_000L)
-                "this_month" -> now - ts < 30 * 86_400_000L
+                "today" -> ts >= start_of_local_day(0)
+                "yesterday" -> ts >= start_of_local_day(1) && ts < start_of_local_day(0)
+                "this_week" -> ts >= start_of_local_day(6)
+                "last_week" -> ts >= start_of_local_day(13) && ts < start_of_local_day(6)
+                "this_month" -> ts >= start_of_local_day(29)
                 else -> true
             }
         }
@@ -267,6 +277,16 @@ private fun evaluate_operator(item: InboxItem, op: SearchOperator): Boolean {
         else -> true
     }
     return if (op.negated) !result else result
+}
+
+private fun start_of_local_day(days_back: Int): Long {
+    val calendar = org.astermail.android.ui.mail.AsterTimePreferences.account_calendar()
+    calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
+    calendar.set(java.util.Calendar.MINUTE, 0)
+    calendar.set(java.util.Calendar.SECOND, 0)
+    calendar.set(java.util.Calendar.MILLISECOND, 0)
+    calendar.add(java.util.Calendar.DAY_OF_YEAR, -days_back)
+    return calendar.timeInMillis
 }
 
 private fun parse_digits(text: String, start: Int, end: Int): Int {
@@ -487,13 +507,19 @@ fun SearchScreen(
     }
     val grouping_enabled = settings_state.preferences?.conversation_grouping != false
     val result_threads = remember(filtered, grouping_enabled) {
-        search_result_threads(filtered, grouping_enabled)
+        search_result_threads(filtered, grouping_enabled, context_for_prefs)
     }
     val thread_member_ids = remember(result_threads, visible_corpus, grouping_enabled) {
         search_thread_member_ids(result_threads, visible_corpus, grouping_enabled)
     }
     fun expand_selection(ids: List<String>): List<String> =
         expand_thread_selection(ids, thread_member_ids, grouping_enabled)
+
+    val selection_all_starred = selected_ids.isNotEmpty() &&
+        expand_selection(selected_ids.toList()).toSet().let { ids ->
+            val picked = visible_corpus.filter { it.id in ids }
+            picked.isNotEmpty() && picked.none { !it.is_starred }
+        }
 
     LaunchedEffect(result_threads, results_pending) {
         if (select_mode && !results_pending) {
@@ -785,19 +811,28 @@ fun SearchScreen(
                     .padding(AsterSpacing.xxl),
                 contentAlignment = Alignment.Center,
             ) {
+                val corpus_error = search_state.error
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
-                        imageVector = TablerIcons.Search,
+                        imageVector = if (corpus_error != null) TablerIcons.AlertCircle else TablerIcons.Search,
                         contentDescription = null,
                         tint = colors.text_muted,
                         modifier = Modifier.size(40.dp),
                     )
                     Spacer(Modifier.height(AsterSpacing.md))
                     Text(
-                        text = stringResource(R.string.no_results_found),
+                        text = corpus_error ?: stringResource(R.string.no_results_found),
                         color = colors.text_muted,
                         fontSize = 15.sp,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     )
+                    if (corpus_error != null) {
+                        Spacer(Modifier.height(AsterSpacing.md))
+                        org.astermail.android.design.components.AsterSecondaryButton(
+                            label = stringResource(R.string.retry),
+                            onClick = { mail_vm.build_search_index(force = true) },
+                        )
+                    }
                 }
             }
         } else if (result_threads.isNotEmpty()) {
@@ -832,6 +867,7 @@ fun SearchScreen(
                     custom_actions = selection_toolbar_slots,
                     on_action = ::run_selection_action,
                     on_more = { show_selection_overflow = true },
+                    selection_all_starred = selection_all_starred,
                 )
             }
         }
@@ -844,6 +880,7 @@ fun SearchScreen(
                 show_selection_overflow = false
                 run_selection_action(id)
             },
+            selection_all_starred = selection_all_starred,
         )
     }
 
@@ -866,14 +903,13 @@ fun SearchScreen(
             on_pick = { picked ->
                 val display = picked.encrypted_name?.takeIf { it.isNotBlank() } ?: unnamed_folder_label
                 show_folder_sheet = false
-                mail_vm.apply_label_bulk(expand_selection(selected_ids.toList()), picked.label_token, display)
+                mail_vm.move_to_folder_bulk(expand_selection(selected_ids.toList()), picked.label_token, display)
                 exit_select_mode()
             },
         )
     }
 
     if (show_label_sheet) {
-        val tag_items = org.astermail.android.labels.tag_rows(settings_state.tags)
         val expanded_selection = expand_selection(selected_ids.toList()).toSet()
         val selected_items = search_state.all_items.filter { it.id in expanded_selection }
         val applied_tags = if (selected_items.isEmpty()) {
@@ -881,13 +917,15 @@ fun SearchScreen(
         } else {
             selected_items.map { it.tag_tokens.toSet() }.reduce { acc, tokens -> acc intersect tokens }
         }
+        val tag_items = org.astermail.android.labels.tag_rows(settings_state.tags, applied_tags)
+        val unknown_label = stringResource(R.string.unknown)
         org.astermail.android.ui.mail.tag_picker_sheet(
             title = stringResource(R.string.edit_labels),
             empty_message = stringResource(R.string.no_labels_yet_create),
             items = tag_items,
             on_close = { show_label_sheet = false },
             on_pick = { picked ->
-                val display = picked.encrypted_name.takeIf { it.isNotBlank() } ?: picked.tag_token
+                val display = org.astermail.android.labels.tag_display_name(picked, unknown_label)
                 show_label_sheet = false
                 if (picked.tag_token in applied_tags) {
                     mail_vm.remove_tag_bulk(expanded_selection.toList(), picked.tag_token, display)
@@ -957,19 +995,28 @@ private fun search_tip(syntax: String, description: String, on_click: () -> Unit
 private fun operator_chip(op: SearchOperator, on_remove: () -> Unit) {
     val colors = AsterMaterial.colors
     val label_key = when (op.key) {
-        "from" -> "From"
-        "to" -> "To"
-        "subject" -> "Subject"
-        "has" -> "Has"
-        "is" -> "Is"
-        "in" -> "In"
-        "before" -> "Before"
-        "after" -> "After"
-        "date" -> "Date"
-        "label" -> "Label"
+        "from" -> stringResource(R.string.search_chip_from)
+        "to" -> stringResource(R.string.search_chip_to)
+        "subject" -> stringResource(R.string.search_chip_subject)
+        "has" -> stringResource(R.string.search_chip_has)
+        "is" -> stringResource(R.string.search_chip_is)
+        "in" -> stringResource(R.string.search_chip_in)
+        "before" -> stringResource(R.string.search_chip_before)
+        "after" -> stringResource(R.string.search_chip_after)
+        "date" -> stringResource(R.string.search_chip_date)
+        "label" -> stringResource(R.string.search_chip_label)
         else -> op.key.replaceFirstChar { it.uppercase() }
     }
-    val prefix = if (op.negated) "Not " else ""
+    val chip_label = if (op.negated) {
+        stringResource(
+            R.string.search_chip_format_negated,
+            stringResource(R.string.search_chip_not_prefix),
+            label_key,
+            op.value,
+        )
+    } else {
+        stringResource(R.string.search_chip_format, label_key, op.value)
+    }
     Row(
         modifier = Modifier
             .clip(SquircleShape(999.dp))
@@ -979,7 +1026,7 @@ private fun operator_chip(op: SearchOperator, on_remove: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "$prefix$label_key: ${op.value}",
+            text = chip_label,
             color = colors.accent_blue,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
@@ -1065,6 +1112,7 @@ private fun search_input_bar(
     ) {
         AsterIconButton(
             icon = TablerIcons.ArrowLeft,
+            auto_mirror = true,
             content_description = stringResource(R.string.back),
             onClick = on_back,
             modifier = Modifier.testTag("back"),
@@ -1373,6 +1421,7 @@ internal fun search_select_bottom_bar(
     custom_actions: List<String>,
     on_action: (String) -> Unit,
     on_more: () -> Unit,
+    selection_all_starred: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
@@ -1394,7 +1443,7 @@ internal fun search_select_bottom_bar(
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
                 custom_actions.forEach { action_id ->
-                    val action = org.astermail.android.ui.mail.selection_toolbar_action_by_id(action_id)
+                    val action = org.astermail.android.ui.mail.selection_toolbar_action_for(action_id, selection_all_starred)
                         ?: return@forEach
                     search_select_action(
                         icon = action.icon,

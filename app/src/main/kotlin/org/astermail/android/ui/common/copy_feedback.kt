@@ -41,6 +41,20 @@ fun copied_toast_text(context: Context, value: String): String {
     return context.getString(R.string.copied_value, shown)
 }
 
+fun write_to_clipboard(context: Context, clip: ClipData): Boolean {
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+        ?: return false
+    return runCatching { clipboard.setPrimaryClip(clip) }.isSuccess
+}
+
+fun show_copy_failed_toast(context: Context) {
+    Toast.makeText(context, context.getString(R.string.copy_failed), Toast.LENGTH_SHORT).show()
+}
+
+fun show_copy_result_toast(context: Context, value: String, copied: Boolean) {
+    if (copied) show_copied_toast(context, value) else show_copy_failed_toast(context)
+}
+
 fun show_copied_toast(context: Context, value: String) {
     Toast.makeText(context, copied_toast_text(context, value), Toast.LENGTH_SHORT).show()
 }
@@ -53,9 +67,12 @@ fun remember_copy_action(): (label: String, value: String, toast: String) -> Uni
     return remember(context, haptics, haptic_enabled) {
         { label, value, toast ->
             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
-            clipboard?.setPrimaryClip(ClipData.newPlainText(label, value))
+            val copied = clipboard != null && runCatching {
+                clipboard.setPrimaryClip(ClipData.newPlainText(label, value))
+            }.isSuccess
             if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-            Toast.makeText(context, toast, Toast.LENGTH_SHORT).show()
+            val message = if (copied) toast else context.getString(R.string.copy_failed)
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
         }
     }
 }

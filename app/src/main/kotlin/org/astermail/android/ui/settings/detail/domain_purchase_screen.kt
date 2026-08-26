@@ -53,6 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -78,6 +79,7 @@ import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.settings.DomainPurchaseErrorKind
 import org.astermail.android.settings.DomainPurchaseUiState
 import org.astermail.android.settings.DomainPurchaseViewModel
+import org.astermail.android.design.mirror_in_rtl
 
 internal fun format_domain_price(cents: Int, currency: String): String =
     org.astermail.android.billing.format_money(cents.toLong(), currency)
@@ -86,6 +88,11 @@ internal fun open_url(context: android.content.Context, url: String) {
     try {
         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
     } catch (_: Throwable) {
+        android.widget.Toast.makeText(
+            context,
+            context.getString(R.string.could_not_open_link),
+            android.widget.Toast.LENGTH_SHORT,
+        ).show()
     }
 }
 
@@ -313,7 +320,7 @@ private fun domain_result_row(result: DomainSearchResult, on_select: () -> Unit)
                 imageVector = TablerIcons.ChevronRight,
                 contentDescription = null,
                 tint = colors.text_tertiary,
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(20.dp).mirror_in_rtl(),
             )
         }
     }
@@ -376,8 +383,7 @@ private fun purchase_confirm_content(vm: DomainPurchaseViewModel, state: DomainP
     ) {
         (1..3).forEach { y ->
             selector_chip(
-                label = if (y == 1) stringResource(R.string.domain_purchase_one_year)
-                else stringResource(R.string.domain_purchase_n_years, y),
+                label = pluralStringResource(R.plurals.domain_purchase_n_years, y, y),
                 selected = state.years == y,
                 on_click = { vm.set_years(y) },
                 modifier = Modifier.weight(1f),
@@ -503,7 +509,7 @@ private fun purchase_summary_card(
     AsterCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(AsterSpacing.md)) {
             summary_row(
-                label = stringResource(R.string.domain_purchase_years_line, state.years),
+                label = pluralStringResource(R.plurals.domain_purchase_years_line, state.years, state.years),
                 value = format_domain_price(total, selected.currency),
             )
             summary_row(

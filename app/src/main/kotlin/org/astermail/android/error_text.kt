@@ -36,9 +36,59 @@ fun localized_server_code(context: Context, t: Throwable): String? {
     }
 }
 
+private val validation_code_strings = mapOf(
+    "INVALID_TWO_FACTOR_CODE" to R.string.error_invalid_2fa_code,
+    "TWO_FACTOR_CODE_REQUIRED" to R.string.error_2fa_code_required,
+    "ACCOUNT_PASSWORD_REQUIRED" to R.string.error_account_password_required,
+    "INVALID_BACKUP_CODE" to R.string.error_invalid_backup_code,
+    "INVALID_RECOVERY_CODE" to R.string.error_invalid_code,
+    "INVALID_RECOVERY_PHRASE" to R.string.error_invalid_recovery_phrase,
+    "INVALID_OR_EXPIRED_CODE" to R.string.error_sign_in_code_invalid,
+    "FOLDER_PASSWORD_ALREADY_SET" to R.string.error_folder_password_already_set,
+    "FOLDER_PASSWORD_NOT_SET" to R.string.error_folder_password_not_set,
+    "IMAGE_TOO_LARGE" to R.string.error_image_too_large,
+    "PAYLOAD_TOO_LARGE" to R.string.error_upload_too_large,
+)
+
+private fun send_refusal_message(
+    context: Context,
+    code: String?,
+    details: Map<String, String>,
+): String? {
+    return when (code) {
+        "TOO_MANY_RECIPIENTS" -> details["max_allowed"]?.toIntOrNull()?.let {
+            context.getString(R.string.send_refusal_too_many_recipients, it)
+        }
+        "TOO_MANY_ATTACHMENTS" -> details["max_allowed"]?.toIntOrNull()?.let {
+            context.getString(R.string.send_refusal_too_many_attachments, it)
+        }
+        "ATTACHMENTS_TOO_LARGE" -> details["max_bytes"]?.toLongOrNull()?.let {
+            context.getString(
+                R.string.send_refusal_attachments_too_large,
+                android.text.format.Formatter.formatShortFileSize(context, it),
+            )
+        }
+        "RECIPIENT_CONCENTRATION" -> context.getString(
+            R.string.send_refusal_recipient_concentration,
+            details["domain"]?.takeIf { it.isNotBlank() }
+                ?: context.getString(R.string.send_refusal_that_provider),
+        )
+        else -> null
+    }
+}
+
 fun localized_api_error(context: Context, t: Throwable, fallback: String): String {
     if (t is CancellationException) throw t
     localized_server_code(context, t)?.let { return it }
+    if (t is ApiError.ValidationError) {
+        send_refusal_message(context, t.code, t.details)?.let { return it }
+        validation_code_strings[t.code]?.let { return context.getString(it) }
+    }
+    if (t is ApiError.RateLimited) {
+        send_refusal_message(context, t.code, t.details)?.let { return it }
+    }
+    if (t is ApiError.PlanLimitExceeded) return context.getString(R.string.error_plan_limit_reached)
+    if (t is ApiError.StorageQuotaExceeded) return context.getString(R.string.error_storage_full)
     server_supplied_detail(t)?.let { return it }
     return when (t) {
         is ApiError.NetworkError -> context.getString(R.string.error_no_connection)

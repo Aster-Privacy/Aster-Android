@@ -117,6 +117,46 @@ class DecryptedMailCachePurgeInstrumentedTest {
     }
 
     @Test
+    fun keeps_mail_that_merely_quotes_a_public_key_or_a_signature() = runBlocking {
+        val dao = database.decrypted_mail_dao()
+        dao.insert_all(
+            listOf(
+                row("key_mail", "My key", "-----BEGIN PGP PUBLIC KEY BLOCK-----"),
+                row("signed_mail", "Contract", "-----BEGIN PGP SIGNED MESSAGE-----"),
+                row("quoted", "Re: keys", "Here is what you sent: -----BEGIN PGP MESSAGE-----"),
+                row("undecryptable", "Invoice", "-----BEGIN PGP MESSAGE----- hQIMA"),
+            ),
+        )
+
+        val removed = dao.delete_bundle_poisoned()
+
+        assertEquals(0, removed)
+        assertEquals(
+            listOf("key_mail", "quoted", "signed_mail", "undecryptable"),
+            dao.get_all_ids().sorted(),
+        )
+    }
+
+    @Test
+    fun an_undecryptable_pgp_message_keeps_its_row_and_loses_only_the_armored_preview() = runBlocking {
+        val dao = database.decrypted_mail_dao()
+        dao.insert_all(
+            listOf(
+                row("undecryptable", "Invoice", "-----BEGIN PGP MESSAGE----- hQIMA"),
+                row("clean", "Question", "Hi, I'm new here"),
+            ),
+        )
+
+        val cleared = dao.clear_armored_previews()
+
+        assertEquals(1, cleared)
+        assertEquals(listOf("clean", "undecryptable"), dao.get_all_ids().sorted())
+        val kept = dao.get_all().first { it.id == "undecryptable" }
+        assertEquals("Invoice", kept.subject)
+        assertEquals("", kept.preview)
+    }
+
+    @Test
     fun keeps_every_row_when_no_bundle_marker_was_cached() = runBlocking {
         val dao = database.decrypted_mail_dao()
         dao.insert_all(listOf(row("a", "One", "body one"), row("b", "Two", "body two")))

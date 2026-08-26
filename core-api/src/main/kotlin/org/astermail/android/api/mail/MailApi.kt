@@ -135,6 +135,8 @@ interface MailApi {
 
     suspend fun add_label_to_item(item_id: String, label_token: String)
 
+    suspend fun move_item_to_folder(item_id: String, folder_token: String)
+
     suspend fun remove_label_from_item(item_id: String, label_token: String)
 
     suspend fun add_tag_to_item(item_id: String, tag_token: String)
@@ -148,6 +150,9 @@ interface MailApi {
 
 @kotlinx.serialization.Serializable
 data class AddLabelRequestBody(val folder_token: String)
+
+@kotlinx.serialization.Serializable
+data class MoveToFolderRequestBody(val folder_token: String)
 
 @kotlinx.serialization.Serializable
 data class AddTagRequestBody(val tag_token: String)
@@ -509,6 +514,15 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(AddLabelRequestBody(folder_token = label_token))
+        }
+        throw_if_error(response)
+    }
+
+    override suspend fun move_item_to_folder(item_id: String, folder_token: String) {
+        val response = client.http.put("${client.base_url}$base/messages/$item_id/move") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(MoveToFolderRequestBody(folder_token = folder_token))
         }
         throw_if_error(response)
     }

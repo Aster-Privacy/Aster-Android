@@ -27,8 +27,6 @@
     <string name="rules_value_unread">okunmadı</string>
     <string name="rules_value_on">açık</string>
     <string name="rules_value_off">kapalı</string>
-    <string name="rules_value_days">%1$d gün</string>
-    <string name="rules_value_label_count">%1$d etiket</string>
     <string name="rules_value_placeholder_ellipsis">...</string>
 
     <string name="rules_unit_kb">KB</string>
@@ -47,7 +45,6 @@
     <string name="rules_delete_title">Kural silinsin mi?</string>
     <string name="rules_delete_message">Bu kural yeni e-postalara artık uygulanmayacak. Daha önce yapılan değişiklikler geri alınmaz.</string>
     <string name="rules_save_failed">Kural kaydedilemedi</string>
-    <string name="rules_emails_count">%1$d e-posta</string>
     <string name="rules_copy_suffix">(kopya)</string>
     <string name="rules_error_load">Kurallar yüklenemedi</string>
     <string name="rules_error_delete">Kural silinemedi</string>
@@ -98,4 +95,12 @@
     <string name="category_tutorial_text">Bir e-posta, girdiğin alan adlarından ya da anahtar sözcüklerden birine uyduğu anda kendi kategorine düşer. Kendi kategorilerin hazır kategorilerin önüne geçer ve tüm eşleştirme cihazında yapılır.</string>
     <string name="rules_create_first_folder_hint">Bir klasör oluşturun, bu kural eşleşen e-postaları oraya taşıyabilsin.</string>
     <string name="rules_create_first_label_hint">Bir etiket oluşturun, bu kural eşleşen e-postalara uygulayabilsin.</string>
+    <string name="muted_categories">Sessize alınan kategoriler</string>
+    <string name="muted_categories_description">Bir kategorinin bildirimlerini susturmak için onu aç. Sessize alınan kategoriler posta almaya devam eder ve gelen kutunda görünür.</string>
+    <string name="muted_categories_empty">Hangi kategorileri sessize alacağını seçmek için gelen kutusu kategorilerini aç.</string>
+    <string name="rules_hint_name">Bu kural için bir ad girin.</string>
+    <string name="rules_hint_add_condition">En az bir koşul ekleyin.</string>
+    <string name="rules_hint_finish_condition">Her koşul için bir değer girin.</string>
+    <string name="rules_hint_add_action">En az bir işlem ekleyin.</string>
+    <string name="rules_hint_finish_action">Her işlem için bir değer girin.</string>
 </resources>

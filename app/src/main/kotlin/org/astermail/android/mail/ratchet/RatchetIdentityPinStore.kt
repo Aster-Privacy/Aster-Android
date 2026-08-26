@@ -139,13 +139,13 @@ class RatchetIdentityPinStore @Inject constructor(
     }
 
     fun is_prekey_binding_verified(recipient_email: String): Boolean {
-        val normalized = recipient_email.trim().lowercase()
+        val normalized = recipient_email.trim().lowercase(java.util.Locale.ROOT)
         if (normalized.isBlank()) return false
         return prefs.getBoolean(binding_key(normalized), false)
     }
 
     suspend fun record_prekey_binding_verified(recipient_email: String): Unit = mutex.withLock {
-        val normalized = recipient_email.trim().lowercase()
+        val normalized = recipient_email.trim().lowercase(java.util.Locale.ROOT)
         if (normalized.isBlank()) return@withLock
         val key = binding_key(normalized)
         if (prefs.getBoolean(key, false)) return@withLock
@@ -166,9 +166,9 @@ class RatchetIdentityPinStore @Inject constructor(
     }
 
     fun acknowledge_sender(sender_email: String) {
-        val normalized = sender_email.trim().lowercase()
+        val normalized = sender_email.trim().lowercase(java.util.Locale.ROOT)
         if (normalized.isBlank()) return
-        val updated = pending.value.filterNot { it.sender_email.trim().lowercase() == normalized }
+        val updated = pending.value.filterNot { it.sender_email.trim().lowercase(java.util.Locale.ROOT) == normalized }
         if (updated.size == pending.value.size) return
         pending.value = updated
         runCatching { prefs.edit().putString(pending_key, encode_pending(updated)).apply() }

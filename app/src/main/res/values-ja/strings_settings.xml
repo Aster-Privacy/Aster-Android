@@ -68,10 +68,7 @@
     <string name="settings_val_gb">%1$d GB</string>
     <string name="settings_val_tb">%1$d TB</string>
     <string name="settings_val_mb">%1$d MB</string>
-    <string name="settings_val_emails_per_day">%1$d 通</string>
-    <string name="settings_val_days">%1$d 日</string>
     <string name="settings_val_one_year">1 年</string>
-    <string name="settings_val_hours">%1$d 時間</string>
     <string name="settings_val_count">%1$d</string>
     <string name="settings_plan_bullet_duo_storage">共有の暗号化ストレージ 1 TB</string>
     <string name="settings_plan_bullet_duo_members">メンバー 2 人、アカウントは別々</string>
@@ -85,9 +82,13 @@
     <string name="settings_save_amount">$%1$.2f</string>
     <string name="settings_interval_default">月</string>
     <string name="settings_diagnostics_clip_label">診断情報</string>
+    <string name="settings_diagnostics_secure_storage">セキュアストレージ</string>
+    <string name="settings_diagnostics_storage_ok">正常</string>
+    <string name="settings_diagnostics_storage_degraded">劣化しています。サインアウトしてからサインインし直してください</string>
     <string name="log_out_confirm_title">サインアウトしますか？</string>
     <string name="log_out_confirm_message">この端末で %1$s からサインアウトしますか？</string>
     <string name="revoke_session_confirm_message">この端末をアカウントからサインアウトしますか？</string>
     <string name="sign_out_all_other_confirm_message">この端末以外をすべてサインアウトしますか？</string>
     <string name="alias_forward_limit_reached">現在のプランで使えるエイリアスの上限に達しました</string>
+    <string name="settings_plan_bullet_daily_emails">1 日あたり 1,000 通</string>
 </resources>

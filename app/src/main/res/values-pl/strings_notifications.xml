@@ -22,4 +22,7 @@
     <string name="notif_group_summary_new_mail">Nowa poczta</string>
     <string name="notif_battery_opt_title">Nieograniczona aktywność w tle</string>
     <string name="notif_battery_opt_subtitle">Wymagana do niezawodnych powiadomień. Dotknij, aby włączyć w ustawieniach systemu.</string>
+    <string name="notif_blocked_title">Powiadomienia są wyłączone</string>
+    <string name="notif_blocked_subtitle">Aster Mail nie może wyświetlać powiadomień, dopóki ich nie włączysz. Dotknij, aby otworzyć ustawienia systemu.</string>
+    <string name="notif_channel_downloads_name">Pobrane</string>
 </resources>

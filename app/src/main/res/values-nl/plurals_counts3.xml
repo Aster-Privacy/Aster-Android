@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="duration_n_days">
+        <item quantity="one">%1$d dag</item>
+        <item quantity="other">%1$d dagen</item>
+    </plurals>
+    <plurals name="expires_in_days">
+        <item quantity="one">Verloopt over %1$d dag</item>
+        <item quantity="other">Verloopt over %1$d dagen</item>
+    </plurals>
+    <plurals name="valid_for_days">
+        <item quantity="one">Geldig voor %1$d dag</item>
+        <item quantity="other">Geldig voor %1$d dagen</item>
+    </plurals>
+    <plurals name="rules_value_days">
+        <item quantity="one">%1$d dag</item>
+        <item quantity="other">%1$d dagen</item>
+    </plurals>
+    <plurals name="settings_val_days">
+        <item quantity="one">%1$d dag</item>
+        <item quantity="other">%1$d dagen</item>
+    </plurals>
+    <plurals name="settings_val_hours">
+        <item quantity="one">%1$d uur</item>
+        <item quantity="other">%1$d uur</item>
+    </plurals>
+    <plurals name="settings_val_emails_per_day">
+        <item quantity="one">%1$d mail</item>
+        <item quantity="other">%1$d mails</item>
+    </plurals>
+    <plurals name="spam_auto_delete_notice">
+        <item quantity="one">Items in spam worden na %1$d dag automatisch verwijderd.</item>
+        <item quantity="other">Items in spam worden na %1$d dagen automatisch verwijderd.</item>
+    </plurals>
+    <plurals name="pending_deletion_body_days">
+        <item quantity="one">Je account wordt over %1$d dag verwijderd. Annuleer de verwijdering om je account te behouden en de toegang tot je e-mail en abonnement te herstellen.</item>
+        <item quantity="other">Je account wordt over %1$d dagen verwijderd. Annuleer de verwijdering om je account te behouden en de toegang tot je e-mail en abonnement te herstellen.</item>
+    </plurals>
+    <plurals name="domain_purchase_n_years">
+        <item quantity="one">%1$d jaar</item>
+        <item quantity="other">%1$d jaar</item>
+    </plurals>
+    <plurals name="domain_purchase_years_line">
+        <item quantity="one">Registratie voor %1$d jaar</item>
+        <item quantity="other">Registratie voor %1$d jaar</item>
+    </plurals>
+    <plurals name="app_lock_try_again_in">
+        <item quantity="one">Probeer het over %d seconde opnieuw</item>
+        <item quantity="other">Probeer het over %d seconden opnieuw</item>
+    </plurals>
+    <plurals name="export_undecryptable_skipped">
+        <item quantity="one">%1$d bericht kon niet worden ontsleuteld en ontbreekt in de export.</item>
+        <item quantity="other">%1$d berichten konden niet worden ontsleuteld en ontbreken in de export.</item>
+    </plurals>
+    <plurals name="param_removed_from_links">
+        <item quantity="one">%1$s verwijderd uit %2$d link</item>
+        <item quantity="other">%1$s verwijderd uit %2$d links</item>
+    </plurals>
+</resources>

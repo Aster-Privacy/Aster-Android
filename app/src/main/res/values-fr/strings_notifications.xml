@@ -20,6 +20,9 @@
     <string name="notif_login_alert_revoke_failed_body">Ouvrez l\'application pour vérifier vos sessions actives.</string>
     <string name="notif_battery_opt_title">Activité en arrière-plan illimitée</string>
     <string name="notif_battery_opt_subtitle">Requis pour des notifications fiables. Appuyez pour activer dans les paramètres système.</string>
+    <string name="notif_blocked_title">Les notifications sont désactivées</string>
+    <string name="notif_blocked_subtitle">Aster Mail ne peut pas afficher de notifications tant que vous ne les autorisez pas. Appuyez pour ouvrir les paramètres système.</string>
     <string name="mute_folder_notifications">Désactiver les notifications du dossier</string>
     <string name="unmute_folder_notifications">Réactiver les notifications du dossier</string>
+    <string name="notif_channel_downloads_name">Téléchargements</string>
 </resources>

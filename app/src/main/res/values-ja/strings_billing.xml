@@ -23,10 +23,8 @@
     <string name="error_network">サーバーに接続できません。接続を確認してからもう一度お試しください。</string>
     <string name="error_not_found">この項目は利用できなくなりました。</string>
     <string name="error_payment_required">この操作を行うには、プランのお支払いが必要です。</string>
-    <string name="error_plan_limit_reached">現在のプランの上限に達しました。</string>
     <string name="error_rate_limited">試行回数が多すぎます。しばらく待ってからもう一度お試しください。</string>
     <string name="error_send_quota_reached">このアカウントの、Aster 以外のアドレス宛メッセージの 1 日の上限に達しました。他の Aster アドレス宛のメッセージには影響しません。</string>
-    <string name="error_storage_full">保存容量がいっぱいです。</string>
     <string name="family_manage_web">ウェブでメンバーを管理</string>
     <string name="finish_plan_setup_action">設定を完了</string>
     <string name="finish_plan_setup_message">お支払いの前にチェックアウトを閉じました。完了するまで、アカウントは無料プランのままです。</string>

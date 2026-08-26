@@ -15,5 +15,14 @@
     <string name="signature_none">Geen ondertekening</string>
     <string name="signature_select">Ondertekening kiezen</string>
     <string name="compose_metadata_strip_failed">Kon verborgen metadata niet verwijderen uit: %1$s</string>
+    <string name="compose_inline_image_failed">Kon deze afbeeldingen niet toevoegen: %1$s</string>
     <string name="compose_attachment_read_failed">\"%1$s\" kon niet worden bijgevoegd. Je e-mail is niet verzonden. Verwijder het bestand of voeg het opnieuw toe en probeer het nog eens.</string>
+    <string name="schedule_in_one_hour">Over een uur</string>
+    <string name="schedule_tonight">Vanavond</string>
+    <string name="schedule_tomorrow_morning">Morgenochtend</string>
+    <string name="schedule_tomorrow_afternoon">Morgenmiddag</string>
+    <string name="schedule_monday_morning">Maandagochtend</string>
+    <string name="schedule_pick_date_time">Datum &amp; tijd kiezen</string>
+    <string name="too_many_recipients_in_field">Elk veld Aan, Cc en Bcc bevat maximaal %1$d adressen. Verplaats een deel naar een tweede bericht om dit bericht te versturen.</string>
+    <string name="too_many_recipients_in_message">Eén bericht bereikt maximaal %1$d adressen in Aan, Cc en Bcc samen. De lijst opsplitsen in kleinere berichten werkt wel.</string>
 </resources>

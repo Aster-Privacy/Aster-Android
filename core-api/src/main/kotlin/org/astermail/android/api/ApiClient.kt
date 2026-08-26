@@ -81,11 +81,17 @@ sealed class ApiError(message: String) : Exception(message) {
     data class StorageQuotaExceeded(val detail: String) : ApiError(detail)
     object NotFoundError : ApiError("not found")
     data class ServerError(val code: Int) : ApiError("server error $code")
-    data class ValidationError(val messages: List<String>) : ApiError(messages.joinToString("; "))
+    data class ValidationError(
+        val messages: List<String>,
+        val code: String? = null,
+        val details: Map<String, String> = emptyMap(),
+    ) : ApiError(messages.joinToString("; "))
     data class Conflict(val detail: String) : ApiError(detail)
     data class RateLimited(
         val detail: String = "rate limited",
         val resets_at: String? = null,
+        val code: String? = null,
+        val details: Map<String, String> = emptyMap(),
     ) : ApiError(detail)
     data class UnknownError(val detail: String) : ApiError(detail)
     data class StepUpRequired(val detail: String = "step up required") : ApiError(detail)
@@ -153,7 +159,6 @@ class ApiClient(
     val base_url: String,
     private val token_provider: TokenProvider,
     private val refresh_endpoint: String = "/api/core/v1/auth/refresh",
-    private val csrf_endpoint: String = "/api/csrf/token",
     private val on_csrf_changed: (String?) -> Unit = {},
     initial_csrf: String? = null,
     private val csrf_refresher: suspend () -> String? = { null },
@@ -346,20 +351,7 @@ class ApiClient(
         return csrf_mutex.withLock {
             csrf_token?.let { return@withLock it }
             try {
-                val response: HttpResponse = http.request {
-                    method = HttpMethod.Get
-                    url.takeFrom("$base_url$csrf_endpoint")
-                }
-                if (response.status.isSuccess()) {
-                    val body_text = response.bodyAsStringSafe()
-                    val token = extract_csrf_from_body(body_text)
-                    if (token != null) {
-                        csrf_token = token
-                    }
-                    token
-                } else {
-                    null
-                }
+                csrf_refresher()
             } catch (_: Throwable) {
                 null
             }
@@ -394,25 +386,6 @@ class ApiClient(
         runCatching { on_csrf_changed(null) }
     }
 
-    private fun extract_csrf_from_body(body: String?): String? {
-        if (body.isNullOrBlank()) return null
-        return try {
-            val element = json.parseToJsonElement(body)
-            val obj = element as? JsonObject ?: return null
-            sanitize_csrf((obj["csrf_token"] ?: obj["token"])?.jsonPrimitive?.content)
-        } catch (_: SerializationException) {
-            null
-        } catch (_: Throwable) {
-            null
-        }
-    }
-
-    private suspend fun HttpResponse.bodyAsStringSafe(): String? = try {
-        body<String>()
-    } catch (_: Throwable) {
-        null
-    }
-
     private suspend fun safe_read_body(response: HttpResponse): String = try {
         response.body<String>()
     } catch (_: Throwable) {
@@ -432,22 +405,32 @@ class ApiClient(
             return ApiError.StorageQuotaExceeded(detail).also { emit_storage_full(it) }
         }
         if (server_code == "EXTERNAL_SEND_QUOTA_REACHED") {
-            return ApiError.SendQuotaReached(detail)
+            return ApiError.SendQuotaReached(detail.ifBlank { "You've reached this account's daily limit for messages to addresses outside Aster. Messages to other Aster addresses aren't affected." })
         }
         return when (code) {
-            400 -> ApiError.ValidationError(parse_validation_messages(body).ifEmpty { listOf(detail) })
+            400 -> ApiError.ValidationError(
+                parse_validation_messages(body).ifEmpty { listOf(detail.ifBlank { "bad request" }) },
+                server_code,
+                parse_error_details(body),
+            )
             401 -> map_unauthorized(server_code, detail).also {
                 if (should_emit_unauthorized(server_code)) AuthEventBus.emit_unauthorized()
             }
             402 -> ApiError.PaymentRequired(detail)
             403 -> ApiError.ForbiddenError(detail, server_code)
             404 -> ApiError.NotFoundError
-            413 -> ApiError.AttachmentTooLarge(detail)
-            422 -> ApiError.ValidationError(parse_validation_messages(body).ifEmpty { listOf(detail) })
-            409 -> ApiError.Conflict(detail)
+            413 -> ApiError.AttachmentTooLarge(detail.ifBlank { "attachment too large" })
+            422 -> ApiError.ValidationError(
+                parse_validation_messages(body).ifEmpty { listOf(detail.ifBlank { "unprocessable request" }) },
+                server_code,
+                parse_error_details(body),
+            )
+            409 -> ApiError.Conflict(detail.ifBlank { "conflict" })
             429 -> ApiError.RateLimited(
                 detail = detail,
                 resets_at = parse_error_resets_at(body),
+                code = server_code,
+                details = parse_error_details(body),
             )
             in 500..599 -> ApiError.ServerError(code)
             else -> ApiError.UnknownError(detail)
@@ -479,6 +462,20 @@ class ApiClient(
             obj["code"]?.jsonPrimitive?.content
         } catch (_: Throwable) {
             null
+        }
+    }
+
+    private fun parse_error_details(body: String): Map<String, String> {
+        if (body.isBlank()) return emptyMap()
+        return try {
+            val obj = json.parseToJsonElement(body) as? JsonObject ?: return emptyMap()
+            val details = obj["details"] as? JsonObject ?: return emptyMap()
+            details.mapNotNull { (key, value) ->
+                val primitive = value as? kotlinx.serialization.json.JsonPrimitive ?: return@mapNotNull null
+                key to primitive.content
+            }.toMap()
+        } catch (_: Throwable) {
+            emptyMap()
         }
     }
 

@@ -68,10 +68,7 @@
     <string name="settings_val_gb">%1$d GB</string>
     <string name="settings_val_tb">%1$d TB</string>
     <string name="settings_val_mb">%1$d MB</string>
-    <string name="settings_val_emails_per_day">%1$d e-posta</string>
-    <string name="settings_val_days">%1$d gün</string>
     <string name="settings_val_one_year">1 yıl</string>
-    <string name="settings_val_hours">%1$d saat</string>
     <string name="settings_val_count">%1$d</string>
     <string name="settings_plan_bullet_duo_storage">1 TB paylaşılan şifreli depolama</string>
     <string name="settings_plan_bullet_duo_members">2 üye, ayrı hesaplar</string>
@@ -85,9 +82,13 @@
     <string name="settings_save_amount">$%1$.2f</string>
     <string name="settings_interval_default">ay</string>
     <string name="settings_diagnostics_clip_label">Tanılama</string>
+    <string name="settings_diagnostics_secure_storage">Güvenli depolama</string>
+    <string name="settings_diagnostics_storage_ok">Sağlıklı</string>
+    <string name="settings_diagnostics_storage_degraded">Bozulmuş, oturumu kapatıp yeniden açın</string>
     <string name="log_out_confirm_title">Çıkış yapılsın mı?</string>
     <string name="log_out_confirm_message">Bu cihazda %1$s hesabından çıkılsın mı?</string>
     <string name="revoke_session_confirm_message">Bu cihaz hesabından çıkarılsın mı?</string>
     <string name="sign_out_all_other_confirm_message">Bu cihaz dışındaki tüm cihazlardan çıkılsın mı?</string>
     <string name="alias_forward_limit_reached">Planındaki etkin takma ad sayısının üst sınırına ulaştın</string>
+    <string name="settings_plan_bullet_daily_emails">Günde 1.000 e-posta</string>
 </resources>

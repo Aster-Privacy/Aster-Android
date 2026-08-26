@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="aliases_count">
+        <item quantity="one">%d alias</item>
+        <item quantity="few">%d aliasy</item>
+        <item quantity="many">%d aliasów</item>
+        <item quantity="other">%d aliasów</item>
+    </plurals>
+    <plurals name="api_keys_count">
+        <item quantity="one">%d klucz</item>
+        <item quantity="few">%d klucze</item>
+        <item quantity="many">%d kluczy</item>
+        <item quantity="other">%d kluczy</item>
+    </plurals>
+    <plurals name="devices_count">
+        <item quantity="one">%d urządzenie</item>
+        <item quantity="few">%d urządzenia</item>
+        <item quantity="many">%d urządzeń</item>
+        <item quantity="other">%d urządzeń</item>
+    </plurals>
+    <plurals name="labels_count">
+        <item quantity="one">%d etykieta</item>
+        <item quantity="few">%d etykiety</item>
+        <item quantity="many">%d etykiet</item>
+        <item quantity="other">%d etykiet</item>
+    </plurals>
+    <plurals name="ghosts_count">
+        <item quantity="one">%d ghost alias</item>
+        <item quantity="few">%d ghost aliasy</item>
+        <item quantity="many">%d ghost aliasów</item>
+        <item quantity="other">%d ghost aliasów</item>
+    </plurals>
+    <plurals name="recovery_codes_count">
+        <item quantity="one">%d kod odzyskiwania</item>
+        <item quantity="few">%d kody odzyskiwania</item>
+        <item quantity="many">%d kodów odzyskiwania</item>
+        <item quantity="other">%d kodów odzyskiwania</item>
+    </plurals>
+    <plurals name="imported_contacts">
+        <item quantity="one">Zaimportowano %d kontakt</item>
+        <item quantity="few">Zaimportowano %d kontakty</item>
+        <item quantity="many">Zaimportowano %d kontaktów</item>
+        <item quantity="other">Zaimportowano %d kontaktów</item>
+    </plurals>
+    <plurals name="n_images">
+        <item quantity="one">%1$d obraz</item>
+        <item quantity="few">%1$d obrazy</item>
+        <item quantity="many">%1$d obrazów</item>
+        <item quantity="other">%1$d obrazów</item>
+    </plurals>
+    <plurals name="n_trackers">
+        <item quantity="one">%1$d tracker</item>
+        <item quantity="few">%1$d trackery</item>
+        <item quantity="many">%1$d trackerów</item>
+        <item quantity="other">%1$d trackerów</item>
+    </plurals>
+    <plurals name="n_fonts">
+        <item quantity="one">%1$d czcionka</item>
+        <item quantity="few">%1$d czcionki</item>
+        <item quantity="many">%1$d czcionek</item>
+        <item quantity="other">%1$d czcionek</item>
+    </plurals>
+    <plurals name="n_stylesheets">
+        <item quantity="one">%1$d arkusz stylów</item>
+        <item quantity="few">%1$d arkusze stylów</item>
+        <item quantity="many">%1$d arkuszy stylów</item>
+        <item quantity="other">%1$d arkuszy stylów</item>
+    </plurals>
+    <plurals name="show_n_more_aliases">
+        <item quantity="one">Pokaż jeszcze %1$d alias</item>
+        <item quantity="few">Pokaż jeszcze %1$d aliasy</item>
+        <item quantity="many">Pokaż jeszcze %1$d aliasów</item>
+        <item quantity="other">Pokaż jeszcze %1$d aliasów</item>
+    </plurals>
+    <plurals name="show_n_more_folders">
+        <item quantity="one">Pokaż jeszcze %1$d folder</item>
+        <item quantity="few">Pokaż jeszcze %1$d foldery</item>
+        <item quantity="many">Pokaż jeszcze %1$d folderów</item>
+        <item quantity="other">Pokaż jeszcze %1$d folderów</item>
+    </plurals>
+    <plurals name="rules_emails_count">
+        <item quantity="one">%1$d wiadomość</item>
+        <item quantity="few">%1$d wiadomości</item>
+        <item quantity="many">%1$d wiadomości</item>
+        <item quantity="other">%1$d wiadomości</item>
+    </plurals>
+    <plurals name="rules_value_label_count">
+        <item quantity="one">%1$d etykieta</item>
+        <item quantity="few">%1$d etykiety</item>
+        <item quantity="many">%1$d etykiet</item>
+        <item quantity="other">%1$d etykiet</item>
+    </plurals>
+    <plurals name="stop_senders_title">
+        <item quantity="one">Zatrzymać pocztę od %1$d nadawcy?</item>
+        <item quantity="few">Zatrzymać pocztę od %1$d nadawców?</item>
+        <item quantity="many">Zatrzymać pocztę od %1$d nadawców?</item>
+        <item quantity="other">Zatrzymać pocztę od %1$d nadawców?</item>
+    </plurals>
+    <plurals name="participants_and_others">
+        <item quantity="one">%1$s i %2$d inny</item>
+        <item quantity="few">%1$s i %2$d innych</item>
+        <item quantity="many">%1$s i %2$d innych</item>
+        <item quantity="other">%1$s i %2$d innych</item>
+    </plurals>
+    <plurals name="messages_in_type">
+        <item quantity="one">%1$d wiadomość w %2$s</item>
+        <item quantity="few">%1$d wiadomości w %2$s</item>
+        <item quantity="many">%1$d wiadomości w %2$s</item>
+        <item quantity="other">%1$d wiadomości w %2$s</item>
+    </plurals>
+</resources>

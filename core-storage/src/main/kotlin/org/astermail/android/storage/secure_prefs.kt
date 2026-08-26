@@ -35,6 +35,9 @@ private const val quarantine_marker = ".quarantine."
 private const val master_key_alias = "aster_prefs_master_v2"
 private const val migration_prefs_name = "aster_secure_prefs_migration"
 private const val rekeyed_key_prefix = "rekeyed_v2_"
+private const val rekey_attempts_prefix = "rekey_attempts_"
+
+const val rekey_max_attempts = 3
 
 private const val warm_join_timeout_ms = 5_000L
 
@@ -117,22 +120,37 @@ object SecurePrefs {
     private fun migration_prefs(context: Context): SharedPreferences =
         context.applicationContext.getSharedPreferences(migration_prefs_name, Context.MODE_PRIVATE)
 
-    private fun record_failure(context: Context, name: String): Boolean {
-        val prefs = health_prefs(context)
-        val key = failure_key_prefix + name
-        val already_failed = prefs.getBoolean(key, false)
-        if (!already_failed) {
-            prefs.edit().putBoolean(key, true).apply()
+    private fun record_failure(context: Context, name: String): Boolean =
+        record_failure_in(health_prefs(context), failure_key_prefix + name)
+
+    @androidx.annotation.VisibleForTesting
+    fun record_failure_in(prefs: SharedPreferences, key: String): Boolean {
+        val already_failed = runCatching { prefs.getBoolean(key, false) }.getOrNull()
+        if (already_failed == null) {
+            StorageHealth.mark_secure_prefs_degraded()
+            return false
         }
-        return already_failed
+        if (already_failed) return true
+        val stored = runCatching { prefs.edit().putBoolean(key, true).commit() }.getOrDefault(false)
+        if (!stored) StorageHealth.mark_secure_prefs_degraded()
+        return false
     }
 
     private fun clear_failure_record(context: Context, name: String) {
-        val prefs = health_prefs(context)
-        val key = failure_key_prefix + name
-        if (prefs.contains(key)) {
-            prefs.edit().remove(key).commit()
+        clear_failure_record_in(health_prefs(context), failure_key_prefix + name)
+    }
+
+    @androidx.annotation.VisibleForTesting
+    fun clear_failure_record_in(prefs: SharedPreferences, key: String): Boolean {
+        val present = runCatching { prefs.contains(key) }.getOrNull()
+        if (present == null) {
+            StorageHealth.mark_secure_prefs_degraded()
+            return false
         }
+        if (!present) return true
+        val cleared = runCatching { prefs.edit().remove(key).commit() }.getOrDefault(false)
+        if (!cleared) StorageHealth.mark_secure_prefs_degraded()
+        return cleared
     }
 
     private fun reset_key_material(context: Context, name: String) {
@@ -213,15 +231,43 @@ object SecurePrefs {
             create_encrypted_with(app, name, legacy_master_key(app)).all
         }.getOrNull()
         if (snapshot == null) {
+            if (!exhausted_rekey_attempts(markers, rekey_attempts_prefix + name)) {
+                StorageHealth.mark_secure_prefs_degraded()
+                return
+            }
             quarantine_prefs(app, name)
             markers.edit().putBoolean(marker_key, true).commit()
             return
         }
         val target = runCatching { create_encrypted(app, name + rekeyed_suffix) }.getOrNull() ?: return
+        val target_entries = runCatching { target.all }.getOrNull()
+        if (target_entries == null) {
+            StorageHealth.mark_secure_prefs_degraded()
+            return
+        }
+        if (target_entries.isNotEmpty()) {
+            markers.edit().putBoolean(marker_key, true).commit()
+            return
+        }
         val copied = runCatching { copy_entries(snapshot, target) }.getOrDefault(false)
         if (!copied) return
-        markers.edit().putBoolean(marker_key, true).commit()
+        val marked = runCatching { markers.edit().putBoolean(marker_key, true).commit() }.getOrDefault(false)
+        if (!marked) {
+            StorageHealth.mark_secure_prefs_degraded()
+            return
+        }
         runCatching { app.deleteSharedPreferences(name) }
+    }
+
+    @androidx.annotation.VisibleForTesting
+    fun exhausted_rekey_attempts(markers: SharedPreferences, attempts_key: String): Boolean {
+        val previous = runCatching { markers.getInt(attempts_key, 0) }.getOrNull() ?: return false
+        val attempts = previous + 1
+        val recorded = runCatching {
+            markers.edit().putInt(attempts_key, attempts).commit()
+        }.getOrDefault(false)
+        if (!recorded) return false
+        return attempts >= rekey_max_attempts
     }
 
     private fun copy_entries(snapshot: Map<String, Any?>, target: SharedPreferences): Boolean {

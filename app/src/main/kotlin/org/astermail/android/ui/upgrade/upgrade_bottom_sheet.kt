@@ -108,7 +108,7 @@ private fun format_bytes(bytes: Long): String {
     val rounded = if (value >= 10 || i == 0) {
         value.toLong().toString()
     } else {
-        "%.1f".format(java.util.Locale.US, value)
+        "%.1f".format(java.util.Locale.getDefault(), value)
     }
     return "$rounded ${units[i]}"
 }

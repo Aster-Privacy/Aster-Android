@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="duration_n_days">
+        <item quantity="other">%1$d日間</item>
+    </plurals>
+    <plurals name="expires_in_days">
+        <item quantity="other">%1$d日で期限切れ</item>
+    </plurals>
+    <plurals name="valid_for_days">
+        <item quantity="other">%1$d日間有効</item>
+    </plurals>
+    <plurals name="rules_value_days">
+        <item quantity="other">%1$d 日</item>
+    </plurals>
+    <plurals name="settings_val_days">
+        <item quantity="other">%1$d 日</item>
+    </plurals>
+    <plurals name="settings_val_hours">
+        <item quantity="other">%1$d 時間</item>
+    </plurals>
+    <plurals name="settings_val_emails_per_day">
+        <item quantity="other">%1$d 通</item>
+    </plurals>
+    <plurals name="spam_auto_delete_notice">
+        <item quantity="other">迷惑メール内のアイテムは%1$d日後に自動的に削除されます。</item>
+    </plurals>
+    <plurals name="pending_deletion_body_days">
+        <item quantity="other">お客様のアカウントは%1$d日後に削除されます。削除をキャンセルすると、アカウントを保持し、メールとサブスクリプションへのアクセスを復元できます。</item>
+    </plurals>
+    <plurals name="domain_purchase_n_years">
+        <item quantity="other">%1$d年</item>
+    </plurals>
+    <plurals name="domain_purchase_years_line">
+        <item quantity="other">%1$d年間の登録</item>
+    </plurals>
+    <plurals name="app_lock_try_again_in">
+        <item quantity="other">%d 秒後にもう一度お試しください</item>
+    </plurals>
+    <plurals name="export_undecryptable_skipped">
+        <item quantity="other">%1$d 件のメッセージを復号できず、エクスポートから除外されました。</item>
+    </plurals>
+    <plurals name="param_removed_from_links">
+        <item quantity="other">%2$d件のリンクから%1$sを削除しました</item>
+    </plurals>
+</resources>

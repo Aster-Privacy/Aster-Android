@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="aliases_count">
+        <item quantity="other">%d個のエイリアス</item>
+    </plurals>
+    <plurals name="api_keys_count">
+        <item quantity="other">%d個のキー</item>
+    </plurals>
+    <plurals name="devices_count">
+        <item quantity="other">%d台のデバイス</item>
+    </plurals>
+    <plurals name="labels_count">
+        <item quantity="other">%d個のラベル</item>
+    </plurals>
+    <plurals name="ghosts_count">
+        <item quantity="other">%d個のゴースト</item>
+    </plurals>
+    <plurals name="recovery_codes_count">
+        <item quantity="other">%d個のリカバリコード</item>
+    </plurals>
+    <plurals name="imported_contacts">
+        <item quantity="other">%d件の連絡先をインポートしました</item>
+    </plurals>
+    <plurals name="n_images">
+        <item quantity="other">%1$d個の画像</item>
+    </plurals>
+    <plurals name="n_trackers">
+        <item quantity="other">%1$d個のトラッカー</item>
+    </plurals>
+    <plurals name="n_fonts">
+        <item quantity="other">%1$d個のフォント</item>
+    </plurals>
+    <plurals name="n_stylesheets">
+        <item quantity="other">%1$d個のスタイルシート</item>
+    </plurals>
+    <plurals name="show_n_more_aliases">
+        <item quantity="other">他 %1$d 件のエイリアスを表示</item>
+    </plurals>
+    <plurals name="show_n_more_folders">
+        <item quantity="other">他 %1$d 件のフォルダーを表示</item>
+    </plurals>
+    <plurals name="rules_emails_count">
+        <item quantity="other">%1$d 件のメール</item>
+    </plurals>
+    <plurals name="rules_value_label_count">
+        <item quantity="other">ラベル %1$d 件</item>
+    </plurals>
+    <plurals name="stop_senders_title">
+        <item quantity="other">%1$d件の送信者からのメールを止めますか？</item>
+    </plurals>
+    <plurals name="participants_and_others">
+        <item quantity="other">%1$s 他%2$d名</item>
+    </plurals>
+    <plurals name="messages_in_type">
+        <item quantity="other">%2$sに%1$d件のメッセージ</item>
+    </plurals>
+</resources>

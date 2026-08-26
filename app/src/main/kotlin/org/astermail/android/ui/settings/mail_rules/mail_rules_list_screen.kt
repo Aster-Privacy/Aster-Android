@@ -64,6 +64,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -96,6 +97,18 @@ fun MailRulesListScreen(
     val colors = AsterMaterial.colors
     val state by vm.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { vm.load() }
+    val rules_context = androidx.compose.ui.platform.LocalContext.current
+
+    LaunchedEffect(state.error, state.rules.isEmpty()) {
+        val message_res = state.error ?: return@LaunchedEffect
+        if (state.rules.isEmpty()) return@LaunchedEffect
+        android.widget.Toast.makeText(
+            rules_context,
+            rules_context.getString(message_res),
+            android.widget.Toast.LENGTH_SHORT,
+        ).show()
+        vm.clear_error()
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -153,7 +166,10 @@ fun MailRulesListScreen(
                 .padding(AsterSpacing.lg)
                 .testTag("add_rule"),
         ) {
-            Icon(imageVector = TablerIcons.Plus, contentDescription = null)
+            Icon(
+                imageVector = TablerIcons.Plus,
+                contentDescription = stringResource(R.string.mail_rules_new_rule),
+            )
         }
     }
 }
@@ -267,6 +283,7 @@ private fun rule_row(
     val colors = AsterMaterial.colors
     var menu_open by remember { mutableStateOf(false) }
     var confirm_delete by remember { mutableStateOf(false) }
+    var confirm_run by remember { mutableStateOf(false) }
     if (confirm_delete) {
         AsterDialog(
             on_dismiss = { confirm_delete = false },
@@ -280,6 +297,23 @@ private fun rule_row(
                 AsterDialogDestructiveButton(
                     label = stringResource(R.string.delete),
                     onClick = { confirm_delete = false; on_delete() },
+                )
+            },
+        )
+    }
+    if (confirm_run) {
+        AsterDialog(
+            on_dismiss = { confirm_run = false },
+            title = stringResource(R.string.mail_rules_run_on_existing),
+            message = stringResource(R.string.mail_rules_run_on_existing_confirm),
+            footer = {
+                AsterDialogOutlineButton(
+                    label = stringResource(R.string.cancel),
+                    onClick = { confirm_run = false },
+                )
+                AsterDialogDestructiveButton(
+                    label = stringResource(R.string.mail_rules_run_on_existing),
+                    onClick = { confirm_run = false; on_run() },
                 )
             },
         )
@@ -310,7 +344,12 @@ private fun rule_row(
                 fontWeight = FontWeight.Medium,
             )
             Text(
-                text = stringResource(R.string.mail_rules_applied_count, rule.applied_count.toInt()),
+                text =
+                    pluralStringResource(
+                        R.plurals.mail_rules_applied_count,
+                        rule.applied_count.toInt(),
+                        rule.applied_count.toInt(),
+                    ),
                 color = colors.text_tertiary,
                 fontSize = 12.sp,
             )
@@ -322,7 +361,11 @@ private fun rule_row(
         Spacer(Modifier.width(AsterSpacing.sm))
         Box {
             IconButton(onClick = { menu_open = true }) {
-                Icon(imageVector = TablerIcons.DotsVertical, contentDescription = null, tint = colors.text_secondary)
+                Icon(
+                    imageVector = TablerIcons.DotsVertical,
+                    contentDescription = stringResource(R.string.more_options),
+                    tint = colors.text_secondary,
+                )
             }
             aster_dropdown_menu(expanded = menu_open, on_dismiss = { menu_open = false }) {
                 aster_dropdown_item(
@@ -340,7 +383,7 @@ private fun rule_row(
                 aster_dropdown_item(
                     label = stringResource(R.string.mail_rules_run_on_existing),
                     icon = TablerIcons.PlayerPlay,
-                    on_click = { menu_open = false; on_run() },
+                    on_click = { menu_open = false; confirm_run = true },
                 )
                 aster_dropdown_item(
                     label = stringResource(R.string.mail_rules_delete),

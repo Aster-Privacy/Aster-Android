@@ -37,6 +37,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -58,6 +59,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -144,7 +146,7 @@ private fun behavior_toggle(
 @Composable
 fun BehaviorScreen(
     on_back: () -> Unit,
-    on_open: (id: String) -> Unit = {},
+    on_open: (id: String) -> Unit,
 ) {
     val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
@@ -153,6 +155,7 @@ fun BehaviorScreen(
     val current_prefs = rememberUpdatedState(prefs)
 
     LaunchedEffect(Unit) { vm.load_preferences() }
+    LaunchedEffect(Unit) { vm.load_spam_settings() }
 
     val prefs_loaded = prefs != null && state.preferences_authoritative
     var mark_read by remember(prefs_loaded) { mutableStateOf(prefs?.mark_as_read ?: "1_second") }
@@ -169,11 +172,14 @@ fun BehaviorScreen(
     val plan_state by plan_vm.state.collectAsStateWithLifecycle()
     val custom_category_limit =
         plan_state.limits?.limits?.get("max_custom_categories")?.limit ?: -1
-    var conversation_order by remember(prefs_loaded) { mutableStateOf(prefs?.conversation_order ?: "newest") }
+    var inbox_sort_oldest_first by remember(prefs_loaded) {
+        mutableStateOf(org.astermail.android.api.preferences.resolve_inbox_sort_oldest_first(prefs))
+    }
     var inbox_page_size by remember(prefs_loaded) { mutableIntStateOf(prefs?.inbox_page_size ?: 50) }
     var show_message_size by remember(prefs_loaded) { mutableStateOf(prefs?.show_message_size ?: false) }
     var show_alias_indicators by remember(prefs_loaded) { mutableStateOf(prefs?.show_alias_indicators ?: true) }
     var show_profile_pictures by remember(prefs_loaded) { mutableStateOf(prefs?.show_profile_pictures ?: true) }
+    var show_email_preview by remember(prefs_loaded) { mutableStateOf(prefs?.show_email_preview != false) }
     var force_dark_emails by remember(prefs_loaded) { mutableStateOf(prefs?.force_dark_emails ?: false) }
     var default_reply by remember(prefs_loaded) { mutableStateOf(prefs?.default_reply_behavior ?: "reply") }
     var auto_save_recipients by remember(prefs_loaded) { mutableStateOf(prefs?.auto_save_recent_recipients ?: true) }
@@ -182,9 +188,16 @@ fun BehaviorScreen(
     var confirm_delete by remember(prefs_loaded) { mutableStateOf(prefs?.confirm_delete ?: false) }
     var confirm_archive by remember(prefs_loaded) { mutableStateOf(prefs?.confirm_archive ?: false) }
     var confirm_spam by remember(prefs_loaded) { mutableStateOf(prefs?.confirm_spam ?: false) }
-    var spam_filter_enabled by remember(prefs_loaded) { mutableStateOf(prefs?.spam_filter_enabled ?: true) }
-    var spam_sensitivity by remember(prefs_loaded) { mutableStateOf(prefs?.spam_sensitivity ?: "medium") }
-    var auto_delete_spam_days by remember(prefs_loaded) { mutableIntStateOf(prefs?.auto_delete_spam_days ?: 30) }
+    val spam_settings = state.spam_settings
+    var spam_filter_enabled by remember(prefs_loaded, spam_settings != null) {
+        mutableStateOf(spam_settings?.spam_filter_enabled ?: prefs?.spam_filter_enabled ?: true)
+    }
+    var spam_sensitivity by remember(prefs_loaded, spam_settings != null) {
+        mutableStateOf(spam_settings?.spam_sensitivity ?: prefs?.spam_sensitivity ?: "medium")
+    }
+    var auto_delete_spam_days by remember(prefs_loaded, spam_settings != null) {
+        mutableIntStateOf(spam_settings?.spam_retention_days ?: prefs?.auto_delete_spam_days ?: 30)
+    }
     var folder_lock_mode by remember(prefs_loaded) { mutableStateOf(prefs?.folder_lock_mode ?: "session") }
     var purge_locked_folder_on_delete by remember(prefs_loaded) {
         mutableStateOf(prefs?.purge_locked_folder_on_delete ?: false)
@@ -197,8 +210,17 @@ fun BehaviorScreen(
     var translate_never by remember(prefs_loaded) { mutableStateOf((prefs?.translate_never_languages ?: emptyList()).toSet()) }
     var save_trigger by remember { mutableIntStateOf(0) }
     var loaded_signature by remember { mutableStateOf<Int?>(null) }
+    var reseed_token by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(prefs) {
+    LaunchedEffect(state.save_status) {
+        if (state.save_status != org.astermail.android.settings.SaveStatus.ERROR) return@LaunchedEffect
+        if (prefs == null) return@LaunchedEffect
+        save_trigger = 0
+        loaded_signature = null
+        reseed_token += 1
+    }
+
+    LaunchedEffect(prefs, reseed_token) {
         if (prefs != null) {
             val sig = prefs.hashCode()
             if (loaded_signature != sig && save_trigger == 0) {
@@ -209,11 +231,13 @@ fun BehaviorScreen(
                 inbox_categories = prefs.inbox_categories_enabled
                 enabled_categories = prefs.enabled_categories
                 custom_categories = prefs.custom_categories
-                conversation_order = prefs.conversation_order
+                inbox_sort_oldest_first =
+                    org.astermail.android.api.preferences.resolve_inbox_sort_oldest_first(prefs)
                 inbox_page_size = prefs.inbox_page_size
                 show_message_size = prefs.show_message_size
                 show_alias_indicators = prefs.show_alias_indicators
                 show_profile_pictures = prefs.show_profile_pictures
+                show_email_preview = prefs.show_email_preview
                 force_dark_emails = prefs.force_dark_emails
                 default_reply = prefs.default_reply_behavior
                 auto_save_recipients = prefs.auto_save_recent_recipients
@@ -222,9 +246,11 @@ fun BehaviorScreen(
                 confirm_delete = prefs.confirm_delete
                 confirm_archive = prefs.confirm_archive
                 confirm_spam = prefs.confirm_spam
-                spam_filter_enabled = prefs.spam_filter_enabled
-                spam_sensitivity = prefs.spam_sensitivity
-                auto_delete_spam_days = prefs.auto_delete_spam_days
+                if (spam_settings == null) {
+                    spam_filter_enabled = prefs.spam_filter_enabled
+                    spam_sensitivity = prefs.spam_sensitivity
+                    auto_delete_spam_days = prefs.auto_delete_spam_days
+                }
                 folder_lock_mode = prefs.folder_lock_mode
                 purge_locked_folder_on_delete = prefs.purge_locked_folder_on_delete
                 haptic = prefs.haptic_enabled
@@ -237,6 +263,30 @@ fun BehaviorScreen(
         }
     }
 
+    LaunchedEffect(spam_settings) {
+        val server = spam_settings ?: return@LaunchedEffect
+        spam_filter_enabled = server.spam_filter_enabled
+        spam_sensitivity = server.spam_sensitivity
+        auto_delete_spam_days = server.spam_retention_days
+    }
+
+    val toast_context = LocalContext.current
+    LaunchedEffect(state.action_result) {
+        val message = state.action_result ?: return@LaunchedEffect
+        Toast.makeText(toast_context, message, Toast.LENGTH_LONG).show()
+        vm.clear_action_result()
+    }
+
+    fun push_spam_settings() {
+        vm.save_spam_settings(
+            org.astermail.android.api.preferences.SpamSettings(
+                spam_retention_days = auto_delete_spam_days,
+                spam_sensitivity = spam_sensitivity,
+                spam_filter_enabled = spam_filter_enabled,
+            ),
+        )
+    }
+
     fun save(snap: UserPreferences? = null) {
         val base = snap ?: prefs ?: return
         vm.save_preferences(
@@ -247,11 +297,13 @@ fun BehaviorScreen(
                 inbox_categories_enabled = inbox_categories,
                 enabled_categories = enabled_categories,
                 custom_categories = org.astermail.android.mail.sanitize_custom_categories(custom_categories),
-                conversation_order = conversation_order,
+                inbox_sort_order =
+                    org.astermail.android.api.preferences.inbox_sort_order_value(inbox_sort_oldest_first),
                 inbox_page_size = inbox_page_size.coerceIn(10, 100),
                 show_message_size = show_message_size,
                 show_alias_indicators = show_alias_indicators,
                 show_profile_pictures = show_profile_pictures,
+                show_email_preview = show_email_preview,
                 force_dark_emails = force_dark_emails,
                 default_reply_behavior = default_reply,
                 auto_save_recent_recipients = auto_save_recipients,
@@ -282,27 +334,38 @@ fun BehaviorScreen(
         save_trigger = 0
     }
 
+    val flush_on_exit: androidx.compose.runtime.State<() -> Unit> =
+        rememberUpdatedState({
+            if (save_trigger > 0 && loaded_signature != null) save(current_prefs.value)
+        })
+
     DisposableEffect(Unit) {
-        onDispose { if (save_trigger > 0 && loaded_signature != null) save(current_prefs.value) }
+        onDispose { flush_on_exit.value() }
     }
 
     detail_scaffold(title = stringResource(R.string.settings_behavior), on_back = on_back) {
+        preferences_save_error_banner()
         if (!prefs_loaded) {
-            Box(modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
-            }
+            preferences_load_placeholder()
         } else {
 
             // ── Reading & Conversations ──────────────────────────────────────────
             section_label(stringResource(R.string.section_reading_conversations))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = stringResource(R.string.mark_as_read),
+                    color = colors.text_primary,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),
+                )
                 listOf(
                     "immediate" to stringResource(R.string.immediately),
                     "1_second" to stringResource(R.string.after_1_second),
                     "3_seconds" to stringResource(R.string.after_3_seconds),
                     "never" to stringResource(R.string.never_manual),
                 ).forEachIndexed { i, (id, label) ->
-                    behavior_option("${stringResource(R.string.mark_as_read)}: $label", mark_read == id) { mark_read = id; save_trigger++ }
+                    behavior_option(label, mark_read == id) { mark_read = id; save_trigger++ }
                     if (i < 3) AsterDivider(modifier = Modifier)
                 }
             }
@@ -341,17 +404,20 @@ fun BehaviorScreen(
                 )
                 AsterDivider(modifier = Modifier)
                 Text(
-                    text = stringResource(R.string.conversation_order_label),
+                    text = stringResource(R.string.sort_by),
                     color = colors.text_primary,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),
                 )
                 listOf(
-                    "newest" to stringResource(R.string.sort_newest),
-                    "oldest" to stringResource(R.string.sort_oldest),
-                ).forEachIndexed { i, (id, label) ->
-                    behavior_option(label, conversation_order == id) { conversation_order = id; save_trigger++ }
+                    false to stringResource(R.string.sort_newest),
+                    true to stringResource(R.string.sort_oldest),
+                ).forEachIndexed { i, (oldest_first, label) ->
+                    behavior_option(label, inbox_sort_oldest_first == oldest_first) {
+                        inbox_sort_oldest_first = oldest_first
+                        save_trigger++
+                    }
                     if (i == 0) AsterDivider(modifier = Modifier)
                 }
                 AsterDivider(modifier = Modifier)
@@ -374,6 +440,13 @@ fun BehaviorScreen(
                     subtitle = stringResource(R.string.show_sender_pictures_subtitle),
                     checked = show_profile_pictures,
                     on_change = { show_profile_pictures = it; save_trigger++ },
+                )
+                AsterDivider(modifier = Modifier)
+                behavior_toggle(
+                    title = stringResource(R.string.show_email_preview),
+                    subtitle = stringResource(R.string.show_email_preview_subtitle),
+                    checked = show_email_preview,
+                    on_change = { show_email_preview = it; save_trigger++ },
                 )
                 AsterDivider(modifier = Modifier)
                 behavior_toggle(
@@ -550,7 +623,7 @@ fun BehaviorScreen(
                             modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.sm, bottom = 2.dp),
                         )
                         listOf(3, 5, 10, 15, 20, 30).forEachIndexed { i, secs ->
-                            behavior_option("${secs}s", undo_send_secs == secs) { undo_send_secs = secs; save_trigger++ }
+                            behavior_option(stringResource(R.string.undo_send_delay_seconds, secs), undo_send_secs == secs) { undo_send_secs = secs; save_trigger++ }
                             if (i < 5) AsterDivider(modifier = Modifier)
                         }
                     }
@@ -578,7 +651,7 @@ fun BehaviorScreen(
                     title = stringResource(R.string.enable_spam_filtering),
                     subtitle = stringResource(R.string.enable_spam_filtering_subtitle),
                     checked = spam_filter_enabled,
-                    on_change = { spam_filter_enabled = it; save_trigger++ },
+                    on_change = { spam_filter_enabled = it; push_spam_settings(); save_trigger++ },
                 )
                 AnimatedVisibility(
                     visible = spam_filter_enabled,
@@ -599,7 +672,7 @@ fun BehaviorScreen(
                             "medium" to stringResource(R.string.spam_sensitivity_medium),
                             "high" to stringResource(R.string.spam_sensitivity_high),
                         ).forEachIndexed { i, (id, label) ->
-                            behavior_option(label, spam_sensitivity == id) { spam_sensitivity = id; save_trigger++ }
+                            behavior_option(label, spam_sensitivity == id) { spam_sensitivity = id; push_spam_settings(); save_trigger++ }
                             if (i < 2) AsterDivider(modifier = Modifier)
                         }
                         AsterDivider(modifier = Modifier)
@@ -616,7 +689,7 @@ fun BehaviorScreen(
                             30 to stringResource(R.string.auto_delete_spam_30),
                             0 to stringResource(R.string.auto_delete_spam_never),
                         ).forEachIndexed { i, (days, label) ->
-                            behavior_option(label, auto_delete_spam_days == days) { auto_delete_spam_days = days; save_trigger++ }
+                            behavior_option(label, auto_delete_spam_days == days) { auto_delete_spam_days = days; push_spam_settings(); save_trigger++ }
                             if (i < 3) AsterDivider(modifier = Modifier)
                         }
                     }
@@ -670,13 +743,6 @@ fun BehaviorScreen(
                     subtitle = stringResource(R.string.haptic_feedback_subtitle),
                     checked = haptic,
                     on_change = { haptic = it; theme_vm.set_haptic_enabled(it); save_trigger++ },
-                )
-                AsterDivider(modifier = Modifier)
-                behavior_toggle(
-                    title = stringResource(R.string.developer_mode),
-                    subtitle = stringResource(R.string.developer_mode_subtitle_behavior),
-                    checked = dev_mode,
-                    on_change = { dev_mode = it; save_trigger++ },
                 )
             }
         }

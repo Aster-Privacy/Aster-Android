@@ -22,4 +22,7 @@
     <string name="notif_group_summary_new_mail">بريد جديد</string>
     <string name="notif_battery_opt_title">نشاط غير مقيّد في الخلفية</string>
     <string name="notif_battery_opt_subtitle">مطلوب لإشعارات موثوقة. انقر للتفعيل من إعدادات النظام.</string>
+    <string name="notif_blocked_title">الإشعارات مُعطّلة</string>
+    <string name="notif_blocked_subtitle">لا يمكن لتطبيق Aster Mail عرض الإشعارات حتى تسمح بها. انقر لفتح إعدادات النظام.</string>
+    <string name="notif_channel_downloads_name">التنزيلات</string>
 </resources>

@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -90,6 +91,11 @@ fun LinkDeviceScreen(
                         keyboardType = KeyboardType.Text,
                         imeAction = ImeAction.Done,
                         capitalization = KeyboardCapitalization.Characters,
+                    ),
+                    keyboard_actions = KeyboardActions(
+                        onDone = {
+                            if (state.is_code_complete && !state.is_verifying) vm.verify_code()
+                        },
                     ),
                     leading_icon = { Icon(TablerIcons.Key, null, tint = colors.text_muted) },
                 )

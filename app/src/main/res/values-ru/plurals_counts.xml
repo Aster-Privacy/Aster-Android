@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="attachments_count">
+        <item quantity="one">%d вложение</item>
+        <item quantity="few">%d вложения</item>
+        <item quantity="many">%d вложений</item>
+        <item quantity="other">%d вложений</item>
+    </plurals>
+    <plurals name="archived_conversations">
+        <item quantity="one">Архивирован %d разговор</item>
+        <item quantity="few">Архивировано %d разговора</item>
+        <item quantity="many">Архивировано %d разговоров</item>
+        <item quantity="other">Архивировано %d разговоров</item>
+    </plurals>
+    <plurals name="moved_to_trash">
+        <item quantity="one">Перемещён %d разговор в корзину</item>
+        <item quantity="few">Перемещено %d разговора в корзину</item>
+        <item quantity="many">Перемещено %d разговоров в корзину</item>
+        <item quantity="other">Перемещено %d разговоров в корзину</item>
+    </plurals>
+    <plurals name="starred_count">
+        <item quantity="one">Отмечено звездой: %d</item>
+        <item quantity="few">Отмечено звездой: %d</item>
+        <item quantity="many">Отмечено звездой: %d</item>
+        <item quantity="other">Отмечено звездой: %d</item>
+    </plurals>
+    <plurals name="unstarred_count">
+        <item quantity="one">Звезда снята: %d</item>
+        <item quantity="few">Звезда снята: %d</item>
+        <item quantity="many">Звезда снята: %d</item>
+        <item quantity="other">Звезда снята: %d</item>
+    </plurals>
+    <plurals name="unsnoozed_count">
+        <item quantity="one">Возвращено во входящие: %d</item>
+        <item quantity="few">Возвращено во входящие: %d</item>
+        <item quantity="many">Возвращено во входящие: %d</item>
+        <item quantity="other">Возвращено во входящие: %d</item>
+    </plurals>
+    <plurals name="draft_deleted">
+        <item quantity="one">Удалено черновиков: %d</item>
+        <item quantity="few">Удалено черновиков: %d</item>
+        <item quantity="many">Удалено черновиков: %d</item>
+        <item quantity="other">Удалено черновиков: %d</item>
+    </plurals>
+    <plurals name="marked_read_count">
+        <item quantity="one">Отмечено как прочитанные: %d</item>
+        <item quantity="few">Отмечено как прочитанные: %d</item>
+        <item quantity="many">Отмечено как прочитанные: %d</item>
+        <item quantity="other">Отмечено как прочитанные: %d</item>
+    </plurals>
+    <plurals name="marked_unread_count">
+        <item quantity="one">Помечено как непрочитанные: %d</item>
+        <item quantity="few">Помечено как непрочитанные: %d</item>
+        <item quantity="many">Помечено как непрочитанные: %d</item>
+        <item quantity="other">Помечено как непрочитанные: %d</item>
+    </plurals>
+    <plurals name="results_count">
+        <item quantity="one">%d результат</item>
+        <item quantity="few">%d результата</item>
+        <item quantity="many">%d результатов</item>
+        <item quantity="other">%d результатов</item>
+    </plurals>
+    <plurals name="active_endpoints">
+        <item quantity="one">%d активная точка подключения</item>
+        <item quantity="few">%d активные точки подключения</item>
+        <item quantity="many">%d активных точек подключения</item>
+        <item quantity="other">%d активных точек подключения</item>
+    </plurals>
+    <plurals name="storage_addons_active_count">
+        <item quantity="one">активных дополнений: %1$d</item>
+        <item quantity="few">активных дополнений: %1$d</item>
+        <item quantity="many">активных дополнений: %1$d</item>
+        <item quantity="other">активных дополнений: %1$d</item>
+    </plurals>
+    <plurals name="backup_codes_remaining">
+        <item quantity="one">Остался %d резервный код</item>
+        <item quantity="few">Осталось %d резервных кода</item>
+        <item quantity="many">Осталось %d резервных кодов</item>
+        <item quantity="other">Осталось %d резервных кодов</item>
+    </plurals>
+    <plurals name="kids_seats_free">
+        <item quantity="one">доступно мест: %1$d</item>
+        <item quantity="few">доступно мест: %1$d</item>
+        <item quantity="many">доступно мест: %1$d</item>
+        <item quantity="other">доступно мест: %1$d</item>
+    </plurals>
+    <plurals name="trackers_blocked_count">
+        <item quantity="one">Заблокировано трекеров: %1$d</item>
+        <item quantity="few">Заблокировано трекеров: %1$d</item>
+        <item quantity="many">Заблокировано трекеров: %1$d</item>
+        <item quantity="other">Заблокировано трекеров: %1$d</item>
+    </plurals>
+</resources>

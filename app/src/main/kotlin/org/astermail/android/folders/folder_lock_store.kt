@@ -52,6 +52,8 @@ object folder_lock_store {
     private val folder_token_by_id = mutableMapOf<String, String>()
     private val folder_id_by_token = mutableMapOf<String, String>()
     private val protected_folder_ids = mutableSetOf<String>()
+    private val seeded_protected_tokens = mutableSetOf<String>()
+    private var folders_known = false
     private val item_folder_index = bounded_route_index<String, Set<String>>(folder_route_index_capacity)
     private val thread_folder_index = bounded_route_index<String, Set<String>>(folder_route_index_capacity)
 
@@ -154,14 +156,27 @@ object folder_lock_store {
                 protected_folder_ids.remove(label.id)
             }
         }
+        folders_known = true
+        seeded_protected_tokens.clear()
         if (newly_protected.isNotEmpty()) {
             purge_hook?.let { hook -> runCatching { hook(newly_protected) } }
         }
     }
 
     @Synchronized
+    fun seed_protected_tokens(tokens: Collection<String>) {
+        if (folders_known) return
+        val cleaned = tokens.filter { it.isNotBlank() }.toSet()
+        if (cleaned == seeded_protected_tokens) return
+        seeded_protected_tokens.clear()
+        seeded_protected_tokens.addAll(cleaned)
+        _revision.value = _revision.value + 1
+    }
+
+    @Synchronized
     fun locked_folder_tokens(): Set<String> {
         val result = mutableSetOf<String>()
+        if (!folders_known) result.addAll(seeded_protected_tokens)
         for (folder_id in protected_folder_ids) {
             if (session_for(folder_id) != null) continue
             folder_token_by_id[folder_id]?.let { result.add(it) }
@@ -215,6 +230,8 @@ object folder_lock_store {
     fun lock_all() {
         val entries = unlocked.toMap()
         unlocked.clear()
+        folders_known = false
+        seeded_protected_tokens.clear()
         item_folder_index.clear()
         thread_folder_index.clear()
         if (entries.isNotEmpty()) _revision.value = _revision.value + 1
@@ -231,6 +248,8 @@ object folder_lock_store {
         unlocked.clear()
         item_folder_index.clear()
         thread_folder_index.clear()
+        seeded_protected_tokens.clear()
+        folders_known = false
         active_folder_token = ""
         _revision.value = _revision.value + 1
     }

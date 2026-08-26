@@ -103,6 +103,21 @@ internal fun alias_detail_panel(
                     color = colors.accent_blue,
                 )
             }
+        } else if (detail.load_failed) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                panel_hint_text(stringResource(R.string.failed_to_load))
+                Text(
+                    text = stringResource(R.string.retry),
+                    color = colors.accent_blue,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.clickable { vm.load_alias_detail(alias.id, force = true) },
+                )
+            }
         } else {
             alias_stats_section(detail)
             alias_sender_pinning_section(alias.id, detail, vm)
@@ -599,5 +614,5 @@ private fun alias_stat_cell(label: String, value: Long, modifier: Modifier = Mod
 
 internal fun format_panel_date(value: String): String {
     if (value.isBlank()) return ""
-    return value.substringBefore('T')
+    return absolute_date_label(value)
 }

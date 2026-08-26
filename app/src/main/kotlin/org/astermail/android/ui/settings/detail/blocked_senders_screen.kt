@@ -142,6 +142,14 @@ fun BlockedSendersScreen(
     var add_email by remember { mutableStateOf("") }
     val senders = state.blocked_senders
 
+    val action_result_context = androidx.compose.ui.platform.LocalContext.current
+
+    LaunchedEffect(state.action_result) {
+        val msg = state.action_result ?: return@LaunchedEffect
+        android.widget.Toast.makeText(action_result_context, msg, android.widget.Toast.LENGTH_SHORT).show()
+        vm.clear_action_result()
+    }
+
     LaunchedEffect(Unit) { vm.load_blocked_senders() }
 
     detail_scaffold(title = stringResource(R.string.blocked_senders), on_back = on_back) {
@@ -163,6 +171,7 @@ fun BlockedSendersScreen(
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 detail_row(
                     title = stringResource(R.string.blocked_senders_load_failed),
+                    subtitle = state.blocked_senders_error,
                     icon = TablerIcons.Ban,
                     trailing = {
                         AsterGhostButton(

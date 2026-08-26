@@ -67,6 +67,12 @@ class RecoveryViewModelTest {
             "failed to send recovery email"
         every { application.getString(org.astermail.android.R.string.error_invalid_code) } returns
             "invalid recovery code"
+        every { application.getString(org.astermail.android.R.string.error_enter_full_email_address) } returns
+            "enter your full email address"
+        every { application.getString(org.astermail.android.R.string.error_sign_in_domain_unsupported) } returns
+            "sign in with your astermail address"
+        every { application.getString(org.astermail.android.R.string.error_recovery_failed) } returns
+            "recovery could not be completed"
         recovery_api = mockk(relaxed = true)
         mockkStatic(Base64::class)
         every { Base64.encodeToString(any(), any()) } answers {
@@ -121,8 +127,30 @@ class RecoveryViewModelTest {
         advanceUntilIdle()
 
         coVerify {
-            recovery_api.initiate_email(match { it.email == "user@astermail.org" })
+            recovery_api.initiate_email(
+                match { it.username == "user" && it.email_domain == "astermail.org" },
+            )
         }
+    }
+
+    @Test
+    fun `send_recovery_email rejects an address without a domain`() = runTest {
+        vm.send_recovery_email("user")
+        advanceUntilIdle()
+
+        assertEquals("enter your full email address", vm.state.value.error)
+        assertFalse(vm.state.value.is_loading)
+        coVerify(exactly = 0) { recovery_api.initiate_email(any()) }
+    }
+
+    @Test
+    fun `send_recovery_email rejects an unsupported domain`() = runTest {
+        vm.send_recovery_email("user@mycompany.com")
+        advanceUntilIdle()
+
+        assertEquals("sign in with your astermail address", vm.state.value.error)
+        assertFalse(vm.state.value.is_loading)
+        coVerify(exactly = 0) { recovery_api.initiate_email(any()) }
     }
 
     @Test
@@ -244,10 +272,13 @@ class RecoveryViewModelTest {
     }
 
     @Test
-    fun `submit_new_password does nothing without recovery_token`() {
+    fun `submit_new_password without a recovery token reports an error instead of doing nothing`() {
         vm.submit_new_password("password12345!", "password12345!")
-        assertNull(vm.state.value.error)
-        assertFalse(vm.state.value.is_loading)
+
+        val state = vm.state.value
+        assertEquals("recovery could not be completed", state.error)
+        assertEquals(RecoveryStep.code, state.step)
+        assertFalse(state.is_loading)
     }
 
     @Test
@@ -269,7 +300,7 @@ class RecoveryViewModelTest {
     fun `clear_error clears error while preserving step`() = runTest {
         coEvery { recovery_api.initiate_email(any()) } throws RuntimeException("boom")
 
-        vm.send_recovery_email("test@test.com")
+        vm.send_recovery_email("test@astermail.org")
         advanceUntilIdle()
         assertEquals("failed to send recovery email", vm.state.value.error)
 
@@ -294,7 +325,7 @@ class RecoveryViewModelTest {
         coEvery { recovery_api.initiate_email(any()) } returns
             InitiateEmailRecoveryResponse(success = true)
 
-        vm.send_recovery_email("test@test.com")
+        vm.send_recovery_email("test@astermail.org")
         advanceUntilIdle()
         assertEquals(RecoveryStep.email_sent, vm.state.value.step)
 
@@ -314,6 +345,52 @@ class RecoveryViewModelTest {
         vm.go_to_success()
         vm.go_back()
         assertEquals(RecoveryStep.success, vm.state.value.step)
+    }
+
+    @Test
+    fun `send_recovery_email ignores a second tap while in flight`() = runTest {
+        coEvery { recovery_api.initiate_email(any()) } returns
+            InitiateEmailRecoveryResponse(success = true)
+
+        vm.send_recovery_email("user@astermail.org")
+        vm.send_recovery_email("user@astermail.org")
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { recovery_api.initiate_email(any()) }
+    }
+
+    @Test
+    fun `verify_code ignores a second tap while in flight`() = runTest {
+        coEvery { recovery_api.initiate_email(any()) } coAnswers {
+            kotlinx.coroutines.delay(1_000L)
+            InitiateEmailRecoveryResponse(success = true)
+        }
+
+        vm.send_recovery_email("user@astermail.org")
+        assertTrue(vm.state.value.is_loading)
+
+        vm.verify_code("not-a-code")
+
+        assertNull(vm.state.value.error)
+
+        advanceUntilIdle()
+    }
+
+    @Test
+    fun `go_back is ignored while a request is in flight`() = runTest {
+        coEvery { recovery_api.initiate_email(any()) } coAnswers {
+            kotlinx.coroutines.delay(1_000L)
+            InitiateEmailRecoveryResponse(success = true)
+        }
+
+        vm.send_recovery_email("user@astermail.org")
+        vm.go_back()
+
+        assertEquals(RecoveryStep.email, vm.state.value.step)
+        assertTrue(vm.state.value.is_loading)
+
+        advanceUntilIdle()
+        assertEquals(RecoveryStep.email_sent, vm.state.value.step)
     }
 
     @Test

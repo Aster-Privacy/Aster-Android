@@ -105,7 +105,28 @@ class AuthViewModelTest {
             "Secure connection failed. Please try again."
         io.mockk.every { app.getString(org.astermail.android.R.string.error_generic) } returns
             "Something went wrong. Please try again."
+        io.mockk.every { app.getString(org.astermail.android.R.string.recovery_step_up_description) } returns
+            "confirm your password first"
+        io.mockk.every { app.getString(org.astermail.android.R.string.totp_code_required_error) } returns
+            "enter your authentication code"
+        io.mockk.every { app.getString(org.astermail.android.R.string.error_send_recovery) } returns
+            "could not send the recovery email"
+        io.mockk.every { app.getString(org.astermail.android.R.string.recovery_email_already_in_use) } returns
+            "that email is already in use"
+        io.mockk.every { app.getString(org.astermail.android.R.string.recovery_email_resend_cooldown) } returns
+            "wait before requesting another email"
     }
+
+    private fun fake_totp_challenge(): org.astermail.android.auth.TotpChallenge =
+        org.astermail.android.auth.TotpChallenge(
+            pending_login_token = "pending",
+            available_methods = listOf("totp"),
+            password_hash_bytes = ByteArray(4) { 7 },
+            password_bytes = ByteArray(4) { 9 },
+            salt_bytes = ByteArray(4) { 3 },
+            email = "user@astermail.org",
+            remember_me = true,
+        )
 
     @Test
     fun `initial state is idle`() {
@@ -221,7 +242,7 @@ class AuthViewModelTest {
     }
 
     @Test
-    fun `submit_login validation error joins messages`() = runTest {
+    fun `submit_login validation error hides field level detail`() = runTest {
         coEvery { repository.login(any(), any(), any()) } returns
             Result.failure(ApiError.ValidationError(listOf("field1 bad", "field2 bad")))
 
@@ -230,7 +251,20 @@ class AuthViewModelTest {
 
         val state = vm.ui_state.value
         assertTrue(state is AuthUiState.Error)
-        assertEquals("field1 bad, field2 bad", (state as AuthUiState.Error).message)
+        assertEquals("Invalid request", (state as AuthUiState.Error).message)
+    }
+
+    @Test
+    fun `submit_login validation error keeps a readable server message`() = runTest {
+        coEvery { repository.login(any(), any(), any()) } returns
+            Result.failure(ApiError.ValidationError(listOf("Your account is not ready yet.")))
+
+        vm.submit_login("user@astermail.org", "pass")
+        advanceUntilIdle()
+
+        val state = vm.ui_state.value
+        assertTrue(state is AuthUiState.Error)
+        assertEquals("Your account is not ready yet.", (state as AuthUiState.Error).message)
     }
 
     @Test
@@ -539,5 +573,126 @@ class AuthViewModelTest {
         val state = vm.ui_state.value
         assertTrue(state is AuthUiState.Error)
         assertEquals("Invalid request", (state as AuthUiState.Error).message)
+    }
+
+    @Test
+    fun `submit_login timeout maps to the timeout message`() = runTest {
+        coEvery { repository.login(any(), any(), any()) } coAnswers {
+            kotlinx.coroutines.delay(60_000L)
+            Result.success(LoginOutcome.Success)
+        }
+
+        vm.submit_login("user@astermail.org", "password123!")
+        advanceUntilIdle()
+
+        val state = vm.ui_state.value
+        assertTrue(state is AuthUiState.Error)
+        assertEquals(
+            "Connection timed out. Please try again.",
+            (state as AuthUiState.Error).message,
+        )
+    }
+
+    @Test
+    fun `cancel_totp clears the challenge buffers when idle`() {
+        val challenge = fake_totp_challenge()
+
+        assertTrue(vm.cancel_totp(challenge))
+
+        assertTrue(challenge.password_bytes.all { it == 0.toByte() })
+        assertTrue(challenge.password_hash_bytes.all { it == 0.toByte() })
+        assertEquals(AuthUiState.Idle, vm.ui_state.value)
+    }
+
+    @Test
+    fun `cancel_totp refuses to wipe buffers while a verification is in flight`() = runTest {
+        val challenge = fake_totp_challenge()
+        coEvery { repository.verify_totp(any(), any(), any()) } coAnswers {
+            kotlinx.coroutines.delay(5_000L)
+            Result.success(Unit)
+        }
+
+        vm.submit_totp("123456", challenge)
+
+        assertEquals(AuthUiState.Loading, vm.ui_state.value)
+        assertEquals(false, vm.cancel_totp(challenge))
+        assertTrue(challenge.password_bytes.any { it != 0.toByte() })
+        assertTrue(challenge.password_hash_bytes.any { it != 0.toByte() })
+        assertEquals(AuthUiState.Loading, vm.ui_state.value)
+
+        advanceUntilIdle()
+    }
+
+    @Test
+    fun `save_recovery_email maps step up required to a localized message`() = runTest {
+        coEvery { repository.save_recovery_email(any()) } returns Result.failure(
+            org.astermail.android.api.recovery_email.RecoveryEmailError(
+                code = org.astermail.android.api.recovery_email.RecoveryEmailApiImpl.STEP_UP_REQUIRED,
+                user_message = "Invalid request",
+            ),
+        )
+
+        vm.save_recovery_email("backup@example.com") {}
+        advanceUntilIdle()
+
+        assertEquals("confirm your password first", vm.recovery_email_error.value)
+        assertEquals(false, vm.is_saving_recovery_email.value)
+    }
+
+    @Test
+    fun `save_recovery_email maps totp required to a localized message`() = runTest {
+        coEvery { repository.save_recovery_email(any()) } returns Result.failure(
+            org.astermail.android.api.recovery_email.RecoveryEmailError(
+                code = org.astermail.android.api.recovery_email.RecoveryEmailApiImpl.TOTP_REQUIRED,
+            ),
+        )
+
+        vm.save_recovery_email("backup@example.com") {}
+        advanceUntilIdle()
+
+        assertEquals("enter your authentication code", vm.recovery_email_error.value)
+    }
+
+    @Test
+    fun `save_recovery_email maps the in use code to a localized message`() = runTest {
+        coEvery { repository.save_recovery_email(any()) } returns Result.failure(
+            ApiError.UnknownError(
+                org.astermail.android.api.recovery_email.RecoveryEmailApiImpl.RECOVERY_EMAIL_IN_USE,
+            ),
+        )
+
+        vm.save_recovery_email("backup@example.com") {}
+        advanceUntilIdle()
+
+        assertEquals("that email is already in use", vm.recovery_email_error.value)
+    }
+
+    @Test
+    fun `save_recovery_email maps the cooldown code to a localized message`() = runTest {
+        coEvery { repository.save_recovery_email(any()) } returns Result.failure(
+            ApiError.UnknownError(
+                org.astermail.android.api.recovery_email.RecoveryEmailApiImpl.RECOVERY_EMAIL_COOLDOWN,
+            ),
+        )
+
+        vm.save_recovery_email("backup@example.com") {}
+        advanceUntilIdle()
+
+        assertEquals("wait before requesting another email", vm.recovery_email_error.value)
+    }
+
+    @Test
+    fun `save_recovery_email never renders raw server text`() = runTest {
+        coEvery { repository.save_recovery_email(any()) } returns Result.failure(
+            org.astermail.android.api.recovery_email.RecoveryEmailError(
+                code = "some_unmapped_code",
+                user_message = "raw backend detail",
+            ),
+        )
+
+        vm.save_recovery_email("backup@example.com") {}
+        advanceUntilIdle()
+
+        assertEquals("Something went wrong. Please try again.", vm.recovery_email_error.value)
     }
 }

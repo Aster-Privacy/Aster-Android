@@ -40,6 +40,7 @@ data class DeleteAccountUiState(
     val confirm_phrase: String = "",
     val totp_code: String = "",
     val totp_enabled: Boolean = false,
+    val totp_status_unknown: Boolean = false,
     val show_password: Boolean = false,
     val is_submitting: Boolean = false,
     val error: String? = null,
@@ -63,9 +64,15 @@ class DeleteAccountViewModel @Inject constructor(
     val state: StateFlow<DeleteAccountUiState> = _state.asStateFlow()
 
     init {
+        load_totp_status()
+    }
+
+    fun load_totp_status() {
         viewModelScope.launch {
             runCatching { totp_api.status() }.onSuccess { status ->
-                _state.value = _state.value.copy(totp_enabled = status.enabled)
+                _state.value = _state.value.copy(totp_enabled = status.enabled, totp_status_unknown = false)
+            }.onFailure {
+                _state.value = _state.value.copy(totp_status_unknown = true)
             }
         }
     }
@@ -80,7 +87,7 @@ class DeleteAccountViewModel @Inject constructor(
 
     fun set_totp_code(value: String) {
         _state.value = _state.value.copy(
-            totp_code = value.uppercase().filter { it.isLetterOrDigit() || it == '-' }.take(14),
+            totp_code = value.uppercase(java.util.Locale.ROOT).filter { it.isLetterOrDigit() || it == '-' }.take(14),
             error = null,
         )
     }
@@ -100,6 +107,11 @@ class DeleteAccountViewModel @Inject constructor(
         }
         if (s.confirm_phrase.trim() != required_phrase) {
             _state.value = s.copy(error = context.getString(R.string.delete_account_confirm_mismatch))
+            return
+        }
+        if (s.totp_status_unknown) {
+            _state.value = s.copy(error = context.getString(R.string.failed_to_load))
+            load_totp_status()
             return
         }
         val code = s.totp_code.trim()

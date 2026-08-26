@@ -80,6 +80,7 @@ import org.astermail.android.ui.common.plan_ring
 import org.astermail.android.ui.common.remember_has_paid_plan
 import org.astermail.android.ui.mail.search_field_bg_color
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.design.mirror_in_rtl
 
 data class settings_row_item(
     val id: String,
@@ -101,7 +102,6 @@ internal fun build_settings_sections(is_family: Boolean) = listOf(
             add(settings_row_item("accessibility", R.string.settings_accessibility, icon = TablerIcons.Typography))
             add(settings_row_item("security", R.string.settings_security, icon = TablerIcons.Shield))
             add(settings_row_item("encryption", R.string.settings_encryption, icon = TablerIcons.Key))
-            add(settings_row_item("connection", R.string.settings_connection, icon = TablerIcons.Router))
             add(settings_row_item("trusted_devices", R.string.trusted_devices, icon = TablerIcons.DeviceDesktop))
             add(settings_row_item("aliases", R.string.settings_aliases, icon = TablerIcons.At))
             add(settings_row_item("billing", R.string.settings_plans_billing, icon = TablerIcons.CreditCard))
@@ -372,7 +372,7 @@ internal fun settings_row(row: settings_row_item, on_click: () -> Unit) {
             imageVector = TablerIcons.ChevronRight,
             contentDescription = null,
             tint = colors.text_tertiary,
-            modifier = Modifier.size(18.dp),
+            modifier = Modifier.size(18.dp).mirror_in_rtl(),
         )
     }
 }

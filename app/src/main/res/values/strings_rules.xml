@@ -27,8 +27,6 @@
     <string name="rules_value_unread">unread</string>
     <string name="rules_value_on">on</string>
     <string name="rules_value_off">off</string>
-    <string name="rules_value_days">%1$d days</string>
-    <string name="rules_value_label_count">%1$d labels</string>
     <string name="rules_value_placeholder_ellipsis">...</string>
 
     <string name="rules_unit_kb">KB</string>
@@ -50,7 +48,6 @@
     <string name="rules_delete_title">Delete rule?</string>
     <string name="rules_delete_message">This rule will stop running on new mail. Existing changes are not reverted.</string>
     <string name="rules_save_failed">Could not save rule</string>
-    <string name="rules_emails_count">%1$d emails</string>
     <string name="rules_copy_suffix">(copy)</string>
     <string name="rules_error_load">Could not load rules</string>
     <string name="rules_error_delete">Could not delete rule</string>
@@ -98,4 +95,12 @@
     <string name="category_tutorial_text">Tip: a custom category matches if the sender domain OR the subject contains any of your keywords. Custom categories are checked before built-in ones, so they always take priority.</string>
     <string name="rules_create_first_folder_hint">Create a folder and this rule can move matching emails into it.</string>
     <string name="rules_create_first_label_hint">Create a label and this rule can apply it to matching emails.</string>
+    <string name="muted_categories">Muted categories</string>
+    <string name="muted_categories_description">Turn on a category to silence its notifications. Muted categories still receive mail and appear in your inbox.</string>
+    <string name="muted_categories_empty">Turn on inbox categories to choose which ones to mute.</string>
+    <string name="rules_hint_name">Enter a name for this rule.</string>
+    <string name="rules_hint_add_condition">Add at least one condition.</string>
+    <string name="rules_hint_finish_condition">Fill in a value for every condition.</string>
+    <string name="rules_hint_add_action">Add at least one action.</string>
+    <string name="rules_hint_finish_action">Fill in a value for every action.</string>
 </resources>

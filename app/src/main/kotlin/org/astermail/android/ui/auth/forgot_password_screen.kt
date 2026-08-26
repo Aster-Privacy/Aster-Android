@@ -22,6 +22,8 @@
 package org.astermail.android.ui.auth
 
 import compose.icons.TablerIcons
+import org.astermail.android.ui.common.show_copy_failed_toast
+import org.astermail.android.ui.common.write_to_clipboard
 import compose.icons.tablericons.*
 
 import android.content.ClipData
@@ -76,6 +78,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.draw.clip
@@ -90,6 +93,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -116,10 +120,19 @@ fun ForgotPasswordScreen(
     org.astermail.android.ui.common.secure_screen()
     val colors = AsterMaterial.colors
     val state by view_model.state.collectAsStateWithLifecycle()
+    var new_password by remember { mutableStateOf("") }
+    var new_password_confirm by remember { mutableStateOf("") }
 
     LaunchedEffect(start_with_code) {
         if (start_with_code) {
             view_model.go_to_code_step()
+        }
+    }
+
+    LaunchedEffect(state.step) {
+        if (state.step == RecoveryStep.new_codes || state.step == RecoveryStep.success) {
+            new_password = ""
+            new_password_confirm = ""
         }
     }
 
@@ -131,18 +144,12 @@ fun ForgotPasswordScreen(
             .imePadding(),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            AsterTopBar(
-                title = "",
-                on_back = {
-                    when (state.step) {
-                        RecoveryStep.email -> on_back()
-                        RecoveryStep.success -> on_back()
-                        RecoveryStep.processing -> {}
-                        RecoveryStep.new_codes -> {}
-                        else -> view_model.go_back()
-                    }
-                },
-            )
+            val top_bar_back: (() -> Unit)? = when (state.step) {
+                RecoveryStep.processing, RecoveryStep.new_codes -> null
+                RecoveryStep.email, RecoveryStep.success -> on_back
+                else -> ({ view_model.go_back() })
+            }
+            AsterTopBar(title = "", on_back = top_bar_back)
 
             AnimatedContent(
                 targetState = state.step,
@@ -177,6 +184,10 @@ fun ForgotPasswordScreen(
                             on_back = { view_model.go_back() },
                         )
                         RecoveryStep.password -> password_step(
+                            password = new_password,
+                            confirm = new_password_confirm,
+                            on_password_change = { new_password = it },
+                            on_confirm_change = { new_password_confirm = it },
                             is_loading = state.is_loading,
                             error = state.error,
                             on_submit = { pw, confirm -> view_model.submit_new_password(pw, confirm) },
@@ -419,13 +430,15 @@ private fun code_step(
 
 @Composable
 private fun password_step(
+    password: String,
+    confirm: String,
+    on_password_change: (String) -> Unit,
+    on_confirm_change: (String) -> Unit,
     is_loading: Boolean,
     error: String?,
     on_submit: (String, String) -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    var password by remember { mutableStateOf("") }
-    var confirm by remember { mutableStateOf("") }
     var password_visible by remember { mutableStateOf(false) }
     var confirm_visible by remember { mutableStateOf(false) }
     val confirm_focus = remember { androidx.compose.ui.focus.FocusRequester() }
@@ -462,11 +475,12 @@ private fun password_step(
 
     AsterTextField(
         value = password,
-        onValueChange = { password = it },
+        onValueChange = on_password_change,
         label = stringResource(R.string.new_password),
         placeholder = stringResource(R.string.enter_new_password),
         enabled = !is_loading,
         visual_transformation = if (password_visible) VisualTransformation.None else PasswordVisualTransformation(),
+        content_type = ContentType.NewPassword,
         keyboard_options = KeyboardOptions(
             keyboardType = KeyboardType.Password,
             imeAction = ImeAction.Next,
@@ -496,11 +510,12 @@ private fun password_step(
 
     AsterTextField(
         value = confirm,
-        onValueChange = { confirm = it },
+        onValueChange = on_confirm_change,
         label = stringResource(R.string.confirm_password_label),
         placeholder = stringResource(R.string.confirm_new_password),
         enabled = !is_loading,
         visual_transformation = if (confirm_visible) VisualTransformation.None else PasswordVisualTransformation(),
+        content_type = ContentType.NewPassword,
         keyboard_options = KeyboardOptions(
             keyboardType = KeyboardType.Password,
             imeAction = ImeAction.Done,
@@ -630,6 +645,7 @@ private fun new_codes_step(
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
+    val request_storage_access = org.astermail.android.util.remember_downloads_permission_gate()
     var codes_visible by remember { mutableStateOf(false) }
     val copied_message = stringResource(R.string.copied_to_clipboard)
     val saved_message = stringResource(R.string.saved_file, FORGOT_PASSWORD_CODES_FILE_NAME)
@@ -666,7 +682,7 @@ private fun new_codes_step(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = stringResource(R.string.recovery_codes_count, codes.size),
+            text = pluralStringResource(R.plurals.recovery_codes_count, codes.size, codes.size),
             color = colors.text_secondary,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
@@ -713,14 +729,16 @@ private fun new_codes_step(
         label = stringResource(R.string.copy_to_clipboard),
         onClick = {
             val text = codes.joinToString("\n")
-            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
             val clip = ClipData.newPlainText("recovery codes", text)
             clip.description.extras = android.os.PersistableBundle().apply {
                 putBoolean("android.content.extra.IS_SENSITIVE", true)
             }
-            clipboard?.setPrimaryClip(clip)
-            org.astermail.android.util.schedule_sensitive_clipboard_clear(context, text)
-            Toast.makeText(context, copied_message, Toast.LENGTH_SHORT).show()
+            if (write_to_clipboard(context, clip)) {
+                org.astermail.android.util.schedule_sensitive_clipboard_clear(context, text)
+                Toast.makeText(context, copied_message, Toast.LENGTH_SHORT).show()
+            } else {
+                show_copy_failed_toast(context)
+            }
         },
     )
 
@@ -729,8 +747,10 @@ private fun new_codes_step(
     AsterSecondaryButton(
         label = stringResource(R.string.download),
         onClick = {
-            val saved = download_forgot_password_codes(context, codes)
-            Toast.makeText(context, if (saved) saved_message else failed_message, Toast.LENGTH_SHORT).show()
+            request_storage_access {
+                val saved = download_forgot_password_codes(context, codes)
+                Toast.makeText(context, if (saved) saved_message else failed_message, Toast.LENGTH_SHORT).show()
+            }
         },
     )
 

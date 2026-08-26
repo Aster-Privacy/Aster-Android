@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="attachments_count">
+        <item quantity="one">%d Anhang</item>
+        <item quantity="other">%d Anhänge</item>
+    </plurals>
+    <plurals name="archived_conversations">
+        <item quantity="one">%d Konversation archiviert</item>
+        <item quantity="other">%d Konversationen archiviert</item>
+    </plurals>
+    <plurals name="moved_to_trash">
+        <item quantity="one">%d Konversation in den Papierkorb verschoben</item>
+        <item quantity="other">%d Konversationen in den Papierkorb verschoben</item>
+    </plurals>
+    <plurals name="starred_count">
+        <item quantity="one">Stern für %d Unterhaltung gesetzt</item>
+        <item quantity="other">Stern für %d Unterhaltungen gesetzt</item>
+    </plurals>
+    <plurals name="unstarred_count">
+        <item quantity="one">Stern für %d Unterhaltung entfernt</item>
+        <item quantity="other">Stern für %d Unterhaltungen entfernt</item>
+    </plurals>
+    <plurals name="unsnoozed_count">
+        <item quantity="one">%d Konversation nicht mehr zurückgestellt</item>
+        <item quantity="other">%d Konversationen nicht mehr zurückgestellt</item>
+    </plurals>
+    <plurals name="draft_deleted">
+        <item quantity="one">%d Entwurf gelöscht</item>
+        <item quantity="other">%d Entwürfe gelöscht</item>
+    </plurals>
+    <plurals name="marked_read_count">
+        <item quantity="one">%d Nachricht als gelesen markiert</item>
+        <item quantity="other">%d Nachrichten als gelesen markiert</item>
+    </plurals>
+    <plurals name="marked_unread_count">
+        <item quantity="one">%d Nachricht als ungelesen markiert</item>
+        <item quantity="other">%d Nachrichten als ungelesen markiert</item>
+    </plurals>
+    <plurals name="results_count">
+        <item quantity="one">%d Ergebnis</item>
+        <item quantity="other">%d Ergebnisse</item>
+    </plurals>
+    <plurals name="active_endpoints">
+        <item quantity="one">%d aktiver Endpunkt</item>
+        <item quantity="other">%d aktive Endpunkte</item>
+    </plurals>
+    <plurals name="storage_addons_active_count">
+        <item quantity="one">%1$d aktives Add-on</item>
+        <item quantity="other">%1$d aktive Add-ons</item>
+    </plurals>
+    <plurals name="backup_codes_remaining">
+        <item quantity="one">%d Sicherungscode übrig</item>
+        <item quantity="other">%d Sicherungscodes übrig</item>
+    </plurals>
+    <plurals name="kids_seats_free">
+        <item quantity="one">%1$d Platz verfügbar</item>
+        <item quantity="other">%1$d Plätze verfügbar</item>
+    </plurals>
+    <plurals name="trackers_blocked_count">
+        <item quantity="one">%1$d Tracker blockiert</item>
+        <item quantity="other">%1$d Tracker blockiert</item>
+    </plurals>
+</resources>

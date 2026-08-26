@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="attachments_count">
+        <item quantity="zero">%d مرفقات</item>
+        <item quantity="one">%d مرفق</item>
+        <item quantity="two">%d مرفقان</item>
+        <item quantity="few">%d مرفقات</item>
+        <item quantity="many">%d مرفقًا</item>
+        <item quantity="other">%d مرفقًا</item>
+    </plurals>
+    <plurals name="archived_conversations">
+        <item quantity="zero">تمت أرشفة %d محادثات</item>
+        <item quantity="one">تمت أرشفة %d محادثة</item>
+        <item quantity="two">تمت أرشفة %d محادثتين</item>
+        <item quantity="few">تمت أرشفة %d محادثات</item>
+        <item quantity="many">تمت أرشفة %d محادثة</item>
+        <item quantity="other">تمت أرشفة %d محادثة</item>
+    </plurals>
+    <plurals name="moved_to_trash">
+        <item quantity="zero">تم نقل %d محادثات إلى سلة المهملات</item>
+        <item quantity="one">تم نقل %d محادثة إلى سلة المهملات</item>
+        <item quantity="two">تم نقل %d محادثتين إلى سلة المهملات</item>
+        <item quantity="few">تم نقل %d محادثات إلى سلة المهملات</item>
+        <item quantity="many">تم نقل %d محادثة إلى سلة المهملات</item>
+        <item quantity="other">تم نقل %d محادثة إلى سلة المهملات</item>
+    </plurals>
+    <plurals name="starred_count">
+        <item quantity="zero">تم تمييز %d محادثات بنجمة</item>
+        <item quantity="one">تم تمييز %d محادثة بنجمة</item>
+        <item quantity="two">تم تمييز %d محادثتين بنجمة</item>
+        <item quantity="few">تم تمييز %d محادثات بنجمة</item>
+        <item quantity="many">تم تمييز %d محادثة بنجمة</item>
+        <item quantity="other">تم تمييز %d محادثة بنجمة</item>
+    </plurals>
+    <plurals name="unstarred_count">
+        <item quantity="zero">تمت إزالة النجمة من %d محادثات</item>
+        <item quantity="one">تمت إزالة النجمة من %d محادثة</item>
+        <item quantity="two">تمت إزالة النجمة من %d محادثتين</item>
+        <item quantity="few">تمت إزالة النجمة من %d محادثات</item>
+        <item quantity="many">تمت إزالة النجمة من %d محادثة</item>
+        <item quantity="other">تمت إزالة النجمة من %d محادثة</item>
+    </plurals>
+    <plurals name="unsnoozed_count">
+        <item quantity="zero">تم إلغاء تأجيل %d محادثات</item>
+        <item quantity="one">تم إلغاء تأجيل %d محادثة</item>
+        <item quantity="two">تم إلغاء تأجيل %d محادثتين</item>
+        <item quantity="few">تم إلغاء تأجيل %d محادثات</item>
+        <item quantity="many">تم إلغاء تأجيل %d محادثة</item>
+        <item quantity="other">تم إلغاء تأجيل %d محادثة</item>
+    </plurals>
+    <plurals name="draft_deleted">
+        <item quantity="zero">تم حذف %d مسودات</item>
+        <item quantity="one">تم حذف %d مسودة</item>
+        <item quantity="two">تم حذف %d مسودتين</item>
+        <item quantity="few">تم حذف %d مسودات</item>
+        <item quantity="many">تم حذف %d مسودة</item>
+        <item quantity="other">تم حذف %d مسودة</item>
+    </plurals>
+    <plurals name="marked_read_count">
+        <item quantity="zero">تم تعليم %d رسائل كمقروءة</item>
+        <item quantity="one">تم تعليم %d رسالة كمقروءة</item>
+        <item quantity="two">تم تعليم %d رسالتين كمقروءة</item>
+        <item quantity="few">تم تعليم %d رسائل كمقروءة</item>
+        <item quantity="many">تم تعليم %d رسالة كمقروءة</item>
+        <item quantity="other">تم تعليم %d رسالة كمقروءة</item>
+    </plurals>
+    <plurals name="marked_unread_count">
+        <item quantity="zero">تم وضع علامة غير مقروء على %d رسائل</item>
+        <item quantity="one">تم وضع علامة غير مقروء على %d رسالة</item>
+        <item quantity="two">تم وضع علامة غير مقروء على %d رسالتين</item>
+        <item quantity="few">تم وضع علامة غير مقروء على %d رسائل</item>
+        <item quantity="many">تم وضع علامة غير مقروء على %d رسالة</item>
+        <item quantity="other">تم وضع علامة غير مقروء على %d رسالة</item>
+    </plurals>
+    <plurals name="results_count">
+        <item quantity="zero">%d نتائج</item>
+        <item quantity="one">%d نتيجة</item>
+        <item quantity="two">%d نتيجتان</item>
+        <item quantity="few">%d نتائج</item>
+        <item quantity="many">%d نتيجة</item>
+        <item quantity="other">%d نتيجة</item>
+    </plurals>
+    <plurals name="active_endpoints">
+        <item quantity="zero">%d نقاط نهاية نشطة</item>
+        <item quantity="one">%d نقطة نهاية نشطة</item>
+        <item quantity="two">%d نقطتا نهاية نشطتان</item>
+        <item quantity="few">%d نقاط نهاية نشطة</item>
+        <item quantity="many">%d نقطة نهاية نشطة</item>
+        <item quantity="other">%d نقطة نهاية نشطة</item>
+    </plurals>
+    <plurals name="storage_addons_active_count">
+        <item quantity="zero">%1$d إضافات نشطة</item>
+        <item quantity="one">%1$d إضافة نشطة</item>
+        <item quantity="two">%1$d إضافتان نشطتان</item>
+        <item quantity="few">%1$d إضافات نشطة</item>
+        <item quantity="many">%1$d إضافة نشطة</item>
+        <item quantity="other">%1$d إضافة نشطة</item>
+    </plurals>
+    <plurals name="backup_codes_remaining">
+        <item quantity="zero">بقيت %d رموز احتياطية</item>
+        <item quantity="one">بقي %d رمز احتياطي</item>
+        <item quantity="two">بقي %d رمزان احتياطيان</item>
+        <item quantity="few">بقيت %d رموز احتياطية</item>
+        <item quantity="many">بقي %d رمزًا احتياطيًا</item>
+        <item quantity="other">بقي %d رمزًا احتياطيًا</item>
+    </plurals>
+    <plurals name="kids_seats_free">
+        <item quantity="zero">%1$d مقاعد متاحة</item>
+        <item quantity="one">%1$d مقعد متاح</item>
+        <item quantity="two">%1$d مقعدان متاحان</item>
+        <item quantity="few">%1$d مقاعد متاحة</item>
+        <item quantity="many">%1$d مقعدًا متاحًا</item>
+        <item quantity="other">%1$d مقعدًا متاحًا</item>
+    </plurals>
+    <plurals name="trackers_blocked_count">
+        <item quantity="zero">تم حظر %1$d متعقّبين</item>
+        <item quantity="one">تم حظر %1$d متعقّب</item>
+        <item quantity="two">تم حظر %1$d متعقّبين</item>
+        <item quantity="few">تم حظر %1$d متعقّبين</item>
+        <item quantity="many">تم حظر %1$d متعقّبًا</item>
+        <item quantity="other">تم حظر %1$d متعقّبًا</item>
+    </plurals>
+</resources>

@@ -57,11 +57,11 @@ class RatchetStateStore @Inject constructor(
 
     suspend fun save(state: RatchetState): Unit = mutex.withLock {
         val encoded = json.encodeToString(state)
-        prefs.edit().putString(key_for(state.conversation_id), encoded).apply()
+        prefs.edit().putString(key_for(state.conversation_id), encoded).commit()
     }
 
     suspend fun delete(conversation_id: String): Unit = mutex.withLock {
-        prefs.edit().remove(key_for(conversation_id)).apply()
+        prefs.edit().remove(key_for(conversation_id)).commit()
     }
 
     fun derive_state_encryption_key(): ByteArray? =

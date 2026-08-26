@@ -44,6 +44,23 @@ private fun json_kind_matches(incoming: JsonElement, base: JsonElement): Boolean
     }
 }
 
+const val FONT_SIZE_SCALE_KEY = "font_size_scale"
+
+fun font_size_bucket(px: Int): String = when {
+    px <= 14 -> "small"
+    px <= 16 -> "default"
+    px <= 18 -> "large"
+    else -> "extra_large"
+}
+
+private fun coerce_font_size_scale(key: String, incoming: JsonElement, base: JsonElement): JsonElement {
+    if (key != FONT_SIZE_SCALE_KEY) return incoming
+    if (base !is JsonPrimitive || !base.isString) return incoming
+    if (incoming !is JsonPrimitive || incoming.isString) return incoming
+    val px = incoming.doubleOrNull ?: return incoming
+    return JsonPrimitive(font_size_bucket(Math.round(px).toInt()))
+}
+
 val web_preference_key_aliases = mapOf(
     "underline_links" to "link_underlines",
     "confirm_delete" to "confirm_before_delete",
@@ -53,6 +70,10 @@ val web_preference_key_aliases = mapOf(
     "force_dark_emails" to "force_dark_mode_emails",
     "mark_as_read" to "mark_as_read_delay",
     "folder_lock_mode" to "protected_folder_lock_mode",
+)
+
+val fallback_preference_key_aliases = mapOf(
+    "send_read_receipts" to "show_read_receipts",
 )
 
 fun merge_decrypted_preferences(
@@ -68,15 +89,20 @@ fun merge_decrypted_preferences(
     val merged = buildJsonObject {
         for ((k, base_value) in base) {
             val alias_value = web_preference_key_aliases[k]?.let { incoming[it] }
+            val fallback_value = fallback_preference_key_aliases[k]?.let { incoming[it] }
             val own_value = incoming[k]
-            val in_value = when {
+            val raw_value = when {
                 alias_value != null && alias_value != own_value -> alias_value
-                else -> own_value
+                own_value != null -> own_value
+                else -> fallback_value
             }
+            val in_value = raw_value?.let { coerce_font_size_scale(k, it, base_value) }
             put(k, if (in_value != null && json_kind_matches(in_value, base_value)) in_value else base_value)
         }
     }
-    return json.decodeFromJsonElement(UserPreferences.serializer(), merged)
+    return normalize_order_preferences(
+        json.decodeFromJsonElement(UserPreferences.serializer(), merged),
+    )
 }
 
 fun rebase_preferences_changes(
@@ -113,10 +139,24 @@ fun encode_preferences_preserving_unknown(
     val merged = buildJsonObject {
         for ((k, v) in original) if (k !in known_keys) put(k, v)
         for ((k, v) in known) put(k, v)
+        preserved_font_size_scale(known, original)?.let { put(FONT_SIZE_SCALE_KEY, it) }
         for ((own_key, web_key) in web_preference_key_aliases) {
+            val v = known[own_key] ?: continue
+            put(web_key, v)
+        }
+        for ((own_key, web_key) in fallback_preference_key_aliases) {
             val v = known[own_key] ?: continue
             put(web_key, v)
         }
     }
     return json.encodeToString(JsonObject.serializer(), merged)
+}
+
+private fun preserved_font_size_scale(known: JsonObject, original: JsonObject): JsonElement? {
+    val original_value = original[FONT_SIZE_SCALE_KEY] as? JsonPrimitive ?: return null
+    if (original_value.isString) return null
+    val px = original_value.doubleOrNull ?: return null
+    val known_value = known[FONT_SIZE_SCALE_KEY] as? JsonPrimitive ?: return null
+    if (!known_value.isString) return null
+    return if (font_size_bucket(Math.round(px).toInt()) == known_value.content) original_value else null
 }

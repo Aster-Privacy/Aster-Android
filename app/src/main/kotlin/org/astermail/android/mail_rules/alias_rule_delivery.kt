@@ -112,7 +112,7 @@ fun rule_alias_delivery_conflict(
 ): AliasDeliveryConflict? {
     val rule_folder = actions.filterIsInstance<Action.MoveTo>().lastOrNull()?.folder_token ?: return null
     conditions.flatMap { condition_exact_addresses(it) }.forEach { address ->
-        val delivery = alias_delivery[address.lowercase()] ?: return@forEach
+        val delivery = alias_delivery[address.lowercase(java.util.Locale.ROOT)] ?: return@forEach
         val has_explicit_target = delivery.delivery_folder_token != null || delivery.never_inbox
         if (!has_explicit_target) return@forEach
         if (delivery.delivery_folder_token == rule_folder) return@forEach
@@ -150,7 +150,7 @@ fun rule_alias_label_conflict(
         .orEmpty()
     if (rule_labels.isEmpty()) return null
     conditions.flatMap { condition_exact_addresses(it) }.forEach { address ->
-        val label_token = alias_delivery[address.lowercase()]?.delivery_label_token ?: return@forEach
+        val label_token = alias_delivery[address.lowercase(java.util.Locale.ROOT)]?.delivery_label_token ?: return@forEach
         if (rule_labels.contains(label_token)) return@forEach
         return AliasLabelConflict(
             alias_address = address,

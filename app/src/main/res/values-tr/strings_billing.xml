@@ -23,10 +23,8 @@
     <string name="error_network">Aster sunucuya ulaşamıyor. Bağlantınızı kontrol edip tekrar deneyin.</string>
     <string name="error_not_found">Bu öğe artık kullanılamıyor.</string>
     <string name="error_payment_required">Bunu yapabilmeniz için planınızın ödemeye ihtiyacı var.</string>
-    <string name="error_plan_limit_reached">Mevcut planınızdaki bir sınıra ulaştınız.</string>
     <string name="error_rate_limited">Çok fazla deneme yapıldı. Biraz bekleyip tekrar deneyin.</string>
     <string name="error_send_quota_reached">Bu hesabın Aster dışındaki adreslere günlük mesaj sınırına ulaştınız. Diğer Aster adreslerine giden mesajlar bundan etkilenmez.</string>
-    <string name="error_storage_full">Depolama alanınız dolu.</string>
     <string name="family_manage_web">Üyeleri web\'de yönetin</string>
     <string name="finish_plan_setup_action">Kurulumu tamamla</string>
     <string name="finish_plan_setup_message">Ödeme yapmadan önce ödeme sayfasını kapattınız. Kurulumu tamamlayana kadar hesabınız ücretsiz planda kalır.</string>

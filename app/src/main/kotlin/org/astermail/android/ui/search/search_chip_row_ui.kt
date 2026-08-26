@@ -290,7 +290,7 @@ internal fun search_chip_row(
     val unread_label = stringResource(R.string.chip_is_unread)
 
     val launch_custom_range = {
-        val cal = java.util.Calendar.getInstance()
+        val cal = org.astermail.android.ui.mail.AsterTimePreferences.account_calendar()
         android.app.DatePickerDialog(
             context,
             theme_res,

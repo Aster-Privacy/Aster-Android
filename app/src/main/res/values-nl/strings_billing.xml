@@ -23,10 +23,8 @@
     <string name="error_network">Aster kan de server niet bereiken. Controleer je verbinding en probeer opnieuw.</string>
     <string name="error_not_found">Dat item is niet meer beschikbaar.</string>
     <string name="error_payment_required">Je abonnement heeft een betaling nodig voordat je dit kunt doen.</string>
-    <string name="error_plan_limit_reached">Je hebt een limiet van je huidige abonnement bereikt.</string>
     <string name="error_rate_limited">Te veel pogingen. Wacht even en probeer opnieuw.</string>
     <string name="error_send_quota_reached">Je hebt de daglimiet van dit account bereikt voor berichten naar adressen buiten Aster. Berichten naar andere Aster-adressen worden niet beïnvloed.</string>
-    <string name="error_storage_full">Je opslag is vol.</string>
     <string name="family_manage_web">Leden beheren op het web</string>
     <string name="finish_plan_setup_action">Instellen afronden</string>
     <string name="finish_plan_setup_message">Je hebt het afrekenen gesloten voordat je betaalde. Je account blijft op het gratis abonnement tot je klaar bent.</string>

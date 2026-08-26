@@ -23,10 +23,8 @@
     <string name="error_network">Aster 无法连接服务器。请检查网络连接后重试。</string>
     <string name="error_not_found">该项目已不可用。</string>
     <string name="error_payment_required">需要先完成付款才能执行此操作。</string>
-    <string name="error_plan_limit_reached">您已达到当前套餐的限额。</string>
     <string name="error_rate_limited">尝试次数过多。请稍候再试。</string>
     <string name="error_send_quota_reached">此账户向 Aster 以外地址发送邮件的每日上限已用完。发送给其他 Aster 地址的邮件不受影响。</string>
-    <string name="error_storage_full">您的存储空间已满。</string>
     <string name="family_manage_web">在网页版管理成员</string>
     <string name="finish_plan_setup_action">完成设置</string>
     <string name="finish_plan_setup_message">您在付款前关闭了结账页面。完成之前，您的账户将保持免费套餐。</string>

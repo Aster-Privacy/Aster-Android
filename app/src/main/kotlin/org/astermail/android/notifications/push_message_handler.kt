@@ -46,11 +46,8 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
     val obj = JSONObject(payload)
     val type = obj.optString("type")
     if (type == "test") {
-        return if (MailPollingWorker.show_generic(context, 1)) {
-            PushResult.Shown
-        } else {
-            PushResult.Ignore
-        }
+        MailPollingWorker.show_generic(context, 1)
+        return PushResult.Shown
     }
     if (type == "login_alert") {
         val session_id = obj.optString("session_id", "")
@@ -72,7 +69,13 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
             MailPollingWorker.MailRepositoryEntryPoint::class.java,
         ).mail_repository().signal_new_mail()
     }
-    if (!MailPollingWorker.is_notify_new_email(context)) return PushResult.Ignore
+    if (MailPollingWorker.is_quiet_hours_now(context)) return PushResult.Ignore
+    if (
+        !MailPollingWorker.is_notify_new_email(context) &&
+        !MailPollingWorker.is_notify_replies(context)
+    ) {
+        return PushResult.Ignore
+    }
     val entry = try {
         EntryPointAccessors.fromApplication(
             context.applicationContext,
@@ -83,21 +86,7 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
     }
     val app_lock_configured = runCatching { entry.app_lock_store().is_configured() }.getOrDefault(true)
     if (org.astermail.android.security.LockdownStore.is_enabled(context) || app_lock_configured) {
-        val locked_item_id = obj.optString("item_id", "")
-        if (locked_item_id.isBlank()) {
-            return if (MailPollingWorker.show_generic(context, 1)) {
-                PushResult.Shown
-            } else {
-                PushResult.Ignore
-            }
-        }
-        if (!MailPollingWorker.claim_item_notification(context, locked_item_id)) {
-            return PushResult.Ignore
-        }
-        if (!MailPollingWorker.show_generic_for_item(context, locked_item_id)) {
-            MailPollingWorker.release_item_claim(context, locked_item_id)
-            return PushResult.Ignore
-        }
+        MailPollingWorker.show_generic(context, 1)
         return PushResult.Shown
     }
     if (type == "wake") return PushResult.NeedsFetch
@@ -105,6 +94,9 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
         return PushResult.NeedsFetch
     }
     if (MailPollingWorker.muted_folder_tokens(context).isNotEmpty()) {
+        return PushResult.NeedsFetch
+    }
+    if (MailPollingWorker.muted_notification_categories(context).isNotEmpty()) {
         return PushResult.NeedsFetch
     }
     val item_id = obj.optString("item_id", "")
@@ -119,6 +111,9 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
     val envelope = repo.decrypt_envelope_public(encrypted_envelope, envelope_nonce, item_id)
         ?: return PushResult.NeedsFetch
     if (envelope.is_undecryptable) return PushResult.NeedsFetch
+    if (!MailPollingWorker.is_envelope_notifiable_by_type(context, envelope)) {
+        return PushResult.Ignore
+    }
     val forwarding = org.astermail.android.ui.mail.resolve_forwarding_display(
         envelope.from_email,
         envelope.raw_headers,
@@ -138,16 +133,18 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
     if (!MailPollingWorker.claim_item_notification(context, item_id)) {
         return PushResult.Ignore
     }
-    val posted = MailPollingWorker.show_message(
-        context = context,
-        sender = sender,
-        subject = subject,
-        preview = repo.notification_preview(envelope),
-        message_id = notification_id,
-        item_id = item_id,
-    )
-    if (!posted) {
-        MailPollingWorker.release_item_claim(context, item_id)
+    val shown = runCatching {
+        MailPollingWorker.show_message(
+            context = context,
+            sender = sender,
+            subject = subject,
+            preview = repo.notification_preview(envelope),
+            message_id = notification_id,
+            item_id = item_id,
+        )
+    }.isSuccess
+    if (!shown) {
+        MailPollingWorker.release_item_notification(context, item_id)
         return PushResult.NeedsFetch
     }
     return PushResult.Shown

@@ -50,7 +50,8 @@ data class InitiateRecoveryResponse(
 
 @Serializable
 data class InitiateEmailRecoveryRequest(
-    val email: String,
+    val username: String,
+    val email_domain: String,
 )
 
 @Serializable
@@ -140,7 +141,7 @@ class RecoveryApiImpl(private val client: ApiClient) : RecoveryApi {
     }
 
     override suspend fun initiate_email(request: InitiateEmailRecoveryRequest): InitiateEmailRecoveryResponse {
-        val response = client.http.post("${client.base_url}$base/email-initiate") {
+        val response = client.http.post("${client.base_url}$base/forgot-password") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }

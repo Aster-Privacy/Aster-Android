@@ -27,8 +27,6 @@
     <string name="rules_value_unread">未読</string>
     <string name="rules_value_on">オン</string>
     <string name="rules_value_off">オフ</string>
-    <string name="rules_value_days">%1$d 日</string>
-    <string name="rules_value_label_count">ラベル %1$d 件</string>
     <string name="rules_value_placeholder_ellipsis">...</string>
 
     <string name="rules_unit_kb">KB</string>
@@ -47,7 +45,6 @@
     <string name="rules_delete_title">ルールを削除しますか？</string>
     <string name="rules_delete_message">このルールは今後の新着メールに適用されなくなります。すでに行われた変更は元に戻りません。</string>
     <string name="rules_save_failed">ルールを保存できませんでした</string>
-    <string name="rules_emails_count">%1$d 件のメール</string>
     <string name="rules_copy_suffix">(コピー)</string>
     <string name="rules_error_load">ルールを読み込めませんでした</string>
     <string name="rules_error_delete">ルールを削除できませんでした</string>
@@ -98,4 +95,12 @@
     <string name="category_tutorial_text">入力したドメインかキーワードのどれかに一致すると、そのメールはカスタムカテゴリに入ります。カスタムカテゴリは標準のカテゴリより優先され、判定はすべて端末内で行われます。</string>
     <string name="rules_create_first_folder_hint">フォルダを作成すると、このルールで一致するメールを移動できます。</string>
     <string name="rules_create_first_label_hint">ラベルを作成すると、このルールで一致するメールに適用できます。</string>
+    <string name="muted_categories">ミュート中のカテゴリ</string>
+    <string name="muted_categories_description">カテゴリをオンにすると、その通知をミュートします。ミュートしたカテゴリもメールを受信し、受信トレイに表示されます。</string>
+    <string name="muted_categories_empty">ミュートするカテゴリを選ぶには、受信トレイのカテゴリをオンにします。</string>
+    <string name="rules_hint_name">このルールの名前を入力してください。</string>
+    <string name="rules_hint_add_condition">条件を 1 つ以上追加してください。</string>
+    <string name="rules_hint_finish_condition">すべての条件に値を入力してください。</string>
+    <string name="rules_hint_add_action">アクションを 1 つ以上追加してください。</string>
+    <string name="rules_hint_finish_action">すべてのアクションに値を入力してください。</string>
 </resources>

@@ -49,6 +49,8 @@ class AccountsViewModel @Inject constructor(
     private val _state = MutableStateFlow(AccountsUiState())
     val state: StateFlow<AccountsUiState> = _state.asStateFlow()
 
+    private var is_switching = false
+
     init {
         refresh()
         viewModelScope.launch {
@@ -79,12 +81,18 @@ class AccountsViewModel @Inject constructor(
             on_result(false)
             return
         }
+        if (is_switching) return
+        is_switching = true
         account_store.set_current(account_id)
         org.astermail.android.billing.AttachmentLimits.reset()
         refresh()
         viewModelScope.launch {
-            val restored = auth_repository.try_restore_session(account_id)
-            on_result(restored)
+            val restored = try {
+                auth_repository.try_restore_session(account_id)
+            } finally {
+                is_switching = false
+            }
+            if (account_store.get_current_id() == account_id) on_result(restored)
         }
     }
 

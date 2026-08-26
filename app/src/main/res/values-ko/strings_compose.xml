@@ -15,5 +15,14 @@
     <string name="signature_none">서명 없음</string>
     <string name="signature_select">서명 선택</string>
     <string name="compose_metadata_strip_failed">다음 파일에서 숨은 메타데이터를 지우지 못했습니다: %1$s</string>
+    <string name="compose_inline_image_failed">다음 이미지를 추가하지 못했습니다: %1$s</string>
     <string name="compose_attachment_read_failed">\"%1$s\"을(를) 첨부하지 못했습니다. 메일은 보내지지 않았습니다. 파일을 빼거나 다시 넣은 뒤 시도하세요.</string>
+    <string name="schedule_in_one_hour">1시간 후</string>
+    <string name="schedule_tonight">오늘 밤</string>
+    <string name="schedule_tomorrow_morning">내일 아침</string>
+    <string name="schedule_tomorrow_afternoon">내일 오후</string>
+    <string name="schedule_monday_morning">월요일 아침</string>
+    <string name="schedule_pick_date_time">날짜 및 시간 선택</string>
+    <string name="too_many_recipients_in_field">받는 사람, 참조, 숨은 참조 각 항목에는 최대 %1$d개의 주소가 들어갑니다. 일부를 두 번째 메시지로 옮기면 이 메시지를 보낼 수 있습니다.</string>
+    <string name="too_many_recipients_in_message">메시지 한 통은 받는 사람, 참조, 숨은 참조를 합쳐 최대 %1$d개의 주소에 도달합니다. 목록을 여러 메시지로 나누면 전송됩니다.</string>
 </resources>

@@ -339,7 +339,7 @@ class ContactsRepository @Inject constructor(
     private fun generate_search_token(value: String, raw_key: ByteArray): String {
         val sub = derive_subkey(raw_key, SEARCH_INFO)
         try {
-            val normalized = value.lowercase().trim()
+            val normalized = value.lowercase(java.util.Locale.ROOT).trim()
             val hash = hmac_sha256(sub, normalized.toByteArray(Charsets.UTF_8))
             return b64(hash)
         } finally {
@@ -352,7 +352,7 @@ class ContactsRepository @Inject constructor(
         try {
             val (first, last) = split_name(contact.name)
             val emails = listOf(contact.email, contact.work_email).filter { it.isNotBlank() }
-            val searchable = "$first $last ${emails.joinToString(" ")}".lowercase()
+            val searchable = "$first $last ${emails.joinToString(" ")}".lowercase(java.util.Locale.ROOT)
             val hash = hmac_sha256(sub, searchable.toByteArray(Charsets.UTF_8))
             return b64(hash)
         } finally {

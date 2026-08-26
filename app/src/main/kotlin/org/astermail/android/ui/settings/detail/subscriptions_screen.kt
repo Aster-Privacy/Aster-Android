@@ -27,8 +27,6 @@ import compose.icons.tablericons.*
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
-import android.content.Intent
-import android.net.Uri
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -68,6 +66,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -90,6 +89,7 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
+import org.astermail.android.ui.common.open_external_url
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterTextField
 import androidx.compose.foundation.shape.CircleShape
@@ -245,6 +245,9 @@ private val plan_tiers = listOf(
 private val FAMILY_PLAN_CODES = setOf("duo", "family")
 
 private fun tier_rank(code: String): Int = org.astermail.android.billing.plan_tier_rank(code)
+
+private fun is_lower_tier(code: String?, current_code: String?): Boolean =
+    tier_rank(code.orEmpty()) < tier_rank(current_code.orEmpty())
 
 private fun plan_code_of(plan_name: String?): String = org.astermail.android.billing.plan_code_from_name(plan_name)
 
@@ -459,6 +462,10 @@ fun SubscriptionsScreen(
     }
 
     detail_scaffold(title = stringResource(R.string.plan_billing), on_back = on_back, scroll_state = scroll_state) {
+        if (sub == null && state.subscription_load_failed) {
+            load_failed_card(state.error) { vm.load_subscription() }
+            return@detail_scaffold
+        }
         if (payment_failed_due != null) {
             org.astermail.android.ui.common.payment_failed_banner(
                 plan_name = sub?.effective_plan_name ?: plan_free_label,
@@ -597,7 +604,8 @@ fun SubscriptionsScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(modifier = Modifier.weight(1f)) {
                             aster_plan_badge(
-                                text = sub?.effective_plan_name ?: plan_free_label,
+                                text = sub?.effective_plan_name
+                                    ?: if (state.error != null) stringResource(R.string.failed_to_load) else plan_free_label,
                                 accent = if (current_code == "free") colors.text_muted else colors.accent_blue,
                                 font_size = 13.sp,
                                 horizontal_padding = 10.dp,
@@ -905,7 +913,7 @@ fun SubscriptionsScreen(
             if (!addons.active_addons.isNullOrEmpty()) {
                 v_gap(AsterSpacing.sm)
                 Text(
-                    text = stringResource(R.string.storage_addons_active_count, addons.active_addons.size),
+                    text = pluralStringResource(R.plurals.storage_addons_active_count, addons.active_addons.size, addons.active_addons.size),
                     color = colors.text_tertiary,
                     fontSize = 12.sp,
                 )
@@ -1003,8 +1011,13 @@ fun SubscriptionsScreen(
     if (show_payment_picker) {
         payment_method_dialog(
             title = pending_plan_code?.let { code ->
-                plan_tiers.firstOrNull { it.code == code }?.let { context.getString(R.string.upgrade_to, context.getString(it.name_res)) }
-                    ?: context.getString(R.string.upgrade)
+                val down = is_lower_tier(code, current_code)
+                plan_tiers.firstOrNull { it.code == code }?.let {
+                    context.getString(
+                        if (down) R.string.downgrade_to else R.string.upgrade_to,
+                        context.getString(it.name_res),
+                    )
+                } ?: context.getString(if (down) R.string.downgrade else R.string.upgrade)
             } ?: context.getString(R.string.storage_addons_title),
             on_dismiss = { show_payment_picker = false },
             on_card = {

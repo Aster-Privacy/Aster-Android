@@ -24,6 +24,7 @@ package org.astermail.android.ui.contacts
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -51,8 +52,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -87,36 +90,52 @@ fun ContactEditScreen(
         if (contact_id != null) vm.load_contact(contact_id)
     }
 
+    val context = LocalContext.current
+    var save_requested by rememberSaveable { mutableStateOf(false) }
+
     LaunchedEffect(ui_state.save_success) {
-        if (ui_state.save_success) {
+        if (ui_state.save_success && save_requested) {
+            save_requested = false
             vm.clear_flags()
             on_saved()
         }
     }
 
-    val source = ui_state.selected_contact?.takeIf { it.id == contact_id }
+    LaunchedEffect(ui_state.error) {
+        val message = ui_state.error
+        if (message != null && save_requested) {
+            save_requested = false
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            vm.clear_flags()
+        }
+    }
 
-    var name by remember { mutableStateOf(source?.name.orEmpty()) }
-    var email by remember { mutableStateOf(source?.email.orEmpty()) }
-    var phone by remember { mutableStateOf(source?.phone.orEmpty()) }
-    var company by remember { mutableStateOf(source?.company.orEmpty()) }
-    var title by remember { mutableStateOf(source?.title.orEmpty()) }
-    var work_email by remember { mutableStateOf(source?.work_email.orEmpty()) }
-    var work_phone by remember { mutableStateOf(source?.work_phone.orEmpty()) }
-    var birthday by remember { mutableStateOf(source?.birthday.orEmpty()) }
-    var address by remember { mutableStateOf(source?.address.orEmpty()) }
-    var city by remember { mutableStateOf(source?.city.orEmpty()) }
-    var region by remember { mutableStateOf(source?.region.orEmpty()) }
-    var postal_code by remember { mutableStateOf(source?.postal_code.orEmpty()) }
-    var country by remember { mutableStateOf(source?.country.orEmpty()) }
-    var website by remember { mutableStateOf(source?.website.orEmpty()) }
-    var twitter by remember { mutableStateOf(source?.twitter.orEmpty()) }
-    var linkedin by remember { mutableStateOf(source?.linkedin.orEmpty()) }
-    var notes by remember { mutableStateOf(source?.notes.orEmpty()) }
-    var active_tab by remember { mutableStateOf(0) }
+    val source = ui_state.selected_contact?.takeIf { it.id == contact_id }
+    val contact_unavailable = contact_id != null && source == null
+
+    var name by rememberSaveable { mutableStateOf(source?.name.orEmpty()) }
+    var email by rememberSaveable { mutableStateOf(source?.email.orEmpty()) }
+    var phone by rememberSaveable { mutableStateOf(source?.phone.orEmpty()) }
+    var company by rememberSaveable { mutableStateOf(source?.company.orEmpty()) }
+    var title by rememberSaveable { mutableStateOf(source?.title.orEmpty()) }
+    var work_email by rememberSaveable { mutableStateOf(source?.work_email.orEmpty()) }
+    var work_phone by rememberSaveable { mutableStateOf(source?.work_phone.orEmpty()) }
+    var birthday by rememberSaveable { mutableStateOf(source?.birthday.orEmpty()) }
+    var address by rememberSaveable { mutableStateOf(source?.address.orEmpty()) }
+    var city by rememberSaveable { mutableStateOf(source?.city.orEmpty()) }
+    var region by rememberSaveable { mutableStateOf(source?.region.orEmpty()) }
+    var postal_code by rememberSaveable { mutableStateOf(source?.postal_code.orEmpty()) }
+    var country by rememberSaveable { mutableStateOf(source?.country.orEmpty()) }
+    var website by rememberSaveable { mutableStateOf(source?.website.orEmpty()) }
+    var twitter by rememberSaveable { mutableStateOf(source?.twitter.orEmpty()) }
+    var linkedin by rememberSaveable { mutableStateOf(source?.linkedin.orEmpty()) }
+    var notes by rememberSaveable { mutableStateOf(source?.notes.orEmpty()) }
+    var active_tab by rememberSaveable { mutableStateOf(0) }
+    var loaded_contact_id by rememberSaveable { mutableStateOf<String?>(null) }
 
     LaunchedEffect(source) {
-        if (source != null) {
+        if (source != null && source.id != loaded_contact_id) {
+            loaded_contact_id = source.id
             name = source.name
             email = source.email
             phone = source.phone
@@ -152,12 +171,13 @@ fun ContactEditScreen(
         ) {
             AsterIconButton(
                 icon = TablerIcons.ArrowLeft,
+                auto_mirror = true,
                 content_description = stringResource(R.string.back),
                 onClick = on_back,
             )
             Spacer(Modifier.width(AsterSpacing.sm))
             Text(
-                text = if (source == null) stringResource(R.string.new_contact) else stringResource(R.string.edit_contact),
+                text = if (contact_id == null) stringResource(R.string.new_contact) else stringResource(R.string.edit_contact),
                 style = MaterialTheme.typography.titleMedium,
                 color = colors.text_primary,
                 fontWeight = FontWeight.SemiBold,
@@ -166,7 +186,7 @@ fun ContactEditScreen(
             val can_save = name.isNotBlank() || email.isNotBlank() || phone.isNotBlank()
             AsterGhostButton(
                 label = stringResource(R.string.save),
-                enabled = can_save,
+                enabled = can_save && !ui_state.is_loading && !contact_unavailable,
                 onClick = {
                     val contact = Contact(
                         id = contact_id ?: "",
@@ -187,12 +207,34 @@ fun ContactEditScreen(
                         twitter = twitter,
                         linkedin = linkedin,
                         notes = notes,
+                        is_favorite = source?.is_favorite ?: false,
                     )
+                    save_requested = true
                     vm.save_contact(contact, contact_id)
                 },
             )
         }
         AsterDivider()
+
+        if (contact_unavailable && !ui_state.is_loading) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(AsterSpacing.md),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.failed_to_load),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.text_secondary,
+                    modifier = Modifier.weight(1f),
+                )
+                AsterGhostButton(
+                    label = stringResource(R.string.retry),
+                    onClick = { if (contact_id != null) vm.load_contact(contact_id) },
+                )
+            }
+        }
 
         Column(
             modifier = Modifier

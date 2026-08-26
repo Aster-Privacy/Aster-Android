@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="aliases_count">
+        <item quantity="zero">%d أسماء مستعارة</item>
+        <item quantity="one">%d اسم مستعار</item>
+        <item quantity="two">%d اسمان مستعاران</item>
+        <item quantity="few">%d أسماء مستعارة</item>
+        <item quantity="many">%d اسمًا مستعارًا</item>
+        <item quantity="other">%d اسمًا مستعارًا</item>
+    </plurals>
+    <plurals name="api_keys_count">
+        <item quantity="zero">%d مفاتيح</item>
+        <item quantity="one">%d مفتاح</item>
+        <item quantity="two">%d مفتاحان</item>
+        <item quantity="few">%d مفاتيح</item>
+        <item quantity="many">%d مفتاحًا</item>
+        <item quantity="other">%d مفتاحًا</item>
+    </plurals>
+    <plurals name="devices_count">
+        <item quantity="zero">%d أجهزة</item>
+        <item quantity="one">%d جهاز</item>
+        <item quantity="two">%d جهازان</item>
+        <item quantity="few">%d أجهزة</item>
+        <item quantity="many">%d جهازًا</item>
+        <item quantity="other">%d جهازًا</item>
+    </plurals>
+    <plurals name="labels_count">
+        <item quantity="zero">%d تصنيفات</item>
+        <item quantity="one">%d تصنيف</item>
+        <item quantity="two">%d تصنيفان</item>
+        <item quantity="few">%d تصنيفات</item>
+        <item quantity="many">%d تصنيفًا</item>
+        <item quantity="other">%d تصنيفًا</item>
+    </plurals>
+    <plurals name="ghosts_count">
+        <item quantity="zero">%d أشباح</item>
+        <item quantity="one">%d شبح</item>
+        <item quantity="two">%d شبحان</item>
+        <item quantity="few">%d أشباح</item>
+        <item quantity="many">%d شبحًا</item>
+        <item quantity="other">%d شبحًا</item>
+    </plurals>
+    <plurals name="recovery_codes_count">
+        <item quantity="zero">%d رموز استرداد</item>
+        <item quantity="one">%d رمز استرداد</item>
+        <item quantity="two">%d رمزا استرداد</item>
+        <item quantity="few">%d رموز استرداد</item>
+        <item quantity="many">%d رمز استرداد</item>
+        <item quantity="other">%d رمز استرداد</item>
+    </plurals>
+    <plurals name="imported_contacts">
+        <item quantity="zero">تم استيراد %d جهات اتصال</item>
+        <item quantity="one">تم استيراد %d جهة اتصال</item>
+        <item quantity="two">تم استيراد %d جهتي اتصال</item>
+        <item quantity="few">تم استيراد %d جهات اتصال</item>
+        <item quantity="many">تم استيراد %d جهة اتصال</item>
+        <item quantity="other">تم استيراد %d جهة اتصال</item>
+    </plurals>
+    <plurals name="n_images">
+        <item quantity="zero">%1$d صور</item>
+        <item quantity="one">%1$d صورة</item>
+        <item quantity="two">%1$d صورتان</item>
+        <item quantity="few">%1$d صور</item>
+        <item quantity="many">%1$d صورة</item>
+        <item quantity="other">%1$d صورة</item>
+    </plurals>
+    <plurals name="n_trackers">
+        <item quantity="zero">%1$d متعقّبات</item>
+        <item quantity="one">%1$d متعقّب</item>
+        <item quantity="two">%1$d متعقّبان</item>
+        <item quantity="few">%1$d متعقّبات</item>
+        <item quantity="many">%1$d متعقّبًا</item>
+        <item quantity="other">%1$d متعقّبًا</item>
+    </plurals>
+    <plurals name="n_fonts">
+        <item quantity="zero">%1$d خطوط</item>
+        <item quantity="one">%1$d خط</item>
+        <item quantity="two">%1$d خطان</item>
+        <item quantity="few">%1$d خطوط</item>
+        <item quantity="many">%1$d خطًا</item>
+        <item quantity="other">%1$d خطًا</item>
+    </plurals>
+    <plurals name="n_stylesheets">
+        <item quantity="zero">%1$d أوراق أنماط</item>
+        <item quantity="one">%1$d ورقة أنماط</item>
+        <item quantity="two">%1$d ورقتا أنماط</item>
+        <item quantity="few">%1$d أوراق أنماط</item>
+        <item quantity="many">%1$d ورقة أنماط</item>
+        <item quantity="other">%1$d ورقة أنماط</item>
+    </plurals>
+    <plurals name="show_n_more_aliases">
+        <item quantity="zero">عرض %1$d أسماء مستعارة إضافية</item>
+        <item quantity="one">عرض %1$d اسم مستعار إضافي</item>
+        <item quantity="two">عرض %1$d اسمين مستعارين إضافيين</item>
+        <item quantity="few">عرض %1$d أسماء مستعارة إضافية</item>
+        <item quantity="many">عرض %1$d اسمًا مستعارًا إضافيًا</item>
+        <item quantity="other">عرض %1$d اسمًا مستعارًا إضافيًا</item>
+    </plurals>
+    <plurals name="show_n_more_folders">
+        <item quantity="zero">عرض %1$d مجلدات إضافية</item>
+        <item quantity="one">عرض %1$d مجلد إضافي</item>
+        <item quantity="two">عرض %1$d مجلدين إضافيين</item>
+        <item quantity="few">عرض %1$d مجلدات إضافية</item>
+        <item quantity="many">عرض %1$d مجلدًا إضافيًا</item>
+        <item quantity="other">عرض %1$d مجلدًا إضافيًا</item>
+    </plurals>
+    <plurals name="rules_emails_count">
+        <item quantity="zero">%1$d رسائل</item>
+        <item quantity="one">%1$d رسالة</item>
+        <item quantity="two">%1$d رسالتان</item>
+        <item quantity="few">%1$d رسائل</item>
+        <item quantity="many">%1$d رسالة</item>
+        <item quantity="other">%1$d رسالة</item>
+    </plurals>
+    <plurals name="rules_value_label_count">
+        <item quantity="zero">%1$d تصنيفات</item>
+        <item quantity="one">%1$d تصنيف</item>
+        <item quantity="two">%1$d تصنيفان</item>
+        <item quantity="few">%1$d تصنيفات</item>
+        <item quantity="many">%1$d تصنيفًا</item>
+        <item quantity="other">%1$d تصنيفًا</item>
+    </plurals>
+    <plurals name="stop_senders_title">
+        <item quantity="zero">إيقاف البريد من %1$d مرسلين؟</item>
+        <item quantity="one">إيقاف البريد من %1$d مرسل؟</item>
+        <item quantity="two">إيقاف البريد من %1$d مرسلين؟</item>
+        <item quantity="few">إيقاف البريد من %1$d مرسلين؟</item>
+        <item quantity="many">إيقاف البريد من %1$d مرسلًا؟</item>
+        <item quantity="other">إيقاف البريد من %1$d مرسلًا؟</item>
+    </plurals>
+    <plurals name="participants_and_others">
+        <item quantity="zero">%1$s و%2$d آخرين</item>
+        <item quantity="one">%1$s و%2$d آخر</item>
+        <item quantity="two">%1$s و%2$d آخرين</item>
+        <item quantity="few">%1$s و%2$d آخرين</item>
+        <item quantity="many">%1$s و%2$d آخر</item>
+        <item quantity="other">%1$s و%2$d آخر</item>
+    </plurals>
+    <plurals name="messages_in_type">
+        <item quantity="zero">%1$d رسائل في %2$s</item>
+        <item quantity="one">%1$d رسالة في %2$s</item>
+        <item quantity="two">%1$d رسالتان في %2$s</item>
+        <item quantity="few">%1$d رسائل في %2$s</item>
+        <item quantity="many">%1$d رسالة في %2$s</item>
+        <item quantity="other">%1$d رسالة في %2$s</item>
+    </plurals>
+</resources>

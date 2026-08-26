@@ -28,6 +28,7 @@ import org.astermail.android.api.preferences.UserPreferences
 import org.astermail.android.api.preferences.effective_theme_values
 import org.astermail.android.api.preferences.encode_preferences_preserving_unknown
 import org.astermail.android.api.preferences.merge_decrypted_preferences
+import org.astermail.android.api.preferences.normalize_order_preferences
 import org.astermail.android.api.preferences.theme_sync_enabled
 import org.astermail.android.api.preferences.with_theme_sync_enabled
 import org.astermail.android.api.preferences.with_theme_values
@@ -201,7 +202,7 @@ class ThemeSyncTest {
 
         val merged = merge_decrypted_preferences(json, raw, null)
 
-        assertEquals(prefs, merged)
+        assertEquals(normalize_order_preferences(prefs), merged)
         assertNull(json.parseToJsonElement(raw).jsonObject["theme_ios"])
     }
 }

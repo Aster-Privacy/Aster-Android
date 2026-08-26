@@ -15,5 +15,14 @@
     <string name="signature_none">İmza yok</string>
     <string name="signature_select">İmza seç</string>
     <string name="compose_metadata_strip_failed">Şu dosyadan gizli üstveri kaldırılamadı: %1$s</string>
+    <string name="compose_inline_image_failed">Bu görseller eklenemedi: %1$s</string>
     <string name="compose_attachment_read_failed">\"%1$s\" eklenemedi. E-postan gönderilmedi. Dosyayı çıkar ya da yeniden ekleyip tekrar dene.</string>
+    <string name="schedule_in_one_hour">Bir saat sonra</string>
+    <string name="schedule_tonight">Bu akşam</string>
+    <string name="schedule_tomorrow_morning">Yarın sabah</string>
+    <string name="schedule_tomorrow_afternoon">Yarın öğleden sonra</string>
+    <string name="schedule_monday_morning">Pazartesi sabahı</string>
+    <string name="schedule_pick_date_time">Tarih ve saat seçin</string>
+    <string name="too_many_recipients_in_field">Kime, Bilgi ve Gizli alanlarının her biri en fazla %1$d adres alır. Bir kısmını ikinci bir iletiye taşıdığınızda bu ileti gönderilir.</string>
+    <string name="too_many_recipients_in_message">Bir ileti Kime, Bilgi ve Gizli alanlarında toplam en fazla %1$d adrese ulaşır. Listeyi daha küçük iletilere bölerek gönderebilirsiniz.</string>
 </resources>

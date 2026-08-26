@@ -15,5 +15,14 @@
     <string name="signature_none">不使用签名</string>
     <string name="signature_select">选择签名</string>
     <string name="compose_metadata_strip_failed">无法清除以下文件中的隐藏元数据：%1$s</string>
+    <string name="compose_inline_image_failed">无法添加这些图片：%1$s</string>
     <string name="compose_attachment_read_failed">无法添加附件 \"%1$s\"。邮件尚未发送。请移除该文件或重新添加后再试。</string>
+    <string name="schedule_in_one_hour">一小时后</string>
+    <string name="schedule_tonight">今晚</string>
+    <string name="schedule_tomorrow_morning">明天上午</string>
+    <string name="schedule_tomorrow_afternoon">明天下午</string>
+    <string name="schedule_monday_morning">周一上午</string>
+    <string name="schedule_pick_date_time">选择日期和时间</string>
+    <string name="too_many_recipients_in_field">收件人、抄送和密送每个字段最多容纳 %1$d 个地址。将其中一部分移到第二封邮件即可发送这一封。</string>
+    <string name="too_many_recipients_in_message">一封邮件在收件人、抄送和密送中最多送达 %1$d 个地址。把名单拆成多封较小的邮件即可发送。</string>
 </resources>

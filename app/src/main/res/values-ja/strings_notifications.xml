@@ -22,4 +22,7 @@
     <string name="notif_group_summary_new_mail">新着メール</string>
     <string name="notif_battery_opt_title">バックグラウンド動作の制限を解除</string>
     <string name="notif_battery_opt_subtitle">通知を確実に受け取るために必要です。タップしてシステム設定で有効にしてください。</string>
+    <string name="notif_blocked_title">通知がオフになっています</string>
+    <string name="notif_blocked_subtitle">許可するまで Aster Mail は通知を表示できません。タップしてシステム設定を開いてください。</string>
+    <string name="notif_channel_downloads_name">ダウンロード</string>
 </resources>

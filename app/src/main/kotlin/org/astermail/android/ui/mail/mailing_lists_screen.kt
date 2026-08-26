@@ -89,6 +89,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -211,12 +212,12 @@ fun MailingListsScreen(
                     horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
                 ) {
                     subscription_chip(
-                        text = stringResource(R.string.active_tab) + " (" + active.size + ")",
+                        text = stringResource(R.string.tab_label_with_count, stringResource(R.string.active_tab), active.size),
                         selected = !show_unsubscribed,
                         on_click = { show_unsubscribed = false; selected_ids = emptySet() },
                     )
                     subscription_chip(
-                        text = stringResource(R.string.unsubscribed_tab) + " (" + unsubscribed.size + ")",
+                        text = stringResource(R.string.tab_label_with_count, stringResource(R.string.unsubscribed_tab), unsubscribed.size),
                         selected = show_unsubscribed,
                         on_click = { show_unsubscribed = true; selected_ids = emptySet() },
                     )
@@ -233,6 +234,16 @@ fun MailingListsScreen(
                             color = colors.accent_blue,
                             modifier = Modifier.size(24.dp),
                         )
+                    }
+                }
+                state.load_error != null && state.items.isEmpty() -> item(key = "load_error") {
+                    Box(modifier = Modifier.padding(horizontal = inbox_card_horizontal_margin)) {
+                        Column {
+                            org.astermail.android.ui.settings.detail.load_failed_card(
+                                message = state.load_error,
+                                on_retry = { vm.load() },
+                            )
+                        }
                     }
                 }
                 visible.isEmpty() -> item(key = "empty") {
@@ -356,7 +367,7 @@ fun MailingListsScreen(
         val pending = confirm_bulk
         AsterAlertDialog(
             on_dismiss = { confirm_bulk = emptyList() },
-            title = stringResource(R.string.stop_senders_title, pending.size),
+            title = pluralStringResource(R.plurals.stop_senders_title, pending.size, pending.size),
             message = stringResource(R.string.stop_senders_body),
             confirm_label = stringResource(R.string.stop_sender_confirm),
             cancel_label = stringResource(R.string.cancel),
@@ -397,6 +408,7 @@ private fun subscription_top_bar(
             } else {
                 AsterIconButton(
                     icon = TablerIcons.ArrowLeft,
+                    auto_mirror = true,
                     content_description = stringResource(R.string.back),
                     onClick = on_back,
                 )
@@ -795,7 +807,7 @@ private fun subscription_row(
             )
             Text(
                 text = buildString {
-                    append(stringResource(R.string.rules_emails_count, item.email_count))
+                    append(pluralStringResource(R.plurals.rules_emails_count, item.email_count, item.email_count))
                     if (item.category.isNotBlank() && item.category != "unknown") {
                         append(" · ")
                         append(item.category.replaceFirstChar { it.uppercase() })

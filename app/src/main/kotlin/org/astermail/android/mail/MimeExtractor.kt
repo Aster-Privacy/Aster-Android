@@ -75,7 +75,7 @@ object MimeExtractor {
     private fun decode_transfer_encoding(body: String, headers: String): String {
         val encoding = transfer_encoding_pattern.find(headers)
             ?.groupValues?.getOrNull(1)
-            ?.lowercase() ?: "7bit"
+            ?.lowercase(java.util.Locale.ROOT) ?: "7bit"
         val charset = charset_pattern.find(headers)
             ?.groupValues?.getOrNull(1)
             ?.let { runCatching { java.nio.charset.Charset.forName(it) }.getOrNull() }
@@ -144,7 +144,7 @@ object MimeExtractor {
             val split = find_split(trimmed) ?: continue
             val headers = split.first
             val payload = split.second
-            val lower = headers.lowercase()
+            val lower = headers.lowercase(java.util.Locale.ROOT)
             val nested = get_boundary(headers)
 
             if (nested != null && lower.contains("multipart/")) {
@@ -177,7 +177,7 @@ object MimeExtractor {
             if (r != null) return r
         }
 
-        val lower = headers.lowercase()
+        val lower = headers.lowercase(java.util.Locale.ROOT)
         if (lower.contains("text/html")) {
             return MimeBody(decode_transfer_encoding(body.trim(), lower), true)
         }

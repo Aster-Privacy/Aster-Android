@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="debug_banner_label">DEBUG BUILD</string>
-    <string name="debug_banner_link">production build</string>
-    <string name="debug_banner_body">This is a debug build, intended for developers only, and may contain serious bugs. Please use the latest %1$s instead.</string>
+    <string name="debug_banner_label" translatable="false">DEBUG BUILD</string>
+    <string name="debug_banner_link" translatable="false">production build</string>
+    <string name="debug_banner_body" translatable="false">This is a debug build, intended for developers only, and may contain serious bugs. Please use the latest %1$s instead.</string>
 </resources>

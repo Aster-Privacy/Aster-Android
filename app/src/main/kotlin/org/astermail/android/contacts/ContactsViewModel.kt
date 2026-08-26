@@ -57,11 +57,17 @@ class ContactsViewModel @Inject constructor(
     private val _state = MutableStateFlow(ContactsUiState())
     val state: StateFlow<ContactsUiState> = _state.asStateFlow()
 
+    private var list_in_flight = false
+    private var mutation_in_flight = false
+
     fun load_contacts() {
-        if (_state.value.is_loading) return
+        if (list_in_flight) return
+        list_in_flight = true
         _state.value = _state.value.copy(is_loading = true, error = null)
         viewModelScope.launch {
-            repository.fetch_contacts().fold(
+            val outcome = repository.fetch_contacts()
+            list_in_flight = false
+            outcome.fold(
                 onSuccess = { contacts ->
                     _state.value = _state.value.copy(
                         contacts = contacts,
@@ -103,7 +109,13 @@ class ContactsViewModel @Inject constructor(
         }
     }
 
-    fun save_contact(contact: Contact, existing_id: String? = null) {
+    fun save_contact(
+        contact: Contact,
+        existing_id: String? = null,
+        on_complete: ((Boolean) -> Unit)? = null,
+    ) {
+        if (mutation_in_flight) return
+        mutation_in_flight = true
         _state.value = _state.value.copy(is_loading = true, error = null, save_success = false)
         viewModelScope.launch {
             val result = if (existing_id != null) {
@@ -111,12 +123,14 @@ class ContactsViewModel @Inject constructor(
             } else {
                 repository.create_contact(contact).map { }
             }
+            mutation_in_flight = false
             result.fold(
                 onSuccess = {
                     _state.value = _state.value.copy(
                         is_loading = false,
                         save_success = true,
                     )
+                    on_complete?.invoke(true)
                     load_contacts()
                 },
                 onFailure = { t ->
@@ -124,27 +138,34 @@ class ContactsViewModel @Inject constructor(
                         is_loading = false,
                         error = friendly_error(t),
                     )
+                    on_complete?.invoke(false)
                 },
             )
         }
     }
 
-    fun delete_contact(contact_id: String) {
+    fun delete_contact(contact_id: String, on_complete: ((Boolean) -> Unit)? = null) {
+        if (mutation_in_flight) return
+        mutation_in_flight = true
         _state.value = _state.value.copy(is_loading = true, error = null, delete_success = false)
         viewModelScope.launch {
-            repository.delete_contact(contact_id).fold(
+            val outcome = repository.delete_contact(contact_id)
+            mutation_in_flight = false
+            outcome.fold(
                 onSuccess = {
                     _state.value = _state.value.copy(
                         is_loading = false,
                         delete_success = true,
                         contacts = _state.value.contacts.filter { it.id != contact_id },
                     )
+                    on_complete?.invoke(true)
                 },
                 onFailure = { t ->
                     _state.value = _state.value.copy(
                         is_loading = false,
                         error = friendly_error(t),
                     )
+                    on_complete?.invoke(false)
                 },
             )
         }
@@ -167,25 +188,37 @@ class ContactsViewModel @Inject constructor(
                 }
                 val existing_emails = _state.value.contacts
                     .filter { it.email.isNotBlank() }
-                    .map { it.email.lowercase().trim() }
+                    .map { it.email.lowercase(java.util.Locale.ROOT).trim() }
                     .toSet()
                 val existing_names = _state.value.contacts
-                    .map { it.name.lowercase().trim() }
+                    .map { it.name.lowercase(java.util.Locale.ROOT).trim() }
                     .toSet()
                 val new_contacts = device_contacts.filter { contact ->
                     if (contact.email.isNotBlank()) {
-                        contact.email.lowercase().trim() !in existing_emails
+                        contact.email.lowercase(java.util.Locale.ROOT).trim() !in existing_emails
                     } else {
-                        contact.name.lowercase().trim() !in existing_names
+                        contact.name.lowercase(java.util.Locale.ROOT).trim() !in existing_names
                     }
                 }
                 var imported = 0
+                var last_failure: Throwable? = null
                 for (contact in new_contacts) {
-                    repository.create_contact(contact).onSuccess { imported++ }
+                    repository.create_contact(contact).fold(
+                        onSuccess = { imported++ },
+                        onFailure = { t -> last_failure = t },
+                    )
+                }
+                val failure = last_failure
+                if (imported == 0 && failure != null) {
+                    _state.value = _state.value.copy(
+                        is_syncing = false,
+                        error = friendly_error(failure),
+                    )
+                    return@launch
                 }
                 _state.value = _state.value.copy(
                     is_syncing = false,
-                    sync_message = if (imported > 0) context.getString(R.string.imported_contacts, imported) else context.getString(R.string.no_new_contacts),
+                    sync_message = if (imported > 0) context.resources.getQuantityString(R.plurals.imported_contacts, imported, imported) else context.getString(R.string.no_new_contacts),
                 )
                 load_contacts()
             } catch (t: Throwable) {
@@ -282,9 +315,9 @@ class ContactsViewModel @Inject constructor(
     private val auto_save_in_flight = java.util.Collections.synchronizedSet(mutableSetOf<String>())
 
     fun auto_save_recipients(recipients: List<String>, own_addresses: Set<String>) {
-        val own = own_addresses.map { it.lowercase().trim() }.toSet()
+        val own = own_addresses.map { it.lowercase(java.util.Locale.ROOT).trim() }.toSet()
         val targets = recipients
-            .map { it.lowercase().trim() }
+            .map { it.lowercase(java.util.Locale.ROOT).trim() }
             .filter { it.matches(Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) }
             .filterNot { it in own }
             .distinct()
@@ -297,7 +330,7 @@ class ContactsViewModel @Inject constructor(
                     if (existing.isNotEmpty()) continue
                     val local_part = email.substringBefore("@")
                     val derived_name = local_part.split(".").filter { it.isNotBlank() }
-                        .joinToString(" ") { part -> part.replaceFirstChar { ch -> ch.uppercase() } }
+                        .joinToString(" ") { part -> part.replaceFirstChar { ch -> ch.uppercase(java.util.Locale.ROOT) } }
                     repository.create_contact(
                         Contact(
                             id = "",
@@ -322,7 +355,7 @@ class ContactsViewModel @Inject constructor(
     }
 
     private fun friendly_error(t: Throwable): String {
-        val msg = t.message?.lowercase().orEmpty()
+        val msg = t.message?.lowercase(java.util.Locale.ROOT).orEmpty()
         return when {
             t is java.net.UnknownHostException -> context.getString(R.string.error_no_connection)
             t is java.net.ConnectException -> context.getString(R.string.error_no_connection)

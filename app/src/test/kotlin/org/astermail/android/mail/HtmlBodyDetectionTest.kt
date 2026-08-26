@@ -78,4 +78,27 @@ class HtmlBodyDetectionTest {
     fun decodes_numeric_entities() {
         assertEquals("café & cream", decode_html_entities("caf&#233; &amp; cream"))
     }
+
+    @Test
+    fun decodes_common_named_entities() {
+        assertEquals(
+            "don\u2019t \u201Cstop\u201D \u00A9 \u2022 5 \u00B0",
+            decode_html_entities("don&rsquo;t &ldquo;stop&rdquo; &copy; &bull; 5 &deg;"),
+        )
+    }
+
+    @Test
+    fun preview_keeps_words_intact_around_named_entities() {
+        assertEquals("don\u2019t stop", strip_body_html("<p>don&rsquo;t stop</p>"))
+    }
+
+    @Test
+    fun unknown_named_entity_is_left_alone() {
+        assertEquals("&zzz; ok", decode_html_entities("&zzz; ok"))
+    }
+
+    @Test
+    fun escaped_ampersand_is_decoded_last() {
+        assertEquals("&lt; stays", decode_html_entities("&amp;lt; stays"))
+    }
 }

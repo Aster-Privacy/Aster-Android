@@ -9,4 +9,5 @@
     <string name="selection_scope_offer">Alle %1$d in %2$s auswählen</string>
     <string name="selection_scope_offer_categories">Alle %1$d in %2$s auswählen, einschließlich aller Kategorien</string>
     <string name="selection_scope_confirmed">Alle %1$d in %2$s sind ausgewählt</string>
+    <string name="inbox_search_in_category">In %1$s suchen</string>
 </resources>

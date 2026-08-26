@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="aliases_count">
+        <item quantity="one">%d alias</item>
+        <item quantity="other">%d aliases</item>
+    </plurals>
+    <plurals name="api_keys_count">
+        <item quantity="one">%d key</item>
+        <item quantity="other">%d keys</item>
+    </plurals>
+    <plurals name="devices_count">
+        <item quantity="one">%d device</item>
+        <item quantity="other">%d devices</item>
+    </plurals>
+    <plurals name="labels_count">
+        <item quantity="one">%d label</item>
+        <item quantity="other">%d labels</item>
+    </plurals>
+    <plurals name="ghosts_count">
+        <item quantity="one">%d ghost alias</item>
+        <item quantity="other">%d ghost aliases</item>
+    </plurals>
+    <plurals name="recovery_codes_count">
+        <item quantity="one">%d recovery code</item>
+        <item quantity="other">%d recovery codes</item>
+    </plurals>
+    <plurals name="imported_contacts">
+        <item quantity="one">Imported %d contact</item>
+        <item quantity="other">Imported %d contacts</item>
+    </plurals>
+    <plurals name="n_images">
+        <item quantity="one">%1$d image</item>
+        <item quantity="other">%1$d images</item>
+    </plurals>
+    <plurals name="n_trackers">
+        <item quantity="one">%1$d tracker</item>
+        <item quantity="other">%1$d trackers</item>
+    </plurals>
+    <plurals name="n_fonts">
+        <item quantity="one">%1$d font</item>
+        <item quantity="other">%1$d fonts</item>
+    </plurals>
+    <plurals name="n_stylesheets">
+        <item quantity="one">%1$d stylesheet</item>
+        <item quantity="other">%1$d stylesheets</item>
+    </plurals>
+    <plurals name="show_n_more_aliases">
+        <item quantity="one">Show %1$d more alias</item>
+        <item quantity="other">Show %1$d more aliases</item>
+    </plurals>
+    <plurals name="show_n_more_folders">
+        <item quantity="one">Show %1$d more folder</item>
+        <item quantity="other">Show %1$d more folders</item>
+    </plurals>
+    <plurals name="rules_emails_count">
+        <item quantity="one">%1$d email</item>
+        <item quantity="other">%1$d emails</item>
+    </plurals>
+    <plurals name="rules_value_label_count">
+        <item quantity="one">%1$d label</item>
+        <item quantity="other">%1$d labels</item>
+    </plurals>
+    <plurals name="stop_senders_title">
+        <item quantity="one">Stop mail from %1$d sender?</item>
+        <item quantity="other">Stop mail from %1$d senders?</item>
+    </plurals>
+    <plurals name="participants_and_others">
+        <item quantity="one">%1$s &amp; %2$d other</item>
+        <item quantity="other">%1$s &amp; %2$d others</item>
+    </plurals>
+    <plurals name="messages_in_type">
+        <item quantity="one">%1$d message in %2$s</item>
+        <item quantity="other">%1$d messages in %2$s</item>
+    </plurals>
+</resources>

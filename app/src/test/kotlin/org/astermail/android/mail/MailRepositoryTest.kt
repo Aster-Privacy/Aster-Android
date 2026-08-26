@@ -26,6 +26,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import kotlinx.coroutines.CompletableDeferred
@@ -113,6 +114,12 @@ class MailRepositoryTest {
         }
         override suspend fun delete_by_id(id: String) { rows.remove(id) }
         override suspend fun clear_all() { rows.clear() }
+        override suspend fun clear_for_account(account_id: String) {
+            rows.values.filter { it.account_id == account_id || it.account_id == null }
+                .forEach { rows.remove(it.id) }
+        }
+        override suspend fun get_for_account(account_id: String): List<PendingSendEntity> =
+            rows.values.filter { it.account_id == account_id || it.account_id == null }
     }
 
     @Before
@@ -1755,5 +1762,19 @@ class MailRepositoryTest {
         assertNotNull(pending_send_dao.rows["p_ok"])
         assertEquals(0, repo.failed_send_count.value)
         assertFalse(repo.send_problem.value)
+    }
+
+    @Test
+    fun `clear_caches keeps the persistent ratchet plaintext cache`() = runTest {
+        repo.clear_caches()
+
+        verify(exactly = 0) { ratchet_plaintext_cache.clear() }
+    }
+
+    @Test
+    fun `clear_account_data wipes the persistent ratchet plaintext cache`() = runTest {
+        repo.clear_account_data()
+
+        verify(exactly = 1) { ratchet_plaintext_cache.clear() }
     }
 }

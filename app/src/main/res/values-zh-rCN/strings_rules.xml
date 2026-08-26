@@ -27,8 +27,6 @@
     <string name="rules_value_unread">未读</string>
     <string name="rules_value_on">开</string>
     <string name="rules_value_off">关</string>
-    <string name="rules_value_days">%1$d 天</string>
-    <string name="rules_value_label_count">%1$d 个标签</string>
     <string name="rules_value_placeholder_ellipsis">...</string>
 
     <string name="rules_unit_kb">KB</string>
@@ -47,7 +45,6 @@
     <string name="rules_delete_title">删除此规则？</string>
     <string name="rules_delete_message">此规则将不再应用于新邮件。已做出的更改不会被撤销。</string>
     <string name="rules_save_failed">无法保存规则</string>
-    <string name="rules_emails_count">%1$d 封邮件</string>
     <string name="rules_copy_suffix">(副本)</string>
     <string name="rules_error_load">无法加载规则</string>
     <string name="rules_error_delete">无法删除规则</string>
@@ -98,4 +95,12 @@
     <string name="category_tutorial_text">只要邮件符合你填写的任一域名或关键词，就会归入你的分类。自定义分类优先于内置分类，全部匹配都在本机完成。</string>
     <string name="rules_create_first_folder_hint">创建一个文件夹，此规则即可将匹配的邮件移入其中。</string>
     <string name="rules_create_first_label_hint">创建一个标签，此规则即可将其应用到匹配的邮件。</string>
+    <string name="muted_categories">已静音的类别</string>
+    <string name="muted_categories_description">开启某个类别即可静音它的通知。静音的类别仍会收到邮件并显示在收件箱中。</string>
+    <string name="muted_categories_empty">开启收件箱类别，以选择要静音的类别。</string>
+    <string name="rules_hint_name">为此规则输入名称。</string>
+    <string name="rules_hint_add_condition">至少添加一个条件。</string>
+    <string name="rules_hint_finish_condition">为每个条件填写值。</string>
+    <string name="rules_hint_add_action">至少添加一个操作。</string>
+    <string name="rules_hint_finish_action">为每个操作填写值。</string>
 </resources>

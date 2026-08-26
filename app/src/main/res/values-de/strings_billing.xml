@@ -23,10 +23,8 @@
     <string name="error_network">Aster erreicht den Server nicht. Prüfe deine Verbindung und versuche es erneut.</string>
     <string name="error_not_found">Dieses Element ist nicht mehr verfügbar.</string>
     <string name="error_payment_required">Für diesen Schritt ist eine Zahlung für deinen Tarif nötig.</string>
-    <string name="error_plan_limit_reached">Du hast ein Limit deines aktuellen Tarifs erreicht.</string>
     <string name="error_rate_limited">Zu viele Versuche. Warte einen Moment und versuche es erneut.</string>
     <string name="error_send_quota_reached">Du hast das tägliche Limit dieses Kontos für Nachrichten an Adressen außerhalb von Aster erreicht. Nachrichten an andere Aster-Adressen sind nicht betroffen.</string>
-    <string name="error_storage_full">Dein Speicher ist voll.</string>
     <string name="family_manage_web">Mitglieder im Web verwalten</string>
     <string name="finish_plan_setup_action">Einrichtung abschließen</string>
     <string name="finish_plan_setup_message">Du hast die Kasse vor der Zahlung geschlossen. Dein Konto bleibt im kostenlosen Tarif, bis du fertig bist.</string>

@@ -63,6 +63,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -146,6 +147,13 @@ fun RuleEditorScreen(
         settings_vm.load_tags(force = false)
     }
 
+    val editor_context = androidx.compose.ui.platform.LocalContext.current
+    LaunchedEffect(settings_state.action_result) {
+        val msg = settings_state.action_result ?: return@LaunchedEffect
+        android.widget.Toast.makeText(editor_context, msg, android.widget.Toast.LENGTH_SHORT).show()
+        settings_vm.clear_action_result()
+    }
+
     val existing = remember(rule_id, state.rules) {
         rule_id?.let { id -> state.rules.firstOrNull { it.id == id } }
     }
@@ -176,6 +184,39 @@ fun RuleEditorScreen(
         return
     }
 
+    if (rule_id != null && existing == null && state.error != null) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colors.bg_primary)
+                .systemBarsPadding()
+                .testTag("rule_editor_error"),
+        ) {
+            AsterTopBar(
+                title = stringResource(R.string.mail_rules_edit_rule),
+                on_back = on_back,
+            )
+            AsterDivider()
+            Column(
+                modifier = Modifier.fillMaxSize().padding(AsterSpacing.lg),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Text(
+                    text = stringResource(state.error!!),
+                    color = colors.text_secondary,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(Modifier.height(AsterSpacing.lg))
+                org.astermail.android.design.components.AsterDialogPrimaryButton(
+                    label = stringResource(R.string.retry),
+                    onClick = { vm.load(force_refresh = true) },
+                )
+            }
+        }
+        return
+    }
+
     var name by remember(existing) { mutableStateOf(existing?.name ?: "") }
     var color_hex by remember(existing) { mutableStateOf(existing?.color ?: palette_colors.first()) }
     var match_mode by remember(existing) { mutableStateOf(existing?.match_mode ?: MatchMode.ALL) }
@@ -187,11 +228,15 @@ fun RuleEditorScreen(
             existing?.actions?.let { addAll(strip_unavailable_actions(it)) }
         }
     }
+    val preserved_actions = remember(existing) {
+        existing?.actions.orEmpty().filter { action_of(it) in unavailable_actions }
+    }
 
     var sheet: active_sheet by remember { mutableStateOf(active_sheet.none) }
+    var next_sheet: active_sheet? by remember { mutableStateOf(null) }
     var create_target by remember { mutableStateOf<String?>(null) }
     var create_for_action by remember { mutableStateOf<Int?>(null) }
-    var pending_field: field_id? by remember { mutableStateOf(null) }
+    var pending_field_index: Int? by remember { mutableStateOf(null) }
     var auto_advance by remember { mutableStateOf(false) }
     var is_saving by remember { mutableStateOf(false) }
     var save_error by remember { mutableStateOf<Int?>(null) }
@@ -271,7 +316,17 @@ fun RuleEditorScreen(
 
     val is_valid = name.isNotBlank() &&
         conditions.isNotEmpty() && conditions.all { is_condition_complete(it) } &&
-        actions.isNotEmpty() && actions.all { is_action_complete(it) }
+        (actions.isNotEmpty() || preserved_actions.isNotEmpty()) && actions.all { is_action_complete(it) }
+
+    val save_hint: Int? = when {
+        is_read_only -> null
+        name.isBlank() -> R.string.rules_hint_name
+        conditions.isEmpty() -> R.string.rules_hint_add_condition
+        conditions.any { !is_condition_complete(it) } -> R.string.rules_hint_finish_condition
+        actions.isEmpty() && preserved_actions.isEmpty() -> R.string.rules_hint_add_action
+        actions.any { !is_action_complete(it) } -> R.string.rules_hint_finish_action
+        else -> null
+    }
 
     Column(
         modifier = Modifier
@@ -317,7 +372,14 @@ fun RuleEditorScreen(
             )
             Spacer(Modifier.height(AsterSpacing.md))
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .clickable(enabled = !is_read_only) { sheet = active_sheet.pick_color }
+                    .padding(vertical = AsterSpacing.sm),
+            ) {
                 Text(
                     text = stringResource(R.string.mail_rules_color),
                     color = colors.text_secondary,
@@ -328,8 +390,7 @@ fun RuleEditorScreen(
                     modifier = Modifier
                         .size(28.dp)
                         .clip(CircleShape)
-                        .background(parse_hex(color_hex), CircleShape)
-                        .clickable { sheet = active_sheet.pick_color },
+                        .background(parse_hex(color_hex), CircleShape),
                 )
             }
 
@@ -347,7 +408,7 @@ fun RuleEditorScreen(
                     condition = condition,
                     on_field = {
                         if (!is_read_only) {
-                            pending_field = field_of(condition)
+                            pending_field_index = index
                             sheet = active_sheet.pick_field
                         }
                     },
@@ -606,6 +667,14 @@ fun RuleEditorScreen(
                     modifier = Modifier.padding(bottom = AsterSpacing.sm),
                 )
             }
+            if (save_hint != null) {
+                Text(
+                    text = stringResource(save_hint),
+                    color = colors.text_secondary,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(bottom = AsterSpacing.sm),
+                )
+            }
             AsterButton(
                 label = stringResource(R.string.mail_rules_save),
                 onClick = {
@@ -620,7 +689,7 @@ fun RuleEditorScreen(
                             enabled = true,
                             match_mode = match_mode,
                             conditions = conditions.toList(),
-                            actions = actions.toList(),
+                            actions = actions.toList() + preserved_actions,
                         ) { id ->
                             is_saving = false
                             if (id != null) on_saved() else save_error = state.error ?: R.string.rules_save_failed
@@ -632,7 +701,7 @@ fun RuleEditorScreen(
                             color = color_hex,
                             match_mode = match_mode,
                             conditions = conditions.toList(),
-                            actions = actions.toList(),
+                            actions = actions.toList() + preserved_actions,
                         ) { ok ->
                             is_saving = false
                             if (ok) on_saved() else save_error = state.error ?: R.string.rules_save_failed
@@ -649,16 +718,23 @@ fun RuleEditorScreen(
     when (val s = sheet) {
         active_sheet.none -> {}
         active_sheet.pick_field -> field_picker(
-            on_dismiss = { sheet = active_sheet.none; pending_field = null; auto_advance = false },
+            on_dismiss = {
+                sheet = next_sheet ?: active_sheet.none
+                next_sheet = null
+                pending_field_index = null
+                auto_advance = false
+            },
             on_pick = { picked ->
-                if (pending_field != null) {
-                    val idx = conditions.indexOfFirst { field_of(it) == pending_field }
-                    if (idx >= 0) conditions[idx] = default_condition_for(picked)
-                    pending_field = null
+                val target_index = pending_field_index
+                if (target_index != null) {
+                    if (target_index in conditions.indices) {
+                        conditions[target_index] = default_condition_for(picked)
+                    }
+                    pending_field_index = null
                 } else {
                     conditions.add(default_condition_for(picked))
                     if (auto_advance && field_kind_of(picked) != field_kind.boolean) {
-                        sheet = active_sheet.pick_operator(conditions.lastIndex)
+                        next_sheet = active_sheet.pick_operator(conditions.lastIndex)
                         auto_advance = false
                         return@field_picker
                     }
@@ -668,11 +744,14 @@ fun RuleEditorScreen(
         )
         is active_sheet.pick_operator -> operator_picker(
             condition = conditions[s.cond_index],
-            on_dismiss = { sheet = active_sheet.none },
+            on_dismiss = {
+                sheet = next_sheet ?: active_sheet.none
+                next_sheet = null
+            },
             on_pick = { updated ->
                 conditions[s.cond_index] = updated
                 if (auto_advance && needs_value(updated)) {
-                    sheet = active_sheet.pick_value(s.cond_index)
+                    next_sheet = active_sheet.pick_value(s.cond_index)
                     auto_advance = false
                     return@operator_picker
                 }
@@ -741,7 +820,10 @@ fun RuleEditorScreen(
             }
         }
         is active_sheet.pick_action_kind -> options_picker(
-            on_dismiss = { sheet = active_sheet.none },
+            on_dismiss = {
+                sheet = next_sheet ?: active_sheet.none
+                next_sheet = null
+            },
             title = stringResource(R.string.mail_rules_pick_action),
             items = selectable_actions().map { picker_item(it.name, action_label(it)) },
             selected_id = action_of(actions[s.action_index])?.name,
@@ -752,7 +834,7 @@ fun RuleEditorScreen(
                     picked == action_id.categorize ||
                     picked == action_id.mark_as
                 ) {
-                    sheet = active_sheet.pick_action_target(s.action_index)
+                    next_sheet = active_sheet.pick_action_target(s.action_index)
                     return@options_picker
                 }
             },
@@ -1061,8 +1143,8 @@ private fun value_display(c: Condition): String? {
         is Condition.AttachmentSize -> format_size(c.value)
         is Condition.TotalSize -> format_size(c.value)
         is Condition.RecipientCount -> c.value.toString()
-        is Condition.SpamScore -> "%.1f".format(java.util.Locale.US, c.value)
-        is Condition.DateReceived -> stringResource(R.string.rules_value_days, c.value.toInt())
+        is Condition.SpamScore -> "%.1f".format(java.util.Locale.getDefault(), c.value)
+        is Condition.DateReceived -> pluralStringResource(R.plurals.rules_value_days, c.value.toInt(), c.value.toInt())
         is Condition.DkimResult -> c.value.name.lowercase()
         is Condition.SpfResult -> c.value.name.lowercase()
         is Condition.DmarcResult -> c.value.name.lowercase()
@@ -1082,14 +1164,17 @@ private fun format_size(bytes: Long): String {
 
 private fun format_snooze_until(value: String): String = runCatching {
     java.time.OffsetDateTime.parse(value)
-        .atZoneSameInstant(java.time.ZoneId.systemDefault())
-        .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+        .atZoneSameInstant(org.astermail.android.ui.mail.AsterTimePreferences.account_zone_id())
+        .format(
+            java.time.format.DateTimeFormatter
+                .ofLocalizedDateTime(java.time.format.FormatStyle.MEDIUM, java.time.format.FormatStyle.SHORT),
+        )
 }.getOrDefault(value)
 
 @Composable
 private fun action_target_display(action: Action, folder_label: String?): String? = when (action) {
     is Action.MoveTo -> folder_label ?: ""
-    is Action.ApplyLabels -> if (action.label_tokens.isEmpty()) "" else stringResource(R.string.rules_value_label_count, action.label_tokens.size)
+    is Action.ApplyLabels -> if (action.label_tokens.isEmpty()) "" else pluralStringResource(R.plurals.rules_value_label_count, action.label_tokens.size, action.label_tokens.size)
     is Action.MarkAs -> if (action.value == ReadState.READ) stringResource(R.string.rules_value_read) else stringResource(R.string.rules_value_unread)
     is Action.Forward -> action.to
     is Action.Snooze -> format_snooze_until(action.until_iso8601)

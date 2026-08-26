@@ -506,7 +506,7 @@ class SettingsViewModelTest {
                 grace_expires_at = "2026-07-08T00:00:00Z",
             )
 
-        vm.create_ghost_alias("my note")
+        vm.create_ghost_alias()
         advanceUntilIdle()
 
         coVerify { ghost_alias_api.create_ghost_alias(any()) }
@@ -1420,7 +1420,7 @@ class SettingsViewModelTest {
     fun `create_ghost_alias error does not reload`() = runTest {
         coEvery { ghost_alias_api.create_ghost_alias(any()) } throws RuntimeException("error")
 
-        vm.create_ghost_alias("note")
+        vm.create_ghost_alias()
         advanceUntilIdle()
 
         coVerify(exactly = 0) { ghost_alias_api.list_ghost_aliases() }
@@ -2365,13 +2365,14 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `load_referral_info error does not set error`() = runTest {
+    fun `load_referral_info error flags failure without inventing data`() = runTest {
         coEvery { labels_api.get_referral_info() } throws RuntimeException("fail")
 
         vm.load_referral_info()
         advanceUntilIdle()
 
-        assertEquals(ReferralInfoResponse(), vm.state.value.referral)
+        assertNull(vm.state.value.referral)
+        assertTrue(vm.state.value.referral_load_failed)
         assertNull(vm.state.value.error)
     }
 

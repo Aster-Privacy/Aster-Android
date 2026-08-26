@@ -71,6 +71,7 @@ class SelectionToolbarTest {
                     show_overflow = false
                     direct_calls.add("customize")
                 },
+                current_folder = current_folder,
             )
         }
     }
@@ -159,12 +160,62 @@ class SelectionToolbarTest {
     }
 
     @Test
-    fun trash_folder_keeps_contextual_bar_without_more() {
+    fun trash_folder_keeps_contextual_bar_and_offers_more() {
         set_harness(default_actions, folder = "trash")
 
         compose_rule.onNodeWithTag("mark_read").assertIsDisplayed()
-        compose_rule.onNodeWithTag("sel_action_more").assertDoesNotExist()
+        compose_rule.onNodeWithTag("sel_action_more").assertIsDisplayed()
         compose_rule.onNodeWithTag("sel_action_trash").assertDoesNotExist()
+    }
+
+    @Test
+    fun trash_overflow_offers_restore_and_hides_contradictory_rows() {
+        set_harness(default_actions, folder = "trash")
+
+        compose_rule.onNodeWithTag("sel_action_more").performClick()
+        compose_rule.waitForIdle()
+
+        listOf("star", "read", "unread", "restore", "folder", "label", "delete_permanent", "customize")
+            .forEach { compose_rule.onNodeWithTag("sel_overflow_$it").assertIsDisplayed() }
+        listOf("archive", "snooze", "trash", "spam")
+            .forEach { compose_rule.onNodeWithTag("sel_overflow_$it").assertDoesNotExist() }
+    }
+
+    @Test
+    fun spam_overflow_offers_not_spam_and_hides_contradictory_rows() {
+        set_harness(default_actions, folder = "spam")
+
+        compose_rule.onNodeWithTag("sel_action_more").performClick()
+        compose_rule.waitForIdle()
+
+        listOf("star", "read", "unread", "not_spam", "folder", "label", "trash", "customize")
+            .forEach { compose_rule.onNodeWithTag("sel_overflow_$it").assertIsDisplayed() }
+        listOf("archive", "snooze", "spam")
+            .forEach { compose_rule.onNodeWithTag("sel_overflow_$it").assertDoesNotExist() }
+    }
+
+    @Test
+    fun archive_overflow_offers_unarchive_and_hides_archive() {
+        set_harness(default_actions, folder = "archive")
+
+        compose_rule.onNodeWithTag("sel_action_more").performClick()
+        compose_rule.waitForIdle()
+
+        listOf("star", "read", "unread", "unarchive", "snooze", "folder", "label", "trash", "spam", "customize")
+            .forEach { compose_rule.onNodeWithTag("sel_overflow_$it").assertIsDisplayed() }
+        compose_rule.onNodeWithTag("sel_overflow_archive").assertDoesNotExist()
+    }
+
+    @Test
+    fun trash_overflow_restore_dispatches_its_id() {
+        set_harness(default_actions, folder = "trash")
+
+        compose_rule.onNodeWithTag("sel_action_more").performClick()
+        compose_rule.waitForIdle()
+        compose_rule.onNodeWithTag("sel_overflow_restore").performClick()
+        compose_rule.waitForIdle()
+
+        assertEquals(listOf("restore"), dispatched)
     }
 
     @Test

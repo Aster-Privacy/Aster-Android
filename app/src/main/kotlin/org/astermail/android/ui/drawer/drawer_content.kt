@@ -100,7 +100,9 @@ import org.astermail.android.ui.mail.avatar_colors_for
 import org.astermail.android.ui.mail.avatar_seed_for
 import org.astermail.android.ui.mail.avatar_initial_style
 import org.astermail.android.ui.mail.initial_for
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.focus.focusRequester
 import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
@@ -127,6 +129,8 @@ data class drawer_folder_item(
     val can_move_up: Boolean = false,
     val can_move_down: Boolean = false,
     val can_have_children: Boolean = false,
+    val parent_token: String? = null,
+    val blocked_parent_tokens: Set<String> = emptySet(),
 )
 
 data class folder_menu_actions(
@@ -140,6 +144,8 @@ data class folder_menu_actions(
     val on_lock_now: (drawer_folder_item) -> Unit = {},
     val on_delete: (drawer_folder_item, String?, String?, Boolean) -> Unit = { _, _, _, _ -> },
 )
+
+private val dialog_focus_delay_ms = 120L
 
 data class folder_parent_option(
     val token: String,
@@ -252,6 +258,7 @@ private const val key_folders_collapsed = "folders_collapsed"
 private const val key_labels_collapsed = "labels_collapsed"
 private const val key_aliases_collapsed = "aliases_collapsed"
 private const val key_expanded_folders = "expanded_folders"
+private const val key_categories_collapsed = "categories_collapsed"
 
 @Composable
 fun DrawerContent(
@@ -292,6 +299,7 @@ fun DrawerContent(
     initial_folders_collapsed: Boolean = false,
     initial_labels_collapsed: Boolean = false,
     initial_aliases_collapsed: Boolean = false,
+    initial_categories_collapsed: Boolean = false,
     preferences_loaded: Boolean = false,
     totp_enabled: Boolean = false,
     purge_locked_folder_default: Boolean = false,
@@ -317,6 +325,9 @@ fun DrawerContent(
     var aliases_expanded by rememberSaveable {
         mutableStateOf(!sidebar_prefs.getBoolean(key_aliases_collapsed, false))
     }
+    var categories_expanded by rememberSaveable {
+        mutableStateOf(!sidebar_prefs.getBoolean(key_categories_collapsed, false))
+    }
     var aliases_show_all by remember { mutableStateOf(false) }
     val aliases_collapsed_count = 5
     var folders_show_all by rememberSaveable { mutableStateOf(false) }
@@ -331,11 +342,15 @@ fun DrawerContent(
             if (!sidebar_prefs.contains(key_folders_collapsed)) folders_expanded = !initial_folders_collapsed
             if (!sidebar_prefs.contains(key_labels_collapsed)) labels_expanded = !initial_labels_collapsed
             if (!sidebar_prefs.contains(key_aliases_collapsed)) aliases_expanded = !initial_aliases_collapsed
+            if (!sidebar_prefs.contains(key_categories_collapsed)) {
+                categories_expanded = !initial_categories_collapsed
+            }
             sidebar_prefs.edit()
                 .putBoolean(key_more_collapsed, !more_expanded)
                 .putBoolean(key_folders_collapsed, !folders_expanded)
                 .putBoolean(key_labels_collapsed, !labels_expanded)
                 .putBoolean(key_aliases_collapsed, !aliases_expanded)
+                .putBoolean(key_categories_collapsed, !categories_expanded)
                 .apply()
             prefs_synced = true
         }
@@ -375,7 +390,7 @@ fun DrawerContent(
 
     val core_items = remember(categories_enabled, inbox_unread, drafts_count, spam_count, trash_count, label_inbox, label_sent, label_drafts, label_starred, label_archive, label_spam, label_trash, label_all_mail) {
         listOfNotNull(
-            if (categories_enabled) null else drawer_folder_item("inbox", label_inbox, TablerIcons.Inbox, inbox_unread),
+            drawer_folder_item("inbox", label_inbox, TablerIcons.Inbox, inbox_unread),
             drawer_folder_item("sent", label_sent, TablerIcons.Send),
             drawer_folder_item("drafts", label_drafts, TablerIcons.FileText, drafts_count),
             drawer_folder_item("starred", label_starred, TablerIcons.Star),
@@ -420,34 +435,76 @@ fun DrawerContent(
         ) {
             Spacer(Modifier.height(AsterSpacing.sm))
 
-            if (categories_enabled) {
-                category_entries.forEach { entry ->
+            val category_children = if (categories_enabled) {
+                category_entries.filter { it.id != "primary" }
+            } else {
+                emptyList()
+            }
+
+            core_items.forEach { item ->
+                if (item.id == "inbox" && categories_enabled) {
                     drawer_row(
-                        icon = category_icon(entry.icon),
-                        label = entry.label,
-                        count = category_unread[entry.id] ?: 0,
+                        icon = item.icon,
+                        label = item.label,
+                        count = if (categories_expanded && category_unread.isNotEmpty()) {
+                            category_unread["primary"] ?: 0
+                        } else {
+                            item.count
+                        },
                         is_unread_count = true,
-                        selected = selected_id == "inbox" && entry.id == selected_category,
+                        selected = selected_id == "inbox" && selected_category == "primary",
                         on_click = {
-                            on_select_category(entry.id)
+                            on_select_category("primary")
+                            on_close()
+                        },
+                        show_expand_slot = true,
+                        can_expand = category_children.isNotEmpty(),
+                        expanded = categories_expanded,
+                        on_toggle_expand = {
+                            categories_expanded = !categories_expanded
+                            sidebar_prefs.edit()
+                                .putBoolean(key_categories_collapsed, !categories_expanded)
+                                .apply()
+                            on_sidebar_toggle("sidebar_categories_collapsed", !categories_expanded)
+                        },
+                    )
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = categories_expanded && category_children.isNotEmpty(),
+                        enter = section_expand_enter(),
+                        exit = section_expand_exit(),
+                    ) {
+                        androidx.compose.foundation.layout.Column {
+                            category_children.forEachIndexed { index, entry ->
+                                drawer_row(
+                                    icon = category_icon(entry.icon),
+                                    label = entry.label,
+                                    count = category_unread[entry.id] ?: 0,
+                                    is_unread_count = true,
+                                    selected = selected_id == "inbox" && entry.id == selected_category,
+                                    on_click = {
+                                        on_select_category(entry.id)
+                                        on_close()
+                                    },
+                                    depth = 1,
+                                    has_next = index < category_children.lastIndex,
+                                    show_expand_slot = true,
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    drawer_row(
+                        icon = item.icon,
+                        label = item.label,
+                        count = item.count,
+                        is_unread_count = item.id == "inbox",
+                        selected = item.id == selected_id,
+                        on_click = {
+                            on_select(item.id)
                             on_close()
                         },
                     )
                 }
-            }
-
-            core_items.forEach { item ->
-                drawer_row(
-                    icon = item.icon,
-                    label = item.label,
-                    count = item.count,
-                    is_unread_count = item.id == "inbox",
-                    selected = item.id == selected_id,
-                    on_click = {
-                        on_select(item.id)
-                        on_close()
-                    },
-                )
             }
 
             collapsible_section_header(
@@ -503,6 +560,7 @@ fun DrawerContent(
                 show_add = true,
                 on_add = { show_create_folder = true },
                 add_test_tag = "create_folder",
+                add_description = stringResource(R.string.create_folder),
             )
             androidx.compose.animation.AnimatedVisibility(
                 visible = folders_expanded,
@@ -582,7 +640,7 @@ fun DrawerContent(
                                 text = if (folders_show_all) {
                                     stringResource(R.string.show_less)
                                 } else {
-                                    stringResource(R.string.show_n_more_folders, remaining)
+                                    pluralStringResource(R.plurals.show_n_more_folders, remaining, remaining)
                                 },
                                 expanded = folders_show_all,
                                 on_click = { folders_show_all = !folders_show_all },
@@ -603,6 +661,7 @@ fun DrawerContent(
                 show_add = true,
                 on_add = { show_create_label = true },
                 add_test_tag = "create_label",
+                add_description = stringResource(R.string.create_label),
             )
             androidx.compose.animation.AnimatedVisibility(
                 visible = labels_expanded,
@@ -663,6 +722,7 @@ fun DrawerContent(
                     on_select("aliases_create")
                     on_close()
                 },
+                add_description = stringResource(R.string.create_alias),
             )
             androidx.compose.animation.AnimatedVisibility(
                 visible = aliases_expanded,
@@ -713,7 +773,7 @@ fun DrawerContent(
                                 text = if (aliases_show_all) {
                                     stringResource(R.string.show_less)
                                 } else {
-                                    stringResource(R.string.show_n_more_aliases, remaining)
+                                    pluralStringResource(R.plurals.show_n_more_aliases, remaining, remaining)
                                 },
                                 expanded = aliases_show_all,
                                 on_click = { aliases_show_all = !aliases_show_all },
@@ -827,6 +887,7 @@ fun DrawerContent(
 
     if (show_create_label) {
         create_label_dialog(
+            existing_names = api_label_items.map { it.label },
             on_dismiss = { show_create_label = false },
             on_create = { name, color, icon ->
                 on_create_label(name, color, icon)
@@ -926,7 +987,8 @@ fun DrawerContent(
                 on_dismiss = { pending_delete = null },
                 title = stringResource(R.string.delete_folder_confirm_title),
                 message = if (target.has_children) {
-                    stringResource(R.string.delete_folder_confirm_subfolders, target.label)
+                    stringResource(R.string.delete_folder_confirm_message, target.label) +
+                        " " + stringResource(R.string.delete_folder_confirm_subfolders)
                 } else {
                     stringResource(R.string.delete_folder_confirm_message, target.label)
                 },
@@ -1237,7 +1299,7 @@ private fun label_icon_dialog(
 }
 
 @Composable
-private fun folder_rename_dialog(
+fun folder_rename_dialog(
     initial_name: String,
     on_dismiss: () -> Unit,
     on_confirm: (String) -> Unit,
@@ -1328,10 +1390,17 @@ private fun folder_move_dialog(
 ) {
     val colors = AsterMaterial.colors
     val none_label = stringResource(R.string.parent_folder_none)
-    val options = remember(parent_options, target.id) {
-        parent_options.filter { it.token != target.id }
+    val options = remember(parent_options, target.id, target.blocked_parent_tokens) {
+        parent_options.filter {
+            it.token != target.id && it.token !in target.blocked_parent_tokens
+        }
     }
-    var selected_parent by remember { mutableStateOf<folder_parent_option?>(null) }
+    var selected_parent by remember(target.id, options) {
+        mutableStateOf(options.firstOrNull { it.token == target.parent_token })
+    }
+    val initial_parent_token = remember(target.id, options) {
+        options.firstOrNull { it.token == target.parent_token }?.token
+    }
     var menu_open by remember { mutableStateOf(false) }
 
     org.astermail.android.design.components.AsterAlertDialog(
@@ -1339,6 +1408,7 @@ private fun folder_move_dialog(
         title = stringResource(R.string.move_folder_to),
         confirm_label = stringResource(R.string.save),
         cancel_label = stringResource(R.string.cancel),
+        confirm_enabled = selected_parent?.token != initial_parent_token,
         on_confirm = { on_confirm(selected_parent?.token) },
         extra_content = {
             Box(modifier = Modifier.fillMaxWidth()) {
@@ -1548,14 +1618,42 @@ internal fun create_folder_dialog(
     }
     var parent_menu_open by remember { mutableStateOf(false) }
     val none_label = stringResource(R.string.parent_folder_none)
+    val name_focus = remember { androidx.compose.ui.focus.FocusRequester() }
+    val sibling_names = remember(parent_options, selected_parent) {
+        val parent = selected_parent
+        if (parent == null) {
+            parent_options.filter { it.depth == 0 }.map { it.label }
+        } else {
+            val target_depth = parent.depth + 1
+            val start = parent_options.indexOf(parent)
+            val names = mutableListOf<String>()
+            var index = start + 1
+            while (index < parent_options.size && parent_options[index].depth >= target_depth) {
+                if (parent_options[index].depth == target_depth) names.add(parent_options[index].label)
+                index += 1
+            }
+            names
+        }
+    }
+    val trimmed_name = text_value.trim()
+    val is_duplicate_name = trimmed_name.isNotEmpty() &&
+        sibling_names.any { it.trim().equals(trimmed_name, ignoreCase = true) }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(dialog_focus_delay_ms)
+        runCatching { name_focus.requestFocus() }
+    }
 
     org.astermail.android.design.components.AsterAlertDialog(
         on_dismiss = on_dismiss,
         title = title,
         confirm_label = stringResource(R.string.save),
         cancel_label = stringResource(R.string.cancel),
-        on_confirm = { if (text_value.isNotBlank()) on_create(text_value.trim(), selected_parent?.token) },
-        confirm_enabled = text_value.isNotBlank(),
+        on_confirm = {
+            if (trimmed_name.isNotEmpty() && !is_duplicate_name) {
+                on_create(trimmed_name, selected_parent?.token)
+            }
+        },
+        confirm_enabled = trimmed_name.isNotEmpty() && !is_duplicate_name,
         extra_content = {
             Column(modifier = Modifier.fillMaxWidth()) {
                 org.astermail.android.design.components.AsterTextField(
@@ -1563,7 +1661,10 @@ internal fun create_folder_dialog(
                     onValueChange = { text_value = it },
                     placeholder = placeholder,
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+                    error_text = if (is_duplicate_name) stringResource(R.string.folder_name_taken) else null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(name_focus),
                 )
                 Spacer(Modifier.height(AsterSpacing.md))
                 Text(
@@ -1640,12 +1741,21 @@ internal fun create_folder_dialog(
 internal fun create_label_dialog(
     on_dismiss: () -> Unit,
     on_create: (name: String, color: String, icon: String?) -> Unit,
+    existing_names: List<String> = emptyList(),
 ) {
     val colors = AsterMaterial.colors
     var name_value by remember { mutableStateOf("") }
     var selected_color by remember { mutableStateOf(default_label_color) }
     var selected_icon by remember { mutableStateOf<String?>(null) }
     val accent = parse_hex_color(selected_color)
+    val name_focus = remember { androidx.compose.ui.focus.FocusRequester() }
+    val trimmed_name = name_value.trim()
+    val is_duplicate_name = trimmed_name.isNotEmpty() &&
+        existing_names.any { it.trim().equals(trimmed_name, ignoreCase = true) }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(dialog_focus_delay_ms)
+        runCatching { name_focus.requestFocus() }
+    }
 
     org.astermail.android.design.components.AsterAlertDialog(
         on_dismiss = on_dismiss,
@@ -1653,11 +1763,11 @@ internal fun create_label_dialog(
         confirm_label = stringResource(R.string.create),
         cancel_label = stringResource(R.string.cancel),
         on_confirm = {
-            if (name_value.isNotBlank()) {
-                on_create(name_value.trim(), selected_color, selected_icon)
+            if (trimmed_name.isNotEmpty() && !is_duplicate_name) {
+                on_create(trimmed_name, selected_color, selected_icon)
             }
         },
-        confirm_enabled = name_value.isNotBlank(),
+        confirm_enabled = trimmed_name.isNotEmpty() && !is_duplicate_name,
         extra_content = {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Row(
@@ -1689,7 +1799,10 @@ internal fun create_label_dialog(
                     onValueChange = { name_value = it },
                     placeholder = stringResource(R.string.label_name),
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+                    error_text = if (is_duplicate_name) stringResource(R.string.label_name_taken) else null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(name_focus),
                 )
 
                 Spacer(Modifier.height(AsterSpacing.md))
@@ -2020,6 +2133,7 @@ private fun collapsible_section_header(
     show_add: Boolean = false,
     on_add: () -> Unit = {},
     add_test_tag: String? = null,
+    add_description: String? = null,
 ) {
     val colors = AsterMaterial.colors
     val chevron_rotation by animateFloatAsState(
@@ -2058,17 +2172,17 @@ private fun collapsible_section_header(
         if (show_add) {
             Box(
                 modifier = Modifier
-                    .size(24.dp)
-                    .clip(RoundedCornerShape(4.dp))
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(8.dp))
                     .clickable(onClick = on_add)
                     .then(if (add_test_tag != null) Modifier.testTag(add_test_tag) else Modifier),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = TablerIcons.Plus,
-                    contentDescription = stringResource(R.string.add),
+                    contentDescription = add_description ?: stringResource(R.string.add),
                     tint = colors.text_muted,
-                    modifier = Modifier.size(14.dp),
+                    modifier = Modifier.size(16.dp),
                 )
             }
         }

@@ -125,8 +125,8 @@ private fun collect_hidden_selectors(html: String): HiddenSelectors {
             for (selector in rule.groupValues[1].split(",")) {
                 val target = selector.trim().split(Regex("[\\s>+~]+")).lastOrNull() ?: continue
 
-                CSS_CLASS_RE.findAll(target).forEach { classes.add(it.groupValues[1].lowercase()) }
-                CSS_ID_RE.findAll(target).forEach { ids.add(it.groupValues[1].lowercase()) }
+                CSS_CLASS_RE.findAll(target).forEach { classes.add(it.groupValues[1].lowercase(java.util.Locale.ROOT)) }
+                CSS_ID_RE.findAll(target).forEach { ids.add(it.groupValues[1].lowercase(java.util.Locale.ROOT)) }
             }
         }
     }
@@ -145,11 +145,11 @@ private fun is_hidden_element(element: Element, selectors: HiddenSelectors): Boo
 
     if (selectors.classes.isNotEmpty()) {
         for (token in class_name.split(Regex("\\s+"))) {
-            if (token.isNotEmpty() && selectors.classes.contains(token.lowercase())) return true
+            if (token.isNotEmpty() && selectors.classes.contains(token.lowercase(java.util.Locale.ROOT))) return true
         }
     }
 
-    if (id.isNotEmpty() && selectors.ids.contains(id.lowercase())) return true
+    if (id.isNotEmpty() && selectors.ids.contains(id.lowercase(java.util.Locale.ROOT))) return true
 
     val style = element.attr("style")
 

@@ -70,10 +70,10 @@ fun decrypt_recovery_email(
 }
 
 fun hash_recovery_email(email: String): String {
-    val material = (RECOVERY_EMAIL_HASH_PREFIX + email.trim().lowercase())
+    val material = (RECOVERY_EMAIL_HASH_PREFIX + email.trim().lowercase(java.util.Locale.ROOT))
         .toByteArray(Charsets.UTF_8)
     val digest = MessageDigest.getInstance("SHA-256").digest(material)
     return Base64.encodeToString(digest, Base64.NO_WRAP)
 }
 
-fun normalize_recovery_email(email: String): String = email.trim().lowercase()
+fun normalize_recovery_email(email: String): String = email.trim().lowercase(java.util.Locale.ROOT)

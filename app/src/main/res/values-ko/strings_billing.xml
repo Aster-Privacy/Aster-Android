@@ -23,10 +23,8 @@
     <string name="error_network">Aster가 서버에 연결하지 못했습니다. 연결을 확인한 뒤 다시 시도하세요.</string>
     <string name="error_not_found">이 항목은 더 이상 사용할 수 없습니다.</string>
     <string name="error_payment_required">이 작업을 하려면 요금제 결제가 필요합니다.</string>
-    <string name="error_plan_limit_reached">현재 요금제의 한도에 도달했습니다.</string>
     <string name="error_rate_limited">시도가 너무 많습니다. 잠시 후 다시 시도하세요.</string>
     <string name="error_send_quota_reached">이 계정의 Aster 외부 주소 하루 발송 한도에 도달했습니다. 다른 Aster 주소로 보내는 메일은 영향을 받지 않습니다.</string>
-    <string name="error_storage_full">저장 공간이 가득 찼습니다.</string>
     <string name="family_manage_web">웹에서 구성원 관리</string>
     <string name="finish_plan_setup_action">설정 마치기</string>
     <string name="finish_plan_setup_message">결제를 마치기 전에 결제 화면을 닫았습니다. 설정을 마칠 때까지 계정은 무료 요금제로 유지됩니다.</string>

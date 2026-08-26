@@ -58,4 +58,10 @@ interface PendingSendDao {
 
     @Query("DELETE FROM pending_send_queue")
     suspend fun clear_all()
+
+    @Query("DELETE FROM pending_send_queue WHERE account_id = :account_id OR account_id IS NULL")
+    suspend fun clear_for_account(account_id: String)
+
+    @Query("SELECT * FROM pending_send_queue WHERE account_id = :account_id OR account_id IS NULL")
+    suspend fun get_for_account(account_id: String): List<PendingSendEntity>
 }

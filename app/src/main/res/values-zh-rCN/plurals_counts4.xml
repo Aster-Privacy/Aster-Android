@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="alias_export_entries">
+        <item quantity="other">%d 条</item>
+    </plurals>
+    <plurals name="alias_export_files">
+        <item quantity="other">%d 个文件</item>
+    </plurals>
+    <plurals name="alias_import_existing">
+        <item quantity="other">%d 已存在</item>
+    </plurals>
+    <plurals name="alias_import_invalid">
+        <item quantity="other">%d 无效</item>
+    </plurals>
+    <plurals name="alias_import_to_import">
+        <item quantity="other">%d 将导入</item>
+    </plurals>
+    <plurals name="kids_seats_invitations">
+        <item quantity="other">邀请 %d 个</item>
+    </plurals>
+    <plurals name="kids_seats_members">
+        <item quantity="other">成员 %d 名</item>
+    </plurals>
+    <plurals name="kids_seats_reserved">
+        <item quantity="other">预留地址 %d 个</item>
+    </plurals>
+    <plurals name="replies_sent_count">
+        <item quantity="other">已发送 %d 条回复。</item>
+    </plurals>
+</resources>

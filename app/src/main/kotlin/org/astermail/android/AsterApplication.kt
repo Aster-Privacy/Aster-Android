@@ -63,12 +63,16 @@ class AsterApplication : Application(), ImageLoaderFactory {
     override fun onCreate() {
         super.onCreate()
         start_secure_prefs_warm()
+        org.astermail.android.ui.mail.AsterTimePreferences.set_use_24h(
+            android.text.format.DateFormat.is24HourFormat(this),
+        )
         runCatching {
             val ep = EntryPointAccessors.fromApplication(this, ImageLoaderEntryPoint::class.java)
             org.astermail.android.mail.AsterProfileResolverHolder.shared = ep.aster_profile_resolver()
         }
         register_app_lock_lifecycle()
         runCatching { register_folder_lock_hooks() }
+        runCatching { seed_protected_folder_tokens() }
         start_deferred_startup()
     }
 
@@ -120,6 +124,13 @@ class AsterApplication : Application(), ImageLoaderFactory {
                     else -> {}
                 }
             },
+        )
+    }
+
+    private fun seed_protected_folder_tokens() {
+        if (!org.astermail.android.notifications.MailPollingWorker.protected_folder_state_known(this)) return
+        org.astermail.android.folders.folder_lock_store.seed_protected_tokens(
+            org.astermail.android.notifications.MailPollingWorker.protected_folder_tokens(this),
         )
     }
 

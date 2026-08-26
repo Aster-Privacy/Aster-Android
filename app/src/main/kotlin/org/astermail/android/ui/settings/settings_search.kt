@@ -37,6 +37,7 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
@@ -50,6 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -172,6 +174,7 @@ private fun settings_search_overlay(on_dismiss: () -> Unit) {
             ) {
                 AsterIconButton(
                     icon = TablerIcons.ArrowLeft,
+                    auto_mirror = true,
                     content_description = stringResource(R.string.back),
                     onClick = on_dismiss,
                 )
@@ -203,6 +206,7 @@ private fun settings_search_field(
     modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
+    val keyboard = LocalSoftwareKeyboardController.current
     Row(
         modifier = modifier
             .padding(end = AsterSpacing.sm)
@@ -237,6 +241,7 @@ private fun settings_search_field(
                     autoCorrect = false,
                     imeAction = ImeAction.Search,
                 ),
+                keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
                 modifier = Modifier
                     .fillMaxWidth()
                     .focusRequester(focus_requester),

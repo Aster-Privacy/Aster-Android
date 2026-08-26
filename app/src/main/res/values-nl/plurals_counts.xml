@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="attachments_count">
+        <item quantity="one">%d bijlage</item>
+        <item quantity="other">%d bijlagen</item>
+    </plurals>
+    <plurals name="archived_conversations">
+        <item quantity="one">%d gesprek gearchiveerd</item>
+        <item quantity="other">%d gesprekken gearchiveerd</item>
+    </plurals>
+    <plurals name="moved_to_trash">
+        <item quantity="one">%d gesprek naar prullenbak verplaatst</item>
+        <item quantity="other">%d gesprekken naar prullenbak verplaatst</item>
+    </plurals>
+    <plurals name="starred_count">
+        <item quantity="one">%d gesprek met ster gemarkeerd</item>
+        <item quantity="other">%d gesprekken met ster gemarkeerd</item>
+    </plurals>
+    <plurals name="unstarred_count">
+        <item quantity="one">Ster verwijderd van %d gesprek</item>
+        <item quantity="other">Ster verwijderd van %d gesprekken</item>
+    </plurals>
+    <plurals name="unsnoozed_count">
+        <item quantity="one">%d gesprek niet meer uitgesteld</item>
+        <item quantity="other">%d gesprekken niet meer uitgesteld</item>
+    </plurals>
+    <plurals name="draft_deleted">
+        <item quantity="one">%d concept verwijderd</item>
+        <item quantity="other">%d concepten verwijderd</item>
+    </plurals>
+    <plurals name="marked_read_count">
+        <item quantity="one">%d bericht gemarkeerd als gelezen</item>
+        <item quantity="other">%d berichten gemarkeerd als gelezen</item>
+    </plurals>
+    <plurals name="marked_unread_count">
+        <item quantity="one">%d bericht gemarkeerd als ongelezen</item>
+        <item quantity="other">%d berichten gemarkeerd als ongelezen</item>
+    </plurals>
+    <plurals name="results_count">
+        <item quantity="one">%d resultaat</item>
+        <item quantity="other">%d resultaten</item>
+    </plurals>
+    <plurals name="active_endpoints">
+        <item quantity="one">%d actief eindpunt</item>
+        <item quantity="other">%d actieve eindpunten</item>
+    </plurals>
+    <plurals name="storage_addons_active_count">
+        <item quantity="one">%1$d actief pakket</item>
+        <item quantity="other">%1$d actieve pakketten</item>
+    </plurals>
+    <plurals name="backup_codes_remaining">
+        <item quantity="one">%d back-upcode resterend</item>
+        <item quantity="other">%d back-upcodes resterend</item>
+    </plurals>
+    <plurals name="kids_seats_free">
+        <item quantity="one">%1$d plaats beschikbaar</item>
+        <item quantity="other">%1$d plaatsen beschikbaar</item>
+    </plurals>
+    <plurals name="trackers_blocked_count">
+        <item quantity="one">%1$d tracker geblokkeerd</item>
+        <item quantity="other">%1$d trackers geblokkeerd</item>
+    </plurals>
+</resources>

@@ -44,6 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Text
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -93,7 +94,7 @@ fun PendingDeletionGate(
             val days = state.days_remaining
             Text(
                 text = if (days != null && days > 0L) {
-                    stringResource(R.string.pending_deletion_body_days, days.toInt())
+                    pluralStringResource(R.plurals.pending_deletion_body_days, days.toInt(), days.toInt())
                 } else {
                     stringResource(R.string.pending_deletion_body)
                 },

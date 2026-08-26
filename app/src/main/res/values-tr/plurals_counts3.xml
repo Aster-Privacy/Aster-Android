@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="duration_n_days">
+        <item quantity="one">%1$d gün</item>
+        <item quantity="other">%1$d gün</item>
+    </plurals>
+    <plurals name="expires_in_days">
+        <item quantity="one">%1$d gün sonra sona erer</item>
+        <item quantity="other">%1$d gün sonra sona erer</item>
+    </plurals>
+    <plurals name="valid_for_days">
+        <item quantity="one">%1$d gün geçerli</item>
+        <item quantity="other">%1$d gün geçerli</item>
+    </plurals>
+    <plurals name="rules_value_days">
+        <item quantity="one">%1$d gün</item>
+        <item quantity="other">%1$d gün</item>
+    </plurals>
+    <plurals name="settings_val_days">
+        <item quantity="one">%1$d gün</item>
+        <item quantity="other">%1$d gün</item>
+    </plurals>
+    <plurals name="settings_val_hours">
+        <item quantity="one">%1$d saat</item>
+        <item quantity="other">%1$d saat</item>
+    </plurals>
+    <plurals name="settings_val_emails_per_day">
+        <item quantity="one">%1$d e-posta</item>
+        <item quantity="other">%1$d e-posta</item>
+    </plurals>
+    <plurals name="spam_auto_delete_notice">
+        <item quantity="one">Spamdaki öğeler %1$d gün sonra otomatik olarak silinir.</item>
+        <item quantity="other">Spamdaki öğeler %1$d gün sonra otomatik olarak silinir.</item>
+    </plurals>
+    <plurals name="pending_deletion_body_days">
+        <item quantity="one">Hesabınız %1$d gün içinde silinecek. Hesabınızı korumak ve e-postanıza ve aboneliğinize erişimi geri yüklemek için silmeyi iptal edin.</item>
+        <item quantity="other">Hesabınız %1$d gün içinde silinecek. Hesabınızı korumak ve e-postanıza ve aboneliğinize erişimi geri yüklemek için silmeyi iptal edin.</item>
+    </plurals>
+    <plurals name="domain_purchase_n_years">
+        <item quantity="one">%1$d yıl</item>
+        <item quantity="other">%1$d yıl</item>
+    </plurals>
+    <plurals name="domain_purchase_years_line">
+        <item quantity="one">%1$d yıllık kayıt</item>
+        <item quantity="other">%1$d yıllık kayıt</item>
+    </plurals>
+    <plurals name="app_lock_try_again_in">
+        <item quantity="one">%d saniye sonra yeniden dene</item>
+        <item quantity="other">%d saniye sonra yeniden dene</item>
+    </plurals>
+    <plurals name="export_undecryptable_skipped">
+        <item quantity="one">%1$d mesajın şifresi çözülemedi ve dışa aktarıma dahil edilmedi.</item>
+        <item quantity="other">%1$d mesajın şifresi çözülemedi ve dışa aktarıma dahil edilmedi.</item>
+    </plurals>
+    <plurals name="param_removed_from_links">
+        <item quantity="one">%2$d bağlantıdan %1$s kaldırıldı</item>
+        <item quantity="other">%2$d bağlantıdan %1$s kaldırıldı</item>
+    </plurals>
+</resources>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="alias_export_entries">
+        <item quantity="other">항목 %d개</item>
+    </plurals>
+    <plurals name="alias_export_files">
+        <item quantity="other">파일 %d개</item>
+    </plurals>
+    <plurals name="alias_import_existing">
+        <item quantity="other">%d 이미 존재함</item>
+    </plurals>
+    <plurals name="alias_import_invalid">
+        <item quantity="other">%d 유효하지 않음</item>
+    </plurals>
+    <plurals name="alias_import_to_import">
+        <item quantity="other">%d 가져올 항목</item>
+    </plurals>
+    <plurals name="kids_seats_invitations">
+        <item quantity="other">초대 %d건</item>
+    </plurals>
+    <plurals name="kids_seats_members">
+        <item quantity="other">구성원 %d명</item>
+    </plurals>
+    <plurals name="kids_seats_reserved">
+        <item quantity="other">예약 주소 %d건</item>
+    </plurals>
+    <plurals name="replies_sent_count">
+        <item quantity="other">지금까지 %d개의 답장을 보냈습니다.</item>
+    </plurals>
+</resources>

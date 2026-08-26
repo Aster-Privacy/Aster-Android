@@ -148,6 +148,32 @@ data class FolderMappingRequest(
     val folder_mapping: Map<String, String>,
 )
 
+@Serializable
+data class ExternalAccountSendAttachment(
+    val data: String,
+    val filename: String,
+    val content_type: String,
+    val size_bytes: Long,
+    val content_id: String? = null,
+)
+
+@Serializable
+data class ExternalAccountSendRequest(
+    val account_token: String,
+    val to: List<String> = emptyList(),
+    val cc: List<String> = emptyList(),
+    val bcc: List<String> = emptyList(),
+    val subject: String = "",
+    val body: String = "",
+    val attachments: List<ExternalAccountSendAttachment>? = null,
+)
+
+@Serializable
+data class ExternalAccountSendResponse(
+    val success: Boolean = false,
+    val message: String = "",
+)
+
 interface ExternalAccountsApi {
     suspend fun list_accounts(): ExternalAccountListResponse
     suspend fun start_oauth(req: OAuthAuthorizeRequest): OAuthAuthorizeResponse
@@ -157,6 +183,7 @@ interface ExternalAccountsApi {
     suspend fun get_sync_progress(account_token: String): SyncProgress
     suspend fun list_oauth_folders(account_token: String): OAuthFoldersResponse
     suspend fun save_folder_mapping(req: FolderMappingRequest): SuccessResponse
+    suspend fun send_via_account(req: ExternalAccountSendRequest): ExternalAccountSendResponse
 }
 
 class ExternalAccountsApiImpl(private val client: ApiClient) : ExternalAccountsApi {
@@ -216,6 +243,13 @@ class ExternalAccountsApiImpl(private val client: ApiClient) : ExternalAccountsA
 
     override suspend fun save_folder_mapping(req: FolderMappingRequest): SuccessResponse =
         decode(client.http.put("${client.base_url}$base/folder_mapping") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(req)
+        })
+
+    override suspend fun send_via_account(req: ExternalAccountSendRequest): ExternalAccountSendResponse =
+        decode(client.http.post("${client.base_url}$base/send") {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(req)

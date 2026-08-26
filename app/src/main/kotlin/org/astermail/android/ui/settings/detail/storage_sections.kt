@@ -65,6 +65,7 @@ import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.mirror_in_rtl
 
 private val segment_inbox = Color(0xFF3B82F6)
 private val segment_archived = Color(0xFF22C55E)
@@ -204,7 +205,7 @@ internal fun legend_row(segment: storage_segment, total: Int, on_open: () -> Uni
             imageVector = TablerIcons.ChevronRight,
             contentDescription = null,
             tint = colors.text_muted,
-            modifier = Modifier.size(16.dp),
+            modifier = Modifier.size(16.dp).mirror_in_rtl(),
         )
     }
 }
@@ -415,6 +416,7 @@ internal fun storage_cleanup_section(
     trash_count: Int,
     spam_count: Int,
     is_emptying_spam: Boolean,
+    is_emptying_trash: Boolean,
     on_empty_trash: () -> Unit,
     on_empty_spam: () -> Unit,
     on_open_folder: (String, String) -> Unit,
@@ -435,7 +437,7 @@ internal fun storage_cleanup_section(
                 subtitle = stringResource(R.string.storage_trash_hint),
                 count = trash_count,
                 action_label = stringResource(R.string.storage_empty_action),
-                is_busy = false,
+                is_busy = is_emptying_trash,
                 on_action = on_empty_trash,
                 on_open = { on_open_folder("trash", trash_label) },
             )

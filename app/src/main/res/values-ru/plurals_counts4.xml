@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="alias_export_entries">
+        <item quantity="one">%d запись</item>
+        <item quantity="few">%d записи</item>
+        <item quantity="many">%d записей</item>
+        <item quantity="other">%d записей</item>
+    </plurals>
+    <plurals name="alias_export_files">
+        <item quantity="one">%d файле</item>
+        <item quantity="few">%d файлах</item>
+        <item quantity="many">%d файлах</item>
+        <item quantity="other">%d файлах</item>
+    </plurals>
+    <plurals name="alias_import_existing">
+        <item quantity="one">%d уже существует</item>
+        <item quantity="few">%d уже существуют</item>
+        <item quantity="many">%d уже существует</item>
+        <item quantity="other">%d уже существует</item>
+    </plurals>
+    <plurals name="alias_import_invalid">
+        <item quantity="one">%d недействительный</item>
+        <item quantity="few">%d недействительных</item>
+        <item quantity="many">%d недействительных</item>
+        <item quantity="other">%d недействительных</item>
+    </plurals>
+    <plurals name="alias_import_to_import">
+        <item quantity="one">%d к импорту</item>
+        <item quantity="few">%d к импорту</item>
+        <item quantity="many">%d к импорту</item>
+        <item quantity="other">%d к импорту</item>
+    </plurals>
+    <plurals name="kids_seats_invitations">
+        <item quantity="one">%d приглашение</item>
+        <item quantity="few">%d приглашения</item>
+        <item quantity="many">%d приглашений</item>
+        <item quantity="other">%d приглашений</item>
+    </plurals>
+    <plurals name="kids_seats_members">
+        <item quantity="one">%d участник</item>
+        <item quantity="few">%d участника</item>
+        <item quantity="many">%d участников</item>
+        <item quantity="other">%d участников</item>
+    </plurals>
+    <plurals name="kids_seats_reserved">
+        <item quantity="one">%d зарезервированный адрес</item>
+        <item quantity="few">%d зарезервированных адреса</item>
+        <item quantity="many">%d зарезервированных адресов</item>
+        <item quantity="other">%d зарезервированных адресов</item>
+    </plurals>
+    <plurals name="replies_sent_count">
+        <item quantity="one">Отправлен %d ответ.</item>
+        <item quantity="few">Отправлено %d ответа.</item>
+        <item quantity="many">Отправлено %d ответов.</item>
+        <item quantity="other">Отправлено %d ответов.</item>
+    </plurals>
+</resources>

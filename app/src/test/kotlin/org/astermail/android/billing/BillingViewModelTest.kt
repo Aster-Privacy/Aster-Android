@@ -83,6 +83,19 @@ class BillingViewModelTest {
     }
 
     @Test
+    fun `keeps the current subscription when a refresh fails`() = runTest {
+        coEvery { billing_api.get_subscription() } returns paid_sub
+        vm.load_subscription()
+        advanceUntilIdle()
+
+        coEvery { billing_api.get_subscription() } throws java.io.IOException("offline")
+        vm.load_subscription()
+        advanceUntilIdle()
+
+        assertEquals(paid_sub, vm.state.value.subscription)
+    }
+
+    @Test
     fun `emits review request after a free to paid purchase`() = runTest {
         coEvery { billing_api.get_subscription() } returns free_sub
         vm.load_subscription()

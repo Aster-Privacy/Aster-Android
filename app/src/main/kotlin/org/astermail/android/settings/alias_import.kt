@@ -97,7 +97,7 @@ fun sanitize_import_local_part(local_part: String): String =
     local_part.replace(EDGE_PUNCTUATION_PATTERN, "")
 
 fun is_valid_import_local_part(local_part: String, is_system_domain: Boolean): Boolean {
-    val normalized = local_part.lowercase()
+    val normalized = local_part.lowercase(java.util.Locale.ROOT)
 
     if (normalized.isEmpty()) return false
     if (is_system_domain && normalized.length < 3) return false
@@ -147,8 +147,8 @@ private fun split_address(raw: String): Pair<String, String>? {
     val at = raw.lastIndexOf('@')
     if (at <= 0) return null
 
-    val local_part = sanitize_import_local_part(raw.substring(0, at).lowercase())
-    val domain = raw.substring(at + 1).lowercase()
+    val local_part = sanitize_import_local_part(raw.substring(0, at).lowercase(java.util.Locale.ROOT))
+    val domain = raw.substring(at + 1).lowercase(java.util.Locale.ROOT)
 
     if (local_part.isEmpty() || domain.isEmpty()) return null
 
@@ -163,7 +163,7 @@ fun parse_alias_csv(text: String): List<ParsedImportRow> {
 
     val first_cols = parse_csv_row(lines[0])
     val first_row_is_data = first_cols.firstOrNull().orEmpty().contains("@")
-    val header = if (first_row_is_data) emptyList() else first_cols.map { it.lowercase().trim() }
+    val header = if (first_row_is_data) emptyList() else first_cols.map { it.lowercase(java.util.Locale.ROOT).trim() }
     val data_lines = if (first_row_is_data) lines else lines.drop(1)
 
     if (data_lines.isEmpty()) return emptyList()
@@ -198,7 +198,7 @@ fun parse_alias_csv(text: String): List<ParsedImportRow> {
         val enabled = enabled_col.takeIf { it >= 0 }
             ?.let { cols.getOrNull(it) }
             ?.trim()
-            ?.lowercase()
+            ?.lowercase(java.util.Locale.ROOT)
             ?.takeIf { it.isNotEmpty() }
             ?.let { !DISABLED_VALUES.contains(it) }
 
@@ -244,7 +244,7 @@ fun parse_vault_json(text: String): List<ParsedImportRow> {
             val alias_email = data.optJSONObject("content")
                 ?.optString("aliasEmail")
                 ?.trim()
-                ?.lowercase()
+                ?.lowercase(java.util.Locale.ROOT)
                 .orEmpty()
 
             if (!alias_email.contains("@")) continue
@@ -267,7 +267,7 @@ fun parse_vault_json(text: String): List<ParsedImportRow> {
 }
 
 fun parse_import_file(text: String, file_name: String): List<ParsedImportRow> =
-    if (file_name.lowercase().endsWith(".json")) parse_vault_json(text) else parse_alias_csv(text)
+    if (file_name.lowercase(java.util.Locale.ROOT).endsWith(".json")) parse_vault_json(text) else parse_alias_csv(text)
 
 fun build_import_preview(
     rows: List<ParsedImportRow>,

@@ -173,7 +173,8 @@ private class StreamedJsonContent(private val file: java.io.File) : OutgoingCont
 
 class SendApiImpl(private val client: ApiClient) : SendApi {
     private val base = "/api/mail/v1/send"
-    private val send_timeout_ms = 60_000L
+    private val send_socket_timeout_ms = 120_000L
+    private val send_request_timeout_ms = 30 * 60_000L
 
     @OptIn(ExperimentalSerializationApi::class)
     private inline fun <reified T> encode_to_temp_file(json: Json, value: T): java.io.File {
@@ -194,8 +195,8 @@ class SendApiImpl(private val client: ApiClient) : SendApi {
         try {
             val response = client.http.post(url) {
                 timeout {
-                    requestTimeoutMillis = send_timeout_ms
-                    socketTimeoutMillis = send_timeout_ms
+                    requestTimeoutMillis = send_request_timeout_ms
+                    socketTimeoutMillis = send_socket_timeout_ms
                 }
                 contentType(ContentType.Application.Json)
                 client.get_csrf()?.let { header("X-CSRF-Token", it) }
@@ -218,8 +219,8 @@ class SendApiImpl(private val client: ApiClient) : SendApi {
     override suspend fun react(request: ReactRequest): ReactResponse {
         val response = client.http.post("${client.base_url}/api/mail/v1/react") {
             timeout {
-                requestTimeoutMillis = send_timeout_ms
-                socketTimeoutMillis = send_timeout_ms
+                requestTimeoutMillis = send_socket_timeout_ms
+                socketTimeoutMillis = send_socket_timeout_ms
             }
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }

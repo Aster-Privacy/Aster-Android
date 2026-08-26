@@ -54,6 +54,8 @@ import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -137,9 +139,16 @@ private fun dialog_scrim(
             .fillMaxSize()
             .background(Color.Black.copy(alpha = dialog_scrim_alpha * progress))
             .clickable(interactionSource = interaction, indication = null, onClick = on_dismiss),
-        contentAlignment = Alignment.Center,
-        content = { content() },
-    )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .safeDrawingPadding()
+                .imePadding(),
+            contentAlignment = Alignment.Center,
+            content = { content() },
+        )
+    }
 }
 
 @Composable
@@ -187,6 +196,7 @@ fun AsterDialog(
             Column(modifier = Modifier.fillMaxWidth()) {
                 Column(
                     modifier = Modifier
+                        .weight(1f, fill = false)
                         .heightIn(max = dialog_max_content_height)
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = 24.dp, vertical = 24.dp),
@@ -281,6 +291,7 @@ fun AsterAlertDialog(
             Column(modifier = Modifier.fillMaxWidth()) {
                 Column(
                     modifier = Modifier
+                        .weight(1f, fill = false)
                         .heightIn(max = dialog_max_content_height)
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = 24.dp, vertical = 24.dp),

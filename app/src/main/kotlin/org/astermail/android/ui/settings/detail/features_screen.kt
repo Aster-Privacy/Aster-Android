@@ -24,6 +24,7 @@ package org.astermail.android.ui.settings.detail
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
+import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -42,6 +43,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -58,6 +60,7 @@ private sealed interface cell_value {
     object no : cell_value
     data class text_res(@StringRes val res: Int) : cell_value
     data class text_res_int(@StringRes val res: Int, val arg: Int) : cell_value
+    data class plural_res_int(@PluralsRes val res: Int, val arg: Int) : cell_value
     data class plain(val literal: String) : cell_value
 }
 
@@ -86,9 +89,9 @@ private fun category(@StringRes name_res: Int): feature_row =
 private fun gb(value: Int): cell_value = cell_value.text_res_int(R.string.settings_val_gb, value)
 private fun tb(value: Int): cell_value = cell_value.text_res_int(R.string.settings_val_tb, value)
 private fun mb(value: Int): cell_value = cell_value.text_res_int(R.string.settings_val_mb, value)
-private fun emails(value: Int): cell_value = cell_value.text_res_int(R.string.settings_val_emails_per_day, value)
-private fun days(value: Int): cell_value = cell_value.text_res_int(R.string.settings_val_days, value)
-private fun hours(value: Int): cell_value = cell_value.text_res_int(R.string.settings_val_hours, value)
+private fun emails(value: Int): cell_value = cell_value.plural_res_int(R.plurals.settings_val_emails_per_day, value)
+private fun days(value: Int): cell_value = cell_value.plural_res_int(R.plurals.settings_val_days, value)
+private fun hours(value: Int): cell_value = cell_value.plural_res_int(R.plurals.settings_val_hours, value)
 private fun count(value: Int): cell_value = cell_value.text_res_int(R.string.settings_val_count, value)
 private val unlimited: cell_value = cell_value.text_res(R.string.settings_val_unlimited)
 private val dash: cell_value = cell_value.text_res(R.string.settings_val_dash)
@@ -117,7 +120,6 @@ private fun build_features(): List<feature_row> = listOf(
     row(R.string.settings_feat_custom_domains, count(1), count(5), count(30), unlimited),
     row(R.string.settings_feat_scheduled_send, yes_cell, yes_cell, yes_cell, yes_cell),
     row(R.string.settings_feat_undo_send, yes_cell, yes_cell, yes_cell, yes_cell),
-    row(R.string.settings_feat_read_receipts, no_cell, no_cell, no_cell, yes_cell),
     row(R.string.settings_feat_email_templates, count(3), count(10), unlimited, unlimited),
     row(R.string.settings_feat_auto_responder, no_cell, yes_cell, yes_cell, yes_cell),
     row(R.string.settings_feat_alias_avatars, no_cell, yes_cell, yes_cell, yes_cell),
@@ -295,6 +297,12 @@ private fun feature_cell(value: cell_value) {
         )
         is cell_value.text_res_int -> Text(
             text = stringResource(value.res, value.arg),
+            color = colors.text_secondary,
+            fontSize = 12.sp,
+            textAlign = TextAlign.Center,
+        )
+        is cell_value.plural_res_int -> Text(
+            text = pluralStringResource(value.res, value.arg, value.arg),
             color = colors.text_secondary,
             fontSize = 12.sp,
             textAlign = TextAlign.Center,

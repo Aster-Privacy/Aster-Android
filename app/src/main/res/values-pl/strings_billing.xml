@@ -23,10 +23,8 @@
     <string name="error_network">Aster nie może połączyć się z serwerem. Sprawdź połączenie i spróbuj ponownie.</string>
     <string name="error_not_found">Ten element nie jest już dostępny.</string>
     <string name="error_payment_required">Twój plan wymaga płatności, zanim wykonasz tę czynność.</string>
-    <string name="error_plan_limit_reached">Osiągnięto limit bieżącego planu.</string>
     <string name="error_rate_limited">Zbyt wiele prób. Odczekaj chwilę i spróbuj ponownie.</string>
     <string name="error_send_quota_reached">Osiągnięto dzienny limit tego konta na wiadomości do adresów spoza Aster. Nie dotyczy to wiadomości do innych adresów Aster.</string>
-    <string name="error_storage_full">Twoja przestrzeń dyskowa jest pełna.</string>
     <string name="family_manage_web">Zarządzaj członkami w przeglądarce</string>
     <string name="finish_plan_setup_action">Dokończ konfigurację</string>
     <string name="finish_plan_setup_message">Zamykasz stronę płatności przed jej opłaceniem. Twoje konto pozostaje w planie darmowym, dopóki nie dokończysz konfiguracji.</string>

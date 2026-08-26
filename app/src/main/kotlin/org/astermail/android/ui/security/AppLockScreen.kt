@@ -72,6 +72,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -227,7 +228,7 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
     }
 
     LaunchedEffect(biometric_available) {
-        if (biometric_available && !biometric_prompted) {
+        if (biometric_available && !biometric_prompted && BiometricUnlockGate.is_enrolled(context)) {
             biometric_prompted = true
             launch_biometric()
         }
@@ -289,7 +290,7 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
                 if (locked_out) {
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = stringResource(R.string.app_lock_try_again_in, lockout_secs),
+                        text = pluralStringResource(R.plurals.app_lock_try_again_in, lockout_secs.toInt(), lockout_secs),
                         color = colors.text_muted,
                         fontSize = 14.sp,
                     )

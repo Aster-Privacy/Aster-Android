@@ -42,6 +42,7 @@ data class DecryptedAliasContact(
 data class AliasDetailState(
     val loading: Boolean = false,
     val loaded: Boolean = false,
+    val load_failed: Boolean = false,
     val busy: Boolean = false,
     val stats: AliasStatsResponse? = null,
     val stats_locked: Boolean = false,

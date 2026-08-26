@@ -85,6 +85,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
@@ -142,6 +143,7 @@ fun EmailRow(
     select_mode: Boolean = false,
     list_density: String? = null,
     show_sender_pictures: Boolean = true,
+    show_email_preview: Boolean = true,
 ) {
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
@@ -254,7 +256,7 @@ fun EmailRow(
                 }
             }
             Spacer(Modifier.height(metrics.line_gap))
-            val has_preview = email.preview.isNotBlank()
+            val has_preview = show_email_preview && email.preview.isNotBlank()
             val trailing_controls: @Composable () -> Unit = {
                 Spacer(Modifier.width(AsterSpacing.sm))
                 Row(
@@ -506,7 +508,8 @@ fun ThreadInboxRow(
             StackedAvatars(participants = participants, size = metrics.avatar_size)
         }
         Column(modifier = Modifier.weight(1f)) {
-            val others_template = stringResource(R.string.participants_and_others)
+            val others_count = (thread.participants.size - 1).coerceAtLeast(1)
+            val others_template = pluralStringResource(R.plurals.participants_and_others, others_count)
             val participants_text = remember(
                 thread.thread_id,
                 thread.participants,
@@ -565,7 +568,7 @@ fun ThreadInboxRow(
                     base
                 }
             }
-            val has_preview = email.preview.isNotBlank()
+            val has_preview = user_prefs?.show_email_preview != false && email.preview.isNotBlank()
             val trailing_controls: @Composable () -> Unit = {
                 if (user_prefs?.show_message_size == true && email.size_bytes > 0) {
                     Spacer(Modifier.width(4.dp))
@@ -699,8 +702,11 @@ internal data class InboxRowMetrics(
     val line_gap: androidx.compose.ui.unit.Dp,
 )
 
+internal fun is_comfortable_density(density: String?): Boolean =
+    density == "comfortable" || density == "spacious"
+
 internal fun inbox_row_metrics(density: String?): InboxRowMetrics =
-    if (density == "comfortable") {
+    if (is_comfortable_density(density)) {
         InboxRowMetrics(
             min_height = 88.dp,
             vertical_padding = AsterSpacing.md,

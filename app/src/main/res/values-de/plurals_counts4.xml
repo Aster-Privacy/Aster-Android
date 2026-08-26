@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="alias_export_entries">
+        <item quantity="one">%d Eintrag</item>
+        <item quantity="other">%d Einträge</item>
+    </plurals>
+    <plurals name="alias_export_files">
+        <item quantity="one">%d Datei</item>
+        <item quantity="other">%d Dateien</item>
+    </plurals>
+    <plurals name="alias_import_existing">
+        <item quantity="one">%d existiert bereits</item>
+        <item quantity="other">%d existieren bereits</item>
+    </plurals>
+    <plurals name="alias_import_invalid">
+        <item quantity="one">%d ungültig</item>
+        <item quantity="other">%d ungültig</item>
+    </plurals>
+    <plurals name="alias_import_to_import">
+        <item quantity="one">%d wird importiert</item>
+        <item quantity="other">%d werden importiert</item>
+    </plurals>
+    <plurals name="kids_seats_invitations">
+        <item quantity="one">%d Einladung</item>
+        <item quantity="other">%d Einladungen</item>
+    </plurals>
+    <plurals name="kids_seats_members">
+        <item quantity="one">%d Mitglied</item>
+        <item quantity="other">%d Mitglieder</item>
+    </plurals>
+    <plurals name="kids_seats_reserved">
+        <item quantity="one">%d reservierte Adresse</item>
+        <item quantity="other">%d reservierte Adressen</item>
+    </plurals>
+    <plurals name="replies_sent_count">
+        <item quantity="one">%d Antwort bisher gesendet.</item>
+        <item quantity="other">%d Antworten bisher gesendet.</item>
+    </plurals>
+</resources>

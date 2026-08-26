@@ -99,6 +99,7 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.ui.mail.SenderAvatar
+import org.astermail.android.design.mirror_in_rtl
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -184,6 +185,7 @@ fun ContactsScreen(
             } else {
                 AsterIconButton(
                     icon = TablerIcons.ArrowLeft,
+                    auto_mirror = true,
                     content_description = stringResource(R.string.back),
                     onClick = on_back,
                 )
@@ -436,7 +438,7 @@ private fun ContactRow(contact: Contact, on_click: () -> Unit) {
             imageVector = TablerIcons.ChevronRight,
             contentDescription = null,
             tint = colors.text_muted,
-            modifier = Modifier.size(18.dp),
+            modifier = Modifier.size(18.dp).mirror_in_rtl(),
         )
     }
 }

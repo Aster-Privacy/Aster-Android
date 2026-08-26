@@ -21,8 +21,6 @@
 
 package org.astermail.android.ui.settings.detail
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -70,6 +68,7 @@ import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.DialogConfirmStyle
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.ui.common.open_external_url
 
 internal fun format_bytes(bytes: Long): String {
     if (bytes < 1024) return "$bytes B"
@@ -108,6 +107,7 @@ fun StorageScreen(
     val mail_vm: org.astermail.android.mail.MailViewModel = hiltViewModel()
     val inbox_state by mail_vm.inbox_state.collectAsStateWithLifecycle()
     val is_emptying_spam by mail_vm.emptying_spam_state.collectAsStateWithLifecycle()
+    val is_emptying_trash by mail_vm.emptying_trash_state.collectAsStateWithLifecycle()
     val billing_vm: BillingViewModel = hiltViewModel()
     val billing_state by billing_vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
@@ -152,12 +152,11 @@ fun StorageScreen(
             (!load_requested || state.is_loading || (state.error == null && !storage_load_settled))
         if (awaiting_first_load) {
             storage_skeleton()
-        } else if (storage == null && stats == null) {
-            AsterCard(modifier = Modifier.fillMaxWidth()) {
-                detail_row(
-                    title = stringResource(R.string.storage_unavailable),
-                    subtitle = state.error ?: stringResource(R.string.storage_load_error),
-                )
+        } else if (storage == null && (stats == null || stats.storage_total_bytes <= 0L)) {
+            load_failed_card(state.error ?: stringResource(R.string.storage_load_error)) {
+                vm.load_storage()
+                vm.load_subscription(force = true)
+                mail_vm.load_stats()
             }
         } else {
             val used_bytes = when {
@@ -298,6 +297,7 @@ fun StorageScreen(
                 trash_count = stats?.trash ?: 0,
                 spam_count = stats?.spam ?: 0,
                 is_emptying_spam = is_emptying_spam,
+                is_emptying_trash = is_emptying_trash,
                 on_empty_trash = { show_empty_trash_confirm = true },
                 on_empty_spam = { show_empty_spam_confirm = true },
                 on_open_folder = on_open_folder,

@@ -68,10 +68,7 @@
     <string name="settings_val_gb">%1$d GB</string>
     <string name="settings_val_tb">%1$d TB</string>
     <string name="settings_val_mb">%1$d MB</string>
-    <string name="settings_val_emails_per_day">%1$d Mails</string>
-    <string name="settings_val_days">%1$d Tage</string>
     <string name="settings_val_one_year">1 Jahr</string>
-    <string name="settings_val_hours">%1$d Stunden</string>
     <string name="settings_val_count">%1$d</string>
     <string name="settings_plan_bullet_duo_storage">1 TB gemeinsamer verschlüsselter Speicher</string>
     <string name="settings_plan_bullet_duo_members">2 Mitglieder, getrennte Konten</string>
@@ -85,9 +82,13 @@
     <string name="settings_save_amount">$%1$.2f</string>
     <string name="settings_interval_default">Mon.</string>
     <string name="settings_diagnostics_clip_label">Diagnose</string>
+    <string name="settings_diagnostics_secure_storage">Sicherer Speicher</string>
+    <string name="settings_diagnostics_storage_ok">Fehlerfrei</string>
+    <string name="settings_diagnostics_storage_degraded">Beeinträchtigt, melde dich ab und wieder an</string>
     <string name="log_out_confirm_title">Abmelden?</string>
     <string name="log_out_confirm_message">%1$s auf diesem Gerät abmelden?</string>
     <string name="revoke_session_confirm_message">Dieses Gerät von deinem Konto abmelden?</string>
     <string name="sign_out_all_other_confirm_message">Alle Geräte außer diesem abmelden?</string>
     <string name="alias_forward_limit_reached">Du hast die Höchstzahl aktiver Aliase deines Tarifs erreicht</string>
+    <string name="settings_plan_bullet_daily_emails">1.000 E-Mails pro Tag</string>
 </resources>

@@ -23,10 +23,8 @@
     <string name="error_network">Aster cannot reach the server. Check your connection and try again.</string>
     <string name="error_not_found">That item is no longer available.</string>
     <string name="error_payment_required">Your plan needs a payment before you can do this.</string>
-    <string name="error_plan_limit_reached">You reached a limit on your current plan.</string>
     <string name="error_rate_limited">Too many attempts. Wait a moment and try again.</string>
     <string name="error_send_quota_reached">You reached this account\'s daily limit for messages to addresses outside Aster. Messages to other Aster addresses are not affected.</string>
-    <string name="error_storage_full">Your storage is full.</string>
     <string name="family_manage_web">Manage members on the web</string>
     <string name="finish_plan_setup_action">Finish setting up</string>
     <string name="finish_plan_setup_message">You closed checkout before paying. Your account stays on the free plan until you finish.</string>

@@ -48,6 +48,7 @@ class RatchetDecryptor @Inject constructor(
     private val conversation_locks: ConversationLocks,
     private val auth_repository: dagger.Lazy<org.astermail.android.auth.AuthRepository>,
     private val identity_pins: RatchetIdentityPinStore,
+    private val plaintext_cache: RatchetPlaintextCache,
 ) {
 
     private data class ReceiverKeySet(
@@ -86,7 +87,12 @@ class RatchetDecryptor @Inject constructor(
         return trimmed.contains("\"double_ratchet_v1\"") || trimmed.contains("\"double_ratchet_v2\"")
     }
 
-    suspend fun try_decrypt(body: String, our_addresses: List<String>, sender_email: String): String {
+    suspend fun try_decrypt(
+        body: String,
+        our_addresses: List<String>,
+        sender_email: String,
+        message_id: String? = null,
+    ): String {
         if (!looks_like_ratchet_envelope(body)) return body
         val envelope = parse_envelope(body)
         if (envelope == null) {
@@ -99,7 +105,7 @@ class RatchetDecryptor @Inject constructor(
             }
         }
         return try {
-            val result = decrypt(envelope, our_addresses, sender_email)
+            val result = decrypt(envelope, our_addresses, sender_email, message_id)
             if (result == null && org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "decrypt() returned null")
             result ?: RATCHET_UNDECRYPTABLE_SENTINEL
         } catch (t: Throwable) {
@@ -120,21 +126,26 @@ class RatchetDecryptor @Inject constructor(
         }
     }
 
-    private suspend fun decrypt(envelope: RatchetEnvelope, our_addresses: List<String>, sender_email: String): String? {
-        val owned_lower = our_addresses.map { it.trim().lowercase() }.filter { it.isNotBlank() }.toSet()
-        val matched = envelope.recipients.entries.firstOrNull { it.key.trim().lowercase() in owned_lower }
+    private suspend fun decrypt(
+        envelope: RatchetEnvelope,
+        our_addresses: List<String>,
+        sender_email: String,
+        message_id: String?,
+    ): String? {
+        val owned_lower = our_addresses.map { it.trim().lowercase(java.util.Locale.ROOT) }.filter { it.isNotBlank() }.toSet()
+        val matched = envelope.recipients.entries.firstOrNull { it.key.trim().lowercase(java.util.Locale.ROOT) in owned_lower }
         if (matched != null) {
-            return decrypt_entry(envelope, matched.key, matched.value, sender_email)
+            return decrypt_entry(envelope, matched.key, matched.value, sender_email, message_id)
         }
 
-        val sender_lower = sender_email.trim().lowercase()
+        val sender_lower = sender_email.trim().lowercase(java.util.Locale.ROOT)
         val fallback = envelope.recipients.entries
-            .filter { it.key.trim().lowercase() !in owned_lower && it.key.trim().lowercase() != sender_lower }
+            .filter { it.key.trim().lowercase(java.util.Locale.ROOT) !in owned_lower && it.key.trim().lowercase(java.util.Locale.ROOT) != sender_lower }
             .take(MAX_ALIAS_RECIPIENT_ATTEMPTS)
 
         for (entry in fallback) {
             val plaintext = try {
-                decrypt_entry(envelope, entry.key, entry.value, sender_email)
+                decrypt_entry(envelope, entry.key, entry.value, sender_email, message_id)
             } catch (_: Throwable) {
                 null
             }
@@ -149,6 +160,7 @@ class RatchetDecryptor @Inject constructor(
         matched_address: String,
         recipient: RatchetRecipientData,
         sender_email: String,
+        message_id: String?,
     ): String? {
         val conversation_id = X3dh.derive_conversation_id(matched_address, sender_email)
 
@@ -243,6 +255,7 @@ class RatchetDecryptor @Inject constructor(
                 )
                 if (final_recovery != null) {
                     record_identity_pin(conversation_id, sender_email, envelope.sender_identity_key)
+                    cache_plaintext(message_id, final_recovery)
                     return@with_lock final_recovery
                 }
                 decrypt_error?.let { throw it }
@@ -263,10 +276,17 @@ class RatchetDecryptor @Inject constructor(
             }
 
             val final_state = state ?: return@with_lock null
+            val resolved = plaintext ?: return@with_lock null
+            cache_plaintext(message_id, resolved)
             state_store.save(final_state)
             syncer.sync(conversation_id, final_state)
-            plaintext
+            resolved
         }
+    }
+
+    private suspend fun cache_plaintext(message_id: String?, plaintext: String) {
+        if (message_id.isNullOrBlank()) return
+        runCatching { plaintext_cache.put(message_id, plaintext) }
     }
 
     private suspend fun record_identity_pin(

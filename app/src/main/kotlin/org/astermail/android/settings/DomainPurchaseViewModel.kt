@@ -97,7 +97,7 @@ class DomainPurchaseViewModel @Inject constructor(
         get() = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     fun set_query(raw: String) {
-        val query = raw.lowercase().trimStart()
+        val query = raw.lowercase(java.util.Locale.ROOT).trimStart()
         _state.update { it.copy(query = query, search_failed = false) }
         search_job?.cancel()
         val trimmed = query.trim()
@@ -364,6 +364,7 @@ class DomainPurchaseViewModel @Inject constructor(
 
     suspend fun poll_order(order_id: String) {
         var failures = 0
+        _state.update { it.copy(order_load_failed = false) }
         while (true) {
             try {
                 val order = purchase_api.get_order(order_id)

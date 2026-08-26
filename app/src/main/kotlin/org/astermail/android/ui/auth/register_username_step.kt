@@ -46,6 +46,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
@@ -124,7 +125,7 @@ fun RegisterUsernameStep(
         AsterTextField(
             value = state.username.value,
             onValueChange = { input ->
-                val filtered = input.filter { it in 'a'..'z' || it in 'A'..'Z' || it in '0'..'9' || it == '.' }
+                val filtered = input.lowercase().filter { it in 'a'..'z' || it in '0'..'9' || it == '.' }
                 state.username.value = filtered.replace(Regex("\\.{2,}"), ".").trimStart('.')
             },
             label = stringResource(R.string.username),
@@ -161,6 +162,11 @@ fun RegisterUsernameStep(
                 keyboardType = KeyboardType.Text,
                 imeAction = ImeAction.Done,
             ),
+            keyboard_actions = KeyboardActions(
+                onDone = {
+                    if (state.username.value.replace(".", "").length in 3..40) on_next()
+                },
+            ),
         )
 
         Spacer(Modifier.height(AsterSpacing.xl))
@@ -168,7 +174,7 @@ fun RegisterUsernameStep(
         AsterButton(
             label = stringResource(R.string.next),
             onClick = on_next,
-            enabled = state.username.value.length in 3..40,
+            enabled = state.username.value.replace(".", "").length in 3..40,
         )
 
         Spacer(Modifier.height(AsterSpacing.lg))

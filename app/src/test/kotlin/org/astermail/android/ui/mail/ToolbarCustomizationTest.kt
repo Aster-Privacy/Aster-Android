@@ -84,4 +84,30 @@ class ToolbarCustomizationTest {
         assertEquals("unread", parse_selection_toolbar_actions("unread,trash,folder,label")[0])
         assertTrue("unread" !in parse_toolbar_actions("unread,trash,folder,label"))
     }
+
+    @Test
+    fun star_action_reads_star_when_selection_has_an_unstarred_message() {
+        val action = selection_toolbar_action_for("star", false)
+        assertEquals(org.astermail.android.R.string.star, action?.label_res)
+    }
+
+    @Test
+    fun star_action_reads_unstar_when_every_selected_message_is_starred() {
+        val action = selection_toolbar_action_for("star", true)
+        assertEquals(org.astermail.android.R.string.unstar, action?.label_res)
+        assertEquals("star", action?.id)
+    }
+
+    @Test
+    fun other_actions_are_unaffected_by_the_star_state() {
+        listOf("trash", "folder", "label", "read", "unread", "archive", "snooze", "spam").forEach { id ->
+            assertEquals(selection_toolbar_action_by_id(id), selection_toolbar_action_for(id, true))
+            assertEquals(selection_toolbar_action_by_id(id), selection_toolbar_action_for(id, false))
+        }
+    }
+
+    @Test
+    fun unknown_action_stays_null() {
+        assertEquals(null, selection_toolbar_action_for("bogus", true))
+    }
 }

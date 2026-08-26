@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="attachments_count">
+        <item quantity="other">%d 个附件</item>
+    </plurals>
+    <plurals name="archived_conversations">
+        <item quantity="other">已归档 %d 个会话</item>
+    </plurals>
+    <plurals name="moved_to_trash">
+        <item quantity="other">已将 %d 个会话移至回收站</item>
+    </plurals>
+    <plurals name="starred_count">
+        <item quantity="other">已为 %d 个会话加注星标</item>
+    </plurals>
+    <plurals name="unstarred_count">
+        <item quantity="other">已移除 %d 个会话的星标</item>
+    </plurals>
+    <plurals name="unsnoozed_count">
+        <item quantity="other">已取消延后 %d 个会话</item>
+    </plurals>
+    <plurals name="draft_deleted">
+        <item quantity="other">已删除 %d 封草稿</item>
+    </plurals>
+    <plurals name="marked_read_count">
+        <item quantity="other">已将 %d 条消息标记为已读</item>
+    </plurals>
+    <plurals name="marked_unread_count">
+        <item quantity="other">已将 %d 封邮件标记为未读</item>
+    </plurals>
+    <plurals name="results_count">
+        <item quantity="other">%d 条结果</item>
+    </plurals>
+    <plurals name="active_endpoints">
+        <item quantity="other">%d 个活跃端点</item>
+    </plurals>
+    <plurals name="storage_addons_active_count">
+        <item quantity="other">%1$d 个生效中的扩展包</item>
+    </plurals>
+    <plurals name="backup_codes_remaining">
+        <item quantity="other">剩余 %d 个备用代码</item>
+    </plurals>
+    <plurals name="kids_seats_free">
+        <item quantity="other">剩余 %1$d 个名额</item>
+    </plurals>
+    <plurals name="trackers_blocked_count">
+        <item quantity="other">已拦截 %1$d 个追踪器</item>
+    </plurals>
+</resources>

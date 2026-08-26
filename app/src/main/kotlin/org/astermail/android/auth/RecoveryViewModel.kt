@@ -83,11 +83,36 @@ class RecoveryViewModel @Inject constructor(
     private var user_email: String = ""
 
     fun send_recovery_email(email: String) {
-        user_email = email.trim().lowercase()
+        if (_state.value.is_loading) return
+        user_email = email.trim().lowercase(java.util.Locale.ROOT)
+        val at_index = user_email.indexOf('@')
+
+        if (at_index <= 0) {
+            _state.value = _state.value.copy(
+                error = ctx.getString(R.string.error_enter_full_email_address),
+            )
+            return
+        }
+
+        val username = user_email.substring(0, at_index)
+        val email_domain = user_email.substring(at_index + 1).trimEnd('.')
+
+        if (!is_supported_recovery_domain(email_domain)) {
+            _state.value = _state.value.copy(
+                error = ctx.getString(R.string.error_sign_in_domain_unsupported),
+            )
+            return
+        }
+
         _state.value = _state.value.copy(is_loading = true, error = null)
         viewModelScope.launch {
             try {
-                recovery_api.initiate_email(InitiateEmailRecoveryRequest(email = user_email))
+                recovery_api.initiate_email(
+                    InitiateEmailRecoveryRequest(
+                        username = username,
+                        email_domain = email_domain,
+                    ),
+                )
                 _state.value = _state.value.copy(
                     step = RecoveryStep.email_sent,
                     is_loading = false,
@@ -101,12 +126,18 @@ class RecoveryViewModel @Inject constructor(
         }
     }
 
+    private fun is_supported_recovery_domain(domain: String): Boolean {
+        return domain == "astermail.org" || domain.endsWith(".astermail.org") ||
+            domain == "aster.cx" || domain.endsWith(".aster.cx")
+    }
+
     fun go_to_code_step() {
         _state.value = _state.value.copy(step = RecoveryStep.code, error = null)
     }
 
     fun verify_code(code: String) {
-        val normalized = code.trim().uppercase()
+        if (_state.value.is_loading) return
+        val normalized = code.trim().uppercase(java.util.Locale.ROOT)
         if (!normalized.startsWith("ASTER-") || normalized.length != 20) {
             _state.value = _state.value.copy(error = ctx.getString(R.string.error_invalid_recovery_code))
             return
@@ -152,6 +183,7 @@ class RecoveryViewModel @Inject constructor(
     }
 
     fun submit_new_password(password: String, confirm: String) {
+        if (_state.value.is_loading) return
         if (password.length < 12) {
             _state.value = _state.value.copy(error = ctx.getString(R.string.error_password_min_length))
             return
@@ -160,8 +192,17 @@ class RecoveryViewModel @Inject constructor(
             _state.value = _state.value.copy(error = ctx.getString(R.string.error_passwords_no_match))
             return
         }
-        val token = recovery_token ?: return
-        val vault_bytes = decrypted_vault ?: return
+        val token = recovery_token
+        val vault_bytes = decrypted_vault
+        if (token == null || vault_bytes == null) {
+            _state.value = _state.value.copy(
+                step = RecoveryStep.code,
+                is_loading = false,
+                error = ctx.getString(R.string.error_recovery_failed),
+                processing_status = "",
+            )
+            return
+        }
 
         _state.value = _state.value.copy(
             step = RecoveryStep.processing,
@@ -171,9 +212,9 @@ class RecoveryViewModel @Inject constructor(
         )
 
         viewModelScope.launch {
+            val password_bytes = password.toByteArray(Charsets.UTF_8)
             try {
                 val new_salt = ByteArray(32).also { SecureRandom().nextBytes(it) }
-                val password_bytes = password.toByteArray(Charsets.UTF_8)
 
                 _state.value = _state.value.copy(processing_status = ctx.getString(R.string.status_encrypting_vault))
                 val new_password_hash = withContext(compute_dispatcher) {
@@ -216,7 +257,6 @@ class RecoveryViewModel @Inject constructor(
 
                 new_password_hash.fill(0)
                 new_recovery_key.fill(0)
-                password_bytes.fill(0)
                 vault_bytes.fill(0)
                 decrypted_vault = null
 
@@ -227,12 +267,15 @@ class RecoveryViewModel @Inject constructor(
                     processing_status = "",
                 )
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     step = RecoveryStep.password,
                     is_loading = false,
                     error = map_error(t, R.string.error_recovery_failed),
                     processing_status = "",
                 )
+            } finally {
+                password_bytes.fill(0)
             }
         }
     }
@@ -246,6 +289,7 @@ class RecoveryViewModel @Inject constructor(
     }
 
     fun go_back() {
+        if (_state.value.is_loading) return
         val current = _state.value.step
         val prev = when (current) {
             RecoveryStep.email_sent -> RecoveryStep.email
@@ -257,7 +301,8 @@ class RecoveryViewModel @Inject constructor(
     }
 
     private fun map_error(t: Throwable, fallback: Int): String = when (t) {
-        is ApiError.ValidationError -> t.messages.joinToString(", ").ifBlank { ctx.getString(R.string.error_invalid_request) }
+        is ApiError.ValidationError ->
+            org.astermail.android.localized_api_error(ctx, t, ctx.getString(R.string.error_invalid_request))
         is ApiError.RateLimited -> ctx.getString(R.string.error_too_many_attempts)
         is ApiError.NotFoundError -> ctx.getString(R.string.error_account_not_found)
         is ApiError.NetworkError -> ctx.getString(R.string.error_no_connection)
@@ -271,7 +316,7 @@ class RecoveryViewModel @Inject constructor(
     }
 
     private fun hash_recovery_code(code: String): String {
-        val cleaned = code.uppercase().trim()
+        val cleaned = code.uppercase(java.util.Locale.ROOT).trim()
         val digest = MessageDigest.getInstance("SHA-256")
         val hash = digest.digest(cleaned.toByteArray(Charsets.UTF_8))
         return base64_encode(hash)
@@ -283,7 +328,7 @@ class RecoveryViewModel @Inject constructor(
         nonce: ByteArray,
         salt: ByteArray,
     ): ByteArray {
-        val derived = PasswordKdf.derive_aes_key(code.uppercase().trim(), salt, PBKDF2_ITERATIONS)
+        val derived = PasswordKdf.derive_aes_key(code.uppercase(java.util.Locale.ROOT).trim(), salt, PBKDF2_ITERATIONS)
         val decrypted = AesGcm.decrypt(derived, nonce, encrypted_key)
         derived.fill(0)
         return decrypted
@@ -317,7 +362,7 @@ class RecoveryViewModel @Inject constructor(
         val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
         val nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
 
-        val derived = PasswordKdf.derive_aes_key(code.uppercase().trim(), salt, PBKDF2_ITERATIONS)
+        val derived = PasswordKdf.derive_aes_key(code.uppercase(java.util.Locale.ROOT).trim(), salt, PBKDF2_ITERATIONS)
         val encrypted = AesGcm.encrypt(derived, nonce, recovery_key)
         derived.fill(0)
 

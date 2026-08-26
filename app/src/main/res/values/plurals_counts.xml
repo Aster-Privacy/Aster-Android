@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="attachments_count">
+        <item quantity="one">%d attachment</item>
+        <item quantity="other">%d attachments</item>
+    </plurals>
+    <plurals name="archived_conversations">
+        <item quantity="one">Archived %d conversation</item>
+        <item quantity="other">Archived %d conversations</item>
+    </plurals>
+    <plurals name="moved_to_trash">
+        <item quantity="one">Moved %d conversation to trash</item>
+        <item quantity="other">Moved %d conversations to trash</item>
+    </plurals>
+    <plurals name="starred_count">
+        <item quantity="one">Starred %d conversation</item>
+        <item quantity="other">Starred %d conversations</item>
+    </plurals>
+    <plurals name="unstarred_count">
+        <item quantity="one">Unstarred %d conversation</item>
+        <item quantity="other">Unstarred %d conversations</item>
+    </plurals>
+    <plurals name="unsnoozed_count">
+        <item quantity="one">Unsnoozed %d conversation</item>
+        <item quantity="other">Unsnoozed %d conversations</item>
+    </plurals>
+    <plurals name="draft_deleted">
+        <item quantity="one">Deleted %d draft</item>
+        <item quantity="other">Deleted %d drafts</item>
+    </plurals>
+    <plurals name="marked_read_count">
+        <item quantity="one">Marked %d message as read</item>
+        <item quantity="other">Marked %d messages as read</item>
+    </plurals>
+    <plurals name="marked_unread_count">
+        <item quantity="one">Marked %d message as unread</item>
+        <item quantity="other">Marked %d messages as unread</item>
+    </plurals>
+    <plurals name="results_count">
+        <item quantity="one">%d result</item>
+        <item quantity="other">%d results</item>
+    </plurals>
+    <plurals name="active_endpoints">
+        <item quantity="one">%d active endpoint</item>
+        <item quantity="other">%d active endpoints</item>
+    </plurals>
+    <plurals name="storage_addons_active_count">
+        <item quantity="one">%1$d active add-on</item>
+        <item quantity="other">%1$d active add-ons</item>
+    </plurals>
+    <plurals name="backup_codes_remaining">
+        <item quantity="one">%d backup code remaining</item>
+        <item quantity="other">%d backup codes remaining</item>
+    </plurals>
+    <plurals name="kids_seats_free">
+        <item quantity="one">%1$d seat available</item>
+        <item quantity="other">%1$d seats available</item>
+    </plurals>
+    <plurals name="trackers_blocked_count">
+        <item quantity="one">%1$d tracker blocked</item>
+        <item quantity="other">%1$d trackers blocked</item>
+    </plurals>
+</resources>

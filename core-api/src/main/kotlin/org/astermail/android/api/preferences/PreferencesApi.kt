@@ -55,9 +55,9 @@ data class UserPreferences(
     val custom_theme_seed_android: String = "",
     val custom_theme_overrides: Map<String, String> = emptyMap(),
     val font_choice: String = "default",
-    val time_zone: String = "",
-    val date_format: String = "",
-    val time_format: String = "12h",
+    val time_zone: String = "auto",
+    val date_format: String = "MM/DD/YYYY",
+    val time_format: String = "auto",
     val push_notifications: Boolean = true,
     val sound: Boolean = true,
     val vibrate: Boolean = true,
@@ -112,6 +112,7 @@ data class UserPreferences(
     val sidebar_folders_collapsed: Boolean = false,
     val sidebar_labels_collapsed: Boolean = false,
     val sidebar_aliases_collapsed: Boolean = false,
+    val sidebar_categories_collapsed: Boolean = false,
     val swipe_right_action: String = "toggle_read",
     val swipe_left_action: String = "archive",
     val toolbar_actions: String = "",
@@ -120,7 +121,8 @@ data class UserPreferences(
     val inbox_categories_enabled: Boolean = true,
     val enabled_categories: List<String> = listOf("promotions", "social", "updates"),
     val custom_categories: List<CustomCategoryRule> = emptyList(),
-    val conversation_order: String = "newest",
+    val conversation_order: String = CONVERSATION_ORDER_ASCENDING,
+    val inbox_sort_order: String = "",
     val show_message_size: Boolean = false,
     val show_alias_indicators: Boolean = true,
     val force_dark_emails: Boolean = false,
@@ -129,7 +131,7 @@ data class UserPreferences(
     val spam_filter_enabled: Boolean = true,
     val spam_sensitivity: String = "medium",
     val auto_delete_spam_days: Int = 30,
-    val auto_discover_keys: Boolean = true,
+    val auto_discover_keys: Boolean = false,
     val encrypt_emails: Boolean = false,
     val require_encryption: Boolean = false,
     val show_encryption_indicators: Boolean = true,
@@ -142,12 +144,24 @@ data class UserPreferences(
     val translate_languages: List<String> = emptyList(),
     val translate_never_languages: List<String> = emptyList(),
     val muted_folder_tokens: List<String> = emptyList(),
+    val muted_notification_categories: List<String> = emptyList(),
     val inbox_page_size: Int = 50,
     val reactions_enabled: Boolean = true,
     val email_font_choice: String = "match_app",
     val mail_list_density: String = "compact",
     val compose_font_size: String = "normal",
     val compose_font_color: String = "",
+    val signature_mode: String = "auto",
+    val signature_placement: String = "below",
+    val show_signature_separator: Boolean = true,
+    val auto_save_drafts: Boolean = true,
+)
+
+@Serializable
+data class SpamSettings(
+    val spam_retention_days: Int = 30,
+    val spam_sensitivity: String = "medium",
+    val spam_filter_enabled: Boolean = true,
 )
 
 @Serializable
@@ -193,6 +207,8 @@ interface PreferencesApi {
     suspend fun set_default_sender(request: SetDefaultSenderRequest): DefaultSenderResponse
     suspend fun get_product_updates(): ProductUpdatesResponse
     suspend fun set_product_updates(request: SetProductUpdatesRequest)
+    suspend fun get_spam_settings(): SpamSettings
+    suspend fun save_spam_settings(request: SpamSettings): Boolean
 }
 
 class PreferencesApiImpl(private val client: ApiClient) : PreferencesApi {
@@ -279,6 +295,20 @@ class PreferencesApiImpl(private val client: ApiClient) : PreferencesApi {
             val body = try { response.body<String>() } catch (_: Throwable) { "" }
             throw client.map_http_status(response.status.value, body)
         }
+    }
+
+    override suspend fun get_spam_settings(): SpamSettings {
+        val response = client.http.get("${client.base_url}$base/spam")
+        return decode_or_throw(response)
+    }
+
+    override suspend fun save_spam_settings(request: SpamSettings): Boolean {
+        val response = client.http.put("${client.base_url}$base/spam") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return response.status.value in 200..299
     }
 
     private suspend inline fun <reified T> decode_or_throw(response: HttpResponse): T {

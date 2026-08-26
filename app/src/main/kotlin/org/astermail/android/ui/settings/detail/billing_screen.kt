@@ -21,8 +21,6 @@
 
 package org.astermail.android.ui.settings.detail
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -47,6 +45,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
+import org.astermail.android.ui.common.open_external_url
 
 @Composable
 fun BillingScreen(
@@ -60,7 +59,7 @@ fun BillingScreen(
 
     LaunchedEffect(billing_state.portal_url) {
         val url = billing_state.portal_url ?: return@LaunchedEffect
-        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+        open_external_url(context, url)
         billing_vm.consume_portal_url()
     }
 
@@ -98,7 +97,17 @@ fun BillingScreen(
                             billing_vm.open_portal()
                         }
                     },
+                    enabled = !billing_state.is_acting,
+                    is_loading = billing_state.is_acting,
                 )
+                billing_state.error?.let { message ->
+                    v_gap(AsterSpacing.sm)
+                    Text(
+                        text = message,
+                        color = colors.danger,
+                        fontSize = 13.sp,
+                    )
+                }
             }
         }
         v_gap(AsterSpacing.xxl)

@@ -68,10 +68,7 @@
     <string name="settings_val_gb">%1$d GB</string>
     <string name="settings_val_tb">%1$d TB</string>
     <string name="settings_val_mb">%1$d MB</string>
-    <string name="settings_val_emails_per_day">%1$d mails</string>
-    <string name="settings_val_days">%1$d dagen</string>
     <string name="settings_val_one_year">1 jaar</string>
-    <string name="settings_val_hours">%1$d uur</string>
     <string name="settings_val_count">%1$d</string>
     <string name="settings_plan_bullet_duo_storage">1 TB gedeelde versleutelde opslag</string>
     <string name="settings_plan_bullet_duo_members">2 leden, aparte accounts</string>
@@ -85,9 +82,13 @@
     <string name="settings_save_amount">$%1$.2f</string>
     <string name="settings_interval_default">mnd</string>
     <string name="settings_diagnostics_clip_label">Diagnose</string>
+    <string name="settings_diagnostics_secure_storage">Beveiligde opslag</string>
+    <string name="settings_diagnostics_storage_ok">In orde</string>
+    <string name="settings_diagnostics_storage_degraded">Verminderd, meld je af en weer aan</string>
     <string name="log_out_confirm_title">Afmelden?</string>
     <string name="log_out_confirm_message">%1$s op dit toestel afmelden?</string>
     <string name="revoke_session_confirm_message">Dit toestel afmelden bij je account?</string>
     <string name="sign_out_all_other_confirm_message">Alle toestellen behalve dit afmelden?</string>
     <string name="alias_forward_limit_reached">Je hebt het maximum aantal actieve aliassen van je abonnement bereikt</string>
+    <string name="settings_plan_bullet_daily_emails">1.000 e-mails per dag</string>
 </resources>

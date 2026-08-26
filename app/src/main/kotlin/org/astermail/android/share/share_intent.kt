@@ -119,7 +119,7 @@ private fun stream_uris(intent: Intent): List<Uri> {
 }
 
 private fun is_attachable_uri(uri: Uri): Boolean {
-    val scheme = uri.scheme?.lowercase()
+    val scheme = uri.scheme?.lowercase(java.util.Locale.ROOT)
     return scheme == "content" || scheme == "file"
 }
 
@@ -255,7 +255,7 @@ private fun is_private_app_file(context: Context, uri: Uri): Boolean {
 }
 
 private fun guess_mime_from_name(name: String): String {
-    val extension = name.substringAfterLast('.', "").lowercase()
+    val extension = name.substringAfterLast('.', "").lowercase(java.util.Locale.ROOT)
     if (extension.isBlank()) return "application/octet-stream"
     return android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
         ?: "application/octet-stream"
@@ -264,7 +264,7 @@ private fun guess_mime_from_name(name: String): String {
 private fun ensure_extension(name: String, mime: String): String {
     if (name.substringAfterLast('.', "").isNotBlank()) return name
     val extension = android.webkit.MimeTypeMap.getSingleton()
-        .getExtensionFromMimeType(mime.substringBefore(';').trim().lowercase())
+        .getExtensionFromMimeType(mime.substringBefore(';').trim().lowercase(java.util.Locale.ROOT))
     if (extension.isNullOrBlank()) return name
     return name + "." + extension
 }

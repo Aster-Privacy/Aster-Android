@@ -15,5 +15,14 @@
     <string name="signature_none">Без подписи</string>
     <string name="signature_select">Выбрать подпись</string>
     <string name="compose_metadata_strip_failed">Не удалось убрать скрытые метаданные из: %1$s</string>
+    <string name="compose_inline_image_failed">Не удалось добавить эти изображения: %1$s</string>
     <string name="compose_attachment_read_failed">Не удалось прикрепить \"%1$s\". Письмо не отправлено. Уберите файл или добавьте его заново и попробуйте ещё раз.</string>
+    <string name="schedule_in_one_hour">Через час</string>
+    <string name="schedule_tonight">Сегодня вечером</string>
+    <string name="schedule_tomorrow_morning">Завтра утром</string>
+    <string name="schedule_tomorrow_afternoon">Завтра днём</string>
+    <string name="schedule_monday_morning">В понедельник утром</string>
+    <string name="schedule_pick_date_time">Выбрать дату и время</string>
+    <string name="too_many_recipients_in_field">В каждое поле Кому, Копия и Скрытая копия помещается не более %1$d адресов. Перенесите часть во второе письмо, чтобы отправить это.</string>
+    <string name="too_many_recipients_in_message">Одно письмо доходит максимум до %1$d адресов в полях Кому, Копия и Скрытая копия. Разделите список на несколько писем, и отправка пройдет.</string>
 </resources>

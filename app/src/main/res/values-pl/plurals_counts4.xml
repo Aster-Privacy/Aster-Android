@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="alias_export_entries">
+        <item quantity="one">%d wpis</item>
+        <item quantity="few">%d wpisy</item>
+        <item quantity="many">%d wpisów</item>
+        <item quantity="other">%d wpisów</item>
+    </plurals>
+    <plurals name="alias_export_files">
+        <item quantity="one">%d pliku</item>
+        <item quantity="few">%d plikach</item>
+        <item quantity="many">%d plikach</item>
+        <item quantity="other">%d plikach</item>
+    </plurals>
+    <plurals name="alias_import_existing">
+        <item quantity="one">%d już istnieje</item>
+        <item quantity="few">%d już istnieją</item>
+        <item quantity="many">%d już istnieje</item>
+        <item quantity="other">%d już istnieje</item>
+    </plurals>
+    <plurals name="alias_import_invalid">
+        <item quantity="one">%d nieprawidłowy</item>
+        <item quantity="few">%d nieprawidłowe</item>
+        <item quantity="many">%d nieprawidłowych</item>
+        <item quantity="other">%d nieprawidłowych</item>
+    </plurals>
+    <plurals name="alias_import_to_import">
+        <item quantity="one">%d do zaimportowania</item>
+        <item quantity="few">%d do zaimportowania</item>
+        <item quantity="many">%d do zaimportowania</item>
+        <item quantity="other">%d do zaimportowania</item>
+    </plurals>
+    <plurals name="kids_seats_invitations">
+        <item quantity="one">%d zaproszenie</item>
+        <item quantity="few">%d zaproszenia</item>
+        <item quantity="many">%d zaproszeń</item>
+        <item quantity="other">%d zaproszeń</item>
+    </plurals>
+    <plurals name="kids_seats_members">
+        <item quantity="one">%d osoba</item>
+        <item quantity="few">%d osoby</item>
+        <item quantity="many">%d osób</item>
+        <item quantity="other">%d osób</item>
+    </plurals>
+    <plurals name="kids_seats_reserved">
+        <item quantity="one">%d zarezerwowany adres</item>
+        <item quantity="few">%d zarezerwowane adresy</item>
+        <item quantity="many">%d zarezerwowanych adresów</item>
+        <item quantity="other">%d zarezerwowanych adresów</item>
+    </plurals>
+    <plurals name="replies_sent_count">
+        <item quantity="one">Wysłano %d odpowiedź.</item>
+        <item quantity="few">Wysłano %d odpowiedzi.</item>
+        <item quantity="many">Wysłano %d odpowiedzi.</item>
+        <item quantity="other">Wysłano %d odpowiedzi.</item>
+    </plurals>
+</resources>

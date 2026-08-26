@@ -23,10 +23,8 @@
     <string name="error_network">يتعذّر على Aster الوصول إلى الخادم. تحقق من اتصالك وحاول مرة أخرى.</string>
     <string name="error_not_found">هذا العنصر لم يعد متاحًا.</string>
     <string name="error_payment_required">تحتاج خطتك إلى دفعة قبل أن تتمكن من ذلك.</string>
-    <string name="error_plan_limit_reached">لقد بلغت حدًا في خطتك الحالية.</string>
     <string name="error_rate_limited">محاولات كثيرة جدًا. انتظر قليلًا وحاول مرة أخرى.</string>
     <string name="error_send_quota_reached">لقد بلغت الحد اليومي لهذا الحساب للرسائل إلى عناوين خارج Aster. لا تتأثر الرسائل إلى عناوين Aster الأخرى.</string>
-    <string name="error_storage_full">مساحة التخزين ممتلئة.</string>
     <string name="family_manage_web">إدارة الأعضاء على الويب</string>
     <string name="finish_plan_setup_action">أكمل الإعداد</string>
     <string name="finish_plan_setup_message">لقد أغلقت صفحة الدفع قبل إتمامه. يبقى حسابك على الخطة المجانية حتى تنتهي.</string>

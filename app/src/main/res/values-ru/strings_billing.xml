@@ -23,10 +23,8 @@
     <string name="error_network">Aster не может связаться с сервером. Проверьте подключение и попробуйте снова.</string>
     <string name="error_not_found">Этот элемент больше недоступен.</string>
     <string name="error_payment_required">Для этого действия по вашему тарифу требуется оплата.</string>
-    <string name="error_plan_limit_reached">Вы достигли ограничения текущего тарифа.</string>
     <string name="error_rate_limited">Слишком много попыток. Подождите немного и попробуйте снова.</string>
     <string name="error_send_quota_reached">Вы достигли дневного лимита этой учётной записи на письма по адресам за пределами Aster. На письма другим адресам Aster это не влияет.</string>
-    <string name="error_storage_full">Ваше хранилище заполнено.</string>
     <string name="family_manage_web">Управление участниками в веб-версии</string>
     <string name="finish_plan_setup_action">Завершить настройку</string>
     <string name="finish_plan_setup_message">Вы закрыли оформление заказа до оплаты. Ваша учётная запись остаётся на бесплатном тарифе, пока вы не завершите оплату.</string>

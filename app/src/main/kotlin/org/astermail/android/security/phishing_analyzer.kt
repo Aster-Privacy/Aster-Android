@@ -101,7 +101,7 @@ private val DIGIT_TO_LETTER = mapOf('0' to 'o', '1' to 'l', '3' to 'e', '4' to '
 
 private fun normalize_for_brand_match(s: String): String {
     val sb = StringBuilder()
-    for (ch in s.lowercase()) {
+    for (ch in s.lowercase(java.util.Locale.ROOT)) {
         val mapped = DIGIT_TO_LETTER[ch]
         if (mapped != null) sb.append(mapped)
         else if (ch in 'a'..'z') sb.append(ch)
@@ -135,7 +135,7 @@ private fun is_brand_domain(sender_domain: String, brand: String, legit_domains:
 }
 
 private fun display_name_targets_brand(display_name: String, brand: String): Boolean {
-    val name = display_name.lowercase().trim()
+    val name = display_name.lowercase(java.util.Locale.ROOT).trim()
     if (name.isEmpty()) return false
     val brand_pattern = Regex("\\b" + Regex.escape(brand) + "\\b")
     if (!brand_pattern.containsMatchIn(name)) return false
@@ -149,9 +149,9 @@ private fun display_name_targets_brand(display_name: String, brand: String): Boo
 }
 
 private fun check_sender_domain_lookalike(sender_name: String, sender_email: String): List<PhishingSignal> {
-    val sender_domain = sender_email.substringAfter('@', "").lowercase()
+    val sender_domain = sender_email.substringAfter('@', "").lowercase(java.util.Locale.ROOT)
     if (sender_domain.isEmpty()) return emptyList()
-    val name_lower = sender_name.lowercase()
+    val name_lower = sender_name.lowercase(java.util.Locale.ROOT)
     val registrable = registrable_label(sender_domain)
     val normalized_registrable = normalize_for_brand_match(registrable)
     if (normalized_registrable.isEmpty()) return emptyList()
@@ -186,8 +186,8 @@ private fun check_sender_domain_lookalike(sender_name: String, sender_email: Str
 
 private fun check_display_name_spoof(sender_name: String, sender_email: String): List<PhishingSignal> {
     val out = mutableListOf<PhishingSignal>()
-    val lower_name = sender_name.lowercase().trim()
-    val sender_domain = sender_email.substringAfter('@', "").lowercase()
+    val lower_name = sender_name.lowercase(java.util.Locale.ROOT).trim()
+    val sender_domain = sender_email.substringAfter('@', "").lowercase(java.util.Locale.ROOT)
 
     for ((brand, legit_domains) in BRAND_DISPLAY_NAMES) {
         if (!display_name_targets_brand(lower_name, brand)) continue
@@ -202,7 +202,7 @@ private fun check_display_name_spoof(sender_name: String, sender_email: String):
     }
 
     val email_in_name = EMAIL_IN_NAME_REGEX.find(lower_name)?.value
-    if (email_in_name != null && email_in_name != sender_email.lowercase()) {
+    if (email_in_name != null && email_in_name != sender_email.lowercase(java.util.Locale.ROOT)) {
         out += PhishingSignal(
             name = "display_name_email_mismatch",
             category = "display_name",
@@ -232,9 +232,9 @@ fun analyze_email(
 ): PhishingResult {
     if (!is_external) return PhishingResult(PhishingLevel.safe, 0.0, emptyList())
 
-    val spf = spf_result?.lowercase()
-    val dkim = dkim_result?.lowercase()
-    val dmarc = dmarc_result?.lowercase()
+    val spf = spf_result?.lowercase(java.util.Locale.ROOT)
+    val dkim = dkim_result?.lowercase(java.util.Locale.ROOT)
+    val dmarc = dmarc_result?.lowercase(java.util.Locale.ROOT)
     val authenticated = dmarc == "pass" && (dkim == "pass" || spf == "pass")
     val auth_failed = dmarc == "fail" || spf == "fail" || dkim == "fail"
 

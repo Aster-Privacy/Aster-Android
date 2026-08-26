@@ -53,13 +53,20 @@ class UndoSendWorker(
                 UndoSendEntryPoint::class.java,
             ).mail_repository()
         } catch (_: Throwable) {
-            return Result.retry()
+            return retry_or_give_up(runAttemptCount)
         }
         return when (repo.run_pending_send(pending_id, owner_id, runAttemptCount)) {
-            PendingSendOutcome.SENT, PendingSendOutcome.GONE, PendingSendOutcome.FAILED -> Result.success()
-            PendingSendOutcome.RETRY -> Result.retry()
+            PendingSendOutcome.SENT,
+            PendingSendOutcome.GONE,
+            PendingSendOutcome.FAILED,
+            PendingSendOutcome.DEFERRED,
+            -> Result.success()
+            PendingSendOutcome.RETRY -> retry_or_give_up(runAttemptCount)
         }
     }
+
+    private fun retry_or_give_up(attempt: Int): Result =
+        if (should_retry(attempt)) Result.retry() else Result.failure()
 
     @EntryPoint
     @InstallIn(SingletonComponent::class)
@@ -71,8 +78,17 @@ class UndoSendWorker(
         const val KEY_PENDING_ID = "pending_send_id"
         const val KEY_OWNER_ID = "pending_send_owner_id"
         private const val WORK_PREFIX = "undo_send_"
+        const val MAX_ATTEMPTS = 10
+
+        fun should_retry(attempt: Int): Boolean = attempt + 1 < MAX_ATTEMPTS
 
         private fun work_name(pending_id: String): String = WORK_PREFIX + pending_id
+
+        private fun absent_input_data(pending_id: String, owner_id: String?): Data {
+            val data = Data.Builder().putString(KEY_PENDING_ID, pending_id)
+            owner_id?.let { data.putString(KEY_OWNER_ID, it) }
+            return data.build()
+        }
 
         fun enqueue(context: Context, pending_id: String, initial_delay_ms: Long, owner_id: String? = null) {
             val constraints = Constraints.Builder()
@@ -93,14 +109,14 @@ class UndoSendWorker(
             )
         }
 
-        fun enqueue_if_absent(context: Context, pending_id: String, initial_delay_ms: Long) {
+        fun enqueue_if_absent(context: Context, pending_id: String, initial_delay_ms: Long, owner_id: String? = null) {
             val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
                 .build()
             val request = OneTimeWorkRequestBuilder<UndoSendWorker>()
                 .setConstraints(constraints)
                 .setInitialDelay(initial_delay_ms.coerceAtLeast(0L), TimeUnit.MILLISECONDS)
-                .setInputData(Data.Builder().putString(KEY_PENDING_ID, pending_id).build())
+                .setInputData(absent_input_data(pending_id, owner_id))
                 .setBackoffCriteria(BackoffPolicy.LINEAR, 15, TimeUnit.SECONDS)
                 .build()
             WorkManager.getInstance(context).enqueueUniqueWork(

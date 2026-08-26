@@ -85,7 +85,13 @@ fun resolve_reply_from_alias(
     alias_options: List<String>,
 ): String {
     return received_on_alias
-        ?: thread_ghost_match?.takeIf { it in alias_options }
-        ?: primary_sender_email.takeIf { it.isNotBlank() && it in alias_options }
+        ?: matching_alias_option(thread_ghost_match, alias_options)
+        ?: matching_alias_option(primary_sender_email, alias_options)
         ?: alias_options.firstOrNull().orEmpty()
+}
+
+private fun matching_alias_option(value: String?, alias_options: List<String>): String? {
+    val trimmed = value?.trim().orEmpty()
+    if (trimmed.isEmpty()) return null
+    return alias_options.firstOrNull { it.trim().equals(trimmed, ignoreCase = true) }
 }

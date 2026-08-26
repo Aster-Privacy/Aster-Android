@@ -22,6 +22,8 @@
 package org.astermail.android.ui.auth
 
 import android.content.ClipData
+import org.astermail.android.ui.common.show_copy_failed_toast
+import org.astermail.android.ui.common.write_to_clipboard
 import android.content.ClipboardManager
 import android.content.ContentValues
 import android.content.Context
@@ -64,11 +66,15 @@ import org.astermail.android.design.components.AsterSecondaryButton
 @Composable
 fun RegisterRecoveryStep(
     codes: List<String>,
+    backup_failed: Boolean = false,
+    is_retrying_backup: Boolean = false,
+    on_retry_backup: () -> Unit = {},
     on_continue: () -> Unit,
 ) {
     org.astermail.android.ui.common.secure_screen()
     val colors = AsterMaterial.colors
     val context = LocalContext.current
+    val request_storage_access = org.astermail.android.util.remember_downloads_permission_gate()
     val copied_message = stringResource(R.string.copied_to_clipboard)
     val saved_message = stringResource(R.string.saved_file, RECOVERY_CODES_FILE_NAME)
     val failed_message = stringResource(R.string.failed_to_save)
@@ -132,13 +138,39 @@ fun RegisterRecoveryStep(
             }
         }
 
+        if (backup_failed) {
+            Spacer(Modifier.height(AsterSpacing.lg))
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, colors.danger, SquircleShape(18.dp))
+                    .background(colors.bg_secondary, SquircleShape(18.dp))
+                    .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
+                verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+            ) {
+                Text(
+                    text = stringResource(R.string.recovery_backup_not_saved),
+                    color = colors.danger,
+                    fontSize = 13.sp,
+                )
+                AsterSecondaryButton(
+                    label = stringResource(R.string.retry),
+                    onClick = on_retry_backup,
+                    is_loading = is_retrying_backup,
+                )
+            }
+        }
+
         Spacer(Modifier.height(AsterSpacing.xl))
 
         AsterButton(
             label = stringResource(R.string.copy_to_clipboard),
             onClick = {
-                copy_recovery_codes(context, codes)
-                Toast.makeText(context, copied_message, Toast.LENGTH_SHORT).show()
+                if (copy_recovery_codes(context, codes)) {
+                    Toast.makeText(context, copied_message, Toast.LENGTH_SHORT).show()
+                } else {
+                    show_copy_failed_toast(context)
+                }
             },
         )
 
@@ -147,8 +179,10 @@ fun RegisterRecoveryStep(
         AsterSecondaryButton(
             label = stringResource(R.string.download),
             onClick = {
-                val saved = download_recovery_codes(context, codes)
-                Toast.makeText(context, if (saved) saved_message else failed_message, Toast.LENGTH_SHORT).show()
+                request_storage_access {
+                    val saved = download_recovery_codes(context, codes)
+                    Toast.makeText(context, if (saved) saved_message else failed_message, Toast.LENGTH_SHORT).show()
+                }
             },
         )
 
@@ -163,15 +197,15 @@ fun RegisterRecoveryStep(
 
 private const val RECOVERY_CODES_FILE_NAME = "aster-recovery-codes.txt"
 
-private fun copy_recovery_codes(context: Context, codes: List<String>) {
+private fun copy_recovery_codes(context: Context, codes: List<String>): Boolean {
     val text = codes.joinToString("\n")
-    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
     val clip = ClipData.newPlainText("recovery codes", text)
     clip.description.extras = android.os.PersistableBundle().apply {
         putBoolean("android.content.extra.IS_SENSITIVE", true)
     }
-    clipboard?.setPrimaryClip(clip)
+    if (!write_to_clipboard(context, clip)) return false
     org.astermail.android.util.schedule_sensitive_clipboard_clear(context, text)
+    return true
 }
 
 private fun download_recovery_codes(context: Context, codes: List<String>): Boolean {

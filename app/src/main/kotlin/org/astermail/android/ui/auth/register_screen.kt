@@ -69,6 +69,8 @@ fun RegisterScreen(
     val state = remember_register_flow_state()
     val auth_state by view_model.ui_state.collectAsStateWithLifecycle()
     val recovery_codes by view_model.recovery_codes.collectAsStateWithLifecycle()
+    val recovery_backup_failed by view_model.recovery_backup_failed.collectAsStateWithLifecycle()
+    val is_retrying_recovery_backup by view_model.is_retrying_recovery_backup.collectAsStateWithLifecycle()
     val recovery_email_error by view_model.recovery_email_error.collectAsStateWithLifecycle()
     val is_saving_recovery_email by view_model.is_saving_recovery_email.collectAsStateWithLifecycle()
 
@@ -81,6 +83,17 @@ fun RegisterScreen(
     LaunchedEffect(auth_state) {
         if (auth_state is AuthUiState.Error && state.step.value == RegisterStep.generating) {
             state.captcha_token.value = null
+            state.step.value = RegisterStep.password
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        val orphaned_generating = state.step.value == RegisterStep.generating &&
+            auth_state !is AuthUiState.Loading &&
+            recovery_codes == null
+        if (orphaned_generating) {
+            state.captcha_token.value = null
+            view_model.reset_state()
             state.step.value = RegisterStep.password
         }
     }
@@ -144,6 +157,7 @@ fun RegisterScreen(
                                 state.password.value,
                                 state.confirm_password.value,
                                 state.captcha_token.value,
+                                state.remember_me.value,
                             )
                         },
                         on_sign_in = on_sign_in,
@@ -153,6 +167,9 @@ fun RegisterScreen(
                     RegisterStep.generating -> RegisterGeneratingStep()
                     RegisterStep.recovery_key -> RegisterRecoveryStep(
                         codes = recovery_codes.orEmpty(),
+                        backup_failed = recovery_backup_failed,
+                        is_retrying_backup = is_retrying_recovery_backup,
+                        on_retry_backup = { view_model.retry_recovery_backup() },
                         on_continue = {
                             state.step.value = RegisterStep.recovery_email
                         },
@@ -215,6 +232,7 @@ private fun register_progress_header(
         if (show_back) {
             AsterIconButton(
                 icon = TablerIcons.ArrowLeft,
+                auto_mirror = true,
                 content_description = null,
                 onClick = on_back,
                 tint = colors.text_primary,

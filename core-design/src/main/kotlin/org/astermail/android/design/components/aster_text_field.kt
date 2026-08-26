@@ -44,15 +44,20 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -86,6 +91,23 @@ fun AsterTextField(
     val interaction_source = remember { MutableInteractionSource() }
     val is_focused by interaction_source.collectIsFocusedAsState()
     val has_error = error_text != null
+    var field_state by remember {
+        mutableStateOf(TextFieldValue(value, TextRange(value.length)))
+    }
+    val field_value = if (field_state.text == value) {
+        field_state
+    } else {
+        TextFieldValue(
+            text = value,
+            selection = TextRange(
+                adjusted_caret(field_state.text, value, field_state.selection.end),
+            ),
+        )
+    }
+
+    SideEffect {
+        if (field_value != field_state) field_state = field_value
+    }
 
     val border_color = when {
         has_error -> colors.danger
@@ -131,8 +153,11 @@ fun AsterTextField(
                         )
                     }
                     BasicTextField(
-                        value = value,
-                        onValueChange = onValueChange,
+                        value = field_value,
+                        onValueChange = { updated ->
+                            field_state = updated
+                            if (updated.text != value) onValueChange(updated.text)
+                        },
                         enabled = enabled,
                         singleLine = singleLine,
                         minLines = min_lines,

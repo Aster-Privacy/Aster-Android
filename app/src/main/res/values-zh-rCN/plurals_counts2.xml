@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="aliases_count">
+        <item quantity="other">%d 个别名</item>
+    </plurals>
+    <plurals name="api_keys_count">
+        <item quantity="other">%d 个密钥</item>
+    </plurals>
+    <plurals name="devices_count">
+        <item quantity="other">%d 个设备</item>
+    </plurals>
+    <plurals name="labels_count">
+        <item quantity="other">%d 个标签</item>
+    </plurals>
+    <plurals name="ghosts_count">
+        <item quantity="other">%d 个幽灵别名</item>
+    </plurals>
+    <plurals name="recovery_codes_count">
+        <item quantity="other">%d 个恢复代码</item>
+    </plurals>
+    <plurals name="imported_contacts">
+        <item quantity="other">已导入 %d 个联系人</item>
+    </plurals>
+    <plurals name="n_images">
+        <item quantity="other">%1$d 张图片</item>
+    </plurals>
+    <plurals name="n_trackers">
+        <item quantity="other">%1$d 个跟踪器</item>
+    </plurals>
+    <plurals name="n_fonts">
+        <item quantity="other">%1$d 个字体</item>
+    </plurals>
+    <plurals name="n_stylesheets">
+        <item quantity="other">%1$d 个样式表</item>
+    </plurals>
+    <plurals name="show_n_more_aliases">
+        <item quantity="other">显示另外 %1$d 个别名</item>
+    </plurals>
+    <plurals name="show_n_more_folders">
+        <item quantity="other">显示另外 %1$d 个文件夹</item>
+    </plurals>
+    <plurals name="rules_emails_count">
+        <item quantity="other">%1$d 封邮件</item>
+    </plurals>
+    <plurals name="rules_value_label_count">
+        <item quantity="other">%1$d 个标签</item>
+    </plurals>
+    <plurals name="stop_senders_title">
+        <item quantity="other">停止接收 %1$d 位发件人的邮件？</item>
+    </plurals>
+    <plurals name="participants_and_others">
+        <item quantity="other">%1$s 等 %2$d 人</item>
+    </plurals>
+    <plurals name="messages_in_type">
+        <item quantity="other">%2$s 中有 %1$d 条消息</item>
+    </plurals>
+</resources>

@@ -68,10 +68,7 @@
     <string name="settings_val_gb">%1$d غيغابايت</string>
     <string name="settings_val_tb">%1$d تيرابايت</string>
     <string name="settings_val_mb">%1$d ميغابايت</string>
-    <string name="settings_val_emails_per_day">%1$d رسالة</string>
-    <string name="settings_val_days">%1$d يومًا</string>
     <string name="settings_val_one_year">سنة واحدة</string>
-    <string name="settings_val_hours">%1$d ساعة</string>
     <string name="settings_val_count">%1$d</string>
     <string name="settings_plan_bullet_duo_storage">1 تيرابايت من التخزين المشفّر المشترك</string>
     <string name="settings_plan_bullet_duo_members">عضوان، بحسابين منفصلين</string>
@@ -85,9 +82,13 @@
     <string name="settings_save_amount">$%1$.2f</string>
     <string name="settings_interval_default">شهر</string>
     <string name="settings_diagnostics_clip_label">التشخيص</string>
+    <string name="settings_diagnostics_secure_storage">التخزين الآمن</string>
+    <string name="settings_diagnostics_storage_ok">سليم</string>
+    <string name="settings_diagnostics_storage_degraded">متدهور، سجّل الخروج ثم سجّل الدخول مرة أخرى</string>
     <string name="log_out_confirm_title">تسجيل الخروج؟</string>
     <string name="log_out_confirm_message">تسجيل الخروج من %1$s على هذا الجهاز؟</string>
     <string name="revoke_session_confirm_message">إخراج هذا الجهاز من حسابك؟</string>
     <string name="sign_out_all_other_confirm_message">تسجيل الخروج من كل الأجهزة عدا هذا؟</string>
     <string name="alias_forward_limit_reached">لقد بلغت الحد الأقصى من العناوين البديلة النشطة في خطتك</string>
+    <string name="settings_plan_bullet_daily_emails">1000 رسالة يوميًا</string>
 </resources>

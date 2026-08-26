@@ -33,6 +33,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.astermail.android.R
 import org.astermail.android.api.ApiError
+import org.astermail.android.api.recovery_email.RecoveryEmailApiImpl
+import org.astermail.android.api.recovery_email.RecoveryEmailError
 
 sealed interface AuthUiState {
     data object Idle : AuthUiState
@@ -57,6 +59,12 @@ class AuthViewModel @Inject constructor(
     private val _recovery_codes = MutableStateFlow<List<String>?>(null)
     val recovery_codes: StateFlow<List<String>?> = _recovery_codes.asStateFlow()
 
+    private val _recovery_backup_failed = MutableStateFlow(false)
+    val recovery_backup_failed: StateFlow<Boolean> = _recovery_backup_failed.asStateFlow()
+
+    private val _is_retrying_recovery_backup = MutableStateFlow(false)
+    val is_retrying_recovery_backup: StateFlow<Boolean> = _is_retrying_recovery_backup.asStateFlow()
+
     private val _recovery_email_error = MutableStateFlow<String?>(null)
     val recovery_email_error: StateFlow<String?> = _recovery_email_error.asStateFlow()
 
@@ -67,6 +75,12 @@ class AuthViewModel @Inject constructor(
 
     fun submit_login(email: String, password: String, captcha_token: String? = null) {
         if (_ui_state.value == AuthUiState.Loading) return
+        if (!is_supported_sign_in_domain(email)) {
+            _ui_state.value = AuthUiState.Error(
+                ctx.getString(R.string.error_sign_in_domain_unsupported),
+            )
+            return
+        }
         _ui_state.value = AuthUiState.Loading
         viewModelScope.launch(Dispatchers.IO) {
             val result = runCatching {
@@ -102,7 +116,23 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    fun submit_register(email: String, password: String, confirm_password: String, captcha_token: String? = null) {
+    private fun failure_state(cause: Throwable): AuthUiState {
+        if (cause is kotlinx.coroutines.TimeoutCancellationException && repository.is_signed_in.value) {
+            return AuthUiState.Success
+        }
+        if (cause is ApiError.ForbiddenError && cause.code == org.astermail.android.api.ACCOUNT_SUSPENDED_CODE) {
+            return AuthUiState.AccountSuspended
+        }
+        return AuthUiState.Error(map_error(cause))
+    }
+
+    fun submit_register(
+        email: String,
+        password: String,
+        confirm_password: String,
+        captcha_token: String? = null,
+        remember_me: Boolean = true,
+    ) {
         if (_ui_state.value == AuthUiState.Loading) return
         val trimmed = email.trim()
         if (!is_valid_email(trimmed)) {
@@ -119,10 +149,11 @@ class AuthViewModel @Inject constructor(
         }
         _ui_state.value = AuthUiState.Loading
         viewModelScope.launch(Dispatchers.IO) {
-            val result = repository.register(trimmed, password, captcha_token)
+            val result = repository.register(trimmed, password, captcha_token, remember_me)
             result.fold(
                 onSuccess = { success ->
                     _recovery_codes.value = success.recovery_codes
+                    _recovery_backup_failed.value = !success.recovery_backup_saved
                     _ui_state.value = AuthUiState.Success
                 },
                 onFailure = { t ->
@@ -134,6 +165,18 @@ class AuthViewModel @Inject constructor(
 
     fun consume_recovery_codes() {
         _recovery_codes.value = null
+    }
+
+    fun retry_recovery_backup() {
+        if (_is_retrying_recovery_backup.value) return
+        _is_retrying_recovery_backup.value = true
+        viewModelScope.launch {
+            val saved = kotlinx.coroutines.withContext(Dispatchers.IO) {
+                runCatching { repository.retry_recovery_backup() }.getOrDefault(false)
+            }
+            _recovery_backup_failed.value = !saved
+            _is_retrying_recovery_backup.value = false
+        }
     }
 
     fun save_recovery_email(email: String, on_saved: () -> Unit) {
@@ -156,22 +199,51 @@ class AuthViewModel @Inject constructor(
         _recovery_email_error.value = null
     }
 
-    private fun recovery_email_error_message(t: Throwable): String =
-        (t as? org.astermail.android.api.recovery_email.RecoveryEmailError)
-            ?.user_message
-            ?.takeIf { it.isNotBlank() }
-            ?: map_error(t)
+    private fun recovery_email_error_message(t: Throwable): String {
+        (t as? RecoveryEmailError)?.let { error ->
+            return when (error.code) {
+                RecoveryEmailApiImpl.STEP_UP_REQUIRED ->
+                    ctx.getString(R.string.recovery_step_up_description)
+                RecoveryEmailApiImpl.TOTP_REQUIRED ->
+                    ctx.getString(R.string.totp_code_required_error)
+                RecoveryEmailApiImpl.INVALID_INPUT ->
+                    ctx.getString(R.string.error_invalid_email)
+                RecoveryEmailApiImpl.EMAIL_SEND_FAILED ->
+                    ctx.getString(R.string.error_send_recovery)
+                else -> map_error(t)
+            }
+        }
+        return when ((t as? ApiError.UnknownError)?.detail) {
+            RecoveryEmailApiImpl.RECOVERY_EMAIL_IN_USE ->
+                ctx.getString(R.string.recovery_email_already_in_use)
+            RecoveryEmailApiImpl.RECOVERY_EMAIL_COOLDOWN ->
+                ctx.getString(R.string.recovery_email_resend_cooldown)
+            else -> map_error(t)
+        }
+    }
 
     fun reset_state() {
         _ui_state.value = AuthUiState.Idle
     }
 
-    fun cancel_totp(challenge: org.astermail.android.auth.TotpChallenge) {
+    fun cancel_totp(challenge: org.astermail.android.auth.TotpChallenge): Boolean {
+        if (_ui_state.value == AuthUiState.Loading) return false
         challenge.password_bytes.fill(0)
         challenge.password_hash_bytes.fill(0)
         _ui_state.value = AuthUiState.Idle
+        return true
     }
 
+    private fun is_supported_sign_in_domain(email: String): Boolean {
+        val at_index = email.indexOf('@')
+
+        if (at_index == -1) return true
+
+        val domain = email.substring(at_index + 1).lowercase(java.util.Locale.ROOT).trimEnd('.')
+
+        return domain == "astermail.org" || domain.endsWith(".astermail.org") ||
+            domain == "aster.cx" || domain.endsWith(".aster.cx")
+    }
     private fun is_valid_email(email: String): Boolean {
         val at = email.indexOf('@')
         if (at <= 0 || at == email.length - 1) return false
@@ -180,13 +252,6 @@ class AuthViewModel @Inject constructor(
         if (local.isBlank() || domain.isBlank()) return false
         return domain.contains('.')
     }
-
-    private fun failure_state(t: Throwable): AuthUiState =
-        if (t is ApiError.ForbiddenError && t.code == org.astermail.android.api.ACCOUNT_SUSPENDED_CODE) {
-            AuthUiState.AccountSuspended
-        } else {
-            AuthUiState.Error(map_error(t))
-        }
 
     private fun map_error(t: Throwable): String = when (t) {
         is ApiError.InvalidCredentials, is ApiError.UnauthorizedError -> ctx.getString(R.string.error_invalid_credentials)
@@ -198,12 +263,14 @@ class AuthViewModel @Inject constructor(
         is ApiError.NotFoundError -> ctx.getString(R.string.error_account_not_found)
         is ApiError.NetworkError -> ctx.getString(R.string.error_no_connection)
         is ApiError.ServerError -> ctx.getString(R.string.error_server)
-        is ApiError.ValidationError -> t.messages.joinToString(", ").ifBlank { ctx.getString(R.string.error_invalid_request) }
+        is ApiError.ValidationError ->
+            org.astermail.android.localized_api_error(ctx, t, ctx.getString(R.string.error_invalid_request))
         is ApiError.RateLimited -> ctx.getString(R.string.error_too_many_attempts)
         is ApiError.UnknownError -> ctx.getString(R.string.error_generic)
         is java.net.UnknownHostException -> ctx.getString(R.string.error_no_connection)
         is java.net.ConnectException -> ctx.getString(R.string.error_no_connection)
         is java.net.SocketTimeoutException -> ctx.getString(R.string.error_timeout)
+        is kotlinx.coroutines.TimeoutCancellationException -> ctx.getString(R.string.error_timeout)
         is javax.net.ssl.SSLException -> ctx.getString(R.string.error_ssl)
         else -> ctx.getString(R.string.error_generic)
     }

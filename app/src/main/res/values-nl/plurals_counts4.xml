@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="alias_export_entries">
+        <item quantity="one">%d item</item>
+        <item quantity="other">%d items</item>
+    </plurals>
+    <plurals name="alias_export_files">
+        <item quantity="one">%d bestand</item>
+        <item quantity="other">%d bestanden</item>
+    </plurals>
+    <plurals name="alias_import_existing">
+        <item quantity="one">%d bestaat al</item>
+        <item quantity="other">%d bestaan al</item>
+    </plurals>
+    <plurals name="alias_import_invalid">
+        <item quantity="one">%d ongeldig</item>
+        <item quantity="other">%d ongeldig</item>
+    </plurals>
+    <plurals name="alias_import_to_import">
+        <item quantity="one">%d wordt geïmporteerd</item>
+        <item quantity="other">%d worden geïmporteerd</item>
+    </plurals>
+    <plurals name="kids_seats_invitations">
+        <item quantity="one">%d uitnodiging</item>
+        <item quantity="other">%d uitnodigingen</item>
+    </plurals>
+    <plurals name="kids_seats_members">
+        <item quantity="one">%d lid</item>
+        <item quantity="other">%d leden</item>
+    </plurals>
+    <plurals name="kids_seats_reserved">
+        <item quantity="one">%d gereserveerd adres</item>
+        <item quantity="other">%d gereserveerde adressen</item>
+    </plurals>
+    <plurals name="replies_sent_count">
+        <item quantity="one">%d antwoord tot nu toe verzonden.</item>
+        <item quantity="other">%d antwoorden tot nu toe verzonden.</item>
+    </plurals>
+</resources>

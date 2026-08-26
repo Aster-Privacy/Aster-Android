@@ -22,7 +22,8 @@
 package org.astermail.android.ui.settings.detail
 
 import android.content.ClipData
-import android.content.ClipboardManager
+import org.astermail.android.ui.common.show_copy_result_toast
+import org.astermail.android.ui.common.write_to_clipboard
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -49,6 +50,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -70,14 +72,18 @@ import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
+import org.astermail.android.design.components.DialogConfirmStyle
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.UpgradeGate
 import org.astermail.android.imports.ExternalAccountsError
 import org.astermail.android.imports.ExternalAccountsViewModel
 import org.astermail.android.ui.common.app_toast
 import org.astermail.android.ui.common.show_copied_toast
+import org.astermail.android.ui.common.start_external_intent
+import org.astermail.android.util.ascii_digits
 
 @Composable
 fun ExternalAccountsScreen(
@@ -101,24 +107,25 @@ fun ExternalAccountsScreen(
     LaunchedEffect(state.authorize_url) {
         val url = state.authorize_url
         if (!url.isNullOrBlank()) {
-            runCatching {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                context.startActivity(intent)
-            }
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            start_external_intent(context, intent)
             vm.consume_authorize_url()
         }
     }
 
-    var manual_open by remember { mutableStateOf(false) }
-    var imap_email by remember { mutableStateOf("") }
-    var imap_host by remember { mutableStateOf("") }
-    var imap_port by remember { mutableStateOf("993") }
-    var imap_user by remember { mutableStateOf("") }
+    var manual_open by rememberSaveable { mutableStateOf(false) }
+    var confirm_delete by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var deleting_token by remember { mutableStateOf<String?>(null) }
+    var imap_email by rememberSaveable { mutableStateOf("") }
+    var imap_host by rememberSaveable { mutableStateOf("") }
+    var imap_port by rememberSaveable { mutableStateOf("993") }
+    var imap_user by rememberSaveable { mutableStateOf("") }
     var imap_pass by remember { mutableStateOf("") }
-    var smtp_host by remember { mutableStateOf("") }
-    var smtp_port by remember { mutableStateOf("587") }
-    var smtp_user by remember { mutableStateOf("") }
+    var smtp_host by rememberSaveable { mutableStateOf("") }
+    var smtp_port by rememberSaveable { mutableStateOf("587") }
+    var smtp_user by rememberSaveable { mutableStateOf("") }
     var smtp_pass by remember { mutableStateOf("") }
 
     detail_scaffold(title = stringResource(R.string.external_accounts), on_back = on_back) {
@@ -183,6 +190,13 @@ fun ExternalAccountsScreen(
                     is_loading = state.connecting_provider == "yahoo",
                     on_click = { vm.start_oauth("yahoo") },
                 )
+                if (state.connecting_provider != null) {
+                    Spacer(Modifier.size(AsterSpacing.md))
+                    AsterButton(
+                        label = stringResource(R.string.cancel),
+                        onClick = { vm.cancel_oauth() },
+                    )
+                }
             }
         }
 
@@ -211,7 +225,7 @@ fun ExternalAccountsScreen(
                     v_gap(AsterSpacing.xs)
                     AsterTextField(
                         value = imap_port,
-                        onValueChange = { imap_port = it.filter { ch -> ch.isDigit() } },
+                        onValueChange = { imap_port = ascii_digits(it) },
                         placeholder = stringResource(R.string.ext_imap_port),
                         keyboard_options = KeyboardOptions(keyboardType = KeyboardType.Number),
                     )
@@ -237,7 +251,7 @@ fun ExternalAccountsScreen(
                     v_gap(AsterSpacing.xs)
                     AsterTextField(
                         value = smtp_port,
-                        onValueChange = { smtp_port = it.filter { ch -> ch.isDigit() } },
+                        onValueChange = { smtp_port = ascii_digits(it) },
                         placeholder = stringResource(R.string.ext_smtp_port),
                         keyboard_options = KeyboardOptions(keyboardType = KeyboardType.Number),
                     )
@@ -271,7 +285,7 @@ fun ExternalAccountsScreen(
                                 smtp_password = smtp_pass,
                             )
                         },
-                        enabled = imap_email.contains("@") && imap_host.isNotBlank() && imap_user.isNotBlank() && imap_pass.isNotBlank() && (imap_port.toIntOrNull() ?: 0) in 1..65535 && !state.manual_submitting,
+                        enabled = imap_email.contains("@") && imap_host.isNotBlank() && imap_user.isNotBlank() && imap_pass.isNotBlank() && (imap_port.isEmpty() || (imap_port.toIntOrNull() ?: 0) in 1..65535) && (smtp_port.isEmpty() || (smtp_port.toIntOrNull() ?: 0) in 1..65535) && !state.manual_submitting,
                         is_loading = state.manual_submitting,
                     )
                     if (state.manual_success) {
@@ -290,7 +304,20 @@ fun ExternalAccountsScreen(
         section_label(stringResource(R.string.ext_section_accounts))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(AsterSpacing.lg)) {
-                if (state.accounts.isEmpty()) {
+                if (state.accounts.isEmpty() && state.error == ExternalAccountsError.LOAD_FAILED) {
+                    Text(
+                        text = stringResource(R.string.ext_error_load_failed),
+                        color = colors.text_tertiary,
+                        fontSize = 13.sp,
+                    )
+                    Spacer(Modifier.size(AsterSpacing.md))
+                    AsterButton(
+                        label = stringResource(R.string.retry),
+                        onClick = { vm.load() },
+                    )
+                } else if (state.accounts.isEmpty() && state.loading) {
+                    CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(20.dp))
+                } else if (state.accounts.isEmpty()) {
                     Text(
                         text = stringResource(R.string.ext_no_accounts),
                         color = colors.text_tertiary,
@@ -311,7 +338,11 @@ fun ExternalAccountsScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .combinedClickable(
-                                    onClick = {},
+                                    onClick = {
+                                        if (!account_email.isNullOrBlank()) {
+                                            copy_account_email(context, account_email)
+                                        }
+                                    },
                                     onLongClick = {
                                         if (!account_email.isNullOrBlank()) {
                                             haptics.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -346,8 +377,11 @@ fun ExternalAccountsScreen(
                                 val pretty = remember(last_sync) {
                                     runCatching {
                                         val instant = java.time.Instant.parse(last_sync)
-                                        val zoned = instant.atZone(java.time.ZoneId.systemDefault())
-                                        zoned.format(java.time.format.DateTimeFormatter.ofPattern("MMM d, h:mm a"))
+                                        val zoned = instant.atZone(org.astermail.android.ui.mail.AsterTimePreferences.account_zone_id())
+                                        zoned.format(
+                                            java.time.format.DateTimeFormatter
+                                                .ofLocalizedDateTime(java.time.format.FormatStyle.MEDIUM, java.time.format.FormatStyle.SHORT),
+                                        )
                                     }.getOrDefault(last_sync)
                                 }
                                 Text(
@@ -359,7 +393,7 @@ fun ExternalAccountsScreen(
                             val sync_error = acct.last_sync_error
                             if (!sync_error.isNullOrBlank()) {
                                 Text(
-                                    text = sync_error,
+                                    text = stringResource(R.string.ext_error_sync_failed),
                                     color = colors.danger,
                                     fontSize = 12.sp,
                                 )
@@ -378,11 +412,9 @@ fun ExternalAccountsScreen(
                                 )
                                 AsterButton(
                                     label = stringResource(R.string.ext_delete),
-                                    onClick = {
-                                        vm.delete_account(acct.account_token) { ok ->
-                                            app_toast.show(if (ok) account_removed_message else account_remove_failed_message)
-                                        }
-                                    },
+                                    onClick = { confirm_delete = acct.account_token to display_label },
+                                    enabled = deleting_token != acct.account_token,
+                                    is_loading = deleting_token == acct.account_token,
                                 )
                             }
                         }
@@ -391,7 +423,7 @@ fun ExternalAccountsScreen(
             }
         }
 
-        state.error?.let { err ->
+        state.error?.takeIf { it != ExternalAccountsError.LOAD_FAILED || state.accounts.isNotEmpty() }?.let { err ->
             v_gap(AsterSpacing.md)
             val msg = when (err) {
                 ExternalAccountsError.LOAD_FAILED -> stringResource(R.string.ext_error_load_failed)
@@ -405,6 +437,25 @@ fun ExternalAccountsScreen(
         }
 
         v_gap(AsterSpacing.xxl)
+    }
+
+    confirm_delete?.let { (token, label) ->
+        AsterAlertDialog(
+            on_dismiss = { confirm_delete = null },
+            title = stringResource(R.string.ext_delete),
+            message = stringResource(R.string.alias_delete_confirm_message, label),
+            confirm_label = stringResource(R.string.ext_delete),
+            cancel_label = stringResource(R.string.cancel),
+            confirm_style = DialogConfirmStyle.destructive,
+            on_confirm = {
+                confirm_delete = null
+                deleting_token = token
+                vm.delete_account(token) { ok ->
+                    deleting_token = null
+                    app_toast.show(if (ok) account_removed_message else account_remove_failed_message)
+                }
+            },
+        )
     }
 }
 
@@ -483,7 +534,6 @@ internal fun provider_icon_res(oauth_provider: String?, email: String?, protocol
 }
 
 private fun copy_account_email(context: Context, email: String) {
-    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    clipboard.setPrimaryClip(ClipData.newPlainText("account", email))
-    show_copied_toast(context, email)
+    val copied = write_to_clipboard(context, ClipData.newPlainText("account", email))
+    show_copy_result_toast(context, email, copied)
 }

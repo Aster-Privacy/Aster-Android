@@ -52,6 +52,7 @@ import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.settings.DomainPurchaseUiState
 import org.astermail.android.settings.is_domain_order_in_flight
+import org.astermail.android.design.mirror_in_rtl
 
 private fun format_expiry_date(iso: String): String {
     return try {
@@ -136,7 +137,7 @@ private fun domain_purchase_promo(on_buy: () -> Unit) {
                 imageVector = TablerIcons.ChevronRight,
                 contentDescription = null,
                 tint = colors.text_tertiary,
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(20.dp).mirror_in_rtl(),
             )
         }
     }
@@ -249,7 +250,7 @@ private fun purchased_domain_row(
                     imageVector = TablerIcons.ChevronRight,
                     contentDescription = null,
                     tint = colors.text_tertiary,
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(20.dp).mirror_in_rtl(),
                 )
                 order.status == "complete" -> {
                     if (state.renewing_order_id == order.id) {

@@ -21,8 +21,9 @@
 
 package org.astermail.android.ui.settings.detail
 
-import android.content.ActivityNotFoundException
 import android.content.ClipData
+import org.astermail.android.ui.common.show_copy_failed_toast
+import org.astermail.android.ui.common.write_to_clipboard
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
@@ -136,7 +137,7 @@ private fun parse_iso_millis(value: String): Long? {
 }
 
 private fun format_usd_amount(cents: Long): String {
-    return String.format(Locale.US, "%,.2f", cents / 100.0)
+    return String.format(Locale.getDefault(), "%,.2f", cents / 100.0)
 }
 
 private fun atomic_or_null(value: String): BigInteger? =
@@ -680,9 +681,11 @@ private fun crypto_detail_row(label: String, value: String, monospace: Boolean =
                     .size(32.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .clickable {
-                        val manager = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
-                        manager?.setPrimaryClip(ClipData.newPlainText(label, value))
-                        Toast.makeText(context, copied_message, Toast.LENGTH_SHORT).show()
+                        if (write_to_clipboard(context, ClipData.newPlainText(label, value))) {
+                            Toast.makeText(context, copied_message, Toast.LENGTH_SHORT).show()
+                        } else {
+                            show_copy_failed_toast(context)
+                        }
                     },
                 contentAlignment = Alignment.Center,
             ) {
@@ -730,7 +733,7 @@ private fun crypto_wallet_button(target_uri: String) {
         onClick = {
             try {
                 context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(target_uri)))
-            } catch (e: ActivityNotFoundException) {
+            } catch (_: Throwable) {
                 Toast.makeText(context, missing_app_message, Toast.LENGTH_SHORT).show()
             }
         },

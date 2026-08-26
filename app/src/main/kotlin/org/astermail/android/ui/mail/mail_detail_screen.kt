@@ -22,6 +22,9 @@
 package org.astermail.android.ui.mail
 
 import compose.icons.TablerIcons
+import org.astermail.android.ui.common.show_copy_result_toast
+import org.astermail.android.ui.common.show_copy_failed_toast
+import org.astermail.android.ui.common.write_to_clipboard
 import compose.icons.tablericons.AlertTriangle
 import compose.icons.tablericons.*
 
@@ -161,6 +164,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
 import org.astermail.android.looks_encrypted
@@ -179,6 +183,9 @@ import org.astermail.android.mail.can_move_to_inbox
 import org.astermail.android.mail.body_starts_with
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.design.mirror_in_rtl
+import org.astermail.android.util.clip_units
+import org.astermail.android.util.clip_with_ellipsis
 
 private val placeholder_body_height = 140.dp
 
@@ -227,16 +234,16 @@ private fun external_display_url(url: String): String {
     if (trimmed.length <= 60) return trimmed
     return try {
         val parsed = android.net.Uri.parse(trimmed)
-        val host = parsed.host ?: return trimmed.take(60) + "…"
+        val host = parsed.host ?: return trimmed.clip_with_ellipsis(60)
         val path = parsed.path.orEmpty()
         val remaining = 60 - host.length - 3
         if (remaining > 10) {
-            host + if (path.length > remaining) path.take(remaining) + "…" else path
+            host + if (path.length > remaining) path.clip_with_ellipsis(remaining) else path
         } else {
             "$host/…"
         }
     } catch (_: Throwable) {
-        trimmed.take(60) + "…"
+        trimmed.clip_with_ellipsis(60)
     }
 }
 
@@ -446,6 +453,7 @@ fun MailDetailScreen(
     val colors = AsterMaterial.colors
     val density = LocalDensity.current
     val context = LocalContext.current
+    val request_storage_access = org.astermail.android.util.remember_downloads_permission_gate()
     val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
     val swipe_threshold_px = with(density) { 200.dp.toPx() }
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
@@ -453,9 +461,12 @@ fun MailDetailScreen(
     val traffic_blocks_external = settings_state.preferences?.low_network_mode == true
     val block_external_images = privacy_blocks_external || traffic_blocks_external
     val blocked_for_traffic_only = traffic_blocks_external && !privacy_blocks_external
+    val offer_always_allow_external =
+        settings_state.preferences?.load_remote_images != "never"
     val thread_state by mail_vm.thread_state.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     val reactions_enabled = settings_state.preferences?.reactions_enabled != false
+    val show_encryption_indicators = settings_state.preferences?.show_encryption_indicators != false
     val message_reactions by mail_vm.message_reactions.collectAsStateWithLifecycle()
     val decrypt_retry_active by mail_vm.decrypt_retry_active.collectAsStateWithLifecycle()
     val identity_changes by mail_vm.identity_changes.collectAsStateWithLifecycle()
@@ -505,6 +516,20 @@ fun MailDetailScreen(
     val all_thread_attachments = remember(api_messages) {
         api_messages.flatMap { it.attachments }
     }
+    val attachment_failure_ids = remember(
+        thread_state.messages,
+        thread_state.attachments_failed,
+        thread_attachments,
+    ) {
+        if (!thread_state.attachments_failed) {
+            emptySet()
+        } else {
+            thread_state.messages
+                .filter { it.has_attachments && thread_attachments[it.id].isNullOrEmpty() }
+                .map { it.id }
+                .toSet()
+        }
+    }
 
     val thread_ghost_email = remember(thread_state.messages) {
         val latest_sent = thread_state.messages
@@ -528,7 +553,7 @@ fun MailDetailScreen(
     }
 
     val email = remember(email_id, api_item) {
-        if (api_item != null) inbox_item_to_email(api_item) else null
+        if (api_item != null) inbox_item_to_email(api_item, context = context) else null
     }
     var star_override by remember(email_id) { mutableStateOf<Boolean?>(null) }
     val is_starred = star_override ?: (api_item?.is_starred == true)
@@ -613,6 +638,7 @@ fun MailDetailScreen(
     var show_raw_source_dialog by remember { mutableStateOf(false) }
     var show_encryption_info by remember { mutableStateOf(false) }
     var pending_block_sender by remember { mutableStateOf<String?>(null) }
+    var pending_delete_permanent by remember { mutableStateOf(false) }
     var profile_sender by remember { mutableStateOf<Pair<String, String>?>(null) }
     var show_snooze_sheet by remember { mutableStateOf(false) }
     var show_folder_sheet by remember { mutableStateOf(false) }
@@ -735,6 +761,7 @@ fun MailDetailScreen(
             ) {
                 AsterIconButton(
                     icon = TablerIcons.ArrowLeft,
+                    auto_mirror = true,
                     content_description = stringResource(R.string.back),
                     onClick = on_back,
                     modifier = Modifier.align(Alignment.CenterStart).testTag("back"),
@@ -763,7 +790,7 @@ fun MailDetailScreen(
                         )
                     }
                     androidx.compose.animation.AnimatedVisibility(
-                        visible = !show_topbar_subject && email != null,
+                        visible = !show_topbar_subject && email != null && show_encryption_indicators,
                         enter = fadeIn(),
                         exit = fadeOut(),
                     ) {
@@ -934,13 +961,21 @@ fun MailDetailScreen(
                             }
                         }
                         detail_menu_action(
-                            icon = TablerIcons.Trash,
-                            text = stringResource(R.string.delete_action),
+                            icon = if (is_trashed) TablerIcons.TrashOff else TablerIcons.Trash,
+                            text = if (is_trashed) {
+                                stringResource(R.string.swipe_delete_forever)
+                            } else {
+                                stringResource(R.string.delete_action)
+                            },
                             tint = colors.danger,
                         ) {
                             show_topbar_menu = false
-                            mail_vm.trash(listOf(email_id))
-                            on_delete()
+                            if (is_trashed) {
+                                pending_delete_permanent = true
+                            } else {
+                                mail_vm.trash(listOf(email_id))
+                                on_delete()
+                            }
                         }
                     }
                     }
@@ -1136,8 +1171,12 @@ fun MailDetailScreen(
                             show_top_divider = !is_after_indicator,
                             allow_external = !block_external_images || msg.id in allow_external_ids || is_system_sender,
                             blocked_for_traffic = blocked_for_traffic_only,
+                            offer_always_allow = offer_always_allow_external,
+                            show_raw_headers = settings_state.preferences?.show_raw_headers == true,
                             on_retry_decrypt = { mail_vm.retry_decrypt_thread() },
                             retry_in_progress = decrypt_retry_active,
+                            attachments_failed = msg.id in attachment_failure_ids,
+                            on_retry_attachments = { mail_vm.retry_thread_attachments() },
                             identity_changed = identity_changed_senders.contains(
                                 msg.sender_email.trim().lowercase(),
                             ),
@@ -1151,7 +1190,12 @@ fun MailDetailScreen(
                                 allow_external_ids = allow_external_ids + msg.id
                                 val base = settings_state.preferences
                                 if (base != null) {
-                                    settings_vm.save_preferences(base.copy(block_external_images = false))
+                                    settings_vm.save_preferences(
+                                        base.copy(
+                                            block_external_images = false,
+                                            load_remote_images = "always",
+                                        ),
+                                    )
                                 }
                             },
                             on_disable_low_network = {
@@ -1220,8 +1264,10 @@ fun MailDetailScreen(
                                 show_toast(context.getString(R.string.downloading_file, att.filename))
                                 mail_vm.download_attachment(att) { result ->
                                     result.onSuccess { (resolved_att, bytes) ->
-                                        val saved = save_attachment_to_storage(context, resolved_att, bytes)
-                                        show_toast(if (saved) context.getString(R.string.saved_file, resolved_att.filename) else context.getString(R.string.failed_to_save))
+                                        request_storage_access {
+                                            val saved = save_attachment_to_storage(context, resolved_att, bytes)
+                                            show_toast(if (saved) context.getString(R.string.saved_file, resolved_att.filename) else context.getString(R.string.failed_to_save))
+                                        }
                                     }.onFailure { error ->
                                         show_toast(
                                             if (error is AttachmentKeyUnavailableException) context.getString(R.string.attachment_locked)
@@ -1417,13 +1463,22 @@ fun MailDetailScreen(
                                 } else {
                                     bottom_action(TablerIcons.MailOpened, stringResource(R.string.mark_as_read), test_tag = "mark_read") {
                                         mail_vm.mark_read(email_id)
-                                        show_toast(context.getString(R.string.mark_as_read))
+                                        show_toast(context.getString(R.string.marked_as_read))
                                     }
                                 }
                             }
-                            "trash" -> bottom_action(TablerIcons.Trash, stringResource(R.string.move_to_trash), test_tag = "delete") {
-                                mail_vm.trash(listOf(email_id))
-                                on_delete()
+                            "trash" -> {
+                                if (is_trashed) {
+                                    bottom_action(TablerIcons.Inbox, stringResource(R.string.swipe_restore), test_tag = "delete") {
+                                        mail_vm.restore_trash(listOf(email_id))
+                                        on_delete()
+                                    }
+                                } else {
+                                    bottom_action(TablerIcons.Trash, stringResource(R.string.move_to_trash), test_tag = "delete") {
+                                        mail_vm.trash(listOf(email_id))
+                                        on_delete()
+                                    }
+                                }
                             }
                             "archive" -> {
                                 val archived = api_item?.is_archived == true
@@ -1461,7 +1516,11 @@ fun MailDetailScreen(
                             "snooze" -> bottom_action(TablerIcons.Clock, stringResource(R.string.snooze)) {
                                 show_snooze_sheet = true
                             }
-                            "spam" -> bottom_action(TablerIcons.Ban, stringResource(R.string.report_spam), test_tag = "toolbar_spam") {
+                            "spam" -> bottom_action(
+                                if (is_spam) TablerIcons.ShieldCheck else TablerIcons.Ban,
+                                if (is_spam) stringResource(R.string.swipe_not_spam) else stringResource(R.string.report_spam),
+                                test_tag = "toolbar_spam",
+                            ) {
                                 val spam_sender_hint = listOfNotNull(messages.lastOrNull()?.sender_email)
                                 if (is_spam) {
                                     is_spam_override = false
@@ -1469,10 +1528,6 @@ fun MailDetailScreen(
                                 } else {
                                     is_spam_override = true
                                     mail_vm.mark_spam(listOf(email_id), sender_emails_hint = spam_sender_hint)
-                                    val sender = messages.lastOrNull()?.sender_email
-                                    if (!sender.isNullOrBlank()) {
-                                        settings_vm.block_sender(sender)
-                                    }
                                 }
                                 on_back()
                             }
@@ -1526,6 +1581,7 @@ fun MailDetailScreen(
                     on_archive()
                 }
             },
+            is_archived = api_item?.is_archived == true,
             on_trash = {
                 show_action_sheet = false
                 mail_vm.trash(listOf(item_target), message_scope = message_scope)
@@ -1541,10 +1597,6 @@ fun MailDetailScreen(
                 } else {
                     is_spam_override = true
                     mail_vm.mark_spam(listOf(item_target), sender_emails_hint = spam_sender_hint)
-                    val sender = target_message?.sender_email
-                    if (!sender.isNullOrBlank()) {
-                        settings_vm.block_sender(sender)
-                    }
                 }
                 on_back()
             },
@@ -1589,15 +1641,17 @@ fun MailDetailScreen(
                     preview_bytes = null
                 },
                 on_download = {
-                    val saved = save_attachment_to_storage(context, att, byt)
-                    Toast.makeText(
-                        context,
-                        if (saved) context.getString(R.string.saved_file, att.filename) else context.getString(R.string.failed_to_save),
-                        Toast.LENGTH_SHORT,
-                    ).show()
-                    if (saved) {
-                        preview_attachment = null
-                        preview_bytes = null
+                    request_storage_access {
+                        val saved = save_attachment_to_storage(context, att, byt)
+                        Toast.makeText(
+                            context,
+                            if (saved) context.getString(R.string.saved_file, att.filename) else context.getString(R.string.failed_to_save),
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                        if (saved) {
+                            preview_attachment = null
+                            preview_bytes = null
+                        }
                     }
                 },
             )
@@ -1665,9 +1719,15 @@ fun MailDetailScreen(
             sender_name = profile_target.second,
             on_close = { profile_sender = null },
             on_copy = { address ->
-                val cm = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                cm.setPrimaryClip(android.content.ClipData.newPlainText("email_address", address))
-                show_toast(org.astermail.android.ui.common.copied_toast_text(context, address))
+                val copied = write_to_clipboard(
+                    context,
+                    android.content.ClipData.newPlainText("email_address", address),
+                )
+                if (copied) {
+                    show_toast(org.astermail.android.ui.common.copied_toast_text(context, address))
+                } else {
+                    show_copy_failed_toast(context)
+                }
             },
             on_search_sender = { address -> on_navigate?.invoke("search:from:$address") },
             on_send_email = { address ->
@@ -1677,6 +1737,22 @@ fun MailDetailScreen(
             },
             on_block = { address -> pending_block_sender = address },
             on_result = { message -> show_toast(message) },
+        )
+    }
+
+    if (pending_delete_permanent) {
+        org.astermail.android.design.components.AsterAlertDialog(
+            on_dismiss = { pending_delete_permanent = false },
+            title = stringResource(R.string.confirm_delete_permanent_title),
+            message = stringResource(R.string.confirm_delete_permanent_message),
+            confirm_label = stringResource(R.string.swipe_delete_forever),
+            cancel_label = stringResource(R.string.cancel),
+            confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
+            on_confirm = {
+                pending_delete_permanent = false
+                mail_vm.delete_permanent(email_id)
+                on_delete()
+            },
         )
     }
 
@@ -1756,8 +1832,9 @@ fun MailDetailScreen(
             on_pick = { picked ->
                 val display = picked.encrypted_name?.takeIf { it.isNotBlank() }
                     ?: unnamed_folder_label
-                mail_vm.apply_label(email_id, picked.label_token, display)
+                mail_vm.move_to_folder_bulk(listOf(email_id), picked.label_token, display)
                 show_folder_sheet = false
+                on_back()
             },
             on_move_to_inbox = if (can_move_to_inbox(source_folder)) {
                 {
@@ -1773,22 +1850,22 @@ fun MailDetailScreen(
 
     if (show_label_sheet) {
         val settings_state by settings_vm.state.collectAsStateWithLifecycle()
-        val tag_items = org.astermail.android.labels.tag_rows(settings_state.tags)
         val applied_tags = thread_state.item?.takeIf { it.id == email_id }?.tag_tokens?.toSet()
             ?: emptySet()
+        val tag_items = org.astermail.android.labels.tag_rows(settings_state.tags, applied_tags)
+        val unknown_label = stringResource(R.string.unknown)
         tag_picker_sheet(
             title = stringResource(R.string.edit_labels),
             empty_message = stringResource(R.string.no_labels_yet_create),
             items = tag_items,
             on_close = { show_label_sheet = false },
             on_pick = { picked ->
-                val display = picked.encrypted_name.takeIf { it.isNotBlank() } ?: picked.tag_token
+                val display = org.astermail.android.labels.tag_display_name(picked, unknown_label)
                 if (picked.tag_token in applied_tags) {
                     mail_vm.remove_tag(email_id, picked.tag_token, display)
                 } else {
                     mail_vm.apply_tag(email_id, picked.tag_token, display)
                 }
-                show_label_sheet = false
             },
             applied_tokens = applied_tags,
         )
@@ -1824,6 +1901,7 @@ internal fun expanded_message(
     my_profile_pic: String? = null,
     allow_external: Boolean = false,
     blocked_for_traffic: Boolean = false,
+    offer_always_allow: Boolean = true,
     on_load_external: () -> Unit = {},
     on_always_allow_external: () -> Unit = {},
     on_disable_low_network: () -> Unit = {},
@@ -1845,10 +1923,13 @@ internal fun expanded_message(
     on_more: () -> Unit,
     on_attachment_tap: (MessageAttachment) -> Unit = {},
     on_attachment_download: (MessageAttachment) -> Unit = {},
+    attachments_failed: Boolean = false,
+    on_retry_attachments: () -> Unit = {},
     reactions: List<DecryptedReaction> = emptyList(),
     on_react: (String) -> Unit = {},
     is_system: Boolean = false,
     can_collapse: Boolean = true,
+    show_raw_headers: Boolean = false,
     show_header_reply: Boolean = true,
     identity_changed: Boolean = false,
     on_acknowledge_identity: () -> Unit = {},
@@ -1858,9 +1939,11 @@ internal fun expanded_message(
     val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
     val copy_email = { email: String ->
         haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-        val cm = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-        cm.setPrimaryClip(android.content.ClipData.newPlainText("email_address", email))
-        org.astermail.android.ui.common.show_copied_toast(context, email)
+        val copied = write_to_clipboard(
+            context,
+            android.content.ClipData.newPlainText("email_address", email),
+        )
+        show_copy_result_toast(context, email, copied)
     }
     var show_details by remember { mutableStateOf(false) }
     var addresses_expanded by remember(msg.id) { mutableStateOf(false) }
@@ -2077,6 +2160,8 @@ internal fun expanded_message(
                 },
                 authentication_failed = auth_status == SenderAuthStatus.failed,
                 on_show_trackers = if (tracker_report.total > 0) ({ show_tracker_details = true }) else null,
+                raw_headers = msg.raw_headers,
+                show_raw_headers = show_raw_headers,
             )
         }
 
@@ -2128,7 +2213,7 @@ internal fun expanded_message(
                 external_content_banner(
                     counts = external_counts,
                     on_allow_once = on_load_external,
-                    on_always_allow = on_always_allow_external,
+                    on_always_allow = if (offer_always_allow) on_always_allow_external else null,
                 )
             }
         }
@@ -2289,15 +2374,8 @@ internal fun expanded_message(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
             ) {
-                Icon(
-                    imageVector = TablerIcons.Lock,
-                    contentDescription = null,
-                    tint = colors.text_muted,
-                    modifier = Modifier.size(16.dp),
-                )
-                Spacer(Modifier.width(8.dp))
                 Text(
-                    text = stringResource(R.string.e2e_encrypted_message),
+                    text = stringResource(R.string.no_body),
                     color = colors.text_muted,
                     fontSize = 14.sp,
                 )
@@ -2346,6 +2424,18 @@ internal fun expanded_message(
                 on_tap = on_attachment_tap,
                 on_download = on_attachment_download,
             )
+        } else if (attachments_failed) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = AsterSpacing.sm)
+                    .testTag("attachments_failed"),
+            ) {
+                org.astermail.android.ui.settings.detail.load_failed_card(
+                    message = null,
+                    on_retry = on_retry_attachments,
+                )
+            }
         }
 
         reaction_chip_row(reactions = reactions, my_email = my_email)
@@ -2886,7 +2976,7 @@ private fun tracker_details_dialog(
                     Spacer(Modifier.height(4.dp))
                     report.param_counts.forEach { (param, count) ->
                         Text(
-                            text = stringResource(R.string.param_removed_from_links, param, count),
+                            text = pluralStringResource(R.plurals.param_removed_from_links, count, param, count),
                             color = colors.text_secondary,
                             fontSize = 11.sp,
                             modifier = Modifier.padding(vertical = 3.dp),
@@ -2908,24 +2998,24 @@ private fun tracker_details_dialog(
 internal fun external_content_banner(
     counts: ExternalContentCounts,
     on_allow_once: () -> Unit,
-    on_always_allow: () -> Unit,
+    on_always_allow: (() -> Unit)?,
 ) {
     val summary_parts = mutableListOf<String>()
     if (counts.image_count > 0) {
         val n = counts.image_count
-        summary_parts.add(if (n == 1) stringResource(R.string.one_image) else stringResource(R.string.n_images, n))
+        summary_parts.add(pluralStringResource(R.plurals.n_images, n, n))
     }
     if (counts.tracker_count > 0) {
         val n = counts.tracker_count
-        summary_parts.add(if (n == 1) stringResource(R.string.one_tracker) else stringResource(R.string.n_trackers, n))
+        summary_parts.add(pluralStringResource(R.plurals.n_trackers, n, n))
     }
     if (counts.font_count > 0) {
         val n = counts.font_count
-        summary_parts.add(if (n == 1) stringResource(R.string.one_font) else stringResource(R.string.n_fonts, n))
+        summary_parts.add(pluralStringResource(R.plurals.n_fonts, n, n))
     }
     if (counts.css_count > 0) {
         val n = counts.css_count
-        summary_parts.add(if (n == 1) stringResource(R.string.one_stylesheet) else stringResource(R.string.n_stylesheets, n))
+        summary_parts.add(pluralStringResource(R.plurals.n_stylesheets, n, n))
     }
     val label = if (summary_parts.isNotEmpty()) summary_parts.joinToString(", ")
         else stringResource(R.string.detail_external_images_blocked)
@@ -2943,12 +3033,14 @@ internal fun external_content_banner(
             primary = false,
             onClick = on_allow_once,
         )
-        Text("·", color = AsterMaterial.colors.text_muted, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 4.dp))
-        compact_banner_action(
-            label = stringResource(R.string.detail_external_always_allow),
-            primary = true,
-            onClick = on_always_allow,
-        )
+        if (on_always_allow != null) {
+            Text("·", color = AsterMaterial.colors.text_muted, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 4.dp))
+            compact_banner_action(
+                label = stringResource(R.string.detail_external_always_allow),
+                primary = true,
+                onClick = on_always_allow,
+            )
+        }
     }
 }
 
@@ -2961,11 +3053,11 @@ internal fun traffic_saver_banner(
     val summary_parts = mutableListOf<String>()
     if (counts.image_count > 0) {
         val n = counts.image_count
-        summary_parts.add(if (n == 1) stringResource(R.string.one_image) else stringResource(R.string.n_images, n))
+        summary_parts.add(pluralStringResource(R.plurals.n_images, n, n))
     }
     if (counts.font_count > 0) {
         val n = counts.font_count
-        summary_parts.add(if (n == 1) stringResource(R.string.one_font) else stringResource(R.string.n_fonts, n))
+        summary_parts.add(pluralStringResource(R.plurals.n_fonts, n, n))
     }
     val label = if (summary_parts.isNotEmpty()) summary_parts.joinToString(", ")
         else stringResource(R.string.detail_external_images_traffic_blocked)
@@ -3056,13 +3148,15 @@ private fun raw_source_dialog(
                 org.astermail.android.design.components.AsterDialogPrimaryButton(
                     label = stringResource(R.string.detail_raw_source_copy),
                     onClick = {
-                        val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
                         val clip = android.content.ClipData.newPlainText("raw_source", headers + "\n" + body_text)
                         clip.description.extras = android.os.PersistableBundle().apply {
                             putBoolean("android.content.extra.IS_SENSITIVE", true)
                         }
-                        clipboard?.setPrimaryClip(clip)
-                        Toast.makeText(context, context.getString(R.string.detail_raw_source_copied), Toast.LENGTH_SHORT).show()
+                        if (write_to_clipboard(context, clip)) {
+                            Toast.makeText(context, context.getString(R.string.detail_raw_source_copied), Toast.LENGTH_SHORT).show()
+                        } else {
+                            show_copy_failed_toast(context)
+                        }
                     },
                 )
             }
@@ -3167,13 +3261,15 @@ private fun message_details_dialog(
                 org.astermail.android.design.components.AsterDialogPrimaryButton(
                     label = stringResource(R.string.copy_headers),
                     onClick = {
-                        val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
                         val clip = android.content.ClipData.newPlainText("headers", headers_text)
                         clip.description.extras = android.os.PersistableBundle().apply {
                             putBoolean("android.content.extra.IS_SENSITIVE", true)
                         }
-                        clipboard?.setPrimaryClip(clip)
-                        Toast.makeText(context, context.getString(R.string.headers_copied), Toast.LENGTH_SHORT).show()
+                        if (write_to_clipboard(context, clip)) {
+                            Toast.makeText(context, context.getString(R.string.headers_copied), Toast.LENGTH_SHORT).show()
+                        } else {
+                            show_copy_failed_toast(context)
+                        }
                     },
                 )
             }
@@ -3192,9 +3288,14 @@ internal fun message_details_panel(
     authentication: String?,
     authentication_failed: Boolean,
     on_show_trackers: (() -> Unit)?,
+    raw_headers: List<Pair<String, String>> = emptyList(),
+    show_raw_headers: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
     var show_security by remember { mutableStateOf(false) }
+    val raw_headers_text = remember(raw_headers) {
+        raw_headers.joinToString("\n") { "${it.first}: ${it.second}" }
+    }
     val encryption_value = if (is_encrypted) {
         stringResource(R.string.encrypted_e2e)
     } else {
@@ -3232,6 +3333,26 @@ internal fun message_details_panel(
                 .clickable { show_security = true }
                 .padding(vertical = 5.dp),
         )
+        if (show_raw_headers) {
+            Spacer(Modifier.height(AsterSpacing.sm))
+            Text(
+                text = stringResource(R.string.message_headers),
+                color = colors.text_muted,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = raw_headers_text.ifBlank { stringResource(R.string.no_raw_headers) },
+                color = colors.text_primary,
+                fontSize = 12.sp,
+                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 260.dp)
+                    .verticalScroll(rememberScrollState()),
+            )
+        }
     }
     if (show_security) {
         security_details_dialog(
@@ -3276,7 +3397,7 @@ private fun security_details_dialog(
                 detail_meta_row(
                     label = stringResource(R.string.tracker_protection),
                     value = if (tracker_count > 0) {
-                        stringResource(R.string.trackers_blocked_count, tracker_count)
+                        pluralStringResource(R.plurals.trackers_blocked_count, tracker_count, tracker_count)
                     } else {
                         stringResource(R.string.no_trackers)
                     },
@@ -3360,7 +3481,7 @@ private fun detail_meta_row(
                 imageVector = TablerIcons.ChevronRight,
                 contentDescription = null,
                 tint = colors.text_muted,
-                modifier = Modifier.size(15.dp),
+                modifier = Modifier.size(15.dp).mirror_in_rtl(),
             )
         }
     }
@@ -3439,7 +3560,7 @@ private fun collapsed_message(
                 }
                 Text(
                     text = if (is_undecryptable) stringResource(R.string.e2e_encrypted_message)
-                        else clean_preview_text(msg.preview, msg.body).ifBlank { stringResource(R.string.end_to_end_encrypted) },
+                        else clean_preview_text(msg.preview, msg.body).ifBlank { stringResource(R.string.no_body) },
                     color = colors.text_muted,
                     fontSize = 13.sp,
                     maxLines = 1,
@@ -3569,6 +3690,7 @@ internal fun action_menu_sheet(
     is_starred: Boolean,
     on_mark_unread: () -> Unit,
     on_archive: () -> Unit,
+    is_archived: Boolean = false,
     on_trash: () -> Unit,
     on_spam: () -> Unit,
     is_spam: Boolean = false,
@@ -3649,7 +3771,11 @@ internal fun action_menu_sheet(
                     aster_dropdown_item(stringResource(R.string.label), on_label, icon = TablerIcons.Tag)
                     aster_dropdown_item(stringResource(R.string.snooze), on_snooze, icon = TablerIcons.Moon)
                     aster_dropdown_divider()
-                    aster_dropdown_item(stringResource(R.string.swipe_archive), on_archive, icon = TablerIcons.Archive)
+                    aster_dropdown_item(
+                        if (is_archived) stringResource(R.string.swipe_move_to_inbox) else stringResource(R.string.swipe_archive),
+                        on_archive,
+                        icon = if (is_archived) TablerIcons.Inbox else TablerIcons.Archive,
+                    )
                     if (is_spam) {
                         aster_dropdown_item(
                             stringResource(R.string.swipe_not_spam),
@@ -3696,8 +3822,21 @@ internal fun snooze_sheet(
     val tomorrow_morning = stringResource(R.string.snooze_tomorrow_morning)
     val this_weekend_label = stringResource(R.string.snooze_this_weekend)
     val next_week_label = stringResource(R.string.snooze_next_week)
-    val options = remember(later_today, tomorrow_morning, this_weekend_label, next_week_label) {
-        snooze_options(later_today, tomorrow_morning, this_weekend_label, next_week_label)
+    val next_month_label = stringResource(R.string.snooze_next_month)
+    val options = remember(
+        later_today,
+        tomorrow_morning,
+        this_weekend_label,
+        next_week_label,
+        next_month_label,
+    ) {
+        snooze_options(
+            later_today,
+            tomorrow_morning,
+            this_weekend_label,
+            next_week_label,
+            next_month_label,
+        )
     }
     ModalBottomSheet(
         onDismissRequest = on_close,
@@ -3724,13 +3863,54 @@ internal fun snooze_sheet(
                 ),
             )
             options.forEach { (label, iso) ->
-                sheet_row(label, colors.text_primary) { on_pick(iso, label) }
+                snooze_row(
+                    label = label,
+                    detail = snooze_detail_label(iso),
+                    tint = colors.text_primary,
+                    detail_tint = colors.text_secondary,
+                ) { on_pick(iso, label) }
             }
             Spacer(Modifier.height(AsterSpacing.md))
         }
     }
 }
 
+@Composable
+private fun snooze_row(
+    label: String,
+    detail: String,
+    tint: Color,
+    detail_tint: Color,
+    on_click: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = on_click)
+            .padding(horizontal = AsterSpacing.xl, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            color = tint,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text = detail,
+            color = detail_tint,
+            fontSize = 13.sp,
+            maxLines = 1,
+        )
+    }
+}
+
+private fun snooze_detail_label(iso: String): String {
+    val millis = runCatching { java.time.Instant.parse(iso).toEpochMilli() }.getOrNull()
+        ?: return ""
+    return millis.format_full_datetime()
+}
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -3790,11 +3970,36 @@ internal fun label_picker_sheet(
                     val display = item.encrypted_name?.takeIf { it.isNotBlank() }
                         ?: stringResource(R.string.unnamed_folder)
                     val applied = item.label_token in applied_tokens
-                    sheet_row(
-                        label = display,
-                        tint = colors.text_primary,
-                        icon = if (applied) TablerIcons.Check else null,
-                    ) { on_pick(item) }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { on_pick(item) }
+                            .padding(horizontal = AsterSpacing.xl, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = TablerIcons.Folder,
+                            contentDescription = null,
+                            tint = colors.text_primary,
+                            modifier = Modifier.size(20.dp),
+                        )
+                        Spacer(Modifier.width(AsterSpacing.md))
+                        Text(
+                            text = display,
+                            color = colors.text_primary,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.weight(1f),
+                        )
+                        if (applied) {
+                            Icon(
+                                imageVector = TablerIcons.Check,
+                                contentDescription = null,
+                                tint = colors.accent_blue,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                    }
                 }
             }
             Spacer(Modifier.height(AsterSpacing.md))
@@ -3846,8 +4051,9 @@ internal fun tag_picker_sheet(
                     modifier = Modifier.padding(horizontal = AsterSpacing.xl, vertical = AsterSpacing.md),
                 )
             } else {
+                val unknown_tag_label = stringResource(R.string.unknown)
                 items.forEach { item ->
-                    val display = item.encrypted_name.takeIf { it.isNotBlank() } ?: item.tag_token
+                    val display = org.astermail.android.labels.tag_display_name(item, unknown_tag_label)
                     val tag_color = try {
                         item.encrypted_color?.let { androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor(it)) }
                     } catch (_: Throwable) { null }
@@ -3858,14 +4064,12 @@ internal fun tag_picker_sheet(
                             .padding(horizontal = AsterSpacing.xl, vertical = AsterSpacing.md),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        if (tag_color != null) {
-                            Box(
-                                modifier = Modifier
-                                    .size(12.dp)
-                                    .background(tag_color, shape = CircleShape),
-                            )
-                            Spacer(Modifier.width(AsterSpacing.md))
-                        }
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .background(tag_color ?: Color.Transparent, shape = CircleShape),
+                        )
+                        Spacer(Modifier.width(AsterSpacing.md))
                         Text(
                             text = display,
                             color = colors.text_primary,
@@ -3888,39 +4092,64 @@ internal fun tag_picker_sheet(
     }
 }
 
+internal const val SNOOZE_MORNING_HOUR = 9
+
+internal const val SNOOZE_LATER_TODAY_OFFSET_HOURS = 4L
+
+internal fun snooze_targets(
+    now: java.time.ZonedDateTime,
+): List<java.time.ZonedDateTime> {
+    val later_today = now.plusHours(SNOOZE_LATER_TODAY_OFFSET_HOURS)
+    val tomorrow = at_snooze_morning(now.plusDays(1))
+    val days_until_saturday = ((java.time.DayOfWeek.SATURDAY.value -
+        now.dayOfWeek.value + 7) % 7).let { if (it == 0) 7 else it }
+    val this_weekend = at_snooze_morning(now.plusDays(days_until_saturday.toLong()))
+    val next_week = at_snooze_morning(now.plusDays(7))
+    val next_month = at_snooze_morning(now.plusMonths(1))
+    return listOf(later_today, tomorrow, this_weekend, next_week, next_month)
+}
+
+private fun at_snooze_morning(
+    value: java.time.ZonedDateTime,
+): java.time.ZonedDateTime {
+    return value.toLocalDate()
+        .atTime(SNOOZE_MORNING_HOUR, 0)
+        .atZone(value.zone)
+}
+
 internal fun snooze_options(
     later_today_label: String,
     tomorrow_morning_label: String,
     this_weekend_label: String,
     next_week_label: String,
+    next_month_label: String,
+    now: java.time.ZonedDateTime = java.time.ZonedDateTime.now(
+        AsterTimePreferences.account_zone_id(),
+    ),
 ): List<Pair<String, String>> {
-    val now = java.time.ZonedDateTime.now(java.time.ZoneId.systemDefault())
-    val later_today = now.withHour(18).withMinute(0).withSecond(0).withNano(0).let {
-        if (it.isBefore(now.plusHours(1))) now.plusHours(3) else it
-    }
-    val tomorrow = now.plusDays(1).withHour(8).withMinute(0).withSecond(0).withNano(0)
-    val this_weekend = now.with(java.time.DayOfWeek.SATURDAY).withHour(8).withMinute(0).withSecond(0).withNano(0).let {
-        if (it.isBefore(now.plusHours(2)) || it.toLocalDate() == tomorrow.toLocalDate()) it.plusWeeks(1) else it
-    }
-    val next_week = now.plusWeeks(1).with(java.time.DayOfWeek.MONDAY).withHour(8).withMinute(0).withSecond(0).withNano(0)
-    val fmt = java.time.format.DateTimeFormatter.ISO_INSTANT
-    fun iso(z: java.time.ZonedDateTime) = fmt.format(z.toInstant())
-    return listOf(
-        later_today_label to iso(later_today),
-        tomorrow_morning_label to iso(tomorrow),
-        this_weekend_label to iso(this_weekend),
-        next_week_label to iso(next_week),
+    val labels = listOf(
+        later_today_label,
+        tomorrow_morning_label,
+        this_weekend_label,
+        next_week_label,
+        next_month_label,
     )
+    val fmt = java.time.format.DateTimeFormatter.ISO_INSTANT
+    val targets = snooze_targets(now)
+    val paired = labels.zip(targets) { label, target ->
+        label to fmt.format(target.toInstant())
+    }
+    val later_today_is_today = targets[0].toLocalDate() == now.toLocalDate()
+    return if (later_today_is_today) paired else paired.drop(1)
 }
 
 private fun print_email(context: android.content.Context, msg: ThreadMessage, subject: String) {
     val print_manager = context.getSystemService(android.content.Context.PRINT_SERVICE) as? android.print.PrintManager
         ?: return
-    val safe_subject = subject.ifBlank { context.getString(R.string.aster_email) }.take(80)
+    val safe_subject = subject.ifBlank { context.getString(R.string.aster_email) }.clip_units(80)
     val sender = "${displayed_sender_name(msg.display_sender_name, msg.sender_name)} " +
         "<${displayed_sender_email(msg.display_sender_email, msg.sender_email)}>"
-    val timestamp_text = java.text.SimpleDateFormat("MMM d, yyyy h:mm a", java.util.Locale.getDefault())
-        .format(java.util.Date(msg.timestamp))
+    val timestamp_text = msg.timestamp.format_full_datetime()
     val body = msg.body_html?.takeIf { it.isNotBlank() }?.let { EmailHtmlSanitizer.sanitize(it) }
         ?: "<pre>${android.text.Html.escapeHtml(msg.body)}</pre>"
     val html = """
@@ -4208,6 +4437,7 @@ private fun email_user_font_response(
     null
 }
 
+@Suppress("ResourceType")
 private fun email_font_response(context: android.content.Context): android.webkit.WebResourceResponse? = try {
     android.webkit.WebResourceResponse(
         "font/otf",
@@ -4432,12 +4662,18 @@ internal fun email_html_view(
         mutableStateOf<TranslationBannerState>(TranslationBannerState.Hidden)
     }
     val main_handler = remember { android.os.Handler(android.os.Looper.getMainLooper()) }
+    val translate_mode_ref = remember { arrayOf("off") }
+    val translate_target_ref = remember { arrayOf("en") }
+    val set_translation_state = remember { arrayOfNulls<(TranslationBannerState) -> Unit>(1) }
+    translate_mode_ref[0] = translate_mode
+    translate_target_ref[0] = translate_target
+    set_translation_state[0] = { translation_state = it }
 
     fun run_translation(from: String) {
         val web = web_ref[0] ?: return
-        translation_state = TranslationBannerState.Translating
+        set_translation_state[0]?.invoke(TranslationBannerState.Translating)
         web.evaluateJavascript(
-            "window.__aster_translate&&window.__aster_translate.run('$from','$translate_target')",
+            "window.__aster_translate&&window.__aster_translate.run('$from','${translate_target_ref[0]}')",
             null,
         )
     }
@@ -4450,19 +4686,20 @@ internal fun email_html_view(
         )
     }
 
-    val translate_bridge = remember(translate_mode, translate_target) {
+    val translate_bridge = remember {
         object {
             @android.webkit.JavascriptInterface
             fun on_detect(json: String) {
                 val language = Regex("\"language\"\\s*:\\s*\"([a-z]{2})\"").find(json)?.groupValues?.get(1)
                 val detected = json.contains("\"detected\":true") || json.contains("\"detected\": true")
                 if (!detected || language == null) return
-                if (language == translate_target) return
+                if (language == translate_target_ref[0]) return
                 main_handler.post {
-                    if (translate_mode == "always") {
+                    val mode = translate_mode_ref[0]
+                    if (mode == "always") {
                         run_translation(language)
-                    } else if (translate_mode == "ask") {
-                        translation_state = TranslationBannerState.Offer(language)
+                    } else if (mode == "ask") {
+                        set_translation_state[0]?.invoke(TranslationBannerState.Offer(language))
                     }
                 }
             }
@@ -4472,12 +4709,14 @@ internal fun email_html_view(
                 val state = Regex("\"state\"\\s*:\\s*\"([a-z_]+)\"").find(json)?.groupValues?.get(1)
                 val from = Regex("\"from\"\\s*:\\s*\"([a-z]{2})\"").find(json)?.groupValues?.get(1)
                 main_handler.post {
+                    val apply_state = set_translation_state[0]
                     when (state) {
-                        "translating" -> translation_state = TranslationBannerState.Translating
-                        "translated" -> translation_state =
-                            TranslationBannerState.Translated(from ?: "")
-                        "original" -> translation_state = TranslationBannerState.Hidden
-                        "error" -> translation_state = TranslationBannerState.Failed
+                        "translating" -> apply_state?.invoke(TranslationBannerState.Translating)
+                        "translated" -> apply_state?.invoke(
+                            TranslationBannerState.Translated(from ?: ""),
+                        )
+                        "original" -> apply_state?.invoke(TranslationBannerState.Hidden)
+                        "error" -> apply_state?.invoke(TranslationBannerState.Failed)
                         else -> Unit
                     }
                 }
@@ -5071,9 +5310,11 @@ private fun link_options_sheet(
             )
             AsterDivider()
             sheet_row(stringResource(R.string.copy_link), colors.text_primary) {
-                val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
-                clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("link", url))
-                Toast.makeText(context, copied_label, Toast.LENGTH_SHORT).show()
+                if (write_to_clipboard(context, android.content.ClipData.newPlainText("link", url))) {
+                    Toast.makeText(context, copied_label, Toast.LENGTH_SHORT).show()
+                } else {
+                    show_copy_failed_toast(context)
+                }
                 on_close()
             }
             sheet_row(stringResource(R.string.share_link), colors.text_primary) {
@@ -5117,7 +5358,7 @@ private fun attachment_section(
                 modifier = Modifier.size(14.dp),
             )
             Text(
-                text = stringResource(R.string.attachments_count, attachments.size),
+                text = pluralStringResource(R.plurals.attachments_count, attachments.size, attachments.size),
                 color = colors.text_secondary,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
@@ -5288,6 +5529,52 @@ private fun sanitize_filename(raw: String): String {
     return cleaned.ifBlank { "attachment" }.take(200)
 }
 
+private fun open_attachment_externally(
+    context: android.content.Context,
+    filename: String,
+    content_type: String,
+    bytes: ByteArray,
+): Boolean {
+    val mime = safe_view_mime(filename, content_type)
+    val safe_name = sanitize_filename(filename)
+    val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        val values = ContentValues().apply {
+            put(MediaStore.Downloads.DISPLAY_NAME, safe_name)
+            put(MediaStore.Downloads.MIME_TYPE, mime)
+            put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+            put(MediaStore.Downloads.IS_PENDING, 1)
+        }
+        val pending = context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+            ?: return false
+        context.contentResolver.openOutputStream(pending)?.use {
+            it.write(bytes)
+            it.flush()
+        } ?: return false
+        val done = ContentValues().apply { put(MediaStore.Downloads.IS_PENDING, 0) }
+        context.contentResolver.update(pending, done, null, null)
+        pending
+    } else {
+        val dir = java.io.File(context.cacheDir, "shared_attachments").apply { mkdirs() }
+        val target = java.io.File(dir, System.nanoTime().toString() + "_" + safe_name)
+        target.outputStream().use {
+            it.write(bytes)
+            it.flush()
+        }
+        androidx.core.content.FileProvider.getUriForFile(
+            context,
+            context.packageName + ".fileprovider",
+            target,
+        )
+    }
+    val intent = Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(uri, mime)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+    context.startActivity(intent)
+    return true
+}
+
 private fun safe_view_mime(filename: String, declared: String): String {
     val ext = filename.substringAfterLast('.', "").lowercase()
     val resolved = if (ext.isNotBlank()) {
@@ -5364,7 +5651,7 @@ private fun show_download_notification(
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             val channel = android.app.NotificationChannel(
                 channel_id,
-                "Downloads",
+                context.getString(R.string.notif_channel_downloads_name),
                 android.app.NotificationManager.IMPORTANCE_LOW,
             )
             nm.createNotificationChannel(channel)
@@ -5450,26 +5737,14 @@ private fun attachment_preview_dialog(
                     content_description = stringResource(R.string.open_with),
                     onClick = {
                         try {
-                            val mime = safe_view_mime(attachment.filename, attachment.content_type)
-                            val values = ContentValues().apply {
-                                put(MediaStore.Downloads.DISPLAY_NAME, sanitize_filename(attachment.filename))
-                                put(MediaStore.Downloads.MIME_TYPE, mime)
-                                put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
-                                put(MediaStore.Downloads.IS_PENDING, 1)
-                            }
-                            val uri = context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
-                            if (uri != null) {
-                                context.contentResolver.openOutputStream(uri)?.use {
-                                    it.write(bytes)
-                                    it.flush()
-                                }
-                                val done = ContentValues().apply { put(MediaStore.Downloads.IS_PENDING, 0) }
-                                context.contentResolver.update(uri, done, null, null)
-                                val intent = Intent(Intent.ACTION_VIEW).apply {
-                                    setDataAndType(uri, mime)
-                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                }
-                                context.startActivity(intent)
+                            val opened = open_attachment_externally(
+                                context,
+                                attachment.filename,
+                                attachment.content_type,
+                                bytes,
+                            )
+                            if (!opened) {
+                                Toast.makeText(context, context.getString(R.string.no_app_to_open), Toast.LENGTH_SHORT).show()
                             }
                         } catch (_: Throwable) {
                             Toast.makeText(context, context.getString(R.string.no_app_to_open), Toast.LENGTH_SHORT).show()
@@ -5592,26 +5867,14 @@ private fun attachment_preview_dialog(
                                         .background(Color.White.copy(alpha = 0.15f))
                                         .clickable {
                                             try {
-                                                val mime = attachment.content_type.ifBlank { "application/octet-stream" }
-                                                val values = ContentValues().apply {
-                                                    put(MediaStore.Downloads.DISPLAY_NAME, sanitize_filename(attachment.filename))
-                                                    put(MediaStore.Downloads.MIME_TYPE, mime)
-                                                    put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
-                                                    put(MediaStore.Downloads.IS_PENDING, 1)
-                                                }
-                                                val uri = context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
-                                                if (uri != null) {
-                                                    context.contentResolver.openOutputStream(uri)?.use {
-                                                        it.write(bytes)
-                                                        it.flush()
-                                                    }
-                                                    val done = ContentValues().apply { put(MediaStore.Downloads.IS_PENDING, 0) }
-                                                    context.contentResolver.update(uri, done, null, null)
-                                                    val intent = Intent(Intent.ACTION_VIEW).apply {
-                                                        setDataAndType(uri, mime)
-                                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                                    }
-                                                    context.startActivity(intent)
+                                                val opened = open_attachment_externally(
+                                                    context,
+                                                    attachment.filename,
+                                                    attachment.content_type,
+                                                    bytes,
+                                                )
+                                                if (!opened) {
+                                                    Toast.makeText(context, context.getString(R.string.no_app_to_open), Toast.LENGTH_SHORT).show()
                                                 }
                                             } catch (_: Throwable) {
                                                 Toast.makeText(context, context.getString(R.string.no_app_to_open), Toast.LENGTH_SHORT).show()

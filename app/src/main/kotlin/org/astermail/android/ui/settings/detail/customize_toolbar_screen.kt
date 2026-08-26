@@ -92,6 +92,7 @@ fun CustomizeToolbarScreen(
     val context = LocalContext.current
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
     val server_prefs = settings_state.preferences
+    val prefs_authoritative = server_prefs != null && settings_state.preferences_authoritative
 
     LaunchedEffect(Unit) { settings_vm.load_preferences() }
 
@@ -118,7 +119,8 @@ fun CustomizeToolbarScreen(
     }
 
     fun save_prefs() {
-        val base = server_prefs ?: org.astermail.android.api.preferences.UserPreferences()
+        val base = server_prefs
+        if (base == null || !settings_state.preferences_authoritative) return
         settings_vm.save_preferences(
             base.copy(
                 toolbar_actions = reading_slots.joinToString(","),
@@ -154,12 +156,21 @@ fun CustomizeToolbarScreen(
         title = stringResource(R.string.customize_toolbar),
         on_back = on_back,
     ) {
+        preferences_save_error_banner()
         Text(
             text = stringResource(R.string.customize_toolbar_subtitle),
             color = colors.text_tertiary,
             fontSize = 13.sp,
             modifier = Modifier.padding(bottom = AsterSpacing.md),
         )
+        if (!prefs_authoritative && !settings_state.is_loading) {
+            Text(
+                text = stringResource(R.string.failed_to_load),
+                color = colors.text_tertiary,
+                fontSize = 13.sp,
+                modifier = Modifier.padding(bottom = AsterSpacing.md),
+            )
+        }
         toolbar_section(
             kind = "selection",
             title = stringResource(R.string.selection_toolbar),
@@ -167,6 +178,7 @@ fun CustomizeToolbarScreen(
             slot_count = selection_toolbar_slot_count,
             action_lookup = ::selection_toolbar_action_by_id,
             on_edit = { editing = it },
+            enabled = prefs_authoritative,
         )
         v_gap(AsterSpacing.lg)
         toolbar_section(
@@ -176,6 +188,7 @@ fun CustomizeToolbarScreen(
             slot_count = toolbar_slot_count,
             action_lookup = ::toolbar_action_by_id,
             on_edit = { editing = it },
+            enabled = prefs_authoritative,
         )
         v_gap(AsterSpacing.xxl)
     }
@@ -260,6 +273,7 @@ private fun toolbar_section(
     slot_count: Int,
     action_lookup: (String) -> ToolbarAction?,
     on_edit: (editing_target) -> Unit,
+    enabled: Boolean,
 ) {
     val colors = AsterMaterial.colors
     section_label(title)
@@ -274,6 +288,7 @@ private fun toolbar_section(
                 action_icon = action?.icon,
                 on_click = { on_edit(editing_target(kind, i)) },
                 test_tag = "${kind}_slot_${i + 1}",
+                enabled = enabled,
             )
             if (i < slot_count - 1) AsterDivider(modifier = Modifier)
         }
@@ -316,12 +331,13 @@ private fun slot_row(
     action_icon: androidx.compose.ui.graphics.vector.ImageVector?,
     on_click: () -> Unit,
     test_tag: String,
+    enabled: Boolean,
 ) {
     val colors = AsterMaterial.colors
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = on_click)
+            .clickable(enabled = enabled, onClick = on_click)
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md)
             .testTag(test_tag),
         verticalAlignment = Alignment.CenterVertically,
@@ -357,7 +373,7 @@ private fun slot_row(
         )
         Text(
             text = stringResource(R.string.change),
-            color = colors.accent_blue,
+            color = if (enabled) colors.accent_blue else colors.text_muted,
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium,
         )

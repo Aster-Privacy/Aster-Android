@@ -16,4 +16,13 @@
     <string name="signature_none">Aucune signature</string>
     <string name="signature_select">Choisir une signature</string>
     <string name="compose_metadata_strip_failed">Impossible de retirer les métadonnées cachées de : %1$s</string>
+    <string name="compose_inline_image_failed">Impossible d’ajouter ces images : %1$s</string>
+    <string name="schedule_in_one_hour">Dans une heure</string>
+    <string name="schedule_tonight">Ce soir</string>
+    <string name="schedule_tomorrow_morning">Demain matin</string>
+    <string name="schedule_tomorrow_afternoon">Demain après-midi</string>
+    <string name="schedule_monday_morning">Lundi matin</string>
+    <string name="schedule_pick_date_time">Choisir date et heure</string>
+    <string name="too_many_recipients_in_field">Chaque champ À, Cc et Cci accepte au maximum %1$d adresses. Déplacez-en une partie vers un second message pour envoyer celui-ci.</string>
+    <string name="too_many_recipients_in_message">Un message atteint au maximum %1$d adresses entre À, Cc et Cci. Répartir la liste en messages plus petits permettra l\'envoi.</string>
 </resources>

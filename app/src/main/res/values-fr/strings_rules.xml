@@ -27,8 +27,6 @@
     <string name="rules_value_unread">non lu</string>
     <string name="rules_value_on">activé</string>
     <string name="rules_value_off">désactivé</string>
-    <string name="rules_value_days">%1$d jours</string>
-    <string name="rules_value_label_count">%1$d libellés</string>
     <string name="rules_value_placeholder_ellipsis">...</string>
 
     <string name="rules_unit_kb">Ko</string>
@@ -47,7 +45,6 @@
     <string name="rules_delete_title">Supprimer la règle ?</string>
     <string name="rules_delete_message">Cette règle ne s\'appliquera plus aux nouveaux messages. Les modifications existantes ne sont pas annulées.</string>
     <string name="rules_save_failed">Impossible d\'enregistrer la règle</string>
-    <string name="rules_emails_count">%1$d e-mails</string>
     <string name="rules_copy_suffix">(copie)</string>
     <string name="rules_error_load">Impossible de charger les règles</string>
     <string name="rules_error_delete">Impossible de supprimer la règle</string>
@@ -98,4 +95,12 @@
     <string name="category_tutorial_text">Un message rejoint votre catégorie dès qu\'il correspond à l\'un de vos domaines ou mots-clés. Les catégories personnalisées passent avant celles fournies, et toute la correspondance se fait sur votre appareil.</string>
     <string name="rules_create_first_folder_hint">Créez un dossier et cette règle pourra y déplacer les e-mails correspondants.</string>
     <string name="rules_create_first_label_hint">Créez un libellé et cette règle pourra l\'appliquer aux e-mails correspondants.</string>
+    <string name="muted_categories">Catégories en sourdine</string>
+    <string name="muted_categories_description">Activez une catégorie pour mettre ses notifications en sourdine. Les catégories en sourdine continuent de recevoir des e-mails et apparaissent dans votre boîte de réception.</string>
+    <string name="muted_categories_empty">Activez les catégories de boîte de réception pour choisir celles à mettre en sourdine.</string>
+    <string name="rules_hint_name">Saisissez un nom pour cette règle.</string>
+    <string name="rules_hint_add_condition">Ajoutez au moins une condition.</string>
+    <string name="rules_hint_finish_condition">Renseignez une valeur pour chaque condition.</string>
+    <string name="rules_hint_add_action">Ajoutez au moins une action.</string>
+    <string name="rules_hint_finish_action">Renseignez une valeur pour chaque action.</string>
 </resources>

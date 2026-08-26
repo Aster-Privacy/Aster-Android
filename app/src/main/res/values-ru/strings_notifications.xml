@@ -22,4 +22,7 @@
     <string name="notif_group_summary_new_mail">Новые письма</string>
     <string name="notif_battery_opt_title">Неограниченная фоновая активность</string>
     <string name="notif_battery_opt_subtitle">Требуется для надёжных уведомлений. Нажмите, чтобы включить в настройках системы.</string>
+    <string name="notif_blocked_title">Уведомления отключены</string>
+    <string name="notif_blocked_subtitle">Aster Mail не может показывать уведомления, пока вы их не разрешите. Нажмите, чтобы открыть настройки системы.</string>
+    <string name="notif_channel_downloads_name">Загрузки</string>
 </resources>
