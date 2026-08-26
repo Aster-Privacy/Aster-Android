@@ -284,6 +284,14 @@ data class CheckAliasAvailabilityResponse(
 )
 
 @Serializable
+data class TwinAddressResponse(
+    val address: String = "",
+    val domain: String = "",
+    val local_part: String = "",
+    val state: String = "unsupported",
+)
+
+@Serializable
 data class AliasDirectory(
     val id: String = "",
     val directory_hash: String = "",
@@ -654,6 +662,7 @@ interface SettingsApi {
     suspend fun send_feedback(request: FeedbackRequest)
     suspend fun get_recovery_key(): RecoveryKeyResponse
     suspend fun check_alias_availability(request: CheckAliasAvailabilityRequest): CheckAliasAvailabilityResponse
+    suspend fun get_twin_address(): TwinAddressResponse
     suspend fun list_directories(): ListDirectoriesResponse
     suspend fun create_directory(request: CreateDirectoryRequest): CreateDirectoryResponse
     suspend fun check_directory_availability(request: DirectoryAvailabilityRequest): DirectoryAvailabilityResponse
@@ -1077,6 +1086,11 @@ class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)
         }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun get_twin_address(): TwinAddressResponse {
+        val response = client.http.get("${client.base_url}/api/addresses/v1/aliases/twin")
         return decode_or_throw(response)
     }
 

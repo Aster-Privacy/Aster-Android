@@ -3024,4 +3024,8 @@
     <string name="domain_purchase_manage_auto_renew_note">Ce domaine ne se renouvelle pas automatiquement. Pour le conserver, renouvelez-le avant la date d\'expiration.</string>
     <string name="domain_purchase_manage_support_note">Pour transférer ce domaine vers un autre bureau d\'enregistrement ou demander un remboursement, contactez l\'assistance.</string>
     <string name="domain_purchase_n_years">%1$d ans</string>
+    <string name="twin_address_title">Votre adresse jumelle</string>
+    <string name="twin_address_reserved_description">%1$s est réservée à votre compte, donc personne d’autre ne peut l’enregistrer. Créez-la comme alias quand vous voulez envoyer et recevoir avec elle.</string>
+    <string name="twin_address_available_description">%1$s est l’adresse correspondante sur l’autre domaine Aster. Créez-la comme alias pour envoyer et recevoir avec elle.</string>
+    <string name="twin_address_create">Créer un alias</string>
 </resources>

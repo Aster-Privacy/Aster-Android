@@ -2984,4 +2984,8 @@
     <string name="domain_purchase_manage_auto_renew_note">이 도메인은 자동으로 갱신되지 않습니다. 계속 사용하려면 만료일 전에 갱신하세요.</string>
     <string name="domain_purchase_manage_support_note">이 도메인을 다른 등록 기관으로 이전하거나 환불을 문의하려면 고객 지원에 연락하세요.</string>
     <string name="domain_purchase_n_years">%1$d년</string>
+    <string name="twin_address_title">일치하는 주소</string>
+    <string name="twin_address_reserved_description">%1$s은(는) 회원님의 계정을 위해 예약되어 있으므로 다른 사람은 등록할 수 없습니다. 이 주소로 보내고 받으려면 별칭으로 만드세요.</string>
+    <string name="twin_address_available_description">%1$s은(는) 다른 Aster 도메인의 일치하는 주소입니다. 이 주소로 보내고 받으려면 별칭으로 만드세요.</string>
+    <string name="twin_address_create">별칭 만들기</string>
 </resources>

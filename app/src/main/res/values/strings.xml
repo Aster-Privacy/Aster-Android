@@ -3046,4 +3046,8 @@
     <string name="domain_purchase_manage_auto_renew_note">This domain doesn\'t renew automatically. To keep it, renew it before the expiration date.</string>
     <string name="domain_purchase_manage_support_note">To transfer this domain to another registrar or ask about a refund, contact support.</string>
     <string name="domain_purchase_n_years">%1$d years</string>
+    <string name="twin_address_title">Your matching address</string>
+    <string name="twin_address_reserved_description">%1$s is reserved for your account, so no one else can register it. Create it as an alias whenever you want to send and receive from it.</string>
+    <string name="twin_address_available_description">%1$s is the matching address on the other Aster domain. Create it as an alias to send and receive from it.</string>
+    <string name="twin_address_create">Create alias</string>
 </resources>

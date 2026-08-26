@@ -2984,4 +2984,8 @@
     <string name="domain_purchase_manage_auto_renew_note">このドメインは自動的には更新されません。使い続けるには、有効期限までに更新してください。</string>
     <string name="domain_purchase_manage_support_note">このドメインを別のレジストラに移管する場合や返金について尋ねる場合は、サポートに問い合わせてください。</string>
     <string name="domain_purchase_n_years">%1$d年</string>
+    <string name="twin_address_title">対応するアドレス</string>
+    <string name="twin_address_reserved_description">%1$s はあなたのアカウント用に予約されているため、他の人は登録できません。このアドレスで送受信したくなったら、エイリアスとして作成してください。</string>
+    <string name="twin_address_available_description">%1$s はもう一方の Aster ドメインで対応するアドレスです。このアドレスで送受信するには、エイリアスとして作成してください。</string>
+    <string name="twin_address_create">エイリアスを作成</string>
 </resources>

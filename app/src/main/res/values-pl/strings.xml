@@ -3023,4 +3023,8 @@
     <string name="domain_purchase_manage_auto_renew_note">Ta domena nie odnawia się automatycznie. Aby ją zachować, odnów ją przed datą wygaśnięcia.</string>
     <string name="domain_purchase_manage_support_note">Aby przenieść tę domenę do innego rejestratora lub zapytać o zwrot środków, skontaktuj się z pomocą techniczną.</string>
     <string name="domain_purchase_n_years">%1$d lata</string>
+    <string name="twin_address_title">Twój adres bliźniaczy</string>
+    <string name="twin_address_reserved_description">%1$s jest zarezerwowany dla Twojego konta, więc nikt inny nie może go zarejestrować. Utwórz go jako alias, gdy zechcesz z niego wysyłać i odbierać.</string>
+    <string name="twin_address_available_description">%1$s to odpowiadający adres w drugiej domenie Aster. Utwórz go jako alias, aby z niego wysyłać i odbierać.</string>
+    <string name="twin_address_create">Utwórz alias</string>
 </resources>
