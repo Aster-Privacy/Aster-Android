@@ -2800,9 +2800,9 @@
     <string name="plan_change_preview_loading">Der heute fällige Betrag wird berechnet…</string>
     <string name="plan_change_due_today">Heute fällig: %1$s</string>
     <string name="plan_change_preview_failed">Der heute fällige Betrag konnte nicht berechnet werden. Es wird der volle Preis angezeigt.</string>
-    <string name="payment_failed_banner_overdue">Deine letzte Zahlung ist fehlgeschlagen. Aktualisiere jetzt deine Karte, um deinen %1$s-Tarif zu behalten.</string>
-    <string name="payment_failed_days_left">Noch %1$d Tage, um deine Karte zu aktualisieren.</string>
-    <string name="payment_failed_one_day_left">Noch 1 Tag, um deine Karte zu aktualisieren.</string>
+    <string name="payment_failed_banner_overdue">Ihre Zahlung war nicht erfolgreich. Der Zugriff auf Ihren %1$s-Tarif wird bald eingeschränkt.</string>
+    <string name="payment_failed_days_left">Zugriff wird in %1$d Tagen eingeschränkt.</string>
+    <string name="payment_failed_one_day_left">Zugriff wird in 1 Tag eingeschränkt.</string>
     <string name="device_verification_failed">Dieses Gerät konnte für diese Änderung nicht verifiziert werden. Melde dich auf diesem Gerät erneut an und versuche es dann noch einmal.</string>
     <string name="cancel_reason_title">Bevor Sie gehen</string>
     <string name="cancel_reason_description">Warum möchtest du kündigen? Die Antwort ist freiwillig.</string>
@@ -2818,8 +2818,8 @@
     <string name="change_plan_failed">Tarif konnte nicht geändert werden</string>
     <string name="crypto_term_24_months">24 Monate</string>
     <string name="downgrade_confirm_message">Dein Tarif wechselt zu %1$s am %2$s. Funktionen oberhalb des %1$s-Tarifs sind dann nicht mehr verfügbar.</string>
-    <string name="payment_failed_banner_message">Deine letzte Zahlung ist fehlgeschlagen. Aktualisiere deine Karte bis %1$s, um deinen %2$s-Tarif zu behalten.</string>
-    <string name="payment_failed_update_card">Karte aktualisieren</string>
+    <string name="payment_failed_banner_message">Ihre Zahlung war nicht erfolgreich. Der Zugriff auf Ihren %2$s-Tarif wird nach dem %1$s eingeschränkt.</string>
+    <string name="payment_failed_update_card">Bezahlen</string>
     <string name="plan_changed">Tarif geändert</string>
     <string name="plan_ended_on">Dein %1$s-Tarif endete am %2$s</string>
     <string name="plan_ended_resubscribe_note">Schließe erneut ab, um Speicher, Aliase und weitere Tariffunktionen zurückzubekommen.</string>

@@ -1579,8 +1579,8 @@
     <string name="subscription_cancelled">Subscription cancelled</string>
     <string name="subscription_reactivated">Subscription reactivated</string>
     <string name="billing_changed_to">Billing changed to %s</string>
-    <string name="payment_failed_banner_message">Your last payment did not go through. Update your card by %1$s to keep your %2$s plan.</string>
-    <string name="payment_failed_update_card">Update card</string>
+    <string name="payment_failed_banner_message">Your payment did not go through. Access to your %2$s plan is limited after %1$s.</string>
+    <string name="payment_failed_update_card">Pay</string>
     <string name="resume_plan">Resume plan</string>
     <string name="cancel_offer_switch_plan">Switch to %1$s for %2$s</string>
     <string name="switch_yearly_save">Switch to yearly and save %d%%</string>
@@ -2901,9 +2901,9 @@
     <string name="plan_change_preview_loading">Calculating the amount due today…</string>
     <string name="plan_change_due_today">Due today: %1$s</string>
     <string name="plan_change_preview_failed">The amount due today could not be calculated. The full price is shown.</string>
-    <string name="payment_failed_banner_overdue">Your last payment did not go through. Update your card now to keep your %1$s plan.</string>
-    <string name="payment_failed_days_left">%1$d days left to update your card.</string>
-    <string name="payment_failed_one_day_left">1 day left to update your card.</string>
+    <string name="payment_failed_banner_overdue">Your payment did not go through. Access to your %1$s plan is limited soon.</string>
+    <string name="payment_failed_days_left">Access limited in %1$d days.</string>
+    <string name="payment_failed_one_day_left">Access limited in 1 day.</string>
     <string name="device_verification_failed">This device could not be verified for that change. Sign in again on this device, then try again.</string>
     <string name="cancel_reason_title">Before you go</string>
     <string name="cancel_reason_description">What made you decide to cancel? Answering is optional.</string>

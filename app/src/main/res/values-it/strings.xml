@@ -2799,9 +2799,9 @@
     <string name="plan_change_preview_loading">Calcolo dell’importo dovuto oggi…</string>
     <string name="plan_change_due_today">Dovuto oggi: %1$s</string>
     <string name="plan_change_preview_failed">Impossibile calcolare l’importo dovuto oggi. Viene mostrato il prezzo completo.</string>
-    <string name="payment_failed_banner_overdue">L’ultimo pagamento non è andato a buon fine. Aggiorna subito la carta per mantenere il piano %1$s.</string>
-    <string name="payment_failed_days_left">Hai ancora %1$d giorni per aggiornare la carta.</string>
-    <string name="payment_failed_one_day_left">Hai ancora 1 giorno per aggiornare la carta.</string>
+    <string name="payment_failed_banner_overdue">Il tuo pagamento non è andato a buon fine. L\'accesso al piano %1$s sarà presto limitato.</string>
+    <string name="payment_failed_days_left">L\'accesso sarà limitato tra %1$d giorni.</string>
+    <string name="payment_failed_one_day_left">L\'accesso sarà limitato tra 1 giorno.</string>
     <string name="device_verification_failed">Non è stato possibile verificare questo dispositivo per la modifica. Accedi di nuovo da questo dispositivo e riprova.</string>
     <string name="cancel_reason_title">Prima di andare</string>
     <string name="cancel_reason_description">Cosa ti ha spinto ad annullare? Rispondere è facoltativo.</string>
@@ -2817,8 +2817,8 @@
     <string name="change_plan_failed">Impossibile cambiare piano</string>
     <string name="crypto_term_24_months">24 mesi</string>
     <string name="downgrade_confirm_message">Il tuo piano passa a %1$s il %2$s. Le funzioni superiori al piano %1$s smettono di funzionare.</string>
-    <string name="payment_failed_banner_message">Il tuo ultimo pagamento non è andato a buon fine. Aggiorna la tua carta entro il %1$s per mantenere il piano %2$s.</string>
-    <string name="payment_failed_update_card">Aggiorna la carta</string>
+    <string name="payment_failed_banner_message">Il tuo pagamento non è andato a buon fine. L\'accesso al piano %2$s sarà limitato dopo il %1$s.</string>
+    <string name="payment_failed_update_card">Paga</string>
     <string name="plan_changed">Piano cambiato</string>
     <string name="plan_ended_on">Il tuo piano %1$s è terminato il %2$s</string>
     <string name="plan_ended_resubscribe_note">Riattiva l\'abbonamento per riavere lo spazio di archiviazione, gli alias e le altre funzioni del piano.</string>

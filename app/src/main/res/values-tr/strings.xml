@@ -2799,9 +2799,9 @@
     <string name="plan_change_preview_loading">Bugün ödenecek tutar hesaplanıyor…</string>
     <string name="plan_change_due_today">Bugün ödenecek: %1$s</string>
     <string name="plan_change_preview_failed">Bugün ödenecek tutar hesaplanamadı. Tam fiyat gösteriliyor.</string>
-    <string name="payment_failed_banner_overdue">Son ödemeniz gerçekleşmedi. %1$s planınızı korumak için kartınızı şimdi güncelleyin.</string>
-    <string name="payment_failed_days_left">Kartınızı güncellemek için %1$d gününüz kaldı.</string>
-    <string name="payment_failed_one_day_left">Kartınızı güncellemek için 1 gününüz kaldı.</string>
+    <string name="payment_failed_banner_overdue">Ödemeniz alınamadı. %1$s planınıza erişim yakında kısıtlanacak.</string>
+    <string name="payment_failed_days_left">Erişim %1$d gün içinde kısıtlanacak.</string>
+    <string name="payment_failed_one_day_left">Erişim 1 gün içinde kısıtlanacak.</string>
     <string name="device_verification_failed">Bu değişiklik için bu cihaz doğrulanamadı. Bu cihazda yeniden oturum açıp tekrar deneyin.</string>
     <string name="cancel_reason_title">Gitmeden önce</string>
     <string name="cancel_reason_description">İptal etmeye neden karar verdiniz? Yanıtlamak isteğe bağlıdır.</string>
@@ -2817,8 +2817,8 @@
     <string name="change_plan_failed">Plan değiştirilemedi</string>
     <string name="crypto_term_24_months">24 ay</string>
     <string name="downgrade_confirm_message">Planınız %1$s planına %2$s tarihinde geçer. %1$s planının üzerindeki özellikler çalışmayı durdurur.</string>
-    <string name="payment_failed_banner_message">Son ödemeniz gerçekleşmedi. %1$s tarihine kadar kartınızı güncelleyerek %2$s planınızı sürdürün.</string>
-    <string name="payment_failed_update_card">Kartı güncelle</string>
+    <string name="payment_failed_banner_message">Ödemeniz alınamadı. %2$s planınıza erişim %1$s tarihinden sonra kısıtlanacak.</string>
+    <string name="payment_failed_update_card">Öde</string>
     <string name="plan_changed">Plan değiştirildi</string>
     <string name="plan_ended_on">%1$s planınız %2$s tarihinde sona erdi</string>
     <string name="plan_ended_resubscribe_note">Depolama alanınızı, takma adlarınızı ve diğer plan özelliklerinizi geri almak için yeniden abone olun.</string>

@@ -54,6 +54,19 @@ class SubscriptionNoticesTest {
     }
 
     @Test
+    fun `no banner once a past due subscription is cancelled`() {
+        assertNull(
+            payment_failed_due_date(
+                status = "past_due",
+                payment_failed_at = "2026-08-20T10:00:00Z",
+                grace_period_end = "2026-08-27T10:00:00Z",
+                current_period_end = "2026-09-01T10:00:00Z",
+                cancel_at_period_end = true,
+            ),
+        )
+    }
+
+    @Test
     fun `no banner without a failed payment or for an ended subscription`() {
         assertNull(payment_failed_due_date("active", null, "2026-08-27", "2026-09-01"))
         assertNull(payment_failed_due_date("canceled", "2026-08-20", "2026-08-27", "2026-09-01"))

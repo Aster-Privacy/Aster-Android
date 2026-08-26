@@ -298,6 +298,7 @@ fun InboxScreen(
             payment_failed_at = sub.payment_failed_at,
             grace_period_end = sub.grace_period_end,
             current_period_end = sub.current_period_end,
+            cancel_at_period_end = sub.cancel_at_period_end,
         )
     }
     val show_payment_failed_banner = payment_failed_due != null

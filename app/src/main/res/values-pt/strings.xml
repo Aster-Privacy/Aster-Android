@@ -2799,9 +2799,9 @@
     <string name="plan_change_preview_loading">Calculando o valor a pagar hoje…</string>
     <string name="plan_change_due_today">A pagar hoje: %1$s</string>
     <string name="plan_change_preview_failed">Não foi possível calcular o valor a pagar hoje. O preço completo é exibido.</string>
-    <string name="payment_failed_banner_overdue">Seu último pagamento não foi concluído. Atualize seu cartão agora para manter seu plano %1$s.</string>
-    <string name="payment_failed_days_left">Faltam %1$d dias para atualizar seu cartão.</string>
-    <string name="payment_failed_one_day_left">Falta 1 dia para atualizar seu cartão.</string>
+    <string name="payment_failed_banner_overdue">Seu pagamento não foi concluído. O acesso ao plano %1$s será limitado em breve.</string>
+    <string name="payment_failed_days_left">O acesso será limitado em %1$d dias.</string>
+    <string name="payment_failed_one_day_left">O acesso será limitado em 1 dia.</string>
     <string name="device_verification_failed">Não foi possível verificar este dispositivo para essa alteração. Entre novamente neste dispositivo e tente de novo.</string>
     <string name="cancel_reason_title">Antes de sair</string>
     <string name="cancel_reason_description">O que fez você decidir cancelar? Responder é opcional.</string>
@@ -2817,8 +2817,8 @@
     <string name="change_plan_failed">Não foi possível mudar de plano</string>
     <string name="crypto_term_24_months">24 meses</string>
     <string name="downgrade_confirm_message">O seu plano muda para %1$s em %2$s. Os recursos acima do plano %1$s deixam de funcionar.</string>
-    <string name="payment_failed_banner_message">O seu último pagamento não foi concluído. Atualize o seu cartão até %1$s para manter o plano %2$s.</string>
-    <string name="payment_failed_update_card">Atualizar cartão</string>
+    <string name="payment_failed_banner_message">Seu pagamento não foi concluído. O acesso ao plano %2$s será limitado após %1$s.</string>
+    <string name="payment_failed_update_card">Pagar</string>
     <string name="plan_changed">Plano alterado</string>
     <string name="plan_ended_on">O seu plano %1$s terminou em %2$s</string>
     <string name="plan_ended_resubscribe_note">Assine de novo para recuperar o seu armazenamento, os aliases e os outros recursos do plano.</string>

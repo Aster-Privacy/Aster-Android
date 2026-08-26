@@ -54,7 +54,9 @@ fun payment_failed_due_date(
     payment_failed_at: String?,
     grace_period_end: String?,
     current_period_end: String?,
+    cancel_at_period_end: Boolean = false,
 ): String? {
+    if (cancel_at_period_end) return null
     if (status !in ACTIVE_STATUSES) return null
     if (payment_failed_at.isNullOrBlank() && status != "past_due") return null
     val raw = grace_period_end?.takeIf { it.isNotBlank() } ?: current_period_end?.takeIf { it.isNotBlank() }

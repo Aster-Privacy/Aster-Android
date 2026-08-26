@@ -454,6 +454,7 @@ fun SubscriptionsScreen(
             payment_failed_at = it.payment_failed_at,
             grace_period_end = it.grace_period_end,
             current_period_end = it.current_period_end,
+            cancel_at_period_end = it.cancel_at_period_end,
         )
     }
 

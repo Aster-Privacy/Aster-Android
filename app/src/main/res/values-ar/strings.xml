@@ -2831,9 +2831,9 @@
     <string name="plan_change_preview_loading">جارٍ حساب المبلغ المستحق اليوم…</string>
     <string name="plan_change_due_today">المستحق اليوم: %1$s</string>
     <string name="plan_change_preview_failed">تعذر حساب المبلغ المستحق اليوم. يُعرض السعر الكامل.</string>
-    <string name="payment_failed_banner_overdue">لم تتم عملية الدفع الأخيرة. حدّث بطاقتك الآن للاحتفاظ بخطة %1$s.</string>
-    <string name="payment_failed_days_left">تبقى %1$d يومًا لتحديث بطاقتك.</string>
-    <string name="payment_failed_one_day_left">يتبقى يوم واحد لتحديث بطاقتك.</string>
+    <string name="payment_failed_banner_overdue">لم تتم عملية الدفع. سيتم تقييد الوصول إلى خطة %1$s قريباً.</string>
+    <string name="payment_failed_days_left">سيتم تقييد الوصول خلال %1$d يوماً.</string>
+    <string name="payment_failed_one_day_left">سيتم تقييد الوصول خلال يوم واحد.</string>
     <string name="device_verification_failed">تعذر التحقق من هذا الجهاز لإجراء هذا التغيير. سجّل الدخول مرة أخرى على هذا الجهاز، ثم أعد المحاولة.</string>
     <string name="cancel_reason_title">قبل أن تغادر</string>
     <string name="cancel_reason_description">ما الذي دفعك إلى الإلغاء؟ الإجابة اختيارية.</string>
@@ -2849,8 +2849,8 @@
     <string name="change_plan_failed">تعذّر تغيير الخطة</string>
     <string name="crypto_term_24_months">24 شهرًا</string>
     <string name="downgrade_confirm_message">تتغير خطتك إلى %1$s في %2$s. تتوقف الميزات الأعلى من خطة %1$s عن العمل.</string>
-    <string name="payment_failed_banner_message">لم تتم عملية الدفع الأخيرة. حدّث بطاقتك بحلول %1$s للاحتفاظ بخطة %2$s.</string>
-    <string name="payment_failed_update_card">تحديث البطاقة</string>
+    <string name="payment_failed_banner_message">لم تتم عملية الدفع. سيتم تقييد الوصول إلى خطة %2$s بعد %1$s.</string>
+    <string name="payment_failed_update_card">ادفع</string>
     <string name="plan_changed">تم تغيير الخطة</string>
     <string name="plan_ended_on">انتهت خطة %1$s في %2$s</string>
     <string name="plan_ended_resubscribe_note">أعد الاشتراك لاستعادة سعة التخزين والأسماء المستعارة وبقية ميزات خطتك.</string>

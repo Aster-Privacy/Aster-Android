@@ -2826,9 +2826,9 @@
     <string name="plan_change_preview_loading">Calcul du montant dû aujourd’hui…</string>
     <string name="plan_change_due_today">Dû aujourd’hui : %1$s</string>
     <string name="plan_change_preview_failed">Le montant dû aujourd’hui n’a pas pu être calculé. Le prix complet est affiché.</string>
-    <string name="payment_failed_banner_overdue">Votre dernier paiement a échoué. Mettez à jour votre carte maintenant pour conserver votre forfait %1$s.</string>
-    <string name="payment_failed_days_left">Il vous reste %1$d jours pour mettre à jour votre carte.</string>
-    <string name="payment_failed_one_day_left">Il vous reste 1 jour pour mettre à jour votre carte.</string>
+    <string name="payment_failed_banner_overdue">Votre paiement n\'a pas abouti. L\'accès à votre forfait %1$s sera bientôt limité.</string>
+    <string name="payment_failed_days_left">L\'accès sera limité dans %1$d jours.</string>
+    <string name="payment_failed_one_day_left">L\'accès sera limité dans 1 jour.</string>
     <string name="device_verification_failed">Cet appareil n’a pas pu être vérifié pour cette modification. Reconnectez-vous sur cet appareil, puis réessayez.</string>
     <string name="cancel_reason_title">Avant de partir</string>
     <string name="cancel_reason_description">Qu’est-ce qui vous a décidé à annuler ? Répondre est facultatif.</string>
@@ -2844,8 +2844,8 @@
     <string name="change_plan_failed">Impossible de changer d\'offre</string>
     <string name="crypto_term_24_months">24 mois</string>
     <string name="downgrade_confirm_message">Votre offre passe à %1$s le %2$s. Les fonctionnalités supérieures à l\'offre %1$s cessent de fonctionner.</string>
-    <string name="payment_failed_banner_message">Votre dernier paiement n\'a pas abouti. Mettez votre carte à jour avant le %1$s pour conserver votre offre %2$s.</string>
-    <string name="payment_failed_update_card">Mettre la carte à jour</string>
+    <string name="payment_failed_banner_message">Votre paiement n\'a pas abouti. L\'accès à votre forfait %2$s sera limité après le %1$s.</string>
+    <string name="payment_failed_update_card">Payer</string>
     <string name="plan_changed">Offre modifiée</string>
     <string name="plan_ended_on">Votre offre %1$s s\'est terminée le %2$s</string>
     <string name="plan_ended_resubscribe_note">Réabonnez-vous pour récupérer votre stockage, vos alias et les autres fonctionnalités de votre offre.</string>

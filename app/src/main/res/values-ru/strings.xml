@@ -2815,9 +2815,9 @@
     <string name="plan_change_preview_loading">Рассчитываем сумму к оплате сегодня…</string>
     <string name="plan_change_due_today">К оплате сегодня: %1$s</string>
     <string name="plan_change_preview_failed">Не удалось рассчитать сумму к оплате сегодня. Показана полная цена.</string>
-    <string name="payment_failed_banner_overdue">Последний платёж не прошёл. Обновите карту сейчас, чтобы сохранить тариф %1$s.</string>
-    <string name="payment_failed_days_left">Осталось %1$d дн., чтобы обновить карту.</string>
-    <string name="payment_failed_one_day_left">Остался 1 день, чтобы обновить карту.</string>
+    <string name="payment_failed_banner_overdue">Платёж не прошёл. Доступ к тарифу %1$s скоро будет ограничен.</string>
+    <string name="payment_failed_days_left">Доступ будет ограничен через %1$d дн.</string>
+    <string name="payment_failed_one_day_left">Доступ будет ограничен через 1 день.</string>
     <string name="device_verification_failed">Не удалось подтвердить это устройство для этого изменения. Войдите снова на этом устройстве и повторите попытку.</string>
     <string name="cancel_reason_title">Перед уходом</string>
     <string name="cancel_reason_description">Почему вы решили отменить подписку? Ответ необязателен.</string>
@@ -2833,8 +2833,8 @@
     <string name="change_plan_failed">Не удалось сменить тариф</string>
     <string name="crypto_term_24_months">24 месяца</string>
     <string name="downgrade_confirm_message">Ваш тариф изменится на %1$s %2$s. Функции, доступные сверх тарифа %1$s, перестанут работать.</string>
-    <string name="payment_failed_banner_message">Ваш последний платёж не прошёл. Обновите данные карты до %1$s, чтобы сохранить тариф %2$s.</string>
-    <string name="payment_failed_update_card">Обновить карту</string>
+    <string name="payment_failed_banner_message">Платёж не прошёл. Доступ к тарифу %2$s будет ограничен после %1$s.</string>
+    <string name="payment_failed_update_card">Оплатить</string>
     <string name="plan_changed">Тариф изменён</string>
     <string name="plan_ended_on">Ваш тариф %1$s закончился %2$s</string>
     <string name="plan_ended_resubscribe_note">Оформите подписку снова, чтобы вернуть хранилище, псевдонимы и другие возможности тарифа.</string>

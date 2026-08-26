@@ -2791,9 +2791,9 @@
     <string name="plan_change_preview_loading">오늘 청구 금액을 계산하는 중…</string>
     <string name="plan_change_due_today">오늘 청구 금액: %1$s</string>
     <string name="plan_change_preview_failed">오늘 청구 금액을 계산할 수 없습니다. 전체 가격이 표시됩니다.</string>
-    <string name="payment_failed_banner_overdue">마지막 결제가 완료되지 않았습니다. %1$s 요금제를 유지하려면 지금 카드를 업데이트하세요.</string>
-    <string name="payment_failed_days_left">카드를 업데이트할 수 있는 기간이 %1$d일 남았습니다.</string>
-    <string name="payment_failed_one_day_left">카드를 업데이트할 수 있는 기간이 1일 남았습니다.</string>
+    <string name="payment_failed_banner_overdue">결제가 완료되지 않았습니다. 곧 %1$s 요금제 액세스가 제한됩니다.</string>
+    <string name="payment_failed_days_left">%1$d일 후에 액세스가 제한됩니다.</string>
+    <string name="payment_failed_one_day_left">1일 후에 액세스가 제한됩니다.</string>
     <string name="device_verification_failed">이 변경을 위해 이 기기를 확인할 수 없습니다. 이 기기에서 다시 로그인한 후 다시 시도하세요.</string>
     <string name="cancel_reason_title">떠나시기 전에</string>
     <string name="cancel_reason_description">해지를 결정한 이유는 무엇인가요? 답변은 선택 사항입니다.</string>
@@ -2809,8 +2809,8 @@
     <string name="change_plan_failed">요금제를 변경하지 못했습니다</string>
     <string name="crypto_term_24_months">24개월</string>
     <string name="downgrade_confirm_message">%2$s에 요금제가 %1$s(으)로 바뀝니다. %1$s 요금제보다 상위인 기능은 작동을 멈춥니다.</string>
-    <string name="payment_failed_banner_message">마지막 결제가 처리되지 않았습니다. %2$s 요금제를 유지하려면 %1$s까지 카드를 업데이트하세요.</string>
-    <string name="payment_failed_update_card">카드 업데이트</string>
+    <string name="payment_failed_banner_message">결제가 완료되지 않았습니다. %1$s 이후 %2$s 요금제 액세스가 제한됩니다.</string>
+    <string name="payment_failed_update_card">결제하기</string>
     <string name="plan_changed">요금제가 변경되었습니다</string>
     <string name="plan_ended_on">%1$s 요금제가 %2$s에 끝났습니다</string>
     <string name="plan_ended_resubscribe_note">다시 구독하면 저장 공간, 별칭 등 요금제 기능을 되찾을 수 있습니다.</string>

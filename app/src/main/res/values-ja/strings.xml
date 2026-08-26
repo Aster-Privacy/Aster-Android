@@ -2791,9 +2791,9 @@
     <string name="plan_change_preview_loading">本日のお支払い額を計算しています…</string>
     <string name="plan_change_due_today">本日のお支払い: %1$s</string>
     <string name="plan_change_preview_failed">本日のお支払い額を計算できませんでした。通常価格を表示しています。</string>
-    <string name="payment_failed_banner_overdue">前回のお支払いが完了しませんでした。%1$s プランを維持するには、今すぐカードを更新してください。</string>
-    <string name="payment_failed_days_left">カードの更新期限まであと %1$d 日です。</string>
-    <string name="payment_failed_one_day_left">カードの更新期限まであと 1 日です。</string>
+    <string name="payment_failed_banner_overdue">お支払いが完了しませんでした。まもなく%1$sプランへのアクセスが制限されます。</string>
+    <string name="payment_failed_days_left">%1$d日後にアクセスが制限されます。</string>
+    <string name="payment_failed_one_day_left">1日後にアクセスが制限されます。</string>
     <string name="device_verification_failed">この変更のためにこのデバイスを確認できませんでした。このデバイスでもう一度サインインしてから、再試行してください。</string>
     <string name="cancel_reason_title">ご解約の前に</string>
     <string name="cancel_reason_description">解約を決めた理由は何ですか。回答は任意です。</string>
@@ -2809,8 +2809,8 @@
     <string name="change_plan_failed">プランを変更できませんでした</string>
     <string name="crypto_term_24_months">24 か月</string>
     <string name="downgrade_confirm_message">プランは %1$s に変わります（%2$s）。%1$s プランを超える機能は使えなくなります。</string>
-    <string name="payment_failed_banner_message">前回のお支払いを処理できませんでした。%1$s までにカード情報を更新して、%2$s プランを継続してください。</string>
-    <string name="payment_failed_update_card">カードを更新</string>
+    <string name="payment_failed_banner_message">お支払いが完了しませんでした。%1$s以降、%2$sプランへのアクセスが制限されます。</string>
+    <string name="payment_failed_update_card">支払う</string>
     <string name="plan_changed">プランを変更しました</string>
     <string name="plan_ended_on">%1$s プランは %2$s に終了しました</string>
     <string name="plan_ended_resubscribe_note">再登録すると、保存容量やエイリアスなどのプラン機能をもう一度使えます。</string>

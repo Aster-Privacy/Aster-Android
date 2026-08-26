@@ -2799,9 +2799,9 @@
     <string name="plan_change_preview_loading">Het bedrag dat je vandaag betaalt wordt berekend…</string>
     <string name="plan_change_due_today">Vandaag te betalen: %1$s</string>
     <string name="plan_change_preview_failed">Het bedrag dat je vandaag betaalt kon niet worden berekend. De volledige prijs wordt getoond.</string>
-    <string name="payment_failed_banner_overdue">Je laatste betaling is mislukt. Werk je kaart nu bij om je %1$s-abonnement te behouden.</string>
-    <string name="payment_failed_days_left">Nog %1$d dagen om je kaart bij te werken.</string>
-    <string name="payment_failed_one_day_left">Nog 1 dag om je kaart bij te werken.</string>
+    <string name="payment_failed_banner_overdue">Je betaling is niet gelukt. De toegang tot je %1$s-abonnement wordt binnenkort beperkt.</string>
+    <string name="payment_failed_days_left">De toegang wordt over %1$d dagen beperkt.</string>
+    <string name="payment_failed_one_day_left">De toegang wordt over 1 dag beperkt.</string>
     <string name="device_verification_failed">Dit apparaat kon niet worden geverifieerd voor die wijziging. Meld je opnieuw aan op dit apparaat en probeer het dan opnieuw.</string>
     <string name="cancel_reason_title">Voordat je gaat</string>
     <string name="cancel_reason_description">Waarom wil je opzeggen? Antwoorden is optioneel.</string>
@@ -2817,8 +2817,8 @@
     <string name="change_plan_failed">Kon abonnement niet wijzigen</string>
     <string name="crypto_term_24_months">24 maanden</string>
     <string name="downgrade_confirm_message">Je abonnement wijzigt naar %1$s op %2$s. Functies boven het %1$s-abonnement werken niet meer.</string>
-    <string name="payment_failed_banner_message">Je laatste betaling is niet gelukt. Werk je kaart bij vóór %1$s om je %2$s-abonnement te behouden.</string>
-    <string name="payment_failed_update_card">Kaart bijwerken</string>
+    <string name="payment_failed_banner_message">Je betaling is niet gelukt. De toegang tot je %2$s-abonnement wordt na %1$s beperkt.</string>
+    <string name="payment_failed_update_card">Betalen</string>
     <string name="plan_changed">Abonnement gewijzigd</string>
     <string name="plan_ended_on">Je %1$s-abonnement is geëindigd op %2$s</string>
     <string name="plan_ended_resubscribe_note">Neem opnieuw een abonnement om je opslag, aliassen en andere abonnementsfuncties terug te krijgen.</string>

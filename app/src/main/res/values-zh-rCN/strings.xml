@@ -2791,9 +2791,9 @@
     <string name="plan_change_preview_loading">正在计算今天应付金额…</string>
     <string name="plan_change_due_today">今天应付：%1$s</string>
     <string name="plan_change_preview_failed">无法计算今天应付金额。当前显示完整价格。</string>
-    <string name="payment_failed_banner_overdue">您的上次付款未成功。请立即更新您的卡，以保留 %1$s 套餐。</string>
-    <string name="payment_failed_days_left">还有 %1$d 天可更新您的卡。</string>
-    <string name="payment_failed_one_day_left">还有 1 天可更新您的卡。</string>
+    <string name="payment_failed_banner_overdue">付款未成功。%1$s 方案的访问权限即将受限。</string>
+    <string name="payment_failed_days_left">访问权限将在 %1$d 天后受限。</string>
+    <string name="payment_failed_one_day_left">访问权限将在 1 天后受限。</string>
     <string name="device_verification_failed">无法为此更改验证此设备。请在此设备上重新登录，然后重试。</string>
     <string name="cancel_reason_title">在您离开之前</string>
     <string name="cancel_reason_description">是什么让您决定取消？填写为可选项。</string>
@@ -2809,8 +2809,8 @@
     <string name="change_plan_failed">无法更改套餐</string>
     <string name="crypto_term_24_months">24 个月</string>
     <string name="downgrade_confirm_message">您的套餐将变更为 %1$s，生效时间为 %2$s。高于 %1$s 套餐的功能将停止可用。</string>
-    <string name="payment_failed_banner_message">您上次的付款未成功。请在 %1$s 之前更新银行卡，以继续使用 %2$s 套餐。</string>
-    <string name="payment_failed_update_card">更新银行卡</string>
+    <string name="payment_failed_banner_message">付款未成功。%1$s 之后，%2$s 方案的访问权限将受限。</string>
+    <string name="payment_failed_update_card">付款</string>
     <string name="plan_changed">套餐已更改</string>
     <string name="plan_ended_on">您的 %1$s 套餐已于 %2$s 结束</string>
     <string name="plan_ended_resubscribe_note">重新订阅即可恢复存储空间、别名和其他套餐功能。</string>
