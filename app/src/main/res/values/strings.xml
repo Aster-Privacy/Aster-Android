@@ -2894,4 +2894,8 @@
     <string name="label_icon_group_work">WORK</string>
     <string name="label_icon_group_school">SCHOOL</string>
     <string name="label_icon_group_everyday">EVERYDAY</string>
+    <string name="text_color">Text color</string>
+    <string name="highlight_color">Highlight color</string>
+    <string name="clear_formatting">Clear formatting</string>
+    <string name="signature_add_formatting">Add formatting</string>
 </resources>

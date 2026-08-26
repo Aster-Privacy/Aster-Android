@@ -2805,4 +2805,8 @@
     <string name="label_icon_group_work">LAVORO</string>
     <string name="label_icon_group_school">SCUOLA</string>
     <string name="label_icon_group_everyday">QUOTIDIANO</string>
+    <string name="text_color">Colore del testo</string>
+    <string name="highlight_color">Colore di evidenziazione</string>
+    <string name="clear_formatting">Cancella formattazione</string>
+    <string name="signature_add_formatting">Aggiungi formattazione</string>
 </resources>

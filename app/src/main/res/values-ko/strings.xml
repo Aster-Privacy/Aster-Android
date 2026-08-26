@@ -2797,4 +2797,8 @@
     <string name="label_icon_group_work">업무</string>
     <string name="label_icon_group_school">학교</string>
     <string name="label_icon_group_everyday">일상</string>
+    <string name="text_color">글자 색</string>
+    <string name="highlight_color">강조 색</string>
+    <string name="clear_formatting">서식 지우기</string>
+    <string name="signature_add_formatting">서식 추가</string>
 </resources>

@@ -2833,4 +2833,8 @@
     <string name="label_icon_group_work">TRAVAIL</string>
     <string name="label_icon_group_school">ÉCOLE</string>
     <string name="label_icon_group_everyday">QUOTIDIEN</string>
+    <string name="text_color">Couleur du texte</string>
+    <string name="highlight_color">Couleur de surlignage</string>
+    <string name="clear_formatting">Effacer la mise en forme</string>
+    <string name="signature_add_formatting">Ajouter une mise en forme</string>
 </resources>

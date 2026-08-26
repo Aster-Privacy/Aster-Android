@@ -2806,4 +2806,8 @@
     <string name="label_icon_group_work">ARBEIT</string>
     <string name="label_icon_group_school">SCHULE</string>
     <string name="label_icon_group_everyday">ALLTAG</string>
+    <string name="text_color">Textfarbe</string>
+    <string name="highlight_color">Hervorhebungsfarbe</string>
+    <string name="clear_formatting">Formatierung entfernen</string>
+    <string name="signature_add_formatting">Formatierung hinzufügen</string>
 </resources>

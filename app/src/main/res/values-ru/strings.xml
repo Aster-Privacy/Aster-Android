@@ -2821,4 +2821,8 @@
     <string name="label_icon_group_work">РАБОТА</string>
     <string name="label_icon_group_school">УЧЁБА</string>
     <string name="label_icon_group_everyday">ПОВСЕДНЕВНОЕ</string>
+    <string name="text_color">Цвет текста</string>
+    <string name="highlight_color">Цвет выделения</string>
+    <string name="clear_formatting">Очистить форматирование</string>
+    <string name="signature_add_formatting">Добавить форматирование</string>
 </resources>

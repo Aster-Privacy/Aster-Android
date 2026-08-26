@@ -2797,4 +2797,8 @@
     <string name="label_icon_group_work">仕事</string>
     <string name="label_icon_group_school">学校</string>
     <string name="label_icon_group_everyday">日常</string>
+    <string name="text_color">文字の色</string>
+    <string name="highlight_color">蛍光ペンの色</string>
+    <string name="clear_formatting">書式をクリア</string>
+    <string name="signature_add_formatting">書式を追加</string>
 </resources>

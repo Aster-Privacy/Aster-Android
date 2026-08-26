@@ -2805,4 +2805,8 @@
     <string name="label_icon_group_work">İŞ</string>
     <string name="label_icon_group_school">OKUL</string>
     <string name="label_icon_group_everyday">GÜNLÜK</string>
+    <string name="text_color">Metin rengi</string>
+    <string name="highlight_color">Vurgu rengi</string>
+    <string name="clear_formatting">Biçimlendirmeyi temizle</string>
+    <string name="signature_add_formatting">Biçimlendirme ekle</string>
 </resources>

@@ -2805,4 +2805,8 @@
     <string name="label_icon_group_work">WERK</string>
     <string name="label_icon_group_school">SCHOOL</string>
     <string name="label_icon_group_everyday">DAGELIJKS</string>
+    <string name="text_color">Tekstkleur</string>
+    <string name="highlight_color">Markeerkleur</string>
+    <string name="clear_formatting">Opmaak wissen</string>
+    <string name="signature_add_formatting">Opmaak toevoegen</string>
 </resources>

@@ -71,7 +71,6 @@ import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.settings.DecryptedSignature
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
-import org.astermail.android.ui.compose.signature_html_web_preview
 
 @Composable
 fun SignatureScreen(
@@ -244,6 +243,17 @@ private fun signature_edit_modal(
     var placement by remember { mutableStateOf(initial?.placement) }
     var is_default by remember { mutableStateOf(initial?.is_default ?: (initial == null)) }
     var is_html by remember { mutableStateOf(initial?.is_html ?: false) }
+    val editor_controller = remember { signature_editor_controller() }
+
+    fun commit(latest_content: String) {
+        val prepared = if (is_html) {
+            sanitize_signature_html(latest_content)
+        } else {
+            latest_content
+        }
+        if (prepared.isBlank()) return
+        on_save(name, prepared, alias_id, placement, is_html, is_default)
+    }
 
     detail_scaffold(
         title = if (initial == null) stringResource(R.string.add_signature) else stringResource(R.string.signature),
@@ -268,19 +278,17 @@ private fun signature_edit_modal(
         v_gap(AsterSpacing.lg)
         section_label(stringResource(R.string.your_signature))
         if (is_html) {
-            signature_html_web_preview(
-                html = content,
+            signature_format_toolbar(controller = editor_controller)
+            v_gap(AsterSpacing.sm)
+            signature_rich_editor(
+                initial_html = content,
+                controller = editor_controller,
+                on_html_change = { content = it },
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(SquircleShape(18.dp))
                     .border(1.dp, colors.input_border, SquircleShape(18.dp))
-                    .height(200.dp),
-            )
-            v_gap(AsterSpacing.sm)
-            Text(
-                text = stringResource(R.string.signature_rich_preview_note),
-                color = colors.text_muted,
-                fontSize = 12.sp,
+                    .height(220.dp),
             )
             v_gap(AsterSpacing.sm)
             AsterSecondaryButton(
@@ -317,6 +325,14 @@ private fun signature_edit_modal(
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
+            v_gap(AsterSpacing.sm)
+            AsterSecondaryButton(
+                label = stringResource(R.string.signature_add_formatting),
+                onClick = {
+                    content = plain_signature_to_html(content)
+                    is_html = true
+                },
+            )
         }
         v_gap(AsterSpacing.lg)
         section_label(stringResource(R.string.signature_apply_to))
@@ -381,7 +397,13 @@ private fun signature_edit_modal(
                 AsterButton(
                     label = stringResource(R.string.save),
                     onClick = {
-                        on_save(name, content, alias_id, placement, is_html, is_default)
+                        if (is_html) {
+                            editor_controller.request_html { latest ->
+                                commit(latest?.takeIf { it.isNotBlank() } ?: content)
+                            }
+                        } else {
+                            commit(content)
+                        }
                     },
                 )
             }
