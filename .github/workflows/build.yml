@@ -32,6 +32,7 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
+      - run: cp app/google-services.json.example app/google-services.json
       - run: ./gradlew assembleFullRelease
       - run: ./gradlew assembleFdroidRelease
       - uses: actions/upload-artifact@v4

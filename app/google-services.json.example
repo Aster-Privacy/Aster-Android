@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "YOUR_PROJECT_NUMBER",
-    "project_id": "YOUR_PROJECT_ID",
-    "storage_bucket": "YOUR_PROJECT_ID.firebasestorage.app"
+    "project_number": "000000000000",
+    "project_id": "aster-mail-example",
+    "storage_bucket": "aster-mail-example.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "YOUR_MOBILESDK_APP_ID",
+        "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
         "android_client_info": {
           "package_name": "org.astermail.android"
         }
@@ -26,7 +26,7 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "YOUR_MOBILESDK_APP_ID_DEBUG",
+        "mobilesdk_app_id": "1:000000000000:android:0000000000000001",
         "android_client_info": {
           "package_name": "org.astermail.android.debug"
         }
