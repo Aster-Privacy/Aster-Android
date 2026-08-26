@@ -60,6 +60,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -88,6 +89,7 @@ import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.AsterTopBar
+import org.astermail.android.util.ascii_digits
 
 @Composable
 fun SignInScreen(
@@ -102,8 +104,8 @@ fun SignInScreen(
     val colors = AsterMaterial.colors
     val state by view_model.ui_state.collectAsStateWithLifecycle()
 
-    var email by remember(prefill_email) { mutableStateOf(prefill_email) }
-    var email_domain by remember { mutableStateOf("astermail.org") }
+    var email by rememberSaveable(prefill_email) { mutableStateOf(prefill_email) }
+    var email_domain by rememberSaveable { mutableStateOf("astermail.org") }
     var password by remember { mutableStateOf("") }
     var password_visible by remember { mutableStateOf(false) }
     val email_focus = remember { FocusRequester() }
@@ -118,7 +120,6 @@ fun SignInScreen(
         when (state) {
             is AuthUiState.Success -> if (!signed_in_fired) { signed_in_fired = true; on_signed_in() }
             is AuthUiState.TotpChallenge -> cached_totp_challenge = (state as AuthUiState.TotpChallenge).challenge
-            is AuthUiState.Idle -> cached_totp_challenge = null
             else -> Unit
         }
     }
@@ -139,8 +140,7 @@ fun SignInScreen(
     val active_totp_challenge = cached_totp_challenge
     BackHandler {
         if (active_totp_challenge != null) {
-            view_model.cancel_totp(active_totp_challenge)
-            cached_totp_challenge = null
+            if (view_model.cancel_totp(active_totp_challenge)) cached_totp_challenge = null
         } else {
             on_back()
         }
@@ -150,8 +150,7 @@ fun SignInScreen(
             challenge = active_totp_challenge,
             view_model = view_model,
             on_back = {
-                view_model.cancel_totp(active_totp_challenge)
-                cached_totp_challenge = null
+                if (view_model.cancel_totp(active_totp_challenge)) cached_totp_challenge = null
             },
         )
         return
@@ -465,7 +464,7 @@ private fun TotpVerifyScreen(
                         code = if (use_backup) {
                             v.filter { it.isLetterOrDigit() || it == '-' }.take(20)
                         } else {
-                            v.filter { it.isDigit() }.take(6)
+                            ascii_digits(v).take(6)
                         }
                         if (state is AuthUiState.Error) view_model.reset_state()
                     },

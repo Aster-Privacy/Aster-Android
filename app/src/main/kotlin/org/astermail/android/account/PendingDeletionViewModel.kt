@@ -56,20 +56,25 @@ class PendingDeletionViewModel @Inject constructor(
 
     private val ctx get() = getApplication<Application>()
 
+    private var is_signing_out = false
+
     fun check() {
         if (_state.value.is_cancelling) return
         viewModelScope.launch(Dispatchers.IO) {
-            val days = runCatching { account_api.get_status() }.fold(
+            val outcome = runCatching { account_api.get_status() }
+            if (_state.value.is_cancelling) return@launch
+            val failure = outcome.exceptionOrNull()
+            if (failure != null && !is_pending_deletion_error(failure)) return@launch
+            val days = outcome.fold(
                 onSuccess = { status ->
                     if (status.status == "pending_deletion") status.days_until_deletion ?: -1L else null
                 },
-                onFailure = { t -> if (is_pending_deletion_error(t)) -1L else null },
+                onFailure = { -1L },
             )
-            if (_state.value.is_cancelling) return@launch
             _state.value = if (days != null) {
                 _state.value.copy(visible = true, days_remaining = days.takeIf { it >= 0L })
             } else {
-                _state.value.copy(visible = false)
+                _state.value.copy(visible = false, days_remaining = null)
             }
         }
     }
@@ -102,10 +107,13 @@ class PendingDeletionViewModel @Inject constructor(
     }
 
     fun sign_out(on_done: (Boolean) -> Unit) {
+        if (is_signing_out) return
+        is_signing_out = true
         viewModelScope.launch(Dispatchers.IO) {
             runCatching { auth_repository.logout() }
             val switched_account = auth_repository.is_signed_in.value
             _state.value = UiState(visible = false)
+            is_signing_out = false
             withContext(Dispatchers.Main) { on_done(switched_account) }
         }
     }

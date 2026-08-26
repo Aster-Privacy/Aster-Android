@@ -162,15 +162,16 @@ class LinkDeviceViewModel @Inject constructor(
 
     private fun seal_for(device: PendingDevice): String {
         val passphrase = session_key_store.get_passphrase() ?: throw SessionExpiredException()
-        val mlkem_pk = DeviceEnvelope.base64url_decode(device.mlkem_pk)
-        val x25519_pk = DeviceEnvelope.base64url_decode(device.x25519_pk)
-        val ed25519_pk = DeviceEnvelope.base64url_decode(device.ed25519_pk)
-
-        if (ed25519_pk.size != DeviceEnvelope.ED25519_PK_BYTES) {
-            throw DeviceEnvelope.InvalidDeviceKeyException("bad ed25519 key")
-        }
 
         try {
+            val mlkem_pk = DeviceEnvelope.base64url_decode(device.mlkem_pk)
+            val x25519_pk = DeviceEnvelope.base64url_decode(device.x25519_pk)
+            val ed25519_pk = DeviceEnvelope.base64url_decode(device.ed25519_pk)
+
+            if (ed25519_pk.size != DeviceEnvelope.ED25519_PK_BYTES) {
+                throw DeviceEnvelope.InvalidDeviceKeyException("bad ed25519 key")
+            }
+
             return DeviceEnvelope.base64url_encode(
                 DeviceEnvelope.seal_secret_for_device(
                     secret = passphrase,

@@ -191,6 +191,11 @@ fun RegisterPlanStep(
         try {
             context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
         } catch (_: Throwable) {
+            android.widget.Toast.makeText(
+                context,
+                context.getString(R.string.could_not_open_link),
+                android.widget.Toast.LENGTH_SHORT,
+            ).show()
         }
         billing_vm.consume_checkout_url()
     }
@@ -252,6 +257,11 @@ fun RegisterPlanStep(
 
         Spacer(Modifier.height(AsterSpacing.xl))
 
+        state.error?.let { message ->
+            error_banner(message = message)
+            Spacer(Modifier.height(AsterSpacing.lg))
+        }
+
         if (plans.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
@@ -281,7 +291,10 @@ fun RegisterPlanStep(
                     plan = plan,
                     is_selected = selected_code == plan.code,
                     billing_interval = effective_interval,
-                    on_select = { selected_code = plan.code },
+                    on_select = {
+                        selected_code = plan.code
+                        billing_vm.clear_messages()
+                    },
                 )
                 Spacer(Modifier.height(AsterSpacing.md))
             }
@@ -298,6 +311,7 @@ fun RegisterPlanStep(
             AsterButton(
                 label = stringResource(R.string.continue_with_upgrade),
                 onClick = {
+                    billing_vm.clear_messages()
                     if (used_fallback && api_plans.isEmpty()) {
                         billing_vm.load_plans()
                     }
@@ -404,8 +418,11 @@ private fun plan_card(
             Spacer(Modifier.height(4.dp))
 
             val price_text = if (plan.price_cents > 0) {
-                val amount = plan.price_cents / 100.0
-                "$%.2f".format(amount) + " / " + (plan.billing_period ?: billing_interval)
+                stringResource(
+                    R.string.price_per_interval,
+                    format_plan_price(plan.price_cents),
+                    plan_interval_label(plan.billing_period ?: billing_interval),
+                )
             } else {
                 stringResource(R.string.free_forever)
             }
@@ -456,4 +473,21 @@ private fun format_plan_bytes(bytes: Long): String {
     }
     return if (unit == 0) "%d %s".format(bytes, units[unit])
     else "%.1f %s".format(size, units[unit])
+}
+
+private fun format_plan_price(cents: Int): String {
+    val amount = cents / 100.0
+    return try {
+        val fmt = java.text.NumberFormat.getCurrencyInstance(java.util.Locale.getDefault())
+        fmt.currency = java.util.Currency.getInstance("USD")
+        fmt.format(amount)
+    } catch (_: Throwable) {
+        "$%.2f".format(amount)
+    }
+}
+
+@Composable
+private fun plan_interval_label(interval: String): String = when (interval.lowercase()) {
+    "year", "yearly", "annual" -> stringResource(R.string.billing_period_year)
+    else -> stringResource(R.string.billing_period_month)
 }

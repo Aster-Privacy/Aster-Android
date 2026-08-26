@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -112,6 +113,11 @@ fun RegisterRecoveryEmailStep(
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Done,
             ),
+            keyboard_actions = KeyboardActions(
+                onDone = {
+                    if (state.recovery_email.value.isNotBlank() && !is_saving) on_continue()
+                },
+            ),
             leading_icon = {
                 Icon(TablerIcons.Mail, null, tint = colors.text_muted)
             },
@@ -123,6 +129,7 @@ fun RegisterRecoveryEmailStep(
             label = stringResource(R.string.continue_action),
             onClick = on_continue,
             enabled = state.recovery_email.value.isNotBlank() && !is_saving,
+            is_loading = is_saving,
         )
 
         Spacer(Modifier.height(AsterSpacing.sm))
@@ -131,6 +138,7 @@ fun RegisterRecoveryEmailStep(
             label = stringResource(R.string.skip_for_now),
             onClick = on_skip,
             modifier = Modifier.fillMaxWidth(),
+            enabled = !is_saving,
         )
     }
 }

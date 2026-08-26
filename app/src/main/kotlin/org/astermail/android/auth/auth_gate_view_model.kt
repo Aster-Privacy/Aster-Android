@@ -56,9 +56,10 @@ class AuthGateViewModel @Inject constructor(
     init {
         if (auth_repository.is_signed_in.value) {
             viewModelScope.launch {
-                withContext(Dispatchers.Default) {
+                val recovery = launch(Dispatchers.Default) {
                     runCatching { auth_repository.try_recover_identity_key() }
                 }
+                withTimeoutOrNull(IDENTITY_RECOVERY_TIMEOUT_MS) { recovery.join() }
                 _is_ready.value = true
             }
         } else {
@@ -94,5 +95,9 @@ class AuthGateViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    private companion object {
+        const val IDENTITY_RECOVERY_TIMEOUT_MS = 12_000L
     }
 }

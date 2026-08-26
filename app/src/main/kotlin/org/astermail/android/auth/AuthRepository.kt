@@ -32,11 +32,13 @@ import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.astermail.android.crypto.AesGcm
 import org.astermail.android.crypto.AuthSaltCollisionException
@@ -74,7 +76,7 @@ import org.astermail.android.storage.ThemeStore
 import org.astermail.android.storage.TokenStore
 import org.astermail.android.storage.TrustedDeviceStore
 
-data class RegisterSuccess(val recovery_codes: List<String>)
+data class RegisterSuccess(val recovery_codes: List<String>, val recovery_backup_saved: Boolean = true)
 
 data class TotpChallenge(
     val pending_login_token: String,
@@ -87,6 +89,8 @@ data class TotpChallenge(
 )
 
 private const val UNAUTHORIZED_CHECK_COOLDOWN_MS = 10_000L
+private const val RECOVERY_BACKUP_ATTEMPTS = 3
+private const val RECOVERY_BACKUP_RETRY_DELAY_MS = 1_200L
 
 sealed interface LoginOutcome {
     data object Success : LoginOutcome
@@ -310,8 +314,7 @@ class AuthRepository @Inject constructor(
             if (!clear_decrypted_mail_cache_blocking()) {
                 throw ApiError.UnknownError("could not clear the previous account's local mail cache")
             }
-            runCatching { pending_send_dao_clear_all() }
-            mail_repository.clear_caches()
+            mail_repository.clear_account_data()
             cancel_all_notifications()
             runCatching { org.astermail.android.notifications.MailPollingWorker.reset_new_mail_baseline(context) }
         }
@@ -321,67 +324,69 @@ class AuthRepository @Inject constructor(
             runCatching { token_store.clear() }
             throw AuthSaltCollisionException("auth salt equals the vault key salt")
         }
-        token_store.save(access, login_resp.refresh_token ?: access)
-        api_client.invalidate_bearer_cache()
-        session_key_store.put(password_hash_bytes)
-        session_key_store.put_passphrase(password_bytes)
-        session_key_store.put_password_salt(salt_bytes)
-        session_key_store.put_user_id(login_resp.user_id)
-        session_key_store.put_user_email(login_resp.email)
-        session_key_store.put_encrypted_vault(login_resp.encrypted_vault, login_resp.vault_nonce)
+        withContext(NonCancellable) {
+            token_store.save(access, login_resp.refresh_token ?: access)
+            api_client.invalidate_bearer_cache()
+            session_key_store.put(password_hash_bytes)
+            session_key_store.put_passphrase(password_bytes)
+            session_key_store.put_password_salt(salt_bytes)
+            session_key_store.put_user_id(login_resp.user_id)
+            session_key_store.put_user_email(login_resp.email)
+            session_key_store.put_encrypted_vault(login_resp.encrypted_vault, login_resp.vault_nonce)
 
-        try {
-            val vault_bytes = base64_decode(login_resp.encrypted_vault)
-            val nonce_bytes = base64_decode(login_resp.vault_nonce)
-            val vault_plain = CryptoNative.decrypt_vault_with_password(
-                vault_bytes,
-                nonce_bytes,
-                password_bytes,
-            )
-            val vault_json = String(vault_plain, Charsets.UTF_8)
-            vault_plain.fill(0)
-            val vault_obj = org.json.JSONObject(vault_json)
-            val identity_key = vault_obj.optString("identity_key", "")
-                .ifBlank { vault_obj.optString("identity_private_key", "") }
-            if (identity_key.isNotBlank()) {
-                session_key_store.put_identity_key(identity_key)
+            try {
+                val vault_bytes = base64_decode(login_resp.encrypted_vault)
+                val nonce_bytes = base64_decode(login_resp.vault_nonce)
+                val vault_plain = CryptoNative.decrypt_vault_with_password(
+                    vault_bytes,
+                    nonce_bytes,
+                    password_bytes,
+                )
+                val vault_json = String(vault_plain, Charsets.UTF_8)
+                vault_plain.fill(0)
+                val vault_obj = org.json.JSONObject(vault_json)
+                val identity_key = vault_obj.optString("identity_key", "")
+                    .ifBlank { vault_obj.optString("identity_private_key", "") }
+                if (identity_key.isNotBlank()) {
+                    session_key_store.put_identity_key(identity_key)
+                } else {
+                    if (BuildConfig.DEBUG) android.util.Log.w("AuthRepository", "vault decrypted but no identity_key field present")
+                }
+                val codes_array = vault_obj.optJSONArray("recovery_codes")
+                if (codes_array != null) {
+                    val codes = (0 until codes_array.length()).map { codes_array.getString(it) }
+                    session_key_store.put_recovery_codes(codes)
+                }
+                absorb_previous_keys_and_keks(vault_obj)
+                absorb_data_kek(vault_obj)
+                extract_ratchet_keys(vault_obj)
+            } catch (t: Throwable) {
+                if (BuildConfig.DEBUG) android.util.Log.w("AuthRepository", "vault decryption failed: ${t.javaClass.simpleName}")
+            }
+
+            password_bytes.fill(0)
+            password_hash_bytes.fill(0)
+
+            val profile = runCatching { withTimeoutOrNull(8_000L) { auth_api.me() } }.getOrNull()
+            profile?.let { LockdownStore.set_enabled(context, it.lockdown_mode_enabled) }
+            val previous_account = if (profile == null) {
+                account_store.get_all().firstOrNull { it.id == login_resp.user_id }
             } else {
-                if (BuildConfig.DEBUG) android.util.Log.w("AuthRepository", "vault decrypted but no identity_key field present")
+                null
             }
-            val codes_array = vault_obj.optJSONArray("recovery_codes")
-            if (codes_array != null) {
-                val codes = (0 until codes_array.length()).map { codes_array.getString(it) }
-                session_key_store.put_recovery_codes(codes)
-            }
-            absorb_previous_keys_and_keks(vault_obj)
-            absorb_data_kek(vault_obj)
-            extract_ratchet_keys(vault_obj)
-        } catch (t: Throwable) {
-            if (BuildConfig.DEBUG) android.util.Log.w("AuthRepository", "vault decryption failed: ${t.javaClass.simpleName}")
+            account_store.add_or_update(
+                StoredAccount(
+                    id = login_resp.user_id,
+                    email = login_resp.email,
+                    display_name = profile?.display_name ?: previous_account?.display_name,
+                    profile_color = profile?.profile_color ?: previous_account?.profile_color,
+                    profile_picture = profile?.profile_picture ?: previous_account?.profile_picture,
+                    added_at = System.currentTimeMillis(),
+                ),
+            )
+            runCatching { save_session_snapshot(login_resp.user_id) }
+            _is_signed_in.value = true
         }
-
-        password_bytes.fill(0)
-        password_hash_bytes.fill(0)
-
-        val profile = runCatching { withTimeoutOrNull(8_000L) { auth_api.me() } }.getOrNull()
-        profile?.let { LockdownStore.set_enabled(context, it.lockdown_mode_enabled) }
-        val previous_account = if (profile == null) {
-            account_store.get_all().firstOrNull { it.id == login_resp.user_id }
-        } else {
-            null
-        }
-        account_store.add_or_update(
-            StoredAccount(
-                id = login_resp.user_id,
-                email = login_resp.email,
-                display_name = profile?.display_name ?: previous_account?.display_name,
-                profile_color = profile?.profile_color ?: previous_account?.profile_color,
-                profile_picture = profile?.profile_picture ?: previous_account?.profile_picture,
-                added_at = System.currentTimeMillis(),
-            ),
-        )
-        runCatching { save_session_snapshot(login_resp.user_id) }
-        _is_signed_in.value = true
         runCatching { UnifiedPushState.clear_backend_registration(context) }
         runCatching { UnifiedPushState.sync_registration(context) }
         background_scope.launch { runCatching { ensure_pgp_key_published() } }
@@ -389,13 +394,45 @@ class AuthRepository @Inject constructor(
         background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
     }
 
-    suspend fun register(email: String, password: String, captcha_token: String? = null): Result<RegisterSuccess> = runCatching {
-        val trimmed = email.trim().lowercase()
+    private val pending_recovery_backup = java.util.concurrent.atomic.AtomicReference<SaveRecoveryBackupRequest?>(null)
+
+    private suspend fun upload_recovery_backup(request: SaveRecoveryBackupRequest): Boolean {
+        repeat(RECOVERY_BACKUP_ATTEMPTS) { attempt ->
+            val uploaded = runCatching { recovery_api.backup(request) }
+            if (uploaded.isSuccess) {
+                pending_recovery_backup.set(null)
+                return true
+            }
+            val failure = uploaded.exceptionOrNull()
+            if (failure is CancellationException) throw failure
+            if (attempt < RECOVERY_BACKUP_ATTEMPTS - 1) {
+                delay(RECOVERY_BACKUP_RETRY_DELAY_MS * (attempt + 1))
+            }
+        }
+        pending_recovery_backup.set(request)
+        return false
+    }
+
+    suspend fun retry_recovery_backup(): Boolean {
+        val pending = pending_recovery_backup.get() ?: return true
+        return upload_recovery_backup(pending)
+    }
+
+    suspend fun register(
+        email: String,
+        password: String,
+        captcha_token: String? = null,
+        remember_me: Boolean = true,
+    ): Result<RegisterSuccess> = runCatching {
+        val trimmed = email.trim().lowercase(java.util.Locale.ROOT)
         val at_index = trimmed.indexOf('@')
         val username = if (at_index > 0) trimmed.substring(0, at_index) else trimmed
         val email_domain = if (at_index > 0) trimmed.substring(at_index + 1) else "astermail.org"
         if (email_domain != "astermail.org" && email_domain != "aster.cx") {
-            throw ApiError.ValidationError(listOf("email domain must be astermail.org or aster.cx"))
+            throw ApiError.ValidationError(
+                listOf(context.getString(R.string.error_unsupported_email_domain)),
+                "CLIENT_MESSAGE",
+            )
         }
         val canonical_email = "$username@$email_domain"
 
@@ -443,8 +480,8 @@ class AuthRepository @Inject constructor(
                 val (encrypted_private_key, private_key_nonce) =
                     encrypt_pgp_private_key_for_server(keys.armored_private_key, password)
                 ClientPgpKeyData(
-                    fingerprint = keys.fingerprint.uppercase(),
-                    key_id = keys.key_id.uppercase(),
+                    fingerprint = keys.fingerprint.uppercase(java.util.Locale.ROOT),
+                    key_id = keys.key_id.uppercase(java.util.Locale.ROOT),
                     public_key_armored = keys.armored_public_key,
                     encrypted_private_key = encrypted_private_key,
                     private_key_nonce = private_key_nonce,
@@ -466,7 +503,7 @@ class AuthRepository @Inject constructor(
                 encrypted_vault = base64_encode(vault_envelope.encrypted_vault),
                 vault_nonce = base64_encode(vault_envelope.vault_nonce),
                 email_domain = email_domain,
-                remember_me = true,
+                remember_me = remember_me,
                 captcha_token = captcha_token,
                 pgp_key = client_pgp_key,
             ),
@@ -480,7 +517,7 @@ class AuthRepository @Inject constructor(
             runCatching {
                 withTimeoutOrNull(3_000L) { database.decrypted_mail_dao().clear_all() }
             }
-            mail_repository.clear_caches()
+            mail_repository.clear_account_data()
             cancel_all_notifications()
             runCatching { org.astermail.android.notifications.MailPollingWorker.reset_new_mail_baseline(context) }
         }
@@ -511,16 +548,13 @@ class AuthRepository @Inject constructor(
         val recovery_shares = recovery_codes.map { code -> generate_recovery_share(code, recovery_key) }
         recovery_key.fill(0)
 
-        runCatching {
-            recovery_api.backup(
-                SaveRecoveryBackupRequest(
-                    recovery_shares = recovery_shares,
-                    encrypted_vault_backup = vault_backup.encrypted_data,
-                    vault_backup_nonce = vault_backup.nonce,
-                    recovery_key_salt = vault_backup.salt,
-                ),
-            )
-        }
+        val backup_request = SaveRecoveryBackupRequest(
+            recovery_shares = recovery_shares,
+            encrypted_vault_backup = vault_backup.encrypted_data,
+            vault_backup_nonce = vault_backup.nonce,
+            recovery_key_salt = vault_backup.salt,
+        )
+        val recovery_backup_saved = upload_recovery_backup(backup_request)
 
         session_key_store.put_recovery_codes(recovery_codes)
 
@@ -540,7 +574,7 @@ class AuthRepository @Inject constructor(
         runCatching { UnifiedPushState.clear_backend_registration(context) }
         runCatching { UnifiedPushState.sync_registration(context) }
         background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
-        RegisterSuccess(recovery_codes = recovery_codes)
+        RegisterSuccess(recovery_codes = recovery_codes, recovery_backup_saved = recovery_backup_saved)
     }
 
     private fun save_session_snapshot(account_id: String) {
@@ -568,8 +602,7 @@ class AuthRepository @Inject constructor(
     suspend fun try_restore_session(account_id: String): Boolean {
         val snapshot = session_snapshot_store.load(account_id) ?: return false
         if (!clear_decrypted_mail_cache_blocking()) return false
-        runCatching { pending_send_dao_clear_all() }
-        mail_repository.clear_caches()
+        mail_repository.clear_account_data()
         cancel_all_notifications()
         token_store.save(snapshot.token_access, snapshot.token_refresh)
         api_client.invalidate_bearer_cache()
@@ -640,7 +673,12 @@ class AuthRepository @Inject constructor(
                 current_password_bytes,
             )
         } catch (_: Throwable) {
-            throw ApiError.ValidationError(listOf(context.getString(R.string.current_password_incorrect)))
+            current_password_bytes.fill(0)
+            new_password_bytes.fill(0)
+            throw ApiError.ValidationError(
+                listOf(context.getString(R.string.current_password_incorrect)),
+                "CLIENT_MESSAGE",
+            )
         }
 
         val vault_obj = org.json.JSONObject(String(vault_plain, Charsets.UTF_8))
@@ -664,6 +702,7 @@ class AuthRepository @Inject constructor(
             new_password_bytes.fill(0)
             throw ApiError.ValidationError(
                 listOf(context.getString(R.string.password_change_web_required)),
+                "CLIENT_MESSAGE",
             )
         }
 
@@ -676,42 +715,46 @@ class AuthRepository @Inject constructor(
             new_password_bytes, new_salt, pbkdf2_iterations,
         )
 
-        val response = settings_api.change_password(
-            ChangePasswordRequest(
-                current_password_hash = base64_encode(current_password_hash),
-                new_password_hash = base64_encode(new_password_hash),
-                new_password_salt = base64_encode(new_salt),
-                new_encrypted_vault = base64_encode(new_envelope.encrypted_vault),
-                new_vault_nonce = base64_encode(new_envelope.vault_nonce),
-                vault_format = MASTER_KEY_VAULT_FORMAT,
-            ),
-        )
+        withContext(NonCancellable) {
+            val response = settings_api.change_password(
+                ChangePasswordRequest(
+                    current_password_hash = base64_encode(current_password_hash),
+                    new_password_hash = base64_encode(new_password_hash),
+                    new_password_salt = base64_encode(new_salt),
+                    new_encrypted_vault = base64_encode(new_envelope.encrypted_vault),
+                    new_vault_nonce = base64_encode(new_envelope.vault_nonce),
+                    vault_format = MASTER_KEY_VAULT_FORMAT,
+                ),
+            )
 
-        session_key_store.put_data_kek(preserved_data_kek)
-        session_key_store.put(new_password_hash)
-        session_key_store.put_passphrase(new_password_bytes)
-        session_key_store.put_password_salt(new_salt)
-        session_key_store.put_encrypted_vault(
-            base64_encode(new_envelope.encrypted_vault),
-            base64_encode(new_envelope.vault_nonce),
-        )
+            session_key_store.put_data_kek(preserved_data_kek)
+            session_key_store.put(new_password_hash)
+            session_key_store.put_passphrase(new_password_bytes)
+            session_key_store.put_password_salt(new_salt)
+            session_key_store.put_encrypted_vault(
+                base64_encode(new_envelope.encrypted_vault),
+                base64_encode(new_envelope.vault_nonce),
+            )
 
-        response.csrf_token?.let { api_client.set_csrf(it) }
-        response.access_token?.let { token_store.save(it, token_store.refresh_token ?: it) }
+            response.csrf_token?.let { api_client.set_csrf(it) }
+            response.access_token?.let {
+                token_store.save(it, response.refresh_token ?: token_store.refresh_token ?: it)
+            }
 
-        runCatching { rewrap_server_pgp_key(new_password) }
+            runCatching { rewrap_server_pgp_key(new_password) }
 
-        runCatching { session_key_store.get_user_id()?.let { save_session_snapshot(it) } }
-        mail_repository.clear_caches()
-        database.decrypted_mail_dao().clear_all()
-        session_key_store.get_user_email()?.let { trusted_device_store.clear(it) }
+            runCatching { session_key_store.get_user_id()?.let { save_session_snapshot(it) } }
+            mail_repository.clear_caches()
+            database.decrypted_mail_dao().clear_all()
+            session_key_store.get_user_email()?.let { trusted_device_store.clear(it) }
 
-        current_password_hash.fill(0)
-        new_password_hash.fill(0)
-        current_password_bytes.fill(0)
-        new_password_bytes.fill(0)
-        stored_salt.fill(0)
-        preserved_data_kek.fill(0)
+            current_password_hash.fill(0)
+            new_password_hash.fill(0)
+            current_password_bytes.fill(0)
+            new_password_bytes.fill(0)
+            stored_salt.fill(0)
+            preserved_data_kek.fill(0)
+        }
     }
 
     private fun cancel_all_notifications() {
@@ -770,7 +813,7 @@ class AuthRepository @Inject constructor(
         runCatching { api_client.invalidate_bearer_cache() }
         runCatching { session_key_store.clear() }
         runCatching { org.astermail.android.folders.folder_lock_store.lock_all() }
-        runCatching { mail_repository.clear_caches() }
+        runCatching { mail_repository.clear_account_data() }
         runCatching { org.astermail.android.billing.AttachmentLimits.reset() }
         runCatching { theme_store.clear() }
         cancel_all_notifications()
@@ -783,7 +826,12 @@ class AuthRepository @Inject constructor(
             org.astermail.android.mail.AsterProfileResolverHolder.shared?.clear()
         }
         runCatching { database.decrypted_mail_dao().clear_all() }
-        runCatching { database.pending_send_dao().clear_all() }
+        if (remove_account) {
+            runCatching {
+                current_id?.let { database.pending_send_dao().clear_for_account(it) }
+                    ?: database.pending_send_dao().clear_all()
+            }
+        }
         if (current_id != null) {
             runCatching { session_snapshot_store.remove(current_id) }
             if (remove_account) runCatching { account_store.remove(current_id) }
@@ -942,7 +990,7 @@ class AuthRepository @Inject constructor(
         api_client.invalidate_bearer_cache()
         session_key_store.clear()
         org.astermail.android.folders.folder_lock_store.lock_all()
-        mail_repository.clear_caches()
+        mail_repository.clear_account_data()
         runCatching { theme_store.clear() }
         cancel_all_notifications()
         runCatching {
@@ -1173,7 +1221,7 @@ class AuthRepository @Inject constructor(
     }
 
     private fun hash_recovery_code(code: String): String {
-        val cleaned = code.uppercase().trim()
+        val cleaned = code.uppercase(java.util.Locale.ROOT).trim()
         val digest = java.security.MessageDigest.getInstance("SHA-256")
         val hash = digest.digest(cleaned.toByteArray(Charsets.UTF_8))
         return base64_encode(hash)
@@ -1183,7 +1231,7 @@ class AuthRepository @Inject constructor(
         val code_hash = hash_recovery_code(code)
         val salt = ByteArray(16).also { java.security.SecureRandom().nextBytes(it) }
         val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
-        val derived = PasswordKdf.derive_aes_key(code.uppercase().trim(), salt, pbkdf2_iterations)
+        val derived = PasswordKdf.derive_aes_key(code.uppercase(java.util.Locale.ROOT).trim(), salt, pbkdf2_iterations)
         val encrypted = AesGcm.encrypt(derived, nonce, recovery_key)
         derived.fill(0)
         return RecoveryShareData(
@@ -1274,10 +1322,6 @@ class AuthRepository @Inject constructor(
         return false
     }
 
-    private suspend fun pending_send_dao_clear_all() {
-        database.pending_send_dao().clear_all()
-    }
-
     private fun cached_vault_bytes(): ByteArray? =
         runCatching { session_key_store.get_encrypted_vault()?.first?.let { base64_decode(it) } }.getOrNull()
 
@@ -1288,7 +1332,7 @@ class AuthRepository @Inject constructor(
         android.util.Base64.decode(s, android.util.Base64.DEFAULT)
 
     private fun normalize_email(input: String): String {
-        val trimmed = input.trim().lowercase()
+        val trimmed = input.trim().lowercase(java.util.Locale.ROOT)
         return if (trimmed.contains('@')) trimmed else "$trimmed@astermail.org"
     }
 

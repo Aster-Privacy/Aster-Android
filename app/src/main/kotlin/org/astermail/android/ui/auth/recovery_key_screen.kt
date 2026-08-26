@@ -22,6 +22,8 @@
 package org.astermail.android.ui.auth
 
 import compose.icons.TablerIcons
+import org.astermail.android.ui.common.show_copy_failed_toast
+import org.astermail.android.ui.common.write_to_clipboard
 import compose.icons.tablericons.*
 
 import android.content.ClipData
@@ -52,6 +54,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -77,7 +80,7 @@ fun RecoveryKeyScreen(
     org.astermail.android.ui.common.secure_screen()
     val colors = AsterMaterial.colors
     val context = LocalContext.current
-    var saved by remember { mutableStateOf(false) }
+    var saved by rememberSaveable { mutableStateOf(false) }
     var copied by remember { mutableStateOf(false) }
     LaunchedEffect(copied) {
         if (copied) {
@@ -93,7 +96,7 @@ fun RecoveryKeyScreen(
             .systemBarsPadding(),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            AsterTopBar(title = "", on_back = {})
+            AsterTopBar(title = "", on_back = null)
 
             auth_centered_column(horizontal_alignment = Alignment.Start) {
                 Text(
@@ -138,8 +141,11 @@ fun RecoveryKeyScreen(
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.clickable {
-                        copy_to_clipboard(context, mnemonic)
-                        copied = true
+                        if (copy_to_clipboard(context, mnemonic)) {
+                            copied = true
+                        } else {
+                            show_copy_failed_toast(context)
+                        }
                     },
                 )
 
@@ -187,13 +193,13 @@ fun RecoveryKeyScreen(
     }
 }
 
-private fun copy_to_clipboard(context: Context, text: String) {
-    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+private fun copy_to_clipboard(context: Context, text: String): Boolean {
     val clip = ClipData.newPlainText("recovery key", text)
     clip.description.extras = android.os.PersistableBundle().apply {
         putBoolean("android.content.extra.IS_SENSITIVE", true)
     }
-    clipboard?.setPrimaryClip(clip)
+    if (!write_to_clipboard(context, clip)) return false
     org.astermail.android.util.schedule_sensitive_clipboard_clear(context, text)
+    return true
 }
 
