@@ -23,6 +23,8 @@ package org.astermail.android.translation
 
 import java.util.Locale
 
+const val PIVOT_LANGUAGE = "en"
+
 val translation_language_codes: List<String> = listOf(
     "ar", "de", "en", "es", "fr", "it", "ja", "ko", "nl", "pl", "pt", "ru", "tr", "zh",
 )

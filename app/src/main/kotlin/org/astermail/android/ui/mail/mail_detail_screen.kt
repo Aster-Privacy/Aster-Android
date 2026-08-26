@@ -184,6 +184,7 @@ import org.astermail.android.mail.MailViewModel
 import org.astermail.android.mail.can_move_to_inbox
 import org.astermail.android.mail.body_starts_with
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.translation.TranslationDownloadPolicy
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.design.mirror_in_rtl
 import org.astermail.android.util.clip_units
@@ -4511,7 +4512,7 @@ private val mail_detail_image_lock = Any()
 
 private sealed interface TranslationBannerState {
     object Hidden : TranslationBannerState
-    data class Offer(val language: String) : TranslationBannerState
+    data class Offer(val language: String, val needs_download: Boolean) : TranslationBannerState
     object Translating : TranslationBannerState
     data class Translated(val language: String) : TranslationBannerState
     object Failed : TranslationBannerState
@@ -4539,7 +4540,11 @@ private fun translation_banner(
             is TranslationBannerState.Offer -> {
                 val name = org.astermail.android.translation.language_display_name(state.language)
                 Text(
-                    text = stringResource(R.string.translation_offer_title, name),
+                    text = if (state.needs_download) {
+                        stringResource(R.string.translation_offer_download, name)
+                    } else {
+                        stringResource(R.string.translation_offer_title, name)
+                    },
                     color = colors.text_primary,
                     fontSize = 13.sp,
                     modifier = Modifier.weight(1f),
@@ -4679,6 +4684,7 @@ internal fun email_html_view(
             .distinct()
             .joinToString(",")
     }
+    val translate_context = LocalContext.current
     val web_ref = remember { arrayOfNulls<android.webkit.WebView>(1) }
     var translation_state by remember(html) {
         mutableStateOf<TranslationBannerState>(TranslationBannerState.Hidden)
@@ -4718,10 +4724,18 @@ internal fun email_html_view(
                 if (language == translate_target_ref[0]) return
                 main_handler.post {
                     val mode = translate_mode_ref[0]
-                    if (mode == "always") {
+                    if (mode == "off") return@post
+                    val granted = TranslationDownloadPolicy.route_consent_granted(
+                        translate_context,
+                        language,
+                        translate_target_ref[0],
+                    )
+                    if (mode == "always" && granted) {
                         run_translation(language)
-                    } else if (mode == "ask") {
-                        set_translation_state[0]?.invoke(TranslationBannerState.Offer(language))
+                    } else {
+                        set_translation_state[0]?.invoke(
+                            TranslationBannerState.Offer(language, !granted),
+                        )
                     }
                 }
             }
@@ -5101,7 +5115,10 @@ internal fun email_html_view(
     Column(modifier = modifier) {
       translation_banner(
         state = translation_state,
-        on_translate = { lang -> run_translation(lang) },
+        on_translate = { lang ->
+            TranslationDownloadPolicy.grant_route_consent(translate_context, lang, translate_target)
+            run_translation(lang)
+        },
         on_show_original = { show_original() },
         on_dismiss = { translation_state = TranslationBannerState.Hidden },
       )
@@ -5228,12 +5245,19 @@ internal fun email_html_view(
                         }
                     }
                     webViewClient = webview_client
-                    addJavascriptInterface(translate_bridge, "AsterTranslateBridge")
+                    if (translate_active_ref[0]) {
+                        addJavascriptInterface(translate_bridge, "AsterTranslateBridge")
+                    }
                     web_ref[0] = this
                 }
             },
             update = { web_view ->
                 web_ref[0] = web_view
+                if (translate_active_ref[0]) {
+                    web_view.addJavascriptInterface(translate_bridge, "AsterTranslateBridge")
+                } else {
+                    web_view.removeJavascriptInterface("AsterTranslateBridge")
+                }
                 val built = prebuilt_html ?: return@AndroidView
                 val is_newsletter = built.contains("data-nl=\"1\"")
                 val wants_white_page = built.contains("data-white=\"1\"")
