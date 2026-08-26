@@ -68,6 +68,16 @@ git clone -q --branch main https://github.com/Aster-Privacy/Aster-Android.git "$
 cd "$clone"
 echo "HEAD $(git rev-parse --short HEAD)"
 
+head_sha="$(git rev-parse HEAD)"
+if [ "${ASTER_SKIP_CI_CHECK:-0}" != "1" ]; then
+  ci=$(gh api "repos/Aster-Privacy/Aster-Android/commits/$head_sha/check-runs"     -q '[.check_runs[] | select(.name != "verify") | "\(.conclusion // "pending") \(.name)"] | .[]' 2>/dev/null || true)
+  if echo "$ci" | grep -qE '^(failure|timed_out|cancelled) '; then
+    echo "$ci" | grep -E '^(failure|timed_out|cancelled) ' >&2
+    die "CI is not green on $head_sha, fix main first or set ASTER_SKIP_CI_CHECK=1"
+  fi
+  echo "CI on $head_sha: ${ci:-no checks reported}"
+fi
+
 cp "$repo_root/app/google-services.json" app/google-services.json
 if [ -f "$repo_root/local.properties" ]; then
   cp "$repo_root/local.properties" local.properties
