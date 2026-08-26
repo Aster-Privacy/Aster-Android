@@ -621,7 +621,6 @@
     <string name="events">이벤트</string>
     <string name="new_emails">새 이메일</string>
     <string name="replies">답장</string>
-    <string name="mentions">멘션</string>
     <string name="quiet_hours">방해 금지 시간</string>
     <string name="quiet_hours_subtitle">22:00 - 07:00 알림 음소거</string>
 
@@ -2946,7 +2945,8 @@
     <string name="nothing_in_category">%1$s에 아무것도 없습니다</string>
     <string name="other_categories_have_mail">다른 카테고리에는 아직 메일이 있습니다.</string>
     <string name="product_updates">제품 업데이트</string>
-    <string name="product_updates_subtitle">주요 기능이 출시되면 받은 편지함으로 알려 드립니다. 보안 및 정책 공지는 항상 도착합니다.</string>
+    <string name="product_updates_subtitle">Aster가 주요 업데이트를 출시하면 소식을 받습니다</string>
+    <string name="product_updates_info">보안 및 정책 공지는 이 설정이 꺼져 있어도 항상 전달됩니다. Aster는 이 메일을 열었는지 클릭했는지 기록하지 않습니다.</string>
     <string name="purge_all_aliases_title">삭제된 별칭을 모두 지울까요?</string>
     <string name="reply_to_label">회신 주소</string>
     <string name="security_details_title">보안 세부 정보</string>

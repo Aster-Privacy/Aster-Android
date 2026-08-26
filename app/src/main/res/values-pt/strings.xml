@@ -621,7 +621,6 @@
     <string name="events">Eventos</string>
     <string name="new_emails">Novos e-mails</string>
     <string name="replies">Respostas</string>
-    <string name="mentions">Menções</string>
     <string name="quiet_hours">Horário silencioso</string>
     <string name="quiet_hours_subtitle">Silenciar notificações 22:00 - 07:00</string>
 
@@ -2959,7 +2958,8 @@
     <string name="nothing_in_category">Nada em %1$s</string>
     <string name="other_categories_have_mail">As suas outras categorias ainda têm mensagens.</string>
     <string name="product_updates">Novidades do produto</string>
-    <string name="product_updates_subtitle">Uma mensagem na sua caixa de entrada quando é lançada uma funcionalidade importante. Os avisos de segurança e de política chegam sempre.</string>
+    <string name="product_updates_subtitle">Receba uma mensagem quando a Aster lançar uma atualização importante</string>
+    <string name="product_updates_info">Avisos de segurança e de políticas sempre chegam, mesmo com esta opção desativada. A Aster não registra se você abre ou clica nessas mensagens.</string>
     <string name="purge_all_aliases_title">Eliminar todos os aliases apagados?</string>
     <string name="reply_to_label">Responder a</string>
     <string name="security_details_title">Detalhes de segurança</string>

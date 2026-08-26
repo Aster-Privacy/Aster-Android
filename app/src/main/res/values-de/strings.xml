@@ -622,7 +622,6 @@
     <string name="events">Ereignisse</string>
     <string name="new_emails">Neue E-Mails</string>
     <string name="replies">Antworten</string>
-    <string name="mentions">Erwähnungen</string>
     <string name="quiet_hours">Ruhezeiten</string>
     <string name="quiet_hours_subtitle">Benachrichtigungen stumm 22:00 - 07:00</string>
 
@@ -2960,7 +2959,8 @@
     <string name="nothing_in_category">Nichts in %1$s</string>
     <string name="other_categories_have_mail">Deine anderen Kategorien enthalten weiterhin Nachrichten.</string>
     <string name="product_updates">Produktneuigkeiten</string>
-    <string name="product_updates_subtitle">Eine Nachricht in deinem Posteingang, wenn eine wichtige Funktion erscheint. Sicherheits- und Richtlinienhinweise kommen immer an.</string>
+    <string name="product_updates_subtitle">Erhalte eine Nachricht, wenn Aster ein wichtiges Update veröffentlicht</string>
+    <string name="product_updates_info">Sicherheits- und Richtlinienhinweise kommen immer an, auch wenn dies ausgeschaltet ist. Aster erfasst nicht, ob du diese Nachrichten öffnest oder darin klickst.</string>
     <string name="purge_all_aliases_title">Alle gelöschten Aliase entfernen?</string>
     <string name="reply_to_label">Antwort an</string>
     <string name="security_details_title">Sicherheitsdetails</string>

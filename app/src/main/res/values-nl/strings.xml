@@ -621,7 +621,6 @@
     <string name="events">Evenementen</string>
     <string name="new_emails">Nieuwe e-mails</string>
     <string name="replies">Antwoorden</string>
-    <string name="mentions">Vermeldingen</string>
     <string name="quiet_hours">Stille uren</string>
     <string name="quiet_hours_subtitle">Meldingen dempen 22:00 - 07:00</string>
 
@@ -2959,7 +2958,8 @@
     <string name="nothing_in_category">Niets in %1$s</string>
     <string name="other_categories_have_mail">Je andere categorieën bevatten nog steeds berichten.</string>
     <string name="product_updates">Productupdates</string>
-    <string name="product_updates_subtitle">Een bericht in je Postvak IN wanneer een belangrijke functie verschijnt. Beveiligings- en beleidsmededelingen komen altijd aan.</string>
+    <string name="product_updates_subtitle">Ontvang een bericht wanneer Aster een noemenswaardige update uitbrengt</string>
+    <string name="product_updates_info">Aankondigingen over beveiliging en beleid komen altijd aan, ook als dit uitstaat. Aster registreert niet of je deze berichten opent of erin klikt.</string>
     <string name="purge_all_aliases_title">Alle verwijderde aliassen wissen?</string>
     <string name="reply_to_label">Antwoorden aan</string>
     <string name="security_details_title">Beveiligingsdetails</string>

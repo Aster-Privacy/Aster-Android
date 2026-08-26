@@ -621,7 +621,6 @@
     <string name="events">События</string>
     <string name="new_emails">Новые письма</string>
     <string name="replies">Ответы</string>
-    <string name="mentions">Упоминания</string>
     <string name="quiet_hours">Тихие часы</string>
     <string name="quiet_hours_subtitle">Отключить уведомления 22:00 - 07:00</string>
 
@@ -2985,7 +2984,8 @@
     <string name="nothing_in_category">В категории «%1$s» ничего нет</string>
     <string name="other_categories_have_mail">В других категориях письма ещё есть.</string>
     <string name="product_updates">Новости продукта</string>
-    <string name="product_updates_subtitle">Письмо во «Входящие», когда выходит заметная функция. Сообщения о безопасности и правилах приходят всегда.</string>
+    <string name="product_updates_subtitle">Получайте письмо, когда Aster выпускает заметное обновление</string>
+    <string name="product_updates_info">Сообщения о безопасности и правилах приходят всегда, даже когда этот параметр выключен. Aster не фиксирует, открываете ли вы эти письма и переходите ли по ссылкам.</string>
     <string name="purge_all_aliases_title">Удалить все удалённые псевдонимы?</string>
     <string name="reply_to_label">Ответить</string>
     <string name="security_details_title">Сведения о безопасности</string>

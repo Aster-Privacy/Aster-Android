@@ -621,7 +621,6 @@
     <string name="events">事件</string>
     <string name="new_emails">新邮件</string>
     <string name="replies">回复</string>
-    <string name="mentions">提及</string>
     <string name="quiet_hours">免打扰时间</string>
     <string name="quiet_hours_subtitle">22:00 - 07:00 静音通知</string>
 
@@ -2946,7 +2945,8 @@
     <string name="nothing_in_category">%1$s 中没有内容</string>
     <string name="other_categories_have_mail">你的其他分类中仍有邮件。</string>
     <string name="product_updates">产品更新</string>
-    <string name="product_updates_subtitle">重要功能发布时，你的收件箱会收到一封邮件。安全和政策公告始终会送达。</string>
+    <string name="product_updates_subtitle">Aster 发布重要更新时，你会收到一封邮件</string>
+    <string name="product_updates_info">即使关闭此项，安全和政策公告也始终会送达。Aster 不会记录你是否打开或点击这些邮件。</string>
     <string name="purge_all_aliases_title">清除所有已删除的别名？</string>
     <string name="reply_to_label">回复至</string>
     <string name="security_details_title">安全详情</string>

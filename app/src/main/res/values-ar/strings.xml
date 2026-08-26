@@ -621,7 +621,6 @@
     <string name="events">الأحداث</string>
     <string name="new_emails">رسائل جديدة</string>
     <string name="replies">الردود</string>
-    <string name="mentions">الإشارات</string>
     <string name="quiet_hours">ساعات الهدوء</string>
     <string name="quiet_hours_subtitle">كتم الإشعارات 22:00 - 07:00</string>
 
@@ -3011,7 +3010,8 @@
     <string name="nothing_in_category">لا شيء في %1$s</string>
     <string name="other_categories_have_mail">لا تزال فئاتك الأخرى تحتوي على رسائل.</string>
     <string name="product_updates">تحديثات المنتج</string>
-    <string name="product_updates_subtitle">رسالة في بريدك الوارد عند إطلاق ميزة مهمة. تصل إعلانات الأمان والسياسات دائمًا.</string>
+    <string name="product_updates_subtitle">احصل على رسالة عند إصدار Aster تحديثًا مهمًا</string>
+    <string name="product_updates_info">تصلك دائمًا إعلانات الأمان والسياسات، حتى عند إيقاف هذا الخيار. لا يسجّل Aster ما إذا كنت تفتح هذه الرسائل أو تنقر فيها.</string>
     <string name="purge_all_aliases_title">حذف كل الأسماء المستعارة المحذوفة؟</string>
     <string name="reply_to_label">الرد إلى</string>
     <string name="security_details_title">تفاصيل الأمان</string>
