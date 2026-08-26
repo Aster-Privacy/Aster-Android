@@ -3651,6 +3651,7 @@ class MailViewModel @Inject constructor(
             metadata_nonce = raw.metadata_nonce,
             metadata_version = raw.metadata_version,
             is_external = raw.is_external,
+            system_origin = raw.system_origin,
             has_recipient_key = raw.has_recipient_key,
             ephemeral_key = raw.ephemeral_key,
             ephemeral_pq_key = raw.ephemeral_pq_key,
@@ -3785,6 +3786,7 @@ fun org.astermail.android.storage.search.DecryptedMailEntity.to_inbox_item(): In
     raw_item = org.astermail.android.api.mail.MailItem(
         id = id,
         is_external = is_external,
+        system_origin = system_origin,
         has_recipient_key = has_recipient_key,
         thread_token = thread_token,
         routing_token = routing_token,

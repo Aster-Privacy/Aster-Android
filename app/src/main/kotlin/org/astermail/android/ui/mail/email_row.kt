@@ -217,6 +217,7 @@ fun EmailRow(
                 email = displayed_sender_email(email.display_sender_email, email.sender_email),
                 name = displayed_sender_name(email.display_sender_name, email.sender_name),
                 size = metrics.avatar_size,
+                sender_authenticated = system_avatar_authenticated(email),
             )
         }
 

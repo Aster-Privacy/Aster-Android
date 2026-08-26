@@ -28,7 +28,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import org.astermail.android.storage.outbox.PendingSendDao
 import org.astermail.android.storage.outbox.PendingSendEntity
 
-const val aster_database_version = 13
+const val aster_database_version = 14
 
 data class schema_column(val table: String, val name: String, val definition: String)
 
@@ -79,6 +79,7 @@ val migration_columns: Map<Int, List<schema_column>> = mapOf(
     ),
     12 to listOf(schema_column(decrypted_mail_table, "is_pinned", "INTEGER NOT NULL DEFAULT 0")),
     13 to listOf(schema_column(decrypted_mail_table, "tag_tokens", "TEXT")),
+    14 to listOf(schema_column(decrypted_mail_table, "system_origin", "INTEGER NOT NULL DEFAULT 0")),
 )
 
 val migration_statements: Map<Int, List<String>> = mapOf(
@@ -144,6 +145,7 @@ abstract class AsterDatabase : RoomDatabase() {
         val migration_10_11 = step_migration(11)
         val migration_11_12 = step_migration(12)
         val migration_12_13 = step_migration(13)
+        val migration_13_14 = step_migration(14)
 
         val all_migrations: Array<Migration> = arrayOf(
             migration_1_2,
@@ -158,6 +160,7 @@ abstract class AsterDatabase : RoomDatabase() {
             migration_10_11,
             migration_11_12,
             migration_12_13,
+            migration_13_14,
         )
     }
 }

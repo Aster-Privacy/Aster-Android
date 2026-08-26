@@ -145,6 +145,7 @@ fun SenderAvatar(
     size: Dp = 40.dp,
     modifier: Modifier = Modifier,
     profile_picture_url: String? = null,
+    sender_authenticated: Boolean = false,
 ) {
     val context = LocalContext.current
     if (!profile_picture_url.isNullOrBlank()) {
@@ -196,7 +197,7 @@ fun SenderAvatar(
     }
 
     if (is_aster_domain(root_domain)) {
-        if (is_system_email(email)) {
+        if (sender_authenticated && is_system_local_part(email)) {
             AsterSystemAvatar(size = size, modifier = modifier)
             return
         }
@@ -263,7 +264,7 @@ fun SenderAvatar(
     }
 }
 
-private val SYSTEM_LOCAL_PARTS = setOf(
+internal val SYSTEM_LOCAL_PARTS = setOf(
     "mailer-daemon",
     "mail-daemon",
     "maildaemon",
@@ -289,7 +290,7 @@ private val SYSTEM_LOCAL_PARTS = setOf(
     "announcements",
 )
 
-fun is_system_email(email: String): Boolean {
+internal fun is_system_local_part(email: String): Boolean {
     val at_idx = email.indexOf('@')
     val local = if (at_idx >= 0) email.substring(0, at_idx) else email
     return SYSTEM_LOCAL_PARTS.contains(local.trim().lowercase())
