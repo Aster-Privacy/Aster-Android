@@ -1457,16 +1457,17 @@ class MailRepository @Inject constructor(
         mail_api.add_label_to_item(item_id, label_token)
     }
 
-    suspend fun move_item_to_folder(item_id: String, folder_token: String): Result<Unit> = runCatching {
-        mail_api.move_item_to_folder(item_id, folder_token)
-    }
-
-    suspend fun move_to_folder_bulk(item_ids: List<String>, folder_token: String): Set<String> {
-        val failed = mutableSetOf<String>()
-        item_ids.forEach { item_id ->
-            if (runCatching { mail_api.move_item_to_folder(item_id, folder_token) }.isFailure) {
-                failed.add(item_id)
-            }
+    suspend fun move_to_folder_bulk(
+        item_ids: List<String>,
+        folder_token: String,
+        from_label_token: String? = null,
+    ): Set<String> {
+        if (item_ids.isEmpty()) return emptySet()
+        val failed = add_label_bulk(item_ids, folder_token).toMutableSet()
+        val moved = item_ids.filter { it !in failed }
+        if (moved.isEmpty()) return failed
+        if (from_label_token != null && from_label_token != folder_token) {
+            remove_label_bulk(moved, from_label_token)
         }
         return failed
     }

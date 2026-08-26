@@ -51,6 +51,21 @@ class FolderMatchesTest {
     )
 
     @Test
+    fun inbox_matches_unlabeled_items() {
+        assertTrue(folder_matches_item("inbox", item(item_type = "received")))
+    }
+
+    @Test
+    fun inbox_rejects_items_moved_to_a_folder() {
+        assertFalse(folder_matches_item("inbox", item(item_type = "received", labels = listOf("bills"))))
+    }
+
+    @Test
+    fun folder_matches_items_carrying_its_token() {
+        assertTrue(folder_matches_item("label:bills", item(item_type = "received", labels = listOf("bills"))))
+    }
+
+    @Test
     fun sent_folder_matches_sent_items() {
         assertTrue(folder_matches_item("sent", item(item_type = "sent")))
     }
