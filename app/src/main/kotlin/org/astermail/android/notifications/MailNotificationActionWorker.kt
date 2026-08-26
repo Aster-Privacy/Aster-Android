@@ -38,6 +38,8 @@ import dagger.hilt.components.SingletonComponent
 import org.astermail.android.mail.MailRepository
 import java.util.concurrent.TimeUnit
 
+enum class MailActionAttempt { Done, Retry, GiveUp }
+
 class MailNotificationActionWorker(
     private val context: Context,
     params: WorkerParameters,
@@ -46,22 +48,28 @@ class MailNotificationActionWorker(
     override suspend fun doWork(): Result {
         val item_id = inputData.getString(KEY_ITEM_ID)?.takeIf { it.isNotBlank() } ?: return Result.success()
         val action = inputData.getString(KEY_ACTION) ?: return Result.success()
+        if (action !in supported_actions) return Result.success()
         val repo = try {
             EntryPointAccessors.fromApplication(
                 context.applicationContext,
                 MailNotificationActionEntryPoint::class.java,
             ).mail_repository()
         } catch (_: Throwable) {
-            return Result.retry()
+            null
         }
-        val outcome = when (action) {
+        val succeeded = repo != null && when (action) {
             ACTION_ARCHIVE -> repo.archive(listOf(item_id))
             ACTION_TRASH -> repo.trash(listOf(item_id))
-            ACTION_MARK_READ -> repo.mark_read(item_id, true)
-            else -> return Result.success()
+            else -> repo.mark_read(item_id, true)
+        }.isSuccess
+        return when (attempt_result(succeeded, runAttemptCount)) {
+            MailActionAttempt.Done -> Result.success()
+            MailActionAttempt.Retry -> Result.retry()
+            MailActionAttempt.GiveUp -> {
+                runCatching { MailPollingWorker.show_action_failed(context, item_id, action) }
+                Result.failure()
+            }
         }
-        if (outcome.isSuccess) return Result.success()
-        return if (runAttemptCount >= MAX_ATTEMPTS) Result.success() else Result.retry()
     }
 
     @EntryPoint
@@ -77,7 +85,15 @@ class MailNotificationActionWorker(
         const val ACTION_TRASH = "trash"
         const val ACTION_MARK_READ = "mark_read"
         private const val WORK_PREFIX = "mail_notification_action_"
-        private const val MAX_ATTEMPTS = 5
+        const val MAX_ATTEMPTS = 5
+
+        private val supported_actions = setOf(ACTION_ARCHIVE, ACTION_TRASH, ACTION_MARK_READ)
+
+        fun attempt_result(succeeded: Boolean, attempt: Int): MailActionAttempt = when {
+            succeeded -> MailActionAttempt.Done
+            attempt + 1 < MAX_ATTEMPTS -> MailActionAttempt.Retry
+            else -> MailActionAttempt.GiveUp
+        }
 
         fun enqueue(context: Context, item_id: String, action: String) {
             if (item_id.isBlank()) return

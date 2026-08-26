@@ -64,6 +64,9 @@ import dagger.hilt.components.SingletonComponent
 import io.ktor.client.plugins.auth.providers.BearerTokens
 import java.util.concurrent.TimeUnit
 
+private fun localized(context: Context): Context =
+    org.astermail.android.settings.app_language.wrap(context)
+
 class MailPollingWorker(
     private val context: Context,
     params: WorkerParameters,
@@ -92,12 +95,8 @@ class MailPollingWorker(
         }
 
         if (inputData.getBoolean(KEY_FORCE_NOTIFY, false)) {
-            val notified = notify_for_new_mail(1)
-            return if (!notified && runAttemptCount < FORCE_NOTIFY_MAX_ATTEMPTS) {
-                Result.retry()
-            } else {
-                Result.success()
-            }
+            notify_for_new_mail(1)
+            return Result.success()
         }
 
         lateinit var client: ApiClient
@@ -163,7 +162,10 @@ class MailPollingWorker(
         val cached_unread = prefs.getInt(KEY_CACHED_UNREAD, new_unread)
         val cached_notifiable = prefs.getInt(KEY_CACHED_NOTIFIABLE, new_notifiable)
 
-        val arrived = maxOf(new_unread - cached_unread, new_notifiable - cached_notifiable)
+        val unread_arrivals = new_unread - cached_unread
+        val notifiable_arrivals = new_notifiable - cached_notifiable
+        val arrived = maxOf(unread_arrivals, notifiable_arrivals)
+
         val has_pending_new_mail = has_baseline && arrived > 0
         val suppressed_by_quiet_hours = has_pending_new_mail && is_quiet_hours_now(context)
         var deferred = false
@@ -191,13 +193,8 @@ class MailPollingWorker(
     }
 
     private suspend fun notify_for_new_mail(arrived: Int): Boolean {
-        return notify_lock.withLock {
-            notify_for_new_mail_locked(arrived)
-        }
-    }
-
-    private suspend fun notify_for_new_mail_locked(arrived: Int): Boolean {
-        if (!is_notify_new_email(context)) return true
+        if (!is_notify_new_email(context) && !is_notify_replies(context)) return true
+        if (message_notified_recently(context)) return false
         val entry = try {
             EntryPointAccessors.fromApplication(
                 context.applicationContext,
@@ -208,31 +205,30 @@ class MailPollingWorker(
         }
         val app_lock_configured = runCatching { entry?.app_lock_store()?.is_configured() ?: true }.getOrDefault(true)
         if (org.astermail.android.security.LockdownStore.is_enabled(context) || app_lock_configured) {
-            return show_generic(context, arrived)
+            show_generic(context, arrived)
+            return true
         }
         val repo = entry?.mail_repository()
         if (repo == null) {
-            return show_generic(context, arrived)
+            show_generic(context, arrived)
+            return true
         }
-        val wanted = arrived.coerceIn(1, 5)
-        val picked = mutableListOf<Pair<org.astermail.android.mail.InboxItem, String>>()
+        var newest: org.astermail.android.mail.InboxItem? = null
+        var sender: String? = null
         var fetched_any_page = false
         var forced_heal_armed = false
         repeat(3) { attempt ->
-            if (picked.size >= wanted) return@repeat
+            if (newest != null) return@repeat
             if (attempt > 0) kotlinx.coroutines.delay(1_500L)
             val page = try {
                 kotlinx.coroutines.withTimeout(20_000L) {
-                    repo.fetch_inbox(limit = wanted)
+                    repo.fetch_inbox(limit = arrived.coerceIn(1, 5))
                 }.getOrNull()
             } catch (_: Throwable) { null }
             if (page != null) fetched_any_page = true
-            var candidates = page?.items?.let { pick_notifiable_candidates(context, it, wanted) }.orEmpty()
+            var candidate = page?.items?.let { pick_notifiable_candidate(context, it) }
 
-            if (candidates.isEmpty()) {
-                // Nothing new sitting in Inbox, so the message may have been auto-filed into a
-                // custom folder by a mail rule before the app ever saw it. Scan folders that
-                // currently report unread mail so those messages still get notified.
+            if (candidate == null) {
                 val folders = try {
                     kotlinx.coroutines.withTimeout(20_000L) {
                         repo.list_notifiable_folders()
@@ -244,75 +240,94 @@ class MailPollingWorker(
                     if (folder.label_token in muted) continue
                     val folder_page = try {
                         kotlinx.coroutines.withTimeout(20_000L) {
-                            repo.fetch_inbox(limit = wanted, label_token = folder.label_token)
+                            repo.fetch_inbox(limit = arrived.coerceIn(1, 5), label_token = folder.label_token)
                         }.getOrNull()
                     } catch (_: Throwable) { null }
                     if (folder_page != null) fetched_any_page = true
-                    candidates = folder_page?.items?.let { pick_notifiable_candidates(context, it, wanted) }.orEmpty()
-                    if (candidates.isNotEmpty()) break
+                    candidate = folder_page?.items?.let { pick_notifiable_candidate(context, it) }
+                    if (candidate != null) break
                 }
             }
 
-            val leader = candidates.firstOrNull()
-            if (leader?.is_undecryptable == true &&
+            if (candidate?.is_undecryptable == true &&
                 !forced_heal_armed &&
                 attempt < 2 &&
-                repo.is_sealed_inbound_nonce(leader.raw_item.envelope_nonce)
+                repo.is_sealed_inbound_nonce(candidate.raw_item.envelope_nonce)
             ) {
                 forced_heal_armed = true
                 repo.begin_decrypt_retry()
                 return@repeat
             }
 
-            for (candidate in candidates) {
-                if (picked.size >= wanted) break
-                val candidate_sender = if (candidate.is_undecryptable) {
-                    context.getString(org.astermail.android.R.string.encrypted)
-                } else {
-                    (
-                        candidate.display_sender_name?.takeIf { it.isNotBlank() }
-                            ?: candidate.sender_name.takeIf { it.isNotBlank() }
-                            ?: candidate.sender_email
-                        ).trim()
-                }
-                if (candidate_sender.isBlank()) continue
-                if (!claim_item_notification(context, candidate.id)) continue
-                picked.add(candidate to candidate_sender)
+            val candidate_sender = if (candidate?.is_undecryptable == true) {
+                localized(context).getString(org.astermail.android.R.string.encrypted)
+            } else {
+                (
+                    candidate?.display_sender_name
+                        ?: candidate?.sender_name?.takeIf { it.isNotBlank() }
+                        ?: candidate?.sender_email
+                    )?.trim()
+            }
+            if (candidate != null &&
+                !candidate_sender.isNullOrBlank() &&
+                claim_item_notification(context, candidate.id)
+            ) {
+                newest = candidate
+                sender = candidate_sender
             }
         }
-        if (picked.isEmpty()) {
+        val fresh = newest
+        if (fresh == null || sender.isNullOrBlank()) {
             if (!fetched_any_page) {
-                return show_generic(context, arrived)
+                show_generic(context, arrived)
             }
             return true
         }
-        var posted_any = false
-        for ((fresh, sender) in picked.asReversed()) {
-            val subject = if (fresh.is_undecryptable) {
-                context.getString(org.astermail.android.R.string.decrypt_failed_title)
-            } else {
-                fresh.subject.trim()
-            }
-            val preview = if (fresh.is_undecryptable) {
-                context.getString(org.astermail.android.R.string.undecryptable_message_preview)
-            } else {
-                fresh.preview
-            }
-            val posted = show_message(
-                context = context,
-                sender = sender,
-                subject = subject,
-                preview = preview,
-                message_id = message_notification_id(fresh.id.hashCode()),
-                item_id = fresh.id,
-            )
-            if (posted) {
-                posted_any = true
-            } else {
-                release_item_claim(context, fresh.id)
-            }
+        val subject = if (fresh.is_undecryptable) {
+            localized(context).getString(org.astermail.android.R.string.decrypt_failed_title)
+        } else {
+            fresh.subject.trim()
         }
-        return posted_any
+        val preview = if (fresh.is_undecryptable) {
+            localized(context).getString(org.astermail.android.R.string.undecryptable_message_preview)
+        } else {
+            fresh.preview
+        }
+        val message_id = message_notification_id(fresh.id.hashCode())
+        return post_message_notification(
+            item_id = fresh.id,
+            sender = sender!!,
+            subject = subject,
+            preview = preview,
+            message_id = message_id,
+        )
+    }
+
+    private suspend fun post_message_notification(
+        item_id: String,
+        sender: String,
+        subject: String,
+        preview: String,
+        message_id: Int,
+    ): Boolean {
+        return notify_lock.withLock {
+            if (message_notified_recently(context)) {
+                release_item_notification(context, item_id)
+                return@withLock false
+            }
+            val posted = runCatching {
+                show_message(
+                    context = context,
+                    sender = sender,
+                    subject = subject,
+                    preview = preview,
+                    message_id = message_id,
+                    item_id = item_id,
+                )
+            }.isSuccess
+            if (!posted) release_item_notification(context, item_id)
+            posted
+        }
     }
 
     @EntryPoint
@@ -324,6 +339,9 @@ class MailPollingWorker(
 
     companion object {
         const val CHANNEL_ID = "aster_new_mail"
+        const val CHANNEL_ID_SOUND_ONLY = "aster_new_mail_sound_only"
+        const val CHANNEL_ID_VIBRATE_ONLY = "aster_new_mail_vibrate_only"
+        const val CHANNEL_ID_SILENT = "aster_new_mail_silent"
         const val NOTIFICATION_ID = 1001
         const val SUMMARY_NOTIFICATION_ID = 1000
         const val GROUP_KEY_NEW_MAIL = "aster_new_mail_group"
@@ -341,7 +359,11 @@ class MailPollingWorker(
         private const val NOTIFIED_ITEM_IDS_MAX = 100
         private const val KEY_PRIVATE_NOTIFICATIONS = "private_notifications"
         private const val KEY_NOTIFY_NEW_EMAIL = "notify_new_email"
+        private const val KEY_NOTIFY_REPLIES = "notify_replies"
+        private const val KEY_SOUND_ENABLED = "notification_sound_enabled"
+        private const val KEY_VIBRATE_ENABLED = "notification_vibrate_enabled"
         private const val KEY_MUTED_FOLDER_TOKENS = "muted_folder_tokens"
+        private const val KEY_MUTED_NOTIFICATION_CATEGORIES = "muted_notification_categories"
         private const val KEY_PROTECTED_FOLDER_TOKENS = "protected_folder_tokens"
         private const val KEY_PROTECTED_FOLDER_TOKENS_KNOWN = "protected_folder_tokens_known"
         private const val KEY_QUIET_HOURS_ENABLED = "quiet_hours_enabled"
@@ -353,11 +375,9 @@ class MailPollingWorker(
         const val MESSAGE_NOTIFY_DEDUPE_WINDOW_MS = 90_000L
         private const val KEY_LAST_GENERIC_COUNT = "last_generic_notify_count"
         private const val KEY_LAST_GENERIC_MS = "last_generic_notify_ms"
-        private const val GENERIC_NOTIFY_COOLDOWN_MS = 5_000L
-        private const val NOTIFIED_ITEM_SEPARATOR = "\n"
-        private const val FORCE_NOTIFY_MAX_ATTEMPTS = 3
-        private const val FORCE_NOTIFY_BACKOFF_MS = 10_000L
+        private const val GENERIC_NOTIFY_COOLDOWN_MS = 60_000L
         private val notify_lock = Mutex()
+        val FORCED_NOTIFY_POLICY: ExistingWorkPolicy = ExistingWorkPolicy.APPEND_OR_REPLACE
         private const val SENDER_MAX_LENGTH = 80
         private const val SUBJECT_MAX_LENGTH = 120
 
@@ -391,17 +411,60 @@ class MailPollingWorker(
             return h * 60 + m
         }
 
+        fun is_sound_enabled(context: Context): Boolean {
+            return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .getBoolean(KEY_SOUND_ENABLED, true)
+        }
+
+        fun is_vibrate_enabled(context: Context): Boolean {
+            return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .getBoolean(KEY_VIBRATE_ENABLED, true)
+        }
+
+        fun set_notification_alerts(context: Context, sound: Boolean, vibrate: Boolean) {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean(KEY_SOUND_ENABLED, sound)
+                .putBoolean(KEY_VIBRATE_ENABLED, vibrate)
+                .apply()
+            create_channel(context)
+        }
+
+        fun notification_channel_id(sound: Boolean, vibrate: Boolean): String = when {
+            sound && vibrate -> CHANNEL_ID
+            sound -> CHANNEL_ID_SOUND_ONLY
+            vibrate -> CHANNEL_ID_VIBRATE_ONLY
+            else -> CHANNEL_ID_SILENT
+        }
+
+        fun alert_channel_ids(): List<String> =
+            listOf(CHANNEL_ID, CHANNEL_ID_SOUND_ONLY, CHANNEL_ID_VIBRATE_ONLY, CHANNEL_ID_SILENT)
+
+        fun active_channel_id(context: Context): String =
+            notification_channel_id(is_sound_enabled(context), is_vibrate_enabled(context))
+
         fun create_channel(context: Context) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val channel = NotificationChannel(
-                    CHANNEL_ID,
-                    context.getString(R.string.notif_channel_new_mail_name),
-                    NotificationManager.IMPORTANCE_DEFAULT,
-                )
-                channel.description = context.getString(R.string.notif_channel_new_mail_description)
-                channel.setShowBadge(true)
-                val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-                manager?.createNotificationChannel(channel)
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                ?: return
+            val active = active_channel_id(context)
+            val channel = NotificationChannel(
+                active,
+                localized(context).getString(R.string.notif_channel_new_mail_name),
+                NotificationManager.IMPORTANCE_DEFAULT,
+            )
+            channel.description = localized(context)
+                .getString(R.string.notif_channel_new_mail_description)
+            channel.setShowBadge(true)
+            channel.enableVibration(is_vibrate_enabled(context))
+            if (!is_sound_enabled(context)) {
+                channel.setSound(null, null)
+            }
+            manager.createNotificationChannel(channel)
+            for (id in alert_channel_ids()) {
+                if (id != active) {
+                    runCatching { manager.deleteNotificationChannel(id) }
+                }
             }
         }
 
@@ -422,6 +485,34 @@ class MailPollingWorker(
                 .getBoolean(KEY_NOTIFY_NEW_EMAIL, true)
         }
 
+        fun is_notify_replies(context: Context): Boolean {
+            return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .getBoolean(KEY_NOTIFY_REPLIES, true)
+        }
+
+        fun is_envelope_notifiable_by_type(
+            context: Context,
+            envelope: org.astermail.android.mail.DecryptedEnvelope,
+        ): Boolean {
+            val is_reply = envelope.raw_headers.any { (name, value) ->
+                value.isNotBlank() &&
+                    (name.equals("in-reply-to", ignoreCase = true) ||
+                        name.equals("references", ignoreCase = true))
+            }
+            return if (is_reply) is_notify_replies(context) else is_notify_new_email(context)
+        }
+
+        fun is_item_notifiable_by_type(
+            context: Context,
+            item: org.astermail.android.mail.InboxItem,
+        ): Boolean {
+            return if (item.thread_message_count > 1) {
+                is_notify_replies(context)
+            } else {
+                is_notify_new_email(context)
+            }
+        }
+
         private fun stored_token_set(context: Context, key: String): Set<String> {
             val stored = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                 .getString(key, "") ?: ""
@@ -431,6 +522,9 @@ class MailPollingWorker(
         fun muted_folder_tokens(context: Context): Set<String> =
             stored_token_set(context, KEY_MUTED_FOLDER_TOKENS) +
                 stored_token_set(context, KEY_PROTECTED_FOLDER_TOKENS)
+
+        fun protected_folder_tokens(context: Context): Set<String> =
+            stored_token_set(context, KEY_PROTECTED_FOLDER_TOKENS)
 
         fun protected_folder_state_known(context: Context): Boolean =
             context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -457,6 +551,29 @@ class MailPollingWorker(
                 .apply()
         }
 
+        fun muted_notification_categories(context: Context): Set<String> =
+            stored_token_set(context, KEY_MUTED_NOTIFICATION_CATEGORIES)
+
+        fun set_muted_notification_categories(context: Context, categories: Collection<String>) {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .putString(
+                    KEY_MUTED_NOTIFICATION_CATEGORIES,
+                    categories.filter { it.isNotBlank() && it != "primary" }
+                        .distinct()
+                        .joinToString("\n"),
+                )
+                .apply()
+        }
+
+        fun is_item_in_muted_category(
+            item: org.astermail.android.mail.InboxItem,
+            muted: Set<String>,
+        ): Boolean {
+            if (muted.isEmpty()) return false
+            return org.astermail.android.mail.category_for_tab(item.category) in muted
+        }
+
         fun is_item_in_muted_folder(
             item: org.astermail.android.mail.InboxItem,
             muted: Set<String>,
@@ -477,6 +594,13 @@ class MailPollingWorker(
                 .apply()
         }
 
+        fun set_notify_replies(context: Context, enabled: Boolean) {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean(KEY_NOTIFY_REPLIES, enabled)
+                .apply()
+        }
+
         fun reset_new_mail_baseline(context: Context) {
             context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                 .edit()
@@ -485,8 +609,6 @@ class MailPollingWorker(
                 .remove(KEY_LAST_NOTIFIED_COUNT)
                 .remove(KEY_NOTIFIED_ITEM_IDS)
                 .remove(KEY_LAST_MESSAGE_NOTIFY_MS)
-                .remove(KEY_LAST_GENERIC_COUNT)
-                .remove(KEY_LAST_GENERIC_MS)
                 .apply()
         }
 
@@ -556,15 +678,10 @@ class MailPollingWorker(
                 .setConstraints(constraints)
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .setInputData(Data.Builder().putBoolean(KEY_FORCE_NOTIFY, true).build())
-                .setBackoffCriteria(
-                    BackoffPolicy.LINEAR,
-                    FORCE_NOTIFY_BACKOFF_MS,
-                    TimeUnit.MILLISECONDS,
-                )
                 .build()
             WorkManager.getInstance(context).enqueueUniqueWork(
                 WORK_NAME_IMMEDIATE,
-                ExistingWorkPolicy.APPEND_OR_REPLACE,
+                FORCED_NOTIFY_POLICY,
                 request,
             )
         }
@@ -593,23 +710,30 @@ class MailPollingWorker(
             return active_mail_notifications >= 2
         }
 
+        private fun message_notified_recently(context: Context): Boolean {
+            val last = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .getLong(KEY_LAST_MESSAGE_NOTIFY_MS, 0L)
+            return is_within_message_dedupe_window(last, System.currentTimeMillis())
+        }
+
         @Synchronized
-        fun show_generic(context: Context, unread_count: Int): Boolean {
-            if (!can_post(context)) return false
+        fun show_generic(context: Context, unread_count: Int) {
+            if (!can_post(context)) return
+            if (message_notified_recently(context)) return
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             val now = System.currentTimeMillis()
             val repeat_of_last = prefs.getInt(KEY_LAST_GENERIC_COUNT, -1) == unread_count &&
                 now - prefs.getLong(KEY_LAST_GENERIC_MS, 0L) < GENERIC_NOTIFY_COOLDOWN_MS
-            if (repeat_of_last) return true
+            if (repeat_of_last) return
             prefs.edit()
                 .putInt(KEY_LAST_GENERIC_COUNT, unread_count)
                 .putLong(KEY_LAST_GENERIC_MS, now)
                 .commit()
-            val text = context.resources.getQuantityString(
+            val text = localized(context).resources.getQuantityString(
                 R.plurals.new_mail_notification, unread_count, unread_count,
             )
             val notification = base_builder(context)
-                .setContentTitle(context.getString(R.string.app_name))
+                .setContentTitle(localized(context).getString(R.string.app_name))
                 .setContentText(text)
                 .setVisibility(NotificationCompat.VISIBILITY_SECRET)
                 .setGroup(GROUP_KEY_NEW_MAIL)
@@ -617,26 +741,6 @@ class MailPollingWorker(
             val manager = NotificationManagerCompat.from(context)
             manager.notify(NOTIFICATION_ID, notification)
             post_group_summary(context, manager, NOTIFICATION_ID)
-            return true
-        }
-
-        @Synchronized
-        fun show_generic_for_item(context: Context, item_id: String): Boolean {
-            if (!can_post(context)) return false
-            if (item_id.isBlank()) return show_generic(context, 1)
-            val notification = base_builder(context)
-                .setWhen(System.currentTimeMillis())
-                .setShowWhen(true)
-                .setContentTitle(context.getString(R.string.app_name))
-                .setContentText(context.getString(R.string.notif_new_message))
-                .setVisibility(NotificationCompat.VISIBILITY_SECRET)
-                .setGroup(GROUP_KEY_NEW_MAIL)
-                .build()
-            val manager = NotificationManagerCompat.from(context)
-            val notification_id = message_notification_id(item_id.hashCode())
-            manager.notify(notification_id, notification)
-            post_group_summary(context, manager, notification_id)
-            return true
         }
 
         fun show_message(
@@ -646,13 +750,13 @@ class MailPollingWorker(
             preview: String,
             message_id: Int,
             item_id: String = "",
-        ): Boolean {
-            if (!can_post(context)) return false
+        ) {
+            if (!can_post(context)) return
             val private_mode = is_private_notifications(context)
             val safe_sender = org.astermail.android.mail.safe_display_text(sender, SENDER_MAX_LENGTH)
-                .ifBlank { context.getString(R.string.app_name) }
+                .ifBlank { localized(context).getString(R.string.app_name) }
             val one_line_subject = org.astermail.android.mail.safe_display_text(subject, SUBJECT_MAX_LENGTH)
-                .ifBlank { context.getString(R.string.notif_new_message) }
+                .ifBlank { localized(context).getString(R.string.notif_new_message) }
             val one_line_preview = org.astermail.android.mail.safe_display_text(preview)
             val builder = base_builder(context)
                 .setWhen(System.currentTimeMillis())
@@ -686,8 +790,8 @@ class MailPollingWorker(
                 builder.setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
                 builder.setPublicVersion(
                     base_builder(context)
-                        .setContentTitle(context.getString(R.string.app_name))
-                        .setContentText(context.getString(R.string.notif_new_message))
+                        .setContentTitle(localized(context).getString(R.string.app_name))
+                        .setContentText(localized(context).getString(R.string.notif_new_message))
                         .setGroup(GROUP_KEY_NEW_MAIL)
                         .build(),
                 )
@@ -704,7 +808,6 @@ class MailPollingWorker(
                 .commit()
             manager.notify(message_id, builder.build())
             post_group_summary(context, manager, message_id)
-            return true
         }
 
         private fun add_message_actions(
@@ -727,7 +830,7 @@ class MailPollingWorker(
                 Triple(
                     MailNotificationActionReceiver.ACTION_MARK_READ,
                     R.drawable.ic_action_mark_read,
-                    R.string.mark_as_read,
+                    R.string.mark_read_action,
                 ),
             )
             actions.forEachIndexed { index, (action, icon, label) ->
@@ -743,7 +846,7 @@ class MailPollingWorker(
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                 )
                 builder.addAction(
-                    NotificationCompat.Action.Builder(icon, context.getString(label), pending)
+                    NotificationCompat.Action.Builder(icon, localized(context).getString(label), pending)
                         .setShowsUserInterface(false)
                         .build(),
                 )
@@ -777,11 +880,11 @@ class MailPollingWorker(
                 context, 0, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
-            val summary = NotificationCompat.Builder(context, CHANNEL_ID)
+            val summary = NotificationCompat.Builder(context, active_channel_id(context))
                 .setSmallIcon(R.drawable.ic_notification)
                 .setLargeIcon(app_large_icon(context))
                 .setColor(0xFF3B82F6.toInt())
-                .setContentTitle(context.getString(R.string.notif_group_summary_new_mail))
+                .setContentTitle(localized(context).getString(R.string.notif_group_summary_new_mail))
                 .setGroup(GROUP_KEY_NEW_MAIL)
                 .setGroupSummary(true)
                 .setCategory(NotificationCompat.CATEGORY_EMAIL)
@@ -800,25 +903,20 @@ class MailPollingWorker(
             return MESSAGE_ID_BASE + ((seed and 0x7fffffff) % 1_000_000)
         }
 
-        fun pick_notifiable_candidates(
-            context: Context,
-            items: List<org.astermail.android.mail.InboxItem>,
-            limit: Int,
-        ): List<org.astermail.android.mail.InboxItem> {
-            if (limit <= 0) return emptyList()
-            val muted = muted_folder_tokens(context)
-            return items.filter {
-                !it.is_read &&
-                    !was_item_notified(context, it.id) &&
-                    !is_item_in_muted_folder(it, muted)
-            }.take(limit)
-        }
-
         fun pick_notifiable_candidate(
             context: Context,
             items: List<org.astermail.android.mail.InboxItem>,
-        ): org.astermail.android.mail.InboxItem? =
-            pick_notifiable_candidates(context, items, 1).firstOrNull()
+        ): org.astermail.android.mail.InboxItem? {
+            val muted = muted_folder_tokens(context)
+            val muted_categories = muted_notification_categories(context)
+            return items.firstOrNull {
+                !it.is_read &&
+                    !was_item_notified(context, it.id) &&
+                    !is_item_in_muted_folder(it, muted) &&
+                    !is_item_in_muted_category(it, muted_categories) &&
+                    is_item_notifiable_by_type(context, it)
+            }
+        }
 
         @Synchronized
         fun was_item_notified(context: Context, item_id: String): Boolean {
@@ -843,12 +941,46 @@ class MailPollingWorker(
         }
 
         @Synchronized
-        fun release_item_claim(context: Context, item_id: String) {
+        fun release_item_notification(context: Context, item_id: String) {
             if (item_id.isBlank()) return
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             val stored = prefs.getString(KEY_NOTIFIED_ITEM_IDS, "") ?: ""
-            val ids = stored.split(NOTIFIED_ITEM_SEPARATOR).filter { it.isNotBlank() && it != item_id }
-            prefs.edit().putString(KEY_NOTIFIED_ITEM_IDS, ids.joinToString(NOTIFIED_ITEM_SEPARATOR)).commit()
+            val ids = stored.split('\n').filter { it.isNotBlank() && it != item_id }
+            prefs.edit().putString(KEY_NOTIFIED_ITEM_IDS, ids.joinToString("\n")).commit()
+        }
+
+        fun action_failed_title_res(action: String): Int? = when (action) {
+            MailNotificationActionWorker.ACTION_ARCHIVE -> R.string.failed_to_archive
+            MailNotificationActionWorker.ACTION_TRASH -> R.string.failed_to_trash
+            MailNotificationActionWorker.ACTION_MARK_READ -> R.string.failed_mark_read
+            else -> null
+        }
+
+        fun show_action_failed(context: Context, item_id: String, action: String) {
+            if (item_id.isBlank()) return
+            if (!can_post(context)) return
+            val title_res = action_failed_title_res(action) ?: return
+            create_channel(context)
+            val message_id = message_notification_id(item_id.hashCode())
+            val open_intent = Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra(MainActivity.EXTRA_OPEN_EMAIL_ID, item_id)
+            }
+            val pending = PendingIntent.getActivity(
+                context, message_id, open_intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+            val notification = base_builder(context)
+                .setContentTitle(localized(context).getString(title_res))
+                .setContentIntent(pending)
+                .setVisibility(NotificationCompat.VISIBILITY_SECRET)
+                .setGroup(GROUP_KEY_NEW_MAIL)
+                .build()
+            val manager = NotificationManagerCompat.from(context)
+            manager.notify(message_id, notification)
+            post_group_summary(context, manager, message_id)
         }
 
         @Synchronized
@@ -921,7 +1053,10 @@ class MailPollingWorker(
                 context, 0, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
-            return NotificationCompat.Builder(context, CHANNEL_ID)
+            val sound = is_sound_enabled(context)
+            val vibrate = is_vibrate_enabled(context)
+            return NotificationCompat.Builder(context, active_channel_id(context))
+                .setSilent(!sound && !vibrate)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setLargeIcon(app_large_icon(context))
                 .setColor(0xFF3B82F6.toInt())
