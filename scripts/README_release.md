@@ -19,6 +19,7 @@ Add `--dry-run` to build, sign, and verify without pushing or publishing anythin
 
 | Step | Detail |
 |---|---|
+| CI gate | Refuses to start if the latest checks on `origin/main` are failing. Override with `ASTER_SKIP_CI_CHECK=1` only when you know why. |
 | Clean clone | Clones `origin/main` into `../.release_work`. Your working tree is never packaged, so another session's uncommitted edits can't reach an APK. |
 | Bump | Sets `versionName` and `versionCode` in `app/build.gradle.kts`, commits, tags. |
 | Build | `assembleFullRelease bundleFullRelease` first, then `assembleFdroidRelease` in a **separate** gradle invocation. |
