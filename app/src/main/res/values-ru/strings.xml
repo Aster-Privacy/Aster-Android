@@ -2995,4 +2995,17 @@
     <string name="theme_sync_across_devices_subtitle">Отключите это, чтобы оставить на этом устройстве отдельную тему.</string>
     <string name="view_encryption_details">Посмотреть сведения о шифровании</string>
     <string name="resubscribe">Возобновить подписку</string>
+    <string name="contact_support">Связаться с поддержкой</string>
+    <string name="domain_purchase_manage">Управление</string>
+    <string name="domain_purchase_manage_description">Проверьте эту регистрацию и продлите её до истечения срока.</string>
+    <string name="domain_purchase_manage_status">Статус</string>
+    <string name="domain_purchase_manage_status_active">Активен</string>
+    <string name="domain_purchase_manage_status_expiring">Скоро истекает</string>
+    <string name="domain_purchase_manage_registered">Зарегистрирован</string>
+    <string name="domain_purchase_manage_expires">Истекает</string>
+    <string name="domain_purchase_manage_term">Срок</string>
+    <string name="domain_purchase_manage_paid">Оплачено</string>
+    <string name="domain_purchase_manage_auto_renew_note">Этот домен не продлевается автоматически. Чтобы сохранить его, продлите его до даты истечения срока.</string>
+    <string name="domain_purchase_manage_support_note">Чтобы перенести этот домен к другому регистратору или спросить о возврате средств, свяжитесь с поддержкой.</string>
+    <string name="domain_purchase_n_years">%1$d года</string>
 </resources>

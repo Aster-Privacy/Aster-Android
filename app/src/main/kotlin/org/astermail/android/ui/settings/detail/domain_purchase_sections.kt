@@ -38,6 +38,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -78,6 +82,8 @@ internal fun domain_purchase_area(
     on_renew: (String) -> Unit,
 ) {
     val has_complete = state.orders.any { it.status == "complete" }
+    var manage_order_id by remember { mutableStateOf<String?>(null) }
+    val manage_order = state.orders.firstOrNull { it.id == manage_order_id }
     if (!has_complete) {
         domain_purchase_promo(on_buy = on_buy)
         v_gap(AsterSpacing.md)
@@ -90,9 +96,18 @@ internal fun domain_purchase_area(
             on_open_order = on_open_order,
             on_cancel = on_cancel,
             on_complete_purchase = on_complete_purchase,
-            on_renew = on_renew,
+            on_manage = { manage_order_id = it },
         )
         v_gap(AsterSpacing.md)
+    }
+    if (manage_order != null) {
+        domain_purchase_manage_dialog(
+            order = manage_order,
+            renewing = state.renewing_order_id == manage_order.id,
+            renew_error = state.order_action_error,
+            on_renew = { on_renew(manage_order.id) },
+            on_dismiss = { manage_order_id = null },
+        )
     }
 }
 
@@ -151,7 +166,7 @@ private fun purchased_domains_section(
     on_open_order: (DomainOrder) -> Unit,
     on_cancel: (String) -> Unit,
     on_complete_purchase: (DomainOrder) -> Unit,
-    on_renew: (String) -> Unit,
+    on_manage: (String) -> Unit,
 ) {
     val colors = AsterMaterial.colors
     Row(
@@ -185,7 +200,7 @@ private fun purchased_domains_section(
                 on_open_order = on_open_order,
                 on_cancel = on_cancel,
                 on_complete_purchase = on_complete_purchase,
-                on_renew = on_renew,
+                on_manage = on_manage,
             )
         }
     }
@@ -202,14 +217,20 @@ private fun purchased_domain_row(
     on_open_order: (DomainOrder) -> Unit,
     on_cancel: (String) -> Unit,
     on_complete_purchase: (DomainOrder) -> Unit,
-    on_renew: (String) -> Unit,
+    on_manage: (String) -> Unit,
 ) {
     val colors = AsterMaterial.colors
     val in_flight = is_domain_order_in_flight(order.status)
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .then(if (in_flight) Modifier.clickable { on_open_order(order) } else Modifier)
+            .then(
+                when {
+                    in_flight -> Modifier.clickable { on_open_order(order) }
+                    order.status == "complete" -> Modifier.clickable { on_manage(order.id) }
+                    else -> Modifier
+                },
+            )
             .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -261,11 +282,11 @@ private fun purchased_domain_row(
                         )
                     } else {
                         TextButton(
-                            onClick = { on_renew(order.id) },
+                            onClick = { on_manage(order.id) },
                             enabled = state.renewing_order_id == null,
                         ) {
                             Text(
-                                text = stringResource(R.string.domain_purchase_renew),
+                                text = stringResource(R.string.domain_purchase_manage),
                                 color = colors.accent_blue,
                                 fontSize = 14.sp,
                             )

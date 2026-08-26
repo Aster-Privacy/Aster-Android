@@ -2956,4 +2956,17 @@
     <string name="theme_sync_across_devices_subtitle">关闭此项可在本设备上保留单独的主题。</string>
     <string name="view_encryption_details">查看加密详情</string>
     <string name="resubscribe">重新订阅</string>
+    <string name="contact_support">联系支持团队</string>
+    <string name="domain_purchase_manage">管理</string>
+    <string name="domain_purchase_manage_description">查看此注册信息，并在到期前续期。</string>
+    <string name="domain_purchase_manage_status">状态</string>
+    <string name="domain_purchase_manage_status_active">有效</string>
+    <string name="domain_purchase_manage_status_expiring">即将到期</string>
+    <string name="domain_purchase_manage_registered">注册于</string>
+    <string name="domain_purchase_manage_expires">到期</string>
+    <string name="domain_purchase_manage_term">期限</string>
+    <string name="domain_purchase_manage_paid">已付</string>
+    <string name="domain_purchase_manage_auto_renew_note">此域名不会自动续期。若要继续使用，请在到期日前续期。</string>
+    <string name="domain_purchase_manage_support_note">如需将此域名转移到其他注册商或咨询退款，请联系支持团队。</string>
+    <string name="domain_purchase_n_years">%1$d 年</string>
 </resources>

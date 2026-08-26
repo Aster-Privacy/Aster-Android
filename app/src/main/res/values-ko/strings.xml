@@ -2956,4 +2956,17 @@
     <string name="theme_sync_across_devices_subtitle">이 기기에서 별도의 테마를 사용하려면 끄세요.</string>
     <string name="view_encryption_details">암호화 세부 정보 보기</string>
     <string name="resubscribe">다시 구독</string>
+    <string name="contact_support">고객 지원에 문의</string>
+    <string name="domain_purchase_manage">관리</string>
+    <string name="domain_purchase_manage_description">이 등록 내용을 확인하고 만료되기 전에 갱신하세요.</string>
+    <string name="domain_purchase_manage_status">상태</string>
+    <string name="domain_purchase_manage_status_active">활성</string>
+    <string name="domain_purchase_manage_status_expiring">곧 만료됨</string>
+    <string name="domain_purchase_manage_registered">등록일</string>
+    <string name="domain_purchase_manage_expires">만료일</string>
+    <string name="domain_purchase_manage_term">기간</string>
+    <string name="domain_purchase_manage_paid">결제 금액</string>
+    <string name="domain_purchase_manage_auto_renew_note">이 도메인은 자동으로 갱신되지 않습니다. 계속 사용하려면 만료일 전에 갱신하세요.</string>
+    <string name="domain_purchase_manage_support_note">이 도메인을 다른 등록 기관으로 이전하거나 환불을 문의하려면 고객 지원에 연락하세요.</string>
+    <string name="domain_purchase_n_years">%1$d년</string>
 </resources>

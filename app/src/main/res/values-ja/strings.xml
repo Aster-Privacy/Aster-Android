@@ -2956,4 +2956,17 @@
     <string name="theme_sync_across_devices_subtitle">このデバイスで別のテーマを使うには、これをオフにします。</string>
     <string name="view_encryption_details">暗号化の詳細を表示</string>
     <string name="resubscribe">再登録</string>
+    <string name="contact_support">サポートに問い合わせる</string>
+    <string name="domain_purchase_manage">管理</string>
+    <string name="domain_purchase_manage_description">この登録内容を確認し、有効期限が切れる前に更新してください。</string>
+    <string name="domain_purchase_manage_status">ステータス</string>
+    <string name="domain_purchase_manage_status_active">有効</string>
+    <string name="domain_purchase_manage_status_expiring">まもなく期限切れ</string>
+    <string name="domain_purchase_manage_registered">登録日</string>
+    <string name="domain_purchase_manage_expires">有効期限</string>
+    <string name="domain_purchase_manage_term">期間</string>
+    <string name="domain_purchase_manage_paid">支払い済み</string>
+    <string name="domain_purchase_manage_auto_renew_note">このドメインは自動的には更新されません。使い続けるには、有効期限までに更新してください。</string>
+    <string name="domain_purchase_manage_support_note">このドメインを別のレジストラに移管する場合や返金について尋ねる場合は、サポートに問い合わせてください。</string>
+    <string name="domain_purchase_n_years">%1$d年</string>
 </resources>

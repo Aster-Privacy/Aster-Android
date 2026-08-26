@@ -2969,4 +2969,17 @@
     <string name="theme_sync_across_devices_subtitle">Disattiva questa opzione per mantenere un tema separato su questo dispositivo.</string>
     <string name="view_encryption_details">Vedi i dettagli della crittografia</string>
     <string name="resubscribe">Iscriviti di nuovo</string>
+    <string name="contact_support">Contatta l\'assistenza</string>
+    <string name="domain_purchase_manage">Gestisci</string>
+    <string name="domain_purchase_manage_description">Controlla questa registrazione e rinnovala prima che scada.</string>
+    <string name="domain_purchase_manage_status">Stato</string>
+    <string name="domain_purchase_manage_status_active">Attivo</string>
+    <string name="domain_purchase_manage_status_expiring">In scadenza</string>
+    <string name="domain_purchase_manage_registered">Registrato</string>
+    <string name="domain_purchase_manage_expires">Scade</string>
+    <string name="domain_purchase_manage_term">Durata</string>
+    <string name="domain_purchase_manage_paid">Pagato</string>
+    <string name="domain_purchase_manage_auto_renew_note">Questo dominio non si rinnova automaticamente. Per conservarlo, rinnovalo prima della data di scadenza.</string>
+    <string name="domain_purchase_manage_support_note">Per trasferire questo dominio a un altro registrar o chiedere un rimborso, contatta l\'assistenza.</string>
+    <string name="domain_purchase_n_years">%1$d anni</string>
 </resources>

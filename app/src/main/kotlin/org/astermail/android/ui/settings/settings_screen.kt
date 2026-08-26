@@ -59,6 +59,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -81,6 +82,8 @@ import org.astermail.android.ui.common.remember_has_paid_plan
 import org.astermail.android.ui.mail.search_field_bg_color
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.design.mirror_in_rtl
+
+private const val support_address = "hello@astermail.org"
 
 data class settings_row_item(
     val id: String,
@@ -131,6 +134,7 @@ internal fun build_settings_sections(is_family: Boolean) = listOf(
         R.string.settings_advanced,
         listOf(
             settings_row_item("about", R.string.about, icon = TablerIcons.InfoCircle),
+            settings_row_item("contact_support", R.string.contact_support, icon = TablerIcons.Lifebuoy),
             settings_row_item("feedback", R.string.settings_feedback, icon = TablerIcons.MessageReport),
             settings_row_item("developer", R.string.developer, icon = TablerIcons.Code),
             settings_row_item("diagnostics", R.string.settings_diagnostics, icon = TablerIcons.Bug),
@@ -144,6 +148,7 @@ fun SettingsScreen(
     on_open: (String) -> Unit,
 ) {
     val colors = AsterMaterial.colors
+    val context = LocalContext.current
     val settings_vm: SettingsViewModel = shared_settings_view_model()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) {
@@ -203,7 +208,18 @@ fun SettingsScreen(
                         .border(1.dp, colors.border_secondary, SquircleShape(18.dp)),
                 ) {
                     section.rows.forEachIndexed { idx, row ->
-                        settings_row(row) { on_open(row.id) }
+                        settings_row(row) {
+                            if (row.id == "contact_support") {
+                                context.startActivity(
+                                    org.astermail.android.ComposeActivity.intent_for(
+                                        context,
+                                        prefill_to = support_address,
+                                    ),
+                                )
+                            } else {
+                                on_open(row.id)
+                            }
+                        }
                         if (idx < section.rows.lastIndex) {
                             AsterDivider(modifier = Modifier.padding(start = 50.dp))
                         }
