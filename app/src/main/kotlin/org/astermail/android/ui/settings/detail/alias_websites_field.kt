@@ -210,7 +210,8 @@ internal fun alias_websites_field(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
                         .clickable {
-                            if (draft.isNotBlank()) on_add(draft)
+                            val entry = draft.trim()
+                            if (entry.isNotEmpty()) on_add(entry)
                             draft = ""
                             adding = false
                         }

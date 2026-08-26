@@ -27,6 +27,7 @@ import org.astermail.android.labels.label_reorder_entries
 import org.astermail.android.labels.label_rows
 import org.astermail.android.labels.move_row
 import org.astermail.android.labels.tag_reorder_entries
+import org.astermail.android.labels.tag_display_name
 import org.astermail.android.labels.tag_rows
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -128,6 +129,32 @@ class LabelOrderTest {
             ),
         )
         assertEquals(listOf("a", "b"), rows.map { it.id })
+    }
+
+    @Test
+    fun `tag rows keep an unreadable tag that is applied to the selection`() {
+        val tags = listOf(
+            tag("a", sort_order = 0),
+            tag("encrypted", name = "aGVsbG8gd29ybGQgdGhpcyBpcyBiYXNlNjQgcGF5bG9hZA==", sort_order = 1),
+        )
+        assertEquals(listOf("a"), tag_rows(tags).map { it.id })
+        assertEquals(
+            listOf("a", "encrypted"),
+            tag_rows(tags, setOf("token_encrypted")).map { it.id },
+        )
+    }
+
+    @Test
+    fun `tag display name falls back for an unreadable tag`() {
+        assertEquals("a", tag_display_name(tag("a"), "Unknown"))
+        assertEquals(
+            "Unknown",
+            tag_display_name(
+                tag("encrypted", name = "aGVsbG8gd29ybGQgdGhpcyBpcyBiYXNlNjQgcGF5bG9hZA=="),
+                "Unknown",
+            ),
+        )
+        assertEquals("Unknown", tag_display_name(tag("blank", name = ""), "Unknown"))
     }
 
     @Test

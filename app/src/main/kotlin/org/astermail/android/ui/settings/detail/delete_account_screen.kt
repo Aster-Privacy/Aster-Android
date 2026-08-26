@@ -26,6 +26,11 @@ import compose.icons.tablericons.*
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
@@ -35,6 +40,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -79,6 +85,7 @@ fun DeleteAccountScreen(
             enabled = !state.is_submitting,
             singleLine = true,
             visual_transformation = if (state.show_password) VisualTransformation.None else PasswordVisualTransformation(),
+            content_type = ContentType.Password,
             keyboard_options = KeyboardOptions(
                 capitalization = KeyboardCapitalization.None,
                 autoCorrectEnabled = false,
@@ -104,6 +111,20 @@ fun DeleteAccountScreen(
                 autoCorrectEnabled = false,
             ),
         )
+        if (state.totp_status_unknown) {
+            v_gap(AsterSpacing.sm)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = stringResource(R.string.failed_to_load), color = colors.danger, fontSize = 13.sp)
+                Spacer(Modifier.width(AsterSpacing.sm))
+                Text(
+                    text = stringResource(R.string.retry),
+                    color = colors.accent_blue,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.clickable { view_model.load_totp_status() },
+                )
+            }
+        }
         v_gap(AsterSpacing.md)
         AsterTextField(
             label = stringResource(R.string.delete_account_confirm_phrase),
@@ -127,6 +148,7 @@ fun DeleteAccountScreen(
         val can_submit = !state.is_submitting &&
             state.password.isNotBlank() &&
             state.confirm_phrase.trim() == required_phrase &&
+            !state.totp_status_unknown &&
             (!state.totp_enabled || is_valid_totp_or_backup_code(state.totp_code.trim()))
         AsterButton(
             label = if (state.is_submitting) stringResource(R.string.deleting_account) else stringResource(R.string.delete_account_button),

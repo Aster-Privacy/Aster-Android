@@ -115,12 +115,12 @@ class BillingViewModel @Inject constructor(
             val sub = billing_api.get_subscription()
             _state.update { it.copy(subscription = sub, is_loading = false, error = null) }
         } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
             if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_subscription failed", t)
             _state.update {
                 it.copy(
                     is_loading = false,
-                    subscription = null,
-                    error = null,
+                    error = org.astermail.android.localized_api_error(ctx, t, ctx.getString(R.string.failed_to_load)),
                 )
             }
         }
@@ -131,7 +131,13 @@ class BillingViewModel @Inject constructor(
             try {
                 val response = billing_api.get_available_plans()
                 _state.update { it.copy(available_plans = response.plans) }
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                _state.update {
+                    it.copy(
+                        error = org.astermail.android.localized_api_error(ctx, t, ctx.getString(R.string.failed_to_load),
+                        ),
+                    )
+                }
             }
         }
     }
@@ -141,7 +147,13 @@ class BillingViewModel @Inject constructor(
             try {
                 val limits = billing_api.get_plan_limits()
                 _state.update { it.copy(limits = limits) }
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                _state.update {
+                    it.copy(
+                        error = org.astermail.android.localized_api_error(ctx, t, ctx.getString(R.string.failed_to_load),
+                        ),
+                    )
+                }
             }
         }
     }
@@ -151,7 +163,13 @@ class BillingViewModel @Inject constructor(
             try {
                 val response = billing_api.get_billing_history(page = 1, per_page = 20)
                 _state.update { it.copy(history = response.items) }
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                _state.update {
+                    it.copy(
+                        error = org.astermail.android.localized_api_error(ctx, t, ctx.getString(R.string.failed_to_load),
+                        ),
+                    )
+                }
             }
         }
     }
@@ -320,7 +338,7 @@ class BillingViewModel @Inject constructor(
                     crypto_native_coins = response.coins,
                 )
             } catch (t: Throwable) {
-                _state.value = _state.value.copy(crypto_native_enabled = false, crypto_native_coins = emptyList())
+                if (t is kotlinx.coroutines.CancellationException) throw t
             }
         }
     }
@@ -339,7 +357,7 @@ class BillingViewModel @Inject constructor(
                     },
                 )
             } catch (t: Throwable) {
-                _state.value = _state.value.copy(pending_crypto_invoices = emptyList())
+                if (t is kotlinx.coroutines.CancellationException) throw t
             } finally {
                 pending_crypto_invoices_in_flight = false
             }
@@ -387,7 +405,14 @@ class BillingViewModel @Inject constructor(
             try {
                 val response = billing_api.get_storage_addons()
                 _state.value = _state.value.copy(storage_addons = response)
-            } catch (_: Throwable) {}
+            } catch (t: Throwable) {
+                _state.update {
+                    it.copy(
+                        error = org.astermail.android.localized_api_error(ctx, t, ctx.getString(R.string.failed_to_load),
+                        ),
+                    )
+                }
+            }
         }
     }
 
@@ -443,7 +468,13 @@ class BillingViewModel @Inject constructor(
             try {
                 val response = billing_api.list_payment_methods()
                 _state.value = _state.value.copy(payment_methods = response.payment_methods)
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                _state.update {
+                    it.copy(
+                        error = org.astermail.android.localized_api_error(ctx, t, ctx.getString(R.string.failed_to_load),
+                        ),
+                    )
+                }
             }
         }
     }

@@ -63,6 +63,7 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterSwitch
+import org.astermail.android.settings.SaveStatus
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.ui.theme.ThemeViewModel
 import org.astermail.android.settings.shared_settings_view_model
@@ -169,6 +170,29 @@ fun AccessibilityScreen(
         }
     }
 
+    LaunchedEffect(state.save_status) {
+        if (state.save_status != SaveStatus.ERROR || !prefs_loaded) return@LaunchedEffect
+        val base = prefs ?: return@LaunchedEffect
+        font_size = base.font_size_scale
+        high_contrast = base.high_contrast
+        reduce_transparency = base.reduce_transparency
+        underline_links = base.underline_links
+        dyslexia = base.dyslexia_font
+        text_spacing = base.text_spacing
+        reduce_motion = base.reduce_motion
+        compact = base.compact_mode
+        low_network = base.low_network_mode
+        save_trigger = 0
+        theme_vm.set_text_size_from_key(base.font_size_scale)
+        theme_vm.set_high_contrast(base.high_contrast)
+        theme_vm.set_reduce_transparency(base.reduce_transparency)
+        theme_vm.set_reduce_motion(base.reduce_motion)
+        theme_vm.set_compact_mode(base.compact_mode)
+        theme_vm.set_text_spacing(base.text_spacing)
+        theme_vm.set_underline_links(base.underline_links)
+        theme_vm.set_dyslexia_font(base.dyslexia_font)
+    }
+
     fun save() {
         val base = prefs ?: return
         vm.save_preferences(
@@ -191,17 +215,22 @@ fun AccessibilityScreen(
         if (!prefs_loaded || prefs == null) return@LaunchedEffect
         delay(400)
         save()
+        save_trigger = 0
     }
 
-    DisposableEffect(Unit) {
-        onDispose { if (save_trigger > 0 && prefs != null && prefs_loaded) save() }
+    val flush_on_exit: androidx.compose.runtime.State<() -> Unit> =
+        androidx.compose.runtime.rememberUpdatedState({
+            if (save_trigger > 0 && prefs != null && prefs_loaded) save()
+        })
+
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        onDispose { flush_on_exit.value() }
     }
 
     detail_scaffold(title = stringResource(R.string.settings_accessibility), on_back = on_back) {
+        preferences_save_error_banner()
         if (prefs == null || !state.preferences_authoritative) {
-            Box(modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
-            }
+            preferences_load_placeholder()
         } else {
 
             // ── Font Size ──────────────────────────────────────────────────────

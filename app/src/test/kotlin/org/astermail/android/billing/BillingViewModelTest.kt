@@ -37,6 +37,7 @@ import org.astermail.android.api.billing.PlanInfo
 import org.astermail.android.api.billing.SubscriptionResponse
 import org.astermail.android.auth.AuthRepository
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
@@ -64,6 +65,19 @@ class BillingViewModelTest {
     @After
     fun teardown() {
         Dispatchers.resetMain()
+    }
+
+    @Test
+    fun `keeps the current subscription when a refresh fails`() = runTest {
+        coEvery { billing_api.get_subscription() } returns paid_sub
+        vm.load_subscription()
+        advanceUntilIdle()
+
+        coEvery { billing_api.get_subscription() } throws java.io.IOException("offline")
+        vm.load_subscription()
+        advanceUntilIdle()
+
+        assertEquals(paid_sub, vm.state.value.subscription)
     }
 
     @Test

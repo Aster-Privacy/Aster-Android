@@ -22,8 +22,9 @@
 package org.astermail.android.ui.settings.detail
 
 import android.content.ClipData
+import org.astermail.android.ui.common.show_copy_failed_toast
+import org.astermail.android.ui.common.write_to_clipboard
 import android.content.ClipDescription
-import android.content.ClipboardManager
 import android.content.Context
 import android.os.Build
 import android.os.PersistableBundle
@@ -80,7 +81,6 @@ fun DiagnosticsScreen(
         AsterSecondaryButton(
             label = stringResource(R.string.copy_diagnostics),
             onClick = {
-                val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val clip = ClipData.newPlainText(clip_label, diag_text)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     val extras = PersistableBundle().apply {
@@ -88,8 +88,11 @@ fun DiagnosticsScreen(
                     }
                     clip.description.extras = extras
                 }
-                cm.setPrimaryClip(clip)
-                Toast.makeText(context, copied_text, Toast.LENGTH_SHORT).show()
+                if (write_to_clipboard(context, clip)) {
+                    Toast.makeText(context, copied_text, Toast.LENGTH_SHORT).show()
+                } else {
+                    show_copy_failed_toast(context)
+                }
             },
         )
         v_gap(AsterSpacing.xxl)

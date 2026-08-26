@@ -21,11 +21,15 @@
 
 package org.astermail.android.ui.settings.detail
 
+import org.astermail.android.ui.mail.format_long_date
+import org.astermail.android.ui.common.show_copy_result_toast
+import org.astermail.android.ui.common.show_copy_failed_toast
+import org.astermail.android.ui.common.write_to_clipboard
+
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -47,6 +51,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
@@ -118,6 +123,7 @@ import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.ui.auth.TurnstileWidget
 import org.astermail.android.util.generate_random_local_part
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.design.mirror_in_rtl
 
 @Composable
 private fun tab_labels_computed(): List<String> = listOf(
@@ -131,7 +137,7 @@ private fun tab_labels_computed(): List<String> = listOf(
 @Composable
 fun AliasesScreen(
     on_back: () -> Unit,
-    on_open: (id: String) -> Unit = {},
+    on_open: (id: String) -> Unit,
     open_create: Boolean = false,
     on_open_buy_domain: () -> Unit = {},
     on_open_domain_order: (String) -> Unit = {},
@@ -339,7 +345,7 @@ fun AliasesScreen(
                         expanded_domain_id = domain.id
                         scope.launch {
                             val records = vm.get_dns_records_now(domain.id)
-                            if (records.isNotEmpty()) domain_dns = domain_dns + (domain.id to records)
+                            if (!records.isNullOrEmpty()) domain_dns = domain_dns + (domain.id to records)
                         }
                     }
                 }
@@ -443,7 +449,7 @@ private fun aliases_tab(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = stringResource(R.string.aliases_count, state.aliases.size),
+                    text = pluralStringResource(R.plurals.aliases_count, state.aliases.size, state.aliases.size),
                     color = colors.text_tertiary,
                     fontSize = 13.sp,
                 )
@@ -497,11 +503,24 @@ private fun aliases_tab(
                 }
             } else if (state.aliases.isEmpty()) {
                 item(key = "alias_empty") {
+                    val load_error = state.error
                     AsterCard(modifier = Modifier.fillMaxWidth()) {
-                        detail_row(
-                            title = stringResource(R.string.no_aliases),
-                            subtitle = state.error ?: stringResource(R.string.no_aliases_subtitle),
-                        )
+                        if (load_error != null) {
+                            detail_row(
+                                title = stringResource(R.string.failed_to_load),
+                                subtitle = load_error,
+                            )
+                            AsterDivider()
+                            detail_row(
+                                title = stringResource(R.string.retry),
+                                on_click = { vm.load_aliases(force = true) },
+                            )
+                        } else {
+                            detail_row(
+                                title = stringResource(R.string.no_aliases),
+                                subtitle = stringResource(R.string.no_aliases_subtitle),
+                            )
+                        }
                     }
                 }
             } else if (visible_aliases.isEmpty() && visible_domain_addresses.isEmpty()) {
@@ -715,9 +734,8 @@ private fun alias_toggle_chip(label: String, active: Boolean, on_click: () -> Un
 }
 
 private fun copy_address(context: Context, address: String) {
-    val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    cm.setPrimaryClip(ClipData.newPlainText("alias", address))
-    show_copied_toast(context, address)
+    val copied = write_to_clipboard(context, ClipData.newPlainText("alias", address))
+    show_copy_result_toast(context, address, copied)
 }
 
 @Composable
@@ -1053,7 +1071,7 @@ private fun custom_domain_address_row(
             .background(colors.bg_card)
             .border(1.dp, colors.border_secondary, shape)
             .combinedClickable(
-                onClick = {},
+                onClick = { copy_address(context, addr.address) },
                 onLongClick = {
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                     copy_address(context, addr.address)
@@ -1164,7 +1182,7 @@ private fun recently_deleted_section(
             if (!restore_locked) {
                 TextButton(onClick = { confirm_empty = true }) {
                     Text(
-                        text = stringResource(R.string.empty_trash),
+                        text = stringResource(R.string.delete_all),
                         color = colors.danger,
                         fontSize = 13.sp,
                     )
@@ -1237,15 +1255,15 @@ private fun recently_deleted_section(
     if (confirm_empty) {
         org.astermail.android.design.components.AsterDialog(
             on_dismiss = { confirm_empty = false },
-            title = stringResource(R.string.empty_trash_confirm_title),
-            message = stringResource(R.string.empty_trash_confirm_message),
+            title = stringResource(R.string.purge_all_aliases_title),
+            message = stringResource(R.string.purge_all_aliases_message),
             footer = {
                 org.astermail.android.design.components.AsterDialogOutlineButton(
                     label = stringResource(R.string.cancel),
                     onClick = { confirm_empty = false },
                 )
                 org.astermail.android.design.components.AsterDialogDestructiveButton(
-                    label = stringResource(R.string.empty_trash),
+                    label = stringResource(R.string.delete_all),
                     onClick = { vm.empty_deleted_aliases(); confirm_empty = false },
                 )
             },
@@ -1325,10 +1343,8 @@ private fun domains_tab(
                         on_expanded_change(domain.id)
                         if (!domain_dns.containsKey(domain.id)) {
                             scope.launch {
-                                try {
-                                    val records = vm.get_dns_records_now(domain.id)
-                                    on_dns_loaded(domain.id, records)
-                                } catch (_: Throwable) {}
+                                val records = vm.get_dns_records_now(domain.id)
+                                if (records != null) on_dns_loaded(domain.id, records)
                             }
                         }
                     }
@@ -1345,7 +1361,7 @@ private fun domains_tab(
                             on_verify_result(domain.id, outcome)
                             if (!outcome.rate_limited) {
                                 val records = vm.get_dns_records_now(domain.id)
-                                if (records.isNotEmpty()) on_dns_loaded(domain.id, records)
+                                if (!records.isNullOrEmpty()) on_dns_loaded(domain.id, records)
                             }
                         } finally {
                             on_verifying_change(null)
@@ -1381,16 +1397,15 @@ private fun directories_tab(
     val colors = AsterMaterial.colors
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
+    val domain_options = remember(state.domains) { alias_domain_options(state.domains) }
     var dir_key by remember { mutableStateOf("") }
-    var dir_separator by remember { mutableStateOf(".") }
-    var dir_domain by remember { mutableStateOf("astermail.org") }
+    var dir_domain by remember { mutableStateOf(domain_options.first().domain_name) }
     var captcha_token by remember { mutableStateOf<String?>(null) }
     var captcha_reset by remember { mutableStateOf(0) }
-    var separator_menu_open by remember { mutableStateOf(false) }
+    var domain_menu_open by remember { mutableStateOf(false) }
     var is_creating by remember { mutableStateOf(false) }
     var dir_availability by remember { mutableStateOf<Boolean?>(null) }
     var dir_checking by remember { mutableStateOf(false) }
-    val separators = listOf(".", "+", "#")
     val key_valid = dir_key.matches(Regex("[a-z0-9-]{2,}"))
 
     LaunchedEffect(dir_key, dir_domain) {
@@ -1424,12 +1439,20 @@ private fun directories_tab(
                     .clip(SquircleShape(18.dp))
                     .background(colors.input_bg, SquircleShape(18.dp))
                     .border(1.5.dp, colors.input_border, SquircleShape(18.dp))
-                    .clickable { separator_menu_open = true }
+                    .clickable { domain_menu_open = true }
                     .padding(horizontal = AsterSpacing.md),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                Text(dir_separator, color = colors.text_primary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    text = "@$dir_domain",
+                    color = colors.text_primary,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.widthIn(max = 140.dp),
+                )
                 Icon(
                     imageVector = TablerIcons.ChevronDown,
                     contentDescription = null,
@@ -1438,15 +1461,15 @@ private fun directories_tab(
                 )
             }
             aster_dropdown_menu(
-                expanded = separator_menu_open,
-                on_dismiss = { separator_menu_open = false },
-                min_width = 96.dp,
+                expanded = domain_menu_open,
+                on_dismiss = { domain_menu_open = false },
+                min_width = 180.dp,
             ) {
-                separators.forEach { sep ->
+                domain_options.forEach { option ->
                     aster_dropdown_item(
-                        label = sep,
-                        selected = sep == dir_separator,
-                        on_click = { dir_separator = sep; separator_menu_open = false },
+                        label = "@${option.domain_name}",
+                        selected = option.domain_name == dir_domain,
+                        on_click = { dir_domain = option.domain_name; domain_menu_open = false },
                     )
                 }
             }
@@ -1456,8 +1479,14 @@ private fun directories_tab(
 
     if (dir_key.isNotBlank()) {
         Text(
-            text = stringResource(R.string.alias_directory_example, dir_separator, dir_key),
+            text = stringResource(R.string.alias_directory_example, dir_key, dir_domain),
             color = colors.text_tertiary,
+            fontSize = 12.sp,
+        )
+        v_gap(AsterSpacing.xs)
+        Text(
+            text = stringResource(R.string.alias_directory_separator_hint),
+            color = colors.text_muted,
             fontSize = 12.sp,
         )
         when {
@@ -1516,6 +1545,23 @@ private fun directories_tab(
     )
     v_gap(AsterSpacing.lg)
 
+    var confirm_delete_directory by remember { mutableStateOf<String?>(null) }
+
+    confirm_delete_directory?.let { pending_directory_id ->
+        org.astermail.android.design.components.AsterAlertDialog(
+            on_dismiss = { confirm_delete_directory = null },
+            title = stringResource(R.string.alias_delete_directory),
+            message = stringResource(R.string.alias_delete_directory_confirm),
+            confirm_label = stringResource(R.string.delete),
+            cancel_label = stringResource(R.string.cancel),
+            confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
+            on_confirm = {
+                confirm_delete_directory = null
+                vm.delete_directory(pending_directory_id)
+            },
+        )
+    }
+
     val directories_settled = remember_load_settled(state.directories_loading)
     if (state.directories.isEmpty() && (state.directories_loading || !directories_settled)) {
         skeleton_card_list(rows = 3)
@@ -1541,12 +1587,14 @@ private fun directories_tab(
                         modifier = Modifier
                             .weight(1f)
                             .combinedClickable(
-                                onClick = {},
+                                onClick = {
+                                    val copied = write_to_clipboard(context, ClipData.newPlainText("directory", dir_address))
+                                    show_copy_result_toast(context, dir_address, copied)
+                                },
                                 onLongClick = {
                                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                    cm.setPrimaryClip(ClipData.newPlainText("directory", dir_address))
-                                    show_copied_toast(context, dir_address)
+                                    val copied = write_to_clipboard(context, ClipData.newPlainText("directory", dir_address))
+                                    show_copy_result_toast(context, dir_address, copied)
                                 },
                             ),
                     ) {
@@ -1569,7 +1617,7 @@ private fun directories_tab(
                     AsterIconButton(
                         icon = TablerIcons.Trash,
                         content_description = stringResource(R.string.alias_delete_directory),
-                        onClick = { vm.delete_directory(dir.id) },
+                        onClick = { confirm_delete_directory = dir.id },
                         tint = colors.danger,
                     )
                 }
@@ -1587,7 +1635,7 @@ private fun alias_delete_eligible_at(created_at: String): Long? {
 }
 
 private fun format_alias_date(millis: Long): String =
-    java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM).format(java.util.Date(millis))
+    millis.format_long_date()
 
 private fun parse_iso_millis(iso: String): Long? = try {
     java.time.Instant.parse(iso).toEpochMilli()
@@ -1627,7 +1675,6 @@ internal fun ghost_tab(
     val keyboard = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
     val focus_manager = androidx.compose.ui.platform.LocalFocusManager.current
     var show_create_dialog by remember { mutableStateOf(false) }
-    var create_note by remember { mutableStateOf("") }
     var is_creating by remember { mutableStateOf(false) }
     var measured_list_height by remember { mutableStateOf(0) }
     var measured_ghost_count by remember { mutableStateOf(state.ghost_aliases.size) }
@@ -1673,7 +1720,7 @@ internal fun ghost_tab(
             )
         }
     } else {
-        section_label(stringResource(R.string.ghosts_count, state.ghost_aliases.size))
+        section_label(pluralStringResource(R.plurals.ghosts_count, state.ghost_aliases.size, state.ghost_aliases.size))
         AsterCard(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1702,12 +1749,14 @@ internal fun ghost_tab(
                     modifier = Modifier
                         .fillMaxWidth()
                         .combinedClickable(
-                            onClick = {},
+                            onClick = {
+                                val copied = write_to_clipboard(context, ClipData.newPlainText("ghost", ghost_address))
+                                show_copy_result_toast(context, ghost_address, copied)
+                            },
                             onLongClick = {
                                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                                val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                cm.setPrimaryClip(ClipData.newPlainText("ghost", ghost_address))
-                                show_copied_toast(context, ghost_address)
+                                val copied = write_to_clipboard(context, ClipData.newPlainText("ghost", ghost_address))
+                                show_copy_result_toast(context, ghost_address, copied)
                             },
                         )
                         .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
@@ -1722,32 +1771,13 @@ internal fun ghost_tab(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
-                        if (g.note.isNotEmpty()) {
-                            Spacer(Modifier.height(2.dp))
+                        if (expiry_label != null) {
+                            Spacer(Modifier.height(4.dp))
                             Text(
-                                text = g.note,
-                                color = colors.text_secondary,
-                                fontSize = 12.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                        Spacer(Modifier.height(4.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
-                            Text(
-                                text = stringResource(R.string.ghost_forwarded_count, g.forward_count),
-                                color = colors.text_tertiary,
+                                text = expiry_label,
+                                color = if (g.enabled) colors.text_tertiary else colors.text_muted,
                                 fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium,
                             )
-                            if (expiry_label != null) {
-                                Text(text = "·", color = colors.text_muted, fontSize = 11.sp)
-                                Text(
-                                    text = expiry_label,
-                                    color = if (g.enabled) colors.text_tertiary else colors.text_muted,
-                                    fontSize = 11.sp,
-                                )
-                            }
                         }
                     }
                     if (g.enabled) {
@@ -1817,22 +1847,14 @@ internal fun ghost_tab(
 
     if (show_create_dialog) {
         org.astermail.android.design.components.AsterDialog(
-            on_dismiss = { if (!is_creating) { show_create_dialog = false; create_note = "" } },
+            on_dismiss = { if (!is_creating) show_create_dialog = false },
             title = stringResource(R.string.generate_ghost_alias),
-            body = {
-                AsterTextField(
-                    value = create_note,
-                    onValueChange = { create_note = it },
-                    label = stringResource(R.string.ghost_alias_note_label),
-                    placeholder = stringResource(R.string.ghost_alias_note_placeholder),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            },
+            message = stringResource(R.string.generate_ghost_alias_message),
             footer = {
                 org.astermail.android.design.components.AsterDialogOutlineButton(
                     label = stringResource(R.string.cancel),
                     enabled = !is_creating,
-                    onClick = { show_create_dialog = false; create_note = "" },
+                    onClick = { show_create_dialog = false },
                 )
                 org.astermail.android.design.components.AsterDialogPrimaryButton(
                     label = if (is_creating) stringResource(R.string.ghost_alias_creating) else stringResource(R.string.create),
@@ -1843,10 +1865,9 @@ internal fun ghost_tab(
                         focus_manager.clearFocus(force = true)
                         keyboard?.hide()
                         scope.launch {
-                            val result = vm.create_ghost_alias_now(create_note.trim())
+                            val result = vm.create_ghost_alias_now()
                             is_creating = false
                             show_create_dialog = false
-                            create_note = ""
                             when (result) {
                                 is SettingsViewModel.GhostAliasResult.Success -> {
                                     scroll_to_new_ghost = true
@@ -1878,6 +1899,16 @@ private fun preferences_tab(
     var show_unsubscribe_dialog by remember { mutableStateOf(false) }
     var show_default_domain_dialog by remember { mutableStateOf(false) }
 
+    if (prefs == null && state.alias_preferences_load_failed) {
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            detail_row(
+                title = stringResource(R.string.failed_to_load),
+                subtitle = stringResource(R.string.retry),
+                on_click = { vm.load_alias_preferences() },
+            )
+        }
+        return
+    }
     if (prefs == null) {
         skeleton_section_label()
         skeleton_hero_card(lines = 3)
@@ -1901,7 +1932,7 @@ private fun preferences_tab(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(default_domain, color = colors.text_secondary, fontSize = 14.sp)
                     Spacer(Modifier.width(AsterSpacing.xs))
-                    Icon(imageVector = TablerIcons.ChevronRight, contentDescription = null, tint = colors.text_muted, modifier = Modifier.size(20.dp))
+                    Icon(imageVector = TablerIcons.ChevronRight, contentDescription = null, tint = colors.text_muted, modifier = Modifier.size(20.dp).mirror_in_rtl())
                 }
             },
         )
@@ -1933,7 +1964,7 @@ private fun preferences_tab(
                 else -> stringResource(R.string.alias_unsubscribe_preserve_desc)
             },
             trailing = {
-                Icon(imageVector = TablerIcons.ChevronRight, contentDescription = null, tint = colors.text_muted, modifier = Modifier.size(20.dp))
+                Icon(imageVector = TablerIcons.ChevronRight, contentDescription = null, tint = colors.text_muted, modifier = Modifier.size(20.dp).mirror_in_rtl())
             },
             on_click = { show_unsubscribe_dialog = true },
             info_title = stringResource(R.string.alias_unsubscribe_action),
@@ -2207,7 +2238,18 @@ private fun domain_card(
     val colors = AsterMaterial.colors
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
-    val is_active = domain.txt_verified && domain.mx_verified && domain.spf_verified && domain.dkim_verified
+    val is_active = domain.status.equals("active", ignoreCase = true) ||
+        (domain.status.isBlank() && domain.txt_verified && domain.mx_verified && domain.spf_verified && domain.dkim_verified)
+    val status_label = when (domain.status.lowercase()) {
+        "active" -> stringResource(R.string.domain_status_active)
+        "verifying" -> stringResource(R.string.domain_status_verifying)
+        "dns_pending" -> stringResource(R.string.domain_status_dns_pending)
+        "suspended" -> stringResource(R.string.domain_status_suspended)
+        "failed" -> stringResource(R.string.domain_status_failed)
+        else -> stringResource(if (is_active) R.string.domain_status_active else R.string.domain_status_setup_required)
+    }
+    val is_blocked = domain.status.equals("suspended", ignoreCase = true) ||
+        domain.status.equals("failed", ignoreCase = true)
     var confirm_delete by remember(domain.id) { mutableStateOf(false) }
     var name_expanded by remember(domain.id) { mutableStateOf(false) }
 
@@ -2253,8 +2295,8 @@ private fun domain_card(
                         ),
                     )
                     Text(
-                        text = if (is_active) stringResource(R.string.domain_status_active) else stringResource(R.string.domain_status_setup_required),
-                        color = if (is_active) colors.success else colors.warning,
+                        text = status_label,
+                        color = if (is_active) colors.success else if (is_blocked) colors.danger else colors.warning,
                         fontSize = 12.sp,
                     )
                 }
@@ -2347,13 +2389,15 @@ private fun domain_card(
 }
 
 private fun copy_dns_value(context: Context, label: String, value: String) {
-    val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    cm.setPrimaryClip(ClipData.newPlainText(label, value))
-    android.widget.Toast.makeText(
-        context,
-        context.getString(R.string.copied_to_clipboard),
-        android.widget.Toast.LENGTH_SHORT,
-    ).show()
+    if (write_to_clipboard(context, ClipData.newPlainText(label, value))) {
+        android.widget.Toast.makeText(
+            context,
+            context.getString(R.string.copied_to_clipboard),
+            android.widget.Toast.LENGTH_SHORT,
+        ).show()
+    } else {
+        show_copy_failed_toast(context)
+    }
 }
 
 @Composable
@@ -2448,8 +2492,10 @@ private fun dns_record_row(label: String, verified: Boolean) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = TablerIcons.Check,
-            contentDescription = null,
+            imageVector = if (verified) TablerIcons.Check else TablerIcons.Clock,
+            contentDescription = stringResource(
+                if (verified) R.string.domain_record_found else R.string.domain_record_pending,
+            ),
             tint = if (verified) colors.success else colors.text_muted,
             modifier = Modifier.size(16.dp),
         )

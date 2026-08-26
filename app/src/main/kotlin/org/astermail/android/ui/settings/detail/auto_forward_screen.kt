@@ -80,7 +80,7 @@ fun AutoForwardScreen(
     LaunchedEffect(Unit) { vm.load_forwarding_rules() }
 
     val active_rule = rules.firstOrNull()
-    var enabled by remember(active_rule) { mutableStateOf(active_rule?.enabled ?: false) }
+    var enabled by remember(active_rule) { mutableStateOf(active_rule?.enabled ?: true) }
     var target by remember(active_rule) { mutableStateOf(active_rule?.target_address ?: "") }
     var keep_copy by remember(active_rule) { mutableStateOf(active_rule?.keep_copy ?: true) }
 
@@ -90,6 +90,15 @@ fun AutoForwardScreen(
                 Toast.makeText(context, context.getString(R.string.auto_forward_saved), Toast.LENGTH_SHORT).show()
             }
             vm.reset_save_status()
+        }
+    }
+
+    LaunchedEffect(state.save_status) {
+        if (state.save_status == SaveStatus.ERROR) {
+            val message = state.error ?: context.getString(R.string.settings_save_failed_banner)
+            active_rule?.let { enabled = it.enabled }
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            vm.reset_transient_state()
         }
     }
 
@@ -111,6 +120,10 @@ fun AutoForwardScreen(
             )
             return@detail_scaffold
         }
+        if (state.forwarding_rules_load_failed && rules.isEmpty()) {
+            load_failed_card(state.error) { vm.load_forwarding_rules() }
+            return@detail_scaffold
+        }
         if (state.is_loading && rules.isEmpty() && active_rule == null) {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
@@ -119,34 +132,42 @@ fun AutoForwardScreen(
                 CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
             }
         } else {
-            AsterCard(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(AsterSpacing.lg),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = stringResource(R.string.enable_auto_forward),
-                            color = colors.text_primary,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                        )
-                        Text(
-                            text = stringResource(R.string.all_mail_forwarded),
-                            color = colors.text_tertiary,
-                            fontSize = 13.sp,
+            if (active_rule != null) {
+                AsterCard(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(AsterSpacing.lg),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = stringResource(R.string.enable_auto_forward),
+                                color = colors.text_primary,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Medium,
+                            )
+                            Text(
+                                text = stringResource(R.string.all_mail_forwarded),
+                                color = colors.text_tertiary,
+                                fontSize = 13.sp,
+                            )
+                        }
+                        AsterSwitch(
+                            checked = enabled,
+                            onCheckedChange = { checked ->
+                                enabled = checked
+                                vm.toggle_forwarding_rule(active_rule.id, checked)
+                            },
                         )
                     }
-                    AsterSwitch(
-                        checked = enabled,
-                        onCheckedChange = { checked ->
-                            enabled = checked
-                            active_rule?.let { vm.toggle_forwarding_rule(it.id, checked) }
-                        },
-                    )
                 }
+            } else {
+                Text(
+                    text = stringResource(R.string.auto_forward_setup_hint),
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
+                )
             }
             v_gap(AsterSpacing.lg)
             AsterTextField(
@@ -159,7 +180,7 @@ fun AutoForwardScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable(enabled = enabled) { keep_copy = !keep_copy }
+                    .clickable { keep_copy = !keep_copy }
                     .padding(vertical = AsterSpacing.sm),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -167,24 +188,24 @@ fun AutoForwardScreen(
                     modifier = Modifier
                         .size(20.dp)
                         .background(
-                            if (keep_copy && enabled) colors.accent_blue else Color.Transparent,
+                            if (keep_copy) colors.accent_blue else Color.Transparent,
                             RoundedCornerShape(4.dp),
                         )
                         .border(
                             width = 1.5.dp,
-                            color = if (enabled) colors.border_primary else colors.text_muted,
+                            color = colors.border_primary,
                             shape = RoundedCornerShape(4.dp),
                         ),
                     contentAlignment = Alignment.Center,
                 ) {
-                    if (keep_copy && enabled) {
+                    if (keep_copy) {
                         Text("\u2713", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     }
                 }
                 Spacer(Modifier.size(AsterSpacing.md))
                 Text(
                     text = stringResource(R.string.keep_copy_in_inbox),
-                    color = if (enabled) colors.text_primary else colors.text_muted,
+                    color = colors.text_primary,
                     fontSize = 14.sp,
                 )
             }
@@ -196,10 +217,10 @@ fun AutoForwardScreen(
                     if (rule != null) {
                         vm.update_forwarding_rule(rule.id, target, keep_copy)
                     } else {
-                        vm.create_forwarding_rule(target, keep_copy)
+                        vm.create_forwarding_rule(target, keep_copy, true)
                     }
                 },
-                enabled = target.contains("@"),
+                enabled = target.contains("@") && state.save_status != SaveStatus.SAVING,
             )
             val pending = active_rule?.pending_destinations.orEmpty()
             if (pending.isNotEmpty()) {

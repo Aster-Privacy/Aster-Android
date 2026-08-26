@@ -88,6 +88,7 @@ import org.astermail.android.design.components.AsterCard
 private const val CHUNK_SIZE = 4 * 1024 * 1024
 private const val MAX_TOTAL_BYTES = 10L * 1024 * 1024 * 1024
 private const val max_visible_sync_jobs = 5
+private const val ACTION_FAILED = "action_failed"
 
 data class ImportUiState(
     val is_uploading: Boolean = false,
@@ -99,6 +100,7 @@ data class ImportUiState(
     val jobs: List<JobSummary> = emptyList(),
     val expanded_job_id: String? = null,
     val expanded_details: JobDetails? = null,
+    val expanded_details_failed: Boolean = false,
     val acting_job_id: String? = null,
 )
 
@@ -116,9 +118,17 @@ class ImportViewModel @Inject constructor(
     fun toggle_job(job_id: String) {
         if (_state.value.expanded_job_id == job_id) {
             stop_polling()
-            _state.value = _state.value.copy(expanded_job_id = null, expanded_details = null)
+            _state.value = _state.value.copy(
+                expanded_job_id = null,
+                expanded_details = null,
+                expanded_details_failed = false,
+            )
         } else {
-            _state.value = _state.value.copy(expanded_job_id = job_id, expanded_details = null)
+            _state.value = _state.value.copy(
+                expanded_job_id = job_id,
+                expanded_details = null,
+                expanded_details_failed = false,
+            )
             start_polling(job_id)
         }
     }
@@ -128,7 +138,14 @@ class ImportViewModel @Inject constructor(
         poll_job = viewModelScope.launch {
             while (isActive && _state.value.expanded_job_id == job_id) {
                 runCatching { withContext(Dispatchers.IO) { api.get_job(job_id) } }
-                    .onSuccess { d -> _state.value = _state.value.copy(expanded_details = d) }
+                    .onSuccess { d ->
+                        _state.value = _state.value.copy(expanded_details = d, expanded_details_failed = false)
+                    }
+                    .onFailure {
+                        if (_state.value.expanded_details == null) {
+                            _state.value = _state.value.copy(expanded_details_failed = true)
+                        }
+                    }
                 delay(3000)
             }
         }
@@ -141,18 +158,26 @@ class ImportViewModel @Inject constructor(
 
     fun pause(job_id: String) {
         viewModelScope.launch {
-            _state.value = _state.value.copy(acting_job_id = job_id)
-            runCatching { withContext(Dispatchers.IO) { api.pause_job(job_id) } }
-            _state.value = _state.value.copy(acting_job_id = null)
+            _state.value = _state.value.copy(acting_job_id = job_id, error = null)
+            val result = runCatching { withContext(Dispatchers.IO) { api.pause_job(job_id) } }
+
+            _state.value = _state.value.copy(
+                acting_job_id = null,
+                error = if (result.isFailure) ACTION_FAILED else null,
+            )
             load_jobs()
         }
     }
 
     fun retry_failed(job_id: String) {
         viewModelScope.launch {
-            _state.value = _state.value.copy(acting_job_id = job_id)
-            runCatching { withContext(Dispatchers.IO) { api.retry_failed(job_id) } }
-            _state.value = _state.value.copy(acting_job_id = null)
+            _state.value = _state.value.copy(acting_job_id = job_id, error = null)
+            val result = runCatching { withContext(Dispatchers.IO) { api.retry_failed(job_id) } }
+
+            _state.value = _state.value.copy(
+                acting_job_id = null,
+                error = if (result.isFailure) ACTION_FAILED else null,
+            )
             load_jobs()
         }
     }
@@ -166,6 +191,7 @@ class ImportViewModel @Inject constructor(
         viewModelScope.launch {
             runCatching { api.list_jobs() }
                 .onSuccess { jobs -> _state.value = _state.value.copy(jobs = jobs) }
+                .onFailure { _state.value = _state.value.copy(error = ACTION_FAILED) }
         }
     }
 
@@ -433,7 +459,7 @@ fun ImportScreen(
                         android.net.Uri.parse(url),
                     )
                     intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                    context.startActivity(intent)
+                    org.astermail.android.ui.common.start_external_intent(context, intent)
                 }
                 provider_row(
                     icon_res = R.drawable.ic_brand_gmail,
@@ -520,7 +546,12 @@ fun ImportScreen(
                 }
                 state.error?.let { err ->
                     Spacer(Modifier.size(AsterSpacing.sm))
-                    val text = if (err == "file_too_large") stringResource(R.string.import_file_too_large) else stringResource(R.string.import_upload_failed)
+                    val upload_failed_text = stringResource(R.string.import_upload_failed)
+                    val text = when (err) {
+                        "file_too_large" -> stringResource(R.string.import_file_too_large)
+                        ACTION_FAILED -> stringResource(R.string.something_went_wrong)
+                        else -> err.ifBlank { upload_failed_text }
+                    }
                     Text(text = text, color = colors.danger, fontSize = 13.sp)
                 }
             }
@@ -590,8 +621,12 @@ fun ImportScreen(
                                 Spacer(Modifier.size(AsterSpacing.xs))
                                 if (details == null) {
                                     Text(
-                                        text = stringResource(R.string.loading),
-                                        color = colors.text_tertiary,
+                                        text = if (state.expanded_details_failed) {
+                                            stringResource(R.string.failed_to_load)
+                                        } else {
+                                            stringResource(R.string.loading)
+                                        },
+                                        color = if (state.expanded_details_failed) colors.danger else colors.text_tertiary,
                                         fontSize = 12.sp,
                                     )
                                 } else {

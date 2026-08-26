@@ -30,6 +30,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -64,6 +66,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.delay
 import org.astermail.android.R
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.billing.PlanLimitsViewModel
@@ -77,6 +80,7 @@ import org.astermail.android.design.MaterialThemeGenerator
 import org.astermail.android.design.FONT_OPTIONS
 import org.astermail.android.design.preview_font_family_for
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.ui.mail.is_comfortable_density
 import org.astermail.android.api.preferences.compose_font_size_labels
 import org.astermail.android.api.preferences.effective_compose_font_color
 import org.astermail.android.api.preferences.effective_compose_font_size
@@ -91,6 +95,7 @@ import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.UpgradeGate
+import org.astermail.android.settings.SaveStatus
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.storage.ThemeMode
 import org.astermail.android.ui.settings.mail_rules.pickers.base_sheet
@@ -168,6 +173,7 @@ private val preset_swatch_ids = listOf(
     ColorThemeId.emerald, ColorThemeId.pink, ColorThemeId.black,
 )
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AppearanceScreen(
     on_back: () -> Unit,
@@ -187,7 +193,9 @@ fun AppearanceScreen(
     val colors = AsterMaterial.colors
     val color_theme = ColorThemeId.from_key(color_theme_key)
     val plan_limits = plan_state.limits
+    val plan_loaded = plan_limits != null
     val is_paid_plan = plan_limits != null && plan_limits.plan_code != "free"
+    val custom_theme_locked = plan_loaded && !is_paid_plan
 
     var show_font_picker by remember { mutableStateOf(false) }
     var show_custom_theme_upgrade by remember { mutableStateOf(false) }
@@ -196,6 +204,10 @@ fun AppearanceScreen(
 
     val prefs_authoritative = prefs != null && settings_state.preferences_authoritative
     var remote_prefs_adopted by remember { mutableStateOf(false) }
+
+    LaunchedEffect(settings_state.save_status) {
+        if (settings_state.save_status == SaveStatus.ERROR) remote_prefs_adopted = false
+    }
     val mode_derived_from_color_theme = AsterColorThemes.is_dark_only(color_theme)
 
     LaunchedEffect(prefs_authoritative, remote_prefs_adopted) {
@@ -232,20 +244,20 @@ fun AppearanceScreen(
     }
 
     fun apply(theme_mode: ThemeMode, theme_key: String) {
+        val base = prefs ?: return
         remote_prefs_adopted = true
         vm.set_mode(theme_mode)
         vm.set_color_theme(ColorThemeId.default.name)
-        val base = prefs ?: return
         val next = with_theme_values(base, theme = theme_key, color_theme = ColorThemeId.default.name)
         if (next != base) settings_vm.save_preferences(next)
     }
 
     fun apply_color_theme(id: ColorThemeId) {
+        val base = prefs ?: return
         remote_prefs_adopted = true
         vm.set_color_theme(id.name)
         val forced_dark = AsterColorThemes.is_dark_only(id)
         if (forced_dark) vm.set_mode(ThemeMode.dark)
-        val base = prefs ?: return
         val next = with_theme_values(
             base,
             theme = if (forced_dark) "dark" else null,
@@ -255,16 +267,16 @@ fun AppearanceScreen(
     }
 
     fun apply_custom_seed(hex: String) {
+        val base = prefs ?: return
         remote_prefs_adopted = true
         vm.set_custom_theme_seed(hex)
-        val base = prefs ?: return
         val next = with_theme_values(base, custom_theme_seed = hex)
         if (next != base) settings_vm.save_preferences(next)
     }
 
     fun apply_theme_sync(enabled: Boolean) {
-        remote_prefs_adopted = true
         val base = prefs ?: return
+        remote_prefs_adopted = true
         val next = with_theme_sync_enabled(base, enabled)
         settings_vm.save_preferences(next)
         val values = effective_theme_values(next)
@@ -276,6 +288,22 @@ fun AppearanceScreen(
         if (mode != next_mode) vm.set_mode(next_mode)
         if (color_theme_key != values.color_theme) vm.set_color_theme(values.color_theme)
         if (custom_theme_seed != values.custom_theme_seed) vm.set_custom_theme_seed(values.custom_theme_seed)
+    }
+
+    val device_uses_24h = android.text.format.DateFormat.is24HourFormat(
+        androidx.compose.ui.platform.LocalContext.current,
+    )
+    val effective_24h = when (prefs?.time_format) {
+        "24h" -> true
+        "12h" -> false
+        else -> device_uses_24h
+    }
+
+    fun apply_time_format(value: String) {
+        val base = prefs ?: return
+        if (base.time_format != value) {
+            settings_vm.save_preferences(base.copy(time_format = value))
+        }
     }
 
     fun apply_density(value: String) {
@@ -305,9 +333,9 @@ fun AppearanceScreen(
     }
 
     fun apply_font(id: String) {
+        val base = prefs ?: return
         remote_prefs_adopted = true
         vm.set_font_choice(id)
-        val base = prefs ?: return
         if (base.font_choice != id) {
             settings_vm.save_preferences(base.copy(font_choice = id))
         }
@@ -321,6 +349,11 @@ fun AppearanceScreen(
     }
 
     detail_scaffold(title = stringResource(R.string.settings_appearance), on_back = on_back) {
+        preferences_save_error_banner()
+        if (prefs == null || !settings_state.preferences_authoritative) {
+            preferences_load_placeholder()
+            return@detail_scaffold
+        }
         section_label(stringResource(R.string.theme))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             theme_option_row(
@@ -383,7 +416,7 @@ fun AppearanceScreen(
                         horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md),
                     ) {
                         row.forEach { id ->
-                            val is_locked = id == ColorThemeId.custom && !is_paid_plan
+                            val is_locked = id == ColorThemeId.custom && custom_theme_locked
                             val palette = if (id == ColorThemeId.custom) {
                                 custom_preview_palette
                             } else {
@@ -410,7 +443,7 @@ fun AppearanceScreen(
             }
         }
 
-        if (show_custom_theme_upgrade && !is_paid_plan) {
+        if (show_custom_theme_upgrade && custom_theme_locked) {
             v_gap(AsterSpacing.xxl)
             UpgradeGate(
                 title = stringResource(R.string.custom_theme_upgrade_title),
@@ -422,7 +455,7 @@ fun AppearanceScreen(
             )
         }
 
-        if (color_theme == ColorThemeId.custom && is_paid_plan) {
+        if (color_theme == ColorThemeId.custom && !custom_theme_locked) {
             v_gap(AsterSpacing.xxl)
             section_label(stringResource(R.string.custom_theme_base_color))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
@@ -435,6 +468,12 @@ fun AppearanceScreen(
                     v_gap(AsterSpacing.sm)
                     var hex_input by remember(custom_theme_seed) { mutableStateOf(custom_theme_seed) }
                     val is_valid = MaterialThemeGenerator.is_valid_hex_color(hex_input)
+                    LaunchedEffect(hex_input) {
+                        if (hex_input == custom_theme_seed) return@LaunchedEffect
+                        if (!MaterialThemeGenerator.is_valid_hex_color(hex_input)) return@LaunchedEffect
+                        delay(450)
+                        apply_custom_seed(hex_input)
+                    }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
@@ -445,10 +484,7 @@ fun AppearanceScreen(
                         Spacer(Modifier.width(AsterSpacing.md))
                         AsterTextField(
                             value = hex_input,
-                            onValueChange = { value ->
-                                hex_input = value
-                                if (MaterialThemeGenerator.is_valid_hex_color(value)) apply_custom_seed(value)
-                            },
+                            onValueChange = { value -> hex_input = value },
                             placeholder = stringResource(R.string.custom_theme_hex_placeholder),
                             modifier = Modifier.weight(1f).testTag("custom_hex_input"),
                         )
@@ -462,7 +498,11 @@ fun AppearanceScreen(
                         )
                     }
                     v_gap(AsterSpacing.md)
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
                         quick_seed_colors.forEach { hex ->
                             val is_selected = hex.equals(custom_theme_seed, ignoreCase = true)
                             Box(
@@ -492,18 +532,34 @@ fun AppearanceScreen(
         }
 
         v_gap(AsterSpacing.xxl)
+        section_label(stringResource(R.string.time_format))
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            theme_option_row(
+                stringResource(R.string.time_format_12h),
+                "",
+                !effective_24h,
+            ) { apply_time_format("12h") }
+            AsterDivider(modifier = Modifier)
+            theme_option_row(
+                stringResource(R.string.time_format_24h),
+                "",
+                effective_24h,
+            ) { apply_time_format("24h") }
+        }
+
+        v_gap(AsterSpacing.xxl)
         section_label(stringResource(R.string.mail_list_density))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             theme_option_row(
                 stringResource(R.string.density_compact),
                 stringResource(R.string.density_compact_subtitle),
-                (prefs?.mail_list_density ?: "compact") != "comfortable",
+                !is_comfortable_density(prefs?.mail_list_density),
             ) { apply_density("compact") }
             AsterDivider(modifier = Modifier)
             theme_option_row(
                 stringResource(R.string.density_comfortable),
                 stringResource(R.string.density_comfortable_subtitle),
-                prefs?.mail_list_density == "comfortable",
+                is_comfortable_density(prefs?.mail_list_density),
             ) { apply_density("comfortable") }
         }
 
@@ -546,6 +602,12 @@ fun AppearanceScreen(
                 v_gap(AsterSpacing.sm)
                 var compose_color_input by remember(compose_font_color) { mutableStateOf(compose_font_color) }
                 val compose_color_valid = normalize_compose_font_color(compose_color_input).isNotEmpty()
+                LaunchedEffect(compose_color_input) {
+                    if (compose_color_input == compose_font_color) return@LaunchedEffect
+                    if (!compose_color_valid) return@LaunchedEffect
+                    delay(450)
+                    apply_compose_font_color(compose_color_input)
+                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
@@ -561,7 +623,6 @@ fun AppearanceScreen(
                         value = compose_color_input,
                         onValueChange = { value ->
                             compose_color_input = value
-                            if (normalize_compose_font_color(value).isNotEmpty()) apply_compose_font_color(value)
                         },
                         placeholder = stringResource(R.string.compose_text_color_placeholder),
                         modifier = Modifier.weight(1f).testTag("compose_color_input"),
@@ -576,7 +637,11 @@ fun AppearanceScreen(
                     )
                 }
                 v_gap(AsterSpacing.md)
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
                     quick_compose_text_colors.forEach { hex ->
                         val is_selected = hex == compose_font_color
                         Box(
@@ -829,7 +894,9 @@ private fun theme_option_row(
         Spacer(Modifier.width(AsterSpacing.md))
         Column(modifier = Modifier.weight(1f)) {
             Text(text = title, color = colors.text_primary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
-            Text(text = subtitle, color = colors.text_tertiary, fontSize = 13.sp)
+            if (subtitle.isNotBlank()) {
+                Text(text = subtitle, color = colors.text_tertiary, fontSize = 13.sp)
+            }
         }
     }
 }

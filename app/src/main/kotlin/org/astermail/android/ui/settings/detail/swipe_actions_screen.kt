@@ -71,6 +71,7 @@ import org.astermail.android.mail.SWIPE_ACTION_SPAM
 import org.astermail.android.mail.SWIPE_ACTION_STAR
 import org.astermail.android.mail.SWIPE_ACTION_TOGGLE_READ
 import org.astermail.android.mail.normalize_swipe_action
+import org.astermail.android.settings.SaveStatus
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
 
@@ -102,6 +103,13 @@ fun SwipeActionsScreen(on_back: () -> Unit) {
         }
     }
 
+    LaunchedEffect(state.save_status) {
+        if (state.save_status != SaveStatus.ERROR || !prefs_loaded) return@LaunchedEffect
+        val base = prefs ?: return@LaunchedEffect
+        swipe_right = normalize_swipe_action(base.swipe_right_action, DEFAULT_SWIPE_RIGHT_ACTION)
+        swipe_left = normalize_swipe_action(base.swipe_left_action, DEFAULT_SWIPE_LEFT_ACTION)
+    }
+
     val action_options = listOf(
         SwipeActionOption(SWIPE_ACTION_ARCHIVE, stringResource(R.string.swipe_archive), TablerIcons.Archive, colors.accent_blue),
         SwipeActionOption(SWIPE_ACTION_DELETE, stringResource(R.string.swipe_delete), TablerIcons.Trash, colors.danger),
@@ -116,13 +124,9 @@ fun SwipeActionsScreen(on_back: () -> Unit) {
         title = stringResource(R.string.swipe_actions),
         on_back = on_back,
     ) {
+        preferences_save_error_banner()
         if (prefs == null || !state.preferences_authoritative) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
-            }
+            preferences_load_placeholder()
         } else {
             section_label(stringResource(R.string.swipe_right))
             Text(

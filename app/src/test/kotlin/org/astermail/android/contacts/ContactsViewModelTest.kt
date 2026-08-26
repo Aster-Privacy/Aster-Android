@@ -498,4 +498,50 @@ class ContactsViewModelTest {
         assertTrue(state.delete_success)
         assertTrue(state.contacts.isEmpty())
     }
+
+    @Test
+    fun `save_contact double tap creates only one contact`() = runTest {
+        val new_contact = fake_contact("", "New Person", "new@astermail.org")
+        coEvery { repository.create_contact(new_contact) } coAnswers {
+            kotlinx.coroutines.delay(5000)
+            Result.success(CreateContactResponse(id = "c_new", success = true))
+        }
+        coEvery { repository.fetch_contacts() } returns Result.success(emptyList())
+
+        vm.save_contact(new_contact)
+        vm.save_contact(new_contact)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { repository.create_contact(new_contact) }
+    }
+
+    @Test
+    fun `delete_contact double tap deletes only once`() = runTest {
+        coEvery { repository.delete_contact("c_1") } coAnswers {
+            kotlinx.coroutines.delay(5000)
+            Result.success(DeleteContactResponse(success = true, deleted_count = 1))
+        }
+
+        vm.delete_contact("c_1")
+        vm.delete_contact("c_1")
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { repository.delete_contact("c_1") }
+    }
+
+    @Test
+    fun `load_contacts still runs while a save is in flight`() = runTest {
+        val new_contact = fake_contact("", "New Person", "new@astermail.org")
+        coEvery { repository.create_contact(new_contact) } coAnswers {
+            kotlinx.coroutines.delay(5000)
+            Result.success(CreateContactResponse(id = "c_new", success = true))
+        }
+        coEvery { repository.fetch_contacts() } returns Result.success(listOf(fake_contact()))
+
+        vm.save_contact(new_contact)
+        vm.load_contacts()
+        advanceUntilIdle()
+
+        assertEquals(1, vm.state.value.contacts.size)
+    }
 }

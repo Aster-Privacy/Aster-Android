@@ -112,6 +112,12 @@ fun ProfileScreen(
         vm.load_badges()
     }
 
+    LaunchedEffect(state.action_result) {
+        val msg = state.action_result ?: return@LaunchedEffect
+        android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+        vm.clear_action_result()
+    }
+
     val live_account by vm.account_store.current_account.collectAsStateWithLifecycle(
         initialValue = vm.account_store.get_current()
     )
@@ -226,7 +232,7 @@ fun ProfileScreen(
         AsterTextField(
             value = display_name,
             onValueChange = {
-                display_name = it
+                display_name = sanitize_display_name(it)
                 vm.reset_save_status()
             },
             placeholder = stringResource(R.string.your_name),
@@ -458,6 +464,11 @@ private fun badge_toggle_row(
         AsterSwitch(checked = checked, onCheckedChange = on_change)
     }
 }
+
+private const val MAX_DISPLAY_NAME_LENGTH = 100
+
+private fun sanitize_display_name(value: String): String =
+    value.filter { it != '<' && it != '>' && it != ' ' }.take(MAX_DISPLAY_NAME_LENGTH)
 
 private const val MAX_AVATAR_DIMENSION = 256
 

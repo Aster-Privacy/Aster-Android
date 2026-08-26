@@ -34,6 +34,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -81,6 +82,7 @@ fun ChangePasswordScreen(
             visible = state.show_current,
             on_toggle = view_model::toggle_show_current,
             enabled = !state.is_submitting,
+            content_type = ContentType.Password,
         )
         v_gap(AsterSpacing.md)
         password_field(
@@ -90,6 +92,7 @@ fun ChangePasswordScreen(
             visible = state.show_new,
             on_toggle = view_model::toggle_show_new,
             enabled = !state.is_submitting,
+            content_type = ContentType.NewPassword,
         )
         v_gap(AsterSpacing.md)
         password_field(
@@ -99,6 +102,7 @@ fun ChangePasswordScreen(
             visible = state.show_confirm,
             on_toggle = view_model::toggle_show_confirm,
             enabled = !state.is_submitting,
+            content_type = ContentType.NewPassword,
         )
 
         state.error?.let { err ->
@@ -137,6 +141,7 @@ private fun password_field(
     visible: Boolean,
     on_toggle: () -> Unit,
     enabled: Boolean,
+    content_type: ContentType,
 ) {
     val colors = AsterMaterial.colors
     AsterTextField(
@@ -146,6 +151,7 @@ private fun password_field(
         enabled = enabled,
         singleLine = true,
         visual_transformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
+        content_type = content_type,
         keyboard_options = KeyboardOptions(
             capitalization = KeyboardCapitalization.None,
             autoCorrectEnabled = false,

@@ -22,10 +22,11 @@
 package org.astermail.android.ui.settings.detail
 
 import compose.icons.TablerIcons
+import org.astermail.android.ui.common.show_copy_failed_toast
+import org.astermail.android.ui.common.write_to_clipboard
 import compose.icons.tablericons.*
 
 import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -53,6 +54,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -90,6 +92,7 @@ fun RecoveryKeyViewScreen(
     var is_verifying by remember { mutableStateOf(false) }
     var codes by remember { mutableStateOf<List<String>?>(null) }
     var is_generating by remember { mutableStateOf(false) }
+    var show_generate_confirm by remember { mutableStateOf(false) }
 
     detail_scaffold(title = stringResource(R.string.recovery_key), on_back = on_back) {
         if (!unlocked) {
@@ -129,6 +132,7 @@ fun RecoveryKeyViewScreen(
                 onValueChange = { password = it; error = null },
                 placeholder = stringResource(R.string.password),
                 visual_transformation = PasswordVisualTransformation(),
+                content_type = ContentType.Password,
                 keyboard_options = KeyboardOptions(keyboardType = KeyboardType.Password),
             )
             AnimatedVisibility(
@@ -151,6 +155,11 @@ fun RecoveryKeyViewScreen(
                     }
                     is_verifying = true
                     scope.launch {
+                        if (!vm.password_check_available()) {
+                            is_verifying = false
+                            error = context.getString(R.string.session_unavailable_sign_in_again)
+                            return@launch
+                        }
                         val valid = vm.verify_password(password)
                         is_verifying = false
                         if (valid) {
@@ -234,18 +243,7 @@ fun RecoveryKeyViewScreen(
                     v_gap(AsterSpacing.lg)
                     AsterButton(
                         label = if (is_generating) stringResource(R.string.generating) else stringResource(R.string.generate_recovery_codes),
-                        onClick = {
-                            is_generating = true
-                            scope.launch {
-                                val generated = vm.regenerate_recovery_codes_now()
-                                is_generating = false
-                                if (generated.isNotEmpty()) {
-                                    codes = generated
-                                } else {
-                                    Toast.makeText(context, context.getString(R.string.something_went_wrong), Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                        },
+                        onClick = { show_generate_confirm = true },
                         enabled = !is_generating,
                         is_loading = is_generating,
                     )
@@ -262,19 +260,45 @@ fun RecoveryKeyViewScreen(
                         label = stringResource(R.string.copy_to_clipboard),
                         onClick = {
                             val text = codes?.joinToString("\n").orEmpty()
-                            val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                             val clip = ClipData.newPlainText(context.getString(R.string.clipboard_label_recovery_key), text)
                             clip.description.extras = android.os.PersistableBundle().apply {
                                 putBoolean("android.content.extra.IS_SENSITIVE", true)
                             }
-                            cm.setPrimaryClip(clip)
-                            org.astermail.android.util.schedule_sensitive_clipboard_clear(context, text)
-                            Toast.makeText(context, context.getString(R.string.copied_to_clipboard), Toast.LENGTH_SHORT).show()
+                            if (write_to_clipboard(context, clip)) {
+                                org.astermail.android.util.schedule_sensitive_clipboard_clear(context, text)
+                                Toast.makeText(context, context.getString(R.string.copied_to_clipboard), Toast.LENGTH_SHORT).show()
+                            } else {
+                                show_copy_failed_toast(context)
+                            }
                         },
                     )
                 }
             }
         }
         v_gap(AsterSpacing.xxl)
+    }
+
+    if (show_generate_confirm) {
+        org.astermail.android.design.components.AsterAlertDialog(
+            on_dismiss = { show_generate_confirm = false },
+            title = stringResource(R.string.regenerate_recovery_codes_title),
+            message = stringResource(R.string.regenerate_recovery_codes_message),
+            confirm_label = stringResource(R.string.regenerate),
+            cancel_label = stringResource(R.string.cancel),
+            confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
+            on_confirm = {
+                show_generate_confirm = false
+                is_generating = true
+                scope.launch {
+                    val generated = vm.regenerate_recovery_codes_now()
+                    is_generating = false
+                    if (generated.isNotEmpty()) {
+                        codes = generated
+                    } else {
+                        Toast.makeText(context, context.getString(R.string.something_went_wrong), Toast.LENGTH_SHORT).show()
+                    }
+                }
+            },
+        )
     }
 }

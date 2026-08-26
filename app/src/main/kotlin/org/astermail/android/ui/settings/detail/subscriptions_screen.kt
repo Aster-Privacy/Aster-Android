@@ -27,8 +27,6 @@ import compose.icons.tablericons.*
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
-import android.content.Intent
-import android.net.Uri
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -65,6 +63,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -87,6 +86,7 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
+import org.astermail.android.ui.common.open_external_url
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
@@ -115,11 +115,17 @@ private fun detect_currency(): String {
     }
 }
 
+@Composable
+private fun interval_label(interval: String?): String = when (interval?.lowercase()) {
+    "year", "yearly", "annual" -> stringResource(R.string.billing_period_year)
+    else -> stringResource(R.string.billing_period_month)
+}
+
 private fun format_price(cents: Int, currency: String): String {
     val amount = cents / 100.0
     return try {
         val cur = java.util.Currency.getInstance(currency.uppercase())
-        val fmt = java.text.NumberFormat.getCurrencyInstance(Locale.US)
+        val fmt = java.text.NumberFormat.getCurrencyInstance(Locale.getDefault())
         fmt.currency = cur
         fmt.format(amount)
     } catch (_: Throwable) {
@@ -181,7 +187,7 @@ private val plan_tiers = listOf(
             R.string.settings_plan_bullet_star_attachments,
             R.string.settings_plan_bullet_star_aliases,
             R.string.settings_plan_bullet_star_domains,
-            R.string.settings_plan_bullet_unlimited_daily_emails,
+            R.string.settings_plan_bullet_daily_emails,
             R.string.settings_plan_bullet_star_templates,
             R.string.settings_plan_bullet_tracker_protection,
             R.string.settings_plan_bullet_vacation_reply,
@@ -207,7 +213,7 @@ private val plan_tiers = listOf(
             R.string.settings_plan_bullet_nova_attachments,
             R.string.settings_plan_bullet_unlimited_aliases,
             R.string.settings_plan_bullet_nova_domains,
-            R.string.settings_plan_bullet_unlimited_daily_emails,
+            R.string.settings_plan_bullet_daily_emails,
             R.string.settings_plan_bullet_unlimited_templates,
             R.string.settings_plan_bullet_unlimited_signatures,
             R.string.settings_plan_bullet_tracker_protection,
@@ -233,7 +239,7 @@ private val plan_tiers = listOf(
             R.string.settings_plan_bullet_supernova_attachments,
             R.string.settings_plan_bullet_unlimited_aliases,
             R.string.settings_plan_bullet_unlimited_domains,
-            R.string.settings_plan_bullet_unlimited_daily_emails,
+            R.string.settings_plan_bullet_daily_emails,
             R.string.settings_plan_bullet_tracker_protection,
             R.string.settings_plan_bullet_receipt_tracking,
             R.string.settings_plan_bullet_external_accounts,
@@ -243,6 +249,10 @@ private val plan_tiers = listOf(
         ),
     ),
 )
+
+private fun is_lower_tier(code: String?, current_code: String?): Boolean =
+    plan_ladder_of(code) == plan_ladder_of(current_code) &&
+        plan_rank_of(code) < plan_rank_of(current_code)
 
 private fun plan_code_of(plan_name: String?): String {
     val lower = plan_name?.trim()?.lowercase().orEmpty()
@@ -300,13 +310,13 @@ fun SubscriptionsScreen(
 
     LaunchedEffect(billing_state.checkout_url) {
         val url = billing_state.checkout_url ?: return@LaunchedEffect
-        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+        open_external_url(context, url)
         billing_vm.consume_checkout_url()
     }
 
     LaunchedEffect(billing_state.portal_url) {
         val url = billing_state.portal_url ?: return@LaunchedEffect
-        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+        open_external_url(context, url)
         billing_vm.consume_portal_url()
     }
 
@@ -372,6 +382,10 @@ fun SubscriptionsScreen(
     val plan_load_settled = remember_load_settled(state.is_loading)
 
     detail_scaffold(title = stringResource(R.string.plan_billing), on_back = on_back, scroll_state = scroll_state) {
+        if (sub == null && state.subscription_load_failed) {
+            load_failed_card(state.error) { vm.load_subscription() }
+            return@detail_scaffold
+        }
         if (sub == null && (state.is_loading || !plan_load_settled)) {
             skeleton_hero_card(lines = 2)
             v_gap(AsterSpacing.lg)
@@ -386,7 +400,8 @@ fun SubscriptionsScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(modifier = Modifier.weight(1f)) {
                             aster_plan_badge(
-                                text = sub?.effective_plan_name ?: plan_free_label,
+                                text = sub?.effective_plan_name
+                                    ?: if (state.error != null) stringResource(R.string.failed_to_load) else plan_free_label,
                                 accent = if (current_code == "free") colors.text_muted else colors.accent_blue,
                                 font_size = 13.sp,
                                 horizontal_padding = 10.dp,
@@ -402,9 +417,9 @@ fun SubscriptionsScreen(
                         if (sub != null && sub.effective_price_cents > 0) {
                             Text(
                                 text = stringResource(
-                                    R.string.settings_price_per_interval,
-                                    sub.effective_price_cents / 100.0,
-                                    sub.effective_interval ?: default_interval,
+                                    R.string.price_per_interval,
+                                    format_price(sub.effective_price_cents, detected_currency),
+                                    interval_label(sub.effective_interval ?: default_interval),
                                 ),
                                 color = colors.text_primary,
                                 fontSize = 17.sp,
@@ -416,9 +431,19 @@ fun SubscriptionsScreen(
                     if (period_end != null) {
                         Spacer(Modifier.size(AsterSpacing.sm))
                         Text(
-                            text = stringResource(R.string.renews_format, period_end.take(10)),
+                            text = stringResource(
+                                if (sub?.cancel_at_period_end == true) R.string.cancels_format else R.string.renews_format,
+                                absolute_date_label(period_end),
+                            ),
                             color = colors.text_tertiary,
                             fontSize = 13.sp,
+                        )
+                    }
+                    if (sub == null && state.error != null) {
+                        Spacer(Modifier.size(AsterSpacing.lg))
+                        AsterSecondaryButton(
+                            label = stringResource(R.string.retry),
+                            onClick = { vm.load_subscription() },
                         )
                     }
                     if (current_code != "free") {
@@ -471,6 +496,7 @@ fun SubscriptionsScreen(
                 tier = tier,
                 billing_interval = billing_interval,
                 is_current = tier.code == current_code,
+                is_downgrade = is_lower_tier(tier.code, current_code),
                 is_recommended = recommendation.recommended_plan_code == tier.code,
                 currency = detected_currency,
                 on_choose = {
@@ -517,7 +543,11 @@ fun SubscriptionsScreen(
                                 fontWeight = FontWeight.SemiBold,
                             )
                             Text(
-                                text = "${format_price(addon.price_cents, detected_currency)}/${addon.billing_period}",
+                                text = stringResource(
+                                    R.string.price_per_interval,
+                                    format_price(addon.price_cents, detected_currency),
+                                    interval_label(addon.billing_period),
+                                ),
                                 color = colors.text_tertiary,
                                 fontSize = 13.sp,
                             )
@@ -540,7 +570,7 @@ fun SubscriptionsScreen(
             if (!addons.active_addons.isNullOrEmpty()) {
                 v_gap(AsterSpacing.sm)
                 Text(
-                    text = stringResource(R.string.storage_addons_active_count, addons.active_addons.size),
+                    text = pluralStringResource(R.plurals.storage_addons_active_count, addons.active_addons.size, addons.active_addons.size),
                     color = colors.text_tertiary,
                     fontSize = 12.sp,
                 )
@@ -556,12 +586,8 @@ fun SubscriptionsScreen(
         )
         v_gap(AsterSpacing.md)
         AsterSecondaryButton(
-            label = "${stringResource(R.string.view_all_features)} →",
-            onClick = {
-                runCatching {
-                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://astermail.org/pricing")))
-                }
-            },
+            label = stringResource(R.string.view_all_features),
+            onClick = { open_external_url(context, "https://astermail.org/pricing") },
         )
 
         if (billing_state.error != null) {
@@ -587,8 +613,13 @@ fun SubscriptionsScreen(
     if (show_payment_picker) {
         payment_method_dialog(
             title = pending_plan_code?.let { code ->
-                plan_tiers.firstOrNull { it.code == code }?.let { context.getString(R.string.upgrade_to, context.getString(it.name_res)) }
-                    ?: context.getString(R.string.upgrade)
+                val down = is_lower_tier(code, current_code)
+                plan_tiers.firstOrNull { it.code == code }?.let {
+                    context.getString(
+                        if (down) R.string.downgrade_to else R.string.upgrade_to,
+                        context.getString(it.name_res),
+                    )
+                } ?: context.getString(if (down) R.string.downgrade else R.string.upgrade)
             } ?: context.getString(R.string.storage_addons_title),
             on_dismiss = { show_payment_picker = false },
             on_card = {
@@ -993,6 +1024,7 @@ private fun plan_tier_card(
     tier: plan_tier,
     billing_interval: String,
     is_current: Boolean,
+    is_downgrade: Boolean = false,
     is_recommended: Boolean = false,
     currency: String = "usd",
     on_choose: () -> Unit,
@@ -1087,7 +1119,10 @@ private fun plan_tier_card(
                 )
             } else {
                 AsterButton(
-                    label = stringResource(R.string.upgrade_to, plan_name),
+                    label = stringResource(
+                        if (is_downgrade) R.string.downgrade_to else R.string.upgrade_to,
+                        plan_name,
+                    ),
                     onClick = on_choose,
                 )
             }

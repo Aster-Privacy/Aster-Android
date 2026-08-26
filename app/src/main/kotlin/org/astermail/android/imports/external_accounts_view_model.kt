@@ -35,6 +35,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.astermail.android.api.external_accounts.CreateManualAccountRequest
 import org.astermail.android.api.external_accounts.ExternalAccount
+import org.astermail.android.api.external_accounts.ExternalAccountSendAttachment
+import org.astermail.android.api.external_accounts.ExternalAccountSendRequest
 import org.astermail.android.api.external_accounts.ExternalAccountsApi
 import org.astermail.android.api.external_accounts.ManualImapCredentials
 import org.astermail.android.api.external_accounts.OAuthAuthorizeRequest
@@ -156,7 +158,10 @@ class ExternalAccountsViewModel @Inject constructor(
                     }
                 }
             }
-            _state.value = _state.value.copy(connecting_provider = null)
+            _state.value = _state.value.copy(
+                connecting_provider = null,
+                error = ExternalAccountsError.OAUTH_FAILED,
+            )
         }
     }
 
@@ -253,4 +258,40 @@ class ExternalAccountsViewModel @Inject constructor(
     fun clear_manual_success() {
         _state.value = _state.value.copy(manual_success = false)
     }
+
+    suspend fun send_via_account(
+        account_token: String,
+        to: List<String>,
+        cc: List<String>,
+        bcc: List<String>,
+        subject: String,
+        body: String,
+        attachments: List<ExternalAccountSendAttachment>,
+    ): Result<Unit> = runCatching {
+        val response = withContext(Dispatchers.IO) {
+            api.send_via_account(
+                ExternalAccountSendRequest(
+                    account_token = account_token,
+                    to = to,
+                    cc = cc,
+                    bcc = bcc,
+                    subject = subject,
+                    body = body,
+                    attachments = attachments.takeIf { it.isNotEmpty() },
+                ),
+            )
+        }
+        if (!response.success) throw IllegalStateException(response.message)
+    }
+}
+
+fun external_sender_map(state: ExternalAccountsUiState): Map<String, String> {
+    val result = LinkedHashMap<String, String>()
+    state.accounts.forEach { account ->
+        if (!account.is_enabled || account.oauth_provider != null) return@forEach
+        val email = state.decrypted[account.account_token]?.email?.trim().orEmpty()
+        if (email.isBlank() || email.endsWith("@import") || !email.contains('@')) return@forEach
+        result.putIfAbsent(email, account.account_token)
+    }
+    return result
 }

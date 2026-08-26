@@ -42,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -157,7 +158,8 @@ private fun share_export_archive(context: Context, archive: File) {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
 
-    context.startActivity(
+    org.astermail.android.ui.common.start_external_intent(
+        context,
         Intent.createChooser(intent, context.getString(R.string.alias_export_title))
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
     )
@@ -256,7 +258,12 @@ fun alias_export_dialog(
                                     fontWeight = FontWeight.Medium,
                                 )
                                 Text(
-                                    text = stringResource(R.string.alias_export_source_count, count),
+                                    text =
+                                        pluralStringResource(
+                                            R.plurals.alias_export_source_count,
+                                            count,
+                                            count,
+                                        ),
                                     color = colors.text_tertiary,
                                     fontSize = 12.sp,
                                 )
@@ -295,8 +302,16 @@ fun alias_export_dialog(
                     Text(
                         text = stringResource(
                             R.string.alias_export_summary,
-                            total_rows,
-                            effective.size,
+                            pluralStringResource(
+                                R.plurals.alias_export_entries,
+                                total_rows,
+                                total_rows,
+                            ),
+                            pluralStringResource(
+                                R.plurals.alias_export_files,
+                                effective.size,
+                                effective.size,
+                            ),
                         ),
                         color = colors.text_secondary,
                         fontSize = 13.sp,

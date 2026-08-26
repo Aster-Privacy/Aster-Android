@@ -46,6 +46,7 @@ data class MailRulesUiState(
     val is_refreshing: Boolean = false,
     @StringRes val error: Int? = null,
     val last_saved_id: String? = null,
+    val running_rule_id: String? = null,
 )
 
 @HiltViewModel
@@ -58,7 +59,9 @@ class MailRulesViewModel @Inject constructor(
 
     fun load(force_refresh: Boolean = false) {
         viewModelScope.launch {
-            if (force_refresh) {
+            if (force_refresh && _state.value.rules.isEmpty()) {
+                _state.value = _state.value.copy(is_loading = true, is_refreshing = true, error = null)
+            } else if (force_refresh) {
                 _state.value = _state.value.copy(is_refreshing = true, error = null)
             } else if (_state.value.rules.isEmpty()) {
                 _state.value = _state.value.copy(is_loading = true, error = null)
@@ -179,11 +182,21 @@ class MailRulesViewModel @Inject constructor(
     }
 
     fun run_on_existing(rule_id: String) {
+        if (_state.value.running_rule_id != null) return
+        _state.value = _state.value.copy(running_rule_id = rule_id)
         viewModelScope.launch {
             try {
                 api.run_on_existing(rule_id)
+                _state.value = _state.value.copy(running_rule_id = null)
+                load(force_refresh = true)
+            } catch (t: kotlinx.coroutines.CancellationException) {
+                _state.value = _state.value.copy(running_rule_id = null)
+                throw t
             } catch (t: Throwable) {
-                _state.value = _state.value.copy(error = R.string.rules_error_run)
+                _state.value = _state.value.copy(
+                    running_rule_id = null,
+                    error = R.string.rules_error_run,
+                )
             }
         }
     }

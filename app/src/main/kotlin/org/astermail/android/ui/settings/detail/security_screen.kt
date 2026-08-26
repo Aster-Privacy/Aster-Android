@@ -79,6 +79,7 @@ import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.shimmer_brush
 import org.astermail.android.design.components.AsterDivider
+import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.security.AppLockStore
@@ -87,11 +88,31 @@ import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.ui.security.AppLockSetupSheet
 import org.astermail.android.ui.security.AppLockVerifySheet
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.design.mirror_in_rtl
 
-private fun format_audit_event(type: String): String = type
-    .replace("_", " ")
-    .split(" ")
-    .joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
+@Composable
+private fun format_audit_event(type: String): String {
+    val label = when (type) {
+        "login" -> R.string.audit_event_login
+        "logout" -> R.string.audit_event_logout
+        "password_change" -> R.string.audit_event_password_change
+        "session_revoked" -> R.string.audit_event_session_revoked
+        "settings_changed" -> R.string.audit_event_settings_changed
+        "lockdown_enabled" -> R.string.audit_event_lockdown_enabled
+        "lockdown_disabled" -> R.string.audit_event_lockdown_disabled
+        "suspicious_activity" -> R.string.audit_event_suspicious_activity
+        "account_locked" -> R.string.audit_event_account_locked
+        "2fa_enabled" -> R.string.audit_event_2fa_enabled
+        "2fa_disabled" -> R.string.audit_event_2fa_disabled
+        "key_rotated" -> R.string.audit_event_key_rotated
+        "key_exported" -> R.string.audit_event_key_exported
+        "device_removed" -> R.string.audit_event_device_removed
+        "recovery_codes_regenerated" -> R.string.audit_event_recovery_codes_regenerated
+        else -> null
+    }
+    if (label != null) return stringResource(label)
+    return type.replace("_", " ").replaceFirstChar { it.uppercase() }
+}
 
 private fun audit_icon(event_type: String): ImageVector = when {
     event_type.contains("login") || event_type.contains("sign_in") -> TablerIcons.Login
@@ -182,27 +203,31 @@ fun SecurityScreen(
         if (prefs?.block_tracking_pixels == true) s++
         if (prefs?.block_external_images == true) s++
         if (prefs?.strip_exif_on_compose == true) s++
-        if (prefs?.send_read_receipts == false) s++
         s
     }
 
     val score_label = when (score) {
         null -> "…"
         in 0..2 -> stringResource(R.string.score_weak)
-        in 3..5 -> stringResource(R.string.score_fair)
-        in 6..7 -> stringResource(R.string.score_partial)
+        in 3..4 -> stringResource(R.string.score_fair)
+        in 5..6 -> stringResource(R.string.score_partial)
         else -> stringResource(R.string.score_strong)
     }
     val score_color = when (score) {
         null -> colors.text_muted
         in 0..2 -> colors.danger
-        in 3..5 -> colors.warning
-        in 6..7 -> Color(0xFFD97706)
+        in 3..4 -> colors.warning
+        in 5..6 -> Color(0xFFD97706)
         else -> colors.success
     }
 
     fun toggle(update: (UserPreferences) -> UserPreferences) {
-        val current = prefs ?: UserPreferences()
+        val current = prefs ?: return
+        if (!state.preferences_authoritative) {
+            vm.report_preferences_locked()
+
+            return
+        }
         vm.save_preferences(update(current))
     }
 
@@ -236,6 +261,7 @@ fun SecurityScreen(
         scroll_state = scroll_state,
     ) {
 
+        preferences_save_error_banner()
         section_label(stringResource(R.string.section_account_protection))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             Column(
@@ -261,7 +287,7 @@ fun SecurityScreen(
                             skeleton_block(shimmer_brush(), 52.dp, 17.dp, corner = 6.dp)
                         } else {
                             Text(
-                                text = "$score / 8",
+                                text = "$score / 7",
                                 color = score_color,
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold,
@@ -300,7 +326,7 @@ fun SecurityScreen(
                     if (score != null) {
                         Box(
                             modifier = Modifier
-                                .fillMaxWidth(fraction = (score / 8f).coerceIn(0f, 1f))
+                                .fillMaxWidth(fraction = (score / 7f).coerceIn(0f, 1f))
                                 .height(6.dp)
                                 .clip(CircleShape)
                                 .background(score_color),
@@ -326,9 +352,8 @@ fun SecurityScreen(
                         score_checklist_row(stringResource(R.string.check_verified_recovery_email), recovery_email_verified, colors) { on_open("recovery_email") }
                         score_checklist_row(stringResource(R.string.login_alerts), state.login_alerts_enabled == true, colors) { vm.set_login_alerts(state.login_alerts_enabled != true) }
                         score_checklist_row(stringResource(R.string.block_tracking_pixels), prefs?.block_tracking_pixels == true, colors) { toggle { it.copy(block_tracking_pixels = it.block_tracking_pixels != true) } }
-                        score_checklist_row(stringResource(R.string.block_remote_images), prefs?.block_external_images == true, colors) { toggle { it.copy(block_external_images = it.block_external_images != true) } }
+                        score_checklist_row(stringResource(R.string.block_remote_images), prefs?.block_external_images == true, colors) { toggle { val on = it.block_external_images != true; it.copy(block_external_images = on, load_remote_images = if (on) "never" else "always") } }
                         score_checklist_row(stringResource(R.string.strip_exif), prefs?.strip_exif_on_compose == true, colors) { toggle { it.copy(strip_exif = it.strip_exif_on_compose != true, strip_exif_on_compose = it.strip_exif_on_compose != true) } }
-                        score_checklist_row(stringResource(R.string.check_read_receipts_off), prefs?.send_read_receipts == false, colors) { toggle { it.copy(send_read_receipts = !it.send_read_receipts) } }
                     }
                 }
             }
@@ -359,11 +384,18 @@ fun SecurityScreen(
                 info_title = stringResource(R.string.login_alerts_info_title),
                 info_description = stringResource(R.string.login_alerts_info_desc),
                 trailing = {
-                    AsterSwitch(
-                        checked = state.login_alerts_enabled == true,
-                        onCheckedChange = { v -> vm.set_login_alerts(v) },
-                        enabled = state.login_alerts_enabled != null,
-                    )
+                    if (state.login_alerts_enabled == null && state.login_alerts_load_failed) {
+                        AsterGhostButton(
+                            label = stringResource(R.string.retry),
+                            onClick = { vm.load_login_alerts() },
+                        )
+                    } else {
+                        AsterSwitch(
+                            checked = state.login_alerts_enabled == true,
+                            onCheckedChange = { v -> vm.set_login_alerts(v) },
+                            enabled = state.login_alerts_enabled != null,
+                        )
+                    }
                 },
             )
             AsterDivider()
@@ -374,6 +406,14 @@ fun SecurityScreen(
                 on_click = { on_open("sessions") },
             )
             AsterDivider()
+            if (hardware_keys_count == 0 && state.hardware_keys_load_failed) {
+                detail_row(
+                    title = stringResource(R.string.passkeys_security_keys),
+                    subtitle = stringResource(R.string.failed_to_load),
+                    icon = TablerIcons.AlertCircle,
+                    on_click = { vm.load_hardware_keys() },
+                )
+            }
             if (hardware_keys_count > 0) {
                 detail_row(
                     title = stringResource(R.string.passkeys_security_keys),
@@ -404,7 +444,7 @@ fun SecurityScreen(
                         }
                     }
                 }
-            } else {
+            } else if (!state.hardware_keys_load_failed) {
                 AsterDivider()
                 detail_row(
                     title = stringResource(R.string.passkeys_security_keys),
@@ -423,7 +463,14 @@ fun SecurityScreen(
             on_click = { show_revoke_all_confirm = true },
         )
         AsterCard(modifier = Modifier.fillMaxWidth()) {
-            if (state.trusted_devices.isEmpty()) {
+            if (state.trusted_devices.isEmpty() && state.trusted_devices_load_failed) {
+                detail_row(
+                    title = stringResource(R.string.failed_to_load),
+                    subtitle = stringResource(R.string.retry),
+                    icon = TablerIcons.AlertCircle,
+                    on_click = { vm.load_trusted_devices() },
+                )
+            } else if (state.trusted_devices.isEmpty()) {
                 detail_row(
                     title = stringResource(R.string.no_trusted_devices),
                     subtitle = stringResource(R.string.no_trusted_devices_subtitle),
@@ -523,7 +570,11 @@ fun SecurityScreen(
                                 toggle {
                                     it.copy(
                                         block_external_images = v,
-                                        load_remote_images = if (v) "never" else "always",
+                                        load_remote_images = when {
+                                            !v -> "always"
+                                            it.load_remote_images == "ask" -> "ask"
+                                            else -> "never"
+                                        },
                                     )
                                 }
                             },
@@ -639,30 +690,16 @@ fun SecurityScreen(
 
         v_gap(AsterSpacing.lg)
 
-        section_label(stringResource(R.string.section_privacy_security))
-        if (prefs == null) {
-            skeleton_card_list(rows = 1)
-        } else {
-            AsterCard(modifier = Modifier.fillMaxWidth()) {
-                detail_row(
-                    title = stringResource(R.string.send_read_receipts),
-                    subtitle = stringResource(R.string.send_read_receipts_subtitle),
-                    icon = TablerIcons.Eye,
-                    trailing = {
-                        AsterSwitch(
-                            checked = prefs.send_read_receipts == true,
-                            onCheckedChange = { v -> toggle { it.copy(send_read_receipts = v) } },
-                        )
-                    },
-                )
-            }
-        }
-
-        v_gap(AsterSpacing.lg)
-
         section_label(stringResource(R.string.section_recent_activity))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
-            if (state.audit_events.isEmpty()) {
+            if (state.audit_events.isEmpty() && state.audit_events_load_failed) {
+                detail_row(
+                    title = stringResource(R.string.failed_to_load),
+                    subtitle = stringResource(R.string.retry),
+                    icon = TablerIcons.AlertCircle,
+                    on_click = { vm.load_audit_log() },
+                )
+            } else if (state.audit_events.isEmpty()) {
                 detail_row(
                     title = stringResource(R.string.no_recent_activity),
                     subtitle = stringResource(R.string.no_recent_activity_subtitle),
@@ -791,7 +828,12 @@ private fun vanguard_section(
                         fontSize = 13.sp,
                     )
                 }
-                if (state.vanguard_enabled == null) {
+                if (state.vanguard_enabled == null && state.vanguard_status_load_failed) {
+                    AsterGhostButton(
+                        label = stringResource(R.string.retry),
+                        onClick = { vm.load_vanguard_status() },
+                    )
+                } else if (state.vanguard_enabled == null) {
                     androidx.compose.material3.CircularProgressIndicator(
                         modifier = Modifier.size(20.dp),
                         strokeWidth = 2.dp,
@@ -857,9 +899,10 @@ private fun vanguard_section(
             confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
             on_confirm = {
                 show_disable_confirm = false
-                store.disable()
-                app_lock_enabled = false
-                vm.disable_vanguard()
+                vm.disable_vanguard {
+                    store.disable()
+                    app_lock_enabled = false
+                }
             },
         )
     }
@@ -971,7 +1014,7 @@ private fun score_checklist_row(
             imageVector = TablerIcons.ChevronRight,
             contentDescription = null,
             tint = colors.text_muted,
-            modifier = Modifier.size(14.dp),
+            modifier = Modifier.size(14.dp).mirror_in_rtl(),
         )
     }
 }
@@ -984,6 +1027,7 @@ private fun hardware_key_row(
     colors: org.astermail.android.design.AsterSemanticColors,
 ) {
     var show_rename by remember(key.id) { mutableStateOf(false) }
+    var show_delete_confirm by remember(key.id) { mutableStateOf(false) }
     var rename_text by remember(key.id) { mutableStateOf(key.display_name) }
 
     Row(
@@ -1024,8 +1068,23 @@ private fun hardware_key_row(
         AsterIconButton(
             icon = TablerIcons.Trash,
             content_description = stringResource(R.string.hardware_key_remove),
-            onClick = on_delete,
+            onClick = { show_delete_confirm = true },
             tint = colors.danger,
+        )
+    }
+
+    if (show_delete_confirm) {
+        AsterAlertDialog(
+            on_dismiss = { show_delete_confirm = false },
+            title = stringResource(R.string.hardware_key_remove),
+            message = stringResource(R.string.hardware_key_remove_confirm),
+            confirm_label = stringResource(R.string.remove),
+            cancel_label = stringResource(R.string.cancel),
+            confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
+            on_confirm = {
+                show_delete_confirm = false
+                on_delete()
+            },
         )
     }
 
@@ -1059,6 +1118,23 @@ private fun trusted_device_row(
     on_revoke: () -> Unit,
     colors: org.astermail.android.design.AsterSemanticColors,
 ) {
+    var show_revoke_confirm by remember(device.id) { mutableStateOf(false) }
+
+    if (show_revoke_confirm) {
+        AsterAlertDialog(
+            on_dismiss = { show_revoke_confirm = false },
+            title = stringResource(R.string.trusted_device_revoke),
+            message = stringResource(R.string.trusted_device_revoke_confirm),
+            confirm_label = stringResource(R.string.revoke),
+            cancel_label = stringResource(R.string.cancel),
+            confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
+            on_confirm = {
+                show_revoke_confirm = false
+                on_revoke()
+            },
+        )
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -1098,7 +1174,7 @@ private fun trusted_device_row(
         AsterIconButton(
             icon = TablerIcons.Trash,
             content_description = stringResource(R.string.trusted_device_revoke),
-            onClick = on_revoke,
+            onClick = { show_revoke_confirm = true },
             tint = colors.danger,
         )
     }

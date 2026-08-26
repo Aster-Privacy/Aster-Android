@@ -34,10 +34,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -118,7 +121,11 @@ fun base_sheet(
         dragHandle = null,
         modifier = Modifier.testTag("mr_sheet"),
     ) {
-        Column(modifier = Modifier.padding(bottom = AsterSpacing.lg)) {
+        Column(
+            modifier = Modifier
+                .navigationBarsPadding()
+                .padding(bottom = AsterSpacing.lg),
+        ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -322,8 +329,11 @@ fun snooze_picker(
 ) {
     val current_label = runCatching {
         java.time.OffsetDateTime.parse(current)
-            .atZoneSameInstant(java.time.ZoneId.systemDefault())
-            .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+            .atZoneSameInstant(org.astermail.android.ui.mail.AsterTimePreferences.account_zone_id())
+            .format(
+                java.time.format.DateTimeFormatter
+                    .ofLocalizedDateTime(java.time.format.FormatStyle.MEDIUM, java.time.format.FormatStyle.SHORT),
+            )
     }.getOrNull()
 
     base_sheet(on_dismiss = on_dismiss, title = title) {
@@ -470,12 +480,23 @@ fun header_value_picker(
 }
 
 private fun single_decimal(v: String): String {
-    val filtered = v.filter { it.isDigit() || it == '.' }
-    val dot = filtered.indexOf('.')
+    val normalized = buildString {
+        for (ch in v) {
+            if (ch == '.' || ch == ',') {
+                append('.')
+                continue
+            }
+            val digit = Character.digit(ch, 10)
+            if (digit >= 0) {
+                append('0' + digit)
+            }
+        }
+    }
+    val dot = normalized.indexOf('.')
     return if (dot >= 0) {
-        filtered.substring(0, dot + 1) + filtered.substring(dot + 1).replace(".", "")
+        normalized.substring(0, dot + 1) + normalized.substring(dot + 1).replace(".", "")
     } else {
-        filtered
+        normalized
     }
 }
 
@@ -614,6 +635,7 @@ fun boolean_value_picker(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun color_picker(
     on_dismiss: () -> Unit,
@@ -622,11 +644,12 @@ fun color_picker(
     on_pick: (String) -> Unit,
 ) {
     base_sheet(on_dismiss = on_dismiss, title = stringResource(R.string.mail_rules_pick_color)) {
-        Row(
+        FlowRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             palette.forEach { hex ->
                 val color = try { Color(android.graphics.Color.parseColor(hex)) } catch (_: Throwable) { Color.Gray }

@@ -24,14 +24,12 @@ package org.astermail.android.billing
 object AttachmentLimits {
     const val free_max_bytes = 25L * 1024 * 1024
     const val paid_max_bytes = 250L * 1024 * 1024
-    private const val total_multiplier = 2L
-
     @Volatile
     private var cached_max_bytes = free_max_bytes
 
     fun max_bytes(): Long = cached_max_bytes
 
-    fun total_max_bytes(): Long = cached_max_bytes * total_multiplier
+    fun total_max_bytes(): Long = cached_max_bytes
 
     fun can_upgrade(): Boolean =
         cached_max_bytes <= free_max_bytes && cached_max_bytes < paid_max_bytes

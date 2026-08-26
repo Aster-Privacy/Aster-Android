@@ -49,6 +49,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -69,14 +70,38 @@ import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
 import coil.compose.AsyncImagePainter
+import androidx.compose.foundation.layout.Arrangement
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.astermail.android.settings.SaveStatus
+import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterAlertDialog
+import org.astermail.android.design.components.AsterButton
+import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterTopBar
 import org.astermail.android.ui.mail.avatar_initial_style
+import org.astermail.android.design.mirror_in_rtl
+
+internal fun absolute_date_label(iso: String?): String {
+    if (iso.isNullOrBlank()) return ""
+    val instant = try {
+        java.time.OffsetDateTime.parse(iso).toInstant()
+    } catch (_: Throwable) {
+        try {
+            java.time.Instant.parse(iso)
+        } catch (_: Throwable) {
+            null
+        }
+    } ?: return iso.take(10)
+    return java.time.format.DateTimeFormatter
+        .ofLocalizedDate(java.time.format.FormatStyle.MEDIUM)
+        .withZone(org.astermail.android.ui.mail.AsterTimePreferences.account_zone_id())
+        .format(instant)
+}
 
 @Composable
 internal fun relative_time_label(iso: String?): String {
@@ -94,7 +119,7 @@ internal fun relative_time_label(iso: String?): String {
     val minutes = java.time.Duration.between(instant, java.time.Instant.now()).toMinutes()
     val absolute = java.time.format.DateTimeFormatter
         .ofLocalizedDate(java.time.format.FormatStyle.MEDIUM)
-        .withZone(java.time.ZoneId.systemDefault())
+        .withZone(org.astermail.android.ui.mail.AsterTimePreferences.account_zone_id())
         .format(instant)
     return when {
         minutes < 0 -> absolute
@@ -148,6 +173,75 @@ internal fun detail_scaffold(
                 content = content,
             )
         }
+    }
+}
+
+@Composable
+internal fun preferences_load_placeholder() {
+    val vm = shared_settings_view_model()
+    val state by vm.state.collectAsStateWithLifecycle()
+    val colors = AsterMaterial.colors
+
+    if (state.is_loading || state.error == null) {
+        Box(
+            modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
+            contentAlignment = Alignment.Center,
+        ) {
+            CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
+        }
+
+        return
+    }
+
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = state.error ?: stringResource(R.string.something_went_wrong),
+            color = colors.text_secondary,
+            fontSize = 14.sp,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        )
+        Spacer(modifier = Modifier.height(AsterSpacing.md))
+        org.astermail.android.design.components.AsterSecondaryButton(
+            label = stringResource(R.string.retry),
+            onClick = { vm.load_preferences(force = true) },
+        )
+    }
+}
+
+@Composable
+internal fun preferences_save_error_banner() {
+    val vm = shared_settings_view_model()
+    val state by vm.state.collectAsStateWithLifecycle()
+    if (state.save_status != SaveStatus.ERROR) return
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm)
+            .clip(RoundedCornerShape(12.dp))
+            .background(colors.bg_secondary)
+            .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            text = stringResource(R.string.settings_save_failed_banner),
+            color = colors.text_secondary,
+            fontSize = 13.sp,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text = stringResource(R.string.retry),
+            color = colors.accent_blue,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier
+                .padding(start = AsterSpacing.md)
+                .clickable { vm.retry_preferences_save() },
+        )
     }
 }
 
@@ -278,7 +372,7 @@ internal fun detail_row(
                 imageVector = TablerIcons.ChevronRight,
                 contentDescription = null,
                 tint = colors.text_tertiary,
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(20.dp).mirror_in_rtl(),
             )
         }
     }
@@ -342,6 +436,31 @@ internal fun verified_badge(text: String = "Verified") {
 @Composable
 internal fun v_gap(height: androidx.compose.ui.unit.Dp = AsterSpacing.md) {
     Spacer(Modifier.height(height))
+}
+
+@Composable
+internal fun load_failed_card(message: String?, on_retry: () -> Unit) {
+    val colors = AsterMaterial.colors
+    Column(Modifier.fillMaxWidth()) {
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(AsterSpacing.lg)) {
+                Text(
+                    text = stringResource(R.string.failed_to_load),
+                    color = colors.text_primary,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+                Spacer(Modifier.height(AsterSpacing.xs))
+                Text(
+                    text = message ?: stringResource(R.string.something_went_wrong),
+                    color = colors.text_secondary,
+                    fontSize = 13.sp,
+                )
+            }
+        }
+        v_gap(AsterSpacing.md)
+        AsterButton(label = stringResource(R.string.retry), onClick = on_retry)
+    }
 }
 
 @Composable

@@ -45,6 +45,7 @@ data class MailingListsState(
     val items: List<MailingListSubscription> = emptyList(),
     val stats: MailingListStats? = null,
     val error: String? = null,
+    val load_error: String? = null,
     val pending_ids: Set<String> = emptySet(),
     val message: String? = null,
 )
@@ -61,7 +62,7 @@ class MailingListsViewModel @Inject constructor(
 
     fun load() {
         if (_state.value.is_loading) return
-        _state.value = _state.value.copy(is_loading = true, error = null)
+        _state.value = _state.value.copy(is_loading = true, error = null, load_error = null)
         viewModelScope.launch {
             try {
                 val response = api.list(limit = 200)
@@ -71,11 +72,13 @@ class MailingListsViewModel @Inject constructor(
                     stats = stats,
                     is_loading = false,
                     error = null,
+                    load_error = null,
                 )
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     is_loading = false,
-                    error = org.astermail.android.localized_api_error(context, t, context.getString(R.string.failed_to_load)),
+                    load_error = org.astermail.android.localized_api_error(context, t, context.getString(R.string.failed_to_load)),
                 )
             }
         }
@@ -139,6 +142,8 @@ class MailingListsViewModel @Inject constructor(
                     },
                     message = context.getString(R.string.toast_unsubscribed),
                 )
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     pending_ids = _state.value.pending_ids - subscription_id,
@@ -148,7 +153,8 @@ class MailingListsViewModel @Inject constructor(
         }
     }
 
-    fun bulk_unsubscribe(ids: List<String>) {
+    fun bulk_unsubscribe(requested_ids: List<String>) {
+        val ids = requested_ids.distinct().filter { it !in _state.value.pending_ids }
         if (ids.isEmpty()) return
         _state.value = _state.value.copy(pending_ids = _state.value.pending_ids + ids)
         viewModelScope.launch {
@@ -162,6 +168,8 @@ class MailingListsViewModel @Inject constructor(
                     message = context.resources.getQuantityString(R.plurals.unsubscribed_count, ids.size, ids.size),
                 )
                 load()
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     pending_ids = _state.value.pending_ids - ids.toSet(),
@@ -197,7 +205,11 @@ class MailingListsViewModel @Inject constructor(
     fun auto_scan_if_empty() {
         viewModelScope.launch {
             kotlinx.coroutines.delay(500)
-            if (_state.value.items.isEmpty() && !_state.value.is_scanning && !_state.value.is_loading) {
+            if (_state.value.items.isEmpty() &&
+                _state.value.load_error == null &&
+                !_state.value.is_scanning &&
+                !_state.value.is_loading
+            ) {
                 scan(force_full = true)
             }
         }

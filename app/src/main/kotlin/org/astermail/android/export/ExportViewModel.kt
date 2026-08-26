@@ -110,18 +110,26 @@ class ExportViewModel @Inject constructor(
                 error = null,
             )
         }
-        export_job = viewModelScope.launch { run_export() }
+        export_job = viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) { run_export() }
+    }
+
+    private var in_progress_file: File? = null
+
+    private fun discard_export_files() {
+        _state.value.export_file?.delete()
+        in_progress_file?.delete()
+        in_progress_file = null
     }
 
     fun cancel_export() {
         export_job?.cancel()
-        _state.value.export_file?.delete()
+        discard_export_files()
         _state.update { it.copy(is_running = false, export_file = null, step = ExportStep.Scope) }
     }
 
     fun reset() {
         export_job?.cancel()
-        _state.value.export_file?.delete()
+        discard_export_files()
         _state.value = ExportUiState()
     }
 
@@ -139,21 +147,32 @@ class ExportViewModel @Inject constructor(
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
-            context.startActivity(
-                Intent.createChooser(intent, "Save export")
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            org.astermail.android.ui.common.start_external_intent(
+                context,
+                Intent.createChooser(
+                    intent,
+                    context.getString(org.astermail.android.R.string.export_share_save),
+                ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             )
-        } catch (t: Throwable) {
-            _state.update { it.copy(error = "Could not share file: ${t.message}") }
+        } catch (_: Throwable) {
+            _state.update {
+                it.copy(
+                    error = context.getString(
+                        org.astermail.android.R.string.something_went_wrong,
+                    ),
+                )
+            }
         }
     }
 
     private suspend fun run_export() {
         try {
-            val ts = System.currentTimeMillis()
+            val ts = java.text.SimpleDateFormat("yyyy-MM-dd_HHmm", java.util.Locale.US)
+                .format(java.util.Date())
             val export_dir = File(context.cacheDir, "exports").apply { mkdirs() }
             export_dir.listFiles()?.forEach { runCatching { it.delete() } }
             val zip_file = File(export_dir, "aster_export_$ts.zip")
+            in_progress_file = zip_file
             var total_bytes = 0L
 
             val zos = ZipOutputStream(BufferedOutputStream(zip_file.outputStream()))
@@ -165,6 +184,7 @@ class ExportViewModel @Inject constructor(
                 runCatching { zos.close() }
             }
 
+            in_progress_file = null
             _state.update {
                 it.copy(
                     step = ExportStep.Complete,
@@ -173,9 +193,13 @@ class ExportViewModel @Inject constructor(
                     bytes_written = total_bytes,
                 )
             }
-        } catch (_: CancellationException) {
-            // handled in cancel_export
+        } catch (c: CancellationException) {
+            in_progress_file?.delete()
+            in_progress_file = null
+            throw c
         } catch (t: Throwable) {
+            in_progress_file?.delete()
+            in_progress_file = null
             _state.update {
                 it.copy(
                     is_running = false,

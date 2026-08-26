@@ -52,6 +52,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -296,9 +297,21 @@ fun alias_import_dialog(
                         Text(
                             text = stringResource(
                                 R.string.alias_import_counts,
-                                will_import_count,
-                                exists_count,
-                                invalid_count,
+                                pluralStringResource(
+                                    R.plurals.alias_import_to_import,
+                                    will_import_count,
+                                    will_import_count,
+                                ),
+                                pluralStringResource(
+                                    R.plurals.alias_import_existing,
+                                    exists_count,
+                                    exists_count,
+                                ),
+                                pluralStringResource(
+                                    R.plurals.alias_import_invalid,
+                                    invalid_count,
+                                    invalid_count,
+                                ),
                             ),
                             color = colors.text_tertiary,
                             fontSize = 12.sp,
@@ -458,7 +471,12 @@ fun alias_import_dialog(
                         },
                     )
                     AsterDialogPrimaryButton(
-                        label = stringResource(R.string.alias_import_confirm, action_rows.size),
+                        label =
+                            pluralStringResource(
+                                R.plurals.alias_import_confirm,
+                                action_rows.size,
+                                action_rows.size,
+                            ),
                         enabled = action_rows.isNotEmpty(),
                         onClick = {
                             val to_create = action_rows.filter { it.status == ImportRowStatus.WillImport }

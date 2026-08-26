@@ -75,7 +75,7 @@ import org.astermail.android.settings.shared_settings_view_model
 @Composable
 fun SignatureScreen(
     on_back: () -> Unit,
-    on_open: (id: String) -> Unit = {},
+    on_open: (id: String) -> Unit,
 ) {
     val colors = AsterMaterial.colors
     val vm: SettingsViewModel = shared_settings_view_model()
@@ -86,6 +86,16 @@ fun SignatureScreen(
     val is_paid = plan_state.limits?.let { it.plan_code != "free" } ?: false
     var editing by remember { mutableStateOf<DecryptedSignature?>(null) }
     var creating by remember { mutableStateOf(false) }
+    var pending_delete by remember { mutableStateOf<DecryptedSignature?>(null) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    LaunchedEffect(state.save_status) {
+        if (state.save_status == org.astermail.android.settings.SaveStatus.ERROR) {
+            val message = state.error ?: context.getString(R.string.settings_save_failed_banner)
+            android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_LONG).show()
+            vm.reset_transient_state()
+        }
+    }
 
     LaunchedEffect(Unit) {
         vm.load_aliases()
@@ -127,15 +137,28 @@ fun SignatureScreen(
                 editing = null
                 creating = false
             },
-            on_delete = {
-                val target = editing
-                if (target != null) {
-                    vm.delete_signature(target.id)
-                }
-                editing = null
-                creating = false
-            },
+            on_delete = { pending_delete = editing },
         )
+        val delete_target = pending_delete
+        if (delete_target != null) {
+            org.astermail.android.design.components.AsterAlertDialog(
+                on_dismiss = { pending_delete = null },
+                title = stringResource(R.string.delete_signature),
+                message = stringResource(
+                    R.string.delete_signature_message,
+                    delete_target.name.ifBlank { stringResource(R.string.signature) },
+                ),
+                confirm_label = stringResource(R.string.delete),
+                cancel_label = stringResource(R.string.cancel),
+                confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
+                on_confirm = {
+                    pending_delete = null
+                    vm.delete_signature(delete_target.id)
+                    editing = null
+                    creating = false
+                },
+            )
+        }
         return
     }
 
@@ -143,6 +166,7 @@ fun SignatureScreen(
         title = stringResource(R.string.signature),
         on_back = on_back,
     ) {
+        preferences_save_error_banner()
         section_label(stringResource(R.string.your_signature))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             Column {
@@ -360,6 +384,30 @@ private fun signature_edit_modal(
                 }
             }
         }
+        if (alias_id == null) {
+            v_gap(AsterSpacing.lg)
+            AsterCard(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.signature_set_default),
+                        color = colors.text_primary,
+                        fontSize = 15.sp,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Spacer(Modifier.width(AsterSpacing.md))
+                    AsterSwitch(
+                        checked = is_default,
+                        enabled = initial?.is_default != true,
+                        onCheckedChange = { is_default = it },
+                    )
+                }
+            }
+        }
         v_gap(AsterSpacing.lg)
         section_label(stringResource(R.string.signature_placement))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
@@ -382,6 +430,15 @@ private fun signature_edit_modal(
             }
         }
         v_gap(AsterSpacing.lg)
+        val can_save = content.isNotBlank()
+        if (!can_save) {
+            Text(
+                text = stringResource(R.string.signature_hint_content),
+                color = colors.text_secondary,
+                fontSize = 13.sp,
+                modifier = Modifier.padding(bottom = AsterSpacing.sm),
+            )
+        }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md),
@@ -396,6 +453,7 @@ private fun signature_edit_modal(
             Box(modifier = Modifier.weight(1f)) {
                 AsterButton(
                     label = stringResource(R.string.save),
+                    enabled = can_save,
                     onClick = {
                         if (is_html) {
                             editor_controller.request_html { latest ->

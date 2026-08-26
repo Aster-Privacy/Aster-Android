@@ -46,6 +46,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,6 +59,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
@@ -101,6 +103,8 @@ private fun category_chip(label: String, icon: ImageVector, selected: Boolean, o
     }
 }
 
+private const val MAX_FEEDBACK_LENGTH = 2000
+
 @Composable
 fun FeedbackScreen(
     on_back: () -> Unit,
@@ -110,8 +114,8 @@ fun FeedbackScreen(
     val context = LocalContext.current
     val vm: SettingsViewModel = shared_settings_view_model()
     val scope = rememberCoroutineScope()
-    var category by remember { mutableStateOf("general") }
-    var message by remember { mutableStateOf("") }
+    var category by rememberSaveable { mutableStateOf("general") }
+    var message by rememberSaveable { mutableStateOf("") }
     var is_sending by remember { mutableStateOf(false) }
     var sent by remember { mutableStateOf(false) }
 
@@ -154,12 +158,19 @@ fun FeedbackScreen(
             }
             BasicTextField(
                 value = message,
-                onValueChange = { message = it },
+                onValueChange = { if (it.length <= MAX_FEEDBACK_LENGTH) message = it },
                 textStyle = TextStyle(color = colors.text_primary, fontSize = 15.sp),
                 cursorBrush = SolidColor(colors.accent_blue),
                 modifier = Modifier.fillMaxWidth().focusRequester(focus_requester),
             )
         }
+        Text(
+            text = "${message.length} / $MAX_FEEDBACK_LENGTH",
+            color = colors.text_tertiary,
+            fontSize = 12.sp,
+            modifier = Modifier.fillMaxWidth().padding(top = AsterSpacing.xs),
+            textAlign = TextAlign.End,
+        )
         v_gap(AsterSpacing.lg)
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             Text(

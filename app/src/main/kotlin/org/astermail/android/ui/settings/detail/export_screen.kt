@@ -51,6 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import org.astermail.android.R
@@ -437,7 +438,7 @@ private fun complete_step(
     if (skipped_undecryptable > 0) {
         v_gap(AsterSpacing.md)
         Text(
-            text = stringResource(R.string.export_undecryptable_skipped, skipped_undecryptable),
+            text = pluralStringResource(R.plurals.export_undecryptable_skipped, skipped_undecryptable, skipped_undecryptable),
             color = colors.warning,
             fontSize = 13.sp,
             textAlign = TextAlign.Center,

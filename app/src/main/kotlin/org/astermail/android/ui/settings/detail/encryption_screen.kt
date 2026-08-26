@@ -22,10 +22,11 @@
 package org.astermail.android.ui.settings.detail
 
 import compose.icons.TablerIcons
+import org.astermail.android.ui.common.show_copy_failed_toast
+import org.astermail.android.ui.common.write_to_clipboard
 import compose.icons.tablericons.*
 
 import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
 import android.util.Base64
 import android.widget.Toast
@@ -134,6 +135,12 @@ fun EncryptionScreen(
     val session_key_store = remember(deps) { deps.session_key_store() }
     val auth_repository = remember(deps) { deps.auth_repository() }
 
+    LaunchedEffect(state.action_result) {
+        val msg = state.action_result ?: return@LaunchedEffect
+        android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+        vm.clear_action_result()
+    }
+
     LaunchedEffect(Unit) {
         vm.load_pgp_key_info()
         vm.load_recovery_codes_status()
@@ -211,12 +218,18 @@ fun EncryptionScreen(
     var export_private_error by remember { mutableStateOf<String?>(null) }
 
     fun toggle(update: (UserPreferences) -> UserPreferences) {
-        val current = prefs ?: UserPreferences()
+        val current = prefs ?: return
+        if (!state.preferences_authoritative) {
+            vm.report_preferences_locked()
+
+            return
+        }
         vm.save_preferences(update(current))
     }
 
     detail_scaffold(title = stringResource(R.string.encryption_title), on_back = on_back) {
 
+        preferences_save_error_banner()
         section_label(stringResource(R.string.your_key))
 
         if (view == null) {
@@ -240,15 +253,19 @@ fun EncryptionScreen(
         } else if (key_available && fingerprint != null) {
             val pgp_info = state.pgp_key_info
             val algorithm_title = run {
-                val raw = pgp_info?.algorithm.orEmpty()
-                val base = raw.replace(Regex("[0-9]+"), "").uppercase().ifBlank { raw.uppercase() }
+                val raw = pgp_info?.algorithm.orEmpty().lowercase()
                 val size = when {
                     (pgp_info?.key_size ?: 0) > 0 -> pgp_info!!.key_size
                     else -> raw.filter { it.isDigit() }.toIntOrNull() ?: 0
                 }
                 when {
-                    base.isNotBlank() && size > 0 -> "$base-$size"
-                    base.isNotBlank() -> base
+                    raw.startsWith("rsa") && size > 0 -> "RSA-$size"
+                    raw.startsWith("rsa") -> "RSA"
+                    raw.contains("25519") -> "Curve25519"
+                    raw.contains("448") -> "Curve448"
+                    raw.contains("p256") || raw.contains("p-256") -> "NIST P-256"
+                    raw.contains("p384") || raw.contains("p-384") -> "NIST P-384"
+                    raw.isNotBlank() -> raw.replace('_', ' ').uppercase()
                     else -> stringResource(if (is_pgp_key) R.string.pgp_identity_fingerprint else R.string.identity_key_fingerprint)
                 }
             }
@@ -293,7 +310,7 @@ fun EncryptionScreen(
                             if (created.isNotBlank()) {
                                 Spacer(Modifier.size(2.dp))
                                 Text(
-                                    text = stringResource(R.string.created_at_format, created.take(10)),
+                                    text = stringResource(R.string.created_at_format, absolute_date_label(created)),
                                     color = colors.text_muted,
                                     fontSize = 12.sp,
                                 )
@@ -352,8 +369,11 @@ fun EncryptionScreen(
                                 icon = TablerIcons.Copy,
                                 content_description = stringResource(R.string.copy_fingerprint_action),
                                 onClick = {
-                                    copy_to_clipboard(context, context.getString(R.string.clipboard_label_identity_fingerprint), grouped_fingerprint)
-                                    Toast.makeText(context, context.getString(R.string.fingerprint_copied), Toast.LENGTH_SHORT).show()
+                                    if (copy_to_clipboard(context, context.getString(R.string.clipboard_label_identity_fingerprint), grouped_fingerprint)) {
+                                        Toast.makeText(context, context.getString(R.string.fingerprint_copied), Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        show_copy_failed_toast(context)
+                                    }
                                 },
                                 icon_size = 16,
                             )
@@ -390,8 +410,13 @@ fun EncryptionScreen(
                             scope.launch {
                                 val armored = vm.export_public_key_now()
                                 if (armored != null) {
-                                    copy_to_clipboard(context, context.getString(R.string.clipboard_label_identity_public_key), armored)
-                                    Toast.makeText(context, context.getString(R.string.public_key_copied), Toast.LENGTH_SHORT).show()
+                                    if (copy_to_clipboard(context, context.getString(R.string.clipboard_label_identity_public_key), armored)) {
+                                        Toast.makeText(context, context.getString(R.string.public_key_copied), Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        show_copy_failed_toast(context)
+                                    }
+                                } else {
+                                    Toast.makeText(context, context.getString(R.string.something_went_wrong), Toast.LENGTH_SHORT).show()
                                 }
                             }
                         },
@@ -617,7 +642,7 @@ fun EncryptionScreen(
                     subtitle = stringResource(R.string.storage_format_aster_sub),
                     selected = prefs.storage_format != "ipfs",
                     modifier = Modifier.fillMaxWidth(),
-                    on_click = { toggle { it.copy(storage_format = "aster") } },
+                    on_click = { vm.set_storage_format("aster") },
                 )
                 illustrated_option_card(
                     image = R.drawable.settings_decentralized,
@@ -625,7 +650,7 @@ fun EncryptionScreen(
                     subtitle = stringResource(R.string.storage_format_ipfs_sub),
                     selected = prefs.storage_format == "ipfs",
                     modifier = Modifier.fillMaxWidth(),
-                    on_click = { toggle { it.copy(storage_format = "ipfs") } },
+                    on_click = { vm.set_storage_format("ipfs") },
                 )
             }
         }
@@ -635,7 +660,13 @@ fun EncryptionScreen(
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             val enc = state.encryption_settings
             val wkd = state.wkd_status
-            if (prefs == null || enc == null) {
+            if (enc == null && state.encryption_settings_load_failed) {
+                detail_row(
+                    title = stringResource(R.string.failed_to_load),
+                    subtitle = stringResource(R.string.retry),
+                    on_click = { vm.load_encryption_settings() },
+                )
+            } else if (prefs == null || enc == null) {
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xl),
                     contentAlignment = Alignment.Center,
@@ -650,7 +681,7 @@ fun EncryptionScreen(
                     info_description = stringResource(R.string.info_auto_discover_desc),
                     trailing = {
                         AsterSwitch(
-                            checked = enc.auto_discover_keys != false,
+                            checked = enc.auto_discover_keys == true,
                             onCheckedChange = { vm.toggle_auto_discover_keys() },
                         )
                     },
@@ -676,8 +707,8 @@ fun EncryptionScreen(
                     info_description = stringResource(R.string.info_require_encryption_desc),
                     trailing = {
                         AsterSwitch(
-                            checked = prefs.require_encryption == true,
-                            onCheckedChange = { toggle { it.copy(require_encryption = !it.require_encryption) } },
+                            checked = enc.require_encryption,
+                            onCheckedChange = { vm.toggle_require_encryption() },
                         )
                     },
                 )
@@ -697,12 +728,22 @@ fun EncryptionScreen(
                 AsterDivider()
                 detail_row(
                     title = stringResource(R.string.publish_to_wkd),
-                    subtitle = stringResource(R.string.publish_to_wkd_sub),
+                    subtitle = if (wkd == null && state.wkd_status_load_failed) {
+                        stringResource(R.string.failed_to_load)
+                    } else {
+                        stringResource(R.string.publish_to_wkd_sub)
+                    },
                     info_title = stringResource(R.string.info_wkd_title),
                     info_description = stringResource(R.string.info_wkd_desc),
+                    on_click = if (wkd == null && state.wkd_status_load_failed) {
+                        { vm.load_wkd_keyserver_status() }
+                    } else {
+                        null
+                    },
                     trailing = {
                         AsterSwitch(
                             checked = wkd?.published == true,
+                            enabled = wkd != null,
                             onCheckedChange = { vm.toggle_wkd_publishing() },
                         )
                     },
@@ -715,7 +756,8 @@ fun EncryptionScreen(
                     info_description = stringResource(R.string.info_keyservers_desc),
                     trailing = {
                         AsterSwitch(
-                            checked = prefs.publish_to_keyservers,
+                            checked = state.keyserver_status?.published == true || prefs.publish_to_keyservers,
+                            enabled = state.keyserver_status?.published != true,
                             onCheckedChange = { vm.toggle_keyserver_publishing() },
                         )
                     },
@@ -763,9 +805,12 @@ fun EncryptionScreen(
                                 if (armored != null) {
                                     show_export_private_dialog = false
                                     export_private_password = ""
-                                    copy_to_clipboard(context_export, "private_key", armored)
-                                    org.astermail.android.util.schedule_sensitive_clipboard_clear(context_export, armored)
-                                    Toast.makeText(context_export, context_export.getString(R.string.toast_private_key_copied), Toast.LENGTH_LONG).show()
+                                    if (copy_to_clipboard(context_export, "private_key", armored)) {
+                                        org.astermail.android.util.schedule_sensitive_clipboard_clear(context_export, armored)
+                                        Toast.makeText(context_export, context_export.getString(R.string.toast_private_key_copied), Toast.LENGTH_LONG).show()
+                                    } else {
+                                        show_copy_failed_toast(context_export)
+                                    }
                                 } else {
                                     export_private_error = context_export.getString(R.string.error_private_key_export)
                                 }
@@ -794,6 +839,8 @@ fun EncryptionScreen(
                     if (codes.isNotEmpty()) {
                         new_recovery_codes = codes
                         show_new_codes_dialog = true
+                    } else {
+                        Toast.makeText(context, context.getString(R.string.something_went_wrong), Toast.LENGTH_SHORT).show()
                     }
                 }
             },
@@ -843,12 +890,16 @@ fun EncryptionScreen(
                 org.astermail.android.design.components.AsterDialogOutlineButton(
                     label = stringResource(R.string.copy_all_codes),
                     onClick = {
-                        copy_to_clipboard(
+                        val copied = copy_to_clipboard(
                             context_dialog,
                             "recovery_codes",
                             new_recovery_codes.joinToString("\n"),
                         )
-                        Toast.makeText(context_dialog, context_dialog.getString(R.string.copied), Toast.LENGTH_SHORT).show()
+                        if (copied) {
+                            Toast.makeText(context_dialog, context_dialog.getString(R.string.copied), Toast.LENGTH_SHORT).show()
+                        } else {
+                            show_copy_failed_toast(context_dialog)
+                        }
                     },
                 )
                 org.astermail.android.design.components.AsterDialogPrimaryButton(
@@ -869,11 +920,10 @@ internal fun format_fingerprint(hex: String): String {
     return clean.chunked(2).chunked(8).joinToString("\n") { line -> line.joinToString(" ") }
 }
 
-private fun copy_to_clipboard(context: Context, label: String, value: String) {
-    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+private fun copy_to_clipboard(context: Context, label: String, value: String): Boolean {
     val clip = ClipData.newPlainText(label, value)
     clip.description.extras = android.os.PersistableBundle().apply {
         putBoolean("android.content.extra.IS_SENSITIVE", true)
     }
-    clipboard.setPrimaryClip(clip)
+    return write_to_clipboard(context, clip)
 }

@@ -239,6 +239,34 @@ class PreferencesMergeTest {
     }
 
     @Test
+    fun read_receipt_choice_travels_between_the_web_key_and_the_android_field() {
+        val merged = merge_decrypted_preferences(json, """{"show_read_receipts": true}""", null)
+
+        assertTrue(merged.send_read_receipts)
+
+        val encoded = json.parseToJsonElement(
+            encode_preferences_preserving_unknown(
+                json,
+                UserPreferences(send_read_receipts = true),
+                "{}",
+            ),
+        ).jsonObject
+
+        assertTrue(encoded["show_read_receipts"]!!.jsonPrimitive.content.toBoolean())
+    }
+
+    @Test
+    fun read_receipt_choice_prefers_its_own_key_over_the_legacy_web_key() {
+        val blob = """
+            {"send_read_receipts": true, "show_read_receipts": false}
+        """.trimIndent()
+
+        val merged = merge_decrypted_preferences(json, blob, null)
+
+        assertTrue(merged.send_read_receipts)
+    }
+
+    @Test
     fun own_key_wins_when_the_alias_agrees_with_it() {
         val blob = """
             {"underline_links": false, "link_underlines": false}
@@ -269,5 +297,46 @@ class PreferencesMergeTest {
         assertEquals("3_seconds", encoded["mark_as_read_delay"]!!.jsonPrimitive.content)
         assertEquals("always", encoded["protected_folder_lock_mode"]!!.jsonPrimitive.content)
         assertEquals("1", encoded["web_only"]!!.jsonPrimitive.content)
+    }
+
+    private fun blob_with_font_size(value: String): String {
+        val full = json.encodeToString(UserPreferences.serializer(), UserPreferences())
+        return full.replace(Regex("\"font_size_scale\":\"[^\"]*\""), "\"font_size_scale\":" + value)
+    }
+
+    @Test
+    fun adopts_a_numeric_font_size_from_the_web_client() {
+        val merged = merge_decrypted_preferences(json, blob_with_font_size("19"), null)
+
+        assertEquals("extra_large", merged.font_size_scale)
+    }
+
+    @Test
+    fun maps_the_web_default_font_size_to_the_default_bucket() {
+        val merged = merge_decrypted_preferences(json, blob_with_font_size("15"), null)
+
+        assertEquals("default", merged.font_size_scale)
+    }
+
+    @Test
+    fun keeps_the_exact_numeric_font_size_when_the_bucket_is_unchanged() {
+        val original = blob_with_font_size("13")
+        val merged = merge_decrypted_preferences(json, original, null)
+        val encoded = encode_preferences_preserving_unknown(json, merged, original)
+        val value = json.parseToJsonElement(encoded).jsonObject["font_size_scale"]!!.jsonPrimitive
+
+        assertEquals("13", value.content)
+    }
+
+    @Test
+    fun writes_the_chosen_bucket_when_the_font_size_changes() {
+        val original = blob_with_font_size("13")
+        val merged = merge_decrypted_preferences(json, original, null)
+        val updated = merged.copy(font_size_scale = "large")
+        val encoded = encode_preferences_preserving_unknown(json, updated, original)
+        val value = json.parseToJsonElement(encoded).jsonObject["font_size_scale"]!!.jsonPrimitive
+
+        assertEquals("large", value.content)
+        assertTrue(value.isString)
     }
 }

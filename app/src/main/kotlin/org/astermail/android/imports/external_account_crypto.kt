@@ -68,7 +68,7 @@ private fun derive_hmac_key(master: ByteArray): SecretKeySpec {
 fun generate_account_token(email: String, master_key: ByteArray): String {
     val hmac_key = derive_hmac_key(master_key)
     val mac = Mac.getInstance("HmacSHA256").apply { init(hmac_key) }
-    val normalized = email.lowercase().trim().toByteArray(Charsets.UTF_8)
+    val normalized = email.lowercase(java.util.Locale.ROOT).trim().toByteArray(Charsets.UTF_8)
     val signed = mac.doFinal(normalized)
     return Base64.encodeToString(signed, Base64.NO_WRAP)
 }

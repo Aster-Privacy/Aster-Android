@@ -28,6 +28,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.astermail.android.R
+import org.astermail.android.localized_api_error
 import java.security.MessageDigest
 import java.security.SecureRandom
 import javax.crypto.Mac
@@ -189,11 +190,13 @@ data class SettingsUiState(
     val domains_loading: Boolean = false,
     val storage: StorageOverview? = null,
     val subscription: SubscriptionInfo? = null,
+    val subscription_load_failed: Boolean = false,
     val security_status: SecurityStatusResponse? = null,
     val labels: List<LabelItem> = emptyList(),
     val tags: List<TagItem> = emptyList(),
     val referral: ReferralInfoResponse? = null,
     val referral_history: List<ReferralHistoryItem> = emptyList(),
+    val referral_load_failed: Boolean = false,
     val preferences: UserPreferences? = null,
     val preferences_authoritative: Boolean = false,
     val reserved_addresses: List<ReservedAddress> = emptyList(),
@@ -203,12 +206,15 @@ data class SettingsUiState(
     val forwarding_resending_address: String? = null,
     val forwarding_notice: String? = null,
     val api_keys: List<ApiKeyInfo> = emptyList(),
+    val api_key_creating: Boolean = false,
+    val forwarding_rules_load_failed: Boolean = false,
     val webhooks: List<WebhookInfo> = emptyList(),
     val directories: List<AliasDirectory> = emptyList(),
     val directories_loading: Boolean = false,
     val deleted_aliases: List<DecryptedDeletedAlias> = emptyList(),
     val deleted_aliases_loading: Boolean = false,
     val alias_preferences: AliasPreferences? = null,
+    val alias_preferences_load_failed: Boolean = false,
     val expanded_alias_ids: Set<String> = emptySet(),
     val alias_details: Map<String, AliasDetailState> = emptyMap(),
     val mail_rules: List<org.astermail.android.api.mail_rules.MailRule> = emptyList(),
@@ -217,15 +223,23 @@ data class SettingsUiState(
     val recovery_email_verified: Boolean = false,
     val recovery_email_step_up_required: Boolean = false,
     val login_alerts_enabled: Boolean? = null,
+    val login_alerts_load_failed: Boolean = false,
     val hardware_keys: List<HardwareKey> = emptyList(),
+    val hardware_keys_load_failed: Boolean = false,
     val trusted_devices: List<TrustedDevice> = emptyList(),
+    val trusted_devices_load_failed: Boolean = false,
     val audit_events: List<AuditEvent> = emptyList(),
+    val audit_events_load_failed: Boolean = false,
     val vanguard_enabled: Boolean? = null,
+    val vanguard_status_load_failed: Boolean = false,
     val security_loading: Boolean = false,
     val pgp_key_info: org.astermail.android.api.encryption.PgpKeyInfo? = null,
     val recovery_codes_status: org.astermail.android.api.encryption.RecoveryCodesStatus? = null,
     val encryption_settings: org.astermail.android.api.encryption.EncryptionSettings? = null,
+    val spam_settings: org.astermail.android.api.preferences.SpamSettings? = null,
+    val encryption_settings_load_failed: Boolean = false,
     val wkd_status: org.astermail.android.api.encryption.WkdStatusResponse? = null,
+    val wkd_status_load_failed: Boolean = false,
     val keyserver_status: org.astermail.android.api.encryption.KeyserverStatusResponse? = null,
     val badges: List<Badge> = emptyList(),
     val badge_preferences: org.astermail.android.api.user.BadgePreferences? = null,
@@ -448,6 +462,7 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(user = user, is_loading = false)
                 auth_repository.absorb_profile(user)
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     is_loading = false,
                     error = user_facing_error(t),
@@ -467,6 +482,7 @@ class SettingsViewModel @Inject constructor(
                 }
                 persist_cached_badges(result)
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_badges", t)
             }
         }
@@ -475,6 +491,7 @@ class SettingsViewModel @Inject constructor(
                 val prefs = user_api.fetch_badge_preferences()
                 _state.value = _state.value.copy(badge_preferences = prefs)
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_badge_preferences", t)
             }
         }
@@ -499,7 +516,11 @@ class SettingsViewModel @Inject constructor(
                 val updated = user_api.update_badge_preferences(request)
                 _state.value = _state.value.copy(badge_preferences = updated)
             } catch (t: Throwable) {
-                _state.value = _state.value.copy(badge_preferences = previous)
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.value = _state.value.copy(
+                    badge_preferences = previous,
+                    action_result = user_facing_error(t),
+                )
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "update_badge_preferences", t)
             }
         }
@@ -542,6 +563,7 @@ class SettingsViewModel @Inject constructor(
                 val response = preferences_api.get_default_sender()
                 _state.value = _state.value.copy(default_sender_id = response.sender_id)
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_default_sender", t)
             }
         }
@@ -559,6 +581,7 @@ class SettingsViewModel @Inject constructor(
                     product_updates_available = true,
                 )
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 last_product_updates_load_ms = 0L
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_product_updates", t)
             }
@@ -574,6 +597,7 @@ class SettingsViewModel @Inject constructor(
                     org.astermail.android.api.preferences.SetProductUpdatesRequest(subscribed = subscribed),
                 )
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     product_updates = previous,
                     error = user_facing_error(t),
@@ -583,6 +607,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun set_default_sender(sender_id: String?) {
+        val previous = _state.value.default_sender_id
         _state.value = _state.value.copy(default_sender_id = sender_id)
         viewModelScope.launch {
             try {
@@ -590,8 +615,9 @@ class SettingsViewModel @Inject constructor(
                     org.astermail.android.api.preferences.SetDefaultSenderRequest(sender_id = sender_id),
                 )
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
-                    default_sender_id = null,
+                    default_sender_id = previous,
                     error = user_facing_error(t),
                 )
             }
@@ -609,6 +635,7 @@ class SettingsViewModel @Inject constructor(
                 )
                 auth_repository.refresh_profile()
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     save_status = SaveStatus.ERROR,
                     error = user_facing_error(t),
@@ -628,7 +655,9 @@ class SettingsViewModel @Inject constructor(
             }
             auth_repository.refresh_profile()
             true
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            _state.value = _state.value.copy(action_result = user_facing_error(t))
             false
         }
     }
@@ -643,6 +672,7 @@ class SettingsViewModel @Inject constructor(
                     is_loading = false,
                 )
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     is_loading = false,
                     error = user_facing_error(t),
@@ -661,9 +691,10 @@ class SettingsViewModel @Inject constructor(
                 )
                 val refreshed = settings_api.list_sessions()
                 _state.value = _state.value.copy(sessions = refreshed.sessions)
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
-                    action_result = context.getString(R.string.failed_revoke_session),
+                    action_result = localized_api_error(context, t, context.getString(R.string.failed_revoke_session)),
                 )
             }
         }
@@ -678,7 +709,8 @@ class SettingsViewModel @Inject constructor(
                     connection_method = response.method ?: "direct",
                     connection_loading = false,
                 )
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(connection_loading = false)
             }
         }
@@ -692,11 +724,12 @@ class SettingsViewModel @Inject constructor(
             try {
                 settings_api.update_connection_preference(method)
                 _state.value = _state.value.copy(connection_saving = false)
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     connection_method = previous,
                     connection_saving = false,
-                    action_result = context.getString(R.string.failed_save_connection_preference),
+                    action_result = localized_api_error(context, t, context.getString(R.string.failed_save_connection_preference)),
                 )
             }
         }
@@ -710,9 +743,10 @@ class SettingsViewModel @Inject constructor(
                     sessions = _state.value.sessions.filter { it.is_current },
                     action_result = context.getString(R.string.all_other_sessions_signed_out),
                 )
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
-                    action_result = context.getString(R.string.failed_sign_out_other_sessions),
+                    action_result = localized_api_error(context, t, context.getString(R.string.failed_sign_out_other_sessions)),
                 )
             }
         }
@@ -783,6 +817,7 @@ class SettingsViewModel @Inject constructor(
                     it.copy(blocked_senders = decrypted, blocked_senders_loading = false)
                 }
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.update {
                     it.copy(
                         blocked_senders_loading = false,
@@ -795,7 +830,7 @@ class SettingsViewModel @Inject constructor(
 
     fun block_sender(address: String, on_result: (Boolean) -> Unit = {}) {
         viewModelScope.launch {
-            val normalized = address.trim().lowercase()
+            val normalized = address.trim().lowercase(java.util.Locale.ROOT)
             if (normalized.isEmpty()) {
                 on_result(false)
                 return@launch
@@ -820,9 +855,10 @@ class SettingsViewModel @Inject constructor(
                     )
                 }
                 on_result(true)
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
-                    action_result = context.getString(R.string.failed_block_sender),
+                    action_result = localized_api_error(context, t, context.getString(R.string.failed_block_sender)),
                 )
                 on_result(false)
             }
@@ -835,11 +871,12 @@ class SettingsViewModel @Inject constructor(
             _state.update { s -> s.copy(blocked_senders = s.blocked_senders.filter { it.sender_token != sender_token }) }
             try {
                 settings_api.unblock_sender(sender_token)
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.update { s ->
                     s.copy(
                         blocked_senders = previous,
-                        action_result = context.getString(R.string.failed_unblock_sender),
+                        action_result = localized_api_error(context, t, context.getString(R.string.failed_unblock_sender)),
                     )
                 }
             }
@@ -884,7 +921,8 @@ class SettingsViewModel @Inject constructor(
             val json = decrypt_alias_field(item.encrypted_sender_data, item.sender_data_nonce)
             val parsed = kotlinx.serialization.json.Json.parseToJsonElement(json).jsonObject
             parsed["email"]?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() }
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
             null
         }
     }
@@ -965,7 +1003,8 @@ class SettingsViewModel @Inject constructor(
             val json = decrypt_alias_field(item.encrypted_sender_data, item.sender_data_nonce)
             val parsed = kotlinx.serialization.json.Json.parseToJsonElement(json).jsonObject
             parsed["email"]?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() }
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
             null
         }
     }
@@ -1048,7 +1087,7 @@ class SettingsViewModel @Inject constructor(
 
     fun allow_sender(address: String, is_domain: Boolean, on_result: (Boolean) -> Unit = {}) {
         viewModelScope.launch {
-            val normalized = address.trim().lowercase()
+            val normalized = address.trim().lowercase(java.util.Locale.ROOT)
             if (normalized.isEmpty()) {
                 on_result(false)
                 return@launch
@@ -1076,7 +1115,7 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
-                    action_result = context.getString(R.string.failed_allow_sender),
+                    action_result = localized_api_error(context, t, context.getString(R.string.failed_allow_sender)),
                 )
                 on_result(false)
             }
@@ -1094,7 +1133,7 @@ class SettingsViewModel @Inject constructor(
                 _state.update { s ->
                     s.copy(
                         allowed_senders = previous,
-                        action_result = context.getString(R.string.failed_remove_allowed_sender),
+                        action_result = localized_api_error(context, t, context.getString(R.string.failed_remove_allowed_sender)),
                     )
                 }
             }
@@ -1110,6 +1149,7 @@ class SettingsViewModel @Inject constructor(
                 val response = mail_rules_api.list()
                 _state.update { it.copy(mail_rules = response.rules) }
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 last_mail_rules_load_ms = 0L
                 if (org.astermail.android.BuildConfig.DEBUG) {
                     android.util.Log.w("SettingsVM", "load_mail_rules failed", t)
@@ -1173,6 +1213,8 @@ class SettingsViewModel @Inject constructor(
                     is_loading = false,
                 )
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                last_aliases_load_ms = 0L
                 _state.value = _state.value.copy(
                     is_loading = false,
                     error = user_facing_error(t),
@@ -1192,7 +1234,8 @@ class SettingsViewModel @Inject constructor(
                     if (addr.encrypted_local_part.isBlank()) return@map addr
                     val local_part = try {
                         decrypt_alias_field(addr.encrypted_local_part, addr.local_part_nonce)
-                    } catch (_: Throwable) {
+                    } catch (t: Throwable) {
+                        if (t is kotlinx.coroutines.CancellationException) throw t
                         return@map addr.copy(encrypted_local_part = "", decryption_failed = true)
                     }
                     val display_name = addr.encrypted_display_name
@@ -1200,7 +1243,8 @@ class SettingsViewModel @Inject constructor(
                         ?.let {
                             try {
                                 decrypt_alias_field(it, addr.display_name_nonce.orEmpty())
-                            } catch (_: Throwable) {
+                            } catch (t: Throwable) {
+                                if (t is kotlinx.coroutines.CancellationException) throw t
                                 null
                             }
                         }
@@ -1208,6 +1252,7 @@ class SettingsViewModel @Inject constructor(
                 }
                 _state.value = _state.value.copy(custom_domain_addresses = decrypted)
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) {
                     android.util.Log.w("SettingsVM", "load_custom_domain_addresses failed", t)
                 }
@@ -1221,9 +1266,10 @@ class SettingsViewModel @Inject constructor(
                 settings_api.delete_alias(alias_id)
                 _state.update { s -> s.copy(aliases = s.aliases.filter { it.id != alias_id }) }
                 load_deleted_aliases()
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
-                    action_result = context.getString(R.string.failed_delete_alias),
+                    action_result = localized_api_error(context, t, context.getString(R.string.failed_delete_alias)),
                 )
             }
         }
@@ -1240,6 +1286,7 @@ class SettingsViewModel @Inject constructor(
                     deleted_aliases_loading = false,
                 )
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) {
                     android.util.Log.w("SettingsVM", "load_deleted_aliases failed", t)
                 }
@@ -1257,9 +1304,10 @@ class SettingsViewModel @Inject constructor(
                     action_result = context.getString(R.string.alias_restored),
                 )
                 load_aliases(force = true)
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
-                    action_result = context.getString(R.string.failed_restore_alias),
+                    action_result = localized_api_error(context, t, context.getString(R.string.failed_restore_alias)),
                 )
                 load_deleted_aliases()
             }
@@ -1274,9 +1322,10 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     action_result = context.getString(R.string.alias_purged),
                 )
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
-                    action_result = context.getString(R.string.failed_purge_alias),
+                    action_result = localized_api_error(context, t, context.getString(R.string.failed_purge_alias)),
                 )
                 load_deleted_aliases()
             }
@@ -1291,9 +1340,10 @@ class SettingsViewModel @Inject constructor(
                     deleted_aliases = emptyList(),
                     action_result = context.getString(R.string.trash_emptied),
                 )
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
-                    action_result = context.getString(R.string.failed_empty_trash),
+                    action_result = localized_api_error(context, t, context.getString(R.string.failed_empty_trash)),
                 )
                 load_deleted_aliases()
             }
@@ -1308,13 +1358,15 @@ class SettingsViewModel @Inject constructor(
                         android.util.Base64.decode(alias.encrypted_local_part, android.util.Base64.DEFAULT),
                         Charsets.UTF_8,
                     )
-                } catch (_: Throwable) {
+                } catch (t: Throwable) {
+                    if (t is kotlinx.coroutines.CancellationException) throw t
                     alias.encrypted_local_part
                 }
             } else {
                 decrypt_alias_field(alias.encrypted_local_part, alias.local_part_nonce)
             }
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
             ""
         }
         val enc_name = alias.encrypted_display_name
@@ -1322,7 +1374,8 @@ class SettingsViewModel @Inject constructor(
         val display_name = if (!enc_name.isNullOrBlank() && !name_nonce.isNullOrBlank()) {
             try {
                 decrypt_alias_field(enc_name, name_nonce)
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 null
             }
         } else {
@@ -1361,7 +1414,8 @@ class SettingsViewModel @Inject constructor(
                     UpdateAliasRequest(never_inbox = to_archive)
                 }
                 settings_api.update_alias(alias_id, request)
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.update { s ->
                     s.copy(
                         aliases = s.aliases.map {
@@ -1375,7 +1429,7 @@ class SettingsViewModel @Inject constructor(
                     )
                 }
                 _state.value = _state.value.copy(
-                    action_result = context.getString(R.string.something_went_wrong),
+                    action_result = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)),
                 )
             }
         }
@@ -1396,7 +1450,8 @@ class SettingsViewModel @Inject constructor(
             try {
                 val updated = settings_api.update_alias_delivery_label(alias_id, next_token)
                 if (!updated) throw IllegalStateException("update_alias_delivery_label failed")
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.update { s ->
                     s.copy(
                         aliases = s.aliases.map {
@@ -1407,7 +1462,7 @@ class SettingsViewModel @Inject constructor(
                     )
                 }
                 _state.value = _state.value.copy(
-                    action_result = context.getString(R.string.something_went_wrong),
+                    action_result = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)),
                 )
             }
         }
@@ -1513,12 +1568,13 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 settings_api.update_alias(alias_id, UpdateAliasRequest(is_enabled = new_enabled))
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.update { s ->
                     s.copy(aliases = s.aliases.map { if (it.id == alias_id) it.copy(is_enabled = current.is_enabled) else it })
                 }
                 _state.value = _state.value.copy(
-                    action_result = context.getString(R.string.something_went_wrong),
+                    action_result = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)),
                 )
             }
         }
@@ -1541,12 +1597,13 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     action_result = context.getString(R.string.alias_note_updated),
                 )
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.update { s ->
                     s.copy(aliases = s.aliases.map { if (it.id == alias_id) it.copy(encrypted_note = current.encrypted_note) else it })
                 }
                 _state.value = _state.value.copy(
-                    action_result = context.getString(R.string.something_went_wrong),
+                    action_result = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)),
                 )
             }
         }
@@ -1601,10 +1658,12 @@ class SettingsViewModel @Inject constructor(
                     )
                 }
             }
+            val section_failed = listOf(stats, pins, contacts, log, rules, apply_run).any { it.failed }
             update_alias_detail(alias_id) {
                 it.copy(
                     loading = false,
-                    loaded = true,
+                    loaded = !section_failed,
+                    load_failed = section_failed,
                     stats = stats.value,
                     stats_locked = stats.locked,
                     pin_mode = pins.value?.mode ?: SENDER_PIN_MODE_OFF,
@@ -1623,14 +1682,15 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    private data class AliasSectionResult<T>(val value: T?, val locked: Boolean)
+    private data class AliasSectionResult<T>(val value: T?, val locked: Boolean, val failed: Boolean = false)
 
     private suspend fun <T> fetch_alias_section(block: suspend () -> T): AliasSectionResult<T> {
         return try {
             AliasSectionResult(block(), false)
         } catch (t: Throwable) {
             if (t is kotlinx.coroutines.CancellationException) throw t
-            AliasSectionResult(null, is_feature_locked_error(t))
+            val locked = is_feature_locked_error(t)
+            AliasSectionResult(null, locked, !locked)
         }
     }
 
@@ -1648,13 +1708,14 @@ class SettingsViewModel @Inject constructor(
         if (ciphertext.isNullOrBlank() || nonce.isNullOrBlank()) return null
         return try {
             decrypt_alias_field(ciphertext, nonce)
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
             null
         }
     }
 
     private fun sha256_base64(text: String): String {
-        val normalized = text.lowercase().trim()
+        val normalized = text.lowercase(java.util.Locale.ROOT).trim()
         val digest = MessageDigest.getInstance("SHA-256").digest(normalized.toByteArray(Charsets.UTF_8))
         return android.util.Base64.encodeToString(digest, android.util.Base64.NO_WRAP)
     }
@@ -1800,12 +1861,13 @@ class SettingsViewModel @Inject constructor(
         if (with_scheme.length > MAX_WEBSITE_URL_LENGTH) return null
         return try {
             val uri = java.net.URI(with_scheme)
-            val scheme = uri.scheme?.lowercase()
+            val scheme = uri.scheme?.lowercase(java.util.Locale.ROOT)
             if (scheme != "https" && scheme != "http") return null
             val host = uri.host
             if (host.isNullOrBlank() || !host.contains(".")) return null
             with_scheme
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
             null
         }
     }
@@ -1830,7 +1892,8 @@ class SettingsViewModel @Inject constructor(
     private fun websites_payload_to_list(raw: String): List<String> {
         val parsed = try {
             kotlinx.serialization.json.Json.parseToJsonElement(raw)
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
             null
         }
         val entries = if (parsed is kotlinx.serialization.json.JsonArray) {
@@ -2138,6 +2201,7 @@ class SettingsViewModel @Inject constructor(
                 val response = settings_api.list_domains()
                 _state.value = _state.value.copy(domains = response.domains, domains_loading = false)
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     domains_loading = false,
                     action_result = user_facing_error(t),
@@ -2152,6 +2216,7 @@ class SettingsViewModel @Inject constructor(
                 settings_api.add_domain(AddDomainRequest(domain_name = domain_name))
                 load_domains()
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     action_result = user_facing_error(t),
                 )
@@ -2165,6 +2230,7 @@ class SettingsViewModel @Inject constructor(
                 settings_api.delete_domain(domain_id)
                 _state.update { s -> s.copy(domains = s.domains.filter { it.id != domain_id }) }
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     action_result = user_facing_error(t),
                 )
@@ -2184,22 +2250,26 @@ class SettingsViewModel @Inject constructor(
                 _state.update { s ->
                     s.copy(domains = s.domains.map { if (it.id == domain_id) updated else it })
                 }
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.update { s ->
                     s.copy(domains = s.domains.map { if (it.id == domain_id) current else it })
                 }
                 _state.value = _state.value.copy(
-                    action_result = context.getString(R.string.something_went_wrong),
+                    action_result = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)),
                 )
             }
         }
     }
 
-    suspend fun get_dns_records_now(domain_id: String): List<org.astermail.android.api.settings.DnsRecord> {
+    suspend fun get_dns_records_now(domain_id: String): List<org.astermail.android.api.settings.DnsRecord>? {
         return try {
             settings_api.get_dns_records(domain_id).records
-        } catch (_: Throwable) {
-            emptyList()
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "get_dns_records_now", t)
+            _state.update { it.copy(action_result = localized_api_error(context, t, context.getString(R.string.failed_load_dns_records))) }
+            null
         }
     }
 
@@ -2233,14 +2303,12 @@ class SettingsViewModel @Inject constructor(
             if (result.success) {
                 DomainVerifyOutcome(true, context.getString(R.string.domain_verify_success))
             } else {
-                DomainVerifyOutcome(
-                    false,
-                    result.message.ifBlank { pending_records_message(result) },
-                )
+                DomainVerifyOutcome(false, pending_records_message(result))
             }
         } catch (t: kotlin.coroutines.cancellation.CancellationException) {
             throw t
         } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
             when {
                 t is ApiError.RateLimited -> DomainVerifyOutcome(false, rate_limit_message(t), rate_limited = true)
                 is_transport_failure(t) -> {
@@ -2313,7 +2381,7 @@ class SettingsViewModel @Inject constructor(
         val alias = _state.value.aliases.firstOrNull { it.id == alias_id }
             ?: return AliasRestoreResult.Unverifiable
         if (alias.routing_address_hash.isBlank()) return AliasRestoreResult.Unverifiable
-        val local_part = claimed_local_part.trim().lowercase()
+        val local_part = claimed_local_part.trim().lowercase(java.util.Locale.ROOT)
         if (local_part.isBlank()) return AliasRestoreResult.AddressMismatch
         return try {
             withContext(default_dispatcher) {
@@ -2342,6 +2410,7 @@ class SettingsViewModel @Inject constructor(
                 }
             }.also { if (it is AliasRestoreResult.Restored) load_aliases(force = true) }
         } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
             AliasRestoreResult.Failed(user_facing_error(t))
         }
     }
@@ -2354,8 +2423,8 @@ class SettingsViewModel @Inject constructor(
 
     suspend fun check_alias_availability(local_part: String, domain: String): AliasAvailability {
         return try {
-            val addr_hash = compute_alias_address_hash(local_part.lowercase(), domain)
-            val routing_hash = compute_routing_address_hash(local_part.lowercase(), domain)
+            val addr_hash = compute_alias_address_hash(local_part.lowercase(java.util.Locale.ROOT), domain)
+            val routing_hash = compute_routing_address_hash(local_part.lowercase(java.util.Locale.ROOT), domain)
             val response = settings_api.check_alias_availability(
                 CheckAliasAvailabilityRequest(
                     alias_address_hash = addr_hash,
@@ -2364,6 +2433,7 @@ class SettingsViewModel @Inject constructor(
             )
             if (response.available) AliasAvailability.Available else AliasAvailability.Taken
         } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
             if (org.astermail.android.BuildConfig.DEBUG) {
                 android.util.Log.w("SettingsVM", "check_alias_availability failed for @$domain", t)
             }
@@ -2372,9 +2442,9 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun domain_address_availability(local_part: String, domain_name: String): AliasAvailability {
-        val target = "${local_part.trim().lowercase()}@${domain_name.lowercase()}"
+        val target = "${local_part.trim().lowercase(java.util.Locale.ROOT)}@${domain_name.lowercase(java.util.Locale.ROOT)}"
         val taken = _state.value.custom_domain_addresses.any {
-            !it.decryption_failed && it.address.lowercase() == target
+            !it.decryption_failed && it.address.lowercase(java.util.Locale.ROOT) == target
         }
         return if (taken) AliasAvailability.Taken else AliasAvailability.Available
     }
@@ -2384,12 +2454,13 @@ class SettingsViewModel @Inject constructor(
             val response = settings_api.check_directory_availability(
                 DirectoryAvailabilityRequest(
                     directory_hash = compute_directory_address_hash(key, domain),
-                    legacy_hash = compute_directory_key_hash(key.lowercase()),
-                    domain = domain.lowercase(),
+                    legacy_hash = compute_directory_key_hash(key.lowercase(java.util.Locale.ROOT)),
+                    domain = domain.lowercase(java.util.Locale.ROOT),
                 )
             )
             response.available
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
             false
         }
     }
@@ -2401,7 +2472,8 @@ class SettingsViewModel @Inject constructor(
                 val response = settings_api.list_directories()
                 val decrypted = response.directories.map { decrypt_directory(it) }
                 _state.value = _state.value.copy(directories = decrypted, directories_loading = false)
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(directories_loading = false)
             }
         }
@@ -2410,11 +2482,11 @@ class SettingsViewModel @Inject constructor(
     suspend fun create_directory_now(key: String, domain: String, captcha_token: String? = null): Boolean {
         return try {
             val dir_hash = compute_directory_address_hash(key, domain)
-            val (enc_label, label_nonce) = encrypt_alias_field(key.lowercase())
+            val (enc_label, label_nonce) = encrypt_alias_field(key.lowercase(java.util.Locale.ROOT))
             settings_api.create_directory(
                 CreateDirectoryRequest(
                     directory_hash = dir_hash,
-                    legacy_hash = compute_directory_key_hash(key.lowercase()),
+                    legacy_hash = compute_directory_key_hash(key.lowercase(java.util.Locale.ROOT)),
                     encrypted_label = enc_label,
                     label_nonce = label_nonce,
                     domain = domain,
@@ -2425,6 +2497,7 @@ class SettingsViewModel @Inject constructor(
             load_directories()
             true
         } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
             _state.value = _state.value.copy(action_result = user_facing_error(t))
             false
         }
@@ -2437,8 +2510,14 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 settings_api.update_directory(directory_id, UpdateDirectoryRequest(auto_create_enabled = new_val))
-            } catch (_: Throwable) {
-                _state.update { s -> s.copy(directories = s.directories.map { if (it.id == directory_id) it.copy(auto_create_enabled = !new_val) else it }) }
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.update { s ->
+                    s.copy(
+                        directories = s.directories.map { if (it.id == directory_id) it.copy(auto_create_enabled = !new_val) else it },
+                        action_result = user_facing_error(t),
+                    )
+                }
             }
         }
     }
@@ -2448,8 +2527,9 @@ class SettingsViewModel @Inject constructor(
             try {
                 settings_api.delete_directory(directory_id)
                 _state.update { s -> s.copy(directories = s.directories.filter { it.id != directory_id }) }
-            } catch (_: Throwable) {
-                _state.value = _state.value.copy(action_result = context.getString(R.string.something_went_wrong))
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.value = _state.value.copy(action_result = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)))
             }
         }
     }
@@ -2459,10 +2539,14 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val prefs = settings_api.get_alias_preferences()
-                _state.value = _state.value.copy(alias_preferences = prefs)
+                _state.value = _state.value.copy(alias_preferences = prefs, alias_preferences_load_failed = false)
                 persist_cached_alias_preferences(prefs)
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_alias_preferences", t)
+                _state.value = _state.value.copy(
+                    alias_preferences_load_failed = _state.value.alias_preferences == null,
+                )
             }
         }
     }
@@ -2507,10 +2591,11 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 settings_api.update_alias_preferences(update)
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.update { it.copy(alias_preferences = previous) }
                 previous?.let { persist_cached_alias_preferences(it) }
-                _state.value = _state.value.copy(action_result = context.getString(R.string.something_went_wrong))
+                _state.value = _state.value.copy(action_result = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)))
             }
         }
     }
@@ -2523,9 +2608,9 @@ class SettingsViewModel @Inject constructor(
         note: String? = null,
     ): Boolean {
         return try {
-            val (enc_local, local_nonce) = encrypt_alias_field(local_part.lowercase())
-            val addr_hash = compute_alias_address_hash(local_part.lowercase(), domain)
-            val routing_hash = compute_routing_address_hash(local_part.lowercase(), domain)
+            val (enc_local, local_nonce) = encrypt_alias_field(local_part.lowercase(java.util.Locale.ROOT))
+            val addr_hash = compute_alias_address_hash(local_part.lowercase(java.util.Locale.ROOT), domain)
+            val routing_hash = compute_routing_address_hash(local_part.lowercase(java.util.Locale.ROOT), domain)
             val name_pair = display_name?.trim()?.takeIf { it.isNotBlank() }?.let { encrypt_alias_field(it) }
             val note_pair = note
                 ?.replace(Regex("[\\x00-\\x08\\x0B-\\x1F\\x7F]"), "")
@@ -2549,6 +2634,7 @@ class SettingsViewModel @Inject constructor(
             load_aliases(force = true)
             true
         } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
             _state.value = _state.value.copy(action_result = user_facing_error(t))
             false
         }
@@ -2556,7 +2642,7 @@ class SettingsViewModel @Inject constructor(
 
     suspend fun create_domain_address_now(local_part: String, domain_id: String, domain_name: String, captcha_token: String? = null, display_name: String? = null): Boolean {
         return try {
-            val norm = local_part.trim().lowercase()
+            val norm = local_part.trim().lowercase(java.util.Locale.ROOT)
             val (enc_local, local_nonce) = encrypt_alias_field(norm)
             val addr_hash = compute_domain_address_hash(norm, domain_name)
             val routing_hash = compute_domain_address_routing_hash(norm, domain_name)
@@ -2573,9 +2659,10 @@ class SettingsViewModel @Inject constructor(
                     captcha_token = captcha_token,
                 )
             )
-            load_custom_domain_addresses()
+            load_custom_domain_addresses(force = true)
             true
         } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
             _state.value = _state.value.copy(action_result = user_facing_error(t))
             false
         }
@@ -2595,7 +2682,7 @@ class SettingsViewModel @Inject constructor(
 
         if (system_rows.isNotEmpty()) {
             val items = system_rows.map { row ->
-                val normalized = row.local_part.lowercase().trim()
+                val normalized = row.local_part.lowercase(java.util.Locale.ROOT).trim()
                 val (enc_local, local_nonce) = encrypt_alias_field(normalized)
                 val name_pair = row.display_name?.takeIf { it.isNotBlank() }?.let { encrypt_alias_field(it) }
                 BulkCreateAliasItem(
@@ -2614,7 +2701,8 @@ class SettingsViewModel @Inject constructor(
                     val response = settings_api.bulk_create_aliases(BulkCreateAliasRequest(batch))
                     created += response.created
                     failed += response.failed
-                } catch (_: Throwable) {
+                } catch (t: Throwable) {
+                    if (t is kotlinx.coroutines.CancellationException) throw t
                     failed += batch.size
                 }
                 processed += batch.size
@@ -2631,7 +2719,7 @@ class SettingsViewModel @Inject constructor(
                 return@forEach
             }
             val items = rows.map { row ->
-                val normalized = row.local_part.lowercase().trim()
+                val normalized = row.local_part.lowercase(java.util.Locale.ROOT).trim()
                 val (enc_local, local_nonce) = encrypt_alias_field(normalized)
                 val name_pair = row.display_name?.takeIf { it.isNotBlank() }?.let { encrypt_alias_field(it) }
                 BulkAddAddressItem(
@@ -2652,7 +2740,8 @@ class SettingsViewModel @Inject constructor(
                     )
                     created += response.created
                     failed += response.failed
-                } catch (_: Throwable) {
+                } catch (t: Throwable) {
+                    if (t is kotlinx.coroutines.CancellationException) throw t
                     failed += batch.size
                 }
                 processed += batch.size
@@ -2697,14 +2786,16 @@ class SettingsViewModel @Inject constructor(
                 try {
                     send_update(with_name = true)
                     created += 1
-                } catch (_: Throwable) {
+                } catch (t: Throwable) {
+                    if (t is kotlinx.coroutines.CancellationException) throw t
                     if (name_pair == null) {
                         failed += 1
                     } else {
                         try {
                             send_update(with_name = false)
                             created += 1
-                        } catch (_: Throwable) {
+                        } catch (t: Throwable) {
+                            if (t is kotlinx.coroutines.CancellationException) throw t
                             failed += 1
                         }
                     }
@@ -2715,7 +2806,7 @@ class SettingsViewModel @Inject constructor(
         }
 
         load_aliases(force = true)
-        load_custom_domain_addresses()
+        load_custom_domain_addresses(force = true)
 
         return created to failed
     }
@@ -2732,6 +2823,7 @@ class SettingsViewModel @Inject constructor(
             try {
                 settings_api.update_domain_address(domain_id, address_id, UpdateDomainAddressRequest(is_enabled = new_val))
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.update { s ->
                     s.copy(
                         custom_domain_addresses = s.custom_domain_addresses.map { if (it.id == address_id) it.copy(is_enabled = current.is_enabled) else it },
@@ -2749,6 +2841,7 @@ class SettingsViewModel @Inject constructor(
                 settings_api.delete_domain_address(domain_id, address_id)
                 _state.update { s -> s.copy(custom_domain_addresses = s.custom_domain_addresses.filter { it.id != address_id }) }
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(action_result = user_facing_error(t))
             }
         }
@@ -2765,6 +2858,7 @@ class SettingsViewModel @Inject constructor(
                 _state.update { s -> s.copy(domains = s.domains + domain) }
                 on_done(domain, null)
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 on_done(null, add_domain_error(t))
             }
         }
@@ -2774,7 +2868,7 @@ class SettingsViewModel @Inject constructor(
         is ApiError.Conflict -> context.getString(R.string.domain_add_conflict)
         is ApiError.ValidationError -> t.messages.firstOrNull { it.isNotBlank() }
             ?: context.getString(R.string.domain_add_invalid)
-        is ApiError.PlanLimitExceeded -> t.detail.ifBlank { context.getString(R.string.domain_add_plan_limit) }
+        is ApiError.PlanLimitExceeded -> context.getString(R.string.domain_add_plan_limit)
         is ApiError.RateLimited -> rate_limit_message(t)
         else -> user_facing_error(t)
     }
@@ -2789,6 +2883,7 @@ class SettingsViewModel @Inject constructor(
                 val overview = settings_api.get_storage_overview()
                 _state.value = _state.value.copy(storage = overview, is_loading = false)
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     is_loading = false,
                     error = user_facing_error(t),
@@ -2802,20 +2897,26 @@ class SettingsViewModel @Inject constructor(
         if (!force && _state.value.subscription != null && now - last_subscription_load_ms < SUBSCRIPTION_TTL_MS) return
         last_subscription_load_ms = now
         viewModelScope.launch {
-            _state.value = _state.value.copy(is_loading = true, error = null)
+            _state.value = _state.value.copy(is_loading = true, error = null, subscription_load_failed = false)
             try {
                 val sub = settings_api.get_subscription()
                 if (org.astermail.android.BuildConfig.DEBUG) {
                     android.util.Log.i("SettingsVM", "subscription loaded status=${sub.status} plan=${sub.plan_name}")
                 }
-                _state.value = _state.value.copy(subscription = sub, is_loading = false)
+                _state.value = _state.value.copy(
+                    subscription = sub,
+                    is_loading = false,
+                    subscription_load_failed = false,
+                )
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) {
                     android.util.Log.w("SettingsVM", "load_subscription failed", t)
                 }
                 _state.value = _state.value.copy(
                     is_loading = false,
                     error = user_facing_error(t),
+                    subscription_load_failed = true,
                 )
             }
         }
@@ -2834,17 +2935,21 @@ class SettingsViewModel @Inject constructor(
                     )
                 }
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_security_status", t)
             }
         }
     }
 
     fun load_login_alerts() {
+        _state.update { it.copy(login_alerts_load_failed = false) }
         viewModelScope.launch {
             try {
                 val status = security_api.get_login_alerts()
-                _state.update { it.copy(login_alerts_enabled = status.enabled) }
+                _state.update { it.copy(login_alerts_enabled = status.enabled, login_alerts_load_failed = false) }
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.update { it.copy(login_alerts_load_failed = it.login_alerts_enabled == null) }
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_login_alerts", t)
             }
         }
@@ -2855,10 +2960,11 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 security_api.set_login_alerts(SetLoginAlertRequest(enabled = enabled))
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.update { it.copy(
                     login_alerts_enabled = !enabled,
-                    action_result = context.getString(R.string.something_went_wrong),
+                    action_result = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)),
                 ) }
             }
         }
@@ -2868,8 +2974,10 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val response = security_api.list_hardware_keys()
-                _state.update { it.copy(hardware_keys = response.keys) }
+                _state.update { it.copy(hardware_keys = response.keys, hardware_keys_load_failed = false) }
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.update { it.copy(hardware_keys_load_failed = it.hardware_keys.isEmpty()) }
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_hardware_keys", t)
             }
         }
@@ -2880,8 +2988,9 @@ class SettingsViewModel @Inject constructor(
             try {
                 security_api.delete_hardware_key(key_id)
                 _state.update { it.copy(hardware_keys = it.hardware_keys.filter { k -> k.id != key_id }) }
-            } catch (_: Throwable) {
-                _state.value = _state.value.copy(action_result = context.getString(R.string.something_went_wrong))
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.value = _state.value.copy(action_result = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)))
             }
         }
     }
@@ -2902,8 +3011,9 @@ class SettingsViewModel @Inject constructor(
                 } else {
                     _state.value = _state.value.copy(action_result = context.getString(R.string.something_went_wrong))
                 }
-            } catch (_: Throwable) {
-                _state.value = _state.value.copy(action_result = context.getString(R.string.something_went_wrong))
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.value = _state.value.copy(action_result = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)))
             }
         }
     }
@@ -2912,8 +3022,10 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val response = security_api.list_trusted_devices()
-                _state.update { it.copy(trusted_devices = response.devices) }
+                _state.update { it.copy(trusted_devices = response.devices, trusted_devices_load_failed = false) }
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.update { it.copy(trusted_devices_load_failed = it.trusted_devices.isEmpty()) }
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_trusted_devices", t)
             }
         }
@@ -2925,8 +3037,9 @@ class SettingsViewModel @Inject constructor(
                 security_api.revoke_trusted_device(device_id)
                 _state.update { it.copy(trusted_devices = it.trusted_devices.filter { d -> d.id != device_id }) }
                 auth_repository.handle_unauthorized_signal(force = true)
-            } catch (_: Throwable) {
-                _state.value = _state.value.copy(action_result = context.getString(R.string.something_went_wrong))
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.value = _state.value.copy(action_result = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)))
             }
         }
     }
@@ -2937,8 +3050,9 @@ class SettingsViewModel @Inject constructor(
                 security_api.revoke_all_trusted_devices()
                 _state.update { it.copy(trusted_devices = emptyList()) }
                 auth_repository.handle_unauthorized_signal(force = true)
-            } catch (_: Throwable) {
-                _state.value = _state.value.copy(action_result = context.getString(R.string.something_went_wrong))
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.value = _state.value.copy(action_result = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)))
             }
         }
     }
@@ -2947,19 +3061,24 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val response = security_api.get_audit_log(per_page = 10)
-                _state.update { it.copy(audit_events = response.events) }
+                _state.update { it.copy(audit_events = response.events, audit_events_load_failed = false) }
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.update { it.copy(audit_events_load_failed = it.audit_events.isEmpty()) }
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_audit_log", t)
             }
         }
     }
 
     fun load_vanguard_status() {
+        _state.update { it.copy(vanguard_status_load_failed = false) }
         viewModelScope.launch {
             try {
                 val v = security_api.get_vanguard_status()
-                _state.update { it.copy(vanguard_enabled = v.enabled) }
+                _state.update { it.copy(vanguard_enabled = v.enabled, vanguard_status_load_failed = false) }
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.update { it.copy(vanguard_status_load_failed = it.vanguard_enabled == null) }
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_vanguard_status", t)
             }
         }
@@ -2970,19 +3089,22 @@ class SettingsViewModel @Inject constructor(
             try {
                 val v = security_api.enable_vanguard()
                 _state.update { it.copy(vanguard_enabled = v.enabled) }
-            } catch (_: Throwable) {
-                _state.value = _state.value.copy(action_result = context.getString(R.string.something_went_wrong))
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.value = _state.value.copy(action_result = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)))
             }
         }
     }
 
-    fun disable_vanguard() {
+    fun disable_vanguard(on_disabled: () -> Unit = {}) {
         viewModelScope.launch {
             try {
                 val v = security_api.disable_vanguard()
                 _state.update { it.copy(vanguard_enabled = v.enabled) }
-            } catch (_: Throwable) {
-                _state.value = _state.value.copy(action_result = context.getString(R.string.something_went_wrong))
+                if (!v.enabled) on_disabled()
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.value = _state.value.copy(action_result = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)))
             }
         }
     }
@@ -2993,6 +3115,7 @@ class SettingsViewModel @Inject constructor(
                 val info = encryption_api.get_pgp_key_info()
                 _state.update { it.copy(pgp_key_info = info) }
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_pgp_key_info", t)
             }
         }
@@ -3004,7 +3127,62 @@ class SettingsViewModel @Inject constructor(
                 val status = encryption_api.get_recovery_codes_status()
                 _state.update { it.copy(recovery_codes_status = status) }
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_recovery_codes_status", t)
+            }
+        }
+    }
+
+    fun load_spam_settings() {
+        viewModelScope.launch {
+            val settings = try {
+                preferences_api.get_spam_settings()
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_spam_settings", t)
+                null
+            } ?: return@launch
+            _state.update { it.copy(spam_settings = settings) }
+            mirror_spam_settings_to_preferences(settings)
+        }
+    }
+
+    private fun mirror_spam_settings_to_preferences(settings: org.astermail.android.api.preferences.SpamSettings) {
+        val prefs = _state.value.preferences ?: return
+        if (prefs.spam_filter_enabled == settings.spam_filter_enabled &&
+            prefs.spam_sensitivity == settings.spam_sensitivity &&
+            prefs.auto_delete_spam_days == settings.spam_retention_days
+        ) {
+            return
+        }
+        if (!prefs_load_succeeded) return
+        if (account_uses_encrypted_prefs && !_state.value.preferences_authoritative) return
+        save_preferences(
+            prefs.copy(
+                spam_filter_enabled = settings.spam_filter_enabled,
+                spam_sensitivity = settings.spam_sensitivity,
+                auto_delete_spam_days = settings.spam_retention_days,
+            )
+        )
+    }
+
+    fun save_spam_settings(settings: org.astermail.android.api.preferences.SpamSettings) {
+        val previous = _state.value.spam_settings
+        _state.update { it.copy(spam_settings = settings) }
+        viewModelScope.launch {
+            val saved = try {
+                preferences_api.save_spam_settings(settings)
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                false
+            }
+            if (!saved) {
+                _state.update {
+                    it.copy(
+                        spam_settings = previous,
+                        action_result = context.getString(R.string.settings_save_failed_banner),
+                    )
+                }
             }
         }
     }
@@ -3013,23 +3191,116 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val settings = encryption_api.get_encryption_settings()
-                _state.update { it.copy(encryption_settings = settings) }
+                _state.update { it.copy(encryption_settings = settings, encryption_settings_load_failed = false) }
+                converge_require_encryption(settings.require_encryption)
+                converge_encrypt_by_default(settings.encrypt_by_default == true)
+                converge_storage_format(settings.ipfs_storage_enabled)
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_encryption_settings", t)
+                _state.update { it.copy(encryption_settings_load_failed = it.encryption_settings == null) }
+            }
+        }
+    }
+
+    private suspend fun converge_require_encryption(server_value: Boolean) {
+        val prefs = _state.value.preferences ?: return
+        if (prefs.require_encryption == server_value) return
+        if (prefs.require_encryption) {
+            val saved = try {
+                encryption_api.update_encryption_settings(
+                    org.astermail.android.api.encryption.UpdateEncryptionSettingsRequest(require_encryption = true)
+                )
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                false
+            }
+            if (saved) {
+                _state.update { it.copy(encryption_settings = it.encryption_settings?.copy(require_encryption = true)) }
+            }
+            return
+        }
+        if (prefs_load_succeeded && (!account_uses_encrypted_prefs || _state.value.preferences_authoritative)) {
+            save_preferences(prefs.copy(require_encryption = true))
+        }
+    }
+
+    private fun converge_encrypt_by_default(server_value: Boolean) {
+        val prefs = _state.value.preferences ?: return
+        if (prefs.encrypt_emails == server_value) return
+        if (!prefs_load_succeeded) return
+        if (account_uses_encrypted_prefs && !_state.value.preferences_authoritative) return
+        save_preferences(prefs.copy(encrypt_emails = server_value))
+    }
+
+    private fun converge_storage_format(server_ipfs_enabled: Boolean) {
+        val prefs = _state.value.preferences ?: return
+        val server_format = if (server_ipfs_enabled) "ipfs" else "aster"
+        if (prefs.storage_format == server_format) return
+        if (!prefs_load_succeeded) return
+        if (account_uses_encrypted_prefs && !_state.value.preferences_authoritative) return
+        save_preferences(prefs.copy(storage_format = server_format))
+    }
+
+    fun set_storage_format(format: String) {
+        val prefs = _state.value.preferences ?: return
+        if (prefs.storage_format == format) return
+        if (!_state.value.preferences_authoritative) {
+            report_preferences_locked()
+
+            return
+        }
+        save_preferences(prefs.copy(storage_format = format))
+        viewModelScope.launch {
+            val saved = try {
+                encryption_api.update_encryption_settings(
+                    org.astermail.android.api.encryption.UpdateEncryptionSettingsRequest(
+                        ipfs_storage_enabled = format == "ipfs",
+                    )
+                )
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                false
+            }
+            if (saved) {
+                _state.update {
+                    it.copy(
+                        encryption_settings = it.encryption_settings?.copy(
+                            ipfs_storage_enabled = format == "ipfs",
+                        ),
+                    )
+                }
+            } else {
+                val current = _state.value.preferences
+                if (current != null) {
+                    save_preferences(current.copy(storage_format = prefs.storage_format))
+                }
+                _state.update {
+                    it.copy(action_result = context.getString(R.string.settings_save_failed_banner))
+                }
             }
         }
     }
 
     fun toggle_auto_discover_keys() {
-        val current = _state.value.encryption_settings?.auto_discover_keys ?: true
+        val current = _state.value.encryption_settings?.auto_discover_keys ?: false
         _state.update { it.copy(encryption_settings = it.encryption_settings?.copy(auto_discover_keys = !current)) }
         viewModelScope.launch {
-            try {
+            val saved = try {
                 encryption_api.update_encryption_settings(
                     org.astermail.android.api.encryption.UpdateEncryptionSettingsRequest(auto_discover_keys = !current)
                 )
-            } catch (_: Throwable) {
-                _state.update { it.copy(encryption_settings = it.encryption_settings?.copy(auto_discover_keys = current)) }
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                false
+            }
+            if (!saved) {
+                _state.update {
+                    it.copy(
+                        encryption_settings = it.encryption_settings?.copy(auto_discover_keys = current),
+                        action_result = context.getString(R.string.settings_save_failed_banner),
+                    )
+                }
             }
         }
     }
@@ -3038,12 +3309,63 @@ class SettingsViewModel @Inject constructor(
         val current = _state.value.encryption_settings?.encrypt_by_default ?: false
         _state.update { it.copy(encryption_settings = it.encryption_settings?.copy(encrypt_by_default = !current)) }
         viewModelScope.launch {
-            try {
+            val saved = try {
                 encryption_api.update_encryption_settings(
                     org.astermail.android.api.encryption.UpdateEncryptionSettingsRequest(encrypt_by_default = !current)
                 )
-            } catch (_: Throwable) {
-                _state.update { it.copy(encryption_settings = it.encryption_settings?.copy(encrypt_by_default = current)) }
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                false
+            }
+            if (!saved) {
+                _state.update {
+                    it.copy(
+                        encryption_settings = it.encryption_settings?.copy(encrypt_by_default = current),
+                        action_result = context.getString(R.string.settings_save_failed_banner),
+                    )
+                }
+                return@launch
+            }
+            _state.value.preferences?.let { prefs ->
+                if (prefs.encrypt_emails != !current &&
+                    prefs_load_succeeded &&
+                    (!account_uses_encrypted_prefs || _state.value.preferences_authoritative)
+                ) {
+                    save_preferences(prefs.copy(encrypt_emails = !current))
+                }
+            }
+        }
+    }
+
+    fun toggle_require_encryption() {
+        val current = _state.value.encryption_settings?.require_encryption ?: false
+        val next = !current
+        _state.update { it.copy(encryption_settings = it.encryption_settings?.copy(require_encryption = next)) }
+        viewModelScope.launch {
+            val saved = try {
+                encryption_api.update_encryption_settings(
+                    org.astermail.android.api.encryption.UpdateEncryptionSettingsRequest(require_encryption = next)
+                )
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                false
+            }
+            if (!saved) {
+                _state.update {
+                    it.copy(
+                        encryption_settings = it.encryption_settings?.copy(require_encryption = current),
+                        action_result = context.getString(R.string.settings_save_failed_banner),
+                    )
+                }
+                return@launch
+            }
+            _state.value.preferences?.let { prefs ->
+                if (prefs.require_encryption != next &&
+                    prefs_load_succeeded &&
+                    (!account_uses_encrypted_prefs || _state.value.preferences_authoritative)
+                ) {
+                    save_preferences(prefs.copy(require_encryption = next))
+                }
             }
         }
     }
@@ -3052,26 +3374,34 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val wkd = encryption_api.get_wkd_status()
-                _state.update { it.copy(wkd_status = wkd) }
+                _state.update { it.copy(wkd_status = wkd, wkd_status_load_failed = false) }
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_wkd_keyserver_status/wkd", t)
+                _state.update { it.copy(wkd_status_load_failed = it.wkd_status == null) }
             }
             try {
                 val ks = encryption_api.get_keyserver_status()
                 _state.update { it.copy(keyserver_status = ks) }
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_wkd_keyserver_status/keyserver", t)
             }
         }
     }
 
     fun toggle_wkd_publishing() {
-        val published = _state.value.wkd_status?.published == true
+        val published = _state.value.wkd_status?.published ?: return
         viewModelScope.launch {
             try {
                 val result = if (published) encryption_api.unpublish_from_wkd() else encryption_api.publish_to_wkd()
                 _state.update { it.copy(wkd_status = org.astermail.android.api.encryption.WkdStatusResponse(published = !published, url = result.url)) }
-            } catch (_: Throwable) {}
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "toggle_wkd_publishing", t)
+                val message = if (published) R.string.wkd_unpublish_failed else R.string.wkd_publish_failed
+                _state.update { it.copy(action_result = context.getString(message)) }
+            }
         }
     }
 
@@ -3085,6 +3415,7 @@ class SettingsViewModel @Inject constructor(
                 encryption_api.publish_to_keyserver()
                 false
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "publish_to_keyserver", t)
                 true
             }
@@ -3099,6 +3430,7 @@ class SettingsViewModel @Inject constructor(
                 val ks = encryption_api.get_keyserver_status()
                 _state.update { it.copy(keyserver_status = ks) }
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "keyserver status refresh", t)
             }
         }
@@ -3108,7 +3440,10 @@ class SettingsViewModel @Inject constructor(
         return try {
             val result = encryption_api.export_public_key()
             result.public_key_armored.ifBlank { null }
-        } catch (_: Throwable) { null }
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            null
+        }
     }
 
     suspend fun export_private_key_now(password: String): String? {
@@ -3123,7 +3458,10 @@ class SettingsViewModel @Inject constructor(
             )
             result.private_key_encrypted?.ifBlank { null }
                 ?: result.encrypted_private_key_blob?.ifBlank { null }
-        } catch (_: Throwable) { null }
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            null
+        }
     }
 
     suspend fun regenerate_recovery_codes_now(): List<String> {
@@ -3134,7 +3472,10 @@ class SettingsViewModel @Inject constructor(
                 session_key_store.put_recovery_codes(result.codes)
             }
             result.codes
-        } catch (_: Throwable) { emptyList() }
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            emptyList()
+        }
     }
 
     fun load_recovery_email() {
@@ -3148,7 +3489,8 @@ class SettingsViewModel @Inject constructor(
                 val address = if (!enc.isNullOrBlank() && !nonce.isNullOrBlank() && !identity_key.isNullOrBlank()) {
                     try {
                         decrypt_recovery_email(enc, nonce, identity_key)
-                    } catch (_: Throwable) {
+                    } catch (t: Throwable) {
+                        if (t is kotlinx.coroutines.CancellationException) throw t
                         null
                     }
                 } else {
@@ -3168,6 +3510,7 @@ class SettingsViewModel @Inject constructor(
                     is_loading = false,
                 )
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     is_loading = false,
                     error = user_facing_error(t),
@@ -3179,7 +3522,7 @@ class SettingsViewModel @Inject constructor(
     fun save_recovery_email(email: String, password: String?, totp_code: String?) {
         viewModelScope.launch {
             _state.value = _state.value.copy(save_status = SaveStatus.SAVING, error = null)
-            val normalized = email.trim().lowercase()
+            val normalized = email.trim().lowercase(java.util.Locale.ROOT)
             try {
                 val password_hash = password?.takeIf { it.isNotBlank() }?.let {
                     auth_repository.derive_password_hash_b64(it)
@@ -3213,6 +3556,7 @@ class SettingsViewModel @Inject constructor(
                     save_status = SaveStatus.SAVED,
                 )
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 val needs_step_up = (t as? RecoveryEmailError)?.code ==
                     RecoveryEmailApiImpl.STEP_UP_REQUIRED
                 _state.value = _state.value.copy(
@@ -3234,6 +3578,7 @@ class SettingsViewModel @Inject constructor(
                     action_result = context.getString(R.string.recovery_email_resent),
                 )
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     action_result = recovery_email_error_message(t),
                 )
@@ -3265,6 +3610,7 @@ class SettingsViewModel @Inject constructor(
                     save_status = SaveStatus.SAVED,
                 )
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     save_status = SaveStatus.ERROR,
                     error = recovery_email_error_message(t),
@@ -3390,6 +3736,7 @@ class SettingsViewModel @Inject constructor(
                         .map { it.label_token },
                 )
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_labels failed", t)
                 _state.value = _state.value.copy(
                     is_loading = false,
@@ -3407,6 +3754,7 @@ class SettingsViewModel @Inject constructor(
                     load_labels(force = true)
                 }
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     action_result = user_facing_error(t),
                 )
@@ -3444,6 +3792,7 @@ class SettingsViewModel @Inject constructor(
                 )
                 on_result?.invoke(true)
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     action_result = user_facing_error(t),
                 )
@@ -3485,7 +3834,8 @@ class SettingsViewModel @Inject constructor(
                     }
                     response.verified
                 }
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 false
             }
             on_result(ok)
@@ -3501,6 +3851,13 @@ class SettingsViewModel @Inject constructor(
 
     fun toggle_folder_notifications(label_token: String) {
         if (label_token.isBlank()) return
+        if (!prefs_load_succeeded) {
+            _state.value = _state.value.copy(
+                save_status = SaveStatus.ERROR,
+                error = context.getString(R.string.preferences_locked_retry),
+            )
+            return
+        }
         val base = _state.value.preferences ?: UserPreferences()
         val muted = base.muted_folder_tokens
         val is_muting = label_token !in muted
@@ -3512,6 +3869,24 @@ class SettingsViewModel @Inject constructor(
                 if (is_muting) R.string.folder_notifications_muted else R.string.folder_notifications_unmuted,
             ),
         )
+    }
+
+    fun toggle_category_notifications(category_id: String) {
+        if (category_id.isBlank() || category_id == "primary") return
+        if (!prefs_load_succeeded) {
+            _state.value = _state.value.copy(
+                save_status = SaveStatus.ERROR,
+                error = context.getString(R.string.preferences_locked_retry),
+            )
+            return
+        }
+        val base = _state.value.preferences ?: UserPreferences()
+        val muted = base.muted_notification_categories
+        val is_muting = category_id !in muted
+        val next = if (is_muting) muted + category_id else muted - category_id
+        org.astermail.android.notifications.MailPollingWorker
+            .set_muted_notification_categories(context, next)
+        save_preferences(base.copy(muted_notification_categories = next))
     }
 
     fun load_tags(force: Boolean = true) {
@@ -3529,6 +3904,7 @@ class SettingsViewModel @Inject constructor(
                 }
                 _state.value = _state.value.copy(tags = decrypted)
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     error = user_facing_error(t),
                 )
@@ -3544,7 +3920,14 @@ class SettingsViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             try {
-                val identity_key = session_key_store.get_identity_key() ?: return@launch
+                val identity_key = session_key_store.get_identity_key()
+                if (identity_key == null) {
+                    _state.value = _state.value.copy(
+                        action_result = context.getString(R.string.failed_create_tag),
+                    )
+
+                    return@launch
+                }
                 val name_field = encrypt_field_with_version(name, identity_key, TAG_VERSION_CURRENT)
                 val color_field = color?.let { encrypt_field_with_version(it, identity_key, TAG_VERSION_CURRENT) }
                 val icon_field = icon?.let { encrypt_field_with_version(it, identity_key, TAG_VERSION_CURRENT) }
@@ -3562,9 +3945,10 @@ class SettingsViewModel @Inject constructor(
                 )
                 load_tags()
                 on_created?.invoke(tag_token)
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
-                    action_result = context.getString(R.string.failed_create_tag),
+                    action_result = localized_api_error(context, t, context.getString(R.string.failed_create_tag)),
                 )
             }
         }
@@ -3614,9 +3998,10 @@ class SettingsViewModel @Inject constructor(
                     action_result = context.getString(R.string.folder_created),
                 )
                 on_created?.invoke(token)
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
-                    action_result = context.getString(R.string.failed_create_folder),
+                    action_result = localized_api_error(context, t, context.getString(R.string.failed_create_folder)),
                 )
             }
         }
@@ -3643,10 +4028,11 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     action_result = context.getString(R.string.item_renamed),
                 )
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     labels = previous,
-                    action_result = context.getString(R.string.failed_update_folder),
+                    action_result = localized_api_error(context, t, context.getString(R.string.failed_update_folder)),
                 )
             }
         }
@@ -3671,10 +4057,11 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     action_result = context.getString(R.string.item_color_updated),
                 )
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     labels = previous,
-                    action_result = context.getString(R.string.failed_update_folder),
+                    action_result = localized_api_error(context, t, context.getString(R.string.failed_update_folder)),
                 )
             }
         }
@@ -3692,10 +4079,11 @@ class SettingsViewModel @Inject constructor(
                     UpdateLabelRequest(parent_token = parent_token.orEmpty()),
                 )
                 load_labels(force = true)
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     labels = previous,
-                    action_result = context.getString(R.string.failed_update_folder),
+                    action_result = localized_api_error(context, t, context.getString(R.string.failed_update_folder)),
                 )
             }
         }
@@ -3717,7 +4105,8 @@ class SettingsViewModel @Inject constructor(
                     ),
                 )
                 true
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 false
             }
             if (ok) {
@@ -3752,7 +4141,8 @@ class SettingsViewModel @Inject constructor(
                     )
                     true
                 }
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 false
             }
             if (ok) {
@@ -3760,6 +4150,10 @@ class SettingsViewModel @Inject constructor(
                 load_labels(force = true)
                 _state.value = _state.value.copy(
                     action_result = context.getString(R.string.folder_lock_removed),
+                )
+            } else {
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.failed_update_folder),
                 )
             }
             on_result(ok)
@@ -3788,7 +4182,8 @@ class SettingsViewModel @Inject constructor(
             if (changed.isEmpty()) return@launch
             try {
                 labels_api.bulk_reorder_labels(BulkReorderLabelsRequest(labels = changed))
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(labels = previous_labels)
             }
         }
@@ -3801,9 +4196,10 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     tags = _state.value.tags.filter { it.id != tag_id },
                 )
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
-                    action_result = context.getString(R.string.failed_delete_tag),
+                    action_result = localized_api_error(context, t, context.getString(R.string.failed_delete_tag)),
                 )
             }
         }
@@ -3827,10 +4223,11 @@ class SettingsViewModel @Inject constructor(
                         name_nonce = name_field.nonce_b64,
                     ),
                 )
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     tags = previous,
-                    action_result = context.getString(R.string.failed_update_label),
+                    action_result = localized_api_error(context, t, context.getString(R.string.failed_update_label)),
                 )
             }
         }
@@ -3852,10 +4249,11 @@ class SettingsViewModel @Inject constructor(
                         color_nonce = color_field.nonce_b64,
                     ),
                 )
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     tags = previous,
-                    action_result = context.getString(R.string.failed_update_label),
+                    action_result = localized_api_error(context, t, context.getString(R.string.failed_update_label)),
                 )
             }
         }
@@ -3877,10 +4275,11 @@ class SettingsViewModel @Inject constructor(
                         icon_nonce = icon_field.nonce_b64,
                     ),
                 )
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     tags = previous,
-                    action_result = context.getString(R.string.failed_update_label),
+                    action_result = localized_api_error(context, t, context.getString(R.string.failed_update_label)),
                 )
             }
         }
@@ -3902,10 +4301,11 @@ class SettingsViewModel @Inject constructor(
                 tags_api.bulk_reorder_tags(
                     org.astermail.android.api.tags.BulkReorderTagsRequest(tags = changed),
                 )
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     tags = current,
-                    action_result = context.getString(R.string.failed_update_label),
+                    action_result = localized_api_error(context, t, context.getString(R.string.failed_update_label)),
                 )
             }
         }
@@ -3927,10 +4327,11 @@ class SettingsViewModel @Inject constructor(
                         icon_nonce = icon_field.nonce_b64,
                     ),
                 )
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     labels = previous,
-                    action_result = context.getString(R.string.failed_update_label),
+                    action_result = localized_api_error(context, t, context.getString(R.string.failed_update_label)),
                 )
             }
         }
@@ -3950,10 +4351,11 @@ class SettingsViewModel @Inject constructor(
             )
             try {
                 labels_api.bulk_reorder_labels(BulkReorderLabelsRequest(labels = changed))
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     labels = all,
-                    action_result = context.getString(R.string.failed_update_label),
+                    action_result = localized_api_error(context, t, context.getString(R.string.failed_update_label)),
                 )
             }
         }
@@ -3961,21 +4363,27 @@ class SettingsViewModel @Inject constructor(
 
     fun load_referral_info() {
         viewModelScope.launch {
-            val info = try {
+            val info: ReferralInfoResponse? = try {
                 kotlinx.coroutines.withTimeout(10_000L) {
                     labels_api.get_referral_info()
                 }
-            } catch (_: Throwable) {
-                ReferralInfoResponse()
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                null
             }
             val history = try {
                 kotlinx.coroutines.withTimeout(10_000L) {
                     labels_api.get_referral_history().referrals
                 }
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 emptyList()
             }
-            _state.value = _state.value.copy(referral = info, referral_history = history)
+            _state.value = _state.value.copy(
+                referral = info ?: _state.value.referral,
+                referral_history = history,
+                referral_load_failed = info == null,
+            )
         }
     }
 
@@ -3988,6 +4396,34 @@ class SettingsViewModel @Inject constructor(
             attempts++
         }
         return key
+    }
+
+    private fun mirror_notification_preferences(prefs: UserPreferences) {
+        val result = runCatching {
+            org.astermail.android.notifications.MailPollingWorker
+                .set_muted_folder_tokens(context, prefs.muted_folder_tokens)
+            org.astermail.android.notifications.MailPollingWorker
+                .set_muted_notification_categories(context, prefs.muted_notification_categories)
+            org.astermail.android.notifications.MailPollingWorker
+                .set_notify_new_email(context, prefs.notify_new_email)
+            org.astermail.android.notifications.MailPollingWorker
+                .set_notify_replies(context, prefs.notify_replies)
+            org.astermail.android.notifications.MailPollingWorker
+                .set_push_enabled(context, prefs.push_notifications)
+            org.astermail.android.notifications.MailPollingWorker
+                .set_notification_alerts(context, prefs.sound, prefs.vibrate)
+            org.astermail.android.notifications.MailPollingWorker.set_quiet_hours(
+                context,
+                prefs.quiet_hours_enabled,
+                prefs.quiet_hours_start.takeIf { it.isNotBlank() } ?: "22:00",
+                prefs.quiet_hours_end.takeIf { it.isNotBlank() } ?: "07:00",
+            )
+        }
+        val failure = result.exceptionOrNull() ?: return
+        if (failure is kotlinx.coroutines.CancellationException) throw failure
+        if (org.astermail.android.BuildConfig.DEBUG) {
+            android.util.Log.w("SettingsVM", "mirror_notification_preferences", failure)
+        }
     }
 
     fun load_preferences(force: Boolean = false) {
@@ -4021,7 +4457,8 @@ class SettingsViewModel @Inject constructor(
                     }
                     val decrypted = try {
                         decrypt_preferences(enc, nonce, identity_key, _state.value.preferences)
-                    } catch (_: Throwable) {
+                    } catch (t: Throwable) {
+                        if (t is kotlinx.coroutines.CancellationException) throw t
                         null
                     }
                     if (decrypted != null) {
@@ -4031,8 +4468,7 @@ class SettingsViewModel @Inject constructor(
                         last_synced_preferences = decrypted
                         persist_cached_preferences(decrypted)
                         apply_preferences_to_theme_store(decrypted)
-                        org.astermail.android.notifications.MailPollingWorker
-                            .set_muted_folder_tokens(context, decrypted.muted_folder_tokens)
+                        mirror_notification_preferences(decrypted)
                         _state.value = _state.value.copy(
                             preferences = decrypted,
                             preferences_authoritative = true,
@@ -4047,7 +4483,11 @@ class SettingsViewModel @Inject constructor(
                             preferences = fallback ?: UserPreferences(),
                             preferences_authoritative = fallback != null,
                             is_loading = false,
-                            error = null,
+                            error = if (fallback != null) {
+                                null
+                            } else {
+                                context.getString(R.string.preferences_locked_retry)
+                            },
                         )
                     }
                 } else {
@@ -4057,8 +4497,7 @@ class SettingsViewModel @Inject constructor(
                     last_synced_preferences = prefs
                     persist_cached_preferences(prefs)
                     apply_preferences_to_theme_store(prefs)
-                    org.astermail.android.notifications.MailPollingWorker
-                        .set_muted_folder_tokens(context, prefs.muted_folder_tokens)
+                    mirror_notification_preferences(prefs)
                     _state.value = _state.value.copy(
                         preferences = prefs,
                         preferences_authoritative = true,
@@ -4066,6 +4505,7 @@ class SettingsViewModel @Inject constructor(
                     )
                 }
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     preferences = _state.value.preferences ?: UserPreferences(),
                     is_loading = false,
@@ -4157,7 +4597,8 @@ class SettingsViewModel @Inject constructor(
                 apply_signature_defaults(decrypted)
                 persist_cached_signatures(decrypted)
                 _signature_loaded.value = true
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _signature_loaded.value = true
             }
         }
@@ -4201,6 +4642,7 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(save_status = SaveStatus.SAVED)
                 load_signature()
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     save_status = SaveStatus.ERROR,
                     error = user_facing_error(t),
@@ -4238,6 +4680,7 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(save_status = SaveStatus.SAVED)
                 load_signature()
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     save_status = SaveStatus.ERROR,
                     error = user_facing_error(t),
@@ -4254,6 +4697,7 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(save_status = SaveStatus.SAVED)
                 load_signature()
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     save_status = SaveStatus.ERROR,
                     error = user_facing_error(t),
@@ -4270,6 +4714,7 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(save_status = SaveStatus.SAVED)
                 load_signature()
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     save_status = SaveStatus.ERROR,
                     error = user_facing_error(t),
@@ -4312,6 +4757,7 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(save_status = SaveStatus.SAVED)
                 load_signature()
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     save_status = SaveStatus.ERROR,
                     error = user_facing_error(t),
@@ -4328,6 +4774,7 @@ class SettingsViewModel @Inject constructor(
         try {
             return String(aes_gcm_decrypt(ciphertext, key, nonce), Charsets.UTF_8)
         } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
             val fallback = derive_passphrase_key()
             try {
                 return String(aes_gcm_decrypt(ciphertext, fallback, nonce), Charsets.UTF_8)
@@ -4355,6 +4802,13 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun report_preferences_locked() {
+        _state.value = _state.value.copy(
+            save_status = SaveStatus.ERROR,
+            error = context.getString(R.string.preferences_locked_retry),
+        )
+    }
+
     fun save_preferences(prefs: UserPreferences) {
         if (!prefs_load_succeeded) {
             _state.value = _state.value.copy(
@@ -4366,6 +4820,7 @@ class SettingsViewModel @Inject constructor(
         load_preferences_job?.cancel()
         save_preferences_job?.cancel()
         val baseline = last_synced_preferences
+        failed_preferences_save = null
         _state.value = _state.value.copy(preferences = prefs, save_status = SaveStatus.SAVING)
         persist_cached_preferences(prefs)
         save_preferences_job = viewModelScope.launch {
@@ -4379,7 +4834,8 @@ class SettingsViewModel @Inject constructor(
                     if (!fresh_enc.isNullOrBlank() && !fresh_nonce.isNullOrBlank()) {
                         val server_prefs = try {
                             decrypt_preferences(fresh_enc, fresh_nonce, identity_key, baseline)
-                        } catch (_: Throwable) {
+                        } catch (t: Throwable) {
+                            if (t is kotlinx.coroutines.CancellationException) throw t
                             null
                         }
                         if (server_prefs != null) {
@@ -4391,17 +4847,26 @@ class SettingsViewModel @Inject constructor(
                     last_preferences_raw_json = payload
                     last_synced_preferences = to_save
                     persist_cached_preferences(to_save)
-                    org.astermail.android.notifications.MailPollingWorker
-                        .set_muted_folder_tokens(context, to_save.muted_folder_tokens)
-                    _state.value = _state.value.copy(preferences = to_save, save_status = SaveStatus.SAVED)
-                } else if (account_uses_encrypted_prefs) {
+                    mirror_notification_preferences(to_save)
                     _state.value = _state.value.copy(
+                        preferences = to_save,
+                        preferences_authoritative = true,
+                        save_status = SaveStatus.SAVED,
+                    )
+                } else if (account_uses_encrypted_prefs) {
+                    failed_preferences_save = prefs
+                    if (baseline != null) {
+                        persist_cached_preferences(baseline)
+                        mirror_notification_preferences(baseline)
+                    }
+                    _state.value = _state.value.copy(
+                        preferences = baseline ?: _state.value.preferences,
                         save_status = SaveStatus.ERROR,
                         error = context.getString(R.string.preferences_locked_retry),
                     )
                     return@launch
                 } else {
-                    val raw = last_preferences_raw_json
+                    val raw = last_preferences_raw_json ?: refetch_preferences_raw()
                     if (raw != null) {
                         val payload = encode_preferences_preserving_unknown(prefs_json, prefs, raw)
                         preferences_api.save_preferences_raw(payload)
@@ -4411,16 +4876,34 @@ class SettingsViewModel @Inject constructor(
                     }
                     last_synced_preferences = prefs
                     persist_cached_preferences(prefs)
-                    _state.value = _state.value.copy(save_status = SaveStatus.SAVED)
+                    mirror_notification_preferences(prefs)
+                    _state.value = _state.value.copy(
+                        preferences_authoritative = true,
+                        save_status = SaveStatus.SAVED,
+                    )
                 }
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                failed_preferences_save = prefs
+                if (baseline != null) {
+                    persist_cached_preferences(baseline)
+                    mirror_notification_preferences(baseline)
+                }
                 _state.value = _state.value.copy(
+                    preferences = baseline ?: _state.value.preferences,
                     save_status = SaveStatus.ERROR,
                     error = user_facing_error(t),
                 )
             }
         }
     }
+
+    fun retry_preferences_save() {
+        val pending = failed_preferences_save ?: _state.value.preferences ?: return
+        save_preferences(pending)
+    }
+
+    suspend fun password_check_available(): Boolean = session_key_store.get_passphrase() != null
 
     suspend fun verify_password(password: String): Boolean {
         val entered = password.toByteArray(Charsets.UTF_8)
@@ -4431,9 +4914,13 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun constant_time_equals(a: ByteArray, b: ByteArray): Boolean {
-        if (a.size != b.size) return false
-        var diff = 0
-        for (i in a.indices) diff = diff or (a[i].toInt() xor b[i].toInt())
+        var diff = a.size xor b.size
+        val span = maxOf(a.size, b.size)
+        for (i in 0 until span) {
+            val left = if (i < a.size) a[i].toInt() else 0
+            val right = if (i < b.size) b[i].toInt() else 0
+            diff = diff or (left xor right)
+        }
         return diff == 0
     }
 
@@ -4444,7 +4931,8 @@ class SettingsViewModel @Inject constructor(
             "sidebar_folders_collapsed" -> current.copy(sidebar_folders_collapsed = value)
             "sidebar_labels_collapsed" -> current.copy(sidebar_labels_collapsed = value)
             "sidebar_aliases_collapsed" -> current.copy(sidebar_aliases_collapsed = value)
-            else -> current
+            "sidebar_categories_collapsed" -> current.copy(sidebar_categories_collapsed = value)
+            else -> return
         }
         _state.value = _state.value.copy(preferences = updated)
         save_preferences(updated)
@@ -4458,6 +4946,7 @@ class SettingsViewModel @Inject constructor(
                 val decrypted = response.aliases.map { decrypt_ghost_alias(it) }
                 _state.value = _state.value.copy(ghost_aliases = decrypted, is_loading = false)
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     is_loading = false,
                     error = user_facing_error(t),
@@ -4466,9 +4955,9 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun create_ghost_alias(note: String) {
+    fun create_ghost_alias() {
         viewModelScope.launch {
-            create_ghost_alias_now(note)
+            create_ghost_alias_now()
         }
     }
 
@@ -4477,7 +4966,7 @@ class SettingsViewModel @Inject constructor(
         data class Failure(val message: String) : GhostAliasResult()
     }
 
-    suspend fun create_ghost_alias_now(note: String): GhostAliasResult {
+    suspend fun create_ghost_alias_now(expires_in_days: Int = 30): GhostAliasResult {
         return try {
             val domain = GHOST_ALIAS_DOMAIN
             val local_part = generate_ghost_local_part()
@@ -4491,7 +4980,7 @@ class SettingsViewModel @Inject constructor(
                     alias_address_hash = addr_hash,
                     routing_address_hash = routing_hash,
                     domain = domain,
-                    expires_in_days = 30,
+                    expires_in_days = expires_in_days,
                 )
             )
             val new_alias = GhostAlias(
@@ -4511,8 +5000,11 @@ class SettingsViewModel @Inject constructor(
             val message = when (t) {
                 is ApiError.RateLimited, is ApiError.PlanLimitExceeded ->
                     context.getString(R.string.ghost_alias_limit_reached)
-                else -> (t as? ApiError)?.message?.takeIf { it.isNotBlank() }
-                    ?: context.getString(R.string.could_not_create_ghost_alias)
+                else -> org.astermail.android.localized_api_error(
+                    context,
+                    t,
+                    context.getString(R.string.could_not_create_ghost_alias),
+                )
             }
             GhostAliasResult.Failure(message)
         }
@@ -4541,7 +5033,8 @@ class SettingsViewModel @Inject constructor(
             ghost_alias_api.expire_ghost_alias(alias_id)
             load_ghost_aliases()
             true
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
             false
         }
     }
@@ -4551,7 +5044,8 @@ class SettingsViewModel @Inject constructor(
             ghost_alias_api.extend_ghost_alias(alias_id)
             load_ghost_aliases()
             true
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
             false
         }
     }
@@ -4563,11 +5057,14 @@ class SettingsViewModel @Inject constructor(
                 val response = auto_forward_api.list_rules()
                 _state.value = _state.value.copy(
                     forwarding_rules = response.rules,
+                    forwarding_rules_load_failed = false,
                     is_loading = false,
                 )
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     is_loading = false,
+                    forwarding_rules_load_failed = true,
                     error = user_facing_error(t),
                 )
             }
@@ -4593,7 +5090,7 @@ class SettingsViewModel @Inject constructor(
         _state.update { s -> s.copy(forwarding_notice = null) }
     }
 
-    fun create_forwarding_rule(target: String, keep_copy: Boolean) {
+    fun create_forwarding_rule(target: String, keep_copy: Boolean, enabled: Boolean = true) {
         viewModelScope.launch {
             _state.value = _state.value.copy(save_status = SaveStatus.SAVING)
             try {
@@ -4604,12 +5101,18 @@ class SettingsViewModel @Inject constructor(
                         keep_copy = keep_copy,
                     ),
                 )
+                if (created.is_enabled != enabled && created.id.isNotBlank()) {
+                    auto_forward_api.toggle_rule(
+                        ToggleForwardingRuleRequest(id = created.id, is_enabled = enabled),
+                    )
+                }
                 _state.value = _state.value.copy(
                     save_status = SaveStatus.SAVED,
                     forwarding_notice = forwarding_notice_for(created),
                 )
                 load_forwarding_rules()
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     save_status = SaveStatus.ERROR,
                     error = user_facing_error(t),
@@ -4637,6 +5140,7 @@ class SettingsViewModel @Inject constructor(
                     forwarding_notice = forwarding_notice_for(rules.firstOrNull { it.id == rule_id }),
                 )
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     save_status = SaveStatus.ERROR,
                     error = user_facing_error(t),
@@ -4665,6 +5169,7 @@ class SettingsViewModel @Inject constructor(
                     )
                 }
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.update { s ->
                     s.copy(
                         forwarding_resending_address = null,
@@ -4690,6 +5195,7 @@ class SettingsViewModel @Inject constructor(
                     ToggleForwardingRuleRequest(id = rule_id, is_enabled = enabled),
                 )
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.update { s -> s.copy(forwarding_rules = previous) }
                 _state.value = _state.value.copy(
                     error = user_facing_error(t),
@@ -4703,7 +5209,9 @@ class SettingsViewModel @Inject constructor(
             try {
                 auto_forward_api.delete_rule(rule_id)
                 _state.update { s -> s.copy(forwarding_rules = s.forwarding_rules.filter { it.id != rule_id }) }
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.update { s -> s.copy(error = user_facing_error(t)) }
             }
         }
     }
@@ -4717,7 +5225,8 @@ class SettingsViewModel @Inject constructor(
                     val name = if (key.name_encrypted.isNotBlank() && key.name_nonce.isNotBlank()) {
                         try {
                             decrypt_alias_field(key.name_encrypted, key.name_nonce)
-                        } catch (_: Throwable) {
+                        } catch (t: Throwable) {
+                            if (t is kotlinx.coroutines.CancellationException) throw t
                             context.getString(R.string.api_key_default_name)
                         }
                     } else {
@@ -4730,6 +5239,7 @@ class SettingsViewModel @Inject constructor(
                     is_loading = false,
                 )
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     is_loading = false,
                     error = user_facing_error(t),
@@ -4739,11 +5249,17 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun create_api_key(name: String) {
+        if (_state.value.api_key_creating) return
+        _state.update { s -> s.copy(api_key_creating = true) }
         viewModelScope.launch {
             try {
                 developer_api.create_api_key(CreateApiKeyRequest(name = name))
+                _state.update { s -> s.copy(api_key_creating = false) }
                 load_api_keys()
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                _state.update { s -> s.copy(api_key_creating = false) }
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.update { s -> s.copy(action_result = user_facing_error(t)) }
             }
         }
     }
@@ -4753,9 +5269,10 @@ class SettingsViewModel @Inject constructor(
             try {
                 developer_api.revoke_api_key(key_id)
                 _state.update { s -> s.copy(api_keys = s.api_keys.filter { it.id != key_id }) }
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
-                    action_result = context.getString(R.string.failed_revoke_api_key),
+                    action_result = localized_api_error(context, t, context.getString(R.string.failed_revoke_api_key)),
                 )
             }
         }
@@ -4769,7 +5286,8 @@ class SettingsViewModel @Inject constructor(
                     val url = if (hook.url_encrypted.isNotBlank() && hook.url_nonce.isNotBlank()) {
                         try {
                             decrypt_alias_field(hook.url_encrypted, hook.url_nonce)
-                        } catch (_: Throwable) {
+                        } catch (t: Throwable) {
+                            if (t is kotlinx.coroutines.CancellationException) throw t
                             ""
                         }
                     } else {
@@ -4778,7 +5296,8 @@ class SettingsViewModel @Inject constructor(
                     hook.copy(decrypted_url = url)
                 }
                 _state.value = _state.value.copy(webhooks = decrypted)
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
             }
         }
     }
@@ -4796,7 +5315,8 @@ class SettingsViewModel @Inject constructor(
                 }
                 response.access_token
             }
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
             token_store.access_token
         }
     }
@@ -4825,7 +5345,8 @@ class SettingsViewModel @Inject constructor(
             } else enc_icon
 
             tag.copy(encrypted_name = name, encrypted_color = color, encrypted_icon = icon)
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
             tag.copy(encrypted_name = "")
         }
     }
@@ -4846,7 +5367,8 @@ class SettingsViewModel @Inject constructor(
                 } finally {
                     derived.fill(0)
                 }
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
             }
         }
         val legacy_keks = session_key_store.get_legacy_keks().orEmpty()
@@ -4861,7 +5383,8 @@ class SettingsViewModel @Inject constructor(
                         raw_key.fill(0)
                     }
                 }
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
             }
         }
         return null
@@ -4884,7 +5407,8 @@ class SettingsViewModel @Inject constructor(
                     } finally {
                         derived.fill(0)
                     }
-                } catch (_: Throwable) {
+                } catch (t: Throwable) {
+                    if (t is kotlinx.coroutines.CancellationException) throw t
                 }
             }
         }
@@ -4900,7 +5424,8 @@ class SettingsViewModel @Inject constructor(
                         raw_key.fill(0)
                     }
                 }
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
             }
         }
         return null
@@ -4932,7 +5457,8 @@ class SettingsViewModel @Inject constructor(
             } else enc_icon
 
             label.copy(encrypted_name = name, encrypted_color = color, encrypted_icon = icon)
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
             label.copy(encrypted_name = null)
         }
     }
@@ -4960,7 +5486,8 @@ class SettingsViewModel @Inject constructor(
                 } finally {
                     key.fill(0)
                 }
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
             }
         }
         throw IllegalStateException("field decryption failed")
@@ -5007,7 +5534,8 @@ class SettingsViewModel @Inject constructor(
         return try {
             val label = decrypt_alias_field(enc, nonce)
             dir.copy(decrypted_label = label)
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
             dir
         }
     }
@@ -5021,13 +5549,15 @@ class SettingsViewModel @Inject constructor(
                         alias.encrypted_local_part, android.util.Base64.DEFAULT,
                     )
                     String(bytes, Charsets.UTF_8)
-                } catch (_: Throwable) {
+                } catch (t: Throwable) {
+                    if (t is kotlinx.coroutines.CancellationException) throw t
                     alias.encrypted_local_part
                 }
             } else {
                 decrypt_alias_field(alias.encrypted_local_part, alias.local_part_nonce)
             }
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
             return alias.copy(
                 encrypted_local_part = "",
                 encrypted_display_name = null,
@@ -5040,7 +5570,8 @@ class SettingsViewModel @Inject constructor(
         val display_name = if (!enc_name.isNullOrBlank() && !name_nonce.isNullOrBlank()) {
             try {
                 decrypt_alias_field(enc_name, name_nonce)
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 null
             }
         } else {
@@ -5051,7 +5582,8 @@ class SettingsViewModel @Inject constructor(
         val note = if (!enc_note.isNullOrBlank() && !enc_note_nonce.isNullOrBlank()) {
             try {
                 decrypt_alias_field(enc_note, enc_note_nonce)
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 null
             }
         } else {
@@ -5062,7 +5594,8 @@ class SettingsViewModel @Inject constructor(
         val website_list = if (!enc_websites.isNullOrBlank() && !websites_nonce.isNullOrBlank()) {
             try {
                 websites_payload_to_list(decrypt_alias_field(enc_websites, websites_nonce))
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 emptyList()
             }
         } else {
@@ -5089,7 +5622,8 @@ class SettingsViewModel @Inject constructor(
             } finally {
                 key.fill(0)
             }
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
         }
 
         try {
@@ -5099,7 +5633,8 @@ class SettingsViewModel @Inject constructor(
             } finally {
                 key.fill(0)
             }
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
         }
 
         val identity_key = session_key_store.get_identity_key()
@@ -5109,7 +5644,8 @@ class SettingsViewModel @Inject constructor(
                     val material = (identity_key + version).toByteArray(Charsets.UTF_8)
                     val key = MessageDigest.getInstance("SHA-256").digest(material)
                     return String(aes_gcm_decrypt(ciphertext, key, nonce), Charsets.UTF_8)
-                } catch (_: Throwable) {
+                } catch (t: Throwable) {
+                    if (t is kotlinx.coroutines.CancellationException) throw t
                 }
             }
         }
@@ -5125,7 +5661,8 @@ class SettingsViewModel @Inject constructor(
                         raw_key.fill(0)
                     }
                 }
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
             }
         }
         throw IllegalStateException("alias decryption failed")
@@ -5144,7 +5681,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun normalize_alias_local_part(local_part: String): String {
-        return local_part.lowercase().replace(".", "")
+        return local_part.lowercase(java.util.Locale.ROOT).replace(".", "")
     }
 
     private fun compute_alias_address_hash(local_part: String, domain: String): String {
@@ -5179,7 +5716,7 @@ class SettingsViewModel @Inject constructor(
             combined.fill(0)
             val mac = Mac.getInstance("HmacSHA256")
             mac.init(SecretKeySpec(hmac_key_bytes, "HmacSHA256"))
-            val sig = mac.doFinal("${local_part.lowercase()}@${domain.lowercase()}".toByteArray(Charsets.UTF_8))
+            val sig = mac.doFinal("${local_part.lowercase(java.util.Locale.ROOT)}@${domain.lowercase(java.util.Locale.ROOT)}".toByteArray(Charsets.UTF_8))
             hmac_key_bytes.fill(0)
             return android.util.Base64.encodeToString(sig, android.util.Base64.NO_WRAP)
         } finally {
@@ -5188,18 +5725,18 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun compute_domain_address_routing_hash(local_part: String, domain: String): String {
-        val data = "${normalize_alias_local_part(local_part)}@${domain.lowercase()}".toByteArray(Charsets.UTF_8)
+        val data = "${normalize_alias_local_part(local_part)}@${domain.lowercase(java.util.Locale.ROOT)}".toByteArray(Charsets.UTF_8)
         val hash = MessageDigest.getInstance("SHA-256").digest(data)
         return android.util.Base64.encodeToString(hash, android.util.Base64.NO_WRAP)
     }
 
     private fun compute_directory_key_hash(key: String): String {
-        val hash = MessageDigest.getInstance("SHA-256").digest(key.lowercase().toByteArray(Charsets.UTF_8))
+        val hash = MessageDigest.getInstance("SHA-256").digest(key.lowercase(java.util.Locale.ROOT).toByteArray(Charsets.UTF_8))
         return android.util.Base64.encodeToString(hash, android.util.Base64.NO_WRAP)
     }
 
     private fun compute_directory_address_hash(key: String, domain: String): String {
-        val data = "${key.lowercase()}@${domain.lowercase()}".toByteArray(Charsets.UTF_8)
+        val data = "${key.lowercase(java.util.Locale.ROOT)}@${domain.lowercase(java.util.Locale.ROOT)}".toByteArray(Charsets.UTF_8)
         val hash = MessageDigest.getInstance("SHA-256").digest(data)
         return android.util.Base64.encodeToString(hash, android.util.Base64.NO_WRAP)
     }
@@ -5210,7 +5747,8 @@ class SettingsViewModel @Inject constructor(
             val local_part = decrypt_alias_field(alias.encrypted_local_part, alias.local_part_nonce)
             val address = if (alias.domain.isNotBlank()) "$local_part@${alias.domain}" else local_part
             alias.copy(decrypted_address = address)
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
             alias.copy(decryption_failed = true)
         }
     }
@@ -5255,6 +5793,7 @@ class SettingsViewModel @Inject constructor(
 
     @Volatile
     private var last_synced_preferences: UserPreferences? = null
+    private var failed_preferences_save: UserPreferences? = null
 
     private fun decrypt_preferences(
         encrypted_b64: String,
@@ -5274,7 +5813,12 @@ class SettingsViewModel @Inject constructor(
     }
 
     private suspend fun load_plaintext_preferences(): UserPreferences {
-        val raw = try { preferences_api.get_preferences_raw() } catch (_: Throwable) { null }
+        val raw = try {
+            preferences_api.get_preferences_raw()
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            null
+        }
         val sanitized = raw?.let { sanitize_plaintext_raw(it) }
         if (sanitized != null) {
             val merged = runCatching {
@@ -5286,6 +5830,17 @@ class SettingsViewModel @Inject constructor(
             }
         }
         return preferences_api.get_preferences()
+    }
+
+    private suspend fun refetch_preferences_raw(): String? {
+        val raw = try {
+            preferences_api.get_preferences_raw()
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            null
+        } ?: return null
+
+        return sanitize_plaintext_raw(raw)
     }
 
     private fun sanitize_plaintext_raw(raw: String): String? {
@@ -5327,6 +5882,7 @@ class SettingsViewModel @Inject constructor(
                     is_loading = false,
                 ) }
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.update { it.copy(is_loading = false, error = user_facing_error(t)) }
             }
         }
@@ -5356,7 +5912,8 @@ class SettingsViewModel @Inject constructor(
                     )
                 }
                 on_done(true)
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 on_done(false)
             }
         }
@@ -5372,7 +5929,8 @@ class SettingsViewModel @Inject constructor(
                     },
                 ) }
                 on_done(r.claim_url)
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 on_done(null)
             }
         }

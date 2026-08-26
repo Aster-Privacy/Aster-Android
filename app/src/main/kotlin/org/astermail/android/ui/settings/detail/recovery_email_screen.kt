@@ -28,6 +28,7 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
@@ -40,6 +41,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -61,6 +63,7 @@ import org.astermail.android.design.components.DialogConfirmStyle
 import org.astermail.android.settings.SaveStatus
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.util.ascii_digits
 
 @Composable
 fun RecoveryEmailScreen(on_back: () -> Unit) {
@@ -79,6 +82,7 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
     var step_up_is_remove by rememberSaveable { mutableStateOf(false) }
     var step_up_password by rememberSaveable { mutableStateOf("") }
     var step_up_code by rememberSaveable { mutableStateOf("") }
+    var resend_pending by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(state.recovery_email_address) {
         if (email.isBlank() && !state.recovery_email_address.isNullOrBlank()) {
@@ -100,6 +104,9 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
 
     LaunchedEffect(state.save_status) {
         if (state.save_status == SaveStatus.SAVED) {
+            show_step_up = false
+            step_up_password = ""
+            step_up_code = ""
             Toast.makeText(
                 context,
                 context.getString(R.string.recovery_email_saved),
@@ -107,10 +114,14 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
             ).show()
             vm.reset_save_status()
         }
+        if (state.save_status == SaveStatus.ERROR && show_step_up) {
+            step_up_code = ""
+        }
     }
 
     LaunchedEffect(state.action_result) {
         state.action_result?.let {
+            resend_pending = false
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
             vm.clear_action_result()
         }
@@ -172,6 +183,20 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Done,
             ),
+            keyboard_actions = KeyboardActions(
+                onDone = {
+                    if (email.trim().contains("@") && state.save_status != SaveStatus.SAVING) {
+                        if (state.recovery_email_step_up_required) {
+                            step_up_is_remove = false
+                            step_up_password = ""
+                            step_up_code = ""
+                            show_step_up = true
+                        } else {
+                            vm.save_recovery_email(email, null, null)
+                        }
+                    }
+                },
+            ),
             leading_icon = {
                 Icon(TablerIcons.Mail, null, tint = colors.text_muted)
             },
@@ -202,8 +227,12 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
             v_gap(AsterSpacing.sm)
             AsterGhostButton(
                 label = stringResource(R.string.recovery_email_resend),
-                onClick = { vm.resend_recovery_verification() },
+                onClick = {
+                    resend_pending = true
+                    vm.resend_recovery_verification()
+                },
                 modifier = Modifier.fillMaxWidth(),
+                enabled = !resend_pending,
             )
         }
 
@@ -258,16 +287,22 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
                 } else {
                     vm.save_recovery_email(email, step_up_password, code)
                 }
-                show_step_up = false
             },
             extra_content = {
                 androidx.compose.foundation.layout.Column {
+                    if (state.save_status == SaveStatus.ERROR) {
+                        state.error?.let {
+                            error_banner(it)
+                            v_gap(AsterSpacing.md)
+                        }
+                    }
                     AsterTextField(
                         value = step_up_password,
                         onValueChange = { step_up_password = it },
                         label = stringResource(R.string.password),
                         placeholder = stringResource(R.string.enter_your_password),
                         visual_transformation = PasswordVisualTransformation(),
+                        content_type = ContentType.Password,
                         keyboard_options = KeyboardOptions(
                             keyboardType = KeyboardType.Password,
                             imeAction = ImeAction.Done,
@@ -278,7 +313,7 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
                         AsterTextField(
                             value = step_up_code,
                             onValueChange = { input ->
-                                step_up_code = input.filter { it.isDigit() }.take(6)
+                                step_up_code = ascii_digits(input).take(6)
                             },
                             label = stringResource(R.string.authenticator_code),
                             placeholder = "000000",

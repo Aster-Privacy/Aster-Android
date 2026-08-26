@@ -19,93 +19,41 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 //
 
+
 package org.astermail.android.ui.settings.detail
 
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
-import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
-import org.astermail.android.settings.SettingsViewModel
-
-@Composable
-fun ConnectionScreen(
-    on_back: () -> Unit,
-) {
-    val vm: SettingsViewModel = hiltViewModel()
-    val state by vm.state.collectAsStateWithLifecycle()
-    val colors = AsterMaterial.colors
-
-    LaunchedEffect(Unit) { vm.load_connection_preference() }
-
-    detail_scaffold(title = stringResource(R.string.settings_connection), on_back = on_back) {
-        Text(
-            text = stringResource(R.string.connection_description),
-            color = colors.text_tertiary,
-            fontSize = 13.sp,
-            modifier = Modifier.padding(horizontal = AsterSpacing.lg),
-        )
-        v_gap(AsterSpacing.lg)
-        section_label(stringResource(R.string.connection_method_header))
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = AsterSpacing.lg),
-            verticalArrangement = Arrangement.spacedBy(AsterSpacing.md),
-        ) {
-            connection_option_card(
-                image = R.drawable.settings_direct,
-                title = stringResource(R.string.connection_direct),
-                subtitle = stringResource(R.string.connection_direct_description),
-                selected = state.connection_method == "direct",
-                modifier = Modifier.fillMaxWidth(),
-            ) { vm.update_connection_preference("direct") }
-            connection_option_card(
-                image = R.drawable.settings_cdn,
-                title = stringResource(R.string.connection_cdn_relay),
-                subtitle = stringResource(R.string.connection_cdn_relay_description),
-                selected = state.connection_method == "cdn_relay",
-                modifier = Modifier.fillMaxWidth(),
-            ) { vm.update_connection_preference("cdn_relay") }
-        }
-        v_gap(AsterSpacing.xxl)
-    }
-}
 
 @Composable
 internal fun illustrated_option_card(
@@ -179,13 +127,3 @@ internal fun illustrated_option_card(
         Spacer(Modifier.height(AsterSpacing.xs))
     }
 }
-
-@Composable
-private fun connection_option_card(
-    image: Int,
-    title: String,
-    subtitle: String,
-    selected: Boolean,
-    modifier: Modifier = Modifier,
-    on_click: () -> Unit,
-) = illustrated_option_card(image, title, subtitle, selected, modifier, on_click)

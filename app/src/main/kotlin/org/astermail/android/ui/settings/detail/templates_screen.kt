@@ -72,6 +72,7 @@ import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.DialogConfirmStyle
 import org.astermail.android.templates.DecryptedTemplate
 import org.astermail.android.templates.TemplatesViewModel
+import org.astermail.android.util.clip_units
 
 @Composable
 fun TemplatesScreen(
@@ -122,12 +123,29 @@ fun TemplatesScreen(
             return@detail_scaffold
         }
 
+        state.load_error?.let { err ->
+            if (state.items.isEmpty()) {
+                load_failed_card(message = err, on_retry = { vm.load() })
+                v_gap(AsterSpacing.xxl)
+                return@detail_scaffold
+            }
+            error_banner(err)
+            v_gap(AsterSpacing.md)
+        }
+
         state.error?.let { err ->
             error_banner(err)
             v_gap(AsterSpacing.md)
         }
 
-        if (state.items.isEmpty() && !state.is_loading) {
+        if (state.undecryptable_count > 0) {
+            error_banner(
+                stringResource(R.string.templates_decrypt_failed_count, state.undecryptable_count),
+            )
+            v_gap(AsterSpacing.md)
+        }
+
+        if (state.items.isEmpty() && !state.is_loading && state.undecryptable_count == 0) {
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(AsterSpacing.lg)) {
                     Text(
@@ -172,7 +190,10 @@ fun TemplatesScreen(
         AsterAlertDialog(
             on_dismiss = { pending_delete = null },
             title = stringResource(R.string.delete_template_title),
-            message = stringResource(R.string.delete_template_message),
+            message = stringResource(
+                R.string.delete_template_message,
+                doomed.name.ifBlank { stringResource(R.string.unnamed_template) },
+            ),
             confirm_label = stringResource(R.string.delete),
             cancel_label = stringResource(R.string.cancel),
             confirm_style = DialogConfirmStyle.destructive,
@@ -193,7 +214,7 @@ private fun template_preview(content: String): String {
         .replace("&gt;", ">")
         .replace("&quot;", "\"")
         .replace("&#39;", "'")
-    return decoded.replace(Regex("\\s+"), " ").trim().take(120)
+    return decoded.replace(Regex("\\s+"), " ").trim().clip_units(120)
 }
 
 @Composable

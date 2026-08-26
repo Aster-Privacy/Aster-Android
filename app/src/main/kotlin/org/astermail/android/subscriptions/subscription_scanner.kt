@@ -91,7 +91,7 @@ private val TRANSACTIONAL_KEYWORDS = listOf(
 )
 
 internal fun sender_domain(email: String): String =
-    email.substringAfter('@', "").lowercase()
+    email.substringAfter('@', "").lowercase(java.util.Locale.ROOT)
 
 internal fun is_system_sender(email: String): Boolean {
     val domain = sender_domain(email)
@@ -103,8 +103,8 @@ internal fun categorize_sender(
     sender_name: String,
     has_list_unsubscribe: Boolean,
 ): String {
-    val domain_lower = domain.lowercase()
-    val name_lower = sender_name.lowercase()
+    val domain_lower = domain.lowercase(java.util.Locale.ROOT)
+    val name_lower = sender_name.lowercase(java.util.Locale.ROOT)
 
     if (NEWSLETTER_DOMAINS.any { domain_lower.contains(it) }) return "newsletter"
     if (MARKETING_DOMAINS.any { domain_lower.contains(it) }) return "marketing"
@@ -205,7 +205,7 @@ class SubscriptionScanner @Inject constructor(
                     continue
                 }
 
-                val email = envelope.from_email.trim().lowercase()
+                val email = envelope.from_email.trim().lowercase(java.util.Locale.ROOT)
                 if (email.isEmpty() || !email.contains('@')) continue
                 if (is_system_sender(email)) continue
 

@@ -182,6 +182,14 @@ fun AllowListScreen(on_back: () -> Unit) {
     var add_is_domain by remember { mutableStateOf(false) }
     val senders = state.allowed_senders
 
+    val action_result_context = androidx.compose.ui.platform.LocalContext.current
+
+    LaunchedEffect(state.action_result) {
+        val msg = state.action_result ?: return@LaunchedEffect
+        android.widget.Toast.makeText(action_result_context, msg, android.widget.Toast.LENGTH_SHORT).show()
+        vm.clear_action_result()
+    }
+
     LaunchedEffect(Unit) { vm.load_allowed_senders() }
 
     detail_scaffold(title = stringResource(R.string.allowlist), on_back = on_back) {
@@ -203,6 +211,7 @@ fun AllowListScreen(on_back: () -> Unit) {
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 detail_row(
                     title = stringResource(R.string.allowed_senders_load_failed),
+                    subtitle = state.allowed_senders_error,
                     icon = TablerIcons.CircleCheck,
                     trailing = {
                         AsterGhostButton(

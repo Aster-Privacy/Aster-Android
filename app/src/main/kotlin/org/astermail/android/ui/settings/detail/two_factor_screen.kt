@@ -22,10 +22,12 @@
 package org.astermail.android.ui.settings.detail
 
 import compose.icons.TablerIcons
+import android.widget.Toast
+import org.astermail.android.ui.common.show_copy_failed_toast
+import org.astermail.android.ui.common.write_to_clipboard
 import compose.icons.tablericons.*
 
 import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -50,6 +52,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
@@ -58,6 +61,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -151,7 +155,7 @@ private fun idle_panel(state: org.astermail.android.twofactor.TwoFactorUiState, 
                 )
                 Text(
                     text = if (state.enabled) {
-                        stringResource(R.string.backup_codes_remaining, state.backup_codes_remaining)
+                        pluralStringResource(R.plurals.backup_codes_remaining, state.backup_codes_remaining, state.backup_codes_remaining)
                     } else {
                         stringResource(R.string.add_second_factor)
                     },
@@ -273,6 +277,7 @@ private fun disable_panel(state: org.astermail.android.twofactor.TwoFactorUiStat
         label = stringResource(R.string.password),
         placeholder = stringResource(R.string.password_dots),
         visual_transformation = PasswordVisualTransformation(),
+        content_type = ContentType.Password,
         keyboard_options = KeyboardOptions(keyboardType = KeyboardType.Password),
     )
     v_gap(AsterSpacing.md)
@@ -358,11 +363,14 @@ private fun backup_codes_panel(
 }
 
 private fun copy_to_clipboard(context: Context, label: String, value: String) {
-    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     val clip = ClipData.newPlainText(label, value)
     clip.description.extras = android.os.PersistableBundle().apply {
         putBoolean("android.content.extra.IS_SENSITIVE", true)
     }
-    clipboard.setPrimaryClip(clip)
+    if (!write_to_clipboard(context, clip)) {
+        show_copy_failed_toast(context)
+        return
+    }
     org.astermail.android.util.schedule_sensitive_clipboard_clear(context, value)
+    Toast.makeText(context, context.getString(R.string.copied_to_clipboard), Toast.LENGTH_SHORT).show()
 }

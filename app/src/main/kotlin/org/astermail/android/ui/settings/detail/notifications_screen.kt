@@ -53,6 +53,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -67,6 +68,7 @@ import org.astermail.android.api.preferences.UserPreferences
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.design.components.UpgradeGate
+import org.astermail.android.settings.SaveStatus
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
 
@@ -121,7 +123,6 @@ fun NotificationsScreen(
     var vibrate by remember(prefs_seeded) { mutableStateOf(prefs?.vibrate ?: true) }
     var new_email by remember(prefs_seeded) { mutableStateOf(prefs?.notify_new_email ?: true) }
     var replies by remember(prefs_seeded) { mutableStateOf(prefs?.notify_replies ?: true) }
-    var mentions by remember(prefs_seeded) { mutableStateOf(prefs?.notify_mentions ?: true) }
     var quiet_hours by remember(prefs_seeded) { mutableStateOf(prefs?.quiet_hours_enabled ?: false) }
     var quiet_hours_start by remember(prefs_seeded) { mutableStateOf(prefs?.quiet_hours_start?.takeIf { it.isNotBlank() } ?: "22:00") }
     var quiet_hours_end by remember(prefs_seeded) { mutableStateOf(prefs?.quiet_hours_end?.takeIf { it.isNotBlank() } ?: "07:00") }
@@ -129,6 +130,7 @@ fun NotificationsScreen(
     var prefs_loaded by remember { mutableStateOf(false) }
 
     val is_battery_exempt = remember { mutableStateOf(false) }
+    val notifications_allowed = remember { mutableStateOf(true) }
     fun refresh_battery_exempt() {
         is_battery_exempt.value = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val pm = context.getSystemService(android.content.Context.POWER_SERVICE) as? PowerManager
@@ -136,6 +138,7 @@ fun NotificationsScreen(
         } else {
             true
         }
+        notifications_allowed.value = NotificationManagerCompat.from(context).areNotificationsEnabled()
     }
     LaunchedEffect(Unit) { refresh_battery_exempt() }
     val lifecycle_owner = LocalLifecycleOwner.current
@@ -155,13 +158,33 @@ fun NotificationsScreen(
             vibrate = prefs.vibrate
             new_email = prefs.notify_new_email
             replies = prefs.notify_replies
-            mentions = prefs.notify_mentions
             quiet_hours = prefs.quiet_hours_enabled
             quiet_hours_start = prefs.quiet_hours_start.takeIf { it.isNotBlank() } ?: "22:00"
             quiet_hours_end = prefs.quiet_hours_end.takeIf { it.isNotBlank() } ?: "07:00"
             MailPollingWorker.set_quiet_hours(context, quiet_hours, quiet_hours_start, quiet_hours_end)
             MailPollingWorker.set_notify_new_email(context, new_email)
+            MailPollingWorker.set_notify_replies(context, replies)
+            MailPollingWorker.set_notification_alerts(context, sound, vibrate)
         }
+    }
+
+    LaunchedEffect(state.save_status) {
+        if (state.save_status != SaveStatus.ERROR || !prefs_loaded) return@LaunchedEffect
+        val base = prefs ?: return@LaunchedEffect
+        push = base.push_notifications
+        sound = base.sound
+        vibrate = base.vibrate
+        new_email = base.notify_new_email
+        replies = base.notify_replies
+        quiet_hours = base.quiet_hours_enabled
+        quiet_hours_start = base.quiet_hours_start.takeIf { it.isNotBlank() } ?: "22:00"
+        quiet_hours_end = base.quiet_hours_end.takeIf { it.isNotBlank() } ?: "07:00"
+        save_trigger = 0
+        MailPollingWorker.set_push_enabled(context, push)
+        MailPollingWorker.set_quiet_hours(context, quiet_hours, quiet_hours_start, quiet_hours_end)
+        MailPollingWorker.set_notify_new_email(context, new_email)
+        MailPollingWorker.set_notify_replies(context, replies)
+        MailPollingWorker.set_notification_alerts(context, sound, vibrate)
     }
 
     fun save() {
@@ -173,13 +196,45 @@ fun NotificationsScreen(
                 vibrate = vibrate,
                 notify_new_email = new_email,
                 notify_replies = replies,
-                notify_mentions = mentions,
                 quiet_hours_enabled = quiet_hours,
                 quiet_hours_start = quiet_hours_start,
                 quiet_hours_end = quiet_hours_end,
             ),
         )
         MailPollingWorker.set_quiet_hours(context, quiet_hours, quiet_hours_start, quiet_hours_end)
+        MailPollingWorker.set_notification_alerts(context, sound, vibrate)
+        MailPollingWorker.set_notify_new_email(context, new_email)
+        MailPollingWorker.set_notify_replies(context, replies)
+    }
+
+    LaunchedEffect(quiet_hours_locked, prefs_loaded) {
+        if (!quiet_hours_locked || !prefs_loaded) return@LaunchedEffect
+        val base = prefs ?: return@LaunchedEffect
+        if (!base.quiet_hours_enabled) {
+            MailPollingWorker.set_quiet_hours(context, false, quiet_hours_start, quiet_hours_end)
+            return@LaunchedEffect
+        }
+        quiet_hours = false
+        MailPollingWorker.set_quiet_hours(context, false, quiet_hours_start, quiet_hours_end)
+        vm.save_preferences(base.copy(quiet_hours_enabled = false))
+    }
+
+    val uses_24h = when (prefs?.time_format) {
+        "24h" -> true
+        "12h" -> false
+        else -> android.text.format.DateFormat.is24HourFormat(context)
+    }
+
+    fun display_time(value: String): String {
+        if (uses_24h) return value
+        val parts = value.split(":")
+        val hour = parts.getOrNull(0)?.toIntOrNull() ?: return value
+        val minute = parts.getOrNull(1)?.toIntOrNull() ?: return value
+        val calendar = java.util.Calendar.getInstance().apply {
+            set(java.util.Calendar.HOUR_OF_DAY, hour.coerceIn(0, 23))
+            set(java.util.Calendar.MINUTE, minute.coerceIn(0, 59))
+        }
+        return java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault()).format(calendar.time)
     }
 
     fun show_time_picker(initial: String, on_pick: (String) -> Unit) {
@@ -190,7 +245,7 @@ fun NotificationsScreen(
             context,
             time_picker_theme,
             { _, hour, minute -> on_pick(String.format(java.util.Locale.US, "%02d:%02d", hour, minute)) },
-            h, m, android.text.format.DateFormat.is24HourFormat(context),
+            h, m, uses_24h,
         ).show()
     }
 
@@ -199,35 +254,47 @@ fun NotificationsScreen(
         if (!prefs_loaded || prefs == null) return@LaunchedEffect
         delay(500)
         save()
+        save_trigger = 0
     }
 
+    val flush_on_exit: androidx.compose.runtime.State<() -> Unit> =
+        androidx.compose.runtime.rememberUpdatedState({
+            if (save_trigger > 0 && prefs != null && prefs_loaded) save()
+        })
+
     androidx.compose.runtime.DisposableEffect(Unit) {
-        onDispose {
-            if (save_trigger > 0 && prefs != null && prefs_loaded) {
-                save()
-            }
-        }
+        onDispose { flush_on_exit.value() }
     }
 
     detail_scaffold(
         title = stringResource(R.string.notifications),
         on_back = on_back,
     ) {
+        preferences_save_error_banner()
         if (prefs == null || !state.preferences_authoritative) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
-            }
+            preferences_load_placeholder()
         } else {
             section_label(stringResource(R.string.channels))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 switch_row(stringResource(R.string.push_notifications), stringResource(R.string.push_notifications_subtitle), push) { push = it; save_trigger++; MailPollingWorker.set_push_enabled(context, it) }
                 AsterDivider(modifier = Modifier)
-                switch_row(stringResource(R.string.sound), stringResource(R.string.sound_subtitle), sound) { sound = it; save_trigger++ }
+                switch_row(stringResource(R.string.sound), stringResource(R.string.sound_subtitle), sound) { sound = it; save_trigger++; MailPollingWorker.set_notification_alerts(context, it, vibrate) }
                 AsterDivider(modifier = Modifier)
-                switch_row(stringResource(R.string.vibrate), null, vibrate) { vibrate = it; save_trigger++ }
+                switch_row(stringResource(R.string.vibrate), null, vibrate) { vibrate = it; save_trigger++; MailPollingWorker.set_notification_alerts(context, sound, it) }
+            }
+            if (!notifications_allowed.value) {
+                v_gap(AsterSpacing.lg)
+                AsterCard(modifier = Modifier.fillMaxWidth()) {
+                    detail_row(
+                        title = stringResource(R.string.notif_blocked_title),
+                        subtitle = stringResource(R.string.notif_blocked_subtitle),
+                        on_click = {
+                            val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                            org.astermail.android.ui.common.start_external_intent(context, intent)
+                        },
+                    )
+                }
             }
             if (!is_battery_exempt.value && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 v_gap(AsterSpacing.lg)
@@ -240,7 +307,7 @@ fun NotificationsScreen(
                                 Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
                                 Uri.parse("package:${context.packageName}"),
                             )
-                            context.startActivity(intent)
+                            org.astermail.android.ui.common.start_external_intent(context, intent)
                         },
                     )
                 }
@@ -250,9 +317,7 @@ fun NotificationsScreen(
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 switch_row(stringResource(R.string.new_emails), null, new_email) { new_email = it; save_trigger++; MailPollingWorker.set_notify_new_email(context, it) }
                 AsterDivider(modifier = Modifier)
-                switch_row(stringResource(R.string.replies), null, replies) { replies = it; save_trigger++ }
-                AsterDivider(modifier = Modifier)
-                switch_row(stringResource(R.string.mentions), null, mentions) { mentions = it; save_trigger++ }
+                switch_row(stringResource(R.string.replies), null, replies) { replies = it; save_trigger++; MailPollingWorker.set_notify_replies(context, it) }
                 if (state.product_updates_available) {
                     AsterDivider(modifier = Modifier)
                     switch_row(
@@ -260,6 +325,46 @@ fun NotificationsScreen(
                         stringResource(R.string.product_updates_subtitle),
                         state.product_updates,
                     ) { vm.set_product_updates(it) }
+                }
+            }
+            if (prefs.inbox_categories_enabled) {
+                val muted_categories = prefs.muted_notification_categories
+                val rows = buildList {
+                    org.astermail.android.mail.BUILTIN_CATEGORIES
+                        .filter { it.removable && it.id in prefs.enabled_categories }
+                        .forEach { add(it.id to context.getString(it.label_res)) }
+                    prefs.custom_categories
+                        .filter { it.enabled && it.id.isNotBlank() && it.name.isNotBlank() }
+                        .forEach { add(it.id to it.name) }
+                }
+                v_gap(AsterSpacing.lg)
+                section_label(stringResource(R.string.muted_categories))
+                Text(
+                    text = stringResource(R.string.muted_categories_description),
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(
+                        start = AsterSpacing.lg,
+                        end = AsterSpacing.lg,
+                        bottom = AsterSpacing.sm,
+                    ),
+                )
+                if (rows.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.muted_categories_empty),
+                        color = colors.text_tertiary,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(horizontal = AsterSpacing.lg),
+                    )
+                } else {
+                    AsterCard(modifier = Modifier.fillMaxWidth()) {
+                        rows.forEachIndexed { index, (id, label) ->
+                            switch_row(label, null, id in muted_categories) {
+                                vm.toggle_category_notifications(id)
+                            }
+                            if (index < rows.size - 1) AsterDivider(modifier = Modifier)
+                        }
+                    }
                 }
             }
             v_gap(AsterSpacing.lg)
@@ -275,19 +380,19 @@ fun NotificationsScreen(
                 )
             } else {
                 AsterCard(modifier = Modifier.fillMaxWidth()) {
-                    switch_row(stringResource(R.string.quiet_hours), stringResource(R.string.quiet_hours_subtitle_range, quiet_hours_start, quiet_hours_end), quiet_hours) { quiet_hours = it; save_trigger++ }
+                    switch_row(stringResource(R.string.quiet_hours), stringResource(R.string.quiet_hours_subtitle_range, display_time(quiet_hours_start), display_time(quiet_hours_end)), quiet_hours) { quiet_hours = it; save_trigger++ }
                     if (quiet_hours) {
                         AsterDivider(modifier = Modifier)
                         detail_row(
                             title = stringResource(R.string.quiet_hours_start),
                             on_click = { show_time_picker(quiet_hours_start) { quiet_hours_start = it; save_trigger++ } },
-                            trailing = { Text(text = quiet_hours_start, color = colors.text_secondary, fontSize = 15.sp) },
+                            trailing = { Text(text = display_time(quiet_hours_start), color = colors.text_secondary, fontSize = 15.sp) },
                         )
                         AsterDivider(modifier = Modifier)
                         detail_row(
                             title = stringResource(R.string.quiet_hours_end),
                             on_click = { show_time_picker(quiet_hours_end) { quiet_hours_end = it; save_trigger++ } },
-                            trailing = { Text(text = quiet_hours_end, color = colors.text_secondary, fontSize = 15.sp) },
+                            trailing = { Text(text = display_time(quiet_hours_end), color = colors.text_secondary, fontSize = 15.sp) },
                         )
                     }
                 }

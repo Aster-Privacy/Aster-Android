@@ -22,10 +22,12 @@
 package org.astermail.android.ui.settings.detail
 
 import compose.icons.TablerIcons
+import org.astermail.android.ui.common.show_copy_result_toast
+import org.astermail.android.ui.common.show_copy_failed_toast
+import org.astermail.android.ui.common.write_to_clipboard
 import compose.icons.tablericons.*
 
 import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -170,8 +172,17 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
     val colors = AsterMaterial.colors
 
     LaunchedEffect(Unit) { vm.load_sessions() }
+    val devices_context = LocalContext.current
+
+    LaunchedEffect(state.action_result) {
+        val msg = state.action_result ?: return@LaunchedEffect
+        android.widget.Toast.makeText(devices_context, msg, android.widget.Toast.LENGTH_SHORT).show()
+        vm.clear_action_result()
+    }
+
     val devices_load_settled = remember_load_settled(state.is_loading)
     var show_revoke_all_confirm by remember { mutableStateOf(false) }
+    var pending_revoke_session by remember { mutableStateOf<String?>(null) }
     val scroll_state = rememberScrollState()
 
     detail_scaffold(
@@ -190,7 +201,7 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
         v_gap(AsterSpacing.lg)
 
         section_header_action(
-            title = stringResource(R.string.devices_count, state.sessions.size),
+            title = pluralStringResource(R.plurals.devices_count, state.sessions.size, state.sessions.size),
             action_label = stringResource(R.string.revoke_all_action),
             enabled = state.sessions.size > 1,
             on_click = { show_revoke_all_confirm = true },
@@ -198,11 +209,8 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
         if (state.sessions.isEmpty() && (state.is_loading || !devices_load_settled)) {
             skeleton_card_list(rows = 6, leading_circle = true, trailing_width = 72.dp)
         } else if (state.sessions.isEmpty()) {
-            AsterCard(modifier = Modifier.fillMaxWidth()) {
-                detail_row(
-                    title = stringResource(R.string.no_devices_found),
-                    subtitle = state.error ?: stringResource(R.string.could_not_load_devices),
-                )
+            load_failed_card(state.error ?: stringResource(R.string.could_not_load_devices)) {
+                vm.load_sessions()
             }
         } else {
             AsterCard(modifier = Modifier.fillMaxWidth()) {
@@ -220,10 +228,10 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
                         title = name,
                         subtitle = last_seen,
                         icon = icon,
-                        on_click = {},
+                        on_click = null,
                         trailing = {
                             if (s.is_current) verified_badge(stringResource(R.string.this_device))
-                            else AsterGhostButton(label = stringResource(R.string.revoke), onClick = { vm.revoke_session(s.id) })
+                            else AsterGhostButton(label = stringResource(R.string.revoke), onClick = { pending_revoke_session = s.id })
                         },
                     )
                     if (idx < state.sessions.lastIndex) AsterDivider(modifier = Modifier)
@@ -231,6 +239,21 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
             }
         }
         v_gap(AsterSpacing.xxl)
+    }
+
+    pending_revoke_session?.let { session_id ->
+        AsterAlertDialog(
+            on_dismiss = { pending_revoke_session = null },
+            title = stringResource(R.string.revoke),
+            message = stringResource(R.string.revoke_session_confirm),
+            confirm_label = stringResource(R.string.revoke),
+            cancel_label = stringResource(R.string.cancel),
+            confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
+            on_confirm = {
+                pending_revoke_session = null
+                vm.revoke_session(session_id)
+            },
+        )
     }
 
     if (show_revoke_all_confirm) {
@@ -273,9 +296,11 @@ fun ReferralScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
 
     val copy_link = {
         if (link.isNotEmpty()) {
-            val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            cm.setPrimaryClip(ClipData.newPlainText(clipboard_label, link))
-            Toast.makeText(context, link_copied_text, Toast.LENGTH_SHORT).show()
+            if (write_to_clipboard(context, ClipData.newPlainText(clipboard_label, link))) {
+                Toast.makeText(context, link_copied_text, Toast.LENGTH_SHORT).show()
+            } else {
+                show_copy_failed_toast(context)
+            }
         }
     }
 
@@ -285,12 +310,17 @@ fun ReferralScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                 type = "text/plain"
                 putExtra(Intent.EXTRA_TEXT, "$share_body $link")
             }
-            context.startActivity(Intent.createChooser(intent, share_title))
+            org.astermail.android.ui.common.start_external_intent(
+                context,
+                Intent.createChooser(intent, share_title),
+            )
         }
     }
 
     detail_scaffold(title = stringResource(R.string.referral_program), on_back = on_back) {
-        if (referral == null) {
+        if (referral == null && state.referral_load_failed) {
+            load_failed_card(null) { vm.load_referral_info() }
+        } else if (referral == null) {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
                 contentAlignment = Alignment.Center,
@@ -440,7 +470,7 @@ private fun referral_hero(
                 .clip(RoundedCornerShape(AsterRadius.md))
                 .background(Color.Black.copy(alpha = 0.20f))
                 .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(AsterRadius.md))
-                .clickable(onClick = on_copy)
+                .clickable(enabled = link.isNotEmpty(), onClick = on_copy)
                 .padding(horizontal = AsterSpacing.md),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -468,6 +498,7 @@ private fun referral_hero(
                 label = stringResource(R.string.copy_link),
                 accent = accent,
                 on_click = on_copy,
+                enabled = link.isNotEmpty(),
             )
             referral_hero_button(
                 modifier = Modifier.weight(1f),
@@ -475,6 +506,7 @@ private fun referral_hero(
                 label = stringResource(R.string.share_link),
                 accent = accent,
                 on_click = on_share,
+                enabled = link.isNotEmpty(),
             )
         }
         }
@@ -488,14 +520,15 @@ private fun referral_hero_button(
     label: String,
     accent: Color,
     on_click: () -> Unit,
+    enabled: Boolean = true,
 ) {
-    val ink = accent.darken(0.42f)
+    val ink = accent.darken(0.42f).copy(alpha = if (enabled) 1f else 0.45f)
     Row(
         modifier = modifier
             .height(38.dp)
             .clip(RoundedCornerShape(AsterRadius.md))
-            .background(Color.White)
-            .clickable(onClick = on_click),
+            .background(Color.White.copy(alpha = if (enabled) 1f else 0.55f))
+            .clickable(enabled = enabled, onClick = on_click),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
     ) {
@@ -866,7 +899,7 @@ private fun format_referral_date(raw: String?): String {
         val instant = java.time.Instant.parse(raw)
         java.time.format.DateTimeFormatter
             .ofLocalizedDate(java.time.format.FormatStyle.MEDIUM)
-            .withZone(java.time.ZoneId.systemDefault())
+            .withZone(org.astermail.android.ui.mail.AsterTimePreferences.account_zone_id())
             .format(instant)
     } catch (_: Throwable) {
         raw.take(10)
@@ -891,8 +924,6 @@ fun DeveloperScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
     val prefs_seeded = prefs != null && state.preferences_authoritative
     var dev_mode by remember(prefs_seeded) { mutableStateOf(prefs?.dev_mode ?: false) }
     var show_raw_headers by remember(prefs_seeded) { mutableStateOf(prefs?.show_raw_headers ?: false) }
-    var allow_insecure by remember(prefs_seeded) { mutableStateOf(prefs?.allow_insecure ?: false) }
-    var verbose_logs by remember(prefs_seeded) { mutableStateOf(prefs?.verbose_logs ?: false) }
     var save_trigger by remember { mutableIntStateOf(0) }
     var prefs_loaded_dev by remember { mutableStateOf(false) }
 
@@ -901,9 +932,14 @@ fun DeveloperScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
             prefs_loaded_dev = true
             dev_mode = prefs.dev_mode
             show_raw_headers = prefs.show_raw_headers
-            allow_insecure = prefs.allow_insecure
-            verbose_logs = prefs.verbose_logs
         }
+    }
+
+    LaunchedEffect(state.save_status) {
+        if (state.save_status != org.astermail.android.settings.SaveStatus.ERROR || !prefs_loaded_dev) return@LaunchedEffect
+        val base = prefs ?: return@LaunchedEffect
+        dev_mode = base.dev_mode
+        show_raw_headers = base.show_raw_headers
     }
 
     fun save() {
@@ -912,8 +948,6 @@ fun DeveloperScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
             base.copy(
                 dev_mode = dev_mode,
                 show_raw_headers = show_raw_headers,
-                allow_insecure = allow_insecure,
-                verbose_logs = verbose_logs,
             ),
         )
     }
@@ -925,35 +959,26 @@ fun DeveloperScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
         save()
     }
 
+    val flush_on_exit: androidx.compose.runtime.State<() -> Unit> =
+        androidx.compose.runtime.rememberUpdatedState({
+            if (save_trigger > 0 && prefs != null && prefs_loaded_dev) save()
+        })
+
     androidx.compose.runtime.DisposableEffect(Unit) {
-        onDispose {
-            if (save_trigger > 0 && prefs != null && prefs_loaded_dev) {
-                save()
-            }
-        }
+        onDispose { flush_on_exit.value() }
     }
 
     detail_scaffold(
         title = stringResource(R.string.developer),
         on_back = on_back,
     ) {
-        if (prefs == null) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
-            }
+        if (prefs == null || !state.preferences_authoritative) {
+            preferences_load_placeholder()
         } else {
+            preferences_save_error_banner()
             section_label(stringResource(R.string.mode))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
-                toggle_row(stringResource(R.string.developer_mode), stringResource(R.string.developer_mode_subtitle), dev_mode) { dev_mode = it; save_trigger++ }
-                AsterDivider(modifier = Modifier)
                 toggle_row(stringResource(R.string.show_raw_headers), stringResource(R.string.show_raw_headers_subtitle), show_raw_headers) { show_raw_headers = it; save_trigger++ }
-                AsterDivider(modifier = Modifier)
-                toggle_row(stringResource(R.string.allow_insecure), stringResource(R.string.allow_insecure_subtitle), allow_insecure) { allow_insecure = it; save_trigger++ }
-                AsterDivider(modifier = Modifier)
-                toggle_row(stringResource(R.string.verbose_logs), stringResource(R.string.verbose_logs_subtitle), verbose_logs) { verbose_logs = it; save_trigger++ }
             }
             v_gap(AsterSpacing.lg)
             section_label(stringResource(R.string.tools))
@@ -1041,10 +1066,30 @@ fun LabelsScreen(
         vm.load_tags()
     }
 
+    val labels_context = LocalContext.current
+
+    LaunchedEffect(state.action_result) {
+        val msg = state.action_result ?: return@LaunchedEffect
+        android.widget.Toast.makeText(labels_context, msg, android.widget.Toast.LENGTH_SHORT).show()
+        vm.clear_action_result()
+    }
+
     val rows = label_screen_rows(state.tags, state.labels)
     var pending_label_delete by remember { mutableStateOf<label_screen_row?>(null) }
+    var pending_label_rename by remember { mutableStateOf<label_screen_row?>(null) }
+    var show_create_label by remember { mutableStateOf(false) }
 
     detail_scaffold(title = stringResource(R.string.labels), on_back = on_back) {
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            detail_row(
+                title = stringResource(R.string.create_label),
+                subtitle = stringResource(R.string.create_label_subtitle),
+                icon = TablerIcons.Tag,
+                on_click = { show_create_label = true },
+            )
+        }
+        v_gap(AsterSpacing.md)
+
         if (state.is_loading && rows.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
@@ -1052,15 +1097,20 @@ fun LabelsScreen(
             ) {
                 CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
             }
+        } else if (rows.isEmpty() && state.error != null) {
+            load_failed_card(state.error) {
+                vm.load_labels(folder_type = "label")
+                vm.load_tags()
+            }
         } else if (rows.isEmpty()) {
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 detail_row(
                     title = stringResource(R.string.no_labels),
-                    subtitle = state.error ?: stringResource(R.string.no_labels_subtitle),
+                    subtitle = stringResource(R.string.no_labels_subtitle),
                 )
             }
         } else {
-            section_label(stringResource(R.string.labels_count, rows.size))
+            section_label(pluralStringResource(R.plurals.labels_count, rows.size, rows.size))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 rows.forEachIndexed { idx, row ->
                     label_settings_row(
@@ -1074,12 +1124,37 @@ fun LabelsScreen(
                         on_move_up = { if (row.is_tag) vm.move_tag(row.id, -1) else vm.move_label_row(row.id, -1) },
                         on_move_down = { if (row.is_tag) vm.move_tag(row.id, 1) else vm.move_label_row(row.id, 1) },
                         on_delete = { pending_label_delete = row },
+                        on_rename = if (row.can_delete) ({ pending_label_rename = row }) else null,
                     )
                     if (idx < rows.lastIndex) AsterDivider(modifier = Modifier)
                 }
             }
         }
         v_gap(AsterSpacing.xxl)
+    }
+
+    if (show_create_label) {
+        org.astermail.android.ui.drawer.create_label_dialog(
+            on_dismiss = { show_create_label = false },
+            on_create = { name, color, icon ->
+                vm.create_tag(name = name, color = color, icon = icon)
+                show_create_label = false
+            },
+            existing_names = rows.map { it.name },
+        )
+    }
+
+    pending_label_rename?.let { target ->
+        org.astermail.android.ui.drawer.folder_rename_dialog(
+            initial_name = target.name,
+            title = stringResource(R.string.rename_label),
+            placeholder = stringResource(R.string.label_name),
+            on_dismiss = { pending_label_rename = null },
+            on_confirm = { new_name ->
+                if (target.is_tag) vm.rename_tag(target.id, new_name) else vm.rename_folder(target.id, new_name)
+                pending_label_rename = null
+            },
+        )
     }
 
     pending_label_delete?.let { target ->
@@ -1110,6 +1185,7 @@ internal fun label_settings_row(
     on_move_up: () -> Unit,
     on_move_down: () -> Unit,
     on_delete: () -> Unit,
+    on_rename: (() -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
     Row(
@@ -1118,7 +1194,11 @@ internal fun label_settings_row(
     ) {
         Box(modifier = Modifier.size(12.dp).background(color, CircleShape))
         Spacer(Modifier.width(AsterSpacing.md))
-        Column(Modifier.weight(1f)) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .then(if (on_rename != null) Modifier.clickable(onClick = on_rename) else Modifier),
+        ) {
             Text(name, color = colors.text_primary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
             if (count_text.isNotEmpty()) {
                 Text(count_text, color = colors.text_tertiary, fontSize = 13.sp)
@@ -1193,6 +1273,7 @@ fun FoldersScreen(
     val muted_tokens = state.preferences?.muted_folder_tokens ?: emptyList()
     var show_create_folder by remember { mutableStateOf(false) }
     var pending_folder_delete by remember { mutableStateOf<org.astermail.android.api.labels.LabelItem?>(null) }
+    var pending_folder_rename by remember { mutableStateOf<org.astermail.android.api.labels.LabelItem?>(null) }
     val folders_context = LocalContext.current
 
     LaunchedEffect(state.action_result) {
@@ -1233,11 +1314,16 @@ fun FoldersScreen(
             ) {
                 CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
             }
+        } else if (folder_nodes.isEmpty() && state.error != null) {
+            load_failed_card(state.error) {
+                vm.load_labels(folder_type = "folder")
+                vm.load_preferences()
+            }
         } else if (folder_nodes.isEmpty()) {
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 detail_row(
                     title = stringResource(R.string.no_folders),
-                    subtitle = state.error ?: stringResource(R.string.no_folders_subtitle),
+                    subtitle = stringResource(R.string.no_folders_subtitle),
                 )
             }
         } else {
@@ -1261,7 +1347,7 @@ fun FoldersScreen(
                                 title = folder_name,
                                 subtitle = count_text,
                                 icon = TablerIcons.Folder,
-                                on_click = {},
+                                on_click = if (f.is_system || f.is_locked) null else ({ pending_folder_rename = f }),
                                 trailing = {
                                     if (!f.is_system) {
                                         val is_muted = f.label_token in muted_tokens
@@ -1354,6 +1440,17 @@ fun FoldersScreen(
         )
     }
 
+    pending_folder_rename?.let { target ->
+        org.astermail.android.ui.drawer.folder_rename_dialog(
+            initial_name = target.encrypted_name?.takeIf { it.isNotBlank() } ?: target.label_token,
+            on_dismiss = { pending_folder_rename = null },
+            on_confirm = { new_name ->
+                vm.rename_folder(target.id, new_name)
+                pending_folder_rename = null
+            },
+        )
+    }
+
     pending_folder_delete?.let { target ->
         val target_name = target.encrypted_name?.takeIf { it.isNotBlank() } ?: target.label_token
         val has_subfolders = org.astermail.android.folders.descendant_tokens(
@@ -1392,26 +1489,33 @@ fun PrivacyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
 
     LaunchedEffect(Unit) { vm.load_preferences() }
 
-    val prefs_seeded = prefs != null
-    var block_trackers by remember(prefs_seeded) { mutableStateOf(prefs?.block_trackers ?: true) }
+    val prefs_seeded = prefs != null && state.preferences_authoritative
+    var block_trackers by remember(prefs_seeded) {
+        mutableStateOf(prefs?.block_tracking_pixels != false && prefs?.block_external_content != false)
+    }
     var remote_images by remember(prefs_seeded) { mutableStateOf(prefs?.load_remote_images == "always") }
-    var send_receipts by remember(prefs_seeded) { mutableStateOf(prefs?.send_read_receipts ?: false) }
     var link_warnings by remember(prefs_seeded) { mutableStateOf(prefs?.warn_suspicious_links ?: true) }
     var strip_exif by remember(prefs_seeded) { mutableStateOf(prefs?.strip_exif_on_compose ?: true) }
-    var ghost_mode by remember(prefs_seeded) { mutableStateOf(prefs?.ghost_mode ?: false) }
     var save_trigger by remember { mutableIntStateOf(0) }
     var prefs_loaded_priv by remember { mutableStateOf(false) }
 
-    LaunchedEffect(prefs) {
-        if (prefs != null && !prefs_loaded_priv) {
+    LaunchedEffect(prefs, state.preferences_authoritative) {
+        if (prefs != null && state.preferences_authoritative && !prefs_loaded_priv) {
             prefs_loaded_priv = true
-            block_trackers = prefs.block_trackers
+            block_trackers = prefs.block_tracking_pixels && prefs.block_external_content != false
             remote_images = prefs.load_remote_images == "always"
-            send_receipts = prefs.send_read_receipts
             link_warnings = prefs.warn_suspicious_links
             strip_exif = prefs.strip_exif_on_compose
-            ghost_mode = prefs.ghost_mode
         }
+    }
+
+    LaunchedEffect(state.save_status) {
+        if (state.save_status != org.astermail.android.settings.SaveStatus.ERROR || !prefs_loaded_priv) return@LaunchedEffect
+        val base = prefs ?: return@LaunchedEffect
+        block_trackers = base.block_tracking_pixels && base.block_external_content != false
+        remote_images = base.load_remote_images == "always"
+        link_warnings = base.warn_suspicious_links
+        strip_exif = base.strip_exif_on_compose
     }
 
     fun save() {
@@ -1419,12 +1523,17 @@ fun PrivacyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
         vm.save_preferences(
             base.copy(
                 block_trackers = block_trackers,
-                load_remote_images = if (remote_images) "always" else "never",
-                send_read_receipts = send_receipts,
+                block_tracking_pixels = block_trackers,
+                block_external_content = if (block_trackers) true else base.block_external_content,
+                load_remote_images = when {
+                    remote_images -> "always"
+                    base.load_remote_images == "ask" -> "ask"
+                    else -> "never"
+                },
+                block_external_images = !remote_images,
                 warn_suspicious_links = link_warnings,
                 strip_exif = strip_exif,
                 strip_exif_on_compose = strip_exif,
-                ghost_mode = ghost_mode,
             ),
         )
     }
@@ -1434,35 +1543,31 @@ fun PrivacyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
         if (!prefs_loaded_priv || prefs == null) return@LaunchedEffect
         delay(500)
         save()
+        save_trigger = 0
     }
 
+    val flush_on_exit: androidx.compose.runtime.State<() -> Unit> =
+        androidx.compose.runtime.rememberUpdatedState({
+            if (save_trigger > 0 && prefs != null && prefs_loaded_priv) save()
+        })
+
     androidx.compose.runtime.DisposableEffect(Unit) {
-        onDispose {
-            if (save_trigger > 0 && prefs != null && prefs_loaded_priv) {
-                save()
-            }
-        }
+        onDispose { flush_on_exit.value() }
     }
 
     detail_scaffold(
         title = stringResource(R.string.privacy),
         on_back = on_back,
     ) {
-        if (prefs == null) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
-            }
+        if (prefs == null || !state.preferences_authoritative) {
+            preferences_load_placeholder()
         } else {
+            preferences_save_error_banner()
             section_label(stringResource(R.string.tracking))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 toggle_row(stringResource(R.string.block_tracking_pixels_privacy), stringResource(R.string.block_tracking_pixels_subtitle), block_trackers) { block_trackers = it; save_trigger++ }
                 AsterDivider(modifier = Modifier)
                 toggle_row(stringResource(R.string.load_remote_images), stringResource(R.string.load_remote_images_subtitle), remote_images) { remote_images = it; save_trigger++ }
-                AsterDivider(modifier = Modifier)
-                toggle_row(stringResource(R.string.send_read_receipts), stringResource(R.string.send_read_receipts_subtitle), send_receipts) { send_receipts = it; save_trigger++ }
             }
             v_gap(AsterSpacing.lg)
             section_label(stringResource(R.string.protection))
@@ -1470,14 +1575,12 @@ fun PrivacyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                 toggle_row(stringResource(R.string.warn_suspicious_links), null, link_warnings) { link_warnings = it; save_trigger++ }
                 AsterDivider(modifier = Modifier)
                 toggle_row(stringResource(R.string.strip_exif), stringResource(R.string.strip_exif_subtitle), strip_exif) { strip_exif = it; save_trigger++ }
-                AsterDivider(modifier = Modifier)
-                toggle_row(stringResource(R.string.ghost_mode), stringResource(R.string.ghost_mode_subtitle), ghost_mode) { ghost_mode = it; save_trigger++ }
             }
             v_gap(AsterSpacing.lg)
             detail_row(
                 title = stringResource(R.string.privacy_policy),
                 icon = TablerIcons.ShieldLock,
-                on_click = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://astermail.org/privacy"))) },
+                on_click = { org.astermail.android.ui.common.open_external_url(context, "https://astermail.org/privacy") },
             )
         }
         v_gap(AsterSpacing.xxl)
@@ -1508,22 +1611,24 @@ fun ApiKeysScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
             ) {
                 CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
             }
+        } else if (state.api_keys.isEmpty() && state.error != null) {
+            load_failed_card(state.error) { vm.load_api_keys() }
         } else if (state.api_keys.isEmpty()) {
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 detail_row(
                     title = stringResource(R.string.no_api_keys),
-                    subtitle = state.error ?: stringResource(R.string.no_api_keys_subtitle),
+                    subtitle = stringResource(R.string.no_api_keys_subtitle),
                 )
             }
         } else {
-            section_label(stringResource(R.string.api_keys_count, state.api_keys.size))
+            section_label(pluralStringResource(R.plurals.api_keys_count, state.api_keys.size, state.api_keys.size))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 state.api_keys.forEachIndexed { idx, k ->
                     detail_row(
                         title = k.decrypted_name.ifBlank { stringResource(R.string.api_key_default_name) },
-                        subtitle = "${k.prefix}... - created ${k.created_at ?: ""}",
+                        subtitle = "${k.prefix}... " + stringResource(R.string.created_at_format, relative_time_label(k.created_at)),
                         icon = TablerIcons.Plug,
-                        on_click = {},
+                        on_click = null,
                         trailing = {
                             AsterGhostButton(label = stringResource(R.string.revoke), onClick = { pending_revoke = k.id })
                         },
@@ -1534,7 +1639,12 @@ fun ApiKeysScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
         }
         v_gap(AsterSpacing.lg)
         val mobile_key_name = stringResource(R.string.mobile_key)
-        AsterButton(label = stringResource(R.string.generate_new_key), onClick = { vm.create_api_key(mobile_key_name) })
+        AsterButton(
+            label = stringResource(R.string.generate_new_key),
+            onClick = { vm.create_api_key(mobile_key_name) },
+            enabled = !state.api_key_creating,
+            is_loading = state.api_key_creating,
+        )
         v_gap(AsterSpacing.xxl)
     }
 
@@ -1582,9 +1692,7 @@ fun IntegrationsScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) 
                 subtitle = stringResource(R.string.slack_subtitle),
                 icon = TablerIcons.Puzzle,
                 on_click = {
-                    context.startActivity(
-                        Intent(Intent.ACTION_VIEW, Uri.parse("https://app.astermail.org/settings/integrations")),
-                    )
+                    org.astermail.android.ui.common.open_external_url(context, "https://app.astermail.org/settings/integrations")
                 },
             )
             AsterDivider(modifier = Modifier)
@@ -1593,9 +1701,7 @@ fun IntegrationsScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) 
                 subtitle = stringResource(R.string.calendar_subtitle),
                 icon = TablerIcons.Puzzle,
                 on_click = {
-                    context.startActivity(
-                        Intent(Intent.ACTION_VIEW, Uri.parse("https://app.astermail.org/settings/integrations")),
-                    )
+                    org.astermail.android.ui.common.open_external_url(context, "https://app.astermail.org/settings/integrations")
                 },
             )
             AsterDivider(modifier = Modifier)
@@ -1604,9 +1710,7 @@ fun IntegrationsScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) 
                 subtitle = stringResource(R.string.zapier_subtitle),
                 icon = TablerIcons.Puzzle,
                 on_click = {
-                    context.startActivity(
-                        Intent(Intent.ACTION_VIEW, Uri.parse("https://app.astermail.org/settings/integrations")),
-                    )
+                    org.astermail.android.ui.common.open_external_url(context, "https://app.astermail.org/settings/integrations")
                 },
             )
         }
@@ -1614,15 +1718,13 @@ fun IntegrationsScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) 
         section_label(stringResource(R.string.webhooks))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             val webhook_count = state.webhooks.size
-            val subtitle = if (webhook_count == 0) stringResource(R.string.no_active_endpoints) else stringResource(R.string.active_endpoints, webhook_count)
+            val subtitle = if (webhook_count == 0) stringResource(R.string.no_active_endpoints) else pluralStringResource(R.plurals.active_endpoints, webhook_count, webhook_count)
             detail_row(
                 title = stringResource(R.string.manage_webhooks),
                 subtitle = subtitle,
                 icon = TablerIcons.Link,
                 on_click = {
-                    context.startActivity(
-                        Intent(Intent.ACTION_VIEW, Uri.parse("https://app.astermail.org/settings/integrations")),
-                    )
+                    org.astermail.android.ui.common.open_external_url(context, "https://app.astermail.org/settings/integrations")
                 },
             )
         }
@@ -1650,6 +1752,8 @@ fun FamilyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
             ) {
                 CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
             }
+        } else if (state.subscription_load_failed && sub == null) {
+            load_failed_card(state.error) { vm.load_subscription() }
         } else if (is_family) {
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 detail_row(
@@ -1657,9 +1761,7 @@ fun FamilyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                     subtitle = stringResource(R.string.manage_family_subtitle),
                     icon = TablerIcons.Users,
                     on_click = {
-                        context.startActivity(
-                            Intent(Intent.ACTION_VIEW, Uri.parse("https://app.astermail.org/settings/family")),
-                        )
+                        org.astermail.android.ui.common.open_external_url(context, "https://app.astermail.org/settings/family")
                     },
                 )
                 AsterDivider(modifier = Modifier)
@@ -1691,9 +1793,7 @@ fun FamilyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
             AsterButton(
                 label = stringResource(R.string.view_plans),
                 onClick = {
-                    context.startActivity(
-                        Intent(Intent.ACTION_VIEW, Uri.parse("https://app.astermail.org/settings/billing")),
-                    )
+                    org.astermail.android.ui.common.open_external_url(context, "https://app.astermail.org/settings/billing")
                 },
             )
         }
@@ -1712,9 +1812,8 @@ fun KidsReservedScreen(on_back: () -> Unit) {
     LaunchedEffect(Unit) { vm.load_reserved_addresses() }
 
     fun copy_to_clipboard(text: String, label: String) {
-        val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        cm.setPrimaryClip(ClipData.newPlainText(label, text))
-        org.astermail.android.ui.common.show_copied_toast(context, text)
+        val copied = write_to_clipboard(context, ClipData.newPlainText(label, text))
+        show_copy_result_toast(context, text, copied)
     }
 
     detail_scaffold(title = stringResource(R.string.kids_reserved_addresses), on_back = on_back) {
@@ -1725,7 +1824,7 @@ fun KidsReservedScreen(on_back: () -> Unit) {
             Text(
                 text = stringResource(R.string.kids_seats_used, seats.seats_used, seats.max_members) +
                     " · " +
-                    stringResource(R.string.kids_seats_free, seats.seats_remaining),
+                    pluralStringResource(R.plurals.kids_seats_free, seats.seats_remaining, seats.seats_remaining),
                 color = colors.text_tertiary,
                 fontSize = 12.sp,
             )
@@ -1734,9 +1833,21 @@ fun KidsReservedScreen(on_back: () -> Unit) {
                 Text(
                     text = stringResource(
                         R.string.kids_seats_breakdown,
-                        breakdown.active_members,
-                        breakdown.pending_invites,
-                        breakdown.reserved_addresses,
+                        pluralStringResource(
+                            R.plurals.kids_seats_members,
+                            breakdown.active_members,
+                            breakdown.active_members,
+                        ),
+                        pluralStringResource(
+                            R.plurals.kids_seats_invitations,
+                            breakdown.pending_invites,
+                            breakdown.pending_invites,
+                        ),
+                        pluralStringResource(
+                            R.plurals.kids_seats_reserved,
+                            breakdown.reserved_addresses,
+                            breakdown.reserved_addresses,
+                        ),
                     ),
                     color = colors.text_tertiary,
                     fontSize = 11.sp,
@@ -1748,9 +1859,7 @@ fun KidsReservedScreen(on_back: () -> Unit) {
         AsterButton(
             label = stringResource(R.string.kids_reserve_on_web),
             onClick = {
-                context.startActivity(
-                    Intent(Intent.ACTION_VIEW, Uri.parse("https://app.astermail.org/settings/family")),
-                )
+                org.astermail.android.ui.common.open_external_url(context, "https://app.astermail.org/settings/family")
             },
         )
 
@@ -1871,35 +1980,30 @@ fun LanguageScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
 
     LaunchedEffect(Unit) { vm.load_preferences() }
 
-    val languages = listOf(
-        "en" to "English",
-        "es" to "Espanol",
-        "fr" to "Francais",
-        "de" to "Deutsch",
-        "it" to "Italiano",
-        "pt" to "Portugues",
-        "ja" to "Japanese",
-        "ko" to "Korean",
-        "zh" to "Chinese (simplified)",
-        "ru" to "Russian",
-        "ar" to "Arabic",
-        "hi" to "Hindi",
-    )
+    val context = LocalContext.current
+    val activity = context as? android.app.Activity
+    val languages = org.astermail.android.settings.app_language.supported
     val prefs_seeded = prefs != null
-    var selected by remember(prefs_seeded) { mutableStateOf(prefs?.language ?: "en") }
+    var selected by remember(prefs_seeded) {
+        mutableStateOf(org.astermail.android.settings.app_language.normalize_code(prefs?.language) ?: "en")
+    }
     var lang_loaded by remember { mutableStateOf(false) }
 
     LaunchedEffect(prefs) {
         if (prefs != null && !lang_loaded) {
             lang_loaded = true
-            selected = prefs.language
+            selected = org.astermail.android.settings.app_language.stored_code(context)
+                ?: org.astermail.android.settings.app_language.normalize_code(prefs.language)
+                ?: selected
         }
     }
 
     fun save(code: String) {
+        if (code == selected) return
         selected = code
-        val base = prefs ?: return
-        vm.save_preferences(base.copy(language = code))
+        org.astermail.android.settings.app_language.store_code(context, code)
+        prefs?.let { vm.save_preferences(it.copy(language = code)) }
+        activity?.recreate()
     }
 
     detail_scaffold(title = stringResource(R.string.language), on_back = on_back) {
@@ -1947,7 +2051,8 @@ fun LanguageScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                 AsterSecondaryButton(
                     label = stringResource(R.string.set_from_system),
                     onClick = {
-                        val device_language = java.util.Locale.getDefault().language
+                        val device_language = android.content.res.Resources.getSystem()
+                            .configuration.locales[0].language
                         val supported = languages.any { it.first == device_language }
                         save(if (supported) device_language else "en")
                     },

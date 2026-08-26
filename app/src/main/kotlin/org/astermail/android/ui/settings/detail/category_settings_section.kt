@@ -359,7 +359,6 @@ fun category_settings_section(
                         Spacer(Modifier.width(4.dp))
                         AsterSwitch(
                             checked = rule.enabled && !is_locked,
-                            enabled = !is_locked,
                             onCheckedChange = {
                                 if (is_locked) {
                                     on_upgrade()

@@ -74,7 +74,7 @@ fun AboutScreen(
     val colors = AsterMaterial.colors
     val context = LocalContext.current
     fun open_url(url: String) {
-        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        org.astermail.android.ui.common.open_external_url(context, url)
     }
     detail_scaffold(title = stringResource(R.string.about), on_back = on_back) {
         Column(

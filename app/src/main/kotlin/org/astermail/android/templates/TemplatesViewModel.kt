@@ -55,8 +55,21 @@ data class TemplatesUiState(
     val is_loading: Boolean = false,
     val is_saving: Boolean = false,
     val error: String? = null,
+    val load_error: String? = null,
+    val undecryptable_count: Int = 0,
     val draft: DecryptedTemplate? = null,
 )
+
+data class TemplateLoadOutcome(
+    val items: List<DecryptedTemplate>,
+    val undecryptable_count: Int,
+)
+
+fun template_load_outcome(decrypted: List<DecryptedTemplate?>): TemplateLoadOutcome =
+    TemplateLoadOutcome(
+        items = decrypted.filterNotNull(),
+        undecryptable_count = decrypted.count { it == null },
+    )
 
 @HiltViewModel
 class TemplatesViewModel @Inject constructor(
@@ -70,34 +83,50 @@ class TemplatesViewModel @Inject constructor(
 
     fun load() {
         viewModelScope.launch {
-            _state.value = _state.value.copy(is_loading = true, error = null)
+            _state.value = _state.value.copy(is_loading = true, error = null, load_error = null)
             val result = runCatching {
                 val response = api.list()
                 withContext(Dispatchers.Default) {
                     val key = derive_key() ?: error("session expired")
                     try {
-                        response.templates.mapNotNull { decrypt(it, key) }
+                        decrypt_all(response.templates, key)
                     } finally {
                         key.fill(0)
                     }
                 }
             }
             _state.value = result.fold(
-                onSuccess = { _state.value.copy(is_loading = false, items = it.sortedBy { t -> t.sort_order }) },
-                onFailure = { _state.value.copy(is_loading = false, error = readable_error(it)) },
+                onSuccess = {
+                    _state.value.copy(
+                        is_loading = false,
+                        items = it.items.sortedBy { t -> t.sort_order },
+                        undecryptable_count = it.undecryptable_count,
+                    )
+                },
+                onFailure = {
+                    _state.value.copy(
+                        is_loading = false,
+                        load_error = readable_error(it),
+                        undecryptable_count = 0,
+                    )
+                },
             )
         }
     }
 
+    private fun decrypt_all(items: List<TemplateItem>, key: ByteArray): TemplateLoadOutcome =
+        template_load_outcome(items.map { decrypt(it, key) })
+
     fun start_new() {
         _state.value = _state.value.copy(
             draft = DecryptedTemplate(id = "", name = "", category = "", content = "", sort_order = next_order()),
+            error = null,
         )
     }
 
     fun start_edit(id: String) {
         val item = _state.value.items.firstOrNull { it.id == id } ?: return
-        _state.value = _state.value.copy(draft = item)
+        _state.value = _state.value.copy(draft = item, error = null)
     }
 
     fun cancel_edit() {
@@ -112,10 +141,12 @@ class TemplatesViewModel @Inject constructor(
                 category = category ?: current.category,
                 content = content ?: current.content,
             ),
+            error = null,
         )
     }
 
     fun save_draft() {
+        if (_state.value.is_saving) return
         val current = _state.value.draft ?: return
         if (current.name.isBlank()) {
             _state.value = _state.value.copy(error = context.getString(R.string.name_cannot_be_empty))
@@ -184,6 +215,7 @@ class TemplatesViewModel @Inject constructor(
     }
 
     fun delete(id: String) {
+        if (_state.value.is_saving) return
         viewModelScope.launch {
             _state.value = _state.value.copy(is_saving = true, error = null)
             val outcome = runCatching { api.delete(id) }
