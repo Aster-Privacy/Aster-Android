@@ -2010,6 +2010,7 @@ internal fun expanded_message(
             SenderAvatar(
                 email = shown_sender_email,
                 name = shown_sender_name,
+                sender_authenticated = system_avatar_authenticated(msg),
                 profile_picture_url = if (msg.sender_email.lowercase() == my_email) my_profile_pic else null,
                 modifier = Modifier
                     .clip(CircleShape)
@@ -3557,6 +3558,7 @@ private fun collapsed_message(
                     email = displayed_sender_email(msg.display_sender_email, msg.sender_email),
                     name = displayed_sender_name(msg.display_sender_name, msg.sender_name),
                     size = 40.dp,
+                    sender_authenticated = system_avatar_authenticated(msg),
                     profile_picture_url = if (msg.sender_email.lowercase() == my_email) my_profile_pic else null,
                 )
             }

@@ -57,6 +57,8 @@ data class Email(
     val display_sender_name: String? = null,
     val display_sender_email: String? = null,
     val folder_chip: list_folder_chip? = null,
+    val is_external: Boolean = false,
+    val system_origin: Boolean = false,
 )
 
 data class list_folder_chip(
@@ -209,6 +211,7 @@ data class ThreadMessage(
     val dkim_result: String? = null,
     val dmarc_result: String? = null,
     val is_external: Boolean = false,
+    val system_origin: Boolean = false,
     val has_recipient_key: Boolean? = null,
 )
 
@@ -219,12 +222,28 @@ enum class SenderAuthStatus { verified, failed, unknown }
 
 private val aster_sender_domains = listOf("@astermail.org", "@aster.cx")
 
-fun is_aster_system_sender(msg: ThreadMessage): Boolean {
-    val address = msg.sender_email.trim().lowercase()
+fun is_aster_system_address(email: String): Boolean {
+    val address = email.trim().lowercase()
     if (aster_sender_domains.none { address.endsWith(it) }) return false
-    if (!msg.is_external) return true
-    return sender_auth_status(msg) == SenderAuthStatus.verified
+    return is_system_local_part(address)
 }
+
+fun is_aster_system_sender(msg: ThreadMessage): Boolean =
+    msg.system_origin && !msg.is_external && is_aster_system_address(msg.sender_email)
+
+fun is_aster_system_sender(email: Email): Boolean =
+    email.system_origin && !email.is_external && is_aster_system_address(email.sender_email)
+
+private fun same_address(shown: String, actual: String): Boolean =
+    shown.trim().lowercase() == actual.trim().lowercase()
+
+fun system_avatar_authenticated(email: Email): Boolean =
+    is_aster_system_sender(email) &&
+        same_address(displayed_sender_email(email.display_sender_email, email.sender_email), email.sender_email)
+
+fun system_avatar_authenticated(msg: ThreadMessage): Boolean =
+    is_aster_system_sender(msg) &&
+        same_address(displayed_sender_email(msg.display_sender_email, msg.sender_email), msg.sender_email)
 
 fun sender_auth_status(msg: ThreadMessage): SenderAuthStatus {
     if (msg.item_type != "received") return SenderAuthStatus.unknown
@@ -1171,6 +1190,8 @@ fun inbox_item_to_email(
         display_sender_name = item.display_sender_name,
         display_sender_email = item.display_sender_email,
         folder_chip = folder_chip,
+        is_external = item.raw_item.is_external,
+        system_origin = item.raw_item.system_origin,
     )
 }
 
@@ -1209,6 +1230,7 @@ fun thread_message_to_mock(msg: org.astermail.android.mail.ThreadMessageDecrypte
         dkim_result = msg.raw_item.dkim_result,
         dmarc_result = msg.raw_item.dmarc_result,
         is_external = msg.raw_item.is_external ?: false,
+        system_origin = msg.raw_item.system_origin ?: false,
         has_recipient_key = msg.raw_item.has_recipient_key,
     )
 }

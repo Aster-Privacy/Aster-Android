@@ -441,6 +441,7 @@ class SearchIndexManager @Inject constructor(
                 to_addresses = item.to_addresses.joinToString(",").ifBlank { null },
                 routing_token = item.routing_token,
                 is_external = item.raw_item.is_external,
+                system_origin = item.raw_item.system_origin,
                 has_recipient_key = item.raw_item.has_recipient_key,
                 is_pinned = item.raw_item.metadata?.is_pinned ?: false,
                 tag_tokens = item.tag_tokens.joinToString(",").ifBlank { null },
