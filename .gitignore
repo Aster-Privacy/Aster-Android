@@ -32,7 +32,9 @@ _ui_dump.xml
 _ui*.xml
 *.bak
 /app/google-services.json
-/scripts/
+/scripts/*
+!/scripts/release.sh
+!/scripts/README_release.md
 /.test_artifacts/
 /test_screenshots/
 /my-downloads/

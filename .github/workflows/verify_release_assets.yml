@@ -1,0 +1,49 @@
+name: verify_release_assets
+
+# Fails loudly when a published release is missing an APK that a channel depends on.
+# Fixed-name Aster-Mail.apk feeds astermail.org, the versioned copy identifies the
+# build, and Aster-Mail-fdroid-<ver>.apk is the exact filename F-Droid's recipe fetches.
+
+on:
+  release:
+    types: [released, published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: release tag to check, for example v0.6.156
+        required: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: check required assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: |
+          set -u
+          ver="${TAG#v}"
+          assets=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}" --jq '[.assets[].name] | join(" ")')
+          echo "tag ${TAG} carries: ${assets}"
+          fail=0
+          for want in "Aster-Mail.apk" "Aster-Mail-${ver}.apk" "Aster-Mail-fdroid-${ver}.apk"; do
+            case " ${assets} " in
+              *" ${want} "*) echo "  OK   ${want}" ;;
+              *) echo "  MISS ${want}"; fail=1 ;;
+            esac
+          done
+          body=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}" --jq '.body')
+          if [ -z "${body}" ]; then
+            echo "  MISS release notes are empty"
+            fail=1
+          else
+            echo "  OK   release notes present"
+          fi
+          if [ "${fail}" != "0" ]; then
+            echo
+            echo "A missing fdroid APK fails F-Droid's build for this tag, and repeated"
+            echo "failures get the app disabled. A missing Aster-Mail.apk breaks the"
+            echo "download link on astermail.org. Upload the missing assets to ${TAG}."
+            exit 1
+          fi

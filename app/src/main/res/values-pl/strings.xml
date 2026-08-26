@@ -2863,4 +2863,14 @@
     <string name="domain_grace_ends">Kończy się %1$s</string>
     <string name="domain_grace_upgrade_hint">Ulepsz plan, aby zachować tę domenę</string>
     <string name="error_family_2fa_required">Twój plan rodzinny wymaga uwierzytelniania dwuskładnikowego. Aby nadal korzystać z tego konta, włącz je w Ustawieniach &gt; Bezpieczeństwo.</string>
+    <string name="label_icon_group_essentials">PODSTAWOWE</string>
+    <string name="label_icon_group_mail">POCZTA</string>
+    <string name="label_icon_group_money">PIENIĄDZE</string>
+    <string name="label_icon_group_work">PRACA</string>
+    <string name="label_icon_group_school">SZKOŁA</string>
+    <string name="label_icon_group_everyday">CODZIENNE</string>
+    <string name="text_color">Kolor tekstu</string>
+    <string name="highlight_color">Kolor wyróżnienia</string>
+    <string name="clear_formatting">Wyczyść formatowanie</string>
+    <string name="signature_add_formatting">Dodaj formatowanie</string>
 </resources>

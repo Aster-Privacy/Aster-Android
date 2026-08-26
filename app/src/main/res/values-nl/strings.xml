@@ -2847,4 +2847,14 @@
     <string name="domain_grace_ends">Eindigt op %1$s</string>
     <string name="domain_grace_upgrade_hint">Upgrade je abonnement om dit domein actief te houden</string>
     <string name="error_family_2fa_required">Je gezinsabonnement vereist tweefactorauthenticatie. Als je dit account wilt blijven gebruiken, schakel je die in bij Instellingen &gt; Beveiliging.</string>
+    <string name="label_icon_group_essentials">BASIS</string>
+    <string name="label_icon_group_mail">MAIL</string>
+    <string name="label_icon_group_money">GELD</string>
+    <string name="label_icon_group_work">WERK</string>
+    <string name="label_icon_group_school">SCHOOL</string>
+    <string name="label_icon_group_everyday">DAGELIJKS</string>
+    <string name="text_color">Tekstkleur</string>
+    <string name="highlight_color">Markeerkleur</string>
+    <string name="clear_formatting">Opmaak wissen</string>
+    <string name="signature_add_formatting">Opmaak toevoegen</string>
 </resources>

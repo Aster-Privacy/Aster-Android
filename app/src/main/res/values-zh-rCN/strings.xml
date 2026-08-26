@@ -2839,4 +2839,14 @@
     <string name="domain_grace_ends">%1$s 结束</string>
     <string name="domain_grace_upgrade_hint">升级套餐即可继续使用此域名</string>
     <string name="error_family_2fa_required">家庭套餐需要双重认证。若要继续使用此账户，请在“设置”&gt;“安全”中开启。</string>
+    <string name="label_icon_group_essentials">基本</string>
+    <string name="label_icon_group_mail">邮件</string>
+    <string name="label_icon_group_money">金钱</string>
+    <string name="label_icon_group_work">工作</string>
+    <string name="label_icon_group_school">学校</string>
+    <string name="label_icon_group_everyday">日常</string>
+    <string name="text_color">文字颜色</string>
+    <string name="highlight_color">突出显示颜色</string>
+    <string name="clear_formatting">清除格式</string>
+    <string name="signature_add_formatting">添加格式</string>
 </resources>

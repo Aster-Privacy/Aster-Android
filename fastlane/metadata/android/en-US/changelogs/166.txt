@@ -1,0 +1,7 @@
+Bug fixes and improvements:
+
+- You now get a notification for every message that arrives, not just the first one.
+- The inbox and filtered views refresh when you return to the app.
+- After you send a message, the app returns to your mailbox.
+- Search groups results into threads and counts them correctly.
+- The app starts faster.

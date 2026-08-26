@@ -2879,4 +2879,14 @@
     <string name="domain_grace_ends">ينتهي في %1$s</string>
     <string name="domain_grace_upgrade_hint">قم بترقية خطتك للحفاظ على هذا النطاق نشطًا</string>
     <string name="error_family_2fa_required">تتطلب خطة العائلة المصادقة الثنائية. لمواصلة استخدام هذا الحساب، فعّلها من الإعدادات &gt; الأمان.</string>
+    <string name="label_icon_group_essentials">أساسيات</string>
+    <string name="label_icon_group_mail">بريد</string>
+    <string name="label_icon_group_money">مال</string>
+    <string name="label_icon_group_work">عمل</string>
+    <string name="label_icon_group_school">دراسة</string>
+    <string name="label_icon_group_everyday">يومي</string>
+    <string name="text_color">لون النص</string>
+    <string name="highlight_color">لون التمييز</string>
+    <string name="clear_formatting">مسح التنسيق</string>
+    <string name="signature_add_formatting">إضافة تنسيق</string>
 </resources>

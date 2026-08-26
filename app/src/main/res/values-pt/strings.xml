@@ -2847,4 +2847,14 @@
     <string name="domain_grace_ends">Termina em %1$s</string>
     <string name="domain_grace_upgrade_hint">Faça upgrade do seu plano para manter este domínio ativo</string>
     <string name="error_family_2fa_required">O seu plano familiar exige autenticação de dois fatores. Para continuar a usar esta conta, ative-a em Definições &gt; Segurança.</string>
+    <string name="label_icon_group_essentials">ESSENCIAIS</string>
+    <string name="label_icon_group_mail">CORREIO</string>
+    <string name="label_icon_group_money">DINHEIRO</string>
+    <string name="label_icon_group_work">TRABALHO</string>
+    <string name="label_icon_group_school">ESCOLA</string>
+    <string name="label_icon_group_everyday">DIA A DIA</string>
+    <string name="text_color">Cor do texto</string>
+    <string name="highlight_color">Cor de destaque</string>
+    <string name="clear_formatting">Limpar formatação</string>
+    <string name="signature_add_formatting">Adicionar formatação</string>
 </resources>

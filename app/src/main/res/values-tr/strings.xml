@@ -2847,4 +2847,14 @@
     <string name="domain_grace_ends">%1$s tarihinde sona erer</string>
     <string name="domain_grace_upgrade_hint">Bu alan adını etkin tutmak için planınızı yükseltin</string>
     <string name="error_family_2fa_required">Aile planınız iki faktörlü kimlik doğrulama gerektiriyor. Bu hesabı kullanmaya devam etmek için Ayarlar &gt; Güvenlik bölümünden açın.</string>
+    <string name="label_icon_group_essentials">TEMEL</string>
+    <string name="label_icon_group_mail">POSTA</string>
+    <string name="label_icon_group_money">PARA</string>
+    <string name="label_icon_group_work">İŞ</string>
+    <string name="label_icon_group_school">OKUL</string>
+    <string name="label_icon_group_everyday">GÜNLÜK</string>
+    <string name="text_color">Metin rengi</string>
+    <string name="highlight_color">Vurgu rengi</string>
+    <string name="clear_formatting">Biçimlendirmeyi temizle</string>
+    <string name="signature_add_formatting">Biçimlendirme ekle</string>
 </resources>

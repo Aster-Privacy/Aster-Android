@@ -220,6 +220,8 @@
     <string name="all_caught_up">You\'re all caught up</string>
     <string name="nothing_in_this_tab">Nothing in this tab</string>
     <string name="other_tabs_have_mail">Your other tabs still have mail.</string>
+    <string name="nothing_in_category">Nothing in %1$s</string>
+    <string name="other_categories_have_mail">Your other categories still have mail.</string>
     <string name="new_messages_here">New messages will appear here</string>
     <string name="nothing_sent_yet">Nothing sent yet</string>
     <string name="sent_messages_here">Messages you send will appear here</string>
@@ -467,6 +469,7 @@
     <string name="failed_to_trash">Failed to move to trash</string>
     <string name="failed_report_spam">Failed to report spam</string>
     <string name="moved_to_inbox">Moved to inbox</string>
+    <string name="couldnt_move_to_inbox">Couldn\'t move to inbox</string>
     <string name="failed_remove_spam">Failed to remove from spam</string>
     <string name="failed_to_unarchive">Failed to unarchive</string>
     <string name="restored_to_inbox">Restored to inbox</string>
@@ -2932,4 +2935,14 @@
     <string name="domain_grace_ends">Ends %1$s</string>
     <string name="domain_grace_upgrade_hint">Upgrade to keep this domain active</string>
     <string name="error_family_2fa_required">Your family plan requires two-factor authentication. To keep using this account, turn it on in Settings &gt; Security.</string>
+    <string name="label_icon_group_essentials">ESSENTIALS</string>
+    <string name="label_icon_group_mail">MAIL</string>
+    <string name="label_icon_group_money">MONEY</string>
+    <string name="label_icon_group_work">WORK</string>
+    <string name="label_icon_group_school">SCHOOL</string>
+    <string name="label_icon_group_everyday">EVERYDAY</string>
+    <string name="text_color">Text color</string>
+    <string name="highlight_color">Highlight color</string>
+    <string name="clear_formatting">Clear formatting</string>
+    <string name="signature_add_formatting">Add formatting</string>
 </resources>

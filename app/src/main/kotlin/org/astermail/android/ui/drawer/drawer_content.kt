@@ -1227,40 +1227,11 @@ private fun label_icon_dialog(
         cancel_label = stringResource(R.string.cancel),
         on_confirm = { on_confirm(selected_icon) },
         extra_content = {
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                label_icon_presets.forEach { (key, vector) ->
-                    val is_selected = key == selected_icon
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(SquircleShape(8.dp))
-                            .background(
-                                if (is_selected) accent_color.copy(alpha = 0.15f) else colors.bg_hover
-                            )
-                            .then(
-                                if (is_selected)
-                                    Modifier.border(1.dp, accent_color, SquircleShape(8.dp))
-                                else
-                                    Modifier
-                            )
-                            .clickable {
-                                selected_icon = if (is_selected) null else key
-                            },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = vector,
-                            contentDescription = key,
-                            tint = if (is_selected) accent_color else colors.text_secondary,
-                            modifier = Modifier.size(18.dp),
-                        )
-                    }
-                }
-            }
+            org.astermail.android.ui.common.label_icon_grid(
+                selected_icon = selected_icon,
+                accent_color = accent_color,
+                on_select = { selected_icon = it },
+            )
         },
     )
 }
@@ -1771,40 +1742,11 @@ internal fun create_label_dialog(
                     fontWeight = FontWeight.SemiBold,
                 )
                 Spacer(Modifier.height(AsterSpacing.xs))
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    label_icon_presets.forEach { (key, vector) ->
-                        val is_selected = key == selected_icon
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(SquircleShape(8.dp))
-                                .background(
-                                    if (is_selected) accent.copy(alpha = 0.15f) else colors.bg_hover
-                                )
-                                .then(
-                                    if (is_selected)
-                                        Modifier.border(1.dp, accent, SquircleShape(8.dp))
-                                    else
-                                        Modifier
-                                )
-                                .clickable {
-                                    selected_icon = if (is_selected) null else key
-                                },
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                imageVector = vector,
-                                contentDescription = key,
-                                tint = if (is_selected) accent else colors.text_secondary,
-                                modifier = Modifier.size(18.dp),
-                            )
-                        }
-                    }
-                }
+                org.astermail.android.ui.common.label_icon_grid(
+                    selected_icon = selected_icon,
+                    accent_color = accent,
+                    on_select = { selected_icon = it },
+                )
             }
         },
     )

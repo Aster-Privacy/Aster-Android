@@ -34,11 +34,14 @@ import org.junit.Test
 class LabelIconCatalogTest {
 
     private val web_tag_icon_keys = listOf(
-        "clock", "archive", "trash", "send", "draft", "star", "flag", "bolt",
-        "shield", "warning", "check", "tag", "folder", "envelope", "lock",
-        "bell", "sparkles", "fire", "heart", "bookmark", "chat", "document",
-        "currency", "cart", "code", "user", "building", "globe", "info",
-        "eye-slash", "at",
+        "tag", "folder", "star", "bookmark", "flag", "check", "bell", "heart", "sparkles",
+        "fire", "bolt", "clock", "info", "warning", "envelope", "at", "chat", "send",
+        "draft", "document", "archive", "trash", "shield", "lock", "eye-slash", "currency",
+        "money", "bank", "card", "wallet", "receipt", "chart", "cart", "gift", "ticket",
+        "crypto", "briefcase", "building", "user", "users", "calendar", "clipboard",
+        "presentation", "trophy", "code", "key", "link", "package", "graduation", "book",
+        "pencil", "calculator", "beaker", "language", "home", "truck", "map-pin", "camera",
+        "music", "cloud", "sun", "moon", "globe", "phone", "news", "bulb", "tools", "ban",
     )
 
     @Test
@@ -92,11 +95,26 @@ class LabelIconCatalogTest {
     }
 
     @Test
-    fun no_two_catalog_keys_share_a_misleading_glyph() {
+    fun every_catalog_entry_has_its_own_glyph() {
         val duplicates = label_icon_catalog
             .groupBy { it.second }
             .filterValues { it.size > 1 }
             .mapValues { entry -> entry.value.map { it.first }.sorted() }
-        assertTrue(duplicates.toString(), duplicates.values.all { it == listOf("document", "draft") })
+        assertTrue(duplicates.toString(), duplicates.isEmpty())
+    }
+
+    @Test
+    fun every_catalog_key_belongs_to_exactly_one_group() {
+        val grouped = label_icon_groups.flatMap { it.icons }
+        assertEquals(grouped.size, grouped.distinct().size)
+        assertEquals(label_icon_catalog.map { it.first }.sorted(), grouped.sorted())
+    }
+
+    @Test
+    fun every_group_has_a_title_and_icons() {
+        label_icon_groups.forEach { group ->
+            assertTrue(group.title != 0)
+            assertTrue(group.icons.isNotEmpty())
+        }
     }
 }

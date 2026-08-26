@@ -2839,4 +2839,14 @@
     <string name="domain_grace_ends">%1$s에 종료</string>
     <string name="domain_grace_upgrade_hint">이 도메인을 계속 사용하려면 요금제를 업그레이드하세요</string>
     <string name="error_family_2fa_required">가족 요금제는 2단계 인증이 필요합니다. 이 계정을 계속 사용하려면 설정 &gt; 보안에서 켜세요.</string>
+    <string name="label_icon_group_essentials">기본</string>
+    <string name="label_icon_group_mail">메일</string>
+    <string name="label_icon_group_money">돈</string>
+    <string name="label_icon_group_work">업무</string>
+    <string name="label_icon_group_school">학교</string>
+    <string name="label_icon_group_everyday">일상</string>
+    <string name="text_color">글자 색</string>
+    <string name="highlight_color">강조 색</string>
+    <string name="clear_formatting">서식 지우기</string>
+    <string name="signature_add_formatting">서식 추가</string>
 </resources>
