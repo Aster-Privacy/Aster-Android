@@ -32,7 +32,8 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
-      - run: ./gradlew assembleFullRelease assembleFdroidRelease
+      - run: ./gradlew assembleFullRelease
+      - run: ./gradlew assembleFdroidRelease
       - uses: actions/upload-artifact@v4
         with:
           name: full-release
