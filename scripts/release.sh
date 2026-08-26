@@ -114,11 +114,9 @@ git commit -q -m "chore(release): $ver"
 git tag -a "v$ver" -m "v$ver"
 echo "committed and tagged v$ver"
 
-# Only the full flavor is built here. The fdroid APK must come from the Linux CI
-# build so F-Droid can reproduce it: a Windows build never matches their rebuild.
-# Never add an fdroid task to this invocation either, because is_fdroid_build is
-# true when ANY task name contains "fdroid" and that strips signing from the full
-# flavor.
+# Only the full flavor is built here. Never add an fdroid task to this invocation,
+# because is_fdroid_build is true when ANY task name contains "fdroid" and that
+# strips signing from the full flavor.
 say "build full flavor (signed)"
 ./gradlew --no-daemon assembleFullRelease bundleFullRelease
 
@@ -141,7 +139,6 @@ echo "  OK Aster-Mail.apk signed by $cert_sha"
 if [ "$dry_run" = 1 ]; then
   say "dry run complete"
   echo "artifacts in $out_dir"
-  echo "the fdroid APK comes from CI after the tag is pushed, so a dry run skips it"
   echo "nothing pushed, nothing published"
   exit 0
 fi
@@ -150,60 +147,18 @@ say "push commit and tag"
 git push origin main
 git push origin "v$ver"
 
-say "fdroid APK from the Linux CI build"
-echo "waiting for release_fdroid on v$ver"
-run_id=""
-for _ in $(seq 1 120); do
-  run_id=$(gh run list --repo Aster-Privacy/Aster-Android --workflow release_fdroid.yml     --branch "v$ver" -L 1 --json databaseId,status,conclusion     -q '.[] | select(.status == "completed" and .conclusion == "success") | .databaseId' 2>/dev/null || true)
-  [ -n "$run_id" ] && break
-  sleep 30
-done
-[ -n "$run_id" ] || die "release_fdroid did not finish for v$ver, rerun it then sign by hand"
-echo "using run $run_id"
-ci_dir="$work/ci-fdroid-$ver"
-rm -rf "$ci_dir"
-mkdir -p "$ci_dir"
-gh run download "$run_id" --repo Aster-Privacy/Aster-Android -n fdroid-unsigned --dir "$ci_dir"
-ci_apk="$ci_dir/app-fdroid-release-unsigned.apk"
-[ -f "$ci_apk" ] || die "CI artifact did not contain app-fdroid-release-unsigned.apk"
-ci_vc=$("$sdk/build-tools/$bt_ver/aapt2.exe" dump badging "$ci_apk" 2>/dev/null | head -1 | grep -oE "versionCode='[0-9]+'" | grep -oE '[0-9]+')
-[ "$ci_vc" = "$vc" ] || die "CI APK is versionCode $ci_vc, expected $vc"
-echo "  OK CI APK is versionCode $ci_vc"
-
-align_flag=""
-if [ "$bt_ver" != "34.0.0" ]; then align_flag="--alignment-preserved"; fi
-"$apksigner" sign --ks keystore/aster-mail-upload-v3.jks --ks-key-alias aster-mail   --ks-pass env:KEYSTORE_PASSWORD --key-pass env:KEYSTORE_PASSWORD   $align_flag --out "$out_dir/Aster-Mail-fdroid-$ver.apk" "$ci_apk"
-got=$("$apksigner" verify --print-certs "$out_dir/Aster-Mail-fdroid-$ver.apk" | grep -i "SHA-256 digest" | head -1 | grep -oE '[0-9a-f]{64}')
-[ "$got" = "$cert_sha" ] || die "fdroid APK signer is $got, expected $cert_sha"
-echo "  OK Aster-Mail-fdroid-$ver.apk signed by $cert_sha"
-
-bad=$(python - "$out_dir/Aster-Mail-fdroid-$ver.apk" <<'PYEOF'
-import struct, sys, zipfile
-data = open(sys.argv[1], "rb").read()
-n = 0
-for zi in zipfile.ZipFile(sys.argv[1]).infolist():
-    if zi.filename.startswith("META-INF/"):
-        continue
-    off = zi.header_offset
-    nm_len, ex_len = struct.unpack_from("<HH", data, off + 26)
-    ex = data[off + 30 + nm_len: off + 30 + nm_len + ex_len]
-    i = 0
-    while i + 4 <= len(ex):
-        hid, sz = struct.unpack_from("<HH", ex, i)
-        if hid == 0xd935:
-            n += 1
-            break
-        i += 4 + sz
-print(n)
-PYEOF
-)
-[ "$bad" = "0" ] || die "$bad entries carry 0xd935 padding, --alignment-preserved was missed"
-echo "  OK alignment preserved ($bad padded entries)"
+say "F-Droid"
+# F-Droid builds the fdroid flavor from source on their buildserver and signs it with
+# their own key, so no APK ships to that channel and reproducibility does not gate it.
+# The recipe is on AutoUpdateMode: Version / UpdateCheckMode: Tags, so their bot picks
+# the tag up on its own cycle. release_fdroid.yml still builds the flavor unsigned in
+# CI as a preflight that their build will compile.
+echo "no APK to publish, F-Droid builds and signs v$ver from source"
 
 say "GitHub release"
 gh release create "v$ver" --repo Aster-Privacy/Aster-Android --title "v$ver" \
   --notes-file "$notes" \
-  "$out_dir/Aster-Mail.apk" "$out_dir/Aster-Mail-$ver.apk" "$out_dir/Aster-Mail-fdroid-$ver.apk"
+  "$out_dir/Aster-Mail.apk" "$out_dir/Aster-Mail-$ver.apk"
 
 say "carry APK to the site download target"
 mail_tag=$(gh api repos/Aster-Privacy/Aster-Mail/releases/latest -q .tag_name)

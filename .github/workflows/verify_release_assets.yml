@@ -1,8 +1,9 @@
 name: verify_release_assets
 
 # Fails loudly when a published release is missing an APK that a channel depends on.
-# Fixed-name Aster-Mail.apk feeds astermail.org, the versioned copy identifies the
-# build, and Aster-Mail-fdroid-<ver>.apk is the exact filename F-Droid's recipe fetches.
+# Fixed-name Aster-Mail.apk feeds astermail.org and the versioned copy identifies the
+# build. F-Droid needs no asset here: it compiles the fdroid flavor from the tag and
+# signs it with their own key.
 
 on:
   release:
@@ -27,7 +28,7 @@ jobs:
           assets=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}" --jq '[.assets[].name] | join(" ")')
           echo "tag ${TAG} carries: ${assets}"
           fail=0
-          for want in "Aster-Mail.apk" "Aster-Mail-${ver}.apk" "Aster-Mail-fdroid-${ver}.apk"; do
+          for want in "Aster-Mail.apk" "Aster-Mail-${ver}.apk"; do
             case " ${assets} " in
               *" ${want} "*) echo "  OK   ${want}" ;;
               *) echo "  MISS ${want}"; fail=1 ;;
@@ -42,8 +43,7 @@ jobs:
           fi
           if [ "${fail}" != "0" ]; then
             echo
-            echo "A missing fdroid APK fails F-Droid's build for this tag, and repeated"
-            echo "failures get the app disabled. A missing Aster-Mail.apk breaks the"
-            echo "download link on astermail.org. Upload the missing assets to ${TAG}."
+            echo "A missing Aster-Mail.apk breaks the download link on astermail.org."
+            echo "Upload the missing assets to ${TAG}."
             exit 1
           fi

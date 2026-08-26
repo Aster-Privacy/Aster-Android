@@ -22,21 +22,27 @@ Add `--dry-run` to build, sign, and verify without pushing or publishing anythin
 | CI gate | Refuses to start if the latest checks on `origin/main` are failing. Override with `ASTER_SKIP_CI_CHECK=1` only when you know why. |
 | Clean clone | Clones `origin/main` into `../.release_work`. Your working tree is never packaged, so another session's uncommitted edits can't reach an APK. |
 | Bump | Sets `versionName` and `versionCode` in `app/build.gradle.kts`, commits, tags. |
-| Build | `assembleFullRelease bundleFullRelease` locally. The fdroid APK is **not** built here. |
-| F-Droid APK | Waits for the `release_fdroid` run on the new tag, downloads its unsigned Linux-built APK, checks the versionCode, and signs it locally. |
-| Sign | Signs the fdroid APK with `apksigner --alignment-preserved`. Never runs `zipalign`. |
-| Verify | Both APKs must carry cert SHA-256 `88b0a8a6…`, and the fdroid APK must have zero `0xd935` padded entries. |
-| Publish | Creates the GitHub release with all three APK names, then re-uploads `Aster-Mail.apk` to the current Aster-Mail **Latest** release, which is what astermail.org serves. |
+| Build | `assembleFullRelease bundleFullRelease` locally. The fdroid flavor is **not** built here. |
+| Verify | The APK must carry cert SHA-256 `88b0a8a6…`. |
+| F-Droid | Nothing to publish. F-Droid compiles the fdroid flavor from the tag and signs it with their own key. |
+| Publish | Creates the GitHub release with `Aster-Mail.apk` and `Aster-Mail-<version>.apk`, then re-uploads `Aster-Mail.apk` to the current Aster-Mail **Latest** release, which is what astermail.org serves. |
 | Play | Uploads the AAB with `fastlane supply` if a service account is configured, otherwise copies the AAB to `~/Downloads` and says so. |
 | Audit | Runs `Claude/scripts/audit_android_channels.sh` and prints the per-channel result. |
 
-## Why the F-Droid APK is built in CI
+## Why no F-Droid APK ships on the tag
 
-F-Droid rebuilds the app from source on Linux and byte-compares the result against the APK on the
-tag. A Windows build never matches that rebuild, so an APK built on the release machine fails their
-reproducibility check and the recipe cannot be published. `release_fdroid.yml` builds the fdroid
-flavor on `ubuntu-latest` and uploads it unsigned; `release.sh` downloads that artifact and signs it
-here. The key never goes near CI.
+F-Droid used to rebuild the app from source and byte-compare the result against an APK on the tag,
+which meant every release had to be reproducible. A Windows build never matched that rebuild, and
+that requirement blocked the app for months. Since 2026-08-26 the recipe carries no `Binaries:` and
+no `AllowedAPKSigningKeys:`, so F-Droid compiles the fdroid flavor on their buildserver and signs it
+with their key. Nothing on our side has to be reproducible any more.
+
+That was safe to adopt only because F-Droid had never published the app, so no installed base was
+stranded by the certificate change. It is a one-way door: an F-Droid install can never be updated in
+place by an APK signed with our key, or the reverse. Do not reverse it without asking.
+
+`release_fdroid.yml` still builds the fdroid flavor unsigned on `ubuntu-latest` on every tag. It is
+now a preflight that catches a flavor that would fail to compile on F-Droid's buildserver.
 
 Never add an fdroid task to the local gradle invocation. `is_fdroid_build` is true when **any** task
 name contains `fdroid`, so `assembleFullRelease assembleFdroidRelease` in one call silently strips
@@ -70,8 +76,7 @@ F-Droid is the one channel nobody can fully automate from here, because publishi
 
 What is automated: the recipe is on `AutoUpdateMode: Version` and `UpdateCheckMode: Tags`, so once
 it is merged, F-Droid's bot picks up each new tag on its own and no per-release merge request is
-needed. That only works if every tag carries `Aster-Mail-fdroid-<version>.apk` signed with our key,
-which `release.sh` guarantees and `verify_release_assets.yml` double-checks.
+needed. Because F-Droid signs its own builds, a tag needs nothing beyond the source itself.
 
 Until MR !40463 merges, the app is not on F-Droid at all and no release can reach that channel.
 Check the state with:
