@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="duration_n_days">
+        <item quantity="other">%1$d일</item>
+    </plurals>
+    <plurals name="expires_in_days">
+        <item quantity="other">%1$d일 후 만료</item>
+    </plurals>
+    <plurals name="valid_for_days">
+        <item quantity="other">%1$d일 동안 유효</item>
+    </plurals>
+    <plurals name="rules_value_days">
+        <item quantity="other">%1$d일</item>
+    </plurals>
+    <plurals name="settings_val_days">
+        <item quantity="other">%1$d일</item>
+    </plurals>
+    <plurals name="settings_val_hours">
+        <item quantity="other">%1$d시간</item>
+    </plurals>
+    <plurals name="settings_val_emails_per_day">
+        <item quantity="other">%1$d통</item>
+    </plurals>
+    <plurals name="spam_auto_delete_notice">
+        <item quantity="other">스팸의 항목은 %1$d일 후 자동으로 삭제됩니다.</item>
+    </plurals>
+    <plurals name="pending_deletion_body_days">
+        <item quantity="other">회원님의 계정은 %1$d일 후에 삭제됩니다. 삭제를 취소하면 계정을 유지하고 메일과 구독에 대한 액세스를 복원할 수 있습니다.</item>
+    </plurals>
+    <plurals name="domain_purchase_n_years">
+        <item quantity="other">%1$d년</item>
+    </plurals>
+    <plurals name="domain_purchase_years_line">
+        <item quantity="other">%1$d년 등록</item>
+    </plurals>
+    <plurals name="app_lock_try_again_in">
+        <item quantity="other">%d초 후에 다시 시도하세요</item>
+    </plurals>
+    <plurals name="export_undecryptable_skipped">
+        <item quantity="other">%1$d개의 메시지를 복호화하지 못해 내보내기에서 제외되었습니다.</item>
+    </plurals>
+    <plurals name="param_removed_from_links">
+        <item quantity="other">링크 %2$d개에서 %1$s을(를) 제거했습니다</item>
+    </plurals>
+</resources>

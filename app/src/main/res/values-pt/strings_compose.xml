@@ -15,5 +15,14 @@
     <string name="signature_none">Sem assinatura</string>
     <string name="signature_select">Escolher assinatura</string>
     <string name="compose_metadata_strip_failed">Não foi possível remover os metadados ocultos de: %1$s</string>
+    <string name="compose_inline_image_failed">Não foi possível adicionar estas imagens: %1$s</string>
     <string name="compose_attachment_read_failed">Não foi possível anexar \"%1$s\". Seu e-mail não foi enviado. Remova o arquivo ou adicione de novo e tente outra vez.</string>
+    <string name="schedule_in_one_hour">Daqui a uma hora</string>
+    <string name="schedule_tonight">Esta noite</string>
+    <string name="schedule_tomorrow_morning">Amanhã de manhã</string>
+    <string name="schedule_tomorrow_afternoon">Amanhã à tarde</string>
+    <string name="schedule_monday_morning">Segunda-feira de manhã</string>
+    <string name="schedule_pick_date_time">Escolher data e hora</string>
+    <string name="too_many_recipients_in_field">Cada campo Para, Cc e Cco comporta no máximo %1$d endereços. Mova alguns para uma segunda mensagem para enviar esta.</string>
+    <string name="too_many_recipients_in_message">Uma mensagem alcança no máximo %1$d endereços entre Para, Cc e Cco. Dividir a lista em mensagens menores vai funcionar.</string>
 </resources>

@@ -68,10 +68,7 @@
     <string name="settings_val_gb">%1$d GB</string>
     <string name="settings_val_tb">%1$d TB</string>
     <string name="settings_val_mb">%1$d MB</string>
-    <string name="settings_val_emails_per_day">%1$d통</string>
-    <string name="settings_val_days">%1$d일</string>
     <string name="settings_val_one_year">1년</string>
-    <string name="settings_val_hours">%1$d시간</string>
     <string name="settings_val_count">%1$d</string>
     <string name="settings_plan_bullet_duo_storage">공유 암호화 저장 공간 1 TB</string>
     <string name="settings_plan_bullet_duo_members">구성원 2명, 계정은 각자 따로</string>
@@ -85,9 +82,13 @@
     <string name="settings_save_amount">$%1$.2f</string>
     <string name="settings_interval_default">월</string>
     <string name="settings_diagnostics_clip_label">진단 정보</string>
+    <string name="settings_diagnostics_secure_storage">보안 저장소</string>
+    <string name="settings_diagnostics_storage_ok">정상</string>
+    <string name="settings_diagnostics_storage_degraded">손상됨, 로그아웃한 후 다시 로그인하세요</string>
     <string name="log_out_confirm_title">로그아웃할까요?</string>
     <string name="log_out_confirm_message">이 기기에서 %1$s 계정을 로그아웃할까요?</string>
     <string name="revoke_session_confirm_message">이 기기를 계정에서 로그아웃할까요?</string>
     <string name="sign_out_all_other_confirm_message">이 기기만 남기고 모두 로그아웃할까요?</string>
     <string name="alias_forward_limit_reached">현재 요금제에서 쓸 수 있는 별칭 수를 모두 채웠습니다</string>
+    <string name="settings_plan_bullet_daily_emails">하루 1,000통</string>
 </resources>

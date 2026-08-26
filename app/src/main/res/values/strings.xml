@@ -2,25 +2,20 @@
     <string name="app_name">Aster Mail</string>
     <string name="generate_ghost_alias">Generate ghost alias</string>
     <string name="ghost_alias_subtitle">Create a temporary @realiased.me address that auto-expires.</string>
-    <string name="valid_for_days">Valid for %1$d days</string>
     <string name="set_message_expiry">Set message expiry</string>
     <string name="message_expiry_subtitle">Recipients will lose access after the chosen window.</string>
     <string name="accept">Accept</string>
     <string name="expiry_password_label">Password protect (optional)</string>
     <string name="expiry_password_subtitle">External recipients must enter this password to open the message.</string>
     <string name="expires_in_day">Expires in 1 day</string>
-    <string name="expires_in_days">Expires in %1$d days</string>
     <string name="expires_in_hour">Expires in 1 hour</string>
     <string name="expires_in_hours">Expires in %1$d hours</string>
     <string name="duration_one_hour">1 hour</string>
     <string name="duration_n_hours">%1$d hours</string>
     <string name="duration_one_day">1 day</string>
-    <string name="duration_n_days">%1$d days</string>
     <string name="snooze_until">Snooze until</string>
     <string name="sort_by">Sort by</string>
     <string name="show_less">Show less</string>
-    <string name="show_n_more_aliases">Show %1$d more aliases</string>
-    <string name="show_n_more_folders">Show %1$d more folders</string>
     <string name="expand_folder">Expand %1$s</string>
     <string name="collapse_folder">Collapse %1$s</string>
     <string name="undo">Undo</string>
@@ -195,7 +190,6 @@
     <string name="please_dont_close_app">Please don\'t close the app</string>
     <string name="save_new_recovery_codes">Save new recovery codes</string>
     <string name="old_codes_invalidated">Your old recovery codes have been invalidated. Save these new codes in a safe place.</string>
-    <string name="recovery_codes_count">%d recovery codes</string>
     <string name="show_codes">Show codes</string>
     <string name="hide_codes">Hide codes</string>
     <string name="copy_codes">Copy codes</string>
@@ -276,7 +270,6 @@
     <string name="swipe_restore">Restore</string>
     <string name="swipe_delete_forever">Delete forever</string>
     <string name="swipe_not_spam">Not spam</string>
-    <string name="spam_auto_delete_notice">Items in spam will be automatically deleted after %1$d days.</string>
     <string name="compose_task_label">Compose</string>
     <string name="compose_locked_title">Aster is locked</string>
     <string name="compose_locked_message">Unlock Aster to keep writing. Your draft is safe.</string>
@@ -366,13 +359,9 @@
     <string name="forward">Forward</string>
     <string name="load_content">Load content</string>
     <string name="load_external_content">Load external content</string>
-    <string name="n_images">%1$d images</string>
     <string name="one_image">1 image</string>
-    <string name="n_trackers">%1$d trackers</string>
     <string name="one_tracker">1 tracker</string>
-    <string name="n_fonts">%1$d fonts</string>
     <string name="one_font">1 font</string>
-    <string name="n_stylesheets">%1$d stylesheets</string>
     <string name="one_stylesheet">1 stylesheet</string>
     <string name="blocked_content_details_title">Blocked content</string>
     <string name="blocked_type_image">Image</string>
@@ -383,7 +372,6 @@
     <string name="tracker_details_hint">Aster removed these before the message was shown, so the sender learns nothing about you.</string>
     <string name="spy_pixels_blocked">SPY PIXELS BLOCKED</string>
     <string name="links_cleaned">LINKS CLEANED</string>
-    <string name="param_removed_from_links">Removed %1$s from %2$d links</string>
     <string name="stop_receiving_from">Stop receiving from</string>
     <string name="external_content_blocked">External images, fonts, and trackers blocked</string>
     <string name="e2e_encrypted_message">End-to-end encrypted message</string>
@@ -396,7 +384,6 @@
     <string name="attachment_prepare_failed">Could not send: "%1$s" could not be prepared. The message was not sent.</string>
     <string name="e2e_keys_not_ready">Could not send: encryption keys aren\'t ready yet. The message was not sent.</string>
     <string name="no_body">(no body)</string>
-    <string name="attachments_count">%d attachment(s)</string>
     <string name="attachment_unnamed">Attachment</string>
     <string name="attachment_locked">This attachment can\'t be opened because its encryption key isn\'t available on this device.</string>
     <string name="download_complete">Download complete</string>
@@ -429,7 +416,6 @@
     <string name="tracker_protection">Tracker protection</string>
     <string name="encrypted_e2e">End-to-end encrypted</string>
     <string name="encrypted_in_transit">Encrypted in transit</string>
-    <string name="trackers_blocked_count">%1$d trackers blocked</string>
     <string name="no_trackers">No trackers</string>
     <string name="message_location">Location</string>
     <string name="lock_message">Lock message</string>
@@ -454,12 +440,8 @@
     <string name="couldnt_apply_label">Couldn\'t apply label</string>
     <string name="removed_from_label">Removed from %s</string>
     <string name="couldnt_remove_label">Couldn\'t remove label</string>
-    <string name="unsnoozed_count">Unsnoozed %d conversation(s)</string>
     <string name="couldnt_unsnooze">Couldn\'t unsnooze</string>
-    <string name="archived_conversations">Archived %d conversation(s)</string>
     <string name="failed_to_archive">Failed to archive</string>
-    <string name="moved_to_trash">Moved %d conversation(s) to trash</string>
-    <string name="participants_and_others">%1$s &amp; %2$d others</string>
     <string name="to_label_prefix">to %s</string>
     <string name="received_on_prefix">received on %s</string>
     <string name="received_on_label">Received on</string>
@@ -476,14 +458,9 @@
     <string name="failed_to_restore">Failed to restore</string>
     <string name="failed_to_save_draft">Failed to save draft</string>
     <string name="email_saved_as_draft">Email saved as draft</string>
-    <string name="draft_deleted">Deleted %d draft(s)</string>
     <string name="failed_to_delete_draft">Failed to delete draft</string>
     <string name="deleted_permanently">Deleted permanently</string>
     <string name="failed_to_delete">Failed to delete</string>
-    <string name="marked_read_count">Marked %d message(s) as read</string>
-    <string name="marked_unread_count">Marked %d message(s) as unread</string>
-    <string name="starred_count">Starred %d conversation(s)</string>
-    <string name="unstarred_count">Unstarred %d conversation(s)</string>
     <string name="failed_to_update_selection">Failed to update some conversations</string>
     <string name="applied_to_loaded_only">Applied to %1$d of %2$d - this action only covers loaded messages</string>
     <string name="failed_mark_read">Failed to mark as read</string>
@@ -520,7 +497,6 @@
     <string name="type_folder">folder</string>
     <string name="type_label">label</string>
     <string name="type_alias">alias</string>
-    <string name="messages_in_type">%1$d message(s) in %2$s</string>
 
     <!-- Mailing lists -->
     <string name="subscriptions">Subscriptions</string>
@@ -549,7 +525,6 @@
     <string name="stop_sender_title">Stop mail from this sender?</string>
     <string name="stop_sender_body">Aster will ask %1$s to take you off their list. Mail can keep arriving for a few days while they process it, and you can turn this sender back on at any time from the Unsubscribed tab.</string>
     <string name="stop_sender_confirm">Send request</string>
-    <string name="stop_senders_title">Stop mail from %1$d senders?</string>
     <string name="stop_senders_body">Aster will ask each of these senders to take you off their list. Mail can keep arriving for a few days while they process it, and you can turn any of them back on at any time from the Unsubscribed tab.</string>
 
     <!-- Compose -->
@@ -1048,7 +1023,6 @@
 
     <!-- Two-factor auth -->
     <string name="two_factor_authentication">Two-factor authentication</string>
-    <string name="backup_codes_remaining">%d backup code(s) remaining</string>
     <string name="add_second_factor">Add a second factor to protect your account</string>
     <string name="turn_off_two_factor">Turn off two-factor</string>
     <string name="generate_new_backup_codes">Generate new backup codes</string>
@@ -1102,7 +1076,6 @@
     <string name="minutes_ago">%dm ago</string>
     <string name="hours_ago">%dh ago</string>
     <string name="days_ago">%dd ago</string>
-    <string name="devices_count">%d devices</string>
 
     <!-- Encryption settings -->
     <string name="encryption_title">Encryption</string>
@@ -1179,7 +1152,6 @@
     <string name="ghost_aliases_description">Disposable addresses that forward to your inbox. Burn any one without affecting the rest.</string>
     <string name="no_ghost_aliases">No ghost aliases</string>
     <string name="no_ghost_aliases_subtitle">Compose a message and select a ghost alias as the sender to generate one</string>
-    <string name="ghosts_count">%d ghosts</string>
     <string name="forwarded_count">%d forwarded</string>
     <string name="expired">Expired</string>
     <string name="expire">Expire</string>
@@ -1252,7 +1224,6 @@
     <string name="billing_history">Billing history</string>
     <string name="current">Current</string>
     <string name="unlimited_aliases">Unlimited aliases</string>
-    <string name="aliases_count">%d aliases</string>
     <string name="alias_page_indicator">Page %1$d of %2$d</string>
     <string name="unlimited_domains">Unlimited domains</string>
     <string name="domains_count">%d domains</string>
@@ -1390,7 +1361,6 @@
     <string name="vacation_reply_placeholder">I\'m currently away…</string>
     <string name="external_senders_only">External senders only</string>
     <string name="external_senders_subtitle">Skip auto-replies to people inside your domain.</string>
-    <string name="replies_sent_count">Sent %1$d %2$s so far.</string>
     <string name="reply_singular">reply</string>
     <string name="replies_plural">replies</string>
     <string name="delete_vacation_reply">Delete vacation reply</string>
@@ -1591,7 +1561,6 @@
     <string name="set_default_failed">Could not set default payment method</string>
     <string name="remove_payment_failed">Could not remove payment method</string>
     <string name="no_device_contacts">No contacts found on device</string>
-    <string name="imported_contacts">Imported %d contacts</string>
     <string name="no_new_contacts">No new contacts to import</string>
 
     <!-- Privacy settings -->
@@ -1629,7 +1598,6 @@
     <string name="labels">Labels</string>
     <string name="no_labels">No labels</string>
     <string name="no_labels_subtitle">You haven\'t created any labels yet</string>
-    <string name="labels_count">%d labels</string>
     <string name="messages_count">%d messages</string>
     <string name="delete_label">Delete label</string>
     <string name="folders">Folders</string>
@@ -1647,7 +1615,6 @@
     <string name="api_keys">API keys</string>
     <string name="no_api_keys">No API keys</string>
     <string name="no_api_keys_subtitle">Generate one below to get started</string>
-    <string name="api_keys_count">%d keys</string>
     <string name="generate_new_key">Generate new key</string>
     <string name="mobile_key">Mobile key</string>
     <string name="api_key_default_name">API key</string>
@@ -1664,7 +1631,6 @@
     <string name="webhooks">Webhooks</string>
     <string name="manage_webhooks">Manage webhooks</string>
     <string name="no_active_endpoints">No active endpoints</string>
-    <string name="active_endpoints">%d active endpoint(s)</string>
 
     <!-- Language -->
     <string name="language">Language</string>
@@ -2327,7 +2293,6 @@
     <string name="storage_addons_title">Storage Add-ons</string>
     <string name="storage_addons_description">Add extra storage to any plan. These add-ons are stackable.</string>
     <string name="storage_addon_add">Add %1$s</string>
-    <string name="storage_addons_active_count">%1$d active add-on(s)</string>
     <string name="payment_method_card">Credit / Debit Card</string>
     <string name="payment_method_card_subtitle">Pay with Stripe</string>
     <string name="payment_method_crypto">Cryptocurrency</string>
@@ -2431,7 +2396,6 @@
     <!-- App Lock screen -->
     <string name="app_lock_title">Aster Mail is locked</string>
     <string name="app_lock_wrong_pin">Incorrect PIN. Try again.</string>
-    <string name="app_lock_try_again_in">Try again in %d seconds</string>
     <string name="app_lock_locked_out">Too many attempts. Wait before trying again.</string>
     <string name="app_lock_unlock">Unlock</string>
     <string name="app_lock_use_biometric">Use biometrics</string>
@@ -2465,7 +2429,6 @@
     <string name="kids_reserved_addresses">Reserved addresses for kids</string>
     <string name="kids_reserved_subtitle">Hold an address for your child. Share the claim link so they can finish setup with their own password.</string>
     <string name="kids_seats_used">%1$d of %2$d family seats used</string>
-    <string name="kids_seats_free">%1$d seat(s) available</string>
     <string name="kids_seats_breakdown">%1$d members, %2$d invitations, %3$d reserved addresses</string>
     <string name="kids_no_reservations">No reserved addresses yet. Reserve one on astermail.org.</string>
     <string name="kids_reserve_on_web">Reserve on web</string>
@@ -2485,7 +2448,6 @@
 
     <!-- Pending account deletion -->
     <string name="pending_deletion_title">Account scheduled for deletion</string>
-    <string name="pending_deletion_body_days">Your account is scheduled to be deleted in %1$d days. Cancel the deletion to keep your account and restore access to your mail and subscription.</string>
     <string name="pending_deletion_body">Your account is scheduled for deletion. Cancel the deletion to keep your account and restore access to your mail and subscription.</string>
     <string name="pending_deletion_keep">Keep My Account</string>
     <string name="pending_deletion_sign_out">Sign Out</string>
@@ -2748,7 +2710,6 @@
     <string name="domain_purchase_renews_at">Renews at %1$s/yr</string>
     <string name="domain_purchase_years">Registration period</string>
     <string name="domain_purchase_one_year">1 year</string>
-    <string name="domain_purchase_n_years">%1$d years</string>
     <string name="domain_purchase_pay_with">Pay with</string>
     <string name="domain_purchase_pay_card">Card</string>
     <string name="domain_purchase_pay_crypto">Crypto</string>
@@ -2780,7 +2741,6 @@
     <string name="domain_purchase_summary_dns">Automatic DNS setup</string>
     <string name="domain_purchase_summary_included">Included</string>
     <string name="domain_purchase_total_today">Total today</string>
-    <string name="domain_purchase_years_line">%1$d year registration</string>
     <string name="domain_purchase_included_heading">Everything included with your domain</string>
     <string name="domain_purchase_renew">Renew</string>
     <string name="domain_purchase_purchased_label">Purchased domains</string>
@@ -2807,7 +2767,6 @@
     <string name="change_label_icon">Change icon</string>
     <string name="failed_update_label">Could not update label</string>
     <string name="undecryptable_message_preview">This device doesn’t have the key for this message.</string>
-    <string name="export_undecryptable_skipped">%1$d messages couldn’t be decrypted and were left out of the export.</string>
     <plurals name="archived_messages">
         <item quantity="one">Archived %d message</item>
         <item quantity="other">Archived %d messages</item>
@@ -2894,6 +2853,120 @@
     <string name="label_icon_group_work">WORK</string>
     <string name="label_icon_group_school">SCHOOL</string>
     <string name="label_icon_group_everyday">EVERYDAY</string>
+    <plurals name="alias_export_source_count">
+        <item quantity="one">%1$d entry</item>
+        <item quantity="other">%1$d entries</item>
+    </plurals>
+    <plurals name="alias_import_confirm">
+        <item quantity="one">Import %1$d alias</item>
+        <item quantity="other">Import %1$d aliases</item>
+    </plurals>
+    <plurals name="mail_rules_applied_count">
+        <item quantity="one">Applied %1$d time</item>
+        <item quantity="other">Applied %1$d times</item>
+    </plurals>
+    <string name="alias_delete_directory_confirm">Mail sent to addresses in this directory stops being delivered. You can\'t undo this.</string>
+    <string name="alias_directory_separator_hint">A dot, slash, plus sign, or number sign all work before the directory name.</string>
+    <string name="attachment_too_many">One email can carry %1$d attachments</string>
+    <string name="audit_event_2fa_disabled">Two-factor authentication turned off</string>
+    <string name="audit_event_2fa_enabled">Two-factor authentication turned on</string>
+    <string name="audit_event_account_locked">Account locked</string>
+    <string name="audit_event_device_removed">Device removed</string>
+    <string name="audit_event_key_exported">Encryption key exported</string>
+    <string name="audit_event_key_rotated">Encryption key rotated</string>
+    <string name="audit_event_lockdown_disabled">Lockdown turned off</string>
+    <string name="audit_event_lockdown_enabled">Lockdown turned on</string>
+    <string name="audit_event_login">Signed in</string>
+    <string name="audit_event_logout">Signed out</string>
+    <string name="audit_event_password_change">Password changed</string>
+    <string name="audit_event_recovery_codes_regenerated">Recovery codes regenerated</string>
+    <string name="audit_event_session_revoked">Session revoked</string>
+    <string name="audit_event_settings_changed">Settings changed</string>
+    <string name="audit_event_suspicious_activity">Suspicious activity</string>
+    <string name="auto_forward_setup_hint">Enter the address to forward your mail to, then create the rule. The address has to confirm the request before forwarding starts.</string>
+    <string name="cancels_format">Cancels %s</string>
+    <string name="check_for_older_messages">Check for older messages</string>
+    <string name="contact_add_failed">Could not save %1$s to contacts</string>
+    <string name="contact_remove_failed">Could not remove %1$s from contacts</string>
+    <string name="copy_failed">Couldn’t copy. Try again.</string>
+    <string name="create_label_subtitle">Tag messages with a color you choose</string>
+    <string name="delete_signature_message">Delete “%1$s”? This cannot be undone.</string>
+    <string name="delete_vacation_reply_confirm">Your away message and its dates will be deleted. This cannot be undone.</string>
+    <string name="domain_record_pending">Not found yet</string>
+    <string name="domain_status_dns_pending">Waiting for DNS</string>
+    <string name="domain_status_failed">Verification failed</string>
+    <string name="domain_status_suspended">Suspended</string>
+    <string name="domain_status_verifying">Verifying</string>
+    <string name="error_2fa_code_required">Enter the code from your authenticator app.</string>
+    <string name="error_account_password_required">Enter your account password.</string>
+    <string name="error_enter_full_email_address">Enter your full email address, including the part after the at sign.</string>
+    <string name="error_folder_password_already_set">This folder already has a password.</string>
+    <string name="error_folder_password_not_set">This folder doesn\'t have a password.</string>
+    <string name="error_image_too_large">That image is too large. Choose a smaller photo.</string>
+    <string name="error_invalid_2fa_code">That code isn\'t correct. Check your authenticator app and try again.</string>
+    <string name="error_invalid_backup_code">That backup code didn\'t match. Each code works only once, so try the next unused one from your list.</string>
+    <string name="error_invalid_recovery_phrase">That recovery phrase didn\'t match. Check the word order and the spelling, then try again.</string>
+    <string name="error_plan_limit_reached">You have hit the limit on your current plan. Upgrading, or removing some items to make room, will get you moving again.</string>
+    <string name="error_sign_in_code_invalid">That code is no longer valid. Request a new one to keep signing in.</string>
+    <string name="error_sign_in_domain_unsupported">Sign in with the astermail.org or aster.cx address you registered with. Addresses on your own domain reach the same account.</string>
+    <string name="error_storage_full">Your storage is full. To make room, upgrade your plan or remove some emails.</string>
+    <string name="error_unsupported_email_domain">Enter an address that ends in astermail.org or aster.cx.</string>
+    <string name="error_upload_too_large">The upload is too large. To continue, remove or shrink a file and try again.</string>
+    <string name="expiring_not_with_schedule">You can schedule a message or set it to expire, but not both. Turn one off to continue.</string>
+    <string name="failed_load_dns_records">Could not load DNS records</string>
+    <string name="failed_to_move_items">Move failed</string>
+    <string name="folder_name_taken">A folder with this name already exists.</string>
+    <string name="generate_ghost_alias_message">Aster creates a random address that forwards to your inbox. Burn it at any time without affecting your other addresses.</string>
+    <string name="hardware_key_remove_confirm">You won\'t be able to sign in with this security key any more.</string>
+    <string name="image_insert_failed">That image could not be added. It may be too large or in an unsupported format.</string>
+    <string name="invalid_recipient_address">“%1$s” is not a valid email address</string>
+    <string name="label_name_taken">A label with this name already exists.</string>
+    <string name="mail_rules_run_on_existing_confirm">This rule runs on your whole mailbox and can move or delete messages. You can\'t undo it.</string>
+    <string name="marked_as_read">Marked as read</string>
+    <string name="moved_to_folder">Moved to %s</string>
+    <string name="no_more_messages">No more messages</string>
+    <string name="price_per_interval">%1$s / %2$s</string>
+    <string name="purge_all_aliases_message">This removes every alias in this list for good. This cannot be undone.</string>
+    <string name="purge_all_aliases_title">Delete all deleted aliases?</string>
+    <string name="recovery_backup_not_saved">These codes aren\'t saved to your account yet, so they can\'t recover it. Check your connection and retry.</string>
+    <string name="revoke_session_confirm">This device is signed out right away and has to sign in again.</string>
+    <string name="scheduled_action_failed">Couldn\'t update the scheduled message</string>
+    <string name="scheduled_cancelled">Scheduled message canceled</string>
+    <string name="scheduled_delete">Delete</string>
+    <string name="scheduled_deleted">Scheduled message deleted</string>
+    <string name="scheduled_no_subject">(No subject)</string>
+    <string name="scheduled_reschedule">Reschedule</string>
+    <string name="scheduled_rescheduled">Send time updated</string>
+    <string name="scheduled_send_connected_account">Scheduled sending isn\'t available for connected accounts. Send this message now, or choose an Aster address.</string>
+    <string name="scheduled_send_failed">This message couldn\'t be sent. Choose a new send time to try again.</string>
+    <string name="scheduled_send_now">Send now</string>
+    <string name="scheduled_send_time">Scheduled for %1$s</string>
+    <string name="scheduled_sending_now">Sending now</string>
+    <string name="scheduled_to">To: %1$s</string>
+    <string name="send_refusal_attachments_too_large">These attachments add up to more than %1$s, which is the most one message can carry on your plan. Removing or shrinking a file will let this send, and your draft is saved.</string>
+    <string name="send_refusal_recipient_concentration">You have sent to as many addresses at %1$s as we allow in one hour. Sending this many at once to a single provider gets our mail servers blocked. Try again later, and your draft is saved.</string>
+    <string name="send_refusal_that_provider">that provider</string>
+    <string name="send_refusal_too_many_attachments">This message has more than %1$d attachments, which is the most one message can carry. Removing a few will let this send, and your draft is saved.</string>
+    <string name="send_refusal_too_many_recipients">This message has more recipients than one message can reach. Your account can send to %1$d at a time, and that limit rises over your first week. Sending it in smaller batches will work, and your draft is saved.</string>
+    <string name="settings_save_failed_banner">Your changes didn\'t save. Check your connection, then try again.</string>
+    <string name="show_email_preview">Preview text</string>
+    <string name="show_email_preview_subtitle">Show a line of message text in the inbox list</string>
+    <string name="signature_hint_content">Enter the signature text.</string>
+    <string name="signature_set_default">Use as default signature</string>
+    <string name="snooze_next_month">Next month</string>
+    <string name="star_failed">Failed to star</string>
+    <string name="tab_label_with_count">%1$s (%2$d)</string>
+    <string name="templates_decrypt_failed_count">%1$d templates could not be read on this device. They were saved with a key this device does not currently hold.</string>
+    <string name="time_format">Time format</string>
+    <string name="time_format_12h">12-hour (1:30 PM)</string>
+    <string name="time_format_24h">24-hour (13:30)</string>
+    <string name="trusted_device_revoke_confirm">This device will need a verification code the next time it signs in.</string>
+    <string name="unstar_failed">Failed to remove star</string>
+    <string name="vacation_date_not_set">Not set</string>
+    <string name="vacation_end_date">End date</string>
+    <string name="vacation_start_date">Start date</string>
+    <string name="wkd_publish_failed">Your public key did not publish to the Web Key Directory. Another attempt should do it.</string>
+    <string name="wkd_unpublish_failed">Your public key is still in the Web Key Directory. Another attempt should remove it.</string>
     <string name="text_color">Text color</string>
     <string name="highlight_color">Highlight color</string>
     <string name="clear_formatting">Clear formatting</string>

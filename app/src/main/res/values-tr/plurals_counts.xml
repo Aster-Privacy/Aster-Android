@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="attachments_count">
+        <item quantity="one">%d ek</item>
+        <item quantity="other">%d ek</item>
+    </plurals>
+    <plurals name="archived_conversations">
+        <item quantity="one">%d konuşma arşivlendi</item>
+        <item quantity="other">%d konuşma arşivlendi</item>
+    </plurals>
+    <plurals name="moved_to_trash">
+        <item quantity="one">%d konuşma çöpe taşındı</item>
+        <item quantity="other">%d konuşma çöpe taşındı</item>
+    </plurals>
+    <plurals name="starred_count">
+        <item quantity="one">%d konuşma yıldızlandı</item>
+        <item quantity="other">%d konuşma yıldızlandı</item>
+    </plurals>
+    <plurals name="unstarred_count">
+        <item quantity="one">%d konuşmanın yıldızı kaldırıldı</item>
+        <item quantity="other">%d konuşmanın yıldızı kaldırıldı</item>
+    </plurals>
+    <plurals name="unsnoozed_count">
+        <item quantity="one">%d konuşmanın ertelemesi kaldırıldı</item>
+        <item quantity="other">%d konuşmanın ertelemesi kaldırıldı</item>
+    </plurals>
+    <plurals name="draft_deleted">
+        <item quantity="one">%d taslak silindi</item>
+        <item quantity="other">%d taslak silindi</item>
+    </plurals>
+    <plurals name="marked_read_count">
+        <item quantity="one">%d mesaj okundu olarak işaretlendi</item>
+        <item quantity="other">%d mesaj okundu olarak işaretlendi</item>
+    </plurals>
+    <plurals name="marked_unread_count">
+        <item quantity="one">%d ileti okunmadı olarak işaretlendi</item>
+        <item quantity="other">%d ileti okunmadı olarak işaretlendi</item>
+    </plurals>
+    <plurals name="results_count">
+        <item quantity="one">%d sonuç</item>
+        <item quantity="other">%d sonuç</item>
+    </plurals>
+    <plurals name="active_endpoints">
+        <item quantity="one">%d aktif uç nokta</item>
+        <item quantity="other">%d aktif uç nokta</item>
+    </plurals>
+    <plurals name="storage_addons_active_count">
+        <item quantity="one">%1$d etkin ek</item>
+        <item quantity="other">%1$d etkin ek</item>
+    </plurals>
+    <plurals name="backup_codes_remaining">
+        <item quantity="one">%d yedek kod kaldı</item>
+        <item quantity="other">%d yedek kod kaldı</item>
+    </plurals>
+    <plurals name="kids_seats_free">
+        <item quantity="one">%1$d yer müsait</item>
+        <item quantity="other">%1$d yer müsait</item>
+    </plurals>
+    <plurals name="trackers_blocked_count">
+        <item quantity="one">%1$d izleyici engellendi</item>
+        <item quantity="other">%1$d izleyici engellendi</item>
+    </plurals>
+</resources>

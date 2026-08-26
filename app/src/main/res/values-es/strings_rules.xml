@@ -27,8 +27,6 @@
     <string name="rules_value_unread">no leído</string>
     <string name="rules_value_on">activado</string>
     <string name="rules_value_off">desactivado</string>
-    <string name="rules_value_days">%1$d días</string>
-    <string name="rules_value_label_count">%1$d etiquetas</string>
     <string name="rules_value_placeholder_ellipsis">...</string>
 
     <string name="rules_unit_kb">KB</string>
@@ -47,7 +45,6 @@
     <string name="rules_delete_title">¿Eliminar la regla?</string>
     <string name="rules_delete_message">Esta regla dejará de aplicarse al correo nuevo. Los cambios ya realizados no se deshacen.</string>
     <string name="rules_save_failed">No se pudo guardar la regla</string>
-    <string name="rules_emails_count">%1$d correos</string>
     <string name="rules_copy_suffix">(copia)</string>
     <string name="rules_error_load">No se pudieron cargar las reglas</string>
     <string name="rules_error_delete">No se pudo eliminar la regla</string>
@@ -98,4 +95,12 @@
     <string name="category_tutorial_text">Un correo entra en tu categoría en cuanto coincide con alguno de tus dominios o palabras clave. Las categorías propias tienen prioridad sobre las incluidas y todo el emparejamiento ocurre en tu dispositivo.</string>
     <string name="rules_create_first_folder_hint">Crea una carpeta y esta regla podrá mover allí los correos coincidentes.</string>
     <string name="rules_create_first_label_hint">Crea una etiqueta y esta regla podrá aplicarla a los correos coincidentes.</string>
+    <string name="muted_categories">Categorías silenciadas</string>
+    <string name="muted_categories_description">Activa una categoría para silenciar sus avisos. Las categorías silenciadas siguen recibiendo correo y aparecen en tu bandeja de entrada.</string>
+    <string name="muted_categories_empty">Activa las categorías de la bandeja de entrada para elegir cuáles silenciar.</string>
+    <string name="rules_hint_name">Escribe un nombre para esta regla.</string>
+    <string name="rules_hint_add_condition">Agrega al menos una condición.</string>
+    <string name="rules_hint_finish_condition">Completa un valor para cada condición.</string>
+    <string name="rules_hint_add_action">Agrega al menos una acción.</string>
+    <string name="rules_hint_finish_action">Completa un valor para cada acción.</string>
 </resources>

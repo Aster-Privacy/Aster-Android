@@ -22,4 +22,7 @@
     <string name="notif_group_summary_new_mail">Yeni posta</string>
     <string name="notif_battery_opt_title">Sınırsız arka plan etkinliği</string>
     <string name="notif_battery_opt_subtitle">Güvenilir bildirimler için gereklidir. Sistem ayarlarında etkinleştirmek için dokunun.</string>
+    <string name="notif_blocked_title">Bildirimler kapalı</string>
+    <string name="notif_blocked_subtitle">İzin verene kadar Aster Mail bildirim gösteremez. Sistem ayarlarını açmak için dokunun.</string>
+    <string name="notif_channel_downloads_name">İndirilenler</string>
 </resources>

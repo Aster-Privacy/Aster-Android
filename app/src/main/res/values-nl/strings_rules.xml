@@ -27,8 +27,6 @@
     <string name="rules_value_unread">ongelezen</string>
     <string name="rules_value_on">aan</string>
     <string name="rules_value_off">uit</string>
-    <string name="rules_value_days">%1$d dagen</string>
-    <string name="rules_value_label_count">%1$d labels</string>
     <string name="rules_value_placeholder_ellipsis">...</string>
 
     <string name="rules_unit_kb">KB</string>
@@ -47,7 +45,6 @@
     <string name="rules_delete_title">Regel verwijderen?</string>
     <string name="rules_delete_message">Deze regel wordt niet meer toegepast op nieuwe e-mail. Al doorgevoerde wijzigingen worden niet teruggedraaid.</string>
     <string name="rules_save_failed">Kan regel niet opslaan</string>
-    <string name="rules_emails_count">%1$d e-mails</string>
     <string name="rules_copy_suffix">(kopie)</string>
     <string name="rules_error_load">Kan regels niet laden</string>
     <string name="rules_error_delete">Kan regel niet verwijderen</string>
@@ -98,4 +95,12 @@
     <string name="category_tutorial_text">Een mail komt in je eigen categorie zodra die past bij een van je domeinen of trefwoorden. Eigen categorieën gaan voor de standaardcategorieën en het matchen gebeurt volledig op je toestel.</string>
     <string name="rules_create_first_folder_hint">Maak een map aan en deze regel kan overeenkomende e-mails erin verplaatsen.</string>
     <string name="rules_create_first_label_hint">Maak een label aan en deze regel kan het op overeenkomende e-mails toepassen.</string>
+    <string name="muted_categories">Gedempte categorieën</string>
+    <string name="muted_categories_description">Schakel een categorie in om de meldingen ervan te dempen. Gedempte categorieën ontvangen nog steeds e-mail en verschijnen in je inbox.</string>
+    <string name="muted_categories_empty">Schakel inboxcategorieën in om te kiezen welke je dempt.</string>
+    <string name="rules_hint_name">Voer een naam in voor deze regel.</string>
+    <string name="rules_hint_add_condition">Voeg minstens één voorwaarde toe.</string>
+    <string name="rules_hint_finish_condition">Vul voor elke voorwaarde een waarde in.</string>
+    <string name="rules_hint_add_action">Voeg minstens één actie toe.</string>
+    <string name="rules_hint_finish_action">Vul voor elke actie een waarde in.</string>
 </resources>

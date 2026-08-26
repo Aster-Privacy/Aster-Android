@@ -15,5 +15,14 @@
     <string name="signature_none">Nessuna firma</string>
     <string name="signature_select">Scegli la firma</string>
     <string name="compose_metadata_strip_failed">Impossibile rimuovere i metadati nascosti da: %1$s</string>
+    <string name="compose_inline_image_failed">Impossibile aggiungere queste immagini: %1$s</string>
     <string name="compose_attachment_read_failed">Impossibile allegare \"%1$s\". L\'email non è stata inviata. Rimuovi il file o aggiungilo di nuovo e riprova.</string>
+    <string name="schedule_in_one_hour">Tra un’ora</string>
+    <string name="schedule_tonight">Stasera</string>
+    <string name="schedule_tomorrow_morning">Domani mattina</string>
+    <string name="schedule_tomorrow_afternoon">Domani pomeriggio</string>
+    <string name="schedule_monday_morning">Lunedì mattina</string>
+    <string name="schedule_pick_date_time">Scegli data e ora</string>
+    <string name="too_many_recipients_in_field">Ogni campo A, Cc e Ccn contiene al massimo %1$d indirizzi. Ne sposti una parte in un secondo messaggio per inviare questo.</string>
+    <string name="too_many_recipients_in_message">Un messaggio raggiunge al massimo %1$d indirizzi tra A, Cc e Ccn. Suddividere l\'elenco in messaggi più piccoli consentirà l\'invio.</string>
 </resources>

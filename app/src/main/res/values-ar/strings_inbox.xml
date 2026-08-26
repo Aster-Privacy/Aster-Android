@@ -9,4 +9,5 @@
     <string name="selection_scope_offer">تحديد كل %1$d في %2$s</string>
     <string name="selection_scope_offer_categories">تحديد كل %1$d في %2$s، بما في ذلك كل فئة</string>
     <string name="selection_scope_confirmed">تم تحديد كل %1$d في %2$s</string>
+    <string name="inbox_search_in_category">البحث في %1$s</string>
 </resources>

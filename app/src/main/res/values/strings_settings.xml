@@ -71,16 +71,13 @@
     <string name="settings_val_gb">%1$d GB</string>
     <string name="settings_val_tb">%1$d TB</string>
     <string name="settings_val_mb">%1$d MB</string>
-    <string name="settings_val_emails_per_day">%1$d emails</string>
-    <string name="settings_val_days">%1$d days</string>
     <string name="settings_val_one_year">1 year</string>
-    <string name="settings_val_hours">%1$d hours</string>
     <string name="settings_val_count">%1$d</string>
 
     <string name="settings_plan_free_tagline">Everything you need to get started with private, encrypted email.</string>
     <string name="settings_plan_star_tagline">More storage, more aliases, and your first custom domain.</string>
     <string name="settings_plan_nova_tagline">More storage, custom domains, and unlimited aliases.</string>
-    <string name="settings_plan_supernova_tagline">Maximum storage, unlimited everything, and dedicated support.</string>
+    <string name="settings_plan_supernova_tagline">The most storage, unlimited aliases and domains, and dedicated support.</string>
 
     <string name="settings_plan_lead_star">Everything in Star, plus:</string>
     <string name="settings_plan_lead_nova">Everything in Nova, plus:</string>
@@ -92,7 +89,7 @@
     <string name="settings_plan_bullet_star_attachments">Up to 50 MB attachments</string>
     <string name="settings_plan_bullet_star_aliases">15 email aliases</string>
     <string name="settings_plan_bullet_star_domains">5 custom domains</string>
-    <string name="settings_plan_bullet_unlimited_daily_emails">Unlimited daily emails</string>
+    <string name="settings_plan_bullet_daily_emails">1,000 daily emails</string>
     <string name="settings_plan_bullet_star_templates">10 email templates</string>
     <string name="settings_plan_bullet_tracker_protection">Tracker protection</string>
     <string name="settings_plan_bullet_vacation_reply">Vacation auto-reply</string>

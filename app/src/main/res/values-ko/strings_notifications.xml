@@ -22,4 +22,7 @@
     <string name="notif_group_summary_new_mail">새 메일</string>
     <string name="notif_battery_opt_title">백그라운드 활동 제한 해제</string>
     <string name="notif_battery_opt_subtitle">알림을 안정적으로 받으려면 필요합니다. 탭하여 시스템 설정에서 사용 설정하세요.</string>
+    <string name="notif_blocked_title">알림이 꺼져 있습니다</string>
+    <string name="notif_blocked_subtitle">허용하기 전까지 Aster Mail은 알림을 표시할 수 없습니다. 탭하여 시스템 설정을 여세요.</string>
+    <string name="notif_channel_downloads_name">다운로드</string>
 </resources>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="aliases_count">
+        <item quantity="other">별칭 %d개</item>
+    </plurals>
+    <plurals name="api_keys_count">
+        <item quantity="other">키 %d개</item>
+    </plurals>
+    <plurals name="devices_count">
+        <item quantity="other">%d개의 기기</item>
+    </plurals>
+    <plurals name="labels_count">
+        <item quantity="other">라벨 %d개</item>
+    </plurals>
+    <plurals name="ghosts_count">
+        <item quantity="other">고스트 %d개</item>
+    </plurals>
+    <plurals name="recovery_codes_count">
+        <item quantity="other">복구 코드 %d개</item>
+    </plurals>
+    <plurals name="imported_contacts">
+        <item quantity="other">연락처 %d개 가져옴</item>
+    </plurals>
+    <plurals name="n_images">
+        <item quantity="other">이미지 %1$d개</item>
+    </plurals>
+    <plurals name="n_trackers">
+        <item quantity="other">추적기 %1$d개</item>
+    </plurals>
+    <plurals name="n_fonts">
+        <item quantity="other">글꼴 %1$d개</item>
+    </plurals>
+    <plurals name="n_stylesheets">
+        <item quantity="other">스타일시트 %1$d개</item>
+    </plurals>
+    <plurals name="show_n_more_aliases">
+        <item quantity="other">별칭 %1$d개 더 보기</item>
+    </plurals>
+    <plurals name="show_n_more_folders">
+        <item quantity="other">폴더 %1$d개 더 보기</item>
+    </plurals>
+    <plurals name="rules_emails_count">
+        <item quantity="other">메일 %1$d개</item>
+    </plurals>
+    <plurals name="rules_value_label_count">
+        <item quantity="other">라벨 %1$d개</item>
+    </plurals>
+    <plurals name="stop_senders_title">
+        <item quantity="other">발신자 %1$d명의 메일을 중단할까요?</item>
+    </plurals>
+    <plurals name="participants_and_others">
+        <item quantity="other">%1$s 외 %2$d명</item>
+    </plurals>
+    <plurals name="messages_in_type">
+        <item quantity="other">%2$s에 %1$d개의 메시지</item>
+    </plurals>
+</resources>

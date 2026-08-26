@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="attachments_count">
+        <item quantity="other">%d個の添付ファイル</item>
+    </plurals>
+    <plurals name="archived_conversations">
+        <item quantity="other">%d件のスレッドをアーカイブしました</item>
+    </plurals>
+    <plurals name="moved_to_trash">
+        <item quantity="other">%d件のスレッドをゴミ箱に移動しました</item>
+    </plurals>
+    <plurals name="starred_count">
+        <item quantity="other">%d件の会話にスターを付けました</item>
+    </plurals>
+    <plurals name="unstarred_count">
+        <item quantity="other">%d件の会話のスターを外しました</item>
+    </plurals>
+    <plurals name="unsnoozed_count">
+        <item quantity="other">%d件のスレッドのスヌーズを解除しました</item>
+    </plurals>
+    <plurals name="draft_deleted">
+        <item quantity="other">%d件の下書きを削除しました</item>
+    </plurals>
+    <plurals name="marked_read_count">
+        <item quantity="other">%d件のメッセージを既読にしました</item>
+    </plurals>
+    <plurals name="marked_unread_count">
+        <item quantity="other">%d件のメッセージを未読にしました</item>
+    </plurals>
+    <plurals name="results_count">
+        <item quantity="other">%d件の結果</item>
+    </plurals>
+    <plurals name="active_endpoints">
+        <item quantity="other">%d個のアクティブなエンドポイント</item>
+    </plurals>
+    <plurals name="storage_addons_active_count">
+        <item quantity="other">利用中のアドオン %1$d 件</item>
+    </plurals>
+    <plurals name="backup_codes_remaining">
+        <item quantity="other">%d個のバックアップコードが残っています</item>
+    </plurals>
+    <plurals name="kids_seats_free">
+        <item quantity="other">空き %1$d 件</item>
+    </plurals>
+    <plurals name="trackers_blocked_count">
+        <item quantity="other">%1$d件のトラッカーをブロック</item>
+    </plurals>
+</resources>

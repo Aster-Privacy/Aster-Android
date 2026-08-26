@@ -15,5 +15,14 @@
     <string name="signature_none">署名なし</string>
     <string name="signature_select">署名を選択</string>
     <string name="compose_metadata_strip_failed">次のファイルから隠しメタデータを削除できませんでした: %1$s</string>
+    <string name="compose_inline_image_failed">次の画像を追加できませんでした: %1$s</string>
     <string name="compose_attachment_read_failed">\"%1$s\" を添付できませんでした。メールは送信されていません。ファイルを外すか添付し直して、もう一度お試しください。</string>
+    <string name="schedule_in_one_hour">1時間後</string>
+    <string name="schedule_tonight">今夜</string>
+    <string name="schedule_tomorrow_morning">明日の朝</string>
+    <string name="schedule_tomorrow_afternoon">明日の午後</string>
+    <string name="schedule_monday_morning">月曜の朝</string>
+    <string name="schedule_pick_date_time">日時を選択</string>
+    <string name="too_many_recipients_in_field">宛先、Cc、Bcc の各欄に入るのは最大 %1$d 件です。一部を 2 通目に移すと、このメールを送信できます。</string>
+    <string name="too_many_recipients_in_message">1 通のメールが届くのは、宛先、Cc、Bcc を合わせて最大 %1$d 件です。宛先を分けて複数のメールにすると送信できます。</string>
 </resources>

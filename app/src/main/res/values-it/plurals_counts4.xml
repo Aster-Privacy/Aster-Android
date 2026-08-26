@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="alias_export_entries">
+        <item quantity="one">%d voce</item>
+        <item quantity="other">%d voci</item>
+    </plurals>
+    <plurals name="alias_export_files">
+        <item quantity="one">%d file</item>
+        <item quantity="other">%d file</item>
+    </plurals>
+    <plurals name="alias_import_existing">
+        <item quantity="one">%d già esistente</item>
+        <item quantity="other">%d già esistenti</item>
+    </plurals>
+    <plurals name="alias_import_invalid">
+        <item quantity="one">%d non valido</item>
+        <item quantity="other">%d non validi</item>
+    </plurals>
+    <plurals name="alias_import_to_import">
+        <item quantity="one">%d da importare</item>
+        <item quantity="other">%d da importare</item>
+    </plurals>
+    <plurals name="kids_seats_invitations">
+        <item quantity="one">%d invito</item>
+        <item quantity="other">%d inviti</item>
+    </plurals>
+    <plurals name="kids_seats_members">
+        <item quantity="one">%d membro</item>
+        <item quantity="other">%d membri</item>
+    </plurals>
+    <plurals name="kids_seats_reserved">
+        <item quantity="one">%d indirizzo riservato</item>
+        <item quantity="other">%d indirizzi riservati</item>
+    </plurals>
+    <plurals name="replies_sent_count">
+        <item quantity="one">%d risposta inviata finora.</item>
+        <item quantity="other">%d risposte inviate finora.</item>
+    </plurals>
+</resources>

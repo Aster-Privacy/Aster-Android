@@ -27,8 +27,6 @@
     <string name="rules_value_unread">ungelesen</string>
     <string name="rules_value_on">ein</string>
     <string name="rules_value_off">aus</string>
-    <string name="rules_value_days">%1$d Tage</string>
-    <string name="rules_value_label_count">%1$d Labels</string>
     <string name="rules_value_placeholder_ellipsis">...</string>
 
     <string name="rules_unit_kb">KB</string>
@@ -47,7 +45,6 @@
     <string name="rules_delete_title">Regel löschen?</string>
     <string name="rules_delete_message">Diese Regel wird nicht mehr auf neue E-Mails angewendet. Bereits vorgenommene Änderungen werden nicht rückgängig gemacht.</string>
     <string name="rules_save_failed">Regel konnte nicht gespeichert werden</string>
-    <string name="rules_emails_count">%1$d E-Mails</string>
     <string name="rules_copy_suffix">(Kopie)</string>
     <string name="rules_error_load">Regeln konnten nicht geladen werden</string>
     <string name="rules_error_delete">Regel konnte nicht gelöscht werden</string>
@@ -98,4 +95,12 @@
     <string name="category_tutorial_text">Eine Mail landet in deiner Kategorie, sobald sie zu einer deiner Domains oder zu einem Stichwort passt. Eigene Kategorien haben Vorrang vor den vorgegebenen, und die Zuordnung passiert komplett auf deinem Gerät.</string>
     <string name="rules_create_first_folder_hint">Erstelle einen Ordner, und diese Regel kann passende E-Mails dorthin verschieben.</string>
     <string name="rules_create_first_label_hint">Erstelle ein Label, und diese Regel kann es passenden E-Mails zuweisen.</string>
+    <string name="muted_categories">Stummgeschaltete Kategorien</string>
+    <string name="muted_categories_description">Aktiviere eine Kategorie, um ihre Benachrichtigungen stummzuschalten. Stummgeschaltete Kategorien empfangen weiterhin E-Mails und erscheinen in deinem Posteingang.</string>
+    <string name="muted_categories_empty">Aktiviere Posteingangskategorien, um zu wählen, welche du stummschaltest.</string>
+    <string name="rules_hint_name">Geben Sie einen Namen für diese Regel ein.</string>
+    <string name="rules_hint_add_condition">Fügen Sie mindestens eine Bedingung hinzu.</string>
+    <string name="rules_hint_finish_condition">Geben Sie für jede Bedingung einen Wert an.</string>
+    <string name="rules_hint_add_action">Fügen Sie mindestens eine Aktion hinzu.</string>
+    <string name="rules_hint_finish_action">Geben Sie für jede Aktion einen Wert an.</string>
 </resources>

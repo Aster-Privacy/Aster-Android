@@ -15,5 +15,14 @@
     <string name="signature_none">Bez podpisu</string>
     <string name="signature_select">Wybierz podpis</string>
     <string name="compose_metadata_strip_failed">Nie udało się usunąć ukrytych metadanych z: %1$s</string>
+    <string name="compose_inline_image_failed">Nie udało się dodać tych obrazów: %1$s</string>
     <string name="compose_attachment_read_failed">Nie udało się dołączyć \"%1$s\". Wiadomość nie została wysłana. Usuń plik albo dodaj go ponownie i spróbuj jeszcze raz.</string>
+    <string name="schedule_in_one_hour">Za godzinę</string>
+    <string name="schedule_tonight">Dziś wieczorem</string>
+    <string name="schedule_tomorrow_morning">Jutro rano</string>
+    <string name="schedule_tomorrow_afternoon">Jutro po południu</string>
+    <string name="schedule_monday_morning">W poniedziałek rano</string>
+    <string name="schedule_pick_date_time">Wybierz datę i czas</string>
+    <string name="too_many_recipients_in_field">Każde pole Do, DW i UDW mieści maksymalnie %1$d adresów. Przenieś część do drugiej wiadomości, aby wysłać tę.</string>
+    <string name="too_many_recipients_in_message">Jedna wiadomość dociera maksymalnie do %1$d adresów w polach Do, DW i UDW. Podzielenie listy na mniejsze wiadomości pozwoli ją wysłać.</string>
 </resources>

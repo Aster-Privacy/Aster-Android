@@ -27,8 +27,6 @@
     <string name="rules_value_unread">non letto</string>
     <string name="rules_value_on">attivo</string>
     <string name="rules_value_off">disattivo</string>
-    <string name="rules_value_days">%1$d giorni</string>
-    <string name="rules_value_label_count">%1$d etichette</string>
     <string name="rules_value_placeholder_ellipsis">...</string>
 
     <string name="rules_unit_kb">KB</string>
@@ -47,7 +45,6 @@
     <string name="rules_delete_title">Eliminare la regola?</string>
     <string name="rules_delete_message">Questa regola non verrà più applicata ai nuovi messaggi. Le modifiche già effettuate non vengono annullate.</string>
     <string name="rules_save_failed">Impossibile salvare la regola</string>
-    <string name="rules_emails_count">%1$d email</string>
     <string name="rules_copy_suffix">(copia)</string>
     <string name="rules_error_load">Impossibile caricare le regole</string>
     <string name="rules_error_delete">Impossibile eliminare la regola</string>
@@ -98,4 +95,12 @@
     <string name="category_tutorial_text">Un\'email finisce nella tua categoria appena corrisponde a uno dei domini o a una delle parole chiave. Le categorie personali hanno la precedenza su quelle predefinite e tutto l\'abbinamento avviene sul tuo dispositivo.</string>
     <string name="rules_create_first_folder_hint">Crea una cartella e questa regola potrà spostarci le email corrispondenti.</string>
     <string name="rules_create_first_label_hint">Crea un\'etichetta e questa regola potrà applicarla alle email corrispondenti.</string>
+    <string name="muted_categories">Categorie silenziate</string>
+    <string name="muted_categories_description">Attiva una categoria per silenziare le sue notifiche. Le categorie silenziate continuano a ricevere email e appaiono nella tua casella di posta.</string>
+    <string name="muted_categories_empty">Attiva le categorie della casella di posta per scegliere quali silenziare.</string>
+    <string name="rules_hint_name">Inserisci un nome per questa regola.</string>
+    <string name="rules_hint_add_condition">Aggiungi almeno una condizione.</string>
+    <string name="rules_hint_finish_condition">Inserisci un valore per ogni condizione.</string>
+    <string name="rules_hint_add_action">Aggiungi almeno un’azione.</string>
+    <string name="rules_hint_finish_action">Inserisci un valore per ogni azione.</string>
 </resources>

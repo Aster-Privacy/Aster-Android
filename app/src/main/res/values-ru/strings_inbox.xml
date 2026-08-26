@@ -9,4 +9,5 @@
     <string name="selection_scope_offer">Выбрать все %1$d в %2$s</string>
     <string name="selection_scope_offer_categories">Выбрать все %1$d в %2$s, включая все категории</string>
     <string name="selection_scope_confirmed">Выбрано все %1$d в %2$s</string>
+    <string name="inbox_search_in_category">Поиск в %1$s</string>
 </resources>

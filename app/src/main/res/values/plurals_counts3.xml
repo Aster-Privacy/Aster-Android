@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="duration_n_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
+    <plurals name="expires_in_days">
+        <item quantity="one">Expires in %1$d day</item>
+        <item quantity="other">Expires in %1$d days</item>
+    </plurals>
+    <plurals name="valid_for_days">
+        <item quantity="one">Valid for %1$d day</item>
+        <item quantity="other">Valid for %1$d days</item>
+    </plurals>
+    <plurals name="rules_value_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
+    <plurals name="settings_val_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
+    <plurals name="settings_val_hours">
+        <item quantity="one">%1$d hour</item>
+        <item quantity="other">%1$d hours</item>
+    </plurals>
+    <plurals name="settings_val_emails_per_day">
+        <item quantity="one">%1$d email</item>
+        <item quantity="other">%1$d emails</item>
+    </plurals>
+    <plurals name="spam_auto_delete_notice">
+        <item quantity="one">Items in spam will be automatically deleted after %1$d day.</item>
+        <item quantity="other">Items in spam will be automatically deleted after %1$d days.</item>
+    </plurals>
+    <plurals name="pending_deletion_body_days">
+        <item quantity="one">Your account is scheduled to be deleted in %1$d day. Cancel the deletion to keep your account and restore access to your mail and subscription.</item>
+        <item quantity="other">Your account is scheduled to be deleted in %1$d days. Cancel the deletion to keep your account and restore access to your mail and subscription.</item>
+    </plurals>
+    <plurals name="domain_purchase_n_years">
+        <item quantity="one">%1$d year</item>
+        <item quantity="other">%1$d years</item>
+    </plurals>
+    <plurals name="domain_purchase_years_line">
+        <item quantity="one">%1$d year registration</item>
+        <item quantity="other">%1$d year registration</item>
+    </plurals>
+    <plurals name="app_lock_try_again_in">
+        <item quantity="one">Try again in %d second</item>
+        <item quantity="other">Try again in %d seconds</item>
+    </plurals>
+    <plurals name="export_undecryptable_skipped">
+        <item quantity="one">%1$d message couldn’t be decrypted and was left out of the export.</item>
+        <item quantity="other">%1$d messages couldn’t be decrypted and were left out of the export.</item>
+    </plurals>
+    <plurals name="param_removed_from_links">
+        <item quantity="one">Removed %1$s from %2$d link</item>
+        <item quantity="other">Removed %1$s from %2$d links</item>
+    </plurals>
+</resources>

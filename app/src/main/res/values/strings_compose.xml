@@ -14,5 +14,14 @@
     <string name="signature_none">No signature</string>
     <string name="signature_select">Select signature</string>
     <string name="compose_metadata_strip_failed">Could not remove hidden metadata from: %1$s</string>
+    <string name="compose_inline_image_failed">Could not add these images: %1$s</string>
     <string name="compose_attachment_read_failed">Couldn\'t attach \"%1$s\". Your email was not sent. Remove or re-add the file and try again.</string>
+    <string name="schedule_in_one_hour">In one hour</string>
+    <string name="schedule_tonight">Tonight</string>
+    <string name="schedule_tomorrow_morning">Tomorrow morning</string>
+    <string name="schedule_tomorrow_afternoon">Tomorrow afternoon</string>
+    <string name="schedule_monday_morning">Monday morning</string>
+    <string name="schedule_pick_date_time">Pick date &amp; time</string>
+    <string name="too_many_recipients_in_field">Each of the To, Cc, and Bcc fields holds at most %1$d addresses. Move some of them to a second message to send this one.</string>
+    <string name="too_many_recipients_in_message">One message reaches at most %1$d addresses across To, Cc, and Bcc. Splitting the list into smaller messages will send.</string>
 </resources>

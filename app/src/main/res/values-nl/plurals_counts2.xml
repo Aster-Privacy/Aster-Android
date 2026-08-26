@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="aliases_count">
+        <item quantity="one">%d alias</item>
+        <item quantity="other">%d aliassen</item>
+    </plurals>
+    <plurals name="api_keys_count">
+        <item quantity="one">%d sleutel</item>
+        <item quantity="other">%d sleutels</item>
+    </plurals>
+    <plurals name="devices_count">
+        <item quantity="one">%d apparaat</item>
+        <item quantity="other">%d apparaten</item>
+    </plurals>
+    <plurals name="labels_count">
+        <item quantity="one">%d label</item>
+        <item quantity="other">%d labels</item>
+    </plurals>
+    <plurals name="ghosts_count">
+        <item quantity="one">%d ghost</item>
+        <item quantity="other">%d ghosts</item>
+    </plurals>
+    <plurals name="recovery_codes_count">
+        <item quantity="one">%d herstelcode</item>
+        <item quantity="other">%d herstelcodes</item>
+    </plurals>
+    <plurals name="imported_contacts">
+        <item quantity="one">%d contact geïmporteerd</item>
+        <item quantity="other">%d contacten geïmporteerd</item>
+    </plurals>
+    <plurals name="n_images">
+        <item quantity="one">%1$d afbeelding</item>
+        <item quantity="other">%1$d afbeeldingen</item>
+    </plurals>
+    <plurals name="n_trackers">
+        <item quantity="one">%1$d tracker</item>
+        <item quantity="other">%1$d trackers</item>
+    </plurals>
+    <plurals name="n_fonts">
+        <item quantity="one">%1$d lettertype</item>
+        <item quantity="other">%1$d lettertypen</item>
+    </plurals>
+    <plurals name="n_stylesheets">
+        <item quantity="one">%1$d stylesheet</item>
+        <item quantity="other">%1$d stylesheets</item>
+    </plurals>
+    <plurals name="show_n_more_aliases">
+        <item quantity="one">Nog %1$d alias weergeven</item>
+        <item quantity="other">Nog %1$d aliassen weergeven</item>
+    </plurals>
+    <plurals name="show_n_more_folders">
+        <item quantity="one">Nog %1$d map weergeven</item>
+        <item quantity="other">Nog %1$d mappen weergeven</item>
+    </plurals>
+    <plurals name="rules_emails_count">
+        <item quantity="one">%1$d e-mail</item>
+        <item quantity="other">%1$d e-mails</item>
+    </plurals>
+    <plurals name="rules_value_label_count">
+        <item quantity="one">%1$d label</item>
+        <item quantity="other">%1$d labels</item>
+    </plurals>
+    <plurals name="stop_senders_title">
+        <item quantity="one">Mail van %1$d afzender stoppen?</item>
+        <item quantity="other">Mail van %1$d afzenders stoppen?</item>
+    </plurals>
+    <plurals name="participants_and_others">
+        <item quantity="one">%1$s &amp; %2$d andere</item>
+        <item quantity="other">%1$s &amp; %2$d anderen</item>
+    </plurals>
+    <plurals name="messages_in_type">
+        <item quantity="one">%1$d bericht in %2$s</item>
+        <item quantity="other">%1$d berichten in %2$s</item>
+    </plurals>
+</resources>

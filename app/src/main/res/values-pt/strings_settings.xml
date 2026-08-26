@@ -68,10 +68,7 @@
     <string name="settings_val_gb">%1$d GB</string>
     <string name="settings_val_tb">%1$d TB</string>
     <string name="settings_val_mb">%1$d MB</string>
-    <string name="settings_val_emails_per_day">%1$d e-mails</string>
-    <string name="settings_val_days">%1$d dias</string>
     <string name="settings_val_one_year">1 ano</string>
-    <string name="settings_val_hours">%1$d horas</string>
     <string name="settings_val_count">%1$d</string>
     <string name="settings_plan_bullet_duo_storage">1 TB de armazenamento criptografado compartilhado</string>
     <string name="settings_plan_bullet_duo_members">2 membros, contas separadas</string>
@@ -85,9 +82,13 @@
     <string name="settings_save_amount">$%1$.2f</string>
     <string name="settings_interval_default">mês</string>
     <string name="settings_diagnostics_clip_label">Diagnóstico</string>
+    <string name="settings_diagnostics_secure_storage">Armazenamento seguro</string>
+    <string name="settings_diagnostics_storage_ok">Saudável</string>
+    <string name="settings_diagnostics_storage_degraded">Degradado, termina sessão e inicia sessão novamente</string>
     <string name="log_out_confirm_title">Sair da conta?</string>
     <string name="log_out_confirm_message">Sair de %1$s neste aparelho?</string>
     <string name="revoke_session_confirm_message">Desconectar este aparelho da sua conta?</string>
     <string name="sign_out_all_other_confirm_message">Sair de todos os aparelhos menos deste?</string>
     <string name="alias_forward_limit_reached">Você chegou ao máximo de apelidos ativos do seu plano</string>
+    <string name="settings_plan_bullet_daily_emails">1000 e-mails por dia</string>
 </resources>

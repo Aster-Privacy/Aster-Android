@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="aliases_count">
+        <item quantity="one">%d takma ad</item>
+        <item quantity="other">%d takma ad</item>
+    </plurals>
+    <plurals name="api_keys_count">
+        <item quantity="one">%d anahtar</item>
+        <item quantity="other">%d anahtar</item>
+    </plurals>
+    <plurals name="devices_count">
+        <item quantity="one">%d cihaz</item>
+        <item quantity="other">%d cihaz</item>
+    </plurals>
+    <plurals name="labels_count">
+        <item quantity="one">%d etiket</item>
+        <item quantity="other">%d etiket</item>
+    </plurals>
+    <plurals name="ghosts_count">
+        <item quantity="one">%d ghost takma ad</item>
+        <item quantity="other">%d ghost takma ad</item>
+    </plurals>
+    <plurals name="recovery_codes_count">
+        <item quantity="one">%d kurtarma kodu</item>
+        <item quantity="other">%d kurtarma kodu</item>
+    </plurals>
+    <plurals name="imported_contacts">
+        <item quantity="one">%d kişi içe aktarıldı</item>
+        <item quantity="other">%d kişi içe aktarıldı</item>
+    </plurals>
+    <plurals name="n_images">
+        <item quantity="one">%1$d görsel</item>
+        <item quantity="other">%1$d görsel</item>
+    </plurals>
+    <plurals name="n_trackers">
+        <item quantity="one">%1$d izleyici</item>
+        <item quantity="other">%1$d izleyici</item>
+    </plurals>
+    <plurals name="n_fonts">
+        <item quantity="one">%1$d yazı tipi</item>
+        <item quantity="other">%1$d yazı tipi</item>
+    </plurals>
+    <plurals name="n_stylesheets">
+        <item quantity="one">%1$d stil sayfası</item>
+        <item quantity="other">%1$d stil sayfası</item>
+    </plurals>
+    <plurals name="show_n_more_aliases">
+        <item quantity="one">%1$d diğer takma adı göster</item>
+        <item quantity="other">%1$d diğer takma adı göster</item>
+    </plurals>
+    <plurals name="show_n_more_folders">
+        <item quantity="one">%1$d diğer klasörü göster</item>
+        <item quantity="other">%1$d diğer klasörü göster</item>
+    </plurals>
+    <plurals name="rules_emails_count">
+        <item quantity="one">%1$d e-posta</item>
+        <item quantity="other">%1$d e-posta</item>
+    </plurals>
+    <plurals name="rules_value_label_count">
+        <item quantity="one">%1$d etiket</item>
+        <item quantity="other">%1$d etiket</item>
+    </plurals>
+    <plurals name="stop_senders_title">
+        <item quantity="one">%1$d gönderenin postaları durdurulsun mu?</item>
+        <item quantity="other">%1$d gönderenin postaları durdurulsun mu?</item>
+    </plurals>
+    <plurals name="participants_and_others">
+        <item quantity="one">%1$s ve %2$d kişi daha</item>
+        <item quantity="other">%1$s ve %2$d kişi daha</item>
+    </plurals>
+    <plurals name="messages_in_type">
+        <item quantity="one">%2$s içinde %1$d mesaj</item>
+        <item quantity="other">%2$s içinde %1$d mesaj</item>
+    </plurals>
+</resources>

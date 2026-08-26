@@ -27,8 +27,6 @@
     <string name="rules_value_unread">nieprzeczytane</string>
     <string name="rules_value_on">włączone</string>
     <string name="rules_value_off">wyłączone</string>
-    <string name="rules_value_days">%1$d dni</string>
-    <string name="rules_value_label_count">%1$d etykiet</string>
     <string name="rules_value_placeholder_ellipsis">...</string>
 
     <string name="rules_unit_kb">KB</string>
@@ -47,7 +45,6 @@
     <string name="rules_delete_title">Usunąć regułę?</string>
     <string name="rules_delete_message">Ta reguła przestanie działać dla nowych wiadomości. Wprowadzone już zmiany nie zostaną cofnięte.</string>
     <string name="rules_save_failed">Nie udało się zapisać reguły</string>
-    <string name="rules_emails_count">%1$d wiadomości</string>
     <string name="rules_copy_suffix">(kopia)</string>
     <string name="rules_error_load">Nie udało się wczytać reguł</string>
     <string name="rules_error_delete">Nie udało się usunąć reguły</string>
@@ -98,4 +95,12 @@
     <string name="category_tutorial_text">Wiadomość trafia do twojej kategorii, gdy pasuje do dowolnej podanej domeny albo słowa kluczowego. Własne kategorie mają pierwszeństwo przed wbudowanymi, a całe dopasowanie odbywa się na twoim urządzeniu.</string>
     <string name="rules_create_first_folder_hint">Utwórz folder, a ta reguła będzie mogła przenosić do niego pasujące wiadomości.</string>
     <string name="rules_create_first_label_hint">Utwórz etykietę, a ta reguła będzie mogła stosować ją do pasujących wiadomości.</string>
+    <string name="muted_categories">Wyciszone kategorie</string>
+    <string name="muted_categories_description">Włącz kategorię, aby wyciszyć jej powiadomienia. Wyciszone kategorie nadal odbierają pocztę i pojawiają się w skrzynce odbiorczej.</string>
+    <string name="muted_categories_empty">Włącz kategorie skrzynki odbiorczej, aby wybrać, które wyciszyć.</string>
+    <string name="rules_hint_name">Wpisz nazwę tej reguły.</string>
+    <string name="rules_hint_add_condition">Dodaj co najmniej jeden warunek.</string>
+    <string name="rules_hint_finish_condition">Podaj wartość dla każdego warunku.</string>
+    <string name="rules_hint_add_action">Dodaj co najmniej jedną akcję.</string>
+    <string name="rules_hint_finish_action">Podaj wartość dla każdej akcji.</string>
 </resources>

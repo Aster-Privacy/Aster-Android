@@ -68,10 +68,7 @@
     <string name="settings_val_gb">%1$d GB</string>
     <string name="settings_val_tb">%1$d TB</string>
     <string name="settings_val_mb">%1$d MB</string>
-    <string name="settings_val_emails_per_day">%1$d wiadomości</string>
-    <string name="settings_val_days">%1$d dni</string>
     <string name="settings_val_one_year">1 rok</string>
-    <string name="settings_val_hours">%1$d godzin</string>
     <string name="settings_val_count">%1$d</string>
     <string name="settings_plan_bullet_duo_storage">1 TB wspólnego zaszyfrowanego miejsca</string>
     <string name="settings_plan_bullet_duo_members">2 osoby, osobne konta</string>
@@ -85,9 +82,13 @@
     <string name="settings_save_amount">$%1$.2f</string>
     <string name="settings_interval_default">mies.</string>
     <string name="settings_diagnostics_clip_label">Diagnostyka</string>
+    <string name="settings_diagnostics_secure_storage">Bezpieczne przechowywanie</string>
+    <string name="settings_diagnostics_storage_ok">Sprawne</string>
+    <string name="settings_diagnostics_storage_degraded">Uszkodzone, wyloguj się i zaloguj ponownie</string>
     <string name="log_out_confirm_title">Wylogować?</string>
     <string name="log_out_confirm_message">Wylogować %1$s na tym urządzeniu?</string>
     <string name="revoke_session_confirm_message">Wylogować to urządzenie z twojego konta?</string>
     <string name="sign_out_all_other_confirm_message">Wylogować wszystkie urządzenia poza tym?</string>
     <string name="alias_forward_limit_reached">Osiągnięto maksymalną liczbę aktywnych aliasów w twoim planie</string>
+    <string name="settings_plan_bullet_daily_emails">1000 e-maili dziennie</string>
 </resources>

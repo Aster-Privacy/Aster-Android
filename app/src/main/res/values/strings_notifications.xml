@@ -20,6 +20,9 @@
     <string name="notif_login_alert_revoke_failed_body">Open the app to review your active sessions.</string>
     <string name="notif_battery_opt_title">Unrestricted background activity</string>
     <string name="notif_battery_opt_subtitle">Required for reliable notifications. Tap to enable in system settings.</string>
+    <string name="notif_blocked_title">Notifications are turned off</string>
+    <string name="notif_blocked_subtitle">Aster Mail can\'t show notifications until you allow them. Tap to open system settings.</string>
     <string name="mute_folder_notifications">Mute folder notifications</string>
     <string name="unmute_folder_notifications">Unmute folder notifications</string>
+    <string name="notif_channel_downloads_name">Downloads</string>
 </resources>

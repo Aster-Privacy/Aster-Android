@@ -68,10 +68,7 @@
     <string name="settings_val_gb">%1$d GB</string>
     <string name="settings_val_tb">%1$d TB</string>
     <string name="settings_val_mb">%1$d MB</string>
-    <string name="settings_val_emails_per_day">%1$d 封</string>
-    <string name="settings_val_days">%1$d 天</string>
     <string name="settings_val_one_year">1 年</string>
-    <string name="settings_val_hours">%1$d 小时</string>
     <string name="settings_val_count">%1$d</string>
     <string name="settings_plan_bullet_duo_storage">1 TB 共享加密空间</string>
     <string name="settings_plan_bullet_duo_members">2 名成员，各自独立账号</string>
@@ -85,9 +82,13 @@
     <string name="settings_save_amount">$%1$.2f</string>
     <string name="settings_interval_default">月</string>
     <string name="settings_diagnostics_clip_label">诊断信息</string>
+    <string name="settings_diagnostics_secure_storage">安全存储</string>
+    <string name="settings_diagnostics_storage_ok">正常</string>
+    <string name="settings_diagnostics_storage_degraded">已降级，请退出登录后重新登录</string>
     <string name="log_out_confirm_title">要退出登录吗？</string>
     <string name="log_out_confirm_message">在这台设备上退出 %1$s 吗？</string>
     <string name="revoke_session_confirm_message">让这台设备退出你的账号吗？</string>
     <string name="sign_out_all_other_confirm_message">退出除本机以外的所有设备吗？</string>
     <string name="alias_forward_limit_reached">你的套餐可用的启用别名数量已达上限</string>
+    <string name="settings_plan_bullet_daily_emails">每天 1,000 封邮件</string>
 </resources>

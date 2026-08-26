@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="duration_n_days">
+        <item quantity="zero">%1$d أيام</item>
+        <item quantity="one">%1$d يوم</item>
+        <item quantity="two">%1$d يومان</item>
+        <item quantity="few">%1$d أيام</item>
+        <item quantity="many">%1$d يومًا</item>
+        <item quantity="other">%1$d يومًا</item>
+    </plurals>
+    <plurals name="expires_in_days">
+        <item quantity="zero">تنتهي خلال %1$d أيام</item>
+        <item quantity="one">تنتهي خلال %1$d يوم</item>
+        <item quantity="two">تنتهي خلال %1$d يومين</item>
+        <item quantity="few">تنتهي خلال %1$d أيام</item>
+        <item quantity="many">تنتهي خلال %1$d يومًا</item>
+        <item quantity="other">تنتهي خلال %1$d يومًا</item>
+    </plurals>
+    <plurals name="valid_for_days">
+        <item quantity="zero">صالح لمدة %1$d أيام</item>
+        <item quantity="one">صالح لمدة %1$d يوم</item>
+        <item quantity="two">صالح لمدة %1$d يومين</item>
+        <item quantity="few">صالح لمدة %1$d أيام</item>
+        <item quantity="many">صالح لمدة %1$d يومًا</item>
+        <item quantity="other">صالح لمدة %1$d يومًا</item>
+    </plurals>
+    <plurals name="rules_value_days">
+        <item quantity="zero">%1$d أيام</item>
+        <item quantity="one">%1$d يوم</item>
+        <item quantity="two">%1$d يومان</item>
+        <item quantity="few">%1$d أيام</item>
+        <item quantity="many">%1$d يومًا</item>
+        <item quantity="other">%1$d يومًا</item>
+    </plurals>
+    <plurals name="settings_val_days">
+        <item quantity="zero">%1$d أيام</item>
+        <item quantity="one">%1$d يوم</item>
+        <item quantity="two">%1$d يومان</item>
+        <item quantity="few">%1$d أيام</item>
+        <item quantity="many">%1$d يومًا</item>
+        <item quantity="other">%1$d يومًا</item>
+    </plurals>
+    <plurals name="settings_val_hours">
+        <item quantity="zero">%1$d ساعات</item>
+        <item quantity="one">%1$d ساعة</item>
+        <item quantity="two">%1$d ساعتان</item>
+        <item quantity="few">%1$d ساعات</item>
+        <item quantity="many">%1$d ساعة</item>
+        <item quantity="other">%1$d ساعة</item>
+    </plurals>
+    <plurals name="settings_val_emails_per_day">
+        <item quantity="zero">%1$d رسائل</item>
+        <item quantity="one">%1$d رسالة</item>
+        <item quantity="two">%1$d رسالتان</item>
+        <item quantity="few">%1$d رسائل</item>
+        <item quantity="many">%1$d رسالة</item>
+        <item quantity="other">%1$d رسالة</item>
+    </plurals>
+    <plurals name="spam_auto_delete_notice">
+        <item quantity="zero">يتم حذف العناصر في المزعج تلقائيًا بعد %1$d أيام.</item>
+        <item quantity="one">يتم حذف العناصر في المزعج تلقائيًا بعد %1$d يوم.</item>
+        <item quantity="two">يتم حذف العناصر في المزعج تلقائيًا بعد %1$d يومين.</item>
+        <item quantity="few">يتم حذف العناصر في المزعج تلقائيًا بعد %1$d أيام.</item>
+        <item quantity="many">يتم حذف العناصر في المزعج تلقائيًا بعد %1$d يومًا.</item>
+        <item quantity="other">يتم حذف العناصر في المزعج تلقائيًا بعد %1$d يومًا.</item>
+    </plurals>
+    <plurals name="pending_deletion_body_days">
+        <item quantity="zero">سيتم حذف حسابك خلال %1$d أيام. ألغِ الحذف للاحتفاظ بحسابك واستعادة الوصول إلى بريدك واشتراكك.</item>
+        <item quantity="one">سيتم حذف حسابك خلال %1$d يوم. ألغِ الحذف للاحتفاظ بحسابك واستعادة الوصول إلى بريدك واشتراكك.</item>
+        <item quantity="two">سيتم حذف حسابك خلال %1$d يومين. ألغِ الحذف للاحتفاظ بحسابك واستعادة الوصول إلى بريدك واشتراكك.</item>
+        <item quantity="few">سيتم حذف حسابك خلال %1$d أيام. ألغِ الحذف للاحتفاظ بحسابك واستعادة الوصول إلى بريدك واشتراكك.</item>
+        <item quantity="many">سيتم حذف حسابك خلال %1$d يومًا. ألغِ الحذف للاحتفاظ بحسابك واستعادة الوصول إلى بريدك واشتراكك.</item>
+        <item quantity="other">سيتم حذف حسابك خلال %1$d يومًا. ألغِ الحذف للاحتفاظ بحسابك واستعادة الوصول إلى بريدك واشتراكك.</item>
+    </plurals>
+    <plurals name="domain_purchase_n_years">
+        <item quantity="zero">%1$d سنوات</item>
+        <item quantity="one">%1$d سنة</item>
+        <item quantity="two">%1$d سنتان</item>
+        <item quantity="few">%1$d سنوات</item>
+        <item quantity="many">%1$d سنة</item>
+        <item quantity="other">%1$d سنة</item>
+    </plurals>
+    <plurals name="domain_purchase_years_line">
+        <item quantity="zero">تسجيل لمدة %1$d سنوات</item>
+        <item quantity="one">تسجيل لمدة %1$d سنة</item>
+        <item quantity="two">تسجيل لمدة %1$d سنتين</item>
+        <item quantity="few">تسجيل لمدة %1$d سنوات</item>
+        <item quantity="many">تسجيل لمدة %1$d سنة</item>
+        <item quantity="other">تسجيل لمدة %1$d سنة</item>
+    </plurals>
+    <plurals name="app_lock_try_again_in">
+        <item quantity="zero">أعد المحاولة بعد %d ثوانٍ</item>
+        <item quantity="one">أعد المحاولة بعد %d ثانية</item>
+        <item quantity="two">أعد المحاولة بعد %d ثانيتين</item>
+        <item quantity="few">أعد المحاولة بعد %d ثوانٍ</item>
+        <item quantity="many">أعد المحاولة بعد %d ثانية</item>
+        <item quantity="other">أعد المحاولة بعد %d ثانية</item>
+    </plurals>
+    <plurals name="export_undecryptable_skipped">
+        <item quantity="zero">تعذر فك تشفير %1$d رسائل ولم تُدرج في التصدير.</item>
+        <item quantity="one">تعذر فك تشفير %1$d رسالة ولم تُدرج في التصدير.</item>
+        <item quantity="two">تعذر فك تشفير %1$d رسالتين ولم تُدرجا في التصدير.</item>
+        <item quantity="few">تعذر فك تشفير %1$d رسائل ولم تُدرج في التصدير.</item>
+        <item quantity="many">تعذر فك تشفير %1$d رسالة ولم تُدرج في التصدير.</item>
+        <item quantity="other">تعذر فك تشفير %1$d رسالة ولم تُدرج في التصدير.</item>
+    </plurals>
+    <plurals name="param_removed_from_links">
+        <item quantity="zero">تمت إزالة %1$s من %2$d روابط</item>
+        <item quantity="one">تمت إزالة %1$s من %2$d رابط</item>
+        <item quantity="two">تمت إزالة %1$s من %2$d رابطين</item>
+        <item quantity="few">تمت إزالة %1$s من %2$d روابط</item>
+        <item quantity="many">تمت إزالة %1$s من %2$d رابطًا</item>
+        <item quantity="other">تمت إزالة %1$s من %2$d رابطًا</item>
+    </plurals>
+</resources>

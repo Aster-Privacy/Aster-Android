@@ -9,4 +9,5 @@
     <string name="selection_scope_offer">%2$s içindeki %1$d ögenin tümünü seç</string>
     <string name="selection_scope_offer_categories">%2$s içindeki %1$d ögenin tümünü seç (tüm kategoriler dahil)</string>
     <string name="selection_scope_confirmed">%2$s içindeki %1$d ögenin tümü seçildi</string>
+    <string name="inbox_search_in_category">%1$s içinde ara</string>
 </resources>

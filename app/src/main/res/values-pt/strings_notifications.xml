@@ -22,4 +22,7 @@
     <string name="notif_group_summary_new_mail">Novo e-mail</string>
     <string name="notif_battery_opt_title">Atividade em segundo plano sem restrições</string>
     <string name="notif_battery_opt_subtitle">Necessária para notificações fiáveis. Toque para ativar nas definições do sistema.</string>
+    <string name="notif_blocked_title">As notificações estão desativadas</string>
+    <string name="notif_blocked_subtitle">O Aster Mail não pode mostrar notificações até que as permitas. Toque para abrir as definições do sistema.</string>
+    <string name="notif_channel_downloads_name">Transferências</string>
 </resources>

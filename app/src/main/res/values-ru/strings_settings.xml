@@ -68,10 +68,7 @@
     <string name="settings_val_gb">%1$d ГБ</string>
     <string name="settings_val_tb">%1$d ТБ</string>
     <string name="settings_val_mb">%1$d МБ</string>
-    <string name="settings_val_emails_per_day">%1$d писем</string>
-    <string name="settings_val_days">%1$d дней</string>
     <string name="settings_val_one_year">1 год</string>
-    <string name="settings_val_hours">%1$d часов</string>
     <string name="settings_val_count">%1$d</string>
     <string name="settings_plan_bullet_duo_storage">1 ТБ общего зашифрованного места</string>
     <string name="settings_plan_bullet_duo_members">2 участника, отдельные аккаунты</string>
@@ -85,9 +82,13 @@
     <string name="settings_save_amount">$%1$.2f</string>
     <string name="settings_interval_default">мес.</string>
     <string name="settings_diagnostics_clip_label">Диагностика</string>
+    <string name="settings_diagnostics_secure_storage">Защищённое хранилище</string>
+    <string name="settings_diagnostics_storage_ok">Исправно</string>
+    <string name="settings_diagnostics_storage_degraded">Повреждено, выйдите и войдите снова</string>
     <string name="log_out_confirm_title">Выйти?</string>
     <string name="log_out_confirm_message">Выйти из %1$s на этом устройстве?</string>
     <string name="revoke_session_confirm_message">Отключить это устройство от вашего аккаунта?</string>
     <string name="sign_out_all_other_confirm_message">Выйти на всех устройствах, кроме этого?</string>
     <string name="alias_forward_limit_reached">Достигнут предел активных псевдонимов на вашем тарифе</string>
+    <string name="settings_plan_bullet_daily_emails">1000 писем в день</string>
 </resources>

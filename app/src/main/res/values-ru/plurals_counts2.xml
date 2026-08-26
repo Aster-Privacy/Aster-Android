@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="aliases_count">
+        <item quantity="one">%d псевдоним</item>
+        <item quantity="few">%d псевдонима</item>
+        <item quantity="many">%d псевдонимов</item>
+        <item quantity="other">%d псевдонимов</item>
+    </plurals>
+    <plurals name="api_keys_count">
+        <item quantity="one">%d ключ</item>
+        <item quantity="few">%d ключа</item>
+        <item quantity="many">%d ключей</item>
+        <item quantity="other">%d ключей</item>
+    </plurals>
+    <plurals name="devices_count">
+        <item quantity="one">%d устройство</item>
+        <item quantity="few">%d устройства</item>
+        <item quantity="many">%d устройств</item>
+        <item quantity="other">%d устройств</item>
+    </plurals>
+    <plurals name="labels_count">
+        <item quantity="one">%d метка</item>
+        <item quantity="few">%d метки</item>
+        <item quantity="many">%d меток</item>
+        <item quantity="other">%d меток</item>
+    </plurals>
+    <plurals name="ghosts_count">
+        <item quantity="one">%d ghost-псевдоним</item>
+        <item quantity="few">%d ghost-псевдонима</item>
+        <item quantity="many">%d ghost-псевдонимов</item>
+        <item quantity="other">%d ghost-псевдонимов</item>
+    </plurals>
+    <plurals name="recovery_codes_count">
+        <item quantity="one">%d код восстановления</item>
+        <item quantity="few">%d кода восстановления</item>
+        <item quantity="many">%d кодов восстановления</item>
+        <item quantity="other">%d кодов восстановления</item>
+    </plurals>
+    <plurals name="imported_contacts">
+        <item quantity="one">Импортирован %d контакт</item>
+        <item quantity="few">Импортировано %d контакта</item>
+        <item quantity="many">Импортировано %d контактов</item>
+        <item quantity="other">Импортировано %d контактов</item>
+    </plurals>
+    <plurals name="n_images">
+        <item quantity="one">%1$d изображение</item>
+        <item quantity="few">%1$d изображения</item>
+        <item quantity="many">%1$d изображений</item>
+        <item quantity="other">%1$d изображений</item>
+    </plurals>
+    <plurals name="n_trackers">
+        <item quantity="one">%1$d трекер</item>
+        <item quantity="few">%1$d трекера</item>
+        <item quantity="many">%1$d трекеров</item>
+        <item quantity="other">%1$d трекеров</item>
+    </plurals>
+    <plurals name="n_fonts">
+        <item quantity="one">%1$d шрифт</item>
+        <item quantity="few">%1$d шрифта</item>
+        <item quantity="many">%1$d шрифтов</item>
+        <item quantity="other">%1$d шрифтов</item>
+    </plurals>
+    <plurals name="n_stylesheets">
+        <item quantity="one">%1$d таблица стилей</item>
+        <item quantity="few">%1$d таблицы стилей</item>
+        <item quantity="many">%1$d таблиц стилей</item>
+        <item quantity="other">%1$d таблиц стилей</item>
+    </plurals>
+    <plurals name="show_n_more_aliases">
+        <item quantity="one">Показать ещё %1$d псевдоним</item>
+        <item quantity="few">Показать ещё %1$d псевдонима</item>
+        <item quantity="many">Показать ещё %1$d псевдонимов</item>
+        <item quantity="other">Показать ещё %1$d псевдонимов</item>
+    </plurals>
+    <plurals name="show_n_more_folders">
+        <item quantity="one">Показать ещё %1$d папку</item>
+        <item quantity="few">Показать ещё %1$d папки</item>
+        <item quantity="many">Показать ещё %1$d папок</item>
+        <item quantity="other">Показать ещё %1$d папок</item>
+    </plurals>
+    <plurals name="rules_emails_count">
+        <item quantity="one">Писем: %1$d</item>
+        <item quantity="few">Писем: %1$d</item>
+        <item quantity="many">Писем: %1$d</item>
+        <item quantity="other">Писем: %1$d</item>
+    </plurals>
+    <plurals name="rules_value_label_count">
+        <item quantity="one">Меток: %1$d</item>
+        <item quantity="few">Меток: %1$d</item>
+        <item quantity="many">Меток: %1$d</item>
+        <item quantity="other">Меток: %1$d</item>
+    </plurals>
+    <plurals name="stop_senders_title">
+        <item quantity="one">Остановить письма от %1$d отправителя?</item>
+        <item quantity="few">Остановить письма от %1$d отправителей?</item>
+        <item quantity="many">Остановить письма от %1$d отправителей?</item>
+        <item quantity="other">Остановить письма от %1$d отправителей?</item>
+    </plurals>
+    <plurals name="participants_and_others">
+        <item quantity="one">%1$s и ещё %2$d</item>
+        <item quantity="few">%1$s и ещё %2$d</item>
+        <item quantity="many">%1$s и ещё %2$d</item>
+        <item quantity="other">%1$s и ещё %2$d</item>
+    </plurals>
+    <plurals name="messages_in_type">
+        <item quantity="one">%1$d сообщение в %2$s</item>
+        <item quantity="few">%1$d сообщения в %2$s</item>
+        <item quantity="many">%1$d сообщений в %2$s</item>
+        <item quantity="other">%1$d сообщений в %2$s</item>
+    </plurals>
+</resources>

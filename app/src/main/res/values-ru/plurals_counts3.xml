@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="duration_n_days">
+        <item quantity="one">%1$d день</item>
+        <item quantity="few">%1$d дня</item>
+        <item quantity="many">%1$d дней</item>
+        <item quantity="other">%1$d дней</item>
+    </plurals>
+    <plurals name="expires_in_days">
+        <item quantity="one">Истекает через %1$d день</item>
+        <item quantity="few">Истекает через %1$d дня</item>
+        <item quantity="many">Истекает через %1$d дней</item>
+        <item quantity="other">Истекает через %1$d дней</item>
+    </plurals>
+    <plurals name="valid_for_days">
+        <item quantity="one">Действует %1$d день</item>
+        <item quantity="few">Действует %1$d дня</item>
+        <item quantity="many">Действует %1$d дней</item>
+        <item quantity="other">Действует %1$d дней</item>
+    </plurals>
+    <plurals name="rules_value_days">
+        <item quantity="one">%1$d дн.</item>
+        <item quantity="few">%1$d дн.</item>
+        <item quantity="many">%1$d дн.</item>
+        <item quantity="other">%1$d дн.</item>
+    </plurals>
+    <plurals name="settings_val_days">
+        <item quantity="one">%1$d день</item>
+        <item quantity="few">%1$d дня</item>
+        <item quantity="many">%1$d дней</item>
+        <item quantity="other">%1$d дней</item>
+    </plurals>
+    <plurals name="settings_val_hours">
+        <item quantity="one">%1$d час</item>
+        <item quantity="few">%1$d часа</item>
+        <item quantity="many">%1$d часов</item>
+        <item quantity="other">%1$d часов</item>
+    </plurals>
+    <plurals name="settings_val_emails_per_day">
+        <item quantity="one">%1$d письмо</item>
+        <item quantity="few">%1$d письма</item>
+        <item quantity="many">%1$d писем</item>
+        <item quantity="other">%1$d писем</item>
+    </plurals>
+    <plurals name="spam_auto_delete_notice">
+        <item quantity="one">Элементы в спаме удаляются автоматически через %1$d день.</item>
+        <item quantity="few">Элементы в спаме удаляются автоматически через %1$d дня.</item>
+        <item quantity="many">Элементы в спаме удаляются автоматически через %1$d дней.</item>
+        <item quantity="other">Элементы в спаме удаляются автоматически через %1$d дней.</item>
+    </plurals>
+    <plurals name="pending_deletion_body_days">
+        <item quantity="one">Ваш аккаунт будет удалён через %1$d день. Отмените удаление, чтобы сохранить аккаунт и восстановить доступ к почте и подписке.</item>
+        <item quantity="few">Ваш аккаунт будет удалён через %1$d дня. Отмените удаление, чтобы сохранить аккаунт и восстановить доступ к почте и подписке.</item>
+        <item quantity="many">Ваш аккаунт будет удалён через %1$d дней. Отмените удаление, чтобы сохранить аккаунт и восстановить доступ к почте и подписке.</item>
+        <item quantity="other">Ваш аккаунт будет удалён через %1$d дней. Отмените удаление, чтобы сохранить аккаунт и восстановить доступ к почте и подписке.</item>
+    </plurals>
+    <plurals name="domain_purchase_n_years">
+        <item quantity="one">%1$d год</item>
+        <item quantity="few">%1$d года</item>
+        <item quantity="many">%1$d лет</item>
+        <item quantity="other">%1$d лет</item>
+    </plurals>
+    <plurals name="domain_purchase_years_line">
+        <item quantity="one">Регистрация на %1$d год</item>
+        <item quantity="few">Регистрация на %1$d года</item>
+        <item quantity="many">Регистрация на %1$d лет</item>
+        <item quantity="other">Регистрация на %1$d лет</item>
+    </plurals>
+    <plurals name="app_lock_try_again_in">
+        <item quantity="one">Повторите через %d с</item>
+        <item quantity="few">Повторите через %d с</item>
+        <item quantity="many">Повторите через %d с</item>
+        <item quantity="other">Повторите через %d с</item>
+    </plurals>
+    <plurals name="export_undecryptable_skipped">
+        <item quantity="one">Не удалось расшифровать %1$d сообщение, оно не вошло в экспорт.</item>
+        <item quantity="few">Не удалось расшифровать %1$d сообщения, они не вошли в экспорт.</item>
+        <item quantity="many">Не удалось расшифровать %1$d сообщений, они не вошли в экспорт.</item>
+        <item quantity="other">Не удалось расшифровать %1$d сообщений, они не вошли в экспорт.</item>
+    </plurals>
+    <plurals name="param_removed_from_links">
+        <item quantity="one">%1$s удалён из %2$d ссылки</item>
+        <item quantity="few">%1$s удалён из %2$d ссылок</item>
+        <item quantity="many">%1$s удалён из %2$d ссылок</item>
+        <item quantity="other">%1$s удалён из %2$d ссылок</item>
+    </plurals>
+</resources>

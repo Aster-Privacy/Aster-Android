@@ -27,8 +27,6 @@
     <string name="rules_value_unread">غير مقروء</string>
     <string name="rules_value_on">مفعّل</string>
     <string name="rules_value_off">معطّل</string>
-    <string name="rules_value_days">%1$d يوم</string>
-    <string name="rules_value_label_count">%1$d تصنيف</string>
     <string name="rules_value_placeholder_ellipsis">...</string>
 
     <string name="rules_unit_kb">ك.ب</string>
@@ -47,7 +45,6 @@
     <string name="rules_delete_title">حذف القاعدة؟</string>
     <string name="rules_delete_message">لن تُطبَّق هذه القاعدة على الرسائل الجديدة بعد الآن. لن يتم التراجع عن التغييرات التي تمت بالفعل.</string>
     <string name="rules_save_failed">تعذّر حفظ القاعدة</string>
-    <string name="rules_emails_count">%1$d رسالة</string>
     <string name="rules_copy_suffix">(نسخة)</string>
     <string name="rules_error_load">تعذّر تحميل القواعد</string>
     <string name="rules_error_delete">تعذّر حذف القاعدة</string>
@@ -98,4 +95,12 @@
     <string name="category_tutorial_text">تُصنَّف الرسالة ضمن فئتك المخصصة إذا طابقت أي نطاق أو كلمة مفتاحية أدخلتها. تسبق الفئات المخصصة الفئات المدمجة، وتجري المطابقة كاملة على جهازك.</string>
     <string name="rules_create_first_folder_hint">أنشئ مجلدًا وستتمكن هذه القاعدة من نقل الرسائل المطابقة إليه.</string>
     <string name="rules_create_first_label_hint">أنشئ تصنيفًا وستتمكن هذه القاعدة من تطبيقه على الرسائل المطابقة.</string>
+    <string name="muted_categories">الفئات المكتومة</string>
+    <string name="muted_categories_description">فعّل فئة لكتم إشعاراتها. تستمر الفئات المكتومة في استقبال البريد وتظهر في صندوق الوارد.</string>
+    <string name="muted_categories_empty">فعّل فئات صندوق الوارد لاختيار الفئات التي تكتمها.</string>
+    <string name="rules_hint_name">أدخل اسمًا لهذه القاعدة.</string>
+    <string name="rules_hint_add_condition">أضف شرطًا واحدًا على الأقل.</string>
+    <string name="rules_hint_finish_condition">أدخل قيمة لكل شرط.</string>
+    <string name="rules_hint_add_action">أضف إجراءً واحدًا على الأقل.</string>
+    <string name="rules_hint_finish_action">أدخل قيمة لكل إجراء.</string>
 </resources>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="aliases_count">
+        <item quantity="one">%d alias</item>
+        <item quantity="other">%d alias</item>
+    </plurals>
+    <plurals name="api_keys_count">
+        <item quantity="one">%d clé</item>
+        <item quantity="other">%d clés</item>
+    </plurals>
+    <plurals name="devices_count">
+        <item quantity="one">%d appareil</item>
+        <item quantity="other">%d appareils</item>
+    </plurals>
+    <plurals name="labels_count">
+        <item quantity="one">%d libellé</item>
+        <item quantity="other">%d libellés</item>
+    </plurals>
+    <plurals name="ghosts_count">
+        <item quantity="one">%d fantôme</item>
+        <item quantity="other">%d fantômes</item>
+    </plurals>
+    <plurals name="recovery_codes_count">
+        <item quantity="one">%d code de récupération</item>
+        <item quantity="other">%d codes de récupération</item>
+    </plurals>
+    <plurals name="imported_contacts">
+        <item quantity="one">%d contact importé</item>
+        <item quantity="other">%d contacts importés</item>
+    </plurals>
+    <plurals name="n_images">
+        <item quantity="one">%1$d image</item>
+        <item quantity="other">%1$d images</item>
+    </plurals>
+    <plurals name="n_trackers">
+        <item quantity="one">%1$d traqueur</item>
+        <item quantity="other">%1$d traqueurs</item>
+    </plurals>
+    <plurals name="n_fonts">
+        <item quantity="one">%1$d police</item>
+        <item quantity="other">%1$d polices</item>
+    </plurals>
+    <plurals name="n_stylesheets">
+        <item quantity="one">%1$d feuille de style</item>
+        <item quantity="other">%1$d feuilles de style</item>
+    </plurals>
+    <plurals name="show_n_more_aliases">
+        <item quantity="one">Afficher %1$d alias de plus</item>
+        <item quantity="other">Afficher %1$d alias de plus</item>
+    </plurals>
+    <plurals name="show_n_more_folders">
+        <item quantity="one">Afficher %1$d dossier de plus</item>
+        <item quantity="other">Afficher %1$d dossiers de plus</item>
+    </plurals>
+    <plurals name="rules_emails_count">
+        <item quantity="one">%1$d e-mail</item>
+        <item quantity="other">%1$d e-mails</item>
+    </plurals>
+    <plurals name="rules_value_label_count">
+        <item quantity="one">%1$d libellé</item>
+        <item quantity="other">%1$d libellés</item>
+    </plurals>
+    <plurals name="stop_senders_title">
+        <item quantity="one">Arrêter les e-mails de %1$d expéditeur ?</item>
+        <item quantity="other">Arrêter les e-mails de %1$d expéditeurs ?</item>
+    </plurals>
+    <plurals name="participants_and_others">
+        <item quantity="one">%1$s &amp; %2$d autre</item>
+        <item quantity="other">%1$s &amp; %2$d autres</item>
+    </plurals>
+    <plurals name="messages_in_type">
+        <item quantity="one">%1$d message dans %2$s</item>
+        <item quantity="other">%1$d messages dans %2$s</item>
+    </plurals>
+</resources>

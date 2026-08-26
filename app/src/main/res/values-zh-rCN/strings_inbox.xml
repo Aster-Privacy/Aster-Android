@@ -9,4 +9,5 @@
     <string name="selection_scope_offer">选择%2$s中的全部 %1$d 封</string>
     <string name="selection_scope_offer_categories">选择%2$s中的全部 %1$d 封（含所有类别）</string>
     <string name="selection_scope_confirmed">已选择%2$s中的全部 %1$d 封</string>
+    <string name="inbox_search_in_category">在 %1$s 中搜索</string>
 </resources>

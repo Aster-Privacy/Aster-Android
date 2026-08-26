@@ -27,8 +27,6 @@
     <string name="rules_value_unread">не прочитано</string>
     <string name="rules_value_on">включено</string>
     <string name="rules_value_off">выключено</string>
-    <string name="rules_value_days">%1$d дн.</string>
-    <string name="rules_value_label_count">Меток: %1$d</string>
     <string name="rules_value_placeholder_ellipsis">...</string>
 
     <string name="rules_unit_kb">КБ</string>
@@ -47,7 +45,6 @@
     <string name="rules_delete_title">Удалить правило?</string>
     <string name="rules_delete_message">Правило перестанет применяться к новым письмам. Уже внесённые изменения не отменяются.</string>
     <string name="rules_save_failed">Не удалось сохранить правило</string>
-    <string name="rules_emails_count">Писем: %1$d</string>
     <string name="rules_copy_suffix">(копия)</string>
     <string name="rules_error_load">Не удалось загрузить правила</string>
     <string name="rules_error_delete">Не удалось удалить правило</string>
@@ -98,4 +95,12 @@
     <string name="category_tutorial_text">Письмо попадает в вашу категорию, как только совпадает с любым из указанных доменов или ключевых слов. Свои категории идут раньше встроенных, и всё сопоставление происходит на вашем устройстве.</string>
     <string name="rules_create_first_folder_hint">Создайте папку, и это правило сможет перемещать в неё подходящие письма.</string>
     <string name="rules_create_first_label_hint">Создайте метку, и это правило сможет применять её к подходящим письмам.</string>
+    <string name="muted_categories">Отключённые категории</string>
+    <string name="muted_categories_description">Включите категорию, чтобы отключить её уведомления. Отключённые категории продолжают получать почту и отображаются во входящих.</string>
+    <string name="muted_categories_empty">Включите категории входящих, чтобы выбрать, какие из них отключить.</string>
+    <string name="rules_hint_name">Введите название этого правила.</string>
+    <string name="rules_hint_add_condition">Добавьте хотя бы одно условие.</string>
+    <string name="rules_hint_finish_condition">Укажите значение для каждого условия.</string>
+    <string name="rules_hint_add_action">Добавьте хотя бы одно действие.</string>
+    <string name="rules_hint_finish_action">Укажите значение для каждого действия.</string>
 </resources>

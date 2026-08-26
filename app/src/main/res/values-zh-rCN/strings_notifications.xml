@@ -22,4 +22,7 @@
     <string name="notif_group_summary_new_mail">新邮件</string>
     <string name="notif_battery_opt_title">不受限制的后台活动</string>
     <string name="notif_battery_opt_subtitle">可靠接收通知所必需。点按以在系统设置中开启。</string>
+    <string name="notif_blocked_title">通知已关闭</string>
+    <string name="notif_blocked_subtitle">在你允许之前，Aster Mail 无法显示通知。点按以打开系统设置。</string>
+    <string name="notif_channel_downloads_name">下载</string>
 </resources>

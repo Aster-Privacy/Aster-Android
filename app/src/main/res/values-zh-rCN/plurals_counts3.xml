@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="duration_n_days">
+        <item quantity="other">%1$d 天</item>
+    </plurals>
+    <plurals name="expires_in_days">
+        <item quantity="other">%1$d 天后过期</item>
+    </plurals>
+    <plurals name="valid_for_days">
+        <item quantity="other">有效期 %1$d 天</item>
+    </plurals>
+    <plurals name="rules_value_days">
+        <item quantity="other">%1$d 天</item>
+    </plurals>
+    <plurals name="settings_val_days">
+        <item quantity="other">%1$d 天</item>
+    </plurals>
+    <plurals name="settings_val_hours">
+        <item quantity="other">%1$d 小时</item>
+    </plurals>
+    <plurals name="settings_val_emails_per_day">
+        <item quantity="other">%1$d 封</item>
+    </plurals>
+    <plurals name="spam_auto_delete_notice">
+        <item quantity="other">垃圾邮件中的内容将在 %1$d 天后自动删除。</item>
+    </plurals>
+    <plurals name="pending_deletion_body_days">
+        <item quantity="other">您的账户将在 %1$d 天后被删除。取消删除即可保留账户并恢复对邮件和订阅的访问。</item>
+    </plurals>
+    <plurals name="domain_purchase_n_years">
+        <item quantity="other">%1$d 年</item>
+    </plurals>
+    <plurals name="domain_purchase_years_line">
+        <item quantity="other">%1$d 年注册</item>
+    </plurals>
+    <plurals name="app_lock_try_again_in">
+        <item quantity="other">请在 %d 秒后重试</item>
+    </plurals>
+    <plurals name="export_undecryptable_skipped">
+        <item quantity="other">%1$d 封邮件无法解密，未包含在导出中。</item>
+    </plurals>
+    <plurals name="param_removed_from_links">
+        <item quantity="other">已从 %2$d 个链接中移除 %1$s</item>
+    </plurals>
+</resources>

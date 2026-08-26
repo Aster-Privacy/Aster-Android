@@ -15,5 +15,14 @@
     <string name="signature_none">بدون توقيع</string>
     <string name="signature_select">اختيار التوقيع</string>
     <string name="compose_metadata_strip_failed">تعذّرت إزالة البيانات المخفية من: %1$s</string>
+    <string name="compose_inline_image_failed">تعذّرت إضافة هذه الصور: %1$s</string>
     <string name="compose_attachment_read_failed">تعذّر إرفاق \"%1$s\". لم تُرسل رسالتك. أزل الملف أو أضفه من جديد وحاول مرة أخرى.</string>
+    <string name="schedule_in_one_hour">بعد ساعة</string>
+    <string name="schedule_tonight">الليلة</string>
+    <string name="schedule_tomorrow_morning">صباح الغد</string>
+    <string name="schedule_tomorrow_afternoon">بعد ظهر الغد</string>
+    <string name="schedule_monday_morning">صباح الاثنين</string>
+    <string name="schedule_pick_date_time">اختر التاريخ والوقت</string>
+    <string name="too_many_recipients_in_field">يتسع كل حقل من إلى ونسخة ونسخة مخفية لـ %1$d عنوانا كحد أقصى. انقل بعضها إلى رسالة ثانية لإرسال هذه الرسالة.</string>
+    <string name="too_many_recipients_in_message">تصل الرسالة الواحدة إلى %1$d عنوانا كحد أقصى عبر إلى ونسخة ونسخة مخفية. تقسيم القائمة إلى رسائل أصغر سينجح.</string>
 </resources>
