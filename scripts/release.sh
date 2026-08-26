@@ -114,64 +114,27 @@ git commit -q -m "chore(release): $ver"
 git tag -a "v$ver" -m "v$ver"
 echo "committed and tagged v$ver"
 
-# Separate gradle invocations on purpose. is_fdroid_build is true when ANY task
-# name contains "fdroid", so building both flavors in one call would silently
-# strip signing from the full flavor.
+# Only the full flavor is built here. Never add an fdroid task to this invocation,
+# because is_fdroid_build is true when ANY task name contains "fdroid" and that
+# strips signing from the full flavor.
 say "build full flavor (signed)"
 ./gradlew --no-daemon assembleFullRelease bundleFullRelease
 
-say "build fdroid flavor (unsigned)"
-./gradlew --no-daemon assembleFdroidRelease
-
 full_apk="app/build/outputs/apk/full/release/app-full-release.apk"
-fdroid_unsigned="app/build/outputs/apk/fdroid/release/app-fdroid-release-unsigned.apk"
 aab="app/build/outputs/bundle/fullRelease/app-full-release.aab"
 [ -f "$full_apk" ] || die "full APK not produced at $full_apk"
-[ -f "$fdroid_unsigned" ] || die "fdroid APK not produced at $fdroid_unsigned"
 [ -f "$aab" ] || die "AAB not produced at $aab"
 
-say "sign fdroid APK"
 rm -rf "$out_dir"
 mkdir -p "$out_dir"
-align_flag=""
-if [ "$bt_ver" != "34.0.0" ]; then align_flag="--alignment-preserved"; fi
-"$apksigner" sign --ks keystore/aster-mail-upload-v3.jks --ks-key-alias aster-mail \
-  --ks-pass env:KEYSTORE_PASSWORD --key-pass env:KEYSTORE_PASSWORD \
-  $align_flag --out "$out_dir/Aster-Mail-fdroid-$ver.apk" "$fdroid_unsigned"
-
 cp "$full_apk" "$out_dir/Aster-Mail.apk"
 cp "$full_apk" "$out_dir/Aster-Mail-$ver.apk"
 cp "$aab" "$out_dir/Aster-Mail-$ver.aab"
 
-say "verify signatures"
-for f in "$out_dir/Aster-Mail.apk" "$out_dir/Aster-Mail-fdroid-$ver.apk"; do
-  got=$("$apksigner" verify --print-certs "$f" | grep -i "SHA-256 digest" | head -1 | grep -oE '[0-9a-f]{64}')
-  [ "$got" = "$cert_sha" ] || die "$(basename "$f") signer is $got, expected $cert_sha"
-  echo "  OK $(basename "$f") signed by $cert_sha"
-done
-
-bad=$(python - "$out_dir/Aster-Mail-fdroid-$ver.apk" <<'PY'
-import struct, sys, zipfile
-data = open(sys.argv[1], "rb").read()
-n = 0
-for zi in zipfile.ZipFile(sys.argv[1]).infolist():
-    if zi.filename.startswith("META-INF/"):
-        continue
-    off = zi.header_offset
-    nm_len, ex_len = struct.unpack_from("<HH", data, off + 26)
-    ex = data[off + 30 + nm_len: off + 30 + nm_len + ex_len]
-    i = 0
-    while i + 4 <= len(ex):
-        hid, sz = struct.unpack_from("<HH", ex, i)
-        if hid == 0xd935:
-            n += 1
-            break
-        i += 4 + sz
-print(n)
-PY
-)
-[ "$bad" = "0" ] || die "$bad entries carry 0xd935 padding, --alignment-preserved was missed"
-echo "  OK alignment preserved ($bad padded entries)"
+say "verify full APK signature"
+got=$("$apksigner" verify --print-certs "$out_dir/Aster-Mail.apk" | grep -i "SHA-256 digest" | head -1 | grep -oE '[0-9a-f]{64}')
+[ "$got" = "$cert_sha" ] || die "Aster-Mail.apk signer is $got, expected $cert_sha"
+echo "  OK Aster-Mail.apk signed by $cert_sha"
 
 if [ "$dry_run" = 1 ]; then
   say "dry run complete"
@@ -184,10 +147,18 @@ say "push commit and tag"
 git push origin main
 git push origin "v$ver"
 
+say "F-Droid"
+# F-Droid builds the fdroid flavor from source on their buildserver and signs it with
+# their own key, so no APK ships to that channel and reproducibility does not gate it.
+# The recipe is on AutoUpdateMode: Version / UpdateCheckMode: Tags, so their bot picks
+# the tag up on its own cycle. release_fdroid.yml still builds the flavor unsigned in
+# CI as a preflight that their build will compile.
+echo "no APK to publish, F-Droid builds and signs v$ver from source"
+
 say "GitHub release"
 gh release create "v$ver" --repo Aster-Privacy/Aster-Android --title "v$ver" \
   --notes-file "$notes" \
-  "$out_dir/Aster-Mail.apk" "$out_dir/Aster-Mail-$ver.apk" "$out_dir/Aster-Mail-fdroid-$ver.apk"
+  "$out_dir/Aster-Mail.apk" "$out_dir/Aster-Mail-$ver.apk"
 
 say "carry APK to the site download target"
 mail_tag=$(gh api repos/Aster-Privacy/Aster-Mail/releases/latest -q .tag_name)
