@@ -60,7 +60,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
@@ -238,7 +237,7 @@ private fun subtitle_for(filter_type: FilterType, count: Int): String {
         FilterType.label -> stringResource(R.string.type_label)
         FilterType.alias -> stringResource(R.string.type_alias)
     }
-    return pluralStringResource(R.plurals.messages_in_type, count, count, type_label)
+    return stringResource(R.string.messages_in_type, count, type_label)
 }
 
 
