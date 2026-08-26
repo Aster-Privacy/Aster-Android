@@ -85,21 +85,40 @@ object StorageModule {
     fun provide_database(@ApplicationContext context: Context): AsterDatabase {
         val meta = runCatching { SecurePrefs.open(context, db_meta_prefs) }.getOrNull()
             ?: return build_in_memory_database(context)
-        if (!meta.getBoolean(key_sqlcipher_migrated, false)) {
+        val database_exists = runCatching { context.getDatabasePath(db_name).exists() }.getOrDefault(false)
+        val key_material_readable = meta !is org.astermail.android.storage.InMemoryPrefs &&
+            !org.astermail.android.storage.SecurePrefs.was_key_material_lost(context)
+        if (database_exists && !key_material_readable) {
+            return build_in_memory_database(context)
+        }
+        if (!meta.getBoolean(key_sqlcipher_migrated, false) && !database_exists) {
             runCatching { context.deleteDatabase(db_name) }
         }
+        val passphrase = db_passphrase(meta) ?: return build_in_memory_database(context)
         return try {
-            val db = build_mail_database(context, meta)
+            val db = build_mail_database(context, passphrase)
             runCatching { meta.edit().putBoolean(key_sqlcipher_migrated, true).commit() }
+            runCatching { meta.edit().putInt(key_db_open_failures, 0).commit() }
             db
         } catch (first_error: Throwable) {
             if (org.astermail.android.BuildConfig.DEBUG) {
                 android.util.Log.e("StorageModule", "encrypted db open failed, retrying fresh", first_error)
             }
+            val failures = meta.getInt(key_db_open_failures, 0) + 1
+            runCatching { meta.edit().putInt(key_db_open_failures, failures).commit() }
+            if (!should_reset_database(
+                    database_exists,
+                    meta.getBoolean(key_sqlcipher_migrated, false),
+                    failures,
+                )
+            ) {
+                return build_in_memory_database(context)
+            }
             runCatching { context.deleteDatabase(db_name) }
             try {
-                val db = build_mail_database(context, meta)
+                val db = build_mail_database(context, passphrase)
                 runCatching { meta.edit().putBoolean(key_sqlcipher_migrated, true).commit() }
+                runCatching { meta.edit().putInt(key_db_open_failures, 0).commit() }
                 db
             } catch (second_error: Throwable) {
                 if (org.astermail.android.BuildConfig.DEBUG) {
@@ -114,25 +133,26 @@ object StorageModule {
         }
     }
 
+    fun should_reset_database(
+        database_exists: Boolean,
+        sqlcipher_migrated: Boolean,
+        consecutive_failures: Int,
+    ): Boolean {
+        if (!database_exists) return true
+        if (!sqlcipher_migrated) return false
+        return consecutive_failures >= db_open_failures_before_reset
+    }
+
     private fun build_mail_database(
         context: Context,
-        meta: SharedPreferences,
+        passphrase: ByteArray,
     ): AsterDatabase {
         System.loadLibrary("sqlcipher")
         val builder = Room.databaseBuilder(context, AsterDatabase::class.java, db_name)
         builder.openHelperFactory(
-            net.zetetic.database.sqlcipher.SupportOpenHelperFactory(db_passphrase(meta), null, false),
+            net.zetetic.database.sqlcipher.SupportOpenHelperFactory(passphrase, null, false),
         )
-        builder.addMigrations(
-            AsterDatabase.migration_4_5,
-            AsterDatabase.migration_5_6,
-            AsterDatabase.migration_6_7,
-            AsterDatabase.migration_7_8,
-            AsterDatabase.migration_8_9,
-            AsterDatabase.migration_9_10,
-            AsterDatabase.migration_10_11,
-            AsterDatabase.migration_11_12,
-        )
+        builder.addMigrations(*AsterDatabase.all_migrations)
         builder.fallbackToDestructiveMigration()
         val db = builder.build()
         db.openHelper.writableDatabase
@@ -146,19 +166,35 @@ object StorageModule {
             .build()
     }
 
-    private fun db_passphrase(meta: SharedPreferences): ByteArray {
-        meta.getString(key_db_key, null)?.let {
-            return android.util.Base64.decode(it, android.util.Base64.NO_WRAP)
-        }
-        val key = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
-        meta.edit()
-            .putString(key_db_key, android.util.Base64.encodeToString(key, android.util.Base64.NO_WRAP))
-            .commit()
-        return key
+    private fun db_passphrase(meta: SharedPreferences): ByteArray? = resolve_db_passphrase(
+        read_encoded = { runCatching { meta.getString(key_db_key, null) }.getOrNull() },
+        write_encoded = { encoded ->
+            runCatching { meta.edit().putString(key_db_key, encoded).commit() }.getOrDefault(false)
+        },
+        new_key = { ByteArray(32).also { java.security.SecureRandom().nextBytes(it) } },
+        encode = { android.util.Base64.encodeToString(it, android.util.Base64.NO_WRAP) },
+        decode = { runCatching { android.util.Base64.decode(it, android.util.Base64.NO_WRAP) }.getOrNull() },
+    )
+
+    fun resolve_db_passphrase(
+        read_encoded: () -> String?,
+        write_encoded: (String) -> Boolean,
+        new_key: () -> ByteArray,
+        encode: (ByteArray) -> String,
+        decode: (String) -> ByteArray?,
+    ): ByteArray? {
+        read_encoded()?.let { existing -> decode(existing)?.let { return it } }
+        val key = new_key()
+        val encoded = runCatching { encode(key) }.getOrNull()
+        if (encoded != null && write_encoded(encoded)) return key
+        java.util.Arrays.fill(key, 0)
+        return read_encoded()?.let { decode(it) }
     }
 
     private const val db_name = "aster_mail_db"
     private const val db_meta_prefs = "aster_db_meta"
     private const val key_sqlcipher_migrated = "sqlcipher_migrated"
     private const val key_db_key = "db_key"
+    private const val key_db_open_failures = "db_open_failures"
+    private const val db_open_failures_before_reset = 3
 }
