@@ -53,6 +53,19 @@ class AuthGateViewModel @Inject constructor(
 
     val is_signed_in: StateFlow<Boolean> = auth_repository.is_signed_in
 
+    val session_expired: StateFlow<Boolean> = auth_repository.session_expired
+
+    fun consume_session_expired() {
+        auth_repository.consume_session_expired()
+    }
+
+    fun recheck_session() {
+        if (!auth_repository.is_signed_in.value) return
+        viewModelScope.launch {
+            runCatching { auth_repository.handle_unauthorized_signal() }
+        }
+    }
+
     init {
         if (auth_repository.is_signed_in.value) {
             viewModelScope.launch {

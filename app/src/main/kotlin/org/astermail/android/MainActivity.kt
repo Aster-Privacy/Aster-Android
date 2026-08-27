@@ -475,6 +475,32 @@ private fun AsterNavHost() {
     val a11y = local_accessibility.current
     val nav_duration = if (a11y.reduce_motion) 0 else nav_anim_duration_ms
 
+    val session_expired_state by auth_gate.session_expired.collectAsStateWithLifecycle()
+    androidx.compose.runtime.LaunchedEffect(session_expired_state, is_signed_in_state) {
+        if (!session_expired_state || is_signed_in_state) return@LaunchedEffect
+        auth_gate.consume_session_expired()
+        android.widget.Toast.makeText(
+            context,
+            context.getString(R.string.session_expired_sign_in),
+            android.widget.Toast.LENGTH_LONG,
+        ).show()
+        nav_controller.navigate(routes.welcome) {
+            popUpTo(0) { inclusive = true }
+            launchSingleTop = true
+        }
+    }
+
+    val lifecycle_owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    androidx.compose.runtime.DisposableEffect(lifecycle_owner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                auth_gate.recheck_session()
+            }
+        }
+        lifecycle_owner.lifecycle.addObserver(observer)
+        onDispose { lifecycle_owner.lifecycle.removeObserver(observer) }
+    }
+
     val pending_open_email = MainActivity.pending_open_email_id.value
     androidx.compose.runtime.LaunchedEffect(pending_open_email, is_signed_in_state, is_locked) {
         if (pending_open_email.isNullOrBlank() || !is_signed_in_state || is_locked) return@LaunchedEffect

@@ -124,6 +124,13 @@ class AuthRepository @Inject constructor(
     private val _is_signed_in = MutableStateFlow(token_store.access_token != null)
     val is_signed_in: StateFlow<Boolean> = _is_signed_in.asStateFlow()
 
+    private val _session_expired = MutableStateFlow(false)
+    val session_expired: StateFlow<Boolean> = _session_expired.asStateFlow()
+
+    fun consume_session_expired() {
+        _session_expired.value = false
+    }
+
     private val unauthorized_check_running = java.util.concurrent.atomic.AtomicBoolean(false)
     @Volatile private var last_unauthorized_check_ms = 0L
 
@@ -386,6 +393,7 @@ class AuthRepository @Inject constructor(
             )
             runCatching { save_session_snapshot(login_resp.user_id) }
             _is_signed_in.value = true
+            _session_expired.value = false
         }
         runCatching { UnifiedPushState.clear_backend_registration(context) }
         runCatching { UnifiedPushState.sync_registration(context) }
@@ -571,6 +579,7 @@ class AuthRepository @Inject constructor(
         )
         save_session_snapshot(register_resp.user_id)
         _is_signed_in.value = true
+        _session_expired.value = false
         runCatching { UnifiedPushState.clear_backend_registration(context) }
         runCatching { UnifiedPushState.sync_registration(context) }
         background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
@@ -628,6 +637,7 @@ class AuthRepository @Inject constructor(
             loader.diskCache?.clear()
         }
         _is_signed_in.value = true
+        _session_expired.value = false
         background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
         return true
     }
@@ -784,7 +794,11 @@ class AuthRepository @Inject constructor(
 
     suspend fun logout(): Result<Unit> = sign_out_internal(remove_account = true)
 
-    suspend fun force_sign_out(): Result<Unit> = sign_out_internal(remove_account = false)
+    suspend fun force_sign_out(): Result<Unit> {
+        val result = sign_out_internal(remove_account = false)
+        if (!_is_signed_in.value) _session_expired.value = true
+        return result
+    }
 
     suspend fun logout_all(): Result<Unit> = runCatching {
         var remaining = account_store.count() + 1
