@@ -36,6 +36,8 @@ import org.astermail.android.api.aliases.AliasDetailApi
 import org.astermail.android.api.aliases.AliasDetailApiImpl
 import org.astermail.android.api.auth.AuthApi
 import org.astermail.android.api.auth.AuthApiImpl
+import org.astermail.android.api.auth.RefreshOutcome
+import org.astermail.android.api.auth.SessionRefresher
 import org.astermail.android.api.billing.BillingApi
 import org.astermail.android.api.billing.BillingApiImpl
 import org.astermail.android.api.external_accounts.ExternalAccountsApi
@@ -108,7 +110,7 @@ object NetworkModule {
     @Singleton
     fun provide_token_provider(
         token_store: TokenStore,
-        auth_api: dagger.Lazy<AuthApi>,
+        session_refresher: dagger.Lazy<SessionRefresher>,
     ): TokenProvider = object : TokenProvider {
         override suspend fun load(): BearerTokens? {
             val access = token_store.access_token ?: return null
@@ -117,23 +119,10 @@ object NetworkModule {
         }
 
         override suspend fun refresh(): BearerTokens? {
-            return try {
-                val current_refresh = token_store.refresh_token
-                val response = auth_api.get().refresh(current_refresh)
-                val new_refresh = response.refresh_token ?: current_refresh ?: response.access_token
-                token_store.save(response.access_token, new_refresh)
-                BearerTokens(response.access_token, new_refresh)
-            } catch (t: Throwable) {
-                val is_definitive_auth_failure = t is org.astermail.android.api.ApiError.UnauthorizedError ||
-                    t is org.astermail.android.api.ApiError.ForbiddenError
-                if (is_definitive_auth_failure) {
-                    null
-                } else {
-                    val access = token_store.access_token
-                    val refresh = token_store.refresh_token ?: access
-                    if (access != null && refresh != null) BearerTokens(access, refresh) else null
-                }
-            }
+            if (session_refresher.get().refresh() == RefreshOutcome.AuthFailed) return null
+            val access = token_store.access_token ?: return null
+            val refresh = token_store.refresh_token ?: access
+            return BearerTokens(access, refresh)
         }
 
         override suspend fun clear() {
@@ -143,10 +132,35 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    fun provide_session_refresher(
+        token_store: TokenStore,
+        auth_api: dagger.Lazy<AuthApi>,
+        api_client: dagger.Lazy<ApiClient>,
+    ): SessionRefresher = SessionRefresher(
+        read_refresh_token = { token_store.refresh_token },
+        perform_refresh = { current_refresh ->
+            try {
+                val response = auth_api.get().refresh(current_refresh)
+                val rotated = response.refresh_token ?: current_refresh ?: response.access_token
+                token_store.save(response.access_token, rotated)
+                api_client.get().invalidate_bearer_cache()
+                RefreshOutcome.Success
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (_: org.astermail.android.api.ApiError.UnauthorizedError) {
+                RefreshOutcome.AuthFailed
+            } catch (_: Throwable) {
+                RefreshOutcome.Transient
+            }
+        },
+    )
+
+    @Provides
+    @Singleton
     fun provide_api_client(
         token_provider: TokenProvider,
         token_store: TokenStore,
-        auth_api: dagger.Lazy<AuthApi>,
+        session_refresher: dagger.Lazy<SessionRefresher>,
     ): ApiClient {
         lateinit var client: ApiClient
         client = ApiClient(
@@ -156,14 +170,9 @@ object NetworkModule {
             on_csrf_changed = { token -> token_store.save_csrf(token) },
             initial_csrf = token_store.csrf_token,
             csrf_refresher = {
-                try {
-                    val current_refresh = token_store.refresh_token
-                    val response = auth_api.get().refresh(current_refresh)
-                    val new_refresh = response.refresh_token ?: current_refresh ?: response.access_token
-                    token_store.save(response.access_token, new_refresh)
-                    client.invalidate_bearer_cache()
+                if (session_refresher.get().refresh() == RefreshOutcome.Success) {
                     client.get_csrf()
-                } catch (_: Throwable) {
+                } else {
                     null
                 }
             },

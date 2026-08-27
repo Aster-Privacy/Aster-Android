@@ -34,6 +34,7 @@ class SessionSnapshotStore(context: Context? = null) {
         account_id: String,
         token_access: String?,
         token_refresh: String?,
+        csrf_token: String?,
         session_key: ByteArray?,
         passphrase: ByteArray?,
         identity_key: String?,
@@ -51,6 +52,7 @@ class SessionSnapshotStore(context: Context? = null) {
             val e = p.edit()
             e.putString("${account_id}_$key_token_access", token_access)
             e.putString("${account_id}_$key_token_refresh", token_refresh)
+            e.putString("${account_id}_$key_csrf_token", csrf_token)
             e.putString("${account_id}_$key_session_key", session_key?.let { encode_b64(it) })
             e.putString("${account_id}_$key_passphrase", passphrase?.let { encode_b64(it) })
             e.putString("${account_id}_$key_identity", identity_key)
@@ -79,6 +81,7 @@ class SessionSnapshotStore(context: Context? = null) {
             SessionSnapshot(
                 token_access = token_access,
                 token_refresh = p.getString("${account_id}_$key_token_refresh", null) ?: token_access,
+                csrf_token = p.getString("${account_id}_$key_csrf_token", null),
                 session_key = decode_b64_field(p, "${account_id}_$key_session_key"),
                 passphrase = decode_b64_field(p, "${account_id}_$key_passphrase"),
                 identity_key = p.getString("${account_id}_$key_identity", null),
@@ -99,7 +102,7 @@ class SessionSnapshotStore(context: Context? = null) {
             val p = prefs ?: return
             val e = p.edit()
             listOf(
-                key_token_access, key_token_refresh, key_session_key, key_passphrase,
+                key_token_access, key_token_refresh, key_csrf_token, key_session_key, key_passphrase,
                 key_identity, key_enc_vault, key_vault_nonce, key_password_salt,
                 key_user_id, key_user_email, key_recovery_codes, key_previous_keys, key_legacy_keks,
             ).forEach { e.remove("${account_id}_$it") }
@@ -120,6 +123,7 @@ class SessionSnapshotStore(context: Context? = null) {
         private const val prefs_name = "aster_session_snapshots_v1"
         private const val key_token_access = "token_access"
         private const val key_token_refresh = "token_refresh"
+        private const val key_csrf_token = "csrf_token"
         private const val key_session_key = "session_key"
         private const val key_passphrase = "passphrase"
         private const val key_identity = "identity_key"
@@ -137,6 +141,7 @@ class SessionSnapshotStore(context: Context? = null) {
 data class SessionSnapshot(
     val token_access: String,
     val token_refresh: String,
+    val csrf_token: String?,
     val session_key: ByteArray?,
     val passphrase: ByteArray?,
     val identity_key: String?,

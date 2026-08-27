@@ -54,7 +54,9 @@ import org.astermail.android.api.auth.DeleteAccountRequest
 import org.astermail.android.api.auth.LoginRequest
 import org.astermail.android.api.auth.LoginResponse
 import org.astermail.android.api.auth.LoginResult
+import org.astermail.android.api.auth.RefreshOutcome
 import org.astermail.android.api.auth.RegisterRequest
+import org.astermail.android.api.auth.SessionRefresher
 import org.astermail.android.api.auth.TotpLoginVerifyRequest
 import org.astermail.android.api.labels.CreateLabelRequest
 import org.astermail.android.api.labels.LabelsApi
@@ -106,6 +108,7 @@ class AuthRepository @Inject constructor(
     private val labels_api: LabelsApi,
     private val encryption_api: org.astermail.android.api.encryption.EncryptionApi,
     private val api_client: ApiClient,
+    private val session_refresher: SessionRefresher,
     private val token_store: TokenStore,
     private val session_key_store: SessionKeyStore,
     private val account_store: AccountStore,
@@ -137,6 +140,12 @@ class AuthRepository @Inject constructor(
     private val background_scope = kotlinx.coroutines.CoroutineScope(
         kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO,
     )
+
+    init {
+        session_refresher.on_auth_failure { presented ->
+            handle_refresh_auth_failure(presented)
+        }
+    }
     private val pgp_publish_attempted_user_ids =
         java.util.Collections.synchronizedSet(mutableSetOf<String>())
     private val recovery_email_backfill_attempted_user_ids =
@@ -180,7 +189,7 @@ class AuthRepository @Inject constructor(
                     } catch (_: Throwable) {
                     }
                 }
-                RefreshOutcome.AuthFailed -> force_sign_out()
+                RefreshOutcome.AuthFailed -> if (_is_signed_in.value) force_sign_out()
                 RefreshOutcome.Transient -> {
                 }
             }
@@ -190,27 +199,20 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    private enum class RefreshOutcome { Success, AuthFailed, Transient }
+    private suspend fun handle_refresh_auth_failure(presented: String?) {
+        if (!_is_signed_in.value) return
+        if (presented == null || presented != token_store.refresh_token) return
+        force_sign_out()
+    }
 
     private suspend fun try_refresh_session(): RefreshOutcome {
-        return try {
-            val current_refresh = token_store.refresh_token ?: return RefreshOutcome.AuthFailed
-            val response = auth_api.refresh(current_refresh)
-            val new_refresh = response.refresh_token ?: current_refresh
-            token_store.save(response.access_token, new_refresh)
-            api_client.invalidate_bearer_cache()
+        if (token_store.refresh_token == null) return RefreshOutcome.AuthFailed
+        val outcome = session_refresher.refresh()
+        if (outcome == RefreshOutcome.Success) {
             runCatching { session_key_store.get_user_id()?.let { save_session_snapshot(it) } }
             background_scope.launch { runCatching { backfill_server_recovery_email() } }
-            RefreshOutcome.Success
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: ApiError.UnauthorizedError) {
-            RefreshOutcome.AuthFailed
-        } catch (e: ApiError.ForbiddenError) {
-            RefreshOutcome.Transient
-        } catch (_: Throwable) {
-            RefreshOutcome.Transient
         }
+        return outcome
     }
 
     suspend fun login(email: String, password: String, captcha_token: String? = null): Result<LoginOutcome> = runCatching {
@@ -592,6 +594,7 @@ class AuthRepository @Inject constructor(
                 account_id = account_id,
                 token_access = token_store.access_token,
                 token_refresh = token_store.refresh_token,
+                csrf_token = api_client.get_csrf(),
                 session_key = session_key_store.get(),
                 passphrase = session_key_store.get_passphrase(),
                 identity_key = session_key_store.get_identity_key(),
@@ -614,6 +617,7 @@ class AuthRepository @Inject constructor(
         mail_repository.clear_account_data()
         cancel_all_notifications()
         token_store.save(snapshot.token_access, snapshot.token_refresh)
+        api_client.set_csrf(snapshot.csrf_token)
         api_client.invalidate_bearer_cache()
         session_key_store.clear()
         snapshot.session_key?.let { session_key_store.put(it) }
@@ -638,6 +642,7 @@ class AuthRepository @Inject constructor(
         }
         _is_signed_in.value = true
         _session_expired.value = false
+        background_scope.launch { runCatching { ensure_csrf_ready() } }
         background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
         return true
     }
