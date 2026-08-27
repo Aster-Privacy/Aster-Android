@@ -20,6 +20,7 @@
     <string name="search_filter_encrypted">Cifrados</string>
     <string name="search_chip_from">De</string>
     <string name="search_chip_to">Para</string>
+    <string name="search_chip_contact">Contacto</string>
     <string name="search_chip_subject">Asunto</string>
     <string name="search_chip_has">Tiene</string>
     <string name="search_chip_is">Es</string>

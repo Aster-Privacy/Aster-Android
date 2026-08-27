@@ -1066,6 +1066,7 @@ private fun AsterNavHost() {
                 on_back = { nav_controller.popBackStack() },
                 on_edit = { cid -> nav_controller.navigate(routes.contact_edit_for(cid)) },
                 on_compose = { email -> context.startActivity(ComposeActivity.intent_for(context, prefill_to = email)) },
+                on_search_mail = { query -> nav_controller.navigate(routes.search_for(query)) },
                 vm = shared_contacts_vm,
             )
         }

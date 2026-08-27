@@ -126,9 +126,11 @@ private val FILTER_CHIPS = listOf(
     FilterChip("Encrypted", R.string.filter_encrypted),
 )
 
+internal val ANY_OF_OPERATOR_KEYS = setOf("from", "to", "contact")
+
 private val OPERATOR_REGEX = Regex("""(-?)(\w+):("([^"]+)"|(\S+))""")
 
-private data class ParsedQuery(
+internal data class ParsedQuery(
     val free_text: String,
     val operators: List<SearchOperator>,
 )
@@ -156,7 +158,7 @@ private val operator_chips_saver = listSaver<List<SearchOperator>, String>(
     },
 )
 
-private fun parse_query(raw: String): ParsedQuery {
+internal fun parse_query(raw: String): ParsedQuery {
     val operators = mutableListOf<SearchOperator>()
 
     OPERATOR_REGEX.findAll(raw).forEach { match ->
@@ -173,7 +175,7 @@ private fun parse_query(raw: String): ParsedQuery {
     )
 }
 
-private fun matches_item(
+internal fun matches_item(
     item: InboxItem,
     parsed: ParsedQuery,
     filter: String?,
@@ -203,8 +205,20 @@ private fun matches_item(
         return false
     }
 
+    val grouped_ops = mutableSetOf<SearchOperator>()
+
+    parsed.operators
+        .filter { !it.negated && ANY_OF_OPERATOR_KEYS.contains(it.key) }
+        .groupBy { it.key }
+        .forEach { (key, group) ->
+            if (group.size < 2 && key != "contact") return@forEach
+            grouped_ops.addAll(group)
+            if (group.none { evaluate_operator(item, it) }) return false
+        }
+
     for (op in parsed.operators) {
         if (attachment_type_ops.contains(op)) continue
+        if (grouped_ops.contains(op)) continue
         val pass = evaluate_operator(item, op)
         if (!pass) return false
     }
@@ -230,6 +244,12 @@ private fun evaluate_operator(item: InboxItem, op: SearchOperator): Boolean {
             item.display_sender_name?.contains(op.value, ignoreCase = true) == true ||
             item.display_sender_email?.contains(op.value, ignoreCase = true) == true
         "to" -> item.to_addresses.any { it.contains(op.value, ignoreCase = true) } ||
+            item.received_on?.contains(op.value, ignoreCase = true) == true
+        "contact" -> item.sender_name.contains(op.value, ignoreCase = true) ||
+            item.sender_email.contains(op.value, ignoreCase = true) ||
+            item.display_sender_name?.contains(op.value, ignoreCase = true) == true ||
+            item.display_sender_email?.contains(op.value, ignoreCase = true) == true ||
+            item.to_addresses.any { it.contains(op.value, ignoreCase = true) } ||
             item.received_on?.contains(op.value, ignoreCase = true) == true
         "subject" -> item.subject.contains(op.value, ignoreCase = true)
         "has" -> when (op.value) {
@@ -997,6 +1017,7 @@ private fun operator_chip(op: SearchOperator, on_remove: () -> Unit) {
     val label_key = when (op.key) {
         "from" -> stringResource(R.string.search_chip_from)
         "to" -> stringResource(R.string.search_chip_to)
+        "contact" -> stringResource(R.string.search_chip_contact)
         "subject" -> stringResource(R.string.search_chip_subject)
         "has" -> stringResource(R.string.search_chip_has)
         "is" -> stringResource(R.string.search_chip_is)

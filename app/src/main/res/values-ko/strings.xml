@@ -11,6 +11,7 @@
     <string name="edit">편집</string>
     <string name="retry">재시도</string>
     <string name="copy">복사</string>
+    <string name="all_mail">전체 메일</string>
     <string name="close">닫기</string>
     <string name="confirm">확인</string>
     <string name="search">검색</string>
