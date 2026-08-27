@@ -62,6 +62,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -180,7 +181,11 @@ fun SecurityScreen(
         vm.load_audit_log()
         vm.load_vanguard_status()
         vm.load_subscription(force = false)
+        vm.load_inactive_key_sets()
     }
+
+    var show_recover_dialog by remember { mutableStateOf(false) }
+    var recover_password by remember { mutableStateOf("") }
 
     LaunchedEffect(state.action_result) {
         val msg = state.action_result ?: return@LaunchedEffect
@@ -369,6 +374,15 @@ fun SecurityScreen(
                 icon = TablerIcons.Lock,
                 on_click = { on_open("change_password") },
             )
+            if (state.inactive_key_sets > 0) {
+                AsterDivider()
+                detail_row(
+                    title = stringResource(R.string.recover_older_data_title),
+                    subtitle = stringResource(R.string.recover_older_data_desc),
+                    icon = TablerIcons.Key,
+                    on_click = { show_recover_dialog = true },
+                )
+            }
             AsterDivider()
             detail_row(
                 title = stringResource(R.string.two_factor_auth),
@@ -775,6 +789,49 @@ fun SecurityScreen(
             on_confirm = {
                 show_revoke_all_confirm = false
                 vm.revoke_all_trusted_devices()
+            },
+        )
+    }
+
+    if (show_recover_dialog) {
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = {
+                if (!state.restoring_inactive_key_sets) {
+                    show_recover_dialog = false
+                    recover_password = ""
+                }
+            },
+            title = stringResource(R.string.recover_older_data_title),
+            message = stringResource(R.string.resurrection_old_password_prompt),
+            body = {
+                org.astermail.android.design.components.AsterTextField(
+                    value = recover_password,
+                    onValueChange = { recover_password = it },
+                    label = stringResource(R.string.resurrection_old_password),
+                    visual_transformation = PasswordVisualTransformation(),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            },
+            footer = {
+                org.astermail.android.design.components.AsterDialogOutlineButton(
+                    label = stringResource(R.string.cancel),
+                    enabled = !state.restoring_inactive_key_sets,
+                    onClick = {
+                        show_recover_dialog = false
+                        recover_password = ""
+                    },
+                )
+                org.astermail.android.design.components.AsterDialogPrimaryButton(
+                    label = stringResource(R.string.recover_older_data_button),
+                    enabled = recover_password.isNotBlank() && !state.restoring_inactive_key_sets,
+                    is_loading = state.restoring_inactive_key_sets,
+                    onClick = {
+                        vm.restore_inactive_key_sets(recover_password)
+                        show_recover_dialog = false
+                        recover_password = ""
+                    },
+                )
             },
         )
     }

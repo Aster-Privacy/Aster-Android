@@ -3001,4 +3001,11 @@
     <string name="twin_address_reserved_description">%1$s hesabınız için ayrıldı, bu yüzden başka kimse kaydedemez. Bu adresten gönderip almak istediğinizde takma ad olarak oluşturun.</string>
     <string name="twin_address_available_description">%1$s, diğer Aster alan adındaki eşleşen adrestir. Bu adresten gönderip almak için takma ad olarak oluşturun.</string>
     <string name="twin_address_create">Takma ad oluştur</string>
+    <string name="recover_older_data_title">Eski verileri kurtar</string>
+    <string name="recover_older_data_desc">Bu hesap sıfırlandı. Sıfırlamadan önce kullandığın parolayı hatırlıyorsan eski şifrelenmiş verilerinin kilidi açılabilir ve veriler kurtarılabilir.</string>
+    <string name="recover_older_data_button">Eski verilerin kilidini aç</string>
+    <string name="resurrection_old_password">Eski parola</string>
+    <string name="resurrection_old_password_prompt">Sıfırlamadan önce kullandığın parolayı gir</string>
+    <string name="resurrection_success">Eski verilerinin kilidi açıldı. Önceki postalar ve takma adlar yeniden normal şekilde açılıyor.</string>
+    <string name="resurrection_failed">Bu, eski verilerin kilidini açmadı. Parolayı veya ifadeyi kontrol edip yeniden dene.</string>
 </resources>

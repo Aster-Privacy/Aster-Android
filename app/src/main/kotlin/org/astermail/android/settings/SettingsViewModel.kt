@@ -223,6 +223,8 @@ data class SettingsUiState(
     val recovery_email_set: Boolean = false,
     val recovery_email_verified: Boolean = false,
     val recovery_email_step_up_required: Boolean = false,
+    val inactive_key_sets: Int = 0,
+    val restoring_inactive_key_sets: Boolean = false,
     val login_alerts_enabled: Boolean? = null,
     val login_alerts_load_failed: Boolean = false,
     val hardware_keys: List<HardwareKey> = emptyList(),
@@ -2957,6 +2959,38 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_security_status", t)
+            }
+        }
+    }
+
+    fun load_inactive_key_sets() {
+        viewModelScope.launch {
+            val count = auth_repository.count_inactive_key_sets()
+            _state.update { it.copy(inactive_key_sets = count) }
+        }
+    }
+
+    fun restore_inactive_key_sets(old_password: String) {
+        if (_state.value.restoring_inactive_key_sets) return
+        _state.update { it.copy(restoring_inactive_key_sets = true) }
+        viewModelScope.launch {
+            val restored = runCatching {
+                auth_repository.restore_inactive_key_sets(old_password)
+            }.getOrDefault(0)
+            val message = if (restored > 0) {
+                context.getString(R.string.resurrection_success)
+            } else {
+                context.getString(R.string.resurrection_failed)
+            }
+            _state.update {
+                it.copy(
+                    restoring_inactive_key_sets = false,
+                    inactive_key_sets = if (restored > 0) 0 else it.inactive_key_sets,
+                    action_result = message,
+                )
+            }
+            if (restored > 0) {
+                load_aliases(force = true)
             }
         }
     }

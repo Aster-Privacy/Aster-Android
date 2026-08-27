@@ -3001,4 +3001,11 @@
     <string name="twin_address_reserved_description">%1$s is gereserveerd voor je account, dus niemand anders kan het registreren. Maak het als alias aan wanneer je ermee wilt verzenden en ontvangen.</string>
     <string name="twin_address_available_description">%1$s is het bijpassende adres op het andere Aster-domein. Maak het als alias aan om ermee te verzenden en ontvangen.</string>
     <string name="twin_address_create">Alias aanmaken</string>
+    <string name="recover_older_data_title">Oudere gegevens herstellen</string>
+    <string name="recover_older_data_desc">Dit account is opnieuw ingesteld. Als je het wachtwoord weet dat je voor het opnieuw instellen gebruikte, kun je je oudere versleutelde gegevens ontgrendelen en herstellen.</string>
+    <string name="recover_older_data_button">Oudere gegevens ontgrendelen</string>
+    <string name="resurrection_old_password">Oud wachtwoord</string>
+    <string name="resurrection_old_password_prompt">Voer het wachtwoord in dat je voor het opnieuw instellen gebruikte</string>
+    <string name="resurrection_success">Je oudere gegevens zijn ontgrendeld. Eerdere e-mail en aliassen openen weer normaal.</string>
+    <string name="resurrection_failed">Daarmee zijn de oudere gegevens niet ontgrendeld. Controleer het wachtwoord of de zin en probeer het opnieuw.</string>
 </resources>

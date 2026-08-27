@@ -2988,4 +2988,11 @@
     <string name="twin_address_reserved_description">%1$s はあなたのアカウント用に予約されているため、他の人は登録できません。このアドレスで送受信したくなったら、エイリアスとして作成してください。</string>
     <string name="twin_address_available_description">%1$s はもう一方の Aster ドメインで対応するアドレスです。このアドレスで送受信するには、エイリアスとして作成してください。</string>
     <string name="twin_address_create">エイリアスを作成</string>
+    <string name="recover_older_data_title">以前のデータを復元</string>
+    <string name="recover_older_data_desc">このアカウントはリセットされました。リセット前に使用していたパスワードを覚えている場合は、以前の暗号化されたデータのロックを解除して復元できます。</string>
+    <string name="recover_older_data_button">以前のデータのロックを解除</string>
+    <string name="resurrection_old_password">以前のパスワード</string>
+    <string name="resurrection_old_password_prompt">リセット前に使用していたパスワードを入力してください</string>
+    <string name="resurrection_success">以前のデータのロックが解除されました。以前のメールとエイリアスは再び通常どおり開きます。</string>
+    <string name="resurrection_failed">以前のデータのロックを解除できませんでした。パスワードまたはフレーズを確認して、もう一度お試しください。</string>
 </resources>

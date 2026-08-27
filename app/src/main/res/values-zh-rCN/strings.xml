@@ -2988,4 +2988,11 @@
     <string name="twin_address_reserved_description">%1$s 已为你的账户保留，其他人无法注册。想用它收发邮件时，可以将它创建为别名。</string>
     <string name="twin_address_available_description">%1$s 是另一个 Aster 域名上的对应地址。将它创建为别名即可用它收发邮件。</string>
     <string name="twin_address_create">创建别名</string>
+    <string name="recover_older_data_title">恢复较早的数据</string>
+    <string name="recover_older_data_desc">此账户已重置。如果你记得重置前使用的密码，就可以解锁并恢复较早的加密数据。</string>
+    <string name="recover_older_data_button">解锁较早的数据</string>
+    <string name="resurrection_old_password">旧密码</string>
+    <string name="resurrection_old_password_prompt">输入你在重置前使用的密码</string>
+    <string name="resurrection_success">较早的数据已解锁。以前的邮件和别名可以再次正常打开。</string>
+    <string name="resurrection_failed">未能解锁较早的数据。请检查密码或短语后重试。</string>
 </resources>

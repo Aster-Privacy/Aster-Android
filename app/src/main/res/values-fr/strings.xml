@@ -3028,4 +3028,11 @@
     <string name="twin_address_reserved_description">%1$s est réservée à votre compte, donc personne d’autre ne peut l’enregistrer. Créez-la comme alias quand vous voulez envoyer et recevoir avec elle.</string>
     <string name="twin_address_available_description">%1$s est l’adresse correspondante sur l’autre domaine Aster. Créez-la comme alias pour envoyer et recevoir avec elle.</string>
     <string name="twin_address_create">Créer un alias</string>
+    <string name="recover_older_data_title">Récupérer les données antérieures</string>
+    <string name="recover_older_data_desc">Ce compte a été réinitialisé. Si vous vous souvenez du mot de passe utilisé avant la réinitialisation, vos données chiffrées antérieures peuvent être déverrouillées et récupérées.</string>
+    <string name="recover_older_data_button">Déverrouiller les données antérieures</string>
+    <string name="resurrection_old_password">Ancien mot de passe</string>
+    <string name="resurrection_old_password_prompt">Saisissez le mot de passe utilisé avant la réinitialisation</string>
+    <string name="resurrection_success">Vos données antérieures sont déverrouillées. Les messages et alias précédents s\'ouvrent de nouveau normalement.</string>
+    <string name="resurrection_failed">Cela n\'a pas déverrouillé les données antérieures. Vérifiez le mot de passe ou la phrase, puis réessayez.</string>
 </resources>

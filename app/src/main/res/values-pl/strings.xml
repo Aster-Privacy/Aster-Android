@@ -3027,4 +3027,11 @@
     <string name="twin_address_reserved_description">%1$s jest zarezerwowany dla Twojego konta, więc nikt inny nie może go zarejestrować. Utwórz go jako alias, gdy zechcesz z niego wysyłać i odbierać.</string>
     <string name="twin_address_available_description">%1$s to odpowiadający adres w drugiej domenie Aster. Utwórz go jako alias, aby z niego wysyłać i odbierać.</string>
     <string name="twin_address_create">Utwórz alias</string>
+    <string name="recover_older_data_title">Odzyskaj starsze dane</string>
+    <string name="recover_older_data_desc">To konto zostało zresetowane. Jeśli pamiętasz hasło używane przed resetem, możesz odblokować i odzyskać starsze zaszyfrowane dane.</string>
+    <string name="recover_older_data_button">Odblokuj starsze dane</string>
+    <string name="resurrection_old_password">Stare hasło</string>
+    <string name="resurrection_old_password_prompt">Wpisz hasło używane przed resetem</string>
+    <string name="resurrection_success">Twoje starsze dane są odblokowane. Wcześniejsze wiadomości i aliasy znowu otwierają się normalnie.</string>
+    <string name="resurrection_failed">To nie odblokowało starszych danych. Sprawdź hasło lub frazę i spróbuj ponownie.</string>
 </resources>

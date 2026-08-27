@@ -3002,4 +3002,11 @@
     <string name="twin_address_reserved_description">%1$s está reservada para tu cuenta, así que nadie más puede registrarla. Créala como alias cuando quieras enviar y recibir desde ella.</string>
     <string name="twin_address_available_description">%1$s es la dirección coincidente en el otro dominio de Aster. Créala como alias para enviar y recibir desde ella.</string>
     <string name="twin_address_create">Crear alias</string>
+    <string name="recover_older_data_title">Recuperar datos anteriores</string>
+    <string name="recover_older_data_desc">Esta cuenta se restableció. Si recuerdas la contraseña que usabas antes del restablecimiento, puedes desbloquear y recuperar tus datos cifrados anteriores.</string>
+    <string name="recover_older_data_button">Desbloquear datos anteriores</string>
+    <string name="resurrection_old_password">Contraseña anterior</string>
+    <string name="resurrection_old_password_prompt">Introduce la contraseña que usabas antes del restablecimiento</string>
+    <string name="resurrection_success">Tus datos anteriores están desbloqueados. Los mensajes y alias anteriores vuelven a abrirse con normalidad.</string>
+    <string name="resurrection_failed">Eso no desbloqueó los datos anteriores. Comprueba la contraseña o la frase e inténtalo de nuevo.</string>
 </resources>

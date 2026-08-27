@@ -3027,4 +3027,11 @@
     <string name="twin_address_reserved_description">%1$s зарезервирован за вашей учетной записью, поэтому никто другой не сможет его занять. Создайте его как псевдоним, когда захотите отправлять и получать письма с него.</string>
     <string name="twin_address_available_description">%1$s — это соответствующий адрес в другом домене Aster. Создайте его как псевдоним, чтобы отправлять и получать письма с него.</string>
     <string name="twin_address_create">Создать псевдоним</string>
+    <string name="recover_older_data_title">Восстановить прежние данные</string>
+    <string name="recover_older_data_desc">Эта учетная запись была сброшена. Если вы помните пароль, который использовали до сброса, прежние зашифрованные данные можно разблокировать и восстановить.</string>
+    <string name="recover_older_data_button">Разблокировать прежние данные</string>
+    <string name="resurrection_old_password">Прежний пароль</string>
+    <string name="resurrection_old_password_prompt">Введите пароль, который вы использовали до сброса</string>
+    <string name="resurrection_success">Прежние данные разблокированы. Ранние письма и псевдонимы снова открываются нормально.</string>
+    <string name="resurrection_failed">Разблокировать прежние данные не удалось. Проверьте пароль или фразу и повторите попытку.</string>
 </resources>

@@ -3053,4 +3053,11 @@
     <string name="twin_address_reserved_description">‏%1$s محجوز لحسابك، لذا لا يمكن لأي شخص آخر تسجيله. أنشئه كاسم مستعار متى أردت الإرسال والاستقبال منه.</string>
     <string name="twin_address_available_description">‏%1$s هو العنوان المطابق على نطاق Aster الآخر. أنشئه كاسم مستعار للإرسال والاستقبال منه.</string>
     <string name="twin_address_create">إنشاء اسم مستعار</string>
+    <string name="recover_older_data_title">استعادة البيانات الأقدم</string>
+    <string name="recover_older_data_desc">تمت إعادة تعيين هذا الحساب. إذا كنت تتذكر كلمة السر التي استخدمتها قبل إعادة التعيين، فيمكن فتح بياناتك المشفرة الأقدم واستعادتها.</string>
+    <string name="recover_older_data_button">فتح البيانات الأقدم</string>
+    <string name="resurrection_old_password">كلمة السر القديمة</string>
+    <string name="resurrection_old_password_prompt">أدخل كلمة السر التي استخدمتها قبل إعادة التعيين</string>
+    <string name="resurrection_success">تم فتح بياناتك الأقدم. تُفتح الرسائل والعناوين البديلة السابقة بشكل طبيعي مرة أخرى.</string>
+    <string name="resurrection_failed">لم يؤدِ ذلك إلى فتح البيانات الأقدم. تحقق من كلمة السر أو العبارة وحاول مرة أخرى.</string>
 </resources>

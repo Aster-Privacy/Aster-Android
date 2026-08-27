@@ -3002,4 +3002,11 @@
     <string name="twin_address_reserved_description">%1$s ist für Ihr Konto reserviert, niemand sonst kann sie registrieren. Erstellen Sie sie als Alias, wenn Sie damit senden und empfangen möchten.</string>
     <string name="twin_address_available_description">%1$s ist die passende Adresse auf der anderen Aster-Domain. Erstellen Sie sie als Alias, um damit zu senden und zu empfangen.</string>
     <string name="twin_address_create">Alias erstellen</string>
+    <string name="recover_older_data_title">Ältere Daten wiederherstellen</string>
+    <string name="recover_older_data_desc">Dieses Konto wurde zurückgesetzt. Wenn du das Passwort kennst, das du vor dem Zurücksetzen verwendet hast, lassen sich deine älteren verschlüsselten Daten entsperren und wiederherstellen.</string>
+    <string name="recover_older_data_button">Ältere Daten entsperren</string>
+    <string name="resurrection_old_password">Altes Passwort</string>
+    <string name="resurrection_old_password_prompt">Gib das Passwort ein, das du vor dem Zurücksetzen verwendet hast</string>
+    <string name="resurrection_success">Deine älteren Daten sind entsperrt. Frühere E-Mails und Aliasse lassen sich wieder normal öffnen.</string>
+    <string name="resurrection_failed">Damit ließen sich die älteren Daten nicht entsperren. Prüfe das Passwort oder die Phrase und versuche es erneut.</string>
 </resources>

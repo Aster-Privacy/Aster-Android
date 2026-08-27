@@ -3050,4 +3050,11 @@
     <string name="twin_address_reserved_description">%1$s is reserved for your account, so no one else can register it. Create it as an alias whenever you want to send and receive from it.</string>
     <string name="twin_address_available_description">%1$s is the matching address on the other Aster domain. Create it as an alias to send and receive from it.</string>
     <string name="twin_address_create">Create alias</string>
+    <string name="recover_older_data_title">Recover older data</string>
+    <string name="recover_older_data_desc">This account was reset. If you remember the password you used before the reset, your older encrypted data can be unlocked and restored.</string>
+    <string name="recover_older_data_button">Unlock older data</string>
+    <string name="resurrection_old_password">Old password</string>
+    <string name="resurrection_old_password_prompt">Enter the password you used before the reset</string>
+    <string name="resurrection_success">Your older data is unlocked. Earlier mail and aliases open normally again.</string>
+    <string name="resurrection_failed">That did not unlock the older data. Check the password or phrase and try again.</string>
 </resources>
