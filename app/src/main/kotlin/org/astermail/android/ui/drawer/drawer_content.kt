@@ -507,6 +507,18 @@ fun DrawerContent(
                 }
             }
 
+            drawer_row(
+                icon = TablerIcons.Users,
+                label = label_contacts,
+                count = 0,
+                is_unread_count = false,
+                selected = selected_id == "contacts",
+                on_click = {
+                    on_select("contacts")
+                    on_close()
+                },
+            )
+
             collapsible_section_header(
                 text = stringResource(R.string.drawer_more),
                 expanded = more_expanded,
@@ -792,17 +804,6 @@ fun DrawerContent(
                     .background(colors.border_secondary.copy(alpha = 0.5f)),
             )
             Spacer(Modifier.height(AsterSpacing.xs))
-            drawer_row(
-                icon = TablerIcons.Users,
-                label = stringResource(R.string.folder_contacts),
-                count = 0,
-                is_unread_count = false,
-                selected = selected_id == "contacts",
-                on_click = {
-                    on_select("contacts")
-                    on_close()
-                },
-            )
             drawer_row(
                 icon = TablerIcons.Settings,
                 label = stringResource(R.string.settings),
