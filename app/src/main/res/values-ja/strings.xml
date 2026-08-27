@@ -12,6 +12,8 @@
     <string name="retry">再試行</string>
     <string name="copy">コピー</string>
     <string name="all_mail">すべてのメール</string>
+    <string name="send_sent_folder_unavailable">現在、送信済みフォルダにアクセスできません。接続を確認してからもう一度送信してください。</string>
+    <string name="sent_copy_attachments_missing">メッセージは送信されましたが、%1$d 件の添付ファイルを送信済みに保存できませんでした。</string>
     <string name="close">閉じる</string>
     <string name="confirm">確認</string>
     <string name="search">検索</string>

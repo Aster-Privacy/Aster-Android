@@ -12,6 +12,8 @@
     <string name="retry">Tekrar dene</string>
     <string name="copy">Kopyala</string>
     <string name="all_mail">Tüm postalar</string>
+    <string name="send_sent_folder_unavailable">Aster Mail şu anda Gönderilenler klasörüne ulaşamıyor. Bağlantını denetle ve yeniden göndermeyi dene.</string>
+    <string name="sent_copy_attachments_missing">İletin gönderildi ancak Aster Mail eklerin %1$d tanesini Gönderilenler klasörüne kaydedemedi.</string>
     <string name="close">Kapat</string>
     <string name="confirm">Onayla</string>
     <string name="search">Ara</string>

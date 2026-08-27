@@ -49,6 +49,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.astermail.android.api.ApiError
+import org.astermail.android.api.UpgradeEventBus
 import org.astermail.android.api.auth.AuthApi
 import org.astermail.android.api.auth.UserInfo
 import org.astermail.android.api.autoforward.AutoForwardApi
@@ -1691,7 +1692,7 @@ class SettingsViewModel @Inject constructor(
 
     private suspend fun <T> fetch_alias_section(block: suspend () -> T): AliasSectionResult<T> {
         return try {
-            AliasSectionResult(block(), false)
+            AliasSectionResult(UpgradeEventBus.without_prompts(block), false)
         } catch (t: Throwable) {
             if (t is kotlinx.coroutines.CancellationException) throw t
             val locked = is_feature_locked_error(t)

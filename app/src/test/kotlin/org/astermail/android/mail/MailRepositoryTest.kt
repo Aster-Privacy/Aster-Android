@@ -147,6 +147,17 @@ class MailRepositoryTest {
         every { session_key_store.get_user_email() } returns "me@astermail.org"
         every { session_key_store.has_ratchet_keys() } returns false
         coEvery { mail_api.get_message(any()) } answers { fake_mail_item(firstArg()) }
+        coEvery { labels_api.list_labels(include_counts = false) } returns
+            org.astermail.android.api.labels.LabelsListResponse(
+                labels = listOf(
+                    org.astermail.android.api.labels.LabelItem(
+                        id = "l_sent",
+                        label_token = "sent_token",
+                        is_system = true,
+                        folder_type = "sent",
+                    ),
+                ),
+            )
         pending_send_dao = FakePendingSendDao()
         repo = MailRepository(
             mail_api = mail_api,
@@ -864,6 +875,22 @@ class MailRepositoryTest {
 
         assertTrue(result.isSuccess)
         coVerify { send_api.send_simple(any()) }
+    }
+
+    @Test
+    fun `send_email refuses to relay when the sent folder cannot be resolved`() = runTest {
+        coEvery { labels_api.list_labels(include_counts = false) } throws RuntimeException("network error")
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
+
+        val result = repo.send_email(
+            to = listOf("someone@example.com"),
+            subject = "Test",
+            body_html = "<p>Hello</p>",
+        )
+
+        assertTrue(result.isFailure)
+        coVerify(exactly = 0) { send_api.send_external(any()) }
     }
 
     @Test

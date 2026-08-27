@@ -12,6 +12,8 @@
     <string name="retry">Повторить</string>
     <string name="copy">Копировать</string>
     <string name="all_mail">Все письма</string>
+    <string name="send_sent_folder_unavailable">Сейчас Aster Mail не может открыть папку «Отправленные». Проверьте подключение и отправьте письмо ещё раз.</string>
+    <string name="sent_copy_attachments_missing">Письмо отправлено, но сохранить в «Отправленных» не удалось: вложений — %1$d.</string>
     <string name="close">Закрыть</string>
     <string name="confirm">Подтвердить</string>
     <string name="search">Поиск</string>

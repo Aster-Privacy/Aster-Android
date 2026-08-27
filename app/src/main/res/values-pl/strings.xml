@@ -12,6 +12,8 @@
     <string name="retry">Ponów</string>
     <string name="copy">Kopiuj</string>
     <string name="all_mail">Cała poczta</string>
+    <string name="send_sent_folder_unavailable">Aster Mail nie może teraz otworzyć folderu Wysłane. Sprawdź połączenie i wyślij ponownie.</string>
+    <string name="sent_copy_attachments_missing">Wiadomość została wysłana, ale Aster Mail nie zapisał %1$d załączników w folderze Wysłane.</string>
     <string name="close">Zamknij</string>
     <string name="confirm">Potwierdź</string>
     <string name="search">Szukaj</string>

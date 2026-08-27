@@ -12,6 +12,8 @@
     <string name="retry">Opnieuw proberen</string>
     <string name="copy">Kopiëren</string>
     <string name="all_mail">Alle e-mail</string>
+    <string name="send_sent_folder_unavailable">Aster Mail kan je map Verzonden nu niet bereiken. Controleer je verbinding en verstuur het opnieuw.</string>
+    <string name="sent_copy_attachments_missing">Je bericht is verstuurd, maar Aster Mail kon %1$d van de bijlagen niet opslaan in Verzonden.</string>
     <string name="close">Sluiten</string>
     <string name="confirm">Bevestigen</string>
     <string name="search">Zoeken</string>

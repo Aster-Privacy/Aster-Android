@@ -13,6 +13,8 @@
     <string name="retry">Erneut versuchen</string>
     <string name="copy">Kopieren</string>
     <string name="all_mail">Alle E-Mails</string>
+    <string name="send_sent_folder_unavailable">Aster Mail erreicht deinen Ordner „Gesendet“ gerade nicht. Prüfe deine Verbindung und sende erneut.</string>
+    <string name="sent_copy_attachments_missing">Deine Nachricht wurde gesendet, aber %1$d Anhänge konnten nicht in „Gesendet“ gespeichert werden.</string>
     <string name="close">Schließen</string>
     <string name="confirm">Bestätigen</string>
     <string name="search">Suchen</string>

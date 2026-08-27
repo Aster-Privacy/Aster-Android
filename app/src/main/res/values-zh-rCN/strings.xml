@@ -12,6 +12,8 @@
     <string name="retry">重试</string>
     <string name="copy">复制</string>
     <string name="all_mail">全部邮件</string>
+    <string name="send_sent_folder_unavailable">Aster Mail 目前无法访问你的“已发送”文件夹。请检查网络连接后重新发送。</string>
+    <string name="sent_copy_attachments_missing">邮件已发出，但 Aster Mail 未能将其中 %1$d 个附件保存到“已发送”。</string>
     <string name="close">关闭</string>
     <string name="confirm">确认</string>
     <string name="search">搜索</string>

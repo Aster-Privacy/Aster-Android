@@ -13,6 +13,8 @@
     <string name="retry">Reintentar</string>
     <string name="copy">Copiar</string>
     <string name="all_mail">Todo el correo</string>
+    <string name="send_sent_folder_unavailable">Aster Mail no puede acceder a tu carpeta Enviados en este momento. Comprueba tu conexión e inténtalo de nuevo.</string>
+    <string name="sent_copy_attachments_missing">Tu mensaje se envió, pero Aster Mail no pudo guardar %1$d de los archivos adjuntos en Enviados.</string>
     <string name="close">Cerrar</string>
     <string name="confirm">Confirmar</string>
     <string name="search">Buscar</string>

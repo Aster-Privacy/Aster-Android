@@ -12,6 +12,8 @@
     <string name="retry">إعادة المحاولة</string>
     <string name="copy">نسخ</string>
     <string name="all_mail">كل الرسائل</string>
+    <string name="send_sent_folder_unavailable">يتعذّر على Aster Mail الوصول إلى مجلد المرسل الآن. تحقّق من اتصالك ثم أعد المحاولة.</string>
+    <string name="sent_copy_attachments_missing">تم إرسال رسالتك، لكن تعذّر حفظ %1$d من المرفقات في مجلد المرسل.</string>
     <string name="close">إغلاق</string>
     <string name="confirm">تأكيد</string>
     <string name="search">بحث</string>

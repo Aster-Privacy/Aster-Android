@@ -37,6 +37,8 @@
     <string name="retry">Retry</string>
     <string name="copy">Copy</string>
     <string name="all_mail">All mail</string>
+    <string name="send_sent_folder_unavailable">Aster Mail can\'t reach your Sent folder right now. Check your connection, then try sending again.</string>
+    <string name="sent_copy_attachments_missing">Your message went out, but Aster Mail could not save %1$d of the attachments to Sent.</string>
     <string name="close">Close</string>
     <string name="confirm">Confirm</string>
     <string name="search">Search</string>

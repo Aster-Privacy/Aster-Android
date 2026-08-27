@@ -14,6 +14,8 @@
     <string name="retry">Réessayer</string>
     <string name="copy">Copier</string>
     <string name="all_mail">Tous les messages</string>
+    <string name="send_sent_folder_unavailable">Aster Mail n\'accède pas à votre dossier Envoyés pour le moment. Vérifiez votre connexion, puis réessayez.</string>
+    <string name="sent_copy_attachments_missing">Votre message est parti, mais Aster Mail n\'a pas pu enregistrer %1$d des pièces jointes dans Envoyés.</string>
     <string name="close">Fermer</string>
     <string name="confirm">Confirmer</string>
     <string name="search">Rechercher</string>
