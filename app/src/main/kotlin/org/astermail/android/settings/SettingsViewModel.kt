@@ -699,6 +699,8 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     action_result = localized_api_error(context, t, context.getString(R.string.failed_revoke_session)),
                 )
+            } finally {
+                auth_repository.handle_unauthorized_signal(force = true)
             }
         }
     }

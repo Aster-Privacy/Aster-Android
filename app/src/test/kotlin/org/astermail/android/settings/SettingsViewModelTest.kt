@@ -367,6 +367,27 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `revoke_session rechecks the local session`() = runTest {
+        coEvery { settings_api.list_sessions() } returns SessionListResponse(emptyList())
+
+        vm.revoke_session("s1")
+        advanceUntilIdle()
+
+        coVerify { auth_repository.handle_unauthorized_signal(true) }
+    }
+
+    @Test
+    fun `revoke_session rechecks the local session after a failure`() = runTest {
+        coEvery { settings_api.revoke_session("s1") } throws
+            org.astermail.android.api.ApiError.UnauthorizedError
+
+        vm.revoke_session("s1")
+        advanceUntilIdle()
+
+        coVerify { auth_repository.handle_unauthorized_signal(true) }
+    }
+
+    @Test
     fun `logout_others keeps only current session`() = runTest {
         val sessions = listOf(
             SessionInfo(id = "s1", is_current = true),
