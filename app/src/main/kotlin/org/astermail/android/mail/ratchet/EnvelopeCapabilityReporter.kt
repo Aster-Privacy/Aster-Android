@@ -107,7 +107,8 @@ class EnvelopeCapabilityReporter(
                     x3dh_max_version = X3DH_MAX_VERSION,
                 ),
             )
-        }.getOrNull()
+        }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+            .getOrNull()
 
         if (response != null && response.success) {
             store.put_last_report(user_id, EnvelopeCapabilityReport(now, fingerprint))

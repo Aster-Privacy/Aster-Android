@@ -221,6 +221,9 @@ class ContactsViewModel @Inject constructor(
                     sync_message = if (imported > 0) context.resources.getQuantityString(R.plurals.imported_contacts, imported, imported) else context.getString(R.string.no_new_contacts),
                 )
                 load_contacts()
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                _state.value = _state.value.copy(is_syncing = false)
+                throw e
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_syncing = false,
@@ -338,6 +341,8 @@ class ContactsViewModel @Inject constructor(
                             email = email,
                         ),
                     )
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
                 } catch (_: Exception) {
                 } finally {
                     auto_save_in_flight.remove(email)

@@ -118,6 +118,7 @@ class RecoveryViewModel @Inject constructor(
                     is_loading = false,
                 )
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     is_loading = false,
                     error = map_error(t, R.string.error_send_recovery),
@@ -174,6 +175,7 @@ class RecoveryViewModel @Inject constructor(
                     is_loading = false,
                 )
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     is_loading = false,
                     error = map_error(t, R.string.error_invalid_code),

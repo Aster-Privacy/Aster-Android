@@ -75,6 +75,7 @@ class MailRulesViewModel @Inject constructor(
                     error = null,
                 )
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     is_loading = false,
                     is_refreshing = false,
@@ -111,6 +112,7 @@ class MailRulesViewModel @Inject constructor(
                 _state.value = _state.value.copy(last_saved_id = response.id)
                 on_done(response.id)
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(error = R.string.rules_save_failed)
                 on_done(null)
             }
@@ -145,6 +147,7 @@ class MailRulesViewModel @Inject constructor(
                 )
                 on_done(true)
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(error = R.string.rules_save_failed)
                 on_done(false)
             }
@@ -158,6 +161,7 @@ class MailRulesViewModel @Inject constructor(
             try {
                 api.delete(rule_id)
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(rules = original, error = R.string.rules_error_delete)
             }
         }
@@ -212,6 +216,7 @@ class MailRulesViewModel @Inject constructor(
             try {
                 api.reorder(current.map { it.id })
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(rules = original, error = R.string.rules_error_reorder)
             }
         }

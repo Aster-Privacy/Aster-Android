@@ -108,6 +108,8 @@ class RatchetDecryptor @Inject constructor(
             val result = decrypt(envelope, our_addresses, sender_email, message_id)
             if (result == null && org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "decrypt() returned null")
             result ?: RATCHET_UNDECRYPTABLE_SENTINEL
+        } catch (c: kotlinx.coroutines.CancellationException) {
+            throw c
         } catch (t: Throwable) {
             if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.e("AsterRatchet", "decrypt threw")
             RATCHET_UNDECRYPTABLE_SENTINEL
@@ -146,6 +148,8 @@ class RatchetDecryptor @Inject constructor(
         for (entry in fallback) {
             val plaintext = try {
                 decrypt_entry(envelope, entry.key, entry.value, sender_email, message_id)
+            } catch (c: kotlinx.coroutines.CancellationException) {
+                throw c
             } catch (_: Throwable) {
                 null
             }
@@ -192,6 +196,8 @@ class RatchetDecryptor @Inject constructor(
             if (state != null) {
                 try {
                     plaintext = DoubleRatchet.decrypt(state!!, recipient)
+                } catch (c: kotlinx.coroutines.CancellationException) {
+                    throw c
                 } catch (e: Throwable) {
                     if (!can_bootstrap) throw e
                     decrypt_error = e
@@ -202,6 +208,8 @@ class RatchetDecryptor @Inject constructor(
             if (plaintext == null && (decrypt_error != null || forced) && state_loaded_locally && !is_fresh_bootstrap) {
                 val refreshed = try {
                     syncer.fetch_from_server(conversation_id)
+                } catch (c: kotlinx.coroutines.CancellationException) {
+                    throw c
                 } catch (_: Throwable) {
                     null
                 }
@@ -500,18 +508,22 @@ class RatchetDecryptor @Inject constructor(
             if (!tried.add(tag)) continue
             val candidates = try {
                 bootstrap(conversation_id, sender_identity_key_b64, recipient, keys)
+            } catch (c: kotlinx.coroutines.CancellationException) {
+                throw c
             } catch (t: Throwable) {
                 if (org.astermail.android.BuildConfig.DEBUG) {
-                    android.util.Log.w("AsterRatchet", "bootstrap threw", t)
+                    android.util.Log.w("AsterRatchet", "bootstrap threw: ${t.javaClass.simpleName}")
                 }
                 emptyList()
             }
             for (candidate in candidates) {
                 try {
                     return candidate to DoubleRatchet.decrypt(candidate, recipient)
+                } catch (c: kotlinx.coroutines.CancellationException) {
+                    throw c
                 } catch (t: Throwable) {
                     if (org.astermail.android.BuildConfig.DEBUG) {
-                        android.util.Log.w("AsterRatchet", "bootstrapped state failed to decrypt", t)
+                        android.util.Log.w("AsterRatchet", "bootstrapped state failed to decrypt: ${t.javaClass.simpleName}")
                     }
                 }
             }
@@ -525,6 +537,8 @@ class RatchetDecryptor @Inject constructor(
         last_vault_refresh_at = now
         return try {
             auth_repository.get().try_refresh_vault_keys()
+        } catch (c: kotlinx.coroutines.CancellationException) {
+            throw c
         } catch (_: Throwable) {
             false
         }
@@ -631,7 +645,13 @@ class RatchetDecryptor @Inject constructor(
     private suspend fun fetch_pq_secret(key_id: Int): ByteArray? {
         session_key_store.get_pq_secret(key_id)?.let { return it }
         if (pq_secret_recently_missed(key_id)) return null
-        val resp = try { ratchet_api.fetch_pq_secret(key_id) } catch (_: Throwable) { null }
+        val resp = try {
+            ratchet_api.fetch_pq_secret(key_id)
+        } catch (c: kotlinx.coroutines.CancellationException) {
+            throw c
+        } catch (_: Throwable) {
+            null
+        }
         if (resp == null) {
             if (org.astermail.android.BuildConfig.DEBUG) {
                 android.util.Log.w("AsterRatchet", "pq secret $key_id: api returned null")

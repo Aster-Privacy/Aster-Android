@@ -54,14 +54,16 @@ class PlanLimitsViewModel @Inject constructor(
             try {
                 val response = billing_api.get_plan_limits()
                 _state.value = PlanLimitsUiState(limits = response, is_loading = false)
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(is_loading = false)
             }
             try {
                 val plans = billing_api.get_available_plans().plans
                 val current = plans.firstOrNull { it.is_current }
                 if (current != null) AttachmentLimits.update(current.max_attachment_size_bytes)
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
             }
         }
     }

@@ -113,6 +113,12 @@ class AsterProfileResolver @Inject constructor(
     }
 
     fun request_all(emails: Collection<String>) {
+        if (!org.astermail.android.api.network.should_prefetch_sender_profiles(
+                org.astermail.android.api.network.low_network_state.active(),
+            )
+        ) {
+            return
+        }
         for (email in emails.toSet()) request(email)
     }
 
@@ -156,8 +162,10 @@ class AsterProfileResolver @Inject constructor(
                     resolved_at[email] = now
                 }
                 _profiles.value = current
+            } catch (c: kotlinx.coroutines.CancellationException) {
+                throw c
             } catch (t: Throwable) {
-                if (BuildConfig.DEBUG) android.util.Log.w("AsterProfileResolver", "batch_profiles failed", t)
+                if (BuildConfig.DEBUG) android.util.Log.w("AsterProfileResolver", "batch_profiles failed: ${t.javaClass.simpleName}")
                 val current = _profiles.value.toMutableMap()
                 for (email in chunk) {
                     if (!current.containsKey(email)) current[email] = null

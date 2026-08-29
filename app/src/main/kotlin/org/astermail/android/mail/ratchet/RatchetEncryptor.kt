@@ -110,6 +110,8 @@ class RatchetEncryptor @Inject constructor(
                 encrypt_for_recipient(sender_email, sender_identity_public, sender_identity_jwk, recipient_email, body)
             } catch (e: RatchetEncryptionException) {
                 throw e
+            } catch (c: kotlinx.coroutines.CancellationException) {
+                throw c
             } catch (e: Throwable) {
                 throw RatchetEncryptionException(recipient_email, "ratchet encryption failed for recipient", e)
             } ?: throw RatchetEncryptionException(recipient_email, "no prekey bundle available for recipient")
@@ -234,6 +236,8 @@ class RatchetEncryptor @Inject constructor(
             if (!sender_changed) {
                 bundle = try {
                     ratchet_api.fetch_prekey_bundle(username, recipient_email)
+                } catch (c: kotlinx.coroutines.CancellationException) {
+                    throw c
                 } catch (t: Throwable) {
                     null
                 }
@@ -253,8 +257,10 @@ class RatchetEncryptor @Inject constructor(
         if (state == null) {
             val resolved_bundle = (bundle ?: try {
                 ratchet_api.fetch_prekey_bundle(username, recipient_email)
+            } catch (c: kotlinx.coroutines.CancellationException) {
+                throw c
             } catch (t: Throwable) {
-                if (BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "prekey bundle fetch threw", t)
+                if (BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "prekey bundle fetch threw: ${t.javaClass.simpleName}")
                 null
             }) ?: run {
                 if (BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "no prekey bundle for recipient")

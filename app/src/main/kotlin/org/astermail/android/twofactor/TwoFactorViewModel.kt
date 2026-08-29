@@ -89,7 +89,10 @@ class TwoFactorViewModel @Inject constructor(
                         verified_at = it.verified_at,
                     )
                 },
-                onFailure = { _state.value.copy(is_loading = false, error = readable(it)) },
+                onFailure = {
+                    if (it is kotlinx.coroutines.CancellationException) throw it
+                    _state.value.copy(is_loading = false, error = readable(it))
+                },
             )
         }
     }
@@ -110,7 +113,10 @@ class TwoFactorViewModel @Inject constructor(
                         code_input = "",
                     )
                 },
-                onFailure = { _state.value.copy(is_busy = false, error = readable(it)) },
+                onFailure = {
+                    if (it is kotlinx.coroutines.CancellationException) throw it
+                    _state.value.copy(is_busy = false, error = readable(it))
+                },
             )
         }
     }
@@ -145,7 +151,10 @@ class TwoFactorViewModel @Inject constructor(
                         code_input = "",
                     )
                 },
-                onFailure = { _state.value.copy(is_busy = false, error = readable(it)) },
+                onFailure = {
+                    if (it is kotlinx.coroutines.CancellationException) throw it
+                    _state.value.copy(is_busy = false, error = readable(it))
+                },
             )
         }
     }
@@ -199,7 +208,10 @@ class TwoFactorViewModel @Inject constructor(
                         password_input = "",
                     )
                 },
-                onFailure = { _state.value.copy(is_busy = false, error = readable(it)) },
+                onFailure = {
+                    if (it is kotlinx.coroutines.CancellationException) throw it
+                    _state.value.copy(is_busy = false, error = readable(it))
+                },
             )
         }
     }
@@ -236,7 +248,10 @@ class TwoFactorViewModel @Inject constructor(
                         code_input = "",
                     )
                 },
-                onFailure = { _state.value.copy(is_busy = false, error = readable(it)) },
+                onFailure = {
+                    if (it is kotlinx.coroutines.CancellationException) throw it
+                    _state.value.copy(is_busy = false, error = readable(it))
+                },
             )
         }
     }

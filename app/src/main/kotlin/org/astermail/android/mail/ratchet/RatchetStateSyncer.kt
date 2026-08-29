@@ -102,6 +102,8 @@ class RatchetStateSyncer @Inject constructor(
             for (candidate in keys) {
                 val plaintext = try {
                     RatchetCrypto.aes_gcm_decrypt(ciphertext, candidate, nonce, null)
+                } catch (c: kotlinx.coroutines.CancellationException) {
+                    throw c
                 } catch (_: Throwable) {
                     continue
                 }
@@ -111,8 +113,10 @@ class RatchetStateSyncer @Inject constructor(
             if (state == null) return null
             known_versions[conversation_id] = resp.state_version
             state
+        } catch (c: kotlinx.coroutines.CancellationException) {
+            throw c
         } catch (t: Throwable) {
-            if (BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "fetch_from_server failed", t)
+            if (BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "fetch_from_server failed: ${t.javaClass.simpleName}")
             null
         } finally {
             keys.forEach { it.fill(0) }
@@ -132,8 +136,10 @@ class RatchetStateSyncer @Inject constructor(
             try {
                 val conv_b64 = RatchetCrypto.b64_encode(conversation_id.toByteArray(Charsets.UTF_8))
                 ratchet_api.delete_state(conv_b64)
+            } catch (c: kotlinx.coroutines.CancellationException) {
+                throw c
             } catch (t: Throwable) {
-                if (BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "reset: server delete failed (continuing)", t)
+                if (BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "reset: server delete failed (continuing): ${t.javaClass.simpleName}")
             }
         }
     }
@@ -180,7 +186,7 @@ class RatchetStateSyncer @Inject constructor(
                 val nonce_b64 = RatchetCrypto.b64_encode(nonce)
 
                 if (known_version == null) {
-                    val existing = try { ratchet_api.fetch_state(conv_b64) } catch (_: Throwable) { null }
+                    val existing = try { ratchet_api.fetch_state(conv_b64) } catch (c: kotlinx.coroutines.CancellationException) { throw c } catch (_: Throwable) { null }
                     if (existing == null) {
                         when (val outcome = try_post(conv_b64, ct_b64, nonce_b64)) {
                             is PostStateOutcome.Success -> {
@@ -190,7 +196,7 @@ class RatchetStateSyncer @Inject constructor(
                                 return true
                             }
                             PostStateOutcome.AlreadyExists -> {
-                                val recheck = try { ratchet_api.fetch_state(conv_b64) } catch (_: Throwable) { null }
+                                val recheck = try { ratchet_api.fetch_state(conv_b64) } catch (c: kotlinx.coroutines.CancellationException) { throw c } catch (_: Throwable) { null }
                                 if (recheck == null) {
                                     last_error = "post 409 recheck failed"
                                     delay(50L * (attempt + 1))
@@ -235,7 +241,7 @@ class RatchetStateSyncer @Inject constructor(
                             plaintext = container_text.toByteArray(Charsets.UTF_8)
                             known_version = known_versions[conversation_id]
                         } else {
-                            val recheck = try { ratchet_api.fetch_state(conv_b64) } catch (_: Throwable) { null }
+                            val recheck = try { ratchet_api.fetch_state(conv_b64) } catch (c: kotlinx.coroutines.CancellationException) { throw c } catch (_: Throwable) { null }
                             if (recheck != null) {
                                 known_version = recheck.state_version
                                 known_versions[conversation_id] = recheck.state_version
@@ -260,8 +266,10 @@ class RatchetStateSyncer @Inject constructor(
             known_versions.remove(conversation_id)
             synced_fingerprints.remove(conversation_id)
             return false
+        } catch (c: kotlinx.coroutines.CancellationException) {
+            throw c
         } catch (t: Throwable) {
-            if (BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "sync threw", t)
+            if (BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "sync threw: ${t.javaClass.simpleName}")
             return false
         } finally {
             key.fill(0)
@@ -275,6 +283,8 @@ class RatchetStateSyncer @Inject constructor(
     ): PostStateOutcome {
         return try {
             ratchet_api.post_state(conv_b64, ct_b64, nonce_b64)
+        } catch (c: kotlinx.coroutines.CancellationException) {
+            throw c
         } catch (t: Throwable) {
             PostStateOutcome.Failure(-1)
         }
@@ -288,6 +298,8 @@ class RatchetStateSyncer @Inject constructor(
     ): PutStateOutcome {
         return try {
             ratchet_api.put_state(conv_b64, ct_b64, nonce_b64, expected_version)
+        } catch (c: kotlinx.coroutines.CancellationException) {
+            throw c
         } catch (t: Throwable) {
             PutStateOutcome.Failure(-1)
         }

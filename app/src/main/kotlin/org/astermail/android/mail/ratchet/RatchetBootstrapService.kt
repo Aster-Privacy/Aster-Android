@@ -88,7 +88,8 @@ class RatchetBootstrapService @Inject constructor(
             val capability = runCatching {
                 capability_reporter.report_if_due(user_id, keys.identity_public_b64)
             }
-                .onFailure { debug_log("report_envelope_capability threw: ${it.javaClass.simpleName}: ${it.message}") }
+                .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+                .onFailure { debug_log("report_envelope_capability threw: ${it.javaClass.simpleName}") }
                 .getOrNull()
             if (capability != null) {
                 debug_log(
@@ -130,7 +131,8 @@ class RatchetBootstrapService @Inject constructor(
                         pq_kem_public_key = pq_identity_public?.takeIf { it.isNotBlank() },
                     ),
                 )
-            }.onFailure { debug_log("upload_prekey_bundle threw: ${it.javaClass.simpleName}: ${it.message}") }
+            }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+                .onFailure { debug_log("upload_prekey_bundle threw: ${it.javaClass.simpleName}") }
                 .getOrDefault(false)
 
             debug_log("upload_prekey_bundle result=$uploaded")
@@ -144,6 +146,7 @@ class RatchetBootstrapService @Inject constructor(
 
     private suspend fun sync_vault_with_server(): Boolean {
         val result = runCatching { keys_api.fetch_current_vault() }
+            .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
             .getOrDefault(CurrentVaultResult.Unavailable)
         return when (result) {
             is CurrentVaultResult.Available -> adopt_server_vault(result.encrypted_vault, result.vault_nonce)
@@ -284,7 +287,8 @@ class RatchetBootstrapService @Inject constructor(
                 session_key_store.get_user_id(),
                 collect_vault_key_fingerprints(vault_json),
             )
-        }.getOrDefault(false)
+        }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+            .getOrDefault(false)
         if (ok) {
             session_key_store.put_encrypted_vault(new_ct_b64, new_nonce_b64)
             debug_log("retained the replaced local ratchet identity in the vault")
@@ -453,7 +457,8 @@ class RatchetBootstrapService @Inject constructor(
                 session_key_store.get_user_id(),
                 collect_vault_key_fingerprints(vault_json),
             )
-        }.getOrDefault(false)
+        }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+            .getOrDefault(false)
         if (!ok) return false
 
         session_key_store.put_encrypted_vault(new_ct_b64, new_nonce_b64)

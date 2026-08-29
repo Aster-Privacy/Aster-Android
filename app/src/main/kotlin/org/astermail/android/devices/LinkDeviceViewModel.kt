@@ -104,6 +104,7 @@ class LinkDeviceViewModel @Inject constructor(
                     error = null,
                 )
             }.onFailure { throwable ->
+                if (throwable is kotlinx.coroutines.CancellationException) throw throwable
                 _state.value = _state.value.copy(
                     is_verifying = false,
                     error = classify(throwable),
@@ -134,6 +135,7 @@ class LinkDeviceViewModel @Inject constructor(
                     error = null,
                 )
             }.onFailure { throwable ->
+                if (throwable is kotlinx.coroutines.CancellationException) throw throwable
                 val error = classify(throwable)
                 val restart = error == LinkDeviceError.EXPIRED_CODE ||
                     error == LinkDeviceError.INVALID_CODE
