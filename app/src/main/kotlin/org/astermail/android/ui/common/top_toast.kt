@@ -114,10 +114,9 @@ private fun toast_icon_action(
         tint = colors.accent_blue,
         modifier = Modifier
             .clip(SquircleShape(999.dp))
-            .background(colors.accent_blue.copy(alpha = 0.12f))
             .clickable(enabled = enabled, onClick = on_click)
-            .padding(7.dp)
-            .size(18.dp),
+            .padding(6.dp)
+            .size(22.dp),
     )
 }
 

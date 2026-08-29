@@ -255,20 +255,12 @@ private fun empty_state(on_new: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Box(
-            modifier = Modifier
-                .size(52.dp)
-                .clip(CircleShape)
-                .background(colors.bg_tertiary),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = TablerIcons.Bolt,
-                contentDescription = null,
-                tint = colors.text_secondary,
-                modifier = Modifier.size(24.dp),
-            )
-        }
+        Icon(
+            imageVector = TablerIcons.Bolt,
+            contentDescription = null,
+            tint = colors.text_tertiary,
+            modifier = Modifier.size(28.dp),
+        )
         Spacer(Modifier.height(AsterSpacing.md))
         Text(
             text = stringResource(R.string.mail_rules_empty_title),

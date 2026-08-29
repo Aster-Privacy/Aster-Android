@@ -28,7 +28,6 @@ import compose.icons.tablericons.Search
 import compose.icons.tablericons.World
 import compose.icons.tablericons.X
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -182,20 +181,14 @@ internal fun filters_entry_row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (is_domain) {
-            Box(
+            Icon(
+                imageVector = TablerIcons.World,
+                contentDescription = null,
+                tint = colors.text_tertiary,
                 modifier = Modifier
                     .size(34.dp)
-                    .clip(CircleShape)
-                    .background(colors.bg_tertiary),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = TablerIcons.World,
-                    contentDescription = null,
-                    tint = colors.text_secondary,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
+                    .padding(6.dp),
+            )
         } else {
             SenderAvatar(email = address, size = 34.dp)
         }
@@ -255,20 +248,12 @@ internal fun filters_state_card(
                 .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.xl),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(colors.bg_tertiary),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = colors.text_secondary,
-                    modifier = Modifier.size(22.dp),
-                )
-            }
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = colors.text_tertiary,
+                modifier = Modifier.size(26.dp),
+            )
             v_gap(AsterSpacing.md)
             Text(
                 text = title,

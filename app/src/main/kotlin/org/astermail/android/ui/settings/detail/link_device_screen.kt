@@ -57,7 +57,6 @@ import compose.icons.tablericons.Key
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterGhostButton
@@ -169,19 +168,14 @@ fun LinkDeviceScreen(
                             .padding(AsterSpacing.lg),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Box(
+                        Icon(
+                            imageVector = link_device_icon(device_type),
+                            contentDescription = null,
+                            tint = colors.text_tertiary,
                             modifier = Modifier
                                 .size(44.dp)
-                                .background(colors.bg_secondary, SquircleShape(14.dp)),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                imageVector = link_device_icon(device_type),
-                                contentDescription = null,
-                                tint = colors.text_secondary,
-                                modifier = Modifier.size(22.dp),
-                            )
-                        }
+                                .padding(11.dp),
+                        )
                         Column(
                             modifier = Modifier
                                 .weight(1f)

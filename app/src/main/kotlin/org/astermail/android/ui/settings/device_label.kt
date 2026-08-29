@@ -185,17 +185,12 @@ fun this_device_badge() {
 @Composable
 fun device_client_avatar(kind: DeviceClientKind, size_dp: Int = 40) {
     val colors = AsterMaterial.colors
-    Box(
+    Icon(
+        imageVector = device_client_icon(kind),
+        contentDescription = null,
+        tint = colors.text_tertiary,
         modifier = Modifier
             .size(size_dp.dp)
-            .background(colors.bg_secondary, SquircleShape((size_dp / 3).dp)),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = device_client_icon(kind),
-            contentDescription = null,
-            tint = colors.text_secondary,
-            modifier = Modifier.size((size_dp * 0.5f).dp),
-        )
-    }
+            .padding((size_dp * 0.22f).dp),
+    )
 }

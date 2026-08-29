@@ -569,20 +569,12 @@ private fun crypto_progress_stepper(status: String, confirmations: Int, min_conf
                     contentAlignment = Alignment.Center
                 ) {
                     if (is_done) {
-                        Box(
-                            modifier = Modifier
-                                .size(20.dp)
-                                .clip(CircleShape)
-                                .background(colors.success),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                TablerIcons.Check,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(12.dp)
-                            )
-                        }
+                        Icon(
+                            TablerIcons.Check,
+                            contentDescription = null,
+                            tint = colors.success,
+                            modifier = Modifier.size(20.dp)
+                        )
                     } else if (is_current) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(16.dp),

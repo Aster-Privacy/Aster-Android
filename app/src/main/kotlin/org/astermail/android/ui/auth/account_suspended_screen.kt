@@ -50,7 +50,6 @@ import compose.icons.tablericons.AlertOctagon
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterSecondaryButton
 
@@ -76,19 +75,12 @@ internal fun account_suspended_screen(on_back: () -> Unit) {
                 .padding(horizontal = AsterSpacing.xxl),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .background(colors.danger.copy(alpha = 0.12f), SquircleShape(22.dp)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = TablerIcons.AlertOctagon,
-                    contentDescription = null,
-                    tint = colors.danger,
-                    modifier = Modifier.size(30.dp),
-                )
-            }
+            Icon(
+                imageVector = TablerIcons.AlertOctagon,
+                contentDescription = null,
+                tint = colors.danger,
+                modifier = Modifier.size(40.dp),
+            )
 
             Spacer(Modifier.height(AsterSpacing.xl))
 
