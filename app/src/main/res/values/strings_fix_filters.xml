@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_filters_search_blocked">Search blocked senders</string>
+    <string name="fix_filters_search_allowed">Search allowed senders</string>
+    <string name="fix_filters_search">Search</string>
+    <string name="fix_filters_clear_search">Clear search</string>
+    <string name="fix_filters_no_results_title">No results</string>
+    <string name="fix_filters_no_results_body">Try a different search.</string>
+    <string name="fix_filters_blocked_description">Mail from these senders never reaches your inbox.</string>
+    <string name="fix_filters_allowed_description">Mail from these senders always reaches your inbox, even when it looks like spam.</string>
+    <string name="fix_filters_blocked_empty_body">Block a sender to keep their mail out of your inbox.</string>
+    <string name="fix_filters_allowed_empty_body">Add a sender to keep their mail out of spam.</string>
+</resources>

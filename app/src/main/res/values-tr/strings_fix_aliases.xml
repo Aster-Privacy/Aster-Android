@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alias_filter_all">Tümü</string>
+    <string name="alias_filter_active">Etkin</string>
+    <string name="alias_filter_disabled">Devre dışı</string>
+    <string name="alias_filter_all_domains">Tüm alan adları</string>
+    <string name="alias_import_file_hint">İçe aktarmak için bir CSV veya JSON dosyası seçin</string>
+    <string name="alias_import_change_file">Dosyayı değiştir</string>
+    <string name="alias_import_remove_file">Dosyayı kaldır</string>
+    <string name="alias_note_placeholder_short">Nerede kullandığın</string>
+</resources>

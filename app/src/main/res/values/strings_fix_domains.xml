@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="domains_load_timeout">Loading your domains is taking longer than expected. Check your connection, then try again.</string>
+    <string name="domain_manage_mail_setup">Mail setup</string>
+    <string name="domain_manage_dns_unavailable">Mail setup details appear here after this domain is added to your account.</string>
+    <string name="domain_manage_verification">Verification</string>
+    <string name="domain_manage_last_verified">Last verified</string>
+    <string name="domain_manage_never_verified">Not verified yet</string>
+    <string name="domain_manage_records">DNS records</string>
+    <string name="domain_manage_catch_all_description">Deliver mail sent to any address at this domain.</string>
+    <string name="domain_manage_recheck">Recheck DNS records</string>
+    <string name="domain_manage_rechecking">Checking DNS records</string>
+</resources>

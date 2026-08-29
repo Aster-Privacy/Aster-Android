@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="low_network_mode_active_banner">低速ネットワークモードがオンです</string>
+    <string name="low_network_mode_banner_action">設定</string>
+    <string name="low_network_mode_info_desc_v2">低速または従量制の接続でも Aster を使えるようにします。プロフィール写真、送信者ロゴ、メール内の外部画像を読み込まず、すべてのメッセージをプレーンテキストで表示し、受信トレイのページを短くし、1 つのスレッドに最大 4 件のメッセージを表示します。バックグラウンドのメール確認の間隔が長くなり、アニメーションはオフになり、添付ファイルは開いたときにだけ読み込まれます。従量制接続でデータセーバーがバックグラウンドデータを制限している間は、低速ネットワークモードが自動的にオンになります。</string>
+    <string name="low_network_mode_data_saver_note">Android の設定でデータセーバーをオフにするまで、この設定はオンのままです。</string>
+</resources>

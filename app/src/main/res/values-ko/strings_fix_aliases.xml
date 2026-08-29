@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alias_filter_all">전체</string>
+    <string name="alias_filter_active">활성</string>
+    <string name="alias_filter_disabled">비활성</string>
+    <string name="alias_filter_all_domains">모든 도메인</string>
+    <string name="alias_import_file_hint">가져올 CSV 또는 JSON 파일을 선택하세요</string>
+    <string name="alias_import_change_file">파일 변경</string>
+    <string name="alias_import_remove_file">파일 제거</string>
+    <string name="alias_note_placeholder_short">사용하는 곳</string>
+</resources>

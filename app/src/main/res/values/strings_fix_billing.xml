@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_billing_available_plans">Available plans</string>
+    <string name="fix_billing_status_active">Active</string>
+    <string name="fix_billing_free_plan_description">You’re on the free plan. Explore paid plans below for more storage, aliases, and features.</string>
+    <string name="fix_billing_upgrade_for_more">Upgrade to unlock more storage, aliases, and features</string>
+    <string name="fix_billing_manage_plan">Manage plan</string>
+    <string name="fix_billing_quota_aliases">Email aliases</string>
+    <string name="fix_billing_quota_domains">Custom domains</string>
+    <string name="fix_billing_per_month_short">/mo</string>
+    <string name="fix_billing_per_year_short">/yr</string>
+    <string name="fix_billing_billed_annually">billed annually</string>
+    <string name="fix_billing_plan_recommended">Recommended</string>
+    <string name="fix_billing_get_plan">Get %1$s</string>
+    <string name="fix_billing_autorenew_notice">Your subscription renews automatically at %1$s until you cancel it. To avoid the next charge, cancel in Settings before your renewal date.</string>
+    <string name="fix_billing_autorenew_notice_short">Your plan renews automatically when you pay by card. To avoid the next charge, cancel in Settings before your renewal date.</string>
+    <string name="fix_billing_payment_methods_title">Payment methods</string>
+    <string name="fix_billing_payment_methods_description">Manage your saved payment methods</string>
+    <string name="fix_billing_no_payment_methods">No payment methods saved</string>
+    <string name="fix_billing_default_card">Default</string>
+    <string name="fix_billing_set_as_default">Set as default</string>
+    <string name="fix_billing_invoice_status_paid">Paid</string>
+    <string name="fix_billing_invoice_status_failed">Failed</string>
+    <string name="fix_billing_invoice_status_open">Open</string>
+    <string name="fix_billing_invoice_status_pending">Pending</string>
+    <string name="fix_billing_invoice_status_draft">Draft</string>
+    <string name="fix_billing_invoice_status_void">Void</string>
+    <string name="fix_billing_invoice_status_uncollectible">Uncollectible</string>
+    <string name="fix_billing_invoice_status_refunded">Refunded</string>
+    <string name="fix_billing_invoice_pdf">PDF</string>
+    <string name="fix_billing_invoice_payment">Payment</string>
+    <string name="fix_billing_storage_limit_exceeded">Your storage is full.</string>
+    <string name="fix_billing_payment_failed_warning">The last charge to your payment method did not go through. Updating it in Settings, Billing will keep your plan running. Your mail is unaffected.</string>
+    <string name="fix_billing_update_payment_method">Update payment method</string>
+    <string name="fix_billing_card_expires">Expires %1$s</string>
+    <string name="fix_billing_status_trialing">Trial</string>
+    <string name="fix_billing_status_past_due">Past due</string>
+    <string name="fix_billing_status_canceled">Canceled</string>
+    <string name="fix_billing_billed_monthly">Billed monthly</string>
+    <string name="fix_billing_billed_yearly">Billed yearly</string>
+    <string name="fix_billing_history_empty">No invoices yet. Your payments appear here after your first charge.</string>
+    <string name="fix_billing_quota_count">%1$d / %2$d</string>
+</resources>

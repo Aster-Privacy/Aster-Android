@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="domains_load_timeout">Wczytywanie Twoich domen trwa dłużej niż zwykle. Sprawdź połączenie i spróbuj ponownie.</string>
+    <string name="domain_manage_mail_setup">Konfiguracja poczty</string>
+    <string name="domain_manage_dns_unavailable">Szczegóły konfiguracji poczty pojawią się tutaj po dodaniu tej domeny do konta.</string>
+    <string name="domain_manage_verification">Weryfikacja</string>
+    <string name="domain_manage_last_verified">Ostatnia weryfikacja</string>
+    <string name="domain_manage_never_verified">Jeszcze nie zweryfikowano</string>
+    <string name="domain_manage_records">Rekordy DNS</string>
+    <string name="domain_manage_catch_all_description">Odbieraj wiadomości wysyłane na dowolny adres w tej domenie.</string>
+    <string name="domain_manage_recheck">Sprawdź rekordy DNS ponownie</string>
+    <string name="domain_manage_rechecking">Sprawdzanie rekordów DNS</string>
+</resources>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="domains_load_timeout">도메인을 불러오는 데 예상보다 오래 걸리고 있습니다. 연결을 확인한 다음 다시 시도하세요.</string>
+    <string name="domain_manage_mail_setup">메일 설정</string>
+    <string name="domain_manage_dns_unavailable">메일 설정 세부 정보는 이 도메인을 계정에 추가한 후에 표시됩니다.</string>
+    <string name="domain_manage_verification">확인</string>
+    <string name="domain_manage_last_verified">마지막 확인</string>
+    <string name="domain_manage_never_verified">아직 확인되지 않음</string>
+    <string name="domain_manage_records">DNS 레코드</string>
+    <string name="domain_manage_catch_all_description">이 도메인의 모든 주소로 보낸 메일을 받습니다.</string>
+    <string name="domain_manage_recheck">DNS 레코드 다시 확인</string>
+    <string name="domain_manage_rechecking">DNS 레코드 확인 중</string>
+</resources>

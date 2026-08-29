@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recovery_email_verified_note">Puoi usare questo indirizzo per reimpostare la password.</string>
+    <string name="recovery_email_pending_note">Apri il link nella posta in arrivo per verificare questo indirizzo.</string>
+    <string name="recovery_email_not_verified_badge">Non verificato</string>
+    <string name="recovery_email_action_resend">Invia di nuovo</string>
+    <string name="recovery_email_action_remove">Rimuovi</string>
+    <string name="delete_account_second_factor_checking">Controllo delle impostazioni di sicurezza</string>
+</resources>

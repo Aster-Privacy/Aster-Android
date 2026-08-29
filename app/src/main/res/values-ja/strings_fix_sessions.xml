@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sessions_other_devices_section">その他のデバイス</string>
+    <string name="session_meta_line">%1$s · %2$s</string>
+    <string name="session_client_browser">Web ブラウザ</string>
+    <string name="session_client_phone">スマートフォン</string>
+    <string name="session_client_tablet">タブレット</string>
+    <string name="session_client_desktop">パソコン</string>
+    <string name="session_client_desktop_app">デスクトップApp</string>
+    <string name="session_client_bridge">メールブリッジ</string>
+    <string name="link_device_step_code">コード</string>
+    <string name="link_device_step_confirm">確認</string>
+    <string name="link_device_step_done">リンク済み</string>
+    <string name="link_device_hero_title">デバイスコードを入力</string>
+    <string name="link_device_confirm_title">このデバイスを確認</string>
+    <string name="link_device_pending_badge">保留中</string>
+</resources>

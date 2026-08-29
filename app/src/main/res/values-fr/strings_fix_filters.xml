@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_filters_search_blocked">Rechercher des expéditeurs bloqués</string>
+    <string name="fix_filters_search_allowed">Rechercher des expéditeurs autorisés</string>
+    <string name="fix_filters_search">Rechercher</string>
+    <string name="fix_filters_clear_search">Effacer la recherche</string>
+    <string name="fix_filters_no_results_title">Aucun résultat</string>
+    <string name="fix_filters_no_results_body">Essayez une autre recherche.</string>
+    <string name="fix_filters_blocked_description">Les messages de ces expéditeurs n\'arrivent jamais dans votre boîte de réception.</string>
+    <string name="fix_filters_allowed_description">Les messages de ces expéditeurs arrivent toujours dans votre boîte de réception, même s\'ils ressemblent à du spam.</string>
+    <string name="fix_filters_blocked_empty_body">Bloquez un expéditeur pour que ses messages n\'arrivent pas dans votre boîte de réception.</string>
+    <string name="fix_filters_allowed_empty_body">Ajoutez un expéditeur pour que ses messages n\'arrivent pas dans le spam.</string>
+</resources>

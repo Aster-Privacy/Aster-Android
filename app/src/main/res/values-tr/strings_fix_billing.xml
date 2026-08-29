@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_billing_available_plans">Mevcut Planlar</string>
+    <string name="fix_billing_status_active">Aktif</string>
+    <string name="fix_billing_free_plan_description">Ücretsiz plandasınız. Daha fazla depolama, takma ad ve özellik için aşağıdaki ücretli planları keşfedin.</string>
+    <string name="fix_billing_upgrade_for_more">Daha fazla depolama, takma ad ve özellik açmak için yükseltin</string>
+    <string name="fix_billing_manage_plan">Planı Yönet</string>
+    <string name="fix_billing_quota_aliases">E-posta Takma Adları</string>
+    <string name="fix_billing_quota_domains">Özel Alan Adları</string>
+    <string name="fix_billing_per_month_short">/ay</string>
+    <string name="fix_billing_per_year_short">/yıl</string>
+    <string name="fix_billing_billed_annually">yıllık faturalandırılır</string>
+    <string name="fix_billing_plan_recommended">Önerilen</string>
+    <string name="fix_billing_get_plan">%1$s al</string>
+    <string name="fix_billing_autorenew_notice">Aboneliğiniz siz iptal edene kadar %1$s tutarında otomatik olarak yenilenir. Sonraki ücretlendirmeyi önlemek için yenileme tarihinden önce Ayarlar\'dan iptal edin.</string>
+    <string name="fix_billing_autorenew_notice_short">Kartla ödeme yaptığınızda paketiniz otomatik olarak yenilenir. Sonraki ücretlendirmeyi önlemek için yenileme tarihinden önce Ayarlar\'dan iptal edin.</string>
+    <string name="fix_billing_payment_methods_title">Ödeme Yöntemleri</string>
+    <string name="fix_billing_payment_methods_description">Kayıtlı ödeme yöntemlerinizi yönetin</string>
+    <string name="fix_billing_no_payment_methods">Kayıtlı ödeme yöntemi yok</string>
+    <string name="fix_billing_default_card">Varsayılan</string>
+    <string name="fix_billing_set_as_default">Varsayılan olarak ayarla</string>
+    <string name="fix_billing_invoice_status_paid">Ödendi</string>
+    <string name="fix_billing_invoice_status_failed">Başarısız</string>
+    <string name="fix_billing_invoice_status_open">Açık</string>
+    <string name="fix_billing_invoice_status_pending">Beklemede</string>
+    <string name="fix_billing_invoice_status_draft">Taslak</string>
+    <string name="fix_billing_invoice_status_void">Geçersiz</string>
+    <string name="fix_billing_invoice_status_uncollectible">Tahsil edilemez</string>
+    <string name="fix_billing_invoice_status_refunded">İade edildi</string>
+    <string name="fix_billing_invoice_pdf">PDF</string>
+    <string name="fix_billing_invoice_payment">Ödeme</string>
+    <string name="fix_billing_storage_limit_exceeded">Depolama alanınız doldu.</string>
+    <string name="fix_billing_payment_failed_warning">Ödeme yönteminizden son tahsilat geçmedi. Ayarlar, Faturalandırma\'dan güncellemek planınızı çalışır durumda tutar. E-postanız etkilenmez.</string>
+    <string name="fix_billing_update_payment_method">Ödeme Yöntemini Güncelle</string>
+    <string name="fix_billing_card_expires">Son kullanma %1$s</string>
+    <string name="fix_billing_status_trialing">Deneme</string>
+    <string name="fix_billing_status_past_due">Ödemesi gecikmiş</string>
+    <string name="fix_billing_status_canceled">İptal edildi</string>
+    <string name="fix_billing_billed_monthly">Aylık faturalandırılır</string>
+    <string name="fix_billing_billed_yearly">Yıllık faturalandırılır</string>
+    <string name="fix_billing_history_empty">Henüz fatura yok. Ödemeleriniz ilk tahsilattan sonra burada görünür.</string>
+    <string name="fix_billing_quota_count">%1$d / %2$d</string>
+</resources>

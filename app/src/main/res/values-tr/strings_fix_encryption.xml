@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_enc_key_card_title">Şifreleme anahtarınız</string>
+    <string name="fix_enc_key_id_label">Anahtar kimliği</string>
+    <string name="fix_enc_copy_key_id">Anahtar kimliğini kopyala</string>
+    <string name="fix_enc_key_id_copied">Anahtar kimliği kopyalandı</string>
+    <string name="fix_enc_clipboard_label_key_id">Anahtar kimliği</string>
+    <string name="fix_enc_never_expires">Süresi dolmaz</string>
+    <string name="fix_enc_save_codes">Dosyaya kaydet</string>
+    <string name="fix_enc_codes_share_title">Kurtarma kodları</string>
+    <string name="fix_enc_codes_file_note">Her kod bir kez çalışır. Bu dosyayı güvenli bir yerde saklayın.</string>
+    <string name="fix_enc_codes_save_failed">Dosyayı şu anda kaydedemezsiniz. Bunun yerine kodları kopyalayın.</string>
+    <string name="fix_enc_codes_confirm_saved">Kurtarma kodlarımı kaydettim</string>
+    <string name="fix_enc_codes_used">%1$d kullanıldı</string>
+</resources>

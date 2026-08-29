@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recovery_email_verified_note">이 주소로 비밀번호를 재설정할 수 있습니다.</string>
+    <string name="recovery_email_pending_note">받은편지함의 링크를 열어 이 주소를 확인하세요.</string>
+    <string name="recovery_email_not_verified_badge">확인되지 않음</string>
+    <string name="recovery_email_action_resend">다시 보내기</string>
+    <string name="recovery_email_action_remove">삭제</string>
+    <string name="delete_account_second_factor_checking">보안 설정을 확인하는 중</string>
+</resources>

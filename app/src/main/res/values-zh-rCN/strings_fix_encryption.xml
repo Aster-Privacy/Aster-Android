@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_enc_key_card_title">你的加密密钥</string>
+    <string name="fix_enc_key_id_label">密钥 ID</string>
+    <string name="fix_enc_copy_key_id">复制密钥 ID</string>
+    <string name="fix_enc_key_id_copied">已复制密钥 ID</string>
+    <string name="fix_enc_clipboard_label_key_id">密钥 ID</string>
+    <string name="fix_enc_never_expires">永不过期</string>
+    <string name="fix_enc_save_codes">保存为文件</string>
+    <string name="fix_enc_codes_share_title">恢复代码</string>
+    <string name="fix_enc_codes_file_note">每个代码只能使用一次。请将此文件保存在安全的位置。</string>
+    <string name="fix_enc_codes_save_failed">现在无法保存文件。请改为复制这些代码。</string>
+    <string name="fix_enc_codes_confirm_saved">我已保存恢复代码</string>
+    <string name="fix_enc_codes_used">已使用 %1$d 个</string>
+</resources>

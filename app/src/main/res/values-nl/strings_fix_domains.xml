@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="domains_load_timeout">Het laden van je domeinen duurt langer dan verwacht. Controleer je verbinding en probeer het opnieuw.</string>
+    <string name="domain_manage_mail_setup">E-mailinstellingen</string>
+    <string name="domain_manage_dns_unavailable">De gegevens van de e-mailinstellingen verschijnen hier zodra dit domein aan je account is toegevoegd.</string>
+    <string name="domain_manage_verification">Verificatie</string>
+    <string name="domain_manage_last_verified">Laatst geverifieerd</string>
+    <string name="domain_manage_never_verified">Nog niet geverifieerd</string>
+    <string name="domain_manage_records">DNS-records</string>
+    <string name="domain_manage_catch_all_description">Ontvang berichten die naar elk adres op dit domein worden gestuurd.</string>
+    <string name="domain_manage_recheck">DNS-records opnieuw controleren</string>
+    <string name="domain_manage_rechecking">DNS-records worden gecontroleerd</string>
+</resources>

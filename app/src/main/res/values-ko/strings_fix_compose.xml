@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="compose_discard_draft_title">이 임시보관 메일을 버릴까요?</string>
+    <string name="compose_discard_draft_message">이 메시지는 저장되지 않았습니다. 버리면 본문과 첨부 파일이 삭제됩니다.</string>
+</resources>

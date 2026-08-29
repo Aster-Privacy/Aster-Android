@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alias_filter_all">全部</string>
+    <string name="alias_filter_active">已启用</string>
+    <string name="alias_filter_disabled">已停用</string>
+    <string name="alias_filter_all_domains">所有域名</string>
+    <string name="alias_import_file_hint">选择要导入的 CSV 或 JSON 文件</string>
+    <string name="alias_import_change_file">更换文件</string>
+    <string name="alias_import_remove_file">移除文件</string>
+    <string name="alias_note_placeholder_short">使用场景</string>
+</resources>

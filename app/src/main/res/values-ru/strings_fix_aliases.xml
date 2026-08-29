@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alias_filter_all">Все</string>
+    <string name="alias_filter_active">Активные</string>
+    <string name="alias_filter_disabled">Отключённые</string>
+    <string name="alias_filter_all_domains">Все домены</string>
+    <string name="alias_import_file_hint">Выберите файл CSV или JSON для импорта</string>
+    <string name="alias_import_change_file">Изменить файл</string>
+    <string name="alias_import_remove_file">Удалить файл</string>
+    <string name="alias_note_placeholder_short">Где вы его используете</string>
+</resources>

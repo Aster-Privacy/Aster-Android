@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="compose_discard_draft_title">Odrzucić tę wersję roboczą?</string>
+    <string name="compose_discard_draft_message">Ta wiadomość nie jest zapisana. Jeśli ją odrzucisz, tekst i wszystkie załączniki zostaną usunięte.</string>
+</resources>

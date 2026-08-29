@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alias_filter_all">Tutti</string>
+    <string name="alias_filter_active">Attivi</string>
+    <string name="alias_filter_disabled">Disattivati</string>
+    <string name="alias_filter_all_domains">Tutti i domini</string>
+    <string name="alias_import_file_hint">Scegli un file CSV o JSON da importare</string>
+    <string name="alias_import_change_file">Cambia file</string>
+    <string name="alias_import_remove_file">Rimuovi file</string>
+    <string name="alias_note_placeholder_short">Dove lo usi</string>
+</resources>

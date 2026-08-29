@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_enc_key_card_title">내 암호화 키</string>
+    <string name="fix_enc_key_id_label">키 ID</string>
+    <string name="fix_enc_copy_key_id">키 ID 복사</string>
+    <string name="fix_enc_key_id_copied">키 ID를 복사했습니다</string>
+    <string name="fix_enc_clipboard_label_key_id">키 ID</string>
+    <string name="fix_enc_never_expires">만료되지 않음</string>
+    <string name="fix_enc_save_codes">파일로 저장</string>
+    <string name="fix_enc_codes_share_title">복구 코드</string>
+    <string name="fix_enc_codes_file_note">각 코드는 한 번만 사용할 수 있습니다. 이 파일을 안전한 곳에 보관하세요.</string>
+    <string name="fix_enc_codes_save_failed">지금은 파일을 저장할 수 없습니다. 대신 코드를 복사하세요.</string>
+    <string name="fix_enc_codes_confirm_saved">복구 코드를 저장했습니다</string>
+    <string name="fix_enc_codes_used">%1$d개 사용됨</string>
+</resources>

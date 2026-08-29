@@ -475,7 +475,8 @@
     <string name="settings_security_subtitle">كلمة المرور، المصادقة الثنائية، الجلسات</string>
     <string name="settings_encryption">التشفير</string>
     <string name="settings_encryption_subtitle">مفاتيح PGP والاسترداد</string>
-    <string name="settings_aliases">الأسماء المستعارة والنطاقات</string>
+    <string name="settings_aliases">الأسماء المستعارة</string>
+    <string name="settings_domains">النطاقات</string>
     <string name="settings_aliases_subtitle">إدارة العناوين</string>
     <string name="settings_billing">الفوترة</string>
     <string name="settings_billing_subtitle">الخطة، الفواتير، طرق الدفع</string>
@@ -1881,7 +1882,7 @@
     <string name="upgrade_resource_generic">هذه الميزة</string>
     <string name="storage_locked_title">المساحة ممتلئة</string>
     <string name="storage_locked_description">سيتم رفض البريد الوارد حتى تحرّر مساحة أو تضيف تخزينًا.</string>
-    <string name="storage_locked_bounce_warning">ارتداد نهائي خلال %1$s يومًا.</string>
+    <string name="storage_locked_bounce_warning">ارتداد نهائي خلال %1$s.</string>
     <string name="usage_of">%1$s من %2$s</string>
     <string name="usage_unlimited">غير محدود</string>
     <string name="usage_storage">التخزين</string>
@@ -2334,7 +2335,7 @@
     <string name="kids_reserved_addresses">عناوين محجوزة للأطفال</string>
     <string name="kids_reserved_subtitle">احجز عنوانًا لطفلك. شارك رابط المطالبة ليكمل الإعداد بكلمة مرور خاصة به.</string>
     <string name="kids_seats_used">%1$d من %2$d مقاعد عائلية مستخدمة</string>
-    <string name="kids_seats_breakdown">%1$d أعضاء، %2$d دعوات، %3$d عناوين محجوزة</string>
+    <string name="kids_seats_breakdown">%1$s، %2$s، %3$s</string>
     <string name="kids_no_reservations">لا توجد عناوين محجوزة بعد. احجز واحدًا على astermail.org.</string>
     <string name="kids_reserve_on_web">الحجز عبر الويب</string>
     <string name="kids_status_reserved">محجوز</string>
@@ -2506,7 +2507,7 @@
     <string name="alias_import_description">اختر ملف CSV أو JSON يحتوي على أسمائك المستعارة.</string>
     <string name="alias_import_choose_file">اختيار ملف</string>
     <string name="alias_import_target_domain">الاستيراد إلى</string>
-    <string name="alias_import_counts">%1$d سيتم استيراده / %2$d موجود بالفعل / %3$d غير صالح</string>
+    <string name="alias_import_counts">%1$s / %2$s / %3$s</string>
     <string name="alias_import_update_existing">إعادة التفعيل إذا كان معطّلًا</string>
     <string name="alias_import_confirm">استيراد %1$d اسمًا مستعارًا</string>
     <string name="alias_import_progress">جارٍ استيراد %1$d من %2$d...</string>
@@ -2525,7 +2526,7 @@
     <string name="alias_export_source_count">%1$d إدخالات</string>
     <string name="alias_export_warning_title">هذا الملف غير مشفّر</string>
     <string name="alias_export_warning_body">يمكن لأي شخص يفتحه قراءة كل اسم مستعار وملاحظة وموقع بداخله. احتفظ به في مدير كلمات المرور أو على قرص مشفّر.</string>
-    <string name="alias_export_summary">%1$d إدخالات في %2$d ملف.</string>
+    <string name="alias_export_summary">%1$s في %2$s.</string>
     <string name="alias_export_download">حفظ</string>
     <string name="alias_export_failed">فشل التصدير. لم يتم حفظ أي شيء.</string>
     <string name="chip_any_time">أي وقت</string>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="domains_load_timeout">Alan adlarınızın yüklenmesi beklenenden uzun sürüyor. Bağlantınızı denetleyin ve yeniden deneyin.</string>
+    <string name="domain_manage_mail_setup">Posta kurulumu</string>
+    <string name="domain_manage_dns_unavailable">Posta kurulumu ayrıntıları, bu alan adı hesabınıza eklendikten sonra burada görünür.</string>
+    <string name="domain_manage_verification">Doğrulama</string>
+    <string name="domain_manage_last_verified">Son doğrulama</string>
+    <string name="domain_manage_never_verified">Henüz doğrulanmadı</string>
+    <string name="domain_manage_records">DNS kayıtları</string>
+    <string name="domain_manage_catch_all_description">Bu alan adındaki herhangi bir adrese gönderilen postaları alın.</string>
+    <string name="domain_manage_recheck">DNS kayıtlarını yeniden denetle</string>
+    <string name="domain_manage_rechecking">DNS kayıtları denetleniyor</string>
+</resources>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_billing_available_plans">可用套餐</string>
+    <string name="fix_billing_status_active">活跃</string>
+    <string name="fix_billing_free_plan_description">您当前使用的是免费套餐。浏览下方的付费套餐以获取更多存储空间、别名和功能。</string>
+    <string name="fix_billing_upgrade_for_more">升级以解锁更多存储空间、别名和功能</string>
+    <string name="fix_billing_manage_plan">管理套餐</string>
+    <string name="fix_billing_quota_aliases">邮箱别名</string>
+    <string name="fix_billing_quota_domains">自定义域名</string>
+    <string name="fix_billing_per_month_short">/月</string>
+    <string name="fix_billing_per_year_short">/年</string>
+    <string name="fix_billing_billed_annually">按年计费</string>
+    <string name="fix_billing_plan_recommended">推荐</string>
+    <string name="fix_billing_get_plan">选择 %1$s</string>
+    <string name="fix_billing_autorenew_notice">订阅将按 %1$s 自动续订，直至你取消。若要避免下次扣款，请在续订日期前于“设置”中取消。</string>
+    <string name="fix_billing_autorenew_notice_short">使用银行卡付款时，方案将自动续订。若要避免下次扣款，请在续订日期前于“设置”中取消。</string>
+    <string name="fix_billing_payment_methods_title">支付方式</string>
+    <string name="fix_billing_payment_methods_description">管理您保存的支付方式</string>
+    <string name="fix_billing_no_payment_methods">没有保存的支付方式</string>
+    <string name="fix_billing_default_card">默认</string>
+    <string name="fix_billing_set_as_default">设为默认</string>
+    <string name="fix_billing_invoice_status_paid">已付款</string>
+    <string name="fix_billing_invoice_status_failed">失败</string>
+    <string name="fix_billing_invoice_status_open">待处理</string>
+    <string name="fix_billing_invoice_status_pending">待处理</string>
+    <string name="fix_billing_invoice_status_draft">草稿</string>
+    <string name="fix_billing_invoice_status_void">已作废</string>
+    <string name="fix_billing_invoice_status_uncollectible">无法收取</string>
+    <string name="fix_billing_invoice_status_refunded">已退款</string>
+    <string name="fix_billing_invoice_pdf">PDF</string>
+    <string name="fix_billing_invoice_payment">支付</string>
+    <string name="fix_billing_storage_limit_exceeded">您的存储空间已满。</string>
+    <string name="fix_billing_payment_failed_warning">上一次向您支付方式的扣款未能成功，在「设置」「账单」中更新它就可以继续您的方案。您的邮件不受影响。</string>
+    <string name="fix_billing_update_payment_method">更新支付方式</string>
+    <string name="fix_billing_card_expires">到期 %1$s</string>
+    <string name="fix_billing_status_trialing">试用</string>
+    <string name="fix_billing_status_past_due">逾期未付</string>
+    <string name="fix_billing_status_canceled">已取消</string>
+    <string name="fix_billing_billed_monthly">按月计费</string>
+    <string name="fix_billing_billed_yearly">按年计费</string>
+    <string name="fix_billing_history_empty">暂无账单。首次扣款后，你的付款会显示在这里。</string>
+    <string name="fix_billing_quota_count">%1$d / %2$d</string>
+</resources>

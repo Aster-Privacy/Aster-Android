@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="domains_load_timeout">Le chargement de vos domaines prend plus de temps que prévu. Vérifiez votre connexion, puis réessayez.</string>
+    <string name="domain_manage_mail_setup">Configuration de la messagerie</string>
+    <string name="domain_manage_dns_unavailable">Les détails de configuration apparaissent ici une fois ce domaine ajouté à votre compte.</string>
+    <string name="domain_manage_verification">Vérification</string>
+    <string name="domain_manage_last_verified">Dernière vérification</string>
+    <string name="domain_manage_never_verified">Pas encore vérifié</string>
+    <string name="domain_manage_records">Enregistrements DNS</string>
+    <string name="domain_manage_catch_all_description">Recevoir les messages envoyés à n\'importe quelle adresse de ce domaine.</string>
+    <string name="domain_manage_recheck">Revérifier les enregistrements DNS</string>
+    <string name="domain_manage_rechecking">Vérification des enregistrements DNS</string>
+</resources>

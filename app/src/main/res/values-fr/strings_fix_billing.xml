@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_billing_available_plans">Forfaits disponibles</string>
+    <string name="fix_billing_status_active">Actif</string>
+    <string name="fix_billing_free_plan_description">Vous êtes sur l\'offre gratuite. Découvrez les offres payantes ci-dessous pour plus de stockage, d\'alias et de fonctionnalités.</string>
+    <string name="fix_billing_upgrade_for_more">Passez à une offre supérieure pour plus de stockage, d\'alias et de fonctionnalités</string>
+    <string name="fix_billing_manage_plan">Gérer le forfait</string>
+    <string name="fix_billing_quota_aliases">Alias e-mail</string>
+    <string name="fix_billing_quota_domains">Domaines personnalisés</string>
+    <string name="fix_billing_per_month_short">/mois</string>
+    <string name="fix_billing_per_year_short">/an</string>
+    <string name="fix_billing_billed_annually">facturé chaque année</string>
+    <string name="fix_billing_plan_recommended">Recommandé</string>
+    <string name="fix_billing_get_plan">Choisir %1$s</string>
+    <string name="fix_billing_autorenew_notice">Votre abonnement se renouvelle automatiquement au tarif de %1$s jusqu\'à son annulation. Pour éviter le prochain prélèvement, annulez-le dans Réglages avant la date de renouvellement.</string>
+    <string name="fix_billing_autorenew_notice_short">Votre forfait se renouvelle automatiquement lorsque vous payez par carte. Pour éviter le prochain prélèvement, annulez-le dans Réglages avant la date de renouvellement.</string>
+    <string name="fix_billing_payment_methods_title">Moyens de paiement</string>
+    <string name="fix_billing_payment_methods_description">Gérez vos moyens de paiement enregistrés</string>
+    <string name="fix_billing_no_payment_methods">Aucun moyen de paiement enregistré</string>
+    <string name="fix_billing_default_card">Par défaut</string>
+    <string name="fix_billing_set_as_default">Définir par défaut</string>
+    <string name="fix_billing_invoice_status_paid">Payé</string>
+    <string name="fix_billing_invoice_status_failed">Échoué</string>
+    <string name="fix_billing_invoice_status_open">Ouvert</string>
+    <string name="fix_billing_invoice_status_pending">En attente</string>
+    <string name="fix_billing_invoice_status_draft">Brouillon</string>
+    <string name="fix_billing_invoice_status_void">Annulé</string>
+    <string name="fix_billing_invoice_status_uncollectible">Irrécouvrable</string>
+    <string name="fix_billing_invoice_status_refunded">Remboursé</string>
+    <string name="fix_billing_invoice_pdf">PDF</string>
+    <string name="fix_billing_invoice_payment">Paiement</string>
+    <string name="fix_billing_storage_limit_exceeded">Votre stockage est plein.</string>
+    <string name="fix_billing_payment_failed_warning">Le dernier débit sur votre moyen de paiement n\'est pas passé. Le mettre à jour dans Paramètres, Facturation gardera votre plan actif. Votre courrier n\'est pas affecté.</string>
+    <string name="fix_billing_update_payment_method">Mettre à jour le moyen de paiement</string>
+    <string name="fix_billing_card_expires">Expire le %1$s</string>
+    <string name="fix_billing_status_trialing">Essai</string>
+    <string name="fix_billing_status_past_due">Paiement en retard</string>
+    <string name="fix_billing_status_canceled">Annulé</string>
+    <string name="fix_billing_billed_monthly">Facturation mensuelle</string>
+    <string name="fix_billing_billed_yearly">Facturation annuelle</string>
+    <string name="fix_billing_history_empty">Aucune facture pour le moment. Vos paiements apparaissent ici après le premier prélèvement.</string>
+    <string name="fix_billing_quota_count">%1$d / %2$d</string>
+</resources>

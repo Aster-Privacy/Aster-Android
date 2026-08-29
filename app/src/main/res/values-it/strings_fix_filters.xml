@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_filters_search_blocked">Cerca mittenti bloccati</string>
+    <string name="fix_filters_search_allowed">Cerca mittenti consentiti</string>
+    <string name="fix_filters_search">Cerca</string>
+    <string name="fix_filters_clear_search">Cancella ricerca</string>
+    <string name="fix_filters_no_results_title">Nessun risultato</string>
+    <string name="fix_filters_no_results_body">Prova con un\'altra ricerca.</string>
+    <string name="fix_filters_blocked_description">La posta di questi mittenti non arriva mai nella tua Posta in arrivo.</string>
+    <string name="fix_filters_allowed_description">La posta di questi mittenti arriva sempre nella tua Posta in arrivo, anche se sembra spam.</string>
+    <string name="fix_filters_blocked_empty_body">Blocca un mittente per tenere la sua posta fuori dalla Posta in arrivo.</string>
+    <string name="fix_filters_allowed_empty_body">Aggiungi un mittente per tenere la sua posta fuori dallo spam.</string>
+</resources>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_filters_search_blocked">Buscar remitentes bloqueados</string>
+    <string name="fix_filters_search_allowed">Buscar remitentes permitidos</string>
+    <string name="fix_filters_search">Buscar</string>
+    <string name="fix_filters_clear_search">Borrar búsqueda</string>
+    <string name="fix_filters_no_results_title">Sin resultados</string>
+    <string name="fix_filters_no_results_body">Prueba con otra búsqueda.</string>
+    <string name="fix_filters_blocked_description">El correo de estos remitentes nunca llega a tu bandeja de entrada.</string>
+    <string name="fix_filters_allowed_description">El correo de estos remitentes siempre llega a tu bandeja de entrada, aunque parezca spam.</string>
+    <string name="fix_filters_blocked_empty_body">Bloquea a un remitente para que su correo no llegue a tu bandeja de entrada.</string>
+    <string name="fix_filters_allowed_empty_body">Añade un remitente para que su correo no acabe en spam.</string>
+</resources>

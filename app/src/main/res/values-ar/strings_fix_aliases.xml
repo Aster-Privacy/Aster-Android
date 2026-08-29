@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alias_filter_all">الكل</string>
+    <string name="alias_filter_active">نشط</string>
+    <string name="alias_filter_disabled">معطّل</string>
+    <string name="alias_filter_all_domains">كل النطاقات</string>
+    <string name="alias_import_file_hint">اختر ملف CSV أو JSON للاستيراد</string>
+    <string name="alias_import_change_file">تغيير الملف</string>
+    <string name="alias_import_remove_file">إزالة الملف</string>
+    <string name="alias_note_placeholder_short">أين تستخدمه</string>
+</resources>

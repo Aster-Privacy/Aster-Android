@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="compose_discard_draft_title">Bu taslak atılsın mı?</string>
+    <string name="compose_discard_draft_message">Bu ileti kaydedilmedi. Atarsan metin ve tüm ekler silinir.</string>
+</resources>

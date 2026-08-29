@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="low_network_mode_active_banner">Tryb słabej sieci jest włączony</string>
+    <string name="low_network_mode_banner_action">Ustawienia</string>
+    <string name="low_network_mode_info_desc_v2">Utrzymuje Aster w użyciu na wolnych lub taryfowych połączeniach. Aster pomija zdjęcia profilowe, logo nadawców i zewnętrzne obrazy w wiadomościach, pokazuje każdą wiadomość jako zwykły tekst, wczytuje krótsze strony skrzynki i pokazuje najwyżej 4 wiadomości w wątku. Sprawdzanie poczty w tle działa rzadziej, animacje są wyłączone, a załączniki wczytują się dopiero po ich otwarciu. Tryb słabej sieci włącza się też sam, gdy Oszczędzanie danych ogranicza dane w tle na połączeniu taryfowym.</string>
+    <string name="low_network_mode_data_saver_note">Oszczędzanie danych utrzymuje ten tryb, dopóki nie wyłączysz go w ustawieniach Androida.</string>
+</resources>

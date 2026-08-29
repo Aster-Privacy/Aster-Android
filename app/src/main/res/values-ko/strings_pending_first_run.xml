@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="first_run_title">Aster Mail을 시작합니다</string>
+    <string name="first_run_subtitle">기존 메일을 가져오거나 새로 시작하세요. 나중에 설정에서 가져올 수 있습니다.</string>
+    <string name="first_run_import">메일 가져오기</string>
+    <string name="first_run_skip">나중에</string>
+    <string name="first_run_privacy_note">메일은 기기를 떠나기 전에 암호화됩니다.</string>
+    <string name="recovery_reminder_title">복구 이메일 추가</string>
+    <string name="recovery_reminder_body">복구 이메일이 있으면 비밀번호를 잊어도 계정에 다시 로그인할 수 있습니다.</string>
+    <string name="recovery_reminder_action">복구 이메일 추가</string>
+    <string name="recovery_reminder_later">나중에</string>
+    <string name="plan_prompt_title">Aster Mail 더 활용하기</string>
+    <string name="plan_prompt_body">업그레이드하면 저장 공간이 늘어나고 사용자 지정 도메인과 무제한 별칭을 사용할 수 있습니다.</string>
+    <string name="plan_prompt_action">요금제 보기</string>
+    <string name="plan_prompt_dismiss">나중에</string>
+</resources>

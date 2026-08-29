@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="domains_load_timeout">Загрузка ваших доменов занимает больше времени, чем обычно. Проверьте подключение и повторите попытку.</string>
+    <string name="domain_manage_mail_setup">Настройка почты</string>
+    <string name="domain_manage_dns_unavailable">Сведения о настройке почты появятся здесь после того, как этот домен будет добавлен в аккаунт.</string>
+    <string name="domain_manage_verification">Проверка</string>
+    <string name="domain_manage_last_verified">Последняя проверка</string>
+    <string name="domain_manage_never_verified">Еще не проверен</string>
+    <string name="domain_manage_records">Записи DNS</string>
+    <string name="domain_manage_catch_all_description">Получайте письма, отправленные на любой адрес в этом домене.</string>
+    <string name="domain_manage_recheck">Проверить записи DNS еще раз</string>
+    <string name="domain_manage_rechecking">Проверка записей DNS</string>
+</resources>

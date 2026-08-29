@@ -768,7 +768,8 @@
     <string name="connection_cdn_relay">CDN relay</string>
     <string name="connection_cdn_relay_description">Route traffic through a content delivery relay to mask your IP address.</string>
     <string name="failed_save_connection_preference">Couldn\'t save connection preference</string>
-    <string name="settings_aliases">Aliases &amp; domains</string>
+    <string name="settings_aliases">Aliases</string>
+    <string name="settings_domains">Domains</string>
     <string name="settings_aliases_subtitle">Manage addresses</string>
     <string name="settings_billing">Billing</string>
     <string name="settings_billing_subtitle">Plan, invoices, payment methods</string>
@@ -1934,7 +1935,7 @@
     <string name="upgrade_resource_generic">this feature</string>
     <string name="storage_locked_title">Storage is full</string>
     <string name="storage_locked_description">Incoming mail will be rejected until you free up space or add storage.</string>
-    <string name="storage_locked_bounce_warning">Permanent bounce in %1$s days.</string>
+    <string name="storage_locked_bounce_warning">Permanent bounce in %1$s.</string>
     <string name="usage_of">%1$s of %2$s</string>
     <string name="usage_unlimited">Unlimited</string>
     <string name="usage_storage">Storage</string>
@@ -2432,7 +2433,7 @@
     <string name="kids_reserved_addresses">Reserved addresses for kids</string>
     <string name="kids_reserved_subtitle">Hold an address for your child. Share the claim link so they can finish setup with their own password.</string>
     <string name="kids_seats_used">%1$d of %2$d family seats used</string>
-    <string name="kids_seats_breakdown">%1$d members, %2$d invitations, %3$d reserved addresses</string>
+    <string name="kids_seats_breakdown">%1$s, %2$s, %3$s</string>
     <string name="kids_no_reservations">No reserved addresses yet. Reserve one on astermail.org.</string>
     <string name="kids_reserve_on_web">Reserve on web</string>
     <string name="kids_status_reserved">Reserved</string>
@@ -2651,7 +2652,7 @@
     <string name="alias_import_description">Choose a CSV or JSON file that lists your aliases.</string>
     <string name="alias_import_choose_file">Choose file</string>
     <string name="alias_import_target_domain">Import to</string>
-    <string name="alias_import_counts">%1$d to import / %2$d already exist / %3$d invalid</string>
+    <string name="alias_import_counts">%1$s / %2$s / %3$s</string>
     <string name="alias_import_update_existing">Re-enable if disabled</string>
     <string name="alias_import_confirm">Import %1$d aliases</string>
     <string name="alias_import_progress">Importing %1$d of %2$d...</string>
@@ -2668,7 +2669,7 @@
     <string name="alias_export_source_count">%1$d entries</string>
     <string name="alias_export_warning_title">This file is not encrypted</string>
     <string name="alias_export_warning_body">Anyone who opens it can read every alias, note and website it contains. Keep it in your password manager or on an encrypted drive.</string>
-    <string name="alias_export_summary">%1$d entries across %2$d file(s).</string>
+    <string name="alias_export_summary">%1$s across %2$s.</string>
     <string name="chip_any_time">Any time</string>
     <string name="chip_older_than_week">Older than a week</string>
     <string name="chip_older_than_month">Older than a month</string>

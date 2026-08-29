@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sessions_other_devices_section">Outros dispositivos</string>
+    <string name="session_meta_line">%1$s · %2$s</string>
+    <string name="session_client_browser">Navegador web</string>
+    <string name="session_client_phone">Telefone</string>
+    <string name="session_client_tablet">Tablet</string>
+    <string name="session_client_desktop">Computador</string>
+    <string name="session_client_desktop_app">App para computador</string>
+    <string name="session_client_bridge">Ponte de e-mail</string>
+    <string name="link_device_step_code">Código</string>
+    <string name="link_device_step_confirm">Confirmar</string>
+    <string name="link_device_step_done">Vinculado</string>
+    <string name="link_device_hero_title">Digite o código do dispositivo</string>
+    <string name="link_device_confirm_title">Confirme este dispositivo</string>
+    <string name="link_device_pending_badge">Pendente</string>
+</resources>

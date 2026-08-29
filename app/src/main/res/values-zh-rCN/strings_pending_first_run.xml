@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="first_run_title">欢迎使用 Aster Mail</string>
+    <string name="first_run_subtitle">把现有邮件一起带过来，或者从头开始。你也可以稍后在“设置”中导入。</string>
+    <string name="first_run_import">导入你的邮件</string>
+    <string name="first_run_skip">暂不</string>
+    <string name="first_run_privacy_note">邮件在离开你的设备之前就会被加密。</string>
+    <string name="recovery_reminder_title">添加恢复邮箱</string>
+    <string name="recovery_reminder_body">设置恢复邮箱后，忘记密码时也能重新登录账户。</string>
+    <string name="recovery_reminder_action">添加恢复邮箱</string>
+    <string name="recovery_reminder_later">稍后</string>
+    <string name="plan_prompt_title">解锁更多 Aster Mail 功能</string>
+    <string name="plan_prompt_body">升级即可获得更多存储空间、自定义域名和无限别名。</string>
+    <string name="plan_prompt_action">查看方案</string>
+    <string name="plan_prompt_dismiss">暂不</string>
+</resources>

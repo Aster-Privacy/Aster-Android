@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="low_network_mode_active_banner">Düşük ağ modu açık</string>
+    <string name="low_network_mode_banner_action">Ayarlar</string>
+    <string name="low_network_mode_info_desc_v2">Aster\'i yavaş veya kotalı bağlantılarda kullanılabilir tutar. Aster profil fotoğraflarını, gönderen logolarını ve e-postadaki dış görselleri atlar, her iletiyi düz metin olarak gösterir, daha kısa gelen kutusu sayfaları yükler ve bir konuşmada en fazla 4 ileti gösterir. Arka planda posta denetimleri daha seyrek çalışır, animasyonlar kapanır ve ekler yalnızca sen açtığında yüklenir. Kotalı bir bağlantıda Veri Tasarrufu arka plan verisini sınırlarken düşük ağ modu kendiliğinden de açılır.</string>
+    <string name="low_network_mode_data_saver_note">Android ayarlarında kapatana kadar Veri Tasarrufu bunu açık tutar.</string>
+</resources>

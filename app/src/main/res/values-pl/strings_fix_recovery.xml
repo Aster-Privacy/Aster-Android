@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recovery_email_verified_note">Tego adresu możesz użyć do zresetowania hasła.</string>
+    <string name="recovery_email_pending_note">Otwórz link w swojej skrzynce, aby zweryfikować ten adres.</string>
+    <string name="recovery_email_not_verified_badge">Niezweryfikowany</string>
+    <string name="recovery_email_action_resend">Wyślij ponownie</string>
+    <string name="recovery_email_action_remove">Usuń</string>
+    <string name="delete_account_second_factor_checking">Sprawdzanie ustawień zabezpieczeń</string>
+</resources>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_billing_available_plans">Beschikbare abonnementen</string>
+    <string name="fix_billing_status_active">Actief</string>
+    <string name="fix_billing_free_plan_description">Je gebruikt het gratis abonnement. Bekijk hieronder betaalde abonnementen voor meer opslag, aliassen en functies.</string>
+    <string name="fix_billing_upgrade_for_more">Upgrade om meer opslag, aliassen en functies te ontgrendelen</string>
+    <string name="fix_billing_manage_plan">Abonnement beheren</string>
+    <string name="fix_billing_quota_aliases">E-mailaliassen</string>
+    <string name="fix_billing_quota_domains">Eigen domeinen</string>
+    <string name="fix_billing_per_month_short">/mnd</string>
+    <string name="fix_billing_per_year_short">/jr</string>
+    <string name="fix_billing_billed_annually">jaarlijks gefactureerd</string>
+    <string name="fix_billing_plan_recommended">Aanbevolen</string>
+    <string name="fix_billing_get_plan">Kies %1$s</string>
+    <string name="fix_billing_autorenew_notice">Je abonnement wordt automatisch verlengd voor %1$s totdat je het opzegt. Zeg op in Instellingen vóór de verlengingsdatum om de volgende afschrijving te voorkomen.</string>
+    <string name="fix_billing_autorenew_notice_short">Je abonnement wordt automatisch verlengd als je met een kaart betaalt. Zeg op in Instellingen vóór de verlengingsdatum om de volgende afschrijving te voorkomen.</string>
+    <string name="fix_billing_payment_methods_title">Betaalmethoden</string>
+    <string name="fix_billing_payment_methods_description">Beheer je opgeslagen betaalmethoden</string>
+    <string name="fix_billing_no_payment_methods">Geen betaalmethoden opgeslagen</string>
+    <string name="fix_billing_default_card">Standaard</string>
+    <string name="fix_billing_set_as_default">Als standaard instellen</string>
+    <string name="fix_billing_invoice_status_paid">Betaald</string>
+    <string name="fix_billing_invoice_status_failed">Mislukt</string>
+    <string name="fix_billing_invoice_status_open">Openstaand</string>
+    <string name="fix_billing_invoice_status_pending">In behandeling</string>
+    <string name="fix_billing_invoice_status_draft">Concept</string>
+    <string name="fix_billing_invoice_status_void">Ongeldig</string>
+    <string name="fix_billing_invoice_status_uncollectible">Oninbaar</string>
+    <string name="fix_billing_invoice_status_refunded">Terugbetaald</string>
+    <string name="fix_billing_invoice_pdf">PDF</string>
+    <string name="fix_billing_invoice_payment">Betaling</string>
+    <string name="fix_billing_storage_limit_exceeded">Uw opslag is vol.</string>
+    <string name="fix_billing_payment_failed_warning">De laatste betaling op uw betaalmethode is niet doorgegaan. Deze bijwerken in Instellingen, Facturering houdt uw abonnement draaiende. Uw post wordt niet getroffen.</string>
+    <string name="fix_billing_update_payment_method">Betaalmethode bijwerken</string>
+    <string name="fix_billing_card_expires">Verloopt %1$s</string>
+    <string name="fix_billing_status_trialing">Proef</string>
+    <string name="fix_billing_status_past_due">Achterstallig</string>
+    <string name="fix_billing_status_canceled">Geannuleerd</string>
+    <string name="fix_billing_billed_monthly">Maandelijks gefactureerd</string>
+    <string name="fix_billing_billed_yearly">Jaarlijks gefactureerd</string>
+    <string name="fix_billing_history_empty">Nog geen facturen. Uw betalingen verschijnen hier na de eerste afschrijving.</string>
+    <string name="fix_billing_quota_count">%1$d / %2$d</string>
+</resources>

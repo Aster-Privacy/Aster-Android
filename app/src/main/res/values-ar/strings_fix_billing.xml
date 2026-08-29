@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_billing_available_plans">الخطط المتاحة</string>
+    <string name="fix_billing_status_active">نشط</string>
+    <string name="fix_billing_free_plan_description">أنت على الخطة المجانية. استكشف الخطط المدفوعة أدناه للحصول على مزيد من التخزين والأسماء المستعارة والميزات.</string>
+    <string name="fix_billing_upgrade_for_more">قم بالترقية لفتح المزيد من التخزين والأسماء المستعارة والميزات</string>
+    <string name="fix_billing_manage_plan">إدارة الخطة</string>
+    <string name="fix_billing_quota_aliases">الأسماء المستعارة للبريد</string>
+    <string name="fix_billing_quota_domains">النطاقات المخصصة</string>
+    <string name="fix_billing_per_month_short">/شهريًا</string>
+    <string name="fix_billing_per_year_short">/سنويًا</string>
+    <string name="fix_billing_billed_annually">يُحاسب سنويًا</string>
+    <string name="fix_billing_plan_recommended">موصى به</string>
+    <string name="fix_billing_get_plan">احصل على %1$s</string>
+    <string name="fix_billing_autorenew_notice">يتجدد اشتراكك تلقائيًا بمبلغ %1$s إلى أن تلغيه. لتجنب الرسوم التالية، ألغِ الاشتراك من الإعدادات قبل تاريخ التجديد.</string>
+    <string name="fix_billing_autorenew_notice_short">تتجدد خطتك تلقائيًا عند الدفع بالبطاقة. لتجنب الرسوم التالية، ألغِ الخطة من الإعدادات قبل تاريخ التجديد.</string>
+    <string name="fix_billing_payment_methods_title">طرق الدفع</string>
+    <string name="fix_billing_payment_methods_description">إدارة طرق الدفع المحفوظة</string>
+    <string name="fix_billing_no_payment_methods">لا توجد طرق دفع محفوظة</string>
+    <string name="fix_billing_default_card">افتراضي</string>
+    <string name="fix_billing_set_as_default">تعيين كافتراضي</string>
+    <string name="fix_billing_invoice_status_paid">مدفوع</string>
+    <string name="fix_billing_invoice_status_failed">فشل</string>
+    <string name="fix_billing_invoice_status_open">مفتوح</string>
+    <string name="fix_billing_invoice_status_pending">معلّق</string>
+    <string name="fix_billing_invoice_status_draft">مسودة</string>
+    <string name="fix_billing_invoice_status_void">ملغى</string>
+    <string name="fix_billing_invoice_status_uncollectible">غير قابل للتحصيل</string>
+    <string name="fix_billing_invoice_status_refunded">تم الاسترداد</string>
+    <string name="fix_billing_invoice_pdf">PDF</string>
+    <string name="fix_billing_invoice_payment">الدفع</string>
+    <string name="fix_billing_storage_limit_exceeded">التخزين لديك ممتلئ.</string>
+    <string name="fix_billing_payment_failed_warning">آخر عملية تحصيل من طريقة الدفع لم تتم. تحديثها في الإعدادات، الفوترة يبقي خطتك مستمرة. بريدك غير متأثر.</string>
+    <string name="fix_billing_update_payment_method">تحديث طريقة الدفع</string>
+    <string name="fix_billing_card_expires">تنتهي %1$s</string>
+    <string name="fix_billing_status_trialing">تجريبي</string>
+    <string name="fix_billing_status_past_due">متأخر السداد</string>
+    <string name="fix_billing_status_canceled">ملغى</string>
+    <string name="fix_billing_billed_monthly">فوترة شهرية</string>
+    <string name="fix_billing_billed_yearly">فوترة سنوية</string>
+    <string name="fix_billing_history_empty">لا توجد فواتير بعد. تظهر مدفوعاتك هنا بعد أول عملية دفع.</string>
+    <string name="fix_billing_quota_count">%1$d / %2$d</string>
+</resources>

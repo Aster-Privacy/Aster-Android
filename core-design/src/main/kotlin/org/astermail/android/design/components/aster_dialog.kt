@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -50,7 +51,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ripple
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.TweenSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
@@ -75,7 +76,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import org.astermail.android.design.AsterDuration
+import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterScale
+import org.astermail.android.design.AsterSlide
+import org.astermail.android.design.aster_reduce_motion
 
 private val dialog_shape = SquircleShape(18.dp)
 private val dialog_button_shape = SquircleShape(12.dp)
@@ -97,11 +103,42 @@ private val dlg_red_border_bot = Color(0xFF991B1B)
 
 enum class DialogConfirmStyle { primary, destructive }
 
-private const val dialog_enter_ms = 210
-private const val dialog_exit_ms = 140
+private const val dialog_enter_ms = AsterDuration.dialog_enter
+private const val dialog_exit_ms = AsterDuration.dialog_exit
 private const val dialog_scrim_alpha = 0.46f
-private val dialog_enter_easing = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
-private val dialog_exit_easing = CubicBezierEasing(0.3f, 0f, 0.8f, 0.15f)
+private const val dialog_content_enter_delay_ms = 30
+private val dialog_enter_easing = AsterEasing.dialog_enter
+private val dialog_exit_easing = AsterEasing.dialog_exit
+private val dialog_scrim_easing = AsterEasing.scrim
+private val dialog_slide_from = AsterSlide.dialog_dp.dp
+
+private fun dialog_duration(visible: Boolean, reduce_motion: Boolean): Int = when {
+    reduce_motion -> AsterDuration.instant
+    visible -> dialog_enter_ms
+    else -> dialog_exit_ms
+}
+
+private fun dialog_scrim_duration(visible: Boolean, reduce_motion: Boolean): Int = when {
+    reduce_motion -> AsterDuration.instant
+    visible -> AsterDuration.scrim_enter
+    else -> AsterDuration.scrim_exit
+}
+
+private fun dialog_scrim_spec(visible: Boolean, reduce_motion: Boolean): TweenSpec<Float> = tween(
+    durationMillis = dialog_scrim_duration(visible, reduce_motion),
+    easing = dialog_scrim_easing,
+)
+
+private fun dialog_content_spec(visible: Boolean, reduce_motion: Boolean): TweenSpec<Float> = tween(
+    durationMillis = dialog_duration(visible, reduce_motion),
+    delayMillis = if (visible && !reduce_motion) dialog_content_enter_delay_ms else AsterDuration.instant,
+    easing = if (visible) dialog_enter_easing else dialog_exit_easing,
+)
+
+private fun dialog_scale(progress: Float): Float =
+    AsterScale.dialog_enter_from + (1f - AsterScale.dialog_enter_from) * progress
+
+private fun dialog_slide(progress: Float) = dialog_slide_from * (1f - progress)
 
 private val dialog_properties = DialogProperties(
     dismissOnBackPress = true,
@@ -160,28 +197,33 @@ fun AsterDialog(
     footer: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit,
 ) {
     val colors = AsterMaterial.colors
+    val reduce_motion = aster_reduce_motion()
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { visible = true }
-    val progress by animateFloatAsState(
+    val scrim_progress by animateFloatAsState(
         targetValue = if (visible) 1f else 0f,
-        animationSpec = tween(
-            durationMillis = if (visible) dialog_enter_ms else dialog_exit_ms,
-            easing = if (visible) dialog_enter_easing else dialog_exit_easing,
-        ),
+        animationSpec = dialog_scrim_spec(visible, reduce_motion),
+        label = "dialog_scrim_progress",
+    )
+    val content_progress by animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = dialog_content_spec(visible, reduce_motion),
         finishedListener = { if (!visible) on_dismiss() },
         label = "dialog_progress",
     )
-    val scale = 0.94f + 0.06f * progress
+    val scale = dialog_scale(content_progress)
+    val slide = dialog_slide(content_progress)
     val start_dismiss: () -> Unit = { visible = false }
     Dialog(onDismissRequest = start_dismiss, properties = dialog_properties) {
         prepare_dialog_window()
-        dialog_scrim(progress = progress, on_dismiss = start_dismiss) {
+        dialog_scrim(progress = scrim_progress, on_dismiss = start_dismiss) {
         Surface(
             modifier = Modifier
                 .widthIn(max = dialog_max_width)
                 .padding(horizontal = 16.dp)
+                .offset(y = slide)
                 .scale(scale)
-                .alpha(progress)
+                .alpha(content_progress)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -249,15 +291,18 @@ fun AsterAlertDialog(
     extra_content: @Composable (() -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
+    val reduce_motion = aster_reduce_motion()
     var visible by remember { mutableStateOf(false) }
     var pending_confirm by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { visible = true }
-    val progress by animateFloatAsState(
+    val scrim_progress by animateFloatAsState(
         targetValue = if (visible) 1f else 0f,
-        animationSpec = tween(
-            durationMillis = if (visible) dialog_enter_ms else dialog_exit_ms,
-            easing = if (visible) dialog_enter_easing else dialog_exit_easing,
-        ),
+        animationSpec = dialog_scrim_spec(visible, reduce_motion),
+        label = "alert_scrim_progress",
+    )
+    val content_progress by animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = dialog_content_spec(visible, reduce_motion),
         finishedListener = {
             if (!visible) {
                 if (pending_confirm) on_confirm() else on_dismiss()
@@ -265,18 +310,20 @@ fun AsterAlertDialog(
         },
         label = "alert_progress",
     )
-    val scale = 0.94f + 0.06f * progress
+    val scale = dialog_scale(content_progress)
+    val slide = dialog_slide(content_progress)
     val start_dismiss: () -> Unit = { pending_confirm = false; visible = false }
     val start_confirm: () -> Unit = { pending_confirm = true; visible = false }
     Dialog(onDismissRequest = start_dismiss, properties = dialog_properties) {
         prepare_dialog_window()
-        dialog_scrim(progress = progress, on_dismiss = { if (!is_busy) start_dismiss() }) {
+        dialog_scrim(progress = scrim_progress, on_dismiss = { if (!is_busy) start_dismiss() }) {
         Surface(
             modifier = Modifier
                 .widthIn(max = dialog_max_width)
                 .padding(horizontal = 16.dp)
+                .offset(y = slide)
                 .scale(scale)
-                .alpha(progress)
+                .alpha(content_progress)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,

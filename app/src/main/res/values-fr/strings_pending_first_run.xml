@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="first_run_title">Bienvenue dans Aster Mail</string>
+    <string name="first_run_subtitle">Emportez votre messagerie actuelle ou partez de zéro. Vous pouvez importer plus tard depuis les Réglages.</string>
+    <string name="first_run_import">Importer votre messagerie</string>
+    <string name="first_run_skip">Pas maintenant</string>
+    <string name="first_run_privacy_note">Vos messages sont chiffrés avant de quitter votre appareil.</string>
+    <string name="recovery_reminder_title">Ajoutez une adresse de récupération</string>
+    <string name="recovery_reminder_body">Une adresse de récupération vous permet de retrouver votre compte si vous oubliez votre mot de passe.</string>
+    <string name="recovery_reminder_action">Ajouter une adresse de récupération</string>
+    <string name="recovery_reminder_later">Plus tard</string>
+    <string name="plan_prompt_title">Tirez le meilleur d’Aster Mail</string>
+    <string name="plan_prompt_body">Passez à une formule supérieure pour plus de stockage, des domaines personnalisés et des alias illimités.</string>
+    <string name="plan_prompt_action">Voir les formules</string>
+    <string name="plan_prompt_dismiss">Pas maintenant</string>
+</resources>

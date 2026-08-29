@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_lock_setup_failed">問題が発生しました。ロックをもう一度設定してください。</string>
+</resources>

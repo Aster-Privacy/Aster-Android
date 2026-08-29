@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="two_step_verification_title">Bestätigung in zwei Schritten</string>
+    <string name="two_step_verification_on_description">Für dein Konto ist zusätzlich zum Passwort ein Bestätigungscode erforderlich.</string>
+    <string name="two_step_verification_off_description">Für mehr Schutz kannst du zusätzlich zum Passwort einen Bestätigungscode verlangen.</string>
+    <string name="security_activity_filter_all">Alle</string>
+    <string name="security_activity_filter_sign_ins">Anmeldungen</string>
+    <string name="security_activity_filter_security">Sicherheitsänderungen</string>
+    <string name="security_activity_filter_failures">Fehlschläge</string>
+    <string name="security_activity_today">Heute</string>
+    <string name="security_activity_yesterday">Gestern</string>
+    <string name="security_activity_show_more">Mehr anzeigen</string>
+    <string name="security_activity_show_less">Weniger anzeigen</string>
+    <string name="security_activity_empty_filter">Keine Aktivität entspricht diesem Filter.</string>
+</resources>

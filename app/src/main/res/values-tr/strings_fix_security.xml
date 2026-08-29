@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="two_step_verification_title">İki adımlı doğrulama</string>
+    <string name="two_step_verification_on_description">Hesabınız, parolanıza ek olarak bir doğrulama kodu gerektiriyor.</string>
+    <string name="two_step_verification_off_description">Daha güçlü koruma için parolanıza ek olarak bir doğrulama kodu isteyin.</string>
+    <string name="security_activity_filter_all">Tümü</string>
+    <string name="security_activity_filter_sign_ins">Oturum açmalar</string>
+    <string name="security_activity_filter_security">Güvenlik değişiklikleri</string>
+    <string name="security_activity_filter_failures">Başarısızlıklar</string>
+    <string name="security_activity_today">Bugün</string>
+    <string name="security_activity_yesterday">Dün</string>
+    <string name="security_activity_show_more">Daha fazla göster</string>
+    <string name="security_activity_show_less">Daha az göster</string>
+    <string name="security_activity_empty_filter">Bu filtreyle eşleşen etkinlik yok.</string>
+</resources>

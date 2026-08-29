@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_billing_available_plans">Verfügbare Pläne</string>
+    <string name="fix_billing_status_active">Aktiv</string>
+    <string name="fix_billing_free_plan_description">Sie nutzen den kostenlosen Tarif. Entdecken Sie unten die kostenpflichtigen Tarife für mehr Speicher, Aliase und Funktionen.</string>
+    <string name="fix_billing_upgrade_for_more">Upgrade für mehr Speicher, Aliase und Funktionen</string>
+    <string name="fix_billing_manage_plan">Tarif verwalten</string>
+    <string name="fix_billing_quota_aliases">E-Mail-Aliase</string>
+    <string name="fix_billing_quota_domains">Eigene Domains</string>
+    <string name="fix_billing_per_month_short">/Mo.</string>
+    <string name="fix_billing_per_year_short">/Jahr</string>
+    <string name="fix_billing_billed_annually">jährliche Abrechnung</string>
+    <string name="fix_billing_plan_recommended">Empfohlen</string>
+    <string name="fix_billing_get_plan">%1$s holen</string>
+    <string name="fix_billing_autorenew_notice">Ihr Abonnement verlängert sich automatisch zu %1$s, bis Sie es kündigen. Um die nächste Abbuchung zu vermeiden, kündigen Sie es vor dem Verlängerungsdatum in den Einstellungen.</string>
+    <string name="fix_billing_autorenew_notice_short">Ihr Tarif verlängert sich automatisch, wenn Sie mit Karte bezahlen. Um die nächste Abbuchung zu vermeiden, kündigen Sie ihn vor dem Verlängerungsdatum in den Einstellungen.</string>
+    <string name="fix_billing_payment_methods_title">Zahlungsmethoden</string>
+    <string name="fix_billing_payment_methods_description">Gespeicherte Zahlungsmethoden verwalten</string>
+    <string name="fix_billing_no_payment_methods">Keine Zahlungsmethoden gespeichert</string>
+    <string name="fix_billing_default_card">Standard</string>
+    <string name="fix_billing_set_as_default">Als Standard festlegen</string>
+    <string name="fix_billing_invoice_status_paid">Bezahlt</string>
+    <string name="fix_billing_invoice_status_failed">Fehlgeschlagen</string>
+    <string name="fix_billing_invoice_status_open">Offen</string>
+    <string name="fix_billing_invoice_status_pending">Ausstehend</string>
+    <string name="fix_billing_invoice_status_draft">Entwurf</string>
+    <string name="fix_billing_invoice_status_void">Storniert</string>
+    <string name="fix_billing_invoice_status_uncollectible">Uneinbringlich</string>
+    <string name="fix_billing_invoice_status_refunded">Erstattet</string>
+    <string name="fix_billing_invoice_pdf">PDF</string>
+    <string name="fix_billing_invoice_payment">Zahlung</string>
+    <string name="fix_billing_storage_limit_exceeded">Ihr Speicher ist voll.</string>
+    <string name="fix_billing_payment_failed_warning">Die letzte Belastung Ihrer Zahlungsmethode ist nicht durchgegangen. Eine Aktualisierung unter Einstellungen, Abrechnung hält Ihren Tarif aktiv. Ihre Mails sind nicht betroffen.</string>
+    <string name="fix_billing_update_payment_method">Zahlungsmethode aktualisieren</string>
+    <string name="fix_billing_card_expires">Läuft ab %1$s</string>
+    <string name="fix_billing_status_trialing">Testphase</string>
+    <string name="fix_billing_status_past_due">Überfällig</string>
+    <string name="fix_billing_status_canceled">Gekündigt</string>
+    <string name="fix_billing_billed_monthly">Monatlich abgerechnet</string>
+    <string name="fix_billing_billed_yearly">Jährlich abgerechnet</string>
+    <string name="fix_billing_history_empty">Noch keine Rechnungen. Ihre Zahlungen erscheinen hier nach der ersten Abbuchung.</string>
+    <string name="fix_billing_quota_count">%1$d / %2$d</string>
+</resources>

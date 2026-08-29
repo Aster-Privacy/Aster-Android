@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_filters_search_blocked">Pesquisar remetentes bloqueados</string>
+    <string name="fix_filters_search_allowed">Pesquisar remetentes permitidos</string>
+    <string name="fix_filters_search">Pesquisar</string>
+    <string name="fix_filters_clear_search">Limpar pesquisa</string>
+    <string name="fix_filters_no_results_title">Sem resultados</string>
+    <string name="fix_filters_no_results_body">Tente outra pesquisa.</string>
+    <string name="fix_filters_blocked_description">O correio destes remetentes nunca chega à sua caixa de entrada.</string>
+    <string name="fix_filters_allowed_description">O correio destes remetentes chega sempre à sua caixa de entrada, mesmo que pareça spam.</string>
+    <string name="fix_filters_blocked_empty_body">Bloqueie um remetente para manter o correio dele fora da caixa de entrada.</string>
+    <string name="fix_filters_allowed_empty_body">Adicione um remetente para manter o correio dele fora do spam.</string>
+</resources>

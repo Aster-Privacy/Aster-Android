@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notif_login_alert_inbox_hint">詳細は受信トレイに届いています</string>
+</resources>

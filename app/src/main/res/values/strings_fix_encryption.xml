@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_enc_key_card_title">Your encryption key</string>
+    <string name="fix_enc_key_id_label">Key ID</string>
+    <string name="fix_enc_copy_key_id">Copy key ID</string>
+    <string name="fix_enc_key_id_copied">Key ID copied</string>
+    <string name="fix_enc_clipboard_label_key_id">Key ID</string>
+    <string name="fix_enc_never_expires">Never expires</string>
+    <string name="fix_enc_save_codes">Save to a file</string>
+    <string name="fix_enc_codes_share_title">Recovery codes</string>
+    <string name="fix_enc_codes_file_note">Each code works once. Keep this file somewhere safe.</string>
+    <string name="fix_enc_codes_save_failed">You can\'t save the file right now. Copy the codes instead.</string>
+    <string name="fix_enc_codes_confirm_saved">I saved my recovery codes</string>
+    <string name="fix_enc_codes_used">%1$d used</string>
+</resources>

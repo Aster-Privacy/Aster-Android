@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recovery_email_verified_note">يمكنك استخدام هذا العنوان لإعادة تعيين كلمة السر.</string>
+    <string name="recovery_email_pending_note">افتح الرابط في بريدك الوارد للتحقق من هذا العنوان.</string>
+    <string name="recovery_email_not_verified_badge">غير مُتحقق منه</string>
+    <string name="recovery_email_action_resend">إعادة الإرسال</string>
+    <string name="recovery_email_action_remove">إزالة</string>
+    <string name="delete_account_second_factor_checking">جارٍ التحقق من إعدادات الأمان</string>
+</resources>

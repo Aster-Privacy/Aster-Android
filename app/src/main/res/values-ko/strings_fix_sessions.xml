@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sessions_other_devices_section">다른 기기</string>
+    <string name="session_meta_line">%1$s · %2$s</string>
+    <string name="session_client_browser">웹 브라우저</string>
+    <string name="session_client_phone">휴대폰</string>
+    <string name="session_client_tablet">태블릿</string>
+    <string name="session_client_desktop">컴퓨터</string>
+    <string name="session_client_desktop_app">데스크탑 앱</string>
+    <string name="session_client_bridge">메일 브리지</string>
+    <string name="link_device_step_code">코드</string>
+    <string name="link_device_step_confirm">확인</string>
+    <string name="link_device_step_done">연결됨</string>
+    <string name="link_device_hero_title">기기 코드 입력</string>
+    <string name="link_device_confirm_title">이 기기를 확인하세요</string>
+    <string name="link_device_pending_badge">대기 중</string>
+</resources>

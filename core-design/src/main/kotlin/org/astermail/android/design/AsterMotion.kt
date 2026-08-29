@@ -21,7 +21,13 @@
 
 package org.astermail.android.design
 
+import android.content.Context
+import android.provider.Settings
 import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.platform.LocalContext
 
 object AsterEasing {
     val standard_in_out = CubicBezierEasing(0.25f, 0.1f, 0.25f, 1f)
@@ -32,6 +38,11 @@ object AsterEasing {
     val emphasized_exit = CubicBezierEasing(0f, 0f, 0.58f, 1f)
     val tap_down = CubicBezierEasing(0f, 0f, 0.58f, 1f)
     val tap_up = CubicBezierEasing(0f, 0f, 0.58f, 1f)
+    val menu_enter = CubicBezierEasing(0f, 0f, 0.2f, 1f)
+    val menu_exit = CubicBezierEasing(0.4f, 0f, 1f, 1f)
+    val dialog_enter = CubicBezierEasing(0f, 0f, 0.2f, 1f)
+    val dialog_exit = CubicBezierEasing(0.4f, 0f, 1f, 1f)
+    val scrim = CubicBezierEasing(0.4f, 0f, 0.2f, 1f)
 }
 
 object AsterDuration {
@@ -54,4 +65,47 @@ object AsterDuration {
 
     const val tap_down = 120
     const val tap_up = 180
+
+    const val menu_enter = 200
+    const val menu_exit = 140
+    const val menu_fade_enter = 160
+    const val menu_fade_exit = 120
+    const val menu_state_change = 120
+
+    const val dialog_enter = 240
+    const val dialog_exit = 160
+    const val scrim_enter = 200
+    const val scrim_exit = 160
+
+    const val instant = 0
+}
+
+object AsterScale {
+    const val menu_enter_from = 0.95f
+    const val menu_exit_to = 0.97f
+    const val dialog_enter_from = 0.96f
+}
+
+object AsterSlide {
+    const val menu_dp = 8
+    const val dialog_dp = 10
+}
+
+val local_reduce_motion = staticCompositionLocalOf { false }
+
+fun system_animations_disabled(context: Context): Boolean = try {
+    Settings.Global.getFloat(
+        context.contentResolver,
+        Settings.Global.ANIMATOR_DURATION_SCALE,
+        1f,
+    ) == 0f
+} catch (e: Exception) {
+    false
+}
+
+@Composable
+fun aster_reduce_motion(): Boolean {
+    if (local_reduce_motion.current) return true
+    val context = LocalContext.current
+    return remember(context) { system_animations_disabled(context) }
 }

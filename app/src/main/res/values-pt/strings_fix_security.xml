@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="two_step_verification_title">Verificação em duas etapas</string>
+    <string name="two_step_verification_on_description">Sua conta exige um código de verificação além da senha.</string>
+    <string name="two_step_verification_off_description">Para mais proteção, exija um código de verificação além da senha.</string>
+    <string name="security_activity_filter_all">Tudo</string>
+    <string name="security_activity_filter_sign_ins">Logins</string>
+    <string name="security_activity_filter_security">Alterações de segurança</string>
+    <string name="security_activity_filter_failures">Falhas</string>
+    <string name="security_activity_today">Hoje</string>
+    <string name="security_activity_yesterday">Ontem</string>
+    <string name="security_activity_show_more">Mostrar mais</string>
+    <string name="security_activity_show_less">Mostrar menos</string>
+    <string name="security_activity_empty_filter">Nenhuma atividade corresponde a este filtro.</string>
+</resources>

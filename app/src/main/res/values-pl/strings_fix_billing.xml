@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_billing_available_plans">Dostępne plany</string>
+    <string name="fix_billing_status_active">Aktywny</string>
+    <string name="fix_billing_free_plan_description">Korzystasz z darmowego planu. Zapoznaj się z płatnymi planami poniżej, aby uzyskać więcej miejsca, aliasów i funkcji.</string>
+    <string name="fix_billing_upgrade_for_more">Ulepsz, aby odblokować więcej miejsca, aliasów i funkcji</string>
+    <string name="fix_billing_manage_plan">Zarządzaj planem</string>
+    <string name="fix_billing_quota_aliases">Aliasy e-mail</string>
+    <string name="fix_billing_quota_domains">Domeny własne</string>
+    <string name="fix_billing_per_month_short">/mies.</string>
+    <string name="fix_billing_per_year_short">/rok</string>
+    <string name="fix_billing_billed_annually">rozliczane rocznie</string>
+    <string name="fix_billing_plan_recommended">Rekomendowane</string>
+    <string name="fix_billing_get_plan">Wybierz %1$s</string>
+    <string name="fix_billing_autorenew_notice">Subskrypcja odnawia się automatycznie za %1$s, dopóki jej nie anulujesz. Aby uniknąć kolejnej opłaty, anuluj ją w Ustawieniach przed datą odnowienia.</string>
+    <string name="fix_billing_autorenew_notice_short">Przy płatności kartą plan odnawia się automatycznie. Aby uniknąć kolejnej opłaty, anuluj go w Ustawieniach przed datą odnowienia.</string>
+    <string name="fix_billing_payment_methods_title">Metody płatności</string>
+    <string name="fix_billing_payment_methods_description">Zarządzaj zapisanymi metodami płatności</string>
+    <string name="fix_billing_no_payment_methods">Brak zapisanych metod płatności</string>
+    <string name="fix_billing_default_card">Domyślna</string>
+    <string name="fix_billing_set_as_default">Ustaw jako domyślne</string>
+    <string name="fix_billing_invoice_status_paid">Opłacona</string>
+    <string name="fix_billing_invoice_status_failed">Nieudana</string>
+    <string name="fix_billing_invoice_status_open">Otwarta</string>
+    <string name="fix_billing_invoice_status_pending">Oczekuje</string>
+    <string name="fix_billing_invoice_status_draft">Wersja robocza</string>
+    <string name="fix_billing_invoice_status_void">Unieważniona</string>
+    <string name="fix_billing_invoice_status_uncollectible">Nieściągalna</string>
+    <string name="fix_billing_invoice_status_refunded">Zwrócono</string>
+    <string name="fix_billing_invoice_pdf">PDF</string>
+    <string name="fix_billing_invoice_payment">Płatność</string>
+    <string name="fix_billing_storage_limit_exceeded">Pamięć jest pełna.</string>
+    <string name="fix_billing_payment_failed_warning">Ostatnia opłata na metodzie płatności nie przeszła. Aktualizacja w Ustawienia, Rozliczenia utrzyma plan w działaniu. Poczta pozostaje bez zmian.</string>
+    <string name="fix_billing_update_payment_method">Zaktualizuj metodę płatności</string>
+    <string name="fix_billing_card_expires">Wygasa %1$s</string>
+    <string name="fix_billing_status_trialing">Okres próbny</string>
+    <string name="fix_billing_status_past_due">Zaległa płatność</string>
+    <string name="fix_billing_status_canceled">Anulowano</string>
+    <string name="fix_billing_billed_monthly">Rozliczenie miesięczne</string>
+    <string name="fix_billing_billed_yearly">Rozliczenie roczne</string>
+    <string name="fix_billing_history_empty">Brak faktur. Twoje płatności pojawią się tutaj po pierwszym obciążeniu.</string>
+    <string name="fix_billing_quota_count">%1$d / %2$d</string>
+</resources>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recovery_email_verified_note">You can use this address to reset your password.</string>
+    <string name="recovery_email_pending_note">Open the link in your inbox to verify this address.</string>
+    <string name="recovery_email_not_verified_badge">Not verified</string>
+    <string name="recovery_email_action_resend">Resend</string>
+    <string name="recovery_email_action_remove">Remove</string>
+    <string name="delete_account_second_factor_checking">Checking your security settings</string>
+</resources>

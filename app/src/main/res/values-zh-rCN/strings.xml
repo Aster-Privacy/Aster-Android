@@ -475,7 +475,8 @@
     <string name="settings_security_subtitle">密码、双重验证、会话</string>
     <string name="settings_encryption">加密</string>
     <string name="settings_encryption_subtitle">PGP 密钥和恢复</string>
-    <string name="settings_aliases">别名和域名</string>
+    <string name="settings_aliases">别名</string>
+    <string name="settings_domains">域名</string>
     <string name="settings_aliases_subtitle">管理地址</string>
     <string name="settings_billing">账单</string>
     <string name="settings_billing_subtitle">方案、发票、支付方式</string>
@@ -1866,7 +1867,7 @@
     <string name="upgrade_resource_generic">此功能</string>
     <string name="storage_locked_title">空间已满</string>
     <string name="storage_locked_description">在你释放空间或增加容量之前，收到的邮件将被拒收。</string>
-    <string name="storage_locked_bounce_warning">%1$s 天后将永久退信。</string>
+    <string name="storage_locked_bounce_warning">%1$s后将永久退信。</string>
     <string name="usage_of">%1$s / %2$s</string>
     <string name="usage_unlimited">无限制</string>
     <string name="usage_storage">存储空间</string>
@@ -2314,7 +2315,7 @@
     <string name="kids_reserved_addresses">为孩子预留的地址</string>
     <string name="kids_reserved_subtitle">为孩子预留一个地址。把认领链接发给他，他就能用自己的密码完成设置。</string>
     <string name="kids_seats_used">家庭名额已用 %1$d / %2$d</string>
-    <string name="kids_seats_breakdown">成员 %1$d 名、邀请 %2$d 个、预留地址 %3$d 个</string>
+    <string name="kids_seats_breakdown">%1$s、%2$s、%3$s</string>
     <string name="kids_no_reservations">还没有预留地址。请在 astermail.org 预留一个。</string>
     <string name="kids_reserve_on_web">在网页端预留</string>
     <string name="kids_status_reserved">已预留</string>
@@ -2466,7 +2467,7 @@
     <string name="alias_import_description">选择包含别名的 CSV 或 JSON 文件。</string>
     <string name="alias_import_choose_file">选择文件</string>
     <string name="alias_import_target_domain">导入至</string>
-    <string name="alias_import_counts">%1$d 将导入 / %2$d 已存在 / %3$d 无效</string>
+    <string name="alias_import_counts">%1$s / %2$s / %3$s</string>
     <string name="alias_import_update_existing">若已停用则重新启用</string>
     <string name="alias_import_confirm">导入 %1$d 个别名</string>
     <string name="alias_import_progress">正在导入 %2$d 中的第 %1$d 个……</string>
@@ -2485,7 +2486,7 @@
     <string name="alias_export_source_count">%1$d 条</string>
     <string name="alias_export_warning_title">此文件未加密</string>
     <string name="alias_export_warning_body">任何打开它的人都能看到其中的全部别名、备注和网站。请保存在密码管理器或加密磁盘中。</string>
-    <string name="alias_export_summary">共 %1$d 条，分为 %2$d 个文件。</string>
+    <string name="alias_export_summary">共 %1$s，分为 %2$s。</string>
     <string name="alias_export_download">保存</string>
     <string name="alias_export_failed">导出失败，未保存任何文件。</string>
     <string name="chip_any_time">任何时间</string>

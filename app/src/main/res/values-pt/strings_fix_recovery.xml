@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recovery_email_verified_note">Você pode usar este endereço para redefinir sua senha.</string>
+    <string name="recovery_email_pending_note">Abra o link na sua caixa de entrada para verificar este endereço.</string>
+    <string name="recovery_email_not_verified_badge">Não verificado</string>
+    <string name="recovery_email_action_resend">Reenviar</string>
+    <string name="recovery_email_action_remove">Remover</string>
+    <string name="delete_account_second_factor_checking">Verificando suas configurações de segurança</string>
+</resources>

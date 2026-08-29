@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alias_filter_all">Alle</string>
+    <string name="alias_filter_active">Actief</string>
+    <string name="alias_filter_disabled">Uitgeschakeld</string>
+    <string name="alias_filter_all_domains">Alle domeinen</string>
+    <string name="alias_import_file_hint">Kies een CSV- of JSON-bestand om te importeren</string>
+    <string name="alias_import_change_file">Bestand wijzigen</string>
+    <string name="alias_import_remove_file">Bestand verwijderen</string>
+    <string name="alias_note_placeholder_short">Waar je hem gebruikt</string>
+</resources>

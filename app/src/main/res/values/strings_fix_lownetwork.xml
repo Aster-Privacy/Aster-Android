@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="low_network_mode_active_banner">Low network mode is on</string>
+    <string name="low_network_mode_banner_action">Settings</string>
+    <string name="low_network_mode_info_desc_v2">Keeps Aster usable on slow or metered connections. Aster skips profile pictures, sender logos, and external images in email, shows every message as plain text, loads shorter inbox pages, and shows at most 4 messages in a conversation. Background mail checks run less often, animations turn off, and attachments load only when you open them. Low network mode also turns on by itself while Data Saver limits background data on a metered connection.</string>
+    <string name="low_network_mode_data_saver_note">Data Saver keeps this on until you turn it off in Android settings.</string>
+</resources>

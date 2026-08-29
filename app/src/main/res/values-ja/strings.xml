@@ -475,7 +475,8 @@
     <string name="settings_security_subtitle">パスワード、2FA、セッション</string>
     <string name="settings_encryption">暗号化</string>
     <string name="settings_encryption_subtitle">PGPキーとリカバリ</string>
-    <string name="settings_aliases">エイリアスとドメイン</string>
+    <string name="settings_aliases">エイリアス</string>
+    <string name="settings_domains">ドメイン</string>
     <string name="settings_aliases_subtitle">アドレスの管理</string>
     <string name="settings_billing">請求</string>
     <string name="settings_billing_subtitle">プラン、請求書、支払い方法</string>
@@ -1866,7 +1867,7 @@
     <string name="upgrade_resource_generic">この機能</string>
     <string name="storage_locked_title">容量がいっぱいです</string>
     <string name="storage_locked_description">空き容量を作るか容量を追加するまで、受信メールは拒否されます。</string>
-    <string name="storage_locked_bounce_warning">%1$s 日後に完全に差し戻されます。</string>
+    <string name="storage_locked_bounce_warning">%1$s後に完全に差し戻されます。</string>
     <string name="usage_of">%2$s 中 %1$s</string>
     <string name="usage_unlimited">無制限</string>
     <string name="usage_storage">ストレージ</string>
@@ -2314,7 +2315,7 @@
     <string name="kids_reserved_addresses">子ども用に確保したアドレス</string>
     <string name="kids_reserved_subtitle">お子さま用のアドレスを確保できます。受け取りリンクを渡せば、本人のパスワードで設定を終えられます。</string>
     <string name="kids_seats_used">ファミリー枠 %2$d 件中 %1$d 件を使用</string>
-    <string name="kids_seats_breakdown">メンバー %1$d 人、招待 %2$d 件、予約アドレス %3$d 件</string>
+    <string name="kids_seats_breakdown">%1$s、%2$s、%3$s</string>
     <string name="kids_no_reservations">確保したアドレスはまだありません。astermail.org で確保してください。</string>
     <string name="kids_reserve_on_web">ウェブで確保</string>
     <string name="kids_status_reserved">確保済み</string>
@@ -2466,7 +2467,7 @@
     <string name="alias_import_description">エイリアスが含まれる CSV または JSON ファイルを選択します。</string>
     <string name="alias_import_choose_file">ファイルを選択</string>
     <string name="alias_import_target_domain">インポート先</string>
-    <string name="alias_import_counts">%1$d インポート対象 / %2$d 既に存在します / %3$d 無効</string>
+    <string name="alias_import_counts">%1$s / %2$s / %3$s</string>
     <string name="alias_import_update_existing">無効な場合は再度有効化</string>
     <string name="alias_import_confirm">%1$d件のエイリアスをインポート</string>
     <string name="alias_import_progress">%2$d件中%1$d件をインポート中...</string>
@@ -2485,7 +2486,7 @@
     <string name="alias_export_source_count">%1$d 件</string>
     <string name="alias_export_warning_title">このファイルは暗号化されていません</string>
     <string name="alias_export_warning_body">開いた人は、含まれるすべてのエイリアス、メモ、ウェブサイトを読むことができます。パスワードマネージャーか暗号化されたドライブに保管してください。</string>
-    <string name="alias_export_summary">%2$d 個のファイルに %1$d 件。</string>
+    <string name="alias_export_summary">%2$s に %1$s。</string>
     <string name="alias_export_download">保存</string>
     <string name="alias_export_failed">エクスポートに失敗しました。何も保存されていません。</string>
     <string name="chip_any_time">すべての期間</string>

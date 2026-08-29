@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="low_network_mode_active_banner">Sparsamer Netzmodus ist aktiv</string>
+    <string name="low_network_mode_banner_action">Einstellungen</string>
+    <string name="low_network_mode_info_desc_v2">Hält Aster auf langsamen oder getakteten Verbindungen nutzbar. Aster überspringt Profilbilder, Absenderlogos und externe Bilder in E-Mails, zeigt jede Nachricht als reinen Text, lädt kürzere Posteingangsseiten und zeigt höchstens 4 Nachrichten pro Konversation. Hintergrundabrufe laufen seltener, Animationen werden abgeschaltet, und Anhänge werden erst geladen, wenn du sie öffnest. Der sparsame Netzmodus schaltet sich außerdem selbst ein, solange der Datensparmodus Hintergrunddaten auf einer getakteten Verbindung begrenzt.</string>
+    <string name="low_network_mode_data_saver_note">Der Datensparmodus hält dies aktiv, bis du ihn in den Android-Einstellungen ausschaltest.</string>
+</resources>

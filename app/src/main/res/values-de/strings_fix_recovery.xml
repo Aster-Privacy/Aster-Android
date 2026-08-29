@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recovery_email_verified_note">Mit dieser Adresse kannst du dein Passwort zurücksetzen.</string>
+    <string name="recovery_email_pending_note">Öffne den Link in deinem Postfach, um diese Adresse zu bestätigen.</string>
+    <string name="recovery_email_not_verified_badge">Nicht bestätigt</string>
+    <string name="recovery_email_action_resend">Erneut senden</string>
+    <string name="recovery_email_action_remove">Entfernen</string>
+    <string name="delete_account_second_factor_checking">Sicherheitseinstellungen werden geprüft</string>
+</resources>

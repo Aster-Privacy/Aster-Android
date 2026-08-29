@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_billing_available_plans">사용 가능한 플랜</string>
+    <string name="fix_billing_status_active">활성</string>
+    <string name="fix_billing_free_plan_description">현재 무료 플랜을 사용 중입니다. 아래에서 더 많은 저장 공간, 별칭 및 기능을 위한 유료 플랜을 살펴보세요.</string>
+    <string name="fix_billing_upgrade_for_more">업그레이드하여 더 많은 저장 공간, 별칭 및 기능을 잠금 해제하세요</string>
+    <string name="fix_billing_manage_plan">플랜 관리</string>
+    <string name="fix_billing_quota_aliases">이메일 별칭</string>
+    <string name="fix_billing_quota_domains">사용자 정의 도메인</string>
+    <string name="fix_billing_per_month_short">/월</string>
+    <string name="fix_billing_per_year_short">/년</string>
+    <string name="fix_billing_billed_annually">연간 청구</string>
+    <string name="fix_billing_plan_recommended">추천</string>
+    <string name="fix_billing_get_plan">%1$s 선택</string>
+    <string name="fix_billing_autorenew_notice">구독은 해지할 때까지 %1$s으로 자동 갱신됩니다. 다음 결제를 방지하려면 갱신일 전에 설정에서 해지하세요.</string>
+    <string name="fix_billing_autorenew_notice_short">카드로 결제하면 요금제가 자동으로 갱신됩니다. 다음 결제를 방지하려면 갱신일 전에 설정에서 해지하세요.</string>
+    <string name="fix_billing_payment_methods_title">결제 수단</string>
+    <string name="fix_billing_payment_methods_description">저장된 결제 수단을 관리합니다</string>
+    <string name="fix_billing_no_payment_methods">저장된 결제 수단이 없습니다</string>
+    <string name="fix_billing_default_card">기본</string>
+    <string name="fix_billing_set_as_default">기본값으로 설정</string>
+    <string name="fix_billing_invoice_status_paid">결제됨</string>
+    <string name="fix_billing_invoice_status_failed">실패</string>
+    <string name="fix_billing_invoice_status_open">열림</string>
+    <string name="fix_billing_invoice_status_pending">대기 중</string>
+    <string name="fix_billing_invoice_status_draft">초안</string>
+    <string name="fix_billing_invoice_status_void">무효</string>
+    <string name="fix_billing_invoice_status_uncollectible">수금 불가</string>
+    <string name="fix_billing_invoice_status_refunded">환불됨</string>
+    <string name="fix_billing_invoice_pdf">PDF</string>
+    <string name="fix_billing_invoice_payment">결제</string>
+    <string name="fix_billing_storage_limit_exceeded">저장 공간이 가득 찼습니다.</string>
+    <string name="fix_billing_payment_failed_warning">결제 수단에 대한 마지막 결제가 통과되지 않았습니다. 설정의 결제에서 업데이트하면 요금제가 계속 유지됩니다. 메일에는 영향이 없습니다.</string>
+    <string name="fix_billing_update_payment_method">결제 수단 업데이트</string>
+    <string name="fix_billing_card_expires">만료 %1$s</string>
+    <string name="fix_billing_status_trialing">체험</string>
+    <string name="fix_billing_status_past_due">결제 연체</string>
+    <string name="fix_billing_status_canceled">취소됨</string>
+    <string name="fix_billing_billed_monthly">월간 결제</string>
+    <string name="fix_billing_billed_yearly">연간 결제</string>
+    <string name="fix_billing_history_empty">아직 청구서가 없습니다. 첫 결제 후 여기에 표시됩니다.</string>
+    <string name="fix_billing_quota_count">%1$d / %2$d</string>
+</resources>

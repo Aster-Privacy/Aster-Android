@@ -475,7 +475,8 @@
     <string name="settings_security_subtitle">Parola, 2FA, oturumlar</string>
     <string name="settings_encryption">Şifreleme</string>
     <string name="settings_encryption_subtitle">PGP anahtarları ve kurtarma</string>
-    <string name="settings_aliases">Takma adlar ve alan adları</string>
+    <string name="settings_aliases">Takma adlar</string>
+    <string name="settings_domains">Alan adları</string>
     <string name="settings_aliases_subtitle">Adresleri yönet</string>
     <string name="settings_billing">Faturalandırma</string>
     <string name="settings_billing_subtitle">Plan, faturalar, ödeme yöntemleri</string>
@@ -1869,7 +1870,7 @@
     <string name="upgrade_resource_generic">bu özellik</string>
     <string name="storage_locked_title">Depolama doldu</string>
     <string name="storage_locked_description">Yer açana veya depolama ekleyene kadar gelen postalar reddedilecek.</string>
-    <string name="storage_locked_bounce_warning">%1$s gün sonra kalıcı olarak reddedilecek.</string>
+    <string name="storage_locked_bounce_warning">%1$s sonra kalıcı olarak reddedilecek.</string>
     <string name="usage_of">%2$s içinde %1$s</string>
     <string name="usage_unlimited">Sınırsız</string>
     <string name="usage_storage">Depolama</string>
@@ -2318,7 +2319,7 @@
     <string name="kids_reserved_addresses">Çocuklar için ayrılmış adresler</string>
     <string name="kids_reserved_subtitle">Çocuğun için bir adres ayır. Devralma bağlantısını paylaş ki kurulumu kendi parolasıyla tamamlasın.</string>
     <string name="kids_seats_used">%2$d aile yerinin %1$d tanesi dolu</string>
-    <string name="kids_seats_breakdown">%1$d üye, %2$d davet, %3$d ayrılmış adres</string>
+    <string name="kids_seats_breakdown">%1$s, %2$s, %3$s</string>
     <string name="kids_no_reservations">Henüz ayrılmış adres yok. astermail.org üzerinden bir tane ayır.</string>
     <string name="kids_reserve_on_web">Web\'de ayır</string>
     <string name="kids_status_reserved">Ayrıldı</string>
@@ -2474,7 +2475,7 @@
     <string name="alias_import_description">Rumuzlarınızı içeren bir CSV veya JSON dosyası seçin.</string>
     <string name="alias_import_choose_file">Dosya seç</string>
     <string name="alias_import_target_domain">Şuraya aktar</string>
-    <string name="alias_import_counts">%1$d i̇çe aktarılacak / %2$d zaten mevcut / %3$d geçersiz</string>
+    <string name="alias_import_counts">%1$s / %2$s / %3$s</string>
     <string name="alias_import_update_existing">Devre dışıysa yeniden etkinleştir</string>
     <string name="alias_import_confirm">%1$d rumuzu içe aktar</string>
     <string name="alias_import_progress">%2$d rumuzdan %1$d içe aktarılıyor...</string>
@@ -2493,7 +2494,7 @@
     <string name="alias_export_source_count">%1$d kayıt</string>
     <string name="alias_export_warning_title">Bu dosya şifreli değil</string>
     <string name="alias_export_warning_body">Dosyayı açan herkes içindeki tüm takma adları, notları ve web sitelerini okuyabilir. Parola yöneticinizde veya şifreli bir diskte saklayın.</string>
-    <string name="alias_export_summary">%2$d dosyada toplam %1$d kayıt.</string>
+    <string name="alias_export_summary">%2$s içinde %1$s.</string>
     <string name="alias_export_download">Kaydet</string>
     <string name="alias_export_failed">Dışa aktarma başarısız. Hiçbir şey kaydedilmedi.</string>
     <string name="chip_any_time">Herhangi bir zaman</string>

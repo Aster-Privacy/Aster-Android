@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="domains_load_timeout">Das Laden deiner Domains dauert länger als erwartet. Prüfe deine Verbindung und versuche es erneut.</string>
+    <string name="domain_manage_mail_setup">E-Mail-Einrichtung</string>
+    <string name="domain_manage_dns_unavailable">Die Details zur E-Mail-Einrichtung erscheinen hier, sobald diese Domain deinem Konto hinzugefügt wurde.</string>
+    <string name="domain_manage_verification">Überprüfung</string>
+    <string name="domain_manage_last_verified">Zuletzt überprüft</string>
+    <string name="domain_manage_never_verified">Noch nicht überprüft</string>
+    <string name="domain_manage_records">DNS-Einträge</string>
+    <string name="domain_manage_catch_all_description">Nachrichten an jede Adresse dieser Domain zustellen.</string>
+    <string name="domain_manage_recheck">DNS-Einträge erneut prüfen</string>
+    <string name="domain_manage_rechecking">DNS-Einträge werden geprüft</string>
+</resources>

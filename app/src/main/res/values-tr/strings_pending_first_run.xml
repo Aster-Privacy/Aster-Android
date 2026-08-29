@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="first_run_title">Aster Mail’e hoş geldiniz</string>
+    <string name="first_run_subtitle">Mevcut postanızı yanınızda getirin ya da sıfırdan başlayın. Daha sonra Ayarlar’dan içe aktarabilirsiniz.</string>
+    <string name="first_run_import">Postanızı içe aktarın</string>
+    <string name="first_run_skip">Şimdi değil</string>
+    <string name="first_run_privacy_note">Postanız cihazınızdan ayrılmadan önce şifrelenir.</string>
+    <string name="recovery_reminder_title">Kurtarma e-postası ekleyin</string>
+    <string name="recovery_reminder_body">Kurtarma e-postası, parolanızı unutursanız hesabınıza yeniden girmenizi sağlar.</string>
+    <string name="recovery_reminder_action">Kurtarma e-postası ekle</string>
+    <string name="recovery_reminder_later">Daha sonra</string>
+    <string name="plan_prompt_title">Aster Mail’den daha fazlasını alın</string>
+    <string name="plan_prompt_body">Daha fazla depolama, özel alan adları ve sınırsız takma ad için yükseltin.</string>
+    <string name="plan_prompt_action">Planları görün</string>
+    <string name="plan_prompt_dismiss">Şimdi değil</string>
+</resources>

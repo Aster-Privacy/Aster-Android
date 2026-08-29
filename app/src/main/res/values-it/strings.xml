@@ -475,7 +475,8 @@
     <string name="settings_security_subtitle">Password, 2FA, sessioni</string>
     <string name="settings_encryption">Crittografia</string>
     <string name="settings_encryption_subtitle">Chiavi PGP e recupero</string>
-    <string name="settings_aliases">Alias e domini</string>
+    <string name="settings_aliases">Alias</string>
+    <string name="settings_domains">Domini</string>
     <string name="settings_aliases_subtitle">Gestisci indirizzi</string>
     <string name="settings_billing">Fatturazione</string>
     <string name="settings_billing_subtitle">Piano, fatture, metodi di pagamento</string>
@@ -1869,7 +1870,7 @@
     <string name="upgrade_resource_generic">questa funzione</string>
     <string name="storage_locked_title">Spazio esaurito</string>
     <string name="storage_locked_description">La posta in arrivo verrà respinta finché non liberi spazio o ne aggiungi.</string>
-    <string name="storage_locked_bounce_warning">Respingimento definitivo tra %1$s giorni.</string>
+    <string name="storage_locked_bounce_warning">Respingimento definitivo tra %1$s.</string>
     <string name="usage_of">%1$s di %2$s</string>
     <string name="usage_unlimited">Illimitato</string>
     <string name="usage_storage">Spazio</string>
@@ -2318,7 +2319,7 @@
     <string name="kids_reserved_addresses">Indirizzi riservati ai bambini</string>
     <string name="kids_reserved_subtitle">Riserva un indirizzo per tuo figlio. Condividi il link di attivazione così potrà completare la configurazione con una password sua.</string>
     <string name="kids_seats_used">%1$d di %2$d posti famiglia usati</string>
-    <string name="kids_seats_breakdown">%1$d membri, %2$d inviti, %3$d indirizzi riservati</string>
+    <string name="kids_seats_breakdown">%1$s, %2$s, %3$s</string>
     <string name="kids_no_reservations">Ancora nessun indirizzo riservato. Riservane uno su astermail.org.</string>
     <string name="kids_reserve_on_web">Riserva sul web</string>
     <string name="kids_status_reserved">Riservato</string>
@@ -2474,7 +2475,7 @@
     <string name="alias_import_description">Scegli un file CSV o JSON che contiene i tuoi alias.</string>
     <string name="alias_import_choose_file">Scegli file</string>
     <string name="alias_import_target_domain">Importa in</string>
-    <string name="alias_import_counts">%1$d da importare / %2$d già esistente / %3$d non valido</string>
+    <string name="alias_import_counts">%1$s / %2$s / %3$s</string>
     <string name="alias_import_update_existing">Riabilita se disabilitato</string>
     <string name="alias_import_confirm">Importa %1$d alias</string>
     <string name="alias_import_progress">Importazione di %1$d di %2$d...</string>
@@ -2493,7 +2494,7 @@
     <string name="alias_export_source_count">%1$d voci</string>
     <string name="alias_export_warning_title">Questo file non è cifrato</string>
     <string name="alias_export_warning_body">Chiunque lo apra può leggere ogni alias, nota e sito web contenuto. Conservalo nel tuo gestore di password o su un disco cifrato.</string>
-    <string name="alias_export_summary">%1$d voci in %2$d file.</string>
+    <string name="alias_export_summary">%1$s in %2$s.</string>
     <string name="alias_export_download">Salva</string>
     <string name="alias_export_failed">Esportazione non riuscita. Non è stato salvato nulla.</string>
     <string name="chip_any_time">Qualsiasi data</string>

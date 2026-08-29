@@ -475,7 +475,8 @@
     <string name="settings_security_subtitle">Пароль, 2FA, сессии</string>
     <string name="settings_encryption">Шифрование</string>
     <string name="settings_encryption_subtitle">Ключи PGP и восстановление</string>
-    <string name="settings_aliases">Псевдонимы и домены</string>
+    <string name="settings_aliases">Псевдонимы</string>
+    <string name="settings_domains">Домены</string>
     <string name="settings_aliases_subtitle">Управление адресами</string>
     <string name="settings_billing">Оплата</string>
     <string name="settings_billing_subtitle">Тариф, счета, способы оплаты</string>
@@ -1875,7 +1876,7 @@
     <string name="upgrade_resource_generic">этой функции</string>
     <string name="storage_locked_title">Место закончилось</string>
     <string name="storage_locked_description">Входящие письма будут отклоняться, пока вы не освободите место или не добавите его.</string>
-    <string name="storage_locked_bounce_warning">Окончательный отказ через %1$s дн.</string>
+    <string name="storage_locked_bounce_warning">Окончательный отказ через %1$s.</string>
     <string name="usage_of">%1$s из %2$s</string>
     <string name="usage_unlimited">Без ограничений</string>
     <string name="usage_storage">Хранилище</string>
@@ -2326,7 +2327,7 @@
     <string name="kids_reserved_addresses">Адреса, забронированные для детей</string>
     <string name="kids_reserved_subtitle">Забронируйте адрес для ребёнка. Передайте ссылку активации, чтобы он завершил настройку со своим паролем.</string>
     <string name="kids_seats_used">Занято мест: %1$d из %2$d</string>
-    <string name="kids_seats_breakdown">%1$d участников, %2$d приглашений, %3$d зарезервированных адресов</string>
+    <string name="kids_seats_breakdown">%1$s, %2$s, %3$s</string>
     <string name="kids_no_reservations">Забронированных адресов пока нет. Забронируйте на astermail.org.</string>
     <string name="kids_reserve_on_web">Забронировать в вебе</string>
     <string name="kids_status_reserved">Забронирован</string>
@@ -2490,7 +2491,7 @@
     <string name="alias_import_description">Выберите файл CSV или JSON со списком ваших псевдонимов.</string>
     <string name="alias_import_choose_file">Выбрать файл</string>
     <string name="alias_import_target_domain">Импортировать в</string>
-    <string name="alias_import_counts">%1$d будет импортировано / %2$d уже существует / %3$d недействительно</string>
+    <string name="alias_import_counts">%1$s / %2$s / %3$s</string>
     <string name="alias_import_update_existing">Снова включить, если отключён</string>
     <string name="alias_import_confirm">Импортировать %1$d псевдонимов</string>
     <string name="alias_import_progress">Импорт %1$d из %2$d...</string>
@@ -2509,7 +2510,7 @@
     <string name="alias_export_source_count">Записей: %1$d</string>
     <string name="alias_export_warning_title">Этот файл не зашифрован</string>
     <string name="alias_export_warning_body">Любой, кто его откроет, увидит все псевдонимы, заметки и сайты. Храните его в менеджере паролей или на зашифрованном диске.</string>
-    <string name="alias_export_summary">Записей: %1$d, файлов: %2$d.</string>
+    <string name="alias_export_summary">%1$s, %2$s.</string>
     <string name="alias_export_download">Сохранить</string>
     <string name="alias_export_failed">Экспорт не выполнен. Ничего не сохранено.</string>
     <string name="chip_any_time">Любое время</string>

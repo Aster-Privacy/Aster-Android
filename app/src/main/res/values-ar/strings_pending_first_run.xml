@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="first_run_title">مرحبًا بك في Aster Mail</string>
+    <string name="first_run_subtitle">انقل بريدك الحالي معك، أو ابدأ من جديد. يمكنك الاستيراد لاحقًا من الإعدادات.</string>
+    <string name="first_run_import">استيراد بريدك</string>
+    <string name="first_run_skip">ليس الآن</string>
+    <string name="first_run_privacy_note">يُشفَّر بريدك قبل أن يغادر جهازك.</string>
+    <string name="recovery_reminder_title">أضف بريدًا للاسترداد</string>
+    <string name="recovery_reminder_body">يتيح لك بريد الاسترداد استعادة حسابك إذا نسيت كلمة السر.</string>
+    <string name="recovery_reminder_action">إضافة بريد الاسترداد</string>
+    <string name="recovery_reminder_later">لاحقًا</string>
+    <string name="plan_prompt_title">احصل على المزيد من Aster Mail</string>
+    <string name="plan_prompt_body">قم بالترقية للحصول على مساحة أكبر ونطاقات مخصصة وأسماء مستعارة غير محدودة.</string>
+    <string name="plan_prompt_action">عرض الخطط</string>
+    <string name="plan_prompt_dismiss">ليس الآن</string>
+</resources>

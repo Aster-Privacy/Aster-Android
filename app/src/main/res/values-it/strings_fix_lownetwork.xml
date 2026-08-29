@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="low_network_mode_active_banner">La modalità rete limitata è attiva</string>
+    <string name="low_network_mode_banner_action">Impostazioni</string>
+    <string name="low_network_mode_info_desc_v2">Mantiene Aster utilizzabile su connessioni lente o a consumo. Aster salta le immagini del profilo, i logo dei mittenti e le immagini esterne nelle email, mostra ogni messaggio come testo semplice, carica pagine della posta più brevi e mostra al massimo 4 messaggi per conversazione. I controlli della posta in background avvengono meno spesso, le animazioni si disattivano e gli allegati si caricano solo quando li apri. La modalità rete limitata si attiva anche da sola finché il Risparmio dati limita i dati in background su una connessione a consumo.</string>
+    <string name="low_network_mode_data_saver_note">Il Risparmio dati la mantiene attiva finché non lo disattivi nelle impostazioni di Android.</string>
+</resources>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_enc_key_card_title">مفتاح التشفير الخاص بك</string>
+    <string name="fix_enc_key_id_label">معرّف المفتاح</string>
+    <string name="fix_enc_copy_key_id">نسخ معرّف المفتاح</string>
+    <string name="fix_enc_key_id_copied">تم نسخ معرّف المفتاح</string>
+    <string name="fix_enc_clipboard_label_key_id">معرّف المفتاح</string>
+    <string name="fix_enc_never_expires">لا تنتهي صلاحيته</string>
+    <string name="fix_enc_save_codes">الحفظ في ملف</string>
+    <string name="fix_enc_codes_share_title">رموز الاسترداد</string>
+    <string name="fix_enc_codes_file_note">يعمل كل رمز مرة واحدة. احتفظ بهذا الملف في مكان آمن.</string>
+    <string name="fix_enc_codes_save_failed">لا يمكنك حفظ الملف الآن. انسخ الرموز بدلاً من ذلك.</string>
+    <string name="fix_enc_codes_confirm_saved">لقد حفظت رموز الاسترداد</string>
+    <string name="fix_enc_codes_used">%1$d مستخدم</string>
+</resources>

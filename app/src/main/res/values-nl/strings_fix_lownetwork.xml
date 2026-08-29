@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="low_network_mode_active_banner">Lagenetwerkmodus staat aan</string>
+    <string name="low_network_mode_banner_action">Instellingen</string>
+    <string name="low_network_mode_info_desc_v2">Houdt Aster bruikbaar op trage verbindingen of verbindingen met datalimiet. Aster slaat profielfoto\'s, afzenderlogo\'s en externe afbeeldingen in e-mail over, toont elk bericht als platte tekst, laadt kortere pagina\'s in het postvak en toont maximaal 4 berichten in een gesprek. Achtergrondcontroles op nieuwe e-mail lopen minder vaak, animaties gaan uit en bijlagen worden pas geladen wanneer je ze opent. De lagenetwerkmodus gaat ook vanzelf aan zolang Databesparing achtergronddata beperkt op een verbinding met datalimiet.</string>
+    <string name="low_network_mode_data_saver_note">Databesparing houdt dit aan totdat je het uitzet in de Android-instellingen.</string>
+</resources>

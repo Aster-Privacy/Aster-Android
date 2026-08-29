@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="low_network_mode_active_banner">低网络模式已开启</string>
+    <string name="low_network_mode_banner_action">设置</string>
+    <string name="low_network_mode_info_desc_v2">让 Aster 在网速较慢或按流量计费的连接下仍然可用。Aster 会跳过头像、发件人徽标和邮件中的外部图片，将所有邮件显示为纯文本，加载更短的收件箱分页，并在一个会话中最多显示 4 封邮件。后台收信的频率降低，动画关闭，附件仅在你打开时才加载。在按流量计费的连接上，只要流量节省程序限制后台数据，低网络模式也会自动开启。</string>
+    <string name="low_network_mode_data_saver_note">在你于 Android 设置中关闭流量节省程序之前，此项会保持开启。</string>
+</resources>

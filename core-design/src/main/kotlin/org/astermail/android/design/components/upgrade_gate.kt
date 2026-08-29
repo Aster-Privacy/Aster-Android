@@ -70,19 +70,12 @@ fun UpgradeGate(
             .padding(AsterSpacing.xl),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box(
-            modifier = Modifier
-                .size(56.dp)
-                .background(colors.accent_blue.copy(alpha = 0.15f), CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = colors.accent_blue,
-                modifier = Modifier.size(28.dp),
-            )
-        }
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = colors.accent_blue,
+            modifier = Modifier.size(32.dp),
+        )
         Spacer(Modifier.height(AsterSpacing.md))
         Text(
             text = title,

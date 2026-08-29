@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recovery_email_verified_note">С помощью этого адреса вы можете сбросить пароль.</string>
+    <string name="recovery_email_pending_note">Откройте ссылку в почте, чтобы подтвердить этот адрес.</string>
+    <string name="recovery_email_not_verified_badge">Не подтвержден</string>
+    <string name="recovery_email_action_resend">Отправить снова</string>
+    <string name="recovery_email_action_remove">Удалить</string>
+    <string name="delete_account_second_factor_checking">Проверяем настройки безопасности</string>
+</resources>

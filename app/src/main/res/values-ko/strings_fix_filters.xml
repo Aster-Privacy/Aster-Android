@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_filters_search_blocked">차단된 보낸사람 검색</string>
+    <string name="fix_filters_search_allowed">허용된 보낸사람 검색</string>
+    <string name="fix_filters_search">검색</string>
+    <string name="fix_filters_clear_search">검색어 지우기</string>
+    <string name="fix_filters_no_results_title">결과 없음</string>
+    <string name="fix_filters_no_results_body">다른 검색어를 사용해 보세요.</string>
+    <string name="fix_filters_blocked_description">이 보낸사람의 메일은 받은편지함에 도착하지 않습니다.</string>
+    <string name="fix_filters_allowed_description">이 보낸사람의 메일은 스팸처럼 보여도 항상 받은편지함에 도착합니다.</string>
+    <string name="fix_filters_blocked_empty_body">보낸사람을 차단하면 해당 메일이 받은편지함에 도착하지 않습니다.</string>
+    <string name="fix_filters_allowed_empty_body">보낸사람을 추가하면 해당 메일이 스팸으로 분류되지 않습니다.</string>
+</resources>

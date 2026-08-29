@@ -475,7 +475,8 @@
     <string name="settings_security_subtitle">Wachtwoord, 2FA, sessies</string>
     <string name="settings_encryption">Versleuteling</string>
     <string name="settings_encryption_subtitle">PGP-sleutels en herstel</string>
-    <string name="settings_aliases">Aliassen en domeinen</string>
+    <string name="settings_aliases">Aliassen</string>
+    <string name="settings_domains">Domeinen</string>
     <string name="settings_aliases_subtitle">Adressen beheren</string>
     <string name="settings_billing">Facturering</string>
     <string name="settings_billing_subtitle">Abonnement, facturen, betaalmethoden</string>
@@ -1869,7 +1870,7 @@
     <string name="upgrade_resource_generic">deze functie</string>
     <string name="storage_locked_title">Opslag is vol</string>
     <string name="storage_locked_description">Inkomende mail wordt geweigerd tot je ruimte vrijmaakt of opslag bijkoopt.</string>
-    <string name="storage_locked_bounce_warning">Definitieve weigering over %1$s dagen.</string>
+    <string name="storage_locked_bounce_warning">Definitieve weigering over %1$s.</string>
     <string name="usage_of">%1$s van %2$s</string>
     <string name="usage_unlimited">Onbeperkt</string>
     <string name="usage_storage">Opslag</string>
@@ -2318,7 +2319,7 @@
     <string name="kids_reserved_addresses">Gereserveerde adressen voor kinderen</string>
     <string name="kids_reserved_subtitle">Reserveer een adres voor je kind. Deel de activatielink zodat het de installatie met een eigen wachtwoord afrondt.</string>
     <string name="kids_seats_used">%1$d van %2$d gezinsplaatsen gebruikt</string>
-    <string name="kids_seats_breakdown">%1$d leden, %2$d uitnodigingen, %3$d gereserveerde adressen</string>
+    <string name="kids_seats_breakdown">%1$s, %2$s, %3$s</string>
     <string name="kids_no_reservations">Nog geen gereserveerde adressen. Reserveer er een op astermail.org.</string>
     <string name="kids_reserve_on_web">Reserveren op het web</string>
     <string name="kids_status_reserved">Gereserveerd</string>
@@ -2474,7 +2475,7 @@
     <string name="alias_import_description">Kies een CSV- of JSON-bestand met je aliassen.</string>
     <string name="alias_import_choose_file">Bestand kiezen</string>
     <string name="alias_import_target_domain">Importeren naar</string>
-    <string name="alias_import_counts">%1$d wordt geïmporteerd / %2$d bestaat al / %3$d ongeldig</string>
+    <string name="alias_import_counts">%1$s / %2$s / %3$s</string>
     <string name="alias_import_update_existing">Opnieuw inschakelen indien uitgeschakeld</string>
     <string name="alias_import_confirm">%1$d aliassen importeren</string>
     <string name="alias_import_progress">%1$d van %2$d importeren...</string>
@@ -2493,7 +2494,7 @@
     <string name="alias_export_source_count">%1$d items</string>
     <string name="alias_export_warning_title">Dit bestand is niet versleuteld</string>
     <string name="alias_export_warning_body">Iedereen die het opent kan elke alias, notitie en website erin lezen. Bewaar het in uw wachtwoordmanager of op een versleutelde schijf.</string>
-    <string name="alias_export_summary">%1$d items verdeeld over %2$d bestand(en).</string>
+    <string name="alias_export_summary">%1$s verdeeld over %2$s.</string>
     <string name="alias_export_download">Opslaan</string>
     <string name="alias_export_failed">Export mislukt. Er is niets opgeslagen.</string>
     <string name="chip_any_time">Elk moment</string>

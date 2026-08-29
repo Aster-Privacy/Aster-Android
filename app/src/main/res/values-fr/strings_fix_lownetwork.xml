@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="low_network_mode_active_banner">Le mode réseau limité est activé</string>
+    <string name="low_network_mode_banner_action">Réglages</string>
+    <string name="low_network_mode_info_desc_v2">Garde Aster utilisable sur les connexions lentes ou facturées à l\'usage. Aster ignore les photos de profil, les logos d\'expéditeur et les images externes des e-mails, affiche chaque message en texte brut, charge des pages de boîte de réception plus courtes et affiche au maximum 4 messages par conversation. Les vérifications de courrier en arrière-plan se font moins souvent, les animations sont désactivées et les pièces jointes ne se chargent que lorsque tu les ouvres. Le mode réseau limité s\'active aussi de lui-même tant que l\'économiseur de données limite les données en arrière-plan sur une connexion facturée à l\'usage.</string>
+    <string name="low_network_mode_data_saver_note">L\'économiseur de données maintient cette option activée jusqu\'à ce que tu la désactives dans les réglages Android.</string>
+</resources>

@@ -150,6 +150,8 @@ fun AsterTextField(
                             text = placeholder,
                             color = colors.text_muted,
                             fontSize = 16.sp,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                         )
                     }
                     BasicTextField(

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recovery_email_verified_note">Vous pouvez utiliser cette adresse pour réinitialiser votre mot de passe.</string>
+    <string name="recovery_email_pending_note">Ouvrez le lien reçu dans votre boîte de réception pour vérifier cette adresse.</string>
+    <string name="recovery_email_not_verified_badge">Non vérifiée</string>
+    <string name="recovery_email_action_resend">Renvoyer</string>
+    <string name="recovery_email_action_remove">Supprimer</string>
+    <string name="delete_account_second_factor_checking">Vérification de vos réglages de sécurité</string>
+</resources>

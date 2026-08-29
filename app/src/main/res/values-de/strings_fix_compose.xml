@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="compose_discard_draft_title">Diesen Entwurf verwerfen?</string>
+    <string name="compose_discard_draft_message">Diese Nachricht ist nicht gespeichert. Wenn du sie verwirfst, werden der Text und alle Anhänge entfernt.</string>
+</resources>

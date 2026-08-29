@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="first_run_title">Добро пожаловать в Aster Mail</string>
+    <string name="first_run_subtitle">Перенесите свою почту или начните с чистого листа. Импортировать можно позже в настройках.</string>
+    <string name="first_run_import">Импортировать почту</string>
+    <string name="first_run_skip">Не сейчас</string>
+    <string name="first_run_privacy_note">Ваша почта шифруется до того, как покинет устройство.</string>
+    <string name="recovery_reminder_title">Добавьте резервный адрес</string>
+    <string name="recovery_reminder_body">Резервный адрес поможет вернуться в аккаунт, если вы забудете пароль.</string>
+    <string name="recovery_reminder_action">Добавить резервный адрес</string>
+    <string name="recovery_reminder_later">Позже</string>
+    <string name="plan_prompt_title">Используйте Aster Mail полнее</string>
+    <string name="plan_prompt_body">Перейдите на платный тариф, чтобы получить больше места, свои домены и неограниченные псевдонимы.</string>
+    <string name="plan_prompt_action">Посмотреть тарифы</string>
+    <string name="plan_prompt_dismiss">Не сейчас</string>
+</resources>

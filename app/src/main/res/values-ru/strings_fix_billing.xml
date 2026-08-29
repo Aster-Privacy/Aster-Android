@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_billing_available_plans">Доступные тарифы</string>
+    <string name="fix_billing_status_active">Активен</string>
+    <string name="fix_billing_free_plan_description">Вы на бесплатном тарифе. Изучите платные тарифы ниже для получения большего хранилища, псевдонимов и функций.</string>
+    <string name="fix_billing_upgrade_for_more">Повысьте тариф для большего хранилища, псевдонимов и функций</string>
+    <string name="fix_billing_manage_plan">Управление тарифом</string>
+    <string name="fix_billing_quota_aliases">Почтовые псевдонимы</string>
+    <string name="fix_billing_quota_domains">Пользовательские домены</string>
+    <string name="fix_billing_per_month_short">/мес</string>
+    <string name="fix_billing_per_year_short">/год</string>
+    <string name="fix_billing_billed_annually">оплата раз в год</string>
+    <string name="fix_billing_plan_recommended">Рекомендуемый</string>
+    <string name="fix_billing_get_plan">Выбрать %1$s</string>
+    <string name="fix_billing_autorenew_notice">Подписка продлевается автоматически по цене %1$s, пока вы её не отмените. Чтобы избежать следующего списания, отмените подписку в Настройках до даты продления.</string>
+    <string name="fix_billing_autorenew_notice_short">При оплате картой тариф продлевается автоматически. Чтобы избежать следующего списания, отмените его в Настройках до даты продления.</string>
+    <string name="fix_billing_payment_methods_title">Способы оплаты</string>
+    <string name="fix_billing_payment_methods_description">Управляйте сохранёнными способами оплаты</string>
+    <string name="fix_billing_no_payment_methods">Нет сохранённых способов оплаты</string>
+    <string name="fix_billing_default_card">По умолчанию</string>
+    <string name="fix_billing_set_as_default">Установить по умолчанию</string>
+    <string name="fix_billing_invoice_status_paid">Оплачен</string>
+    <string name="fix_billing_invoice_status_failed">Ошибка</string>
+    <string name="fix_billing_invoice_status_open">Открыт</string>
+    <string name="fix_billing_invoice_status_pending">Ожидание</string>
+    <string name="fix_billing_invoice_status_draft">Черновик</string>
+    <string name="fix_billing_invoice_status_void">Аннулирован</string>
+    <string name="fix_billing_invoice_status_uncollectible">Безнадёжный</string>
+    <string name="fix_billing_invoice_status_refunded">Возвращено</string>
+    <string name="fix_billing_invoice_pdf">PDF</string>
+    <string name="fix_billing_invoice_payment">Оплата</string>
+    <string name="fix_billing_storage_limit_exceeded">Хранилище заполнено.</string>
+    <string name="fix_billing_payment_failed_warning">Последнее списание со способа оплаты не прошло. Обновление данных в Настройках, Оплата сохраняет тариф активным. Почта при этом не затрагивается.</string>
+    <string name="fix_billing_update_payment_method">Обновить способ оплаты</string>
+    <string name="fix_billing_card_expires">Срок действия %1$s</string>
+    <string name="fix_billing_status_trialing">Пробный период</string>
+    <string name="fix_billing_status_past_due">Просрочена</string>
+    <string name="fix_billing_status_canceled">Отменена</string>
+    <string name="fix_billing_billed_monthly">Оплата ежемесячно</string>
+    <string name="fix_billing_billed_yearly">Оплата ежегодно</string>
+    <string name="fix_billing_history_empty">Счетов пока нет. Платежи появятся здесь после первого списания.</string>
+    <string name="fix_billing_quota_count">%1$d / %2$d</string>
+</resources>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="two_step_verification_title">Двухэтапная проверка</string>
+    <string name="two_step_verification_on_description">Для входа в аккаунт нужен код подтверждения в дополнение к паролю.</string>
+    <string name="two_step_verification_off_description">Для большей защиты требуйте код подтверждения в дополнение к паролю.</string>
+    <string name="security_activity_filter_all">Все</string>
+    <string name="security_activity_filter_sign_ins">Входы</string>
+    <string name="security_activity_filter_security">Изменения безопасности</string>
+    <string name="security_activity_filter_failures">Сбои</string>
+    <string name="security_activity_today">Сегодня</string>
+    <string name="security_activity_yesterday">Вчера</string>
+    <string name="security_activity_show_more">Показать больше</string>
+    <string name="security_activity_show_less">Показать меньше</string>
+    <string name="security_activity_empty_filter">Нет активности, соответствующей этому фильтру.</string>
+</resources>

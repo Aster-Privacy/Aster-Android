@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_billing_available_plans">利用可能なプラン</string>
+    <string name="fix_billing_status_active">アクティブ</string>
+    <string name="fix_billing_free_plan_description">現在は無料プランをご利用中です。以下の有料プランで、より多くのストレージ、エイリアス、機能をご利用いただけます。</string>
+    <string name="fix_billing_upgrade_for_more">アップグレードしてストレージ、エイリアス、機能を増やしましょう</string>
+    <string name="fix_billing_manage_plan">プランを管理</string>
+    <string name="fix_billing_quota_aliases">メールエイリアス</string>
+    <string name="fix_billing_quota_domains">カスタムドメイン</string>
+    <string name="fix_billing_per_month_short">/月</string>
+    <string name="fix_billing_per_year_short">/年</string>
+    <string name="fix_billing_billed_annually">年額請求</string>
+    <string name="fix_billing_plan_recommended">おすすめ</string>
+    <string name="fix_billing_get_plan">%1$s を選ぶ</string>
+    <string name="fix_billing_autorenew_notice">サブスクリプションは解約するまで %1$s で自動更新されます。次回の請求を止めるには、更新日より前に「設定」で解約してください。</string>
+    <string name="fix_billing_autorenew_notice_short">カードでお支払いの場合、プランは自動更新されます。次回の請求を止めるには、更新日より前に「設定」で解約してください。</string>
+    <string name="fix_billing_payment_methods_title">お支払い方法</string>
+    <string name="fix_billing_payment_methods_description">保存されたお支払い方法を管理します</string>
+    <string name="fix_billing_no_payment_methods">保存されたお支払い方法はありません</string>
+    <string name="fix_billing_default_card">デフォルト</string>
+    <string name="fix_billing_set_as_default">デフォルトに設定</string>
+    <string name="fix_billing_invoice_status_paid">支払済み</string>
+    <string name="fix_billing_invoice_status_failed">失敗</string>
+    <string name="fix_billing_invoice_status_open">未払い</string>
+    <string name="fix_billing_invoice_status_pending">処理中</string>
+    <string name="fix_billing_invoice_status_draft">下書き</string>
+    <string name="fix_billing_invoice_status_void">無効</string>
+    <string name="fix_billing_invoice_status_uncollectible">回収不能</string>
+    <string name="fix_billing_invoice_status_refunded">返金済み</string>
+    <string name="fix_billing_invoice_pdf">PDF</string>
+    <string name="fix_billing_invoice_payment">支払い</string>
+    <string name="fix_billing_storage_limit_exceeded">ストレージが満杯です。</string>
+    <string name="fix_billing_payment_failed_warning">前回のお支払い方法への請求が通りませんでした。設定の請求から更新すると、プランを継続できます。メールには影響ありません。</string>
+    <string name="fix_billing_update_payment_method">お支払い方法を更新</string>
+    <string name="fix_billing_card_expires">有効期限 %1$s</string>
+    <string name="fix_billing_status_trialing">試用</string>
+    <string name="fix_billing_status_past_due">支払い延滞</string>
+    <string name="fix_billing_status_canceled">解約済み</string>
+    <string name="fix_billing_billed_monthly">月額請求</string>
+    <string name="fix_billing_billed_yearly">年額請求</string>
+    <string name="fix_billing_history_empty">請求書はまだありません。最初のお支払い後にここに表示されます。</string>
+    <string name="fix_billing_quota_count">%1$d / %2$d</string>
+</resources>

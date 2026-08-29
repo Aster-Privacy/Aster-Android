@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="compose_discard_draft_title">この下書きを破棄しますか？</string>
+    <string name="compose_discard_draft_message">このメッセージは保存されていません。破棄すると、本文と添付ファイルは削除されます。</string>
+</resources>

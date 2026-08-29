@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recovery_email_verified_note">Puedes usar esta dirección para restablecer tu contraseña.</string>
+    <string name="recovery_email_pending_note">Abre el enlace de tu bandeja de entrada para verificar esta dirección.</string>
+    <string name="recovery_email_not_verified_badge">Sin verificar</string>
+    <string name="recovery_email_action_resend">Reenviar</string>
+    <string name="recovery_email_action_remove">Eliminar</string>
+    <string name="delete_account_second_factor_checking">Comprobando tus ajustes de seguridad</string>
+</resources>

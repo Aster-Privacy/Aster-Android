@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="two_step_verification_title">2단계 인증</string>
+    <string name="two_step_verification_on_description">계정에 비밀번호와 함께 인증 코드가 필요합니다.</string>
+    <string name="two_step_verification_off_description">보호를 강화하려면 비밀번호와 함께 인증 코드를 요구하세요.</string>
+    <string name="security_activity_filter_all">전체</string>
+    <string name="security_activity_filter_sign_ins">로그인</string>
+    <string name="security_activity_filter_security">보안 변경</string>
+    <string name="security_activity_filter_failures">실패</string>
+    <string name="security_activity_today">오늘</string>
+    <string name="security_activity_yesterday">어제</string>
+    <string name="security_activity_show_more">더 보기</string>
+    <string name="security_activity_show_less">간략히 보기</string>
+    <string name="security_activity_empty_filter">이 필터와 일치하는 활동이 없습니다.</string>
+</resources>

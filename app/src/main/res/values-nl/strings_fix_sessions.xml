@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sessions_other_devices_section">Andere apparaten</string>
+    <string name="session_meta_line">%1$s · %2$s</string>
+    <string name="session_client_browser">Webbrowser</string>
+    <string name="session_client_phone">Telefoon</string>
+    <string name="session_client_tablet">Tablet</string>
+    <string name="session_client_desktop">Computer</string>
+    <string name="session_client_desktop_app">Desktop-app</string>
+    <string name="session_client_bridge">Mailbridge</string>
+    <string name="link_device_step_code">Code</string>
+    <string name="link_device_step_confirm">Bevestigen</string>
+    <string name="link_device_step_done">Gekoppeld</string>
+    <string name="link_device_hero_title">Voer de apparaatcode in</string>
+    <string name="link_device_confirm_title">Bevestig dit apparaat</string>
+    <string name="link_device_pending_badge">In afwachting</string>
+</resources>

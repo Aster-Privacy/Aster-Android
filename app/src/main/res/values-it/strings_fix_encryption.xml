@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_enc_key_card_title">La tua chiave di crittografia</string>
+    <string name="fix_enc_key_id_label">ID della chiave</string>
+    <string name="fix_enc_copy_key_id">Copia l\'ID della chiave</string>
+    <string name="fix_enc_key_id_copied">ID della chiave copiato</string>
+    <string name="fix_enc_clipboard_label_key_id">ID della chiave</string>
+    <string name="fix_enc_never_expires">Non scade mai</string>
+    <string name="fix_enc_save_codes">Salva in un file</string>
+    <string name="fix_enc_codes_share_title">Codici di recupero</string>
+    <string name="fix_enc_codes_file_note">Ogni codice funziona una sola volta. Conserva questo file in un luogo sicuro.</string>
+    <string name="fix_enc_codes_save_failed">Al momento non puoi salvare il file. Copia invece i codici.</string>
+    <string name="fix_enc_codes_confirm_saved">Ho salvato i miei codici di recupero</string>
+    <string name="fix_enc_codes_used">%1$d usati</string>
+</resources>

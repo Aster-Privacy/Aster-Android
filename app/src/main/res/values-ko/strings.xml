@@ -475,7 +475,8 @@
     <string name="settings_security_subtitle">비밀번호, 2FA, 세션</string>
     <string name="settings_encryption">암호화</string>
     <string name="settings_encryption_subtitle">PGP 키 및 복구</string>
-    <string name="settings_aliases">별칭 및 도메인</string>
+    <string name="settings_aliases">별칭</string>
+    <string name="settings_domains">도메인</string>
     <string name="settings_aliases_subtitle">주소 관리</string>
     <string name="settings_billing">청구</string>
     <string name="settings_billing_subtitle">플랜, 청구서, 결제 수단</string>
@@ -1866,7 +1867,7 @@
     <string name="upgrade_resource_generic">이 기능</string>
     <string name="storage_locked_title">저장용량이 가득 찼습니다</string>
     <string name="storage_locked_description">공간을 비우거나 용량을 추가할 때까지 받는 메일이 거부됩니다.</string>
-    <string name="storage_locked_bounce_warning">%1$s일 뒤 영구 반송됩니다.</string>
+    <string name="storage_locked_bounce_warning">%1$s 뒤 영구 반송됩니다.</string>
     <string name="usage_of">%2$s 중 %1$s</string>
     <string name="usage_unlimited">무제한</string>
     <string name="usage_storage">저장용량</string>
@@ -2314,7 +2315,7 @@
     <string name="kids_reserved_addresses">아이용으로 잡아 둔 주소</string>
     <string name="kids_reserved_subtitle">자녀를 위해 주소를 잡아 두세요. 등록 링크를 전달하면 아이가 자기 비밀번호로 설정을 마칠 수 있습니다.</string>
     <string name="kids_seats_used">가족 자리 %2$d개 중 %1$d개 사용</string>
-    <string name="kids_seats_breakdown">구성원 %1$d명, 초대 %2$d건, 예약 주소 %3$d건</string>
+    <string name="kids_seats_breakdown">%1$s, %2$s, %3$s</string>
     <string name="kids_no_reservations">아직 잡아 둔 주소가 없습니다. astermail.org에서 하나 잡아 두세요.</string>
     <string name="kids_reserve_on_web">웹에서 잡아 두기</string>
     <string name="kids_status_reserved">예약됨</string>
@@ -2466,7 +2467,7 @@
     <string name="alias_import_description">별칭이 들어 있는 CSV 또는 JSON 파일을 선택하세요.</string>
     <string name="alias_import_choose_file">파일 선택</string>
     <string name="alias_import_target_domain">가져올 대상</string>
-    <string name="alias_import_counts">%1$d 가져올 항목 / %2$d 이미 존재함 / %3$d 유효하지 않음</string>
+    <string name="alias_import_counts">%1$s / %2$s / %3$s</string>
     <string name="alias_import_update_existing">사용 중지된 경우 다시 사용 설정</string>
     <string name="alias_import_confirm">별칭 %1$d개 가져오기</string>
     <string name="alias_import_progress">%2$d개 중 %1$d개 가져오는 중...</string>
@@ -2485,7 +2486,7 @@
     <string name="alias_export_source_count">%1$d개 항목</string>
     <string name="alias_export_warning_title">이 파일은 암호화되지 않았습니다</string>
     <string name="alias_export_warning_body">파일을 여는 사람은 모든 별칭, 메모, 웹사이트를 읽을 수 있습니다. 비밀번호 관리자나 암호화된 드라이브에 보관하세요.</string>
-    <string name="alias_export_summary">파일 %2$d개에 항목 %1$d개.</string>
+    <string name="alias_export_summary">%2$s에 %1$s.</string>
     <string name="alias_export_download">저장</string>
     <string name="alias_export_failed">내보내기에 실패했습니다. 아무것도 저장되지 않았습니다.</string>
     <string name="chip_any_time">모든 기간</string>

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_lock_setup_failed">حدث خطأ ما. حاول إعداد القفل مرة أخرى.</string>
+</resources>

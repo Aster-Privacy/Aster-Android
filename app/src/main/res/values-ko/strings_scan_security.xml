@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_lock_setup_failed">문제가 발생했습니다. 잠금을 다시 설정해 보세요.</string>
+</resources>

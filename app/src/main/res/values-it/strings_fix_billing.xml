@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_billing_available_plans">Piani disponibili</string>
+    <string name="fix_billing_status_active">Attivo</string>
+    <string name="fix_billing_free_plan_description">Sei sul piano gratuito. Esplora i piani a pagamento qui sotto per più spazio, alias e funzionalità.</string>
+    <string name="fix_billing_upgrade_for_more">Aggiorna per sbloccare più spazio, alias e funzionalità</string>
+    <string name="fix_billing_manage_plan">Gestisci piano</string>
+    <string name="fix_billing_quota_aliases">Alias email</string>
+    <string name="fix_billing_quota_domains">Domini personalizzati</string>
+    <string name="fix_billing_per_month_short">/mese</string>
+    <string name="fix_billing_per_year_short">/anno</string>
+    <string name="fix_billing_billed_annually">con fatturazione annuale</string>
+    <string name="fix_billing_plan_recommended">Consigliato</string>
+    <string name="fix_billing_get_plan">Scegli %1$s</string>
+    <string name="fix_billing_autorenew_notice">Il tuo abbonamento si rinnova automaticamente a %1$s finché non lo annulli. Per evitare il prossimo addebito, annullalo in Impostazioni prima della data di rinnovo.</string>
+    <string name="fix_billing_autorenew_notice_short">Il tuo piano si rinnova automaticamente quando paghi con carta. Per evitare il prossimo addebito, annullalo in Impostazioni prima della data di rinnovo.</string>
+    <string name="fix_billing_payment_methods_title">Metodi di pagamento</string>
+    <string name="fix_billing_payment_methods_description">Gestisci i tuoi metodi di pagamento salvati</string>
+    <string name="fix_billing_no_payment_methods">Nessun metodo di pagamento salvato</string>
+    <string name="fix_billing_default_card">Predefinita</string>
+    <string name="fix_billing_set_as_default">Imposta come predefinito</string>
+    <string name="fix_billing_invoice_status_paid">Pagata</string>
+    <string name="fix_billing_invoice_status_failed">Non riuscita</string>
+    <string name="fix_billing_invoice_status_open">Aperta</string>
+    <string name="fix_billing_invoice_status_pending">In attesa</string>
+    <string name="fix_billing_invoice_status_draft">Bozza</string>
+    <string name="fix_billing_invoice_status_void">Annullata</string>
+    <string name="fix_billing_invoice_status_uncollectible">Inesigibile</string>
+    <string name="fix_billing_invoice_status_refunded">Rimborsato</string>
+    <string name="fix_billing_invoice_pdf">PDF</string>
+    <string name="fix_billing_invoice_payment">Pagamento</string>
+    <string name="fix_billing_storage_limit_exceeded">Il suo spazio di archiviazione è pieno.</string>
+    <string name="fix_billing_payment_failed_warning">L\'ultimo addebito sul suo metodo di pagamento non è andato a buon fine. Aggiornarlo in Impostazioni, Fatturazione manterrà attivo il suo piano. La sua posta non è interessata.</string>
+    <string name="fix_billing_update_payment_method">Aggiorna metodo di pagamento</string>
+    <string name="fix_billing_card_expires">Scadenza %1$s</string>
+    <string name="fix_billing_status_trialing">Prova</string>
+    <string name="fix_billing_status_past_due">Pagamento scaduto</string>
+    <string name="fix_billing_status_canceled">Annullato</string>
+    <string name="fix_billing_billed_monthly">Fatturazione mensile</string>
+    <string name="fix_billing_billed_yearly">Fatturazione annuale</string>
+    <string name="fix_billing_history_empty">Nessuna fattura per ora. I tuoi pagamenti compaiono qui dopo il primo addebito.</string>
+    <string name="fix_billing_quota_count">%1$d / %2$d</string>
+</resources>

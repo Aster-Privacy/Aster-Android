@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_filters_search_blocked">Поиск заблокированных отправителей</string>
+    <string name="fix_filters_search_allowed">Поиск разрешенных отправителей</string>
+    <string name="fix_filters_search">Поиск</string>
+    <string name="fix_filters_clear_search">Очистить поиск</string>
+    <string name="fix_filters_no_results_title">Ничего не найдено</string>
+    <string name="fix_filters_no_results_body">Попробуйте другой запрос.</string>
+    <string name="fix_filters_blocked_description">Письма от этих отправителей никогда не попадают во входящие.</string>
+    <string name="fix_filters_allowed_description">Письма от этих отправителей всегда попадают во входящие, даже если похожи на спам.</string>
+    <string name="fix_filters_blocked_empty_body">Заблокируйте отправителя, чтобы его письма не попадали во входящие.</string>
+    <string name="fix_filters_allowed_empty_body">Добавьте отправителя, чтобы его письма не попадали в спам.</string>
+</resources>

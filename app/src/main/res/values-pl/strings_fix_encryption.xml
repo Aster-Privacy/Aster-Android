@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_enc_key_card_title">Twój klucz szyfrowania</string>
+    <string name="fix_enc_key_id_label">Identyfikator klucza</string>
+    <string name="fix_enc_copy_key_id">Kopiuj identyfikator klucza</string>
+    <string name="fix_enc_key_id_copied">Skopiowano identyfikator klucza</string>
+    <string name="fix_enc_clipboard_label_key_id">Identyfikator klucza</string>
+    <string name="fix_enc_never_expires">Nigdy nie wygasa</string>
+    <string name="fix_enc_save_codes">Zapisz do pliku</string>
+    <string name="fix_enc_codes_share_title">Kody odzyskiwania</string>
+    <string name="fix_enc_codes_file_note">Każdy kod działa raz. Przechowuj ten plik w bezpiecznym miejscu.</string>
+    <string name="fix_enc_codes_save_failed">Teraz nie możesz zapisać pliku. Skopiuj kody zamiast tego.</string>
+    <string name="fix_enc_codes_confirm_saved">Zapisałem swoje kody odzyskiwania</string>
+    <string name="fix_enc_codes_used">Użyto %1$d</string>
+</resources>

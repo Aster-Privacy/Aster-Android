@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recovery_email_verified_note">Je kunt dit adres gebruiken om je wachtwoord opnieuw in te stellen.</string>
+    <string name="recovery_email_pending_note">Open de link in je inbox om dit adres te verifiëren.</string>
+    <string name="recovery_email_not_verified_badge">Niet geverifieerd</string>
+    <string name="recovery_email_action_resend">Opnieuw sturen</string>
+    <string name="recovery_email_action_remove">Verwijderen</string>
+    <string name="delete_account_second_factor_checking">Je beveiligingsinstellingen worden gecontroleerd</string>
+</resources>

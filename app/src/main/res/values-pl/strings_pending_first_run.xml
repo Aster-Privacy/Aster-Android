@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="first_run_title">Witamy w Aster Mail</string>
+    <string name="first_run_subtitle">Przenieś swoją dotychczasową pocztę albo zacznij od nowa. Możesz zaimportować ją później w Ustawieniach.</string>
+    <string name="first_run_import">Importuj pocztę</string>
+    <string name="first_run_skip">Nie teraz</string>
+    <string name="first_run_privacy_note">Twoja poczta jest szyfrowana, zanim opuści urządzenie.</string>
+    <string name="recovery_reminder_title">Dodaj awaryjny adres e-mail</string>
+    <string name="recovery_reminder_body">Awaryjny adres e-mail pozwala odzyskać dostęp do konta, gdy zapomnisz hasła.</string>
+    <string name="recovery_reminder_action">Dodaj awaryjny adres</string>
+    <string name="recovery_reminder_later">Później</string>
+    <string name="plan_prompt_title">Korzystaj z Aster Mail w pełni</string>
+    <string name="plan_prompt_body">Przejdź na wyższy plan, aby uzyskać więcej miejsca, własne domeny i nieograniczone aliasy.</string>
+    <string name="plan_prompt_action">Zobacz plany</string>
+    <string name="plan_prompt_dismiss">Nie teraz</string>
+</resources>

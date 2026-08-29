@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_enc_key_card_title">Je versleutelingssleutel</string>
+    <string name="fix_enc_key_id_label">Sleutel-ID</string>
+    <string name="fix_enc_copy_key_id">Sleutel-ID kopiëren</string>
+    <string name="fix_enc_key_id_copied">Sleutel-ID gekopieerd</string>
+    <string name="fix_enc_clipboard_label_key_id">Sleutel-ID</string>
+    <string name="fix_enc_never_expires">Verloopt nooit</string>
+    <string name="fix_enc_save_codes">Opslaan in een bestand</string>
+    <string name="fix_enc_codes_share_title">Herstelcodes</string>
+    <string name="fix_enc_codes_file_note">Elke code werkt één keer. Bewaar dit bestand op een veilige plek.</string>
+    <string name="fix_enc_codes_save_failed">Je kunt het bestand nu niet opslaan. Kopieer de codes in plaats daarvan.</string>
+    <string name="fix_enc_codes_confirm_saved">Ik heb mijn herstelcodes opgeslagen</string>
+    <string name="fix_enc_codes_used">%1$d gebruikt</string>
+</resources>

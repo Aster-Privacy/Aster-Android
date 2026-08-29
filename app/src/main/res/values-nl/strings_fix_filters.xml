@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_filters_search_blocked">Geblokkeerde afzenders zoeken</string>
+    <string name="fix_filters_search_allowed">Toegestane afzenders zoeken</string>
+    <string name="fix_filters_search">Zoeken</string>
+    <string name="fix_filters_clear_search">Zoekopdracht wissen</string>
+    <string name="fix_filters_no_results_title">Geen resultaten</string>
+    <string name="fix_filters_no_results_body">Probeer een andere zoekopdracht.</string>
+    <string name="fix_filters_blocked_description">E-mail van deze afzenders bereikt je Postvak IN nooit.</string>
+    <string name="fix_filters_allowed_description">E-mail van deze afzenders bereikt je Postvak IN altijd, ook als het op spam lijkt.</string>
+    <string name="fix_filters_blocked_empty_body">Blokkeer een afzender om zijn e-mail uit je Postvak IN te houden.</string>
+    <string name="fix_filters_allowed_empty_body">Voeg een afzender toe om zijn e-mail uit spam te houden.</string>
+</resources>

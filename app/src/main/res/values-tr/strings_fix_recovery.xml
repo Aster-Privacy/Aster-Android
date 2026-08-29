@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recovery_email_verified_note">Parolanı sıfırlamak için bu adresi kullanabilirsin.</string>
+    <string name="recovery_email_pending_note">Bu adresi doğrulamak için gelen kutundaki bağlantıyı aç.</string>
+    <string name="recovery_email_not_verified_badge">Doğrulanmadı</string>
+    <string name="recovery_email_action_resend">Yeniden gönder</string>
+    <string name="recovery_email_action_remove">Kaldır</string>
+    <string name="delete_account_second_factor_checking">Güvenlik ayarların denetleniyor</string>
+</resources>

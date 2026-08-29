@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_enc_key_card_title">Ihr Verschlüsselungsschlüssel</string>
+    <string name="fix_enc_key_id_label">Schlüssel-ID</string>
+    <string name="fix_enc_copy_key_id">Schlüssel-ID kopieren</string>
+    <string name="fix_enc_key_id_copied">Schlüssel-ID kopiert</string>
+    <string name="fix_enc_clipboard_label_key_id">Schlüssel-ID</string>
+    <string name="fix_enc_never_expires">Läuft nie ab</string>
+    <string name="fix_enc_save_codes">In Datei sichern</string>
+    <string name="fix_enc_codes_share_title">Wiederherstellungscodes</string>
+    <string name="fix_enc_codes_file_note">Jeder Code funktioniert einmal. Bewahren Sie diese Datei sicher auf.</string>
+    <string name="fix_enc_codes_save_failed">Sie können die Datei gerade nicht sichern. Kopieren Sie die Codes stattdessen.</string>
+    <string name="fix_enc_codes_confirm_saved">Ich habe meine Wiederherstellungscodes gesichert</string>
+    <string name="fix_enc_codes_used">%1$d verwendet</string>
+</resources>

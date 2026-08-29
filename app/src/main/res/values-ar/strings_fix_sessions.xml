@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sessions_other_devices_section">الأجهزة الأخرى</string>
+    <string name="session_meta_line">%1$s · %2$s</string>
+    <string name="session_client_browser">متصفح الويب</string>
+    <string name="session_client_phone">هاتف</string>
+    <string name="session_client_tablet">جهاز لوحي</string>
+    <string name="session_client_desktop">كمبيوتر</string>
+    <string name="session_client_desktop_app">تطبيق سطح المكتب</string>
+    <string name="session_client_bridge">جسر البريد</string>
+    <string name="link_device_step_code">الرمز</string>
+    <string name="link_device_step_confirm">تأكيد</string>
+    <string name="link_device_step_done">تم الربط</string>
+    <string name="link_device_hero_title">أدخل رمز الجهاز</string>
+    <string name="link_device_confirm_title">أكّد هذا الجهاز</string>
+    <string name="link_device_pending_badge">قيد الانتظار</string>
+</resources>

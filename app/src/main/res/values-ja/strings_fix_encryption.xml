@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_enc_key_card_title">あなたの暗号鍵</string>
+    <string name="fix_enc_key_id_label">鍵 ID</string>
+    <string name="fix_enc_copy_key_id">鍵 ID をコピー</string>
+    <string name="fix_enc_key_id_copied">鍵 ID をコピーしました</string>
+    <string name="fix_enc_clipboard_label_key_id">鍵 ID</string>
+    <string name="fix_enc_never_expires">有効期限なし</string>
+    <string name="fix_enc_save_codes">ファイルに保存</string>
+    <string name="fix_enc_codes_share_title">リカバリーコード</string>
+    <string name="fix_enc_codes_file_note">各コードは 1 回だけ使えます。このファイルは安全な場所に保管してください。</string>
+    <string name="fix_enc_codes_save_failed">今はファイルを保存できません。代わりにコードをコピーしてください。</string>
+    <string name="fix_enc_codes_confirm_saved">リカバリーコードを保存しました</string>
+    <string name="fix_enc_codes_used">%1$d 個使用済み</string>
+</resources>

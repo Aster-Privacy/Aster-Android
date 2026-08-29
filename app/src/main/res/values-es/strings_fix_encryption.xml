@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_enc_key_card_title">Tu clave de cifrado</string>
+    <string name="fix_enc_key_id_label">ID de la clave</string>
+    <string name="fix_enc_copy_key_id">Copiar el ID de la clave</string>
+    <string name="fix_enc_key_id_copied">ID de la clave copiado</string>
+    <string name="fix_enc_clipboard_label_key_id">ID de la clave</string>
+    <string name="fix_enc_never_expires">Nunca caduca</string>
+    <string name="fix_enc_save_codes">Guardar en un archivo</string>
+    <string name="fix_enc_codes_share_title">Códigos de recuperación</string>
+    <string name="fix_enc_codes_file_note">Cada código funciona una sola vez. Guarda este archivo en un lugar seguro.</string>
+    <string name="fix_enc_codes_save_failed">Ahora no puedes guardar el archivo. Copia los códigos en su lugar.</string>
+    <string name="fix_enc_codes_confirm_saved">He guardado mis códigos de recuperación</string>
+    <string name="fix_enc_codes_used">%1$d usados</string>
+</resources>

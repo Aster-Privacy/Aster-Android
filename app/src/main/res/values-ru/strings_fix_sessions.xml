@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sessions_other_devices_section">Другие устройства</string>
+    <string name="session_meta_line">%1$s · %2$s</string>
+    <string name="session_client_browser">Веб-браузер</string>
+    <string name="session_client_phone">Телефон</string>
+    <string name="session_client_tablet">Планшет</string>
+    <string name="session_client_desktop">Компьютер</string>
+    <string name="session_client_desktop_app">Приложение для компьютера</string>
+    <string name="session_client_bridge">Почтовый мост</string>
+    <string name="link_device_step_code">Код</string>
+    <string name="link_device_step_confirm">Подтверждение</string>
+    <string name="link_device_step_done">Привязано</string>
+    <string name="link_device_hero_title">Введите код устройства</string>
+    <string name="link_device_confirm_title">Подтвердите это устройство</string>
+    <string name="link_device_pending_badge">Ожидание</string>
+</resources>

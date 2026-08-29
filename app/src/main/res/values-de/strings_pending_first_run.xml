@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="first_run_title">Willkommen bei Aster Mail</string>
+    <string name="first_run_subtitle">Nimm deine vorhandenen E-Mails mit oder fange neu an. Du kannst später in den Einstellungen importieren.</string>
+    <string name="first_run_import">E-Mails importieren</string>
+    <string name="first_run_skip">Jetzt nicht</string>
+    <string name="first_run_privacy_note">Deine E-Mails werden verschlüsselt, bevor sie dein Gerät verlassen.</string>
+    <string name="recovery_reminder_title">Wiederherstellungs-E-Mail hinzufügen</string>
+    <string name="recovery_reminder_body">Mit einer Wiederherstellungs-E-Mail kommst du wieder in dein Konto, wenn du dein Passwort vergisst.</string>
+    <string name="recovery_reminder_action">Wiederherstellungs-E-Mail hinzufügen</string>
+    <string name="recovery_reminder_later">Später</string>
+    <string name="plan_prompt_title">Hol mehr aus Aster Mail heraus</string>
+    <string name="plan_prompt_body">Führe ein Upgrade durch für mehr Speicher, eigene Domains und unbegrenzte Aliasse.</string>
+    <string name="plan_prompt_action">Tarife ansehen</string>
+    <string name="plan_prompt_dismiss">Jetzt nicht</string>
+</resources>

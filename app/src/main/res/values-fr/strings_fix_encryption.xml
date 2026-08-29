@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_enc_key_card_title">Votre clé de chiffrement</string>
+    <string name="fix_enc_key_id_label">Identifiant de la clé</string>
+    <string name="fix_enc_copy_key_id">Copier l\'identifiant de la clé</string>
+    <string name="fix_enc_key_id_copied">Identifiant de la clé copié</string>
+    <string name="fix_enc_clipboard_label_key_id">Identifiant de la clé</string>
+    <string name="fix_enc_never_expires">N\'expire jamais</string>
+    <string name="fix_enc_save_codes">Enregistrer dans un fichier</string>
+    <string name="fix_enc_codes_share_title">Codes de récupération</string>
+    <string name="fix_enc_codes_file_note">Chaque code ne fonctionne qu\'une seule fois. Conservez ce fichier en lieu sûr.</string>
+    <string name="fix_enc_codes_save_failed">Vous ne pouvez pas enregistrer le fichier pour le moment. Copiez plutôt les codes.</string>
+    <string name="fix_enc_codes_confirm_saved">J\'ai enregistré mes codes de récupération</string>
+    <string name="fix_enc_codes_used">%1$d utilisés</string>
+</resources>

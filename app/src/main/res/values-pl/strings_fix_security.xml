@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="two_step_verification_title">Weryfikacja dwuetapowa</string>
+    <string name="two_step_verification_on_description">Twoje konto wymaga kodu weryfikacyjnego oprócz hasła.</string>
+    <string name="two_step_verification_off_description">Aby zwiększyć ochronę, wymagaj kodu weryfikacyjnego oprócz hasła.</string>
+    <string name="security_activity_filter_all">Wszystko</string>
+    <string name="security_activity_filter_sign_ins">Logowania</string>
+    <string name="security_activity_filter_security">Zmiany zabezpieczeń</string>
+    <string name="security_activity_filter_failures">Niepowodzenia</string>
+    <string name="security_activity_today">Dzisiaj</string>
+    <string name="security_activity_yesterday">Wczoraj</string>
+    <string name="security_activity_show_more">Pokaż więcej</string>
+    <string name="security_activity_show_less">Pokaż mniej</string>
+    <string name="security_activity_empty_filter">Żadna aktywność nie pasuje do tego filtra.</string>
+</resources>

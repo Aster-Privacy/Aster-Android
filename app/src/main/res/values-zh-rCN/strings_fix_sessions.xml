@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sessions_other_devices_section">其他设备</string>
+    <string name="session_meta_line">%1$s · %2$s</string>
+    <string name="session_client_browser">网页浏览器</string>
+    <string name="session_client_phone">手机</string>
+    <string name="session_client_tablet">平板电脑</string>
+    <string name="session_client_desktop">电脑</string>
+    <string name="session_client_desktop_app">桌面App</string>
+    <string name="session_client_bridge">邮件桥接</string>
+    <string name="link_device_step_code">代码</string>
+    <string name="link_device_step_confirm">确认</string>
+    <string name="link_device_step_done">已关联</string>
+    <string name="link_device_hero_title">输入设备代码</string>
+    <string name="link_device_confirm_title">确认此设备</string>
+    <string name="link_device_pending_badge">待处理</string>
+</resources>

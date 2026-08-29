@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alias_filter_all">すべて</string>
+    <string name="alias_filter_active">有効</string>
+    <string name="alias_filter_disabled">無効</string>
+    <string name="alias_filter_all_domains">すべてのドメイン</string>
+    <string name="alias_import_file_hint">インポートする CSV または JSON ファイルを選択します</string>
+    <string name="alias_import_change_file">ファイルを変更</string>
+    <string name="alias_import_remove_file">ファイルを削除</string>
+    <string name="alias_note_placeholder_short">利用先</string>
+</resources>

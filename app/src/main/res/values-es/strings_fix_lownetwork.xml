@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="low_network_mode_active_banner">El modo de red limitada está activado</string>
+    <string name="low_network_mode_banner_action">Ajustes</string>
+    <string name="low_network_mode_info_desc_v2">Mantiene Aster utilizable en conexiones lentas o de uso medido. Aster omite las fotos de perfil, los logotipos de los remitentes y las imágenes externas del correo, muestra cada mensaje como texto sin formato, carga páginas de bandeja más cortas y muestra un máximo de 4 mensajes por conversación. Las comprobaciones de correo en segundo plano se ejecutan con menos frecuencia, las animaciones se desactivan y los archivos adjuntos se cargan solo cuando los abres. El modo de red limitada también se activa por sí solo mientras el Ahorro de datos limita los datos en segundo plano en una conexión de uso medido.</string>
+    <string name="low_network_mode_data_saver_note">El Ahorro de datos lo mantiene activado hasta que lo desactives en los ajustes de Android.</string>
+</resources>

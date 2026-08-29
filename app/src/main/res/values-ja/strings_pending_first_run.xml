@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="first_run_title">Aster Mail へようこそ</string>
+    <string name="first_run_subtitle">現在のメールを引き継ぐことも、新しく始めることもできます。あとから設定でインポートできます。</string>
+    <string name="first_run_import">メールをインポート</string>
+    <string name="first_run_skip">後で</string>
+    <string name="first_run_privacy_note">メールはデバイスから送信される前に暗号化されます。</string>
+    <string name="recovery_reminder_title">復旧用メールアドレスを追加</string>
+    <string name="recovery_reminder_body">復旧用メールアドレスがあれば、パスワードを忘れてもアカウントに戻れます。</string>
+    <string name="recovery_reminder_action">復旧用メールアドレスを追加</string>
+    <string name="recovery_reminder_later">後で</string>
+    <string name="plan_prompt_title">Aster Mail をもっと活用</string>
+    <string name="plan_prompt_body">アップグレードすると、容量が増え、独自ドメインと無制限のエイリアスを利用できます。</string>
+    <string name="plan_prompt_action">プランを見る</string>
+    <string name="plan_prompt_dismiss">後で</string>
+</resources>

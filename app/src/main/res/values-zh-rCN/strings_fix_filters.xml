@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_filters_search_blocked">搜索已屏蔽的发件人</string>
+    <string name="fix_filters_search_allowed">搜索已允许的发件人</string>
+    <string name="fix_filters_search">搜索</string>
+    <string name="fix_filters_clear_search">清除搜索</string>
+    <string name="fix_filters_no_results_title">没有结果</string>
+    <string name="fix_filters_no_results_body">请尝试其他搜索词。</string>
+    <string name="fix_filters_blocked_description">这些发件人的邮件永远不会送达你的收件箱。</string>
+    <string name="fix_filters_allowed_description">这些发件人的邮件始终送达你的收件箱，即使看起来像垃圾邮件。</string>
+    <string name="fix_filters_blocked_empty_body">屏蔽某个发件人，让其邮件不再进入收件箱。</string>
+    <string name="fix_filters_allowed_empty_body">添加某个发件人，让其邮件不再被归入垃圾邮件。</string>
+</resources>

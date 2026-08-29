@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recovery_email_verified_note">このアドレスでパスワードをリセットできます。</string>
+    <string name="recovery_email_pending_note">受信トレイのリンクを開いて、このアドレスを確認してください。</string>
+    <string name="recovery_email_not_verified_badge">未確認</string>
+    <string name="recovery_email_action_resend">再送信</string>
+    <string name="recovery_email_action_remove">削除</string>
+    <string name="delete_account_second_factor_checking">セキュリティ設定を確認しています</string>
+</resources>

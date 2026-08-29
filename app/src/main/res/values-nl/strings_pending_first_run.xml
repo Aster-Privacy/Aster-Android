@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="first_run_title">Welkom bij Aster Mail</string>
+    <string name="first_run_subtitle">Neem je bestaande mail mee of begin opnieuw. Je kunt later importeren via Instellingen.</string>
+    <string name="first_run_import">Je mail importeren</string>
+    <string name="first_run_skip">Niet nu</string>
+    <string name="first_run_privacy_note">Je mail wordt versleuteld voordat die je apparaat verlaat.</string>
+    <string name="recovery_reminder_title">Herstel-e-mailadres toevoegen</string>
+    <string name="recovery_reminder_body">Met een herstel-e-mailadres kom je weer in je account als je je wachtwoord vergeet.</string>
+    <string name="recovery_reminder_action">Herstel-e-mailadres toevoegen</string>
+    <string name="recovery_reminder_later">Later</string>
+    <string name="plan_prompt_title">Haal meer uit Aster Mail</string>
+    <string name="plan_prompt_body">Upgrade voor meer opslag, eigen domeinen en onbeperkte aliassen.</string>
+    <string name="plan_prompt_action">Abonnementen bekijken</string>
+    <string name="plan_prompt_dismiss">Niet nu</string>
+</resources>

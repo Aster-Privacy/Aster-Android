@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_filters_search_blocked">ブロック中の送信者を検索</string>
+    <string name="fix_filters_search_allowed">許可した送信者を検索</string>
+    <string name="fix_filters_search">検索</string>
+    <string name="fix_filters_clear_search">検索をクリア</string>
+    <string name="fix_filters_no_results_title">該当なし</string>
+    <string name="fix_filters_no_results_body">別のキーワードで検索してください。</string>
+    <string name="fix_filters_blocked_description">これらの送信者からのメールは受信トレイに届きません。</string>
+    <string name="fix_filters_allowed_description">これらの送信者からのメールは、迷惑メールのように見える場合でも必ず受信トレイに届きます。</string>
+    <string name="fix_filters_blocked_empty_body">送信者をブロックすると、そのメールは受信トレイに届かなくなります。</string>
+    <string name="fix_filters_allowed_empty_body">送信者を追加すると、そのメールが迷惑メールに振り分けられなくなります。</string>
+</resources>

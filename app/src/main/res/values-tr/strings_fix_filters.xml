@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_filters_search_blocked">Engellenen göndericilerde ara</string>
+    <string name="fix_filters_search_allowed">İzin verilen göndericilerde ara</string>
+    <string name="fix_filters_search">Ara</string>
+    <string name="fix_filters_clear_search">Aramayı temizle</string>
+    <string name="fix_filters_no_results_title">Sonuç yok</string>
+    <string name="fix_filters_no_results_body">Farklı bir arama deneyin.</string>
+    <string name="fix_filters_blocked_description">Bu göndericilerin postaları gelen kutunuza hiçbir zaman ulaşmaz.</string>
+    <string name="fix_filters_allowed_description">Bu göndericilerin postaları, istenmeyen posta gibi görünse bile her zaman gelen kutunuza ulaşır.</string>
+    <string name="fix_filters_blocked_empty_body">Bir göndericinin postasını gelen kutunuzdan uzak tutmak için onu engelleyin.</string>
+    <string name="fix_filters_allowed_empty_body">Bir göndericinin postasını istenmeyen postadan uzak tutmak için onu ekleyin.</string>
+</resources>

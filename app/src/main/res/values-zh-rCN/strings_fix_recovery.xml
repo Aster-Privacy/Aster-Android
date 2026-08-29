@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recovery_email_verified_note">你可以使用该地址重置密码。</string>
+    <string name="recovery_email_pending_note">打开收件箱中的链接以验证该地址。</string>
+    <string name="recovery_email_not_verified_badge">未验证</string>
+    <string name="recovery_email_action_resend">重新发送</string>
+    <string name="recovery_email_action_remove">移除</string>
+    <string name="delete_account_second_factor_checking">正在检查你的安全设置</string>
+</resources>

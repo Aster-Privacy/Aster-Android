@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_filters_search_blocked">Blockierte Absender suchen</string>
+    <string name="fix_filters_search_allowed">Erlaubte Absender suchen</string>
+    <string name="fix_filters_search">Suchen</string>
+    <string name="fix_filters_clear_search">Suche löschen</string>
+    <string name="fix_filters_no_results_title">Keine Ergebnisse</string>
+    <string name="fix_filters_no_results_body">Versuchen Sie eine andere Suche.</string>
+    <string name="fix_filters_blocked_description">E-Mails dieser Absender erreichen Ihren Posteingang nie.</string>
+    <string name="fix_filters_allowed_description">E-Mails dieser Absender erreichen Ihren Posteingang immer, auch wenn sie wie Spam aussehen.</string>
+    <string name="fix_filters_blocked_empty_body">Blockieren Sie einen Absender, damit dessen E-Mails nicht in Ihrem Posteingang landen.</string>
+    <string name="fix_filters_allowed_empty_body">Fügen Sie einen Absender hinzu, damit dessen E-Mails nicht im Spam landen.</string>
+</resources>

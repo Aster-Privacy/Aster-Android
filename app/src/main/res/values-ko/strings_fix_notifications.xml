@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notif_login_alert_inbox_hint">자세한 내용은 받은편지함에 있습니다</string>
+</resources>

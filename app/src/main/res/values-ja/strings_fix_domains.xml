@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="domains_load_timeout">ドメインの読み込みに予想以上の時間がかかっています。接続を確認してからもう一度お試しください。</string>
+    <string name="domain_manage_mail_setup">メールの設定</string>
+    <string name="domain_manage_dns_unavailable">メール設定の詳細は、このドメインをアカウントに追加すると表示されます。</string>
+    <string name="domain_manage_verification">確認</string>
+    <string name="domain_manage_last_verified">最終確認</string>
+    <string name="domain_manage_never_verified">未確認</string>
+    <string name="domain_manage_records">DNS レコード</string>
+    <string name="domain_manage_catch_all_description">このドメインのすべてのアドレス宛のメールを受信します。</string>
+    <string name="domain_manage_recheck">DNS レコードを再確認</string>
+    <string name="domain_manage_rechecking">DNS レコードを確認中</string>
+</resources>
