@@ -91,6 +91,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
@@ -192,7 +194,7 @@ fun MailingListsScreen(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 top = header_height_dp + AsterSpacing.sm,
-                bottom = 120.dp + nav_bar_bottom,
+                bottom = 88.dp + nav_bar_bottom,
             ),
         ) {
             item(key = "hero") {
@@ -225,7 +227,7 @@ fun MailingListsScreen(
                 Spacer(Modifier.height(AsterSpacing.md))
             }
             when {
-                state.is_loading && state.items.isEmpty() -> item(key = "loading") {
+                state.is_loading && !state.is_scanning && state.items.isEmpty() -> item(key = "loading") {
                     Box(
                         modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
                         contentAlignment = Alignment.Center,
@@ -293,7 +295,7 @@ fun MailingListsScreen(
             state = list_state,
             modifier = Modifier.align(Alignment.TopEnd),
             top_padding = header_height_dp,
-            bottom_padding = 96.dp + nav_bar_bottom,
+            bottom_padding = 88.dp + nav_bar_bottom,
         )
 
         val header_bg = colors.bg_primary
@@ -319,7 +321,8 @@ fun MailingListsScreen(
                     on_back = on_back,
                     on_open_drawer = on_open_drawer,
                     on_open_search = on_open_search,
-                    on_scan = { if (!state.is_scanning) vm.scan() },
+                    on_scan = { vm.scan() },
+                    on_cancel_scan = { vm.cancel_scan() },
                     is_scanning = state.is_scanning,
                 )
             }
@@ -387,6 +390,7 @@ private fun subscription_top_bar(
     on_open_drawer: (() -> Unit)?,
     on_open_search: () -> Unit,
     on_scan: () -> Unit,
+    on_cancel_scan: () -> Unit,
     is_scanning: Boolean,
 ) {
     val colors = AsterMaterial.colors
@@ -434,7 +438,15 @@ private fun subscription_top_bar(
                 )
             }
             if (is_scanning) {
-                Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
+                val cancel_label = stringResource(R.string.cancel)
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(SquircleShape(24.dp))
+                        .clickable { on_cancel_scan() }
+                        .semantics { contentDescription = cancel_label },
+                    contentAlignment = Alignment.Center,
+                ) {
                     CircularProgressIndicator(
                         color = colors.accent_blue,
                         strokeWidth = 2.dp,
@@ -479,7 +491,7 @@ private fun subscription_hero(
     val target_fraction = if (total == 0) 0f else active_count.toFloat() / total.toFloat()
     val fraction by animateFloatAsState(
         targetValue = target_fraction,
-        animationSpec = tween(durationMillis = 450),
+        animationSpec = tween(durationMillis = org.astermail.android.design.AsterDuration.long_2),
         label = "subscription_gauge",
     )
     Column(
@@ -568,19 +580,11 @@ private fun subscription_hero(
         }
         if (is_scanning) {
             Spacer(Modifier.height(AsterSpacing.md))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                CircularProgressIndicator(
-                    color = Color.White,
-                    modifier = Modifier.size(14.dp),
-                    strokeWidth = 2.dp,
-                )
-                Spacer(Modifier.width(AsterSpacing.sm))
-                Text(
-                    text = stringResource(R.string.scanning),
-                    color = Color.White.copy(alpha = 0.86f),
-                    fontSize = 12.sp,
-                )
-            }
+            Text(
+                text = stringResource(R.string.scanning),
+                color = Color.White.copy(alpha = 0.86f),
+                fontSize = 12.sp,
+            )
         }
     }
 }
@@ -844,7 +848,6 @@ private fun row_action_button(
         modifier = Modifier
             .size(40.dp)
             .clip(CircleShape)
-            .background(tint.copy(alpha = 0.12f))
             .clickable(enabled = !is_loading, onClick = on_click),
         contentAlignment = Alignment.Center,
     ) {

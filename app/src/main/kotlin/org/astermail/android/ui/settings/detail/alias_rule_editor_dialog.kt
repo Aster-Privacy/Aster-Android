@@ -22,6 +22,7 @@
 package org.astermail.android.ui.settings.detail
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,9 +33,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,11 +53,14 @@ import org.astermail.android.R
 import org.astermail.android.api.aliases.AliasRuleActions
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogOutlineButton
 import org.astermail.android.design.components.AsterDialogPrimaryButton
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.AsterTextField
+import org.astermail.android.design.components.aster_dropdown_item
+import org.astermail.android.design.components.aster_dropdown_menu
 
 private val rule_fields = listOf("from", "to", "subject", "all")
 private val rule_operators = listOf("contains", "equals", "starts_with", "ends_with", "matches_regex")
@@ -174,8 +175,9 @@ private fun rule_dropdown(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(colors.bg_secondary)
+                .clip(SquircleShape(12.dp))
+                .background(colors.input_bg, SquircleShape(12.dp))
+                .border(1.dp, colors.input_border, SquircleShape(12.dp))
                 .clickable { open = true }
                 .padding(horizontal = 12.dp, vertical = 12.dp)
                 .testTag(test_tag),
@@ -194,11 +196,12 @@ private fun rule_dropdown(
                 modifier = Modifier.size(16.dp),
             )
         }
-        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+        aster_dropdown_menu(expanded = open, on_dismiss = { open = false }) {
             options.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(stringResource(label_for(option))) },
-                    onClick = {
+                aster_dropdown_item(
+                    label = stringResource(label_for(option)),
+                    selected = option == selected,
+                    on_click = {
                         open = false
                         on_select(option)
                     },

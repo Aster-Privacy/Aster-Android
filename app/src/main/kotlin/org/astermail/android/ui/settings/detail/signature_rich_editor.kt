@@ -36,6 +36,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -442,6 +444,11 @@ private fun signature_color_dialog(
     on_pick: (String) -> Unit,
 ) {
     val colors = AsterMaterial.colors
+    val swatch_ring_color = if (colors.is_dark) {
+        Color.White.copy(alpha = 0.28f)
+    } else {
+        Color.Black.copy(alpha = 0.16f)
+    }
     AsterDialog(
         on_dismiss = on_dismiss,
         title = title,
@@ -458,14 +465,11 @@ private fun signature_color_dialog(
                         row.forEach { hex ->
                             Box(
                                 modifier = Modifier
-                                    .size(30.dp)
-                                    .clip(RoundedCornerShape(10.dp))
+                                    .weight(1f)
+                                    .aspectRatio(1f)
+                                    .clip(CircleShape)
                                     .background(Color(android.graphics.Color.parseColor(hex)))
-                                    .border(
-                                        1.dp,
-                                        colors.border_secondary,
-                                        RoundedCornerShape(10.dp),
-                                    )
+                                    .border(1.5.dp, swatch_ring_color, CircleShape)
                                     .clickable { on_pick(hex) },
                             )
                         }

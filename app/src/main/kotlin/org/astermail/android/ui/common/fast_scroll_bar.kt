@@ -82,20 +82,20 @@ fun fast_scroll_bar(
             val visible = info.visibleItemsInfo
             val total = info.totalItemsCount
             if (visible.isEmpty() || total < min_items_for_thumb) {
-                scroll_metrics(0, 0f, 0f)
+                scroll_metrics(0, 0f, 0f, 0f)
             } else {
-                val average = visible.sumOf { it.size } / visible.size.toFloat()
-                val viewport = (info.viewportEndOffset - info.viewportStartOffset).toFloat()
-                val content = average * total
-                val scrollable = content - viewport
-                if (scrollable <= 1f || average <= 0f) {
-                    scroll_metrics(total, 0f, 0f)
+                val on_screen = visible.size.toFloat().coerceAtLeast(1f)
+                val span = (total - on_screen).coerceAtLeast(0f)
+                if (span <= 0f) {
+                    scroll_metrics(total, 0f, 0f, 0f)
                 } else {
-                    val offset = state.firstVisibleItemIndex * average + state.firstVisibleItemScrollOffset
+                    val first_size = visible.first().size.toFloat().coerceAtLeast(1f)
+                    val intra = (state.firstVisibleItemScrollOffset / first_size).coerceIn(0f, 1f)
                     scroll_metrics(
                         total = total,
-                        average = average,
-                        progress = (offset / scrollable).coerceIn(0f, 1f),
+                        span = span,
+                        ratio = (on_screen / total).coerceIn(0.02f, 1f),
+                        progress = ((state.firstVisibleItemIndex + intra) / span).coerceIn(0f, 1f),
                     )
                 }
             }
@@ -113,7 +113,7 @@ fun fast_scroll_bar(
         }
     }
 
-    val active = metrics.average > 0f && metrics.total >= min_items_for_thumb
+    val active = metrics.span > 0f && metrics.total >= min_items_for_thumb
     val target_alpha = if (active && recently_scrolled) 1f else 0f
     val alpha by animateFloatAsState(
         targetValue = target_alpha,
@@ -136,10 +136,8 @@ fun fast_scroll_bar(
     ) {
         val track_px = with(density) { maxHeight.toPx() }
         val live_thumb = with(density) {
-            val viewport = (state.layoutInfo.viewportEndOffset - state.layoutInfo.viewportStartOffset).toFloat()
-            val content = max(metrics.average * metrics.total, 1f)
-            val ratio = if (content <= 0f) 1f else (viewport / content).coerceIn(0f, 1f)
-            max(track_px * ratio, thumb_min_height.toPx())
+            val ratio = metrics.ratio.coerceIn(0.02f, 1f)
+            max(track_px * ratio, thumb_min_height.toPx()).coerceAtMost(max(track_px, 1f))
         }
         val thumb_px = if (dragging && locked_geometry[0] > 0f) locked_geometry[0] else live_thumb
         val travel = if (dragging && locked_geometry[1] > 0f) {
@@ -220,7 +218,8 @@ fun fast_scroll_bar(
 
 private data class scroll_metrics(
     val total: Int,
-    val average: Float,
+    val span: Float,
+    val ratio: Float,
     val progress: Float,
 )
 
@@ -229,13 +228,8 @@ private suspend fun scroll_to_fraction(
     fraction: Float,
     metrics: scroll_metrics,
 ) {
-    if (metrics.average <= 0f || metrics.total <= 0) return
-    val info = state.layoutInfo
-    val viewport = (info.viewportEndOffset - info.viewportStartOffset).toFloat()
-    val content = metrics.average * metrics.total
-    val scrollable = max(content - viewport, 1f)
-    val target_px = fraction * scrollable
-    val index = (target_px / metrics.average).toInt().coerceIn(0, max(metrics.total - 1, 0))
-    val offset = (target_px - index * metrics.average).roundToInt().coerceAtLeast(0)
-    state.scrollToItem(index, offset)
+    if (metrics.span <= 0f || metrics.total <= 0) return
+    val target = fraction.coerceIn(0f, 1f) * metrics.span
+    val index = target.roundToInt().coerceIn(0, max(metrics.total - 1, 0))
+    state.scrollToItem(index)
 }

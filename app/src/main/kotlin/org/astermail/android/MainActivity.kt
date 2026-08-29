@@ -60,6 +60,8 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
@@ -74,6 +76,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.Font
@@ -97,6 +100,7 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import org.astermail.android.auth.AuthGateViewModel
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.AsterTheme
 import org.astermail.android.design.AsterThemeMode
 import org.astermail.android.design.ColorThemeId
@@ -142,6 +146,7 @@ import org.astermail.android.ui.settings.detail.TrustedDevicesScreen
 import org.astermail.android.ui.settings.detail.AliasesScreen
 import org.astermail.android.ui.settings.detail.AppearanceScreen
 import org.astermail.android.ui.settings.detail.DomainPurchaseScreen
+import org.astermail.android.ui.settings.detail.DomainsScreen
 import org.astermail.android.ui.settings.detail.DomainPurchaseProgressScreen
 import org.astermail.android.ui.settings.detail.AutoForwardScreen
 import org.astermail.android.ui.settings.detail.BehaviorScreen
@@ -677,6 +682,7 @@ private fun AsterNavHost() {
                     }
                 },
                 on_registered = {
+                    theme_vm.mark_first_run()
                     nav_controller.navigate(routes.inbox) {
                         popUpTo(routes.welcome) { inclusive = true }
                     }
@@ -794,9 +800,18 @@ private fun AsterNavHost() {
             MailDetailScreen(
                 email_id = email_id,
                 on_back = { nav_controller.popBackStack() },
-                on_reply = { msg_id, ghost -> context.startActivity(ComposeActivity.intent_for(context, reply_to = msg_id, mode = "reply", thread_ghost_email = ghost)) },
-                on_reply_all = { msg_id, ghost -> context.startActivity(ComposeActivity.intent_for(context, reply_to = msg_id, mode = "reply_all", thread_ghost_email = ghost)) },
-                on_forward = { msg_id, ghost -> context.startActivity(ComposeActivity.intent_for(context, reply_to = msg_id, mode = "forward", thread_ghost_email = ghost)) },
+                on_reply = { msg_id, ghost ->
+                    org.astermail.android.ui.compose.publish_compose_thread_seed(detail_thread_state)
+                    context.startActivity(ComposeActivity.intent_for(context, reply_to = msg_id, mode = "reply", thread_ghost_email = ghost))
+                },
+                on_reply_all = { msg_id, ghost ->
+                    org.astermail.android.ui.compose.publish_compose_thread_seed(detail_thread_state)
+                    context.startActivity(ComposeActivity.intent_for(context, reply_to = msg_id, mode = "reply_all", thread_ghost_email = ghost))
+                },
+                on_forward = { msg_id, ghost ->
+                    org.astermail.android.ui.compose.publish_compose_thread_seed(detail_thread_state)
+                    context.startActivity(ComposeActivity.intent_for(context, reply_to = msg_id, mode = "forward", thread_ghost_email = ghost))
+                },
                 on_archive = advance_after_action,
                 on_delete = advance_after_action,
                 on_next = neighbor_id(1)?.let { next -> { open_neighbor(next) } },
@@ -1162,6 +1177,11 @@ private fun AsterNavHost() {
                 on_back = { back(); Unit },
                 on_open = open_detail,
                 open_create = entry.arguments?.getBoolean("create") ?: false,
+            )
+        }
+        composable(routes.settings_detail("domains")) {
+            DomainsScreen(
+                on_back = { back(); Unit },
                 on_open_buy_domain = { nav_controller.navigate(routes.settings_detail("buy_domain")) },
                 on_open_domain_order = { id -> nav_controller.navigate(routes.domain_order_for(id)) },
             )
@@ -1417,6 +1437,18 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     val accounts_state by accounts_vm.state.collectAsStateWithLifecycle()
 
     val drawer_context = androidx.compose.ui.platform.LocalContext.current
+    androidx.compose.runtime.LaunchedEffect(
+        settings_state.user,
+        settings_state.aliases,
+        settings_state.custom_domain_addresses,
+        settings_state.ghost_aliases,
+        settings_state.default_sender_id,
+    ) {
+        org.astermail.android.ui.compose.publish_compose_identity_seed(
+            drawer_context,
+            settings_state,
+        )
+    }
     androidx.compose.runtime.LaunchedEffect(settings_state.action_result) {
         val msg = settings_state.action_result ?: return@LaunchedEffect
         android.widget.Toast.makeText(drawer_context, msg, android.widget.Toast.LENGTH_SHORT).show()
@@ -2203,6 +2235,91 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                     }
                 }
             },
+        )
+    }
+
+    val first_run_setup_pending by theme_vm_inbox.first_run_setup_pending.collectAsStateWithLifecycle()
+    val first_run_plan_pending by theme_vm_inbox.first_run_plan_pending.collectAsStateWithLifecycle()
+    val first_run_at by theme_vm_inbox.first_run_at.collectAsStateWithLifecycle()
+    val recovery_snooze_until by theme_vm_inbox.recovery_snooze_until.collectAsStateWithLifecycle()
+
+    var recovery_prompt_dismissed by androidx.compose.runtime.saveable.rememberSaveable {
+        mutableStateOf(false)
+    }
+    var plan_prompt_dismissed by androidx.compose.runtime.saveable.rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    val now_ms = System.currentTimeMillis()
+    val first_run_age_ms = if (first_run_at > 0L) now_ms - first_run_at else -1L
+    val recovery_prompt_due = first_run_age_ms >=
+        org.astermail.android.ui.onboarding.first_run_recovery_delay_ms
+    val plan_prompt_due = first_run_age_ms >=
+        org.astermail.android.ui.onboarding.first_run_plan_delay_ms
+
+    androidx.compose.runtime.LaunchedEffect(recovery_prompt_due) {
+        if (recovery_prompt_due) settings_vm.refresh_recovery_email_presence()
+    }
+
+    val show_recovery_prompt = recovery_prompt_due &&
+        !first_run_setup_pending &&
+        !recovery_prompt_dismissed &&
+        now_ms >= recovery_snooze_until &&
+        !settings_state.recovery_email_set
+
+    val show_plan_prompt = plan_prompt_due &&
+        first_run_plan_pending &&
+        !first_run_setup_pending &&
+        !plan_prompt_dismissed &&
+        !show_recovery_prompt
+
+    if (show_recovery_prompt || show_plan_prompt) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .systemBarsPadding()
+                .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.xxl),
+            contentAlignment = Alignment.BottomCenter,
+        ) {
+            if (show_recovery_prompt) {
+                org.astermail.android.ui.onboarding.RecoveryReminderCard(
+                    visible = true,
+                    on_add_recovery = {
+                        recovery_prompt_dismissed = true
+                        nav_controller.navigate(routes.settings_detail("recovery_email"))
+                    },
+                    on_later = {
+                        recovery_prompt_dismissed = true
+                        theme_vm_inbox.snooze_recovery(
+                            org.astermail.android.ui.onboarding.first_run_recovery_snooze_ms,
+                        )
+                    },
+                )
+            } else {
+                org.astermail.android.ui.onboarding.PlanPromptCard(
+                    visible = true,
+                    on_see_plans = {
+                        plan_prompt_dismissed = true
+                        theme_vm_inbox.clear_first_run_plan()
+                        nav_controller.navigate(routes.settings_detail("billing"))
+                    },
+                    on_dismiss = {
+                        plan_prompt_dismissed = true
+                        theme_vm_inbox.clear_first_run_plan()
+                    },
+                )
+            }
+        }
+    }
+
+    if (first_run_setup_pending) {
+        org.astermail.android.ui.onboarding.FirstRunSetupSheet(
+            email = user_email,
+            on_import = {
+                theme_vm_inbox.clear_first_run_setup()
+                nav_controller.navigate(routes.settings_detail("import"))
+            },
+            on_dismiss = { theme_vm_inbox.clear_first_run_setup() },
         )
     }
 }

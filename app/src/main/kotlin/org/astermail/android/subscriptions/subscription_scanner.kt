@@ -22,10 +22,13 @@
 package org.astermail.android.subscriptions
 
 import android.content.Context
+import android.os.SystemClock
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import org.astermail.android.api.mail.MailApi
 import org.astermail.android.mail.MailRepository
@@ -44,6 +47,7 @@ data class DiscoveredSubscription(
 
 private const val PREFS_NAME = "aster_subscription_scan"
 private const val WATERMARK_PREFIX = "watermark_"
+private const val SCAN_BUDGET_MS = 45_000L
 
 private val SYSTEM_DOMAINS = listOf("astermail.org", "astermail.com", "aster.cx")
 
@@ -168,9 +172,11 @@ class SubscriptionScanner @Inject constructor(
         max_pages: Int = 12,
         page_size: Int = 100,
         force_full: Boolean = false,
+        budget_ms: Long = SCAN_BUDGET_MS,
     ): List<DiscoveredSubscription> = withContext(Dispatchers.Default) {
         val watermark = if (force_full) "" else last_scan_watermark()
         val senders = LinkedHashMap<String, DiscoveredSubscription>()
+        val deadline = SystemClock.elapsedRealtime() + budget_ms
         var cursor: String? = null
         var pages = 0
         var newest_seen = ""
@@ -178,15 +184,26 @@ class SubscriptionScanner @Inject constructor(
         var heal_pending_failure = false
 
         while (pages < max_pages && !stop) {
-            val response = runCatching {
+            ensureActive()
+            if (SystemClock.elapsedRealtime() >= deadline) break
+            val response = try {
                 mail_api.list_messages(
                     limit = page_size,
                     cursor = cursor,
                     item_type = "received",
                 )
-            }.getOrNull() ?: break
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Throwable) {
+                null
+            } ?: break
 
             for (item in response.items) {
+                ensureActive()
+                if (SystemClock.elapsedRealtime() >= deadline) {
+                    stop = true
+                    break
+                }
                 val created_at = item.created_at.orEmpty()
                 if (watermark.isNotEmpty() && created_at.isNotEmpty() && created_at <= watermark) {
                     stop = true
@@ -256,8 +273,9 @@ class SubscriptionScanner @Inject constructor(
             }
 
             pages += 1
-            cursor = response.next_cursor
-            if (!response.has_more || cursor.isNullOrBlank()) break
+            val next_cursor = response.next_cursor
+            if (!response.has_more || next_cursor.isNullOrBlank() || next_cursor == cursor) break
+            cursor = next_cursor
         }
 
         if (newest_seen.isNotEmpty() && !heal_pending_failure) save_watermark(newest_seen)

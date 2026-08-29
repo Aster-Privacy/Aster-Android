@@ -24,6 +24,7 @@ package org.astermail.android.ui.settings.detail
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.text.format.Formatter
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -55,14 +56,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import compose.icons.TablerIcons
 import compose.icons.tablericons.AlertTriangle
 import compose.icons.tablericons.CircleCheck
+import compose.icons.tablericons.FileText
 import compose.icons.tablericons.ChevronDown
 import compose.icons.tablericons.Square
 import compose.icons.tablericons.SquareCheck
+import compose.icons.tablericons.Upload
 import compose.icons.tablericons.X
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -74,6 +78,8 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogOutlineButton
 import org.astermail.android.design.components.AsterDialogPrimaryButton
+import org.astermail.android.design.components.AsterGhostButton
+import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.aster_dropdown_item
 import org.astermail.android.design.components.aster_dropdown_menu
 import org.astermail.android.settings.ImportPreviewRow
@@ -87,6 +93,14 @@ import org.astermail.android.settings.parse_import_file
 
 private const val MAX_IMPORT_FILE_BYTES = 4 * 1024 * 1024
 
+private val IMPORT_MIME_TYPES = arrayOf(
+    "text/csv",
+    "text/comma-separated-values",
+    "text/plain",
+    "application/json",
+    "*/*",
+)
+
 private enum class ImportStep {
     Select,
     Preview,
@@ -97,25 +111,128 @@ private enum class ImportStep {
 private data class ImportFileContent(
     val text: String,
     val file_name: String,
+    val size_bytes: Long,
 )
 
 private fun read_import_file(context: Context, uri: Uri): ImportFileContent? {
     var file_name = "import.csv"
+    var size_bytes = -1L
 
     context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
         if (cursor.moveToFirst()) {
             val name_index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
             val size_index = cursor.getColumnIndex(OpenableColumns.SIZE)
             if (name_index >= 0) file_name = cursor.getString(name_index) ?: file_name
-            if (size_index >= 0 && cursor.getLong(size_index) > MAX_IMPORT_FILE_BYTES) return null
+            if (size_index >= 0 && !cursor.isNull(size_index)) size_bytes = cursor.getLong(size_index)
+            if (size_bytes > MAX_IMPORT_FILE_BYTES) return null
         }
     }
 
-    val text = context.contentResolver.openInputStream(uri)?.use { stream ->
-        stream.readBytes().toString(Charsets.UTF_8)
+    val bytes = context.contentResolver.openInputStream(uri)?.use { stream ->
+        stream.readBytes()
     } ?: return null
+    if (bytes.size > MAX_IMPORT_FILE_BYTES) return null
 
-    return ImportFileContent(text, file_name)
+    return ImportFileContent(
+        text = bytes.toString(Charsets.UTF_8),
+        file_name = file_name,
+        size_bytes = if (size_bytes >= 0) size_bytes else bytes.size.toLong(),
+    )
+}
+
+@Composable
+private fun import_drop_area(on_choose: () -> Unit) {
+    val colors = AsterMaterial.colors
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(SquircleShape(14.dp))
+            .background(colors.bg_secondary, SquircleShape(14.dp))
+            .border(1.dp, colors.input_border, SquircleShape(14.dp))
+            .clickable(onClick = on_choose)
+            .padding(vertical = AsterSpacing.lg, horizontal = AsterSpacing.md),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+    ) {
+        Icon(
+            imageVector = TablerIcons.Upload,
+            contentDescription = null,
+            tint = colors.text_muted,
+            modifier = Modifier.size(28.dp),
+        )
+        Text(
+            text = stringResource(R.string.alias_import_file_hint),
+            color = colors.text_secondary,
+            fontSize = 13.sp,
+        )
+        AsterSecondaryButton(
+            label = stringResource(R.string.alias_import_choose_file),
+            onClick = on_choose,
+        )
+    }
+}
+
+@Composable
+private fun import_file_card(
+    file_name: String,
+    size_bytes: Long,
+    on_change: () -> Unit,
+    on_remove: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val context = LocalContext.current
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(SquircleShape(14.dp))
+            .background(colors.bg_secondary, SquircleShape(14.dp))
+            .border(1.dp, colors.input_border, SquircleShape(14.dp))
+            .padding(AsterSpacing.md),
+        verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+        ) {
+            Icon(
+                imageVector = TablerIcons.FileText,
+                contentDescription = null,
+                tint = colors.accent_blue,
+                modifier = Modifier.size(20.dp),
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = file_name,
+                    color = colors.text_primary,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = Formatter.formatShortFileSize(context, size_bytes),
+                    color = colors.text_tertiary,
+                    fontSize = 12.sp,
+                )
+            }
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+        ) {
+            AsterGhostButton(
+                label = stringResource(R.string.alias_import_remove_file),
+                onClick = on_remove,
+                modifier = Modifier.weight(1f),
+            )
+            AsterSecondaryButton(
+                label = stringResource(R.string.alias_import_change_file),
+                onClick = on_change,
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
 }
 
 @Composable
@@ -141,6 +258,7 @@ fun alias_import_dialog(
     var skipped_count by remember { mutableStateOf(0) }
     var failed_count by remember { mutableStateOf(0) }
     var error_message by remember { mutableStateOf<String?>(null) }
+    var picked_file by remember { mutableStateOf<ImportFileContent?>(null) }
 
     val domain_options = remember(state.domains) { alias_domain_options(state.domains) }
     val available_domains = remember(domain_options) { domain_options.map { it.domain_name } }
@@ -175,9 +293,11 @@ fun alias_import_dialog(
                 runCatching { read_import_file(context, uri) }.getOrNull()
             }
             if (content == null) {
+                picked_file = null
                 error_message = context.getString(R.string.something_went_wrong)
                 return@launch
             }
+            picked_file = content
             if (content.file_name.lowercase().endsWith(".json") && is_encrypted_vault_export(content.text)) {
                 error_message = context.getString(R.string.alias_import_error_encrypted)
                 return@launch
@@ -222,27 +342,39 @@ fun alias_import_dialog(
                             color = colors.text_secondary,
                             fontSize = 13.sp,
                         )
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(SquircleShape(12.dp))
-                                .background(colors.bg_secondary)
-                                .clickable {
-                                    picker.launch(arrayOf("text/csv", "text/comma-separated-values", "text/plain", "application/json", "*/*"))
-                                }
-                                .padding(AsterSpacing.lg),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(
-                                text = stringResource(R.string.alias_import_choose_file),
-                                color = colors.accent_blue,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium,
+                        val current_file = picked_file
+                        if (current_file == null) {
+                            import_drop_area(on_choose = { picker.launch(IMPORT_MIME_TYPES) })
+                        } else {
+                            import_file_card(
+                                file_name = current_file.file_name,
+                                size_bytes = current_file.size_bytes,
+                                on_change = { picker.launch(IMPORT_MIME_TYPES) },
+                                on_remove = {
+                                    picked_file = null
+                                    error_message = null
+                                },
                             )
                         }
                     }
 
                     ImportStep.Preview -> {
+                        picked_file?.let { current_file ->
+                            import_file_card(
+                                file_name = current_file.file_name,
+                                size_bytes = current_file.size_bytes,
+                                on_change = { picker.launch(IMPORT_MIME_TYPES) },
+                                on_remove = {
+                                    picked_file = null
+                                    parsed_rows = emptyList()
+                                    preview_rows = emptyList()
+                                    selected_indices = emptySet()
+                                    update_existing = false
+                                    error_message = null
+                                    step = ImportStep.Select
+                                },
+                            )
+                        }
                         Box(modifier = Modifier.fillMaxWidth()) {
                             Row(
                                 modifier = Modifier
@@ -351,6 +483,8 @@ fun alias_import_dialog(
                                         text = row.address,
                                         color = if (selectable) colors.text_primary else colors.text_muted,
                                         fontSize = 13.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
                                         modifier = Modifier.weight(1f),
                                     )
                                     val (status_icon, status_tint) = when (row.status) {
@@ -463,6 +597,7 @@ fun alias_import_dialog(
                         label = stringResource(R.string.back),
                         onClick = {
                             step = ImportStep.Select
+                            picked_file = null
                             parsed_rows = emptyList()
                             preview_rows = emptyList()
                             selected_indices = emptySet()

@@ -36,6 +36,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -118,7 +119,6 @@ import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.design.components.UpgradeGate
 import org.astermail.android.settings.DecryptedDeletedAlias
-import org.astermail.android.settings.DomainPurchaseViewModel
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.ui.auth.TurnstileWidget
 import org.astermail.android.util.generate_random_local_part
@@ -128,7 +128,6 @@ import org.astermail.android.design.mirror_in_rtl
 @Composable
 private fun tab_labels_computed(): List<String> = listOf(
     stringResource(R.string.aliases),
-    stringResource(R.string.custom_domains),
     stringResource(R.string.aliases_tab_directories),
     stringResource(R.string.ghost_aliases),
     stringResource(R.string.aliases_tab_preferences),
@@ -139,8 +138,6 @@ fun AliasesScreen(
     on_back: () -> Unit,
     on_open: (id: String) -> Unit,
     open_create: Boolean = false,
-    on_open_buy_domain: () -> Unit = {},
-    on_open_domain_order: (String) -> Unit = {},
 ) {
     val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
@@ -150,7 +147,6 @@ fun AliasesScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val tab_labels = tab_labels_computed()
-    val catch_all_locked = plan_vm.is_feature_locked("has_catch_all") && !plan_state.is_loading
     val alias_directories_locked = plan_vm.is_feature_locked("max_alias_directories") && !plan_state.is_loading
     val alias_restore_locked = plan_vm.is_feature_locked("has_advanced_aliases") && !plan_state.is_loading
     val alias_export_locked = plan_vm.is_feature_locked("has_advanced_aliases") && !plan_state.is_loading
@@ -160,43 +156,9 @@ fun AliasesScreen(
     var pending_delete_alias by remember { mutableStateOf<Pair<String, String>?>(null) }
     var show_create_alias by remember { mutableStateOf(false) }
     var create_alias_prefill by remember { mutableStateOf<Pair<String, String>?>(null) }
-    var show_add_domain by remember { mutableStateOf(false) }
-    var expanded_domain_id by remember { mutableStateOf<String?>(null) }
-    var domain_dns by remember { mutableStateOf<Map<String, List<DnsRecord>>>(emptyMap()) }
-    var verifying_domain_id by remember { mutableStateOf<String?>(null) }
-    var domain_verify_results by remember { mutableStateOf<Map<String, SettingsViewModel.DomainVerifyOutcome>>(emptyMap()) }
-
-    val purchase_vm: DomainPurchaseViewModel = hiltViewModel()
-    val purchase_state by purchase_vm.state.collectAsStateWithLifecycle()
-
-    LaunchedEffect(Unit) {
-        purchase_vm.load_orders()
-        purchase_vm.check_pending_order()
-    }
-
-    LaunchedEffect(purchase_state.checkout_url) {
-        val url = purchase_state.checkout_url ?: return@LaunchedEffect
-        open_url(context, url)
-        purchase_vm.consume_checkout_url()
-    }
-
-    LaunchedEffect(purchase_state.resume_order_id) {
-        val id = purchase_state.resume_order_id ?: return@LaunchedEffect
-        purchase_vm.consume_resume_order()
-        on_open_domain_order(id)
-    }
-
-    val lifecycle_owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
-    androidx.compose.runtime.DisposableEffect(lifecycle_owner) {
-        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
-            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
-                purchase_vm.check_pending_order()
-                purchase_vm.load_orders()
-            }
-        }
-        lifecycle_owner.lifecycle.addObserver(observer)
-        onDispose { lifecycle_owner.lifecycle.removeObserver(observer) }
-    }
+    var show_alias_import by remember { mutableStateOf(false) }
+    var show_alias_export by remember { mutableStateOf(false) }
+    var alias_actions_open by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.action_result) {
         val msg = state.action_result ?: return@LaunchedEffect
@@ -221,14 +183,52 @@ fun AliasesScreen(
 
     LaunchedEffect(selected_tab) {
         when (selected_tab) {
-            1 -> purchase_vm.load_orders()
-            2 -> vm.load_directories()
-            3 -> vm.load_ghost_aliases()
-            4 -> vm.load_alias_preferences()
+            1 -> vm.load_directories()
+            2 -> vm.load_ghost_aliases()
+            3 -> vm.load_alias_preferences()
         }
     }
 
-    detail_scaffold(title = stringResource(R.string.aliases), on_back = on_back, scrollable = false) {
+    detail_scaffold(
+        title = stringResource(R.string.aliases),
+        on_back = on_back,
+        scrollable = false,
+        trailing = {
+            if (selected_tab == 0) {
+                Box {
+                    AsterIconButton(
+                        icon = TablerIcons.DotsVertical,
+                        content_description = stringResource(R.string.more_options),
+                        onClick = { alias_actions_open = true },
+                        modifier = Modifier.testTag("alias_overflow_action"),
+                    )
+                    aster_dropdown_menu(
+                        expanded = alias_actions_open,
+                        on_dismiss = { alias_actions_open = false },
+                    ) {
+                        aster_dropdown_item(
+                            label = stringResource(R.string.alias_import_action),
+                            icon = TablerIcons.Upload,
+                            test_tag = "alias_overflow_import",
+                            on_click = {
+                                alias_actions_open = false
+                                show_alias_import = true
+                            },
+                        )
+                        aster_dropdown_item(
+                            label = stringResource(R.string.alias_export_csv),
+                            icon = TablerIcons.Download,
+                            test_tag = "alias_overflow_export",
+                            on_click = {
+                                alias_actions_open = false
+                                if (alias_export_locked) on_open("billing") else show_alias_export = true
+                            },
+                        )
+                    }
+                }
+            }
+        },
+    ) {
         ScrollableTabRow(
             selectedTabIndex = selected_tab,
             containerColor = colors.bg_primary,
@@ -260,6 +260,10 @@ fun AliasesScreen(
                     state = state,
                     context = context,
                     scope = scope,
+                    show_import = show_alias_import,
+                    show_export = show_alias_export,
+                    on_dismiss_import = { show_alias_import = false },
+                    on_dismiss_export = { show_alias_export = false },
                     on_show_create = {
                         create_alias_prefill = null
                         show_create_alias = true
@@ -274,31 +278,6 @@ fun AliasesScreen(
                     on_upgrade = { on_open("billing") },
                 )
                 1 -> tab_scroll {
-                    domain_purchase_area(
-                        state = purchase_state,
-                        on_buy = on_open_buy_domain,
-                        on_open_order = { on_open_domain_order(it.id) },
-                        on_cancel = { purchase_vm.cancel_order(it) },
-                        on_complete_purchase = { purchase_vm.complete_purchase(it) },
-                        on_renew = { purchase_vm.renew_order(it) },
-                    )
-                    domains_tab(
-                        vm = vm,
-                        state = state,
-                        scope = scope,
-                        expanded_domain_id = expanded_domain_id,
-                        domain_dns = domain_dns,
-                        verifying_domain_id = verifying_domain_id,
-                        verify_results = domain_verify_results,
-                        on_expanded_change = { expanded_domain_id = it },
-                        on_dns_loaded = { id, records -> domain_dns = domain_dns + (id to records) },
-                        on_verifying_change = { verifying_domain_id = it },
-                        on_verify_result = { id, outcome -> domain_verify_results = domain_verify_results + (id to outcome) },
-                        on_show_add = { show_add_domain = true },
-                        catch_all_locked = catch_all_locked,
-                    )
-                }
-                2 -> tab_scroll {
                     directories_tab(
                         vm = vm,
                         state = state,
@@ -307,7 +286,7 @@ fun AliasesScreen(
                         on_upgrade = { on_open("billing") },
                     )
                 }
-                3 -> {
+                2 -> {
                     val ghost_scroll = rememberScrollState()
                     tab_scroll(scroll_state = ghost_scroll) {
                         ghost_tab(
@@ -319,7 +298,7 @@ fun AliasesScreen(
                         )
                     }
                 }
-                4 -> tab_scroll { preferences_tab(vm = vm, state = state) }
+                3 -> tab_scroll { preferences_tab(vm = vm, state = state) }
             }
         }
     }
@@ -346,26 +325,6 @@ fun AliasesScreen(
             initial_local_part = create_alias_prefill?.first.orEmpty(),
             initial_domain = create_alias_prefill?.second,
             vm = vm,
-        )
-    }
-
-    if (show_add_domain) {
-        add_domain_dialog(
-            on_dismiss = { show_add_domain = false },
-            on_add = { domain_name, token, on_result ->
-                vm.add_domain_now(domain_name, token) { domain, error ->
-                    on_result(error)
-                    if (domain != null) {
-                        show_add_domain = false
-                        selected_tab = 1
-                        expanded_domain_id = domain.id
-                        scope.launch {
-                            val records = vm.get_dns_records_now(domain.id)
-                            if (!records.isNullOrEmpty()) domain_dns = domain_dns + (domain.id to records)
-                        }
-                    }
-                }
-            },
         )
     }
 
@@ -417,6 +376,10 @@ private fun aliases_tab(
     context: Context,
     scope: kotlinx.coroutines.CoroutineScope,
     on_show_create: () -> Unit,
+    show_import: Boolean = false,
+    show_export: Boolean = false,
+    on_dismiss_import: () -> Unit = {},
+    on_dismiss_export: () -> Unit = {},
     on_claim_twin: (String, String) -> Unit = { _, _ -> },
     restore_locked: Boolean = false,
     export_locked: Boolean = false,
@@ -427,24 +390,47 @@ private fun aliases_tab(
     var alias_too_new_date by remember { mutableStateOf<String?>(null) }
     var pending_domain_address_delete by remember { mutableStateOf<Triple<String, String, String>?>(null) }
     var alias_query by remember { mutableStateOf("") }
-    var show_export by remember { mutableStateOf(false) }
-    var show_import by remember { mutableStateOf(false) }
+    var alias_filter by remember { mutableStateOf(AliasFilter.All) }
+    var alias_domain_filter by remember { mutableStateOf<String?>(null) }
     var note_editing by remember { mutableStateOf<Pair<String, String>?>(null) }
     val alias_load_settled = remember_load_settled(state.is_loading)
     val always_expand_aliases = state.alias_preferences?.alias_always_expand == true
     val colors = AsterMaterial.colors
     val query = alias_query.trim()
-    val visible_aliases = remember(state.aliases, query) {
-        if (query.isBlank()) state.aliases
-        else state.aliases.filter {
-            it.address.contains(query, ignoreCase = true) ||
-                (it.encrypted_display_name ?: "").contains(query, ignoreCase = true) ||
-                (it.encrypted_note ?: "").contains(query, ignoreCase = true)
+    val alias_domains = remember(state.aliases, state.custom_domain_addresses) {
+        (state.aliases.map { it.domain } + state.custom_domain_addresses.map { it.domain_name })
+            .filter { it.isNotBlank() }
+            .map { it.lowercase() }
+            .distinct()
+            .sorted()
+    }
+    LaunchedEffect(alias_domains) {
+        val current = alias_domain_filter
+        if (current != null && !alias_domains.contains(current)) alias_domain_filter = null
+    }
+    val visible_aliases = remember(state.aliases, query, alias_filter, alias_domain_filter) {
+        state.aliases.filter { alias ->
+            matches_alias_query(
+                query,
+                alias.address,
+                alias.encrypted_display_name,
+                alias.encrypted_note,
+            ) &&
+                matches_alias_state(alias.is_enabled, alias_filter) &&
+                matches_alias_domain(alias.domain, alias_domain_filter)
         }
     }
-    val visible_domain_addresses = remember(state.custom_domain_addresses, query) {
-        if (query.isBlank()) state.custom_domain_addresses
-        else state.custom_domain_addresses.filter { it.address.contains(query, ignoreCase = true) }
+    val visible_domain_addresses = remember(
+        state.custom_domain_addresses,
+        query,
+        alias_filter,
+        alias_domain_filter,
+    ) {
+        state.custom_domain_addresses.filter { addr ->
+            matches_alias_query(query, addr.address, addr.encrypted_display_name, null) &&
+                matches_alias_state(addr.is_enabled, alias_filter) &&
+                matches_alias_domain(addr.domain_name, alias_domain_filter)
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -471,24 +457,6 @@ private fun aliases_tab(
                     fontSize = 13.sp,
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = { show_import = true }) {
-                        Text(
-                            stringResource(R.string.alias_import_action),
-                            color = colors.accent_blue,
-                            fontSize = 14.sp,
-                        )
-                    }
-                    TextButton(
-                        onClick = {
-                            if (export_locked) on_upgrade() else show_export = true
-                        },
-                    ) {
-                        Text(
-                            stringResource(R.string.alias_export_csv),
-                            color = if (export_locked) colors.text_muted else colors.accent_blue,
-                            fontSize = 14.sp,
-                        )
-                    }
                     TextButton(onClick = on_show_create) {
                         Text(stringResource(R.string.create), color = colors.accent_blue, fontSize = 14.sp)
                     }
@@ -502,6 +470,55 @@ private fun aliases_tab(
                     placeholder = stringResource(R.string.search_aliases),
                     test_tag = "alias_search_bar",
                 )
+                v_gap(AsterSpacing.xs)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .testTag("alias_filter_row"),
+                    horizontalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    alias_filter_chip(
+                        label = stringResource(R.string.alias_filter_all),
+                        active = alias_filter == AliasFilter.All,
+                        test_tag = "alias_filter_all",
+                        on_click = { alias_filter = AliasFilter.All },
+                    )
+                    alias_filter_chip(
+                        label = stringResource(R.string.alias_filter_active),
+                        active = alias_filter == AliasFilter.Active,
+                        test_tag = "alias_filter_active",
+                        on_click = { alias_filter = AliasFilter.Active },
+                    )
+                    alias_filter_chip(
+                        label = stringResource(R.string.alias_filter_disabled),
+                        active = alias_filter == AliasFilter.Disabled,
+                        test_tag = "alias_filter_disabled",
+                        on_click = { alias_filter = AliasFilter.Disabled },
+                    )
+                    if (alias_domains.size > 1) {
+                        Box(
+                            modifier = Modifier
+                                .size(width = 1.dp, height = 18.dp)
+                                .background(colors.border_secondary),
+                        )
+                        alias_filter_chip(
+                            label = stringResource(R.string.alias_filter_all_domains),
+                            active = alias_domain_filter == null,
+                            test_tag = "alias_filter_all_domains",
+                            on_click = { alias_domain_filter = null },
+                        )
+                        alias_domains.forEach { domain_name ->
+                            alias_filter_chip(
+                                label = "@$domain_name",
+                                active = alias_domain_filter == domain_name,
+                                test_tag = "alias_filter_domain_$domain_name",
+                                on_click = { alias_domain_filter = domain_name },
+                            )
+                        }
+                    }
+                }
             }
             val twin = state.twin_address
             if (twin != null && (twin.state == "reserved" || twin.state == "available")) {
@@ -636,14 +653,14 @@ private fun aliases_tab(
             alias_import_dialog(
                 vm = vm,
                 state = state,
-                on_dismiss = { show_import = false },
+                on_dismiss = on_dismiss_import,
             )
         }
 
         if (show_export && !export_locked) {
             alias_export_dialog(
                 state = state,
-                on_dismiss = { show_export = false },
+                on_dismiss = on_dismiss_export,
                 on_load_directories = { vm.load_directories() },
                 on_load_ghost_aliases = { vm.load_ghost_aliases() },
             )
@@ -713,7 +730,7 @@ private fun aliases_tab(
                     org.astermail.android.design.components.AsterTextField(
                         value = note_value,
                         onValueChange = { if (it.length <= 500 || it.length < note_value.length) note_value = it },
-                        placeholder = stringResource(R.string.alias_note_placeholder),
+                        placeholder = stringResource(R.string.alias_note_placeholder_short),
                         singleLine = false,
                         min_lines = 3,
                         max_lines = 5,
@@ -736,6 +753,55 @@ private fun aliases_tab(
             )
         }
     }
+}
+
+internal enum class AliasFilter { All, Active, Disabled }
+
+internal fun matches_alias_state(is_enabled: Boolean, filter: AliasFilter): Boolean = when (filter) {
+    AliasFilter.All -> true
+    AliasFilter.Active -> is_enabled
+    AliasFilter.Disabled -> !is_enabled
+}
+
+internal fun matches_alias_domain(domain: String, selected: String?): Boolean =
+    selected == null || domain.equals(selected, ignoreCase = true)
+
+internal fun matches_alias_query(
+    query: String,
+    address: String,
+    display_name: String?,
+    note: String?,
+): Boolean = query.isBlank() ||
+    address.contains(query, ignoreCase = true) ||
+    display_name.orEmpty().contains(query, ignoreCase = true) ||
+    note.orEmpty().contains(query, ignoreCase = true)
+
+@Composable
+private fun alias_filter_chip(
+    label: String,
+    active: Boolean,
+    test_tag: String,
+    on_click: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    Text(
+        text = label,
+        color = if (active) colors.accent_blue else colors.text_secondary,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Medium,
+        maxLines = 1,
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(if (active) colors.accent_blue.copy(alpha = 0.14f) else colors.bg_secondary)
+            .border(
+                1.dp,
+                if (active) colors.accent_blue.copy(alpha = 0.5f) else colors.border_secondary,
+                CircleShape,
+            )
+            .clickable(onClick = on_click)
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .testTag(test_tag),
+    )
 }
 
 @Composable
@@ -896,14 +962,23 @@ internal fun alias_list_row(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = alias.address,
-                    color = if (alias.decryption_failed) colors.text_muted else colors.text_primary,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        text = alias.address,
+                        color = if (alias.decryption_failed) colors.text_muted else colors.text_primary,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    if (!alias.decryption_failed && !alias.is_enabled) {
+                        panel_row_chip(stringResource(R.string.alias_status_disabled_badge))
+                    }
+                }
                 if (alias.decryption_failed) {
                     Spacer(Modifier.height(3.dp))
                     alias_meta_row(
@@ -924,38 +999,20 @@ internal fun alias_list_row(
                     }
                 } else {
                     val display_name_val = alias.encrypted_display_name
-                    if (!display_name_val.isNullOrBlank()) {
-                        Spacer(Modifier.height(3.dp))
-                        alias_meta_row(
-                            icon = TablerIcons.Id,
-                            text = display_name_val,
-                            color = colors.text_secondary,
-                        )
+                    val secondary_line = when {
+                        !note_val.isNullOrBlank() -> note_val
+                        !display_name_val.isNullOrBlank() -> display_name_val
+                        delivery_folder_name != null ->
+                            stringResource(R.string.forwards_to_folder, delivery_folder_name)
+                        else -> stringResource(R.string.forwards_to_inbox)
                     }
-                    if (on_edit_note != null) {
-                        Spacer(Modifier.height(3.dp))
-                        alias_meta_row(
-                            icon = TablerIcons.Edit,
-                            text = if (note_val.isNullOrBlank()) {
-                                stringResource(R.string.alias_note_add)
-                            } else {
-                                note_val
-                            },
-                            color = if (note_val.isNullOrBlank()) colors.text_muted else colors.text_tertiary,
-                            max_lines = 3,
-                        )
-                    }
-                    Spacer(Modifier.height(4.dp))
+                    Spacer(Modifier.height(3.dp))
                     Text(
-                        text = when {
-                            !alias.is_enabled -> stringResource(R.string.alias_status_disabled_badge)
-                            delivery_folder_name != null ->
-                                stringResource(R.string.forwards_to_folder, delivery_folder_name)
-                            else -> stringResource(R.string.forwards_to_inbox)
-                        },
-                        color = if (alias.is_enabled) colors.text_tertiary else colors.danger,
-                        fontSize = 11.sp,
+                        text = secondary_line,
+                        color = colors.text_tertiary,
+                        fontSize = 12.sp,
                         maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
@@ -1230,11 +1287,15 @@ private fun recently_deleted_section(
                             color = colors.text_primary,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                         Text(
                             text = stringResource(R.string.alias_deleted_at, format_deleted_date(alias.deleted_at)),
                             color = colors.text_tertiary,
                             fontSize = 12.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                     if (restore_locked) {
@@ -1312,7 +1373,7 @@ private fun format_deleted_date(iso: String): String {
 }
 
 @Composable
-private fun domains_tab(
+internal fun domains_tab(
     vm: SettingsViewModel,
     state: org.astermail.android.settings.SettingsUiState,
     scope: kotlinx.coroutines.CoroutineScope,
@@ -2813,7 +2874,7 @@ private fun create_alias_dialog(
 }
 
 @Composable
-private fun add_domain_dialog(
+internal fun add_domain_dialog(
     on_dismiss: () -> Unit,
     on_add: (String, String, (String?) -> Unit) -> Unit,
 ) {

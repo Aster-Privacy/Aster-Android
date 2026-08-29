@@ -462,7 +462,7 @@ fun MailDetailScreen(
     val swipe_threshold_px = with(density) { 200.dp.toPx() }
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
     val privacy_blocks_external = settings_state.preferences?.block_external_images ?: true
-    val traffic_blocks_external = settings_state.preferences?.low_network_mode == true
+    val traffic_blocks_external = org.astermail.android.network.low_network_active()
     val block_external_images = privacy_blocks_external || traffic_blocks_external
     val blocked_for_traffic_only = traffic_blocks_external && !privacy_blocks_external
     val offer_always_allow_external =
@@ -2298,7 +2298,10 @@ internal fun expanded_message(
         }
 
         val body_settings_state by shared_settings_view_model().state.collectAsStateWithLifecycle()
-        val plain_text_mode = body_settings_state.preferences?.html_rendering_mode == "plain_text"
+        val plain_text_mode = org.astermail.android.api.network.should_render_plain_text(
+            html_rendering_mode = body_settings_state.preferences?.html_rendering_mode,
+            low_network = org.astermail.android.network.low_network_active(),
+        )
         if (msg.is_body_pending) {
             email_body_skeleton(
                 modifier = Modifier
@@ -3738,8 +3741,8 @@ internal fun action_menu_sheet(
         Box(modifier = Modifier.fillMaxSize()) {
             AnimatedVisibility(
                 visibleState = visible_state,
-                enter = fadeIn(animationSpec = tween(120)),
-                exit = fadeOut(animationSpec = tween(120)),
+                enter = fadeIn(animationSpec = tween(org.astermail.android.design.AsterDuration.scrim_enter)),
+                exit = fadeOut(animationSpec = tween(org.astermail.android.design.AsterDuration.scrim_exit)),
             ) {
                 Box(
                     modifier = Modifier
@@ -3758,16 +3761,27 @@ internal fun action_menu_sheet(
                     .align(Alignment.BottomEnd)
                     .navigationBarsPadding()
                     .padding(end = AsterSpacing.sm, bottom = AsterSpacing.sm),
-                enter = fadeIn(animationSpec = tween(120, easing = LinearOutSlowInEasing)) +
+                enter = fadeIn(
+                    animationSpec = tween(
+                        org.astermail.android.design.AsterDuration.menu_fade_enter,
+                        easing = LinearOutSlowInEasing,
+                    ),
+                ) +
                     scaleIn(
-                        animationSpec = tween(190, easing = FastOutSlowInEasing),
-                        initialScale = 0.88f,
+                        animationSpec = tween(
+                            org.astermail.android.design.AsterDuration.menu_enter,
+                            easing = FastOutSlowInEasing,
+                        ),
+                        initialScale = org.astermail.android.design.AsterScale.menu_enter_from,
                         transformOrigin = TransformOrigin(1f, 1f),
                     ),
-                exit = fadeOut(animationSpec = tween(110)) +
+                exit = fadeOut(animationSpec = tween(org.astermail.android.design.AsterDuration.menu_fade_exit)) +
                     scaleOut(
-                        animationSpec = tween(130, easing = FastOutLinearInEasing),
-                        targetScale = 0.94f,
+                        animationSpec = tween(
+                            org.astermail.android.design.AsterDuration.menu_exit,
+                            easing = FastOutLinearInEasing,
+                        ),
+                        targetScale = org.astermail.android.design.AsterScale.menu_exit_to,
                         transformOrigin = TransformOrigin(1f, 1f),
                     ),
             ) {
@@ -4014,6 +4028,8 @@ internal fun label_picker_sheet(
                             color = colors.text_primary,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.weight(1f),
                         )
                         if (applied) {
@@ -4099,6 +4115,8 @@ internal fun tag_picker_sheet(
                             text = display,
                             color = colors.text_primary,
                             fontSize = 15.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.weight(1f),
                         )
                         if (item.tag_token in applied_tokens) {
@@ -5492,15 +5510,14 @@ private fun attachment_chip(
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .clip(SquircleShape(8.dp))
-                .background(colors.bg_tertiary)
+                .clip(CircleShape)
                 .clickable(onClick = on_download),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = TablerIcons.Download,
                 contentDescription = stringResource(R.string.download),
-                tint = colors.text_primary,
+                tint = colors.text_secondary,
                 modifier = Modifier.size(20.dp),
             )
         }

@@ -1940,6 +1940,8 @@ private fun workspace_switcher_sheet(
                         color = colors.text_primary,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                     )
                     Icon(
@@ -1974,6 +1976,8 @@ private fun workspace_switcher_sheet(
                                 color = colors.text_primary,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Medium,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                                 modifier = Modifier
                                     .combinedClickable(
                                         interactionSource = remember { MutableInteractionSource() },
@@ -1988,6 +1992,8 @@ private fun workspace_switcher_sheet(
                             text = account.email,
                             color = colors.text_muted,
                             fontSize = 12.sp,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                             modifier = Modifier
                                 .combinedClickable(
                                     interactionSource = remember { MutableInteractionSource() },
@@ -2371,6 +2377,8 @@ private fun drawer_row(
                 fontSize = 15.5.sp,
                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                 letterSpacing = (-0.15).sp,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
             if (count > 0) {
@@ -2450,6 +2458,8 @@ private fun drawer_label_row(
             fontSize = 15.5.sp,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
             letterSpacing = (-0.15).sp,
+            maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
     }
@@ -2501,6 +2511,8 @@ private fun drawer_alias_row(
             fontSize = 15.sp,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
             letterSpacing = (-0.15).sp,
+            maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
     }

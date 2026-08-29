@@ -107,6 +107,7 @@ internal fun build_settings_sections(is_family: Boolean) = listOf(
             add(settings_row_item("encryption", R.string.settings_encryption, icon = TablerIcons.Key))
             add(settings_row_item("trusted_devices", R.string.trusted_devices, icon = TablerIcons.DeviceDesktop))
             add(settings_row_item("aliases", R.string.settings_aliases, icon = TablerIcons.At))
+            add(settings_row_item("domains", R.string.settings_domains, icon = TablerIcons.World))
             add(settings_row_item("billing", R.string.settings_plans_billing, icon = TablerIcons.CreditCard))
             add(settings_row_item("storage", R.string.settings_storage, icon = TablerIcons.Database))
             add(settings_row_item("referral", R.string.refer_a_friend, icon = TablerIcons.Users))
@@ -293,6 +294,8 @@ private fun profile_header(
                     color = colors.text_primary,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 )
                 if (email.isNotBlank()) {
                     Spacer(Modifier.size(2.dp))
@@ -300,6 +303,8 @@ private fun profile_header(
                         text = email,
                         color = colors.text_tertiary,
                         fontSize = 13.sp,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     )
                 }
             }
@@ -375,12 +380,16 @@ internal fun settings_row(row: settings_row_item, on_click: () -> Unit) {
                 color = colors.text_primary,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             )
             if (row.subtitle_res != null) {
                 Text(
                     text = stringResource(row.subtitle_res),
                     color = colors.text_tertiary,
                     fontSize = 12.sp,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 )
             }
         }

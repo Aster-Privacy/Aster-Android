@@ -81,6 +81,14 @@ object EmailHtmlSanitizer {
 
     fun sanitize(raw_html: String, options: SanitizeOptions = SanitizeOptions()): String {
         if (raw_html.isBlank()) return ""
+        return try {
+            sanitize_unsafe(raw_html, options)
+        } catch (t: Throwable) {
+            org.jsoup.nodes.Entities.escape(raw_html.take(max_sanitizer_input_chars))
+        }
+    }
+
+    private fun sanitize_unsafe(raw_html: String, options: SanitizeOptions): String {
         val bounded_html = if (raw_html.length > max_sanitizer_input_chars) {
             raw_html.take(max_sanitizer_input_chars)
         } else {

@@ -22,15 +22,19 @@
 package org.astermail.android.subscriptions
 
 import android.content.Context
+import android.os.SystemClock
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import org.astermail.android.R
 import org.astermail.android.api.subscriptions.BulkUnsubscribeRequest
 import org.astermail.android.api.subscriptions.MailingListStats
@@ -39,6 +43,9 @@ import org.astermail.android.api.subscriptions.ProxyUnsubscribeRequest
 import org.astermail.android.api.subscriptions.SubscriptionsApi
 import org.astermail.android.api.subscriptions.TrackSubscriptionRequest
 import org.astermail.android.api.subscriptions.UnsubscribeRequest
+
+private const val SCAN_TIMEOUT_MS = 90_000L
+private const val TRACK_BUDGET_MS = 45_000L
 
 data class MailingListsState(
     val is_loading: Boolean = false,
@@ -61,39 +68,54 @@ class MailingListsViewModel @Inject constructor(
     private val _state = MutableStateFlow(MailingListsState())
     val state: StateFlow<MailingListsState> = _state.asStateFlow()
 
+    private var load_job: Job? = null
+    private var scan_job: Job? = null
+
     fun load() {
-        if (_state.value.is_loading) return
+        if (load_job?.isActive == true) return
         _state.value = _state.value.copy(is_loading = true, error = null, load_error = null)
-        viewModelScope.launch {
+        load_job = viewModelScope.launch {
             try {
                 val response = api.list(limit = 200)
-                val stats = try { api.stats() } catch (_: Throwable) { null }
+                val stats = try {
+                    api.stats()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Throwable) {
+                    null
+                }
                 _state.value = _state.value.copy(
                     items = response.subscriptions,
                     stats = stats,
-                    is_loading = false,
-                    error = null,
                     load_error = null,
                 )
+            } catch (e: CancellationException) {
+                throw e
             } catch (t: Throwable) {
-                if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
-                    is_loading = false,
                     load_error = org.astermail.android.localized_api_error(context, t, context.getString(R.string.failed_to_load)),
                 )
+            } finally {
+                _state.value = _state.value.copy(is_loading = false)
             }
         }
     }
 
     fun scan(force_full: Boolean = false) {
-        if (_state.value.is_scanning) return
+        if (scan_job?.isActive == true) return
         _state.value = _state.value.copy(is_scanning = true, error = null, message = null)
-        viewModelScope.launch {
+        scan_job = viewModelScope.launch {
+            var scan_error: String? = null
+            var cancelled = false
+            var tracked = 0
             try {
-                val discovered = scanner.scan(force_full = force_full)
-                var tracked = 0
+                val discovered = withTimeoutOrNull(SCAN_TIMEOUT_MS) {
+                    scanner.scan(force_full = force_full)
+                }.orEmpty()
+                val track_deadline = SystemClock.elapsedRealtime() + TRACK_BUDGET_MS
                 for (sender in discovered) {
-                    val result = runCatching {
+                    if (SystemClock.elapsedRealtime() > track_deadline) break
+                    val result = try {
                         api.track_subscription(
                             TrackSubscriptionRequest(
                                 sender_email = sender.sender_email,
@@ -103,31 +125,41 @@ class MailingListsViewModel @Inject constructor(
                                 category = sender.category,
                             ),
                         )
-                    }.getOrNull()
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (_: Throwable) {
+                        null
+                    }
                     if (result?.is_new == true) tracked += 1
                 }
+            } catch (e: CancellationException) {
+                cancelled = true
+                throw e
+            } catch (t: Throwable) {
+                scan_error = org.astermail.android.localized_api_error(context, t, context.getString(R.string.scan_failed))
+            } finally {
                 _state.value = _state.value.copy(
                     is_scanning = false,
-                    message = if (tracked > 0) {
-                        context.resources.getQuantityString(
+                    error = scan_error,
+                    message = when {
+                        cancelled || scan_error != null -> null
+                        tracked > 0 -> context.resources.getQuantityString(
                             R.plurals.subscriptions_found_count,
                             tracked,
                             tracked,
                         )
-                    } else {
-                        context.getString(R.string.scan_complete)
+                        else -> context.getString(R.string.scan_complete)
                     },
                 )
-                load()
-            } catch (e: kotlinx.coroutines.CancellationException) {
-                throw e
-            } catch (t: Throwable) {
-                _state.value = _state.value.copy(
-                    is_scanning = false,
-                    error = org.astermail.android.localized_api_error(context, t, context.getString(R.string.scan_failed)),
-                )
             }
+            if (scan_error == null) load()
         }
+    }
+
+    fun cancel_scan() {
+        scan_job?.cancel()
+        scan_job = null
+        _state.value = _state.value.copy(is_scanning = false)
     }
 
     suspend fun proxy_unsubscribe(request: ProxyUnsubscribeRequest): Boolean {
@@ -147,18 +179,20 @@ class MailingListsViewModel @Inject constructor(
             try {
                 api.unsubscribe(UnsubscribeRequest(subscription_id))
                 _state.value = _state.value.copy(
-                    pending_ids = _state.value.pending_ids - subscription_id,
                     items = _state.value.items.map { item ->
                         if (item.id == subscription_id) item.copy(status = "unsubscribed") else item
                     },
                     message = context.getString(R.string.toast_unsubscribed),
                 )
-            } catch (e: kotlinx.coroutines.CancellationException) {
+            } catch (e: CancellationException) {
                 throw e
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
-                    pending_ids = _state.value.pending_ids - subscription_id,
                     error = org.astermail.android.localized_api_error(context, t, context.getString(R.string.unsubscribe_failed)),
+                )
+            } finally {
+                _state.value = _state.value.copy(
+                    pending_ids = _state.value.pending_ids - subscription_id,
                 )
             }
         }
@@ -172,19 +206,21 @@ class MailingListsViewModel @Inject constructor(
             try {
                 api.bulk_unsubscribe(BulkUnsubscribeRequest(ids))
                 _state.value = _state.value.copy(
-                    pending_ids = _state.value.pending_ids - ids.toSet(),
                     items = _state.value.items.map { item ->
                         if (item.id in ids) item.copy(status = "unsubscribed") else item
                     },
                     message = context.resources.getQuantityString(R.plurals.unsubscribed_count, ids.size, ids.size),
                 )
                 load()
-            } catch (e: kotlinx.coroutines.CancellationException) {
+            } catch (e: CancellationException) {
                 throw e
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
-                    pending_ids = _state.value.pending_ids - ids.toSet(),
                     error = org.astermail.android.localized_api_error(context, t, context.getString(R.string.bulk_unsubscribe_failed)),
+                )
+            } finally {
+                _state.value = _state.value.copy(
+                    pending_ids = _state.value.pending_ids - ids.toSet(),
                 )
             }
         }
@@ -218,8 +254,8 @@ class MailingListsViewModel @Inject constructor(
             kotlinx.coroutines.delay(500)
             if (_state.value.items.isEmpty() &&
                 _state.value.load_error == null &&
-                !_state.value.is_scanning &&
-                !_state.value.is_loading
+                scan_job?.isActive != true &&
+                load_job?.isActive != true
             ) {
                 scan(force_full = true)
             }

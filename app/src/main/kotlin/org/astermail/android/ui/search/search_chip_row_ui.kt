@@ -168,6 +168,8 @@ internal fun person_picker_sheet(
                     fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = colors.text_primary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
                 if (!current.isNullOrEmpty()) {

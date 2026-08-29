@@ -38,8 +38,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -63,6 +61,9 @@ import compose.icons.tablericons.ChevronDown
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.components.aster_dropdown_item
+import org.astermail.android.design.components.aster_dropdown_menu
 import org.astermail.android.api.settings.AliasRun
 import org.astermail.android.settings.AliasDetailState
 import org.astermail.android.settings.SettingsViewModel
@@ -182,7 +183,7 @@ private fun alias_details_section(
         )
         alias_inline_field(
             label = stringResource(R.string.alias_note_title),
-            placeholder = stringResource(R.string.alias_note_placeholder),
+            placeholder = stringResource(R.string.alias_note_placeholder_short),
             value = alias.encrypted_note.orEmpty(),
             test_tag = "alias_field_note",
             on_save = { vm.update_alias_note(alias.id, it) },
@@ -356,8 +357,9 @@ internal fun alias_delivery_picker(
             Box {
                 Row(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(colors.bg_secondary)
+                        .clip(SquircleShape(12.dp))
+                        .background(colors.input_bg, SquircleShape(12.dp))
+                        .border(1.dp, colors.input_border, SquircleShape(12.dp))
                         .clickable { menu_open = true }
                         .padding(horizontal = 12.dp, vertical = 10.dp)
                         .testTag("alias_delivery_folder_selector"),
@@ -378,25 +380,29 @@ internal fun alias_delivery_picker(
                         modifier = Modifier.size(16.dp),
                     )
                 }
-                DropdownMenu(expanded = menu_open, onDismissRequest = { menu_open = false }) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.folder_inbox)) },
-                        onClick = {
+                aster_dropdown_menu(expanded = menu_open, on_dismiss = { menu_open = false }) {
+                    aster_dropdown_item(
+                        label = stringResource(R.string.folder_inbox),
+                        selected = selected_label == stringResource(R.string.folder_inbox),
+                        on_click = {
                             menu_open = false
                             on_select_inbox()
                         },
                     )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.folder_archive)) },
-                        onClick = {
+                    aster_dropdown_item(
+                        label = stringResource(R.string.folder_archive),
+                        selected = selected_label == stringResource(R.string.folder_archive),
+                        on_click = {
                             menu_open = false
                             on_select_archive()
                         },
                     )
                     folders.forEach { folder ->
-                        DropdownMenuItem(
-                            text = { Text(folder.encrypted_name.orEmpty()) },
-                            onClick = {
+                        val folder_name = folder.encrypted_name.orEmpty()
+                        aster_dropdown_item(
+                            label = folder_name,
+                            selected = folder_name.isNotBlank() && folder_name == selected_label,
+                            on_click = {
                                 menu_open = false
                                 on_select_folder(folder.label_token)
                             },
@@ -420,8 +426,9 @@ internal fun alias_delivery_picker(
             Box {
                 Row(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(colors.bg_secondary)
+                        .clip(SquircleShape(12.dp))
+                        .background(colors.input_bg, SquircleShape(12.dp))
+                        .border(1.dp, colors.input_border, SquircleShape(12.dp))
                         .clickable { label_menu_open = true }
                         .padding(horizontal = 12.dp, vertical = 10.dp)
                         .testTag("alias_delivery_label_selector"),
@@ -442,21 +449,23 @@ internal fun alias_delivery_picker(
                         modifier = Modifier.size(16.dp),
                     )
                 }
-                DropdownMenu(
+                aster_dropdown_menu(
                     expanded = label_menu_open,
-                    onDismissRequest = { label_menu_open = false },
+                    on_dismiss = { label_menu_open = false },
                 ) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.alias_delivery_label_none)) },
-                        onClick = {
+                    aster_dropdown_item(
+                        label = stringResource(R.string.alias_delivery_label_none),
+                        selected = selected_label_name == stringResource(R.string.alias_delivery_label_none),
+                        on_click = {
                             label_menu_open = false
                             on_select_delivery_label(null)
                         },
                     )
                     tags.forEach { tag ->
-                        DropdownMenuItem(
-                            text = { Text(tag.encrypted_name) },
-                            onClick = {
+                        aster_dropdown_item(
+                            label = tag.encrypted_name,
+                            selected = tag.encrypted_name == selected_label_name,
+                            on_click = {
                                 label_menu_open = false
                                 on_select_delivery_label(tag.tag_token)
                             },

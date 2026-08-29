@@ -56,6 +56,10 @@ class ThemeViewModel @Inject constructor(
     val underline_links: StateFlow<Boolean> = theme_store.underline_links
     val dyslexia_font: StateFlow<Boolean> = theme_store.dyslexia_font
     val onboarding_seen: StateFlow<Boolean> = theme_store.onboarding_seen
+    val first_run_setup_pending: StateFlow<Boolean> = theme_store.first_run_setup_pending
+    val first_run_plan_pending: StateFlow<Boolean> = theme_store.first_run_plan_pending
+    val first_run_at: StateFlow<Long> = theme_store.first_run_at
+    val recovery_snooze_until: StateFlow<Long> = theme_store.recovery_snooze_until
     val color_theme: StateFlow<String> = theme_store.color_theme
     val custom_theme_seed: StateFlow<String> = theme_store.custom_theme_seed
     val custom_theme_overrides: StateFlow<Map<String, String>> = theme_store.custom_theme_overrides
@@ -75,6 +79,11 @@ class ThemeViewModel @Inject constructor(
     fun set_haptic_enabled(v: Boolean) = theme_store.set_haptic_enabled(v)
     fun set_dyslexia_font(v: Boolean) = theme_store.set_dyslexia_font(v)
     fun mark_onboarding_seen() = theme_store.set_onboarding_seen(true)
+    fun mark_first_run() = theme_store.mark_first_run(System.currentTimeMillis())
+    fun clear_first_run_setup() = theme_store.clear_first_run_setup()
+    fun clear_first_run_plan() = theme_store.clear_first_run_plan()
+    fun snooze_recovery(duration_ms: Long) =
+        theme_store.snooze_recovery(System.currentTimeMillis() + duration_ms)
     fun set_color_theme(id: String) = theme_store.set_color_theme(id)
     fun set_custom_theme_seed(hex: String) = theme_store.set_custom_theme_seed(hex)
     fun set_custom_theme_overrides(overrides: Map<String, String>) = theme_store.set_custom_theme_overrides(overrides)

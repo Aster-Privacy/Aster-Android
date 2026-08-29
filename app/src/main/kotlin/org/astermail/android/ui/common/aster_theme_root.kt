@@ -119,6 +119,7 @@ fun aster_theme_root(content: @Composable () -> Unit) {
             LocalDensity provides scaled_density,
             local_text_scale provides text_size_state.scale,
             local_accessibility provides a11y,
+            org.astermail.android.design.local_reduce_motion provides a11y.reduce_motion,
         ) {
             val colors = AsterMaterial.colors
             Box(

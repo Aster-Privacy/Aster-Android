@@ -52,6 +52,10 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
     if (type == "login_alert") {
         val session_id = obj.optString("session_id", "")
         if (session_id.isBlank()) return PushResult.Ignore
+        val alert_time = obj.optString("time", "")
+        val event_key = NotificationDedupe.event_key(NotificationDedupe.LOGIN_ALERT_EVENT, session_id)
+        if (!NotificationDedupe.claim_event(context, event_key)) return PushResult.Ignore
+        NotificationDedupe.note_sign_in_alert(context, session_id, alert_time)
         LoginAlertNotifier.enqueue(
             context = context,
             session_id = session_id,
@@ -111,6 +115,16 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
     val envelope = repo.decrypt_envelope_public(encrypted_envelope, envelope_nonce, item_id)
         ?: return PushResult.NeedsFetch
     if (envelope.is_undecryptable) return PushResult.NeedsFetch
+    if (
+        NotificationDedupe.is_sign_in_alert_mail(
+            NotificationDedupe.sign_in_marker(context),
+            envelope.from_email,
+            envelope.sent_at.orEmpty(),
+        )
+    ) {
+        MailPollingWorker.claim_item_notification(context, item_id)
+        return PushResult.Ignore
+    }
     if (!MailPollingWorker.is_envelope_notifiable_by_type(context, envelope)) {
         return PushResult.Ignore
     }

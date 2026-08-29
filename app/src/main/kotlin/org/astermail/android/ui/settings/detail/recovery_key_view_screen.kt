@@ -35,6 +35,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -57,7 +58,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -205,34 +205,25 @@ fun RecoveryKeyViewScreen(
                 }
             }
             v_gap(AsterSpacing.lg)
-            AsterCard(modifier = Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier
-                        .background(colors.bg_secondary, SquircleShape(18.dp))
-                        .padding(AsterSpacing.lg)
-                        .fillMaxWidth(),
-                ) {
-                    val current_codes = codes
-                    if (current_codes.isNullOrEmpty()) {
+            val current_codes = codes
+            if (current_codes.isNullOrEmpty()) {
+                AsterCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier
+                            .background(colors.bg_secondary, SquircleShape(18.dp))
+                            .padding(AsterSpacing.lg)
+                            .fillMaxWidth(),
+                    ) {
                         Text(
                             text = stringResource(R.string.no_recovery_codes_yet),
                             color = colors.text_tertiary,
                             fontSize = 14.sp,
                             lineHeight = 20.sp,
                         )
-                    } else {
-                        current_codes.forEachIndexed { index, code ->
-                            if (index > 0) Spacer(Modifier.size(AsterSpacing.sm))
-                            Text(
-                                text = code,
-                                color = colors.text_primary,
-                                fontSize = 15.sp,
-                                fontFamily = FontFamily.Monospace,
-                                fontWeight = FontWeight.Medium,
-                            )
-                        }
                     }
                 }
+            } else {
+                recovery_codes_block(codes = current_codes)
             }
             AnimatedVisibility(
                 visible = codes.isNullOrEmpty(),
@@ -256,22 +247,33 @@ fun RecoveryKeyViewScreen(
             ) {
                 Column {
                     v_gap(AsterSpacing.lg)
-                    AsterSecondaryButton(
-                        label = stringResource(R.string.copy_to_clipboard),
-                        onClick = {
-                            val text = codes?.joinToString("\n").orEmpty()
-                            val clip = ClipData.newPlainText(context.getString(R.string.clipboard_label_recovery_key), text)
-                            clip.description.extras = android.os.PersistableBundle().apply {
-                                putBoolean("android.content.extra.IS_SENSITIVE", true)
-                            }
-                            if (write_to_clipboard(context, clip)) {
-                                org.astermail.android.util.schedule_sensitive_clipboard_clear(context, text)
-                                Toast.makeText(context, context.getString(R.string.copied_to_clipboard), Toast.LENGTH_SHORT).show()
-                            } else {
-                                show_copy_failed_toast(context)
-                            }
-                        },
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                    ) {
+                        AsterSecondaryButton(
+                            label = stringResource(R.string.copy_to_clipboard),
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                val text = codes?.joinToString("\n").orEmpty()
+                                val clip = ClipData.newPlainText(context.getString(R.string.clipboard_label_recovery_key), text)
+                                clip.description.extras = android.os.PersistableBundle().apply {
+                                    putBoolean("android.content.extra.IS_SENSITIVE", true)
+                                }
+                                if (write_to_clipboard(context, clip)) {
+                                    org.astermail.android.util.schedule_sensitive_clipboard_clear(context, text)
+                                    Toast.makeText(context, context.getString(R.string.copied_to_clipboard), Toast.LENGTH_SHORT).show()
+                                } else {
+                                    show_copy_failed_toast(context)
+                                }
+                            },
+                        )
+                        AsterSecondaryButton(
+                            label = stringResource(R.string.fix_enc_save_codes),
+                            modifier = Modifier.weight(1f),
+                            onClick = { save_recovery_codes(context, codes.orEmpty()) },
+                        )
+                    }
                 }
             }
         }

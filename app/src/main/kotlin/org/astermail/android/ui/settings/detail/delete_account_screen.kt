@@ -25,14 +25,17 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,6 +48,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import org.astermail.android.R
@@ -68,6 +72,9 @@ fun DeleteAccountScreen(
     LaunchedEffect(state.success) {
         if (state.success) on_deleted()
     }
+
+    val second_factor_resolved = !state.totp_status_loading
+    val second_factor_required = state.totp_enabled
 
     detail_scaffold(title = stringResource(R.string.delete_account), on_back = on_back) {
         AsterCard(modifier = Modifier.fillMaxWidth()) {
@@ -100,17 +107,25 @@ fun DeleteAccountScreen(
             },
         )
         v_gap(AsterSpacing.md)
-        AsterTextField(
-            label = if (state.totp_enabled) stringResource(R.string.totp_code_required_label) else stringResource(R.string.totp_code_optional),
-            value = state.totp_code,
-            onValueChange = view_model::set_totp_code,
-            enabled = !state.is_submitting,
-            singleLine = true,
-            keyboard_options = KeyboardOptions(
-                capitalization = KeyboardCapitalization.Characters,
-                autoCorrectEnabled = false,
-            ),
-        )
+        if (second_factor_resolved) {
+            AsterTextField(
+                label = if (second_factor_required) {
+                    stringResource(R.string.totp_code_required_label)
+                } else {
+                    stringResource(R.string.totp_code_optional)
+                },
+                value = state.totp_code,
+                onValueChange = view_model::set_totp_code,
+                enabled = !state.is_submitting,
+                singleLine = true,
+                keyboard_options = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Characters,
+                    autoCorrectEnabled = false,
+                ),
+            )
+        } else {
+            second_factor_placeholder()
+        }
         if (state.totp_status_unknown) {
             v_gap(AsterSpacing.sm)
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -146,10 +161,11 @@ fun DeleteAccountScreen(
         v_gap(AsterSpacing.lg)
         val required_phrase = stringResource(R.string.delete_account_confirm_word)
         val can_submit = !state.is_submitting &&
+            second_factor_resolved &&
             state.password.isNotBlank() &&
             state.confirm_phrase.trim() == required_phrase &&
             !state.totp_status_unknown &&
-            (!state.totp_enabled || is_valid_totp_or_backup_code(state.totp_code.trim()))
+            (!second_factor_required || is_valid_totp_or_backup_code(state.totp_code.trim()))
         AsterButton(
             label = if (state.is_submitting) stringResource(R.string.deleting_account) else stringResource(R.string.delete_account_button),
             onClick = { view_model.submit() },
@@ -162,5 +178,28 @@ fun DeleteAccountScreen(
             fontSize = 12.sp,
         )
         v_gap(AsterSpacing.xxl)
+    }
+}
+
+@Composable
+private fun second_factor_placeholder() {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = 56.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(16.dp),
+            color = colors.text_tertiary,
+            strokeWidth = 2.dp,
+        )
+        Spacer(Modifier.width(AsterSpacing.sm))
+        Text(
+            text = stringResource(R.string.delete_account_second_factor_checking),
+            color = colors.text_tertiary,
+            fontSize = 13.sp,
+        )
     }
 }

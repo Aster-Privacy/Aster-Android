@@ -46,10 +46,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.astermail.android.R
 import org.astermail.android.api.domains.DomainOrder
+import org.astermail.android.api.settings.CustomDomain
+import org.astermail.android.api.settings.DnsRecord
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterCard
@@ -80,6 +83,14 @@ internal fun domain_purchase_area(
     on_cancel: (String) -> Unit,
     on_complete_purchase: (DomainOrder) -> Unit,
     on_renew: (String) -> Unit,
+    custom_domains: List<CustomDomain> = emptyList(),
+    dns_records_for: (String) -> List<DnsRecord> = { emptyList() },
+    verifying_domain_id: String? = null,
+    verify_message_for: (String) -> String? = { null },
+    catch_all_locked: Boolean = false,
+    on_load_dns: (String) -> Unit = {},
+    on_verify_domain: (String) -> Unit = {},
+    on_toggle_catch_all: (String) -> Unit = {},
 ) {
     val has_complete = state.orders.any { it.status == "complete" }
     var manage_order_id by remember { mutableStateOf<String?>(null) }
@@ -101,10 +112,21 @@ internal fun domain_purchase_area(
         v_gap(AsterSpacing.md)
     }
     if (manage_order != null) {
+        val linked_domain = custom_domains.firstOrNull {
+            it.domain_name.equals(manage_order.domain, ignoreCase = true)
+        }
         domain_purchase_manage_dialog(
             order = manage_order,
             renewing = state.renewing_order_id == manage_order.id,
             renew_error = state.order_action_error,
+            domain = linked_domain,
+            dns_records = linked_domain?.let { dns_records_for(it.id) }.orEmpty(),
+            verifying = linked_domain != null && verifying_domain_id == linked_domain.id,
+            verify_message = linked_domain?.let { verify_message_for(it.id) },
+            catch_all_locked = catch_all_locked,
+            on_load_dns = { linked_domain?.let { on_load_dns(it.id) } },
+            on_verify = { linked_domain?.let { on_verify_domain(it.id) } },
+            on_toggle_catch_all = { linked_domain?.let { on_toggle_catch_all(it.id) } },
             on_renew = { on_renew(manage_order.id) },
             on_dismiss = { manage_order_id = null },
         )
@@ -240,6 +262,8 @@ private fun purchased_domain_row(
                     color = colors.text_primary,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
                 when {
                     order.status == "pending_payment" -> Text(

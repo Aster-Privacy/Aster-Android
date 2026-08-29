@@ -54,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -223,12 +224,17 @@ fun UpgradeHost(on_navigate_to_billing: () -> Unit) {
                             .height(6.dp)
                             .clip(RoundedCornerShape(3.dp)),
                     )
-                    if (storage.is_locked && storage.days_until_permanent_bounce != null) {
+                    val bounce_days = storage.days_until_permanent_bounce
+                    if (storage.is_locked && bounce_days != null) {
                         Spacer(Modifier.height(AsterSpacing.sm))
                         Text(
                             text = stringResource(
                                 R.string.storage_locked_bounce_warning,
-                                storage.days_until_permanent_bounce.toString(),
+                                pluralStringResource(
+                                    R.plurals.duration_n_days,
+                                    bounce_days,
+                                    bounce_days,
+                                ),
                             ),
                             color = colors.danger,
                             fontSize = 12.sp,

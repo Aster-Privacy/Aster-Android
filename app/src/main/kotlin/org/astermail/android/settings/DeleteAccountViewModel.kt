@@ -41,6 +41,7 @@ data class DeleteAccountUiState(
     val totp_code: String = "",
     val totp_enabled: Boolean = false,
     val totp_status_unknown: Boolean = false,
+    val totp_status_loading: Boolean = true,
     val show_password: Boolean = false,
     val is_submitting: Boolean = false,
     val error: String? = null,
@@ -68,11 +69,16 @@ class DeleteAccountViewModel @Inject constructor(
     }
 
     fun load_totp_status() {
+        _state.value = _state.value.copy(totp_status_loading = true)
         viewModelScope.launch {
             runCatching { totp_api.status() }.onSuccess { status ->
-                _state.value = _state.value.copy(totp_enabled = status.enabled, totp_status_unknown = false)
+                _state.value = _state.value.copy(
+                    totp_enabled = status.enabled,
+                    totp_status_unknown = false,
+                    totp_status_loading = false,
+                )
             }.onFailure {
-                _state.value = _state.value.copy(totp_status_unknown = true)
+                _state.value = _state.value.copy(totp_status_unknown = true, totp_status_loading = false)
             }
         }
     }

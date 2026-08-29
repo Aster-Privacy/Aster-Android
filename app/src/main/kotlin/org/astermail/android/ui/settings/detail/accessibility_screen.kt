@@ -335,7 +335,7 @@ fun AccessibilityScreen(
                     subtitle = stringResource(R.string.low_network_mode_subtitle),
                     checked = low_network,
                     info_title = stringResource(R.string.low_network_mode_info_title),
-                    info_description = stringResource(R.string.low_network_mode_info_desc),
+                    info_description = stringResource(R.string.low_network_mode_info_desc_v2),
                 ) { low_network = it; save_trigger++ }
             }
         }

@@ -33,6 +33,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -135,32 +136,48 @@ fun TwoFactorScreen(
 private fun idle_panel(state: org.astermail.android.twofactor.TwoFactorUiState, vm: TwoFactorViewModel) {
     val colors = AsterMaterial.colors
     AsterCard(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(AsterSpacing.lg),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = TablerIcons.ShieldCheck,
-                contentDescription = null,
-                tint = if (state.enabled) colors.success else colors.text_tertiary,
-                modifier = Modifier.size(28.dp),
-            )
-            Spacer(Modifier.size(AsterSpacing.md))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = if (state.enabled) stringResource(R.string.enabled) else stringResource(R.string.disabled),
-                    color = colors.text_primary,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.SemiBold,
+        Column(modifier = Modifier.fillMaxWidth().padding(AsterSpacing.lg)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = TablerIcons.ShieldCheck,
+                    contentDescription = null,
+                    tint = colors.text_secondary,
+                    modifier = Modifier.size(20.dp),
                 )
+                Spacer(Modifier.size(AsterSpacing.sm))
                 Text(
-                    text = if (state.enabled) {
-                        pluralStringResource(R.plurals.backup_codes_remaining, state.backup_codes_remaining, state.backup_codes_remaining)
-                    } else {
-                        stringResource(R.string.add_second_factor)
-                    },
-                    color = colors.text_tertiary,
-                    fontSize = 13.sp,
+                    text = stringResource(R.string.two_step_verification_title),
+                    color = colors.text_primary,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.weight(1f),
+                )
+                Spacer(Modifier.size(AsterSpacing.sm))
+                two_factor_status_pill(enabled = state.enabled)
+            }
+            Spacer(Modifier.size(AsterSpacing.xs))
+            Text(
+                text = if (state.enabled) {
+                    stringResource(R.string.two_step_verification_on_description)
+                } else {
+                    stringResource(R.string.two_step_verification_off_description)
+                },
+                color = colors.text_tertiary,
+                fontSize = 13.sp,
+            )
+            if (state.enabled) {
+                Spacer(Modifier.size(AsterSpacing.xs))
+                Text(
+                    text = pluralStringResource(
+                        R.plurals.backup_codes_remaining,
+                        state.backup_codes_remaining,
+                        state.backup_codes_remaining,
+                    ),
+                    color = colors.text_muted,
+                    fontSize = 12.sp,
                 )
             }
         }
@@ -172,6 +189,25 @@ private fun idle_panel(state: org.astermail.android.twofactor.TwoFactorUiState, 
         AsterSecondaryButton(label = stringResource(R.string.generate_new_backup_codes), onClick = { vm.start_regenerate() })
     } else {
         AsterButton(label = stringResource(R.string.setup_two_factor), onClick = { vm.start_setup() })
+    }
+}
+
+@Composable
+private fun two_factor_status_pill(enabled: Boolean) {
+    val colors = AsterMaterial.colors
+    val shape = SquircleShape(8.dp)
+    Box(
+        modifier = Modifier
+            .background(colors.bg_secondary, shape)
+            .border(1.dp, colors.border_primary, shape)
+            .padding(horizontal = AsterSpacing.sm, vertical = 3.dp),
+    ) {
+        Text(
+            text = if (enabled) stringResource(R.string.enabled) else stringResource(R.string.disabled),
+            color = colors.text_secondary,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
     }
 }
 

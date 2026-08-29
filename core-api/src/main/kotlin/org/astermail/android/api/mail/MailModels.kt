@@ -354,6 +354,7 @@ data class BulkScopeResponse(
     val batch_id: String? = null,
     val affected_count: Int = 0,
     val undoable: Boolean = false,
+    val completed: Boolean = true,
 )
 
 @Serializable

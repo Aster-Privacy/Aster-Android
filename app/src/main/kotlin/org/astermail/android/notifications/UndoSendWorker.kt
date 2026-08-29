@@ -55,7 +55,12 @@ class UndoSendWorker(
         } catch (_: Throwable) {
             return retry_or_give_up(runAttemptCount)
         }
-        return when (repo.run_pending_send(pending_id, owner_id, runAttemptCount)) {
+        val outcome = try {
+            repo.run_pending_send(pending_id, owner_id, runAttemptCount)
+        } catch (_: Throwable) {
+            return retry_or_give_up(runAttemptCount)
+        }
+        return when (outcome) {
             PendingSendOutcome.SENT,
             PendingSendOutcome.GONE,
             PendingSendOutcome.FAILED,

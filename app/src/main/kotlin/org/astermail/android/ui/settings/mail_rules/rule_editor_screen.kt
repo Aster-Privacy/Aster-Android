@@ -946,7 +946,7 @@ private fun parse_hex(hex: String): Color = try {
 }
 
 @Composable
-private fun action_label(id: action_id?): String = stringResource(
+internal fun action_label(id: action_id?): String = stringResource(
     when (id) {
         null -> R.string.mail_rules_action_unsupported
         action_id.move_to -> R.string.mail_rules_action_move_to
@@ -1016,7 +1016,7 @@ private fun action_chip(
 }
 
 @Composable
-private fun field_display(field: field_id?): String = stringResource(
+internal fun field_display(field: field_id?): String = stringResource(
     when (field) {
         null -> R.string.mail_rules_field_advanced
         field_id.from -> R.string.mail_rules_field_from
@@ -1048,7 +1048,7 @@ private fun field_display(field: field_id?): String = stringResource(
 )
 
 @Composable
-private fun operator_display(c: Condition): String? = when (c) {
+internal fun operator_display(c: Condition): String? = when (c) {
     is Condition.From -> address_op_label(c.op)
     is Condition.ReplyTo -> address_op_label(c.op)
     is Condition.To -> address_op_label(c.op)
@@ -1119,7 +1119,7 @@ private fun date_op_label(op: DateOp): String = stringResource(
 )
 
 @Composable
-private fun value_display(c: Condition): String? {
+internal fun value_display(c: Condition): String? {
     val yes = stringResource(R.string.rules_value_yes)
     val no = stringResource(R.string.rules_value_no)
     return when (c) {
@@ -1172,7 +1172,7 @@ private fun format_snooze_until(value: String): String = runCatching {
 }.getOrDefault(value)
 
 @Composable
-private fun action_target_display(action: Action, folder_label: String?): String? = when (action) {
+internal fun action_target_display(action: Action, folder_label: String?): String? = when (action) {
     is Action.MoveTo -> folder_label ?: ""
     is Action.ApplyLabels -> if (action.label_tokens.isEmpty()) "" else pluralStringResource(R.plurals.rules_value_label_count, action.label_tokens.size, action.label_tokens.size)
     is Action.MarkAs -> if (action.value == ReadState.READ) stringResource(R.string.rules_value_read) else stringResource(R.string.rules_value_unread)

@@ -392,7 +392,12 @@ class SettingsViewModel @Inject constructor(
         preferences_cache.clear(account_key)
     }
 
+    private fun apply_low_network_preference(prefs: UserPreferences) {
+        org.astermail.android.network.low_network_monitor.apply_preference(context, prefs.low_network_mode)
+    }
+
     private fun apply_preferences_to_theme_store(prefs: UserPreferences) {
+        apply_low_network_preference(prefs)
         val theme_values = effective_theme_values(prefs)
         val mode = when (theme_values.theme) {
             ThemeMode.light.name -> ThemeMode.light
@@ -425,8 +430,12 @@ class SettingsViewModel @Inject constructor(
         if (theme_store.reduce_transparency.value != prefs.reduce_transparency) {
             theme_store.set_reduce_transparency(prefs.reduce_transparency)
         }
-        if (theme_store.reduce_motion.value != prefs.reduce_motion) {
-            theme_store.set_reduce_motion(prefs.reduce_motion)
+        val effective_reduce_motion = org.astermail.android.api.network.should_reduce_motion(
+            reduce_motion = prefs.reduce_motion,
+            low_network = org.astermail.android.api.network.low_network_state.active(),
+        )
+        if (theme_store.reduce_motion.value != effective_reduce_motion) {
+            theme_store.set_reduce_motion(effective_reduce_motion)
         }
         if (theme_store.compact_mode.value != prefs.compact_mode) {
             theme_store.set_compact_mode(prefs.compact_mode)
@@ -2204,7 +2213,10 @@ class SettingsViewModel @Inject constructor(
                 val response = settings_api.list_domains()
                 _state.value = _state.value.copy(domains = response.domains, domains_loading = false)
             } catch (t: Throwable) {
-                if (t is kotlinx.coroutines.CancellationException) throw t
+                if (t is kotlinx.coroutines.CancellationException) {
+                    _state.value = _state.value.copy(domains_loading = false)
+                    throw t
+                }
                 _state.value = _state.value.copy(
                     domains_loading = false,
                     action_result = user_facing_error(t),
@@ -3490,6 +3502,31 @@ class SettingsViewModel @Inject constructor(
         } catch (t: Throwable) {
             if (t is kotlinx.coroutines.CancellationException) throw t
             emptyList()
+        }
+    }
+
+    fun refresh_recovery_email_presence() {
+        viewModelScope.launch {
+            try {
+                val response = recovery_email_api.get_state()
+                val is_set = response.exists
+                    ?: (!response.encrypted_email.isNullOrBlank() && !response.email_nonce.isNullOrBlank())
+                _state.update {
+                    it.copy(
+                        recovery_email_set = is_set,
+                        recovery_email_verified = response.verified,
+                        security_status = it.security_status?.copy(
+                            recovery_email_set = is_set,
+                            recovery_email_verified = response.verified,
+                        ),
+                    )
+                }
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                if (org.astermail.android.BuildConfig.DEBUG) {
+                    android.util.Log.w("SettingsVM", "refresh_recovery_email_presence", t)
+                }
+            }
         }
     }
 

@@ -63,6 +63,8 @@ import compose.icons.tablericons.X
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.components.AsterButton
+import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.ui.mail.get_favicon_url
 import org.astermail.android.ui.mail.get_root_domain
@@ -201,32 +203,29 @@ internal fun alias_websites_field(
                     .fillMaxWidth()
                     .testTag("alias_website_input"),
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
-                Text(
-                    text = stringResource(R.string.save),
-                    color = colors.accent_blue,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable {
-                            val entry = draft.trim()
-                            if (entry.isNotEmpty()) on_add(entry)
-                            draft = ""
-                            adding = false
-                        }
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                        .testTag("alias_website_save"),
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = AsterSpacing.xs),
+                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                AsterSecondaryButton(
+                    label = stringResource(R.string.cancel),
+                    onClick = {
+                        draft = ""
+                        adding = false
+                    },
+                    modifier = Modifier.weight(1f),
                 )
-                Text(
-                    text = stringResource(R.string.cancel),
-                    color = colors.text_muted,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable { draft = ""; adding = false }
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                AsterButton(
+                    label = stringResource(R.string.save),
+                    onClick = {
+                        val entry = draft.trim()
+                        if (entry.isNotEmpty()) on_add(entry)
+                        draft = ""
+                        adding = false
+                    },
+                    enabled = draft.isNotBlank(),
+                    modifier = Modifier.weight(1f).testTag("alias_website_save"),
                 )
             }
         }

@@ -32,8 +32,6 @@ enum class RegisterStep {
     password,
     generating,
     recovery_key,
-    recovery_email,
-    plan_selection,
 }
 
 class RegisterFlowState(
@@ -81,8 +79,6 @@ fun step_progress(step: RegisterStep): Float {
         RegisterStep.password,
         RegisterStep.generating,
         RegisterStep.recovery_key,
-        RegisterStep.recovery_email,
-        RegisterStep.plan_selection,
     )
     val idx = order.indexOf(step)
     return (idx + 1).toFloat() / order.size.toFloat()

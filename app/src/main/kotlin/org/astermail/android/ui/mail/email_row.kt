@@ -128,6 +128,7 @@ private fun inbox_leading_slot(
     Spacer(Modifier.width(AsterSpacing.md))
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun EmailRow(
     email: Email,
@@ -196,10 +197,8 @@ fun EmailRow(
                         interactionSource = interaction_source,
                         indication = androidx.compose.material3.ripple(),
                         onClick = on_click,
-                        onLongClick = {
-                            if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                            on_long_click()
-                        },
+                        onLongClick = on_long_click,
+                        hapticFeedbackEnabled = haptic_enabled,
                     )
                 },
             )
@@ -301,7 +300,7 @@ fun EmailRow(
                 Spacer(Modifier.height(metrics.line_gap))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = email.preview,
+                        text = low_network_preview(email.preview),
                         style = MaterialTheme.typography.bodySmall,
                         color = preview_color,
                         fontSize = 14.sp,
@@ -360,7 +359,6 @@ private fun star_button(
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
         label = "star_scale",
     )
-    val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
     var tooltip_visible by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
     val star_label = if (is_starred) stringResource(R.string.starred) else stringResource(R.string.not_starred)
     org.astermail.android.ui.common.icon_tooltip_host(
@@ -379,12 +377,7 @@ private fun star_button(
                     if (interactive) {
                         Modifier.combinedClickable(
                             onClick = on_toggle,
-                            onLongClick = {
-                                haptics.performHapticFeedback(
-                                    androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress,
-                                )
-                                tooltip_visible = true
-                            },
+                            onLongClick = { tooltip_visible = true },
                         )
                     } else {
                         Modifier
@@ -474,10 +467,8 @@ fun ThreadInboxRow(
                         interactionSource = interaction_source,
                         indication = androidx.compose.material3.ripple(),
                         onClick = on_click,
-                        onLongClick = {
-                            if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                            on_long_click()
-                        },
+                        onLongClick = on_long_click,
+                        hapticFeedbackEnabled = haptic_enabled,
                     )
                 },
             )
@@ -653,7 +644,7 @@ fun ThreadInboxRow(
                         }
                     }
                     Text(
-                        text = email.preview,
+                        text = low_network_preview(email.preview),
                         style = MaterialTheme.typography.bodySmall,
                         color = preview_color,
                         fontSize = 14.sp,
@@ -920,3 +911,13 @@ fun spacer_for_row_height() {
 
 @Suppress("unused")
 fun local_content_color_placeholder(): Color = Color.Unspecified.also { LocalContentColor }
+
+@Composable
+private fun low_network_preview(preview: String): String {
+    val limit = org.astermail.android.api.network.preview_char_limit(
+        configured_limit = null,
+        low_network = org.astermail.android.network.low_network_active(),
+    ) ?: return preview
+    if (preview.length <= limit) return preview
+    return preview.take(limit).trimEnd() + "…"
+}

@@ -60,7 +60,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -813,19 +812,12 @@ private fun success_step(on_sign_in: () -> Unit) {
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box(
-            modifier = Modifier
-                .size(64.dp)
-                .background(Color(0xFF22C55E).copy(alpha = 0.12f), CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = TablerIcons.Check,
-                contentDescription = null,
-                tint = Color(0xFF22C55E),
-                modifier = Modifier.size(32.dp),
-            )
-        }
+        Icon(
+            imageVector = TablerIcons.Check,
+            contentDescription = null,
+            tint = Color(0xFF22C55E),
+            modifier = Modifier.size(40.dp),
+        )
 
         Spacer(Modifier.height(AsterSpacing.xl))
 

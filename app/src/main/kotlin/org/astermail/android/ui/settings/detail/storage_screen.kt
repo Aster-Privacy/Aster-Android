@@ -24,6 +24,7 @@ package org.astermail.android.ui.settings.detail
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,6 +35,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -121,6 +123,7 @@ fun StorageScreen(
         load_requested = true
         vm.load_storage()
         vm.load_subscription(force = false)
+        vm.load_encryption_settings()
         mail_vm.load_stats()
     }
 
@@ -279,6 +282,43 @@ fun StorageScreen(
                 family_allocation_bytes = storage?.family_allocation_bytes ?: 0L,
                 plan_limit_bytes = storage?.plan_limit_bytes ?: 0L,
             )
+            v_gap(AsterSpacing.lg)
+            section_label(stringResource(R.string.storage_format))
+            val prefs = state.preferences
+            if (prefs == null) {
+                AsterCard(modifier = Modifier.fillMaxWidth()) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xl),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
+                    }
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = AsterSpacing.lg),
+                    verticalArrangement = Arrangement.spacedBy(AsterSpacing.md),
+                ) {
+                    illustrated_option_card(
+                        image = R.drawable.settings_aster_server,
+                        title = stringResource(R.string.storage_format_aster),
+                        subtitle = stringResource(R.string.storage_format_aster_sub),
+                        selected = prefs.storage_format != "ipfs",
+                        modifier = Modifier.fillMaxWidth(),
+                        on_click = { vm.set_storage_format("aster") },
+                    )
+                    illustrated_option_card(
+                        image = R.drawable.settings_decentralized,
+                        title = stringResource(R.string.storage_format_ipfs),
+                        subtitle = stringResource(R.string.storage_format_ipfs_sub),
+                        selected = prefs.storage_format == "ipfs",
+                        modifier = Modifier.fillMaxWidth(),
+                        on_click = { vm.set_storage_format("ipfs") },
+                    )
+                }
+            }
             storage_distribution_section(stats, on_open_folder)
             storage_mailbox_section(stats, used_bytes)
             storage_cleanup_section(

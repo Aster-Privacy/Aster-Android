@@ -28,10 +28,12 @@ import compose.icons.tablericons.*
 
 import android.content.ClipData
 import android.content.Context
+import android.content.Intent
 import android.util.Base64
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,6 +46,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -65,6 +69,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -72,6 +77,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -96,7 +102,11 @@ import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.storage.SessionKeyStore
+import java.io.File
 import java.security.MessageDigest
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import org.astermail.android.settings.shared_settings_view_model
 
 @EntryPoint
@@ -211,6 +221,7 @@ fun EncryptionScreen(
     var show_regen_confirm by remember { mutableStateOf(false) }
     var show_new_codes_dialog by remember { mutableStateOf(false) }
     var new_recovery_codes by remember { mutableStateOf(emptyList<String>()) }
+    var codes_acknowledged by remember { mutableStateOf(false) }
     var regenerating by remember { mutableStateOf(false) }
     var show_export_private_dialog by remember { mutableStateOf(false) }
     var export_private_password by remember { mutableStateOf("") }
@@ -266,9 +277,25 @@ fun EncryptionScreen(
                     raw.contains("p256") || raw.contains("p-256") -> "NIST P-256"
                     raw.contains("p384") || raw.contains("p-384") -> "NIST P-384"
                     raw.isNotBlank() -> raw.replace('_', ' ').uppercase()
-                    else -> stringResource(if (is_pgp_key) R.string.pgp_identity_fingerprint else R.string.identity_key_fingerprint)
+                    else -> null
                 }
             }
+            val created_at = pgp_info?.created_at.orEmpty()
+            val expires_at = pgp_info?.expires_at.orEmpty()
+            val key_id = pgp_info?.key_id.orEmpty().filter { !it.isWhitespace() }
+            val meta_line = listOfNotNull(
+                algorithm_title,
+                if (created_at.isNotBlank()) {
+                    stringResource(R.string.created_at_format, absolute_date_label(created_at))
+                } else {
+                    null
+                },
+                if (expires_at.isNotBlank()) {
+                    stringResource(R.string.expires_format, absolute_date_label(expires_at))
+                } else {
+                    stringResource(R.string.fix_enc_never_expires)
+                },
+            ).joinToString(" · ")
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -281,166 +308,111 @@ fun EncryptionScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(AsterSpacing.lg),
-                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(colors.accent_blue.copy(alpha = 0.12f)),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                imageVector = TablerIcons.Key,
-                                contentDescription = null,
-                                tint = colors.accent_blue,
-                                modifier = Modifier.size(19.dp),
-                            )
-                        }
+                        Icon(
+                            imageVector = TablerIcons.Key,
+                            contentDescription = null,
+                            tint = colors.text_secondary,
+                            modifier = Modifier.size(22.dp),
+                        )
                         Spacer(Modifier.width(AsterSpacing.md))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = algorithm_title,
+                                text = stringResource(R.string.fix_enc_key_card_title),
                                 color = colors.text_primary,
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Medium,
                             )
-                            val created = pgp_info?.created_at.orEmpty()
-                            if (created.isNotBlank()) {
+                            if (meta_line.isNotBlank()) {
                                 Spacer(Modifier.size(2.dp))
                                 Text(
-                                    text = stringResource(R.string.created_at_format, absolute_date_label(created)),
+                                    text = meta_line,
                                     color = colors.text_muted,
                                     fontSize = 12.sp,
+                                    lineHeight = 16.sp,
                                 )
                             }
                         }
                         Spacer(Modifier.width(AsterSpacing.sm))
-                        Row(
-                            modifier = Modifier
-                                .clip(SquircleShape(AsterRadius.pill))
-                                .background(colors.success.copy(alpha = 0.10f))
-                                .padding(horizontal = 10.dp, vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            Icon(
-                                imageVector = TablerIcons.CircleCheck,
-                                contentDescription = null,
-                                tint = colors.success,
-                                modifier = Modifier.size(13.dp),
-                            )
-                            Text(
-                                text = stringResource(R.string.active),
-                                color = colors.success,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium,
-                            )
-                        }
+                        verified_badge(text = stringResource(R.string.active))
                     }
 
                     AsterDivider()
+
+                    if (key_id.isNotBlank()) {
+                        val grouped_key_id = remember(key_id) { key_id.chunked(4).joinToString(" ") }
+                        key_detail_field(
+                            icon = TablerIcons.Hash,
+                            label = stringResource(R.string.fix_enc_key_id_label),
+                            value = grouped_key_id,
+                            copy_description = stringResource(R.string.fix_enc_copy_key_id),
+                            on_copy = {
+                                if (copy_to_clipboard(context, context.getString(R.string.fix_enc_clipboard_label_key_id), grouped_key_id)) {
+                                    Toast.makeText(context, context.getString(R.string.fix_enc_key_id_copied), Toast.LENGTH_SHORT).show()
+                                } else {
+                                    show_copy_failed_toast(context)
+                                }
+                            },
+                        )
+
+                        AsterDivider()
+                    }
 
                     val grouped_fingerprint = remember(fingerprint) { format_fingerprint(fingerprint) }
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = TablerIcons.Fingerprint,
-                                contentDescription = null,
-                                tint = colors.text_tertiary,
-                                modifier = Modifier.size(14.dp),
-                            )
-                            Spacer(Modifier.width(6.dp))
-                            Text(
-                                text = stringResource(
-                                    if (is_pgp_key) R.string.pgp_identity_fingerprint else R.string.identity_key_fingerprint,
-                                ).uppercase(),
-                                color = colors.text_tertiary,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.weight(1f),
-                            )
-                            AsterIconButton(
-                                icon = TablerIcons.Copy,
-                                content_description = stringResource(R.string.copy_fingerprint_action),
-                                onClick = {
-                                    if (copy_to_clipboard(context, context.getString(R.string.clipboard_label_identity_fingerprint), grouped_fingerprint)) {
-                                        Toast.makeText(context, context.getString(R.string.fingerprint_copied), Toast.LENGTH_SHORT).show()
-                                    } else {
-                                        show_copy_failed_toast(context)
-                                    }
-                                },
-                                icon_size = 16,
-                            )
-                        }
-                        Spacer(Modifier.size(AsterSpacing.sm))
-                        Text(
-                            text = grouped_fingerprint,
-                            color = colors.text_secondary,
-                            fontSize = 13.sp,
-                            lineHeight = 20.sp,
-                            letterSpacing = 0.5.sp,
-                            fontFamily = FontFamily.Monospace,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(SquircleShape(AsterRadius.md))
-                                .background(colors.bg_secondary)
-                                .border(1.dp, colors.border_primary, SquircleShape(AsterRadius.md))
-                                .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
-                        )
-                        Spacer(Modifier.size(AsterSpacing.sm))
-                        Text(
-                            text = stringResource(R.string.fingerprint_description),
-                            color = colors.text_tertiary,
-                            fontSize = 12.sp,
-                        )
-                    }
-
-                    AsterDivider()
-
-                    detail_row(
-                        title = stringResource(R.string.export_public_key),
-                        icon = TablerIcons.Download,
-                        on_click = {
-                            scope.launch {
-                                val armored = vm.export_public_key_now()
-                                if (armored != null) {
-                                    if (copy_to_clipboard(context, context.getString(R.string.clipboard_label_identity_public_key), armored)) {
-                                        Toast.makeText(context, context.getString(R.string.public_key_copied), Toast.LENGTH_SHORT).show()
-                                    } else {
-                                        show_copy_failed_toast(context)
-                                    }
-                                } else {
-                                    Toast.makeText(context, context.getString(R.string.something_went_wrong), Toast.LENGTH_SHORT).show()
-                                }
+                    key_detail_field(
+                        icon = TablerIcons.Fingerprint,
+                        label = stringResource(
+                            if (is_pgp_key) R.string.pgp_identity_fingerprint else R.string.identity_key_fingerprint,
+                        ),
+                        value = grouped_fingerprint,
+                        copy_description = stringResource(R.string.copy_fingerprint_action),
+                        description = stringResource(R.string.fingerprint_description),
+                        on_copy = {
+                            if (copy_to_clipboard(context, context.getString(R.string.clipboard_label_identity_fingerprint), grouped_fingerprint)) {
+                                Toast.makeText(context, context.getString(R.string.fingerprint_copied), Toast.LENGTH_SHORT).show()
+                            } else {
+                                show_copy_failed_toast(context)
                             }
                         },
-                        trailing = {
-                            Icon(
-                                imageVector = TablerIcons.Copy,
-                                contentDescription = null,
-                                tint = colors.text_tertiary,
-                                modifier = Modifier.size(18.dp),
-                            )
-                        },
                     )
 
                     AsterDivider()
 
-                    detail_row(
-                        title = stringResource(R.string.export_private_key_label),
-                        icon = TablerIcons.ShieldLock,
-                        on_click = {
-                            export_private_password = ""
-                            export_private_error = null
-                            show_export_private_dialog = true
-                        },
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(AsterSpacing.lg),
+                        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                    ) {
+                        AsterSecondaryButton(
+                            label = stringResource(R.string.export_public_key),
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                scope.launch {
+                                    val armored = vm.export_public_key_now()
+                                    if (armored != null) {
+                                        if (copy_to_clipboard(context, context.getString(R.string.clipboard_label_identity_public_key), armored)) {
+                                            Toast.makeText(context, context.getString(R.string.public_key_copied), Toast.LENGTH_SHORT).show()
+                                        } else {
+                                            show_copy_failed_toast(context)
+                                        }
+                                    } else {
+                                        Toast.makeText(context, context.getString(R.string.something_went_wrong), Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            },
+                        )
+                        AsterSecondaryButton(
+                            label = stringResource(R.string.export_private_key_label),
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                export_private_password = ""
+                                export_private_error = null
+                                show_export_private_dialog = true
+                            },
+                        )
+                    }
                 }
             }
             if (identity_public_b64 != null) {
@@ -533,8 +505,8 @@ fun EncryptionScreen(
                 if (status != null) {
                     val available = status.available_codes
                     val total = status.total_codes
-                    val fraction = if (total > 0) available.toFloat() / total else 0f
                     val is_low = available <= 2
+                    val used = (total - available).coerceAtLeast(0)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -546,35 +518,38 @@ fun EncryptionScreen(
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold,
                         )
-                        Box(
-                            modifier = Modifier
-                                .clip(SquircleShape(6.dp))
-                                .background((if (is_low) colors.danger else colors.success).copy(alpha = 0.15f))
-                                .padding(horizontal = 8.dp, vertical = 3.dp),
-                        ) {
-                            Text(
-                                text = if (is_low) stringResource(R.string.low) else stringResource(R.string.ok),
-                                color = if (is_low) colors.danger else colors.success,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold,
-                            )
+                        if (used > 0) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .background(if (is_low) colors.danger else colors.warning)
+                                    .padding(horizontal = 10.dp, vertical = 3.dp),
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.fix_enc_codes_used, used),
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium,
+                                )
+                            }
                         }
                     }
                     Spacer(Modifier.size(AsterSpacing.sm))
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(6.dp)
-                            .clip(CircleShape)
-                            .background(colors.border_primary),
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(fraction = fraction.coerceIn(0f, 1f))
-                                .height(6.dp)
-                                .clip(CircleShape)
-                                .background(if (is_low) colors.danger else colors.success),
-                        )
+                        repeat(total) { index ->
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(6.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (index < available) colors.accent_blue else colors.border_primary,
+                                    ),
+                            )
+                        }
                     }
                     if (is_low) {
                         Spacer(Modifier.size(AsterSpacing.sm))
@@ -616,43 +591,6 @@ fun EncryptionScreen(
                 },
             )
           }
-        }
-
-        v_gap(AsterSpacing.lg)
-        section_label(stringResource(R.string.storage_format))
-        if (prefs == null) {
-            AsterCard(modifier = Modifier.fillMaxWidth()) {
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xl),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
-                }
-            }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = AsterSpacing.lg),
-                verticalArrangement = Arrangement.spacedBy(AsterSpacing.md),
-            ) {
-                illustrated_option_card(
-                    image = R.drawable.settings_aster_server,
-                    title = stringResource(R.string.storage_format_aster),
-                    subtitle = stringResource(R.string.storage_format_aster_sub),
-                    selected = prefs.storage_format != "ipfs",
-                    modifier = Modifier.fillMaxWidth(),
-                    on_click = { vm.set_storage_format("aster") },
-                )
-                illustrated_option_card(
-                    image = R.drawable.settings_decentralized,
-                    title = stringResource(R.string.storage_format_ipfs),
-                    subtitle = stringResource(R.string.storage_format_ipfs_sub),
-                    selected = prefs.storage_format == "ipfs",
-                    modifier = Modifier.fillMaxWidth(),
-                    on_click = { vm.set_storage_format("ipfs") },
-                )
-            }
         }
 
         v_gap(AsterSpacing.lg)
@@ -838,6 +776,7 @@ fun EncryptionScreen(
                     regenerating = false
                     if (codes.isNotEmpty()) {
                         new_recovery_codes = codes
+                        codes_acknowledged = false
                         show_new_codes_dialog = true
                     } else {
                         Toast.makeText(context, context.getString(R.string.something_went_wrong), Toast.LENGTH_SHORT).show()
@@ -850,67 +789,231 @@ fun EncryptionScreen(
     if (show_new_codes_dialog && new_recovery_codes.isNotEmpty()) {
         val context_dialog = LocalContext.current
         org.astermail.android.design.components.AsterDialog(
-            on_dismiss = { show_new_codes_dialog = false; new_recovery_codes = emptyList() },
+            on_dismiss = {
+                show_new_codes_dialog = false
+                new_recovery_codes = emptyList()
+                codes_acknowledged = false
+            },
             title = stringResource(R.string.new_recovery_codes_title),
             body = {
-                Column {
+                Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = stringResource(R.string.new_recovery_codes_message),
                         color = colors.warning,
                         fontSize = 13.sp,
+                        lineHeight = 18.sp,
                     )
                     Spacer(Modifier.size(AsterSpacing.md))
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(SquircleShape(AsterRadius.lg))
-                            .background(colors.bg_secondary)
-                            .padding(vertical = AsterSpacing.md),
-                        verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
+                    recovery_codes_block(codes = new_recovery_codes)
+                    Spacer(Modifier.size(AsterSpacing.md))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
                     ) {
-                        new_recovery_codes.chunked(2).forEach { pair ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceEvenly,
-                            ) {
-                                pair.forEach { code ->
-                                    Text(
-                                        text = code,
-                                        fontFamily = FontFamily.Monospace,
-                                        fontSize = 13.sp,
-                                        color = colors.accent_blue,
-                                    )
+                        AsterSecondaryButton(
+                            label = stringResource(R.string.copy_all_codes),
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                val text = new_recovery_codes.joinToString("\n")
+                                if (copy_to_clipboard(context_dialog, context_dialog.getString(R.string.clipboard_label_recovery_key), text)) {
+                                    org.astermail.android.util.schedule_sensitive_clipboard_clear(context_dialog, text)
+                                    Toast.makeText(context_dialog, context_dialog.getString(R.string.copied), Toast.LENGTH_SHORT).show()
+                                } else {
+                                    show_copy_failed_toast(context_dialog)
                                 }
-                            }
-                        }
+                            },
+                        )
+                        AsterSecondaryButton(
+                            label = stringResource(R.string.fix_enc_save_codes),
+                            modifier = Modifier.weight(1f),
+                            onClick = { save_recovery_codes(context_dialog, new_recovery_codes) },
+                        )
                     }
+                    Spacer(Modifier.size(AsterSpacing.md))
+                    acknowledge_row(
+                        checked = codes_acknowledged,
+                        label = stringResource(R.string.fix_enc_codes_confirm_saved),
+                        on_change = { codes_acknowledged = it },
+                    )
                 }
             },
             footer = {
-                org.astermail.android.design.components.AsterDialogOutlineButton(
-                    label = stringResource(R.string.copy_all_codes),
-                    onClick = {
-                        val copied = copy_to_clipboard(
-                            context_dialog,
-                            "recovery_codes",
-                            new_recovery_codes.joinToString("\n"),
-                        )
-                        if (copied) {
-                            Toast.makeText(context_dialog, context_dialog.getString(R.string.copied), Toast.LENGTH_SHORT).show()
-                        } else {
-                            show_copy_failed_toast(context_dialog)
-                        }
-                    },
-                )
                 org.astermail.android.design.components.AsterDialogPrimaryButton(
                     label = stringResource(R.string.done),
+                    enabled = codes_acknowledged,
                     onClick = {
                         show_new_codes_dialog = false
                         new_recovery_codes = emptyList()
+                        codes_acknowledged = false
                     },
                 )
             },
         )
+    }
+}
+
+@Composable
+private fun key_detail_field(
+    icon: ImageVector,
+    label: String,
+    value: String,
+    copy_description: String,
+    on_copy: () -> Unit,
+    description: String? = null,
+) {
+    val colors = AsterMaterial.colors
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = colors.text_tertiary,
+                modifier = Modifier.size(14.dp),
+            )
+            Spacer(Modifier.width(6.dp))
+            Text(
+                text = label.uppercase(),
+                color = colors.text_tertiary,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.weight(1f),
+            )
+            AsterIconButton(
+                icon = TablerIcons.Copy,
+                content_description = copy_description,
+                onClick = on_copy,
+                icon_size = 16,
+            )
+        }
+        Spacer(Modifier.size(AsterSpacing.sm))
+        Text(
+            text = value,
+            color = colors.text_secondary,
+            fontSize = 13.sp,
+            lineHeight = 20.sp,
+            letterSpacing = 0.5.sp,
+            fontFamily = FontFamily.Monospace,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(SquircleShape(AsterRadius.md))
+                .background(colors.bg_secondary)
+                .border(1.dp, colors.border_primary, SquircleShape(AsterRadius.md))
+                .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
+        )
+        if (description != null) {
+            Spacer(Modifier.size(AsterSpacing.sm))
+            Text(
+                text = description,
+                color = colors.text_tertiary,
+                fontSize = 12.sp,
+                lineHeight = 17.sp,
+            )
+        }
+    }
+}
+
+@Composable
+internal fun recovery_codes_block(codes: List<String>) {
+    val colors = AsterMaterial.colors
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(SquircleShape(AsterRadius.lg))
+            .background(colors.bg_secondary)
+            .border(1.dp, colors.border_primary, SquircleShape(AsterRadius.lg))
+            .padding(AsterSpacing.md),
+        verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+    ) {
+        codes.chunked(2).forEachIndexed { row_index, pair ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+            ) {
+                pair.forEachIndexed { column_index, code ->
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = "${row_index * 2 + column_index + 1}",
+                            color = colors.text_muted,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.width(16.dp),
+                        )
+                        Text(
+                            text = code,
+                            color = colors.text_primary,
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 13.sp,
+                            letterSpacing = 0.5.sp,
+                        )
+                    }
+                }
+                if (pair.size == 1) {
+                    Spacer(Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+internal fun acknowledge_row(checked: Boolean, label: String, on_change: (Boolean) -> Unit) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(SquircleShape(AsterRadius.md))
+            .clickable { on_change(!checked) }
+            .padding(end = AsterSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Checkbox(
+            checked = checked,
+            onCheckedChange = on_change,
+            colors = CheckboxDefaults.colors(
+                checkedColor = colors.accent_blue,
+                uncheckedColor = colors.border_primary,
+                checkmarkColor = colors.bg_card,
+            ),
+        )
+        Text(
+            text = label,
+            color = colors.text_primary,
+            fontSize = 13.sp,
+            lineHeight = 18.sp,
+        )
+    }
+}
+
+internal fun save_recovery_codes(context: Context, codes: List<String>) {
+    val saved = runCatching {
+        val export_dir = File(context.cacheDir, "exports").apply { mkdirs() }
+        val stamp = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+        val file = File(export_dir, "aster-recovery-codes-$stamp.txt")
+        val note = context.getString(R.string.fix_enc_codes_file_note)
+        file.writeText(codes.joinToString("\n") + "\n\n" + note + "\n", Charsets.UTF_8)
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        val title = context.getString(R.string.fix_enc_codes_share_title)
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            putExtra(Intent.EXTRA_SUBJECT, title)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        org.astermail.android.ui.common.start_external_intent(
+            context,
+            Intent.createChooser(intent, title).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
+    }.getOrDefault(false)
+    if (!saved) {
+        Toast.makeText(context, context.getString(R.string.fix_enc_codes_save_failed), Toast.LENGTH_LONG).show()
     }
 }
 

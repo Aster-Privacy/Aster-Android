@@ -22,58 +22,158 @@
 package org.astermail.android.ui.settings.detail
 
 import compose.icons.TablerIcons
+import compose.icons.tablericons.AlertTriangle
 import compose.icons.tablericons.Ban
+import compose.icons.tablericons.Search
 import compose.icons.tablericons.World
+import compose.icons.tablericons.X
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.res.stringResource
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
+import org.astermail.android.design.components.AsterDialog
+import org.astermail.android.design.components.AsterDialogDestructiveButton
+import org.astermail.android.design.components.AsterDialogOutlineButton
 import org.astermail.android.design.components.AsterDivider
-import org.astermail.android.design.components.AsterGhostButton
+import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.settings.SettingsViewModel
-import org.astermail.android.ui.mail.SenderAvatar
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.ui.mail.SenderAvatar
 
 @Composable
-private fun blocked_sender_row(
-    address: String,
-    is_domain: Boolean,
-    on_unblock: () -> Unit,
+internal fun filters_description(text: String) {
+    val colors = AsterMaterial.colors
+    Text(
+        text = text,
+        color = colors.text_tertiary,
+        fontSize = 13.sp,
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
+internal fun filters_search_field(
+    value: String,
+    on_change: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
-    var expanded by remember { mutableStateOf(false) }
+    val clear_label = stringResource(R.string.fix_filters_clear_search)
+    val trailing: (@Composable () -> Unit)? = if (value.isNotEmpty()) {
+        {
+            Icon(
+                imageVector = TablerIcons.X,
+                contentDescription = clear_label,
+                tint = colors.text_tertiary,
+                modifier = Modifier
+                    .size(20.dp)
+                    .clip(CircleShape)
+                    .clickable { on_change("") }
+                    .padding(2.dp),
+            )
+        }
+    } else {
+        null
+    }
+    AsterTextField(
+        value = value,
+        onValueChange = on_change,
+        placeholder = placeholder,
+        modifier = modifier.fillMaxWidth(),
+        min_height = 46.dp,
+        leading_icon = {
+            Icon(
+                imageVector = TablerIcons.Search,
+                contentDescription = stringResource(R.string.fix_filters_search),
+                tint = colors.text_tertiary,
+                modifier = Modifier.size(18.dp),
+            )
+        },
+        trailing_icon = trailing,
+    )
+}
+
+@Composable
+internal fun filters_list_header(label: String, count: Int) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label.uppercase(),
+            color = colors.text_tertiary,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        Spacer(Modifier.width(AsterSpacing.sm))
+        Text(
+            text = count.toString(),
+            color = colors.text_tertiary,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
+internal fun filters_entry_row(
+    address: String,
+    is_domain: Boolean,
+    domain_label: String,
+    action_label: String,
+    on_action: () -> Unit,
+    action_test_tag: String? = null,
+) {
+    val colors = AsterMaterial.colors
+    val action_modifier = Modifier
+        .clip(SquircleShape(10.dp))
+        .clickable(onClick = on_action)
+        .padding(horizontal = AsterSpacing.sm, vertical = AsterSpacing.xs)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -83,50 +183,165 @@ private fun blocked_sender_row(
     ) {
         if (is_domain) {
             Box(
-                modifier = Modifier.size(36.dp),
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(CircleShape)
+                    .background(colors.bg_tertiary),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = TablerIcons.World,
                     contentDescription = null,
-                    tint = colors.text_muted,
-                    modifier = Modifier.size(20.dp),
+                    tint = colors.text_secondary,
+                    modifier = Modifier.size(18.dp),
                 )
             }
         } else {
-            SenderAvatar(email = address, size = 36.dp)
+            SenderAvatar(email = address, size = 34.dp)
         }
         Column(
             modifier = Modifier
                 .weight(1f)
-                .clickable { expanded = !expanded }
-                .padding(horizontal = AsterSpacing.md),
+                .padding(start = AsterSpacing.md, end = AsterSpacing.sm),
         ) {
             Text(
-                text = address,
+                text = if (is_domain) "*.$address" else address,
                 color = colors.text_primary,
-                fontSize = 15.sp,
-                maxLines = if (expanded) 3 else 1,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             if (is_domain) {
                 Text(
-                    text = stringResource(R.string.blocked_domain),
-                    color = colors.text_muted,
+                    text = domain_label,
+                    color = colors.text_tertiary,
                     fontSize = 12.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
         Text(
-            text = stringResource(R.string.unblock),
-            color = colors.accent_blue,
-            fontSize = 14.sp,
+            text = action_label,
+            color = colors.danger,
+            fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
-            modifier = Modifier
-                .clip(CircleShape)
-                .clickable(onClick = on_unblock)
-                .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
+            maxLines = 1,
+            softWrap = false,
+            modifier = if (action_test_tag != null) {
+                action_modifier.testTag(action_test_tag)
+            } else {
+                action_modifier
+            },
         )
+    }
+}
+
+@Composable
+internal fun filters_state_card(
+    icon: ImageVector,
+    title: String,
+    body: String,
+    action_label: String? = null,
+    on_action: (() -> Unit)? = null,
+    action_test_tag: String? = null,
+) {
+    val colors = AsterMaterial.colors
+    AsterCard(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.xl),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(colors.bg_tertiary),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = colors.text_secondary,
+                    modifier = Modifier.size(22.dp),
+                )
+            }
+            v_gap(AsterSpacing.md)
+            Text(
+                text = title,
+                color = colors.text_primary,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+            )
+            v_gap(AsterSpacing.xs)
+            Text(
+                text = body,
+                color = colors.text_tertiary,
+                fontSize = 13.sp,
+                textAlign = TextAlign.Center,
+            )
+            if (action_label != null && on_action != null) {
+                v_gap(AsterSpacing.lg)
+                AsterButton(
+                    label = action_label,
+                    onClick = on_action,
+                    modifier = if (action_test_tag != null) {
+                        Modifier.testTag(action_test_tag)
+                    } else {
+                        Modifier
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+internal fun filters_loading_block() {
+    val colors = AsterMaterial.colors
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(AsterSpacing.xxl),
+        contentAlignment = Alignment.Center,
+    ) {
+        CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
+    }
+}
+
+@Composable
+internal fun filters_error_card(message: String?, on_retry: () -> Unit) {
+    val colors = AsterMaterial.colors
+    AsterCard(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.xl),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Icon(
+                imageVector = TablerIcons.AlertTriangle,
+                contentDescription = null,
+                tint = colors.text_tertiary,
+                modifier = Modifier.size(24.dp),
+            )
+            v_gap(AsterSpacing.sm)
+            Text(
+                text = message.orEmpty(),
+                color = colors.text_secondary,
+                fontSize = 13.sp,
+                textAlign = TextAlign.Center,
+            )
+            v_gap(AsterSpacing.md)
+            AsterSecondaryButton(
+                label = stringResource(R.string.retry),
+                onClick = on_retry,
+            )
+        }
     }
 }
 
@@ -137,10 +352,16 @@ fun BlockedSendersScreen(
 ) {
     val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
-    val colors = AsterMaterial.colors
     var show_add_dialog by remember { mutableStateOf(false) }
     var add_email by remember { mutableStateOf("") }
+    var query by remember { mutableStateOf("") }
     val senders = state.blocked_senders
+    val filtered = remember(senders, query) {
+        val needle = query.trim().lowercase()
+        if (needle.isEmpty()) senders else senders.filter { it.address.lowercase().contains(needle) }
+    }
+    val domain_label = stringResource(R.string.blocked_domain)
+    val unblock_label = stringResource(R.string.unblock)
 
     val action_result_context = androidx.compose.ui.platform.LocalContext.current
 
@@ -153,51 +374,60 @@ fun BlockedSendersScreen(
     LaunchedEffect(Unit) { vm.load_blocked_senders() }
 
     detail_scaffold(title = stringResource(R.string.blocked_senders), on_back = on_back) {
-        AsterButton(
-            label = stringResource(R.string.block_a_sender),
-            onClick = { show_add_dialog = true },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        v_gap(AsterSpacing.md)
+        when {
+            state.blocked_senders_loading && senders.isEmpty() -> filters_loading_block()
 
-        if (state.blocked_senders_loading && senders.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
-            }
-        } else if (state.blocked_senders_error != null) {
-            AsterCard(modifier = Modifier.fillMaxWidth()) {
-                detail_row(
-                    title = stringResource(R.string.blocked_senders_load_failed),
-                    subtitle = state.blocked_senders_error,
-                    icon = TablerIcons.Ban,
-                    trailing = {
-                        AsterGhostButton(
-                            label = stringResource(R.string.retry),
-                            onClick = { vm.load_blocked_senders() },
-                        )
-                    },
+            state.blocked_senders_error != null && senders.isEmpty() -> filters_error_card(
+                message = state.blocked_senders_error,
+                on_retry = { vm.load_blocked_senders() },
+            )
+
+            senders.isEmpty() -> filters_state_card(
+                icon = TablerIcons.Ban,
+                title = stringResource(R.string.no_blocked_senders),
+                body = stringResource(R.string.fix_filters_blocked_empty_body),
+                action_label = stringResource(R.string.block_a_sender),
+                on_action = { show_add_dialog = true },
+            )
+
+            else -> {
+                filters_description(stringResource(R.string.fix_filters_blocked_description))
+                v_gap(AsterSpacing.md)
+                AsterButton(
+                    label = stringResource(R.string.block_a_sender),
+                    onClick = { show_add_dialog = true },
+                    modifier = Modifier.fillMaxWidth(),
                 )
-            }
-        } else if (senders.isEmpty()) {
-            AsterCard(modifier = Modifier.fillMaxWidth()) {
-                detail_row(
-                    title = stringResource(R.string.no_blocked_senders),
-                    subtitle = stringResource(R.string.no_blocked_senders_subtitle),
-                    icon = TablerIcons.Ban,
+                v_gap(AsterSpacing.md)
+                filters_search_field(
+                    value = query,
+                    on_change = { query = it },
+                    placeholder = stringResource(R.string.fix_filters_search_blocked),
                 )
-            }
-        } else {
-            AsterCard(modifier = Modifier.fillMaxWidth()) {
-                senders.forEachIndexed { idx, sender ->
-                    blocked_sender_row(
-                        address = sender.address,
-                        is_domain = sender.is_domain,
-                        on_unblock = { vm.unblock_sender(sender.sender_token) },
+                v_gap(AsterSpacing.md)
+                if (filtered.isEmpty()) {
+                    filters_state_card(
+                        icon = TablerIcons.Search,
+                        title = stringResource(R.string.fix_filters_no_results_title),
+                        body = stringResource(R.string.fix_filters_no_results_body),
                     )
-                    if (idx < senders.lastIndex) AsterDivider(modifier = Modifier)
+                } else {
+                    filters_list_header(
+                        label = stringResource(R.string.blocked_senders),
+                        count = filtered.size,
+                    )
+                    AsterCard(modifier = Modifier.fillMaxWidth()) {
+                        filtered.forEachIndexed { idx, sender ->
+                            filters_entry_row(
+                                address = sender.address,
+                                is_domain = sender.is_domain,
+                                domain_label = domain_label,
+                                action_label = unblock_label,
+                                on_action = { vm.unblock_sender(sender.sender_token) },
+                            )
+                            if (idx < filtered.lastIndex) AsterDivider(modifier = Modifier)
+                        }
+                    }
                 }
             }
         }
@@ -205,7 +435,7 @@ fun BlockedSendersScreen(
     }
 
     if (show_add_dialog) {
-        org.astermail.android.design.components.AsterDialog(
+        AsterDialog(
             on_dismiss = { show_add_dialog = false; add_email = "" },
             title = stringResource(R.string.block_sender),
             message = stringResource(R.string.block_sender_hint),
@@ -218,11 +448,11 @@ fun BlockedSendersScreen(
                 )
             },
             footer = {
-                org.astermail.android.design.components.AsterDialogOutlineButton(
+                AsterDialogOutlineButton(
                     label = stringResource(R.string.cancel),
                     onClick = { show_add_dialog = false; add_email = "" },
                 )
-                org.astermail.android.design.components.AsterDialogDestructiveButton(
+                AsterDialogDestructiveButton(
                     label = stringResource(R.string.block),
                     enabled = add_email.contains("."),
                     onClick = {

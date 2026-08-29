@@ -214,6 +214,8 @@ private fun advanced_toggle_row(label: String, checked: Boolean, on_change: (Boo
             text = label,
             fontSize = 15.sp,
             color = colors.text_primary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
         AsterSwitch(checked = checked, onCheckedChange = on_change)
@@ -338,6 +340,8 @@ internal fun advanced_search_sheet(
                     fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = colors.text_primary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
                 Text(

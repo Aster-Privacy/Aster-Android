@@ -33,7 +33,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -62,7 +61,9 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
-import org.astermail.android.design.components.AsterAlertDialog
+import org.astermail.android.design.components.AsterDialog
+import org.astermail.android.design.components.AsterDialogOutlineButton
+import org.astermail.android.design.components.AsterDialogPrimaryButton
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.settings.AliasExportSource
 import org.astermail.android.settings.SettingsUiState
@@ -192,8 +193,7 @@ fun alias_export_dialog(
     val total_rows = effective.sumOf { source_count(it, state) }
     val date_stamp = export_date_stamp()
 
-    key(confirming, error) {
-    AsterAlertDialog(
+    AsterDialog(
         on_dismiss = on_dismiss,
         title = stringResource(R.string.alias_export_title),
         message = if (confirming) {
@@ -201,30 +201,7 @@ fun alias_export_dialog(
         } else {
             stringResource(R.string.alias_export_description)
         },
-        confirm_label = if (confirming) {
-            stringResource(R.string.alias_export_download)
-        } else {
-            stringResource(R.string.next)
-        },
-        cancel_label = stringResource(R.string.cancel),
-        confirm_enabled = effective.isNotEmpty(),
-        on_confirm = {
-            if (!confirming) {
-                confirming = true
-            } else if (!exporting) {
-                exporting = true
-                val ordered = SOURCE_ORDER.filter { effective.contains(it) }
-                scope.launch {
-                    val archive = withContext(Dispatchers.IO) {
-                        runCatching { write_export_archive(context, state, ordered) }
-                    }
-                    val shared = archive.mapCatching { share_export_archive(context, it) }
-                    exporting = false
-                    if (shared.isSuccess) on_dismiss() else error = context.getString(R.string.alias_export_failed)
-                }
-            }
-        },
-        extra_content = {
+        body = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
@@ -331,6 +308,54 @@ fun alias_export_dialog(
                 }
             }
         },
+        footer = {
+            AsterDialogOutlineButton(
+                label = if (confirming) {
+                    stringResource(R.string.back)
+                } else {
+                    stringResource(R.string.cancel)
+                },
+                onClick = {
+                    if (confirming) {
+                        error = null
+                        confirming = false
+                    } else {
+                        on_dismiss()
+                    }
+                },
+                enabled = !exporting,
+            )
+            AsterDialogPrimaryButton(
+                label = if (confirming) {
+                    stringResource(R.string.alias_export_download)
+                } else {
+                    stringResource(R.string.next)
+                },
+                enabled = effective.isNotEmpty() && !exporting,
+                is_loading = exporting,
+                onClick = {
+                    if (!confirming) {
+                        error = null
+                        confirming = true
+                    } else if (!exporting) {
+                        error = null
+                        exporting = true
+                        val ordered = SOURCE_ORDER.filter { effective.contains(it) }
+                        scope.launch {
+                            val archive = withContext(Dispatchers.IO) {
+                                runCatching { write_export_archive(context, state, ordered) }
+                            }
+                            val shared = archive.mapCatching { share_export_archive(context, it) }
+                            exporting = false
+                            if (shared.isSuccess) {
+                                on_dismiss()
+                            } else {
+                                error = context.getString(R.string.alias_export_failed)
+                            }
+                        }
+                    }
+                },
+            )
+        },
     )
-    }
 }

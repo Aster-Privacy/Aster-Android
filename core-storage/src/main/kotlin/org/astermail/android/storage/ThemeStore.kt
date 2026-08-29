@@ -26,6 +26,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.CoroutineScope
@@ -100,6 +101,17 @@ class ThemeStore(context: Context) {
         boot_cache.edit().putFloat(name, value).apply()
     }
 
+    private fun cached_long(name: String, fallback: Long): Long =
+        try {
+            boot_cache.getLong(name, fallback)
+        } catch (_: Throwable) {
+            fallback
+        }
+
+    private fun cache_long(name: String, value: Long) {
+        boot_cache.edit().putLong(name, value).apply()
+    }
+
     private val key_theme_mode = stringPreferencesKey("theme_mode")
     private val key_text_scale = floatPreferencesKey("text_scale")
     private val key_signature = stringPreferencesKey("signature_text")
@@ -112,6 +124,10 @@ class ThemeStore(context: Context) {
     private val key_haptic_enabled = booleanPreferencesKey("haptic_enabled")
     private val key_dyslexia_font = booleanPreferencesKey("dyslexia_font")
     private val key_onboarding_seen = booleanPreferencesKey("onboarding_seen")
+    private val key_first_run_setup_pending = booleanPreferencesKey("first_run_setup_pending")
+    private val key_first_run_plan_pending = booleanPreferencesKey("first_run_plan_pending")
+    private val key_first_run_at = longPreferencesKey("first_run_at")
+    private val key_recovery_snooze_until = longPreferencesKey("recovery_snooze_until")
     private val key_color_theme = stringPreferencesKey("color_theme")
     private val key_custom_theme_seed = stringPreferencesKey("custom_theme_seed")
     private val key_custom_theme_overrides = stringPreferencesKey("custom_theme_overrides")
@@ -175,6 +191,26 @@ class ThemeStore(context: Context) {
         .map { prefs -> prefs[key_onboarding_seen] ?: false }
         .onEach { cache_bool("onboarding_seen", it) }
         .stateIn(scope, SharingStarted.Eagerly, cached_bool("onboarding_seen", false))
+
+    val first_run_setup_pending: StateFlow<Boolean> = app_context.theme_data_store.data
+        .map { prefs -> prefs[key_first_run_setup_pending] ?: false }
+        .onEach { cache_bool("first_run_setup_pending", it) }
+        .stateIn(scope, SharingStarted.Eagerly, cached_bool("first_run_setup_pending", false))
+
+    val first_run_plan_pending: StateFlow<Boolean> = app_context.theme_data_store.data
+        .map { prefs -> prefs[key_first_run_plan_pending] ?: false }
+        .onEach { cache_bool("first_run_plan_pending", it) }
+        .stateIn(scope, SharingStarted.Eagerly, cached_bool("first_run_plan_pending", false))
+
+    val first_run_at: StateFlow<Long> = app_context.theme_data_store.data
+        .map { prefs -> prefs[key_first_run_at] ?: 0L }
+        .onEach { cache_long("first_run_at", it) }
+        .stateIn(scope, SharingStarted.Eagerly, cached_long("first_run_at", 0L))
+
+    val recovery_snooze_until: StateFlow<Long> = app_context.theme_data_store.data
+        .map { prefs -> prefs[key_recovery_snooze_until] ?: 0L }
+        .onEach { cache_long("recovery_snooze_until", it) }
+        .stateIn(scope, SharingStarted.Eagerly, cached_long("recovery_snooze_until", 0L))
 
     val color_theme: StateFlow<String> = app_context.theme_data_store.data
         .map { prefs -> prefs[key_color_theme] ?: "default" }
@@ -248,6 +284,29 @@ class ThemeStore(context: Context) {
 
     fun set_onboarding_seen(seen: Boolean) {
         scope.launch { app_context.theme_data_store.edit { it[key_onboarding_seen] = seen } }
+    }
+
+    fun mark_first_run(now_ms: Long) {
+        scope.launch {
+            app_context.theme_data_store.edit {
+                it[key_first_run_setup_pending] = true
+                it[key_first_run_plan_pending] = true
+                it[key_first_run_at] = now_ms
+                it[key_recovery_snooze_until] = 0L
+            }
+        }
+    }
+
+    fun clear_first_run_setup() {
+        scope.launch { app_context.theme_data_store.edit { it[key_first_run_setup_pending] = false } }
+    }
+
+    fun clear_first_run_plan() {
+        scope.launch { app_context.theme_data_store.edit { it[key_first_run_plan_pending] = false } }
+    }
+
+    fun snooze_recovery(until_ms: Long) {
+        scope.launch { app_context.theme_data_store.edit { it[key_recovery_snooze_until] = until_ms } }
     }
 
     fun set_color_theme(id: String) {

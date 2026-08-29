@@ -149,9 +149,9 @@ private val operator_chips_saver = listSaver<List<SearchOperator>, String>(
         chips.map { "${if (it.negated) "1" else "0"}|${it.key}|${it.value}" }
     },
     restore = { saved ->
-        saved.map {
+        saved.mapNotNull {
             val parts = it.split("|", limit = 3)
-            SearchOperator(parts[0] == "1", parts[1], parts[2])
+            if (parts.size < 3) null else SearchOperator(parts[0] == "1", parts[1], parts[2])
         }
     },
 )
@@ -667,6 +667,8 @@ fun SearchScreen(
                     text = stringResource(R.string.spam_trash_hidden_notice),
                     color = colors.text_muted,
                     fontSize = 12.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
                 Text(
@@ -674,6 +676,8 @@ fun SearchScreen(
                     color = colors.accent_blue,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
                         .clip(SquircleShape(8.dp))
                         .clickable {
@@ -1064,12 +1068,12 @@ private fun search_chip(text: String, selected: Boolean, on_click: () -> Unit) {
     val text_color = if (selected) Color.White else colors.text_secondary
     val animated_bg by animateColorAsState(
         targetValue = bg,
-        animationSpec = tween(150),
+        animationSpec = tween(org.astermail.android.design.AsterDuration.menu_state_change),
         label = "chip_bg",
     )
     val animated_text by animateColorAsState(
         targetValue = text_color,
-        animationSpec = tween(150),
+        animationSpec = tween(org.astermail.android.design.AsterDuration.menu_state_change),
         label = "chip_text",
     )
     Box(
@@ -1084,6 +1088,8 @@ private fun search_chip(text: String, selected: Boolean, on_click: () -> Unit) {
             color = animated_text,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

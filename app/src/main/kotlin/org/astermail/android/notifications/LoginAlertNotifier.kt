@@ -73,6 +73,9 @@ object LoginAlertNotifier {
     const val ALERT_MAX_ATTEMPTS = 5
     const val REVOKE_MAX_ATTEMPTS = 5
     private const val REVOKE_PROGRESS_TIMEOUT_MS = 15L * 60L * 1000L
+    private const val ACTION_REQUEST_STRIDE = 8
+    private const val ACTION_SLOT_DISMISS = 0
+    private const val ACTION_SLOT_REVOKE = 1
 
     fun alert_decision(own_session: Boolean?, attempt: Int): LoginAlertDecision = when {
         own_session == true -> LoginAlertDecision.Skip
@@ -183,41 +186,51 @@ object LoginAlertNotifier {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
-        val dismiss_intent = Intent(context, LoginAlertActionReceiver::class.java).apply {
-            action = LoginAlertActionReceiver.ACTION_DISMISS
-            putExtra(KEY_NOTIFICATION_ID, id)
-        }
-        val dismiss_pending = PendingIntent.getBroadcast(
-            context, id * 2, dismiss_intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        val dismiss_action = build_action(
+            context = context,
+            notification_id = id,
+            session_id = session_id,
+            action = LoginAlertActionReceiver.ACTION_DISMISS,
+            slot = ACTION_SLOT_DISMISS,
+            icon = R.drawable.ic_action_mark_read,
+            label = R.string.notif_login_alert_action_yes,
+        )
+        val revoke_action = build_action(
+            context = context,
+            notification_id = id,
+            session_id = session_id,
+            action = LoginAlertActionReceiver.ACTION_REVOKE,
+            slot = ACTION_SLOT_REVOKE,
+            icon = R.drawable.ic_action_revoke_session,
+            label = R.string.notif_login_alert_action_revoke,
         )
 
-        val revoke_intent = Intent(context, LoginAlertActionReceiver::class.java).apply {
-            action = LoginAlertActionReceiver.ACTION_REVOKE
-            putExtra(KEY_SESSION_ID, session_id)
-            putExtra(KEY_NOTIFICATION_ID, id)
-        }
-        val revoke_pending = PendingIntent.getBroadcast(
-            context, id * 2 + 1, revoke_intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
-
-        val builder = base_builder(context)
+        val public_version = base_builder(context)
             .setContentTitle(localized(context).getString(R.string.notif_login_alert_title))
-            .setContentText(details.ifBlank { localized(context).getString(R.string.notif_login_alert_title) })
-            .setStyle(NotificationCompat.BigTextStyle().bigText(details))
+            .setContentText(localized(context).getString(R.string.notif_login_alert_public_body))
             .setWhen(when_ms)
             .setShowWhen(true)
             .setContentIntent(content_pending)
-            .addAction(0, localized(context).getString(R.string.notif_login_alert_action_yes), dismiss_pending)
-            .addAction(0, localized(context).getString(R.string.notif_login_alert_action_revoke), revoke_pending)
+            .addAction(dismiss_action)
+            .addAction(revoke_action)
+            .build()
+
+        val summary = details.ifBlank {
+            localized(context).getString(R.string.notif_login_alert_public_body)
+        }
+        val builder = base_builder(context)
+            .setContentTitle(localized(context).getString(R.string.notif_login_alert_title))
+            .setContentText(summary)
+            .setSubText(localized(context).getString(R.string.notif_login_alert_inbox_hint))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(summary))
+            .setWhen(when_ms)
+            .setShowWhen(true)
+            .setOnlyAlertOnce(true)
+            .setContentIntent(content_pending)
+            .addAction(dismiss_action)
+            .addAction(revoke_action)
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
-            .setPublicVersion(
-                base_builder(context)
-                    .setContentTitle(localized(context).getString(R.string.notif_login_alert_title))
-                    .setContentText(localized(context).getString(R.string.notif_login_alert_public_body))
-                    .build(),
-            )
+            .setPublicVersion(public_version)
         NotificationManagerCompat.from(context).notify(id, builder.build())
     }
 
@@ -260,6 +273,35 @@ object LoginAlertNotifier {
             .setContentIntent(pending)
             .build()
         NotificationManagerCompat.from(context).notify(notification_id, notification)
+    }
+
+    fun action_request_code(notification_id: Int, slot: Int): Int =
+        notification_id * ACTION_REQUEST_STRIDE + slot
+
+    private fun build_action(
+        context: Context,
+        notification_id: Int,
+        session_id: String,
+        action: String,
+        slot: Int,
+        icon: Int,
+        label: Int,
+    ): NotificationCompat.Action {
+        val intent = Intent(context, LoginAlertActionReceiver::class.java).apply {
+            this.action = action
+            putExtra(KEY_SESSION_ID, session_id)
+            putExtra(KEY_NOTIFICATION_ID, notification_id)
+        }
+        val pending = PendingIntent.getBroadcast(
+            context,
+            action_request_code(notification_id, slot),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        return NotificationCompat.Action.Builder(icon, localized(context).getString(label), pending)
+            .setShowsUserInterface(false)
+            .setAuthenticationRequired(false)
+            .build()
     }
 
     private fun base_builder(context: Context): NotificationCompat.Builder {

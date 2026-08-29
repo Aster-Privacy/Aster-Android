@@ -153,7 +153,9 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
     var locked_out by remember { mutableStateOf(store.is_locked_out()) }
     var lockout_secs by remember { mutableLongStateOf(store.lockout_remaining_seconds()) }
     var show_passphrase by remember { mutableStateOf(false) }
-    var biometric_available by remember { mutableStateOf(false) }
+    var biometric_available by remember {
+        mutableStateOf(BiometricManager.from(context).canAuthenticate(BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS)
+    }
     var biometric_prompted by remember { mutableStateOf(false) }
 
     val wrong_pin_str = stringResource(R.string.app_lock_wrong_pin)
@@ -168,11 +170,6 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
             if (secs <= 0) { locked_out = false; break }
             delay(1000)
         }
-    }
-
-    LaunchedEffect(Unit) {
-        val mgr = BiometricManager.from(context)
-        biometric_available = mgr.canAuthenticate(BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS
     }
 
     fun launch_biometric() {
@@ -238,8 +235,15 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
         if (verifying || locked_out) return
         scope.launch {
             verifying = true
-            val ok = withContext(Dispatchers.Default) { store.verify_pin(value) }
-            verifying = false
+            val ok = try {
+                withContext(Dispatchers.Default) { store.verify_pin(value) }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                false
+            } finally {
+                verifying = false
+            }
             if (ok) return@launch
             input = ""
             if (store.is_locked_out()) {

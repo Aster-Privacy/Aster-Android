@@ -132,7 +132,11 @@ class MailPollingWorker(
             allow_cleartext_for_test = BuildConfig.API_BASE_URL.startsWith("http://"),
         )
         try {
-            return poll_and_notify(context, prefs, MailApiImpl(client))
+            return try {
+                poll_and_notify(context, prefs, MailApiImpl(client))
+            } catch (_: Throwable) {
+                Result.retry()
+            }
         } finally {
             client.close()
         }
@@ -277,7 +281,8 @@ class MailPollingWorker(
             }
         }
         val fresh = newest
-        if (fresh == null || sender.isNullOrBlank()) {
+        val resolved_sender = sender
+        if (fresh == null || resolved_sender.isNullOrBlank()) {
             if (!fetched_any_page) {
                 show_generic(context, arrived)
             }
@@ -296,7 +301,7 @@ class MailPollingWorker(
         val message_id = message_notification_id(fresh.id.hashCode())
         return post_message_notification(
             item_id = fresh.id,
-            sender = sender!!,
+            sender = resolved_sender,
             subject = subject,
             preview = preview,
             message_id = message_id,
@@ -620,7 +625,12 @@ class MailPollingWorker(
                 .build()
             val next = OneTimeWorkRequestBuilder<MailPollingWorker>()
                 .setConstraints(constraints)
-                .setInitialDelay(3, TimeUnit.MINUTES)
+                .setInitialDelay(
+                    org.astermail.android.api.network.poll_chain_delay_minutes(
+                        org.astermail.android.network.low_network_monitor.is_active(context),
+                    ),
+                    TimeUnit.MINUTES,
+                )
                 .setBackoffCriteria(BackoffPolicy.LINEAR, 30, TimeUnit.SECONDS)
                 .build()
             WorkManager.getInstance(context).enqueueUniqueWork(
@@ -676,7 +686,14 @@ class MailPollingWorker(
                 .build()
             val request = OneTimeWorkRequestBuilder<MailPollingWorker>()
                 .setConstraints(constraints)
-                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                .apply {
+                    if (org.astermail.android.api.network.should_run_expedited_poll(
+                            org.astermail.android.network.low_network_monitor.is_active(context),
+                        )
+                    ) {
+                        setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                    }
+                }
                 .setInputData(Data.Builder().putBoolean(KEY_FORCE_NOTIFY, true).build())
                 .build()
             WorkManager.getInstance(context).enqueueUniqueWork(
@@ -909,11 +926,13 @@ class MailPollingWorker(
         ): org.astermail.android.mail.InboxItem? {
             val muted = muted_folder_tokens(context)
             val muted_categories = muted_notification_categories(context)
+            val sign_in_marker = NotificationDedupe.sign_in_marker(context)
             return items.firstOrNull {
                 !it.is_read &&
                     !was_item_notified(context, it.id) &&
                     !is_item_in_muted_folder(it, muted) &&
                     !is_item_in_muted_category(it, muted_categories) &&
+                    !NotificationDedupe.is_probable_sign_in_alert_mail(sign_in_marker, it.sender_email) &&
                     is_item_notifiable_by_type(context, it)
             }
         }

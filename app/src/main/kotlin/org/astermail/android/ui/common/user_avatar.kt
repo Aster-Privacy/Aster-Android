@@ -59,8 +59,13 @@ fun current_user_avatar(
     profile_picture_url: String? = null,
 ) {
     val account by account_store.current_account.collectAsStateWithLifecycle(initialValue = account_store.current_account.value)
+    val low_network = org.astermail.android.network.low_network_active()
     val url = (profile_picture_url?.takeIf { it.isNotBlank() } ?: account?.profile_picture)
         ?.takeIf { it.isNotBlank() }
+        ?.takeIf {
+            it.startsWith("data:") ||
+                org.astermail.android.api.network.should_load_remote_avatar(low_network)
+        }
     val email = account?.email.orEmpty()
     val name = account?.display_name.orEmpty()
     val seed = avatar_seed_for(email, name)

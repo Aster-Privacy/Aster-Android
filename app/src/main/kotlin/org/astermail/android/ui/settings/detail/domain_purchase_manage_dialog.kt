@@ -21,14 +21,22 @@
 
 package org.astermail.android.ui.settings.detail
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Check
+import compose.icons.tablericons.Clock
+
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -39,11 +47,15 @@ import androidx.compose.ui.unit.sp
 import org.astermail.android.ComposeActivity
 import org.astermail.android.R
 import org.astermail.android.api.domains.DomainOrder
+import org.astermail.android.api.settings.CustomDomain
+import org.astermail.android.api.settings.DnsRecord
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogOutlineButton
 import org.astermail.android.design.components.AsterDialogPrimaryButton
+import org.astermail.android.design.components.AsterDivider
+import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.settings.DomainPurchaseErrorKind
 
 private const val support_address = "hello@astermail.org"
@@ -85,12 +97,24 @@ internal fun domain_purchase_manage_dialog(
     renew_error: DomainPurchaseErrorKind?,
     on_renew: () -> Unit,
     on_dismiss: () -> Unit,
+    domain: CustomDomain? = null,
+    dns_records: List<DnsRecord> = emptyList(),
+    verifying: Boolean = false,
+    verify_message: String? = null,
+    catch_all_locked: Boolean = false,
+    on_load_dns: () -> Unit = {},
+    on_verify: () -> Unit = {},
+    on_toggle_catch_all: () -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
     val remaining = order.expires_at?.let { days_until(it) }
     val lapsed = order.status == "lapsed" || (remaining != null && remaining < 0)
     val expiring_soon = !lapsed && remaining != null && remaining <= expiring_soon_days
+
+    LaunchedEffect(domain?.id) {
+        if (domain != null && dns_records.isEmpty()) on_load_dns()
+    }
 
     val status_text = when {
         lapsed -> stringResource(R.string.domain_purchase_purchased_lapsed)
@@ -137,6 +161,39 @@ internal fun domain_purchase_manage_dialog(
                     label = stringResource(R.string.domain_purchase_manage_paid),
                     value = format_order_price(order.price_cents, order.currency),
                 )
+
+                Spacer(Modifier.height(AsterSpacing.md))
+                AsterDivider()
+                Spacer(Modifier.height(AsterSpacing.md))
+                Text(
+                    text = stringResource(R.string.domain_manage_mail_setup),
+                    color = colors.text_secondary,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+
+                if (domain == null) {
+                    Spacer(Modifier.height(AsterSpacing.sm))
+                    Text(
+                        text = stringResource(R.string.domain_manage_dns_unavailable),
+                        color = colors.text_tertiary,
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp,
+                    )
+                } else {
+                    manage_domain_mail_setup(
+                        domain = domain,
+                        dns_records = dns_records,
+                        verifying = verifying,
+                        verify_message = verify_message,
+                        catch_all_locked = catch_all_locked,
+                        on_verify = on_verify,
+                        on_toggle_catch_all = on_toggle_catch_all,
+                    )
+                }
+
+                Spacer(Modifier.height(AsterSpacing.md))
+                AsterDivider()
                 Spacer(Modifier.height(AsterSpacing.md))
                 Text(
                     text = stringResource(R.string.domain_purchase_manage_auto_renew_note),
@@ -181,6 +238,173 @@ internal fun domain_purchase_manage_dialog(
             )
         },
     )
+}
+
+@Composable
+private fun manage_domain_mail_setup(
+    domain: CustomDomain,
+    dns_records: List<DnsRecord>,
+    verifying: Boolean,
+    verify_message: String?,
+    catch_all_locked: Boolean,
+    on_verify: () -> Unit,
+    on_toggle_catch_all: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val record_states = listOf(
+        "TXT" to domain.txt_verified,
+        "MX" to domain.mx_verified,
+        "SPF" to domain.spf_verified,
+        "DKIM" to domain.dkim_verified,
+        "DMARC" to domain.dmarc_configured,
+    )
+    val verified_count = record_states.count { it.second }
+    val all_verified = verified_count == record_states.size
+
+    manage_row(
+        label = stringResource(R.string.domain_manage_verification),
+        value = manage_domain_status_label(domain),
+        value_color = when {
+            domain.status.equals("suspended", ignoreCase = true) ||
+                domain.status.equals("failed", ignoreCase = true) -> colors.danger
+            all_verified || domain.status.equals("active", ignoreCase = true) -> colors.success
+            else -> colors.warning
+        },
+    )
+    manage_row(
+        label = stringResource(R.string.domain_manage_last_verified),
+        value = domain.verified_at?.let { format_day(it) }
+            ?: stringResource(R.string.domain_manage_never_verified),
+    )
+    manage_row(
+        label = stringResource(R.string.domain_manage_records),
+        value = stringResource(
+            R.string.domain_records_verified,
+            verified_count,
+            record_states.size,
+        ),
+    )
+
+    Spacer(Modifier.height(AsterSpacing.xs))
+    record_states.forEach { (label, verified) ->
+        manage_dns_status_row(
+            label = label,
+            verified = verified,
+            detail = dns_records.firstOrNull { it.type.equals(label, ignoreCase = true) }?.name,
+        )
+    }
+
+    Spacer(Modifier.height(AsterSpacing.sm))
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f).padding(end = AsterSpacing.md)) {
+            Text(
+                text = stringResource(R.string.catch_all),
+                color = colors.text_primary.copy(alpha = if (catch_all_locked) 0.4f else 1f),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+            )
+            Text(
+                text = stringResource(R.string.domain_manage_catch_all_description),
+                color = colors.text_tertiary,
+                fontSize = 12.sp,
+                lineHeight = 16.sp,
+            )
+        }
+        AsterSwitch(
+            checked = domain.catch_all_enabled && !catch_all_locked,
+            onCheckedChange = { if (!catch_all_locked) on_toggle_catch_all() },
+            enabled = !catch_all_locked,
+        )
+    }
+
+    if (!verify_message.isNullOrBlank()) {
+        Spacer(Modifier.height(AsterSpacing.sm))
+        Text(
+            text = verify_message,
+            color = colors.text_tertiary,
+            fontSize = 12.sp,
+            lineHeight = 16.sp,
+        )
+    }
+
+    Spacer(Modifier.height(AsterSpacing.md))
+    AsterDialogOutlineButton(
+        label = if (verifying) {
+            stringResource(R.string.domain_manage_rechecking)
+        } else {
+            stringResource(R.string.domain_manage_recheck)
+        },
+        onClick = on_verify,
+        enabled = !verifying,
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
+private fun manage_domain_status_label(domain: CustomDomain): String {
+    val all_core = domain.txt_verified && domain.mx_verified &&
+        domain.spf_verified && domain.dkim_verified
+    return when (domain.status.lowercase()) {
+        "active" -> stringResource(R.string.domain_status_active)
+        "verifying" -> stringResource(R.string.domain_status_verifying)
+        "dns_pending" -> stringResource(R.string.domain_status_dns_pending)
+        "suspended" -> stringResource(R.string.domain_status_suspended)
+        "failed" -> stringResource(R.string.domain_status_failed)
+        else -> stringResource(
+            if (all_core) R.string.domain_status_active else R.string.domain_status_setup_required,
+        )
+    }
+}
+
+@Composable
+private fun manage_dns_status_row(label: String, verified: Boolean, detail: String?) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 3.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = if (verified) TablerIcons.Check else TablerIcons.Clock,
+            contentDescription = stringResource(
+                if (verified) R.string.domain_record_found else R.string.domain_record_pending,
+            ),
+            tint = if (verified) colors.success else colors.text_muted,
+            modifier = Modifier.size(16.dp),
+        )
+        Spacer(Modifier.width(AsterSpacing.sm))
+        Text(
+            text = label,
+            color = if (verified) colors.text_primary else colors.text_muted,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+        )
+        if (!detail.isNullOrBlank()) {
+            Spacer(Modifier.width(AsterSpacing.sm))
+            Text(
+                text = detail,
+                color = colors.text_tertiary,
+                fontSize = 12.sp,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+        } else {
+            Spacer(Modifier.weight(1f))
+        }
+        Text(
+            text = stringResource(
+                if (verified) R.string.domain_record_found else R.string.domain_record_pending,
+            ),
+            color = if (verified) colors.success else colors.text_muted,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+        )
+    }
 }
 
 @Composable

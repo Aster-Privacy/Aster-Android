@@ -148,7 +148,9 @@ fun SenderAvatar(
     sender_authenticated: Boolean = false,
 ) {
     val context = LocalContext.current
-    if (!profile_picture_url.isNullOrBlank()) {
+    val low_network = org.astermail.android.network.low_network_active()
+    val remote_avatars_allowed = org.astermail.android.api.network.should_load_remote_avatar(low_network)
+    if (!profile_picture_url.isNullOrBlank() && remote_avatars_allowed) {
         val seed_fb = avatar_seed_for(email, name)
         val (bg_fb, fg_fb) = avatar_colors_for(seed_fb)
         var loaded_pp by remember(profile_picture_url) { mutableStateOf(false) }
@@ -202,6 +204,11 @@ fun SenderAvatar(
             return
         }
         AsterDomainAvatar(email = email, name = name, size = size, modifier = modifier)
+        return
+    }
+
+    if (!org.astermail.android.api.network.should_load_sender_logo(low_network)) {
+        initials_circle(name, email, bg, fg, size, modifier)
         return
     }
 
@@ -322,11 +329,14 @@ private fun AsterDomainAvatar(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val low_network = org.astermail.android.network.low_network_active()
     val resolver = AsterProfileResolverHolder.shared
     val lower_email = remember(email) { email.trim().lowercase() }
 
-    LaunchedEffect(lower_email, resolver) {
-        resolver?.request(lower_email)
+    LaunchedEffect(lower_email, resolver, low_network) {
+        if (org.astermail.android.api.network.should_load_remote_avatar(low_network)) {
+            resolver?.request(lower_email)
+        }
     }
 
     val fallback_profiles = remember { MutableStateFlow(emptyMap<String, PublicProfile?>()) }
@@ -340,7 +350,9 @@ private fun AsterDomainAvatar(
         initialValue = profiles_flow.value[lower_email],
     )
 
-    val resolved_pic = profile?.profile_picture?.takeIf { it.isNotBlank() }
+    val resolved_pic = profile?.profile_picture
+        ?.takeIf { it.isNotBlank() }
+        ?.takeIf { org.astermail.android.api.network.should_load_remote_avatar(low_network) }
     val (aster_bg, aster_fg) = avatar_colors_for(avatar_seed_for(email, name), profile?.profile_color)
     if (resolved_pic != null) {
         var loaded by remember(resolved_pic) { mutableStateOf(false) }

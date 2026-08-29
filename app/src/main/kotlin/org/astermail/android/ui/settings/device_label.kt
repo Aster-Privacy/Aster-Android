@@ -21,7 +21,61 @@
 
 package org.astermail.android.ui.settings
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Check
+import compose.icons.tablericons.DeviceDesktop
+import compose.icons.tablericons.DeviceLaptop
+import compose.icons.tablericons.DeviceMobile
+import compose.icons.tablericons.DeviceTablet
+import compose.icons.tablericons.Devices
+import compose.icons.tablericons.Key
+import compose.icons.tablericons.Plug
+import compose.icons.tablericons.ShieldCheck
+import compose.icons.tablericons.World
+import org.astermail.android.R
+import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.SquircleShape
+
 private val device_type_words = setOf("mobile", "desktop", "tablet", "phone", "unknown")
+
+private val bridge_hints = listOf("bridge", "imap", "smtp", "thunderbird", "mail client")
+
+private val tablet_hints = listOf("tablet", "ipad")
+
+private val phone_hints = listOf("android", "iphone", "ipod", "mobile", "phone", "ios")
+
+private val desktop_app_hints = listOf("aster mail", "astermail", "tauri", "electron", "desktop app", "webview")
+
+private val browser_hints = listOf(
+    "chrome",
+    "chromium",
+    "firefox",
+    "safari",
+    "edge",
+    "opera",
+    "brave",
+    "vivaldi",
+    "samsung internet",
+    "browser",
+)
+
+enum class DeviceClientKind { bridge, tablet, phone, desktop_app, browser, desktop }
 
 fun device_display_name(browser: String, device_type: String): String {
     val from_browser = browser.trim()
@@ -38,6 +92,48 @@ fun device_display_platform(name: String, os: String): String {
     if (trimmed.isEmpty() || trimmed.equals("unknown", ignoreCase = true)) return ""
     if (name.contains(trimmed, ignoreCase = true)) return ""
     return trimmed
+}
+
+fun device_client_kind(browser: String, device_type: String, os: String = ""): DeviceClientKind {
+    val haystack = listOf(browser, device_type, os).joinToString(" ").lowercase()
+    return when {
+        bridge_hints.any { haystack.contains(it) } -> DeviceClientKind.bridge
+        tablet_hints.any { haystack.contains(it) } -> DeviceClientKind.tablet
+        phone_hints.any { haystack.contains(it) } -> DeviceClientKind.phone
+        desktop_app_hints.any { haystack.contains(it) } -> DeviceClientKind.desktop_app
+        browser_hints.any { haystack.contains(it) } -> DeviceClientKind.browser
+        else -> DeviceClientKind.desktop
+    }
+}
+
+fun device_client_icon(kind: DeviceClientKind): ImageVector = when (kind) {
+    DeviceClientKind.bridge -> TablerIcons.Plug
+    DeviceClientKind.tablet -> TablerIcons.DeviceTablet
+    DeviceClientKind.phone -> TablerIcons.DeviceMobile
+    DeviceClientKind.desktop_app -> TablerIcons.DeviceDesktop
+    DeviceClientKind.browser -> TablerIcons.World
+    DeviceClientKind.desktop -> TablerIcons.DeviceLaptop
+}
+
+fun device_client_label_res(kind: DeviceClientKind): Int = when (kind) {
+    DeviceClientKind.bridge -> R.string.session_client_bridge
+    DeviceClientKind.tablet -> R.string.session_client_tablet
+    DeviceClientKind.phone -> R.string.session_client_phone
+    DeviceClientKind.desktop_app -> R.string.session_client_desktop_app
+    DeviceClientKind.browser -> R.string.session_client_browser
+    DeviceClientKind.desktop -> R.string.session_client_desktop
+}
+
+fun link_device_icon(device_type: String): ImageVector = when (device_type.lowercase()) {
+    "bridge" -> TablerIcons.Plug
+    "desktop" -> TablerIcons.DeviceDesktop
+    else -> TablerIcons.Devices
+}
+
+fun link_device_step_icon(index: Int): ImageVector = when (index) {
+    0 -> TablerIcons.Key
+    1 -> TablerIcons.ShieldCheck
+    else -> TablerIcons.Check
 }
 
 fun clean_trusted_device_label(raw: String): String {
@@ -62,4 +158,44 @@ fun clean_trusted_device_label(raw: String): String {
     }
 
     return label.trim()
+}
+
+@Composable
+fun device_badge(label: String, color: Color = AsterMaterial.colors.accent_blue) {
+    Box(
+        modifier = Modifier
+            .background(color.copy(alpha = 0.15f), SquircleShape(8.dp))
+            .padding(horizontal = AsterSpacing.sm, vertical = 3.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            color = color,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+    }
+}
+
+@Composable
+fun this_device_badge() {
+    device_badge(label = stringResource(R.string.this_device))
+}
+
+@Composable
+fun device_client_avatar(kind: DeviceClientKind, size_dp: Int = 40) {
+    val colors = AsterMaterial.colors
+    Box(
+        modifier = Modifier
+            .size(size_dp.dp)
+            .background(colors.bg_secondary, SquircleShape((size_dp / 3).dp)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = device_client_icon(kind),
+            contentDescription = null,
+            tint = colors.text_secondary,
+            modifier = Modifier.size((size_dp * 0.5f).dp),
+        )
+    }
 }

@@ -71,8 +71,6 @@ fun RegisterScreen(
     val recovery_codes by view_model.recovery_codes.collectAsStateWithLifecycle()
     val recovery_backup_failed by view_model.recovery_backup_failed.collectAsStateWithLifecycle()
     val is_retrying_recovery_backup by view_model.is_retrying_recovery_backup.collectAsStateWithLifecycle()
-    val recovery_email_error by view_model.recovery_email_error.collectAsStateWithLifecycle()
-    val is_saving_recovery_email by view_model.is_saving_recovery_email.collectAsStateWithLifecycle()
 
     LaunchedEffect(recovery_codes) {
         if (recovery_codes != null && state.step.value == RegisterStep.generating) {
@@ -108,9 +106,6 @@ fun RegisterScreen(
                 view_model.reset_state()
                 state.step.value = RegisterStep.email
             }
-            RegisterStep.recovery_email -> {
-                state.step.value = RegisterStep.recovery_key
-            }
             else -> { }
         }
     }
@@ -129,9 +124,7 @@ fun RegisterScreen(
                 step = state.step.value,
                 on_back = handle_back,
                 show_back = state.step.value == RegisterStep.email ||
-                    state.step.value == RegisterStep.password ||
-                    state.step.value == RegisterStep.recovery_email,
-                show_progress = state.step.value != RegisterStep.plan_selection,
+                    state.step.value == RegisterStep.password,
             )
 
             Box(modifier = Modifier.fillMaxWidth().fillMaxHeight()) {
@@ -171,30 +164,9 @@ fun RegisterScreen(
                         is_retrying_backup = is_retrying_recovery_backup,
                         on_retry_backup = { view_model.retry_recovery_backup() },
                         on_continue = {
-                            state.step.value = RegisterStep.recovery_email
-                        },
-                    )
-                    RegisterStep.recovery_email -> RegisterRecoveryEmailStep(
-                        state = state,
-                        error_message = recovery_email_error,
-                        is_saving = is_saving_recovery_email,
-                        on_continue = {
-                            view_model.save_recovery_email(state.recovery_email.value) {
-                                state.recovery_email_saved.value = true
-                                view_model.consume_recovery_codes()
-                                state.step.value = RegisterStep.plan_selection
-                            }
-                        },
-                        on_skip = {
-                            view_model.clear_recovery_email_error()
-                            state.recovery_email.value = ""
-                            state.recovery_email_saved.value = false
                             view_model.consume_recovery_codes()
-                            state.step.value = RegisterStep.plan_selection
+                            on_registered()
                         },
-                    )
-                    RegisterStep.plan_selection -> RegisterPlanStep(
-                        on_continue = on_registered,
                     )
                 }
             }
@@ -207,7 +179,6 @@ private fun register_progress_header(
     step: RegisterStep,
     on_back: () -> Unit,
     show_back: Boolean,
-    show_progress: Boolean = true,
 ) {
     val colors = AsterMaterial.colors
     val progress = step_progress(step)
@@ -241,22 +212,18 @@ private fun register_progress_header(
             Spacer(Modifier.width(AsterSpacing.md))
         }
 
-        if (show_progress) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(4.dp)
+                .background(colors.border_secondary, RoundedCornerShape(2.dp)),
+        ) {
             Box(
                 modifier = Modifier
-                    .weight(1f)
-                    .height(4.dp)
-                    .background(colors.border_secondary, RoundedCornerShape(2.dp)),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .fillMaxWidth(fraction = animated_progress)
-                        .background(colors.accent_blue, RoundedCornerShape(2.dp)),
-                )
-            }
-        } else {
-            Spacer(Modifier.weight(1f))
+                    .fillMaxHeight()
+                    .fillMaxWidth(fraction = animated_progress)
+                    .background(colors.accent_blue, RoundedCornerShape(2.dp)),
+            )
         }
     }
 }

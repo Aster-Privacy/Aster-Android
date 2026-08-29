@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -218,14 +217,13 @@ fun email_image_lightbox(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(12.dp)
-                    .size(40.dp)
-                    .background(Color.White.copy(alpha = 0.12f), CircleShape),
+                    .size(40.dp),
             ) {
                 Icon(
                     imageVector = TablerIcons.X,
                     contentDescription = stringResource(R.string.close),
                     tint = Color.White,
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(24.dp),
                 )
             }
         }

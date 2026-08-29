@@ -1,4 +1,4 @@
-﻿//
+//
 // Aster Communications Inc.
 //
 // Copyright (c) 2026 Aster Communications Inc.
@@ -21,27 +21,18 @@
 
 package org.astermail.android.ui.settings.detail
 
-import compose.icons.TablerIcons
-import compose.icons.tablericons.*
-
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.rememberScrollState
+import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Text
-import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,22 +40,28 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.R
 import org.astermail.android.api.settings.SessionInfo
 import org.astermail.android.design.AsterMaterial
-import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterGhostButton
-import org.astermail.android.design.components.AsterButton
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.ui.settings.device_client_avatar
+import org.astermail.android.ui.settings.device_client_kind
+import org.astermail.android.ui.settings.device_client_label_res
+import org.astermail.android.ui.settings.device_display_name
+import org.astermail.android.ui.settings.device_display_platform
+import org.astermail.android.ui.settings.this_device_badge
 
 @Composable
 fun SessionsScreen(
@@ -73,7 +70,6 @@ fun SessionsScreen(
 ) {
     val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
-    val colors = AsterMaterial.colors
     val context = LocalContext.current
 
     LaunchedEffect(state.action_result) {
@@ -89,21 +85,19 @@ fun SessionsScreen(
     var show_logout_others_confirm by remember { mutableStateOf(false) }
 
     val scroll_state = rememberScrollState()
+    val current_session = state.sessions.firstOrNull { it.is_current }
+    val other_sessions = state.sessions.filter { !it.is_current }
 
     detail_scaffold(
         title = stringResource(R.string.sessions),
         on_back = on_back,
         scroll_state = scroll_state,
     ) {
-        section_header_action(
-            title = stringResource(R.string.sessions_active_section),
-            action_label = stringResource(R.string.sign_out_others_action),
-            enabled = state.sessions.size > 1,
-            on_click = { show_logout_others_confirm = true },
-        )
         if (state.sessions.isEmpty() && (state.is_loading || !sessions_load_settled)) {
+            section_label(stringResource(R.string.sessions_active_section))
             skeleton_card_list(rows = 3, leading_circle = true, trailing_width = 72.dp)
         } else if (state.error != null && state.sessions.isEmpty()) {
+            section_label(stringResource(R.string.sessions_active_section))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 detail_row(
                     title = stringResource(R.string.could_not_load_sessions),
@@ -116,6 +110,7 @@ fun SessionsScreen(
                 onClick = { vm.load_sessions() },
             )
         } else if (state.sessions.isEmpty()) {
+            section_label(stringResource(R.string.sessions_active_section))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 detail_row(
                     title = stringResource(R.string.no_active_sessions),
@@ -123,13 +118,28 @@ fun SessionsScreen(
                 )
             }
         } else {
-            AsterCard(modifier = Modifier.fillMaxWidth()) {
-                state.sessions.forEachIndexed { idx, s ->
-                    session_row(
-                        session = s,
-                        on_revoke = { pending_revoke_id = s.id },
-                    )
-                    if (idx < state.sessions.lastIndex) AsterDivider()
+            if (current_session != null) {
+                section_label(stringResource(R.string.this_device))
+                AsterCard(modifier = Modifier.fillMaxWidth()) {
+                    session_row(session = current_session, on_revoke = null)
+                }
+                v_gap(AsterSpacing.lg)
+            }
+            if (other_sessions.isNotEmpty()) {
+                section_header_action(
+                    title = stringResource(R.string.sessions_other_devices_section),
+                    action_label = stringResource(R.string.sign_out_others_action),
+                    enabled = true,
+                    on_click = { show_logout_others_confirm = true },
+                )
+                AsterCard(modifier = Modifier.fillMaxWidth()) {
+                    other_sessions.forEachIndexed { idx, s ->
+                        session_row(
+                            session = s,
+                            on_revoke = { pending_revoke_id = s.id },
+                        )
+                        if (idx < other_sessions.lastIndex) AsterDivider()
+                    }
                 }
             }
         }
@@ -182,15 +192,10 @@ fun SessionsScreen(
 
 @Composable
 private fun parse_device_label(session: SessionInfo): String {
-    val name = org.astermail.android.ui.settings.device_display_name(session.browser, session.device_type)
+    val name = device_display_name(session.browser, session.device_type)
     if (name.isNotEmpty()) return name
     return if (session.os.isNotBlank()) stringResource(R.string.os_device, session.os)
     else stringResource(R.string.unknown_device)
-}
-
-private fun is_mobile_session(session: SessionInfo): Boolean {
-    val dt = session.device_type.lowercase()
-    return dt.contains("android") || dt.contains("iphone") || dt.contains("ipad") || dt.contains("mobile")
 }
 
 @Composable
@@ -216,64 +221,49 @@ private fun format_last_active(last_active: String?): String {
 @Composable
 private fun session_row(
     session: SessionInfo,
-    on_revoke: () -> Unit,
+    on_revoke: (() -> Unit)?,
 ) {
     val colors = AsterMaterial.colors
     val device_label = parse_device_label(session)
-    val is_mobile = is_mobile_session(session)
-    val icon = if (is_mobile) TablerIcons.DeviceMobile else TablerIcons.DeviceDesktop
+    val kind = device_client_kind(session.browser, session.device_type, session.os)
+    val platform = device_display_platform(device_label, session.os)
+        .ifEmpty { stringResource(device_client_label_res(kind)) }
+    val meta = stringResource(
+        R.string.session_meta_line,
+        platform,
+        format_last_active(session.last_active),
+    )
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(AsterSpacing.lg),
+            .heightIn(min = 64.dp)
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = colors.text_secondary,
-            modifier = Modifier.size(28.dp),
-        )
+        device_client_avatar(kind = kind)
         Spacer(Modifier.size(AsterSpacing.md))
         Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = device_label,
-                    color = colors.text_primary,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false),
-                )
-                if (session.is_current) {
-                    Spacer(Modifier.size(AsterSpacing.sm))
-                    Box(
-                        modifier = Modifier
-                            .background(colors.accent_blue.copy(alpha = 0.15f), SquircleShape(8.dp))
-                            .padding(horizontal = AsterSpacing.sm, vertical = 2.dp),
-                    ) {
-                        Text(
-                            text = stringResource(R.string.this_device),
-                            color = colors.accent_blue,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    }
-                }
-            }
-            val os = org.astermail.android.ui.settings.device_display_platform(device_label, session.os)
-            if (os.isNotEmpty()) {
-                Text(text = os, color = colors.text_tertiary, fontSize = 13.sp)
-            }
             Text(
-                text = format_last_active(session.last_active),
-                color = colors.text_muted,
-                fontSize = 12.sp,
+                text = device_label,
+                color = colors.text_primary,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = meta,
+                color = colors.text_tertiary,
+                fontSize = 13.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
-        if (!session.is_current) {
+        Spacer(Modifier.size(AsterSpacing.sm))
+        if (on_revoke == null) {
+            this_device_badge()
+        } else {
             AsterGhostButton(label = stringResource(R.string.sign_out), onClick = on_revoke)
         }
     }

@@ -22,6 +22,7 @@
 package org.astermail.android.ui.settings.detail
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,8 +34,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -62,10 +61,13 @@ import org.astermail.android.api.aliases.SENDER_PIN_MODE_LOCK_FIRST
 import org.astermail.android.api.aliases.SENDER_PIN_MODE_OFF
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.keep_visible_above_keyboard
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.AsterTextField
+import org.astermail.android.design.components.aster_dropdown_item
+import org.astermail.android.design.components.aster_dropdown_menu
 import org.astermail.android.settings.AliasDetailState
 import org.astermail.android.settings.SettingsViewModel
 
@@ -181,8 +183,9 @@ internal fun alias_sender_pinning_section(
         Box {
             Row(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(colors.bg_secondary)
+                    .clip(SquircleShape(12.dp))
+                    .background(colors.input_bg, SquircleShape(12.dp))
+                    .border(1.dp, colors.input_border, SquircleShape(12.dp))
                     .clickable { menu_open = true }
                     .padding(horizontal = 12.dp, vertical = 10.dp)
                     .testTag("alias_pin_mode_selector"),
@@ -201,11 +204,12 @@ internal fun alias_sender_pinning_section(
                     modifier = Modifier.size(16.dp),
                 )
             }
-            DropdownMenu(expanded = menu_open, onDismissRequest = { menu_open = false }) {
+            aster_dropdown_menu(expanded = menu_open, on_dismiss = { menu_open = false }) {
                 listOf(SENDER_PIN_MODE_OFF, SENDER_PIN_MODE_LOCK_FIRST, SENDER_PIN_MODE_ALLOWLIST).forEach { mode ->
-                    DropdownMenuItem(
-                        text = { Text(stringResource(pin_mode_label(mode))) },
-                        onClick = {
+                    aster_dropdown_item(
+                        label = stringResource(pin_mode_label(mode)),
+                        selected = mode == detail.pin_mode,
+                        on_click = {
                             menu_open = false
                             vm.set_alias_pin_mode(alias_id, mode)
                         },

@@ -23,9 +23,8 @@ package org.astermail.android.ui.settings.detail
 
 import compose.icons.TablerIcons
 import compose.icons.tablericons.CircleCheck
-import compose.icons.tablericons.World
+import compose.icons.tablericons.Search
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -33,12 +32,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,9 +47,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -66,76 +59,9 @@ import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogOutlineButton
 import org.astermail.android.design.components.AsterDialogPrimaryButton
 import org.astermail.android.design.components.AsterDivider
-import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
-import org.astermail.android.ui.mail.SenderAvatar
-
-@Composable
-private fun allowed_sender_row(
-    address: String,
-    is_domain: Boolean,
-    on_remove: () -> Unit,
-) {
-    val colors = AsterMaterial.colors
-    var expanded by remember { mutableStateOf(false) }
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 60.dp)
-            .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (is_domain) {
-            Box(
-                modifier = Modifier.size(36.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = TablerIcons.World,
-                    contentDescription = null,
-                    tint = colors.text_muted,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-        } else {
-            SenderAvatar(email = address, size = 36.dp)
-        }
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .clickable { expanded = !expanded }
-                .padding(horizontal = AsterSpacing.md),
-        ) {
-            Text(
-                text = if (is_domain) "*.$address" else address,
-                color = colors.text_primary,
-                fontSize = 15.sp,
-                maxLines = if (expanded) 3 else 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            if (is_domain) {
-                Text(
-                    text = stringResource(R.string.allowlist_domain_label),
-                    color = colors.text_muted,
-                    fontSize = 12.sp,
-                )
-            }
-        }
-        Text(
-            text = stringResource(R.string.remove_from_allowlist),
-            color = colors.accent_blue,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier
-                .clip(CircleShape)
-                .clickable(onClick = on_remove)
-                .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm)
-                .testTag("allowlist_remove"),
-        )
-    }
-}
 
 @Composable
 private fun allowlist_kind_option(
@@ -176,11 +102,17 @@ private fun allowlist_kind_option(
 fun AllowListScreen(on_back: () -> Unit) {
     val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
-    val colors = AsterMaterial.colors
     var show_add_dialog by remember { mutableStateOf(false) }
     var add_value by remember { mutableStateOf("") }
     var add_is_domain by remember { mutableStateOf(false) }
+    var query by remember { mutableStateOf("") }
     val senders = state.allowed_senders
+    val filtered = remember(senders, query) {
+        val needle = query.trim().lowercase()
+        if (needle.isEmpty()) senders else senders.filter { it.address.lowercase().contains(needle) }
+    }
+    val domain_label = stringResource(R.string.allowlist_domain_label)
+    val remove_label = stringResource(R.string.remove_from_allowlist)
 
     val action_result_context = androidx.compose.ui.platform.LocalContext.current
 
@@ -193,71 +125,62 @@ fun AllowListScreen(on_back: () -> Unit) {
     LaunchedEffect(Unit) { vm.load_allowed_senders() }
 
     detail_scaffold(title = stringResource(R.string.allowlist), on_back = on_back) {
-        AsterButton(
-            label = stringResource(R.string.allow_a_sender),
-            onClick = { show_add_dialog = true },
-            modifier = Modifier.fillMaxWidth().testTag("allowlist_add_button"),
-        )
-        v_gap(AsterSpacing.md)
+        when {
+            state.allowed_senders_loading && senders.isEmpty() -> filters_loading_block()
 
-        if (state.allowed_senders_loading && senders.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
-            }
-        } else if (state.allowed_senders_error != null) {
-            AsterCard(modifier = Modifier.fillMaxWidth()) {
-                detail_row(
-                    title = stringResource(R.string.allowed_senders_load_failed),
-                    subtitle = state.allowed_senders_error,
-                    icon = TablerIcons.CircleCheck,
-                    trailing = {
-                        AsterGhostButton(
-                            label = stringResource(R.string.retry),
-                            onClick = { vm.load_allowed_senders() },
-                        )
-                    },
-                )
-            }
-        } else if (senders.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(vertical = AsterSpacing.xl),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = TablerIcons.CircleCheck,
-                    contentDescription = null,
-                    tint = colors.success,
-                    modifier = Modifier.size(48.dp),
-                )
-            }
-            Text(
-                text = stringResource(R.string.no_allowlisted_senders),
-                color = colors.text_primary,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
+            state.allowed_senders_error != null && senders.isEmpty() -> filters_error_card(
+                message = state.allowed_senders_error,
+                on_retry = { vm.load_allowed_senders() },
             )
-            v_gap(AsterSpacing.xs)
-            Text(
-                text = stringResource(R.string.no_allowlisted_senders_subtitle),
-                color = colors.text_tertiary,
-                fontSize = 13.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = AsterSpacing.md),
+
+            senders.isEmpty() -> filters_state_card(
+                icon = TablerIcons.CircleCheck,
+                title = stringResource(R.string.no_allowlisted_senders),
+                body = stringResource(R.string.fix_filters_allowed_empty_body),
+                action_label = stringResource(R.string.allow_a_sender),
+                on_action = { show_add_dialog = true },
+                action_test_tag = "allowlist_add_button",
             )
-        } else {
-            AsterCard(modifier = Modifier.fillMaxWidth()) {
-                senders.forEachIndexed { idx, sender ->
-                    allowed_sender_row(
-                        address = sender.address,
-                        is_domain = sender.is_domain,
-                        on_remove = { vm.remove_allowed_sender(sender.sender_token) },
+
+            else -> {
+                filters_description(stringResource(R.string.fix_filters_allowed_description))
+                v_gap(AsterSpacing.md)
+                AsterButton(
+                    label = stringResource(R.string.allow_a_sender),
+                    onClick = { show_add_dialog = true },
+                    modifier = Modifier.fillMaxWidth().testTag("allowlist_add_button"),
+                )
+                v_gap(AsterSpacing.md)
+                filters_search_field(
+                    value = query,
+                    on_change = { query = it },
+                    placeholder = stringResource(R.string.fix_filters_search_allowed),
+                )
+                v_gap(AsterSpacing.md)
+                if (filtered.isEmpty()) {
+                    filters_state_card(
+                        icon = TablerIcons.Search,
+                        title = stringResource(R.string.fix_filters_no_results_title),
+                        body = stringResource(R.string.fix_filters_no_results_body),
                     )
-                    if (idx < senders.lastIndex) AsterDivider(modifier = Modifier)
+                } else {
+                    filters_list_header(
+                        label = stringResource(R.string.allowlist),
+                        count = filtered.size,
+                    )
+                    AsterCard(modifier = Modifier.fillMaxWidth()) {
+                        filtered.forEachIndexed { idx, sender ->
+                            filters_entry_row(
+                                address = sender.address,
+                                is_domain = sender.is_domain,
+                                domain_label = domain_label,
+                                action_label = remove_label,
+                                on_action = { vm.remove_allowed_sender(sender.sender_token) },
+                                action_test_tag = "allowlist_remove",
+                            )
+                            if (idx < filtered.lastIndex) AsterDivider(modifier = Modifier)
+                        }
+                    }
                 }
             }
         }

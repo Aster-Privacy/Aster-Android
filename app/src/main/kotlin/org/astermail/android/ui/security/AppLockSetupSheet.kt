@@ -119,6 +119,7 @@ fun AppLockSetupSheet(
 
     val mismatch_str = stringResource(R.string.app_lock_pin_mismatch)
     val short_str = stringResource(R.string.app_lock_passphrase_too_short)
+    val setup_failed_str = stringResource(R.string.app_lock_setup_failed)
 
     fun go_back() {
         when (step) {
@@ -156,9 +157,17 @@ fun AppLockSetupSheet(
             }
             saving = true
             scope.launch {
-                withContext(Dispatchers.Default) { store.setup_pin(next, "numeric", chosen_digits) }
-                saving = false
-                on_success()
+                val ok = try {
+                    withContext(Dispatchers.Default) { store.setup_pin(next, "numeric", chosen_digits) }
+                    true
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    false
+                } finally {
+                    saving = false
+                }
+                if (ok) on_success() else error_msg = setup_failed_str
             }
         }
     }
@@ -186,9 +195,17 @@ fun AppLockSetupSheet(
             }
             saving = true
             scope.launch {
-                withContext(Dispatchers.Default) { store.setup_pin(text_input, "text", null) }
-                saving = false
-                on_success()
+                val ok = try {
+                    withContext(Dispatchers.Default) { store.setup_pin(text_input, "text", null) }
+                    true
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    false
+                } finally {
+                    saving = false
+                }
+                if (ok) on_success() else error_msg = setup_failed_str
             }
         }
     }
@@ -415,8 +432,15 @@ fun AppLockVerifySheet(
         if (verifying || locked_out) return
         scope.launch {
             verifying = true
-            val ok = withContext(Dispatchers.Default) { store.verify_pin(value) }
-            verifying = false
+            val ok = try {
+                withContext(Dispatchers.Default) { store.verify_pin(value) }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                false
+            } finally {
+                verifying = false
+            }
             if (ok) { on_success(); return@launch }
             input = ""
             if (store.is_locked_out()) {

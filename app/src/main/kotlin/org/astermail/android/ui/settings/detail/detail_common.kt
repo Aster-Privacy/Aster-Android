@@ -350,6 +350,8 @@ internal fun detail_row(
                     color = colors.text_primary,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false),
                 )
                 if (info_title != null && info_description != null) {
@@ -362,10 +364,13 @@ internal fun detail_row(
                     text = subtitle,
                     color = colors.text_tertiary,
                     fontSize = 13.sp,
+                    maxLines = 2,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 )
             }
         }
         if (trailing != null) {
+            Spacer(Modifier.width(AsterSpacing.sm))
             trailing()
         } else if (on_click != null) {
             Icon(
@@ -417,18 +422,32 @@ internal fun avatar_circle(seed: String, size_dp: Int = 60, image_url: String? =
 }
 
 @Composable
-internal fun verified_badge(text: String = "Verified") {
+internal fun verified_badge(
+    text: String = "Verified",
+    icon: ImageVector? = TablerIcons.Check,
+) {
     val colors = AsterMaterial.colors
-    Box(
+    Row(
         modifier = Modifier
-            .background(colors.success.copy(alpha = 0.15f), SquircleShape(8.dp))
-            .padding(horizontal = AsterSpacing.sm, vertical = 2.dp),
+            .background(colors.success.copy(alpha = 0.12f), CircleShape)
+            .padding(horizontal = 8.dp, vertical = 3.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = colors.success,
+                modifier = Modifier.size(11.dp),
+            )
+            Spacer(Modifier.width(3.dp))
+        }
         Text(
             text = text,
             color = colors.success,
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
         )
     }
 }

@@ -215,12 +215,9 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
         } else {
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 state.sessions.forEachIndexed { idx, s ->
-                    val dt = s.device_type.lowercase()
-                    val icon = when {
-                        dt.contains("android") || dt.contains("mobile") || dt.contains("iphone") -> TablerIcons.DeviceMobile
-                        dt.contains("tablet") || dt.contains("ipad") -> TablerIcons.DeviceTablet
-                        else -> TablerIcons.DeviceDesktop
-                    }
+                    val icon = org.astermail.android.ui.settings.device_client_icon(
+                        org.astermail.android.ui.settings.device_client_kind(s.browser, s.device_type, s.os),
+                    )
                     val name = org.astermail.android.ui.settings.device_display_name(s.browser, s.device_type)
                         .ifEmpty { stringResource(R.string.unknown_device) }
                     val last_seen = if (s.is_current) stringResource(R.string.active_now) else relative_time_label(s.last_active)
@@ -230,7 +227,7 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
                         icon = icon,
                         on_click = null,
                         trailing = {
-                            if (s.is_current) verified_badge(stringResource(R.string.this_device))
+                            if (s.is_current) org.astermail.android.ui.settings.this_device_badge()
                             else AsterGhostButton(label = stringResource(R.string.revoke), onClick = { pending_revoke_session = s.id })
                         },
                     )

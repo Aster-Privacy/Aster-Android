@@ -59,6 +59,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -294,6 +295,8 @@ private fun domain_result_row(result: DomainSearchResult, on_select: () -> Unit)
                 color = if (available) colors.text_primary else colors.text_muted,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
             if (available) {
                 val price = result.price_cents ?: 0

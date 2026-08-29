@@ -32,6 +32,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -67,6 +68,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.delay
 import org.astermail.android.R
 import org.astermail.android.api.preferences.UserPreferences
 import org.astermail.android.api.security.AuditEvent
@@ -82,6 +84,8 @@ import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterSwitch
+import org.astermail.android.design.components.aster_dropdown_item
+import org.astermail.android.design.components.aster_dropdown_menu
 import org.astermail.android.security.AppLockStore
 import org.astermail.android.security.AppLockViewModel
 import org.astermail.android.settings.SettingsViewModel
@@ -89,6 +93,10 @@ import org.astermail.android.ui.security.AppLockSetupSheet
 import org.astermail.android.ui.security.AppLockVerifySheet
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.design.mirror_in_rtl
+
+private const val activity_preview_count = 5
+private const val security_settle_delay_ms = 90L
+private const val security_load_timeout_ms = 5000L
 
 @Composable
 private fun format_audit_event(type: String): String {
@@ -192,7 +200,26 @@ fun SecurityScreen(
     val prefs = state.preferences
     val recovery_email_verified = state.recovery_email_verified
     val hardware_keys_count = state.hardware_keys.size
-    val score_loaded = sec != null && prefs != null && state.login_alerts_enabled != null
+
+    val security_signals_ready = sec != null &&
+        prefs != null &&
+        state.login_alerts_enabled != null &&
+        state.vanguard_enabled != null &&
+        !state.is_loading
+
+    var content_ready by remember { mutableStateOf(false) }
+    LaunchedEffect(security_signals_ready) {
+        if (security_signals_ready) {
+            delay(security_settle_delay_ms)
+            content_ready = true
+        }
+    }
+    LaunchedEffect(Unit) {
+        delay(security_load_timeout_ms)
+        content_ready = true
+    }
+
+    val score_loaded = content_ready && sec != null && prefs != null && state.login_alerts_enabled != null
 
     val score = if (!score_loaded) null else run {
         var s = 0
@@ -260,6 +287,10 @@ fun SecurityScreen(
         on_back = on_back,
         scroll_state = scroll_state,
     ) {
+        if (!content_ready) {
+            security_loading_skeleton()
+            return@detail_scaffold
+        }
 
         preferences_save_error_banner()
         section_label(stringResource(R.string.section_account_protection))
@@ -582,29 +613,17 @@ fun SecurityScreen(
                     },
                 )
                 AsterDivider()
-                detail_row(
-                    title = stringResource(R.string.remote_image_loading_title),
-                    subtitle = stringResource(R.string.remote_image_loading_subtitle),
-                    icon = TablerIcons.Photo,
-                )
-                listOf(
-                    "never" to stringResource(R.string.remote_images_never),
-                    "ask" to stringResource(R.string.remote_images_ask),
-                    "always" to stringResource(R.string.remote_images_always),
-                ).forEach { (id, label) ->
-                    security_choice_row(
-                        label = label,
-                        selected = prefs.load_remote_images == id,
-                        test_tag = "remote_image_loading_$id",
-                    ) {
+                remote_image_loading_row(
+                    selected_id = prefs.load_remote_images,
+                    on_select = { id ->
                         toggle {
                             it.copy(
                                 load_remote_images = id,
                                 block_external_images = id != "always",
                             )
                         }
-                    }
-                }
+                    },
+                )
                 AsterDivider()
                 detail_row(
                     title = stringResource(R.string.block_remote_fonts),
@@ -691,27 +710,12 @@ fun SecurityScreen(
         v_gap(AsterSpacing.lg)
 
         section_label(stringResource(R.string.section_recent_activity))
-        AsterCard(modifier = Modifier.fillMaxWidth()) {
-            if (state.audit_events.isEmpty() && state.audit_events_load_failed) {
-                detail_row(
-                    title = stringResource(R.string.failed_to_load),
-                    subtitle = stringResource(R.string.retry),
-                    icon = TablerIcons.AlertCircle,
-                    on_click = { vm.load_audit_log() },
-                )
-            } else if (state.audit_events.isEmpty()) {
-                detail_row(
-                    title = stringResource(R.string.no_recent_activity),
-                    subtitle = stringResource(R.string.no_recent_activity_subtitle),
-                    icon = TablerIcons.History,
-                )
-            } else {
-                state.audit_events.forEachIndexed { idx, event ->
-                    audit_event_row(event = event, colors = colors)
-                    if (idx < state.audit_events.lastIndex) AsterDivider()
-                }
-            }
-        }
+        recent_activity_section(
+            events = state.audit_events,
+            load_failed = state.audit_events_load_failed,
+            on_retry = { vm.load_audit_log() },
+            colors = colors,
+        )
 
         v_gap(AsterSpacing.lg)
 
@@ -1180,11 +1184,257 @@ private fun trusted_device_row(
     }
 }
 
+private enum class AuditFilter { all, sign_ins, security_changes, failures }
+
+private fun audit_filter_of(event: AuditEvent): AuditFilter {
+    val type = event.event_type.lowercase()
+    val severity = event.severity.lowercase()
+    val is_failure = severity == "critical" ||
+        severity == "high" ||
+        severity == "error" ||
+        severity == "warning" ||
+        type.contains("fail") ||
+        type.contains("block") ||
+        type.contains("denied") ||
+        type.contains("suspicious") ||
+        type.contains("locked")
+    val is_sign_in = type.contains("login") ||
+        type.contains("logout") ||
+        type.contains("sign_in") ||
+        type.contains("sign_out") ||
+        type.contains("session")
+    return when {
+        is_failure -> AuditFilter.failures
+        is_sign_in -> AuditFilter.sign_ins
+        else -> AuditFilter.security_changes
+    }
+}
+
+private fun parse_audit_instant(iso: String?): java.time.Instant? {
+    if (iso.isNullOrBlank()) return null
+    return try {
+        java.time.OffsetDateTime.parse(iso).toInstant()
+    } catch (_: Throwable) {
+        try {
+            java.time.Instant.parse(iso)
+        } catch (_: Throwable) {
+            null
+        }
+    }
+}
+
+private fun audit_device_label(user_agent: String?): String? {
+    val agent = user_agent?.trim().orEmpty()
+    if (agent.isEmpty()) return null
+    val client = when {
+        agent.contains("Aster", ignoreCase = true) -> "Aster Mail"
+        agent.contains("Edg", ignoreCase = true) -> "Edge"
+        agent.contains("OPR", ignoreCase = true) || agent.contains("Opera", ignoreCase = true) -> "Opera"
+        agent.contains("Firefox", ignoreCase = true) -> "Firefox"
+        agent.contains("Chrome", ignoreCase = true) -> "Chrome"
+        agent.contains("Safari", ignoreCase = true) -> "Safari"
+        else -> null
+    }
+    val platform = when {
+        agent.contains("Android", ignoreCase = true) -> "Android"
+        agent.contains("iPhone", ignoreCase = true) ||
+            agent.contains("iPad", ignoreCase = true) ||
+            agent.contains("iOS", ignoreCase = true) -> "iOS"
+        agent.contains("Macintosh", ignoreCase = true) || agent.contains("Mac OS", ignoreCase = true) -> "macOS"
+        agent.contains("Windows", ignoreCase = true) -> "Windows"
+        agent.contains("Linux", ignoreCase = true) -> "Linux"
+        else -> null
+    }
+    val label = listOfNotNull(client, platform).joinToString(" - ")
+    return label.ifBlank { null }
+}
+
+private fun group_audit_events(
+    events: List<AuditEvent>,
+    zone: java.time.ZoneId,
+    today_label: String,
+    yesterday_label: String,
+    unknown_label: String,
+): List<Pair<String, List<AuditEvent>>> {
+    val today = java.time.LocalDate.now(zone)
+    val formatter = java.time.format.DateTimeFormatter
+        .ofLocalizedDate(java.time.format.FormatStyle.MEDIUM)
+        .withZone(zone)
+    return events.groupBy { event ->
+        val instant = parse_audit_instant(event.created_at)
+        val date = instant?.atZone(zone)?.toLocalDate()
+        when {
+            instant == null || date == null -> unknown_label
+            date == today -> today_label
+            date == today.minusDays(1) -> yesterday_label
+            else -> formatter.format(instant)
+        }
+    }.toList()
+}
+
+@Composable
+private fun recent_activity_section(
+    events: List<AuditEvent>,
+    load_failed: Boolean,
+    on_retry: () -> Unit,
+    colors: org.astermail.android.design.AsterSemanticColors,
+) {
+    if (events.isEmpty()) {
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            if (load_failed) {
+                detail_row(
+                    title = stringResource(R.string.failed_to_load),
+                    subtitle = stringResource(R.string.retry),
+                    icon = TablerIcons.AlertCircle,
+                    on_click = on_retry,
+                )
+            } else {
+                detail_row(
+                    title = stringResource(R.string.no_recent_activity),
+                    subtitle = stringResource(R.string.no_recent_activity_subtitle),
+                    icon = TablerIcons.History,
+                )
+            }
+        }
+        return
+    }
+
+    var selected_filter by remember { mutableStateOf(AuditFilter.all) }
+    var expanded by remember { mutableStateOf(false) }
+
+    val present = remember(events) { events.map { audit_filter_of(it) }.toSet() }
+    LaunchedEffect(present) {
+        if (selected_filter != AuditFilter.all && !present.contains(selected_filter)) selected_filter = AuditFilter.all
+    }
+
+    val chips = listOf(
+        AuditFilter.all to R.string.security_activity_filter_all,
+        AuditFilter.sign_ins to R.string.security_activity_filter_sign_ins,
+        AuditFilter.security_changes to R.string.security_activity_filter_security,
+        AuditFilter.failures to R.string.security_activity_filter_failures,
+    ).filter { it.first == AuditFilter.all || present.contains(it.first) }
+
+    val filtered = remember(events, selected_filter) {
+        if (selected_filter == AuditFilter.all) events else events.filter { audit_filter_of(it) == selected_filter }
+    }
+    val visible = if (expanded) filtered else filtered.take(activity_preview_count)
+
+    val today_label = stringResource(R.string.security_activity_today)
+    val yesterday_label = stringResource(R.string.security_activity_yesterday)
+    val unknown_label = stringResource(R.string.unknown)
+    val zone = org.astermail.android.ui.mail.AsterTimePreferences.account_zone_id()
+    val groups = remember(visible, today_label, yesterday_label, unknown_label, zone) {
+        group_audit_events(visible, zone, today_label, yesterday_label, unknown_label)
+    }
+
+    if (chips.size > 1) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(bottom = AsterSpacing.sm),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            chips.forEachIndexed { idx, (id, label_res) ->
+                if (idx > 0) Spacer(Modifier.width(AsterSpacing.xs))
+                activity_filter_chip(
+                    label = stringResource(label_res),
+                    selected = selected_filter == id,
+                    colors = colors,
+                    on_click = {
+                        selected_filter = id
+                        expanded = false
+                    },
+                )
+            }
+        }
+    }
+
+    AsterCard(modifier = Modifier.fillMaxWidth()) {
+        if (groups.isEmpty()) {
+            detail_row(
+                title = stringResource(R.string.security_activity_empty_filter),
+                icon = TablerIcons.History,
+            )
+        } else {
+            groups.forEachIndexed { group_idx, (day_label, day_events) ->
+                if (group_idx > 0) AsterDivider()
+                activity_day_header(label = day_label, colors = colors)
+                day_events.forEachIndexed { idx, event ->
+                    if (idx > 0) AsterDivider()
+                    audit_event_row(event = event, colors = colors)
+                }
+            }
+        }
+        if (filtered.size > activity_preview_count) {
+            AsterDivider()
+            Text(
+                text = if (expanded) {
+                    stringResource(R.string.security_activity_show_less)
+                } else {
+                    stringResource(R.string.security_activity_show_more)
+                },
+                color = colors.accent_blue,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = !expanded }
+                    .testTag("security_activity_show_more")
+                    .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.md),
+            )
+        }
+    }
+}
+
+@Composable
+private fun activity_filter_chip(
+    label: String,
+    selected: Boolean,
+    colors: org.astermail.android.design.AsterSemanticColors,
+    on_click: () -> Unit,
+) {
+    val shape = SquircleShape(12.dp)
+    Text(
+        text = label,
+        color = if (selected) Color.White else colors.text_secondary,
+        fontSize = 13.sp,
+        fontWeight = FontWeight.Medium,
+        modifier = Modifier
+            .clip(shape)
+            .background(if (selected) colors.accent_blue else colors.bg_secondary)
+            .border(1.dp, if (selected) colors.accent_blue else colors.border_primary, shape)
+            .clickable(onClick = on_click)
+            .padding(horizontal = AsterSpacing.md, vertical = 7.dp),
+    )
+}
+
+@Composable
+private fun activity_day_header(
+    label: String,
+    colors: org.astermail.android.design.AsterSemanticColors,
+) {
+    Text(
+        text = label,
+        color = colors.text_secondary,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(colors.bg_secondary)
+            .padding(horizontal = AsterSpacing.md, vertical = 7.dp),
+    )
+}
+
 @Composable
 private fun audit_event_row(
     event: AuditEvent,
     colors: org.astermail.android.design.AsterSemanticColors,
 ) {
+    val icon_tint = when (audit_filter_of(event)) {
+        AuditFilter.failures -> colors.danger
+        else -> colors.text_secondary
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -1194,27 +1444,124 @@ private fun audit_event_row(
         Icon(
             imageVector = audit_icon(event.event_type),
             contentDescription = null,
-            tint = colors.text_secondary,
+            tint = icon_tint,
             modifier = Modifier.size(20.dp),
         )
         Spacer(Modifier.width(AsterSpacing.md))
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = format_audit_event(event.event_type),
-                color = colors.text_primary,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-            )
-            val meta = buildList {
-                add(relative_time_label(event.created_at))
-                val ip = event.ip_address
-                if (!ip.isNullOrBlank()) add(ip)
-            }.joinToString(" - ")
-            Text(
-                text = meta,
-                color = colors.text_tertiary,
-                fontSize = 12.sp,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = format_audit_event(event.event_type),
+                    color = colors.text_primary,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                Spacer(Modifier.width(AsterSpacing.sm))
+                Text(
+                    text = relative_time_label(event.created_at),
+                    color = colors.text_muted,
+                    fontSize = 12.sp,
+                )
+            }
+            val meta = listOfNotNull(
+                audit_device_label(event.user_agent),
+                event.ip_address?.takeIf { it.isNotBlank() },
+            ).joinToString(" - ")
+            if (meta.isNotBlank()) {
+                Text(
+                    text = meta,
+                    color = colors.text_tertiary,
+                    fontSize = 12.sp,
+                )
+            }
         }
     }
+}
+
+@Composable
+private fun remote_image_loading_row(
+    selected_id: String,
+    on_select: (String) -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    var menu_open by remember { mutableStateOf(false) }
+    val options = listOf(
+        "never" to stringResource(R.string.remote_images_never),
+        "ask" to stringResource(R.string.remote_images_ask),
+        "always" to stringResource(R.string.remote_images_always),
+    )
+    val selected_label = options.firstOrNull { it.first == selected_id }?.second ?: options.first().second
+    val shape = SquircleShape(12.dp)
+    detail_row(
+        title = stringResource(R.string.remote_image_loading_title),
+        subtitle = stringResource(R.string.remote_image_loading_subtitle),
+        icon = TablerIcons.Photo,
+        trailing = {
+            Box {
+                Row(
+                    modifier = Modifier
+                        .clip(shape)
+                        .background(colors.input_bg)
+                        .border(1.dp, colors.input_border, shape)
+                        .clickable { menu_open = true }
+                        .testTag("remote_image_loading_select")
+                        .padding(start = AsterSpacing.md, end = AsterSpacing.sm, top = 8.dp, bottom = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = selected_label,
+                        color = colors.text_primary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    Spacer(Modifier.width(AsterSpacing.xs))
+                    Icon(
+                        imageVector = TablerIcons.ChevronDown,
+                        contentDescription = null,
+                        tint = colors.text_muted,
+                        modifier = Modifier.size(16.dp),
+                    )
+                }
+                aster_dropdown_menu(
+                    expanded = menu_open,
+                    on_dismiss = { menu_open = false },
+                ) {
+                    options.forEach { (id, label) ->
+                        aster_dropdown_item(
+                            label = label,
+                            selected = selected_id == id,
+                            test_tag = "remote_image_loading_$id",
+                            on_click = {
+                                menu_open = false
+                                on_select(id)
+                            },
+                        )
+                    }
+                }
+            }
+        },
+    )
+}
+
+@Composable
+private fun security_loading_skeleton() {
+    section_label(stringResource(R.string.section_account_protection))
+    skeleton_hero_card(lines = 1, bar = true)
+    v_gap(AsterSpacing.lg)
+    section_label(stringResource(R.string.section_authentication))
+    skeleton_card_list(rows = 5)
+    v_gap(AsterSpacing.lg)
+    section_label(stringResource(R.string.section_trusted_devices))
+    skeleton_card_list(rows = 2, leading_circle = true)
+    v_gap(AsterSpacing.lg)
+    section_label(stringResource(R.string.section_tracking_protection))
+    skeleton_card_list(rows = 3, trailing_width = 44.dp)
+    v_gap(AsterSpacing.lg)
+    section_label(stringResource(R.string.section_images))
+    skeleton_card_list(rows = 5, trailing_width = 44.dp)
+    v_gap(AsterSpacing.lg)
+    section_label(stringResource(R.string.section_recent_activity))
+    skeleton_card_list(rows = 4, leading_circle = true)
+    v_gap(AsterSpacing.xxl)
 }

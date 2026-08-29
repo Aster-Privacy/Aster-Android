@@ -63,6 +63,8 @@ import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import kotlinx.coroutines.delay
 import org.astermail.android.R
+import org.astermail.android.design.AsterDuration
+import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.ui.theme.local_accessibility
 
@@ -80,7 +82,17 @@ private class above_anchor_position_provider(
         val x = anchorBounds.left + (anchorBounds.width - popupContentSize.width) / 2
         val clamped_x = x.coerceIn(0, (windowSize.width - popupContentSize.width).coerceAtLeast(0))
         val above_y = anchorBounds.top - popupContentSize.height - gap_px
-        val y = if (above_y >= 0) above_y else anchorBounds.bottom + gap_px
+        val below_y = anchorBounds.bottom + gap_px
+        val space_above = anchorBounds.top - gap_px
+        val space_below = windowSize.height - below_y
+        val fits_above = space_above >= popupContentSize.height
+        val fits_below = space_below >= popupContentSize.height
+        val y = when {
+            fits_above -> above_y
+            fits_below -> below_y
+            space_above >= space_below -> above_y
+            else -> below_y
+        }
         val clamped_y = y.coerceIn(0, (windowSize.height - popupContentSize.height).coerceAtLeast(0))
         return IntOffset(clamped_x, clamped_y)
     }
@@ -110,8 +122,18 @@ fun icon_tooltip_host(
             ) {
                 AnimatedVisibility(
                     visible = true,
-                    enter = fadeIn(tween(90)),
-                    exit = fadeOut(tween(90)),
+                    enter = fadeIn(
+                        tween(
+                            durationMillis = AsterDuration.menu_fade_enter,
+                            easing = AsterEasing.menu_enter,
+                        ),
+                    ),
+                    exit = fadeOut(
+                        tween(
+                            durationMillis = AsterDuration.menu_fade_exit,
+                            easing = AsterEasing.menu_exit,
+                        ),
+                    ),
                 ) {
                     Text(
                         text = text,

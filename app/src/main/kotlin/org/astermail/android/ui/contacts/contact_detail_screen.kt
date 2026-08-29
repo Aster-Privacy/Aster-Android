@@ -159,7 +159,7 @@ fun ContactDetailScreen(
             )
             Spacer(Modifier.weight(1f))
             AsterIconButton(
-                icon = if (is_favorite) TablerIcons.Star else TablerIcons.Star,
+                icon = if (is_favorite) TablerIcons.Star else TablerIcons.StarOff,
                 content_description = if (is_favorite) stringResource(R.string.unfavorite) else stringResource(R.string.favorite),
                 enabled = contact != null && !favorite_pending,
                 onClick = {
@@ -498,6 +498,8 @@ private fun DetailRow(label: String, value: String, on_open: (() -> Unit)? = nul
             color = colors.text_muted,
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             modifier = Modifier.width(80.dp),
         )
         Spacer(Modifier.width(AsterSpacing.sm))

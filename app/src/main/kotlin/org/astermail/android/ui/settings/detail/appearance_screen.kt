@@ -647,8 +647,13 @@ fun AppearanceScreen(
                         Box(
                             modifier = Modifier
                                 .size(28.dp)
+                                .border(
+                                    width = if (is_selected) 2.5.dp else 1.dp,
+                                    color = if (is_selected) colors.text_primary else colors.border_primary,
+                                    shape = CircleShape,
+                                )
+                                .padding(if (is_selected) 3.5.dp else 0.dp)
                                 .background(parse_hex_color(hex), CircleShape)
-                                .border(if (is_selected) 2.dp else 0.dp, colors.text_primary, CircleShape)
                                 .clickable {
                                     compose_color_input = hex
                                     apply_compose_font_color(hex)

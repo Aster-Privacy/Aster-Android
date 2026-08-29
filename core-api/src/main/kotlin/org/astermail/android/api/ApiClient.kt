@@ -33,6 +33,8 @@ import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.HttpSend
 import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.HttpTimeoutCapability
+import io.ktor.client.plugins.timeout
 import io.ktor.client.plugins.ServerResponseException
 import io.ktor.client.plugins.auth.Auth
 import io.ktor.client.plugins.auth.authProviders
@@ -174,6 +176,20 @@ class ApiClient(
                 pingInterval(java.time.Duration.ofSeconds(20))
                 connectionPool(okhttp3.ConnectionPool(5, 90, java.util.concurrent.TimeUnit.SECONDS))
             }
+            addInterceptor(okhttp3.Interceptor { chain ->
+                if (!org.astermail.android.api.network.low_network_state.active()) {
+                    chain.proceed(chain.request())
+                } else {
+                    val extended = org.astermail.android.api.network.effective_request_timeout_ms(
+                        chain.readTimeoutMillis().toLong(),
+                        true,
+                    ).toInt()
+                    chain
+                        .withReadTimeout(extended, java.util.concurrent.TimeUnit.MILLISECONDS)
+                        .withWriteTimeout(extended, java.util.concurrent.TimeUnit.MILLISECONDS)
+                        .proceed(chain.request())
+                }
+            })
             addNetworkInterceptor(okhttp3.Interceptor { chain ->
                 val original = chain.request()
                 val method = original.method
@@ -248,6 +264,7 @@ class ApiClient(
     init {
         http.plugin(HttpSend).intercept { request ->
             apply_folder_unlock_header(request)
+            apply_low_network_timeout(request)
             val original_call: HttpClientCall = execute(request)
             if (original_call.response.status != HttpStatusCode.Forbidden) {
                 return@intercept original_call
@@ -290,6 +307,19 @@ class ApiClient(
             } else {
                 reattach_fresh_bearer(request)
                 execute(request)
+            }
+        }
+    }
+
+    private fun apply_low_network_timeout(request: HttpRequestBuilder) {
+        runCatching {
+            if (!org.astermail.android.api.network.low_network_state.active()) return
+            val existing = request.getCapabilityOrNull(HttpTimeoutCapability)
+            if (existing?.requestTimeoutMillis != null) return
+            val extended = org.astermail.android.api.network.LOW_NETWORK_MIN_REQUEST_TIMEOUT_MS
+            request.timeout {
+                requestTimeoutMillis = extended
+                socketTimeoutMillis = extended
             }
         }
     }
