@@ -22,6 +22,7 @@
 package org.astermail.android.api.recovery
 
 import io.ktor.client.call.body
+import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
@@ -121,12 +122,50 @@ data class SaveRecoveryBackupResponse(
     val success: Boolean,
 )
 
+@Serializable
+data class InactiveKeySetInfo(
+    val id: String,
+    val vault_version: Int = 1,
+    val retired_reason: String = "",
+    val retired_at: String = "",
+)
+
+@Serializable
+data class ListInactiveKeySetsResponse(
+    val inactive_key_sets: List<InactiveKeySetInfo> = emptyList(),
+)
+
+@Serializable
+data class FetchInactiveKeySetRequest(
+    val inactive_vault_id: String,
+)
+
+@Serializable
+data class FetchInactiveKeySetResponse(
+    val encrypted_vault: String,
+    val vault_nonce: String,
+    val vault_version: Int = 1,
+)
+
+@Serializable
+data class ConsumeInactiveKeySetRequest(
+    val inactive_vault_id: String,
+)
+
+@Serializable
+data class ConsumeInactiveKeySetResponse(
+    val success: Boolean,
+)
+
 interface RecoveryApi {
     suspend fun initiate(request: InitiateRecoveryRequest): InitiateRecoveryResponse
     suspend fun initiate_email(request: InitiateEmailRecoveryRequest): InitiateEmailRecoveryResponse
     suspend fun validate_email(request: ValidateEmailRecoveryRequest): ValidateEmailRecoveryResponse
     suspend fun complete(request: CompleteRecoveryRequest): CompleteRecoveryResponse
     suspend fun backup(request: SaveRecoveryBackupRequest): SaveRecoveryBackupResponse
+    suspend fun list_inactive_key_sets(): ListInactiveKeySetsResponse
+    suspend fun fetch_inactive_key_set(request: FetchInactiveKeySetRequest): FetchInactiveKeySetResponse
+    suspend fun consume_inactive_key_set(request: ConsumeInactiveKeySetRequest): ConsumeInactiveKeySetResponse
 }
 
 class RecoveryApiImpl(private val client: ApiClient) : RecoveryApi {
@@ -166,6 +205,31 @@ class RecoveryApiImpl(private val client: ApiClient) : RecoveryApi {
 
     override suspend fun backup(request: SaveRecoveryBackupRequest): SaveRecoveryBackupResponse {
         val response = client.http.post("${client.base_url}$base/backup") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun list_inactive_key_sets(): ListInactiveKeySetsResponse {
+        val response = client.http.get("${client.base_url}$base/inactive")
+        return decode_or_throw(response)
+    }
+
+    override suspend fun fetch_inactive_key_set(
+        request: FetchInactiveKeySetRequest,
+    ): FetchInactiveKeySetResponse {
+        val response = client.http.post("${client.base_url}$base/inactive/fetch") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun consume_inactive_key_set(
+        request: ConsumeInactiveKeySetRequest,
+    ): ConsumeInactiveKeySetResponse {
+        val response = client.http.post("${client.base_url}$base/inactive/consume") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }

@@ -26,6 +26,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,7 +34,10 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -73,8 +77,15 @@ import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
 
 @Composable
-private fun switch_row(title: String, subtitle: String?, checked: Boolean, on_change: (Boolean) -> Unit) {
+private fun switch_row(
+    title: String,
+    subtitle: String?,
+    checked: Boolean,
+    info: String? = null,
+    on_change: (Boolean) -> Unit,
+) {
     val colors = AsterMaterial.colors
+    var info_open by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -87,9 +98,30 @@ private fun switch_row(title: String, subtitle: String?, checked: Boolean, on_ch
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, color = colors.text_primary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = title, color = colors.text_primary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                if (info != null) {
+                    Icon(
+                        imageVector = Icons.Outlined.Info,
+                        contentDescription = info,
+                        tint = colors.text_tertiary,
+                        modifier = Modifier
+                            .padding(start = AsterSpacing.xs)
+                            .size(16.dp)
+                            .clickable { info_open = !info_open },
+                    )
+                }
+            }
             if (subtitle != null) {
                 Text(text = subtitle, color = colors.text_tertiary, fontSize = 13.sp)
+            }
+            if (info != null && info_open) {
+                Text(
+                    text = info,
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(top = AsterSpacing.xs),
+                )
             }
         }
         AsterSwitch(
@@ -324,6 +356,7 @@ fun NotificationsScreen(
                         stringResource(R.string.product_updates),
                         stringResource(R.string.product_updates_subtitle),
                         state.product_updates,
+                        stringResource(R.string.product_updates_info),
                     ) { vm.set_product_updates(it) }
                 }
             }

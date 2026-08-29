@@ -20,6 +20,7 @@
     <string name="search_filter_encrypted">مشفّرة</string>
     <string name="search_chip_from">من</string>
     <string name="search_chip_to">إلى</string>
+    <string name="search_chip_contact">جهة الاتصال</string>
     <string name="search_chip_subject">الموضوع</string>
     <string name="search_chip_has">تحتوي</string>
     <string name="search_chip_is">الحالة</string>

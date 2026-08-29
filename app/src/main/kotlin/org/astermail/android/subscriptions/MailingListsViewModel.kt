@@ -172,6 +172,7 @@ class MailingListsViewModel @Inject constructor(
         }
     }
 
+
     fun unsubscribe(subscription_id: String) {
         if (subscription_id in _state.value.pending_ids) return
         _state.value = _state.value.copy(pending_ids = _state.value.pending_ids + subscription_id)

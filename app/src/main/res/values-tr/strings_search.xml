@@ -20,6 +20,7 @@
     <string name="search_filter_encrypted">Şifreli</string>
     <string name="search_chip_from">Kimden</string>
     <string name="search_chip_to">Kime</string>
+    <string name="search_chip_contact">Kişi</string>
     <string name="search_chip_subject">Konu</string>
     <string name="search_chip_has">İçeriyor</string>
     <string name="search_chip_is">Durum</string>

@@ -20,6 +20,7 @@
     <string name="search_filter_encrypted">暗号化</string>
     <string name="search_chip_from">差出人</string>
     <string name="search_chip_to">宛先</string>
+    <string name="search_chip_contact">連絡先</string>
     <string name="search_chip_subject">件名</string>
     <string name="search_chip_has">含む</string>
     <string name="search_chip_is">状態</string>

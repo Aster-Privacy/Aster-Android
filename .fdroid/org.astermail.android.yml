@@ -1,55 +1,87 @@
 AntiFeatures:
   NonFreeNet:
-    en-US: Requires an account at astermail.org, a proprietary mail service.
+    en-US: Requires an account on astermail.org, a proprietary email service.
+      Account registration uses Cloudflare Turnstile.
 Categories:
-  - Internet
-License: AGPL-3.0-only
+  - Email
+License: AGPL-3.0-or-later
 AuthorName: Aster Communications Inc.
-AuthorEmail: support@astermail.org
+WebSite: https://astermail.org
 SourceCode: https://github.com/Aster-Privacy/Aster-Android
 IssueTracker: https://github.com/Aster-Privacy/Aster-Android/issues
-Changelog: https://github.com/Aster-Privacy/Aster-Android/releases
 
 AutoName: Aster Mail
-Description: |-
-    Private, end-to-end encrypted email client for astermail.org accounts.
-
-    Messages are encrypted client-side before leaving your device. The server stores
-    only ciphertext - Aster never sees plaintext content.
-
-    Features include a post-quantum ratchet protocol for mail between Aster users,
-    custom domain support, UnifiedPush notifications (no Google services required),
-    biometric lock, private mode notifications, offline-capable encrypted local
-    storage, and attachment support.
-
-    This F-Droid build contains no Firebase or Google Play Services dependencies.
-    Push notifications are delivered via any UnifiedPush-compatible distributor
-    (ntfy, Unified Push, etc.). Background polling provides a fallback when no
-    distributor is installed.
 
 RepoType: git
-Repo: https://github.com/Aster-Privacy/Aster-Android
+Repo: https://github.com/Aster-Privacy/Aster-Android.git
 
 Builds:
-  - versionName: 0.6.65
-    versionCode: 72
-    commit: v0.6.65
+  - versionName: 0.6.81
+    versionCode: 90
+    commit: 6f1ea8f0345e08083663384215fa17213e85ff99
     subdir: app
+    sudo:
+      - apt-get update
+      - apt-get install -y gcc libc-dev rustup
     gradle:
       - fdroid
-    rm:
-      - app/google-services.json
+    prebuild:
+      - export PATH="$HOME/.cargo/bin:$PATH"
+      - rustup default 1.92.0
+      - rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
+      - cargo install cargo-ndk@4.1.2 --locked
+    build: PATH="$HOME/.cargo/bin:$PATH" bash ../rust/aster-crypto-ffi/scripts/build_android.sh
+    ndk: r27c
 
-  - versionName: 0.6.143
-    versionCode: 153
-    commit: v0.6.143
+  - versionName: 0.6.145
+    versionCode: 155
+    commit: bb56f0d504340f8dabde4143ce451ecfb082eeb2
+    subdir: app
+    sudo:
+      - apt-get update
+      - apt-get install -y gcc libc-dev rustup
+    gradle:
+      - fdroid
+    prebuild:
+      - export PATH="$HOME/.cargo/bin:$PATH"
+      - rustup default 1.92.0
+      - rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
+      - cargo install cargo-ndk@4.1.2 --locked
+    build: PATH="$HOME/.cargo/bin:$PATH" bash ../rust/aster-crypto-ffi/scripts/build_android.sh
+    ndk: r27c
+
+  - versionName: 0.6.148
+    versionCode: 158
+    commit: 7e91d724d04dada9af6d67bba003b892b03d664f
+    subdir: app
+    sudo:
+      - apt-get update
+      - apt-get install -y gcc libc-dev rustup
+    gradle:
+      - fdroid
+    prebuild:
+      - export PATH="$HOME/.cargo/bin:$PATH"
+      - rustup default 1.92.0
+      - rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
+      - cargo install cargo-ndk@4.1.2 --locked
+    build: PATH="$HOME/.cargo/bin:$PATH" bash ../rust/aster-crypto-ffi/scripts/build_android.sh
+    ndk: r27c
+
+  - versionName: 0.6.149
+    versionCode: 159
+    commit: 63171cfe4e180853817bf07e2fa2370c5bbe3b65
     subdir: app
     gradle:
       - fdroid
-    rm:
-      - app/google-services.json
+
+  - versionName: 0.6.156
+    versionCode: 166
+    commit: v0.6.156
+    subdir: app
+    gradle:
+      - fdroid
 
 AutoUpdateMode: Version
-UpdateCheckMode: Tags v(.+)
-CurrentVersion: 0.6.143
-CurrentVersionCode: 153
+UpdateCheckMode: Tags
+CurrentVersion: 0.6.156
+CurrentVersionCode: 166

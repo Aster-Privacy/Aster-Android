@@ -655,7 +655,6 @@ private val all_settings_search_index: List<settings_index_entry> = listOf(
     settings_index_entry("notifications", R.string.notifications, R.string.events, false),
     settings_index_entry("notifications", R.string.notifications, R.string.new_emails, false),
     settings_index_entry("notifications", R.string.notifications, R.string.replies, false),
-    settings_index_entry("notifications", R.string.notifications, R.string.mentions, false),
     settings_index_entry("notifications", R.string.notifications, R.string.quiet_hours, false),
     settings_index_entry("notifications", R.string.notifications, R.string.quiet_hours_paywall_description, false),
     settings_index_entry("notifications", R.string.notifications, R.string.upgrade, false),

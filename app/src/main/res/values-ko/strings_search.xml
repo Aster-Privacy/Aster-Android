@@ -20,6 +20,7 @@
     <string name="search_filter_encrypted">암호화됨</string>
     <string name="search_chip_from">보낸 사람</string>
     <string name="search_chip_to">받는 사람</string>
+    <string name="search_chip_contact">연락처</string>
     <string name="search_chip_subject">제목</string>
     <string name="search_chip_has">포함</string>
     <string name="search_chip_is">상태</string>

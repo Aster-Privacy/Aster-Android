@@ -20,6 +20,7 @@
     <string name="search_filter_encrypted">Versleuteld</string>
     <string name="search_chip_from">Van</string>
     <string name="search_chip_to">Aan</string>
+    <string name="search_chip_contact">Contact</string>
     <string name="search_chip_subject">Onderwerp</string>
     <string name="search_chip_has">Bevat</string>
     <string name="search_chip_is">Is</string>

@@ -20,6 +20,7 @@
     <string name="search_filter_encrypted">Cifrati</string>
     <string name="search_chip_from">Da</string>
     <string name="search_chip_to">A</string>
+    <string name="search_chip_contact">Contatto</string>
     <string name="search_chip_subject">Oggetto</string>
     <string name="search_chip_has">Contiene</string>
     <string name="search_chip_is">È</string>

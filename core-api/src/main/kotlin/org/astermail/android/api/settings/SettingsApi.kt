@@ -185,6 +185,7 @@ data class AliasInfo(
     val profile_picture: String? = null,
     val created_at: String = "",
     val updated_at: String = "",
+    val downgrade_grace_expires_at: String? = null,
     val decryption_failed: Boolean = false,
 ) {
     val address: String get() = when {
@@ -475,6 +476,7 @@ data class CustomDomain(
     val verification_token: String = "",
     val created_at: String = "",
     val verified_at: String? = null,
+    val downgrade_grace_expires_at: String? = null,
 )
 
 @Serializable
@@ -554,6 +556,10 @@ data class SubscriptionInfo(
     val current_period_end: String? = null,
     val cancel_at_period_end: Boolean = false,
     val plan: SubscriptionPlanNested? = null,
+    val payment_failed_at: String? = null,
+    val grace_period_end: String? = null,
+    val payment_provider: String? = null,
+    val has_stripe_subscription: Boolean? = null,
 ) {
     val effective_price_cents: Int
         get() = if (amount > 0) amount else (plan?.price_cents ?: 0)

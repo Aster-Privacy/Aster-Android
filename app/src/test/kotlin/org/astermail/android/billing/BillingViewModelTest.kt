@@ -24,7 +24,10 @@ package org.astermail.android.billing
 import android.app.Application
 import app.cash.turbine.test
 import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -32,12 +35,23 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import org.astermail.android.R
 import org.astermail.android.api.billing.BillingApi
+import org.astermail.android.api.billing.CancelSubscriptionRequest
+import org.astermail.android.api.billing.CancelSubscriptionResponse
+import org.astermail.android.api.billing.ChangePlanRequest
+import org.astermail.android.api.billing.ChangePlanResponse
+import org.astermail.android.api.billing.PlanChangePreviewResponse
 import org.astermail.android.api.billing.PlanInfo
+import org.astermail.android.api.billing.PortalSessionResponse
 import org.astermail.android.api.billing.SubscriptionResponse
 import org.astermail.android.auth.AuthRepository
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -59,6 +73,7 @@ class BillingViewModelTest {
         application = mockk(relaxed = true)
         billing_api = mockk(relaxed = true)
         auth_repository = mockk(relaxed = true)
+        coEvery { auth_repository.stored_password_hash_b64() } returns "cached_hash"
         vm = BillingViewModel(application, billing_api, auth_repository)
     }
 
@@ -142,5 +157,178 @@ class BillingViewModelTest {
             expectNoEvents()
             cancelAndConsumeRemainingEvents()
         }
+    }
+
+    @Test
+    fun `change plan posts the plan and reloads the subscription`() = runTest {
+        coEvery { billing_api.get_subscription() } returns paid_sub
+        coEvery { billing_api.change_plan(any()) } returns ChangePlanResponse(plan_code = "star", billing_interval = "year")
+        vm.change_plan("star", "year")
+        advanceUntilIdle()
+
+        coVerify { billing_api.change_plan(ChangePlanRequest(plan_code = "star", billing_interval = "year")) }
+        coVerify { billing_api.get_subscription() }
+    }
+
+    @Test
+    fun `plan change preview exposes the prorated amount due today`() = runTest {
+        coEvery { billing_api.preview_plan_change("star", "year") } returns
+            PlanChangePreviewResponse(credit_cents = 150, amount_due_cents = 2749, currency = "eur")
+        vm.load_plan_change_preview("star", "year")
+        advanceUntilIdle()
+
+        val preview = vm.state.value.plan_change_preview
+        assertEquals(2749L, preview?.amount_due_cents)
+        assertEquals("eur", preview?.currency)
+        assertFalse(vm.state.value.plan_change_preview_loading)
+
+        vm.clear_plan_change_preview()
+        assertNull(vm.state.value.plan_change_preview)
+    }
+
+    @Test
+    fun `plan change preview failure falls back without an amount`() = runTest {
+        coEvery { billing_api.preview_plan_change(any(), any()) } throws RuntimeException("boom")
+        vm.load_plan_change_preview("star", "year")
+        advanceUntilIdle()
+
+        assertNull(vm.state.value.plan_change_preview)
+        assertTrue(vm.state.value.plan_change_preview_failed)
+        assertFalse(vm.state.value.plan_change_preview_loading)
+    }
+
+    @Test
+    fun `cancel sends the chosen reason without asking for the password`() = runTest {
+        coEvery { billing_api.cancel_subscription(any()) } returns CancelSubscriptionResponse(cancel_at_period_end = true)
+        vm.cancel_subscription("too_expensive", "  " + "x".repeat(2500) + "  ")
+        advanceUntilIdle()
+        vm.state.test {
+            var latest = awaitItem()
+            while (latest.is_acting) latest = awaitItem()
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify {
+            billing_api.cancel_subscription(
+                CancelSubscriptionRequest(
+                    password_hash = "cached_hash",
+                    cancel_reason = "too_expensive",
+                    cancel_reason_text = "x".repeat(2000),
+                ),
+            )
+        }
+        coVerify(exactly = 0) { auth_repository.derive_password_hash_b64(any()) }
+        assertFalse(vm.state.value.is_acting)
+    }
+
+    @Test
+    fun `cancel proceeds without a reason`() = runTest {
+        coEvery { billing_api.cancel_subscription(any()) } returns CancelSubscriptionResponse(cancel_at_period_end = true)
+        vm.cancel_subscription()
+        advanceUntilIdle()
+        vm.state.test {
+            var latest = awaitItem()
+            while (latest.is_acting) latest = awaitItem()
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify {
+            billing_api.cancel_subscription(
+                CancelSubscriptionRequest(
+                    password_hash = "cached_hash",
+                    cancel_reason = null,
+                    cancel_reason_text = null,
+                ),
+            )
+        }
+        coVerify(exactly = 0) { auth_repository.derive_password_hash_b64(any()) }
+    }
+
+    @Test
+    fun `cancel drops unknown reasons but still cancels`() = runTest {
+        coEvery { billing_api.cancel_subscription(any()) } returns CancelSubscriptionResponse(cancel_at_period_end = true)
+        vm.cancel_subscription("because")
+        advanceUntilIdle()
+        vm.state.test {
+            var latest = awaitItem()
+            while (latest.is_acting) latest = awaitItem()
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify {
+            billing_api.cancel_subscription(
+                CancelSubscriptionRequest(
+                    password_hash = "cached_hash",
+                    cancel_reason = null,
+                    cancel_reason_text = null,
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun `cancel reports a signed out session instead of failing silently`() = runTest {
+        every { application.getString(R.string.session_expired_sign_in) } returns "Your session expired. Sign in again."
+        coEvery { auth_repository.stored_password_hash_b64() } returns null
+        vm.cancel_subscription()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { billing_api.cancel_subscription(any()) }
+        assertEquals("Your session expired. Sign in again.", vm.state.value.error)
+        assertFalse(vm.state.value.is_acting)
+    }
+
+    @Test
+    fun `cancel refused during another billing action reports it instead of hanging`() = runTest {
+        every { application.getString(R.string.billing_action_in_progress) } returns "Another billing change is still in progress."
+        val gate = CompletableDeferred<PortalSessionResponse>()
+        coEvery { billing_api.create_portal_session() } coAnswers { gate.await() }
+        vm.open_portal()
+        advanceUntilIdle()
+        assertTrue(vm.state.value.is_acting)
+        assertEquals("portal", vm.state.value.acting_action)
+
+        val started = vm.cancel_subscription("too_expensive", "no longer needed")
+        advanceUntilIdle()
+
+        assertFalse(started)
+        assertEquals("Another billing change is still in progress.", vm.state.value.error)
+        assertEquals("portal", vm.state.value.acting_action)
+        coVerify(exactly = 0) { billing_api.cancel_subscription(any()) }
+
+        gate.complete(PortalSessionResponse(url = "https://billing.invalid/portal"))
+        advanceUntilIdle()
+    }
+
+    @Test
+    fun `cancel marks itself acting before the request is dispatched`() = runTest {
+        coEvery { billing_api.cancel_subscription(any()) } returns CancelSubscriptionResponse(cancel_at_period_end = true)
+
+        val started = vm.cancel_subscription()
+
+        assertTrue(started)
+        assertTrue(vm.state.value.is_acting)
+        assertEquals("cancel", vm.state.value.acting_action)
+        assertNull(vm.state.value.error)
+        advanceUntilIdle()
+        assertFalse(vm.state.value.is_acting)
+    }
+
+    @Test
+    fun `keeps the last known subscription when a refresh fails`() = runTest {
+        coEvery { billing_api.get_subscription() } returns paid_sub
+        vm.load_subscription()
+        advanceUntilIdle()
+        assertEquals("pro", vm.state.value.subscription?.plan?.code)
+
+        coEvery { billing_api.get_subscription() } throws RuntimeException("offline")
+        vm.load_subscription()
+        advanceUntilIdle()
+
+        assertEquals("pro", vm.state.value.subscription?.plan?.code)
+        assertNotNull(vm.state.value.subscription_error)
+
+        vm.clear_subscription_error()
+        assertNull(vm.state.value.subscription_error)
     }
 }

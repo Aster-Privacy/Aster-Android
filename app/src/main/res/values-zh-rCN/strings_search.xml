@@ -20,6 +20,7 @@
     <string name="search_filter_encrypted">已加密</string>
     <string name="search_chip_from">发件人</string>
     <string name="search_chip_to">收件人</string>
+    <string name="search_chip_contact">联系人</string>
     <string name="search_chip_subject">主题</string>
     <string name="search_chip_has">含有</string>
     <string name="search_chip_is">状态</string>

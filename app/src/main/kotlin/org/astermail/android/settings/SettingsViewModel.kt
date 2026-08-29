@@ -49,6 +49,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.astermail.android.api.ApiError
+import org.astermail.android.api.UpgradeEventBus
 import org.astermail.android.api.auth.AuthApi
 import org.astermail.android.api.auth.UserInfo
 import org.astermail.android.api.autoforward.AutoForwardApi
@@ -223,6 +224,8 @@ data class SettingsUiState(
     val recovery_email_set: Boolean = false,
     val recovery_email_verified: Boolean = false,
     val recovery_email_step_up_required: Boolean = false,
+    val inactive_key_sets: Int = 0,
+    val restoring_inactive_key_sets: Boolean = false,
     val login_alerts_enabled: Boolean? = null,
     val login_alerts_load_failed: Boolean = false,
     val hardware_keys: List<HardwareKey> = emptyList(),
@@ -1698,7 +1701,7 @@ class SettingsViewModel @Inject constructor(
 
     private suspend fun <T> fetch_alias_section(block: suspend () -> T): AliasSectionResult<T> {
         return try {
-            AliasSectionResult(block(), false)
+            AliasSectionResult(UpgradeEventBus.without_prompts(block), false)
         } catch (t: Throwable) {
             if (t is kotlinx.coroutines.CancellationException) throw t
             val locked = is_feature_locked_error(t)
@@ -2935,6 +2938,13 @@ class SettingsViewModel @Inject constructor(
                     is_loading = false,
                     subscription_load_failed = false,
                 )
+                org.astermail.android.billing.PaymentFailedNotifier.observe(
+                    context,
+                    sub.status,
+                    sub.payment_failed_at,
+                    sub.current_period_end,
+                    sub.effective_plan_name,
+                )
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) {
@@ -2964,6 +2974,38 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_security_status", t)
+            }
+        }
+    }
+
+    fun load_inactive_key_sets() {
+        viewModelScope.launch {
+            val count = auth_repository.count_inactive_key_sets()
+            _state.update { it.copy(inactive_key_sets = count) }
+        }
+    }
+
+    fun restore_inactive_key_sets(old_password: String) {
+        if (_state.value.restoring_inactive_key_sets) return
+        _state.update { it.copy(restoring_inactive_key_sets = true) }
+        viewModelScope.launch {
+            val restored = runCatching {
+                auth_repository.restore_inactive_key_sets(old_password)
+            }.getOrDefault(0)
+            val message = if (restored > 0) {
+                context.getString(R.string.resurrection_success)
+            } else {
+                context.getString(R.string.resurrection_failed)
+            }
+            _state.update {
+                it.copy(
+                    restoring_inactive_key_sets = false,
+                    inactive_key_sets = if (restored > 0) 0 else it.inactive_key_sets,
+                    action_result = message,
+                )
+            }
+            if (restored > 0) {
+                load_aliases(force = true)
             }
         }
     }

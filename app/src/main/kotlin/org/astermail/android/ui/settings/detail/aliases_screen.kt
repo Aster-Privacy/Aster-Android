@@ -275,6 +275,7 @@ fun AliasesScreen(
                     restore_locked = alias_restore_locked,
                     export_locked = alias_export_locked,
                     instant_delete_locked = instant_alias_delete_locked,
+                    alias_limit = plan_state.limits?.limits?.get("max_email_aliases")?.limit,
                     on_upgrade = { on_open("billing") },
                 )
                 1 -> tab_scroll {
@@ -283,6 +284,7 @@ fun AliasesScreen(
                         state = state,
                         scope = scope,
                         locked = alias_directories_locked,
+                        required_plan_name = org.astermail.android.billing.plan_display_name(plan_state.plans, "nova"),
                         on_upgrade = { on_open("billing") },
                     )
                 }
@@ -384,6 +386,7 @@ private fun aliases_tab(
     restore_locked: Boolean = false,
     export_locked: Boolean = false,
     instant_delete_locked: Boolean = false,
+    alias_limit: Int? = null,
     on_upgrade: () -> Unit = {},
 ) {
     var pending_delete by remember { mutableStateOf<Pair<String, String>?>(null) }
@@ -456,6 +459,15 @@ private fun aliases_tab(
                     color = colors.text_tertiary,
                     fontSize = 13.sp,
                 )
+                if (org.astermail.android.billing.alias_limit_near(state.aliases.size, alias_limit)) {
+                    Text(
+                        text = stringResource(R.string.alias_limit_notice, state.aliases.size, alias_limit ?: 0),
+                        color = colors.accent_blue,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.clickable(onClick = on_upgrade),
+                    )
+                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     TextButton(onClick = on_show_create) {
                         Text(stringResource(R.string.create), color = colors.accent_blue, fontSize = 14.sp)
@@ -957,6 +969,10 @@ internal fun alias_list_row(
             )
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
     ) {
+        val grace_ends = remember(alias.downgrade_grace_expires_at) {
+            format_grace_end(alias.downgrade_grace_expires_at)
+        }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -1014,10 +1030,20 @@ internal fun alias_list_row(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
+                    if (grace_ends != null) {
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = stringResource(R.string.alias_grace_upgrade_hint),
+                            color = colors.warning,
+                            fontSize = 11.sp,
+                            maxLines = 2,
+                        )
+                    }
                 }
             }
             AsterSwitch(
                 checked = alias.is_enabled,
+                enabled = grace_ends == null,
                 onCheckedChange = { on_toggle() },
             )
             Spacer(Modifier.width(AsterSpacing.sm))
@@ -1469,14 +1495,19 @@ private fun directories_tab(
     scope: kotlinx.coroutines.CoroutineScope,
     locked: Boolean = false,
     on_upgrade: () -> Unit = {},
+    required_plan_name: String? = null,
 ) {
     if (locked) {
+        val gate_plan = org.astermail.android.billing.required_plan_name(
+            required_plan_name,
+            stringResource(R.string.plan_name_nova),
+        )
         UpgradeGate(
             title = stringResource(R.string.alias_directories),
             description = stringResource(R.string.alias_directories_description),
-            plan_name = "Nova",
+            plan_name = gate_plan,
             on_upgrade = on_upgrade,
-            requires_label = stringResource(R.string.requires_plan, "Nova"),
+            requires_label = stringResource(R.string.requires_plan, gate_plan),
             button_label = stringResource(R.string.upgrade),
         )
         return
@@ -2337,6 +2368,9 @@ private fun domain_card(
     }
     val is_blocked = domain.status.equals("suspended", ignoreCase = true) ||
         domain.status.equals("failed", ignoreCase = true)
+    val grace_ends = remember(domain.downgrade_grace_expires_at) {
+        format_grace_end(domain.downgrade_grace_expires_at)
+    }
     var confirm_delete by remember(domain.id) { mutableStateOf(false) }
     var name_expanded by remember(domain.id) { mutableStateOf(false) }
 
@@ -2386,6 +2420,18 @@ private fun domain_card(
                         color = if (is_active) colors.success else if (is_blocked) colors.danger else colors.warning,
                         fontSize = 12.sp,
                     )
+                    if (grace_ends != null) {
+                        Text(
+                            text = stringResource(R.string.domain_grace_ends, grace_ends),
+                            color = colors.warning,
+                            fontSize = 12.sp,
+                        )
+                        Text(
+                            text = stringResource(R.string.domain_grace_upgrade_hint),
+                            color = colors.warning,
+                            fontSize = 11.sp,
+                        )
+                    }
                 }
                 AsterIconButton(
                     icon = if (is_expanded) TablerIcons.ChevronUp else TablerIcons.ChevronDown,
@@ -2965,3 +3011,14 @@ internal fun is_valid_domain_name(value: String): Boolean {
     }
 }
 
+private fun format_grace_end(value: String?): String? {
+    if (value.isNullOrBlank()) return null
+
+    val millis = runCatching { java.time.OffsetDateTime.parse(value).toInstant().toEpochMilli() }
+        .getOrNull()
+        ?: runCatching { java.time.Instant.parse(value).toEpochMilli() }.getOrNull()
+        ?: return null
+
+    return java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM)
+        .format(java.util.Date(millis))
+}

@@ -196,6 +196,7 @@ class MainActivity :
         const val EXTRA_OPEN_SESSIONS = "open_sessions"
         val pending_open_email_id = mutableStateOf<String?>(null)
         val pending_open_sessions = mutableStateOf(false)
+        val pending_open_billing = mutableStateOf(false)
         val pending_reveal_email_id = mutableStateOf<String?>(null)
         val pending_reveal_folder_tokens = mutableStateOf<List<String>?>(null)
         val pending_share = mutableStateOf<org.astermail.android.share.SharePayload?>(null)
@@ -256,7 +257,15 @@ class MainActivity :
         pending_share.value = payload
     }
 
+    private fun consume_billing_return(intent: Intent?) {
+        val outcome = org.astermail.android.billing.parse_billing_return(intent?.data) ?: return
+        intent?.data = null
+        org.astermail.android.billing.billing_return_store.outcome.value = outcome
+        pending_open_billing.value = true
+    }
+
     private fun consume_open_email_extra(intent: Intent?) {
+        consume_billing_return(intent)
         if (intent?.getBooleanExtra(EXTRA_OPEN_SESSIONS, false) == true) {
             intent.removeExtra(EXTRA_OPEN_SESSIONS)
             pending_open_sessions.value = true
@@ -529,6 +538,17 @@ private fun AsterNavHost() {
         if (!pending_sessions || !is_signed_in_state || is_locked) return@LaunchedEffect
         MainActivity.pending_open_sessions.value = false
         nav_controller.navigate(routes.settings_detail("sessions")) {
+            launchSingleTop = true
+        }
+    }
+
+    val pending_billing = MainActivity.pending_open_billing.value
+    androidx.compose.runtime.LaunchedEffect(pending_billing, is_signed_in_state, is_locked) {
+        if (!pending_billing || !is_signed_in_state || is_locked) return@LaunchedEffect
+        MainActivity.pending_open_billing.value = false
+        val current = nav_controller.currentBackStackEntry?.destination?.route
+        if (current?.contains("billing") == true) return@LaunchedEffect
+        nav_controller.navigate(routes.settings_detail("billing")) {
             launchSingleTop = true
         }
     }
@@ -1061,6 +1081,7 @@ private fun AsterNavHost() {
                 on_back = { nav_controller.popBackStack() },
                 on_edit = { cid -> nav_controller.navigate(routes.contact_edit_for(cid)) },
                 on_compose = { email -> context.startActivity(ComposeActivity.intent_for(context, prefill_to = email)) },
+                on_search_mail = { query -> nav_controller.navigate(routes.search_for(query)) },
                 vm = shared_contacts_vm,
             )
         }

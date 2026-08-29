@@ -90,7 +90,13 @@ fun BillingScreen(
                 v_gap(AsterSpacing.lg)
                 AsterButton(
                     label = stringResource(R.string.manage_billing_browser),
-                    onClick = { billing_vm.open_portal() },
+                    onClick = {
+                        if (org.astermail.android.billing.is_crypto_provider(billing_state.subscription?.payment_provider)) {
+                            on_open("billing")
+                        } else {
+                            billing_vm.open_portal()
+                        }
+                    },
                     enabled = !billing_state.is_acting,
                     is_loading = billing_state.is_acting,
                 )

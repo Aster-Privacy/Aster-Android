@@ -21,10 +21,12 @@
 
 package org.astermail.android.api
 
+import kotlinx.coroutines.asContextElement
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.withContext
 
 sealed class UpgradeEvent {
     data class PlanLimit(val message: String, val resource: String?) : UpgradeEvent()
@@ -40,11 +42,20 @@ object UpgradeEventBus {
 
     val events: SharedFlow<UpgradeEvent> = _events.asSharedFlow()
 
+    private val prompts_suppressed = ThreadLocal<Boolean>()
+
+    suspend fun <T> without_prompts(block: suspend () -> T): T =
+        withContext(prompts_suppressed.asContextElement(value = true)) { block() }
+
+    private fun suppressed(): Boolean = prompts_suppressed.get() == true
+
     fun emit_plan_limit(message: String, resource: String?) {
+        if (suppressed()) return
         _events.tryEmit(UpgradeEvent.PlanLimit(message, resource))
     }
 
     fun emit_storage_full(message: String) {
+        if (suppressed()) return
         _events.tryEmit(UpgradeEvent.StorageFull(message))
     }
 }

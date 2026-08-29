@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="cancel_impact_aliases">
+        <item quantity="other">%d 个别名将停止接收邮件。</item>
+    </plurals>
+    <plurals name="cancel_impact_domains">
+        <item quantity="other">%d 个自有域名将被暂停。</item>
+    </plurals>
+    <plurals name="cancel_impact_templates">
+        <item quantity="other">%d 个模板将停止可用。</item>
+    </plurals>
+    <plurals name="cancel_impact_signatures">
+        <item quantity="other">%d 个签名将停止可用。</item>
+    </plurals>
+    <plurals name="cancel_impact_family">
+        <item quantity="other">%d 位成员将失去账户。</item>
+    </plurals>
+    <plurals name="crypto_renewal_days">
+        <item quantity="other">您的套餐将在 %1$d 天后（%2$s）结束。</item>
+    </plurals>
+</resources>

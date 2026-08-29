@@ -20,6 +20,7 @@
     <string name="search_filter_encrypted">Зашифрованные</string>
     <string name="search_chip_from">От</string>
     <string name="search_chip_to">Кому</string>
+    <string name="search_chip_contact">Контакт</string>
     <string name="search_chip_subject">Тема</string>
     <string name="search_chip_has">Содержит</string>
     <string name="search_chip_is">Состояние</string>

@@ -76,7 +76,7 @@
     <string name="settings_plan_bullet_family_members">حتى 6 أعضاء، بحسابات منفصلة</string>
     <string name="settings_plan_bullet_shared_aliases">عناوين بديلة مشتركة للعائلة</string>
     <string name="settings_price_per_month">$%1$.2f / شهريًا</string>
-    <string name="settings_price_per_interval">$%1$.2f / %2$s</string>
+    <string name="settings_price_per_interval">%1$s / %2$s</string>
     <string name="settings_price_per_mo">$%1$.2f</string>
     <string name="settings_price_per_yr">$%1$.2f</string>
     <string name="settings_save_amount">$%1$.2f</string>

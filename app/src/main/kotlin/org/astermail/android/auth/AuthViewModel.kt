@@ -40,6 +40,7 @@ sealed interface AuthUiState {
     data object Idle : AuthUiState
     data object Loading : AuthUiState
     data class Error(val message: String) : AuthUiState
+    data object AccountSuspended : AuthUiState
     data object Success : AuthUiState
     data class TotpChallenge(val challenge: org.astermail.android.auth.TotpChallenge) : AuthUiState
 }
@@ -118,6 +119,9 @@ class AuthViewModel @Inject constructor(
     private fun failure_state(cause: Throwable): AuthUiState {
         if (cause is kotlinx.coroutines.TimeoutCancellationException && repository.is_signed_in.value) {
             return AuthUiState.Success
+        }
+        if (cause is ApiError.ForbiddenError && cause.code == org.astermail.android.api.ACCOUNT_SUSPENDED_CODE) {
+            return AuthUiState.AccountSuspended
         }
         return AuthUiState.Error(map_error(cause))
     }
@@ -250,7 +254,7 @@ class AuthViewModel @Inject constructor(
     }
 
     private fun map_error(t: Throwable): String = when (t) {
-        is ApiError.UnauthorizedError -> ctx.getString(R.string.error_invalid_credentials)
+        is ApiError.InvalidCredentials, is ApiError.UnauthorizedError -> ctx.getString(R.string.error_invalid_credentials)
         is ApiError.ForbiddenError -> if (t.detail.contains("captcha", ignoreCase = true)) {
             ctx.getString(R.string.error_captcha_failed)
         } else {

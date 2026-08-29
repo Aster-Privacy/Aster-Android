@@ -102,6 +102,8 @@ private const val RATCHET_PREFETCH_BUDGET_MS = 12_000L
 private const val RATCHET_INLINE_TIMEOUT_MS = 6_000L
 private const val OUTBOX_FILE_REF_PREFIX = "@file:"
 private const val EMPTY_ATTACHMENTS_JSON = "[]"
+private const val SENT_FOLDER_TOKEN_ATTEMPTS = 3
+private const val SENT_FOLDER_TOKEN_RETRY_MS = 350L
 private const val METADATA_PATCH_ATTEMPTS = 3
 private const val METADATA_PATCH_RETRY_DELAY_MS = 400L
 private const val DRAFT_UPDATE_CONFLICT_RETRIES = 2
@@ -495,6 +497,49 @@ class MailRepository @Inject constructor(
         undo_canceled_ids.remove(pending_id)
         runCatching { undo_canceled_prefs.edit().remove(pending_id).commit() }
         return was_canceled
+    }
+
+    private val sent_folder_prefs by lazy {
+        context.getSharedPreferences("aster_sent_folder", android.content.Context.MODE_PRIVATE)
+    }
+
+    private fun sent_folder_prefs_key(): String = session_key_store.get_user_id() ?: "anonymous"
+
+    private suspend fun resolve_sent_folder_token(): String? {
+        cached_sent_folder_token?.takeIf { it.isNotBlank() }?.let { return it }
+        val stored = runCatching { sent_folder_prefs.getString(sent_folder_prefs_key(), null) }
+            .getOrNull()
+            ?.takeIf { it.isNotBlank() }
+        var last_error: Throwable? = null
+        repeat(SENT_FOLDER_TOKEN_ATTEMPTS) { attempt ->
+            val token = try {
+                labels_api.list_labels(include_counts = false)
+                    .labels.firstOrNull { it.folder_type == "sent" }?.label_token
+            } catch (e: CancellationException) {
+                throw e
+            } catch (t: Throwable) {
+                last_error = t
+                null
+            }
+            if (!token.isNullOrBlank()) {
+                cached_sent_folder_token = token
+                runCatching {
+                    sent_folder_prefs.edit().putString(sent_folder_prefs_key(), token).apply()
+                }
+                return token
+            }
+            if (attempt < SENT_FOLDER_TOKEN_ATTEMPTS - 1) {
+                kotlinx.coroutines.delay(SENT_FOLDER_TOKEN_RETRY_MS)
+            }
+        }
+        if (stored != null) {
+            cached_sent_folder_token = stored
+            return stored
+        }
+        if (last_error != null && BuildConfig.DEBUG) {
+            android.util.Log.w("MailRepository", "sent folder token unresolved", last_error)
+        }
+        return null
     }
 
     private val outbox_attachments_dir: java.io.File by lazy {
@@ -983,6 +1028,7 @@ class MailRepository @Inject constructor(
         cached_metadata_key?.fill(0)
         cached_metadata_key = null
         cached_sent_folder_token = null
+        runCatching { sent_folder_prefs.edit().remove(sent_folder_prefs_key()).apply() }
         draft_item_cache.clear()
         draft_versions.clear()
         draft_session_ids.clear()
@@ -3266,14 +3312,13 @@ class MailRepository @Inject constructor(
         )
         val (encrypted_envelope, envelope_nonce) = encrypt_envelope(envelope)
 
-        val sent_folder_token = try {
-            val token = labels_api.list_labels(include_counts = false)
-                .labels.firstOrNull { it.folder_type == "sent" }?.label_token
-            if (token != null) cached_sent_folder_token = token
-            token
-        } catch (_: Throwable) { cached_sent_folder_token }
+        val sent_folder_token = resolve_sent_folder_token()
 
         val all_external = (to + cc + bcc).any { !is_internal_recipient(it) }
+
+        if (sent_folder_token.isNullOrBlank()) {
+            throw IllegalStateException(context.getString(R.string.send_sent_folder_unavailable))
+        }
 
         if (all_external) {
             val ephemeral_key = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
@@ -3432,15 +3477,7 @@ class MailRepository @Inject constructor(
         )
         val (encrypted_envelope, envelope_nonce) = encrypt_envelope(envelope)
 
-        val sent_folder_token = try {
-            val token = labels_api.list_labels(include_counts = false)
-                .labels.firstOrNull { it.folder_type == "sent" }?.label_token
-            if (token != null) cached_sent_folder_token = token
-            token
-        } catch (t: Throwable) {
-            if (t is CancellationException) throw t
-            cached_sent_folder_token
-        }
+        val sent_folder_token = resolve_sent_folder_token()
 
         val internal = is_internal_recipient(recipient)
         val resolved_group_id = message_group_id
@@ -3605,8 +3642,9 @@ class MailRepository @Inject constructor(
         mail_item_id: String,
         attachments: List<ExternalAttachmentPayload>,
     ) {
+        var failed = 0
         attachments.forEachIndexed { index, att ->
-            runCatching {
+            val outcome = runCatching {
                 val raw = android.util.Base64.decode(att.data, android.util.Base64.DEFAULT)
                 val session_key = ByteArray(32).also { SecureRandom().nextBytes(it) }
                 val data_nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
@@ -3645,6 +3683,22 @@ class MailRepository @Inject constructor(
                     ),
                 )
             }
+            outcome.exceptionOrNull()?.let { err ->
+                if (err is CancellationException) throw err
+                failed += 1
+                if (BuildConfig.DEBUG) {
+                    android.util.Log.w("MailRepository", "sent copy attachment ${att.filename} not stored", err)
+                }
+            }
+        }
+        if (failed > 0) {
+            _send_result_events.tryEmit(
+                Result.failure(
+                    IllegalStateException(
+                        context.getString(R.string.sent_copy_attachments_missing, failed),
+                    ),
+                ),
+            )
         }
     }
 
@@ -3835,12 +3889,7 @@ class MailRepository @Inject constructor(
         val ephemeral_key_b64 = android.util.Base64.encodeToString(ephemeral_key, android.util.Base64.NO_WRAP)
         ephemeral_key.fill(0)
 
-        val sent_folder_token = try {
-            val token = labels_api.list_labels(include_counts = false)
-                .labels.firstOrNull { it.folder_type == "sent" }?.label_token
-            if (token != null) cached_sent_folder_token = token
-            token
-        } catch (_: Throwable) { cached_sent_folder_token }
+        val sent_folder_token = resolve_sent_folder_token()
 
         val response = scheduled_api.create_scheduled(
             CreateScheduledRequest(

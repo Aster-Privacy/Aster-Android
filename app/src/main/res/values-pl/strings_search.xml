@@ -20,6 +20,7 @@
     <string name="search_filter_encrypted">Zaszyfrowane</string>
     <string name="search_chip_from">Od</string>
     <string name="search_chip_to">Do</string>
+    <string name="search_chip_contact">Kontakt</string>
     <string name="search_chip_subject">Temat</string>
     <string name="search_chip_has">Zawiera</string>
     <string name="search_chip_is">Jest</string>

@@ -77,8 +77,13 @@ fun server_supplied_detail(t: Throwable): String? {
             else detail_unless_default(error.detail, "rate limited")
         is ApiError.ValidationError -> validation_detail(error.messages, error.code)
         is ApiError.UnknownError -> error.detail.takeIf { it.isNotBlank() && !looks_like_a_raw_body(it) }
+        is ApiError.PaymentRequired -> detail_unless_default(error.detail, "payment required")
+        is ApiError.AttachmentTooLarge -> detail_unless_default(error.detail, "attachment too large")
+        is ApiError.SendQuotaReached -> detail_unless_default(error.detail, "send quota reached")
+        is ApiError.StepUpRequired -> detail_unless_default(error.detail, "step up required")
         is ApiError.PlanLimitExceeded,
         is ApiError.StorageQuotaExceeded,
+        ApiError.InvalidCredentials,
         ApiError.NetworkError,
         ApiError.UnauthorizedError,
         ApiError.NotFoundError,

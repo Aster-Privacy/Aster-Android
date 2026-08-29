@@ -84,6 +84,7 @@ import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterDestructiveButton
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.ui.mail.SenderAvatar
+import org.astermail.android.ui.search.build_contact_mail_query
 
 @Composable
 fun ContactDetailScreen(
@@ -91,6 +92,7 @@ fun ContactDetailScreen(
     on_back: () -> Unit,
     on_edit: (String) -> Unit,
     on_compose: ((String) -> Unit)? = null,
+    on_search_mail: ((String) -> Unit)? = null,
     vm: ContactsViewModel = hiltViewModel(),
 ) {
     val colors = AsterMaterial.colors
@@ -258,6 +260,18 @@ fun ContactDetailScreen(
                                 android.widget.Toast.LENGTH_SHORT,
                             ).show()
                         }
+                    }
+                }
+                QuickAction(
+                    TablerIcons.Search,
+                    stringResource(R.string.all_mail),
+                    Modifier.weight(1f),
+                ) {
+                    val query = build_contact_mail_query(
+                        listOf(contact.email, contact.work_email),
+                    )
+                    if (on_search_mail != null && query.isNotEmpty()) {
+                        on_search_mail(query)
                     }
                 }
                 QuickAction(TablerIcons.Copy, stringResource(R.string.copy), Modifier.weight(1f)) {

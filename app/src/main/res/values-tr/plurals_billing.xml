@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="cancel_impact_aliases">
+        <item quantity="one">%d takma ad posta almayı durdurur.</item>
+        <item quantity="other">%d takma ad posta almayı durdurur.</item>
+    </plurals>
+    <plurals name="cancel_impact_domains">
+        <item quantity="one">%d özel alan adı askıya alınır.</item>
+        <item quantity="other">%d özel alan adı askıya alınır.</item>
+    </plurals>
+    <plurals name="cancel_impact_templates">
+        <item quantity="one">%d şablon çalışmayı durdurur.</item>
+        <item quantity="other">%d şablon çalışmayı durdurur.</item>
+    </plurals>
+    <plurals name="cancel_impact_signatures">
+        <item quantity="one">%d imza çalışmayı durdurur.</item>
+        <item quantity="other">%d imza çalışmayı durdurur.</item>
+    </plurals>
+    <plurals name="cancel_impact_family">
+        <item quantity="one">%d üye hesabını kaybeder.</item>
+        <item quantity="other">%d üye hesabını kaybeder.</item>
+    </plurals>
+    <plurals name="crypto_renewal_days">
+        <item quantity="one">Planınız %1$d gün içinde, %2$s tarihinde sona eriyor.</item>
+        <item quantity="other">Planınız %1$d gün içinde, %2$s tarihinde sona eriyor.</item>
+    </plurals>
+</resources>

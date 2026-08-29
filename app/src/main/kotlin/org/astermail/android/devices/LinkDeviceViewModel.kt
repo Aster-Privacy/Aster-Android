@@ -196,7 +196,7 @@ class LinkDeviceViewModel @Inject constructor(
         is ApiError.NotFoundError -> LinkDeviceError.EXPIRED_CODE
         is ApiError.Conflict -> LinkDeviceError.ALREADY_LINKED
         is ApiError.RateLimited -> LinkDeviceError.RATE_LIMITED
-        is ApiError.UnauthorizedError -> LinkDeviceError.SESSION_EXPIRED
+        is ApiError.InvalidCredentials, is ApiError.UnauthorizedError -> LinkDeviceError.SESSION_EXPIRED
         is ApiError.ValidationError -> LinkDeviceError.INVALID_CODE
         else -> LinkDeviceError.FAILED
     }
