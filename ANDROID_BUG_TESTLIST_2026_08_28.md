@@ -50,7 +50,10 @@ Both fixes are in place and were reviewed in code. Neither can be exercised on t
 so they stay `[~]`:
 
 - **Row 1** lives in the backend email template (`Aster-Backend`). Verifying it needs a deployed
-  backend and a real sign-in email, not an app build.
+  backend and a real sign-in email, not an app build. Confirmed present in code on 2026-08-29:
+  `src/api/auth/login_alert.rs` now renders `{logo_header}` from `logo_header_html(24)` instead of
+  the old absolute image URL. That change is uncommitted in the backend tree and undeployed, so the
+  live email still lacks the logo until the backend ships.
 - **Row 2** needs a fresh sign-in to fire the login alert, and the emulator account password is
   not available in this session. Signing out would lock the test account. The fix is a unique
   WorkManager job per session (`enqueueUniqueWork` with `KEEP`) plus a stable notification id,
