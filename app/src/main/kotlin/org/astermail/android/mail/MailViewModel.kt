@@ -57,6 +57,7 @@ private const val WARM_CACHE_MIN_ITEMS = 8
 private const val WARM_CACHE_WINDOW = 200
 private const val BULK_ACTION_CONCURRENCY = 6
 private const val RESTORE_PROTECTION_MS = 15_000L
+private const val REMOVAL_PROTECTION_MS = 15_000L
 private const val STATS_TTL_MS = 30_000L
 private const val STATS_DEBOUNCE_MS = 1_200L
 private const val DECRYPT_RETRY_TIMEOUT_MS = 20_000L
@@ -337,6 +338,7 @@ class MailViewModel @Inject constructor(
     private val item_last_confirmed = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val pending_removed_ids = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
     private val restore_protected_until = java.util.concurrent.ConcurrentHashMap<String, Long>()
+    private val removed_protected_until = java.util.concurrent.ConcurrentHashMap<Pair<String, String>, Long>()
     private var list_order: String? = null
     private var page_size: Int = 50
     private var configured_page_size: Int = 50
@@ -425,6 +427,7 @@ class MailViewModel @Inject constructor(
         item_last_confirmed.clear()
         pending_removed_ids.clear()
         restore_protected_until.clear()
+        removed_protected_until.clear()
         last_stats_load_ms = 0L
         star_overrides.clear()
         pin_overrides.clear()
@@ -507,10 +510,10 @@ class MailViewModel @Inject constructor(
     ): MergeResult {
         val now = System.currentTimeMillis()
         page.items.forEach { item_last_confirmed[it.id] = now }
-        val live_items = if (pending_removed_ids.isEmpty()) {
+        val live_items = if (pending_removed_ids.isEmpty() && removed_protected_until.isEmpty()) {
             page.items
         } else {
-            page.items.filter { it.id !in pending_removed_ids }
+            page.items.filter { !removal_suppressed(it.id, folder, now) }
         }
         if (previous_items.isEmpty()) return MergeResult(live_items, false)
         val previous_by_id = previous_items.associateBy { it.id }
@@ -535,7 +538,7 @@ class MailViewModel @Inject constructor(
         }
         var carried_deeper = false
         val carried = previous_items.filter { prev ->
-            if (prev.id in page_ids || prev.id in pending_removed_ids) return@filter false
+            if (prev.id in page_ids || removal_suppressed(prev.id, folder, now)) return@filter false
             if (!folder_matches(folder, prev)) return@filter false
             if (restore_protected(prev.id, now)) return@filter true
             if (prev.id in page.raw_ids) return@filter true
@@ -1923,6 +1926,7 @@ class MailViewModel @Inject constructor(
             adjust_stats_for_removed(removed_items)
             search_removed = remove_search_items(ids)
             pending_removed_ids.addAll(ids)
+            protect_removed(ids)
         }
         val affected_label_caches = removed_items.flatMap { it.labels }.map { "label:$it" }
         invalidate_caches_except_current(
@@ -2337,6 +2341,7 @@ class MailViewModel @Inject constructor(
         adjust_stats_for_removed(removed_items)
         val search_removed = remove_search_items(item_ids)
         pending_removed_ids.addAll(item_ids)
+        protect_removed(item_ids)
         val affected_label_caches = removed_items.flatMap { it.labels }.map { "label:$it" }
         val affected_tag_caches = removed_items.flatMap { it.tag_tokens }.map { "tag:$it" }
         invalidate_caches_except_current(listOf("archive", "inbox") + all_mail_folder_ids + affected_label_caches + affected_tag_caches)
@@ -2428,6 +2433,7 @@ class MailViewModel @Inject constructor(
         adjust_stats_for_removed(removed_items)
         val search_removed = remove_search_items(item_ids)
         pending_removed_ids.addAll(item_ids)
+        protect_removed(item_ids)
         invalidate_caches_except_current(listOf("trash", "inbox"))
         viewModelScope.launch {
             try {
@@ -2510,6 +2516,7 @@ class MailViewModel @Inject constructor(
             items = previous.filter { it.id !in id_set },
         )
         pending_removed_ids.addAll(id_set)
+        protect_removed(id_set)
         viewModelScope.launch {
             try {
                 val all_succeeded = item_ids.map { id ->
@@ -2543,6 +2550,7 @@ class MailViewModel @Inject constructor(
         )
         val search_removed = remove_search_items(item_ids)
         pending_removed_ids.addAll(item_ids)
+        protect_removed(item_ids)
         invalidate_caches_except_current(listOf("spam", "inbox"))
         viewModelScope.launch {
             try {
@@ -2591,6 +2599,7 @@ class MailViewModel @Inject constructor(
             items = previous.filter { it.id !in item_ids },
         )
         pending_removed_ids.addAll(item_ids)
+        protect_removed(item_ids)
         invalidate_caches(listOf("spam", "inbox"))
         viewModelScope.launch {
             try {
@@ -2632,6 +2641,7 @@ class MailViewModel @Inject constructor(
 
     private fun undo_local_restore(removed: List<InboxItem>) {
         if (removed.isEmpty()) return
+        clear_removal_protection(removed.map { it.id })
         load_stats(force = true)
         val current = _inbox_state.value.items
         val current_ids = current.map { it.id }.toHashSet()
@@ -2668,6 +2678,30 @@ class MailViewModel @Inject constructor(
     private fun protect_restored(item_ids: List<String>) {
         val until = System.currentTimeMillis() + RESTORE_PROTECTION_MS
         item_ids.forEach { restore_protected_until[it] = until }
+        clear_removal_protection(item_ids)
+    }
+
+    private fun protect_removed(item_ids: Collection<String>) {
+        val folder = _inbox_state.value.current_folder
+        val until = System.currentTimeMillis() + REMOVAL_PROTECTION_MS
+        item_ids.forEach { removed_protected_until[folder to it] = until }
+    }
+
+    private fun clear_removal_protection(item_ids: Collection<String>) {
+        if (removed_protected_until.isEmpty() || item_ids.isEmpty()) return
+        val targets = item_ids.toHashSet()
+        removed_protected_until.keys.removeAll { it.second in targets }
+    }
+
+    private fun removal_suppressed(item_id: String, folder: String, now: Long): Boolean {
+        if (item_id in pending_removed_ids) return true
+        val key = folder to item_id
+        val until = removed_protected_until[key] ?: return false
+        if (now > until) {
+            removed_protected_until.remove(key)
+            return false
+        }
+        return true
     }
 
     private fun restore_protected(item_id: String, now: Long): Boolean {
@@ -2717,6 +2751,7 @@ class MailViewModel @Inject constructor(
             items = previous.filter { it.id !in item_ids },
         )
         pending_removed_ids.addAll(item_ids)
+        protect_removed(item_ids)
         invalidate_caches(listOf("inbox", "archive", "label:$label_token"))
         viewModelScope.launch {
             try {
@@ -2747,6 +2782,7 @@ class MailViewModel @Inject constructor(
             items = previous.filter { it.id !in item_ids },
         )
         pending_removed_ids.addAll(item_ids)
+        protect_removed(item_ids)
         invalidate_caches(listOf("inbox", "archive"))
         viewModelScope.launch {
             try {
@@ -2786,6 +2822,7 @@ class MailViewModel @Inject constructor(
             items = previous.filter { it.id !in item_ids },
         )
         pending_removed_ids.addAll(item_ids)
+        protect_removed(item_ids)
         invalidate_caches(listOf("inbox", "trash"))
         viewModelScope.launch {
             try {
@@ -2870,6 +2907,7 @@ class MailViewModel @Inject constructor(
         )
         val search_removed = remove_search_items(real_ids)
         pending_removed_ids.addAll(real_ids)
+        protect_removed(real_ids)
         viewModelScope.launch {
             try {
                 val failed = mutableListOf<String>()
@@ -3028,6 +3066,7 @@ class MailViewModel @Inject constructor(
             _inbox_state.update { it.copy(items = emptyList(), has_more = false, next_cursor = null) }
             adjust_stats_for_removed(snapshot)
             pending_removed_ids.addAll(removed_ids)
+            protect_removed(removed_ids)
         } else {
             val read = action == "mark_read"
             _inbox_state.update { s -> s.copy(items = s.items.map { it.copy(is_read = read) }) }
@@ -3054,6 +3093,7 @@ class MailViewModel @Inject constructor(
                 onFailure = {
                     if (removes) {
                         pending_removed_ids.removeAll(removed_ids.toSet())
+                        clear_removal_protection(removed_ids)
                     }
                     if (!removes) {
                         snapshot.forEach { read_overrides.remove(it.id) }
