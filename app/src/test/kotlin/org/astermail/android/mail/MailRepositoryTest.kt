@@ -512,14 +512,14 @@ class MailRepositoryTest {
     }
 
     @Test
-    fun `unarchive fails when both the batch and the per item fallback fail`() = runTest {
+    fun `unarchive succeeds when the action lands and only the metadata mirror fails`() = runTest {
         coEvery { mail_api.bulk_action(any()) } returns BulkScopeResponse(affected_count = 2)
         coEvery { mail_api.bulk_patch_metadata(any()) } throws RuntimeException("batch rejected")
         coEvery { mail_api.patch_metadata(any(), any()) } throws RuntimeException("patch rejected")
 
         val result = repo.unarchive(listOf("a", "b"))
 
-        assertTrue(result.isFailure)
+        assertTrue(result.isSuccess)
     }
 
     @Test

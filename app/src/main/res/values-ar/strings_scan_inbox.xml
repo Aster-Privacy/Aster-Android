@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="confirm_delete_permanent_message_count">هل تريد حذف %1$s نهائيًا؟ لا يمكن التراجع عن ذلك.</string>
+</resources>

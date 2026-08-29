@@ -287,6 +287,7 @@ fun InboxScreen(
         ((settings_state.subscription?.effective_price_cents ?: 0) > 0 &&
             settings_state.subscription?.status !in setOf("canceled", "cancelled", "incomplete_expired", "unpaid"))
     val show_upgrade_button = plan_known && fresh_check_complete && !has_paid_plan
+    val low_network_on = org.astermail.android.network.low_network_active()
     val prefetch_context = LocalContext.current
     val toast_context = LocalContext.current
 
@@ -664,7 +665,7 @@ fun InboxScreen(
 
     LaunchedEffect(settings_state.preferences?.inbox_page_size) {
         val prefs_page_size = settings_state.preferences?.inbox_page_size ?: return@LaunchedEffect
-        mail_vm.set_page_size(prefs_page_size.coerceIn(10, 100))
+        mail_vm.set_page_size(prefs_page_size)
     }
 
     var last_scroll_reset_key by rememberSaveable { mutableStateOf("") }
@@ -930,7 +931,7 @@ fun InboxScreen(
         }
     }
 
-    val drag_edge_px = with(LocalDensity.current) { 96.dp.toPx() }
+    val drag_edge_px = with(LocalDensity.current) { 72.dp.toPx() }
     LaunchedEffect(drag_selecting) {
         if (!drag_selecting) return@LaunchedEffect
         while (true) {
@@ -938,15 +939,24 @@ fun InboxScreen(
             val y = drag_pointer_y.floatValue
             val viewport = drag_viewport_height.floatValue
             if (y < 0f || viewport <= 0f) continue
+            val info = list_state.layoutInfo
+            val content_top = info.beforeContentPadding.toFloat()
+            val content_bottom = viewport - info.afterContentPadding.toFloat()
+            val usable = content_bottom - content_top
+            if (usable <= 0f) continue
+            val edge = minOf(drag_edge_px, usable / 3f)
+            if (edge <= 0f) continue
+            val top_bound = content_top + edge
+            val bottom_bound = content_bottom - edge
             val ratio = when {
-                y < drag_edge_px -> -(1f - (y / drag_edge_px))
-                y > viewport - drag_edge_px -> 1f - ((viewport - y) / drag_edge_px)
+                y < top_bound -> -((top_bound - y) / edge)
+                y > bottom_bound -> (y - bottom_bound) / edge
                 else -> 0f
             }.coerceIn(-1f, 1f)
             if (ratio != 0f) {
                 val step = ratio * 26f
                 list_state.scrollBy(step)
-                apply_drag_selection(y)
+                apply_drag_selection(y.coerceIn(content_top, content_bottom - 1f))
             }
         }
     }
@@ -956,6 +966,12 @@ fun InboxScreen(
         return emails.filter { (it.thread_id in thread_ids || it.id in thread_ids) }.map { it.id }
     }
 
+    fun notify_if_scope_incomplete(applied: Int) {
+        if (scope_selection && folder_total > applied) {
+            mail_vm.notify_partial_scope_selection(applied, folder_total)
+        }
+    }
+
     fun archive_selected() {
         val ids = selected_email_ids()
         val thread_count = selected_ids.size
@@ -963,6 +979,7 @@ fun InboxScreen(
         mail_vm.archive(ids, thread_count)
         emails.removeAll { (it.thread_id in to_remove || it.id in to_remove) }
         exit_select_mode()
+        notify_if_scope_incomplete(ids.size)
     }
 
     fun delete_selected() {
@@ -972,6 +989,7 @@ fun InboxScreen(
         mail_vm.trash(ids, thread_count)
         emails.removeAll { (it.thread_id in to_remove || it.id in to_remove) }
         exit_select_mode()
+        notify_if_scope_incomplete(ids.size)
     }
 
     fun restore_selected() {
@@ -1010,7 +1028,7 @@ fun InboxScreen(
     fun delete_permanent_selected() {
         val ids = selected_email_ids()
         val to_remove = selected_ids.toSet()
-        ids.forEach { mail_vm.delete_permanent(it) }
+        mail_vm.delete_permanent_bulk(ids)
         emails.removeAll { (it.thread_id in to_remove || it.id in to_remove) }
         exit_select_mode()
     }
@@ -1071,12 +1089,6 @@ fun InboxScreen(
                 emails[i] = emails[i].copy(is_starred = target)
                 note_star_mutation(emails[i].id)
             }
-        }
-    }
-
-    fun notify_if_scope_incomplete(applied: Int) {
-        if (scope_selection && folder_total > applied) {
-            mail_vm.notify_partial_scope_selection(applied, folder_total)
         }
     }
 
@@ -1188,6 +1200,7 @@ fun InboxScreen(
     val nav_bar_bottom = androidx.compose.foundation.layout.WindowInsets.navigationBars
         .asPaddingValues()
         .calculateBottomPadding()
+    val list_bottom_pad = 76.dp + nav_bar_bottom
     val status_bar_top = androidx.compose.foundation.layout.WindowInsets.statusBars
         .asPaddingValues()
         .calculateTopPadding()
@@ -1248,6 +1261,48 @@ fun InboxScreen(
                 header_offset_px.floatValue = 0f
                 header_hidden = false
             }
+        }
+    }
+
+    fun settle_clipped_top() {
+        header_offset_px.floatValue = 0f
+        header_hidden = false
+    }
+
+    LaunchedEffect(list_state) {
+        snapshotFlow {
+            list_state.firstVisibleItemIndex == 0 &&
+                list_state.firstVisibleItemScrollOffset > 0 &&
+                !list_state.canScrollForward &&
+                !list_state.isScrollInProgress
+        }.distinctUntilChanged().collect { stranded_top ->
+            if (stranded_top && !drag_selecting) {
+                list_state.scrollToItem(0)
+                settle_clipped_top()
+            }
+        }
+    }
+
+    val last_visible_thread_count = remember { intArrayOf(-1) }
+    LaunchedEffect(visible_threads.size, top_thread_key) {
+        val previous_count = last_visible_thread_count[0]
+        last_visible_thread_count[0] = visible_threads.size
+        if (previous_count < 0 || visible_threads.size >= previous_count) return@LaunchedEffect
+        if (drag_selecting) return@LaunchedEffect
+        androidx.compose.runtime.withFrameNanos { }
+        if (list_state.isScrollInProgress || drag_selecting) return@LaunchedEffect
+        if (list_state.firstVisibleItemScrollOffset > 0) {
+            list_state.scrollToItem(list_state.firstVisibleItemIndex)
+        }
+        if (list_state.firstVisibleItemIndex == 0) settle_clipped_top()
+    }
+
+    LaunchedEffect(select_mode, list_state) {
+        if (select_mode) return@LaunchedEffect
+        androidx.compose.runtime.withFrameNanos { }
+        if (list_state.isScrollInProgress || drag_selecting) return@LaunchedEffect
+        if (list_state.firstVisibleItemScrollOffset > 0) {
+            list_state.scrollToItem(list_state.firstVisibleItemIndex)
         }
     }
 
@@ -1478,11 +1533,11 @@ fun InboxScreen(
                                         while (true) {
                                             val event = awaitPointerEvent(PointerEventPass.Initial)
                                             val change = event.changes.firstOrNull() ?: break
-                                            if (drag_started) change.consume()
+                                            if (drag_started || select_mode) change.consume()
                                             if (!change.pressed) break
-                                            drag_travel += (change.position - change.previousPosition).getDistance()
-                                            if (drag_travel < drag_start_slop) continue
                                             if (!select_mode) continue
+                                            drag_travel = (change.position - down.position).getDistance()
+                                            if (drag_travel < drag_start_slop) continue
                                             if (!drag_started) {
                                                 val anchor_index = visible_threads.indexOfFirst { it.thread_id == anchor_id }
                                                 if (anchor_index < 0) continue
@@ -1507,8 +1562,13 @@ fun InboxScreen(
                                     }
                                 }
                             },
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(top = header_height_dp, bottom = 96.dp + nav_bar_bottom),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(top = header_height_dp, bottom = list_bottom_pad),
                     ) {
+                        if (!select_mode && low_network_on) {
+                            item(key = "_low_network_notice", contentType = "low_network_notice") {
+                                low_network_banner(on_open_settings = on_open_settings)
+                            }
+                        }
                         val spam_retention_days = settings_state.preferences?.auto_delete_spam_days ?: 0
                         if (current_folder == "spam" && !select_mode && spam_retention_days > 0) {
                             item(key = "_spam_retention_notice", contentType = "spam_notice") {
@@ -1576,7 +1636,6 @@ fun InboxScreen(
                                     swipe_start_color = swipe_action_color(swipe_config.start_action, colors),
                                     swipe_end_color = swipe_action_color(swipe_config.end_action, colors),
                                     on_swipe_start = {
-                                        if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                                         val ids = emails.filter { (it.thread_id == thread.thread_id || it.id == thread.thread_id) }.map { it.id }
                                         val prefs = settings_state.preferences
                                         val needs_confirm = (swipe_config.start_action == "archive" && prefs?.confirm_archive == true) ||
@@ -1598,7 +1657,6 @@ fun InboxScreen(
                                         }
                                     },
                                     on_swipe_end = {
-                                        if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                                         val ids = emails.filter { (it.thread_id == thread.thread_id || it.id == thread.thread_id) }.map { it.id }
                                         val prefs = settings_state.preferences
                                         val needs_confirm = (swipe_config.end_action == "archive" && prefs?.confirm_archive == true) ||
@@ -1656,13 +1714,13 @@ fun InboxScreen(
                                     modifier = Modifier.fillMaxWidth().animateItem(),
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                 ) {
-                                    Spacer(Modifier.height(AsterSpacing.xl))
+                                    Spacer(Modifier.height(AsterSpacing.md))
                                     Text(
                                         text = stringResource(R.string.no_more_messages),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = colors.text_muted,
                                     )
-                                    Spacer(Modifier.height(AsterSpacing.xl))
+                                    Spacer(Modifier.height(AsterSpacing.sm))
                                 }
                             }
                         }
@@ -1671,7 +1729,7 @@ fun InboxScreen(
                         state = list_state,
                         modifier = Modifier.align(Alignment.TopEnd),
                         top_padding = header_height_dp,
-                        bottom_padding = 96.dp + nav_bar_bottom,
+                        bottom_padding = list_bottom_pad,
                     )
                 }
                 pull_indicator()
@@ -1952,10 +2010,18 @@ fun InboxScreen(
             org.astermail.android.design.components.AsterAlertDialog(
                 on_dismiss = { show_bulk_delete_permanent_dialog = false },
                 title = stringResource(R.string.confirm_delete_permanent_title),
-                message = stringResource(
-                    if (bulk_delete_permanent_is_scope) R.string.empty_trash_confirm
-                    else R.string.confirm_delete_permanent_message,
-                ),
+                message = if (bulk_delete_permanent_is_scope) {
+                    stringResource(R.string.empty_trash_confirm)
+                } else {
+                    stringResource(
+                        R.string.confirm_delete_permanent_message_count,
+                        pluralStringResource(
+                            R.plurals.common_messages_count,
+                            selection_count,
+                            selection_count,
+                        ),
+                    )
+                },
                 confirm_label = stringResource(R.string.swipe_delete_forever),
                 cancel_label = stringResource(R.string.cancel),
                 confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
@@ -3164,7 +3230,7 @@ private fun execute_swipe_action(
             emails.removeAll { (it.thread_id == thread_id || it.id == thread_id) }
         }
         "delete_permanent" -> {
-            ids.forEach { mail_vm.delete_permanent(it) }
+            mail_vm.delete_permanent_bulk(ids)
             emails.removeAll { (it.thread_id == thread_id || it.id == thread_id) }
         }
     }
@@ -3456,4 +3522,40 @@ fun emails_fingerprint_of(emails: List<Email>): Int {
         hash = 31 * hash + e.category.hashCode()
     }
     return hash
+}
+
+@Composable
+private fun low_network_banner(on_open_settings: () -> Unit) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.xs)
+            .clip(SquircleShape(12.dp))
+            .background(colors.bg_card)
+            .clickable(onClick = on_open_settings)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Icon(
+            imageVector = TablerIcons.InfoCircle,
+            contentDescription = null,
+            tint = colors.text_muted,
+            modifier = Modifier.size(18.dp),
+        )
+        Text(
+            text = stringResource(R.string.low_network_mode_active_banner),
+            color = colors.text_muted,
+            fontSize = 12.sp,
+            lineHeight = 16.sp,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text = stringResource(R.string.low_network_mode_banner_action),
+            color = colors.accent_blue,
+            fontSize = 12.sp,
+            lineHeight = 16.sp,
+        )
+    }
 }

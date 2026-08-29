@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="confirm_delete_permanent_message_count">Trwale usunąć %1$s? Tej operacji nie można cofnąć.</string>
+</resources>

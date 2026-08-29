@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="confirm_delete_permanent_message_count">%1$s definitief verwijderen? Dit kan niet ongedaan worden gemaakt.</string>
+</resources>

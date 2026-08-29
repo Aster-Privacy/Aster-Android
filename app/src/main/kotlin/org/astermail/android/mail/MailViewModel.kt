@@ -39,6 +39,8 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -337,6 +339,7 @@ class MailViewModel @Inject constructor(
     private val restore_protected_until = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private var list_order: String? = null
     private var page_size: Int = 50
+    private var configured_page_size: Int = 50
     private var inbox_load_job: Job? = null
     private var last_stats_load_ms = 0L
     private var stats_job: Job? = null
@@ -594,7 +597,11 @@ class MailViewModel @Inject constructor(
     }
 
     fun set_page_size(size: Int) {
-        val clamped = size.coerceIn(10, 100)
+        configured_page_size = size
+        val clamped = org.astermail.android.api.network.effective_inbox_page_size(
+            configured_page_size = size,
+            low_network = org.astermail.android.api.network.low_network_state.active(),
+        )
         if (page_size == clamped) return
         page_size = clamped
         val folder = _inbox_state.value.current_folder
@@ -952,7 +959,11 @@ class MailViewModel @Inject constructor(
 
     fun load_stats(force: Boolean = true) {
         val now = System.currentTimeMillis()
-        if (!force && _inbox_state.value.stats != null && now - last_stats_load_ms < STATS_TTL_MS) return
+        val stats_ttl = org.astermail.android.api.network.stats_ttl_ms(
+            default_ttl_ms = STATS_TTL_MS,
+            low_network = org.astermail.android.api.network.low_network_state.active(),
+        )
+        if (!force && _inbox_state.value.stats != null && now - last_stats_load_ms < stats_ttl) return
         stats_job?.cancel()
         stats_job = viewModelScope.launch {
             delay(STATS_DEBOUNCE_MS)
@@ -2371,6 +2382,29 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    private fun full_thread_targets(item_ids: Set<String>): Map<String, List<String>> {
+        if (item_ids.isEmpty()) return emptyMap()
+        val known = _inbox_state.value.items +
+            folder_cache.values.flatMap { it.items } +
+            _search_state.value.all_items
+        val by_token = LinkedHashMap<String, LinkedHashMap<String, InboxItem>>()
+        known.forEach { item ->
+            val token = item.thread_token
+            if (token.isNullOrBlank() || token == item.id) return@forEach
+            by_token.getOrPut(token) { LinkedHashMap() }[item.id] = item
+        }
+        val targets = LinkedHashMap<String, List<String>>()
+        by_token.forEach { (token, items) ->
+            val ids = items.keys
+            if (ids.none { it in item_ids }) return@forEach
+            if (!item_ids.containsAll(ids)) return@forEach
+            val claimed = items.values.maxOf { it.thread_message_count }
+            if (claimed <= ids.size) return@forEach
+            targets[token] = ids.toList()
+        }
+        return targets
+    }
+
     fun trash(item_ids: List<String>, thread_count: Int = 1, message_scope: Boolean = false) {
         if (_inbox_state.value.current_folder == "drafts") {
             delete_draft_items(item_ids)
@@ -2385,6 +2419,9 @@ class MailViewModel @Inject constructor(
         val previous = _inbox_state.value.items
         val removed_items = previous.filter { it.id in item_ids }
         val raw_items = lookup_raw_items(item_ids)
+        val thread_targets = if (message_scope) emptyMap() else full_thread_targets(item_ids.toSet())
+        val thread_tokens = thread_targets.keys.toList()
+        val thread_covered_ids = thread_targets.values.flatten().toSet()
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id !in item_ids },
         )
@@ -2394,7 +2431,7 @@ class MailViewModel @Inject constructor(
         invalidate_caches_except_current(listOf("trash", "inbox"))
         viewModelScope.launch {
             try {
-                repository.trash(item_ids, raw_items).fold(
+                repository.trash(item_ids, raw_items, thread_tokens, thread_covered_ids).fold(
                     onSuccess = {
                         runCatching { search_index_manager.mark_trashed(item_ids) }
                         accumulate_batch_action(
@@ -2813,6 +2850,53 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    fun delete_permanent_bulk(item_ids: List<String>) {
+        if (item_ids.isEmpty()) return
+        if (item_ids.size == 1) {
+            delete_permanent(item_ids.first())
+            return
+        }
+        val demo_ids = item_ids.filter { it == DEMO_PHISH_ITEM_ID }
+        val real_ids = item_ids.filter { it != DEMO_PHISH_ITEM_ID }.distinct()
+        if (demo_ids.isNotEmpty()) handle_demo_in(demo_ids)
+        if (real_ids.isEmpty()) {
+            emit_toast(context.getString(R.string.deleted_permanently))
+            return
+        }
+        val previous = _inbox_state.value.items
+        val removed_items = previous.filter { it.id in real_ids }
+        _inbox_state.value = _inbox_state.value.copy(
+            items = previous.filter { it.id !in real_ids },
+        )
+        val search_removed = remove_search_items(real_ids)
+        pending_removed_ids.addAll(real_ids)
+        viewModelScope.launch {
+            try {
+                val failed = mutableListOf<String>()
+                for (id in real_ids) {
+                    val outcome = repository.delete_permanent(id)
+                    val error = outcome.exceptionOrNull()
+                    if (error is kotlinx.coroutines.CancellationException) throw error
+                    if (error != null && error !is org.astermail.android.api.ApiError.NotFoundError) failed.add(id)
+                }
+                val deleted = real_ids.filter { it !in failed }
+                if (deleted.isNotEmpty()) {
+                    runCatching { search_index_manager.remove_items(deleted) }
+                }
+                if (failed.isNotEmpty()) {
+                    undo_local_restore(removed_items.filter { it.id in failed })
+                    undo_search_restore(search_removed)
+                    emit_toast(context.getString(R.string.failed_to_delete))
+                } else {
+                    emit_toast(context.getString(R.string.deleted_permanently))
+                }
+                load_stats()
+            } finally {
+                pending_removed_ids.removeAll(real_ids.toSet())
+            }
+        }
+    }
+
     fun mark_read_bulk(item_ids: List<String>) {
         if (item_ids.isEmpty()) return
         MailPollingWorker.cancel_message_notifications(context, item_ids)
@@ -2939,9 +3023,11 @@ class MailViewModel @Inject constructor(
         val prior = _inbox_state.value
         val snapshot = prior.items
         val removes = action != "mark_read" && action != "mark_unread"
+        val removed_ids = snapshot.map { it.id }
         if (removes) {
             _inbox_state.update { it.copy(items = emptyList(), has_more = false, next_cursor = null) }
             adjust_stats_for_removed(snapshot)
+            pending_removed_ids.addAll(removed_ids)
         } else {
             val read = action == "mark_read"
             _inbox_state.update { s -> s.copy(items = s.items.map { it.copy(is_read = read) }) }
@@ -2951,13 +3037,24 @@ class MailViewModel @Inject constructor(
             repository.bulk_scope_action(folder, action).fold(
                 onSuccess = {
                     if (!removes) {
-                        persist_read_state(snapshot.map { it.id }, action == "mark_read")
+                        persist_read_state(removed_ids, action == "mark_read")
                     }
-                    invalidate_caches(listOf(folder))
-                    load_stats(force = true)
-                    refresh()
+                    try {
+                        if (removes) {
+                            runCatching { index_scope_removal(folder, action, removed_ids) }
+                        }
+                        invalidate_caches(listOf(folder))
+                        load_stats(force = true)
+                        refresh()
+                        refresh_job?.join()
+                    } finally {
+                        if (removes) pending_removed_ids.removeAll(removed_ids.toSet())
+                    }
                 },
                 onFailure = {
+                    if (removes) {
+                        pending_removed_ids.removeAll(removed_ids.toSet())
+                    }
                     if (!removes) {
                         snapshot.forEach { read_overrides.remove(it.id) }
                     }
@@ -2976,6 +3073,36 @@ class MailViewModel @Inject constructor(
                     }
                 },
             )
+        }
+    }
+
+    private suspend fun cached_scope_ids(folder: String): List<String> {
+        val rows = runCatching { search_index_manager.get_cached_items() }.getOrNull() ?: return emptyList()
+        return rows.filter { row ->
+            when {
+                folder == "inbox" -> !row.is_trashed && !row.is_archived && !row.is_spam
+                folder == "trash" -> row.is_trashed
+                folder == "spam" -> row.is_spam
+                folder == "archive" -> row.is_archived
+                folder.startsWith("label:") -> !row.is_trashed &&
+                    row.labels.split(',').any { it == folder.removePrefix("label:") }
+                else -> false
+            }
+        }.map { it.id }
+    }
+
+    private suspend fun index_scope_removal(folder: String, action: String, ids: List<String>) {
+        val targets = (ids + cached_scope_ids(folder)).distinct()
+        if (targets.isEmpty()) return
+        when (action) {
+            "trash" -> search_index_manager.mark_trashed(targets)
+            "archive" -> search_index_manager.mark_archived(targets)
+            "unarchive" -> search_index_manager.mark_unarchived(targets)
+            "mark_spam" -> search_index_manager.mark_spam(targets)
+            "unmark_spam" -> search_index_manager.mark_unspam(targets)
+            "restore_trash" -> search_index_manager.mark_restored(targets)
+            "delete_permanent" -> search_index_manager.remove_items(targets)
+            "empty_trash" -> search_index_manager.remove_items(targets)
         }
     }
 
@@ -3466,6 +3593,12 @@ class MailViewModel @Inject constructor(
 
     init {
         seed_inbox_attachment_flags()
+        viewModelScope.launch {
+            org.astermail.android.api.network.low_network_state.is_active
+                .drop(1)
+                .distinctUntilChanged()
+                .collect { set_page_size(configured_page_size) }
+        }
         viewModelScope.launch {
             repository.new_mail_events.collect {
                 if (foreground_check()) {

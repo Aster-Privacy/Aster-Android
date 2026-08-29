@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="confirm_delete_permanent_message_count">¿Eliminar %1$s de forma permanente? Esta acción no se puede deshacer.</string>
+</resources>

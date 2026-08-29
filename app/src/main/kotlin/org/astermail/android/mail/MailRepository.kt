@@ -107,6 +107,8 @@ private const val METADATA_PATCH_RETRY_DELAY_MS = 400L
 private const val DRAFT_UPDATE_CONFLICT_RETRIES = 2
 private const val METADATA_PATCH_BATCH_SIZE = 100
 private const val METADATA_RESOLVE_CONCURRENCY = 8
+private const val BULK_SCOPE_COMPLETION_ATTEMPTS = 10
+private const val BULK_SCOPE_COMPLETION_DELAY_MS = 750L
 private const val ENVELOPE_KEY_CACHE_MAX_ENTRIES = 32
 private const val ENVELOPE_HEAL_COOLDOWN_MS = 5L * 60L * 1000L
 private const val ENVELOPE_HEAL_FORCED_WINDOW_MS = 30_000L
@@ -1343,8 +1345,16 @@ class MailRepository @Inject constructor(
 
     suspend fun fetch_thread(thread_token: String): Result<List<ThreadMessageDecrypted>> = runCatching {
         val response = mail_api.get_thread_messages(thread_token)
+        val thread_limit = org.astermail.android.api.network.thread_message_load_limit(
+            org.astermail.android.api.network.low_network_state.active(),
+        )
+        val capped = if (thread_limit != null && response.messages.size > thread_limit) {
+            response.messages.takeLast(thread_limit)
+        } else {
+            response.messages
+        }
         coroutineScope {
-            val decrypted = response.messages.map { msg ->
+            val decrypted = capped.map { msg ->
                 async(Dispatchers.IO) { decrypt_thread_message(msg) }
             }.awaitAll()
             val healed = heal_undecryptable_thread_messages(decrypted)
@@ -1634,13 +1644,24 @@ class MailRepository @Inject constructor(
                 "is_trashed" to false,
                 "is_spam" to false,
             ),
-            require_patch = true,
+            require_patch = false,
         )
         Unit
     }
 
-    suspend fun trash(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<Unit> = runCatching {
-        mail_api.bulk_action(BulkScopeRequest(action = "trash", ids = item_ids))
+    suspend fun trash(
+        item_ids: List<String>,
+        raw_items: List<MailItem?> = emptyList(),
+        thread_tokens: List<String> = emptyList(),
+        thread_covered_ids: Set<String> = emptySet(),
+    ): Result<Unit> = runCatching {
+        val failed_threads = trash_threads(thread_tokens)
+        if (failed_threads.isNotEmpty()) {
+            throw IllegalStateException(
+                "trash failed for ${failed_threads.size} of ${thread_tokens.size} conversations",
+            )
+        }
+        trash_ids_verified(item_ids.filter { it !in thread_covered_ids })
         patch_metadata_for_items(
             item_ids,
             raw_items,
@@ -1648,9 +1669,47 @@ class MailRepository @Inject constructor(
                 "is_trashed" to true,
                 "is_archived" to false,
             ),
-            require_patch = true,
+            require_patch = false,
         )
         Unit
+    }
+
+    suspend fun trash_thread(thread_token: String, is_trashed: Boolean = true): Result<Unit> = runCatching {
+        mail_api.trash_thread(thread_token, is_trashed)
+    }
+
+    private suspend fun trash_threads(thread_tokens: List<String>): Set<String> {
+        val targets = thread_tokens.filter { it.isNotBlank() }.distinct()
+        if (targets.isEmpty()) return emptySet()
+        val failed = mutableSetOf<String>()
+        targets.forEach { token ->
+            if (runCatching { mail_api.trash_thread(token, true) }.isFailure) failed.add(token)
+        }
+        return failed
+    }
+
+    private suspend fun trash_ids_verified(item_ids: List<String>) {
+        val targets = item_ids.filter { it.isNotBlank() }.distinct()
+        if (targets.isEmpty()) return
+        var affected = 0
+        targets.chunked(METADATA_PATCH_BATCH_SIZE).forEach { chunk ->
+            affected += mail_api.bulk_action(BulkScopeRequest(action = "trash", ids = chunk)).affected_count
+        }
+        if (affected >= targets.size) return
+        val uncovered = ids_not_trashed(targets)
+        if (uncovered.isNotEmpty()) {
+            throw IllegalStateException(
+                "trash covered ${targets.size - uncovered.size} of ${targets.size} items",
+            )
+        }
+    }
+
+    private suspend fun ids_not_trashed(item_ids: List<String>): List<String> {
+        val resolved = resolve_raw_items(item_ids, emptyList())
+        return item_ids.filterIndexed { index, _ ->
+            val item = resolved.getOrNull(index)
+            (item?.is_trashed ?: item?.metadata?.is_trashed) != true
+        }
     }
 
     suspend fun mark_spam(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<Unit> = runCatching {
@@ -1663,7 +1722,7 @@ class MailRepository @Inject constructor(
                 "is_trashed" to false,
                 "is_archived" to false,
             ),
-            require_patch = true,
+            require_patch = false,
         )
         Unit
     }
@@ -1677,7 +1736,7 @@ class MailRepository @Inject constructor(
                 "is_spam" to false,
                 "is_trashed" to false,
             ),
-            require_patch = true,
+            require_patch = false,
         )
         response
     }
@@ -1725,7 +1784,7 @@ class MailRepository @Inject constructor(
             item_ids,
             raw_items,
             mapOf("is_archived" to false),
-            require_patch = true,
+            require_patch = false,
         )
         response
     }
@@ -1739,7 +1798,7 @@ class MailRepository @Inject constructor(
                 "is_trashed" to false,
                 "is_spam" to false,
             ),
-            require_patch = true,
+            require_patch = false,
         )
         response
     }
@@ -1767,7 +1826,20 @@ class MailRepository @Inject constructor(
     }
 
     suspend fun bulk_scope_action(folder: String, action: String): Result<BulkScopeResponse> = runCatching {
-        mail_api.bulk_action(BulkScopeRequest(action = action, scope = folder_to_bulk_scope(folder)))
+        val scope = folder_to_bulk_scope(folder)
+        var response = mail_api.bulk_action(BulkScopeRequest(action = action, scope = scope))
+        var total = response.affected_count
+        var attempts = 0
+        while (!response.completed && attempts < BULK_SCOPE_COMPLETION_ATTEMPTS) {
+            attempts++
+            delay(BULK_SCOPE_COMPLETION_DELAY_MS)
+            response = mail_api.bulk_action(BulkScopeRequest(action = action, scope = scope))
+            total += response.affected_count
+        }
+        if (!response.completed) {
+            throw IllegalStateException("bulk $action on $folder did not finish after $attempts retries")
+        }
+        response.copy(affected_count = total)
     }
 
     fun action_supports_bulk_scope(action: String): Boolean = when (action) {
@@ -2844,10 +2916,11 @@ class MailRepository @Inject constructor(
             } else {
                 val s = item.toString()
                 val angle = s.indexOf('<')
-                if (angle > 0 && s.contains('>')) {
+                val close = if (angle >= 0) s.indexOf('>', angle + 1) else -1
+                if (angle > 0 && close > angle) {
                     result.add(
                         s.substring(0, angle).trim().trim('"') to
-                            s.substring(angle + 1, s.indexOf('>')).trim(),
+                            s.substring(angle + 1, close).trim(),
                     )
                 } else {
                     result.add("" to s.trim())
@@ -3295,6 +3368,7 @@ class MailRepository @Inject constructor(
                 } catch (t: org.astermail.android.mail.ratchet.PostQuantumUnavailableException) {
                     throw t
                 } catch (t: Throwable) {
+                    if (t is CancellationException) throw t
                     throw IllegalStateException(context.getString(R.string.e2e_encryption_failed), t)
                 }
                 encrypted ?: throw IllegalStateException(context.getString(R.string.e2e_encryption_failed))
@@ -3363,7 +3437,10 @@ class MailRepository @Inject constructor(
                 .labels.firstOrNull { it.folder_type == "sent" }?.label_token
             if (token != null) cached_sent_folder_token = token
             token
-        } catch (_: Throwable) { cached_sent_folder_token }
+        } catch (t: Throwable) {
+            if (t is CancellationException) throw t
+            cached_sent_folder_token
+        }
 
         val internal = is_internal_recipient(recipient)
         val resolved_group_id = message_group_id
@@ -3380,6 +3457,7 @@ class MailRepository @Inject constructor(
             val encrypted = try {
                 ratchet_encryptor.encrypt_envelope(from_addr, listOf(recipient), payload)
             } catch (t: Throwable) {
+                if (t is CancellationException) throw t
                 throw IllegalStateException(context.getString(R.string.e2e_encryption_failed), t)
             }
             encrypted ?: throw IllegalStateException(context.getString(R.string.e2e_encryption_failed))
@@ -3514,6 +3592,7 @@ class MailRepository @Inject constructor(
                     size_bytes = att.size_bytes,
                 )
             } catch (t: Throwable) {
+                if (t is CancellationException) throw t
                 throw IllegalStateException(
                     context.getString(R.string.attachment_prepare_failed, att.filename),
                     t,

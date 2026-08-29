@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="confirm_delete_permanent_message_count">%1$sを完全に削除しますか？この操作は取り消せません。</string>
+</resources>
