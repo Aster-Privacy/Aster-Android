@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.settings
 
+import androidx.compose.animation.core.TweenSpec
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -56,6 +59,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -90,9 +94,13 @@ import compose.icons.tablericons.Tag
 import compose.icons.tablericons.Trash
 import compose.icons.tablericons.X
 import org.astermail.android.R
+import org.astermail.android.design.AsterDuration
+import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterScale
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.ui.mail.search_field_bg_color
@@ -112,6 +120,28 @@ private data class settings_search_row_text(
     val label: String,
     val parent: String,
 )
+
+private fun search_overlay_spec(visible: Boolean, reduce_motion: Boolean): TweenSpec<Float> = tween(
+    durationMillis = when {
+        reduce_motion -> AsterDuration.instant
+        visible -> AsterDuration.dialog_enter
+        else -> AsterDuration.dialog_exit
+    },
+    easing = if (visible) AsterEasing.dialog_enter else AsterEasing.dialog_exit,
+)
+
+private fun search_overlay_scale(progress: Float): Float =
+    AsterScale.dialog_enter_from + (1f - AsterScale.dialog_enter_from) * progress
+
+@Composable
+private fun prepare_search_overlay_window() {
+    val view = androidx.compose.ui.platform.LocalView.current
+    androidx.compose.runtime.SideEffect {
+        val window = (view.parent as? androidx.compose.ui.window.DialogWindowProvider)?.window ?: return@SideEffect
+        window.setWindowAnimations(0)
+        window.setDimAmount(0f)
+    }
+}
 
 private val extra_screen_icons = mapOf(
     "change_password" to TablerIcons.Lock,
@@ -156,13 +186,29 @@ private fun settings_search_overlay(on_dismiss: () -> Unit) {
     var query by remember { mutableStateOf("") }
     val focus_requester = remember { FocusRequester() }
     LaunchedEffect(Unit) { focus_requester.requestFocus() }
+    val reduce_motion = aster_reduce_motion()
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { visible = true }
+    val overlay_progress by animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = search_overlay_spec(visible, reduce_motion),
+        finishedListener = { if (!visible) on_dismiss() },
+        label = "settings_search_progress",
+    )
+    val start_dismiss: () -> Unit = { visible = false }
     Dialog(
-        onDismissRequest = on_dismiss,
+        onDismissRequest = start_dismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
+        prepare_search_overlay_window()
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .graphicsLayer(
+                    scaleX = search_overlay_scale(overlay_progress),
+                    scaleY = search_overlay_scale(overlay_progress),
+                    alpha = overlay_progress,
+                )
                 .background(colors.bg_primary)
                 .systemBarsPadding(),
         ) {
@@ -176,7 +222,7 @@ private fun settings_search_overlay(on_dismiss: () -> Unit) {
                     icon = TablerIcons.ArrowLeft,
                     auto_mirror = true,
                     content_description = stringResource(R.string.back),
-                    onClick = on_dismiss,
+                    onClick = start_dismiss,
                 )
                 settings_search_field(
                     query = query,
@@ -190,7 +236,7 @@ private fun settings_search_overlay(on_dismiss: () -> Unit) {
                 query = query.trim(),
                 on_open = { id ->
                     query = ""
-                    on_dismiss()
+                    start_dismiss()
                     navigate(id)
                 },
             )

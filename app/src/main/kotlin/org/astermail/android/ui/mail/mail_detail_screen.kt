@@ -37,9 +37,6 @@ import org.astermail.android.BuildConfig
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
@@ -173,7 +170,10 @@ import org.astermail.android.ui.common.TopToastState
 import org.astermail.android.ui.common.app_toast
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterColors
+import org.astermail.android.design.AsterDuration
+import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterDragHandle
@@ -1640,18 +1640,29 @@ fun MailDetailScreen(
     }
 
     val show_preview = preview_attachment != null && preview_bytes != null
+    val preview_reduce_motion = aster_reduce_motion()
     AnimatedVisibility(
         visible = show_preview,
-        enter = fadeIn(animationSpec = androidx.compose.animation.core.tween(200)) +
-            slideInVertically(
-                animationSpec = androidx.compose.animation.core.tween(250),
+        enter = if (preview_reduce_motion) {
+            fadeIn(animationSpec = tween(AsterDuration.instant))
+        } else {
+            fadeIn(
+                animationSpec = tween(AsterDuration.dialog_enter, easing = AsterEasing.dialog_enter),
+            ) + slideInVertically(
+                animationSpec = tween(AsterDuration.dialog_enter, easing = AsterEasing.dialog_enter),
                 initialOffsetY = { it / 6 },
-            ),
-        exit = fadeOut(animationSpec = androidx.compose.animation.core.tween(150)) +
-            slideOutVertically(
-                animationSpec = androidx.compose.animation.core.tween(200),
+            )
+        },
+        exit = if (preview_reduce_motion) {
+            fadeOut(animationSpec = tween(AsterDuration.instant))
+        } else {
+            fadeOut(
+                animationSpec = tween(AsterDuration.dialog_exit, easing = AsterEasing.dialog_exit),
+            ) + slideOutVertically(
+                animationSpec = tween(AsterDuration.dialog_exit, easing = AsterEasing.dialog_exit),
                 targetOffsetY = { it / 6 },
-            ),
+            )
+        },
     ) {
         val att = preview_attachment
         val byt = preview_bytes
@@ -2600,10 +2611,27 @@ private val QUICK_REACTIONS = listOf("👍", "❤️", "😂", "🎉", "😮", "
 @Composable
 private fun reaction_quick_picker(visible: Boolean, on_pick: (String) -> Unit) {
     val colors = AsterMaterial.colors
+    val picker_reduce_motion = aster_reduce_motion()
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn(animationSpec = tween(120)) + expandVertically(animationSpec = tween(140)),
-        exit = fadeOut(animationSpec = tween(90)) + shrinkVertically(animationSpec = tween(120)),
+        enter = if (picker_reduce_motion) {
+            fadeIn(animationSpec = tween(AsterDuration.instant))
+        } else {
+            fadeIn(
+                animationSpec = tween(AsterDuration.menu_fade_enter, easing = AsterEasing.menu_enter),
+            ) + expandVertically(
+                animationSpec = tween(AsterDuration.menu_enter, easing = AsterEasing.menu_enter),
+            )
+        },
+        exit = if (picker_reduce_motion) {
+            fadeOut(animationSpec = tween(AsterDuration.instant))
+        } else {
+            fadeOut(
+                animationSpec = tween(AsterDuration.menu_fade_exit, easing = AsterEasing.menu_exit),
+            ) + shrinkVertically(
+                animationSpec = tween(AsterDuration.menu_exit, easing = AsterEasing.menu_exit),
+            )
+        },
     ) {
         Row(
             modifier = Modifier
@@ -3733,6 +3761,13 @@ internal fun action_menu_sheet(
 
     val shape = SquircleShape(18.dp)
     val scrim_interaction = remember { MutableInteractionSource() }
+    val menu_reduce_motion = aster_reduce_motion()
+    val menu_scrim_enter = if (menu_reduce_motion) AsterDuration.instant else AsterDuration.scrim_enter
+    val menu_scrim_exit = if (menu_reduce_motion) AsterDuration.instant else AsterDuration.scrim_exit
+    val menu_pop_fade_enter = if (menu_reduce_motion) AsterDuration.instant else AsterDuration.menu_fade_enter
+    val menu_pop_enter = if (menu_reduce_motion) AsterDuration.instant else AsterDuration.menu_enter
+    val menu_pop_fade_exit = if (menu_reduce_motion) AsterDuration.instant else AsterDuration.menu_fade_exit
+    val menu_pop_exit = if (menu_reduce_motion) AsterDuration.instant else AsterDuration.menu_exit
     Popup(
         popupPositionProvider = action_menu_position_provider,
         onDismissRequest = on_close,
@@ -3741,8 +3776,8 @@ internal fun action_menu_sheet(
         Box(modifier = Modifier.fillMaxSize()) {
             AnimatedVisibility(
                 visibleState = visible_state,
-                enter = fadeIn(animationSpec = tween(org.astermail.android.design.AsterDuration.scrim_enter)),
-                exit = fadeOut(animationSpec = tween(org.astermail.android.design.AsterDuration.scrim_exit)),
+                enter = fadeIn(animationSpec = tween(menu_scrim_enter)),
+                exit = fadeOut(animationSpec = tween(menu_scrim_exit)),
             ) {
                 Box(
                     modifier = Modifier
@@ -3763,23 +3798,23 @@ internal fun action_menu_sheet(
                     .padding(end = AsterSpacing.sm, bottom = AsterSpacing.sm),
                 enter = fadeIn(
                     animationSpec = tween(
-                        org.astermail.android.design.AsterDuration.menu_fade_enter,
-                        easing = LinearOutSlowInEasing,
+                        menu_pop_fade_enter,
+                        easing = AsterEasing.menu_enter,
                     ),
                 ) +
                     scaleIn(
                         animationSpec = tween(
-                            org.astermail.android.design.AsterDuration.menu_enter,
-                            easing = FastOutSlowInEasing,
+                            menu_pop_enter,
+                            easing = AsterEasing.menu_enter,
                         ),
                         initialScale = org.astermail.android.design.AsterScale.menu_enter_from,
                         transformOrigin = TransformOrigin(1f, 1f),
                     ),
-                exit = fadeOut(animationSpec = tween(org.astermail.android.design.AsterDuration.menu_fade_exit)) +
+                exit = fadeOut(animationSpec = tween(menu_pop_fade_exit)) +
                     scaleOut(
                         animationSpec = tween(
-                            org.astermail.android.design.AsterDuration.menu_exit,
-                            easing = FastOutLinearInEasing,
+                            menu_pop_exit,
+                            easing = AsterEasing.menu_exit,
                         ),
                         targetScale = org.astermail.android.design.AsterScale.menu_exit_to,
                         transformOrigin = TransformOrigin(1f, 1f),
@@ -5999,25 +6034,6 @@ private fun detail_menu_action(
         test_tag = test_tag,
         on_click = onClick,
     )
-}
-
-@Composable
-private fun encryption_badge(size: androidx.compose.ui.unit.Dp) {
-    val colors = AsterMaterial.colors
-    Box(
-        modifier = Modifier
-            .size(size)
-            .clip(CircleShape)
-            .background(colors.accent_blue),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = TablerIcons.Lock,
-            contentDescription = null,
-            tint = Color.White,
-            modifier = Modifier.size(size * 0.6f),
-        )
-    }
 }
 
 @Composable

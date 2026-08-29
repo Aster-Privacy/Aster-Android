@@ -21,10 +21,13 @@
 
 package org.astermail.android.ui.common
 
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -66,6 +69,7 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterDuration
 import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.ui.theme.local_accessibility
 
 private const val tooltip_visible_millis = 1600L
@@ -107,7 +111,12 @@ fun icon_tooltip_host(
     content: @Composable () -> Unit,
 ) {
     val colors = AsterMaterial.colors
+    val reduce_motion = aster_reduce_motion()
     val gap_px = with(LocalDensity.current) { gap.roundToPx() }
+    val tooltip_state = remember { MutableTransitionState(false) }
+    tooltip_state.targetState = visible
+    var rendered_text by remember { mutableStateOf(text) }
+    if (visible && rendered_text != text) rendered_text = text
     Box {
         content()
         if (visible) {
@@ -115,28 +124,38 @@ fun icon_tooltip_host(
                 delay(tooltip_visible_millis)
                 on_dismiss()
             }
+        }
+        if (tooltip_state.currentState || tooltip_state.targetState) {
             Popup(
                 popupPositionProvider = remember(gap_px) { above_anchor_position_provider(gap_px) },
                 onDismissRequest = on_dismiss,
                 properties = PopupProperties(focusable = false, clippingEnabled = false),
             ) {
                 AnimatedVisibility(
-                    visible = true,
-                    enter = fadeIn(
-                        tween(
-                            durationMillis = AsterDuration.menu_fade_enter,
-                            easing = AsterEasing.menu_enter,
-                        ),
-                    ),
-                    exit = fadeOut(
-                        tween(
-                            durationMillis = AsterDuration.menu_fade_exit,
-                            easing = AsterEasing.menu_exit,
-                        ),
-                    ),
+                    visibleState = tooltip_state,
+                    enter = if (reduce_motion) {
+                        EnterTransition.None
+                    } else {
+                        fadeIn(
+                            tween(
+                                durationMillis = AsterDuration.menu_fade_enter,
+                                easing = AsterEasing.menu_enter,
+                            ),
+                        )
+                    },
+                    exit = if (reduce_motion) {
+                        ExitTransition.None
+                    } else {
+                        fadeOut(
+                            tween(
+                                durationMillis = AsterDuration.menu_fade_exit,
+                                easing = AsterEasing.menu_exit,
+                            ),
+                        )
+                    },
                 ) {
                     Text(
-                        text = text,
+                        text = rendered_text,
                         color = colors.bg_primary,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,

@@ -40,6 +40,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
@@ -160,6 +161,7 @@ import org.astermail.android.design.AsterDuration
 import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterScale
 import org.astermail.android.design.AsterSlide
+import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
@@ -3191,7 +3193,15 @@ private fun chip_input(
                 trailing()
             }
         }
-        if (filtered_suggestions.isNotEmpty() && on_suggestion_pick != null) {
+        val suggestions_visible = filtered_suggestions.isNotEmpty() && on_suggestion_pick != null
+        val suggestions_state = remember { MutableTransitionState(false) }
+        suggestions_state.targetState = suggestions_visible
+        var rendered_suggestions by remember { mutableStateOf(filtered_suggestions) }
+        if (filtered_suggestions.isNotEmpty() && rendered_suggestions !== filtered_suggestions) {
+            rendered_suggestions = filtered_suggestions
+        }
+        if (suggestions_state.currentState || suggestions_state.targetState) {
+            val suggestions_reduce_motion = aster_reduce_motion()
             val suggestions_density = LocalDensity.current
             var suggestions_open_upward by remember { mutableStateOf(false) }
             val suggestions_gap_px = with(suggestions_density) { AsterSpacing.xs.roundToPx() }
@@ -3211,30 +3221,54 @@ private fun chip_input(
                 popupPositionProvider = suggestions_position,
                 properties = PopupProperties(focusable = false),
             ) {
-                val suggestions_state = remember { MutableTransitionState(false) }
-                suggestions_state.targetState = true
                 AnimatedVisibility(
                     visibleState = suggestions_state,
-                    enter = fadeIn(
-                        animationSpec = tween(
-                            durationMillis = AsterDuration.menu_fade_enter,
-                            easing = AsterEasing.menu_enter,
-                        ),
-                    ) + scaleIn(
-                        animationSpec = tween(
-                            durationMillis = AsterDuration.menu_enter,
-                            easing = AsterEasing.menu_enter,
-                        ),
-                        initialScale = AsterScale.menu_enter_from,
-                        transformOrigin = suggestions_origin,
-                    ) + slideInVertically(
-                        animationSpec = tween(
-                            durationMillis = AsterDuration.menu_enter,
-                            easing = AsterEasing.menu_enter,
-                        ),
-                        initialOffsetY = { suggestions_slide_offset },
-                    ),
-                    exit = ExitTransition.None,
+                    enter = if (suggestions_reduce_motion) {
+                        EnterTransition.None
+                    } else {
+                        fadeIn(
+                            animationSpec = tween(
+                                durationMillis = AsterDuration.menu_fade_enter,
+                                easing = AsterEasing.menu_enter,
+                            ),
+                        ) + scaleIn(
+                            animationSpec = tween(
+                                durationMillis = AsterDuration.menu_enter,
+                                easing = AsterEasing.menu_enter,
+                            ),
+                            initialScale = AsterScale.menu_enter_from,
+                            transformOrigin = suggestions_origin,
+                        ) + slideInVertically(
+                            animationSpec = tween(
+                                durationMillis = AsterDuration.menu_enter,
+                                easing = AsterEasing.menu_enter,
+                            ),
+                            initialOffsetY = { suggestions_slide_offset },
+                        )
+                    },
+                    exit = if (suggestions_reduce_motion) {
+                        ExitTransition.None
+                    } else {
+                        fadeOut(
+                            animationSpec = tween(
+                                durationMillis = AsterDuration.menu_fade_exit,
+                                easing = AsterEasing.menu_exit,
+                            ),
+                        ) + scaleOut(
+                            animationSpec = tween(
+                                durationMillis = AsterDuration.menu_exit,
+                                easing = AsterEasing.menu_exit,
+                            ),
+                            targetScale = AsterScale.menu_exit_to,
+                            transformOrigin = suggestions_origin,
+                        ) + slideOutVertically(
+                            animationSpec = tween(
+                                durationMillis = AsterDuration.menu_exit,
+                                easing = AsterEasing.menu_exit,
+                            ),
+                            targetOffsetY = { suggestions_slide_offset },
+                        )
+                    },
                 ) {
                     Column(
                         modifier = Modifier
@@ -3245,11 +3279,11 @@ private fun chip_input(
                             .verticalScroll(rememberScrollState())
                             .padding(vertical = 4.dp),
                     ) {
-                        filtered_suggestions.forEach { contact ->
+                        rendered_suggestions.forEach { contact ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { on_suggestion_pick(contact.email) }
+                                    .clickable { on_suggestion_pick?.invoke(contact.email) }
                                     .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {

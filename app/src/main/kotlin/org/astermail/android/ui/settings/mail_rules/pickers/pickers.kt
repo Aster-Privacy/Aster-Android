@@ -25,6 +25,8 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -76,8 +78,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.AsterDuration
+import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterScale
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.AsterTextField
@@ -156,6 +162,7 @@ fun row_select(
     depth: Int = 0,
 ) {
     val colors = AsterMaterial.colors
+    val reduce_motion = aster_reduce_motion()
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -187,8 +194,38 @@ fun row_select(
         }
         AnimatedVisibility(
             visible = selected,
-            enter = fadeIn(tween(150)) + scaleIn(initialScale = 0.6f, animationSpec = tween(150)),
-            exit = fadeOut(tween(100)) + scaleOut(targetScale = 0.6f, animationSpec = tween(100)),
+            enter = if (reduce_motion) {
+                EnterTransition.None
+            } else {
+                fadeIn(
+                    animationSpec = tween(
+                        durationMillis = AsterDuration.menu_state_change,
+                        easing = AsterEasing.menu_enter,
+                    ),
+                ) + scaleIn(
+                    animationSpec = tween(
+                        durationMillis = AsterDuration.menu_state_change,
+                        easing = AsterEasing.menu_enter,
+                    ),
+                    initialScale = AsterScale.menu_enter_from,
+                )
+            },
+            exit = if (reduce_motion) {
+                ExitTransition.None
+            } else {
+                fadeOut(
+                    animationSpec = tween(
+                        durationMillis = AsterDuration.menu_state_change,
+                        easing = AsterEasing.menu_exit,
+                    ),
+                ) + scaleOut(
+                    animationSpec = tween(
+                        durationMillis = AsterDuration.menu_state_change,
+                        easing = AsterEasing.menu_exit,
+                    ),
+                    targetScale = AsterScale.menu_enter_from,
+                )
+            },
         ) {
             Icon(
                 imageVector = TablerIcons.Check,

@@ -21,7 +21,9 @@
 
 package org.astermail.android.ui.mail
 
+import androidx.compose.animation.core.TweenSpec
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -34,6 +36,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -59,12 +62,48 @@ import coil.request.ImageRequest
 import compose.icons.TablerIcons
 import compose.icons.tablericons.X
 import org.astermail.android.R
+import org.astermail.android.design.AsterDuration
+import org.astermail.android.design.AsterEasing
+import org.astermail.android.design.AsterScale
+import org.astermail.android.design.aster_reduce_motion
 
 private const val LIGHTBOX_MIN_SCALE = 1f
 private const val LIGHTBOX_MAX_SCALE = 6f
 private const val LIGHTBOX_MAX_DATA_URI_CHARS = 16 * 1024 * 1024
 
 private const val LIGHTBOX_MAX_PIXELS = 4096
+private const val LIGHTBOX_SCRIM_ALPHA = 0.94f
+
+private fun lightbox_scrim_spec(visible: Boolean, reduce_motion: Boolean): TweenSpec<Float> = tween(
+    durationMillis = when {
+        reduce_motion -> AsterDuration.instant
+        visible -> AsterDuration.scrim_enter
+        else -> AsterDuration.scrim_exit
+    },
+    easing = AsterEasing.scrim,
+)
+
+private fun lightbox_content_spec(visible: Boolean, reduce_motion: Boolean): TweenSpec<Float> = tween(
+    durationMillis = when {
+        reduce_motion -> AsterDuration.instant
+        visible -> AsterDuration.dialog_enter
+        else -> AsterDuration.dialog_exit
+    },
+    easing = if (visible) AsterEasing.dialog_enter else AsterEasing.dialog_exit,
+)
+
+private fun lightbox_scale(progress: Float): Float =
+    AsterScale.dialog_enter_from + (1f - AsterScale.dialog_enter_from) * progress
+
+@Composable
+private fun prepare_lightbox_window() {
+    val view = androidx.compose.ui.platform.LocalView.current
+    androidx.compose.runtime.SideEffect {
+        val window = (view.parent as? androidx.compose.ui.window.DialogWindowProvider)?.window ?: return@SideEffect
+        window.setWindowAnimations(0)
+        window.setDimAmount(0f)
+    }
+}
 
 private fun decode_sampled_bitmap(bytes: ByteArray): androidx.compose.ui.graphics.ImageBitmap? = try {
     val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
@@ -128,17 +167,34 @@ fun email_image_lightbox(
     var double_tap_target by remember { mutableStateOf(1f) }
     val animated_scale by animateFloatAsState(targetValue = double_tap_target, label = "lightbox_zoom")
 
+    val reduce_motion = aster_reduce_motion()
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { visible = true }
+    val scrim_progress by animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = lightbox_scrim_spec(visible, reduce_motion),
+        label = "lightbox_scrim_progress",
+    )
+    val content_progress by animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = lightbox_content_spec(visible, reduce_motion),
+        finishedListener = { if (!visible) on_dismiss() },
+        label = "lightbox_progress",
+    )
+    val start_dismiss: () -> Unit = { visible = false }
+
     Dialog(
-        onDismissRequest = on_dismiss,
+        onDismissRequest = start_dismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
+        prepare_lightbox_window()
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.94f))
+                .background(Color.Black.copy(alpha = LIGHTBOX_SCRIM_ALPHA * scrim_progress))
                 .pointerInput(src) {
                     detectTapGestures(
-                        onTap = { on_dismiss() },
+                        onTap = { start_dismiss() },
                         onDoubleTap = {
                             if (scale > 1.05f) {
                                 scale = 1f
@@ -170,61 +226,72 @@ fun email_image_lightbox(
                 },
             contentAlignment = Alignment.Center,
         ) {
-            val image_modifier = Modifier
-                .fillMaxSize()
-                .padding(12.dp)
-                .graphicsLayer(
-                    scaleX = animated_scale,
-                    scaleY = animated_scale,
-                    translationX = offset_x,
-                    translationY = offset_y,
-                )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer(
+                        scaleX = lightbox_scale(content_progress),
+                        scaleY = lightbox_scale(content_progress),
+                        alpha = content_progress,
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                val image_modifier = Modifier
+                    .fillMaxSize()
+                    .padding(12.dp)
+                    .graphicsLayer(
+                        scaleX = animated_scale,
+                        scaleY = animated_scale,
+                        translationX = offset_x,
+                        translationY = offset_y,
+                    )
 
-            val decoded = inline_bitmap
-            if (local_source) {
-                if (decoded != null) {
+                val decoded = inline_bitmap
+                if (local_source) {
+                    if (decoded != null) {
+                        androidx.compose.foundation.Image(
+                            bitmap = decoded,
+                            contentDescription = stringResource(R.string.image_lightbox_title),
+                            contentScale = ContentScale.Fit,
+                            modifier = image_modifier,
+                        )
+                    } else {
+                        CircularProgressIndicator(color = Color.White)
+                    }
+                } else {
                     androidx.compose.foundation.Image(
-                        bitmap = decoded,
+                        painter = painter,
                         contentDescription = stringResource(R.string.image_lightbox_title),
                         contentScale = ContentScale.Fit,
                         modifier = image_modifier,
                     )
-                } else {
-                    CircularProgressIndicator(color = Color.White)
+                    when (state) {
+                        is AsyncImagePainter.State.Loading -> CircularProgressIndicator(color = Color.White)
+                        is AsyncImagePainter.State.Error -> Text(
+                            text = stringResource(R.string.image_lightbox_failed),
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(32.dp),
+                        )
+                        else -> Unit
+                    }
                 }
-            } else {
-                androidx.compose.foundation.Image(
-                    painter = painter,
-                    contentDescription = stringResource(R.string.image_lightbox_title),
-                    contentScale = ContentScale.Fit,
-                    modifier = image_modifier,
-                )
-                when (state) {
-                    is AsyncImagePainter.State.Loading -> CircularProgressIndicator(color = Color.White)
-                    is AsyncImagePainter.State.Error -> Text(
-                        text = stringResource(R.string.image_lightbox_failed),
-                        color = Color.White,
-                        fontSize = 14.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(32.dp),
-                    )
-                    else -> Unit
-                }
-            }
 
-            IconButton(
-                onClick = on_dismiss,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(12.dp)
-                    .size(40.dp),
-            ) {
-                Icon(
-                    imageVector = TablerIcons.X,
-                    contentDescription = stringResource(R.string.close),
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp),
-                )
+                IconButton(
+                    onClick = start_dismiss,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(12.dp)
+                        .size(40.dp),
+                ) {
+                    Icon(
+                        imageVector = TablerIcons.X,
+                        contentDescription = stringResource(R.string.close),
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
             }
         }
     }
