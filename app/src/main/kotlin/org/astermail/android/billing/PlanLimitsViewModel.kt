@@ -64,6 +64,7 @@ class PlanLimitsViewModel @Inject constructor(
             }
             try {
                 val plans = billing_api.get_available_plans().plans
+                AvailablePlansCache.update(plans)
                 _state.value = _state.value.copy(plans = plans)
                 val current = plans.firstOrNull { it.is_current }
                 if (current != null) AttachmentLimits.update(current.max_attachment_size_bytes)

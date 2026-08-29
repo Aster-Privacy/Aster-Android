@@ -88,6 +88,21 @@ data class BillingUiState(
     val onboarding: org.astermail.android.api.billing.OnboardingChecklistResponse? = null,
 )
 
+object AvailablePlansCache {
+    @Volatile
+    private var cached_plans: List<AvailablePlan> = emptyList()
+
+    fun plans(): List<AvailablePlan> = cached_plans
+
+    fun update(plans: List<AvailablePlan>) {
+        if (plans.isNotEmpty()) cached_plans = plans
+    }
+
+    fun reset() {
+        cached_plans = emptyList()
+    }
+}
+
 const val CHECKOUT_POLL_INTERVAL_MS = 3_000L
 const val CHECKOUT_POLL_TIMEOUT_MS = 60_000L
 const val SIGN_IN_WAIT_TIMEOUT_MS = 15_000L
@@ -101,7 +116,7 @@ class BillingViewModel @Inject constructor(
 
     private val ctx get() = getApplication<Application>()
 
-    private val _state = MutableStateFlow(BillingUiState())
+    private val _state = MutableStateFlow(BillingUiState(available_plans = AvailablePlansCache.plans()))
     val state: StateFlow<BillingUiState> = _state.asStateFlow()
 
     private val _review_request = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
@@ -112,6 +127,10 @@ class BillingViewModel @Inject constructor(
     private var pending_crypto_invoices_in_flight = false
 
     private var poll_job: Job? = null
+
+    private var preview_job: Job? = null
+
+    private var preview_request_tag: Pair<String, String>? = null
 
     private var pending_checkout_plan: String? = null
 
@@ -169,6 +188,7 @@ class BillingViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val response = billing_api.get_available_plans()
+                AvailablePlansCache.update(response.plans)
                 _state.update { it.copy(available_plans = response.plans, plans_failed = response.plans.isEmpty()) }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
@@ -215,7 +235,10 @@ class BillingViewModel @Inject constructor(
     }
 
     fun start_checkout(plan_code: String, billing_interval: String = "month", currency: String? = null) {
-        if (_state.value.is_acting) return
+        if (_state.value.is_acting) {
+            _state.value = _state.value.copy(error = ctx.getString(R.string.billing_action_in_progress), info = null)
+            return
+        }
         viewModelScope.launch {
             _state.value = _state.value.copy(is_acting = true, acting_action = "checkout_$plan_code", error = null, checkout_url = null)
             if (!await_signed_in()) {
@@ -485,21 +508,30 @@ class BillingViewModel @Inject constructor(
     }
 
     fun load_plan_change_preview(plan_code: String, billing_interval: String) {
-        viewModelScope.launch {
+        preview_job?.cancel()
+        val tag = plan_code to billing_interval
+        preview_request_tag = tag
+        preview_job = viewModelScope.launch {
             _state.update {
                 it.copy(plan_change_preview = null, plan_change_preview_loading = true, plan_change_preview_failed = false)
             }
             try {
                 val preview = billing_api.preview_plan_change(plan_code, billing_interval)
+                if (preview_request_tag != tag) return@launch
                 _state.update { it.copy(plan_change_preview = preview, plan_change_preview_loading = false) }
             } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "preview_plan_change failed", t)
+                if (preview_request_tag != tag) return@launch
                 _state.update { it.copy(plan_change_preview_loading = false, plan_change_preview_failed = true) }
             }
         }
     }
 
     fun clear_plan_change_preview() {
+        preview_job?.cancel()
+        preview_job = null
+        preview_request_tag = null
         _state.update {
             it.copy(plan_change_preview = null, plan_change_preview_loading = false, plan_change_preview_failed = false)
         }
@@ -643,7 +675,10 @@ class BillingViewModel @Inject constructor(
     }
 
     fun purchase_storage_addon(addon_id: String) {
-        if (_state.value.is_acting) return
+        if (_state.value.is_acting) {
+            _state.value = _state.value.copy(error = ctx.getString(R.string.billing_action_in_progress), info = null)
+            return
+        }
         viewModelScope.launch {
             _state.value = _state.value.copy(is_acting = true, acting_action = "addon_$addon_id", error = null, checkout_url = null)
             try {

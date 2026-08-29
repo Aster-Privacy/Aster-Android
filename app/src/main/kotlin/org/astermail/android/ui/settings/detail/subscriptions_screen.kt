@@ -69,6 +69,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -354,6 +355,9 @@ fun SubscriptionsScreen(
         android.widget.Toast.makeText(context, err, android.widget.Toast.LENGTH_LONG).show()
         billing_vm.clear_messages()
     }
+    LaunchedEffect(show_cancel_flow) {
+        if (show_cancel_flow) billing_vm.clear_messages()
+    }
     var pending_downgrade_code by remember { mutableStateOf<String?>(null) }
 
     val sub = state.subscription
@@ -616,9 +620,12 @@ fun SubscriptionsScreen(
                                 text = stringResource(R.string.current_plan),
                                 color = colors.text_tertiary,
                                 fontSize = 13.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                             )
                         }
                         if (sub != null && sub.effective_price_cents > 0) {
+                            Spacer(Modifier.width(AsterSpacing.sm))
                             Text(
                                 text = stringResource(
                                     R.string.settings_price_per_interval,
@@ -628,6 +635,7 @@ fun SubscriptionsScreen(
                                 color = colors.text_primary,
                                 fontSize = 17.sp,
                                 fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
                             )
                         }
                     }
@@ -884,7 +892,11 @@ fun SubscriptionsScreen(
                                 color = colors.text_primary,
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f),
                             )
+                            Spacer(Modifier.width(AsterSpacing.sm))
                             Text(
                                 text = stringResource(
                                     R.string.settings_price_per_interval,
@@ -893,6 +905,7 @@ fun SubscriptionsScreen(
                                 ),
                                 color = colors.text_tertiary,
                                 fontSize = 13.sp,
+                                maxLines = 1,
                             )
                         }
                         Spacer(Modifier.height(AsterSpacing.sm))
@@ -933,7 +946,7 @@ fun SubscriptionsScreen(
         )
         v_gap(AsterSpacing.md)
         AsterSecondaryButton(
-            label = "${stringResource(R.string.view_all_features)} →",
+            label = stringResource(R.string.view_all_features),
             onClick = {
                 org.astermail.android.billing.open_billing_tab(context, org.astermail.android.billing.PRICING_URL)
             },
@@ -954,12 +967,17 @@ fun SubscriptionsScreen(
                         text = stringResource(R.string.credits_balance_label),
                         color = colors.text_primary,
                         fontSize = 15.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
                     )
+                    Spacer(Modifier.width(AsterSpacing.sm))
                     Text(
                         text = billing_state.credits?.let { format_price(it.balance_cents.toInt(), detected_currency) }
                             ?: stringResource(R.string.credits_unavailable),
                         color = colors.text_tertiary,
                         fontSize = 13.sp,
+                        maxLines = 1,
                     )
                 }
                 Spacer(Modifier.height(AsterSpacing.md))
@@ -976,7 +994,11 @@ fun SubscriptionsScreen(
                         text = stringResource(R.string.academic_discount_label),
                         color = colors.text_primary,
                         fontSize = 15.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
                     )
+                    Spacer(Modifier.width(AsterSpacing.sm))
                     Text(
                         text = when (billing_state.academic?.status) {
                             "verified" -> stringResource(R.string.academic_status_verified)
@@ -986,6 +1008,7 @@ fun SubscriptionsScreen(
                         },
                         color = colors.text_tertiary,
                         fontSize = 13.sp,
+                        maxLines = 1,
                     )
                 }
                 Spacer(Modifier.height(AsterSpacing.sm))
@@ -1112,6 +1135,7 @@ fun SubscriptionsScreen(
             on_dismiss = {
                 show_cancel_flow = false
                 resume_cancel_flow = false
+                billing_vm.clear_messages()
             },
             on_confirm = { reason, reason_text -> billing_vm.cancel_subscription(reason, reason_text) },
         )
@@ -1611,8 +1635,12 @@ private fun crypto_term_dialog(
                             color = if (term_active) Color.White else colors.text_primary,
                             fontSize = 14.sp,
                             fontWeight = if (term_active) FontWeight.SemiBold else FontWeight.Normal,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f),
                         )
                         if (term_active) {
+                            Spacer(Modifier.width(AsterSpacing.sm))
                             Icon(TablerIcons.Check, null, tint = Color.White, modifier = Modifier.size(18.dp))
                         }
                     }
@@ -1670,11 +1698,15 @@ private fun crypto_coin_dialog(
                                 color = colors.text_primary,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Medium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                             )
                             Text(
                                 stringResource(R.string.crypto_native_coin_on_chain, coin.chain),
                                 color = colors.text_tertiary,
                                 fontSize = 12.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                             )
                         }
                         if (coin.recommended) {
@@ -1683,6 +1715,7 @@ private fun crypto_coin_dialog(
                                 color = colors.accent_blue,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Medium,
+                                maxLines = 1,
                             )
                         }
                     }

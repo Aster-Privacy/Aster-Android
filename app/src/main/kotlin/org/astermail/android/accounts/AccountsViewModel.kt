@@ -85,6 +85,7 @@ class AccountsViewModel @Inject constructor(
         is_switching = true
         account_store.set_current(account_id)
         org.astermail.android.billing.AttachmentLimits.reset()
+        org.astermail.android.billing.AvailablePlansCache.reset()
         refresh()
         viewModelScope.launch {
             val restored = try {

@@ -53,8 +53,9 @@ object PaymentFailedNotifier {
         val key = payment_failure_key(status, payment_failed_at, current_period_end) ?: return
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         if (prefs.getString(KEY_LAST_PAYMENT_FAILURE, null) == key) return
-        prefs.edit().putString(KEY_LAST_PAYMENT_FAILURE, key).apply()
-        notify(context, plan_name.orEmpty())
+        if (notify(context, plan_name.orEmpty())) {
+            prefs.edit().putString(KEY_LAST_PAYMENT_FAILURE, key).apply()
+        }
     }
 
     fun is_lapse_dismissed(context: Context, key: String): Boolean =
@@ -76,11 +77,11 @@ object PaymentFailedNotifier {
         manager?.createNotificationChannel(channel)
     }
 
-    private fun notify(context: Context, plan_name: String) {
+    private fun notify(context: Context, plan_name: String): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) {
-            return
+            return false
         }
         create_channel(context)
         val open = Intent(context, MainActivity::class.java).apply {
@@ -108,6 +109,6 @@ object PaymentFailedNotifier {
             .setAutoCancel(true)
             .setContentIntent(pending)
             .build()
-        runCatching { NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, notification) }
+        return runCatching { NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, notification) }.isSuccess
     }
 }
