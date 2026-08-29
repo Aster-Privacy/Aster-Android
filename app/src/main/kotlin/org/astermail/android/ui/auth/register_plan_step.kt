@@ -63,7 +63,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -81,7 +80,7 @@ import org.astermail.android.design.components.AsterSecondaryButton
 @Composable
 fun RegisterPlanStep(
     on_continue: () -> Unit,
-    billing_vm: BillingViewModel = hiltViewModel(),
+    billing_vm: BillingViewModel = org.astermail.android.billing.billing_view_model(),
 ) {
     val colors = AsterMaterial.colors
     val state by billing_vm.state.collectAsStateWithLifecycle()

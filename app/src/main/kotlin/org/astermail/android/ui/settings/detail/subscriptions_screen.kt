@@ -74,7 +74,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -269,7 +268,7 @@ fun SubscriptionsScreen(
     on_open_crypto_invoice: (id: String) -> Unit = {},
 ) {
     val vm: SettingsViewModel = shared_settings_view_model()
-    val billing_vm: BillingViewModel = hiltViewModel()
+    val billing_vm: BillingViewModel = org.astermail.android.billing.billing_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
     val billing_state by billing_vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors

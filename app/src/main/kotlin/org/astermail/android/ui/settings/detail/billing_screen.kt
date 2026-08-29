@@ -34,7 +34,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -54,8 +53,10 @@ fun BillingScreen(
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
-    val billing_vm: BillingViewModel = hiltViewModel()
+    val billing_vm: BillingViewModel = org.astermail.android.billing.billing_view_model()
     val billing_state by billing_vm.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) { billing_vm.clear_messages() }
 
     LaunchedEffect(billing_state.portal_url) {
         val url = billing_state.portal_url ?: return@LaunchedEffect

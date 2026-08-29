@@ -110,7 +110,7 @@ fun StorageScreen(
     val inbox_state by mail_vm.inbox_state.collectAsStateWithLifecycle()
     val is_emptying_spam by mail_vm.emptying_spam_state.collectAsStateWithLifecycle()
     val is_emptying_trash by mail_vm.emptying_trash_state.collectAsStateWithLifecycle()
-    val billing_vm: BillingViewModel = hiltViewModel()
+    val billing_vm: BillingViewModel = org.astermail.android.billing.billing_view_model()
     val billing_state by billing_vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
     val context = LocalContext.current

@@ -96,7 +96,7 @@ A second sweep covering the icon, animation, billing, and i18n bug classes. Buil
 | D22 | Billing | Picking a payment method while another action was in flight closed the sheet and did nothing | The guard path now reports that an action is in progress | Build |
 | D23 | i18n | Russian rendered counts with the wrong noun form because two plurals lacked the few and many categories | Full CLDR quantity sets added for ru, pl, and ar | Resource inspection |
 | D24 | i18n | The delete template dialog passed the template name to a string with no placeholder, so the name was silently dropped | Placeholder added in all 14 locales | Build |
+| D25 | Billing | Five screens each obtained their own `BillingViewModel` through `hiltViewModel()`, so several instances raced to consume the single checkout return event. An instance the user could not see won the race and nulled the flow, leaving someone who had just paid on a card asking them to pay again | All five resolve one activity scoped instance through `billing_view_model()`, so exactly one owner holds the checkout snapshot and consumes the return | Emulator: Plan & billing opens and re-opens cleanly, no crash, subscription state intact |
 
-Note on D19: the fix is verified to build and the cold start path renders correctly, but the
-warm cache path could not be exercised on the emulator because it has no route to the API,
-so the plans endpoint never answers. Confirm on a device with network before relying on it.
+Note on D19: verified on the emulator on 2026-08-29. Re-entering Plan & billing one second
+after leaving it renders every price and feature row with no Loading placeholder.

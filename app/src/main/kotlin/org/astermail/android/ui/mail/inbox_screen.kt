@@ -288,7 +288,7 @@ fun InboxScreen(
             settings_state.subscription?.status !in setOf("canceled", "cancelled", "incomplete_expired", "unpaid"))
     val show_upgrade_button = plan_known && fresh_check_complete && !has_paid_plan
     val low_network_on = org.astermail.android.network.low_network_active()
-    val billing_vm: org.astermail.android.billing.BillingViewModel = hiltViewModel()
+    val billing_vm: org.astermail.android.billing.BillingViewModel = org.astermail.android.billing.billing_view_model()
     val billing_state by billing_vm.state.collectAsStateWithLifecycle()
     val banner_context = LocalContext.current
     LaunchedEffect(billing_state.portal_url) {
