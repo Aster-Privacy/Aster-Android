@@ -99,6 +99,7 @@ class ExportViewModel @Inject constructor(
     }
 
     fun start_export() {
+        if (export_job?.isActive == true) return
         _state.update {
             it.copy(
                 step = ExportStep.Progress,

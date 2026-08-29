@@ -92,6 +92,7 @@ class SearchIndexManager @Inject constructor(
 
     fun refresh_index() {
         if (_index_paused.value) return
+        if (is_building || build_job?.isActive == true) return
         build_job = scope.launch { build_index_background() }
     }
 
@@ -109,6 +110,7 @@ class SearchIndexManager @Inject constructor(
     fun resume_indexing() {
         _index_paused.value = false
         pause_prefs.edit().putBoolean(KEY_INDEX_PAUSED, false).apply()
+        if (is_building || build_job?.isActive == true) return
         build_job = scope.launch { build_index_background() }
     }
 
@@ -336,6 +338,8 @@ class SearchIndexManager @Inject constructor(
             }
             enrich_attachment_flags(my_epoch)
             if (epoch.get() == my_epoch && walk_complete) _index_ready.value = true
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
         } catch (error: Throwable) {
             if (org.astermail.android.BuildConfig.DEBUG) {
                 android.util.Log.w("SearchIndexManager", "index build aborted", error)
@@ -343,7 +347,7 @@ class SearchIndexManager @Inject constructor(
         } finally {
             withContext(NonCancellable) {
                 mutex.withLock { is_building = false }
-                if (!_index_paused.value) _index_progress.value = null
+                _index_progress.value = null
             }
         }
     }

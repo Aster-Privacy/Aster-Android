@@ -95,6 +95,7 @@ class ExternalAccountsViewModel @Inject constructor(
     }
 
     fun start_oauth(provider: String) {
+        if (_state.value.connecting_provider != null) return
         viewModelScope.launch {
             _state.value = _state.value.copy(connecting_provider = provider, authorize_url = null, error = null)
             val master = session_keys.get() ?: session_keys.get_passphrase()
@@ -121,6 +122,8 @@ class ExternalAccountsViewModel @Inject constructor(
                     ))
                 }
                 _state.value = _state.value.copy(authorize_url = response.authorize_url)
+            } catch (c: kotlinx.coroutines.CancellationException) {
+                throw c
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(connecting_provider = null, error = ExternalAccountsError.OAUTH_FAILED)
             }
@@ -145,7 +148,9 @@ class ExternalAccountsViewModel @Inject constructor(
             val before_tokens = _state.value.accounts.map { it.account_token }.toSet()
             repeat(60) {
                 delay(2000)
-                val res = runCatching { withContext(Dispatchers.IO) { api.list_accounts() } }.getOrNull()
+                val res = runCatching { withContext(Dispatchers.IO) { api.list_accounts() } }
+                    .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+                    .getOrNull()
                 if (res != null) {
                     val new_one = res.accounts.firstOrNull { it.account_token !in before_tokens }
                     if (new_one != null) {
