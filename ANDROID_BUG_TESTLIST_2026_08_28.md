@@ -72,3 +72,31 @@ Each item below is fixed, builds clean, and is covered by the 1809-test unit sui
 | D6 | Export | Tapping Export twice started two concurrent exports | The second tap is ignored while an export is running | Build |
 | D7 | Auth | Compose drafts survived sign-out and account deletion | The draft store is cleared on both paths | Build |
 | D8 | Mail data | Address parsing could read past the end of a malformed header | Bounded index lookup with a guard | Unit suite |
+
+## Deep scan round 2, 2026-08-29
+
+A second sweep covering the icon, animation, billing, and i18n bug classes. Builds clean,
+1867 unit tests pass with no failures.
+
+| # | Area | Bug found by the scan | Fix | Verified |
+|---|---|---|---|---|
+| D9 | Toasts | Every archive, delete, and undo toast drew its action icon on a tinted blue pill | The pill is removed and the icon stands alone | Code plus emulator on sibling screens |
+| D10 | Settings | Eight more screens drew an icon on a tinted circle: blocked senders entries and empty state, session rows, mail rules empty state, device linking, suspended account, and the crypto payment stepper | All chips removed, icons sized so the rows keep their footprint | Emulator: blocked senders and mail rules empty states |
+| D11 | Mail detail | A dead `encryption_badge` composable carried the same banned pattern | Deleted after confirming no callers | Grep plus build |
+| D12 | Popups | The image lightbox and the settings search overlay had no enter or exit animation and slammed onto the screen | Both animate with the dialog scrim and scale tokens | Emulator: settings search opens smoothly |
+| D13 | Popups | The recipient suggestion list and the icon tooltip were unmounted before their exit transition could play, so they vanished instantly | Both stay mounted until the transition settles | Build |
+| D14 | Popups | The attachment preview, reaction picker, and rule picker checkmark used hardcoded durations and scales off the token scale | All moved onto the motion tokens | Build |
+| D15 | Popups | Seven popups ignored the reduce motion setting | All seven collapse to instant when reduce motion is on | Build |
+| D16 | Billing | A cancelled plan-change preview rendered as a failure message | Cancellation is rethrown | Unit suite |
+| D17 | Billing | Switching billing interval twice raced two preview requests, so the dialog could show one proration while submitting another | Previews cancel the prior request and drop stale responses by tag | Build |
+| D18 | Billing | A card decline notification was permanently lost when notification permission was denied, because the dedupe key was written before the post | The key is written only after the post succeeds | Build |
+| D19 | Billing | Plan prices rendered as Loading and the buttons degraded until a network round trip finished | Prices seed synchronously from a process cache the plan limits loader already fills | Partial, see note |
+| D20 | Billing | Six rows put two unweighted labels in one row, so long or server-supplied text double-lined | Labels are weighted and clamped to one line | Build |
+| D21 | Billing | An unrelated earlier error rendered inside the cancel subscription dialog and was toasted again on exit | Messages clear when the flow opens and on dismiss | Build |
+| D22 | Billing | Picking a payment method while another action was in flight closed the sheet and did nothing | The guard path now reports that an action is in progress | Build |
+| D23 | i18n | Russian rendered counts with the wrong noun form because two plurals lacked the few and many categories | Full CLDR quantity sets added for ru, pl, and ar | Resource inspection |
+| D24 | i18n | The delete template dialog passed the template name to a string with no placeholder, so the name was silently dropped | Placeholder added in all 14 locales | Build |
+
+Note on D19: the fix is verified to build and the cold start path renders correctly, but the
+warm cache path could not be exercised on the emulator because it has no route to the API,
+so the plans endpoint never answers. Confirm on a device with network before relying on it.
