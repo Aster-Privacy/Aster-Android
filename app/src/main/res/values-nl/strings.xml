@@ -900,7 +900,7 @@
     <string name="template_placeholders_hint">Gebruik plaatshouders zoals [Naam], [Datum], enz. om aan te passen bij gebruik.</string>
     <string name="template_category_general">Algemeen</string>
     <string name="delete_template_title">Sjabloon verwijderen</string>
-    <string name="delete_template_message">Weet je zeker dat je dit sjabloon wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.</string>
+    <string name="delete_template_message">Weet je zeker dat je het sjabloon %1$s wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.</string>
     <string name="unnamed_template">(naamloos)</string>
     <string name="unnamed_folder">(naamloos)</string>
     <string name="new_label">Nieuw</string>

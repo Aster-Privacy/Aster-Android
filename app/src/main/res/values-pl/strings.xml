@@ -900,7 +900,7 @@
     <string name="template_placeholders_hint">Używaj symboli zastępczych jak [Imię], [Data], itp. do dostosowywania podczas użycia.</string>
     <string name="template_category_general">Ogólne</string>
     <string name="delete_template_title">Usuń szablon</string>
-    <string name="delete_template_message">Czy na pewno chcesz usunąć ten szablon? Tej operacji nie można cofnąć.</string>
+    <string name="delete_template_message">Czy na pewno chcesz usunąć szablon %1$s? Tej operacji nie można cofnąć.</string>
     <string name="unnamed_template">(bez nazwy)</string>
     <string name="unnamed_folder">(bez nazwy)</string>
     <string name="new_label">Nowy</string>
@@ -2699,10 +2699,14 @@
     <string name="undecryptable_message_preview">To urządzenie nie ma klucza do tej wiadomości.</string>
     <plurals name="archived_messages">
         <item quantity="one">Zarchiwizowano %d wiadomość</item>
+        <item quantity="few">Zarchiwizowano %d wiadomości</item>
+        <item quantity="many">Zarchiwizowano %d wiadomości</item>
         <item quantity="other">Zarchiwizowano %d wiadomości</item>
     </plurals>
     <plurals name="moved_messages_to_trash">
         <item quantity="one">Przeniesiono %d wiadomość do kosza</item>
+        <item quantity="few">Przeniesiono %d wiadomości do kosza</item>
+        <item quantity="many">Przeniesiono %d wiadomości do kosza</item>
         <item quantity="other">Przeniesiono %d wiadomości do kosza</item>
     </plurals>
     <string name="unsnooze">Anuluj odłożenie</string>

@@ -1345,7 +1345,7 @@
     <string name="template_placeholders_hint">Use placeholders like [Name], [Date], etc. to customize when using.</string>
     <string name="template_category_general">General</string>
     <string name="delete_template_title">Delete template</string>
-    <string name="delete_template_message">Are you sure you want to delete this template? This action cannot be undone.</string>
+    <string name="delete_template_message">Are you sure you want to delete %1$s? This action cannot be undone.</string>
     <string name="unnamed_template">(unnamed)</string>
     <string name="unnamed_folder">(unnamed)</string>
     <string name="new_label">New</string>

@@ -900,7 +900,7 @@
     <string name="template_placeholders_hint">사용 시 맞춤화를 위해 [이름], [날짜] 등의 자리 표시자를 사용하세요.</string>
     <string name="template_category_general">일반</string>
     <string name="delete_template_title">템플릿 삭제</string>
-    <string name="delete_template_message">이 템플릿을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.</string>
+    <string name="delete_template_message">「%1$s」 템플릿을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.</string>
     <string name="unnamed_template">(이름 없음)</string>
     <string name="unnamed_folder">(이름 없음)</string>
     <string name="new_label">새로 만들기</string>

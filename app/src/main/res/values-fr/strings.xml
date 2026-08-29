@@ -948,7 +948,7 @@
     <string name="template_placeholders_hint">Utilisez des espaces réservés comme [Nom], [Date], etc. pour personnaliser lors de l\'utilisation.</string>
     <string name="template_category_general">Général</string>
     <string name="delete_template_title">Supprimer le modèle</string>
-    <string name="delete_template_message">Êtes-vous sûr de vouloir supprimer ce modèle ? Cette action est irréversible.</string>
+    <string name="delete_template_message">Êtes-vous sûr de vouloir supprimer le modèle %1$s ? Cette action est irréversible.</string>
     <string name="unnamed_template">(sans nom)</string>
     <string name="unnamed_folder">(sans nom)</string>
     <string name="new_label">Nouveau</string>

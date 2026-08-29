@@ -900,7 +900,7 @@
     <string name="template_placeholders_hint">使用占位符如 [姓名]、[日期] 等，在使用时进行自定义。</string>
     <string name="template_category_general">通用</string>
     <string name="delete_template_title">删除模板</string>
-    <string name="delete_template_message">确定要删除此模板吗？此操作无法撤销。</string>
+    <string name="delete_template_message">确定要删除模板“%1$s”吗？此操作无法撤销。</string>
     <string name="unnamed_template">（未命名）</string>
     <string name="unnamed_folder">（未命名）</string>
     <string name="new_label">新建</string>

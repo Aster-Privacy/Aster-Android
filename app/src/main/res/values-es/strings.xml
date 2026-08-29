@@ -901,7 +901,7 @@
     <string name="template_placeholders_hint">Usa marcadores de posición como [Nombre], [Fecha], etc. para personalizar al usar.</string>
     <string name="template_category_general">General</string>
     <string name="delete_template_title">Eliminar plantilla</string>
-    <string name="delete_template_message">¿Estás seguro de que deseas eliminar esta plantilla? Esta acción no se puede deshacer.</string>
+    <string name="delete_template_message">¿Estás seguro de que deseas eliminar la plantilla %1$s? Esta acción no se puede deshacer.</string>
     <string name="unnamed_template">(sin nombre)</string>
     <string name="unnamed_folder">(sin nombre)</string>
     <string name="new_label">Nuevo</string>

@@ -900,7 +900,7 @@
     <string name="template_placeholders_hint">使用時にカスタマイズするために[名前]、[日付]などのプレースホルダーを使用できます。</string>
     <string name="template_category_general">一般</string>
     <string name="delete_template_title">テンプレートを削除</string>
-    <string name="delete_template_message">このテンプレートを削除してもよろしいですか？この操作は元に戻せません。</string>
+    <string name="delete_template_message">テンプレート「%1$s」を削除してもよろしいですか？この操作は元に戻せません。</string>
     <string name="unnamed_template">(名前なし)</string>
     <string name="unnamed_folder">(名前なし)</string>
     <string name="new_label">新規</string>

@@ -900,7 +900,7 @@
     <string name="template_placeholders_hint">Use marcadores como [Nome], [Data], etc. para personalizar ao usar.</string>
     <string name="template_category_general">Geral</string>
     <string name="delete_template_title">Excluir modelo</string>
-    <string name="delete_template_message">Tem certeza de que deseja excluir este modelo? Esta ação não pode ser desfeita.</string>
+    <string name="delete_template_message">Tem certeza de que deseja excluir o modelo %1$s? Esta ação não pode ser desfeita.</string>
     <string name="unnamed_template">(sem nome)</string>
     <string name="unnamed_folder">(sem nome)</string>
     <string name="new_label">Novo</string>

@@ -901,7 +901,7 @@
     <string name="template_placeholders_hint">Verwenden Sie Platzhalter wie [Name], [Datum] usw. zur Anpassung bei der Verwendung.</string>
     <string name="template_category_general">Allgemein</string>
     <string name="delete_template_title">Vorlage löschen</string>
-    <string name="delete_template_message">Sind Sie sicher, dass Sie diese Vorlage löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.</string>
+    <string name="delete_template_message">Sind Sie sicher, dass Sie die Vorlage %1$s löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.</string>
     <string name="unnamed_template">(unbenannt)</string>
     <string name="unnamed_folder">(unbenannt)</string>
     <string name="new_label">Neu</string>

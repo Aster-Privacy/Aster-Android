@@ -900,7 +900,7 @@
     <string name="template_placeholders_hint">Usa segnaposto come [Nome], [Data], ecc. per personalizzare durante l\'uso.</string>
     <string name="template_category_general">Generale</string>
     <string name="delete_template_title">Elimina modello</string>
-    <string name="delete_template_message">Sei sicuro di voler eliminare questo modello? Questa azione non può essere annullata.</string>
+    <string name="delete_template_message">Sei sicuro di voler eliminare il modello %1$s? Questa azione non può essere annullata.</string>
     <string name="unnamed_template">(senza nome)</string>
     <string name="unnamed_folder">(senza nome)</string>
     <string name="new_label">Nuovo</string>

@@ -900,7 +900,7 @@
     <string name="template_placeholders_hint">استخدم العناصر النائبة مثل [الاسم]، [التاريخ]، إلخ. للتخصيص عند الاستخدام.</string>
     <string name="template_category_general">عام</string>
     <string name="delete_template_title">حذف القالب</string>
-    <string name="delete_template_message">هل أنت متأكد أنك تريد حذف هذا القالب؟ لا يمكن التراجع عن هذا الإجراء.</string>
+    <string name="delete_template_message">هل أنت متأكد أنك تريد حذف القالب %1$s؟ لا يمكن التراجع عن هذا الإجراء.</string>
     <string name="unnamed_template">(بدون اسم)</string>
     <string name="unnamed_folder">(بدون اسم)</string>
     <string name="new_label">جديد</string>
@@ -2714,11 +2714,19 @@
     <string name="alias_website_input_placeholder">example.com</string>
     <string name="undecryptable_message_preview">لا يحتوي هذا الجهاز على مفتاح هذه الرسالة.</string>
     <plurals name="archived_messages">
-        <item quantity="one">تمت أرشفة %d رسالة</item>
+        <item quantity="zero">لم تتم أرشفة أي رسالة</item>
+        <item quantity="one">تمت أرشفة رسالة واحدة</item>
+        <item quantity="two">تمت أرشفة رسالتين</item>
+        <item quantity="few">تمت أرشفة %d رسائل</item>
+        <item quantity="many">تمت أرشفة %d رسالة</item>
         <item quantity="other">تمت أرشفة %d رسالة</item>
     </plurals>
     <plurals name="moved_messages_to_trash">
-        <item quantity="one">تم نقل %d رسالة إلى سلة المهملات</item>
+        <item quantity="zero">لم يتم نقل أي رسالة إلى سلة المهملات</item>
+        <item quantity="one">تم نقل رسالة واحدة إلى سلة المهملات</item>
+        <item quantity="two">تم نقل رسالتين إلى سلة المهملات</item>
+        <item quantity="few">تم نقل %d رسائل إلى سلة المهملات</item>
+        <item quantity="many">تم نقل %d رسالة إلى سلة المهملات</item>
         <item quantity="other">تم نقل %d رسالة إلى سلة المهملات</item>
     </plurals>
     <string name="unsnooze">إلغاء التأجيل</string>

@@ -900,7 +900,7 @@
     <string name="template_placeholders_hint">Используйте заполнители, такие как [Имя], [Дата] и т. д., для настройки при использовании.</string>
     <string name="template_category_general">Общие</string>
     <string name="delete_template_title">Удалить шаблон</string>
-    <string name="delete_template_message">Вы уверены, что хотите удалить этот шаблон? Это действие нельзя отменить.</string>
+    <string name="delete_template_message">Вы уверены, что хотите удалить шаблон %1$s? Это действие нельзя отменить.</string>
     <string name="unnamed_template">(без названия)</string>
     <string name="unnamed_folder">(без названия)</string>
     <string name="new_label">Новый</string>
@@ -2699,11 +2699,15 @@
     <string name="undecryptable_message_preview">На этом устройстве нет ключа к этому сообщению.</string>
     <plurals name="archived_messages">
         <item quantity="one">Архивировано %d письмо</item>
-        <item quantity="other">Архивировано %d писем</item>
+        <item quantity="few">Архивировано %d письма</item>
+        <item quantity="many">Архивировано %d писем</item>
+        <item quantity="other">Архивировано %d письма</item>
     </plurals>
     <plurals name="moved_messages_to_trash">
         <item quantity="one">Перемещено %d письмо в корзину</item>
-        <item quantity="other">Перемещено %d писем в корзину</item>
+        <item quantity="few">Перемещено %d письма в корзину</item>
+        <item quantity="many">Перемещено %d писем в корзину</item>
+        <item quantity="other">Перемещено %d письма в корзину</item>
     </plurals>
     <string name="unsnooze">Вернуть во входящие</string>
     <string name="edit_labels">Изменить метки</string>

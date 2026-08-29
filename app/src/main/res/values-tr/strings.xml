@@ -900,7 +900,7 @@
     <string name="template_placeholders_hint">Kullanırken özelleştirmek için [İsim], [Tarih] gibi yer tutucular kullanın.</string>
     <string name="template_category_general">Genel</string>
     <string name="delete_template_title">Şablonu Sil</string>
-    <string name="delete_template_message">Bu şablonu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</string>
+    <string name="delete_template_message">%1$s şablonunu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</string>
     <string name="unnamed_template">(adsız)</string>
     <string name="unnamed_folder">(adsız)</string>
     <string name="new_label">Yeni</string>
