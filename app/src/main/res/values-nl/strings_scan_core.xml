@@ -1,0 +1,10 @@
+<resources>
+    <string name="demo_phish_subject">Dringend: ongebruikelijke inlogactiviteit op je PayPal-account</string>
+    <string name="demo_phish_preview">We hebben een ongeoorloofde inlogpoging gedetecteerd. Verifieer je identiteit onmiddellijk om opschorting van je account te voorkomen.</string>
+    <string name="demo_phish_body_greeting">Beste klant,</string>
+    <string name="demo_phish_body_para1">We hebben ongebruikelijke inlogactiviteit op je PayPal-account gedetecteerd vanaf een apparaat dat we niet herkennen. Ter bescherming wordt je account binnen 24 uur opgeschort tenzij je je identiteit onmiddellijk verifieert.</string>
+    <string name="demo_phish_body_para2">Bevestig je factuurgegevens via de beveiligde link hieronder:</string>
+    <string name="demo_phish_body_para3">Als je niet reageert, verlies je permanent toegang tot je tegoed. Dit is een melding waarvoor onmiddellijke actie vereist is.</string>
+    <string name="demo_phish_body_signoff">PayPal-beveiligingsteam</string>
+    <string name="demo_phish_body_signin_label">Of log direct in:</string>
+</resources>

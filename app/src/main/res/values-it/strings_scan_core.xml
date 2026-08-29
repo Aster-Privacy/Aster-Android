@@ -1,0 +1,10 @@
+<resources>
+    <string name="demo_phish_subject">Urgente: attività di accesso insolita sul tuo account PayPal</string>
+    <string name="demo_phish_preview">Abbiamo rilevato un tentativo di accesso non autorizzato. Verifica subito la tua identità per evitare la sospensione dell\'account.</string>
+    <string name="demo_phish_body_greeting">Gentile cliente,</string>
+    <string name="demo_phish_body_para1">Abbiamo rilevato un\'attività di accesso insolita sul tuo account PayPal da un dispositivo che non riconosciamo. Per tua protezione, il tuo account sarà sospeso entro 24 ore se non verifichi subito la tua identità.</string>
+    <string name="demo_phish_body_para2">Conferma i tuoi dati di fatturazione visitando il link sicuro qui sotto:</string>
+    <string name="demo_phish_body_para3">La mancata risposta comporterà la perdita permanente dell\'accesso ai tuoi fondi. Questo è un avviso di azione immediata richiesta.</string>
+    <string name="demo_phish_body_signoff">Team di sicurezza PayPal</string>
+    <string name="demo_phish_body_signin_label">Oppure accedi direttamente:</string>
+</resources>

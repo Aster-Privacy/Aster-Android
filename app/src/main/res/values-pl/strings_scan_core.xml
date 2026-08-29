@@ -1,0 +1,10 @@
+<resources>
+    <string name="demo_phish_subject">Pilne: nietypowa aktywność logowania na Twoim koncie PayPal</string>
+    <string name="demo_phish_preview">Wykryliśmy nieautoryzowaną próbę logowania. Zweryfikuj swoją tożsamość natychmiast, aby uniknąć zawieszenia konta.</string>
+    <string name="demo_phish_body_greeting">Szanowny kliencie,</string>
+    <string name="demo_phish_body_para1">Wykryliśmy nietypową aktywność logowania na Twoim koncie PayPal z nierozpoznanego urządzenia. Dla Twojego bezpieczeństwa konto zostanie zawieszone w ciągu 24 godzin, jeśli natychmiast nie zweryfikujesz swojej tożsamości.</string>
+    <string name="demo_phish_body_para2">Potwierdź swoje dane rozliczeniowe, odwiedzając poniższy bezpieczny link:</string>
+    <string name="demo_phish_body_para3">Brak odpowiedzi spowoduje trwałą utratę dostępu do Twoich środków. To powiadomienie wymaga natychmiastowego działania.</string>
+    <string name="demo_phish_body_signoff">Zespół ds. bezpieczeństwa PayPal</string>
+    <string name="demo_phish_body_signin_label">Lub zaloguj się bezpośrednio:</string>
+</resources>

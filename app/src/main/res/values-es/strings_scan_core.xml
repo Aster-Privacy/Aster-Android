@@ -1,0 +1,10 @@
+<resources>
+    <string name="demo_phish_subject">Urgente: actividad de inicio de sesión inusual en tu cuenta de PayPal</string>
+    <string name="demo_phish_preview">Detectamos un intento de inicio de sesión no autorizado. Verifica tu identidad de inmediato para evitar la suspensión de la cuenta.</string>
+    <string name="demo_phish_body_greeting">Estimado cliente:</string>
+    <string name="demo_phish_body_para1">Detectamos una actividad de inicio de sesión inusual en tu cuenta de PayPal desde un dispositivo que no reconocemos. Para tu protección, tu cuenta se suspenderá dentro de 24 horas a menos que verifiques tu identidad de inmediato.</string>
+    <string name="demo_phish_body_para2">Confirma tu información de facturación visitando el enlace seguro a continuación:</string>
+    <string name="demo_phish_body_para3">Si no respondes, perderás permanentemente el acceso a tus fondos. Este es un aviso de acción inmediata requerida.</string>
+    <string name="demo_phish_body_signoff">Equipo de seguridad de PayPal</string>
+    <string name="demo_phish_body_signin_label">O inicia sesión directamente:</string>
+</resources>

@@ -1,0 +1,10 @@
+<resources>
+    <string name="demo_phish_subject">긴급: PayPal 계정에서 비정상적인 로그인 활동이 감지되었습니다</string>
+    <string name="demo_phish_preview">무단 로그인 시도가 감지되었습니다. 계정 정지를 방지하려면 지금 즉시 본인 확인을 하세요.</string>
+    <string name="demo_phish_body_greeting">고객님께,</string>
+    <string name="demo_phish_body_para1">인식되지 않은 기기에서 회원님의 PayPal 계정에 비정상적인 로그인 활동이 감지되었습니다. 보호를 위해 지금 즉시 본인 확인을 하지 않으면 24시간 이내에 계정이 정지됩니다.</string>
+    <string name="demo_phish_body_para2">아래의 보안 링크를 방문하여 결제 정보를 확인해 주세요.</string>
+    <string name="demo_phish_body_para3">응답하지 않으면 자금에 대한 접근 권한을 영구적으로 잃게 됩니다. 이는 즉각적인 조치가 필요한 알림입니다.</string>
+    <string name="demo_phish_body_signoff">PayPal 보안팀</string>
+    <string name="demo_phish_body_signin_label">또는 직접 로그인:</string>
+</resources>

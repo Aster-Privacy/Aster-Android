@@ -1,0 +1,10 @@
+<resources>
+    <string name="demo_phish_subject">Dringend: Ungewöhnliche Anmeldeaktivität in Ihrem PayPal-Konto</string>
+    <string name="demo_phish_preview">Wir haben einen nicht autorisierten Anmeldeversuch festgestellt. Bestätigen Sie sofort Ihre Identität, um eine Kontosperrung zu vermeiden.</string>
+    <string name="demo_phish_body_greeting">Sehr geehrter Kunde,</string>
+    <string name="demo_phish_body_para1">Wir haben eine ungewöhnliche Anmeldeaktivität in Ihrem PayPal-Konto von einem uns nicht bekannten Gerät festgestellt. Zu Ihrem Schutz wird Ihr Konto innerhalb von 24 Stunden gesperrt, sofern Sie Ihre Identität nicht sofort bestätigen.</string>
+    <string name="demo_phish_body_para2">Bestätigen Sie Ihre Zahlungsinformationen über den folgenden sicheren Link:</string>
+    <string name="demo_phish_body_para3">Bei Nichtbeachtung verlieren Sie dauerhaft den Zugriff auf Ihr Guthaben. Dies ist eine dringende Handlungsaufforderung.</string>
+    <string name="demo_phish_body_signoff">PayPal-Sicherheitsteam</string>
+    <string name="demo_phish_body_signin_label">Oder direkt anmelden:</string>
+</resources>

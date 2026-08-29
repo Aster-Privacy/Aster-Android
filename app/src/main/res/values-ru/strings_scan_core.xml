@@ -1,0 +1,10 @@
+<resources>
+    <string name="demo_phish_subject">Срочно: необычная активность входа в вашем аккаунте PayPal</string>
+    <string name="demo_phish_preview">Мы обнаружили попытку несанкционированного входа. Немедленно подтвердите личность, чтобы избежать приостановки аккаунта.</string>
+    <string name="demo_phish_body_greeting">Уважаемый клиент,</string>
+    <string name="demo_phish_body_para1">Мы обнаружили необычную активность входа в ваш аккаунт PayPal с неизвестного нам устройства. Для вашей защиты аккаунт будет приостановлен в течение 24 часов, если вы немедленно не подтвердите свою личность.</string>
+    <string name="demo_phish_body_para2">Подтвердите платёжные данные, перейдя по защищённой ссылке ниже:</string>
+    <string name="demo_phish_body_para3">Если вы не ответите, вы навсегда потеряете доступ к своим средствам. Это уведомление требует немедленных действий.</string>
+    <string name="demo_phish_body_signoff">Служба безопасности PayPal</string>
+    <string name="demo_phish_body_signin_label">Или войдите напрямую:</string>
+</resources>

@@ -1,0 +1,10 @@
+<resources>
+    <string name="demo_phish_subject">Urgent : activité de connexion inhabituelle sur votre compte PayPal</string>
+    <string name="demo_phish_preview">Nous avons détecté une tentative de connexion non autorisée. Vérifiez votre identité immédiatement pour éviter la suspension de votre compte.</string>
+    <string name="demo_phish_body_greeting">Cher client,</string>
+    <string name="demo_phish_body_para1">Nous avons détecté une activité de connexion inhabituelle sur votre compte PayPal à partir d\'un appareil que nous ne reconnaissons pas. Pour votre protection, votre compte sera suspendu sous 24 heures si vous ne vérifiez pas votre identité immédiatement.</string>
+    <string name="demo_phish_body_para2">Confirmez vos informations de facturation en visitant le lien sécurisé ci-dessous :</string>
+    <string name="demo_phish_body_para3">Si vous ne répondez pas, vous perdrez définitivement l\'accès à vos fonds. Ceci est un avis d\'action immédiate requise.</string>
+    <string name="demo_phish_body_signoff">Équipe de sécurité PayPal</string>
+    <string name="demo_phish_body_signin_label">Ou connectez-vous directement :</string>
+</resources>

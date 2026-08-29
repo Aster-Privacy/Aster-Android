@@ -1,0 +1,10 @@
+<resources>
+    <string name="demo_phish_subject">Acil: PayPal hesabınızda olağandışı oturum açma etkinliği</string>
+    <string name="demo_phish_preview">Yetkisiz bir oturum açma girişimi tespit ettik. Hesabınızın askıya alınmasını önlemek için kimliğinizi hemen doğrulayın.</string>
+    <string name="demo_phish_body_greeting">Değerli müşterimiz,</string>
+    <string name="demo_phish_body_para1">Tanımadığımız bir cihazdan PayPal hesabınızda olağandışı bir oturum açma etkinliği tespit ettik. Güvenliğiniz için kimliğinizi hemen doğrulamazsanız hesabınız 24 saat içinde askıya alınacaktır.</string>
+    <string name="demo_phish_body_para2">Aşağıdaki güvenli bağlantıyı ziyaret ederek fatura bilgilerinizi onaylayın:</string>
+    <string name="demo_phish_body_para3">Yanıt verilmemesi durumunda fonlarınıza erişiminizi kalıcı olarak kaybedersiniz. Bu, acil işlem gerektiren bir bildirimdir.</string>
+    <string name="demo_phish_body_signoff">PayPal Güvenlik Ekibi</string>
+    <string name="demo_phish_body_signin_label">Veya doğrudan oturum açın:</string>
+</resources>

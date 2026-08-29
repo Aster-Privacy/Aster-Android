@@ -1,0 +1,10 @@
+<resources>
+    <string name="demo_phish_subject">紧急：您的 PayPal 账户出现异常登录活动</string>
+    <string name="demo_phish_preview">我们检测到未经授权的登录尝试。请立即验证身份，以避免账户被暂停。</string>
+    <string name="demo_phish_body_greeting">尊敬的客户：</string>
+    <string name="demo_phish_body_para1">我们检测到您的 PayPal 账户出现来自未知设备的异常登录活动。为保护您的账户，如果您不立即验证身份，账户将在 24 小时内被暂停。</string>
+    <string name="demo_phish_body_para2">请访问以下安全链接确认您的账单信息：</string>
+    <string name="demo_phish_body_para3">如未响应，您将永久失去对资金的访问权限。此通知需要立即处理。</string>
+    <string name="demo_phish_body_signoff">PayPal 安全团队</string>
+    <string name="demo_phish_body_signin_label">或直接登录：</string>
+</resources>

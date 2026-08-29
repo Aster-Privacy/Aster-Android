@@ -70,6 +70,19 @@ class AsterApplication : Application(), ImageLoaderFactory {
             val ep = EntryPointAccessors.fromApplication(this, ImageLoaderEntryPoint::class.java)
             org.astermail.android.mail.AsterProfileResolverHolder.shared = ep.aster_profile_resolver()
         }
+        runCatching {
+            org.astermail.android.mail.DemoPhishingContentHolder.shared = org.astermail.android.mail.DemoPhishingContent(
+                subject = getString(R.string.demo_phish_subject),
+                preview = getString(R.string.demo_phish_preview),
+                body_greeting = getString(R.string.demo_phish_body_greeting),
+                body_para1 = getString(R.string.demo_phish_body_para1),
+                body_para2 = getString(R.string.demo_phish_body_para2),
+                body_para3 = getString(R.string.demo_phish_body_para3),
+                body_signoff = getString(R.string.demo_phish_body_signoff),
+                body_signin_label = getString(R.string.demo_phish_body_signin_label),
+            )
+        }
+        runCatching { org.astermail.android.network.low_network_monitor.start(this) }
         register_app_lock_lifecycle()
         runCatching { register_folder_lock_hooks() }
         runCatching { seed_protected_folder_tokens() }

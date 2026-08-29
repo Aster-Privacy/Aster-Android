@@ -38,6 +38,13 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -92,16 +99,20 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import org.astermail.android.ui.icons.pin_icon
 import org.astermail.android.ui.icons.pin_icon_filled
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.window.PopupProperties
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -144,6 +155,10 @@ import androidx.compose.ui.semantics.semantics
 import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterDuration
+import org.astermail.android.design.AsterEasing
+import org.astermail.android.design.AsterScale
+import org.astermail.android.design.AsterSlide
 import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
@@ -233,8 +248,27 @@ fun ComposeScreen(
         show_copy_result_toast(context, address, copied)
     }
 
+    val seed_args = remember(reply_to, mode, draft_id, prefill_to, thread_ghost_email, share_payload) {
+        compose_screen_args(
+            reply_to = reply_to,
+            mode = mode,
+            draft_id = draft_id,
+            prefill_to = prefill_to,
+            thread_ghost_email = thread_ghost_email,
+            share_to = share_payload?.to.orEmpty(),
+            share_cc = share_payload?.cc.orEmpty(),
+            share_bcc = share_payload?.bcc.orEmpty(),
+            share_subject = share_payload?.subject.orEmpty(),
+        )
+    }
+    val seed_identity = remember { compose_seed_store.read_identity(context, current_user_email) }
+    val seed_thread = remember(reply_to, draft_id) {
+        compose_seed_store.read_thread(reply_to?.takeIf { it.isNotBlank() } ?: draft_id)
+    }
+
     LaunchedEffect(Unit) {
         settings_vm.load_profile()
+        settings_vm.load_default_sender()
         settings_vm.load_aliases()
         settings_vm.load_custom_domain_addresses()
         settings_vm.load_ghost_aliases()
@@ -294,7 +328,11 @@ fun ComposeScreen(
         external_sender_tokens.keys.forEach { addr ->
             if (is_sendable_address(addr) && addr !in options) options.add(addr)
         }
-        if (options.isEmpty()) options.add("you@astermail.org")
+        if (options.isEmpty()) {
+            seed_identity.alias_options.forEach { cached ->
+                if (is_sendable_address(cached) && cached !in options) options.add(cached)
+            }
+        }
         options.toList()
     }
 
@@ -349,13 +387,47 @@ fun ComposeScreen(
         settings_state.ghost_aliases,
         settings_state.custom_domain_addresses,
     ) {
-        resolve_primary_sender_email(
-            settings_state.default_sender_id,
-            user_email,
-            settings_state.aliases,
-            settings_state.ghost_aliases,
-            settings_state.custom_domain_addresses,
+        if (settings_state.default_sender_id.isNullOrBlank() &&
+            seed_identity.primary_sender_email.isNotBlank()
+        ) {
+            seed_identity.primary_sender_email
+        } else {
+            resolve_primary_sender_email(
+                settings_state.default_sender_id,
+                user_email,
+                settings_state.aliases,
+                settings_state.ghost_aliases,
+                settings_state.custom_domain_addresses,
+            )
+        }
+    }
+
+    val live_identity = remember(
+        user_email,
+        settings_state.user,
+        alias_options,
+        primary_sender_email,
+        alias_display_name_map,
+        settings_state.ghost_aliases,
+    ) {
+        compose_identity_snapshot(
+            user_email = user_email,
+            display_name = settings_state.user?.display_name.orEmpty(),
+            alias_options = alias_options,
+            primary_sender_email = primary_sender_email,
+            alias_display_names = alias_display_name_map,
+            ghost_addresses = settings_state.ghost_aliases.map { it.address },
         )
+    }
+    LaunchedEffect(live_identity) {
+        if (settings_state.user != null) {
+            compose_seed_store.publish_identity(context, live_identity)
+        }
+    }
+    LaunchedEffect(thread_state.messages, thread_state.item) {
+        if (!thread_state.is_loading && thread_state.messages.isNotEmpty()) {
+            publish_compose_thread_seed(thread_state)
+        }
     }
 
     val received_on_alias = remember(reply_to, thread_state.messages, alias_options, mode, user_email) {
@@ -375,15 +447,50 @@ fun ComposeScreen(
         }
     }
 
+    val initial_state = remember {
+        val seeded_identity = if (seed_identity.is_ready) {
+            seed_identity
+        } else {
+            compose_identity_snapshot(
+                user_email = user_email,
+                display_name = settings_state.user?.display_name.orEmpty(),
+                alias_options = alias_options,
+                primary_sender_email = primary_sender_email,
+                alias_display_names = alias_display_name_map,
+                ghost_addresses = settings_state.ghost_aliases.map { it.address },
+            )
+        }
+        build_compose_initial_state(
+            args = seed_args,
+            identity = seeded_identity,
+            thread = seed_thread,
+            effective_mode = if (
+                mode == "reply" &&
+                settings_state.preferences?.default_reply_behavior == "reply_all"
+            ) {
+                "reply_all"
+            } else {
+                mode
+            },
+        )
+    }
+
     var from_alias by rememberSaveable {
         mutableStateOf(
-            resolve_reply_from_alias(received_on_alias, thread_ghost_match, primary_sender_email, alias_options),
+            initial_state.from_address.ifBlank {
+                resolve_reply_from_alias(received_on_alias, thread_ghost_match, primary_sender_email, alias_options)
+            },
         )
     }
     var from_manually_selected by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(alias_options, received_on_alias, thread_ghost_match, primary_sender_email) {
         if (from_manually_selected) return@LaunchedEffect
+        if (initial_state.is_complete && from_alias.isNotBlank() &&
+            alias_options.any { it.equals(from_alias, ignoreCase = true) }
+        ) {
+            return@LaunchedEffect
+        }
         val resolved = resolve_reply_from_alias(received_on_alias, thread_ghost_match, primary_sender_email, alias_options)
         if (resolved.isNotBlank() && resolved != from_alias) {
             from_alias = resolved
@@ -473,14 +580,23 @@ fun ComposeScreen(
     var expires_at_iso by remember { mutableStateOf<String?>(null) }
     var expiry_password by remember { mutableStateOf<String?>(null) }
     var show_expiring_sheet by remember { mutableStateOf(false) }
-    var to_chips_set by rememberSaveable { mutableStateOf(false) }
-    var subject_set by rememberSaveable { mutableStateOf(false) }
+    var to_chips_set by rememberSaveable {
+        mutableStateOf(!initial_state.thread_is_skeleton && initial_state.to_chips.isNotEmpty())
+    }
+    var subject_set by rememberSaveable {
+        mutableStateOf(
+            !initial_state.thread_is_skeleton &&
+                initial_state.subject.isNotBlank() &&
+                initial_state.subject.trim().lowercase() !in setOf("re:", "fwd:"),
+        )
+    }
     var body_set by rememberSaveable { mutableStateOf(false) }
     var to_chips by rememberSaveable {
         val initial = when {
             !share_payload?.to.isNullOrEmpty() -> share_payload!!.to
             !prefill_to.isNullOrBlank() -> listOf(prefill_to)
-            else -> prefill.to_chips
+            prefill.to_chips.isNotEmpty() -> prefill.to_chips
+            else -> initial_state.to_chips
         }
         mutableStateOf(initial)
     }
@@ -497,14 +613,23 @@ fun ComposeScreen(
         }
     }
     var cc_expanded by rememberSaveable {
-        mutableStateOf(!share_payload?.cc.isNullOrEmpty() || !share_payload?.bcc.isNullOrEmpty())
+        mutableStateOf(
+            !share_payload?.cc.isNullOrEmpty() ||
+                !share_payload?.bcc.isNullOrEmpty() ||
+                initial_state.cc_chips.isNotEmpty(),
+        )
     }
-    var cc_chips by rememberSaveable { mutableStateOf(share_payload?.cc.orEmpty()) }
+    var cc_chips by rememberSaveable {
+        mutableStateOf(share_payload?.cc.orEmpty().ifEmpty { initial_state.cc_chips })
+    }
     var cc_input by rememberSaveable { mutableStateOf("") }
     var bcc_chips by rememberSaveable { mutableStateOf(share_payload?.bcc.orEmpty()) }
     var bcc_input by rememberSaveable { mutableStateOf("") }
     var subject by rememberSaveable {
-        mutableStateOf(share_payload?.subject?.takeIf { it.isNotBlank() } ?: prefill.subject)
+        mutableStateOf(
+            share_payload?.subject?.takeIf { it.isNotBlank() }
+                ?: prefill.subject.ifBlank { initial_state.subject },
+        )
     }
     val share_body_prefix = remember(share_payload) {
         share_payload?.body?.takeIf { it.isNotBlank() }?.let { it + "\n\n" }.orEmpty()
@@ -671,14 +796,23 @@ fun ComposeScreen(
     var show_discard_dialog by remember { mutableStateOf(false) }
     var show_from_mismatch_dialog by remember { mutableStateOf(false) }
     var post_quantum_missing by remember { mutableStateOf<List<String>>(emptyList()) }
-    val quoted_source = remember(reply_to, mode, thread_state) {
+    val seeded_quoted_source = remember {
+        initial_state.quoted_html?.let { html ->
+            html to Triple(
+                initial_state.quoted_sender,
+                initial_state.quoted_timestamp,
+                initial_state.quoted_subject,
+            )
+        }
+    }
+    val quoted_source = remember(reply_to, mode, thread_state, seeded_quoted_source) {
         if (reply_to.isNullOrBlank() || mode.isNullOrBlank()) {
             null
         } else {
             val msg = thread_state.messages.firstOrNull { it.id == reply_to }
                 ?: thread_state.messages.lastOrNull()
             if (msg == null) {
-                null
+                seeded_quoted_source
             } else {
                 val item = thread_state.item
                 val original_html = msg.body_html?.takeIf { it.isNotBlank() }
@@ -831,21 +965,32 @@ fun ComposeScreen(
             val msg = thread_state.messages.firstOrNull()
             val item = thread_state.item
             if (msg != null && item != null) {
-                subject = item.subject
+                if (subject.isBlank()) {
+                    subject = item.subject
+                    initial_subject = subject
+                }
                 val raw = msg.body_html ?: msg.body_text
-                body = if (raw.contains("<") && raw.contains(">")) {
+                val draft_body = if (raw.contains("<") && raw.contains(">")) {
                     android.text.Html.fromHtml(STYLE_SCRIPT_TAG_RE.replace(raw, ""), android.text.Html.FROM_HTML_MODE_LEGACY)
                         .toString().trimEnd()
                 } else raw
-                to_chips = msg.to_addresses.filter { it.isNotBlank() }
-                cc_chips = msg.cc_addresses.filter { it.isNotBlank() }
-                bcc_chips = msg.bcc_addresses.filter { it.isNotBlank() }
+                if (body.isBlank() || body == initial_body) {
+                    body = draft_body
+                    initial_body = body
+                }
+                if (to_chips.isEmpty()) {
+                    to_chips = msg.to_addresses.filter { it.isNotBlank() }
+                    initial_to_chips = to_chips
+                }
+                if (cc_chips.isEmpty()) {
+                    cc_chips = msg.cc_addresses.filter { it.isNotBlank() }
+                    initial_cc_chips = cc_chips
+                }
+                if (bcc_chips.isEmpty()) {
+                    bcc_chips = msg.bcc_addresses.filter { it.isNotBlank() }
+                    initial_bcc_chips = bcc_chips
+                }
                 if (cc_chips.isNotEmpty() || bcc_chips.isNotEmpty()) cc_expanded = true
-                initial_to_chips = to_chips
-                initial_subject = subject
-                initial_body = body
-                initial_cc_chips = cc_chips
-                initial_bcc_chips = bcc_chips
                 val draft_from = msg.sender_email
                 if (draft_from.isNotBlank() && draft_from in alias_options) {
                     from_alias = draft_from
@@ -1006,7 +1151,11 @@ fun ComposeScreen(
         if (settings_state.preferences?.auto_save_drafts == false) return
         if (mode == "draft" && !draft_id.isNullOrBlank() && !draft_loaded) return
         draft_save_job = scope.launch {
-            delay(3000)
+            delay(
+                org.astermail.android.api.network.draft_autosave_delay_ms(
+                    org.astermail.android.api.network.low_network_state.active(),
+                ),
+            )
             if (sent || is_sending) return@launch
             if (subject.isBlank() && body.isBlank() && to_chips.isEmpty()) return@launch
             if (is_empty_new_draft()) return@launch
@@ -1826,42 +1975,52 @@ fun ComposeScreen(
                 .verticalScroll(rememberScrollState()),
         ) {
             field_row(label = stringResource(R.string.from)) {
-                var from_expanded by remember(from_alias) { mutableStateOf(false) }
-                var from_truncated by remember(from_alias) { mutableStateOf(false) }
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { open_from_sheet() }
+                        .heightIn(min = 24.dp)
+                        .combinedClickable(
+                            onClick = { open_from_sheet() },
+                            onLongClick = { copy_from_address(from_alias) },
+                        )
                         .testTag("from_field"),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    org.astermail.android.ui.mail.SenderAvatar(
-                        email = from_alias,
-                        name = settings_state.user?.display_name.orEmpty(),
-                        size = 24.dp,
-                        profile_picture_url = settings_state.user?.profile_picture,
-                    )
-                    Spacer(Modifier.width(AsterSpacing.sm))
-                    Text(
-                        text = from_alias,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = colors.text_primary,
-                        maxLines = if (from_expanded) 4 else 1,
-                        overflow = TextOverflow.Ellipsis,
-                        onTextLayout = { if (!from_expanded) from_truncated = it.hasVisualOverflow },
-                        modifier = Modifier
-                            .weight(1f)
-                            .combinedClickable(
-                                onClick = {
-                                    if (from_truncated || from_expanded) {
-                                        from_expanded = !from_expanded
-                                    } else {
-                                        open_from_sheet()
-                                    }
-                                },
-                                onLongClick = { copy_from_address(from_alias) },
-                            ),
-                    )
+                    if (from_alias.isBlank()) {
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(CircleShape)
+                                .background(colors.text_tertiary.copy(alpha = 0.16f)),
+                        )
+                        Spacer(Modifier.width(AsterSpacing.sm))
+                        Box(
+                            modifier = Modifier
+                                .width(160.dp)
+                                .height(12.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(colors.text_tertiary.copy(alpha = 0.16f)),
+                        )
+                        Spacer(Modifier.weight(1f))
+                    } else {
+                        org.astermail.android.ui.mail.SenderAvatar(
+                            email = from_alias,
+                            name = settings_state.user?.display_name.orEmpty(),
+                            size = 24.dp,
+                            profile_picture_url = settings_state.user?.profile_picture,
+                        )
+                        Spacer(Modifier.width(AsterSpacing.sm))
+                        Text(
+                            text = from_alias,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = colors.text_primary,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = true),
+                        )
+                    }
+                    Spacer(Modifier.width(AsterSpacing.xs))
                     Icon(
                         imageVector = TablerIcons.ChevronDown,
                         contentDescription = stringResource(R.string.send_from),
@@ -1915,11 +2074,11 @@ fun ComposeScreen(
             AnimatedVisibility(
                 visible = cc_expanded,
                 enter = androidx.compose.animation.expandVertically(
-                    animationSpec = androidx.compose.animation.core.tween(durationMillis = 250, easing = org.astermail.android.design.AsterEasing.emphasized_enter),
-                ) + fadeIn(animationSpec = androidx.compose.animation.core.tween(durationMillis = 200)),
+                    animationSpec = androidx.compose.animation.core.tween(durationMillis = org.astermail.android.design.AsterDuration.medium_2, easing = org.astermail.android.design.AsterEasing.emphasized_enter),
+                ) + fadeIn(animationSpec = androidx.compose.animation.core.tween(durationMillis = org.astermail.android.design.AsterDuration.medium_1)),
                 exit = androidx.compose.animation.shrinkVertically(
-                    animationSpec = androidx.compose.animation.core.tween(durationMillis = 200, easing = org.astermail.android.design.AsterEasing.emphasized_exit),
-                ) + fadeOut(animationSpec = androidx.compose.animation.core.tween(durationMillis = 150)),
+                    animationSpec = androidx.compose.animation.core.tween(durationMillis = org.astermail.android.design.AsterDuration.medium_1, easing = org.astermail.android.design.AsterEasing.emphasized_exit),
+                ) + fadeOut(animationSpec = androidx.compose.animation.core.tween(durationMillis = org.astermail.android.design.AsterDuration.dialog_exit)),
             ) {
             Column {
             field_row(label = stringResource(R.string.cc)) {
@@ -2755,68 +2914,51 @@ fun ComposeScreen(
     if (show_discard_dialog) {
         org.astermail.android.design.components.AsterDialog(
             on_dismiss = { show_discard_dialog = false },
-            title = stringResource(R.string.discard_draft),
-            message = stringResource(R.string.discard_draft_description),
+            title = stringResource(R.string.compose_discard_draft_title),
+            message = stringResource(R.string.compose_discard_draft_message),
             footer = {
-                androidx.compose.foundation.layout.Column(
-                    modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
-                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
-                ) {
-                    org.astermail.android.design.components.AsterDialogDestructiveButton(
-                        label = stringResource(R.string.discard),
-                        onClick = {
-                            show_discard_dialog = false
-                            sent = true
-                            draft_save_job?.cancel()
-                            mail_vm.discard_sent_draft(current_draft_id, draft_session_id)
-                            current_draft_id = ""
-                            on_back()
-                        },
-                        modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
-                    )
-                    androidx.compose.foundation.layout.Row(
-                        modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
-                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
-                    ) {
-                        org.astermail.android.design.components.AsterDialogOutlineButton(
-                            label = stringResource(R.string.cancel),
-                            onClick = { show_discard_dialog = false },
-                            modifier = androidx.compose.ui.Modifier.weight(1f),
-                        )
-                        org.astermail.android.design.components.AsterDialogPrimaryButton(
-                            label = stringResource(R.string.save_draft),
-                            onClick = {
-                                show_discard_dialog = false
-                                draft_save_job?.cancel()
-                                mail_vm.save_draft_and_finish(
-                                    subject = subject,
-                                    body_html = draft_body_with_signature(),
-                                    sender_email = from_alias,
-                                    to = to_chips,
-                                    cc = cc_chips,
-                                    bcc = bcc_chips,
-                                    existing_draft_id = current_draft_id.takeIf { it.isNotBlank() },
-                                    draft_type = draft_save_type,
-                                    reply_to_id = draft_save_reply_to,
-                                    thread_token = draft_save_thread_token,
-                                    session_id = draft_session_id,
-                                ) { ok ->
-                                    if (ok) {
-                                        on_back()
-                                    } else {
-                                        draft_status = context.getString(R.string.save_failed)
-                                        Toast.makeText(
-                                            context,
-                                            context.getString(R.string.save_failed),
-                                            Toast.LENGTH_LONG,
-                                        ).show()
-                                    }
-                                }
-                            },
-                            modifier = androidx.compose.ui.Modifier.weight(1f),
-                        )
-                    }
-                }
+                org.astermail.android.design.components.AsterDialogDestructiveButton(
+                    label = stringResource(R.string.discard),
+                    onClick = {
+                        show_discard_dialog = false
+                        sent = true
+                        draft_save_job?.cancel()
+                        mail_vm.discard_sent_draft(current_draft_id, draft_session_id)
+                        current_draft_id = ""
+                        on_back()
+                    },
+                )
+                org.astermail.android.design.components.AsterDialogPrimaryButton(
+                    label = stringResource(R.string.save_draft),
+                    onClick = {
+                        show_discard_dialog = false
+                        draft_save_job?.cancel()
+                        mail_vm.save_draft_and_finish(
+                            subject = subject,
+                            body_html = draft_body_with_signature(),
+                            sender_email = from_alias,
+                            to = to_chips,
+                            cc = cc_chips,
+                            bcc = bcc_chips,
+                            existing_draft_id = current_draft_id.takeIf { it.isNotBlank() },
+                            draft_type = draft_save_type,
+                            reply_to_id = draft_save_reply_to,
+                            thread_token = draft_save_thread_token,
+                            session_id = draft_session_id,
+                        ) { ok ->
+                            if (ok) {
+                                on_back()
+                            } else {
+                                draft_status = context.getString(R.string.save_failed)
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.save_failed),
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            }
+                        }
+                    },
+                )
             },
         )
     }
@@ -3029,66 +3171,118 @@ private fun chip_input(
             }
         }
         if (filtered_suggestions.isNotEmpty() && on_suggestion_pick != null) {
+            val suggestions_density = LocalDensity.current
+            var suggestions_open_upward by remember { mutableStateOf(false) }
+            val suggestions_gap_px = with(suggestions_density) { AsterSpacing.xs.roundToPx() }
+            val suggestions_position = remember(suggestions_gap_px) {
+                anchored_below_position_provider(suggestions_gap_px) { flipped ->
+                    suggestions_open_upward = flipped
+                }
+            }
+            val suggestions_slide_px = with(suggestions_density) { AsterSlide.menu_dp.dp.roundToPx() }
+            val suggestions_slide_offset =
+                if (suggestions_open_upward) suggestions_slide_px else -suggestions_slide_px
+            val suggestions_origin = TransformOrigin(
+                pivotFractionX = 0f,
+                pivotFractionY = if (suggestions_open_upward) 1f else 0f,
+            )
             Popup(
-                alignment = Alignment.TopStart,
-                offset = IntOffset(0, 120),
+                popupPositionProvider = suggestions_position,
                 properties = PopupProperties(focusable = false),
             ) {
-                var popup_mounted by remember { mutableStateOf(false) }
-                LaunchedEffect(Unit) { popup_mounted = true }
-                val popup_alpha by androidx.compose.animation.core.animateFloatAsState(
-                    targetValue = if (popup_mounted) 1f else 0f,
-                    animationSpec = androidx.compose.animation.core.tween(durationMillis = 140),
-                    label = "popup_alpha",
-                )
-                val popup_scale by androidx.compose.animation.core.animateFloatAsState(
-                    targetValue = if (popup_mounted) 1f else 0.96f,
-                    animationSpec = androidx.compose.animation.core.tween(durationMillis = 140),
-                    label = "popup_scale",
-                )
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .alpha(popup_alpha)
-                        .scale(popup_scale)
-                        .shadow(8.dp, SquircleShape(18.dp))
-                        .background(colors.bg_card, SquircleShape(18.dp))
-                        .heightIn(max = 200.dp)
-                        .verticalScroll(rememberScrollState())
-                        .padding(vertical = 4.dp),
+                val suggestions_state = remember { MutableTransitionState(false) }
+                suggestions_state.targetState = true
+                AnimatedVisibility(
+                    visibleState = suggestions_state,
+                    enter = fadeIn(
+                        animationSpec = tween(
+                            durationMillis = AsterDuration.menu_fade_enter,
+                            easing = AsterEasing.menu_enter,
+                        ),
+                    ) + scaleIn(
+                        animationSpec = tween(
+                            durationMillis = AsterDuration.menu_enter,
+                            easing = AsterEasing.menu_enter,
+                        ),
+                        initialScale = AsterScale.menu_enter_from,
+                        transformOrigin = suggestions_origin,
+                    ) + slideInVertically(
+                        animationSpec = tween(
+                            durationMillis = AsterDuration.menu_enter,
+                            easing = AsterEasing.menu_enter,
+                        ),
+                        initialOffsetY = { suggestions_slide_offset },
+                    ),
+                    exit = ExitTransition.None,
                 ) {
-                    filtered_suggestions.forEach { contact ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { on_suggestion_pick(contact.email) }
-                                .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                if (contact.name.isNotBlank() && contact.name != contact.email) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .shadow(8.dp, SquircleShape(18.dp))
+                            .background(colors.bg_card, SquircleShape(18.dp))
+                            .heightIn(max = 200.dp)
+                            .verticalScroll(rememberScrollState())
+                            .padding(vertical = 4.dp),
+                    ) {
+                        filtered_suggestions.forEach { contact ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { on_suggestion_pick(contact.email) }
+                                    .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    if (contact.name.isNotBlank() && contact.name != contact.email) {
+                                        Text(
+                                            text = contact.name,
+                                            color = colors.text_primary,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    }
                                     Text(
-                                        text = contact.name,
-                                        color = colors.text_primary,
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Medium,
+                                        text = contact.email,
+                                        color = colors.text_secondary,
+                                        fontSize = 13.sp,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
                                     )
                                 }
-                                Text(
-                                    text = contact.email,
-                                    color = colors.text_secondary,
-                                    fontSize = 13.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
                             }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+private class anchored_below_position_provider(
+    private val gap_px: Int,
+    private val on_flip: (Boolean) -> Unit,
+) : PopupPositionProvider {
+    override fun calculatePosition(
+        anchorBounds: IntRect,
+        windowSize: IntSize,
+        layoutDirection: LayoutDirection,
+        popupContentSize: IntSize,
+    ): IntOffset {
+        val x = anchorBounds.left
+            .coerceIn(0, (windowSize.width - popupContentSize.width).coerceAtLeast(0))
+        val below = anchorBounds.bottom + gap_px
+        val above = anchorBounds.top - popupContentSize.height - gap_px
+        val space_below = windowSize.height - below
+        val flip = space_below < popupContentSize.height && above >= 0
+        on_flip(flip)
+        val y = if (flip) {
+            above
+        } else {
+            below.coerceAtMost((windowSize.height - popupContentSize.height).coerceAtLeast(0))
+        }
+        return IntOffset(x, y)
     }
 }
 
@@ -3619,6 +3813,8 @@ private fun FromAliasSheet(
                                 text = opt,
                                 color = colors.text_primary,
                                 style = MaterialTheme.typography.bodyLarge,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                             )
                             Text(
                                 text = if (opt == primary) stringResource(R.string.primary_badge) else label,
@@ -3838,6 +4034,7 @@ private fun TemplatePickerSheet(
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Medium,
                                     maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
                                 )
                                 if (tpl.category.isNotBlank() || tpl.content.isNotBlank()) {
                                     val subtitle = if (tpl.category.isNotBlank()) {
@@ -3850,6 +4047,7 @@ private fun TemplatePickerSheet(
                                         color = colors.text_muted,
                                         fontSize = 12.sp,
                                         maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
                                     )
                                 }
                             }
@@ -4009,6 +4207,7 @@ private fun SignaturePickerSheet(
                             fontSize = 15.sp,
                             fontWeight = if (is_selected) FontWeight.SemiBold else FontWeight.Medium,
                             maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                         val preview_line = remember(sig.id, sig.content, sig.is_html) {
                             if (sig.is_html) {

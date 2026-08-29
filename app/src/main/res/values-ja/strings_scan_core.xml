@@ -1,0 +1,10 @@
+<resources>
+    <string name="demo_phish_subject">緊急: PayPalアカウントで不審なサインインが検出されました</string>
+    <string name="demo_phish_preview">不正なログインの試みを検出しました。アカウントの停止を避けるため、今すぐ本人確認を行ってください。</string>
+    <string name="demo_phish_body_greeting">お客様各位</string>
+    <string name="demo_phish_body_para1">お客様のPayPalアカウントで、心当たりのないデバイスからの不審なサインインを検出しました。保護のため、今すぐ本人確認を行わない場合、24時間以内にアカウントが停止されます。</string>
+    <string name="demo_phish_body_para2">以下の安全なリンクからお支払い情報をご確認ください。</string>
+    <string name="demo_phish_body_para3">ご対応いただけない場合、資金への永久的なアクセス制限が発生します。これは即時対応が必要な通知です。</string>
+    <string name="demo_phish_body_signoff">PayPalセキュリティチーム</string>
+    <string name="demo_phish_body_signin_label">または直接サインイン:</string>
+</resources>

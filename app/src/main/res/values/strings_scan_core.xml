@@ -1,0 +1,10 @@
+<resources>
+    <string name="demo_phish_subject">Urgent: unusual sign-in activity on your PayPal account</string>
+    <string name="demo_phish_preview">We detected an unauthorized login attempt. Verify your identity immediately to avoid account suspension.</string>
+    <string name="demo_phish_body_greeting">Dear customer,</string>
+    <string name="demo_phish_body_para1">We detected an unusual sign-in activity on your PayPal account from a device we do not recognize. For your protection, your account will be suspended within 24 hours unless you verify your identity immediately.</string>
+    <string name="demo_phish_body_para2">Please confirm your billing information by visiting the secure link below:</string>
+    <string name="demo_phish_body_para3">Failure to respond will result in permanent loss of access to your funds. This is an immediate action required notice.</string>
+    <string name="demo_phish_body_signoff">PayPal Security Team</string>
+    <string name="demo_phish_body_signin_label">Or sign in directly:</string>
+</resources>

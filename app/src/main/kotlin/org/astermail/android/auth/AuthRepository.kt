@@ -326,6 +326,7 @@ class AuthRepository @Inject constructor(
             mail_repository.clear_account_data()
             cancel_all_notifications()
             runCatching { org.astermail.android.notifications.MailPollingWorker.reset_new_mail_baseline(context) }
+            runCatching { org.astermail.android.notifications.NotificationDedupe.clear(context) }
         }
         val served_vault_bytes = runCatching { base64_decode(login_resp.encrypted_vault) }.getOrNull()
         if (AuthSaltGuard.collides_with_vault_salt(salt_bytes, served_vault_bytes)) {
@@ -530,6 +531,7 @@ class AuthRepository @Inject constructor(
             mail_repository.clear_account_data()
             cancel_all_notifications()
             runCatching { org.astermail.android.notifications.MailPollingWorker.reset_new_mail_baseline(context) }
+            runCatching { org.astermail.android.notifications.NotificationDedupe.clear(context) }
         }
         token_store.save(access, register_resp.refresh_token ?: access)
         api_client.invalidate_bearer_cache()
@@ -835,6 +837,7 @@ class AuthRepository @Inject constructor(
         runCatching { mail_repository.clear_account_data() }
         runCatching { org.astermail.android.billing.AttachmentLimits.reset() }
         runCatching { theme_store.clear() }
+        runCatching { org.astermail.android.ui.compose.compose_seed_store.clear(context) }
         cancel_all_notifications()
         runCatching {
             val loader = coil.Coil.imageLoader(context)
@@ -1011,6 +1014,7 @@ class AuthRepository @Inject constructor(
         org.astermail.android.folders.folder_lock_store.lock_all()
         mail_repository.clear_account_data()
         runCatching { theme_store.clear() }
+        runCatching { org.astermail.android.ui.compose.compose_seed_store.clear(context) }
         cancel_all_notifications()
         runCatching {
             val loader = coil.Coil.imageLoader(context)

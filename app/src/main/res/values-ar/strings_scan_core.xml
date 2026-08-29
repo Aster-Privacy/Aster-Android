@@ -1,0 +1,10 @@
+<resources>
+    <string name="demo_phish_subject">عاجل: نشاط تسجيل دخول غير معتاد في حساب PayPal الخاص بك</string>
+    <string name="demo_phish_preview">اكتشفنا محاولة تسجيل دخول غير مصرح بها. تحقق من هويتك فورًا لتجنب تعليق حسابك.</string>
+    <string name="demo_phish_body_greeting">عزيزي العميل،</string>
+    <string name="demo_phish_body_para1">اكتشفنا نشاط تسجيل دخول غير معتاد في حساب PayPal الخاص بك من جهاز لا نتعرف عليه. لحمايتك، سيتم تعليق حسابك خلال 24 ساعة ما لم تتحقق من هويتك فورًا.</string>
+    <string name="demo_phish_body_para2">يرجى تأكيد معلومات الفوترة الخاصة بك من خلال زيارة الرابط الآمن أدناه:</string>
+    <string name="demo_phish_body_para3">سيؤدي عدم الاستجابة إلى فقدان الوصول إلى أموالك بشكل دائم. هذا إشعار يتطلب إجراءً فوريًا.</string>
+    <string name="demo_phish_body_signoff">فريق أمان PayPal</string>
+    <string name="demo_phish_body_signin_label">أو سجّل الدخول مباشرة:</string>
+</resources>
