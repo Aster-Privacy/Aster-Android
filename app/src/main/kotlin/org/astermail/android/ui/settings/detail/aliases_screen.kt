@@ -958,6 +958,7 @@ internal fun alias_list_row(
             .background(colors.bg_card)
             .border(1.dp, colors.border_secondary, shape)
             .combinedClickable(
+                hapticFeedbackEnabled = false,
                 onClick = {
                     if (alias.decryption_failed) return@combinedClickable
                     if (on_toggle_expanded != null) on_toggle_expanded() else on_edit_note?.invoke()
@@ -1180,6 +1181,7 @@ private fun custom_domain_address_row(
             .background(colors.bg_card)
             .border(1.dp, colors.border_secondary, shape)
             .combinedClickable(
+                hapticFeedbackEnabled = false,
                 onClick = { copy_address(context, addr.address) },
                 onLongClick = {
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -1705,6 +1707,7 @@ private fun directories_tab(
                         modifier = Modifier
                             .weight(1f)
                             .combinedClickable(
+                                hapticFeedbackEnabled = false,
                                 onClick = {
                                     val copied = write_to_clipboard(context, ClipData.newPlainText("directory", dir_address))
                                     show_copy_result_toast(context, dir_address, copied)
@@ -1867,6 +1870,7 @@ internal fun ghost_tab(
                     modifier = Modifier
                         .fillMaxWidth()
                         .combinedClickable(
+                            hapticFeedbackEnabled = false,
                             onClick = {
                                 val copied = write_to_clipboard(context, ClipData.newPlainText("ghost", ghost_address))
                                 show_copy_result_toast(context, ghost_address, copied)
@@ -2408,6 +2412,7 @@ private fun domain_card(
                         maxLines = if (name_expanded) Int.MAX_VALUE else 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.combinedClickable(
+                            hapticFeedbackEnabled = false,
                             onClick = { name_expanded = !name_expanded },
                             onLongClick = {
                                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)

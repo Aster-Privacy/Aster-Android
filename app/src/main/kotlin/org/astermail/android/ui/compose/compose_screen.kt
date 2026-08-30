@@ -1988,6 +1988,7 @@ fun ComposeScreen(
                         .fillMaxWidth()
                         .heightIn(min = 24.dp)
                         .combinedClickable(
+                            hapticFeedbackEnabled = false,
                             onClick = { open_from_sheet() },
                             onLongClick = { copy_from_address(from_alias) },
                         )

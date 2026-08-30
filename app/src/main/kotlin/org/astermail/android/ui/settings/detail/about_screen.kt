@@ -101,6 +101,7 @@ fun AboutScreen(
                 fontSize = 13.sp,
                 modifier = Modifier
                     .combinedClickable(
+                        hapticFeedbackEnabled = false,
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
                         onClick = {},

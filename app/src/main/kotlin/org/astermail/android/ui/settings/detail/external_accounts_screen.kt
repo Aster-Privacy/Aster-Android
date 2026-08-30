@@ -338,6 +338,7 @@ fun ExternalAccountsScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .combinedClickable(
+                                    hapticFeedbackEnabled = false,
                                     onClick = {
                                         if (!account_email.isNullOrBlank()) {
                                             copy_account_email(context, account_email)

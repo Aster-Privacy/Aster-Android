@@ -731,6 +731,7 @@ private fun subscription_row(
             .clip(group_shape)
             .drawBehind { drawRect(row_bg.value) }
             .combinedClickable(
+                hapticFeedbackEnabled = false,
                 interactionSource = interaction_source,
                 indication = ripple(),
                 onClick = { if (selection_active) on_toggle_select() else on_open() },

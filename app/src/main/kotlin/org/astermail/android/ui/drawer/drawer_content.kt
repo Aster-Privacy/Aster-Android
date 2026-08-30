@@ -1980,6 +1980,7 @@ private fun workspace_switcher_sheet(
                                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                                 modifier = Modifier
                                     .combinedClickable(
+                                        hapticFeedbackEnabled = false,
                                         interactionSource = remember { MutableInteractionSource() },
                                         indication = null,
                                         onClick = { if (!is_current) on_switch(account) },
@@ -1996,6 +1997,7 @@ private fun workspace_switcher_sheet(
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                             modifier = Modifier
                                 .combinedClickable(
+                                    hapticFeedbackEnabled = false,
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
                                     onClick = { if (!is_current) on_switch(account) },
@@ -2340,7 +2342,7 @@ private fun drawer_row(
             .background(bg)
             .then(
                 if (on_long_click != null) {
-                    Modifier.combinedClickable(onClick = on_click, onLongClick = on_long_click)
+                    Modifier.combinedClickable(onClick = on_click, onLongClick = on_long_click, hapticFeedbackEnabled = false)
                 } else {
                     Modifier.clickable(onClick = on_click)
                 }
@@ -2438,7 +2440,7 @@ private fun drawer_label_row(
         .padding(horizontal = 10.dp, vertical = 2.dp)
         .clip(RoundedCornerShape(999.dp))
         .background(bg)
-        .combinedClickable(onClick = on_click, onLongClick = on_long_click)
+        .combinedClickable(onClick = on_click, onLongClick = on_long_click, hapticFeedbackEnabled = false)
         .padding(horizontal = 15.dp)
         .height(48.dp)
     Row(
@@ -2566,6 +2568,7 @@ private fun drawer_footer(
                     .height(22.dp)
                     .aspectRatio(aster_wordmark_ratio)
                     .combinedClickable(
+                        hapticFeedbackEnabled = false,
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
                         onClick = {},

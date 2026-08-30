@@ -197,6 +197,7 @@ fun star_toggle_icon(
                 .size(touch_size)
                 .clip(RoundedCornerShape(percent = 50))
                 .combinedClickable(
+                    hapticFeedbackEnabled = false,
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                     onClick = onClick,

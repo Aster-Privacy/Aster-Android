@@ -2041,6 +2041,7 @@ internal fun expanded_message(
                         modifier = Modifier
                             .weight(1f, fill = false)
                             .combinedClickable(
+                                hapticFeedbackEnabled = false,
                                 onClick = {
                                     if (sender_name_truncated || addresses_expanded) {
                                         addresses_expanded = !addresses_expanded
@@ -2062,6 +2063,7 @@ internal fun expanded_message(
                         overflow = TextOverflow.Ellipsis,
                         onTextLayout = { if (!addresses_expanded) sender_email_truncated = it.hasVisualOverflow },
                         modifier = Modifier.combinedClickable(
+                            hapticFeedbackEnabled = false,
                             onClick = {
                                 if (sender_email_truncated || addresses_expanded) {
                                     addresses_expanded = !addresses_expanded
@@ -2082,6 +2084,7 @@ internal fun expanded_message(
                     overflow = TextOverflow.Ellipsis,
                     onTextLayout = { if (!addresses_expanded) to_truncated = it.hasVisualOverflow },
                     modifier = Modifier.combinedClickable(
+                        hapticFeedbackEnabled = false,
                         onClick = {
                             if (to_truncated || addresses_expanded) {
                                 addresses_expanded = !addresses_expanded
