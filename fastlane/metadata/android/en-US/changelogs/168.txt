@@ -1,0 +1,11 @@
+What's new:
+
+- Contacts has its own place in the navigation, and opening one finds every message from that person.
+- Choose when translation packs download, and manage languages in Settings.
+- Manage bought domains and contact support in Settings.
+- A failed payment now tells you, and you can change your plan in the app.
+
+Fixed:
+
+- Your own photo shows on mail you send from an alias.
+- Deleted messages no longer flicker back into the list.
