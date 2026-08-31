@@ -1,0 +1,9 @@
+Fixed:
+
+- Menus open from the spot you tap, not the top left corner.
+- Folder names in the quick folder menu line up correctly.
+- The message list settles as soon as it opens.
+- The reaction picker no longer flickers when you open a message.
+- Your signature stays below the message, above the quoted text.
+- A contact shows only the actions it supports, and copying confirms.
+- In Subscriptions, hold a row and drag to select more.
