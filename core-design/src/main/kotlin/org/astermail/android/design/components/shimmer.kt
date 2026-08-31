@@ -33,6 +33,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.aster_reduce_motion
 
 private fun mix(from: Color, to: Color, amount: Float): Color = Color(
     red = from.red + (to.red - from.red) * amount,
@@ -49,7 +50,7 @@ fun shimmer_brush(animated: Boolean = true): Brush {
     val base = mix(mix(surface, lift, if (colors.is_dark) 0.07f else 0.09f), colors.accent_blue, 0.05f)
     val highlight = mix(mix(surface, lift, if (colors.is_dark) 0.16f else 0.03f), colors.accent_blue, 0.13f)
 
-    if (!animated) {
+    if (!animated || aster_reduce_motion()) {
         return Brush.linearGradient(colors = listOf(base, base))
     }
 

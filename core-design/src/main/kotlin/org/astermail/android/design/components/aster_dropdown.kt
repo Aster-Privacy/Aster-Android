@@ -19,17 +19,15 @@
 package org.astermail.android.design.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -66,6 +64,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -177,12 +176,7 @@ fun aster_dropdown_menu(
             opens_upward = flip_y
         }
     }
-    val transform_origin = TransformOrigin(
-        pivotFractionX = if (opens_leftward) 1f else 0f,
-        pivotFractionY = if (opens_upward) 1f else 0f,
-    )
-    val slide_px = with(density) { AsterSlide.menu_dp.dp.roundToPx() }
-    val slide_offset = if (opens_upward) slide_px else -slide_px
+    val slide_px = with(density) { AsterSlide.menu_dp.dp.toPx() }
     val enter = if (reduce_motion) {
         EnterTransition.None
     } else {
@@ -191,19 +185,6 @@ fun aster_dropdown_menu(
                 durationMillis = AsterDuration.menu_fade_enter,
                 easing = AsterEasing.menu_enter,
             ),
-        ) + scaleIn(
-            animationSpec = tween(
-                durationMillis = AsterDuration.menu_enter,
-                easing = AsterEasing.menu_enter,
-            ),
-            initialScale = AsterScale.menu_enter_from,
-            transformOrigin = transform_origin,
-        ) + slideInVertically(
-            animationSpec = tween(
-                durationMillis = AsterDuration.menu_enter,
-                easing = AsterEasing.menu_enter,
-            ),
-            initialOffsetY = { slide_offset },
         )
     }
     val exit = if (reduce_motion) {
@@ -214,19 +195,6 @@ fun aster_dropdown_menu(
                 durationMillis = AsterDuration.menu_fade_exit,
                 easing = AsterEasing.menu_exit,
             ),
-        ) + scaleOut(
-            animationSpec = tween(
-                durationMillis = AsterDuration.menu_exit,
-                easing = AsterEasing.menu_exit,
-            ),
-            targetScale = AsterScale.menu_exit_to,
-            transformOrigin = transform_origin,
-        ) + slideOutVertically(
-            animationSpec = tween(
-                durationMillis = AsterDuration.menu_exit,
-                easing = AsterEasing.menu_exit,
-            ),
-            targetOffsetY = { slide_offset },
         )
     }
     Popup(
@@ -239,8 +207,56 @@ fun aster_dropdown_menu(
             enter = enter,
             exit = exit,
         ) {
+            val progress = if (reduce_motion) {
+                null
+            } else {
+                transition.animateFloat(
+                    transitionSpec = {
+                        if (initialState == EnterExitState.PreEnter) {
+                            tween(
+                                durationMillis = AsterDuration.menu_enter,
+                                easing = AsterEasing.menu_enter,
+                            )
+                        } else {
+                            tween(
+                                durationMillis = AsterDuration.menu_exit,
+                                easing = AsterEasing.menu_exit,
+                            )
+                        }
+                    },
+                    label = "aster_dropdown_reveal",
+                ) { state ->
+                    when (state) {
+                        EnterExitState.PreEnter -> 0f
+                        EnterExitState.Visible -> 1f
+                        EnterExitState.PostExit -> 0f
+                    }
+                }
+            }
             Column(
                 modifier = modifier
+                    .then(
+                        if (progress == null) {
+                            Modifier
+                        } else {
+                            Modifier.graphicsLayer {
+                                val t = progress.value
+                                val from = if (transition.targetState == EnterExitState.Visible) {
+                                    AsterScale.menu_enter_from
+                                } else {
+                                    AsterScale.menu_exit_to
+                                }
+                                val scale = from + (1f - from) * t
+                                scaleX = scale
+                                scaleY = scale
+                                translationY = (1f - t) * (if (opens_upward) slide_px else -slide_px)
+                                transformOrigin = TransformOrigin(
+                                    pivotFractionX = if (opens_leftward) 1f else 0f,
+                                    pivotFractionY = if (opens_upward) 1f else 0f,
+                                )
+                            }
+                        },
+                    )
                     .shadow(dropdown_elevation, dropdown_surface_shape, clip = false)
                     .clip(dropdown_surface_shape)
                     .background(colors.dropdown_bg)
