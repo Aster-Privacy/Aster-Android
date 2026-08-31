@@ -28,9 +28,14 @@ import android.content.ClipData
 import android.content.Intent
 import android.widget.Toast
 import android.net.Uri
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -53,6 +58,7 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ripple
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -67,6 +73,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -78,7 +85,10 @@ import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterDuration
+import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterRadius
+import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterDestructiveButton
@@ -235,51 +245,67 @@ fun ContactDetailScreen(
                 }
             }
 
+            val primary_email = contact.email.ifBlank { contact.work_email }
+            val primary_phone = contact.phone.ifBlank { contact.work_phone }
+            val mail_query = build_contact_mail_query(listOf(contact.email, contact.work_email))
+            val can_mail = on_compose != null && primary_email.isNotBlank()
+            val can_call = primary_phone.isNotBlank()
+            val can_search = on_search_mail != null && mail_query.isNotEmpty()
+            val can_copy = primary_email.isNotBlank()
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = AsterSpacing.xxl),
-                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md),
+                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
             ) {
-                QuickAction(TablerIcons.Mail, stringResource(R.string.mail), Modifier.weight(1f)) {
-                    if (on_compose != null && contact.email.isNotBlank()) {
-                        on_compose(contact.email)
+                if (can_mail) {
+                    QuickAction(
+                        icon = TablerIcons.Mail,
+                        label = stringResource(R.string.mail),
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        on_compose?.invoke(primary_email)
                     }
                 }
-                QuickAction(TablerIcons.Phone, stringResource(R.string.call), Modifier.weight(1f)) {
-                    val phone = contact.phone.ifBlank { contact.work_phone }
-                    if (phone.isNotBlank()) {
-                        val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${phone}"))
-
+                if (can_call) {
+                    QuickAction(
+                        icon = TablerIcons.Phone,
+                        label = stringResource(R.string.call),
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + primary_phone))
                         try {
                             context.startActivity(intent)
                         } catch (_: Throwable) {
-                            android.widget.Toast.makeText(
+                            Toast.makeText(
                                 context,
                                 context.getString(R.string.could_not_open_link),
-                                android.widget.Toast.LENGTH_SHORT,
+                                Toast.LENGTH_SHORT,
                             ).show()
                         }
                     }
                 }
-                QuickAction(
-                    TablerIcons.Search,
-                    stringResource(R.string.all_mail),
-                    Modifier.weight(1f),
-                ) {
-                    val query = build_contact_mail_query(
-                        listOf(contact.email, contact.work_email),
-                    )
-                    if (on_search_mail != null && query.isNotEmpty()) {
-                        on_search_mail(query)
+                if (can_search) {
+                    QuickAction(
+                        icon = TablerIcons.Search,
+                        label = stringResource(R.string.all_mail),
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        on_search_mail?.invoke(mail_query)
                     }
                 }
-                QuickAction(TablerIcons.Copy, stringResource(R.string.copy), Modifier.weight(1f)) {
-                    if (contact.email.isNotBlank()) {
+                if (can_copy) {
+                    val copied_message = stringResource(R.string.email_copied)
+                    QuickAction(
+                        icon = TablerIcons.Copy,
+                        label = stringResource(R.string.copy),
+                        modifier = Modifier.weight(1f),
+                    ) {
                         clipboard_scope.launch {
                             clipboard.setClipEntry(
-                                ClipEntry(ClipData.newPlainText("", contact.email)),
+                                ClipEntry(ClipData.newPlainText("", primary_email)),
                             )
+                            Toast.makeText(context, copied_message, Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
@@ -445,12 +471,37 @@ private fun QuickAction(
     on_click: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
+    val reduce_motion = aster_reduce_motion()
+    val interaction_source = remember { MutableInteractionSource() }
+    val pressed by interaction_source.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (pressed && !reduce_motion) 0.96f else 1f,
+        animationSpec = tween(
+            durationMillis = if (pressed) AsterDuration.tap_down else AsterDuration.tap_up,
+            easing = if (pressed) AsterEasing.tap_down else AsterEasing.tap_up,
+        ),
+        label = "quick_action_scale",
+    )
+    val container by animateColorAsState(
+        targetValue = if (pressed) colors.accent_blue.copy(alpha = 0.1f) else colors.bg_tertiary,
+        animationSpec = tween(durationMillis = AsterDuration.tap_up),
+        label = "quick_action_container",
+    )
+    val shape = SquircleShape(18.dp)
     Column(
         modifier = modifier
-            .clip(SquircleShape(18.dp))
-            .background(colors.bg_tertiary)
-            .border(1.dp, colors.border_primary, SquircleShape(18.dp))
-            .clickable(onClick = on_click)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .clip(shape)
+            .background(container)
+            .border(1.dp, colors.border_primary, shape)
+            .clickable(
+                interactionSource = interaction_source,
+                indication = ripple(color = colors.accent_blue),
+                onClick = on_click,
+            )
             .padding(vertical = AsterSpacing.md),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -466,6 +517,7 @@ private fun QuickAction(
             color = colors.text_secondary,
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
+            maxLines = 1,
         )
     }
 }
