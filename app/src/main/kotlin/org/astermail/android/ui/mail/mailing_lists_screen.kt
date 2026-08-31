@@ -33,6 +33,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,6 +56,9 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
@@ -67,7 +71,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -83,6 +89,9 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventTimeoutCancellationException
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
@@ -101,6 +110,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlin.math.roundToInt
+import kotlinx.coroutines.withTimeout
 import org.astermail.android.R
 import org.astermail.android.api.subscriptions.MailingListSubscription
 import org.astermail.android.design.AsterMaterial
@@ -145,6 +155,7 @@ fun MailingListsScreen(
     }
 
     val haptic_enabled = org.astermail.android.ui.theme.local_accessibility.current.haptic_enabled
+    val haptics = LocalHapticFeedback.current
     var show_unsubscribed by rememberSaveable { mutableStateOf(false) }
     var selected_ids by remember { mutableStateOf(emptySet<String>()) }
     var confirm_single by remember { mutableStateOf<MailingListSubscription?>(null) }
@@ -183,6 +194,76 @@ fun MailingListsScreen(
         if (selected_ids.isNotEmpty()) header_offset_px.floatValue = 0f
     }
 
+    fun subscription_id_at_offset(y: Float): String? {
+        val info = list_state.layoutInfo
+        val item_y = y + info.viewportStartOffset
+        val entry = info.visibleItemsInfo.firstOrNull { entry ->
+            item_y >= entry.offset && item_y < entry.offset + entry.size
+        } ?: return null
+        val key = entry.key as? String ?: return null
+        return key.takeIf { it in visible_ids }
+    }
+
+    fun subscription_index_at_offset(y: Float): Int? {
+        val id = subscription_id_at_offset(y) ?: return null
+        val idx = visible.indexOfFirst { it.id == id }
+        return if (idx >= 0) idx else null
+    }
+
+    val drag_anchor_index = remember { mutableIntStateOf(-1) }
+    val drag_last_index = remember { mutableIntStateOf(-1) }
+    val drag_pre_selected = remember { mutableStateListOf<String>() }
+    val drag_pointer_y = remember { mutableFloatStateOf(-1f) }
+    val drag_viewport_height = remember { mutableFloatStateOf(0f) }
+    var drag_selecting by remember { mutableStateOf(false) }
+
+    fun apply_drag_selection(y: Float) {
+        val anchor = drag_anchor_index.intValue
+        if (anchor < 0) return
+        val idx = subscription_index_at_offset(y) ?: return
+        if (idx == drag_last_index.intValue) return
+        drag_last_index.intValue = idx
+        val lo = minOf(anchor, idx)
+        val hi = maxOf(anchor, idx)
+        val target = LinkedHashSet(drag_pre_selected)
+        for (i in lo..hi) {
+            visible.getOrNull(i)?.id?.let { target.add(it) }
+        }
+        if (target.size != selected_ids.size || !target.containsAll(selected_ids)) {
+            if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            selected_ids = target
+        }
+    }
+
+    val drag_edge_px = with(density) { 72.dp.toPx() }
+    LaunchedEffect(drag_selecting) {
+        if (!drag_selecting) return@LaunchedEffect
+        while (true) {
+            withFrameNanos { }
+            val y = drag_pointer_y.floatValue
+            val viewport = drag_viewport_height.floatValue
+            if (y < 0f || viewport <= 0f) continue
+            val info = list_state.layoutInfo
+            val content_top = info.beforeContentPadding.toFloat()
+            val content_bottom = viewport - info.afterContentPadding.toFloat()
+            val usable = content_bottom - content_top
+            if (usable <= 0f) continue
+            val edge = minOf(drag_edge_px, usable / 3f)
+            if (edge <= 0f) continue
+            val top_bound = content_top + edge
+            val bottom_bound = content_bottom - edge
+            val ratio = when {
+                y < top_bound -> -((top_bound - y) / edge)
+                y > bottom_bound -> (y - bottom_bound) / edge
+                else -> 0f
+            }.coerceIn(-1f, 1f)
+            if (ratio != 0f) {
+                list_state.scrollBy(ratio * 26f)
+                apply_drag_selection(y.coerceIn(content_top, content_bottom - 1f))
+            }
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -191,10 +272,81 @@ fun MailingListsScreen(
     ) {
         LazyColumn(
             state = list_state,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(Unit) {
+                    val press_slop = viewConfiguration.touchSlop
+                    val long_press_ms = viewConfiguration.longPressTimeoutMillis
+                    val drag_start_slop = 24.dp.toPx()
+                    awaitEachGesture {
+                        val down = awaitFirstDown(
+                            requireUnconsumed = false,
+                            pass = PointerEventPass.Initial,
+                        )
+                        val anchor_id = subscription_id_at_offset(down.position.y)
+                        var aborted = anchor_id == null
+                        var long_pressed = false
+                        if (!aborted) {
+                            try {
+                                withTimeout(long_press_ms) {
+                                    while (true) {
+                                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                                        val change = event.changes.firstOrNull()
+                                        if (change == null || !change.pressed) {
+                                            aborted = true
+                                            break
+                                        }
+                                        if ((change.position - down.position).getDistance() > press_slop) {
+                                            aborted = true
+                                            break
+                                        }
+                                    }
+                                }
+                            } catch (_: PointerEventTimeoutCancellationException) {
+                                long_pressed = true
+                            }
+                        }
+                        if (!long_pressed || aborted) return@awaitEachGesture
+                        var drag_started = false
+                        try {
+                            while (true) {
+                                val event = awaitPointerEvent(PointerEventPass.Initial)
+                                val change = event.changes.firstOrNull() ?: break
+                                if (drag_started || selected_ids.isNotEmpty()) change.consume()
+                                if (!change.pressed) break
+                                if (selected_ids.isEmpty()) continue
+                                if ((change.position - down.position).getDistance() < drag_start_slop) continue
+                                if (!drag_started) {
+                                    val anchor_index = visible.indexOfFirst { it.id == anchor_id }
+                                    if (anchor_index < 0) continue
+                                    drag_anchor_index.intValue = anchor_index
+                                    drag_last_index.intValue = anchor_index
+                                    drag_pre_selected.clear()
+                                    drag_pre_selected.addAll(selected_ids)
+                                    drag_viewport_height.floatValue = size.height.toFloat()
+                                    drag_started = true
+                                    drag_selecting = true
+                                    change.consume()
+                                }
+                                drag_pointer_y.floatValue = change.position.y
+                                apply_drag_selection(change.position.y)
+                            }
+                        } finally {
+                            drag_selecting = false
+                            drag_pointer_y.floatValue = -1f
+                            drag_anchor_index.intValue = -1
+                            drag_last_index.intValue = -1
+                            drag_pre_selected.clear()
+                        }
+                    }
+                },
             contentPadding = PaddingValues(
                 top = header_height_dp + AsterSpacing.sm,
-                bottom = 88.dp + nav_bar_bottom,
+                bottom = if (selected_ids.isEmpty()) {
+                    AsterSpacing.lg + nav_bar_bottom
+                } else {
+                    88.dp + nav_bar_bottom
+                },
             ),
         ) {
             item(key = "hero") {
@@ -295,7 +447,11 @@ fun MailingListsScreen(
             state = list_state,
             modifier = Modifier.align(Alignment.TopEnd),
             top_padding = header_height_dp,
-            bottom_padding = 88.dp + nav_bar_bottom,
+            bottom_padding = if (selected_ids.isEmpty()) {
+                AsterSpacing.lg + nav_bar_bottom
+            } else {
+                88.dp + nav_bar_bottom
+            },
         )
 
         val header_bg = colors.bg_primary
@@ -844,12 +1000,34 @@ private fun row_action_button(
     on_click: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val tint = if (is_destructive) colors.danger else colors.accent_blue
+    val interaction_source = remember { MutableInteractionSource() }
+    val pressed by interaction_source.collectIsPressedAsState()
+    val intent = if (is_destructive) colors.danger else colors.accent_blue
+    val tint by animateColorAsState(
+        targetValue = when {
+            is_loading -> intent
+            pressed -> intent
+            else -> colors.text_tertiary
+        },
+        animationSpec = tween(durationMillis = 140),
+        label = "subscription_action_tint",
+    )
+    val container by animateColorAsState(
+        targetValue = if (pressed) intent.copy(alpha = 0.12f) else Color.Transparent,
+        animationSpec = tween(durationMillis = 140),
+        label = "subscription_action_container",
+    )
     Box(
         modifier = Modifier
             .size(40.dp)
-            .clip(CircleShape)
-            .clickable(enabled = !is_loading, onClick = on_click),
+            .clip(SquircleShape(12.dp))
+            .background(container)
+            .clickable(
+                enabled = !is_loading,
+                interactionSource = interaction_source,
+                indication = ripple(bounded = true, color = intent),
+                onClick = on_click,
+            ),
         contentAlignment = Alignment.Center,
     ) {
         if (is_loading) {
