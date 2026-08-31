@@ -1222,6 +1222,7 @@ class SettingsViewModel @Inject constructor(
                 if (decrypted.any { it.decryption_failed } && auth_repository.try_refresh_vault_keys()) {
                     decrypted = decrypt_all()
                 }
+                prime_own_alias_avatars(decrypted)
                 _state.value = _state.value.copy(
                     aliases = decrypted,
                     max_aliases = max_aliases,
@@ -5038,6 +5039,7 @@ class SettingsViewModel @Inject constructor(
             try {
                 val response = ghost_alias_api.list_ghost_aliases()
                 val decrypted = response.aliases.map { decrypt_ghost_alias(it) }
+                prime_own_ghost_avatars(decrypted)
                 _state.value = _state.value.copy(ghost_aliases = decrypted, is_loading = false)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
@@ -5631,6 +5633,39 @@ class SettingsViewModel @Inject constructor(
         } catch (t: Throwable) {
             if (t is kotlinx.coroutines.CancellationException) throw t
             dir
+        }
+    }
+
+    private fun prime_own_alias_avatars(aliases: List<AliasInfo>) {
+        prime_own_address_avatars(
+            aliases
+                .filterNot { it.decryption_failed }
+                .map { it.address to it.profile_picture },
+        )
+    }
+
+    private fun prime_own_ghost_avatars(aliases: List<org.astermail.android.api.ghost.GhostAlias>) {
+        prime_own_address_avatars(
+            aliases
+                .filterNot { it.decryption_failed }
+                .map { it.address to null },
+        )
+    }
+
+    private fun prime_own_address_avatars(addresses: List<Pair<String, String?>>) {
+        val resolver = org.astermail.android.mail.AsterProfileResolverHolder.shared ?: return
+        val account = account_store.get_current()
+        val account_picture = account?.profile_picture?.takeIf { it.isNotBlank() }
+        val account_color = account?.profile_color?.takeIf { it.isNotBlank() }
+        for ((address, picture) in addresses) {
+            val local_part = address.substringBefore('@', "")
+            if (local_part.isBlank() || !address.contains('@')) continue
+            resolver.prime(
+                email = address,
+                display_name = null,
+                profile_picture = picture?.takeIf { it.isNotBlank() } ?: account_picture,
+                profile_color = account_color,
+            )
         }
     }
 
