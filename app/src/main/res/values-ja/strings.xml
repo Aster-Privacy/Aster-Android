@@ -2999,4 +2999,11 @@
     <string name="resurrection_old_password_prompt">リセット前に使用していたパスワードを入力してください</string>
     <string name="resurrection_success">以前のデータのロックが解除されました。以前のメールとエイリアスは再び通常どおり開きます。</string>
     <string name="resurrection_failed">以前のデータのロックを解除できませんでした。パスワードまたはフレーズを確認して、もう一度お試しください。</string>
+    <string name="encrypted_pgp">エンドツーエンド暗号化（OpenPGP）</string>
+    <string name="pgp_signature_label">デジタル署名</string>
+    <string name="pgp_signature_none">署名なし</string>
+    <string name="pgp_signature_unverified">署名あり、未検証</string>
+    <string name="pgp_signature_valid">署名を検証済み</string>
+    <string name="pgp_signature_invalid">署名が一致しません</string>
+    <string name="pgp_recipient_description">送信者はこのメッセージを送信前に OpenPGP で暗号化しました。復号できるのは秘密鍵を持つデバイスだけなので、途中の誰にも読めません。</string>
 </resources>

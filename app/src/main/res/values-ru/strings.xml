@@ -3042,4 +3042,11 @@
     <string name="resurrection_old_password_prompt">Введите пароль, который вы использовали до сброса</string>
     <string name="resurrection_success">Прежние данные разблокированы. Ранние письма и псевдонимы снова открываются нормально.</string>
     <string name="resurrection_failed">Разблокировать прежние данные не удалось. Проверьте пароль или фразу и повторите попытку.</string>
+    <string name="encrypted_pgp">Сквозное шифрование (OpenPGP)</string>
+    <string name="pgp_signature_label">Цифровая подпись</string>
+    <string name="pgp_signature_none">Без подписи</string>
+    <string name="pgp_signature_unverified">Подписано, не проверено</string>
+    <string name="pgp_signature_valid">Подпись проверена</string>
+    <string name="pgp_signature_invalid">Подпись не совпадает</string>
+    <string name="pgp_recipient_description">Отправитель зашифровал это сообщение с помощью OpenPGP перед отправкой. Расшифровать его может только устройство с вашим закрытым ключом, поэтому никто другой его не прочитает.</string>
 </resources>

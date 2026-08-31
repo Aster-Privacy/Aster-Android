@@ -2999,4 +2999,11 @@
     <string name="resurrection_old_password_prompt">재설정 전에 사용한 비밀번호를 입력하세요</string>
     <string name="resurrection_success">이전 데이터의 잠금이 해제되었습니다. 이전 메일과 별칭이 다시 정상적으로 열립니다.</string>
     <string name="resurrection_failed">이전 데이터의 잠금을 해제하지 못했습니다. 비밀번호나 문구를 확인하고 다시 시도하세요.</string>
+    <string name="encrypted_pgp">종단간 암호화(OpenPGP)</string>
+    <string name="pgp_signature_label">디지털 서명</string>
+    <string name="pgp_signature_none">서명 없음</string>
+    <string name="pgp_signature_unverified">서명됨, 미검증</string>
+    <string name="pgp_signature_valid">서명 확인됨</string>
+    <string name="pgp_signature_invalid">서명이 일치하지 않음</string>
+    <string name="pgp_recipient_description">발신자가 보내기 전에 OpenPGP로 이 메시지를 암호화했습니다. 개인 키가 있는 기기에서만 복호화할 수 있으므로 중간에서 누구도 읽을 수 없습니다.</string>
 </resources>

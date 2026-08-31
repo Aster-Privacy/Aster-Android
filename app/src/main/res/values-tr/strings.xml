@@ -3012,4 +3012,11 @@
     <string name="resurrection_old_password_prompt">Sıfırlamadan önce kullandığın parolayı gir</string>
     <string name="resurrection_success">Eski verilerinin kilidi açıldı. Önceki postalar ve takma adlar yeniden normal şekilde açılıyor.</string>
     <string name="resurrection_failed">Bu, eski verilerin kilidini açmadı. Parolayı veya ifadeyi kontrol edip yeniden dene.</string>
+    <string name="encrypted_pgp">Uçtan uca şifreli (OpenPGP)</string>
+    <string name="pgp_signature_label">Dijital imza</string>
+    <string name="pgp_signature_none">İmzalanmamış</string>
+    <string name="pgp_signature_unverified">İmzalanmış, doğrulanmamış</string>
+    <string name="pgp_signature_valid">İmza doğrulandı</string>
+    <string name="pgp_signature_invalid">İmza eşleşmiyor</string>
+    <string name="pgp_recipient_description">Gönderen bu mesajı göndermeden önce OpenPGP ile şifreledi. Mesajı yalnızca özel anahtarınızın bulunduğu bir cihaz çözebilir, bu yüzden başka kimse okuyamaz.</string>
 </resources>

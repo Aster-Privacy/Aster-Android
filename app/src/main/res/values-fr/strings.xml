@@ -3039,4 +3039,11 @@
     <string name="resurrection_old_password_prompt">Saisissez le mot de passe utilisé avant la réinitialisation</string>
     <string name="resurrection_success">Vos données antérieures sont déverrouillées. Les messages et alias précédents s\'ouvrent de nouveau normalement.</string>
     <string name="resurrection_failed">Cela n\'a pas déverrouillé les données antérieures. Vérifiez le mot de passe ou la phrase, puis réessayez.</string>
+    <string name="encrypted_pgp">Chiffré de bout en bout (OpenPGP)</string>
+    <string name="pgp_signature_label">Signature numérique</string>
+    <string name="pgp_signature_none">Non signé</string>
+    <string name="pgp_signature_unverified">Signé, non vérifié</string>
+    <string name="pgp_signature_valid">Signature vérifiée</string>
+    <string name="pgp_signature_invalid">La signature ne correspond pas</string>
+    <string name="pgp_recipient_description">L’expéditeur a chiffré ce message avec OpenPGP avant de l’envoyer. Seul un appareil disposant de votre clé privée peut le déchiffrer, personne d’autre ne peut le lire.</string>
 </resources>

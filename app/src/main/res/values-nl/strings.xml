@@ -3012,4 +3012,11 @@
     <string name="resurrection_old_password_prompt">Voer het wachtwoord in dat je voor het opnieuw instellen gebruikte</string>
     <string name="resurrection_success">Je oudere gegevens zijn ontgrendeld. Eerdere e-mail en aliassen openen weer normaal.</string>
     <string name="resurrection_failed">Daarmee zijn de oudere gegevens niet ontgrendeld. Controleer het wachtwoord of de zin en probeer het opnieuw.</string>
+    <string name="encrypted_pgp">End-to-end versleuteld (OpenPGP)</string>
+    <string name="pgp_signature_label">Digitale handtekening</string>
+    <string name="pgp_signature_none">Niet ondertekend</string>
+    <string name="pgp_signature_unverified">Ondertekend, niet geverifieerd</string>
+    <string name="pgp_signature_valid">Handtekening geverifieerd</string>
+    <string name="pgp_signature_invalid">Handtekening komt niet overeen</string>
+    <string name="pgp_recipient_description">De afzender heeft dit bericht met OpenPGP versleuteld voordat het werd verzonden. Alleen een apparaat met jouw privésleutel kan het ontsleutelen, dus niemand anders kan het lezen.</string>
 </resources>

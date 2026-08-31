@@ -3013,4 +3013,11 @@
     <string name="resurrection_old_password_prompt">Gib das Passwort ein, das du vor dem Zurücksetzen verwendet hast</string>
     <string name="resurrection_success">Deine älteren Daten sind entsperrt. Frühere E-Mails und Aliasse lassen sich wieder normal öffnen.</string>
     <string name="resurrection_failed">Damit ließen sich die älteren Daten nicht entsperren. Prüfe das Passwort oder die Phrase und versuche es erneut.</string>
+    <string name="encrypted_pgp">Ende-zu-Ende-verschlüsselt (OpenPGP)</string>
+    <string name="pgp_signature_label">Digitale Signatur</string>
+    <string name="pgp_signature_none">Nicht signiert</string>
+    <string name="pgp_signature_unverified">Signiert, nicht verifiziert</string>
+    <string name="pgp_signature_valid">Signatur verifiziert</string>
+    <string name="pgp_signature_invalid">Signatur stimmt nicht überein</string>
+    <string name="pgp_recipient_description">Der Absender hat diese Nachricht vor dem Senden mit OpenPGP verschlüsselt. Nur ein Gerät mit Ihrem privaten Schlüssel kann sie entschlüsseln, niemand dazwischen kann sie lesen.</string>
 </resources>

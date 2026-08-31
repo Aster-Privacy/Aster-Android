@@ -213,10 +213,13 @@ data class ThreadMessage(
     val is_external: Boolean = false,
     val system_origin: Boolean = false,
     val has_recipient_key: Boolean? = null,
+    val pgp_encrypted: Boolean = false,
+    val pgp_signature: org.astermail.android.crypto.PgpSignatureStatus =
+        org.astermail.android.crypto.PgpSignatureStatus.NONE,
 )
 
 val ThreadMessage.is_e2e_encrypted: Boolean
-    get() = !is_external || has_recipient_key == true
+    get() = pgp_encrypted || !is_external || has_recipient_key == true
 
 enum class SenderAuthStatus { verified, failed, unknown }
 
@@ -1232,6 +1235,8 @@ fun thread_message_to_mock(msg: org.astermail.android.mail.ThreadMessageDecrypte
         is_external = msg.raw_item.is_external ?: false,
         system_origin = msg.raw_item.system_origin ?: false,
         has_recipient_key = msg.raw_item.has_recipient_key,
+        pgp_encrypted = msg.pgp_encrypted,
+        pgp_signature = msg.pgp_signature,
     )
 }
 

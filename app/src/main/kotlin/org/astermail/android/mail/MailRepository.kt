@@ -138,7 +138,27 @@ data class DecryptedEnvelope(
     val sender_verification: String? = null,
     val is_undecryptable: Boolean = false,
     val is_unauthenticated: Boolean = false,
+    val pgp_encrypted: Boolean = false,
+    val pgp_signature: org.astermail.android.crypto.PgpSignatureStatus =
+        org.astermail.android.crypto.PgpSignatureStatus.NONE,
 )
+
+const val PGP_ENCRYPTED_MESSAGE_HEADER = "-----BEGIN PGP MESSAGE-----"
+
+fun merge_pgp_signature(
+    current: org.astermail.android.crypto.PgpSignatureStatus,
+    incoming: org.astermail.android.crypto.PgpSignatureStatus,
+): org.astermail.android.crypto.PgpSignatureStatus {
+    val rank = { status: org.astermail.android.crypto.PgpSignatureStatus ->
+        when (status) {
+            org.astermail.android.crypto.PgpSignatureStatus.NONE -> 0
+            org.astermail.android.crypto.PgpSignatureStatus.UNVERIFIED -> 1
+            org.astermail.android.crypto.PgpSignatureStatus.VALID -> 2
+            org.astermail.android.crypto.PgpSignatureStatus.INVALID -> 3
+        }
+    }
+    return if (rank(incoming) > rank(current)) incoming else current
+}
 
 const val ASTER_SUBJECT_BUNDLE_MARKER = "ASTER_BUNDLE_V2"
 
@@ -349,6 +369,9 @@ data class ThreadMessageDecrypted(
     val display_sender_name: String? = null,
     val display_sender_email: String? = null,
     val is_body_pending: Boolean = false,
+    val pgp_encrypted: Boolean = false,
+    val pgp_signature: org.astermail.android.crypto.PgpSignatureStatus =
+        org.astermail.android.crypto.PgpSignatureStatus.NONE,
 )
 
 @Singleton
@@ -2180,19 +2203,24 @@ class MailRepository @Inject constructor(
             subject = envelope?.subject ?: "",
             display_sender_name = forwarding?.display_sender_name,
             display_sender_email = forwarding?.display_sender_email,
+            pgp_encrypted = envelope?.pgp_encrypted ?: false,
+            pgp_signature = envelope?.pgp_signature
+                ?: org.astermail.android.crypto.PgpSignatureStatus.NONE,
         )
     }
 
-    private fun pgp_placeholder_envelope(): DecryptedEnvelope = DecryptedEnvelope(
-        subject = context.getString(R.string.pgp_encrypted_subject),
-        body_text = context.getString(R.string.pgp_encrypted_body),
-        body_html = null,
-        from_name = "",
-        from_email = "",
-        to = emptyList(),
-        cc = emptyList(),
-        sent_at = null,
-    )
+    private fun pgp_placeholder_envelope(pgp_encrypted: Boolean = true): DecryptedEnvelope =
+        DecryptedEnvelope(
+            subject = context.getString(R.string.pgp_encrypted_subject),
+            body_text = context.getString(R.string.pgp_encrypted_body),
+            body_html = null,
+            from_name = "",
+            from_email = "",
+            to = emptyList(),
+            cc = emptyList(),
+            sent_at = null,
+            pgp_encrypted = pgp_encrypted,
+        )
 
     fun decrypt_envelope_public(
         encrypted_envelope: String?,
@@ -2215,6 +2243,8 @@ class MailRepository @Inject constructor(
     ): DecryptedEnvelope? {
         if (encrypted_envelope.isNullOrBlank()) return null
         var unauthenticated = false
+        var envelope_pgp_encrypted = false
+        var envelope_pgp_signature = org.astermail.android.crypto.PgpSignatureStatus.NONE
         return try {
             val nonce_bytes = if (envelope_nonce.isNullOrBlank()) null
                 else android.util.Base64.decode(envelope_nonce, android.util.Base64.DEFAULT)
@@ -2224,10 +2254,15 @@ class MailRepository @Inject constructor(
                     val raw = android.util.Base64.decode(encrypted_envelope, android.util.Base64.DEFAULT)
                     val text = String(raw, Charsets.UTF_8)
                     if (body_starts_with(text, "-----BEGIN PGP")) {
-                        val pgp_result = try_pgp_decrypt(text)
-                        if (pgp_result != null) {
-                            if (MimeParser.looks_like_mime(pgp_result)) {
-                                val mime = MimeParser.parse(pgp_result)
+                        val armored_is_encrypted =
+                            body_starts_with(text, PGP_ENCRYPTED_MESSAGE_HEADER)
+                        val pgp_result = try_pgp_decrypt_result(text)
+                        val pgp_plaintext = pgp_result?.plaintext
+                        if (pgp_plaintext != null) {
+                            envelope_pgp_encrypted = armored_is_encrypted
+                            envelope_pgp_signature = pgp_result.signature
+                            if (MimeParser.looks_like_mime(pgp_plaintext)) {
+                                val mime = MimeParser.parse(pgp_plaintext)
                                 return DecryptedEnvelope(
                                     subject = "",
                                     body_text = mime.text ?: "",
@@ -2237,11 +2272,13 @@ class MailRepository @Inject constructor(
                                     to = emptyList(),
                                     cc = emptyList(),
                                     sent_at = null,
+                                    pgp_encrypted = armored_is_encrypted,
+                                    pgp_signature = pgp_result.signature,
                                 )
                             }
-                            pgp_result.toByteArray(Charsets.UTF_8)
+                            pgp_plaintext.toByteArray(Charsets.UTF_8)
                         } else {
-                            return pgp_placeholder_envelope()
+                            return pgp_placeholder_envelope(armored_is_encrypted)
                         }
                     } else {
                         unauthenticated = true
@@ -2261,7 +2298,15 @@ class MailRepository @Inject constructor(
             decrypted.fill(0)
             InboundAttachmentKeyStore.register_from_envelope_json(message_id, json_str)
             val parsed = parse_envelope_json(json_str)
-            val envelope = if (unauthenticated) parsed?.copy(is_unauthenticated = true) else parsed
+            val carried = if (envelope_pgp_encrypted || envelope_pgp_signature != org.astermail.android.crypto.PgpSignatureStatus.NONE) {
+                parsed?.copy(
+                    pgp_encrypted = envelope_pgp_encrypted,
+                    pgp_signature = envelope_pgp_signature,
+                )
+            } else {
+                parsed
+            }
+            val envelope = if (unauthenticated) carried?.copy(is_unauthenticated = true) else carried
             when {
                 envelope == null -> null
                 !decrypt_body_fields -> envelope
@@ -3071,7 +3116,12 @@ class MailRepository @Inject constructor(
         }
     }
 
-    private fun try_pgp_decrypt(ciphertext: String): String? {
+    private fun try_pgp_decrypt(ciphertext: String): String? =
+        try_pgp_decrypt_result(ciphertext)?.plaintext
+
+    private fun try_pgp_decrypt_result(
+        ciphertext: String,
+    ): org.astermail.android.crypto.PgpDecryptionResult? {
         val identity_key = session_key_store.get_identity_key() ?: return null
         if (!identity_key.contains("-----BEGIN PGP")) return null
         val passphrase = session_key_store.get_passphrase() ?: return null
@@ -3081,10 +3131,11 @@ class MailRepository @Inject constructor(
                 add(identity_key)
                 session_key_store.get_previous_keys()?.let { addAll(it) }
             }.filter { it.contains("-----BEGIN PGP") }
-            var result: String? = null
+            var result: org.astermail.android.crypto.PgpDecryptionResult? = null
             for (key in keys_to_try) {
                 result = try {
-                    PgpDecryptor.decrypt(ciphertext, key, chars)
+                    PgpDecryptor.decrypt_with_status(ciphertext, key, chars, null)
+                        .takeIf { it.plaintext != null }
                 } catch (_: Throwable) {
                     null
                 }
@@ -3206,13 +3257,24 @@ class MailRepository @Inject constructor(
             }
         }
 
+        var pgp_encrypted = envelope.pgp_encrypted
+        var pgp_signature = envelope.pgp_signature
+
         if (body_starts_with(body_text, "-----BEGIN PGP")) {
-            val decrypted = try_pgp_decrypt(body_text)
-            if (decrypted != null) body_text = decrypted
+            if (body_starts_with(body_text, PGP_ENCRYPTED_MESSAGE_HEADER)) pgp_encrypted = true
+            val decrypted = try_pgp_decrypt_result(body_text)
+            if (decrypted?.plaintext != null) {
+                body_text = decrypted.plaintext
+                pgp_signature = merge_pgp_signature(pgp_signature, decrypted.signature)
+            }
         }
         if (body_html != null && body_starts_with(body_html, "-----BEGIN PGP")) {
-            val decrypted = try_pgp_decrypt(body_html)
-            if (decrypted != null) body_html = decrypted
+            if (body_starts_with(body_html, PGP_ENCRYPTED_MESSAGE_HEADER)) pgp_encrypted = true
+            val decrypted = try_pgp_decrypt_result(body_html)
+            if (decrypted?.plaintext != null) {
+                body_html = decrypted.plaintext
+                pgp_signature = merge_pgp_signature(pgp_signature, decrypted.signature)
+            }
         }
 
         if (MimeParser.looks_like_mime(body_text)) {
@@ -3258,7 +3320,9 @@ class MailRepository @Inject constructor(
             body_html != envelope.body_html ||
             resolved_subject != envelope.subject ||
             is_undecryptable != envelope.is_undecryptable ||
-            is_unauthenticated != envelope.is_unauthenticated
+            is_unauthenticated != envelope.is_unauthenticated ||
+            pgp_encrypted != envelope.pgp_encrypted ||
+            pgp_signature != envelope.pgp_signature
         ) {
             envelope.copy(
                 subject = resolved_subject,
@@ -3266,6 +3330,8 @@ class MailRepository @Inject constructor(
                 body_html = body_html,
                 is_undecryptable = is_undecryptable,
                 is_unauthenticated = is_unauthenticated,
+                pgp_encrypted = pgp_encrypted,
+                pgp_signature = pgp_signature,
             )
         } else {
             envelope

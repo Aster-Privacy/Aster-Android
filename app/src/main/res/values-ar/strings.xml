@@ -3072,4 +3072,11 @@
     <string name="resurrection_old_password_prompt">أدخل كلمة السر التي استخدمتها قبل إعادة التعيين</string>
     <string name="resurrection_success">تم فتح بياناتك الأقدم. تُفتح الرسائل والعناوين البديلة السابقة بشكل طبيعي مرة أخرى.</string>
     <string name="resurrection_failed">لم يؤدِ ذلك إلى فتح البيانات الأقدم. تحقق من كلمة السر أو العبارة وحاول مرة أخرى.</string>
+    <string name="encrypted_pgp">مشفّر من طرف إلى طرف (OpenPGP)</string>
+    <string name="pgp_signature_label">التوقيع الرقمي</string>
+    <string name="pgp_signature_none">غير موقّع</string>
+    <string name="pgp_signature_unverified">موقّع، غير متحقق منه</string>
+    <string name="pgp_signature_valid">تم التحقق من التوقيع</string>
+    <string name="pgp_signature_invalid">التوقيع غير مطابق</string>
+    <string name="pgp_recipient_description">شفّر المرسل هذه الرسالة باستخدام OpenPGP قبل إرسالها. لا يمكن فك تشفيرها إلا على جهاز يحمل مفتاحك الخاص، لذا لا يمكن لأحد في المنتصف قراءتها.</string>
 </resources>

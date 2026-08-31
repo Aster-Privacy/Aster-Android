@@ -3042,4 +3042,11 @@
     <string name="resurrection_old_password_prompt">Wpisz hasło używane przed resetem</string>
     <string name="resurrection_success">Twoje starsze dane są odblokowane. Wcześniejsze wiadomości i aliasy znowu otwierają się normalnie.</string>
     <string name="resurrection_failed">To nie odblokowało starszych danych. Sprawdź hasło lub frazę i spróbuj ponownie.</string>
+    <string name="encrypted_pgp">Szyfrowanie end-to-end (OpenPGP)</string>
+    <string name="pgp_signature_label">Podpis cyfrowy</string>
+    <string name="pgp_signature_none">Niepodpisana</string>
+    <string name="pgp_signature_unverified">Podpisana, niezweryfikowana</string>
+    <string name="pgp_signature_valid">Podpis zweryfikowany</string>
+    <string name="pgp_signature_invalid">Podpis się nie zgadza</string>
+    <string name="pgp_recipient_description">Nadawca zaszyfrował tę wiadomość za pomocą OpenPGP przed wysłaniem. Odszyfrować ją może tylko urządzenie z Twoim kluczem prywatnym, więc nikt inny jej nie przeczyta.</string>
 </resources>

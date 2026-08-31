@@ -3012,4 +3012,11 @@
     <string name="resurrection_old_password_prompt">Digite a senha usada antes da redefinição</string>
     <string name="resurrection_success">Seus dados anteriores estão desbloqueados. As mensagens e os aliases anteriores voltam a abrir normalmente.</string>
     <string name="resurrection_failed">Isso não desbloqueou os dados anteriores. Verifique a senha ou a frase e tente novamente.</string>
+    <string name="encrypted_pgp">Criptografia de ponta a ponta (OpenPGP)</string>
+    <string name="pgp_signature_label">Assinatura digital</string>
+    <string name="pgp_signature_none">Não assinado</string>
+    <string name="pgp_signature_unverified">Assinado, não verificado</string>
+    <string name="pgp_signature_valid">Assinatura verificada</string>
+    <string name="pgp_signature_invalid">A assinatura não corresponde</string>
+    <string name="pgp_recipient_description">O remetente criptografou esta mensagem com OpenPGP antes de enviá-la. Somente um dispositivo com a sua chave privada pode descriptografá-la, então mais ninguém pode lê-la.</string>
 </resources>

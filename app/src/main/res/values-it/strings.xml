@@ -3012,4 +3012,11 @@
     <string name="resurrection_old_password_prompt">Inserisci la password che usavi prima della reimpostazione</string>
     <string name="resurrection_success">I tuoi dati precedenti sono sbloccati. I messaggi e gli alias precedenti si aprono di nuovo normalmente.</string>
     <string name="resurrection_failed">I dati precedenti non sono stati sbloccati. Controlla la password o la frase e riprova.</string>
+    <string name="encrypted_pgp">Crittografia end-to-end (OpenPGP)</string>
+    <string name="pgp_signature_label">Firma digitale</string>
+    <string name="pgp_signature_none">Non firmato</string>
+    <string name="pgp_signature_unverified">Firmato, non verificato</string>
+    <string name="pgp_signature_valid">Firma verificata</string>
+    <string name="pgp_signature_invalid">La firma non corrisponde</string>
+    <string name="pgp_recipient_description">Il mittente ha crittografato questo messaggio con OpenPGP prima di inviarlo. Solo un dispositivo con la tua chiave privata puo decifrarlo, quindi nessun altro puo leggerlo.</string>
 </resources>

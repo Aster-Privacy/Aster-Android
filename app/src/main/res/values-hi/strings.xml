@@ -2902,4 +2902,11 @@
     <string name="resurrection_old_password_prompt">रीसेट से पहले इस्तेमाल किया पासवर्ड डालें</string>
     <string name="resurrection_success">आपका पुराना डेटा खुल गया। पहले की मेल और एलियास फिर से सामान्य रूप से खुलते हैं।</string>
     <string name="resurrection_failed">इससे पुराना डेटा नहीं खुला। पासवर्ड या वाक्यांश जांचें और फिर कोशिश करें।</string>
+    <string name="encrypted_pgp">एंड-टू-एंड एन्क्रिप्टेड (OpenPGP)</string>
+    <string name="pgp_signature_label">डिजिटल हस्ताक्षर</string>
+    <string name="pgp_signature_none">हस्ताक्षरित नहीं</string>
+    <string name="pgp_signature_unverified">हस्ताक्षरित, सत्यापित नहीं</string>
+    <string name="pgp_signature_valid">हस्ताक्षर सत्यापित</string>
+    <string name="pgp_signature_invalid">हस्ताक्षर मेल नहीं खाता</string>
+    <string name="pgp_recipient_description">भेजने वाले ने भेजने से पहले इस संदेश को OpenPGP से एन्क्रिप्ट किया। इसे केवल वही डिवाइस डिक्रिप्ट कर सकता है जिसमें आपकी निजी कुंजी है, इसलिए बीच में कोई इसे नहीं पढ़ सकता।</string>
 </resources>

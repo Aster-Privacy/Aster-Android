@@ -1765,6 +1765,13 @@
     <string name="aster_email">Aster email</string>
     <string name="pgp_encrypted_subject">Encrypted message</string>
     <string name="pgp_encrypted_body">This message is PGP-encrypted. Open the Aster web app to read it on a device that holds the matching PGP key.</string>
+    <string name="encrypted_pgp">End-to-end encrypted (OpenPGP)</string>
+    <string name="pgp_signature_label">Digital signature</string>
+    <string name="pgp_signature_none">Not signed</string>
+    <string name="pgp_signature_unverified">Signed, not verified</string>
+    <string name="pgp_signature_valid">Signature verified</string>
+    <string name="pgp_signature_invalid">Signature does not match</string>
+    <string name="pgp_recipient_description">The sender encrypted this message with OpenPGP before sending it. Only a device holding your private key can decrypt it, so no one in between can read it.</string>
     <string name="no_folders_yet_create">No folders yet - create one from the sidebar</string>
     <string name="no_labels_yet_create">No labels yet - create one from the sidebar</string>
     <string name="clipboard_label_referral">Referral link</string>
