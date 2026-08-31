@@ -759,6 +759,20 @@ while(is_blank_spacer(next)){
   if(rn.parentNode)rn.parentNode.removeChild(rn);
 }
   }
+  function hoist_trailing_signature(wrapper){
+var moved=[];var pending=[];var n=wrapper.nextSibling;
+while(n){
+  var nx=n.nextSibling;
+  if(n.nodeType===1&&n.classList&&n.classList.contains('aster_signature')){
+    for(var pi=0;pi<pending.length;pi++)moved.push(pending[pi]);
+    pending=[];moved.push(n);
+  }else if(is_blank_spacer(n)){pending.push(n)}
+  else{break}
+  n=nx;
+}
+if(!moved.length)return;
+for(var mi=0;mi<moved.length;mi++)wrapper.parentNode.insertBefore(moved[mi],wrapper);
+  }
   function make_toggle(content_el){
 var wrapper=document.createElement('div');wrapper.className='aster-quoted-wrapper';
 var btn=document.createElement('button');btn.className='aster-quote-toggle';btn.type='button';btn.textContent='•••';
@@ -766,6 +780,7 @@ var cdiv=document.createElement('div');cdiv.className='aster-quoted-content';cdi
 content_el.parentNode.insertBefore(wrapper,content_el);cdiv.appendChild(content_el);
 btn.addEventListener('click',function(){var h=cdiv.style.display==='none';cdiv.style.display=h?'':'none';btn.classList.toggle('aster-quote-expanded',h);if(h){watch_media(cdiv);reveal_quoted_media(cdiv)}schedule_h()});
 wrapper.appendChild(btn);wrapper.appendChild(cdiv);
+hoist_trailing_signature(wrapper);
 trim_trailing_gap(wrapper);
   }
   var proton=body.querySelector('div.protonmail_quote');
