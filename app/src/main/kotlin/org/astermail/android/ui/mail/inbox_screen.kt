@@ -927,6 +927,20 @@ fun InboxScreen(
         return if (idx >= 0) idx else null
     }
 
+    var rows_settled by remember(current_folder) { mutableStateOf(false) }
+    LaunchedEffect(current_folder, visible_threads.isEmpty()) {
+        if (visible_threads.isEmpty()) return@LaunchedEffect
+        androidx.compose.runtime.withFrameNanos { }
+        rows_settled = true
+    }
+    val row_fade_in_spec = if (rows_settled) {
+        androidx.compose.animation.core.spring<Float>(
+            stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow,
+        )
+    } else {
+        null
+    }
+
     val drag_anchor_index = remember { androidx.compose.runtime.mutableIntStateOf(-1) }
     val drag_last_index = remember { androidx.compose.runtime.mutableIntStateOf(-1) }
     val drag_pre_selected = remember { mutableStateListOf<String>() }
@@ -1633,7 +1647,7 @@ fun InboxScreen(
                         itemsIndexed(
                             items = visible_threads,
                             key = { _, item -> item.thread_id },
-                            contentType = { _, _ -> if (select_mode) "thread_row_select" else "thread_row" },
+                            contentType = { _, _ -> "thread_row" },
                         ) { row_index, thread ->
                             val is_selected by remember(thread.thread_id) {
                                 derivedStateOf { select_mode && selected_ids.contains(thread.thread_id) }
@@ -1641,7 +1655,7 @@ fun InboxScreen(
                             if (select_mode) {
                                 Box(
                                     modifier = Modifier
-                                        .animateItem()
+                                        .animateItem(fadeInSpec = row_fade_in_spec)
                                         .fillMaxWidth(),
                                 ) {
                                     ThreadInboxRow(
@@ -1661,7 +1675,7 @@ fun InboxScreen(
                             } else {
                                 val swipe_config = hoisted_swipe_config
                                 swipeable_thread_row(
-                                    modifier = Modifier.animateItem(),
+                                    modifier = Modifier.animateItem(fadeInSpec = row_fade_in_spec),
                                     list_scrolling = { list_state.isScrollInProgress },
                                     thread = thread,
                                     is_first = row_index == 0,
@@ -2216,6 +2230,7 @@ private fun folder_tree_dropdown_items(
         }
         shown
     }
+    val has_nesting = visible.any { it.has_children }
     visible.forEach { node ->
         val is_expanded = node.id in expanded
         aster_dropdown_item(
@@ -2224,7 +2239,7 @@ private fun folder_tree_dropdown_items(
             selected = node.id == current_folder,
             count = folder_unread_counts[node.id] ?: 0,
             indent = (node.depth * 14).dp,
-            leading = {
+            leading = if (!has_nesting) null else ({
                 if (node.has_children) {
                     Box(
                         modifier = Modifier
@@ -2248,7 +2263,7 @@ private fun folder_tree_dropdown_items(
                 } else {
                     Spacer(Modifier.width(22.dp))
                 }
-            },
+            }),
             on_click = { on_select(node.id, node.name) },
         )
     }
