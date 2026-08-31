@@ -68,6 +68,9 @@ class PlanLimitsViewModel @Inject constructor(
                 _state.value = _state.value.copy(plans = plans)
                 val current = plans.firstOrNull { it.is_current }
                 if (current != null) AttachmentLimits.update(current.max_attachment_size_bytes)
+                val ceiling = plans.maxOfOrNull { it.max_attachment_size_bytes }
+                if (ceiling != null) AttachmentLimits.update_upgrade_ceiling(ceiling)
+                AttachmentLimits.update_plan_limits(plans.map { it.code to it.max_attachment_size_bytes })
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 if (BuildConfig.DEBUG) android.util.Log.w("PlanLimitsVM", "get_available_plans failed", t)
