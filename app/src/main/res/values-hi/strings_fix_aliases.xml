@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alias_filter_all">सभी</string>
+    <string name="alias_filter_active">सक्रिय</string>
+    <string name="alias_filter_disabled">बंद है</string>
+    <string name="alias_filter_all_domains">सभी डोमेन</string>
+    <string name="alias_import_file_hint">इंपोर्ट करने के लिए CSV या JSON फ़ाइल चुनें</string>
+    <string name="alias_import_change_file">फ़ाइल बदलें</string>
+    <string name="alias_import_remove_file">फ़ाइल निकालें</string>
+    <string name="alias_note_placeholder_short">आप इसे कहां इस्तेमाल करते हैं</string>
+</resources>

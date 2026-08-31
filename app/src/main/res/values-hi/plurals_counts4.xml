@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="alias_export_entries">
+        <item quantity="one">%d प्रविष्टि</item>
+        <item quantity="other">%d प्रविष्टियां</item>
+    </plurals>
+    <plurals name="alias_export_files">
+        <item quantity="one">%d फ़ाइल</item>
+        <item quantity="other">%d फ़ाइलें</item>
+    </plurals>
+    <plurals name="alias_import_existing">
+        <item quantity="one">%d पहले से मौजूद है</item>
+        <item quantity="other">%d पहले से मौजूद हैं</item>
+    </plurals>
+    <plurals name="alias_import_invalid">
+        <item quantity="one">%d अमान्य</item>
+        <item quantity="other">%d अमान्य</item>
+    </plurals>
+    <plurals name="alias_import_to_import">
+        <item quantity="one">%d आयात करने के लिए</item>
+        <item quantity="other">%d आयात करने के लिए</item>
+    </plurals>
+    <plurals name="kids_seats_invitations">
+        <item quantity="one">%d निमंत्रण</item>
+        <item quantity="other">%d निमंत्रण</item>
+    </plurals>
+    <plurals name="kids_seats_members">
+        <item quantity="one">%d सदस्य</item>
+        <item quantity="other">%d सदस्य</item>
+    </plurals>
+    <plurals name="kids_seats_reserved">
+        <item quantity="one">%d सुरक्षित पता</item>
+        <item quantity="other">%d सुरक्षित पते</item>
+    </plurals>
+    <plurals name="replies_sent_count">
+        <item quantity="one">अब तक %d जवाब भेजा गया।</item>
+        <item quantity="other">अब तक %d जवाब भेजे गए।</item>
+    </plurals>
+</resources>

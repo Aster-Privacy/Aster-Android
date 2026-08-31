@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="demo_phish_subject">ज़रूरी: आपके PayPal खाते में असामान्य साइन इन गतिविधि</string>
+    <string name="demo_phish_preview">हमें बिना अनुमति साइन इन करने की कोशिश मिली है। खाता निलंबित होने से बचाने के लिए तुरंत अपनी पहचान सत्यापित करें।</string>
+    <string name="demo_phish_body_greeting">प्रिय ग्राहक,</string>
+    <string name="demo_phish_body_para1">हमें आपके PayPal खाते में एक ऐसे डिवाइस से असामान्य साइन इन गतिविधि मिली है जिसे हम नहीं पहचानते। आपकी सुरक्षा के लिए, अगर आप तुरंत अपनी पहचान सत्यापित नहीं करते तो 24 घंटे के भीतर आपका खाता निलंबित कर दिया जाएगा।</string>
+    <string name="demo_phish_body_para2">नीचे दिए सुरक्षित लिंक पर जाकर अपनी बिलिंग जानकारी की पुष्टि करें:</string>
+    <string name="demo_phish_body_para3">जवाब न देने पर आपके पैसों तक पहुंच हमेशा के लिए खत्म हो जाएगी। यह तुरंत कार्रवाई की मांग करने वाली सूचना है।</string>
+    <string name="demo_phish_body_signoff">PayPal सुरक्षा टीम</string>
+    <string name="demo_phish_body_signin_label">या सीधे साइन इन करें:</string>
+</resources>

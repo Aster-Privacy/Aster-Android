@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="compose_footer_secured_by_plain">Aster Mail से सुरक्षित</string>
+    <string name="compose_footer_secured_by_label">इसके द्वारा सुरक्षित</string>
+    <string name="compose_footer_brand">Aster Mail</string>
+    <string name="compose_quote_forwarded_message">फ़ॉरवर्ड किया गया संदेश</string>
+    <string name="compose_quote_original_message">मूल संदेश</string>
+    <string name="compose_quote_show_label">%1$s दिखाएं</string>
+    <string name="compose_quote_header_from">प्रेषक:</string>
+    <string name="compose_quote_header_date">तारीख:</string>
+    <string name="compose_quote_header_subject">विषय:</string>
+    <string name="compose_attachment_remove">अटैचमेंट हटाएं</string>
+    <string name="compose_attachment_uploading">अटैचमेंट %1$s अपलोड हो रहा है</string>
+    <string name="schedule_time_in_past">शेड्यूल किया गया समय भविष्य में होना चाहिए</string>
+    <string name="signature_none">कोई हस्ताक्षर नहीं</string>
+    <string name="signature_select">हस्ताक्षर चुनें</string>
+    <string name="compose_metadata_strip_failed">इनसे छिपा हुआ मेटाडेटा नहीं हटाया जा सका: %1$s</string>
+    <string name="compose_inline_image_failed">ये तस्वीरें नहीं जोड़ी जा सकीं: %1$s</string>
+    <string name="compose_attachment_read_failed">\"%1$s\" अटैच नहीं हो सका। आपकी ईमेल नहीं भेजी गई। फ़ाइल हटाएं या दोबारा जोड़ें और फिर से कोशिश करें।</string>
+    <string name="schedule_in_one_hour">एक घंटे में</string>
+    <string name="schedule_tonight">आज रात</string>
+    <string name="schedule_tomorrow_morning">कल सुबह</string>
+    <string name="schedule_tomorrow_afternoon">कल दोपहर</string>
+    <string name="schedule_monday_morning">सोमवार सुबह</string>
+    <string name="schedule_pick_date_time">तारीख और समय चुनें</string>
+    <string name="too_many_recipients_in_field">To, Cc और Bcc में से हर फ़ील्ड में ज़्यादा से ज़्यादा %1$d पते आते हैं। इसे भेजने के लिए कुछ पते दूसरे संदेश में ले जाएं।</string>
+    <string name="too_many_recipients_in_message">एक संदेश To, Cc और Bcc मिलाकर ज़्यादा से ज़्यादा %1$d पतों तक पहुंचता है। सूची को छोटे संदेशों में बांटने पर यह भेजा जा सकेगा।</string>
+</resources>

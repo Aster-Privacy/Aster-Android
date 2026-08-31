@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="domains_load_timeout">आपके डोमेन लोड होने में उम्मीद से ज़्यादा समय लग रहा है। अपना कनेक्शन जांचें, फिर से कोशिश करें।</string>
+    <string name="domain_manage_mail_setup">मेल सेटअप</string>
+    <string name="domain_manage_dns_unavailable">यह डोमेन आपके खाते में जुड़ने के बाद मेल सेटअप का ब्योरा यहां दिखता है।</string>
+    <string name="domain_manage_verification">सत्यापन</string>
+    <string name="domain_manage_last_verified">पिछली बार सत्यापित</string>
+    <string name="domain_manage_never_verified">अभी सत्यापित नहीं</string>
+    <string name="domain_manage_records">DNS रिकॉर्ड</string>
+    <string name="domain_manage_catch_all_description">इस डोमेन के किसी भी पते पर भेजी गई मेल पहुंचाएं।</string>
+    <string name="domain_manage_recheck">DNS रिकॉर्ड दोबारा जांचें</string>
+    <string name="domain_manage_rechecking">DNS रिकॉर्ड जांचे जा रहे हैं</string>
+</resources>

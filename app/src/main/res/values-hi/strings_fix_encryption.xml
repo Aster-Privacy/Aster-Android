@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_enc_key_card_title">आपकी एन्क्रिप्शन कुंजी</string>
+    <string name="fix_enc_key_id_label">कुंजी ID</string>
+    <string name="fix_enc_copy_key_id">कुंजी ID कॉपी करें</string>
+    <string name="fix_enc_key_id_copied">कुंजी ID कॉपी हुई</string>
+    <string name="fix_enc_clipboard_label_key_id">कुंजी ID</string>
+    <string name="fix_enc_never_expires">कभी समाप्त नहीं होती</string>
+    <string name="fix_enc_save_codes">फ़ाइल में सहेजें</string>
+    <string name="fix_enc_codes_share_title">रिकवरी कोड</string>
+    <string name="fix_enc_codes_file_note">हर कोड एक बार काम करता है। इस फ़ाइल को किसी सुरक्षित जगह रखें।</string>
+    <string name="fix_enc_codes_save_failed">आप अभी फ़ाइल नहीं सहेज सकते। इसके बजाय कोड कॉपी कर लें।</string>
+    <string name="fix_enc_codes_confirm_saved">मैंने अपने रिकवरी कोड सहेज लिए</string>
+    <string name="fix_enc_codes_used">%1$d इस्तेमाल हुए</string>
+</resources>

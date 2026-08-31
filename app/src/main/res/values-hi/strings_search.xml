@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_placeholder">मेल खोजें</string>
+    <string name="search_clear_cd">खोज मिटाएं</string>
+    <string name="search_back_cd">वापस</string>
+    <string name="search_remove_filter_cd">फ़िल्टर हटाएं</string>
+    <string name="search_empty_initial_title">अपनी मेल खोजें</string>
+    <string name="search_empty_initial_subtitle">प्रेषक, विषय या सामग्री से संदेश ढूंढें। सारी खोज इसी डिवाइस पर होती है।</string>
+    <string name="search_empty_no_results_title">कोई नतीजा नहीं</string>
+    <string name="search_empty_no_results_subtitle">कोई दूसरा कीवर्ड आज़माएं या फ़िल्टर हटाएं।</string>
+    <string name="search_recent_header">हाल के</string>
+    <string name="search_recent_clear">साफ़ करें</string>
+    <string name="search_quick_all">सभी</string>
+    <string name="search_quick_unread">अपठित</string>
+    <string name="search_quick_attachments">अटैचमेंट</string>
+    <string name="search_quick_flagged">फ़्लैग किए गए</string>
+    <string name="search_filter_has_attachment">अटैचमेंट है</string>
+    <string name="search_filter_unread">अपठित</string>
+    <string name="search_filter_starred">तारांकित</string>
+    <string name="search_filter_encrypted">एन्क्रिप्टेड</string>
+    <string name="search_chip_from">प्रेषक</string>
+    <string name="search_chip_to">प्रति</string>
+    <string name="search_chip_contact">संपर्क</string>
+    <string name="search_chip_subject">विषय</string>
+    <string name="search_chip_has">इसमें है</string>
+    <string name="search_chip_is">है</string>
+    <string name="search_chip_in">इसमें</string>
+    <string name="search_chip_before">इससे पहले</string>
+    <string name="search_chip_after">इसके बाद</string>
+    <string name="search_chip_date">तारीख</string>
+    <string name="search_chip_label">लेबल</string>
+    <string name="search_chip_not_prefix">नहीं</string>
+    <string name="search_chip_format">%1$s: %2$s</string>
+    <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>
+</resources>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="duration_n_days">
+        <item quantity="one">%1$d दिन</item>
+        <item quantity="other">%1$d दिन</item>
+    </plurals>
+    <plurals name="expires_in_days">
+        <item quantity="one">%1$d दिन में खत्म</item>
+        <item quantity="other">%1$d दिन में खत्म</item>
+    </plurals>
+    <plurals name="valid_for_days">
+        <item quantity="one">%1$d दिन के लिए मान्य</item>
+        <item quantity="other">%1$d दिन के लिए मान्य</item>
+    </plurals>
+    <plurals name="rules_value_days">
+        <item quantity="one">%1$d दिन</item>
+        <item quantity="other">%1$d दिन</item>
+    </plurals>
+    <plurals name="settings_val_days">
+        <item quantity="one">%1$d दिन</item>
+        <item quantity="other">%1$d दिन</item>
+    </plurals>
+    <plurals name="settings_val_hours">
+        <item quantity="one">%1$d घंटा</item>
+        <item quantity="other">%1$d घंटे</item>
+    </plurals>
+    <plurals name="settings_val_emails_per_day">
+        <item quantity="one">%1$d ईमेल</item>
+        <item quantity="other">%1$d ईमेल</item>
+    </plurals>
+    <plurals name="spam_auto_delete_notice">
+        <item quantity="one">स्पैम में रखी चीज़ें %1$d दिन बाद अपने आप हटा दी जाएंगी।</item>
+        <item quantity="other">स्पैम में रखी चीज़ें %1$d दिन बाद अपने आप हटा दी जाएंगी।</item>
+    </plurals>
+    <plurals name="pending_deletion_body_days">
+        <item quantity="one">आपका खाता %1$d दिन में हटाया जाना तय है। खाता बनाए रखने और अपनी मेल तथा सदस्यता तक पहुंच वापस पाने के लिए हटाना रद्द करें।</item>
+        <item quantity="other">आपका खाता %1$d दिन में हटाया जाना तय है। खाता बनाए रखने और अपनी मेल तथा सदस्यता तक पहुंच वापस पाने के लिए हटाना रद्द करें।</item>
+    </plurals>
+    <plurals name="domain_purchase_n_years">
+        <item quantity="one">%1$d साल</item>
+        <item quantity="other">%1$d साल</item>
+    </plurals>
+    <plurals name="domain_purchase_years_line">
+        <item quantity="one">%1$d साल का पंजीकरण</item>
+        <item quantity="other">%1$d साल का पंजीकरण</item>
+    </plurals>
+    <plurals name="app_lock_try_again_in">
+        <item quantity="one">%d सेकंड बाद फिर कोशिश करें</item>
+        <item quantity="other">%d सेकंड बाद फिर कोशिश करें</item>
+    </plurals>
+    <plurals name="export_undecryptable_skipped">
+        <item quantity="one">%1$d संदेश डिक्रिप्ट नहीं हो सका और उसे एक्सपोर्ट से बाहर रखा गया।</item>
+        <item quantity="other">%1$d संदेश डिक्रिप्ट नहीं हो सके और उन्हें एक्सपोर्ट से बाहर रखा गया।</item>
+    </plurals>
+    <plurals name="param_removed_from_links">
+        <item quantity="one">%2$d लिंक से %1$s हटाया गया</item>
+        <item quantity="other">%2$d लिंक से %1$s हटाया गया</item>
+    </plurals>
+</resources>

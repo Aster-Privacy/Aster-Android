@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="inbox_selected_count">%1$d चुने गए</string>
+    <string name="inbox_search_in_folder">%1$s खोजें</string>
+    <string name="inbox_search_in_category">%1$s में खोजें</string>
+    <string name="inbox_subject_with_count">%1$s (%2$d)</string>
+    <string name="inbox_no_subject">(कोई विषय नहीं)</string>
+    <string name="inbox_a11y_select_thread">बातचीत चुनें</string>
+    <string name="inbox_a11y_deselect_thread">बातचीत का चयन हटाएं</string>
+    <string name="selection_scope_offer">%2$s के सभी %1$d चुनें</string>
+    <string name="selection_scope_offer_categories">हर श्रेणी समेत %2$s के सभी %1$d चुनें</string>
+    <string name="selection_scope_confirmed">%2$s के सभी %1$d चुने गए हैं</string>
+</resources>

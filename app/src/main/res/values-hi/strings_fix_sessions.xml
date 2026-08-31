@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sessions_other_devices_section">दूसरे डिवाइस</string>
+    <string name="session_meta_line">%1$s · %2$s</string>
+    <string name="session_client_browser">वेब ब्राउज़र</string>
+    <string name="session_client_phone">फ़ोन</string>
+    <string name="session_client_tablet">टैबलेट</string>
+    <string name="session_client_desktop">कंप्यूटर</string>
+    <string name="session_client_desktop_app">डेस्कटॉप ऐप</string>
+    <string name="session_client_bridge">मेल ब्रिज</string>
+    <string name="link_device_step_code">कोड</string>
+    <string name="link_device_step_confirm">पुष्टि करें</string>
+    <string name="link_device_step_done">जुड़ा हुआ</string>
+    <string name="link_device_hero_title">डिवाइस का कोड डालें</string>
+    <string name="link_device_confirm_title">इस डिवाइस की पुष्टि करें</string>
+    <string name="link_device_pending_badge">बाकी</string>
+</resources>

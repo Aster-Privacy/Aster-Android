@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="attachments_count">
+        <item quantity="one">%d अटैचमेंट</item>
+        <item quantity="other">%d अटैचमेंट</item>
+    </plurals>
+    <plurals name="archived_conversations">
+        <item quantity="one">%d बातचीत आर्काइव की गई</item>
+        <item quantity="other">%d बातचीत आर्काइव की गईं</item>
+    </plurals>
+    <plurals name="moved_to_trash">
+        <item quantity="one">%d बातचीत ट्रैश में डाली गई</item>
+        <item quantity="other">%d बातचीत ट्रैश में डाली गईं</item>
+    </plurals>
+    <plurals name="starred_count">
+        <item quantity="one">%d बातचीत तारांकित की गई</item>
+        <item quantity="other">%d बातचीत तारांकित की गईं</item>
+    </plurals>
+    <plurals name="unstarred_count">
+        <item quantity="one">%d बातचीत से तारा हटाया गया</item>
+        <item quantity="other">%d बातचीत से तारे हटाए गए</item>
+    </plurals>
+    <plurals name="unsnoozed_count">
+        <item quantity="one">%d बातचीत का स्नूज़ हटाया गया</item>
+        <item quantity="other">%d बातचीत का स्नूज़ हटाया गया</item>
+    </plurals>
+    <plurals name="draft_deleted">
+        <item quantity="one">%d ड्राफ़्ट हटाया गया</item>
+        <item quantity="other">%d ड्राफ़्ट हटाए गए</item>
+    </plurals>
+    <plurals name="marked_read_count">
+        <item quantity="one">%d संदेश पढ़ा हुआ चिह्नित किया गया</item>
+        <item quantity="other">%d संदेश पढ़े हुए चिह्नित किए गए</item>
+    </plurals>
+    <plurals name="marked_unread_count">
+        <item quantity="one">%d संदेश अपठित चिह्नित किया गया</item>
+        <item quantity="other">%d संदेश अपठित चिह्नित किए गए</item>
+    </plurals>
+    <plurals name="results_count">
+        <item quantity="one">%d नतीजा</item>
+        <item quantity="other">%d नतीजे</item>
+    </plurals>
+    <plurals name="active_endpoints">
+        <item quantity="one">%d सक्रिय एंडपॉइंट</item>
+        <item quantity="other">%d सक्रिय एंडपॉइंट</item>
+    </plurals>
+    <plurals name="storage_addons_active_count">
+        <item quantity="one">%1$d सक्रिय ऐड-ऑन</item>
+        <item quantity="other">%1$d सक्रिय ऐड-ऑन</item>
+    </plurals>
+    <plurals name="backup_codes_remaining">
+        <item quantity="one">%d बैकअप कोड बाकी</item>
+        <item quantity="other">%d बैकअप कोड बाकी</item>
+    </plurals>
+    <plurals name="kids_seats_free">
+        <item quantity="one">%1$d जगह उपलब्ध</item>
+        <item quantity="other">%1$d जगहें उपलब्ध</item>
+    </plurals>
+    <plurals name="trackers_blocked_count">
+        <item quantity="one">%1$d ट्रैकर रोका गया</item>
+        <item quantity="other">%1$d ट्रैकर रोके गए</item>
+    </plurals>
+</resources>

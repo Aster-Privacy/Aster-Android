@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="common_back">वापस</string>
+    <string name="common_storage_used_of_total">%2$s में से %1$s</string>
+    <string name="common_storage_used_only">%1$s इस्तेमाल हुआ</string>
+    <string name="common_snackbar_dismiss">खारिज करें</string>
+    <string name="common_snackbar_undo">पहले जैसा करें</string>
+</resources>

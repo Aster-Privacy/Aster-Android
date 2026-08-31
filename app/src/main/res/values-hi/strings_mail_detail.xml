@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="detail_show_details">विवरण दिखाएं</string>
+    <string name="detail_hide_details">विवरण छिपाएं</string>
+    <string name="detail_show_quoted_text">उद्धृत पाठ दिखाएं</string>
+    <string name="detail_hide_quoted_text">उद्धृत पाठ छिपाएं</string>
+    <string name="detail_external_images_blocked">इस संदेश में बाहरी सामग्री है। इसे लोड करने पर प्रेषक को आपकी गतिविधि का पता चल सकता है।</string>
+    <string name="detail_external_allow_once">एक बार लोड करें</string>
+    <string name="detail_external_always_allow">हमेशा अनुमति दें</string>
+    <string name="detail_external_images_traffic_blocked">ट्रैफ़िक बचाने के लिए बाहरी तस्वीरें रोकी गई हैं।</string>
+    <string name="detail_disable_traffic_saving">ट्रैफ़िक की बचत बंद करें</string>
+    <string name="detail_external_dismiss">अभी नहीं</string>
+    <string name="detail_unsubscribe_title">यह प्रेषक एक ही क्लिक में सदस्यता छोड़ने की सुविधा देता है।</string>
+    <string name="detail_unsubscribe_subtitle">आपको इस पते से संदेश मिलने बंद हो जाएंगे।</string>
+    <string name="detail_view_raw_source">कच्चा स्रोत देखें</string>
+    <string name="detail_raw_source_title">संदेश का कच्चा स्रोत</string>
+    <string name="detail_raw_source_headers">हेडर</string>
+    <string name="detail_raw_source_body">मुख्य भाग</string>
+    <string name="detail_raw_source_copy">कॉपी करें</string>
+    <string name="detail_raw_source_copied">क्लिपबोर्ड पर कॉपी हो गया</string>
+    <string name="detail_raw_source_close">बंद करें</string>
+    <string name="detail_raw_source_unavailable">इस संदेश का कच्चा स्रोत उपलब्ध नहीं है।</string>
+    <string name="detail_star_action">संदेश को तारांकित करें</string>
+    <string name="detail_unstar_action">संदेश से तारा हटाएं</string>
+    <string name="message_details">संदेश का विवरण</string>
+    <string name="from_label">प्रेषक</string>
+    <string name="to_label">प्रति</string>
+    <string name="subject_label">विषय</string>
+    <string name="message_id_label">संदेश ID</string>
+    <string name="message_headers">संदेश के हेडर</string>
+    <string name="no_raw_headers">इस संदेश के कच्चे हेडर उपलब्ध नहीं हैं।</string>
+    <string name="copy_headers">हेडर कॉपी करें</string>
+    <string name="headers_copied">हेडर कॉपी हो गए</string>
+</resources>

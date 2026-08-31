@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="aliases_count">
+        <item quantity="one">%d एलियास</item>
+        <item quantity="other">%d एलियास</item>
+    </plurals>
+    <plurals name="api_keys_count">
+        <item quantity="one">%d कुंजी</item>
+        <item quantity="other">%d कुंजियां</item>
+    </plurals>
+    <plurals name="devices_count">
+        <item quantity="one">%d डिवाइस</item>
+        <item quantity="other">%d डिवाइस</item>
+    </plurals>
+    <plurals name="labels_count">
+        <item quantity="one">%d लेबल</item>
+        <item quantity="other">%d लेबल</item>
+    </plurals>
+    <plurals name="ghosts_count">
+        <item quantity="one">%d घोस्ट एलियास</item>
+        <item quantity="other">%d घोस्ट एलियास</item>
+    </plurals>
+    <plurals name="recovery_codes_count">
+        <item quantity="one">%d रिकवरी कोड</item>
+        <item quantity="other">%d रिकवरी कोड</item>
+    </plurals>
+    <plurals name="imported_contacts">
+        <item quantity="one">%d संपर्क आयात किया गया</item>
+        <item quantity="other">%d संपर्क आयात किए गए</item>
+    </plurals>
+    <plurals name="n_images">
+        <item quantity="one">%1$d छवि</item>
+        <item quantity="other">%1$d छवियां</item>
+    </plurals>
+    <plurals name="n_trackers">
+        <item quantity="one">%1$d ट्रैकर</item>
+        <item quantity="other">%1$d ट्रैकर</item>
+    </plurals>
+    <plurals name="n_fonts">
+        <item quantity="one">%1$d फ़ॉन्ट</item>
+        <item quantity="other">%1$d फ़ॉन्ट</item>
+    </plurals>
+    <plurals name="n_stylesheets">
+        <item quantity="one">%1$d स्टाइलशीट</item>
+        <item quantity="other">%1$d स्टाइलशीट</item>
+    </plurals>
+    <plurals name="show_n_more_aliases">
+        <item quantity="one">%1$d और एलियास दिखाएं</item>
+        <item quantity="other">%1$d और एलियास दिखाएं</item>
+    </plurals>
+    <plurals name="show_n_more_folders">
+        <item quantity="one">%1$d और फ़ोल्डर दिखाएं</item>
+        <item quantity="other">%1$d और फ़ोल्डर दिखाएं</item>
+    </plurals>
+    <plurals name="rules_emails_count">
+        <item quantity="one">%1$d ईमेल</item>
+        <item quantity="other">%1$d ईमेल</item>
+    </plurals>
+    <plurals name="rules_value_label_count">
+        <item quantity="one">%1$d लेबल</item>
+        <item quantity="other">%1$d लेबल</item>
+    </plurals>
+    <plurals name="stop_senders_title">
+        <item quantity="one">%1$d प्रेषक से मेल आना बंद करें?</item>
+        <item quantity="other">%1$d प्रेषकों से मेल आना बंद करें?</item>
+    </plurals>
+    <plurals name="participants_and_others">
+        <item quantity="one">%1$s और %2$d अन्य</item>
+        <item quantity="other">%1$s और %2$d अन्य</item>
+    </plurals>
+    <plurals name="messages_in_type">
+        <item quantity="one">%2$s में %1$d संदेश</item>
+        <item quantity="other">%2$s में %1$d संदेश</item>
+    </plurals>
+</resources>

@@ -39,6 +39,7 @@ object app_language {
         "ja" to "日本語",
         "ko" to "한국어",
         "ar" to "العربية",
+        "hi" to "हिन्दी",
     )
 
     fun stored_code(context: Context): String? =

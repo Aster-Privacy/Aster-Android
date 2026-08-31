@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="two_step_verification_title">दो-चरणीय सत्यापन</string>
+    <string name="two_step_verification_on_description">आपके खाते में पासवर्ड के साथ सत्यापन कोड भी ज़रूरी है।</string>
+    <string name="two_step_verification_off_description">ज़्यादा मज़बूत सुरक्षा के लिए अपने पासवर्ड के साथ जांच का कोड भी ज़रूरी करें।</string>
+    <string name="security_activity_filter_all">सभी</string>
+    <string name="security_activity_filter_sign_ins">साइन इन</string>
+    <string name="security_activity_filter_security">सुरक्षा बदलाव</string>
+    <string name="security_activity_filter_failures">विफलताएं</string>
+    <string name="security_activity_today">आज</string>
+    <string name="security_activity_yesterday">कल</string>
+    <string name="security_activity_show_more">और दिखाएं</string>
+    <string name="security_activity_show_less">कम दिखाएं</string>
+    <string name="security_activity_empty_filter">इस फ़िल्टर से कोई गतिविधि मेल नहीं खाती।</string>
+</resources>

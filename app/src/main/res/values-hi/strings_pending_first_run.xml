@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="first_run_title">Aster Mail में आपका स्वागत है</string>
+    <string name="first_run_subtitle">अपनी मौजूदा मेल साथ लाएं, या नए सिरे से शुरू करें। आप बाद में सेटिंग से भी इंपोर्ट कर सकते हैं।</string>
+    <string name="first_run_import">अपनी मेल इंपोर्ट करें</string>
+    <string name="first_run_skip">अभी नहीं</string>
+    <string name="first_run_privacy_note">आपकी मेल आपके डिवाइस से निकलने से पहले एन्क्रिप्ट हो जाती है।</string>
+    <string name="recovery_reminder_title">रिकवरी ईमेल जोड़ें</string>
+    <string name="recovery_reminder_body">पासवर्ड भूल जाने पर रिकवरी ईमेल से आप अपने खाते में वापस पहुंच सकते हैं।</string>
+    <string name="recovery_reminder_action">रिकवरी ईमेल जोड़ें</string>
+    <string name="recovery_reminder_later">बाद में</string>
+    <string name="plan_prompt_title">Aster Mail से और ज़्यादा पाएं</string>
+    <string name="plan_prompt_body">ज़्यादा स्टोरेज, कस्टम डोमेन और बिना सीमा एलियास के लिए अपग्रेड करें।</string>
+    <string name="plan_prompt_action">प्लान देखें</string>
+    <string name="plan_prompt_dismiss">अभी नहीं</string>
+</resources>

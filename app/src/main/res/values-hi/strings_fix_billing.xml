@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_billing_available_plans">उपलब्ध प्लान</string>
+    <string name="fix_billing_status_active">सक्रिय</string>
+    <string name="fix_billing_free_plan_description">आप मुफ़्त प्लान पर हैं। ज़्यादा स्टोरेज, एलियास और सुविधाओं के लिए नीचे दिए भुगतान वाले प्लान देखें।</string>
+    <string name="fix_billing_upgrade_for_more">और स्टोरेज, एलियास और सुविधाएं पाने के लिए प्लान बढ़ाएं</string>
+    <string name="fix_billing_manage_plan">प्लान प्रबंधित करें</string>
+    <string name="fix_billing_quota_aliases">ईमेल एलियास</string>
+    <string name="fix_billing_quota_domains">कस्टम डोमेन</string>
+    <string name="fix_billing_per_month_short">/माह</string>
+    <string name="fix_billing_per_year_short">/वर्ष</string>
+    <string name="fix_billing_billed_annually">सालाना बिल</string>
+    <string name="fix_billing_plan_recommended">अनुशंसित</string>
+    <string name="fix_billing_get_plan">%1$s लें</string>
+    <string name="fix_billing_autorenew_notice">जब तक आप रद्द नहीं करते, आपकी सदस्यता %1$s पर अपने आप नवीनीकृत होती रहती है। अगला शुल्क टालने के लिए अपनी नवीनीकरण तारीख से पहले सेटिंग में जाकर रद्द करें।</string>
+    <string name="fix_billing_autorenew_notice_short">कार्ड से भुगतान करने पर आपका प्लान अपने आप नवीनीकृत होता है। अगला शुल्क टालने के लिए, नवीनीकरण की तारीख से पहले सेटिंग में जाकर इसे रद्द करें।</string>
+    <string name="fix_billing_payment_methods_title">भुगतान के तरीके</string>
+    <string name="fix_billing_payment_methods_description">अपने सहेजे गए भुगतान तरीके प्रबंधित करें</string>
+    <string name="fix_billing_no_payment_methods">भुगतान का कोई तरीका सहेजा नहीं गया</string>
+    <string name="fix_billing_default_card">डिफ़ॉल्ट</string>
+    <string name="fix_billing_set_as_default">डिफ़ॉल्ट के रूप में सेट करें</string>
+    <string name="fix_billing_invoice_status_paid">भुगतान हो गया</string>
+    <string name="fix_billing_invoice_status_failed">विफल</string>
+    <string name="fix_billing_invoice_status_open">खोलें</string>
+    <string name="fix_billing_invoice_status_pending">बाकी</string>
+    <string name="fix_billing_invoice_status_draft">ड्राफ़्ट</string>
+    <string name="fix_billing_invoice_status_void">रद्द</string>
+    <string name="fix_billing_invoice_status_uncollectible">वसूली नहीं हो सकी</string>
+    <string name="fix_billing_invoice_status_refunded">रिफ़ंड किया गया</string>
+    <string name="fix_billing_invoice_pdf">PDF</string>
+    <string name="fix_billing_invoice_payment">भुगतान</string>
+    <string name="fix_billing_storage_limit_exceeded">आपका स्टोरेज भर गया है।</string>
+    <string name="fix_billing_payment_failed_warning">आपके भुगतान के तरीके से पिछला शुल्क नहीं लिया जा सका। सेटिंग, बिलिंग में इसे अपडेट करने से आपका प्लान चलता रहेगा। आपकी मेल पर कोई असर नहीं पड़ा।</string>
+    <string name="fix_billing_update_payment_method">भुगतान का तरीका अपडेट करें</string>
+    <string name="fix_billing_card_expires">%1$s को खत्म</string>
+    <string name="fix_billing_status_trialing">ट्रायल</string>
+    <string name="fix_billing_status_past_due">बकाया</string>
+    <string name="fix_billing_status_canceled">रद्द किया गया</string>
+    <string name="fix_billing_billed_monthly">हर महीने बिल</string>
+    <string name="fix_billing_billed_yearly">सालाना बिलिंग</string>
+    <string name="fix_billing_history_empty">अभी कोई इनवॉइस नहीं। पहला शुल्क लगने के बाद आपके भुगतान यहां दिखते हैं।</string>
+    <string name="fix_billing_quota_count">%1$d / %2$d</string>
+</resources>

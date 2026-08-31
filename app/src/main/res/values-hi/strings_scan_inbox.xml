@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="confirm_delete_permanent_message_count">%1$s को हमेशा के लिए हटाएं? इसे पहले जैसा नहीं किया जा सकता।</string>
+</resources>

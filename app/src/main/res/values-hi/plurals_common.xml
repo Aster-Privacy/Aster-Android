@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="common_unread_count">
+        <item quantity="one">%d अपठित</item>
+        <item quantity="other">%d अपठित</item>
+    </plurals>
+    <plurals name="common_new_messages">
+        <item quantity="one">%d नया संदेश</item>
+        <item quantity="other">%d नए संदेश</item>
+    </plurals>
+    <plurals name="common_folders_count">
+        <item quantity="one">%d फ़ोल्डर</item>
+        <item quantity="other">%d फ़ोल्डर</item>
+    </plurals>
+    <plurals name="common_messages_count">
+        <item quantity="one">%d संदेश</item>
+        <item quantity="other">%d संदेश</item>
+    </plurals>
+</resources>

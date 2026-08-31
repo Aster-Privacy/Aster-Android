@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notif_channel_new_mail_name">नई मेल</string>
+    <string name="notif_channel_new_mail_description">आने वाली नई ईमेल की सूचनाएं</string>
+    <string name="notif_new_message">नया संदेश</string>
+    <string name="notif_action_reply">जवाब दें</string>
+    <string name="notif_action_mark_read">पढ़ा हुआ चिह्नित करें</string>
+    <string name="notif_action_archive">आर्काइव</string>
+    <string name="notif_group_summary_new_mail">नई मेल</string>
+    <string name="notif_channel_login_alerts_name">साइन इन अलर्ट</string>
+    <string name="notif_channel_login_alerts_description">आपके खाते में किसी नए डिवाइस पर साइन इन होने की सूचनाएं</string>
+    <string name="notif_login_alert_title">आपके खाते में नया साइन इन</string>
+    <string name="notif_login_alert_public_body">आपके खाते में एक नए डिवाइस से साइन इन हुआ</string>
+    <string name="notif_login_alert_action_yes">यह मैंने ही किया</string>
+    <string name="notif_login_alert_action_revoke">मैं नहीं</string>
+    <string name="notif_login_alert_revoking">नया सेशन साइन आउट किया जा रहा है…</string>
+    <string name="notif_login_alert_revoked">सेशन साइन आउट हुआ</string>
+    <string name="notif_login_alert_revoked_body">नया सेशन साइन आउट कर दिया गया। सुरक्षा सेटिंग में जाकर अपना पासवर्ड बदलने पर विचार करें।</string>
+    <string name="notif_login_alert_revoke_failed">सेशन साइन आउट नहीं किया जा सका</string>
+    <string name="notif_login_alert_revoke_failed_body">अपने सक्रिय सेशन देखने के लिए ऐप खोलें।</string>
+    <string name="notif_battery_opt_title">बिना पाबंदी पृष्ठभूमि गतिविधि</string>
+    <string name="notif_battery_opt_subtitle">भरोसेमंद सूचनाओं के लिए ज़रूरी है। सिस्टम सेटिंग में चालू करने के लिए टैप करें।</string>
+    <string name="notif_blocked_title">सूचनाएं बंद हैं</string>
+    <string name="notif_blocked_subtitle">जब तक आप अनुमति नहीं देते, Aster Mail सूचनाएं नहीं दिखा सकता। सिस्टम सेटिंग खोलने के लिए टैप करें।</string>
+    <string name="mute_folder_notifications">फ़ोल्डर की सूचनाएं म्यूट करें</string>
+    <string name="unmute_folder_notifications">फ़ोल्डर की सूचनाएं अनम्यूट करें</string>
+    <string name="notif_channel_downloads_name">डाउनलोड</string>
+</resources>

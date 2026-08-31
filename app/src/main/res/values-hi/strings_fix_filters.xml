@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fix_filters_search_blocked">ब्लॉक किए गए प्रेषक खोजें</string>
+    <string name="fix_filters_search_allowed">अनुमति वाले प्रेषक खोजें</string>
+    <string name="fix_filters_search">खोजें</string>
+    <string name="fix_filters_clear_search">खोज मिटाएं</string>
+    <string name="fix_filters_no_results_title">कोई नतीजा नहीं</string>
+    <string name="fix_filters_no_results_body">कोई दूसरी खोज आज़माएं।</string>
+    <string name="fix_filters_blocked_description">इन प्रेषकों की मेल कभी आपके इनबॉक्स में नहीं पहुंचती।</string>
+    <string name="fix_filters_allowed_description">इन प्रेषकों की मेल हमेशा आपके इनबॉक्स में पहुंचती है, भले ही वह स्पैम जैसी लगे।</string>
+    <string name="fix_filters_blocked_empty_body">किसी प्रेषक की मेल अपने इनबॉक्स से बाहर रखने के लिए उसे ब्लॉक करें।</string>
+    <string name="fix_filters_allowed_empty_body">किसी प्रेषक की मेल स्पैम से बाहर रखने के लिए उसे जोड़ें।</string>
+</resources>

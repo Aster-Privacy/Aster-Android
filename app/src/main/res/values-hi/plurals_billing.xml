@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="cancel_impact_aliases">
+        <item quantity="one">%d एलियास पर मेल आना बंद हो जाएगी।</item>
+        <item quantity="other">%d एलियास पर मेल आना बंद हो जाएगी।</item>
+    </plurals>
+    <plurals name="cancel_impact_domains">
+        <item quantity="one">%d कस्टम डोमेन निलंबित हो जाएगा।</item>
+        <item quantity="other">%d कस्टम डोमेन निलंबित हो जाएंगे।</item>
+    </plurals>
+    <plurals name="cancel_impact_templates">
+        <item quantity="one">%d टेम्पलेट काम करना बंद कर देगा।</item>
+        <item quantity="other">%d टेम्पलेट काम करना बंद कर देंगे।</item>
+    </plurals>
+    <plurals name="cancel_impact_signatures">
+        <item quantity="one">%d हस्ताक्षर काम करना बंद कर देगा।</item>
+        <item quantity="other">%d हस्ताक्षर काम करना बंद कर देंगे।</item>
+    </plurals>
+    <plurals name="cancel_impact_family">
+        <item quantity="one">%d सदस्य का खाता चला जाएगा।</item>
+        <item quantity="other">%d सदस्यों के खाते चले जाएंगे।</item>
+    </plurals>
+    <plurals name="crypto_renewal_days">
+        <item quantity="one">आपका प्लान %1$d दिन में, %2$s को खत्म हो जाएगा।</item>
+        <item quantity="other">आपका प्लान %1$d दिन में, %2$s को खत्म हो जाएगा।</item>
+    </plurals>
+</resources>
