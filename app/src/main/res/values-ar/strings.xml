@@ -1165,6 +1165,7 @@
     <string name="error_invalid_recovery_code">صيغة رمز الاسترداد غير صالحة</string>
     <string name="error_invalid_code">رمز الاسترداد غير صالح</string>
     <string name="error_recovery_failed">فشل الاسترداد</string>
+    <string name="error_recovery_too_many_attempts">أُجريت محاولات استرداد كثيرة جدًا على هذا الحساب. يمكنك المحاولة مرة أخرى بعد نحو 30 دقيقة. لم يُستخدم أي من رموزك، لذا ما زالت جميعها لديك.</string>
     <string name="status_deriving_key">استخراج مفتاح كلمة المرور الجديد</string>
     <string name="status_encrypting_vault">تشفير الخزنة بكلمة المرور الجديدة</string>
     <string name="status_generating_codes">إنشاء رموز استرداد جديدة</string>

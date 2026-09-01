@@ -1165,6 +1165,7 @@
     <string name="error_invalid_recovery_code">복구 코드 형식이 올바르지 않습니다</string>
     <string name="error_invalid_code">올바르지 않은 복구 코드</string>
     <string name="error_recovery_failed">복구 실패</string>
+    <string name="error_recovery_too_many_attempts">이 계정에서 복구 시도가 너무 많았습니다. 약 30분 후에 다시 시도할 수 있습니다. 코드는 하나도 사용되지 않아 모두 그대로 남아 있습니다.</string>
     <string name="status_deriving_key">새 비밀번호 키 파생 중</string>
     <string name="status_encrypting_vault">새 비밀번호로 볼트 암호화 중</string>
     <string name="status_generating_codes">새 복구 코드 생성 중</string>

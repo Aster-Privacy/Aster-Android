@@ -1165,6 +1165,7 @@
     <string name="error_invalid_recovery_code">リカバリコードの形式が無効です</string>
     <string name="error_invalid_code">リカバリコードが無効です</string>
     <string name="error_recovery_failed">復旧に失敗しました</string>
+    <string name="error_recovery_too_many_attempts">このアカウントで復旧の試行回数が多すぎます。約30分後にもう一度お試しください。コードは1つも使用されていないため、すべてそのまま残っています。</string>
     <string name="status_deriving_key">新しいパスワードキーを導出中</string>
     <string name="status_encrypting_vault">新しいパスワードでボルトを暗号化中</string>
     <string name="status_generating_codes">新しいリカバリコードを生成中</string>

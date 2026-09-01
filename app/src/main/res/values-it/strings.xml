@@ -1165,6 +1165,7 @@
     <string name="error_invalid_recovery_code">Formato codice di recupero non valido</string>
     <string name="error_invalid_code">Codice di recupero non valido</string>
     <string name="error_recovery_failed">Recupero non riuscito</string>
+    <string name="error_recovery_too_many_attempts">Questo account ha registrato troppi tentativi di recupero. Puoi riprovare tra circa 30 minuti. Nessuno dei tuoi codici è stato usato, quindi li hai ancora tutti.</string>
     <string name="status_deriving_key">Derivazione nuova chiave password</string>
     <string name="status_encrypting_vault">Crittografia vault con nuova password</string>
     <string name="status_generating_codes">Generazione nuovi codici di recupero</string>

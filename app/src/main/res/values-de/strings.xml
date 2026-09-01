@@ -1166,6 +1166,7 @@
     <string name="error_invalid_recovery_code">Ungültiges Format des Wiederherstellungscodes</string>
     <string name="error_invalid_code">Ungültiger Wiederherstellungscode</string>
     <string name="error_recovery_failed">Wiederherstellung fehlgeschlagen</string>
+    <string name="error_recovery_too_many_attempts">Für dieses Konto gab es zu viele Wiederherstellungsversuche. Sie können es in etwa 30 Minuten erneut versuchen. Keiner Ihrer Codes wurde verwendet, Sie haben also noch alle.</string>
     <string name="status_deriving_key">Neuer Passwortschlüssel wird abgeleitet</string>
     <string name="status_encrypting_vault">Tresor wird mit neuem Passwort verschlüsselt</string>
     <string name="status_generating_codes">Neue Wiederherstellungscodes werden generiert</string>

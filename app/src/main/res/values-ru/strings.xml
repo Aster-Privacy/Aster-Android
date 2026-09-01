@@ -1165,6 +1165,7 @@
     <string name="error_invalid_recovery_code">Неверный формат кода восстановления</string>
     <string name="error_invalid_code">Неверный код восстановления</string>
     <string name="error_recovery_failed">Восстановление не удалось</string>
+    <string name="error_recovery_too_many_attempts">На этом аккаунте слишком много попыток восстановления. Повторите примерно через 30 минут. Ни один из ваших кодов не использован, поэтому все они по-прежнему у вас.</string>
     <string name="status_deriving_key">Вычисление нового ключа пароля</string>
     <string name="status_encrypting_vault">Шифрование хранилища новым паролем</string>
     <string name="status_generating_codes">Генерация новых кодов восстановления</string>

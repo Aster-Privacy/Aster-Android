@@ -1165,6 +1165,7 @@
     <string name="error_invalid_recovery_code">Nieprawidłowy format kodu odzyskiwania</string>
     <string name="error_invalid_code">Nieprawidłowy kod odzyskiwania</string>
     <string name="error_recovery_failed">Odzyskiwanie nie powiodło się</string>
+    <string name="error_recovery_too_many_attempts">To konto miało zbyt wiele prób odzyskiwania. Możesz spróbować ponownie za około 30 minut. Żaden z Twoich kodów nie został użyty, więc nadal masz je wszystkie.</string>
     <string name="status_deriving_key">Wyprowadzanie nowego klucza hasła</string>
     <string name="status_encrypting_vault">Szyfrowanie sejfu nowym hasłem</string>
     <string name="status_generating_codes">Generowanie nowych kodów odzyskiwania</string>

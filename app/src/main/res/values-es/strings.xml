@@ -1166,6 +1166,7 @@
     <string name="error_invalid_recovery_code">Formato de código de recuperación no válido</string>
     <string name="error_invalid_code">Código de recuperación no válido</string>
     <string name="error_recovery_failed">Error en la recuperación</string>
+    <string name="error_recovery_too_many_attempts">Esta cuenta ha tenido demasiados intentos de recuperación. Puedes volver a intentarlo en unos 30 minutos. No se usó ninguno de tus códigos, así que los conservas todos.</string>
     <string name="status_deriving_key">Derivando nueva clave de contraseña</string>
     <string name="status_encrypting_vault">Cifrando bóveda con nueva contraseña</string>
     <string name="status_generating_codes">Generando nuevos códigos de recuperación</string>

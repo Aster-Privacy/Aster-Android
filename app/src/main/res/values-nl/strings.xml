@@ -1165,6 +1165,7 @@
     <string name="error_invalid_recovery_code">Ongeldig herstelcode-formaat</string>
     <string name="error_invalid_code">Ongeldige herstelcode</string>
     <string name="error_recovery_failed">Herstel mislukt</string>
+    <string name="error_recovery_too_many_attempts">Dit account heeft te veel herstelpogingen gehad. Je kunt het over ongeveer 30 minuten opnieuw proberen. Geen van je codes is gebruikt, dus je hebt ze nog allemaal.</string>
     <string name="status_deriving_key">Nieuwe wachtwoordsleutel afleiden</string>
     <string name="status_encrypting_vault">Kluis versleutelen met nieuw wachtwoord</string>
     <string name="status_generating_codes">Nieuwe herstelcodes genereren</string>

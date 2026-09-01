@@ -1593,6 +1593,7 @@
     <string name="error_invalid_recovery_code">रिकवरी कोड का प्रारूप अमान्य</string>
     <string name="error_invalid_code">अमान्य रिकवरी कोड</string>
     <string name="error_recovery_failed">रिकवरी नहीं हो सकी</string>
+    <string name="error_recovery_too_many_attempts">इस खाते पर बहुत अधिक रिकवरी प्रयास हो चुके हैं। आप लगभग 30 मिनट में दोबारा कोशिश कर सकते हैं। आपका कोई भी कोड इस्तेमाल नहीं हुआ, इसलिए वे सभी अब भी आपके पास हैं।</string>
     <string name="status_deriving_key">नए पासवर्ड की कुंजी बन रही है</string>
     <string name="status_encrypting_vault">वॉल्ट नए पासवर्ड से एन्क्रिप्ट हो रही है</string>
     <string name="status_generating_codes">नए रिकवरी कोड बन रहे हैं</string>

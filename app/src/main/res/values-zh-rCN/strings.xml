@@ -1165,6 +1165,7 @@
     <string name="error_invalid_recovery_code">恢复代码格式无效</string>
     <string name="error_invalid_code">恢复代码无效</string>
     <string name="error_recovery_failed">恢复失败</string>
+    <string name="error_recovery_too_many_attempts">此账户的恢复尝试次数过多。你可以在大约 30 分钟后重试。你的代码一个都没有被使用，因此全部仍然有效。</string>
     <string name="status_deriving_key">正在派生新的密码密钥</string>
     <string name="status_encrypting_vault">正在使用新密码加密保险库</string>
     <string name="status_generating_codes">正在生成新的恢复代码</string>

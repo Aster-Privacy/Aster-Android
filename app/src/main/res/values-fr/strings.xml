@@ -1228,6 +1228,7 @@
     <string name="error_invalid_recovery_code">Format du code de récupération invalide</string>
     <string name="error_invalid_code">Code de récupération invalide</string>
     <string name="error_recovery_failed">Échec de la récupération</string>
+    <string name="error_recovery_too_many_attempts">Ce compte a fait l’objet de trop de tentatives de récupération. Vous pouvez réessayer dans environ 30 minutes. Aucun de vos codes n’a été utilisé, vous les avez donc tous encore.</string>
     <string name="status_deriving_key">Dérivation de la nouvelle clé de mot de passe</string>
     <string name="status_encrypting_vault">Chiffrement du coffre-fort avec le nouveau mot de passe</string>
     <string name="status_generating_codes">Génération des nouveaux codes de récupération</string>

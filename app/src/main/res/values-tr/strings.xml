@@ -1165,6 +1165,7 @@
     <string name="error_invalid_recovery_code">Geçersiz kurtarma kodu biçimi</string>
     <string name="error_invalid_code">Geçersiz kurtarma kodu</string>
     <string name="error_recovery_failed">Kurtarma başarısız oldu</string>
+    <string name="error_recovery_too_many_attempts">Bu hesapta çok fazla kurtarma denemesi yapıldı. Yaklaşık 30 dakika sonra yeniden deneyebilirsiniz. Kodlarınızın hiçbiri kullanılmadı, hepsi hâlâ sizde.</string>
     <string name="status_deriving_key">Yeni parola anahtarı türetiliyor</string>
     <string name="status_encrypting_vault">Kasa yeni parolayla şifreleniyor</string>
     <string name="status_generating_codes">Yeni kurtarma kodları oluşturuluyor</string>
