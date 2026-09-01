@@ -57,7 +57,7 @@ data class SharedAttachment(
 sealed class AttachmentImport {
     data class Imported(val attachment: SharedAttachment) : AttachmentImport()
 
-    data class TooLarge(val name: String) : AttachmentImport()
+    data class TooLarge(val name: String, val size: Long = 0L) : AttachmentImport()
 
     data class Failed(val name: String) : AttachmentImport()
 }
@@ -206,7 +206,7 @@ fun import_shared_attachment(context: Context, uri: Uri): AttachmentImport {
             }
         }
     }
-    if (size > AttachmentLimits.max_bytes()) return AttachmentImport.TooLarge(name)
+    if (size > AttachmentLimits.max_bytes()) return AttachmentImport.TooLarge(name, size)
     val mime = resolver.getType(uri) ?: guess_mime_from_name(name)
     name = ensure_extension(name, mime)
     val target_dir = File(context.cacheDir, share_cache_dir_name)
@@ -225,7 +225,7 @@ fun import_shared_attachment(context: Context, uri: Uri): AttachmentImport {
     }
     if (copied > AttachmentLimits.max_bytes()) {
         target.delete()
-        return AttachmentImport.TooLarge(name)
+        return AttachmentImport.TooLarge(name, copied)
     }
     val provider_uri = runCatching {
         FileProvider.getUriForFile(context, context.packageName + ".fileprovider", target)

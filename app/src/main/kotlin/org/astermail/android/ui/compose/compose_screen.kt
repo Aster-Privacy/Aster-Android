@@ -904,7 +904,7 @@ fun ComposeScreen(
                 InlineImageRejection.TOO_MANY ->
                     context.getString(R.string.attachment_too_many, max_attachments_per_send)
                 InlineImageRejection.TOO_LARGE ->
-                    oversized_attachment_message(context, img.name)
+                    oversized_attachment_message(context, img.name, img.size)
                 InlineImageRejection.TOTAL_TOO_LARGE ->
                     context.getString(
                         R.string.attachment_total_too_large,
@@ -1048,7 +1048,7 @@ fun ComposeScreen(
             }
             when (result) {
                 is org.astermail.android.share.AttachmentImport.TooLarge -> {
-                    error = oversized_attachment_message(context, result.name)
+                    error = oversized_attachment_message(context, result.name, result.size)
                     if (AttachmentLimits.can_upgrade()) {
                         org.astermail.android.ui.upgrade.UpgradeStore.show_plan_limit("attachments", null)
                     }
@@ -2993,6 +2993,7 @@ private const val max_attachments_per_send = 50
 private fun oversized_attachment_message(
     context: android.content.Context,
     file_name: String,
+    file_size: Long = 0L,
 ): String {
     val max_size = format_file_size(AttachmentLimits.max_bytes())
     return if (AttachmentLimits.can_upgrade()) {
@@ -3000,7 +3001,7 @@ private fun oversized_attachment_message(
             R.string.attachment_too_large_upgradable,
             file_name,
             max_size,
-            format_file_size(AttachmentLimits.paid_max_bytes),
+            format_file_size(AttachmentLimits.upgrade_target_bytes(file_size)),
         )
     } else {
         context.getString(R.string.attachment_too_large, file_name, max_size)

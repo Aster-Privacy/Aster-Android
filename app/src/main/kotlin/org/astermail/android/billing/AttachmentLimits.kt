@@ -27,18 +27,48 @@ object AttachmentLimits {
     @Volatile
     private var cached_max_bytes = free_max_bytes
 
+    @Volatile
+    private var cached_upgrade_max_bytes = paid_max_bytes
+
+    @Volatile
+    private var cached_plan_limits: List<Pair<String, Long>> = emptyList()
+
+    private val upgrade_plan_codes = listOf("star", "nova", "supernova")
+
     fun max_bytes(): Long = cached_max_bytes
 
     fun total_max_bytes(): Long = cached_max_bytes
 
-    fun can_upgrade(): Boolean =
-        cached_max_bytes <= free_max_bytes && cached_max_bytes < paid_max_bytes
+    fun upgrade_max_bytes(): Long = cached_upgrade_max_bytes
+
+    fun can_upgrade(): Boolean = cached_upgrade_max_bytes > cached_max_bytes
 
     fun update(bytes: Long) {
         if (bytes > 0) cached_max_bytes = bytes
     }
 
+    fun update_upgrade_ceiling(bytes: Long) {
+        if (bytes > 0) cached_upgrade_max_bytes = bytes
+    }
+
+    fun update_plan_limits(limits: List<Pair<String, Long>>) {
+        cached_plan_limits = limits.filter { it.second > 0 }
+    }
+
+    fun upgrade_target_bytes(needed_bytes: Long): Long {
+        val larger = cached_plan_limits
+            .filter { it.second > cached_max_bytes && upgrade_plan_codes.contains(it.first) }
+            .sortedBy { it.second }
+
+        if (larger.isEmpty()) return cached_upgrade_max_bytes
+        if (needed_bytes <= 0) return larger.last().second
+
+        return larger.firstOrNull { it.second >= needed_bytes }?.second ?: larger.last().second
+    }
+
     fun reset() {
         cached_max_bytes = free_max_bytes
+        cached_upgrade_max_bytes = paid_max_bytes
+        cached_plan_limits = emptyList()
     }
 }
