@@ -171,6 +171,7 @@ import org.astermail.android.billing.AttachmentLimits
 import org.astermail.android.util.meets_min_search_length
 import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.mail.ASTER_INTERNAL_DOMAINS
+import org.astermail.android.mail.is_sendable_address
 import org.astermail.android.mail.MailViewModel
 import org.astermail.android.mail.is_sendable_address
 import org.astermail.android.settings.DecryptedSignature
@@ -719,6 +720,13 @@ fun ComposeScreen(
         settings_state.aliases.firstOrNull { it.address == from_alias }?.id
             ?: settings_state.custom_domain_addresses.firstOrNull { it.address == from_alias }?.id
     }
+    val signature_scope_allowed = when (mode) {
+        "reply", "reply_all" -> settings_state.preferences?.signature_in_replies != false
+        "forward" -> settings_state.preferences?.signature_in_forwards != false
+        else -> true
+    }
+    val signature_auto_enabled =
+        (settings_state.preferences?.signature_mode ?: "auto") == "auto" && signature_scope_allowed
     LaunchedEffect(signature_loaded, mode, prefill) {
         if (!signature_loaded || signature_applied) return@LaunchedEffect
         if (mode == "draft") { signature_applied = true; return@LaunchedEffect }
@@ -833,6 +841,7 @@ fun ComposeScreen(
     var quoted_expanded by remember { mutableStateOf(false) }
     var is_sending by remember { mutableStateOf(false) }
     var sent by remember { mutableStateOf(false) }
+    var discarded by remember { mutableStateOf(false) }
     var send_error by remember { mutableStateOf<String?>(null) }
     var send_error_upgrade by remember { mutableStateOf(false) }
     var attachments by remember { mutableStateOf(listOf<AttachmentItem>()) }
@@ -1058,6 +1067,11 @@ fun ComposeScreen(
                 is org.astermail.android.share.AttachmentImport.Imported -> {
                     val item = result.attachment
                     when {
+                        attachments.size + accepted.size >= AttachmentLimits.max_per_send ->
+                            error = context.getString(
+                                R.string.attachment_too_many,
+                                AttachmentLimits.max_per_send,
+                            )
                         existing_names.contains(item.name) ->
                             error = context.getString(R.string.attachment_already_attached, item.name)
                         running_count >= max_attachments_per_send ->
@@ -1152,6 +1166,7 @@ fun ComposeScreen(
 
     fun schedule_draft_save() {
         draft_save_job?.cancel()
+        if (discarded) return
         if (settings_state.preferences?.auto_save_drafts == false) return
         if (mode == "draft" && !draft_id.isNullOrBlank() && !draft_loaded) return
         draft_save_job = scope.launch {
@@ -1342,7 +1357,7 @@ fun ComposeScreen(
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
             if (event == androidx.lifecycle.Lifecycle.Event.ON_PAUSE) {
                 val auto_save_enabled = settings_state.preferences?.auto_save_drafts != false
-                if (auto_save_enabled && !sent && !is_sending && !is_empty_new_draft() &&
+                if (auto_save_enabled && !sent && !discarded && !is_sending && !is_empty_new_draft() &&
                     (subject.isNotBlank() || body.isNotBlank() || to_chips.isNotEmpty())
                 ) {
                     draft_save_job?.cancel()
@@ -1503,8 +1518,9 @@ fun ComposeScreen(
                 qh +
                 "</blockquote></div>"
         }.orEmpty()
+        val html_separator = if (signature_separator_enabled != false) "--<br>" else ""
         val signature_block = if (signature_html.isNotBlank()) {
-            "<br><br><div class=\"aster_signature\">" + signature_html + "</div>"
+            "<br><br><div class=\"aster_signature\">" + html_separator + signature_html + "</div>"
         } else {
             ""
         }
@@ -1662,6 +1678,29 @@ fun ComposeScreen(
         val snap_subject = subject
         val snap_from = from_alias
 
+        if (snap_to.size > max_recipients_per_field ||
+            snap_cc.size > max_recipients_per_field ||
+            snap_bcc.size > max_recipients_per_field
+        ) {
+            is_sending = false
+            send_lock.set(false)
+            send_error = context.getString(
+                R.string.too_many_recipients_in_field,
+                max_recipients_per_field,
+            )
+            return
+        }
+
+        if (snap_to.size + snap_cc.size + snap_bcc.size > max_recipients_per_send) {
+            is_sending = false
+            send_lock.set(false)
+            send_error = context.getString(
+                R.string.too_many_recipients_in_message,
+                max_recipients_per_send,
+            )
+            return
+        }
+
         if (settings_state.preferences?.auto_save_recent_recipients != false) {
             contacts_vm.auto_save_recipients(
                 recipients = snap_to + snap_cc + snap_bcc,
@@ -1691,6 +1730,14 @@ fun ComposeScreen(
                 return@launch
             }
             val (body_html, attachment_payloads, suppress_branding) = prepared
+
+            val all_recipients = snap_to + snap_cc + snap_bcc
+            if (all_recipients.any { is_internal_email(it) } && all_recipients.any { !is_internal_email(it) }) {
+                is_sending = false
+                send_lock.set(false)
+                send_error = context.getString(R.string.cannot_mix_recipients)
+                return@launch
+            }
 
             val external_token = external_sender_tokens[snap_from]
             if (external_token != null) {
@@ -2769,7 +2816,7 @@ fun ComposeScreen(
                             val cal = org.astermail.android.ui.mail.AsterTimePreferences.account_calendar()
                             cal.set(year, month, day, hour, minute, 0)
                             cal.set(java.util.Calendar.MILLISECOND, 0)
-                            if (cal.timeInMillis <= System.currentTimeMillis()) {
+                            if (cal.timeInMillis < System.currentTimeMillis() + minimum_schedule_lead_ms) {
                                 show_schedule_picker = false
                                 send_error = context.getString(R.string.schedule_time_in_past)
                             } else {
@@ -2946,6 +2993,7 @@ fun ComposeScreen(
                     onClick = {
                         show_discard_dialog = false
                         sent = true
+                        discarded = true
                         draft_save_job?.cancel()
                         mail_vm.discard_sent_draft(current_draft_id, draft_session_id)
                         current_draft_id = ""
@@ -4602,6 +4650,10 @@ private fun toggle_sheet_row(
         }
     }
 }
+
+private const val minimum_schedule_lead_ms = 60_000L
+private const val max_recipients_per_field = 50
+private const val max_recipients_per_send = 100
 
 private fun escape_html(s: String): String =
     s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")

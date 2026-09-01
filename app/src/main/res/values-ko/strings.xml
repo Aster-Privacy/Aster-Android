@@ -1259,6 +1259,7 @@
     <string name="snooze_tomorrow_morning">내일 아침</string>
     <string name="snooze_this_weekend">이번 주말</string>
     <string name="snooze_next_week">다음 주</string>
+    <string name="snooze_next_month">다음 달</string>
     <string name="aster_email">Aster 메일</string>
     <string name="pgp_encrypted_subject">암호화된 메시지</string>
     <string name="pgp_encrypted_body">이 메시지는 PGP로 암호화되어 있습니다. 일치하는 PGP 키가 있는 기기에서 Aster 웹 앱을 열어 읽어보세요.</string>
@@ -1753,6 +1754,7 @@
     <string name="attachment_already_attached">\"%1$s\"은(는) 이미 첨부되어 있습니다</string>
     <string name="attachment_read_failed">\"%1$s\"을(를) 읽지 못했습니다</string>
     <string name="scheduled_send_no_attachments">예약 발송은 아직 첨부파일을 지원하지 않습니다. 첨부를 지우거나 지금 보내세요.</string>
+    <string name="cannot_mix_recipients">Aster 사용자와 외부 주소는 같은 이메일에 함께 넣을 수 없습니다. 두 통의 별도 메시지로 보내면 됩니다.</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>
@@ -2885,7 +2887,6 @@
     <string name="show_email_preview_subtitle">받은편지함 목록에 메시지 본문을 한 줄 표시합니다</string>
     <string name="signature_hint_content">서명 텍스트를 입력하세요.</string>
     <string name="signature_set_default">기본 서명으로 사용</string>
-    <string name="snooze_next_month">다음 달</string>
     <string name="star_failed">별표를 추가하지 못했습니다</string>
     <string name="tab_label_with_count">%1$s (%2$d)</string>
     <string name="templates_decrypt_failed_count">이 기기에서 템플릿 %1$d개를 읽지 못했습니다. 현재 이 기기에 없는 키로 저장되었습니다.</string>
@@ -3007,4 +3008,16 @@
     <string name="pgp_signature_valid">서명 확인됨</string>
     <string name="pgp_signature_invalid">서명이 일치하지 않음</string>
     <string name="pgp_recipient_description">발신자가 보내기 전에 OpenPGP로 이 메시지를 암호화했습니다. 개인 키가 있는 기기에서만 복호화할 수 있으므로 중간에서 누구도 읽을 수 없습니다.</string>
+    <string name="error_account_locked">계정이 일시적으로 잠겼습니다. 나중에 다시 시도하세요.</string>
+    <string name="error_account_probation">계정에 일시적인 제한이 있습니다.</string>
+    <string name="error_account_suspended">서비스 약관 위반으로 계정이 정지되었습니다.</string>
+    <string name="error_alias_reencryption_incomplete">일부 별칭의 재암호화가 완료되지 않아 아무것도 변경되지 않았습니다. 다시 시도하세요.</string>
+    <string name="error_client_upgrade_required">이 앱 버전에서는 이 변경을 할 수 없습니다. 최신 버전으로 업데이트한 다음 다시 시도하세요.</string>
+    <string name="error_verification_required">이 계정을 계속 사용하려면 복구 이메일을 확인하세요.</string>
+    <string name="no_recipients">받는 사람 없음</string>
+    <string name="scheduled_already_sending">이 메일은 이미 전송 중이라 더 이상 변경할 수 없습니다.</string>
+    <string name="scheduled_cancel_send">전송 취소</string>
+    <string name="scheduled_for">%1$s 전송 예약됨</string>
+    <string name="scheduled_recipients">받는 사람: %1$s</string>
+    <string name="scheduled_time_in_past">미래의 시간을 선택하세요</string>
 </resources>

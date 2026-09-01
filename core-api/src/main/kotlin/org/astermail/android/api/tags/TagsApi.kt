@@ -115,12 +115,28 @@ interface TagsApi {
 
 class TagsApiImpl(private val client: ApiClient) : TagsApi {
     private val tags_base = "/api/mail/v1/tags"
+    private val tag_page_size = 500
+    private val tag_page_cap = 10
 
     override suspend fun list_tags(include_counts: Boolean): TagsListResponse {
-        val response = client.http.get("${client.base_url}$tags_base") {
-            parameter("include_counts", include_counts)
+        val collected = mutableListOf<TagItem>()
+        var total = 0L
+        var offset = 0
+        repeat(tag_page_cap) {
+            val response = client.http.get("${client.base_url}$tags_base") {
+                parameter("include_counts", include_counts)
+                parameter("limit", tag_page_size)
+                parameter("offset", offset)
+            }
+            val page: TagsListResponse = decode_or_throw(response)
+            collected += page.tags
+            total = page.total
+            if (!page.has_more || page.tags.isEmpty()) {
+                return TagsListResponse(tags = collected, total = total, has_more = false)
+            }
+            offset += tag_page_size
         }
-        return decode_or_throw(response)
+        return TagsListResponse(tags = collected, total = total, has_more = true)
     }
 
     override suspend fun create_tag(request: CreateTagRequest): CreateTagResponse {

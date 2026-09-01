@@ -1316,6 +1316,7 @@
     <string name="snooze_tomorrow_morning">Demain matin</string>
     <string name="snooze_this_weekend">Ce week-end</string>
     <string name="snooze_next_week">La semaine prochaine</string>
+    <string name="snooze_next_month">Le mois prochain</string>
     <string name="aster_email">E-mail Aster</string>
     <string name="pgp_encrypted_subject">Message chiffré</string>
     <string name="pgp_encrypted_body">Ce message est chiffré PGP. Ouvrez l\'application web Aster sur un appareil disposant de la clé PGP correspondante pour le lire.</string>
@@ -2274,6 +2275,7 @@
     <string name="attachment_already_attached">\"%1$s\" est déjà joint</string>
     <string name="attachment_read_failed">Impossible de lire \"%1$s\"</string>
     <string name="scheduled_send_no_attachments">Les envois programmés n’acceptent pas encore de pièces jointes. Retirez-les ou envoyez maintenant.</string>
+    <string name="cannot_mix_recipients">Les utilisateurs Aster et les adresses externes ne peuvent pas figurer dans le même message. Les envoyer en deux messages séparés fonctionnera.</string>
     <string name="theme_dynamic">Couleurs du fond d’écran</string>
     <string name="theme_dynamic_subtitle">Suivre les couleurs de votre appareil</string>
     <string name="block_sender_confirm_message">Les nouveaux messages de cette adresse iront directement dans le spam. Vous pouvez annuler dans Réglages, sous Expéditeurs bloqués.</string>
@@ -2923,7 +2925,6 @@
     <string name="show_email_preview_subtitle">Afficher une ligne du texte du message dans la liste de la boîte de réception</string>
     <string name="signature_hint_content">Saisissez le texte de la signature.</string>
     <string name="signature_set_default">Utiliser comme signature par défaut</string>
-    <string name="snooze_next_month">Le mois prochain</string>
     <string name="star_failed">Échec du suivi</string>
     <string name="tab_label_with_count">%1$s (%2$d)</string>
     <string name="templates_decrypt_failed_count">Impossible de lire %1$d modèles sur cet appareil. Ils ont été enregistrés avec une clé que cet appareil ne possède pas actuellement.</string>
@@ -3047,4 +3048,16 @@
     <string name="pgp_signature_valid">Signature vérifiée</string>
     <string name="pgp_signature_invalid">La signature ne correspond pas</string>
     <string name="pgp_recipient_description">L’expéditeur a chiffré ce message avec OpenPGP avant de l’envoyer. Seul un appareil disposant de votre clé privée peut le déchiffrer, personne d’autre ne peut le lire.</string>
+    <string name="error_account_locked">Votre compte est temporairement verrouillé. Réessayez plus tard.</string>
+    <string name="error_account_probation">Votre compte fait l\'objet de restrictions temporaires.</string>
+    <string name="error_account_suspended">Votre compte est suspendu pour non-respect des conditions d\'utilisation.</string>
+    <string name="error_alias_reencryption_incomplete">Certains alias n\'ont pas fini d\'être rechiffrés, donc rien n\'a changé. Réessayez.</string>
+    <string name="error_client_upgrade_required">Cette version de l\'app ne peut pas effectuer cette modification. Installez la dernière version, puis réessayez.</string>
+    <string name="error_verification_required">Pour continuer à utiliser ce compte, vérifiez votre adresse de récupération.</string>
+    <string name="no_recipients">Aucun destinataire</string>
+    <string name="scheduled_already_sending">Cet e-mail est déjà en cours d\'envoi, vous ne pouvez donc plus le modifier.</string>
+    <string name="scheduled_cancel_send">Annuler l\'envoi</string>
+    <string name="scheduled_for">Programmé pour %1$s</string>
+    <string name="scheduled_recipients">À : %1$s</string>
+    <string name="scheduled_time_in_past">Choisissez une heure future</string>
 </resources>

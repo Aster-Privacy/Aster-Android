@@ -62,6 +62,8 @@ import org.astermail.android.api.labels.LabelsApi
 import org.astermail.android.crypto.ratchet.RatchetCrypto
 import org.astermail.android.api.scheduled.CreateScheduledRequest
 import org.astermail.android.api.scheduled.ScheduledApi
+import org.astermail.android.api.scheduled.ScheduledDetailResponse
+import org.astermail.android.api.scheduled.ScheduledSummary
 import org.astermail.android.api.send.ExternalAttachmentPayload
 import org.astermail.android.api.send.ExternalSendRequest
 import org.astermail.android.api.send.SendApi
@@ -113,6 +115,8 @@ private const val METADATA_RESOLVE_CONCURRENCY = 8
 private const val BULK_SCOPE_COMPLETION_ATTEMPTS = 10
 private const val BULK_SCOPE_COMPLETION_DELAY_MS = 750L
 private const val ENVELOPE_KEY_CACHE_MAX_ENTRIES = 32
+private const val SCHEDULED_KEY_VERSION = "astermail-scheduled-v1"
+private val ACTIVE_SCHEDULED_STATUSES = setOf("pending", "sending", "failed")
 private const val ENVELOPE_HEAL_COOLDOWN_MS = 5L * 60L * 1000L
 private const val ENVELOPE_HEAL_FORCED_WINDOW_MS = 30_000L
 private const val ENVELOPE_HEAL_RECENT_CHANGE_MS = 10_000L
@@ -2124,13 +2128,13 @@ class MailRepository @Inject constructor(
             },
             timestamp = item.message_ts ?: item.created_at ?: "",
             is_read = resolve_read_state(item.item_type, item.is_read, meta?.is_read) ||
-                (meta?.is_trashed ?: item.is_trashed) == true,
-            is_starred = meta?.is_starred ?: item.is_starred ?: false,
+                (meta?.is_trashed ?: false) || (item.is_trashed ?: false),
+            is_starred = item.is_starred ?: meta?.is_starred ?: false,
             is_encrypted = item.encrypted_envelope != null && envelope?.is_unauthenticated != true,
-            has_attachments = meta?.has_attachments ?: false,
-            is_trashed = meta?.is_trashed ?: item.is_trashed ?: false,
-            is_archived = meta?.is_archived ?: item.is_archived ?: false,
-            is_spam = meta?.is_spam ?: item.is_spam ?: false,
+            has_attachments = (meta?.has_attachments ?: false) || (item.has_attachments ?: false),
+            is_trashed = (meta?.is_trashed ?: false) || (item.is_trashed ?: false),
+            is_archived = (meta?.is_archived ?: false) || (item.is_archived ?: false),
+            is_spam = (meta?.is_spam ?: false) || (item.is_spam ?: false),
             labels = item.labels?.mapNotNull { it.folder_token } ?: emptyList(),
             tag_tokens = item.tag_tokens ?: emptyList(),
             category = if (envelope != null) {
@@ -2202,12 +2206,12 @@ class MailRepository @Inject constructor(
             body_text = envelope?.body_text ?: "",
             body_html = envelope?.body_html,
             is_encrypted = item.encrypted_envelope != null && envelope?.is_unauthenticated != true,
-            is_read = resolve_read_state(item.item_type, null, meta?.is_read),
+            is_read = resolve_read_state(item.item_type, item.is_read, meta?.is_read),
             raw_item = item,
             to_addresses = envelope?.to?.map { it.second } ?: emptyList(),
             cc_addresses = envelope?.cc?.map { it.second } ?: emptyList(),
             bcc_addresses = envelope?.bcc?.map { it.second } ?: emptyList(),
-            has_attachments = meta?.has_attachments ?: false,
+            has_attachments = (meta?.has_attachments ?: false) || (item.has_attachments ?: false),
             raw_headers = envelope?.raw_headers ?: emptyList(),
             is_undecryptable = envelope?.is_undecryptable ?: !item.encrypted_envelope.isNullOrBlank(),
             subject = envelope?.subject ?: "",

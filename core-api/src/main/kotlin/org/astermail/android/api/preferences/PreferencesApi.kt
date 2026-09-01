@@ -87,6 +87,12 @@ data class UserPreferences(
     val block_remote_css: Boolean = true,
     val html_rendering_mode: String = "html",
     val auto_save_recent_recipients: Boolean = true,
+    val auto_save_drafts: Boolean = true,
+    val signature_mode: String = "auto",
+    val signature_in_replies: Boolean = true,
+    val signature_in_forwards: Boolean = true,
+    val signature_placement: String = "below",
+    val show_signature_separator: Boolean = true,
     val undo_send_enabled: Boolean = true,
     val undo_send_seconds: Int = 10,
     val confirm_delete: Boolean = false,
@@ -152,10 +158,6 @@ data class UserPreferences(
     val mail_list_density: String = "compact",
     val compose_font_size: String = "normal",
     val compose_font_color: String = "",
-    val signature_mode: String = "auto",
-    val signature_placement: String = "below",
-    val show_signature_separator: Boolean = true,
-    val auto_save_drafts: Boolean = true,
 )
 
 @Serializable

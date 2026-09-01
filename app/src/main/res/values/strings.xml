@@ -234,6 +234,14 @@
     <string name="archive_to_clean">Archive emails to keep your inbox clean</string>
     <string name="no_scheduled">No scheduled messages</string>
     <string name="scheduled_messages_here">Messages you schedule will appear here</string>
+    <string name="scheduled_send_now">Send now</string>
+    <string name="scheduled_reschedule">Reschedule</string>
+    <string name="scheduled_cancel_send">Cancel send</string>
+    <string name="scheduled_already_sending">This email is already sending, so you can no longer change it.</string>
+    <string name="scheduled_sending_now">Sending now</string>
+    <string name="scheduled_for">Scheduled for %1$s</string>
+    <string name="scheduled_time_in_past">Choose a time in the future</string>
+    <string name="scheduled_recipients">To: %1$s</string>
     <string name="nothing_snoozed">Nothing sleeping right now</string>
     <string name="snoozed_wake_here">Snoozed emails will wake up here</string>
     <string name="no_messages">No messages</string>
@@ -355,6 +363,7 @@
     <string name="sender_blocked">Sender blocked</string>
     <string name="message_unavailable">Message unavailable</string>
     <string name="no_subject">(no subject)</string>
+    <string name="no_recipients">No recipients</string>
     <string name="open_external_link">Open external link?</string>
     <string name="leaving_aster_warning">You are about to leave Aster and open this link in your browser:</string>
     <string name="reply">Reply</string>
@@ -844,9 +853,11 @@
     <string name="attachment_too_large">\"%1$s\" is over the %2$s single-file limit</string>
     <string name="attachment_too_large_upgradable">\"%1$s\" is over the %2$s single-file limit on your plan. Upgrading raises it to %3$s.</string>
     <string name="attachment_total_too_large">Your attachments are over the %1$s total limit</string>
+    <string name="attachment_too_many">You can attach up to %1$d files to one email</string>
     <string name="attachment_already_attached">\"%1$s\" is already attached</string>
     <string name="attachment_read_failed">\"%1$s\" could not be read</string>
     <string name="scheduled_send_no_attachments">Scheduled emails can\'t include attachments yet. Remove them or send now.</string>
+    <string name="cannot_mix_recipients">Aster users and outside addresses cannot go in the same email. Sending them as two separate messages will work.</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>
@@ -1705,6 +1716,12 @@
     <string name="error_timeout">Connection timed out. Please try again.</string>
     <string name="error_ssl">Secure connection failed. Please try again.</string>
     <string name="error_generic">Something went wrong. Please try again.</string>
+    <string name="error_account_suspended">Your account is suspended for violating the Terms of Service.</string>
+    <string name="error_account_locked">Your account is temporarily locked. Try again later.</string>
+    <string name="error_account_probation">Your account has temporary restrictions.</string>
+    <string name="error_verification_required">To keep using this account, verify your recovery email.</string>
+    <string name="error_client_upgrade_required">This app version can\'t make this change. Update to the latest version, then try again.</string>
+    <string name="error_alias_reencryption_incomplete">Some aliases didn\'t finish re-encrypting, so nothing changed. Try again.</string>
     <string name="error_too_many_attempts">Too many attempts. Please wait a moment and try again.</string>
 
     <!-- Recovery -->
@@ -1763,6 +1780,7 @@
     <string name="snooze_tomorrow_morning">Tomorrow morning</string>
     <string name="snooze_this_weekend">This weekend</string>
     <string name="snooze_next_week">Next week</string>
+    <string name="snooze_next_month">Next month</string>
     <string name="aster_email">Aster email</string>
     <string name="pgp_encrypted_subject">Encrypted message</string>
     <string name="pgp_encrypted_body">This message is PGP-encrypted. Open the Aster web app to read it on a device that holds the matching PGP key.</string>
@@ -2929,7 +2947,6 @@
     </plurals>
     <string name="alias_delete_directory_confirm">Mail sent to addresses in this directory stops being delivered. You can\'t undo this.</string>
     <string name="alias_directory_separator_hint">A dot, slash, plus sign, or number sign all work before the directory name.</string>
-    <string name="attachment_too_many">One email can carry %1$d attachments</string>
     <string name="audit_event_2fa_disabled">Two-factor authentication turned off</string>
     <string name="audit_event_2fa_enabled">Two-factor authentication turned on</string>
     <string name="audit_event_account_locked">Account locked</string>
@@ -2997,13 +3014,10 @@
     <string name="scheduled_delete">Delete</string>
     <string name="scheduled_deleted">Scheduled message deleted</string>
     <string name="scheduled_no_subject">(No subject)</string>
-    <string name="scheduled_reschedule">Reschedule</string>
     <string name="scheduled_rescheduled">Send time updated</string>
     <string name="scheduled_send_connected_account">Scheduled sending isn\'t available for connected accounts. Send this message now, or choose an Aster address.</string>
     <string name="scheduled_send_failed">This message couldn\'t be sent. Choose a new send time to try again.</string>
-    <string name="scheduled_send_now">Send now</string>
     <string name="scheduled_send_time">Scheduled for %1$s</string>
-    <string name="scheduled_sending_now">Sending now</string>
     <string name="scheduled_to">To: %1$s</string>
     <string name="send_refusal_attachments_too_large">These attachments add up to more than %1$s, which is the most one message can carry on your plan. Removing or shrinking a file will let this send, and your draft is saved.</string>
     <string name="send_refusal_recipient_concentration">You have sent to as many addresses at %1$s as we allow in one hour. Sending this many at once to a single provider gets our mail servers blocked. Try again later, and your draft is saved.</string>
@@ -3015,7 +3029,6 @@
     <string name="show_email_preview_subtitle">Show a line of message text in the inbox list</string>
     <string name="signature_hint_content">Enter the signature text.</string>
     <string name="signature_set_default">Use as default signature</string>
-    <string name="snooze_next_month">Next month</string>
     <string name="star_failed">Failed to star</string>
     <string name="tab_label_with_count">%1$s (%2$d)</string>
     <string name="templates_decrypt_failed_count">%1$d templates could not be read on this device. They were saved with a key this device does not currently hold.</string>

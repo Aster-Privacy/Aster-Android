@@ -1261,6 +1261,7 @@
     <string name="snooze_tomorrow_morning">Mañana por la mañana</string>
     <string name="snooze_this_weekend">Este fin de semana</string>
     <string name="snooze_next_week">La próxima semana</string>
+    <string name="snooze_next_month">El próximo mes</string>
     <string name="aster_email">Correo Aster</string>
     <string name="pgp_encrypted_subject">Mensaje cifrado</string>
     <string name="pgp_encrypted_body">Este mensaje está cifrado con PGP. Abre la app web de Aster en un dispositivo que tenga la clave PGP correspondiente para leerlo.</string>
@@ -1757,6 +1758,7 @@
     <string name="attachment_already_attached">\"%1$s\" ya está adjunto</string>
     <string name="attachment_read_failed">No se pudo leer \"%1$s\"</string>
     <string name="scheduled_send_no_attachments">Los correos programados aún no admiten adjuntos. Quítalos o envía ahora.</string>
+    <string name="cannot_mix_recipients">No puedes enviar a usuarios de Aster y a direcciones externas en un mismo correo. Enviarlos como dos mensajes separados funcionará.</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>
@@ -2897,7 +2899,6 @@
     <string name="show_email_preview_subtitle">Mostrar una línea del texto del mensaje en la lista de la bandeja de entrada</string>
     <string name="signature_hint_content">Escribe el texto de la firma.</string>
     <string name="signature_set_default">Usar como firma predeterminada</string>
-    <string name="snooze_next_month">Próximo mes</string>
     <string name="star_failed">No se pudo destacar</string>
     <string name="tab_label_with_count">%1$s (%2$d)</string>
     <string name="templates_decrypt_failed_count">No se pudieron leer %1$d plantillas en este dispositivo. Se guardaron con una clave que este dispositivo no tiene actualmente.</string>
@@ -3021,4 +3022,16 @@
     <string name="pgp_signature_valid">Firma verificada</string>
     <string name="pgp_signature_invalid">La firma no coincide</string>
     <string name="pgp_recipient_description">El remitente cifró este mensaje con OpenPGP antes de enviarlo. Solo un dispositivo con tu clave privada puede descifrarlo, así que nadie más puede leerlo.</string>
+    <string name="error_account_locked">Tu cuenta está bloqueada temporalmente. Inténtalo de nuevo más tarde.</string>
+    <string name="error_account_probation">Tu cuenta tiene restricciones temporales.</string>
+    <string name="error_account_suspended">Tu cuenta está suspendida por incumplir los Términos del servicio.</string>
+    <string name="error_alias_reencryption_incomplete">Algunos alias no terminaron de volver a cifrarse, así que no se cambió nada. Inténtalo de nuevo.</string>
+    <string name="error_client_upgrade_required">Esta versión de la app no puede hacer este cambio. Actualiza a la última versión y vuelve a intentarlo.</string>
+    <string name="error_verification_required">Para seguir usando esta cuenta, verifica tu correo de recuperación.</string>
+    <string name="no_recipients">Sin destinatarios</string>
+    <string name="scheduled_already_sending">Este correo ya se está enviando, así que ya no puedes cambiarlo.</string>
+    <string name="scheduled_cancel_send">Cancelar el envío</string>
+    <string name="scheduled_for">Programado para %1$s</string>
+    <string name="scheduled_recipients">Para: %1$s</string>
+    <string name="scheduled_time_in_past">Elige una hora futura</string>
 </resources>

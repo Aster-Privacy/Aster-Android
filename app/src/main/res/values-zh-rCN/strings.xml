@@ -1259,6 +1259,7 @@
     <string name="snooze_tomorrow_morning">明天早上</string>
     <string name="snooze_this_weekend">本周末</string>
     <string name="snooze_next_week">下周</string>
+    <string name="snooze_next_month">下个月</string>
     <string name="aster_email">Aster 邮件</string>
     <string name="pgp_encrypted_subject">加密消息</string>
     <string name="pgp_encrypted_body">此消息已使用 PGP 加密。请在持有匹配 PGP 密钥的设备上打开 Aster 网页版以阅读。</string>
@@ -1753,6 +1754,7 @@
     <string name="attachment_already_attached">“%1$s”已经添加</string>
     <string name="attachment_read_failed">无法读取“%1$s”</string>
     <string name="scheduled_send_no_attachments">定时发送暂不支持附件。请先移除附件或立即发送。</string>
+    <string name="cannot_mix_recipients">Aster 用户和外部地址不能放在同一封邮件中，分两封发送就可以。</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>
@@ -2885,7 +2887,6 @@
     <string name="show_email_preview_subtitle">在收件箱列表中显示一行邮件正文</string>
     <string name="signature_hint_content">输入签名文本。</string>
     <string name="signature_set_default">用作默认签名</string>
-    <string name="snooze_next_month">下个月</string>
     <string name="star_failed">无法添加星标</string>
     <string name="tab_label_with_count">%1$s（%2$d）</string>
     <string name="templates_decrypt_failed_count">此设备上有 %1$d 个模板无法读取。它们是用此设备当前未持有的密钥保存的。</string>
@@ -3007,4 +3008,16 @@
     <string name="pgp_signature_valid">签名已验证</string>
     <string name="pgp_signature_invalid">签名不匹配</string>
     <string name="pgp_recipient_description">发件人在发送前使用 OpenPGP 加密了此邮件。只有持有你的私钥的设备才能解密，因此中间的任何人都无法阅读。</string>
+    <string name="error_account_locked">你的账户已被暂时锁定。请稍后再试。</string>
+    <string name="error_account_probation">你的账户存在临时限制。</string>
+    <string name="error_account_suspended">因违反服务条款，你的账户已被暂停。</string>
+    <string name="error_alias_reencryption_incomplete">部分别名未完成重新加密，因此未做任何更改。请重试。</string>
+    <string name="error_client_upgrade_required">此版本的应用无法进行此更改。请更新到最新版本后重试。</string>
+    <string name="error_verification_required">若要继续使用此账户，请验证你的恢复邮箱。</string>
+    <string name="no_recipients">无收件人</string>
+    <string name="scheduled_already_sending">此邮件正在发送，无法再更改。</string>
+    <string name="scheduled_cancel_send">取消发送</string>
+    <string name="scheduled_for">已安排在 %1$s 发送</string>
+    <string name="scheduled_recipients">收件人：%1$s</string>
+    <string name="scheduled_time_in_past">请选择将来的时间</string>
 </resources>

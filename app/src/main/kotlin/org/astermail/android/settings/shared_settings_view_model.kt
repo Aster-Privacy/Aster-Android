@@ -39,9 +39,15 @@ internal tailrec fun Context.host_activity(): ComponentActivity? = when (this) {
 
 @Composable
 fun shared_settings_view_model(): SettingsViewModel {
-    val host = LocalContext.current.host_activity()
+    val context = LocalContext.current
+    val host = context.host_activity()
     val view_model: SettingsViewModel = if (host != null) hiltViewModel(host) else hiltViewModel()
     LaunchedEffect(Unit) { view_model.reset_transient_state() }
+    LaunchedEffect(view_model) {
+        view_model.preference_save_failures.collect { message ->
+            android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
     return view_model
 }
 

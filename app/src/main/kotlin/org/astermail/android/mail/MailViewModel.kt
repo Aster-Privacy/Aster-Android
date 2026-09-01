@@ -3827,6 +3827,19 @@ class MailViewModel @Inject constructor(
         )
     }
 
+    private fun scheduled_action_error(error: Throwable): String =
+        if (error is org.astermail.android.api.ApiError.Conflict) {
+            context.getString(R.string.scheduled_already_sending)
+        } else {
+            friendly_load_error(error)
+        }
+
+    private fun drop_scheduled_locally(id: String) {
+        _inbox_state.update { state ->
+            state.copy(items = state.items.filterNot { it.id == id })
+        }
+    }
+
     private fun thread_item_from_mail_item(
         raw: org.astermail.android.api.mail.MailItem,
     ): org.astermail.android.api.mail.ThreadMessageItem =

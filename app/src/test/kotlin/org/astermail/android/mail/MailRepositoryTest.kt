@@ -1839,4 +1839,89 @@ class MailRepositoryTest {
 
         verify(exactly = 1) { ratchet_plaintext_cache.clear() }
     }
+
+    private fun scheduled_fixture(
+        id: String,
+        subject: String,
+        recipients: List<String>,
+        status: String = "pending",
+        scheduled_at: String = "2026-09-01T10:00:00Z",
+    ): Pair<org.astermail.android.api.scheduled.ScheduledSummary, org.astermail.android.api.scheduled.ScheduledDetailResponse> {
+        val key = ByteArray(32) { it.toByte() }
+        val nonce = ByteArray(12) { (it + 7).toByte() }
+        val envelope = org.json.JSONObject()
+            .put("to_recipients", org.json.JSONArray(recipients))
+            .put("subject", subject)
+            .put("body", "<p>hello</p>")
+            .toString()
+        val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(
+            javax.crypto.Cipher.ENCRYPT_MODE,
+            javax.crypto.spec.SecretKeySpec(key, "AES"),
+            javax.crypto.spec.GCMParameterSpec(128, nonce),
+        )
+        val sealed = cipher.doFinal(envelope.toByteArray(Charsets.UTF_8))
+        val encoder = java.util.Base64.getEncoder()
+        return org.astermail.android.api.scheduled.ScheduledSummary(
+            id = id,
+            recipient_count = recipients.size,
+            scheduled_at = scheduled_at,
+            status = status,
+        ) to org.astermail.android.api.scheduled.ScheduledDetailResponse(
+            id = id,
+            encrypted_envelope = encoder.encodeToString(sealed),
+            envelope_nonce = encoder.encodeToString(nonce),
+            recipient_count = recipients.size,
+            scheduled_at = scheduled_at,
+            status = status,
+            ephemeral_key = encoder.encodeToString(key),
+        )
+    }
+
+    @Test
+    fun `fetch_scheduled reads the scheduled endpoint and decrypts each envelope`() = runTest {
+        val (summary, detail) = scheduled_fixture("s1", "Quarterly update", listOf("ada@astermail.org"))
+        coEvery { scheduled_api.list_scheduled(any(), any()) } returns
+            org.astermail.android.api.scheduled.ListScheduledResponse(
+                items = listOf(summary),
+                total = 1,
+                limit = 50,
+                offset = 0,
+            )
+        coEvery { scheduled_api.get_scheduled("s1") } returns detail
+
+        val page = repo.fetch_scheduled().getOrThrow()
+
+        assertEquals(1, page.items.size)
+        assertEquals("Quarterly update", page.items[0].subject)
+        assertEquals(listOf("ada@astermail.org"), page.items[0].to_addresses)
+        assertEquals("2026-09-01T10:00:00Z", page.items[0].timestamp)
+        assertEquals("scheduled", page.items[0].raw_item.item_type)
+        assertFalse(page.has_more)
+    }
+
+    @Test
+    fun `fetch_scheduled hides items that are no longer waiting to send`() = runTest {
+        val (pending, pending_detail) = scheduled_fixture("s1", "Still waiting", listOf("ada@astermail.org"))
+        val (cancelled, cancelled_detail) = scheduled_fixture(
+            "s2",
+            "Called off",
+            listOf("bob@astermail.org"),
+            status = "cancelled",
+        )
+        coEvery { scheduled_api.list_scheduled(any(), any()) } returns
+            org.astermail.android.api.scheduled.ListScheduledResponse(
+                items = listOf(pending, cancelled),
+                total = 2,
+                limit = 50,
+                offset = 0,
+            )
+        coEvery { scheduled_api.get_scheduled("s1") } returns pending_detail
+        coEvery { scheduled_api.get_scheduled("s2") } returns cancelled_detail
+
+        val page = repo.fetch_scheduled().getOrThrow()
+
+        assertEquals(1, page.items.size)
+        assertEquals("s1", page.items[0].id)
+    }
 }

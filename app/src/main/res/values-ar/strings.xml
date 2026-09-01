@@ -1264,6 +1264,7 @@
     <string name="snooze_tomorrow_morning">صباح الغد</string>
     <string name="snooze_this_weekend">نهاية هذا الأسبوع</string>
     <string name="snooze_next_week">الأسبوع القادم</string>
+    <string name="snooze_next_month">الشهر القادم</string>
     <string name="aster_email">بريد Aster</string>
     <string name="pgp_encrypted_subject">رسالة مشفرة</string>
     <string name="pgp_encrypted_body">هذه الرسالة مشفرة بـ PGP. افتح تطبيق ويب Aster على جهاز يحتوي على مفتاح PGP المطابق لقراءتها.</string>
@@ -1768,6 +1769,7 @@
     <string name="attachment_already_attached">\"%1$s\" مرفق بالفعل</string>
     <string name="attachment_read_failed">تعذّرت قراءة \"%1$s\"</string>
     <string name="scheduled_send_no_attachments">الرسائل المجدولة لا تدعم المرفقات بعد. أزِلها أو أرسل الآن.</string>
+    <string name="cannot_mix_recipients">مستخدمو Aster والعناوين الخارجية لا يجتمعون في رسالة واحدة. إرسالهما رسالتين منفصلتين سيعمل.</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>
@@ -2948,7 +2950,6 @@
     <string name="show_email_preview_subtitle">عرض سطر من نص الرسالة في قائمة البريد الوارد</string>
     <string name="signature_hint_content">أدخل نص التوقيع.</string>
     <string name="signature_set_default">استخدامه كتوقيع افتراضي</string>
-    <string name="snooze_next_month">الشهر القادم</string>
     <string name="star_failed">تعذر إضافة النجمة</string>
     <string name="tab_label_with_count">%1$s (%2$d)</string>
     <string name="templates_decrypt_failed_count">تعذّرت قراءة %1$d من القوالب على هذا الجهاز. فقد حُفظت بمفتاح لا يمتلكه هذا الجهاز حاليًا.</string>
@@ -3080,4 +3081,16 @@
     <string name="pgp_signature_valid">تم التحقق من التوقيع</string>
     <string name="pgp_signature_invalid">التوقيع غير مطابق</string>
     <string name="pgp_recipient_description">شفّر المرسل هذه الرسالة باستخدام OpenPGP قبل إرسالها. لا يمكن فك تشفيرها إلا على جهاز يحمل مفتاحك الخاص، لذا لا يمكن لأحد في المنتصف قراءتها.</string>
+    <string name="error_account_locked">حسابك مقفل مؤقتًا. حاول مرة أخرى لاحقًا.</string>
+    <string name="error_account_probation">حسابك عليه قيود مؤقتة.</string>
+    <string name="error_account_suspended">حسابك موقوف بسبب مخالفة شروط الخدمة.</string>
+    <string name="error_alias_reencryption_incomplete">لم تكتمل إعادة تشفير بعض الأسماء المستعارة، لذلك لم يتغير شيء. حاول مرة أخرى.</string>
+    <string name="error_client_upgrade_required">لا يمكن لهذا الإصدار من التطبيق إجراء هذا التغيير. حدّث إلى أحدث إصدار ثم حاول مرة أخرى.</string>
+    <string name="error_verification_required">لمواصلة استخدام هذا الحساب، تحقق من بريد الاسترداد.</string>
+    <string name="no_recipients">لا مستلمين</string>
+    <string name="scheduled_already_sending">هذا البريد قيد الإرسال بالفعل، لذلك لم يعد بإمكانك تغييره.</string>
+    <string name="scheduled_cancel_send">إلغاء الإرسال</string>
+    <string name="scheduled_for">مجدول في %1$s</string>
+    <string name="scheduled_recipients">إلى: %1$s</string>
+    <string name="scheduled_time_in_past">اختر وقتًا في المستقبل</string>
 </resources>

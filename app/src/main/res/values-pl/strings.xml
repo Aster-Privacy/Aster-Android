@@ -1262,6 +1262,7 @@
     <string name="snooze_tomorrow_morning">Jutro rano</string>
     <string name="snooze_this_weekend">W ten weekend</string>
     <string name="snooze_next_week">W przyszłym tygodniu</string>
+    <string name="snooze_next_month">W przyszłym miesiącu</string>
     <string name="aster_email">E-mail Aster</string>
     <string name="pgp_encrypted_subject">Wiadomość zaszyfrowana</string>
     <string name="pgp_encrypted_body">Ta wiadomość jest zaszyfrowana PGP. Otwórz aplikację webową Aster na urządzeniu z odpowiednim kluczem PGP, aby ją odczytać.</string>
@@ -1762,6 +1763,7 @@
     <string name="attachment_already_attached">\"%1$s\" jest już załączony</string>
     <string name="attachment_read_failed">Nie udało się odczytać \"%1$s\"</string>
     <string name="scheduled_send_no_attachments">Zaplanowane wiadomości nie obsługują jeszcze załączników. Usuń je albo wyślij teraz.</string>
+    <string name="cannot_mix_recipients">Użytkownicy Aster i adresy zewnętrzne nie mogą znaleźć się w tej samej wiadomości. Wysłanie ich jako dwóch oddzielnych wiadomości zadziała.</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>
@@ -2922,7 +2924,6 @@
     <string name="show_email_preview_subtitle">Pokaż wiersz treści wiadomości na liście odebranych</string>
     <string name="signature_hint_content">Wpisz treść podpisu.</string>
     <string name="signature_set_default">Użyj jako domyślnego podpisu</string>
-    <string name="snooze_next_month">W przyszłym miesiącu</string>
     <string name="star_failed">Nie udało się oznaczyć gwiazdką</string>
     <string name="tab_label_with_count">%1$s (%2$d)</string>
     <string name="templates_decrypt_failed_count">Nie udało się odczytać %1$d szablonów na tym urządzeniu. Zapisano je kluczem, którego to urządzenie obecnie nie posiada.</string>
@@ -3050,4 +3051,16 @@
     <string name="pgp_signature_valid">Podpis zweryfikowany</string>
     <string name="pgp_signature_invalid">Podpis się nie zgadza</string>
     <string name="pgp_recipient_description">Nadawca zaszyfrował tę wiadomość za pomocą OpenPGP przed wysłaniem. Odszyfrować ją może tylko urządzenie z Twoim kluczem prywatnym, więc nikt inny jej nie przeczyta.</string>
+    <string name="error_account_locked">Twoje konto jest tymczasowo zablokowane. Spróbuj ponownie później.</string>
+    <string name="error_account_probation">Twoje konto ma tymczasowe ograniczenia.</string>
+    <string name="error_account_suspended">Twoje konto zostało zawieszone za naruszenie Warunków korzystania z usługi.</string>
+    <string name="error_alias_reencryption_incomplete">Część aliasów nie została ponownie zaszyfrowana, więc nic się nie zmieniło. Spróbuj ponownie.</string>
+    <string name="error_client_upgrade_required">Ta wersja aplikacji nie może wprowadzić tej zmiany. Zaktualizuj do najnowszej wersji, a potem spróbuj ponownie.</string>
+    <string name="error_verification_required">Aby dalej korzystać z tego konta, zweryfikuj adres e-mail do odzyskiwania.</string>
+    <string name="no_recipients">Brak odbiorców</string>
+    <string name="scheduled_already_sending">Ta wiadomość jest już wysyłana, więc nie możesz jej zmienić.</string>
+    <string name="scheduled_cancel_send">Anuluj wysyłanie</string>
+    <string name="scheduled_for">Zaplanowano na %1$s</string>
+    <string name="scheduled_recipients">Do: %1$s</string>
+    <string name="scheduled_time_in_past">Wybierz czas w przyszłości</string>
 </resources>

@@ -1034,6 +1034,7 @@ fun InboxScreen(
     }
 
     fun archive_selected() {
+        if (current_folder == "scheduled") return
         val ids = selected_email_ids()
         val thread_count = selected_ids.size
         val to_remove = selected_ids.toSet()
@@ -1047,6 +1048,12 @@ fun InboxScreen(
         val ids = selected_email_ids()
         val thread_count = selected_ids.size
         val to_remove = selected_ids.toSet()
+        if (current_folder == "scheduled") {
+            ids.forEach { mail_vm.cancel_scheduled(it) }
+            emails.removeAll { (it.thread_id in to_remove || it.id in to_remove) }
+            exit_select_mode()
+            return
+        }
         mail_vm.trash(ids, thread_count)
         emails.removeAll { (it.thread_id in to_remove || it.id in to_remove) }
         exit_select_mode()
@@ -3293,6 +3300,13 @@ private fun execute_swipe_action(
     on_star_mutation: (List<String>) -> Unit = {},
     on_snooze: (List<String>) -> Unit = {},
 ) {
+    if (current_folder == "scheduled") {
+        if (action == "delete" || action == "trash" || action == "delete_permanent") {
+            ids.forEach { mail_vm.cancel_scheduled(it) }
+            emails.removeAll { (it.thread_id == thread_id || it.id == thread_id) }
+        }
+        return
+    }
     when (action) {
         "archive" -> {
             if (current_folder == "archive") return

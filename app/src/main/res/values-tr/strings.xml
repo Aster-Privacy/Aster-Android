@@ -1260,6 +1260,7 @@
     <string name="snooze_tomorrow_morning">Yarın sabah</string>
     <string name="snooze_this_weekend">Bu hafta sonu</string>
     <string name="snooze_next_week">Önümüzdeki hafta</string>
+    <string name="snooze_next_month">Önümüzdeki ay</string>
     <string name="aster_email">Aster e-postası</string>
     <string name="pgp_encrypted_subject">Şifreli mesaj</string>
     <string name="pgp_encrypted_body">Bu mesaj PGP ile şifrelenmiştir. Okumak için eşleşen PGP anahtarına sahip bir cihazda Aster web uygulamasını açın.</string>
@@ -1756,6 +1757,7 @@
     <string name="attachment_already_attached">\"%1$s\" zaten ekli</string>
     <string name="attachment_read_failed">\"%1$s\" okunamadı</string>
     <string name="scheduled_send_no_attachments">Zamanlanmış e-postalar henüz ek desteklemiyor. Ekleri kaldır ya da şimdi gönder.</string>
+    <string name="cannot_mix_recipients">Aster kullanıcıları ile dış adresler aynı e-postaya konulamaz. Onları iki ayrı mesaj olarak göndermek işe yarar.</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>
@@ -2896,7 +2898,6 @@
     <string name="show_email_preview_subtitle">Gelen kutusu listesinde iletinin bir satırını göster</string>
     <string name="signature_hint_content">İmza metnini girin.</string>
     <string name="signature_set_default">Varsayılan imza olarak kullan</string>
-    <string name="snooze_next_month">Gelecek ay</string>
     <string name="star_failed">Yıldız eklenemedi</string>
     <string name="tab_label_with_count">%1$s (%2$d)</string>
     <string name="templates_decrypt_failed_count">%1$d şablon bu cihazda okunamadı. Bu cihazda şu anda bulunmayan bir anahtarla kaydedilmişler.</string>
@@ -3020,4 +3021,16 @@
     <string name="pgp_signature_valid">İmza doğrulandı</string>
     <string name="pgp_signature_invalid">İmza eşleşmiyor</string>
     <string name="pgp_recipient_description">Gönderen bu mesajı göndermeden önce OpenPGP ile şifreledi. Mesajı yalnızca özel anahtarınızın bulunduğu bir cihaz çözebilir, bu yüzden başka kimse okuyamaz.</string>
+    <string name="error_account_locked">Hesabınız geçici olarak kilitlendi. Daha sonra tekrar deneyin.</string>
+    <string name="error_account_probation">Hesabınızda geçici kısıtlamalar var.</string>
+    <string name="error_account_suspended">Hizmet Şartları\'nı ihlal ettiği için hesabınız askıya alındı.</string>
+    <string name="error_alias_reencryption_incomplete">Bazı takma adların yeniden şifrelenmesi tamamlanmadı, bu yüzden hiçbir şey değişmedi. Tekrar deneyin.</string>
+    <string name="error_client_upgrade_required">Uygulamanın bu sürümü bu değişikliği yapamıyor. En son sürüme güncelleyip tekrar deneyin.</string>
+    <string name="error_verification_required">Bu hesabı kullanmaya devam etmek için kurtarma e-postanızı doğrulayın.</string>
+    <string name="no_recipients">Alıcı yok</string>
+    <string name="scheduled_already_sending">Bu e-posta zaten gönderiliyor, artık değiştiremezsiniz.</string>
+    <string name="scheduled_cancel_send">Göndermeyi iptal et</string>
+    <string name="scheduled_for">%1$s için zamanlandı</string>
+    <string name="scheduled_recipients">Kime: %1$s</string>
+    <string name="scheduled_time_in_past">Gelecekte bir zaman seçin</string>
 </resources>

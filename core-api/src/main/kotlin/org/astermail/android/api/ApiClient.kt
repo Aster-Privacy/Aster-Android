@@ -88,7 +88,10 @@ sealed class ApiError(message: String) : Exception(message) {
         val code: String? = null,
         val details: Map<String, String> = emptyMap(),
     ) : ApiError(messages.joinToString("; "))
-    data class Conflict(val detail: String) : ApiError(detail)
+    data class Conflict(
+        val detail: String,
+        val code: String? = null,
+    ) : ApiError(detail)
     data class RateLimited(
         val detail: String = "rate limited",
         val resets_at: String? = null,
@@ -447,7 +450,7 @@ class ApiClient(
                 if (should_emit_unauthorized(server_code)) AuthEventBus.emit_unauthorized()
             }
             402 -> ApiError.PaymentRequired(detail)
-            403 -> ApiError.ForbiddenError(detail, server_code)
+            403 -> ApiError.ForbiddenError(detail.ifBlank { "forbidden" }, server_code)
             404 -> ApiError.NotFoundError
             413 -> ApiError.AttachmentTooLarge(detail.ifBlank { "attachment too large" })
             422 -> ApiError.ValidationError(
@@ -455,7 +458,7 @@ class ApiClient(
                 server_code,
                 parse_error_details(body),
             )
-            409 -> ApiError.Conflict(detail.ifBlank { "conflict" })
+            409 -> ApiError.Conflict(detail.ifBlank { "conflict" }, server_code)
             429 -> ApiError.RateLimited(
                 detail = detail,
                 resets_at = parse_error_resets_at(body),

@@ -2910,4 +2910,17 @@
     <string name="pgp_signature_valid">हस्ताक्षर सत्यापित</string>
     <string name="pgp_signature_invalid">हस्ताक्षर मेल नहीं खाता</string>
     <string name="pgp_recipient_description">भेजने वाले ने भेजने से पहले इस संदेश को OpenPGP से एन्क्रिप्ट किया। इसे केवल वही डिवाइस डिक्रिप्ट कर सकता है जिसमें आपकी निजी कुंजी है, इसलिए बीच में कोई इसे नहीं पढ़ सकता।</string>
+    <string name="error_account_locked">आपका खाता अस्थायी रूप से लॉक है। बाद में फिर कोशिश करें।</string>
+    <string name="error_account_probation">आपके खाते पर अस्थायी प्रतिबंध हैं।</string>
+    <string name="error_account_suspended">सेवा की शर्तों का उल्लंघन करने के कारण आपका खाता निलंबित है।</string>
+    <string name="error_alias_reencryption_incomplete">कुछ उपनामों का दोबारा एन्क्रिप्शन पूरा नहीं हुआ, इसलिए कुछ नहीं बदला। फिर कोशिश करें।</string>
+    <string name="error_client_upgrade_required">ऐप का यह वर्शन यह बदलाव नहीं कर सकता। नए वर्शन में अपडेट करें, फिर कोशिश करें।</string>
+    <string name="error_verification_required">इस खाते का उपयोग जारी रखने के लिए, अपना रिकवरी ईमेल सत्यापित करें।</string>
+    <string name="no_recipients">कोई प्राप्तकर्ता नहीं</string>
+    <string name="scheduled_already_sending">यह ईमेल पहले से भेजा जा रहा है, इसलिए अब आप इसे बदल नहीं सकते।</string>
+    <string name="scheduled_cancel_send">भेजना रद्द करें</string>
+    <string name="scheduled_for">%1$s के लिए शेड्यूल किया गया</string>
+    <string name="scheduled_recipients">प्रति: %1$s</string>
+    <string name="scheduled_time_in_past">भविष्य का समय चुनें</string>
+    <string name="cannot_mix_recipients">Aster उपयोगकर्ता और बाहरी पते एक ही ईमेल में नहीं भेजे जा सकते। उन्हें दो अलग संदेशों के रूप में भेजने पर यह काम करेगा।</string>
 </resources>

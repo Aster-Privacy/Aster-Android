@@ -1260,6 +1260,7 @@
     <string name="snooze_tomorrow_morning">Morgenochtend</string>
     <string name="snooze_this_weekend">Dit weekend</string>
     <string name="snooze_next_week">Volgende week</string>
+    <string name="snooze_next_month">Volgende maand</string>
     <string name="aster_email">Aster-e-mail</string>
     <string name="pgp_encrypted_subject">Versleuteld bericht</string>
     <string name="pgp_encrypted_body">Dit bericht is versleuteld met PGP. Open de Aster-webapp op een apparaat met de bijbehorende PGP-sleutel om het te lezen.</string>
@@ -1756,6 +1757,7 @@
     <string name="attachment_already_attached">\"%1$s\" is al toegevoegd</string>
     <string name="attachment_read_failed">\"%1$s\" kon niet worden gelezen</string>
     <string name="scheduled_send_no_attachments">Geplande e-mails ondersteunen nog geen bijlagen. Verwijder ze of verstuur nu.</string>
+    <string name="cannot_mix_recipients">Aster-gebruikers en externe adressen kunnen niet in dezelfde e-mail. Ze als twee aparte berichten verzenden werkt.</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>
@@ -2896,7 +2898,6 @@
     <string name="show_email_preview_subtitle">Toon een regel van de berichttekst in de lijst met binnenkomende berichten</string>
     <string name="signature_hint_content">Voer de handtekeningtekst in.</string>
     <string name="signature_set_default">Gebruiken als standaardhandtekening</string>
-    <string name="snooze_next_month">Volgende maand</string>
     <string name="star_failed">Ster toevoegen mislukt</string>
     <string name="tab_label_with_count">%1$s (%2$d)</string>
     <string name="templates_decrypt_failed_count">%1$d sjablonen konden niet worden gelezen op dit apparaat. Ze zijn opgeslagen met een sleutel die dit apparaat momenteel niet heeft.</string>
@@ -3020,4 +3021,16 @@
     <string name="pgp_signature_valid">Handtekening geverifieerd</string>
     <string name="pgp_signature_invalid">Handtekening komt niet overeen</string>
     <string name="pgp_recipient_description">De afzender heeft dit bericht met OpenPGP versleuteld voordat het werd verzonden. Alleen een apparaat met jouw privésleutel kan het ontsleutelen, dus niemand anders kan het lezen.</string>
+    <string name="error_account_locked">Je account is tijdelijk vergrendeld. Probeer het later opnieuw.</string>
+    <string name="error_account_probation">Voor je account gelden tijdelijke beperkingen.</string>
+    <string name="error_account_suspended">Je account is geblokkeerd wegens schending van de servicevoorwaarden.</string>
+    <string name="error_alias_reencryption_incomplete">Sommige aliassen zijn niet opnieuw versleuteld, dus er is niets gewijzigd. Probeer opnieuw.</string>
+    <string name="error_client_upgrade_required">Deze versie van de app kan deze wijziging niet doorvoeren. Werk bij naar de nieuwste versie en probeer opnieuw.</string>
+    <string name="error_verification_required">Verifieer je herstel-e-mailadres om dit account te blijven gebruiken.</string>
+    <string name="no_recipients">Geen ontvangers</string>
+    <string name="scheduled_already_sending">Deze e-mail wordt al verzonden, dus je kunt hem niet meer wijzigen.</string>
+    <string name="scheduled_cancel_send">Verzenden annuleren</string>
+    <string name="scheduled_for">Gepland voor %1$s</string>
+    <string name="scheduled_recipients">Aan: %1$s</string>
+    <string name="scheduled_time_in_past">Kies een tijdstip in de toekomst</string>
 </resources>

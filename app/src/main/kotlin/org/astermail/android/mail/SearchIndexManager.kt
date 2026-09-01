@@ -41,6 +41,9 @@ import org.astermail.android.storage.search.AsterDatabase
 import org.astermail.android.storage.search.DecryptedMailDao
 import org.astermail.android.storage.search.DecryptedMailEntity
 
+private const val snoozed_page_size = 200
+private const val max_snoozed_pages = 50
+
 data class IndexProgress(
     val indexed: Int,
     val total: Int,
@@ -157,14 +160,29 @@ class SearchIndexManager @Inject constructor(
             .filterNot { it.thread_token != null && it.thread_token in returned_thread_tokens }
             .map { it.id }
         if (stale.isEmpty()) return
-        val snoozed = runCatching {
-            mail_api.list_messages(limit = 200, item_type = "received", is_snoozed = true)
-        }.getOrNull() ?: return
-        if (snoozed.has_more) return
-        val snoozed_ids = snoozed.items.map { it.id }.toHashSet()
+        val snoozed_ids = runCatching { collect_snoozed_ids() }.getOrNull() ?: return
         val candidates = stale.filterNot { it in snoozed_ids }
         val removable = record_window_absences(candidates)
         if (removable.isNotEmpty()) dao.remove_items(removable)
+    }
+
+    private suspend fun collect_snoozed_ids(): HashSet<String> {
+        val ids = HashSet<String>()
+        var cursor: String? = null
+        var pages = 0
+        while (pages < max_snoozed_pages) {
+            val response = mail_api.list_messages(
+                limit = snoozed_page_size,
+                cursor = cursor,
+                item_type = "received",
+                is_snoozed = true,
+            )
+            response.items.forEach { ids.add(it.id) }
+            cursor = response.next_cursor
+            pages++
+            if (!response.has_more || cursor == null) return ids
+        }
+        throw IllegalStateException("snoozed listing exceeded the page budget")
     }
 
     private val window_absences = mutableMapOf<String, Int>()

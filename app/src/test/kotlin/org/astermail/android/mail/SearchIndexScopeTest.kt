@@ -166,7 +166,12 @@ class SearchIndexScopeTest {
             InboxWindowRow("stale_1", null),
         )
         coEvery {
-            mail_api.list_messages(limit = 200, item_type = "received", is_snoozed = true)
+            mail_api.list_messages(
+                limit = 200,
+                cursor = any(),
+                item_type = "received",
+                is_snoozed = true,
+            )
         } returns MailItemsListResponse(
             items = emptyList(),
             has_more = true,

@@ -202,10 +202,14 @@ class ContactsViewModel @Inject constructor(
                 }
                 var imported = 0
                 var last_failure: Throwable? = null
+                var failed = 0
                 for (contact in new_contacts) {
                     repository.create_contact(contact).fold(
                         onSuccess = { imported++ },
-                        onFailure = { t -> last_failure = t },
+                        onFailure = { t ->
+                            last_failure = t
+                            failed++
+                        },
                     )
                 }
                 val failure = last_failure
@@ -218,7 +222,7 @@ class ContactsViewModel @Inject constructor(
                 }
                 _state.value = _state.value.copy(
                     is_syncing = false,
-                    sync_message = if (imported > 0) context.resources.getQuantityString(R.plurals.imported_contacts, imported, imported) else context.getString(R.string.no_new_contacts),
+                    sync_message = if (imported > 0) context.resources.getQuantityString(R.plurals.imported_contacts, imported, imported) else if (failed == 0) context.getString(R.string.no_new_contacts) else null,
                 )
                 load_contacts()
             } catch (e: kotlinx.coroutines.CancellationException) {

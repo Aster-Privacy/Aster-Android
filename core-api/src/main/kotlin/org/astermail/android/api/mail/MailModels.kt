@@ -90,6 +90,8 @@ data class MailItem(
     val is_archived: Boolean? = null,
     val is_starred: Boolean? = null,
     val is_pinned: Boolean? = null,
+    val has_attachments: Boolean? = null,
+    val attachment_count: Int? = null,
     val folders: List<MailItemFolder>? = null,
     val tag_tokens: List<String>? = null,
     val metadata: MailItemMetadata? = null,
@@ -235,6 +237,10 @@ data class ThreadMessageItem(
     val spam_score: Float? = null,
     val spam_signals: List<SpamSignalItem>? = null,
     val is_reaction: Boolean? = null,
+    val is_read: Boolean? = null,
+    val is_starred: Boolean? = null,
+    val has_attachments: Boolean? = null,
+    val attachment_count: Int? = null,
     val message_group_id: String? = null,
     val reactions: List<ReactionSummary>? = null,
 )
@@ -250,6 +256,8 @@ data class SpamSignalItem(
 data class ThreadWithMessages(
     val thread: MailThread? = null,
     val messages: List<ThreadMessageItem> = emptyList(),
+    val has_more: Boolean = false,
+    val next_cursor: String? = null,
 )
 
 @Serializable
