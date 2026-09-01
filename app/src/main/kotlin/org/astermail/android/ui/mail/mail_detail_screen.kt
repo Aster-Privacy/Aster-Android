@@ -191,6 +191,7 @@ import org.astermail.android.util.clip_units
 import org.astermail.android.util.clip_with_ellipsis
 
 private val placeholder_body_height = 140.dp
+private const val BODY_PENDING_TIMEOUT_MS = 12_000L
 
 private val EXTERNAL_RESOURCE_PATTERN = Regex(
     """(?:src\s*=\s*["']https?://|background\s*=\s*["']https?://|url\s*\(\s*["']?https?://|@font-face)""",
@@ -1008,7 +1009,7 @@ fun MailDetailScreen(
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                             )
                             org.astermail.android.design.components.AsterDialogPrimaryButton(
-                                label = stringResource(R.string.error_try_again),
+                                label = stringResource(R.string.retry),
                                 onClick = { mail_vm.load_thread(email_id) },
                             )
                         }
@@ -2327,12 +2328,39 @@ internal fun expanded_message(
             low_network = org.astermail.android.network.low_network_active(),
         )
         if (msg.is_body_pending) {
-            email_body_skeleton(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = AsterSpacing.xs, bottom = AsterSpacing.sm)
-                    .testTag("message_body"),
-            )
+            var body_wait_expired by remember(msg.id, retry_in_progress) { mutableStateOf(false) }
+            LaunchedEffect(msg.id, retry_in_progress) {
+                kotlinx.coroutines.delay(BODY_PENDING_TIMEOUT_MS)
+                body_wait_expired = true
+            }
+            if (body_wait_expired) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = AsterSpacing.lg)
+                        .testTag("message_body"),
+                ) {
+                    Text(
+                        text = stringResource(R.string.message_unavailable),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.text_muted,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    )
+                    org.astermail.android.design.components.AsterDialogPrimaryButton(
+                        label = stringResource(R.string.retry),
+                        onClick = on_retry_decrypt,
+                    )
+                }
+            } else {
+                email_body_skeleton(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = AsterSpacing.xs, bottom = AsterSpacing.sm)
+                        .testTag("message_body"),
+                )
+            }
         } else if (!plain_text_mode && !msg.body_html.isNullOrBlank() && !msg.is_undecryptable) {
             email_html_view(
                 html = msg.body_html,
@@ -5258,7 +5286,7 @@ internal fun email_html_view(
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .alpha(body_reveal)
+                    .then(if (body_reveal < 1f) Modifier.alpha(body_reveal) else Modifier)
                     .background(androidx.compose.ui.graphics.Color.White),
             )
         }
@@ -5417,7 +5445,7 @@ internal fun email_html_view(
                     .fillMaxWidth()
                     .height(target)
                     .clipToBounds()
-                    .alpha(body_reveal)
+                    .then(if (body_reveal < 1f) Modifier.alpha(body_reveal) else Modifier)
             },
             onRelease = { web_view ->
                 runCatching {

@@ -954,7 +954,10 @@ class MailViewModel @Inject constructor(
                 stalls = 0
                 pages++
             }
-            if (_inbox_state.value.current_folder == started_folder) on_complete?.invoke()
+        }
+        load_all_remaining_job?.invokeOnCompletion {
+            if (on_complete == null) return@invokeOnCompletion
+            viewModelScope.launch(Dispatchers.Main.immediate) { on_complete.invoke() }
         }
     }
 
@@ -1157,7 +1160,7 @@ class MailViewModel @Inject constructor(
                 load_reactions(msgs)
             } else {
                 val keep = _thread_state.value
-                _thread_state.value = if (keep.item?.id == item_id && keep.messages.isNotEmpty()) {
+                _thread_state.value = if (keep.item?.id == item_id && keep.messages.any { !it.is_body_pending }) {
                     keep.copy(is_loading = false, error = null)
                 } else {
                     ThreadUiState(
@@ -2345,32 +2348,36 @@ class MailViewModel @Inject constructor(
         val affected_label_caches = removed_items.flatMap { it.labels }.map { "label:$it" }
         val affected_tag_caches = removed_items.flatMap { it.tag_tokens }.map { "tag:$it" }
         invalidate_caches_except_current(listOf("archive", "inbox") + all_mail_folder_ids + affected_label_caches + affected_tag_caches)
-        viewModelScope.launch {
+        val archive_key = batch_action_key("archive", message_scope)
+        var archive_job: kotlinx.coroutines.Job? = null
+        accumulate_batch_action(
+            action_key = archive_key,
+            thread_count = thread_count,
+            message_fn = { n -> archived_message(n, message_scope) },
+            undo_label = context.getString(R.string.undo),
+        ) { prev_undo ->
+            {
+                prev_undo?.invoke()
+                undo_restore(
+                    removed_items = removed_items,
+                    search_removed = search_removed,
+                    item_ids = item_ids,
+                    reindex = { search_index_manager.mark_unarchived(it) },
+                    restore = { repository.unarchive(it, lookup_raw_items(it)) },
+                    pending = archive_job,
+                )
+            }
+        }
+        archive_job = viewModelScope.launch {
             try {
                 repository.archive(item_ids, raw_items).fold(
                     onSuccess = {
                         runCatching { search_index_manager.mark_archived(item_ids) }
-                        accumulate_batch_action(
-                            action_key = batch_action_key("archive", message_scope),
-                            thread_count = thread_count,
-                            message_fn = { n -> archived_message(n, message_scope) },
-                            undo_label = context.getString(R.string.undo),
-                        ) { prev_undo ->
-                            {
-                                prev_undo?.invoke()
-                                undo_restore(
-                                    removed_items = removed_items,
-                                    search_removed = search_removed,
-                                    item_ids = item_ids,
-                                    reindex = { search_index_manager.mark_unarchived(it) },
-                                    restore = { repository.unarchive(it, lookup_raw_items(it)) },
-                                )
-                            }
-                        }
                         load_stats()
                     },
                     onFailure = { t ->
                         if (BuildConfig.DEBUG) android.util.Log.w("MailVM", "archive failed", t)
+                        clear_batch_action(archive_key)
                         undo_local_restore(removed_items)
                         undo_search_restore(search_removed)
                         emit_toast(context.getString(R.string.failed_to_archive))
@@ -2378,6 +2385,7 @@ class MailViewModel @Inject constructor(
                 )
             } catch (t: Throwable) {
                 if (BuildConfig.DEBUG) android.util.Log.w("MailVM", "archive threw", t)
+                clear_batch_action(archive_key)
                 undo_local_restore(removed_items)
                 undo_search_restore(search_removed)
                 emit_toast(context.getString(R.string.failed_to_archive))
@@ -2435,37 +2443,42 @@ class MailViewModel @Inject constructor(
         pending_removed_ids.addAll(item_ids)
         protect_removed(item_ids)
         invalidate_caches_except_current(listOf("trash", "inbox"))
-        viewModelScope.launch {
+        val trash_key = batch_action_key("trash", message_scope)
+        var trash_job: kotlinx.coroutines.Job? = null
+        accumulate_batch_action(
+            action_key = trash_key,
+            thread_count = thread_count,
+            message_fn = { n -> trashed_message(n, message_scope) },
+            undo_label = context.getString(R.string.undo),
+        ) { prev_undo ->
+            {
+                prev_undo?.invoke()
+                undo_restore(
+                    removed_items = removed_items,
+                    search_removed = search_removed,
+                    item_ids = item_ids,
+                    reindex = { search_index_manager.mark_restored(it) },
+                    restore = { repository.restore_trash(it) },
+                    pending = trash_job,
+                )
+            }
+        }
+        trash_job = viewModelScope.launch {
             try {
                 repository.trash(item_ids, raw_items, thread_tokens, thread_covered_ids).fold(
                     onSuccess = {
                         runCatching { search_index_manager.mark_trashed(item_ids) }
-                        accumulate_batch_action(
-                            action_key = batch_action_key("trash", message_scope),
-                            thread_count = thread_count,
-                            message_fn = { n -> trashed_message(n, message_scope) },
-                            undo_label = context.getString(R.string.undo),
-                        ) { prev_undo ->
-                            {
-                                prev_undo?.invoke()
-                                undo_restore(
-                                    removed_items = removed_items,
-                                    search_removed = search_removed,
-                                    item_ids = item_ids,
-                                    reindex = { search_index_manager.mark_restored(it) },
-                                    restore = { repository.restore_trash(it) },
-                                )
-                            }
-                        }
                         load_stats()
                     },
                     onFailure = {
+                        clear_batch_action(trash_key)
                         undo_local_restore(removed_items)
                         undo_search_restore(search_removed)
                         emit_toast(context.getString(R.string.failed_to_trash))
                     },
                 )
             } catch (_: Throwable) {
+                clear_batch_action(trash_key)
                 undo_local_restore(removed_items)
                 undo_search_restore(search_removed)
                 emit_toast(context.getString(R.string.failed_to_trash))
@@ -2719,12 +2732,14 @@ class MailViewModel @Inject constructor(
         item_ids: List<String>,
         reindex: suspend (List<String>) -> Unit,
         restore: suspend (List<String>) -> Unit,
+        pending: kotlinx.coroutines.Job? = null,
     ) {
         undo_local_restore(removed_items)
         undo_search_restore(search_removed)
         if (item_ids.isEmpty()) return
         protect_restored(item_ids)
         viewModelScope.launch {
+            runCatching { pending?.join() }
             runCatching { restore(item_ids) }
             runCatching { reindex(item_ids) }
             load_inbox(_inbox_state.value.current_folder, force = true)

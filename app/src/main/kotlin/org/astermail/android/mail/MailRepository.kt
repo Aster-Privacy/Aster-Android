@@ -97,8 +97,9 @@ private const val STATUS_FAILED = "failed"
 private const val SENDING_CLAIM_STALE_MS = 5 * 60 * 1000L
 
 private const val RATCHET_UNDECRYPTABLE_TTL_MS = 10L * 60L * 1000L
-private const val RATCHET_PREFETCH_CONCURRENCY = 4
-private const val RATCHET_PREFETCH_BUDGET_MS = 12_000L
+private const val RATCHET_PREFETCH_CONCURRENCY = 8
+private const val RATCHET_PREFETCH_BUDGET_MS = 1_500L
+private const val RATCHET_BACKFILL_BUDGET_MS = 60_000L
 private const val RATCHET_INLINE_TIMEOUT_MS = 6_000L
 private const val OUTBOX_FILE_REF_PREFIX = "@file:"
 private const val EMPTY_ATTACHMENTS_JSON = "[]"
@@ -3207,13 +3208,15 @@ class MailRepository @Inject constructor(
         return resolve_ratchet_body(envelope, candidate, item.id)
     }
 
+    private val ratchet_backfill_running = java.util.concurrent.atomic.AtomicBoolean(false)
+
     private suspend fun prefetch_ratchet_plaintexts(items: List<MailItem>): Map<String, String> {
         if (items.isEmpty()) return emptyMap()
         val gate = kotlinx.coroutines.sync.Semaphore(RATCHET_PREFETCH_CONCURRENCY)
         val resolved = java.util.concurrent.ConcurrentHashMap<String, String>()
-        val budget = RATCHET_PREFETCH_BUDGET_MS
-        runCatching {
-            kotlinx.coroutines.withTimeout(budget) {
+        val settled = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+        val within_budget = runCatching {
+            kotlinx.coroutines.withTimeout(RATCHET_PREFETCH_BUDGET_MS) {
                 coroutineScope {
                     items.forEach { item ->
                         launch(Dispatchers.IO) {
@@ -3221,13 +3224,50 @@ class MailRepository @Inject constructor(
                                 runCatching { resolve_ratchet_plaintext(item) }
                                     .getOrNull()
                                     ?.let { resolved[item.id] = it }
+                                settled.add(item.id)
                             }
                         }
                     }
                 }
             }
+            true
+        }.getOrDefault(false)
+        if (!within_budget) {
+            schedule_ratchet_backfill(items.filterNot { settled.contains(it.id) })
         }
         return resolved
+    }
+
+    private fun schedule_ratchet_backfill(pending: List<MailItem>) {
+        if (pending.isEmpty()) return
+        if (!ratchet_backfill_running.compareAndSet(false, true)) return
+        app_scope.launch {
+            try {
+                val gate = kotlinx.coroutines.sync.Semaphore(RATCHET_PREFETCH_CONCURRENCY)
+                val recovered = java.util.concurrent.atomic.AtomicBoolean(false)
+                runCatching {
+                    kotlinx.coroutines.withTimeout(RATCHET_BACKFILL_BUDGET_MS) {
+                        coroutineScope {
+                            pending.forEach { item ->
+                                launch(Dispatchers.IO) {
+                                    gate.withPermit {
+                                        val plaintext = runCatching { resolve_ratchet_plaintext(item) }.getOrNull()
+                                        if (plaintext != null &&
+                                            plaintext != org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL
+                                        ) {
+                                            recovered.set(true)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (recovered.get()) _new_mail_events.tryEmit(Unit)
+            } finally {
+                ratchet_backfill_running.set(false)
+            }
+        }
     }
 
     private fun decrypt_pgp_body_fields(
