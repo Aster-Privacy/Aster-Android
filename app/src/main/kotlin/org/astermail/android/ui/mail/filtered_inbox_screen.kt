@@ -38,7 +38,6 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -82,7 +81,12 @@ fun FilteredInboxScreen(
     mail_vm: MailViewModel = hiltViewModel(),
 ) {
     val colors = AsterMaterial.colors
-    val list_state = rememberLazyListState()
+    val list_state = org.astermail.android.ui.common.remember_session_lazy_list_state()
+    val foreground_epoch by org.astermail.android.ui.common.app_session.foreground_epoch
+        .collectAsStateWithLifecycle()
+    LaunchedEffect(foreground_epoch) {
+        if (foreground_epoch > 0) list_state.scrollToItem(0)
+    }
     val inbox_state by mail_vm.inbox_state.collectAsStateWithLifecycle()
     val settings_vm = org.astermail.android.settings.shared_settings_view_model()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()

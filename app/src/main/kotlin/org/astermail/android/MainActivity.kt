@@ -1018,7 +1018,7 @@ private fun AsterNavHost() {
             popExitTransition = { nav_expand_exit(if (nav_duration == 0) 0 else nav_anim_collapse_ms) },
         ) {
             SearchScreen(
-                on_back = { nav_controller.popBackStack() },
+                on_back = { pop_once(nav_controller) },
                 on_open_email = { id -> open_mail_detail(nav_controller, id) },
             )
         }
@@ -1032,7 +1032,7 @@ private fun AsterNavHost() {
         ) { entry ->
             val q = entry.arguments?.getString("q").orEmpty()
             SearchScreen(
-                on_back = { nav_controller.popBackStack() },
+                on_back = { pop_once(nav_controller) },
                 on_open_email = { id -> open_mail_detail(nav_controller, id) },
                 initial_query = q,
             )
@@ -2350,6 +2350,12 @@ internal fun looks_encrypted(value: String?): Boolean {
     if (value.length < 20) return false
     val base64_chars = value.count { it in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=" }
     return base64_chars.toFloat() / value.length > 0.85f
+}
+
+private fun pop_once(nav_controller: NavHostController) {
+    val entry = nav_controller.currentBackStackEntry ?: return
+    if (!entry.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) return
+    nav_controller.popBackStack()
 }
 
 private fun open_mail_detail(nav_controller: NavHostController, email_id: String) {

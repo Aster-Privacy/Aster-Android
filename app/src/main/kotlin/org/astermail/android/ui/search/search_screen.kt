@@ -424,10 +424,31 @@ fun SearchScreen(
         if (selected_ids.isEmpty()) select_mode = false
     }
 
-    BackHandler(enabled = select_mode) { exit_select_mode() }
+    val sheet_open = show_folder_sheet ||
+        show_label_sheet ||
+        show_snooze_sheet ||
+        advanced_open ||
+        show_selection_overflow
+
+    fun close_open_sheets() {
+        show_folder_sheet = false
+        show_label_sheet = false
+        show_snooze_sheet = false
+        advanced_open = false
+        show_selection_overflow = false
+    }
+
+    BackHandler(enabled = sheet_open) { close_open_sheets() }
+
+    BackHandler(enabled = select_mode && !sheet_open) { exit_select_mode() }
 
     val keyboard = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
     val focus_manager = androidx.compose.ui.platform.LocalFocusManager.current
+    fun dismiss_keyboard() {
+        focus_manager.clearFocus(force = true)
+        keyboard?.hide()
+    }
+
     val dismiss_and_back = remember(on_back) {
         {
             focus_manager.clearFocus(force = true)
@@ -436,7 +457,7 @@ fun SearchScreen(
         }
     }
 
-    BackHandler(enabled = !select_mode) { dismiss_and_back() }
+    BackHandler(enabled = !select_mode && !sheet_open) { dismiss_and_back() }
 
     LaunchedEffect(Unit) {
         mail_vm.build_search_index()
@@ -675,36 +696,31 @@ fun SearchScreen(
 
         AsterDivider()
 
-        if (has_query && !results_pending && hidden_spam_trash > 0) {
-            Row(
+        if (has_query && !select_mode && !results_pending && hidden_spam_trash > 0) {
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                    .padding(horizontal = AsterSpacing.sm, vertical = 4.dp)
+                    .clip(SquircleShape(8.dp))
+                    .clickable {
+                        operator_chips = without_key(operator_chips, "in") +
+                            SearchOperator(false, "in", "anywhere")
+                    }
+                    .padding(horizontal = AsterSpacing.sm, vertical = AsterSpacing.sm),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(
                     text = stringResource(R.string.spam_trash_hidden_notice),
                     color = colors.text_muted,
                     fontSize = 12.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
+                    lineHeight = 16.sp,
                 )
                 Text(
                     text = stringResource(R.string.view_spam_trash_messages),
                     color = colors.accent_blue,
                     fontSize = 12.sp,
+                    lineHeight = 16.sp,
                     fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .clip(SquircleShape(8.dp))
-                        .clickable {
-                            operator_chips = without_key(operator_chips, "in") +
-                                SearchOperator(false, "in", "anywhere")
-                        }
-                        .padding(horizontal = AsterSpacing.sm, vertical = 4.dp),
                 )
             }
         }
@@ -873,12 +889,14 @@ fun SearchScreen(
                 on_open_email = on_open_email,
                 on_toggle_selection = ::toggle_selection,
                 on_enter_select_mode = { id ->
+                    dismiss_keyboard()
                     select_mode = true
                     selected_ids.clear()
                     selected_ids.add(id)
                 },
                 on_toggle_star = { mail_vm.toggle_star(it) },
                 on_set_selection = { ids ->
+                    dismiss_keyboard()
                     select_mode = true
                     selected_ids.clear()
                     selected_ids.addAll(ids)

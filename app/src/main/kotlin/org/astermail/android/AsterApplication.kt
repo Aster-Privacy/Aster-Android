@@ -132,8 +132,14 @@ class AsterApplication : Application(), ImageLoaderFactory {
         androidx.lifecycle.ProcessLifecycleOwner.get().lifecycle.addObserver(
             androidx.lifecycle.LifecycleEventObserver { _, event ->
                 when (event) {
-                    androidx.lifecycle.Lifecycle.Event.ON_STOP -> store.lock()
-                    androidx.lifecycle.Lifecycle.Event.ON_START -> store.check_on_foreground()
+                    androidx.lifecycle.Lifecycle.Event.ON_STOP -> {
+                        store.lock()
+                        org.astermail.android.ui.common.app_session.mark_backgrounded()
+                    }
+                    androidx.lifecycle.Lifecycle.Event.ON_START -> {
+                        store.check_on_foreground()
+                        org.astermail.android.ui.common.app_session.mark_foregrounded()
+                    }
                     else -> {}
                 }
             },

@@ -73,7 +73,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Surface
@@ -216,7 +215,7 @@ private const val LOCAL_READ_MUTATION_TTL_MS = 15_000L
 
 private const val MIN_SKELETON_MS = 350L
 
-internal const val SELECT_ALL_DRAIN_LIMIT = 5000
+private const val DRAG_HAPTIC_MIN_GAP_MS = 55L
 
 private val pull_refresh_travel = 56.dp
 
@@ -248,7 +247,7 @@ fun InboxScreen(
 ) {
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
-    val list_state = rememberLazyListState()
+    val list_state = org.astermail.android.ui.common.remember_session_lazy_list_state()
     val scope = rememberCoroutineScope()
     val mail_vm: MailViewModel = hiltViewModel()
     val settings_vm: SettingsViewModel = shared_settings_view_model()
@@ -786,8 +785,8 @@ fun InboxScreen(
         mail_vm.set_visible_order(visible_order_ids)
     }
 
-    LaunchedEffect(select_all_active, visible_order_ids) {
-        if (select_all_active) {
+    LaunchedEffect(select_all_active, scope_selection_confirmed, visible_order_ids) {
+        if (select_all_active && scope_selection_confirmed) {
             selected_ids.clear()
             selected_ids.addAll(visible_threads.map { it.thread_id })
         }
@@ -805,7 +804,6 @@ fun InboxScreen(
     val can_offer_scope_selection = select_mode &&
         select_all_active &&
         !scope_selection_confirmed &&
-        inbox_state.has_more &&
         folder_total > selected_ids.size &&
         mail_vm.folder_supports_scope_selection(current_folder)
 
@@ -889,13 +887,9 @@ fun InboxScreen(
         selected_ids.clear()
         selected_ids.addAll(visible_threads.map { it.thread_id })
         select_all_active = true
-        scope_selection_confirmed = mail_vm.folder_supports_scope_selection(current_folder)
-        if (inbox_state.has_more && folder_total <= SELECT_ALL_DRAIN_LIMIT) {
-            select_all_loading = true
-            mail_vm.load_all_remaining { select_all_loading = false }
-        } else {
-            select_all_loading = false
-        }
+        scope_selection_confirmed = false
+        select_all_loading = false
+        mail_vm.cancel_load_all_remaining()
     }
 
     fun toggle_select_all() {
@@ -967,6 +961,15 @@ fun InboxScreen(
     val drag_pointer_y = remember { androidx.compose.runtime.mutableFloatStateOf(-1f) }
     val drag_viewport_height = remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
     var drag_selecting by remember { mutableStateOf(false) }
+    val drag_last_haptic_ms = remember { androidx.compose.runtime.mutableLongStateOf(0L) }
+
+    fun drag_haptic() {
+        if (!haptic_enabled) return
+        val now = android.os.SystemClock.uptimeMillis()
+        if (now - drag_last_haptic_ms.longValue < DRAG_HAPTIC_MIN_GAP_MS) return
+        drag_last_haptic_ms.longValue = now
+        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+    }
 
     fun apply_drag_selection(y: Float) {
         val anchor = drag_anchor_index.intValue
@@ -981,7 +984,7 @@ fun InboxScreen(
             visible_threads.getOrNull(i)?.thread_id?.let { target.add(it) }
         }
         if (target.size != selected_ids.size || !target.containsAll(selected_ids)) {
-            if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            drag_haptic()
             selected_ids.clear()
             selected_ids.addAll(target)
             select_all_active = false
@@ -1262,7 +1265,19 @@ fun InboxScreen(
     val status_bar_top = androidx.compose.foundation.layout.WindowInsets.statusBars
         .asPaddingValues()
         .calculateTopPadding()
-    var header_height_px by remember { mutableIntStateOf(0) }
+    val window_config = androidx.compose.ui.platform.LocalConfiguration.current
+    val header_cache_width = window_config.screenWidthDp
+    val header_cache_orientation = window_config.orientation
+    var header_height_px by remember(header_cache_width, header_cache_orientation) {
+        mutableIntStateOf(
+            org.astermail.android.ui.common.cached_header_height_px(
+                context_for_prefs,
+                "inbox",
+                header_cache_width,
+                header_cache_orientation,
+            ),
+        )
+    }
     val header_offset_px = remember { mutableFloatStateOf(0f) }
     var header_hidden by remember { mutableStateOf(false) }
     val header_height_dp = with(density) { header_height_px.toDp() }
@@ -1291,6 +1306,15 @@ fun InboxScreen(
             header_offset_px.floatValue = 0f
             header_hidden = false
         }
+    }
+
+    val foreground_epoch by org.astermail.android.ui.common.app_session.foreground_epoch
+        .collectAsStateWithLifecycle()
+    LaunchedEffect(foreground_epoch) {
+        if (foreground_epoch <= 0) return@LaunchedEffect
+        list_state.scrollToItem(0)
+        header_offset_px.floatValue = 0f
+        header_hidden = false
     }
     LaunchedEffect(scroll_top_token, list_state) {
         if (scroll_top_token > 0) {
@@ -1831,7 +1855,19 @@ fun InboxScreen(
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .offset { IntOffset(0, header_offset_px.floatValue.roundToInt()) }
-                .onSizeChanged { if (it.height > 0) header_height_px = it.height }
+                .onSizeChanged {
+                    if (it.height <= 0) return@onSizeChanged
+                    header_height_px = it.height
+                    if (!select_mode) {
+                        org.astermail.android.ui.common.store_header_height_px(
+                            context_for_prefs,
+                            "inbox",
+                            header_cache_width,
+                            header_cache_orientation,
+                            it.height,
+                        )
+                    }
+                }
                 .drawBehind {
                     val limit = header_height_px.toFloat()
                     val fraction = if (limit == 0f) 0f else (-header_offset_px.floatValue / limit).coerceIn(0f, 1f)
