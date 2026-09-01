@@ -1686,10 +1686,17 @@ private fun directories_tab(
     var confirm_delete_directory by remember { mutableStateOf<String?>(null) }
 
     confirm_delete_directory?.let { pending_directory_id ->
+        val pending_directory = state.directories.firstOrNull { it.id == pending_directory_id }
+        val pending_directory_address = pending_directory?.let { entry ->
+            "anything." + entry.decrypted_label.ifBlank { "\u2026" } + "@" + entry.domain
+        } ?: ""
         org.astermail.android.design.components.AsterAlertDialog(
             on_dismiss = { confirm_delete_directory = null },
             title = stringResource(R.string.alias_delete_directory),
-            message = stringResource(R.string.alias_delete_directory_confirm),
+            message = stringResource(
+                R.string.alias_delete_directory_confirm,
+                pending_directory_address,
+            ),
             confirm_label = stringResource(R.string.delete),
             cancel_label = stringResource(R.string.cancel),
             confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
