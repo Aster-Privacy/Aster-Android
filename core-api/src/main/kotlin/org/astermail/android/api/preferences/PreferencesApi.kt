@@ -96,6 +96,7 @@ data class UserPreferences(
     val block_trackers: Boolean = true,
     val load_remote_images: String = "never",
     val send_read_receipts: Boolean = false,
+    val review_prompt_android_done: Boolean = false,
     val warn_suspicious_links: Boolean = true,
     val strip_exif: Boolean = true,
     val strip_exif_on_compose: Boolean = true,

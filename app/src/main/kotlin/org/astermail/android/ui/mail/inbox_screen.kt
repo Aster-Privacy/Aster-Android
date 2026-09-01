@@ -266,8 +266,12 @@ fun InboxScreen(
     LaunchedEffect(Unit) { settings_vm.load_subscription(force = false) }
     val lock_vm_for_review: org.astermail.android.security.AppLockViewModel = hiltViewModel()
     val is_locked_for_review by lock_vm_for_review.store.is_locked.collectAsStateWithLifecycle()
-    LaunchedEffect(is_locked_for_review) {
+    val review_prefs = settings_state.preferences
+    val review_prompt_done = review_prefs?.review_prompt_android_done ?: true
+    LaunchedEffect(is_locked_for_review, settings_state.preferences_authoritative, review_prompt_done) {
         if (is_locked_for_review) return@LaunchedEffect
+        if (!settings_state.preferences_authoritative || review_prompt_done) return@LaunchedEffect
+        if (review_prefs == null) return@LaunchedEffect
         if (!org.astermail.android.billing.ReviewPrompt.should_request(context_for_prefs)) {
             return@LaunchedEffect
         }
@@ -277,6 +281,7 @@ fun InboxScreen(
         val activity = context_for_prefs.review_prompt_activity() ?: return@LaunchedEffect
 
         org.astermail.android.billing.ReviewPrompt.mark_done(context_for_prefs)
+        settings_vm.save_preferences(review_prefs.copy(review_prompt_android_done = true))
         org.astermail.android.billing.PlayReview.request(activity)
     }
     LaunchedEffect(Unit) {
