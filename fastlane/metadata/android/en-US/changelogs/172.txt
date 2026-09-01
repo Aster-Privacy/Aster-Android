@@ -1,0 +1,12 @@
+What's new:
+
+- Mute notifications for Promotions, Social, and Updates.
+- Send now, reschedule, or cancel a message from the Scheduled folder.
+- Snooze a message until next month.
+
+Fixed:
+
+- Timestamps follow your device's 24-hour setting.
+- Long conversations show every message.
+- The message list opens faster, and list actions confirm right away.
+- Your signature follows the signature settings you chose.
