@@ -38,7 +38,7 @@ import kotlinx.coroutines.sync.withLock
 import org.astermail.android.api.auth.AuthApi
 import org.astermail.android.api.auth.PublicProfile
 
-private val ASTER_DOMAINS = setOf("astermail.org", "aster.cx")
+private val ASTER_DOMAINS = setOf("astermail.org", "aster.cx", "astermail.me", "astermail.net")
 
 private const val PROFILE_RESOLVE_TTL_MS = 30L * 60L * 1000L
 

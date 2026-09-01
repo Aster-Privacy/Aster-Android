@@ -24,6 +24,8 @@ package org.astermail.android.mail
 val ASTER_DOMAIN_SUFFIXES: Set<String> = setOf(
     "astermail.org",
     "aster.cx",
+    "astermail.me",
+    "astermail.net",
 )
 
 val SOCIAL_DOMAIN_SUFFIXES: Set<String> = setOf(

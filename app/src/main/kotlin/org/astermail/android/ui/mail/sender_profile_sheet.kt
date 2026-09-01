@@ -69,7 +69,8 @@ import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterDragHandle
 import org.astermail.android.ui.contacts.Contact
 
-private val internal_sender_domains = setOf("aster.cx", "astermail.org")
+private val internal_sender_domains =
+    setOf("aster.cx", "astermail.org", "astermail.me", "astermail.net")
 
 fun is_internal_sender(email: String): Boolean {
     val domain = email.substringAfter('@', "").lowercase().trim()

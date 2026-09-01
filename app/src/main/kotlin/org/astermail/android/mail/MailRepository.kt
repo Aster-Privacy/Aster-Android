@@ -170,7 +170,14 @@ const val ASTER_SUBJECT_BUNDLE_PREFIX =
 const val ASTER_GHOST_ALIAS_DOMAIN = "realiased.me"
 
 val ASTER_INTERNAL_DOMAINS =
-    listOf("astermail.org", "aster.cx", "gs-cloud.space", ASTER_GHOST_ALIAS_DOMAIN)
+    listOf(
+        "astermail.org",
+        "aster.cx",
+        "astermail.me",
+        "astermail.net",
+        "gs-cloud.space",
+        ASTER_GHOST_ALIAS_DOMAIN,
+    )
 
 fun is_internal_recipient(email: String): Boolean {
     val normalized = email.trim().lowercase(java.util.Locale.ROOT)

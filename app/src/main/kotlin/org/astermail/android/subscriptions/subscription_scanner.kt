@@ -49,7 +49,8 @@ private const val PREFS_NAME = "aster_subscription_scan"
 private const val WATERMARK_PREFIX = "watermark_"
 private const val SCAN_BUDGET_MS = 45_000L
 
-private val SYSTEM_DOMAINS = listOf("astermail.org", "astermail.com", "aster.cx")
+private val SYSTEM_DOMAINS =
+    listOf("astermail.org", "astermail.com", "aster.cx", "astermail.me", "astermail.net")
 
 private val NEWSLETTER_DOMAINS = listOf(
     "substack.com",

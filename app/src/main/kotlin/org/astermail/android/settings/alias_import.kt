@@ -53,7 +53,8 @@ data class ImportOutcome(
     val failed: Int,
 )
 
-val SYSTEM_ALIAS_DOMAINS = setOf("astermail.org", "aster.cx")
+val SYSTEM_ALIAS_DOMAINS =
+    setOf("astermail.org", "aster.cx") + PREMIUM_ALIAS_DOMAINS
 
 private val RESERVED_ALIAS_NAMES = setOf(
     "noreply",

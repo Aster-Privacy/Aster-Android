@@ -151,6 +151,9 @@ fun AliasesScreen(
     val alias_restore_locked = plan_vm.is_feature_locked("has_advanced_aliases") && !plan_state.is_loading
     val alias_export_locked = plan_vm.is_feature_locked("has_advanced_aliases") && !plan_state.is_loading
     val instant_alias_delete_locked = plan_vm.is_feature_locked("has_instant_alias_delete") && !plan_state.is_loading
+    val premium_domains_allowed = org.astermail.android.settings.plan_allows_premium_alias_domains(
+        plan_state.limits?.plan_code,
+    )
 
     var selected_tab by remember { mutableStateOf(0) }
     var pending_delete_alias by remember { mutableStateOf<Pair<String, String>?>(null) }
@@ -300,7 +303,13 @@ fun AliasesScreen(
                         )
                     }
                 }
-                3 -> tab_scroll { preferences_tab(vm = vm, state = state) }
+                3 -> tab_scroll {
+                    preferences_tab(
+                        vm = vm,
+                        state = state,
+                        premium_domains_allowed = premium_domains_allowed,
+                    )
+                }
             }
         }
     }
@@ -327,6 +336,8 @@ fun AliasesScreen(
             initial_local_part = create_alias_prefill?.first.orEmpty(),
             initial_domain = create_alias_prefill?.second,
             vm = vm,
+            premium_domains_allowed = premium_domains_allowed,
+            on_upgrade = { on_open("billing") },
         )
     }
 
@@ -2014,6 +2025,7 @@ internal fun ghost_tab(
 private fun preferences_tab(
     vm: SettingsViewModel,
     state: org.astermail.android.settings.SettingsUiState,
+    premium_domains_allowed: Boolean = true,
 ) {
     val colors = AsterMaterial.colors
     val prefs = state.alias_preferences
@@ -2039,7 +2051,9 @@ private fun preferences_tab(
         return
     }
 
-    val available_domains = remember(state.domains) { alias_domain_options(state.domains) }
+    val available_domains = remember(state.domains, premium_domains_allowed) {
+        alias_domain_options(state.domains, include_premium = premium_domains_allowed)
+    }
     val default_domain = resolve_default_alias_domain(prefs.alias_default_domain, available_domains)
 
     section_label(stringResource(R.string.alias_domains_section))
@@ -2645,12 +2659,24 @@ private fun dns_record_row(label: String, verified: Boolean) {
 internal data class AliasDomainOption(
     val domain_name: String,
     val domain_id: String? = null,
+    val is_premium: Boolean = false,
 ) {
     val is_platform: Boolean get() = domain_id == null
 }
 
-internal fun alias_domain_options(domains: List<CustomDomain>): List<AliasDomainOption> =
+internal fun alias_domain_options(
+    domains: List<CustomDomain>,
+    include_premium: Boolean = true,
+): List<AliasDomainOption> =
     listOf(AliasDomainOption("astermail.org"), AliasDomainOption("aster.cx")) +
+        (
+            if (include_premium) {
+                org.astermail.android.settings.PREMIUM_ALIAS_DOMAINS
+                    .map { AliasDomainOption(it, is_premium = true) }
+            } else {
+                emptyList()
+            }
+            ) +
         domains
             .filter { it.status == "active" }
             .map { AliasDomainOption(it.domain_name, it.id) }
@@ -2715,6 +2741,8 @@ private fun create_alias_dialog(
     vm: SettingsViewModel,
     initial_local_part: String = "",
     initial_domain: String? = null,
+    premium_domains_allowed: Boolean = true,
+    on_upgrade: () -> Unit = {},
 ) {
     var local_part by remember { mutableStateOf(initial_local_part) }
     var display_name by remember { mutableStateOf("") }
@@ -2731,12 +2759,16 @@ private fun create_alias_dialog(
     val available_domains = remember(settings_state.domains) {
         alias_domain_options(settings_state.domains)
     }
+    val selectable_domains = remember(available_domains, premium_domains_allowed) {
+        available_domains.filter { premium_domains_allowed || !it.is_premium }
+    }
     val preferred_domain = initial_domain ?: resolve_default_alias_domain(
         settings_state.alias_preferences?.alias_default_domain,
-        available_domains,
+        selectable_domains,
     )
     val active_domain = selected_domain
-        ?: available_domains.firstOrNull { it.domain_name == preferred_domain }
+        ?: selectable_domains.firstOrNull { it.domain_name == preferred_domain }
+        ?: selectable_domains.firstOrNull()
         ?: AliasDomainOption(preferred_domain)
 
     val local_part_valid = remember(local_part) {
@@ -2840,12 +2872,18 @@ private fun create_alias_dialog(
                         on_dismiss = { domain_menu_open = false },
                     ) {
                         available_domains.forEach { domain ->
+                            val domain_locked = domain.is_premium && !premium_domains_allowed
                             aster_dropdown_item(
                                 label = "@${domain.domain_name}",
+                                icon = if (domain_locked) TablerIcons.Lock else null,
                                 selected = domain.domain_name == active_domain.domain_name,
                                 on_click = {
-                                    selected_domain = domain
                                     domain_menu_open = false
+                                    if (domain_locked) {
+                                        on_upgrade()
+                                    } else {
+                                        selected_domain = domain
+                                    }
                                 },
                             )
                         }
