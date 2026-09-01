@@ -1,0 +1,8 @@
+What's new:
+
+- Create aliases on astermail.me and astermail.net. Both domains are available on the Star plan and up.
+
+Fixed:
+
+- Account recovery accepts your recovery code in any format, with or without spaces or dashes.
+- Account recovery tells you when too many attempts have blocked further tries.
