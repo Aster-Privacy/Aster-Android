@@ -1372,15 +1372,15 @@ class AuthRepository @Inject constructor(
         val chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
         val random = java.security.SecureRandom()
         return (1..6).map {
-            val seg1 = (1..4).map { chars[random.nextInt(chars.length)] }.joinToString("")
-            val seg2 = (1..4).map { chars[random.nextInt(chars.length)] }.joinToString("")
-            val seg3 = (1..4).map { chars[random.nextInt(chars.length)] }.joinToString("")
-            "ASTER-$seg1-$seg2-$seg3"
+            val segments = (1..4).map {
+                (1..4).map { chars[random.nextInt(chars.length)] }.joinToString("")
+            }
+            "ASTER-" + segments.joinToString("-")
         }
     }
 
     private fun hash_recovery_code(code: String): String {
-        val cleaned = code.uppercase(java.util.Locale.ROOT).trim()
+        val cleaned = canonicalize_recovery_code(code)
         val digest = java.security.MessageDigest.getInstance("SHA-256")
         val hash = digest.digest(cleaned.toByteArray(Charsets.UTF_8))
         return base64_encode(hash)
@@ -1390,7 +1390,7 @@ class AuthRepository @Inject constructor(
         val code_hash = hash_recovery_code(code)
         val salt = ByteArray(16).also { java.security.SecureRandom().nextBytes(it) }
         val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
-        val derived = PasswordKdf.derive_aes_key(code.uppercase(java.util.Locale.ROOT).trim(), salt, pbkdf2_iterations)
+        val derived = PasswordKdf.derive_aes_key(canonicalize_recovery_code(code), salt, pbkdf2_iterations)
         val encrypted = AesGcm.encrypt(derived, nonce, recovery_key)
         derived.fill(0)
         return RecoveryShareData(

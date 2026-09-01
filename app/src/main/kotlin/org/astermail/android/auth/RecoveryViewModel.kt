@@ -138,8 +138,8 @@ class RecoveryViewModel @Inject constructor(
 
     fun verify_code(code: String) {
         if (_state.value.is_loading) return
-        val normalized = code.trim().uppercase(java.util.Locale.ROOT)
-        if (!normalized.startsWith("ASTER-") || normalized.length != 20) {
+        val normalized = canonicalize_recovery_code(code)
+        if (!is_valid_recovery_code(normalized)) {
             _state.value = _state.value.copy(error = ctx.getString(R.string.error_invalid_recovery_code))
             return
         }
@@ -318,7 +318,7 @@ class RecoveryViewModel @Inject constructor(
     }
 
     private fun hash_recovery_code(code: String): String {
-        val cleaned = code.uppercase(java.util.Locale.ROOT).trim()
+        val cleaned = canonicalize_recovery_code(code)
         val digest = MessageDigest.getInstance("SHA-256")
         val hash = digest.digest(cleaned.toByteArray(Charsets.UTF_8))
         return base64_encode(hash)
@@ -330,7 +330,7 @@ class RecoveryViewModel @Inject constructor(
         nonce: ByteArray,
         salt: ByteArray,
     ): ByteArray {
-        val derived = PasswordKdf.derive_aes_key(code.uppercase(java.util.Locale.ROOT).trim(), salt, PBKDF2_ITERATIONS)
+        val derived = PasswordKdf.derive_aes_key(canonicalize_recovery_code(code), salt, PBKDF2_ITERATIONS)
         val decrypted = AesGcm.decrypt(derived, nonce, encrypted_key)
         derived.fill(0)
         return decrypted
