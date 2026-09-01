@@ -422,6 +422,7 @@ fun StackedAvatars(
     participants: List<Pair<String, String>>,
     size: Dp = 40.dp,
     max_visible: Int = 3,
+    authenticated_system_email: String? = null,
     modifier: Modifier = Modifier,
 ) {
     val list = if (participants.isEmpty()) emptyList() else participants
@@ -429,7 +430,13 @@ fun StackedAvatars(
         val first = list.firstOrNull() ?: ("" to "")
         val (nm, em) = first
         androidx.compose.runtime.key(em.lowercase().ifBlank { nm.lowercase() }) {
-            SenderAvatar(email = em, name = nm, size = size, modifier = modifier)
+            SenderAvatar(
+                email = em,
+                name = nm,
+                size = size,
+                sender_authenticated = matches_authenticated_system(em, authenticated_system_email),
+                modifier = modifier,
+            )
         }
         return
     }
@@ -446,11 +453,17 @@ fun StackedAvatars(
                     email = em,
                     name = nm,
                     size = each_size,
+                    sender_authenticated = matches_authenticated_system(em, authenticated_system_email),
                     modifier = Modifier.align(alignments[idx]),
                 )
             }
         }
     }
+}
+
+internal fun matches_authenticated_system(email: String, authenticated_system_email: String?): Boolean {
+    if (authenticated_system_email.isNullOrBlank()) return false
+    return email.trim().lowercase() == authenticated_system_email.trim().lowercase()
 }
 
 private fun extract_domain(email: String): String {

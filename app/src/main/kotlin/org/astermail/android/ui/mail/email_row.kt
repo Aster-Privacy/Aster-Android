@@ -497,7 +497,20 @@ fun ThreadInboxRow(
                     )
                 }
             }
-            StackedAvatars(participants = participants, size = metrics.avatar_size)
+            val authenticated_system_email = androidx.compose.runtime.remember(
+                email.sender_email, email.display_sender_email, email.is_external, email.system_origin,
+            ) {
+                if (system_avatar_authenticated(email)) {
+                    displayed_sender_email(email.display_sender_email, email.sender_email)
+                } else {
+                    null
+                }
+            }
+            StackedAvatars(
+                participants = participants,
+                size = metrics.avatar_size,
+                authenticated_system_email = authenticated_system_email,
+            )
         }
         Column(modifier = Modifier.weight(1f)) {
             val others_count = (thread.participants.size - 1).coerceAtLeast(1)

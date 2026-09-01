@@ -180,4 +180,21 @@ class SystemSenderTrustTest {
             ),
         )
     }
+
+    @Test
+    fun stacked_avatars_only_authenticate_the_matching_participant() {
+        val trusted = system_avatar_authenticated(
+            row("updates@astermail.org", is_external = false, system_origin = true),
+        )
+        assertTrue(trusted)
+        assertTrue(matches_authenticated_system("updates@astermail.org", "updates@astermail.org"))
+        assertTrue(matches_authenticated_system(" Updates@AsterMail.org ", "updates@astermail.org"))
+        assertFalse(matches_authenticated_system("someone@example.com", "updates@astermail.org"))
+    }
+
+    @Test
+    fun stacked_avatars_authenticate_nothing_without_a_trusted_address() {
+        assertFalse(matches_authenticated_system("updates@astermail.org", null))
+        assertFalse(matches_authenticated_system("updates@astermail.org", ""))
+    }
 }
