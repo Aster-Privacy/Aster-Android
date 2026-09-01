@@ -2945,7 +2945,7 @@
         <item quantity="one">Applied %1$d time</item>
         <item quantity="other">Applied %1$d times</item>
     </plurals>
-    <string name="alias_delete_directory_confirm">Mail sent to addresses in this directory stops being delivered. You can\'t undo this.</string>
+    <string name="alias_delete_directory_confirm">Delete %1$s? Mail sent to new addresses in this directory stops being delivered. Aliases it already created keep working. You can\'t undo this.</string>
     <string name="alias_directory_separator_hint">A dot, slash, plus sign, or number sign all work before the directory name.</string>
     <string name="audit_event_2fa_disabled">Two-factor authentication turned off</string>
     <string name="audit_event_2fa_enabled">Two-factor authentication turned on</string>
