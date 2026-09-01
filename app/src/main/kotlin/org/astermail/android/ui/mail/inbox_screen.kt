@@ -264,10 +264,15 @@ fun InboxScreen(
     var plan_known by rememberSaveable { mutableStateOf(initial_plan_known) }
     var fresh_check_complete by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { settings_vm.load_subscription(force = false) }
-    LaunchedEffect(Unit) {
+    val lock_vm_for_review: org.astermail.android.security.AppLockViewModel = hiltViewModel()
+    val is_locked_for_review by lock_vm_for_review.store.is_locked.collectAsStateWithLifecycle()
+    LaunchedEffect(is_locked_for_review) {
+        if (is_locked_for_review) return@LaunchedEffect
         if (!org.astermail.android.billing.ReviewPrompt.should_request(context_for_prefs)) {
             return@LaunchedEffect
         }
+
+        kotlinx.coroutines.delay(REVIEW_PROMPT_SETTLE_MS)
 
         val activity = context_for_prefs.review_prompt_activity() ?: return@LaunchedEffect
 
@@ -3639,6 +3644,8 @@ private fun low_network_banner(on_open_settings: () -> Unit) {
         )
     }
 }
+
+private const val REVIEW_PROMPT_SETTLE_MS = 2000L
 
 private fun android.content.Context.review_prompt_activity(): android.app.Activity? {
     var current = this
