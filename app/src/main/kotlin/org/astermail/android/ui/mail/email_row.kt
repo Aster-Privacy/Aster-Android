@@ -805,8 +805,8 @@ internal fun alias_chip(label: String, modifier: Modifier = Modifier) {
     val colors = AsterMaterial.colors
     val shape = RoundedCornerShape(4.dp)
     val surface = inbox_card_read_color(colors)
-    val background = chip_background(colors.text_tertiary, surface, colors.is_dark)
-    val border = chip_border(colors.text_tertiary, surface, colors.is_dark)
+    val background = chip_subtle_background(colors.text_tertiary, surface, colors.is_dark)
+    val border = chip_subtle_border(colors.text_tertiary, surface, colors.is_dark)
     Row(
         modifier = modifier
             .clip(shape)
@@ -844,13 +844,11 @@ private fun label_chip(color: Color, name: String, icon: String, modifier: Modif
     val shape = RoundedCornerShape(4.dp)
     val surface = inbox_card_read_color(colors)
     val background = chip_background(color, surface, colors.is_dark)
-    val border = chip_border(color, surface, colors.is_dark)
     val content = chip_content(color, background, colors.is_dark)
     Row(
         modifier = modifier
             .clip(shape)
             .background(background, shape)
-            .border(1.dp, border, shape)
             .padding(horizontal = 6.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),

@@ -28,6 +28,8 @@ import kotlin.math.pow
 
 internal const val chip_min_contrast = 4.5
 
+internal const val chip_solid_min_separation = 1.25
+
 private fun linearize(channel: Float): Double {
     val c = channel.coerceIn(0f, 1f).toDouble()
     return if (c <= 0.03928) c / 12.92 else ((c + 0.055) / 1.055).pow(2.4)
@@ -97,21 +99,58 @@ private fun from_hsl(value: HslColor): Color {
     )
 }
 
-internal fun chip_background(label: Color, surface: Color, is_dark: Boolean): Color =
-    mix(surface, label, if (is_dark) 0.15f else 0.12f)
+private const val chip_solid_min_lightness = 0.34f
+
+private const val chip_solid_max_lightness = 0.52f
+
+private const val chip_solid_min_saturation = 0.32f
+
+private val chip_ink_light = Color(0xFFFFFFFF)
+
+private val chip_ink_dark = Color(0xFF121212)
+
+private fun readable_ink(background: Color): Color =
+    if (contrast_ratio(chip_ink_light, background) >= contrast_ratio(chip_ink_dark, background)) {
+        chip_ink_light
+    } else {
+        chip_ink_dark
+    }
+
+internal fun chip_background(label: Color, surface: Color, is_dark: Boolean): Color {
+    val base = to_hsl(label)
+    val saturation = if (base.saturation <= 0.04f) {
+        base.saturation
+    } else {
+        max(base.saturation, chip_solid_min_saturation)
+    }
+    val lightness = base.lightness.coerceIn(chip_solid_min_lightness, chip_solid_max_lightness)
+    var candidate = from_hsl(base.copy(saturation = saturation, lightness = lightness))
+    var step = 0
+    while (contrast_ratio(readable_ink(candidate), candidate) < chip_min_contrast && step < 40) {
+        step += 1
+        val walked = (lightness - step * 0.01f).coerceIn(0f, 1f)
+        candidate = from_hsl(base.copy(saturation = saturation, lightness = walked))
+    }
+    if (contrast_ratio(candidate, surface) >= chip_solid_min_separation) return candidate
+    var separated = candidate
+    var nudge = 0
+    while (contrast_ratio(separated, surface) < chip_solid_min_separation && nudge < 40) {
+        nudge += 1
+        val hsl = to_hsl(separated)
+        val walked = if (is_dark) hsl.lightness + 0.02f else hsl.lightness - 0.02f
+        separated = from_hsl(hsl.copy(lightness = walked.coerceIn(0f, 1f)))
+    }
+    return separated
+}
 
 internal fun chip_border(label: Color, surface: Color, is_dark: Boolean): Color =
+    chip_background(label, surface, is_dark)
+
+internal fun chip_subtle_background(label: Color, surface: Color, is_dark: Boolean): Color =
+    mix(surface, label, if (is_dark) 0.15f else 0.12f)
+
+internal fun chip_subtle_border(label: Color, surface: Color, is_dark: Boolean): Color =
     mix(surface, label, if (is_dark) 0.30f else 0.25f)
 
-internal fun chip_content(label: Color, background: Color, is_dark: Boolean): Color {
-    val base = to_hsl(label)
-    val target = if (is_dark) max(base.lightness, 0.68f) else min(base.lightness, 0.36f)
-    var candidate = from_hsl(base.copy(lightness = target))
-    var step = 0
-    while (contrast_ratio(candidate, background) < chip_min_contrast && step < 40) {
-        step += 1
-        val walked = if (is_dark) target + step * 0.02f else target - step * 0.02f
-        candidate = from_hsl(base.copy(lightness = walked.coerceIn(0f, 1f)))
-    }
-    return candidate
-}
+internal fun chip_content(label: Color, background: Color, is_dark: Boolean): Color =
+    readable_ink(background)

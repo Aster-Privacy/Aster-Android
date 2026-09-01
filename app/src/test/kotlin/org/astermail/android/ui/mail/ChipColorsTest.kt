@@ -83,10 +83,24 @@ class ChipColorsTest {
     }
 
     @Test
-    fun chip_background_stays_close_to_the_surface() {
-        val surface = Color(0xFF121212)
-        val background = chip_background(Color(0xFFEA4335), surface, is_dark = true)
-        assertTrue(contrast_ratio(background, surface) < 2.0)
+    fun chip_background_separates_from_the_surface() {
+        for (surface in dark_surfaces + light_surfaces) {
+            for (label in label_palette) {
+                val is_dark = surface in dark_surfaces
+                val background = chip_background(label, surface, is_dark)
+                assertTrue(
+                    "label=$label surface=$surface",
+                    contrast_ratio(background, surface) >= chip_solid_min_separation,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun chip_background_keeps_the_label_hue() {
+        val background = chip_background(Color(0xFFA855F7), Color(0xFFFFFFFF), is_dark = false)
+        assertTrue(background.red > background.green)
+        assertTrue(background.blue > background.green)
     }
 
     @Test
@@ -118,33 +132,34 @@ class ChipColorsTest {
     }
 
     @Test
-    fun chip_border_sits_between_the_background_and_the_label() {
+    fun chip_border_matches_the_solid_background() {
         val surface = Color(0xFFFFFFFF)
         val label = Color(0xFF4285F4)
-        val background = chip_background(label, surface, is_dark = false)
-        val border = chip_border(label, surface, is_dark = false)
-        assertTrue(contrast_ratio(border, surface) > contrast_ratio(background, surface))
-        assertTrue(contrast_ratio(border, surface) < contrast_ratio(label, surface))
+        assertEquals(
+            chip_background(label, surface, is_dark = false),
+            chip_border(label, surface, is_dark = false),
+        )
     }
 
     @Test
-    fun chip_content_keeps_the_label_hue() {
-        val label = Color(0xFF4285F4)
-        val background = chip_background(label, Color.White, is_dark = false)
-        val content = chip_content(label, background, is_dark = false)
-        assertTrue(content.blue > content.red)
-        assertTrue(content.blue > content.green)
+    fun chip_content_is_white_or_near_black() {
+        for (surface in dark_surfaces + light_surfaces) {
+            for (label in label_palette) {
+                val is_dark = surface in dark_surfaces
+                val background = chip_background(label, surface, is_dark)
+                val content = chip_content(label, background, is_dark)
+                val neutral = content.red == content.green && content.green == content.blue
+                assertTrue("label=$label content=$content", neutral)
+            }
+        }
     }
 
     @Test
-    fun chip_content_is_darker_on_light_and_lighter_on_dark() {
+    fun the_same_label_reads_the_same_in_both_themes() {
         val label = Color(0xFF34A853)
         val light_background = chip_background(label, Color.White, is_dark = false)
         val dark_background = chip_background(label, Color(0xFF121212), is_dark = true)
-        val on_light = chip_content(label, light_background, is_dark = false)
-        val on_dark = chip_content(label, dark_background, is_dark = true)
-        assertTrue(relative_luminance(on_light) < relative_luminance(label))
-        assertTrue(relative_luminance(on_dark) > relative_luminance(label))
+        assertEquals(light_background, dark_background)
     }
 
     @Test
