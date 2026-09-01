@@ -305,7 +305,7 @@ class RecoveryViewModel @Inject constructor(
     private fun map_error(t: Throwable, fallback: Int): String = when (t) {
         is ApiError.ValidationError ->
             org.astermail.android.localized_api_error(ctx, t, ctx.getString(R.string.error_invalid_request))
-        is ApiError.RateLimited -> ctx.getString(R.string.error_too_many_attempts)
+        is ApiError.RateLimited -> ctx.getString(R.string.error_recovery_too_many_attempts)
         is ApiError.NotFoundError -> ctx.getString(R.string.error_account_not_found)
         is ApiError.NetworkError -> ctx.getString(R.string.error_no_connection)
         is ApiError.ServerError -> ctx.getString(R.string.error_server)

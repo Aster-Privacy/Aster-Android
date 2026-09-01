@@ -1709,8 +1709,9 @@
 
     <!-- Recovery -->
     <string name="error_send_recovery">Failed to send recovery email</string>
-    <string name="error_invalid_recovery_code">Invalid recovery code format</string>
-    <string name="error_invalid_code">Invalid recovery code</string>
+    <string name="error_invalid_recovery_code">A recovery code looks like ASTER-XXXX-XXXX-XXXX-XXXX. Check the code and enter it again.</string>
+    <string name="error_invalid_code">That code does not match this account. Check it against your saved list and enter it again. Spacing and capital letters do not matter.</string>
+    <string name="error_recovery_too_many_attempts">This account has had too many recovery attempts. You can try again in about 30 minutes. None of your codes were used, so you still have all of them.</string>
     <string name="error_recovery_failed">Recovery failed</string>
     <string name="status_deriving_key">Deriving new password key</string>
     <string name="status_encrypting_vault">Encrypting vault with new password</string>
