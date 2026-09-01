@@ -28,14 +28,11 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import org.astermail.android.R
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -119,10 +116,7 @@ class BillingViewModel @Inject constructor(
     private val _state = MutableStateFlow(BillingUiState(available_plans = AvailablePlansCache.plans()))
     val state: StateFlow<BillingUiState> = _state.asStateFlow()
 
-    private val _review_request = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
-    val review_request: SharedFlow<Unit> = _review_request.asSharedFlow()
 
-    private var paid_before_checkout = false
 
     private var pending_crypto_invoices_in_flight = false
 
@@ -465,7 +459,6 @@ class BillingViewModel @Inject constructor(
 
     private fun poll_after_return(returned_paid: Boolean = false) {
         if (poll_job?.isActive == true) return
-        val was_checkout = _state.value.awaiting_checkout
         _state.update { it.copy(awaiting_checkout = false, awaiting_portal = false, checking_payment = true) }
         poll_job = viewModelScope.launch {
             val before = snapshot_before_checkout
@@ -501,9 +494,6 @@ class BillingViewModel @Inject constructor(
                 )
             }
             if (changed) pending_checkout_plan = null
-            if (was_checkout && changed && !paid_before_checkout && now_paid) {
-                _review_request.emit(Unit)
-            }
         }
     }
 
@@ -697,7 +687,6 @@ class BillingViewModel @Inject constructor(
     }
 
     fun consume_checkout_url() {
-        paid_before_checkout = is_active_paid(_state.value.subscription)
         snapshot_before_checkout = subscription_signature(_state.value.subscription)
         _state.value = _state.value.copy(checkout_url = null, awaiting_checkout = true)
     }

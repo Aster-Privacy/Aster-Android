@@ -265,6 +265,16 @@ fun InboxScreen(
     var fresh_check_complete by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { settings_vm.load_subscription(force = false) }
     LaunchedEffect(Unit) {
+        if (!org.astermail.android.billing.ReviewPrompt.should_request(context_for_prefs)) {
+            return@LaunchedEffect
+        }
+
+        val activity = context_for_prefs.review_prompt_activity() ?: return@LaunchedEffect
+
+        org.astermail.android.billing.ReviewPrompt.mark_done(context_for_prefs)
+        org.astermail.android.billing.PlayReview.request(activity)
+    }
+    LaunchedEffect(Unit) {
         settings_vm.refresh_cached_preferences()
         settings_vm.load_preferences()
     }
@@ -3628,4 +3638,13 @@ private fun low_network_banner(on_open_settings: () -> Unit) {
             lineHeight = 16.sp,
         )
     }
+}
+
+private fun android.content.Context.review_prompt_activity(): android.app.Activity? {
+    var current = this
+    while (current is android.content.ContextWrapper) {
+        if (current is android.app.Activity) return current
+        current = current.baseContext
+    }
+    return null
 }
