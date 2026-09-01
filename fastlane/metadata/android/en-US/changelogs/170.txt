@@ -1,0 +1,8 @@
+New:
+
+- Aster Mail is now available in Hindi.
+
+Fixed:
+
+- Mail from Aster shows the Aster logo in the message list, not only after you open the message.
+- Inbound OpenPGP mail shows whether it arrived encrypted and signed.
