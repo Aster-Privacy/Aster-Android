@@ -480,6 +480,7 @@ class MailRepository @Inject constructor(
 
     fun notify_send_success() {
         _send_result_events.tryEmit(Result.success(Unit))
+        org.astermail.android.billing.ReviewPrompt.record_send(context)
     }
     private val _send_problem = kotlinx.coroutines.flow.MutableStateFlow(false)
     val send_problem: kotlinx.coroutines.flow.StateFlow<Boolean> = _send_problem
@@ -842,6 +843,7 @@ class MailRepository @Inject constructor(
             row.draft_id?.takeIf { it.isNotBlank() }?.let { runCatching { delete_draft(it) } }
             _send_problem.value = false
             _send_result_events.tryEmit(Result.success(Unit))
+            org.astermail.android.billing.ReviewPrompt.record_send(context)
             if (BuildConfig.DEBUG) android.util.Log.w("MailRepository", "run_pending_send id=$pending_id SENT mail_item_id=${response?.mail_item_id}")
             PendingSendOutcome.SENT
         } else {

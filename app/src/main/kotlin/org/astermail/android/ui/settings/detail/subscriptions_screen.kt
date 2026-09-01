@@ -24,9 +24,7 @@ package org.astermail.android.ui.settings.detail
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
-import android.app.Activity
 import android.content.Context
-import android.content.ContextWrapper
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -79,7 +77,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import org.astermail.android.R
 import org.astermail.android.billing.BillingViewModel
-import org.astermail.android.billing.PlayReview
 import org.astermail.android.billing.is_resumable_crypto_invoice
 import java.util.Locale
 import org.astermail.android.design.AsterMaterial
@@ -251,14 +248,6 @@ private fun is_lower_tier(code: String?, current_code: String?): Boolean =
 
 private fun plan_code_of(plan_name: String?): String = org.astermail.android.billing.plan_code_from_name(plan_name)
 
-private fun Context.findActivity(): Activity? {
-    var ctx: Context? = this
-    while (ctx is ContextWrapper) {
-        if (ctx is Activity) return ctx
-        ctx = ctx.baseContext
-    }
-    return null
-}
 
 @Composable
 fun SubscriptionsScreen(
@@ -309,12 +298,6 @@ fun SubscriptionsScreen(
         val url = billing_state.portal_url ?: return@LaunchedEffect
         org.astermail.android.billing.open_billing_tab(context, url)
         billing_vm.consume_portal_url()
-    }
-
-    LaunchedEffect(Unit) {
-        billing_vm.review_request.collect {
-            context.findActivity()?.let { PlayReview.request(it) }
-        }
     }
 
     val lifecycle_owner = LocalLifecycleOwner.current
