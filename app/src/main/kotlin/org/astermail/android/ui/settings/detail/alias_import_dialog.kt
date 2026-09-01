@@ -239,6 +239,7 @@ private fun import_file_card(
 fun alias_import_dialog(
     vm: SettingsViewModel,
     state: SettingsUiState,
+    premium_domains_allowed: Boolean = true,
     on_dismiss: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -260,7 +261,9 @@ fun alias_import_dialog(
     var error_message by remember { mutableStateOf<String?>(null) }
     var picked_file by remember { mutableStateOf<ImportFileContent?>(null) }
 
-    val domain_options = remember(state.domains) { alias_domain_options(state.domains) }
+    val domain_options = remember(state.domains, premium_domains_allowed) {
+        alias_domain_options(state.domains, include_premium = premium_domains_allowed)
+    }
     val available_domains = remember(domain_options) { domain_options.map { it.domain_name } }
     val existing_aliases = remember(state.aliases) {
         state.aliases

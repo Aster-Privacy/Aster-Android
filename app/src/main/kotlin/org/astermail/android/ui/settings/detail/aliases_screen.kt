@@ -278,6 +278,7 @@ fun AliasesScreen(
                     restore_locked = alias_restore_locked,
                     export_locked = alias_export_locked,
                     instant_delete_locked = instant_alias_delete_locked,
+                    premium_domains_allowed = premium_domains_allowed,
                     alias_limit = plan_state.limits?.limits?.get("max_email_aliases")?.limit,
                     on_upgrade = { on_open("billing") },
                 )
@@ -287,6 +288,7 @@ fun AliasesScreen(
                         state = state,
                         scope = scope,
                         locked = alias_directories_locked,
+                        premium_domains_allowed = premium_domains_allowed,
                         required_plan_name = org.astermail.android.billing.plan_display_name(plan_state.plans, "nova"),
                         on_upgrade = { on_open("billing") },
                     )
@@ -397,6 +399,7 @@ private fun aliases_tab(
     restore_locked: Boolean = false,
     export_locked: Boolean = false,
     instant_delete_locked: Boolean = false,
+    premium_domains_allowed: Boolean = true,
     alias_limit: Int? = null,
     on_upgrade: () -> Unit = {},
 ) {
@@ -676,6 +679,7 @@ private fun aliases_tab(
             alias_import_dialog(
                 vm = vm,
                 state = state,
+                premium_domains_allowed = premium_domains_allowed,
                 on_dismiss = on_dismiss_import,
             )
         }
@@ -1507,6 +1511,7 @@ private fun directories_tab(
     state: org.astermail.android.settings.SettingsUiState,
     scope: kotlinx.coroutines.CoroutineScope,
     locked: Boolean = false,
+    premium_domains_allowed: Boolean = true,
     on_upgrade: () -> Unit = {},
     required_plan_name: String? = null,
 ) {
@@ -1528,7 +1533,9 @@ private fun directories_tab(
     val colors = AsterMaterial.colors
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
-    val domain_options = remember(state.domains) { alias_domain_options(state.domains) }
+    val domain_options = remember(state.domains, premium_domains_allowed) {
+        alias_domain_options(state.domains, include_premium = premium_domains_allowed)
+    }
     var dir_key by remember { mutableStateOf("") }
     var dir_domain by remember { mutableStateOf(domain_options.first().domain_name) }
     var captcha_token by remember { mutableStateOf<String?>(null) }
