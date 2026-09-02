@@ -1,5 +1,11 @@
 name: release_fdroid
 
+# Preflight only. F-Droid compiles the fdroid flavor on their own buildserver and signs
+# it with their key, so this artifact is never published to a release. It exists to catch
+# a flavor that would fail to compile there. Never attach it to a GitHub release: an
+# unsigned or differently signed APK next to the full build is exactly the confusion the
+# -full asset naming exists to prevent.
+
 on:
   push:
     tags:
@@ -25,5 +31,5 @@ jobs:
       - name: upload unsigned fdroid apk
         uses: actions/upload-artifact@v4
         with:
-          name: fdroid-unsigned
+          name: fdroid-flavor-unsigned-preflight-do-not-publish
           path: app/build/outputs/apk/fdroid/release/app-fdroid-release-unsigned.apk

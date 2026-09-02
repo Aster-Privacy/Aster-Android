@@ -25,9 +25,23 @@ Add `--dry-run` to build, sign, and verify without pushing or publishing anythin
 | Build | `assembleFullRelease bundleFullRelease` locally. The fdroid flavor is **not** built here. |
 | Verify | The APK must carry cert SHA-256 `88b0a8a6…`. |
 | F-Droid | Nothing to publish. F-Droid compiles the fdroid flavor from the tag and signs it with their own key. |
-| Publish | Creates the GitHub release with `Aster-Mail.apk` and `Aster-Mail-<version>.apk`, then re-uploads `Aster-Mail.apk` to the current Aster-Mail **Latest** release, which is what astermail.org serves. |
+| Publish | Creates the GitHub release with `Aster-Mail.apk` and `Aster-Mail-<version>-full.apk`, then re-uploads `Aster-Mail.apk` to the current Aster-Mail **Latest** release, which is what astermail.org serves. |
 | Play | Uploads the AAB with `fastlane supply` if a service account is configured, otherwise copies the AAB to `~/Downloads` and says so. |
 | Audit | Runs `Claude/scripts/audit_android_channels.sh` and prints the per-channel result. |
+
+## Asset names
+
+Every APK on a release is the same signed build of the `full` flavor. Two copies ship, and the
+name states which is which:
+
+| Asset | What it is |
+|---|---|
+| `Aster-Mail.apk` | Fixed name. `releases/latest/download/Aster-Mail.apk` always resolves to the newest build, so the website and the in-app download link keep working. Never rename it. |
+| `Aster-Mail-<version>-full.apk` | The same bytes, pinned to one version. The `-full` suffix names the product flavor, so nobody has to guess whether an asset is the F-Droid build. |
+
+Never publish a bare `Aster-Mail-<version>.apk` and never publish an `Aster-Mail-fdroid-*.apk`.
+Releases up to v0.6.156 carried an F-Droid APK signed with our key, and that history is why an
+unlabeled asset is ambiguous. `verify_release_assets.yml` fails a release that uses either old name.
 
 ## Why no F-Droid APK ships on the tag
 
