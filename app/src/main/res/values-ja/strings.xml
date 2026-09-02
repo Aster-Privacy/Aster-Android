@@ -3001,6 +3001,12 @@
     <string name="resurrection_old_password_prompt">リセット前に使用していたパスワードを入力してください</string>
     <string name="resurrection_success">以前のデータのロックが解除されました。以前のメールとエイリアスは再び通常どおり開きます。</string>
     <string name="resurrection_failed">以前のデータのロックを解除できませんでした。パスワードまたはフレーズを確認して、もう一度お試しください。</string>
+    <string name="discard_older_data_button">以前のデータを破棄</string>
+    <string name="discard_older_data_title">以前のデータを破棄しますか？</string>
+    <string name="discard_older_data_desc">リセット前のメールとエイリアスのロックを解除するオプションが完全に削除されます。この操作は元に戻せません。</string>
+    <string name="discard_older_data_confirm">破棄</string>
+    <string name="discard_older_data_success">以前のデータを破棄しました。</string>
+    <string name="discard_older_data_failed">以前のデータを破棄できませんでした。もう一度お試しください。</string>
     <string name="encrypted_pgp">エンドツーエンド暗号化（OpenPGP）</string>
     <string name="pgp_signature_label">デジタル署名</string>
     <string name="pgp_signature_none">署名なし</string>

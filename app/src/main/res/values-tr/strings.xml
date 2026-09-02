@@ -3014,6 +3014,12 @@
     <string name="resurrection_old_password_prompt">Sıfırlamadan önce kullandığın parolayı gir</string>
     <string name="resurrection_success">Eski verilerinin kilidi açıldı. Önceki postalar ve takma adlar yeniden normal şekilde açılıyor.</string>
     <string name="resurrection_failed">Bu, eski verilerin kilidini açmadı. Parolayı veya ifadeyi kontrol edip yeniden dene.</string>
+    <string name="discard_older_data_button">Eski verileri sil</string>
+    <string name="discard_older_data_title">Eski veriler silinsin mi?</string>
+    <string name="discard_older_data_desc">Bu işlem, sıfırlamadan önceki postaların ve takma adların kilidini açma seçeneğini kalıcı olarak kaldırır. Bunu geri alamazsın.</string>
+    <string name="discard_older_data_confirm">Sil</string>
+    <string name="discard_older_data_success">Eski veriler silindi.</string>
+    <string name="discard_older_data_failed">Eski veriler silinemedi. Yeniden dene.</string>
     <string name="encrypted_pgp">Uçtan uca şifreli (OpenPGP)</string>
     <string name="pgp_signature_label">Dijital imza</string>
     <string name="pgp_signature_none">İmzalanmamış</string>

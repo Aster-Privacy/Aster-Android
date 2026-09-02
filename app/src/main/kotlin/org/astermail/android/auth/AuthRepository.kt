@@ -903,6 +903,8 @@ class AuthRepository @Inject constructor(
         recovery_api.list_inactive_key_sets().inactive_key_sets.size
     }.getOrDefault(0)
 
+    suspend fun discard_inactive_key_sets(): Int = consume_all_inactive_key_sets(recovery_api)
+
     suspend fun restore_inactive_key_sets(old_password: String): Int {
         val sets = runCatching { recovery_api.list_inactive_key_sets().inactive_key_sets }
             .getOrDefault(emptyList())
@@ -1502,4 +1504,17 @@ class AuthRepository @Inject constructor(
         private const val HKDF_INFO = "Aster Mail_Recovery_Vault_v1"
         private const val FOLDER_FIELD_VERSION = "astermail-labels-v1"
     }
+}
+
+internal suspend fun consume_all_inactive_key_sets(recovery_api: RecoveryApi): Int {
+    val sets = runCatching { recovery_api.list_inactive_key_sets().inactive_key_sets }
+        .getOrElse { return 0 }
+    var consumed = 0
+    for (set in sets) {
+        val success = runCatching {
+            recovery_api.consume_inactive_key_set(ConsumeInactiveKeySetRequest(set.id)).success
+        }.getOrDefault(false)
+        if (success) consumed += 1
+    }
+    return consumed
 }

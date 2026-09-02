@@ -229,6 +229,7 @@ data class SettingsUiState(
     val recovery_email_step_up_required: Boolean = false,
     val inactive_key_sets: Int = 0,
     val restoring_inactive_key_sets: Boolean = false,
+    val discarding_inactive_key_sets: Boolean = false,
     val login_alerts_enabled: Boolean? = null,
     val login_alerts_load_failed: Boolean = false,
     val hardware_keys: List<HardwareKey> = emptyList(),
@@ -3010,6 +3011,28 @@ class SettingsViewModel @Inject constructor(
             }
             if (restored > 0) {
                 load_aliases(force = true)
+            }
+        }
+    }
+
+    fun discard_inactive_key_sets() {
+        if (_state.value.discarding_inactive_key_sets) return
+        _state.update { it.copy(discarding_inactive_key_sets = true) }
+        viewModelScope.launch {
+            val discarded = runCatching {
+                auth_repository.discard_inactive_key_sets()
+            }.getOrDefault(0)
+            val message = if (discarded > 0) {
+                context.getString(R.string.discard_older_data_success)
+            } else {
+                context.getString(R.string.discard_older_data_failed)
+            }
+            _state.update {
+                it.copy(
+                    discarding_inactive_key_sets = false,
+                    inactive_key_sets = if (discarded > 0) 0 else it.inactive_key_sets,
+                    action_result = message,
+                )
             }
         }
     }

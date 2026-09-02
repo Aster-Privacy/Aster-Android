@@ -3041,6 +3041,12 @@
     <string name="resurrection_old_password_prompt">Saisissez le mot de passe utilisé avant la réinitialisation</string>
     <string name="resurrection_success">Vos données antérieures sont déverrouillées. Les messages et alias précédents s\'ouvrent de nouveau normalement.</string>
     <string name="resurrection_failed">Cela n\'a pas déverrouillé les données antérieures. Vérifiez le mot de passe ou la phrase, puis réessayez.</string>
+    <string name="discard_older_data_button">Abandonner les données antérieures</string>
+    <string name="discard_older_data_title">Abandonner les données antérieures ?</string>
+    <string name="discard_older_data_desc">Cette action supprime définitivement la possibilité de déverrouiller les e-mails et les alias antérieurs à la réinitialisation. Vous ne pouvez pas annuler cette action.</string>
+    <string name="discard_older_data_confirm">Abandonner</string>
+    <string name="discard_older_data_success">Données antérieures abandonnées.</string>
+    <string name="discard_older_data_failed">Impossible d\'abandonner les données antérieures. Réessayez.</string>
     <string name="encrypted_pgp">Chiffré de bout en bout (OpenPGP)</string>
     <string name="pgp_signature_label">Signature numérique</string>
     <string name="pgp_signature_none">Non signé</string>

@@ -3015,6 +3015,12 @@
     <string name="resurrection_old_password_prompt">Introduce la contraseña que usabas antes del restablecimiento</string>
     <string name="resurrection_success">Tus datos anteriores están desbloqueados. Los mensajes y alias anteriores vuelven a abrirse con normalidad.</string>
     <string name="resurrection_failed">Eso no desbloqueó los datos anteriores. Comprueba la contraseña o la frase e inténtalo de nuevo.</string>
+    <string name="discard_older_data_button">Descartar datos anteriores</string>
+    <string name="discard_older_data_title">¿Descartar los datos anteriores?</string>
+    <string name="discard_older_data_desc">Esto elimina de forma permanente la opción de desbloquear el correo y los alias de antes del restablecimiento. No puedes deshacerlo.</string>
+    <string name="discard_older_data_confirm">Descartar</string>
+    <string name="discard_older_data_success">Datos anteriores descartados.</string>
+    <string name="discard_older_data_failed">No se pudieron descartar los datos anteriores. Inténtalo de nuevo.</string>
     <string name="encrypted_pgp">Cifrado de extremo a extremo (OpenPGP)</string>
     <string name="pgp_signature_label">Firma digital</string>
     <string name="pgp_signature_none">Sin firmar</string>

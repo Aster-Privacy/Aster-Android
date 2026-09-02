@@ -3001,6 +3001,12 @@
     <string name="resurrection_old_password_prompt">输入你在重置前使用的密码</string>
     <string name="resurrection_success">较早的数据已解锁。以前的邮件和别名可以再次正常打开。</string>
     <string name="resurrection_failed">未能解锁较早的数据。请检查密码或短语后重试。</string>
+    <string name="discard_older_data_button">放弃较早的数据</string>
+    <string name="discard_older_data_title">要放弃较早的数据吗？</string>
+    <string name="discard_older_data_desc">此操作会永久移除解锁重置前邮件和别名的选项。此操作无法撤销。</string>
+    <string name="discard_older_data_confirm">放弃</string>
+    <string name="discard_older_data_success">已放弃较早的数据。</string>
+    <string name="discard_older_data_failed">无法放弃较早的数据。请重试。</string>
     <string name="encrypted_pgp">端到端加密（OpenPGP）</string>
     <string name="pgp_signature_label">数字签名</string>
     <string name="pgp_signature_none">未签名</string>

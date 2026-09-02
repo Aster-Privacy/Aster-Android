@@ -3074,6 +3074,12 @@
     <string name="resurrection_old_password_prompt">أدخل كلمة السر التي استخدمتها قبل إعادة التعيين</string>
     <string name="resurrection_success">تم فتح بياناتك الأقدم. تُفتح الرسائل والعناوين البديلة السابقة بشكل طبيعي مرة أخرى.</string>
     <string name="resurrection_failed">لم يؤدِ ذلك إلى فتح البيانات الأقدم. تحقق من كلمة السر أو العبارة وحاول مرة أخرى.</string>
+    <string name="discard_older_data_button">تجاهل البيانات الأقدم</string>
+    <string name="discard_older_data_title">هل تريد تجاهل البيانات الأقدم؟</string>
+    <string name="discard_older_data_desc">يؤدي هذا إلى إزالة خيار فتح البريد والأسماء المستعارة من قبل إعادة التعيين نهائيًا. لا يمكنك التراجع عن ذلك.</string>
+    <string name="discard_older_data_confirm">تجاهل</string>
+    <string name="discard_older_data_success">تم تجاهل البيانات الأقدم.</string>
+    <string name="discard_older_data_failed">تعذّر تجاهل البيانات الأقدم. حاول مرة أخرى.</string>
     <string name="encrypted_pgp">مشفّر من طرف إلى طرف (OpenPGP)</string>
     <string name="pgp_signature_label">التوقيع الرقمي</string>
     <string name="pgp_signature_none">غير موقّع</string>

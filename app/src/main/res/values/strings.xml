@@ -3082,4 +3082,10 @@
     <string name="resurrection_old_password_prompt">Enter the password you used before the reset</string>
     <string name="resurrection_success">Your older data is unlocked. Earlier mail and aliases open normally again.</string>
     <string name="resurrection_failed">That did not unlock the older data. Check the password or phrase and try again.</string>
+    <string name="discard_older_data_button">Discard older data</string>
+    <string name="discard_older_data_title">Discard older data?</string>
+    <string name="discard_older_data_desc">This permanently removes the option to unlock mail and aliases from before the reset. You cannot undo this.</string>
+    <string name="discard_older_data_confirm">Discard</string>
+    <string name="discard_older_data_success">Older data discarded.</string>
+    <string name="discard_older_data_failed">Could not discard the older data. Try again.</string>
 </resources>

@@ -2903,6 +2903,12 @@
     <string name="resurrection_old_password_prompt">रीसेट से पहले इस्तेमाल किया पासवर्ड डालें</string>
     <string name="resurrection_success">आपका पुराना डेटा खुल गया। पहले की मेल और एलियास फिर से सामान्य रूप से खुलते हैं।</string>
     <string name="resurrection_failed">इससे पुराना डेटा नहीं खुला। पासवर्ड या वाक्यांश जांचें और फिर कोशिश करें।</string>
+    <string name="discard_older_data_button">पुराना डेटा हटाएं</string>
+    <string name="discard_older_data_title">पुराना डेटा हटाएं?</string>
+    <string name="discard_older_data_desc">इससे रीसेट से पहले के मेल और उपनाम खोलने का विकल्प स्थायी रूप से हट जाता है। आप इसे पूर्ववत नहीं कर सकते।</string>
+    <string name="discard_older_data_confirm">हटाएं</string>
+    <string name="discard_older_data_success">पुराना डेटा हटा दिया गया।</string>
+    <string name="discard_older_data_failed">पुराना डेटा नहीं हटाया जा सका। फिर कोशिश करें।</string>
     <string name="encrypted_pgp">एंड-टू-एंड एन्क्रिप्टेड (OpenPGP)</string>
     <string name="pgp_signature_label">डिजिटल हस्ताक्षर</string>
     <string name="pgp_signature_none">हस्ताक्षरित नहीं</string>

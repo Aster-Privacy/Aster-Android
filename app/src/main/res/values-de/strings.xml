@@ -3015,6 +3015,12 @@
     <string name="resurrection_old_password_prompt">Gib das Passwort ein, das du vor dem Zurücksetzen verwendet hast</string>
     <string name="resurrection_success">Deine älteren Daten sind entsperrt. Frühere E-Mails und Aliasse lassen sich wieder normal öffnen.</string>
     <string name="resurrection_failed">Damit ließen sich die älteren Daten nicht entsperren. Prüfe das Passwort oder die Phrase und versuche es erneut.</string>
+    <string name="discard_older_data_button">Ältere Daten verwerfen</string>
+    <string name="discard_older_data_title">Ältere Daten verwerfen?</string>
+    <string name="discard_older_data_desc">Damit entfällt dauerhaft die Möglichkeit, E-Mails und Aliasse aus der Zeit vor dem Zurücksetzen zu entsperren. Das lässt sich nicht rückgängig machen.</string>
+    <string name="discard_older_data_confirm">Verwerfen</string>
+    <string name="discard_older_data_success">Ältere Daten verworfen.</string>
+    <string name="discard_older_data_failed">Die älteren Daten konnten nicht verworfen werden. Versuche es erneut.</string>
     <string name="encrypted_pgp">Ende-zu-Ende-verschlüsselt (OpenPGP)</string>
     <string name="pgp_signature_label">Digitale Signatur</string>
     <string name="pgp_signature_none">Nicht signiert</string>

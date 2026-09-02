@@ -3044,6 +3044,12 @@
     <string name="resurrection_old_password_prompt">Введите пароль, который вы использовали до сброса</string>
     <string name="resurrection_success">Прежние данные разблокированы. Ранние письма и псевдонимы снова открываются нормально.</string>
     <string name="resurrection_failed">Разблокировать прежние данные не удалось. Проверьте пароль или фразу и повторите попытку.</string>
+    <string name="discard_older_data_button">Отказаться от прежних данных</string>
+    <string name="discard_older_data_title">Отказаться от прежних данных?</string>
+    <string name="discard_older_data_desc">Возможность разблокировать письма и псевдонимы, созданные до сброса, будет удалена навсегда. Это действие нельзя отменить.</string>
+    <string name="discard_older_data_confirm">Отказаться</string>
+    <string name="discard_older_data_success">Прежние данные удалены.</string>
+    <string name="discard_older_data_failed">Не удалось удалить прежние данные. Повторите попытку.</string>
     <string name="encrypted_pgp">Сквозное шифрование (OpenPGP)</string>
     <string name="pgp_signature_label">Цифровая подпись</string>
     <string name="pgp_signature_none">Без подписи</string>

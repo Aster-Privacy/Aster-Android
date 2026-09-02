@@ -3044,6 +3044,12 @@
     <string name="resurrection_old_password_prompt">Wpisz hasło używane przed resetem</string>
     <string name="resurrection_success">Twoje starsze dane są odblokowane. Wcześniejsze wiadomości i aliasy znowu otwierają się normalnie.</string>
     <string name="resurrection_failed">To nie odblokowało starszych danych. Sprawdź hasło lub frazę i spróbuj ponownie.</string>
+    <string name="discard_older_data_button">Odrzuć starsze dane</string>
+    <string name="discard_older_data_title">Odrzucić starsze dane?</string>
+    <string name="discard_older_data_desc">Ta operacja trwale usuwa możliwość odblokowania poczty i aliasów sprzed resetu. Nie można jej cofnąć.</string>
+    <string name="discard_older_data_confirm">Odrzuć</string>
+    <string name="discard_older_data_success">Starsze dane odrzucone.</string>
+    <string name="discard_older_data_failed">Nie udało się odrzucić starszych danych. Spróbuj ponownie.</string>
     <string name="encrypted_pgp">Szyfrowanie end-to-end (OpenPGP)</string>
     <string name="pgp_signature_label">Podpis cyfrowy</string>
     <string name="pgp_signature_none">Niepodpisana</string>

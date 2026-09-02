@@ -3014,6 +3014,12 @@
     <string name="resurrection_old_password_prompt">Voer het wachtwoord in dat je voor het opnieuw instellen gebruikte</string>
     <string name="resurrection_success">Je oudere gegevens zijn ontgrendeld. Eerdere e-mail en aliassen openen weer normaal.</string>
     <string name="resurrection_failed">Daarmee zijn de oudere gegevens niet ontgrendeld. Controleer het wachtwoord of de zin en probeer het opnieuw.</string>
+    <string name="discard_older_data_button">Oudere gegevens verwijderen</string>
+    <string name="discard_older_data_title">Oudere gegevens verwijderen?</string>
+    <string name="discard_older_data_desc">Hiermee verwijder je definitief de mogelijkheid om mail en aliassen van voor het opnieuw instellen te ontgrendelen. Je kunt dit niet ongedaan maken.</string>
+    <string name="discard_older_data_confirm">Verwijderen</string>
+    <string name="discard_older_data_success">Oudere gegevens verwijderd.</string>
+    <string name="discard_older_data_failed">De oudere gegevens konden niet worden verwijderd. Probeer het opnieuw.</string>
     <string name="encrypted_pgp">End-to-end versleuteld (OpenPGP)</string>
     <string name="pgp_signature_label">Digitale handtekening</string>
     <string name="pgp_signature_none">Niet ondertekend</string>

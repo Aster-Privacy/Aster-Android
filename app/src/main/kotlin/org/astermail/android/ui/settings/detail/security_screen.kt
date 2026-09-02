@@ -194,6 +194,7 @@ fun SecurityScreen(
 
     var show_recover_dialog by remember { mutableStateOf(false) }
     var recover_password by remember { mutableStateOf("") }
+    var show_discard_confirm by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.action_result) {
         val msg = state.action_result ?: return@LaunchedEffect
@@ -808,14 +809,27 @@ fun SecurityScreen(
             title = stringResource(R.string.recover_older_data_title),
             message = stringResource(R.string.resurrection_old_password_prompt),
             body = {
-                org.astermail.android.design.components.AsterTextField(
-                    value = recover_password,
-                    onValueChange = { recover_password = it },
-                    label = stringResource(R.string.resurrection_old_password),
-                    visual_transformation = PasswordVisualTransformation(),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    org.astermail.android.design.components.AsterTextField(
+                        value = recover_password,
+                        onValueChange = { recover_password = it },
+                        label = stringResource(R.string.resurrection_old_password),
+                        visual_transformation = PasswordVisualTransformation(),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    v_gap(AsterSpacing.md)
+                    org.astermail.android.design.components.AsterDialogOutlineButton(
+                        label = stringResource(R.string.discard_older_data_button),
+                        enabled = !state.restoring_inactive_key_sets,
+                        onClick = {
+                            show_recover_dialog = false
+                            recover_password = ""
+                            show_discard_confirm = true
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             },
             footer = {
                 org.astermail.android.design.components.AsterDialogOutlineButton(
@@ -836,6 +850,21 @@ fun SecurityScreen(
                         recover_password = ""
                     },
                 )
+            },
+        )
+    }
+
+    if (show_discard_confirm) {
+        AsterAlertDialog(
+            on_dismiss = { show_discard_confirm = false },
+            title = stringResource(R.string.discard_older_data_title),
+            message = stringResource(R.string.discard_older_data_desc),
+            confirm_label = stringResource(R.string.discard_older_data_confirm),
+            cancel_label = stringResource(R.string.cancel),
+            confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
+            on_confirm = {
+                show_discard_confirm = false
+                vm.discard_inactive_key_sets()
             },
         )
     }

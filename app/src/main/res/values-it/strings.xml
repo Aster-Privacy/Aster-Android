@@ -3014,6 +3014,12 @@
     <string name="resurrection_old_password_prompt">Inserisci la password che usavi prima della reimpostazione</string>
     <string name="resurrection_success">I tuoi dati precedenti sono sbloccati. I messaggi e gli alias precedenti si aprono di nuovo normalmente.</string>
     <string name="resurrection_failed">I dati precedenti non sono stati sbloccati. Controlla la password o la frase e riprova.</string>
+    <string name="discard_older_data_button">Elimina i dati precedenti</string>
+    <string name="discard_older_data_title">Eliminare i dati precedenti?</string>
+    <string name="discard_older_data_desc">Questa operazione rimuove in modo permanente la possibilità di sbloccare la posta e gli alias precedenti alla reimpostazione. Non puoi annullarla.</string>
+    <string name="discard_older_data_confirm">Elimina</string>
+    <string name="discard_older_data_success">Dati precedenti eliminati.</string>
+    <string name="discard_older_data_failed">Impossibile eliminare i dati precedenti. Riprova.</string>
     <string name="encrypted_pgp">Crittografia end-to-end (OpenPGP)</string>
     <string name="pgp_signature_label">Firma digitale</string>
     <string name="pgp_signature_none">Non firmato</string>
