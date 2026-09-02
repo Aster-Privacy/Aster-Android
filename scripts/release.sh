@@ -127,9 +127,12 @@ aab="app/build/outputs/bundle/fullRelease/app-full-release.aab"
 
 rm -rf "$out_dir"
 mkdir -p "$out_dir"
+# Asset names say which build they are. Every APK we publish is the signed full
+# flavor: Aster-Mail.apk is the fixed name the website resolves, and the -full
+# copy pins this version. No fdroid APK ships here, F-Droid signs its own.
 cp "$full_apk" "$out_dir/Aster-Mail.apk"
-cp "$full_apk" "$out_dir/Aster-Mail-$ver.apk"
-cp "$aab" "$out_dir/Aster-Mail-$ver.aab"
+cp "$full_apk" "$out_dir/Aster-Mail-$ver-full.apk"
+cp "$aab" "$out_dir/Aster-Mail-$ver-full.aab"
 
 say "verify full APK signature"
 got=$("$apksigner" verify --print-certs "$out_dir/Aster-Mail.apk" | grep -i "SHA-256 digest" | head -1 | grep -oE '[0-9a-f]{64}')
@@ -158,7 +161,7 @@ echo "no APK to publish, F-Droid builds and signs v$ver from source"
 say "GitHub release"
 gh release create "v$ver" --repo Aster-Privacy/Aster-Android --title "v$ver" \
   --notes-file "$notes" \
-  "$out_dir/Aster-Mail.apk" "$out_dir/Aster-Mail-$ver.apk"
+  "$out_dir/Aster-Mail.apk" "$out_dir/Aster-Mail-$ver-full.apk"
 
 say "carry APK to the site download target"
 mail_tag=$(gh api repos/Aster-Privacy/Aster-Mail/releases/latest -q .tag_name)
@@ -168,13 +171,13 @@ echo "uploaded Aster-Mail.apk to Aster-Mail $mail_tag"
 say "Google Play"
 play_key="${ASTER_PLAY_SERVICE_ACCOUNT_JSON:-$repo_root/../.ops/play_service_account.json}"
 if [ -f "$play_key" ] && command -v fastlane >/dev/null; then
-  fastlane supply --aab "$out_dir/Aster-Mail-$ver.aab" --json_key "$play_key" \
+  fastlane supply --aab "$out_dir/Aster-Mail-$ver-full.aab" --json_key "$play_key" \
     --package_name org.astermail.android --track production --release_status completed \
     --skip_upload_metadata --skip_upload_images --skip_upload_screenshots
   echo "uploaded to Play production"
 else
   mkdir -p "$HOME/Downloads"
-  cp "$out_dir/Aster-Mail-$ver.aab" "$HOME/Downloads/"
+  cp "$out_dir/Aster-Mail-$ver-full.aab" "$HOME/Downloads/"
   echo "NOT automated: no Play service account at $play_key, or fastlane is not installed."
   echo "AAB copied to ~/Downloads for manual upload."
   echo "To automate, see scripts/README_release.md."
