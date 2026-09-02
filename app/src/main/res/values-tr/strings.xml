@@ -78,7 +78,7 @@
     <string name="recovery_email_resent">Doğrulama e-postası gönderildi</string>
     <string name="recovery_email_resend_failed">Doğrulama e-postası gönderilemedi</string>
     <string name="recovery_email_resend_cooldown">Yeniden göndermeden önce lütfen bir an bekleyin</string>
-    <string name="recovery_email_already_in_use">Bu e-posta zaten kullanımda</string>
+    <string name="recovery_email_already_in_use">Bu adres zaten en fazla 20 Aster hesabını koruyor. Farklı bir adres kullanın.</string>
     <string name="recovery_email_saved">Kurtarma e-postası kaydedildi</string>
     <string name="recovery_email_status_verified">Doğrulandı</string>
     <string name="recovery_email_hidden">Bu hesapta kayıtlı</string>

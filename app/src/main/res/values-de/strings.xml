@@ -79,7 +79,7 @@
     <string name="recovery_email_resent">Bestätigungs-E-Mail gesendet</string>
     <string name="recovery_email_resend_failed">Bestätigungs-E-Mail konnte nicht gesendet werden</string>
     <string name="recovery_email_resend_cooldown">Bitte warten Sie einen Moment, bevor Sie erneut senden</string>
-    <string name="recovery_email_already_in_use">Diese E-Mail wird bereits verwendet</string>
+    <string name="recovery_email_already_in_use">Diese Adresse schützt bereits die maximal möglichen 20 Aster-Konten. Verwenden Sie eine andere Adresse.</string>
     <string name="recovery_email_saved">Wiederherstellungs-E-Mail gespeichert</string>
     <string name="recovery_email_status_verified">Bestätigt</string>
     <string name="recovery_email_hidden">In diesem Konto gespeichert</string>

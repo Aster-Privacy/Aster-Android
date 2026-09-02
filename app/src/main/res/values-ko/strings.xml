@@ -78,7 +78,7 @@
     <string name="recovery_email_resent">인증 이메일을 보냈습니다</string>
     <string name="recovery_email_resend_failed">인증 이메일을 보내지 못했습니다</string>
     <string name="recovery_email_resend_cooldown">다시 보내기 전에 잠시 기다려 주세요</string>
-    <string name="recovery_email_already_in_use">이미 사용 중인 이메일입니다</string>
+    <string name="recovery_email_already_in_use">이 주소는 이미 최대 20개의 Aster 계정에 사용되고 있습니다. 다른 주소를 사용하세요.</string>
     <string name="recovery_email_saved">복구 이메일을 저장했습니다</string>
     <string name="recovery_email_status_verified">인증됨</string>
     <string name="recovery_email_hidden">이 계정에 저장됨</string>

@@ -110,7 +110,7 @@
     <string name="recovery_email_resent">सत्यापन ईमेल भेज दिया गया</string>
     <string name="recovery_email_resend_failed">जांच वाली ईमेल नहीं भेजी जा सकी</string>
     <string name="recovery_email_resend_cooldown">दोबारा भेजने से पहले थोड़ी देर रुकें</string>
-    <string name="recovery_email_already_in_use">वह ईमेल पहले से इस्तेमाल में है</string>
+    <string name="recovery_email_already_in_use">यह पता पहले से ही अधिकतम 20 Aster खातों की सुरक्षा कर रहा है। कोई दूसरा पता इस्तेमाल करें।</string>
     <string name="recovery_email_saved">रिकवरी ईमेल सहेजी गई</string>
     <string name="recovery_email_status_verified">सत्यापित</string>
     <string name="recovery_email_hidden">इस खाते पर सहेजा गया</string>

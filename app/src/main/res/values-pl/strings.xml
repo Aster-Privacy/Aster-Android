@@ -78,7 +78,7 @@
     <string name="recovery_email_resent">Wysłano e-mail weryfikacyjny</string>
     <string name="recovery_email_resend_failed">Nie udało się wysłać e-maila weryfikacyjnego</string>
     <string name="recovery_email_resend_cooldown">Poczekaj chwilę przed ponownym wysłaniem</string>
-    <string name="recovery_email_already_in_use">Ten e-mail jest już używany</string>
+    <string name="recovery_email_already_in_use">Ten adres chroni już maksymalną liczbę 20 kont Aster. Użyj innego adresu.</string>
     <string name="recovery_email_saved">Zapisano e-mail odzyskiwania</string>
     <string name="recovery_email_status_verified">Zweryfikowano</string>
     <string name="recovery_email_hidden">Zapisano na tym koncie</string>

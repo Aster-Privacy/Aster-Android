@@ -78,7 +78,7 @@
     <string name="recovery_email_resent">確認メールを送信しました</string>
     <string name="recovery_email_resend_failed">確認メールを送信できませんでした</string>
     <string name="recovery_email_resend_cooldown">再送信まで少しお待ちください</string>
-    <string name="recovery_email_already_in_use">そのメールアドレスは既に使用されています</string>
+    <string name="recovery_email_already_in_use">このアドレスはすでに上限の20件のAsterアカウントで使われています。別のアドレスを使ってください。</string>
     <string name="recovery_email_saved">リカバリーメールを保存しました</string>
     <string name="recovery_email_status_verified">確認済み</string>
     <string name="recovery_email_hidden">このアカウントに保存済み</string>

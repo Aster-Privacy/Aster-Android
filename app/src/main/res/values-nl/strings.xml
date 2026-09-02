@@ -78,7 +78,7 @@
     <string name="recovery_email_resent">Verificatie-e-mail verzonden</string>
     <string name="recovery_email_resend_failed">Verificatie-e-mail kon niet worden verzonden</string>
     <string name="recovery_email_resend_cooldown">Wacht even voordat je opnieuw verzendt</string>
-    <string name="recovery_email_already_in_use">Dat e-mailadres is al in gebruik</string>
+    <string name="recovery_email_already_in_use">Dit adres beschermt al het maximum van 20 Aster-accounts. Gebruik een ander adres.</string>
     <string name="recovery_email_saved">Herstel-e-mail opgeslagen</string>
     <string name="recovery_email_status_verified">Geverifieerd</string>
     <string name="recovery_email_hidden">Opgeslagen in dit account</string>

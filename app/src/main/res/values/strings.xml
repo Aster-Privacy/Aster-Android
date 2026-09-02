@@ -117,7 +117,7 @@
     <string name="recovery_email_resent">Verification email sent</string>
     <string name="recovery_email_resend_failed">Could not send verification email</string>
     <string name="recovery_email_resend_cooldown">Please wait a moment before resending</string>
-    <string name="recovery_email_already_in_use">That email is already in use</string>
+    <string name="recovery_email_already_in_use">That address already protects the maximum of 20 Aster accounts. Use a different address.</string>
     <string name="recovery_email_saved">Recovery email saved</string>
     <string name="recovery_email_status_verified">Verified</string>
     <string name="recovery_email_hidden">Saved on this account</string>

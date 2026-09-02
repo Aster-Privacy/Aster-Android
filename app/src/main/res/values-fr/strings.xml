@@ -81,7 +81,7 @@
     <string name="recovery_email_resent">E-mail de vérification envoyé</string>
     <string name="recovery_email_resend_failed">Impossible d\'envoyer l\'e-mail de vérification</string>
     <string name="recovery_email_resend_cooldown">Veuillez patienter un instant avant de renvoyer</string>
-    <string name="recovery_email_already_in_use">Cet e-mail est déjà utilisé</string>
+    <string name="recovery_email_already_in_use">Cette adresse protège déjà le maximum de 20 comptes Aster. Utilisez une autre adresse.</string>
     <string name="recovery_email_saved">E-mail de récupération enregistré</string>
     <string name="recovery_email_status_verified">Vérifié</string>
     <string name="recovery_email_hidden">Enregistré sur ce compte</string>

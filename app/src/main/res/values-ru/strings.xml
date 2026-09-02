@@ -78,7 +78,7 @@
     <string name="recovery_email_resent">Письмо подтверждения отправлено</string>
     <string name="recovery_email_resend_failed">Не удалось отправить письмо подтверждения</string>
     <string name="recovery_email_resend_cooldown">Подождите немного перед повторной отправкой</string>
-    <string name="recovery_email_already_in_use">Эта почта уже используется</string>
+    <string name="recovery_email_already_in_use">Этот адрес уже защищает максимум 20 аккаунтов Aster. Используйте другой адрес.</string>
     <string name="recovery_email_saved">Почта для восстановления сохранена</string>
     <string name="recovery_email_status_verified">Подтверждено</string>
     <string name="recovery_email_hidden">Сохранено в этом аккаунте</string>

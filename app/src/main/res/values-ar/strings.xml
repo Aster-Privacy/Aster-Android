@@ -78,7 +78,7 @@
     <string name="recovery_email_resent">تم إرسال بريد التحقق</string>
     <string name="recovery_email_resend_failed">تعذّر إرسال بريد التحقق</string>
     <string name="recovery_email_resend_cooldown">يُرجى الانتظار لحظة قبل إعادة الإرسال</string>
-    <string name="recovery_email_already_in_use">هذا البريد مستخدم بالفعل</string>
+    <string name="recovery_email_already_in_use">هذا العنوان يحمي بالفعل الحد الأقصى وهو 20 حسابات Aster. استخدم عنوانًا آخر.</string>
     <string name="recovery_email_saved">تم حفظ بريد الاسترداد</string>
     <string name="recovery_email_status_verified">موثّق</string>
     <string name="recovery_email_hidden">محفوظ في هذا الحساب</string>
