@@ -2335,7 +2335,11 @@ class MailRepository @Inject constructor(
                 }
                 else -> {
                     decrypt_inbound_envelope(encrypted_envelope, nonce_bytes)
-                        ?: decrypt_envelope_identity_key(encrypted_envelope, nonce_bytes)
+                        ?: runCatching {
+                            decrypt_envelope_identity_key(encrypted_envelope, nonce_bytes)
+                        }.getOrNull()
+                        ?: decrypt_envelope_legacy_key_material(encrypted_envelope, nonce_bytes)
+                        ?: throw IllegalStateException("all envelope keys failed")
                 }
             }
 
@@ -2416,6 +2420,49 @@ class MailRepository @Inject constructor(
         pbkdf2_key_cache.put(salt_hex, key_bytes)
 
         return plaintext
+    }
+
+    private fun legacy_key_material(): ByteArray? {
+        val salt = session_key_store.get_password_salt() ?: return null
+        val salt_hex = LEGACY_KEY_MATERIAL_CACHE_PREFIX + salt.joinToString("") { "%02x".format(it) }
+
+        pbkdf2_key_cache.get(salt_hex)?.let { cached ->
+            salt.fill(0)
+            return cached
+        }
+
+        val passphrase = session_key_store.get_passphrase()
+        if (passphrase == null) {
+            salt.fill(0)
+            return null
+        }
+
+        val derived = try {
+            CryptoNative.derive_pbkdf2_hash(passphrase, salt, PBKDF2_ITERATIONS)
+        } catch (_: Throwable) {
+            null
+        } finally {
+            passphrase.fill(0)
+            salt.fill(0)
+        }
+
+        if (derived != null) pbkdf2_key_cache.put(salt_hex, derived)
+
+        return derived
+    }
+
+    private fun decrypt_envelope_legacy_key_material(
+        encrypted_b64: String,
+        nonce: ByteArray,
+    ): ByteArray? {
+        if (nonce.size != LEGACY_KEY_MATERIAL_NONCE_LENGTH) return null
+
+        val key = legacy_key_material() ?: return null
+
+        return runCatching {
+            val ciphertext = android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT)
+            aes_gcm_decrypt(ciphertext, key, nonce)
+        }.getOrNull()
     }
 
     private fun decrypt_envelope_identity_key(encrypted_b64: String, nonce: ByteArray): ByteArray {
@@ -4128,6 +4175,8 @@ class MailRepository @Inject constructor(
 
     companion object {
         private const val PBKDF2_ITERATIONS = 310000
+        private const val LEGACY_KEY_MATERIAL_NONCE_LENGTH = 12
+        private const val LEGACY_KEY_MATERIAL_CACHE_PREFIX = "legacy_key_material_"
         private const val max_attachment_base64_chars = 300_000_000
         private val PLACEHOLDER_META_NONCE = ByteArray(12)
         const val DEFAULT_ATTACHMENT_CONTENT_TYPE = "application/octet-stream"
