@@ -1,0 +1,9 @@
+What's new:
+
+- Discard the older data archive left behind by a password reset from Settings.
+
+Fixed:
+
+- Accounts created without the standard folders can send mail again. The app creates any missing folder when you sign in.
+- Read, star, pin, and snooze changes stay in place until the server confirms them.
+- Opening a conversation no longer shows the previous one for a moment first.
