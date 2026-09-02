@@ -1264,6 +1264,12 @@ fun InboxScreen(
         scope_selection_confirmed = false
     }
 
+    LaunchedEffect(visible_threads) {
+        if (!select_mode || selected_ids.isEmpty() || visible_threads.isEmpty()) return@LaunchedEffect
+        val visible_ids = visible_threads.mapTo(HashSet()) { it.thread_id }
+        selected_ids.retainAll { it in visible_ids }
+    }
+
     val density = LocalDensity.current
     val nav_bar_bottom = androidx.compose.foundation.layout.WindowInsets.navigationBars
         .asPaddingValues()

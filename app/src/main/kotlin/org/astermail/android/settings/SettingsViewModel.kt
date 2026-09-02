@@ -4548,6 +4548,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun load_preferences(force: Boolean = false) {
+        if (save_preferences_job?.isActive == true) return
         val now = System.currentTimeMillis()
         if (!force &&
             _state.value.preferences != null &&

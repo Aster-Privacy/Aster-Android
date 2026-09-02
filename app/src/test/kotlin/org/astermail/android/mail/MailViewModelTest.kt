@@ -761,6 +761,75 @@ class MailViewModelTest {
     }
 
     @Test
+    fun `mark_read survives a stale refetch that still reports unread`() = runTest {
+        val page = fake_inbox_page(3)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+        coEvery { repository.mark_read("id_1", true, any()) } returns Result.success(Unit)
+
+        vm.load_inbox()
+        advanceUntilIdle()
+        vm.mark_read("id_1")
+        advanceUntilIdle()
+        assertTrue(vm.inbox_state.value.items[0].is_read)
+
+        vm.load_inbox(force = true)
+        advanceUntilIdle()
+
+        assertTrue(vm.inbox_state.value.items[0].is_read)
+    }
+
+    @Test
+    fun `mark_unread survives a stale refetch that still reports read`() = runTest {
+        val page = fake_inbox_page(3)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+        coEvery { repository.mark_read("id_2", false, any()) } returns Result.success(Unit)
+
+        vm.load_inbox()
+        advanceUntilIdle()
+        vm.mark_unread("id_2")
+        advanceUntilIdle()
+        assertFalse(vm.inbox_state.value.items[1].is_read)
+
+        vm.load_inbox(force = true)
+        advanceUntilIdle()
+
+        assertFalse(vm.inbox_state.value.items[1].is_read)
+    }
+
+    @Test
+    fun `snooze_until removes the item immediately and keeps it removed on success`() = runTest {
+        val page = fake_inbox_page(3)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+        coEvery { repository.snooze("id_1", any()) } returns Result.success(Unit)
+
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        vm.snooze_until("id_1", "2026-09-03T09:00:00Z", "Tomorrow")
+        assertFalse(vm.inbox_state.value.items.any { it.id == "id_1" })
+        advanceUntilIdle()
+
+        assertFalse(vm.inbox_state.value.items.any { it.id == "id_1" })
+        coVerify { repository.snooze("id_1", "2026-09-03T09:00:00Z") }
+    }
+
+    @Test
+    fun `snooze_until restores the item when the request fails`() = runTest {
+        val page = fake_inbox_page(3)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+        coEvery { repository.snooze("id_1", any()) } returns Result.failure(RuntimeException("offline"))
+
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        vm.snooze_until("id_1", "2026-09-03T09:00:00Z", "Tomorrow")
+        assertFalse(vm.inbox_state.value.items.any { it.id == "id_1" })
+        advanceUntilIdle()
+
+        assertTrue(vm.inbox_state.value.items.any { it.id == "id_1" })
+    }
+
+    @Test
     fun `toggle_star flips star state and calls repository`() = runTest {
         val page = fake_inbox_page(2)
         coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)

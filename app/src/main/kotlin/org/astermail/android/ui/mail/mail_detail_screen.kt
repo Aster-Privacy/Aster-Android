@@ -491,10 +491,13 @@ fun MailDetailScreen(
         mail_vm.load_thread(email_id)
     }
 
-    val unread_thread_ids = remember(thread_state.messages) {
-        thread_state.messages.map { it.id }
+    val thread_matches_email = thread_state.item?.id == email_id ||
+        thread_state.messages.any { it.id == email_id }
+    val unread_thread_ids = remember(thread_state.messages, thread_matches_email) {
+        if (thread_matches_email) thread_state.messages.filter { !it.is_read }.map { it.id } else emptyList()
     }
-    LaunchedEffect(email_id, unread_thread_ids, settings_state.preferences?.mark_as_read) {
+    LaunchedEffect(email_id, thread_matches_email, unread_thread_ids, settings_state.preferences?.mark_as_read) {
+        if (!thread_matches_email) return@LaunchedEffect
         val prefs = settings_state.preferences ?: return@LaunchedEffect
         val delay_ms = when (prefs.mark_as_read) {
             "immediate" -> 0L
@@ -520,7 +523,7 @@ fun MailDetailScreen(
             if (!atts.isNullOrEmpty()) thread_message_with_attachments(base, atts) else base
         }
     }
-    val api_item = thread_state.item
+    val api_item = thread_state.item?.takeIf { thread_matches_email }
     val all_thread_attachments = remember(api_messages) {
         api_messages.flatMap { it.attachments }
     }
