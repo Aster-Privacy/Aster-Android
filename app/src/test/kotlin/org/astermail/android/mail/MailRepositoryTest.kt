@@ -83,6 +83,7 @@ class MailRepositoryTest {
     private lateinit var ratchet_encryptor: org.astermail.android.mail.ratchet.RatchetEncryptor
     private lateinit var ratchet_plaintext_cache: org.astermail.android.mail.ratchet.RatchetPlaintextCache
     private lateinit var context: android.content.Context
+    private lateinit var system_folder_bootstrap: SystemFolderBootstrap
     private lateinit var pending_send_dao: FakePendingSendDao
     private lateinit var repo: MailRepository
 
@@ -142,6 +143,8 @@ class MailRepositoryTest {
         ratchet_encryptor = mockk(relaxed = true)
         ratchet_plaintext_cache = mockk(relaxed = true)
         context = mockk(relaxed = true)
+        system_folder_bootstrap = mockk(relaxed = true)
+        coEvery { system_folder_bootstrap.ensure_system_folders() } returns emptyMap()
         every { session_key_store.get_identity_key() } returns "test_identity_key"
         every { session_key_store.get_passphrase() } returns null
         every { session_key_store.get_user_email() } returns "me@astermail.org"
@@ -170,6 +173,7 @@ class MailRepositoryTest {
             ratchet_decryptor = ratchet_decryptor,
             ratchet_encryptor = ratchet_encryptor,
             ratchet_plaintext_cache = ratchet_plaintext_cache,
+            system_folder_bootstrap = system_folder_bootstrap,
             pending_send_dao_provider = dagger.Lazy { pending_send_dao },
             context = context,
             auth_repository = dagger.Lazy { mockk(relaxed = true) },
@@ -890,6 +894,72 @@ class MailRepositoryTest {
         )
 
         assertTrue(result.isFailure)
+        coVerify(exactly = 0) { send_api.send_external(any()) }
+    }
+
+    @Test
+    fun `send_email creates the missing sent folder before relaying`() = runTest {
+        coEvery { labels_api.list_labels(include_counts = false) } returns
+            org.astermail.android.api.labels.LabelsListResponse(labels = emptyList())
+        coEvery { system_folder_bootstrap.ensure_system_folders() } returns mapOf("sent" to "healed_sent_token")
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
+        coEvery { send_api.send_external(any()) } returns
+            org.astermail.android.api.send.ExternalSendResponse(success = true, mail_item_id = "m1")
+
+        val result = repo.send_email(
+            to = listOf("someone@example.com"),
+            subject = "Test",
+            body_html = "<p>Hello</p>",
+        )
+
+        assertTrue(result.isSuccess)
+        val request = slot<org.astermail.android.api.send.ExternalSendRequest>()
+        coVerify(exactly = 1) { send_api.send_external(capture(request)) }
+        assertEquals("healed_sent_token", request.captured.folder_token)
+        coVerify(exactly = 1) { system_folder_bootstrap.ensure_system_folders() }
+    }
+
+    @Test
+    fun `send_email derives the sent folder token when the folder cannot be created`() = runTest {
+        coEvery { labels_api.list_labels(include_counts = false) } returns
+            org.astermail.android.api.labels.LabelsListResponse(labels = emptyList())
+        coEvery { system_folder_bootstrap.ensure_system_folders() } returns emptyMap()
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
+        coEvery { send_api.send_external(any()) } returns
+            org.astermail.android.api.send.ExternalSendResponse(success = true, mail_item_id = "m1")
+
+        val result = repo.send_email(
+            to = listOf("someone@example.com"),
+            subject = "Test",
+            body_html = "<p>Hello</p>",
+        )
+
+        assertTrue(result.isSuccess)
+        val expected = java.util.Base64.getEncoder().encodeToString(
+            java.security.MessageDigest.getInstance("SHA-256")
+                .digest("test_identity_keyfolder:sent".toByteArray(Charsets.UTF_8)),
+        )
+        val request = slot<org.astermail.android.api.send.ExternalSendRequest>()
+        coVerify(exactly = 1) { send_api.send_external(capture(request)) }
+        assertEquals(expected, request.captured.folder_token)
+    }
+
+    @Test
+    fun `send_email does not create folders when the label list cannot be fetched`() = runTest {
+        coEvery { labels_api.list_labels(include_counts = false) } throws RuntimeException("network error")
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
+
+        val result = repo.send_email(
+            to = listOf("someone@example.com"),
+            subject = "Test",
+            body_html = "<p>Hello</p>",
+        )
+
+        assertTrue(result.isFailure)
+        coVerify(exactly = 0) { system_folder_bootstrap.ensure_system_folders() }
         coVerify(exactly = 0) { send_api.send_external(any()) }
     }
 

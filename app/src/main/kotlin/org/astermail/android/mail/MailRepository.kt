@@ -107,6 +107,7 @@ private const val OUTBOX_FILE_REF_PREFIX = "@file:"
 private const val EMPTY_ATTACHMENTS_JSON = "[]"
 private const val SENT_FOLDER_TOKEN_ATTEMPTS = 3
 private const val SENT_FOLDER_TOKEN_RETRY_MS = 350L
+private const val SENT_FOLDER_TOKEN_MATERIAL = "folder:sent"
 private const val METADATA_PATCH_ATTEMPTS = 3
 private const val METADATA_PATCH_RETRY_DELAY_MS = 400L
 private const val DRAFT_UPDATE_CONFLICT_RETRIES = 2
@@ -398,6 +399,7 @@ class MailRepository @Inject constructor(
     private val ratchet_decryptor: org.astermail.android.mail.ratchet.RatchetDecryptor,
     private val ratchet_encryptor: org.astermail.android.mail.ratchet.RatchetEncryptor,
     private val ratchet_plaintext_cache: org.astermail.android.mail.ratchet.RatchetPlaintextCache,
+    private val system_folder_bootstrap: SystemFolderBootstrap,
     private val pending_send_dao_provider: dagger.Lazy<PendingSendDao>,
     @ApplicationContext private val context: Context,
     private val auth_repository: dagger.Lazy<org.astermail.android.auth.AuthRepository>,
@@ -547,35 +549,64 @@ class MailRepository @Inject constructor(
             .getOrNull()
             ?.takeIf { it.isNotBlank() }
         var last_error: Throwable? = null
-        repeat(SENT_FOLDER_TOKEN_ATTEMPTS) { attempt ->
-            val token = try {
-                labels_api.list_labels(include_counts = false)
-                    .labels.firstOrNull { it.folder_type == "sent" }?.label_token
+        var listed_without_sent = false
+        for (attempt in 0 until SENT_FOLDER_TOKEN_ATTEMPTS) {
+            val labels = try {
+                labels_api.list_labels(include_counts = false).labels
             } catch (e: CancellationException) {
                 throw e
             } catch (t: Throwable) {
                 last_error = t
                 null
             }
-            if (!token.isNullOrBlank()) {
-                cached_sent_folder_token = token
-                runCatching {
-                    sent_folder_prefs.edit().putString(sent_folder_prefs_key(), token).apply()
-                }
-                return token
+            if (labels != null) {
+                val token = labels.firstOrNull { it.folder_type == "sent" }?.label_token
+                if (!token.isNullOrBlank()) return remember_sent_folder_token(token)
+                listed_without_sent = true
+                break
             }
             if (attempt < SENT_FOLDER_TOKEN_ATTEMPTS - 1) {
                 kotlinx.coroutines.delay(SENT_FOLDER_TOKEN_RETRY_MS)
             }
         }
+        if (listed_without_sent) {
+            val healed = try {
+                system_folder_bootstrap.ensure_system_folders()["sent"]
+            } catch (e: CancellationException) {
+                throw e
+            } catch (t: Throwable) {
+                last_error = t
+                null
+            }
+            if (!healed.isNullOrBlank()) return remember_sent_folder_token(healed)
+        }
         if (stored != null) {
             cached_sent_folder_token = stored
             return stored
+        }
+        if (listed_without_sent) {
+            derive_sent_folder_token()?.let { return remember_sent_folder_token(it) }
         }
         if (last_error != null && BuildConfig.DEBUG) {
             android.util.Log.w("MailRepository", "sent folder token unresolved", last_error)
         }
         return null
+    }
+
+    private fun remember_sent_folder_token(token: String): String {
+        cached_sent_folder_token = token
+        runCatching {
+            sent_folder_prefs.edit().putString(sent_folder_prefs_key(), token).apply()
+        }
+        return token
+    }
+
+    private fun derive_sent_folder_token(): String? {
+        val identity_key = session_key_store.get_identity_key()?.takeIf { it.isNotBlank() } ?: return null
+        val material = (identity_key + SENT_FOLDER_TOKEN_MATERIAL).toByteArray(Charsets.UTF_8)
+        val digest = MessageDigest.getInstance("SHA-256").digest(material)
+        material.fill(0)
+        return android.util.Base64.encodeToString(digest, android.util.Base64.NO_WRAP)
     }
 
     private val outbox_attachments_dir: java.io.File by lazy {
