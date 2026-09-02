@@ -161,8 +161,9 @@ fun MailingListsScreen(
     var confirm_single by remember { mutableStateOf<MailingListSubscription?>(null) }
     var confirm_bulk by remember { mutableStateOf<List<String>>(emptyList()) }
 
-    val active = state.items.filter { it.status == "active" }
-    val unsubscribed = state.items.filter { it.status != "active" }
+    val (active, unsubscribed) = remember(state.items) {
+        state.items.partition { it.status == "active" }
+    }
     val visible = if (show_unsubscribed) unsubscribed else active
     val visible_ids = remember(visible) { visible.map { it.id }.toSet() }
     LaunchedEffect(visible_ids) {

@@ -23,6 +23,34 @@ package org.astermail.android.mail
 
 const val PREVIEW_MAX_LENGTH = 140
 
+private val STYLE_BLOCK_PATTERN = Regex("<style[^>]*>[\\s\\S]*?</style>", RegexOption.IGNORE_CASE)
+
+private val SCRIPT_BLOCK_PATTERN = Regex("<script[^>]*>[\\s\\S]*?</script>", RegexOption.IGNORE_CASE)
+
+private val HEAD_BLOCK_PATTERN = Regex("<head[^>]*>[\\s\\S]*?</head>", RegexOption.IGNORE_CASE)
+
+private val ANY_TAG_PATTERN = Regex("<[^>]+>")
+
+private val INVISIBLE_CHAR_PATTERN = Regex("[\\u200B-\\u200F\\u202A-\\u202E\\u2060\\u2066-\\u2069\\uFEFF\\u00AD\\u034F\\u115F\\u1160\\u17B4\\u17B5\\u180E\\u3164\\uFFA0\\uFFF9-\\uFFFC]")
+
+private val WHITESPACE_RUN_PATTERN = Regex("\\s+")
+
+private val BREAK_TAG_PATTERN = Regex("<br\\s*/?>", RegexOption.IGNORE_CASE)
+
+private val BLOCK_CLOSE_PATTERN = Regex("</(?:p|div|li|tr|h[1-6]|blockquote|pre)>", RegexOption.IGNORE_CASE)
+
+private val HR_TAG_PATTERN = Regex("<hr\\s*/?>", RegexOption.IGNORE_CASE)
+
+private val SPACE_RUN_PATTERN = Regex("[ \\t\\u00A0]+")
+
+private val LINE_PADDING_PATTERN = Regex("[ \\t]*\\n[ \\t]*")
+
+private val BLANK_LINES_PATTERN = Regex("\\n{3,}")
+
+private val NUMERIC_ENTITY_PATTERN = Regex("&#(\\d+);")
+
+private val HEX_ENTITY_PATTERN = Regex("&#x([0-9a-fA-F]+);")
+
 private val CIPHERTEXT_MARKERS = listOf(
     ASTER_SUBJECT_BUNDLE_MARKER,
     "ASTER_RATCHET_UNDECRYPTABLE",
@@ -48,14 +76,14 @@ fun looks_like_ciphertext(text: String): Boolean =
 
 fun strip_body_html(html: String): String {
     var text = html
-    text = text.replace(Regex("<style[^>]*>[\\s\\S]*?</style>", RegexOption.IGNORE_CASE), " ")
-    text = text.replace(Regex("<script[^>]*>[\\s\\S]*?</script>", RegexOption.IGNORE_CASE), " ")
-    text = text.replace(Regex("<head[^>]*>[\\s\\S]*?</head>", RegexOption.IGNORE_CASE), " ")
-    text = text.replace(Regex("<[^>]+>"), " ")
+    text = text.replace(STYLE_BLOCK_PATTERN, " ")
+    text = text.replace(SCRIPT_BLOCK_PATTERN, " ")
+    text = text.replace(HEAD_BLOCK_PATTERN, " ")
+    text = text.replace(ANY_TAG_PATTERN, " ")
     text = decode_html_entities(text)
-    text = text.replace(Regex("<[^>]+>"), " ")
-    text = text.replace(Regex("[\\u200B-\\u200F\\u202A-\\u202E\\u2060\\u2066-\\u2069\\uFEFF\\u00AD\\u034F\\u115F\\u1160\\u17B4\\u17B5\\u180E\\u3164\\uFFA0\\uFFF9-\\uFFFC]"), "")
-    text = text.replace(Regex("\\s+"), " ")
+    text = text.replace(ANY_TAG_PATTERN, " ")
+    text = text.replace(INVISIBLE_CHAR_PATTERN, "")
+    text = text.replace(WHITESPACE_RUN_PATTERN, " ")
     return text.trim()
 }
 
@@ -81,18 +109,18 @@ fun looks_like_html_body(text: String): Boolean {
 
 fun html_to_plain_text(html: String): String {
     var text = html
-    text = text.replace(Regex("<style[^>]*>[\\s\\S]*?</style>", RegexOption.IGNORE_CASE), " ")
-    text = text.replace(Regex("<script[^>]*>[\\s\\S]*?</script>", RegexOption.IGNORE_CASE), " ")
-    text = text.replace(Regex("<head[^>]*>[\\s\\S]*?</head>", RegexOption.IGNORE_CASE), " ")
-    text = text.replace(Regex("<br\\s*/?>", RegexOption.IGNORE_CASE), "\n")
-    text = text.replace(Regex("</(?:p|div|li|tr|h[1-6]|blockquote|pre)>", RegexOption.IGNORE_CASE), "\n")
-    text = text.replace(Regex("<hr\\s*/?>", RegexOption.IGNORE_CASE), "\n")
-    text = text.replace(Regex("<[^>]+>"), "")
+    text = text.replace(STYLE_BLOCK_PATTERN, " ")
+    text = text.replace(SCRIPT_BLOCK_PATTERN, " ")
+    text = text.replace(HEAD_BLOCK_PATTERN, " ")
+    text = text.replace(BREAK_TAG_PATTERN, "\n")
+    text = text.replace(BLOCK_CLOSE_PATTERN, "\n")
+    text = text.replace(HR_TAG_PATTERN, "\n")
+    text = text.replace(ANY_TAG_PATTERN, "")
     text = decode_html_entities(text)
     text = text.replace("\r\n", "\n").replace('\r', '\n')
-    text = text.replace(Regex("[ \\t\\u00A0]+"), " ")
-    text = text.replace(Regex("[ \\t]*\\n[ \\t]*"), "\n")
-    text = text.replace(Regex("\\n{3,}"), "\n\n")
+    text = text.replace(SPACE_RUN_PATTERN, " ")
+    text = text.replace(LINE_PADDING_PATTERN, "\n")
+    text = text.replace(BLANK_LINES_PATTERN, "\n\n")
     return text.trim()
 }
 
@@ -170,10 +198,10 @@ fun decode_html_entities(input: String): String {
     text = text.replace(NAMED_ENTITY_PATTERN) { m ->
         NAMED_ENTITIES[m.groupValues[1]] ?: m.value
     }
-    text = text.replace(Regex("&#(\\d+);")) { m ->
+    text = text.replace(NUMERIC_ENTITY_PATTERN) { m ->
         m.groupValues[1].toIntOrNull()?.let { code -> runCatching { String(Character.toChars(code)) }.getOrNull() } ?: m.value
     }
-    text = text.replace(Regex("&#x([0-9a-fA-F]+);")) { m ->
+    text = text.replace(HEX_ENTITY_PATTERN) { m ->
         m.groupValues[1].toIntOrNull(16)?.let { code -> runCatching { String(Character.toChars(code)) }.getOrNull() } ?: m.value
     }
     text = text.replace("&amp;", "&")

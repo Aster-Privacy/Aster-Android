@@ -321,11 +321,13 @@ class ContactsViewModel @Inject constructor(
 
     private val auto_save_in_flight = java.util.Collections.synchronizedSet(mutableSetOf<String>())
 
+    private val auto_save_email_pattern = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
+
     fun auto_save_recipients(recipients: List<String>, own_addresses: Set<String>) {
         val own = own_addresses.map { it.lowercase(java.util.Locale.ROOT).trim() }.toSet()
         val targets = recipients
             .map { it.lowercase(java.util.Locale.ROOT).trim() }
-            .filter { it.matches(Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) }
+            .filter { it.matches(auto_save_email_pattern) }
             .filterNot { it in own }
             .distinct()
         if (targets.isEmpty()) return

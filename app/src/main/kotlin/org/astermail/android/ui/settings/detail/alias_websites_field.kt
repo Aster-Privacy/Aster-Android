@@ -82,8 +82,11 @@ internal fun website_display_label(url: String): String {
 @Composable
 private fun website_favicon(url: String, size: androidx.compose.ui.unit.Dp) {
     val colors = AsterMaterial.colors
-    val host = website_host(url)
-    val root_domain = if (host.isBlank()) "" else get_root_domain(host)
+    val root_domain = remember(url) {
+        val host = website_host(url)
+
+        if (host.isBlank()) "" else get_root_domain(host)
+    }
     var failed by remember(root_domain) { mutableStateOf(root_domain.isBlank()) }
 
     if (failed) {
@@ -97,12 +100,16 @@ private fun website_favicon(url: String, size: androidx.compose.ui.unit.Dp) {
     }
 
     val context = LocalContext.current
-    AsyncImage(
-        model = ImageRequest.Builder(context)
+    val favicon_request = remember(context, root_domain) {
+        ImageRequest.Builder(context)
             .data(get_favicon_url(root_domain))
             .diskCacheKey("favicon:$root_domain")
             .crossfade(true)
-            .build(),
+            .build()
+    }
+
+    AsyncImage(
+        model = favicon_request,
         contentDescription = null,
         contentScale = ContentScale.Fit,
         modifier = Modifier.size(size).clip(RoundedCornerShape(3.dp)),

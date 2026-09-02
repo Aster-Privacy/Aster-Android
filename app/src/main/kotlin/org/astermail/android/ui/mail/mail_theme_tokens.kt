@@ -96,7 +96,12 @@ fun initial_for(name: String, fallback_email: String): String {
 
 fun avatar_initial_font_size(size: Dp): TextUnit = (size.value * 0.4f).sp
 
-fun avatar_initial_style(font_size: TextUnit): TextStyle = TextStyle(
+private val avatar_initial_style_cache = java.util.concurrent.ConcurrentHashMap<TextUnit, TextStyle>()
+
+fun avatar_initial_style(font_size: TextUnit): TextStyle =
+    avatar_initial_style_cache.getOrPut(font_size) { build_avatar_initial_style(font_size) }
+
+private fun build_avatar_initial_style(font_size: TextUnit): TextStyle = TextStyle(
     fontSize = font_size,
     fontWeight = FontWeight.SemiBold,
     lineHeight = font_size,

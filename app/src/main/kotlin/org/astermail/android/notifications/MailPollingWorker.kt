@@ -1117,9 +1117,12 @@ class MailPollingWorker(
                 .setAutoCancel(true)
         }
 
-        private fun app_large_icon(context: Context) = runCatching {
+        @Volatile
+        private var cached_large_icon: android.graphics.Bitmap? = null
+
+        private fun app_large_icon(context: Context) = cached_large_icon ?: runCatching {
             BitmapFactory.decodeResource(context.resources, R.mipmap.ic_launcher_round)
                 ?: BitmapFactory.decodeResource(context.resources, R.mipmap.ic_launcher)
-        }.getOrNull()
+        }.getOrNull()?.also { cached_large_icon = it }
     }
 }

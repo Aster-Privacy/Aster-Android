@@ -578,10 +578,12 @@ private fun DetailRow(label: String, value: String, on_open: (() -> Unit)? = nul
     }
 }
 
+private val social_url_scheme_pattern = Regex("^[a-zA-Z][a-zA-Z0-9+.-]*:")
+
 private fun build_contact_social_url(kind: String, raw: String): String? {
     val value = raw.trim()
     if (value.isEmpty()) return null
-    val has_scheme = Regex("^[a-zA-Z][a-zA-Z0-9+.-]*:").containsMatchIn(value)
+    val has_scheme = social_url_scheme_pattern.containsMatchIn(value)
     fun parse_web_url(candidate: String): Uri? {
         val uri = runCatching { Uri.parse(candidate) }.getOrNull() ?: return null
         val scheme = uri.scheme?.lowercase() ?: return null

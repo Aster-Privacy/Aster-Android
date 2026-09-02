@@ -2128,8 +2128,12 @@ internal fun expanded_message(
             }
             Spacer(Modifier.width(AsterSpacing.sm))
             Column(horizontalAlignment = Alignment.End) {
+                val header_yesterday_label = stringResource(R.string.yesterday)
+                val header_relative_time = remember(msg.timestamp, header_yesterday_label) {
+                    msg.timestamp.format_relative_time(header_yesterday_label)
+                }
                 Text(
-                    text = msg.timestamp.format_relative_time(stringResource(R.string.yesterday)),
+                    text = header_relative_time,
                     color = colors.text_muted,
                     fontSize = 12.sp,
                     maxLines = 1,
@@ -3711,8 +3715,12 @@ private fun collapsed_message(
                         modifier = Modifier.weight(1f),
                     )
                     Spacer(Modifier.width(AsterSpacing.sm))
+                    val row_yesterday_label = stringResource(R.string.yesterday)
+                    val row_relative_time = remember(msg.timestamp, row_yesterday_label) {
+                        msg.timestamp.format_relative_time(row_yesterday_label)
+                    }
                     Text(
-                        text = msg.timestamp.format_relative_time(stringResource(R.string.yesterday)),
+                        text = row_relative_time,
                         color = colors.text_muted,
                         fontSize = 12.sp,
                         maxLines = 1,
