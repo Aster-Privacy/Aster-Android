@@ -829,7 +829,8 @@ var wrote_re=/(^|[\s> ])(On\s[^\n]{1,200}?\bwrote\s*:)/i;
 var wm_re=/(^|[\s> ])(Secured by Aster Mail)/i;
 var inline_tags={A:1,ABBR:1,B:1,BDI:1,BDO:1,BIG:1,CITE:1,CODE:1,EM:1,FONT:1,I:1,KBD:1,LABEL:1,MARK:1,NOBR:1,Q:1,S:1,SAMP:1,SMALL:1,SPAN:1,STRIKE:1,STRONG:1,SUB:1,SUP:1,TIME:1,TT:1,U:1,VAR:1,WBR:1};
 function block_ancestor(n){var p=n.parentNode;while(p&&p!==body&&p.nodeType===1&&inline_tags[p.tagName])p=p.parentNode;return p||body}
-var walker=document.createTreeWalker(body,NodeFilter.SHOW_TEXT|NodeFilter.SHOW_ELEMENT);
+function is_non_content(n){return n.nodeType===1&&(n.tagName==='SCRIPT'||n.tagName==='STYLE'||n.tagName==='TEMPLATE')}
+var walker=document.createTreeWalker(body,NodeFilter.SHOW_TEXT|NodeFilter.SHOW_ELEMENT,{acceptNode:function(n){return is_non_content(n)?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT}});
 var runs=[];var joined='';var prev_block=null;var pending_break=false;
 while(walker.nextNode()){
   var nd=walker.currentNode;
@@ -849,9 +850,9 @@ function node_at(idx){
   }
   return null;
 }
-var marker=null;var hit=-1;
+var marker=null;var hit=-1;var wm_marker=false;
 var wm=wm_re.exec(joined);
-if(wm){hit=wm.index+(wm[1]?wm[1].length:0)}
+if(wm){hit=wm.index+(wm[1]?wm[1].length:0);wm_marker=true}
 else{var mm=wrote_re.exec(joined);if(mm){hit=mm.index+(mm[1]?mm[1].length:0)}}
 if(hit>=0){
   var loc=node_at(hit);
@@ -860,17 +861,19 @@ if(hit>=0){
 if(marker){
   var to_col=[];
   var cur=marker;
-  while(cur){var nx=cur.nextSibling;to_col.push(cur);cur=nx}
+  while(cur){var nx=cur.nextSibling;if(!is_non_content(cur))to_col.push(cur);cur=nx}
   var anc=marker.parentNode;
   while(anc&&anc!==body){
     var ns=anc.nextSibling;
-    while(ns){var nxn=ns.nextSibling;to_col.push(ns);ns=nxn}
+    while(ns){var nxn=ns.nextSibling;if(!is_non_content(ns))to_col.push(ns);ns=nxn}
     anc=anc.parentNode;
   }
   var col_text='';
   for(var ct=0;ct<to_col.length;ct++)col_text+=(to_col[ct].textContent||to_col[ct].nodeValue||'');
   var has_quote_sig=/wrote\s*:|-{3,}\s*(?:Original|Forwarded)|Forwarded message|^\s*>/i.test(col_text);
-  if(to_col.length>0&&(has_quote_sig||col_text.replace(/\s+/g,' ').trim().length>60)){
+  var kept_text=joined.slice(0,hit).replace(/\s+/g,' ').trim();
+  var size_ok=!wm_marker&&col_text.replace(/\s+/g,' ').trim().length>60;
+  if(to_col.length>0&&kept_text.length>0&&(has_quote_sig||size_ok)){
     var w2=document.createElement('div');w2.className='aster-quoted-wrapper';
     var b2=document.createElement('button');b2.className='aster-quote-toggle';b2.type='button';b2.textContent='•••';
     var c2=document.createElement('div');c2.className='aster-quoted-content';c2.style.display='none';

@@ -96,6 +96,23 @@ class QuoteCollapseDetectionTest {
         append("<blockquote class=\"gmail_quote\">the original message that must collapse</blockquote>")
     }
 
+    private val branding_above_body = buildString {
+        append("<div dir=\"auto\">Secured by Aster Mail<br><br>")
+        append("HELLO_PROBE_BODY_ZZZ</div>")
+    }
+
+    private val branding_above_long_body = buildString {
+        append("<div dir=\"auto\">Secured by Aster Mail</div>")
+        append("<div dir=\"auto\">This is the only real content in the message and it runs well past ")
+        append("sixty characters so a length gate would hide it.</div>")
+    }
+
+    private val branding_only_footer = buildString {
+        append("<div dir=\"auto\">HELLO_FOOTER_BODY_YYY</div>")
+        append("<div dir=\"auto\"><br></div>")
+        append("<div dir=\"auto\">Secured by Aster Mail</div>")
+    }
+
     private val no_quote = buildString {
         append("<div>Hi there, this is a normal message with no quoted history in it at all.</div>")
         append("<div>Everything here belongs to the reply and must stay visible.</div>")
@@ -230,6 +247,42 @@ class QuoteCollapseDetectionTest {
         assertTrue(
             "body text went missing [${probe.visible_text}]",
             probe.visible_text.contains("must stay visible"),
+        )
+    }
+
+    @Test
+    fun keeps_a_body_that_follows_the_branding_line_visible() {
+        val probe = probe_all(listOf(branding_above_body)).first()
+
+        assertFalse("the branding line collapsed the body", probe.has_toggle)
+        assertTrue(
+            "body text went missing [${probe.visible_text}]",
+            probe.visible_text.contains("HELLO_PROBE_BODY_ZZZ"),
+        )
+    }
+
+    @Test
+    fun keeps_a_long_body_that_follows_the_branding_line_visible() {
+        val probe = probe_all(listOf(branding_above_long_body)).first()
+
+        assertFalse("the branding line collapsed the body", probe.has_toggle)
+        assertTrue(
+            "body text went missing [${probe.visible_text}]",
+            probe.visible_text.contains("the only real content"),
+        )
+    }
+
+    @Test
+    fun keeps_the_branding_footer_visible_when_it_ends_the_message() {
+        val probe = probe_all(listOf(branding_only_footer)).first()
+
+        assertFalse(
+            "the branding footer grew a toggle [${probe.visible_text}] display=${probe.quoted_display}",
+            probe.has_toggle,
+        )
+        assertTrue(
+            "body text went missing [${probe.visible_text}]",
+            probe.visible_text.contains("HELLO_FOOTER_BODY_YYY"),
         )
     }
 }
