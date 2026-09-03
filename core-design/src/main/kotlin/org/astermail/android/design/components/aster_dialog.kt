@@ -23,7 +23,6 @@ package org.astermail.android.design.components
 
 import org.astermail.android.design.SquircleShape
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -83,9 +82,9 @@ import org.astermail.android.design.AsterScale
 import org.astermail.android.design.AsterSlide
 import org.astermail.android.design.aster_reduce_motion
 
-private val dialog_shape = SquircleShape(18.dp)
-private val dialog_button_shape = SquircleShape(12.dp)
-private val dialog_button_height = 40.dp
+private val dialog_shape = SquircleShape(26.dp)
+private val dialog_button_shape = SquircleShape(999.dp)
+private val dialog_button_height = 44.dp
 private val dialog_max_width = 360.dp
 private val dialog_max_content_height = 480.dp
 
@@ -232,8 +231,7 @@ fun AsterDialog(
             shape = dialog_shape,
             color = colors.bg_card,
             tonalElevation = 0.dp,
-            shadowElevation = 8.dp,
-            border = BorderStroke(1.dp, colors.border_primary),
+            shadowElevation = 18.dp,
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Column(
@@ -332,8 +330,7 @@ fun AsterAlertDialog(
             shape = dialog_shape,
             color = colors.bg_card,
             tonalElevation = 0.dp,
-            shadowElevation = 8.dp,
-            border = BorderStroke(1.dp, colors.border_primary),
+            shadowElevation = 18.dp,
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Column(
@@ -534,11 +531,11 @@ fun AsterDialogOutlineButton(
         modifier = modifier.height(dialog_button_height),
         shape = dialog_button_shape,
         colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = Color.Transparent,
+            containerColor = colors.bg_secondary,
             contentColor = colors.text_primary,
             disabledContentColor = colors.text_muted,
         ),
-        border = BorderStroke(1.dp, colors.border_primary),
+        border = null,
         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp),
     ) {
         dialog_button_label(label, colors.text_primary, false)

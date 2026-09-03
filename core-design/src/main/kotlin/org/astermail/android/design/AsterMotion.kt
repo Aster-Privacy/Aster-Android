@@ -38,10 +38,10 @@ object AsterEasing {
     val emphasized_exit = CubicBezierEasing(0f, 0f, 0.58f, 1f)
     val tap_down = CubicBezierEasing(0f, 0f, 0.58f, 1f)
     val tap_up = CubicBezierEasing(0f, 0f, 0.58f, 1f)
-    val menu_enter = CubicBezierEasing(0f, 0f, 0.2f, 1f)
-    val menu_exit = CubicBezierEasing(0.4f, 0f, 1f, 1f)
-    val dialog_enter = CubicBezierEasing(0f, 0f, 0.2f, 1f)
-    val dialog_exit = CubicBezierEasing(0.4f, 0f, 1f, 1f)
+    val menu_enter = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
+    val menu_exit = CubicBezierEasing(0.3f, 0f, 0.8f, 0.15f)
+    val dialog_enter = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
+    val dialog_exit = CubicBezierEasing(0.3f, 0f, 0.8f, 0.15f)
     val scrim = CubicBezierEasing(0.4f, 0f, 0.2f, 1f)
 }
 
@@ -66,24 +66,24 @@ object AsterDuration {
     const val tap_down = 120
     const val tap_up = 180
 
-    const val menu_enter = 200
-    const val menu_exit = 140
-    const val menu_fade_enter = 160
-    const val menu_fade_exit = 120
-    const val menu_state_change = 120
+    const val menu_enter = 170
+    const val menu_exit = 110
+    const val menu_fade_enter = 110
+    const val menu_fade_exit = 85
+    const val menu_state_change = 110
 
-    const val dialog_enter = 240
-    const val dialog_exit = 160
-    const val scrim_enter = 200
-    const val scrim_exit = 160
+    const val dialog_enter = 210
+    const val dialog_exit = 130
+    const val scrim_enter = 170
+    const val scrim_exit = 130
 
     const val instant = 0
 }
 
 object AsterScale {
-    const val menu_enter_from = 0.95f
-    const val menu_exit_to = 0.97f
-    const val dialog_enter_from = 0.96f
+    const val menu_enter_from = 0.92f
+    const val menu_exit_to = 0.96f
+    const val dialog_enter_from = 0.94f
 }
 
 object AsterSlide {

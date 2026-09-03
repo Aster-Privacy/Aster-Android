@@ -29,7 +29,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -95,10 +94,10 @@ import org.astermail.android.design.AsterSlide
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.aster_reduce_motion
 
-private val dropdown_surface_shape = SquircleShape(8.dp)
-private val dropdown_item_shape = SquircleShape(6.dp)
-private val dropdown_elevation = 12.dp
-private val dropdown_surface_padding = 6.dp
+private val dropdown_surface_shape = SquircleShape(16.dp)
+private val dropdown_item_shape = SquircleShape(11.dp)
+private val dropdown_elevation = 16.dp
+private val dropdown_surface_padding = 7.dp
 private val dropdown_item_min_height = 34.dp
 private val dropdown_item_padding_vertical = 8.dp
 private val dropdown_item_padding_start = 10.dp
@@ -260,7 +259,6 @@ fun aster_dropdown_menu(
                     .shadow(dropdown_elevation, dropdown_surface_shape, clip = false)
                     .clip(dropdown_surface_shape)
                     .background(colors.dropdown_bg)
-                    .border(1.dp, colors.border_secondary, dropdown_surface_shape)
                     .defaultMinSize(minWidth = min_width)
                     .widthIn(max = max_width)
                     .width(IntrinsicSize.Max)

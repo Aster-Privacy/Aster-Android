@@ -24,7 +24,6 @@ package org.astermail.android.design.components
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -61,7 +60,7 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.darken
 
 private val aster_button_height = 54.dp
-private val aster_button_shape = SquircleShape(20.dp)
+private val aster_button_shape = SquircleShape(999.dp)
 private val aster_button_label_size = 16.sp
 
 private val depth_red = Color(0xFFDC2626)
@@ -124,7 +123,7 @@ private fun depth_button(
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(
-        targetValue = if (pressed && interactive) 0.97f else 1f,
+        targetValue = if (pressed && interactive) 0.965f else 1f,
         animationSpec = tween(
             durationMillis = if (pressed) AsterDuration.tap_down else AsterDuration.tap_up,
             easing = AsterEasing.tap_down,
@@ -173,7 +172,7 @@ fun AsterSecondaryButton(
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(
-        targetValue = if (pressed && enabled && !is_loading) 0.97f else 1f,
+        targetValue = if (pressed && enabled && !is_loading) 0.965f else 1f,
         animationSpec = tween(
             durationMillis = if (pressed) AsterDuration.tap_down else AsterDuration.tap_up,
             easing = AsterEasing.tap_down,
@@ -190,11 +189,11 @@ fun AsterSecondaryButton(
             .graphicsLayer { scaleX = scale; scaleY = scale },
         shape = aster_button_shape,
         colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = Color.Transparent,
+            containerColor = colors.bg_secondary,
             contentColor = colors.text_primary,
             disabledContentColor = colors.text_muted,
         ),
-        border = BorderStroke(1.5.dp, colors.text_primary.copy(alpha = 0.14f)),
+        border = null,
         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = AsterSpacing.lg),
     ) {
         aster_button_content(label, is_loading, colors.text_primary)
@@ -213,7 +212,7 @@ fun AsterGhostButton(
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(
-        targetValue = if (pressed && enabled && !is_loading) 0.97f else 1f,
+        targetValue = if (pressed && enabled && !is_loading) 0.965f else 1f,
         animationSpec = tween(
             durationMillis = if (pressed) AsterDuration.tap_down else AsterDuration.tap_up,
             easing = AsterEasing.tap_down,
