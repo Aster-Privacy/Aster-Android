@@ -40,6 +40,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.triStateToggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
@@ -58,6 +59,8 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -307,9 +310,17 @@ internal fun manage_contact_groups_dialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(SquircleShape(12.dp))
-                            .clickable {
-                                on_toggle(group.id, state != GroupMembershipState.all)
-                            }
+                            .triStateToggleable(
+                                state = when (state) {
+                                    GroupMembershipState.all -> ToggleableState.On
+                                    GroupMembershipState.some -> ToggleableState.Indeterminate
+                                    GroupMembershipState.none -> ToggleableState.Off
+                                },
+                                role = Role.Checkbox,
+                                onClick = {
+                                    on_toggle(group.id, state != GroupMembershipState.all)
+                                },
+                            )
                             .padding(vertical = 10.dp, horizontal = AsterSpacing.xs)
                             .testTag("manage_group_" + group.id),
                         verticalAlignment = Alignment.CenterVertically,

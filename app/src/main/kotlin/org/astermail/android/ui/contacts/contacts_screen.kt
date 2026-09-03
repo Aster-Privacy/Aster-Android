@@ -236,7 +236,7 @@ fun ContactsScreen(
                     } else {
                         Icon(
                             imageVector = TablerIcons.ArrowsRightLeft,
-                            contentDescription = stringResource(R.string.sync_contacts),
+                            contentDescription = null,
                             tint = colors.text_secondary,
                             modifier = Modifier.size(22.dp),
                         )
