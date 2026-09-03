@@ -38,16 +38,24 @@ import org.astermail.android.api.contacts.CreateContactGroupResponse
 import org.astermail.android.api.contacts.CreateContactRequest
 import org.astermail.android.api.contacts.CreateContactResponse
 import org.astermail.android.api.contacts.DeleteContactResponse
+import org.astermail.android.api.contacts.GroupMembersRequest
+import org.astermail.android.api.contacts.GroupMembershipChangeResponse
 import org.astermail.android.api.contacts.SuccessResponse
+import org.astermail.android.api.contacts.UpdateContactGroupRequest
 import org.astermail.android.api.contacts.UpdateContactRequest
 import org.astermail.android.storage.SessionKeyStore
 import org.astermail.android.ui.contacts.Contact
+
+const val DEFAULT_CONTACT_GROUP_COLOR = "#4f46e5"
+const val MAX_CONTACT_GROUPS = 500
+const val MAX_CONTACT_GROUP_NAME_LENGTH = 100
 
 data class ContactGroup(
     val id: String,
     val name: String,
     val color: String,
-    val contact_count: Int,
+    val sort_order: Int = 0,
+    val contact_count: Int = 0,
     val created_at: String? = null,
 )
 
@@ -133,15 +141,37 @@ class ContactsRepository @Inject constructor(
     suspend fun create_contact_group(name: String, color: String): Result<CreateContactGroupResponse> = runCatching {
         val key = derive_contacts_key()
         try {
-            val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
-            val ciphertext = aes_gcm_encrypt(name.toByteArray(Charsets.UTF_8), key, nonce)
-            val group_token = generate_search_token(name, key)
+            val sealed = seal_group_name(name, key)
             contacts_api.create_contact_group(
                 CreateContactGroupRequest(
-                    group_token = group_token,
-                    encrypted_name = b64(ciphertext),
-                    name_nonce = b64(nonce),
+                    group_token = sealed.token,
+                    encrypted_name = sealed.encrypted_name,
+                    name_nonce = sealed.name_nonce,
                     color = color,
+                ),
+            )
+        } finally {
+            key.fill(0)
+        }
+    }
+
+    suspend fun update_contact_group(
+        group_id: String,
+        name: String,
+        color: String,
+        sort_order: Int? = null,
+    ): Result<CreateContactGroupResponse> = runCatching {
+        val key = derive_contacts_key()
+        try {
+            val sealed = seal_group_name(name, key)
+            contacts_api.update_contact_group(
+                group_id,
+                UpdateContactGroupRequest(
+                    group_token = sealed.token,
+                    encrypted_name = sealed.encrypted_name,
+                    name_nonce = sealed.name_nonce,
+                    color = color,
+                    sort_order = sort_order,
                 ),
             )
         } finally {
@@ -159,6 +189,79 @@ class ContactsRepository @Inject constructor(
 
     suspend fun remove_contact_from_group(contact_id: String, group_id: String): Result<SuccessResponse> = runCatching {
         contacts_api.remove_contact_from_group(contact_id, group_id)
+    }
+
+    suspend fun add_group_members(
+        group_id: String,
+        contact_ids: List<String>,
+    ): Result<GroupMembershipChangeResponse> = runCatching {
+        contacts_api.add_group_members(group_id, GroupMembersRequest(contact_ids.distinct()))
+    }
+
+    suspend fun remove_group_members(
+        group_id: String,
+        contact_ids: List<String>,
+    ): Result<GroupMembershipChangeResponse> = runCatching {
+        contacts_api.remove_group_members(group_id, GroupMembersRequest(contact_ids.distinct()))
+    }
+
+    suspend fun set_contact_groups(contact: Contact, group_ids: List<String>): Result<Contact> = runCatching {
+        val desired = group_ids.distinct()
+        val current = contact.groups.distinct()
+        val added = desired.filterNot { it in current }
+        val removed = current.filterNot { it in desired }
+        val updated = contact.copy(groups = desired)
+        update_contact(contact.id, updated).getOrThrow()
+        for (group_id in added) {
+            contacts_api.add_contact_to_group(contact.id, group_id)
+        }
+        for (group_id in removed) {
+            contacts_api.remove_contact_from_group(contact.id, group_id)
+        }
+        updated
+    }
+
+    suspend fun set_group_membership(
+        contacts: List<Contact>,
+        group_id: String,
+        should_add: Boolean,
+    ): Result<List<Contact>> = runCatching {
+        val affected = contacts.filter { it.id.isNotBlank() && (group_id in it.groups) != should_add }
+        if (affected.isEmpty()) return@runCatching emptyList()
+        val updated = affected.map { contact ->
+            val groups = if (should_add) {
+                contact.groups + group_id
+            } else {
+                contact.groups.filterNot { it == group_id }
+            }
+            contact.copy(groups = groups.distinct())
+        }
+        for (contact in updated) {
+            update_contact(contact.id, contact).getOrThrow()
+        }
+        val ids = updated.map { it.id }
+        if (should_add) {
+            contacts_api.add_group_members(group_id, GroupMembersRequest(ids))
+        } else {
+            contacts_api.remove_group_members(group_id, GroupMembersRequest(ids))
+        }
+        updated
+    }
+
+    private class SealedGroupName(
+        val token: String,
+        val encrypted_name: String,
+        val name_nonce: String,
+    )
+
+    private fun seal_group_name(name: String, key: ByteArray): SealedGroupName {
+        val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
+        val ciphertext = aes_gcm_encrypt(name.toByteArray(Charsets.UTF_8), key, nonce)
+        return SealedGroupName(
+            token = generate_search_token(name, key),
+            encrypted_name = b64(ciphertext),
+            name_nonce = b64(nonce),
+        )
     }
 
     private fun build_create_request(contact: Contact, key: ByteArray): CreateContactRequest {
@@ -293,7 +396,8 @@ class ContactsRepository @Inject constructor(
             ContactGroup(
                 id = group.id,
                 name = name,
-                color = group.color,
+                color = group.color?.takeIf { it.isNotBlank() } ?: DEFAULT_CONTACT_GROUP_COLOR,
+                sort_order = group.sort_order,
                 contact_count = group.contact_count,
                 created_at = group.created_at,
             )
@@ -431,6 +535,14 @@ class ContactsRepository @Inject constructor(
             }
             val address_obj = obj.optJSONObject("address")
             val social_obj = obj.optJSONObject("social_links")
+            val groups_arr = obj.optJSONArray("groups")
+            val groups = mutableListOf<String>()
+            if (groups_arr != null) {
+                for (i in 0 until groups_arr.length()) {
+                    val group_id = groups_arr.optString(i, "")
+                    if (group_id.isNotBlank()) groups.add(group_id)
+                }
+            }
 
             Contact(
                 id = id,
@@ -451,51 +563,65 @@ class ContactsRepository @Inject constructor(
                 linkedin = social_obj?.optString("linkedin", "") ?: "",
                 notes = obj.optString("notes", ""),
                 is_favorite = obj.optBoolean("is_favorite", false),
+                groups = groups,
+                raw_json = json_str,
             )
         } catch (_: Throwable) {
             null
         }
     }
 
+    private fun put_or_remove(obj: org.json.JSONObject, key: String, value: String) {
+        if (value.isNotBlank()) obj.put(key, value) else obj.remove(key)
+    }
+
     private fun encode_contact_json(contact: Contact, include_envelope: Boolean): String {
-        val obj = org.json.JSONObject()
+        val obj = contact.raw_json.takeIf { it.isNotBlank() }
+            ?.let { runCatching { org.json.JSONObject(it) }.getOrNull() }
+            ?: org.json.JSONObject()
         val (first, last) = split_name(contact.name)
         obj.put("first_name", first)
         obj.put("last_name", last)
 
+        val previous_emails = obj.optJSONArray("emails")
         val emails = org.json.JSONArray()
         if (contact.email.isNotBlank()) emails.put(contact.email)
         if (contact.work_email.isNotBlank()) emails.put(contact.work_email)
+        if (previous_emails != null) {
+            for (i in 2 until previous_emails.length()) {
+                val extra = previous_emails.optString(i, "")
+                if (extra.isNotBlank() && extra != contact.email && extra != contact.work_email) {
+                    emails.put(extra)
+                }
+            }
+        }
         obj.put("emails", emails)
 
-        if (contact.phone.isNotBlank()) obj.put("phone", contact.phone)
-        if (contact.company.isNotBlank()) obj.put("company", contact.company)
-        if (contact.title.isNotBlank()) obj.put("job_title", contact.title)
+        put_or_remove(obj, "phone", contact.phone)
+        put_or_remove(obj, "company", contact.company)
+        put_or_remove(obj, "job_title", contact.title)
 
-        val has_address = listOf(contact.address, contact.city, contact.region, contact.postal_code, contact.country)
-            .any { it.isNotBlank() }
-        if (has_address) {
-            val addr = org.json.JSONObject()
-            addr.put("street", contact.address)
-            addr.put("city", contact.city)
-            addr.put("state", contact.region)
-            addr.put("postal_code", contact.postal_code)
-            addr.put("country", contact.country)
-            obj.put("address", addr)
-        }
+        val addr = obj.optJSONObject("address") ?: org.json.JSONObject()
+        put_or_remove(addr, "street", contact.address)
+        put_or_remove(addr, "city", contact.city)
+        put_or_remove(addr, "state", contact.region)
+        put_or_remove(addr, "postal_code", contact.postal_code)
+        put_or_remove(addr, "country", contact.country)
+        if (addr.length() > 0) obj.put("address", addr) else obj.remove("address")
 
-        val has_social = contact.website.isNotBlank() || contact.twitter.isNotBlank() || contact.linkedin.isNotBlank()
-        if (has_social) {
-            val social = org.json.JSONObject()
-            if (contact.website.isNotBlank()) social.put("website", contact.website)
-            if (contact.twitter.isNotBlank()) social.put("twitter", contact.twitter)
-            if (contact.linkedin.isNotBlank()) social.put("linkedin", contact.linkedin)
-            obj.put("social_links", social)
-        }
+        val social = obj.optJSONObject("social_links") ?: org.json.JSONObject()
+        put_or_remove(social, "website", contact.website)
+        put_or_remove(social, "twitter", contact.twitter)
+        put_or_remove(social, "linkedin", contact.linkedin)
+        if (social.length() > 0) obj.put("social_links", social) else obj.remove("social_links")
 
-        if (contact.birthday.isNotBlank()) obj.put("birthday", contact.birthday)
-        if (contact.notes.isNotBlank()) obj.put("notes", contact.notes)
+        put_or_remove(obj, "birthday", contact.birthday)
+        put_or_remove(obj, "notes", contact.notes)
         obj.put("is_favorite", contact.is_favorite)
+
+        val groups = org.json.JSONArray()
+        contact.groups.distinct().forEach { groups.put(it) }
+        if (groups.length() > 0) obj.put("groups", groups) else obj.remove("groups")
 
         if (include_envelope) {
             obj.put("_version", CONTACT_DATA_VERSION)

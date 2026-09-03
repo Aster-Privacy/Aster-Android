@@ -39,6 +39,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -117,6 +119,9 @@ fun ContactsScreen(
     var query by remember { mutableStateOf("") }
     var filter_favorites by remember { mutableStateOf(false) }
     var show_sync_confirm by remember { mutableStateOf(false) }
+    var show_group_editor by remember { mutableStateOf(false) }
+    var editing_group by remember { mutableStateOf<org.astermail.android.contacts.ContactGroup?>(null) }
+    var deleting_group by remember { mutableStateOf<org.astermail.android.contacts.ContactGroup?>(null) }
 
     val permission_launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
@@ -130,6 +135,7 @@ fun ContactsScreen(
 
     LaunchedEffect(Unit) {
         if (ui_state.contacts.isEmpty()) vm.load_contacts()
+        vm.load_contact_groups()
     }
 
     LaunchedEffect(ui_state.sync_message) {
@@ -146,9 +152,11 @@ fun ContactsScreen(
         }
     }
 
-    val filtered = remember(query, filter_favorites, ui_state.contacts) {
+    val filtered = remember(query, filter_favorites, ui_state.selected_group_id, ui_state.contacts) {
+        val group_id = ui_state.selected_group_id
         ui_state.contacts
             .filter { if (filter_favorites) it.is_favorite else true }
+            .filter { if (group_id == null) true else group_id in it.groups }
             .filter {
                 val q = query.trim().lowercase()
                 if (q.isEmpty()) true
@@ -256,10 +264,56 @@ fun ContactsScreen(
                 .fillMaxWidth()
                 .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.xs),
             horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            FilterChip(stringResource(R.string.tab_all), !filter_favorites) { filter_favorites = false }
-            FilterChip(stringResource(R.string.tab_favorites), filter_favorites) { filter_favorites = true }
-            Spacer(Modifier.weight(1f))
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                contact_group_chip(
+                    label = stringResource(R.string.tab_all),
+                    active = !filter_favorites && ui_state.selected_group_id == null,
+                ) {
+                    filter_favorites = false
+                    vm.select_contact_group(null)
+                }
+                contact_group_chip(
+                    label = stringResource(R.string.tab_favorites),
+                    active = filter_favorites && ui_state.selected_group_id == null,
+                ) {
+                    filter_favorites = true
+                    vm.select_contact_group(null)
+                }
+                ui_state.groups.forEach { group ->
+                    contact_group_chip(
+                        label = group.name,
+                        active = ui_state.selected_group_id == group.id,
+                        color = contact_group_color(group.color),
+                        trailing = group.contact_count.toString(),
+                        on_long_click = {
+                            editing_group = group
+                            show_group_editor = true
+                        },
+                    ) {
+                        filter_favorites = false
+                        vm.select_contact_group(
+                            if (ui_state.selected_group_id == group.id) null else group.id,
+                        )
+                    }
+                }
+                contact_group_chip(
+                    label = stringResource(R.string.new_contact_group),
+                    active = false,
+                    dashed = true,
+                ) {
+                    editing_group = null
+                    show_group_editor = true
+                }
+            }
+            Spacer(Modifier.width(AsterSpacing.sm))
             Text(
                 text = context.resources.getQuantityString(R.plurals.contacts_count_plural, filtered.size, filtered.size),
                 color = colors.text_muted,
@@ -355,6 +409,52 @@ fun ContactsScreen(
             on_confirm = {
                 show_sync_confirm = false
                 permission_launcher.launch(Manifest.permission.READ_CONTACTS)
+            },
+        )
+    }
+
+    if (show_group_editor) {
+        val target = editing_group
+        contact_group_editor_dialog(
+            group = target,
+            existing_names = ui_state.groups.map { it.name },
+            group_count = ui_state.groups.size,
+            on_dismiss = {
+                show_group_editor = false
+                editing_group = null
+            },
+            on_submit = { name, color ->
+                show_group_editor = false
+                editing_group = null
+                if (target == null) {
+                    vm.create_contact_group(name, color)
+                } else {
+                    vm.rename_contact_group(target.id, name, color)
+                }
+            },
+            on_delete = if (target == null) {
+                null
+            } else {
+                {
+                    show_group_editor = false
+                    editing_group = null
+                    deleting_group = target
+                }
+            },
+        )
+    }
+
+    deleting_group?.let { target ->
+        org.astermail.android.design.components.AsterAlertDialog(
+            on_dismiss = { deleting_group = null },
+            title = stringResource(R.string.delete_contact_group),
+            message = stringResource(R.string.delete_contact_group_confirm),
+            confirm_label = stringResource(R.string.delete),
+            cancel_label = stringResource(R.string.cancel),
+            confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
+            on_confirm = {
+                deleting_group = null
+                vm.delete_contact_group(target.id)
             },
         )
     }

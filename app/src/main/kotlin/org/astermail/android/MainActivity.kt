@@ -1457,6 +1457,10 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     val accounts_vm: org.astermail.android.accounts.AccountsViewModel = hiltViewModel()
     val accounts_state by accounts_vm.state.collectAsStateWithLifecycle()
 
+    val contacts_vm: org.astermail.android.contacts.ContactsViewModel = hiltViewModel()
+    val contacts_state by contacts_vm.state.collectAsStateWithLifecycle()
+    androidx.compose.runtime.LaunchedEffect(Unit) { contacts_vm.load_contact_groups() }
+
     val drawer_context = androidx.compose.ui.platform.LocalContext.current
     androidx.compose.runtime.LaunchedEffect(
         settings_state.user,
@@ -2064,6 +2068,22 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 initial_labels_collapsed = prefs?.sidebar_labels_collapsed ?: false,
                 initial_aliases_collapsed = prefs?.sidebar_aliases_collapsed ?: false,
                 initial_categories_collapsed = prefs?.sidebar_categories_collapsed ?: false,
+                contact_group_items = contacts_state.groups.map { group ->
+                    org.astermail.android.ui.drawer.drawer_contact_group_item(
+                        id = group.id,
+                        label = group.name,
+                        color = org.astermail.android.ui.contacts.contact_group_color(group.color),
+                        count = group.contact_count,
+                    )
+                },
+                selected_contact_group_id = contacts_state.selected_group_id,
+                contact_group_names = contacts_state.groups.map { it.name },
+                on_navigate_contact_group = { group_id ->
+                    contacts_vm.select_contact_group(group_id)
+                },
+                on_create_contact_group = { name, color ->
+                    contacts_vm.create_contact_group(name, color)
+                },
                 preferences_loaded = prefs != null,
                 totp_enabled = settings_state.security_status?.totp_enabled == true,
                 purge_locked_folder_default = prefs?.purge_locked_folder_on_delete ?: false,
@@ -2176,6 +2196,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             on_open_drawer = { scope.launch { drawer_state.open() } },
                             on_open_contact = { id -> nav_controller.navigate(routes.contact_detail_for(id)) },
                             on_create_contact = { nav_controller.navigate(routes.contact_edit_new) },
+                            vm = contacts_vm,
                         )
                     }
                     else -> {

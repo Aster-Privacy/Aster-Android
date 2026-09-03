@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_groups">Grupy</string>
+    <string name="new_contact_group">Nowa grupa</string>
+    <string name="create_contact_group">Utwórz grupę</string>
+    <string name="rename_contact_group">Zmień nazwę grupy</string>
+    <string name="delete_contact_group">Usuń grupę</string>
+    <string name="contact_group_name">Nazwa grupy</string>
+    <string name="contact_group_name_taken">Grupa o tej nazwie już istnieje</string>
+    <string name="contact_group_name_too_long">Nazwy grup mogą mieć do %1$d znaków</string>
+    <string name="contact_group_limit_reached">Możesz utworzyć do %1$d grup</string>
+    <string name="manage_contact_groups">Zarządzaj grupami</string>
+    <string name="no_contact_groups_yet">Nie ma jeszcze grup</string>
+    <string name="add_contacts_to_group_hint">Utwórz grupę, aby uporządkować kontakty</string>
+    <string name="contact_not_in_any_group">Ten kontakt nie należy do żadnej grupy</string>
+    <string name="delete_contact_group_confirm">Usunąć tę grupę? Kontakty w niej pozostaną w książce adresowej.</string>
+    <string name="failed_to_load_contact_groups">Nie można wczytać grup</string>
+    <string name="contact_groups_updated">Zaktualizowano grupy</string>
+</resources>

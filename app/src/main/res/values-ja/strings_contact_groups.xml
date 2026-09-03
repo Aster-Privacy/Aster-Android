@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_groups">グループ</string>
+    <string name="new_contact_group">新しいグループ</string>
+    <string name="create_contact_group">グループを作成</string>
+    <string name="rename_contact_group">グループ名を変更</string>
+    <string name="delete_contact_group">グループを削除</string>
+    <string name="contact_group_name">グループ名</string>
+    <string name="contact_group_name_taken">同じ名前のグループがすでにあります</string>
+    <string name="contact_group_name_too_long">グループ名は最大 %1$d 文字までです</string>
+    <string name="contact_group_limit_reached">グループは最大 %1$d 個まで作成できます</string>
+    <string name="manage_contact_groups">グループを管理</string>
+    <string name="no_contact_groups_yet">グループはまだありません</string>
+    <string name="add_contacts_to_group_hint">連絡先を整理するグループを作成してください</string>
+    <string name="contact_not_in_any_group">この連絡先はどのグループにも属していません</string>
+    <string name="delete_contact_group_confirm">このグループを削除しますか。中の連絡先はアドレス帳に残ります。</string>
+    <string name="failed_to_load_contact_groups">グループを読み込めません</string>
+    <string name="contact_groups_updated">グループを更新しました</string>
+</resources>

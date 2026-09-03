@@ -39,6 +39,8 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -96,6 +98,7 @@ import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.ui.mail.SenderAvatar
 import org.astermail.android.ui.search.build_contact_mail_query
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ContactDetailScreen(
     contact_id: String,
@@ -125,8 +128,13 @@ fun ContactDetailScreen(
     var delete_requested by remember { mutableStateOf(false) }
     var show_delete_confirm by remember { mutableStateOf(false) }
     var favorite_pending by remember { mutableStateOf(false) }
+    var show_manage_groups by remember { mutableStateOf(false) }
+    var show_create_group by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) { vm.load_contacts() }
+    LaunchedEffect(Unit) {
+        vm.load_contacts()
+        vm.load_contact_groups()
+    }
     val contact = ui_state.selected_contact ?: ui_state.contacts.firstOrNull { it.id == contact_id }
     var is_favorite by remember(contact) { mutableStateOf(contact?.is_favorite == true) }
 
@@ -431,6 +439,88 @@ fun ContactDetailScreen(
                         )
                     }
                 }
+            }
+
+            Spacer(Modifier.height(AsterSpacing.md))
+            DetailCard(title = stringResource(R.string.contact_groups)) {
+                Column(modifier = Modifier.padding(AsterSpacing.md)) {
+                    val member_of = ui_state.groups.filter { it.id in contact.groups }
+                    if (member_of.isEmpty()) {
+                        Text(
+                            text = if (ui_state.groups.isEmpty()) {
+                                stringResource(R.string.add_contacts_to_group_hint)
+                            } else {
+                                stringResource(R.string.contact_not_in_any_group)
+                            },
+                            color = colors.text_muted,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    } else {
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                            verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                        ) {
+                            member_of.forEach { group ->
+                                contact_group_chip(
+                                    label = group.name,
+                                    active = false,
+                                    color = contact_group_color(group.color),
+                                ) { show_manage_groups = true }
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(AsterSpacing.sm))
+                    Text(
+                        text = stringResource(R.string.manage_contact_groups),
+                        color = colors.accent_blue,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { show_manage_groups = true }
+                            .padding(vertical = 4.dp)
+                            .testTag("manage_contact_groups"),
+                    )
+                }
+            }
+
+            if (show_manage_groups) {
+                manage_contact_groups_dialog(
+                    groups = ui_state.groups,
+                    contacts = listOf(contact),
+                    on_dismiss = { show_manage_groups = false },
+                    on_toggle = { group_id, should_add ->
+                        vm.set_group_membership(listOf(contact), group_id, should_add) { ok ->
+                            if (ok) {
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.contact_groups_updated),
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            }
+                        }
+                    },
+                    on_create = {
+                        show_manage_groups = false
+                        show_create_group = true
+                    },
+                )
+            }
+
+            if (show_create_group) {
+                contact_group_editor_dialog(
+                    group = null,
+                    existing_names = ui_state.groups.map { it.name },
+                    group_count = ui_state.groups.size,
+                    on_dismiss = { show_create_group = false },
+                    on_submit = { name, color ->
+                        show_create_group = false
+                        vm.create_contact_group(name, color) { created ->
+                            if (created) show_manage_groups = true
+                        }
+                    },
+                )
             }
 
             Spacer(Modifier.height(AsterSpacing.xl))

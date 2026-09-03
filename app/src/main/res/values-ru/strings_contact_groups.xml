@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_groups">Группы</string>
+    <string name="new_contact_group">Новая группа</string>
+    <string name="create_contact_group">Создать группу</string>
+    <string name="rename_contact_group">Переименовать группу</string>
+    <string name="delete_contact_group">Удалить группу</string>
+    <string name="contact_group_name">Название группы</string>
+    <string name="contact_group_name_taken">Группа с таким названием уже есть</string>
+    <string name="contact_group_name_too_long">Название группы может содержать до %1$d символов</string>
+    <string name="contact_group_limit_reached">Вы можете создать до %1$d групп</string>
+    <string name="manage_contact_groups">Управление группами</string>
+    <string name="no_contact_groups_yet">Групп пока нет</string>
+    <string name="add_contacts_to_group_hint">Создайте группу, чтобы упорядочить контакты</string>
+    <string name="contact_not_in_any_group">Этот контакт не входит ни в одну группу</string>
+    <string name="delete_contact_group_confirm">Удалить эту группу? Контакты из нее останутся в адресной книге.</string>
+    <string name="failed_to_load_contact_groups">Не удается загрузить группы</string>
+    <string name="contact_groups_updated">Группы обновлены</string>
+</resources>

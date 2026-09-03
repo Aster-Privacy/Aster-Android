@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_groups">群组</string>
+    <string name="new_contact_group">新建群组</string>
+    <string name="create_contact_group">创建群组</string>
+    <string name="rename_contact_group">重命名群组</string>
+    <string name="delete_contact_group">删除群组</string>
+    <string name="contact_group_name">群组名称</string>
+    <string name="contact_group_name_taken">已存在同名群组</string>
+    <string name="contact_group_name_too_long">群组名称最多可包含 %1$d 个字符</string>
+    <string name="contact_group_limit_reached">最多可创建 %1$d 个群组</string>
+    <string name="manage_contact_groups">管理群组</string>
+    <string name="no_contact_groups_yet">还没有群组</string>
+    <string name="add_contacts_to_group_hint">创建群组来整理你的联系人</string>
+    <string name="contact_not_in_any_group">此联系人不属于任何群组</string>
+    <string name="delete_contact_group_confirm">要删除此群组吗？其中的联系人会保留在通讯录中。</string>
+    <string name="failed_to_load_contact_groups">无法加载群组</string>
+    <string name="contact_groups_updated">群组已更新</string>
+</resources>

@@ -154,6 +154,13 @@ data class folder_parent_option(
     val path_label: String,
 )
 
+data class drawer_contact_group_item(
+    val id: String,
+    val label: String,
+    val color: Color,
+    val count: Int = 0,
+)
+
 data class drawer_label_item(
     val id: String,
     val label: String,
@@ -259,6 +266,7 @@ private const val key_labels_collapsed = "labels_collapsed"
 private const val key_aliases_collapsed = "aliases_collapsed"
 private const val key_expanded_folders = "expanded_folders"
 private const val key_categories_collapsed = "categories_collapsed"
+private const val key_contact_groups_collapsed = "contact_groups_collapsed"
 
 @Composable
 fun DrawerContent(
@@ -300,6 +308,11 @@ fun DrawerContent(
     initial_labels_collapsed: Boolean = false,
     initial_aliases_collapsed: Boolean = false,
     initial_categories_collapsed: Boolean = false,
+    contact_group_items: List<drawer_contact_group_item> = emptyList(),
+    selected_contact_group_id: String? = null,
+    on_navigate_contact_group: (String?) -> Unit = {},
+    on_create_contact_group: (name: String, color: String) -> Unit = { _, _ -> },
+    contact_group_names: List<String> = emptyList(),
     preferences_loaded: Boolean = false,
     totp_enabled: Boolean = false,
     purge_locked_folder_default: Boolean = false,
@@ -327,6 +340,9 @@ fun DrawerContent(
     }
     var categories_expanded by rememberSaveable {
         mutableStateOf(!sidebar_prefs.getBoolean(key_categories_collapsed, false))
+    }
+    var contact_groups_expanded by rememberSaveable {
+        mutableStateOf(!sidebar_prefs.getBoolean(key_contact_groups_collapsed, false))
     }
     var aliases_show_all by remember { mutableStateOf(false) }
     val aliases_collapsed_count = 5
@@ -358,6 +374,7 @@ fun DrawerContent(
 
     var show_create_folder by remember { mutableStateOf(false) }
     var show_create_label by remember { mutableStateOf(false) }
+    var show_create_contact_group by remember { mutableStateOf(false) }
     val haptics = LocalHapticFeedback.current
     var pending_subfolder by remember { mutableStateOf<drawer_folder_item?>(null) }
     var pending_rename by remember { mutableStateOf<drawer_folder_item?>(null) }
@@ -512,12 +529,54 @@ fun DrawerContent(
                 label = label_contacts,
                 count = 0,
                 is_unread_count = false,
-                selected = selected_id == "contacts",
+                selected = selected_id == "contacts" && selected_contact_group_id == null,
                 on_click = {
+                    on_navigate_contact_group(null)
                     on_select("contacts")
                     on_close()
                 },
             )
+
+            collapsible_section_header(
+                text = stringResource(R.string.contact_groups),
+                expanded = contact_groups_expanded,
+                on_toggle = {
+                    contact_groups_expanded = !contact_groups_expanded
+                    sidebar_prefs.edit()
+                        .putBoolean(key_contact_groups_collapsed, !contact_groups_expanded)
+                        .apply()
+                    on_sidebar_toggle("sidebar_contact_groups_collapsed", !contact_groups_expanded)
+                },
+                show_add = true,
+                on_add = { show_create_contact_group = true },
+                add_test_tag = "create_contact_group",
+                add_description = stringResource(R.string.create_contact_group),
+            )
+            androidx.compose.animation.AnimatedVisibility(
+                visible = contact_groups_expanded,
+                enter = section_expand_enter(),
+                exit = section_expand_exit(),
+            ) {
+                androidx.compose.foundation.layout.Column {
+                    if (contact_group_items.isEmpty()) {
+                        empty_section_hint(stringResource(R.string.no_contact_groups_yet))
+                    } else {
+                        contact_group_items.forEach { item ->
+                            drawer_label_row(
+                                color = item.color,
+                                label = item.label,
+                                icon = TablerIcons.Users,
+                                selected = selected_id == "contacts" && selected_contact_group_id == item.id,
+                                on_click = {
+                                    on_navigate_contact_group(item.id)
+                                    on_select("contacts")
+                                    on_close()
+                                },
+                            )
+                        }
+                    }
+                }
+            }
 
             collapsible_section_header(
                 text = stringResource(R.string.drawer_more),
@@ -882,6 +941,19 @@ fun DrawerContent(
             on_create = { name, parent_token ->
                 on_create_folder(name, parent_token)
                 show_create_folder = false
+            },
+        )
+    }
+
+    if (show_create_contact_group) {
+        org.astermail.android.ui.contacts.contact_group_editor_dialog(
+            group = null,
+            existing_names = contact_group_names,
+            group_count = contact_group_items.size,
+            on_dismiss = { show_create_contact_group = false },
+            on_submit = { name, color ->
+                show_create_contact_group = false
+                on_create_contact_group(name, color)
             },
         )
     }

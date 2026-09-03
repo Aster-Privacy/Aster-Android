@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_groups">Groepen</string>
+    <string name="new_contact_group">Nieuwe groep</string>
+    <string name="create_contact_group">Groep maken</string>
+    <string name="rename_contact_group">Groep hernoemen</string>
+    <string name="delete_contact_group">Groep verwijderen</string>
+    <string name="contact_group_name">Groepsnaam</string>
+    <string name="contact_group_name_taken">Er bestaat al een groep met deze naam</string>
+    <string name="contact_group_name_too_long">Groepsnamen mogen maximaal %1$d tekens bevatten</string>
+    <string name="contact_group_limit_reached">Je kunt maximaal %1$d groepen maken</string>
+    <string name="manage_contact_groups">Groepen beheren</string>
+    <string name="no_contact_groups_yet">Nog geen groepen</string>
+    <string name="add_contacts_to_group_hint">Maak een groep om je contacten te ordenen</string>
+    <string name="contact_not_in_any_group">Dit contact zit in geen enkele groep</string>
+    <string name="delete_contact_group_confirm">Deze groep verwijderen? De contacten erin blijven in je adresboek staan.</string>
+    <string name="failed_to_load_contact_groups">Kan groepen niet laden</string>
+    <string name="contact_groups_updated">Groepen bijgewerkt</string>
+</resources>

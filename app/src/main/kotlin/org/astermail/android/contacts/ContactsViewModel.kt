@@ -46,6 +46,10 @@ data class ContactsUiState(
     val error: String? = null,
     val save_success: Boolean = false,
     val delete_success: Boolean = false,
+    val groups: List<ContactGroup> = emptyList(),
+    val groups_loading: Boolean = false,
+    val groups_error: String? = null,
+    val selected_group_id: String? = null,
 )
 
 @HiltViewModel
@@ -59,6 +63,163 @@ class ContactsViewModel @Inject constructor(
 
     private var list_in_flight = false
     private var mutation_in_flight = false
+    private var groups_in_flight = false
+    private var group_mutation_in_flight = false
+
+    fun load_contact_groups() {
+        if (groups_in_flight) return
+        groups_in_flight = true
+        _state.value = _state.value.copy(groups_loading = true, groups_error = null)
+        viewModelScope.launch {
+            val outcome = repository.list_contact_groups()
+            groups_in_flight = false
+            outcome.fold(
+                onSuccess = { groups ->
+                    val sorted = groups.sortedWith(
+                        compareBy({ it.sort_order }, { it.name.lowercase(java.util.Locale.ROOT) }),
+                    )
+                    val selected = _state.value.selected_group_id
+                    _state.value = _state.value.copy(
+                        groups = sorted,
+                        groups_loading = false,
+                        selected_group_id = selected?.takeIf { id -> sorted.any { it.id == id } },
+                    )
+                },
+                onFailure = { t ->
+                    _state.value = _state.value.copy(
+                        groups_loading = false,
+                        groups_error = friendly_error(t),
+                    )
+                },
+            )
+        }
+    }
+
+    fun select_contact_group(group_id: String?) {
+        _state.value = _state.value.copy(selected_group_id = group_id)
+    }
+
+    fun create_contact_group(name: String, color: String, on_complete: ((Boolean) -> Unit)? = null) {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty() || group_mutation_in_flight) {
+            on_complete?.invoke(false)
+            return
+        }
+        group_mutation_in_flight = true
+        viewModelScope.launch {
+            val outcome = repository.create_contact_group(trimmed, color)
+            group_mutation_in_flight = false
+            outcome.fold(
+                onSuccess = {
+                    on_complete?.invoke(true)
+                    load_contact_groups()
+                },
+                onFailure = { t ->
+                    _state.value = _state.value.copy(error = friendly_error(t))
+                    on_complete?.invoke(false)
+                },
+            )
+        }
+    }
+
+    fun rename_contact_group(
+        group_id: String,
+        name: String,
+        color: String,
+        on_complete: ((Boolean) -> Unit)? = null,
+    ) {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty() || group_mutation_in_flight) {
+            on_complete?.invoke(false)
+            return
+        }
+        group_mutation_in_flight = true
+        viewModelScope.launch {
+            val outcome = repository.update_contact_group(group_id, trimmed, color)
+            group_mutation_in_flight = false
+            outcome.fold(
+                onSuccess = {
+                    on_complete?.invoke(true)
+                    load_contact_groups()
+                },
+                onFailure = { t ->
+                    _state.value = _state.value.copy(error = friendly_error(t))
+                    on_complete?.invoke(false)
+                },
+            )
+        }
+    }
+
+    fun delete_contact_group(group_id: String, on_complete: ((Boolean) -> Unit)? = null) {
+        if (group_mutation_in_flight) {
+            on_complete?.invoke(false)
+            return
+        }
+        group_mutation_in_flight = true
+        viewModelScope.launch {
+            val outcome = repository.delete_contact_group(group_id)
+            group_mutation_in_flight = false
+            outcome.fold(
+                onSuccess = {
+                    val current = _state.value
+                    _state.value = current.copy(
+                        groups = current.groups.filterNot { it.id == group_id },
+                        selected_group_id = current.selected_group_id?.takeIf { it != group_id },
+                        contacts = current.contacts.map { contact ->
+                            if (group_id in contact.groups) {
+                                contact.copy(groups = contact.groups.filterNot { it == group_id })
+                            } else {
+                                contact
+                            }
+                        },
+                    )
+                    on_complete?.invoke(true)
+                },
+                onFailure = { t ->
+                    _state.value = _state.value.copy(error = friendly_error(t))
+                    on_complete?.invoke(false)
+                },
+            )
+        }
+    }
+
+    fun set_group_membership(
+        contacts: List<Contact>,
+        group_id: String,
+        should_add: Boolean,
+        on_complete: ((Boolean) -> Unit)? = null,
+    ) {
+        if (group_mutation_in_flight) {
+            on_complete?.invoke(false)
+            return
+        }
+        group_mutation_in_flight = true
+        viewModelScope.launch {
+            val outcome = repository.set_group_membership(contacts, group_id, should_add)
+            group_mutation_in_flight = false
+            outcome.fold(
+                onSuccess = { updated ->
+                    apply_local_membership(updated)
+                    on_complete?.invoke(true)
+                    load_contact_groups()
+                },
+                onFailure = { t ->
+                    _state.value = _state.value.copy(error = friendly_error(t))
+                    on_complete?.invoke(false)
+                },
+            )
+        }
+    }
+
+    private fun apply_local_membership(updated: List<Contact>) {
+        if (updated.isEmpty()) return
+        val by_id = updated.associateBy { it.id }
+        val current = _state.value
+        _state.value = current.copy(
+            contacts = current.contacts.map { by_id[it.id] ?: it },
+            selected_contact = current.selected_contact?.let { by_id[it.id] ?: it },
+        )
+    }
 
     fun load_contacts() {
         if (list_in_flight) return

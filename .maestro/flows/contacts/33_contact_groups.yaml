@@ -1,0 +1,115 @@
+appId: ${APP_ID}
+tags:
+  - contacts
+name: contact_groups_create_filter_assign_delete
+---
+- runFlow: ../../setup/sign_in.yaml
+- swipe:
+    start: 5%,50%
+    end: 80%,50%
+- waitForAnimationToEnd
+- tapOn: "^Contacts$"
+- extendedWaitUntil:
+    visible: "Contacts"
+    timeout: 10000
+- waitForAnimationToEnd
+- takeScreenshot: groups_chip_row
+
+- assertVisible: "^All$"
+- assertVisible: "^Favorites$"
+- assertVisible: "^New group$"
+
+- tapOn: "^New group$"
+- extendedWaitUntil:
+    visible: "Create group"
+    timeout: 5000
+- tapOn:
+    id: "contact_group_name_field"
+- inputText: "Maestro Crew"
+- hideKeyboard
+- takeScreenshot: groups_editor
+- tapOn: "^Create$"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Maestro Crew"
+    timeout: 10000
+- takeScreenshot: groups_created
+
+- tapOn: "Maestro Crew"
+- waitForAnimationToEnd
+- takeScreenshot: groups_filter_empty
+- tapOn: "^All$"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "fab_add_contact"
+- waitForAnimationToEnd
+- tapOn:
+    text: "Name"
+    optional: true
+- inputText: "Groups Bot"
+- hideKeyboard
+- tapOn:
+    text: "Email"
+    optional: true
+- inputText: "groups_bot_contact@example.org"
+- hideKeyboard
+- tapOn:
+    text: "Save"
+    optional: true
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Groups Bot"
+    timeout: 10000
+
+- tapOn: "Groups Bot"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Groups"
+    timeout: 5000
+- takeScreenshot: groups_detail_card
+- tapOn:
+    id: "manage_contact_groups"
+- extendedWaitUntil:
+    visible: "Maestro Crew"
+    timeout: 5000
+- takeScreenshot: groups_manage_dialog
+- tapOn: "Maestro Crew"
+- waitForAnimationToEnd
+- tapOn: "^Close$"
+- back
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Maestro Crew"
+    timeout: 10000
+- tapOn: "Maestro Crew"
+- waitForAnimationToEnd
+- assertVisible: "Groups Bot"
+- takeScreenshot: groups_filter_member
+
+- tapOn: "^All$"
+- waitForAnimationToEnd
+- tapOn: "Groups Bot"
+- waitForAnimationToEnd
+- tapOn:
+    text: "Delete"
+    optional: true
+- tapOn:
+    text: "Delete"
+    optional: true
+- waitForAnimationToEnd
+
+- longPressOn: "Maestro Crew"
+- extendedWaitUntil:
+    visible: "Group name"
+    timeout: 5000
+- takeScreenshot: groups_rename_dialog
+- tapOn:
+    id: "contact_group_delete"
+- tapOn:
+    text: "Delete"
+    optional: true
+- waitForAnimationToEnd
+- assertNotVisible: "Maestro Crew"
+- takeScreenshot: groups_deleted

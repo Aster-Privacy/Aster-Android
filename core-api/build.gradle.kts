@@ -17,7 +17,8 @@ android {
     buildTypes {
         getByName("debug") {
             val localApi = providers.gradleProperty("astermail.localApi").orNull == "true"
-            val debugUrl = if (localApi) "http://10.0.2.2:3000" else "https://app.astermail.org"
+            val localApiPort = providers.gradleProperty("astermail.localApiPort").orNull ?: "3000"
+            val debugUrl = if (localApi) "http://10.0.2.2:$localApiPort" else "https://app.astermail.org"
             buildConfigField("String", "API_BASE_URL", "\"$debugUrl\"")
         }
         getByName("release") {

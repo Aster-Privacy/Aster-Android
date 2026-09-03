@@ -110,11 +110,14 @@ data class SearchContactsResponse(
 @Serializable
 data class ContactGroupEncrypted(
     val id: String,
+    val group_token: String? = null,
     val encrypted_name: String,
     val name_nonce: String,
-    val color: String,
+    val color: String? = null,
+    val sort_order: Int = 0,
     val contact_count: Int = 0,
     val created_at: String? = null,
+    val updated_at: String? = null,
 )
 
 @Serializable
@@ -127,13 +130,40 @@ data class CreateContactGroupRequest(
     val group_token: String,
     val encrypted_name: String,
     val name_nonce: String,
-    val color: String,
+    val color: String? = null,
+)
+
+@Serializable
+data class UpdateContactGroupRequest(
+    val group_token: String,
+    val encrypted_name: String,
+    val name_nonce: String,
+    val color: String? = null,
+    val sort_order: Int? = null,
+)
+
+@Serializable
+data class GroupMembersRequest(
+    val contact_ids: List<String>,
+)
+
+@Serializable
+data class GroupMembershipChangeResponse(
+    val success: Boolean = false,
+    val changed: Int = 0,
 )
 
 @Serializable
 data class CreateContactGroupResponse(
     val id: String,
+    val group_token: String? = null,
+    val encrypted_name: String? = null,
+    val name_nonce: String? = null,
+    val color: String? = null,
+    val sort_order: Int = 0,
+    val contact_count: Int = 0,
     val created_at: String? = null,
+    val updated_at: String? = null,
 )
 
 @Serializable
@@ -152,7 +182,10 @@ interface ContactsApi {
     suspend fun search_contacts(search_token: String, field: String = "all", limit: Int? = null): SearchContactsResponse
     suspend fun list_contact_groups(): ListContactGroupsResponse
     suspend fun create_contact_group(request: CreateContactGroupRequest): CreateContactGroupResponse
+    suspend fun update_contact_group(group_id: String, request: UpdateContactGroupRequest): CreateContactGroupResponse
     suspend fun delete_contact_group(group_id: String): SuccessResponse
+    suspend fun add_group_members(group_id: String, request: GroupMembersRequest): GroupMembershipChangeResponse
+    suspend fun remove_group_members(group_id: String, request: GroupMembersRequest): GroupMembershipChangeResponse
     suspend fun add_contact_to_group(contact_id: String, group_id: String): SuccessResponse
     suspend fun remove_contact_from_group(contact_id: String, group_id: String): SuccessResponse
 }
@@ -232,6 +265,42 @@ class ContactsApiImpl(private val client: ApiClient) : ContactsApi {
 
     override suspend fun create_contact_group(request: CreateContactGroupRequest): CreateContactGroupResponse {
         val response = client.http.post("${client.base_url}$base/groups") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun update_contact_group(
+        group_id: String,
+        request: UpdateContactGroupRequest,
+    ): CreateContactGroupResponse {
+        val response = client.http.put("${client.base_url}$base/groups/$group_id") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun add_group_members(
+        group_id: String,
+        request: GroupMembersRequest,
+    ): GroupMembershipChangeResponse {
+        val response = client.http.post("${client.base_url}$base/groups/$group_id/members") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun remove_group_members(
+        group_id: String,
+        request: GroupMembersRequest,
+    ): GroupMembershipChangeResponse {
+        val response = client.http.delete("${client.base_url}$base/groups/$group_id/members") {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_groups">المجموعات</string>
+    <string name="new_contact_group">مجموعة جديدة</string>
+    <string name="create_contact_group">إنشاء مجموعة</string>
+    <string name="rename_contact_group">إعادة تسمية المجموعة</string>
+    <string name="delete_contact_group">حذف المجموعة</string>
+    <string name="contact_group_name">اسم المجموعة</string>
+    <string name="contact_group_name_taken">توجد مجموعة بهذا الاسم بالفعل</string>
+    <string name="contact_group_name_too_long">يمكن أن يصل طول اسم المجموعة إلى %1$d حرفًا</string>
+    <string name="contact_group_limit_reached">يمكنك إنشاء ما يصل إلى %1$d مجموعة</string>
+    <string name="manage_contact_groups">إدارة المجموعات</string>
+    <string name="no_contact_groups_yet">لا توجد مجموعات بعد</string>
+    <string name="add_contacts_to_group_hint">أنشئ مجموعة لتنظيم جهات اتصالك</string>
+    <string name="contact_not_in_any_group">هذه جهة الاتصال ليست في أي مجموعة</string>
+    <string name="delete_contact_group_confirm">هل تريد حذف هذه المجموعة؟ تبقى جهات الاتصال في دفتر العناوين.</string>
+    <string name="failed_to_load_contact_groups">تعذر تحميل المجموعات</string>
+    <string name="contact_groups_updated">تم تحديث المجموعات</string>
+</resources>

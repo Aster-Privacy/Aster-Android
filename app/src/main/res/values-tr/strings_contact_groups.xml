@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_groups">Gruplar</string>
+    <string name="new_contact_group">Yeni grup</string>
+    <string name="create_contact_group">Grup oluştur</string>
+    <string name="rename_contact_group">Grubu yeniden adlandır</string>
+    <string name="delete_contact_group">Grubu sil</string>
+    <string name="contact_group_name">Grup adı</string>
+    <string name="contact_group_name_taken">Bu ada sahip bir grup zaten var</string>
+    <string name="contact_group_name_too_long">Grup adları en fazla %1$d karakter olabilir</string>
+    <string name="contact_group_limit_reached">En fazla %1$d grup oluşturabilirsin</string>
+    <string name="manage_contact_groups">Grupları yönet</string>
+    <string name="no_contact_groups_yet">Henüz grup yok</string>
+    <string name="add_contacts_to_group_hint">Kişilerini düzenlemek için bir grup oluştur</string>
+    <string name="contact_not_in_any_group">Bu kişi hiçbir grupta değil</string>
+    <string name="delete_contact_group_confirm">Bu grup silinsin mi? İçindeki kişiler adres defterinde kalır.</string>
+    <string name="failed_to_load_contact_groups">Gruplar yüklenemiyor</string>
+    <string name="contact_groups_updated">Gruplar güncellendi</string>
+</resources>
