@@ -56,6 +56,7 @@ import org.astermail.android.R
 import org.astermail.android.api.BuildConfig as ApiBuildConfig
 import org.astermail.android.api.auth.PublicProfile
 import org.astermail.android.mail.AsterProfileResolverHolder
+import org.astermail.android.mail.OwnAddressAvatars
 import org.astermail.android.mail.is_aster_domain
 
 private val FAVICON_BASE = "${ApiBuildConfig.API_BASE_URL}/api/images/v1/favicon/"
@@ -150,10 +151,13 @@ fun SenderAvatar(
     val context = LocalContext.current
     val low_network = org.astermail.android.network.low_network_active()
     val remote_avatars_allowed = org.astermail.android.api.network.should_load_remote_avatar(low_network)
-    if (!profile_picture_url.isNullOrBlank() && remote_avatars_allowed) {
+    val own_avatars by OwnAddressAvatars.entries.collectAsStateWithLifecycle()
+    val own_picture = remember(email, own_avatars) { OwnAddressAvatars.get(email) }
+    val resolved_profile_picture = profile_picture_url?.takeIf { it.isNotBlank() } ?: own_picture
+    if (!resolved_profile_picture.isNullOrBlank() && remote_avatars_allowed) {
         val seed_fb = avatar_seed_for(email, name)
         val (bg_fb, fg_fb) = avatar_colors_for(seed_fb)
-        var loaded_pp by remember(profile_picture_url) { mutableStateOf(false) }
+        var loaded_pp by remember(resolved_profile_picture) { mutableStateOf(false) }
         Box(
             modifier = modifier.size(size).clip(CircleShape).background(if (loaded_pp) Color.Transparent else bg_fb),
             contentAlignment = Alignment.Center,
@@ -165,13 +169,13 @@ fun SenderAvatar(
                     style = avatar_initial_style(size),
                 )
             }
-            val model = remember(profile_picture_url) { decode_avatar_model(profile_picture_url) }
-            val request = remember(profile_picture_url, model) {
+            val model = remember(resolved_profile_picture) { decode_avatar_model(resolved_profile_picture) }
+            val request = remember(resolved_profile_picture, model) {
                 ImageRequest.Builder(context)
                     .data(model)
-                    .memoryCacheKey(profile_picture_url)
-                    .placeholderMemoryCacheKey(profile_picture_url)
-                    .diskCacheKey(profile_picture_url)
+                    .memoryCacheKey(resolved_profile_picture)
+                    .placeholderMemoryCacheKey(resolved_profile_picture)
+                    .diskCacheKey(resolved_profile_picture)
                     .crossfade(false)
                     .build()
             }

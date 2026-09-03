@@ -386,12 +386,13 @@ fun ComposeScreen(
 
     val primary_sender_email = remember(
         settings_state.default_sender_id,
+        settings_state.default_sender_loaded,
         user_email,
         settings_state.aliases,
         settings_state.ghost_aliases,
         settings_state.custom_domain_addresses,
     ) {
-        if (settings_state.default_sender_id.isNullOrBlank() &&
+        if (!settings_state.default_sender_loaded &&
             seed_identity.primary_sender_email.isNotBlank()
         ) {
             seed_identity.primary_sender_email
@@ -479,26 +480,39 @@ fun ComposeScreen(
         )
     }
 
-    var from_alias by rememberSaveable {
-        mutableStateOf(
-            initial_state.from_address.ifBlank {
-                resolve_reply_from_alias(received_on_alias, thread_ghost_match, primary_sender_email, alias_options)
-            },
-        )
+    val initial_from = remember {
+        if (initial_state.from_address.isNotBlank()) {
+            resolved_from_alias(initial_state.from_address, initial_state.from_source_tier)
+        } else {
+            resolve_from_alias_tiered(
+                received_on_alias,
+                thread_ghost_match,
+                primary_sender_email,
+                alias_options,
+            )
+        }
     }
+    var from_alias by rememberSaveable { mutableStateOf(initial_from.address) }
+    var from_alias_tier by rememberSaveable { mutableStateOf(initial_from.tier) }
     var from_manually_selected by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(alias_options, received_on_alias, thread_ghost_match, primary_sender_email) {
-        if (from_manually_selected) return@LaunchedEffect
-        if (initial_state.is_complete && from_alias.isNotBlank() &&
-            alias_options.any { it.equals(from_alias, ignoreCase = true) }
-        ) {
-            return@LaunchedEffect
+        val next = next_from_alias(
+            current = from_alias,
+            current_tier = from_alias_tier,
+            resolved = resolve_from_alias_tiered(
+                received_on_alias,
+                thread_ghost_match,
+                primary_sender_email,
+                alias_options,
+            ),
+            alias_options = alias_options,
+            manually_selected = from_manually_selected,
+        ) ?: return@LaunchedEffect
+        if (next.address != from_alias) {
+            from_alias = next.address
         }
-        val resolved = resolve_reply_from_alias(received_on_alias, thread_ghost_match, primary_sender_email, alias_options)
-        if (resolved.isNotBlank() && resolved != from_alias) {
-            from_alias = resolved
-        }
+        from_alias_tier = next.tier
     }
 
     var mode_override by rememberSaveable { mutableStateOf<String?>(null) }

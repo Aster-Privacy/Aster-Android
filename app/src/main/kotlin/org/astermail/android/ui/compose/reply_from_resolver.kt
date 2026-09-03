@@ -78,17 +78,65 @@ fun reply_from_mismatch(
     return !received.equals(from_alias.trim(), ignoreCase = true)
 }
 
+const val from_tier_thread = 0
+
+const val from_tier_ghost = 1
+
+const val from_tier_pinned = 2
+
+const val from_tier_fallback = 3
+
+data class resolved_from_alias(
+    val address: String,
+    val tier: Int,
+)
+
+fun resolve_from_alias_tiered(
+    received_on_alias: String?,
+    thread_ghost_match: String?,
+    primary_sender_email: String,
+    alias_options: List<String>,
+): resolved_from_alias {
+    received_on_alias?.takeIf { it.isNotBlank() }?.let {
+        return resolved_from_alias(it, from_tier_thread)
+    }
+    matching_alias_option(thread_ghost_match, alias_options)?.let {
+        return resolved_from_alias(it, from_tier_ghost)
+    }
+    matching_alias_option(primary_sender_email, alias_options)?.let {
+        return resolved_from_alias(it, from_tier_pinned)
+    }
+    return resolved_from_alias(alias_options.firstOrNull().orEmpty(), from_tier_fallback)
+}
+
+fun next_from_alias(
+    current: String,
+    current_tier: Int,
+    resolved: resolved_from_alias,
+    alias_options: List<String>,
+    manually_selected: Boolean,
+): resolved_from_alias? {
+    if (manually_selected) return null
+    if (alias_options.isEmpty()) return null
+    if (resolved.address.isBlank()) return null
+    val current_is_option = current.isNotBlank() &&
+        alias_options.any { it.equals(current, ignoreCase = true) }
+    if (current_is_option && resolved.tier > current_tier) return null
+    if (resolved.address == current && resolved.tier == current_tier) return null
+    return resolved
+}
+
 fun resolve_reply_from_alias(
     received_on_alias: String?,
     thread_ghost_match: String?,
     primary_sender_email: String,
     alias_options: List<String>,
-): String {
-    return received_on_alias
-        ?: matching_alias_option(thread_ghost_match, alias_options)
-        ?: matching_alias_option(primary_sender_email, alias_options)
-        ?: alias_options.firstOrNull().orEmpty()
-}
+): String = resolve_from_alias_tiered(
+    received_on_alias,
+    thread_ghost_match,
+    primary_sender_email,
+    alias_options,
+).address
 
 private fun matching_alias_option(value: String?, alias_options: List<String>): String? {
     val trimmed = value?.trim().orEmpty()

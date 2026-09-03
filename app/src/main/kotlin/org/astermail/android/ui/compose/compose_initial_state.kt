@@ -75,6 +75,7 @@ data class compose_thread_snapshot(
 
 data class compose_initial_state(
     val from_address: String = "",
+    val from_source_tier: Int = from_tier_fallback,
     val sender_display_name: String = "",
     val to_chips: List<String> = emptyList(),
     val cc_chips: List<String> = emptyList(),
@@ -140,12 +141,13 @@ fun build_compose_initial_state(
         compute_received_on_alias(recipients, alias_options, user_email)
     }
 
-    val from_address = resolve_reply_from_alias(
+    val from_resolution = resolve_from_alias_tiered(
         received_on,
         ghost_match,
         identity.primary_sender_email,
         alias_options,
     )
+    val from_address = from_resolution.address
 
     val display_name = if (from_address.isNotBlank() && from_address != user_email) {
         identity.alias_display_names[from_address]?.trim().orEmpty()
@@ -215,6 +217,7 @@ fun build_compose_initial_state(
 
     return compose_initial_state(
         from_address = from_address,
+        from_source_tier = from_resolution.tier,
         sender_display_name = display_name,
         to_chips = to_chips,
         cc_chips = if (args.share_cc.isNotEmpty()) args.share_cc else thread_cc,

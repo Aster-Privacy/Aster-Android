@@ -850,6 +850,7 @@ class AuthRepository @Inject constructor(
         }
         runCatching {
             org.astermail.android.mail.AsterProfileResolverHolder.shared?.clear()
+            org.astermail.android.mail.OwnAddressAvatars.clear()
         }
         runCatching { database.decrypted_mail_dao().clear_all() }
         if (remove_account) {
@@ -1146,6 +1147,7 @@ class AuthRepository @Inject constructor(
         }
         runCatching {
             org.astermail.android.mail.AsterProfileResolverHolder.shared?.clear()
+            org.astermail.android.mail.OwnAddressAvatars.clear()
         }
         database.decrypted_mail_dao().clear_all()
         current_email?.let { trusted_device_store.clear(it) }

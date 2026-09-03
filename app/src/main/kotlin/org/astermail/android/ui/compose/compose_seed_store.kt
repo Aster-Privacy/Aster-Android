@@ -249,7 +249,7 @@ fun publish_compose_identity_seed(
 ) {
     if (state.user == null) return
     val snapshot = identity_snapshot_from(state, fallback_user_email)
-    val merged = if (state.default_sender_id.isNullOrBlank()) {
+    val merged = if (!state.default_sender_loaded) {
         val cached = compose_seed_store.read_identity(context).primary_sender_email
         if (cached.isNotBlank() && cached in snapshot.alias_options) {
             snapshot.copy(primary_sender_email = cached)

@@ -259,6 +259,7 @@ data class SettingsUiState(
     val save_status: SaveStatus = SaveStatus.IDLE,
     val action_result: String? = null,
     val default_sender_id: String? = null,
+    val default_sender_loaded: Boolean = false,
     val connection_method: String = "direct",
     val connection_loading: Boolean = false,
     val connection_saving: Boolean = false,
@@ -581,9 +582,13 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val response = preferences_api.get_default_sender()
-                _state.value = _state.value.copy(default_sender_id = response.sender_id)
+                _state.value = _state.value.copy(
+                    default_sender_id = response.sender_id,
+                    default_sender_loaded = true,
+                )
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
+                last_default_sender_load_ms = 0L
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_default_sender", t)
             }
         }
@@ -628,7 +633,8 @@ class SettingsViewModel @Inject constructor(
 
     fun set_default_sender(sender_id: String?) {
         val previous = _state.value.default_sender_id
-        _state.value = _state.value.copy(default_sender_id = sender_id)
+        val previously_loaded = _state.value.default_sender_loaded
+        _state.value = _state.value.copy(default_sender_id = sender_id, default_sender_loaded = true)
         viewModelScope.launch {
             try {
                 preferences_api.set_default_sender(
@@ -638,6 +644,7 @@ class SettingsViewModel @Inject constructor(
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     default_sender_id = previous,
+                    default_sender_loaded = previously_loaded,
                     error = user_facing_error(t),
                 )
             }
@@ -1273,6 +1280,7 @@ class SettingsViewModel @Inject constructor(
                         }
                     addr.copy(encrypted_local_part = local_part, encrypted_display_name = display_name)
                 }
+                prime_own_domain_address_avatars(decrypted)
                 _state.value = _state.value.copy(custom_domain_addresses = decrypted)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
@@ -5720,6 +5728,7 @@ class SettingsViewModel @Inject constructor(
 
     private fun prime_own_alias_avatars(aliases: List<AliasInfo>) {
         prime_own_address_avatars(
+            org.astermail.android.mail.OwnAddressAvatarSource.ALIAS,
             aliases
                 .filterNot { it.decryption_failed }
                 .map { it.address to it.profile_picture },
@@ -5728,27 +5737,44 @@ class SettingsViewModel @Inject constructor(
 
     private fun prime_own_ghost_avatars(aliases: List<org.astermail.android.api.ghost.GhostAlias>) {
         prime_own_address_avatars(
+            org.astermail.android.mail.OwnAddressAvatarSource.GHOST,
             aliases
                 .filterNot { it.decryption_failed }
                 .map { it.address to null },
         )
     }
 
-    private fun prime_own_address_avatars(addresses: List<Pair<String, String?>>) {
-        val resolver = org.astermail.android.mail.AsterProfileResolverHolder.shared ?: return
+    private fun prime_own_domain_address_avatars(addresses: List<CustomDomainAddressInfo>) {
+        prime_own_address_avatars(
+            org.astermail.android.mail.OwnAddressAvatarSource.DOMAIN_ADDRESS,
+            addresses
+                .filterNot { it.decryption_failed }
+                .map { it.address to it.profile_picture },
+        )
+    }
+
+    private fun prime_own_address_avatars(
+        source: org.astermail.android.mail.OwnAddressAvatarSource,
+        addresses: List<Pair<String, String?>>,
+    ) {
         val account = account_store.get_current()
         val account_picture = account?.profile_picture?.takeIf { it.isNotBlank() }
         val account_color = account?.profile_color?.takeIf { it.isNotBlank() }
+        val resolver = org.astermail.android.mail.AsterProfileResolverHolder.shared
+        val published = mutableListOf<Pair<String, String?>>()
         for ((address, picture) in addresses) {
             val local_part = address.substringBefore('@', "")
             if (local_part.isBlank() || !address.contains('@')) continue
-            resolver.prime(
+            val resolved_picture = picture?.takeIf { it.isNotBlank() } ?: account_picture
+            published.add(address to resolved_picture)
+            resolver?.prime(
                 email = address,
                 display_name = null,
-                profile_picture = picture?.takeIf { it.isNotBlank() } ?: account_picture,
+                profile_picture = resolved_picture,
                 profile_color = account_color,
             )
         }
+        org.astermail.android.mail.OwnAddressAvatars.publish(source, published)
     }
 
     private fun decrypt_alias(alias: AliasInfo): AliasInfo {

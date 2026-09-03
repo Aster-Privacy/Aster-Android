@@ -447,6 +447,7 @@ class MailViewModel @Inject constructor(
         _thread_participants.value = emptyMap()
         repository.clear_account_data()
         runCatching { AsterProfileResolverHolder.shared?.clear() }
+        runCatching { OwnAddressAvatars.clear() }
         viewModelScope.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
             runCatching { search_index_manager.clear() }
         }

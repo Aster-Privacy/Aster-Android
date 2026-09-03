@@ -233,6 +233,7 @@ data class CustomDomainAddressInfo(
     val encrypted_display_name: String? = null,
     val display_name_nonce: String? = null,
     val is_enabled: Boolean = true,
+    val profile_picture: String? = null,
     val decryption_failed: Boolean = false,
 ) {
     val address: String get() = when {
