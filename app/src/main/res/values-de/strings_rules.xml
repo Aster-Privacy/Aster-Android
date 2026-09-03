@@ -103,4 +103,6 @@
     <string name="rules_hint_finish_condition">Geben Sie für jede Bedingung einen Wert an.</string>
     <string name="rules_hint_add_action">Fügen Sie mindestens eine Aktion hinzu.</string>
     <string name="rules_hint_finish_action">Geben Sie für jede Aktion einen Wert an.</string>
+    <string name="mute_category_notifications">Mitteilungen für %1$s stummschalten</string>
+    <string name="unmute_category_notifications">Stummschaltung für %1$s aufheben</string>
 </resources>

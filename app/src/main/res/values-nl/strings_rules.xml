@@ -103,4 +103,6 @@
     <string name="rules_hint_finish_condition">Vul voor elke voorwaarde een waarde in.</string>
     <string name="rules_hint_add_action">Voeg minstens één actie toe.</string>
     <string name="rules_hint_finish_action">Vul voor elke actie een waarde in.</string>
+    <string name="mute_category_notifications">Meldingen voor %1$s dempen</string>
+    <string name="unmute_category_notifications">Dempen van meldingen voor %1$s opheffen</string>
 </resources>

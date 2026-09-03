@@ -98,6 +98,8 @@
     <string name="muted_categories">Muted categories</string>
     <string name="muted_categories_description">Turn on a category to silence its notifications. Muted categories still receive mail and appear in your inbox.</string>
     <string name="muted_categories_empty">Turn on inbox categories to choose which ones to mute.</string>
+    <string name="mute_category_notifications">Mute notifications for %1$s</string>
+    <string name="unmute_category_notifications">Unmute notifications for %1$s</string>
     <string name="rules_hint_name">Enter a name for this rule.</string>
     <string name="rules_hint_add_condition">Add at least one condition.</string>
     <string name="rules_hint_finish_condition">Fill in a value for every condition.</string>

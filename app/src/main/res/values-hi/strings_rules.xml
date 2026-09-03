@@ -98,4 +98,6 @@
     <string name="rules_hint_finish_condition">हर शर्त के लिए कोई मान भरें।</string>
     <string name="rules_hint_add_action">कम से कम एक कार्रवाई जोड़ें।</string>
     <string name="rules_hint_finish_action">हर कार्रवाई के लिए कोई मान भरें।</string>
+    <string name="mute_category_notifications">%1$s की सूचनाएं म्यूट करें</string>
+    <string name="unmute_category_notifications">%1$s की सूचनाएं अनम्यूट करें</string>
 </resources>

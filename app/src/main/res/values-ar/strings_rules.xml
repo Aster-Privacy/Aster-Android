@@ -103,4 +103,6 @@
     <string name="rules_hint_finish_condition">أدخل قيمة لكل شرط.</string>
     <string name="rules_hint_add_action">أضف إجراءً واحدًا على الأقل.</string>
     <string name="rules_hint_finish_action">أدخل قيمة لكل إجراء.</string>
+    <string name="mute_category_notifications">كتم الإشعارات لـ %1$s</string>
+    <string name="unmute_category_notifications">إلغاء كتم الإشعارات لـ %1$s</string>
 </resources>

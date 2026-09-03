@@ -103,4 +103,6 @@
     <string name="rules_hint_finish_condition">Completa un valor para cada condición.</string>
     <string name="rules_hint_add_action">Agrega al menos una acción.</string>
     <string name="rules_hint_finish_action">Completa un valor para cada acción.</string>
+    <string name="mute_category_notifications">Silenciar las notificaciones de %1$s</string>
+    <string name="unmute_category_notifications">Reactivar las notificaciones de %1$s</string>
 </resources>

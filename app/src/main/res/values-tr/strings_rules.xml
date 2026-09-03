@@ -103,4 +103,6 @@
     <string name="rules_hint_finish_condition">Her koşul için bir değer girin.</string>
     <string name="rules_hint_add_action">En az bir işlem ekleyin.</string>
     <string name="rules_hint_finish_action">Her işlem için bir değer girin.</string>
+    <string name="mute_category_notifications">%1$s bildirimlerini sessize al</string>
+    <string name="unmute_category_notifications">%1$s bildirimlerinin sesini aç</string>
 </resources>

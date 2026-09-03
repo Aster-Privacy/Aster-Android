@@ -78,7 +78,7 @@
     <string name="recovery_email_resent">Verificatie-e-mail verzonden</string>
     <string name="recovery_email_resend_failed">Verificatie-e-mail kon niet worden verzonden</string>
     <string name="recovery_email_resend_cooldown">Wacht even voordat je opnieuw verzendt</string>
-    <string name="recovery_email_already_in_use">Dit adres beschermt al het maximum van 20 Aster-accounts. Gebruik een ander adres.</string>
+    <string name="recovery_email_already_in_use">Dit adres beschermt al het maximum van 10 Aster-accounts. Gebruik een ander adres.</string>
     <string name="recovery_email_saved">Herstel-e-mail opgeslagen</string>
     <string name="recovery_email_status_verified">Geverifieerd</string>
     <string name="recovery_email_hidden">Opgeslagen in dit account</string>
@@ -680,8 +680,6 @@
     <string name="two_factor_enabled_title">Tweefactorauthenticatie ingeschakeld</string>
     <string name="two_factor_enabled_subtitle">Sla deze back-upcodes op een veilige plek op. Elke code kan eenmaal worden gebruikt als je je authenticator verliest.</string>
     <string name="two_factor_other_devices_signed_out">Aster heeft je op je andere apparaten afgemeld. Meld je opnieuw aan en voer een code uit je authenticator-app in om ze weer te gebruiken.</string>
-    <string name="hardware_key_remove_last_title">Je laatste beveiligingssleutel verwijderen?</string>
-    <string name="hardware_key_remove_last_description">Dit is de laatste tweede factor op je account. Voer je wachtwoord in om hem te verwijderen.</string>
     <string name="new_backup_codes_title">Nieuwe back-upcodes</string>
     <string name="new_backup_codes_subtitle">Je oude back-upcodes werken niet meer. Sla deze op een veilige plek op.</string>
     <string name="copy_all_codes">Alle codes kopiëren</string>
@@ -979,7 +977,6 @@
     <string name="ext_smtp_port">SMTP-poort</string>
     <string name="ext_smtp_username">SMTP-gebruikersnaam</string>
     <string name="ext_smtp_password">SMTP-wachtwoord</string>
-    <string name="ext_save_imap">IMAP-account opslaan</string>
     <string name="ext_field_email">E-mailadres</string>
     <string name="ext_field_password">Wachtwoord</string>
     <string name="ext_app_password_required">Deze provider vereist een app-wachtwoord, niet je gewone accountwachtwoord.</string>
@@ -1017,14 +1014,15 @@
     <string name="ext_gmail_wizard_step_4_body">Plak het app-wachtwoord, niet het wachtwoord waarmee je bij Google inlogt. Spaties zijn geen probleem, want Aster haalt ze voor je weg.</string>
     <string name="ext_gmail_wizard_password_label">App-wachtwoord</string>
     <string name="ext_gmail_wizard_connect">Gmail verbinden</string>
+    <string name="ext_save_imap">IMAP-account opslaan</string>
     <string name="ext_no_accounts">Nog geen externe accounts.</string>
     <string name="ext_sync_now">Nu synchroniseren</string>
     <string name="ext_delete">Verwijderen</string>
-    <string name="ext_connect_failed">Verbinding mislukt</string>
     <string name="ext_disconnect_title">Verbinding verbreken</string>
     <string name="ext_disconnect_confirm">Weet u zeker dat u de verbinding met dit account wilt verbreken?</string>
     <string name="ext_disconnect_button">Verbinding verbreken</string>
     <string name="ext_disconnect_delete_messages">Alle gesynchroniseerde berichten verwijderen</string>
+    <string name="ext_connect_failed">Verbinding mislukt</string>
     <string name="ext_error_load_failed">Gekoppelde accounts kunnen niet worden geladen. Sleep om opnieuw te proberen.</string>
     <string name="ext_error_oauth_failed">Aanmelden kan niet worden gestart. Controleer je verbinding en probeer opnieuw.</string>
     <string name="ext_error_manual_failed">Kan account niet opslaan. Controleer host, poort en gegevens.</string>
@@ -2320,7 +2318,9 @@
     <string name="crypto_native_go_to_inbox">Naar Postvak IN</string>
     <string name="crypto_native_copied">Naar klembord gekopieerd</string>
     <string name="crypto_native_copy_action">Kopiëren</string>
-    <string name="crypto_native_cancel_invoice">Betaling annuleren</string>
+    <string name="crypto_native_cancel_invoice">Deze factuur annuleren</string>
+    <string name="crypto_native_cancel_confirm_title">Deze factuur annuleren?</string>
+    <string name="crypto_native_cancel_confirm_body">Het betaaladres wordt niet langer gecontroleerd. Stuur er na het annuleren geen tegoed meer naartoe. Je kunt op elk moment een nieuwe betaling starten.</string>
     <string name="crypto_native_cancel_failed">Deze betaling kon niet worden geannuleerd. Probeer het opnieuw.</string>
     <string name="crypto_native_paid_title">Betaling voltooid</string>
     <string name="crypto_native_paid_body">Je abonnement is nu actief. Bedankt dat je privé-e-mail steunt.</string>
@@ -2908,6 +2908,8 @@
     <string name="failed_to_move_items">Verplaatsen niet gelukt</string>
     <string name="folder_name_taken">Er bestaat al een map met deze naam.</string>
     <string name="hardware_key_remove_confirm">Je kunt daarna niet meer met deze beveiligingssleutel inloggen.</string>
+    <string name="hardware_key_remove_last_title">Je laatste beveiligingssleutel verwijderen?</string>
+    <string name="hardware_key_remove_last_description">Dit is de laatste tweede factor op je account. Voer je wachtwoord in om hem te verwijderen.</string>
     <string name="image_insert_failed">Die afbeelding kon niet worden toegevoegd. Mogelijk is deze te groot of heeft ze een niet-ondersteunde indeling.</string>
     <string name="invalid_recipient_address">“%1$s” is geen geldig e-mailadres</string>
     <string name="label_name_taken">Er bestaat al een label met deze naam.</string>
@@ -3083,4 +3085,70 @@
     <string name="scheduled_for">Gepland voor %1$s</string>
     <string name="scheduled_recipients">Aan: %1$s</string>
     <string name="scheduled_time_in_past">Kies een tijdstip in de toekomst</string>
+    <string name="contact_groups">Groepen</string>
+    <string name="new_group">Nieuwe groep</string>
+    <string name="group_name">Groepsnaam</string>
+    <string name="delete_group">Groep verwijderen</string>
+    <string name="delete_group_message">De contacten in deze groep blijven in je adresboek staan.</string>
+    <string name="no_groups_yet">Nog geen groepen</string>
+    <string name="no_groups_description">Groepeer je contacten om meerdere mensen tegelijk te mailen. Groepsnamen worden op dit apparaat versleuteld voordat ze worden opgeslagen.</string>
+    <string name="add_to_group">Aan groep toevoegen</string>
+    <string name="added_to_group">Toegevoegd aan groep</string>
+    <string name="group_created">Groep aangemaakt</string>
+    <string name="merge">Samenvoegen</string>
+    <string name="merge_contacts">Contacten samenvoegen</string>
+    <string name="merge_contacts_description">Kies het contact dat je wilt houden. Aster vult ontbrekende gegevens aan uit de andere en verwijdert die daarna. Duplicaten worden op dit apparaat gevonden en er wordt niets naar de server gestuurd.</string>
+    <string name="merge_keep_this">Deze houden</string>
+    <string name="contacts_merged">Contacten samengevoegd</string>
+    <string name="review_duplicates">Bekijken</string>
+    <string name="delete_contacts_message">De geselecteerde contacten worden verwijderd van alle apparaten waarop je account is aangemeld.</string>
+    <string name="clear_selection">Selectie wissen</string>
+    <string name="select_contacts_hint">Tik op een profielfoto om een contact te selecteren.</string>
+    <plurals name="groups_count_plural">
+        <item quantity="one">%d groep</item>
+        <item quantity="other">%d groepen</item>
+    </plurals>
+    <plurals name="group_members_plural">
+        <item quantity="one">%d lid</item>
+        <item quantity="other">%d leden</item>
+    </plurals>
+    <plurals name="duplicate_contacts_found">
+        <item quantity="one">%d contact lijkt een duplicaat</item>
+        <item quantity="other">%d contacten lijken duplicaten</item>
+    </plurals>
+    <plurals name="delete_contacts_title">
+        <item quantity="one">%d contact verwijderen?</item>
+        <item quantity="other">%d contacten verwijderen?</item>
+    </plurals>
+    <plurals name="contacts_deleted_plural">
+        <item quantity="one">%d contact verwijderd</item>
+        <item quantity="other">%d contacten verwijderd</item>
+    </plurals>
+    <string name="checkout_review_title">Controleer en betaal</string>
+    <string name="checkout_term_title">Abonnementsduur</string>
+    <string name="checkout_term_save">Bespaar %1$s</string>
+    <string name="checkout_term_per_month">%1$s/maand</string>
+    <string name="checkout_term_total">%1$s totaal</string>
+    <string name="checkout_term_crypto_only">Alleen crypto</string>
+    <string name="checkout_amount_due">Te betalen bedrag</string>
+    <string name="checkout_what_you_get">Wat krijg je?</string>
+    <string name="checkout_method_card">Creditcard</string>
+    <string name="checkout_method_card_note">Wordt automatisch verlengd totdat je opzegt.</string>
+    <string name="checkout_method_crypto">Cryptovaluta</string>
+    <string name="checkout_crypto_note">Dit abonnement wordt niet automatisch verlengd</string>
+    <string name="checkout_payment_details">Betaalgegevens</string>
+    <string name="checkout_best_value">Beste waarde</string>
+    <string name="checkout_plan_recommended">Aanbevolen</string>
+    <string name="checkout_continue">Doorgaan naar afrekenen</string>
+    <string name="checkout_money_back">30 dagen niet-goed-geldterug</string>
+    <string name="checkout_stripe_secure">Beveiligd door Stripe</string>
+    <string name="checkout_abandon_title">Deze bestelling annuleren?</string>
+    <string name="checkout_abandon_message">Je abonnement en betaalkeuze worden niet bewaard en er is niets afgeschreven. Je kunt altijd opnieuw beginnen.</string>
+    <string name="checkout_abandon_keep">Verder bekijken</string>
+    <string name="checkout_abandon_confirm">Bestelling annuleren</string>
+    <string name="checkout_card_term_unavailable">De looptijd van 2 jaar is beschikbaar als je met crypto betaalt.</string>
+    <string name="checkout_change_plan">Abonnement wijzigen</string>
+    <string name="checkout_credits_applied">%1$s aan tegoed wordt toegepast bij het afrekenen</string>
+    <string name="checkout_subtotal">Subtotaal</string>
+    <string name="plan_view_full_features">Volledige functielijst bekijken</string>
 </resources>

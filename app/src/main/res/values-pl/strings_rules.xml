@@ -103,4 +103,6 @@
     <string name="rules_hint_finish_condition">Podaj wartość dla każdego warunku.</string>
     <string name="rules_hint_add_action">Dodaj co najmniej jedną akcję.</string>
     <string name="rules_hint_finish_action">Podaj wartość dla każdej akcji.</string>
+    <string name="mute_category_notifications">Wycisz powiadomienia dla %1$s</string>
+    <string name="unmute_category_notifications">Wyłącz wyciszenie powiadomień dla %1$s</string>
 </resources>

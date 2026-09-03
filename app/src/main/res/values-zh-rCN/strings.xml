@@ -78,7 +78,7 @@
     <string name="recovery_email_resent">验证邮件已发送</string>
     <string name="recovery_email_resend_failed">无法发送验证邮件</string>
     <string name="recovery_email_resend_cooldown">请稍候再重新发送</string>
-    <string name="recovery_email_already_in_use">此地址已用于最多 20 个 Aster 账户。请使用其他地址。</string>
+    <string name="recovery_email_already_in_use">此地址已用于最多 10 个 Aster 账户。请使用其他地址。</string>
     <string name="recovery_email_saved">恢复邮箱已保存</string>
     <string name="recovery_email_status_verified">已验证</string>
     <string name="recovery_email_hidden">已保存在此账户中</string>
@@ -680,8 +680,6 @@
     <string name="two_factor_enabled_title">双重验证已启用</string>
     <string name="two_factor_enabled_subtitle">请将这些备用代码保存在安全的地方。如果您丢失了验证器，每个代码可以使用一次。</string>
     <string name="two_factor_other_devices_signed_out">Aster 已在你的其他设备上退出登录。若要继续使用这些设备，请重新登录并输入身份验证器 App 中的验证码。</string>
-    <string name="hardware_key_remove_last_title">移除最后一个安全密钥？</string>
-    <string name="hardware_key_remove_last_description">这是账户上最后一个双重验证方式。若要移除，请输入密码。</string>
     <string name="new_backup_codes_title">新的备用代码</string>
     <string name="new_backup_codes_subtitle">您的旧备用代码已失效。请将这些代码保存在安全的地方。</string>
     <string name="copy_all_codes">复制所有代码</string>
@@ -979,7 +977,6 @@
     <string name="ext_smtp_port">SMTP 端口</string>
     <string name="ext_smtp_username">SMTP 用户名</string>
     <string name="ext_smtp_password">SMTP 密码</string>
-    <string name="ext_save_imap">保存 IMAP 帐户</string>
     <string name="ext_field_email">电子邮件地址</string>
     <string name="ext_field_password">密码</string>
     <string name="ext_app_password_required">此提供商需要应用专用密码，而不是你平时的账号密码。</string>
@@ -1017,14 +1014,15 @@
     <string name="ext_gmail_wizard_step_4_body">请粘贴应用专用密码，而不是你登录 Google 时使用的密码。有空格也没关系，Aster 会为你去掉。</string>
     <string name="ext_gmail_wizard_password_label">应用专用密码</string>
     <string name="ext_gmail_wizard_connect">连接 Gmail</string>
+    <string name="ext_save_imap">保存 IMAP 帐户</string>
     <string name="ext_no_accounts">暂无外部帐户。</string>
     <string name="ext_sync_now">立即同步</string>
     <string name="ext_delete">移除</string>
-    <string name="ext_connect_failed">连接失败</string>
     <string name="ext_disconnect_title">断开连接</string>
     <string name="ext_disconnect_confirm">确定要断开此账户的连接吗？</string>
     <string name="ext_disconnect_button">断开连接</string>
     <string name="ext_disconnect_delete_messages">同时删除从此账户导入的邮件</string>
+    <string name="ext_connect_failed">连接失败</string>
     <string name="ext_error_load_failed">无法加载已链接的账户。下拉以重试。</string>
     <string name="ext_error_oauth_failed">无法开始登录。请检查网络连接后重试。</string>
     <string name="ext_error_manual_failed">无法保存账户。请检查主机、端口和凭据。</string>
@@ -2316,7 +2314,9 @@
     <string name="crypto_native_go_to_inbox">前往收件箱</string>
     <string name="crypto_native_copied">已复制到剪贴板</string>
     <string name="crypto_native_copy_action">复制</string>
-    <string name="crypto_native_cancel_invoice">取消付款</string>
+    <string name="crypto_native_cancel_invoice">取消此账单</string>
+    <string name="crypto_native_cancel_confirm_title">要取消此账单吗？</string>
+    <string name="crypto_native_cancel_confirm_body">系统将停止监控该付款地址。取消后请勿再向该地址转账。您可以随时发起新的付款。</string>
     <string name="crypto_native_cancel_failed">无法取消此付款，请重试。</string>
     <string name="crypto_native_paid_title">付款完成</string>
     <string name="crypto_native_paid_body">你的方案已生效。感谢你支持私密邮件。</string>
@@ -2897,6 +2897,8 @@
     <string name="failed_to_move_items">无法移动</string>
     <string name="folder_name_taken">已存在同名文件夹。</string>
     <string name="hardware_key_remove_confirm">你将无法再使用此安全密钥登录。</string>
+    <string name="hardware_key_remove_last_title">移除最后一个安全密钥？</string>
+    <string name="hardware_key_remove_last_description">这是账户上最后一个双重验证方式。若要移除，请输入密码。</string>
     <string name="image_insert_failed">无法添加该图片。它可能太大或格式不受支持。</string>
     <string name="invalid_recipient_address">“%1$s” 不是有效的电子邮件地址</string>
     <string name="label_name_taken">已存在同名标签。</string>
@@ -3070,4 +3072,65 @@
     <string name="scheduled_for">已安排在 %1$s 发送</string>
     <string name="scheduled_recipients">收件人：%1$s</string>
     <string name="scheduled_time_in_past">请选择将来的时间</string>
+    <string name="contact_groups">群组</string>
+    <string name="new_group">新建群组</string>
+    <string name="group_name">群组名称</string>
+    <string name="delete_group">删除群组</string>
+    <string name="delete_group_message">该群组中的联系人仍会保留在您的通讯录中。</string>
+    <string name="no_groups_yet">还没有群组</string>
+    <string name="no_groups_description">将联系人分组，即可一次写信给多个人。群组名称在保存前会在此设备上加密。</string>
+    <string name="add_to_group">添加到群组</string>
+    <string name="added_to_group">已添加到群组</string>
+    <string name="group_created">群组已创建</string>
+    <string name="merge">合并</string>
+    <string name="merge_contacts">合并联系人</string>
+    <string name="merge_contacts_description">选择要保留的联系人。Aster 会补齐其他联系人中的信息，然后删除它们。重复项在此设备上检测，不会向服务器发送任何内容。</string>
+    <string name="merge_keep_this">保留这个</string>
+    <string name="contacts_merged">联系人已合并</string>
+    <string name="review_duplicates">查看</string>
+    <string name="delete_contacts_message">所选联系人会从所有已登录您账户的设备上删除。</string>
+    <string name="clear_selection">清除选择</string>
+    <string name="select_contacts_hint">点按头像即可选择联系人。</string>
+    <plurals name="groups_count_plural">
+        <item quantity="other">%d 个群组</item>
+    </plurals>
+    <plurals name="group_members_plural">
+        <item quantity="other">%d 位成员</item>
+    </plurals>
+    <plurals name="duplicate_contacts_found">
+        <item quantity="other">%d 位联系人看起来重复</item>
+    </plurals>
+    <plurals name="delete_contacts_title">
+        <item quantity="other">删除 %d 位联系人？</item>
+    </plurals>
+    <plurals name="contacts_deleted_plural">
+        <item quantity="other">已删除 %d 位联系人</item>
+    </plurals>
+    <string name="checkout_review_title">确认并支付</string>
+    <string name="checkout_term_title">订阅时长</string>
+    <string name="checkout_term_save">省 %1$s</string>
+    <string name="checkout_term_per_month">%1$s/月</string>
+    <string name="checkout_term_total">共 %1$s</string>
+    <string name="checkout_term_crypto_only">仅限加密货币</string>
+    <string name="checkout_amount_due">应付金额</string>
+    <string name="checkout_what_you_get">包含哪些内容？</string>
+    <string name="checkout_method_card">信用卡/借记卡</string>
+    <string name="checkout_method_card_note">自动续订，直到你取消为止。</string>
+    <string name="checkout_method_crypto">加密货币</string>
+    <string name="checkout_crypto_note">加密货币订阅不会自动续费。您可以在到期前手动续费。</string>
+    <string name="checkout_payment_details">付款详情</string>
+    <string name="checkout_best_value">最超值</string>
+    <string name="checkout_plan_recommended">推荐</string>
+    <string name="checkout_continue">继续结账</string>
+    <string name="checkout_money_back">30 天退款保证</string>
+    <string name="checkout_stripe_secure">由 Stripe 保护</string>
+    <string name="checkout_abandon_title">要取消此订单吗？</string>
+    <string name="checkout_abandon_message">您的套餐和支付方式不会保存，也未扣款。您可以随时重新开始。</string>
+    <string name="checkout_abandon_keep">继续查看</string>
+    <string name="checkout_abandon_confirm">取消订单</string>
+    <string name="checkout_card_term_unavailable">使用加密货币付款时可选择 2 年期。</string>
+    <string name="checkout_change_plan">更改套餐</string>
+    <string name="checkout_credits_applied">结账时将抵扣 %1$s 的额度</string>
+    <string name="checkout_subtotal">小计</string>
+    <string name="plan_view_full_features">查看完整功能列表</string>
 </resources>

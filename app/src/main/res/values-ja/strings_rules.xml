@@ -103,4 +103,6 @@
     <string name="rules_hint_finish_condition">すべての条件に値を入力してください。</string>
     <string name="rules_hint_add_action">アクションを 1 つ以上追加してください。</string>
     <string name="rules_hint_finish_action">すべてのアクションに値を入力してください。</string>
+    <string name="mute_category_notifications">%1$sの通知をミュート</string>
+    <string name="unmute_category_notifications">%1$sの通知のミュートを解除</string>
 </resources>

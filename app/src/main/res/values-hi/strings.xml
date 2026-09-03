@@ -110,7 +110,7 @@
     <string name="recovery_email_resent">सत्यापन ईमेल भेज दिया गया</string>
     <string name="recovery_email_resend_failed">जांच वाली ईमेल नहीं भेजी जा सकी</string>
     <string name="recovery_email_resend_cooldown">दोबारा भेजने से पहले थोड़ी देर रुकें</string>
-    <string name="recovery_email_already_in_use">यह पता पहले से ही अधिकतम 20 Aster खातों की सुरक्षा कर रहा है। कोई दूसरा पता इस्तेमाल करें।</string>
+    <string name="recovery_email_already_in_use">यह पता पहले से ही अधिकतम 10 Aster खातों की सुरक्षा कर रहा है। कोई दूसरा पता इस्तेमाल करें।</string>
     <string name="recovery_email_saved">रिकवरी ईमेल सहेजी गई</string>
     <string name="recovery_email_status_verified">सत्यापित</string>
     <string name="recovery_email_hidden">इस खाते पर सहेजा गया</string>
@@ -997,8 +997,6 @@
     <string name="two_factor_enabled_title">दो-चरणीय प्रमाणीकरण चालू हुआ</string>
     <string name="two_factor_enabled_subtitle">इन बैकअप कोड को किसी सुरक्षित जगह सहेजें। प्रमाणक खो जाने पर इनमें से हर एक एक बार इस्तेमाल हो सकता है।</string>
     <string name="two_factor_other_devices_signed_out">Aster ने आपके दूसरे डिवाइस से आपको साइन आउट कर दिया है। उन्हें फिर से इस्तेमाल करने के लिए साइन इन करें और अपने ऑथेंटिकेटर ऐप का कोड डालें।</string>
-    <string name="hardware_key_remove_last_title">अपनी आखिरी सुरक्षा कुंजी हटाएं?</string>
-    <string name="hardware_key_remove_last_description">यह आपके खाते का आखिरी दूसरा फ़ैक्टर है। इसे हटाने के लिए अपना पासवर्ड डालें।</string>
     <string name="new_backup_codes_title">नए बैकअप कोड</string>
     <string name="new_backup_codes_subtitle">आपके पुराने बैकअप कोड अब नहीं चलते। इन्हें किसी सुरक्षित जगह सहेजें।</string>
     <string name="copy_all_codes">सारे कोड कॉपी करें</string>
@@ -1344,7 +1342,6 @@
     <string name="ext_smtp_port">SMTP पोर्ट</string>
     <string name="ext_smtp_username">SMTP उपयोगकर्ता नाम</string>
     <string name="ext_smtp_password">SMTP पासवर्ड</string>
-    <string name="ext_save_imap">IMAP खाता सहेजें</string>
     <string name="ext_field_email">ईमेल पता</string>
     <string name="ext_field_password">पासवर्ड</string>
     <string name="ext_app_password_required">इस प्रदाता के लिए ऐप पासवर्ड चाहिए, आपका सामान्य खाता पासवर्ड नहीं।</string>
@@ -1382,14 +1379,15 @@
     <string name="ext_gmail_wizard_step_4_body">ऐप्लिकेशन पासवर्ड चिपकाएं, वह पासवर्ड नहीं जिससे आप Google में साइन इन करते हैं. स्पेस से कोई दिक्कत नहीं होती, क्योंकि Aster उन्हें हटा देता है.</string>
     <string name="ext_gmail_wizard_password_label">ऐप्लिकेशन पासवर्ड</string>
     <string name="ext_gmail_wizard_connect">Gmail कनेक्ट करें</string>
+    <string name="ext_save_imap">IMAP खाता सहेजें</string>
     <string name="ext_no_accounts">अभी तक कोई बाहरी खाता नहीं।</string>
     <string name="ext_sync_now">अभी सिंक करें</string>
     <string name="ext_delete">निकालें</string>
-    <string name="ext_connect_failed">कनेक्शन नहीं बन सका</string>
     <string name="ext_disconnect_title">खाता अलग करें</string>
     <string name="ext_disconnect_confirm">क्या आप वाकई यह खाता अलग करना चाहते हैं? इस खाते से सिंक हुए सभी ईमेल आपके इनबॉक्स में बने रहेंगे, जब तक आप उन्हें हटाना न चुनें।</string>
     <string name="ext_disconnect_button">अलग करें</string>
     <string name="ext_disconnect_delete_messages">इंपोर्ट किए गए संदेश भी हटाएं</string>
+    <string name="ext_connect_failed">कनेक्शन नहीं बन सका</string>
     <string name="ext_error_load_failed">आपके जुड़े हुए खाते लोड नहीं हो सके। फिर से कोशिश करने के लिए नीचे खींचें।</string>
     <string name="ext_error_oauth_failed">साइन इन शुरू नहीं हो सका। अपना कनेक्शन जांचें और फिर से कोशिश करें।</string>
     <string name="ext_error_manual_failed">खाता सहेजा नहीं जा सका। होस्ट, पोर्ट और लॉगिन जानकारी जांचें।</string>
@@ -2247,7 +2245,9 @@
     <string name="crypto_native_go_to_inbox">इनबॉक्स पर जाएं</string>
     <string name="crypto_native_copied">क्लिपबोर्ड पर कॉपी हो गया</string>
     <string name="crypto_native_copy_action">कॉपी करें</string>
-    <string name="crypto_native_cancel_invoice">भुगतान रद्द करें</string>
+    <string name="crypto_native_cancel_invoice">यह इनवॉइस रद्द करें</string>
+    <string name="crypto_native_cancel_confirm_title">यह इनवॉइस रद्द करें?</string>
+    <string name="crypto_native_cancel_confirm_body">भुगतान के पते पर नज़र रखना बंद हो जाएगा। रद्द करने के बाद उस पर पैसे न भेजें। आप कभी भी नया भुगतान शुरू कर सकते हैं।</string>
     <string name="crypto_native_cancel_failed">यह भुगतान रद्द नहीं हो सका। फिर से कोशिश करें।</string>
     <string name="crypto_native_paid_title">भुगतान पूरा हुआ</string>
     <string name="crypto_native_paid_body">आपका प्लान अब सक्रिय है। निजी ईमेल का साथ देने के लिए धन्यवाद।</string>
@@ -2858,6 +2858,8 @@
     <string name="folder_name_taken">इस नाम का फ़ोल्डर पहले से मौजूद है।</string>
     <string name="generate_ghost_alias_message">Aster एक बेतरतीब पता बनाता है जो आपके इनबॉक्स में फ़ॉरवर्ड करता है। अपने बाकी पतों पर असर डाले बिना इसे कभी भी खत्म कर दें।</string>
     <string name="hardware_key_remove_confirm">आप इस सुरक्षा कुंजी से अब साइन इन नहीं कर पाएंगे।</string>
+    <string name="hardware_key_remove_last_title">अपनी आखिरी सुरक्षा कुंजी हटाएं?</string>
+    <string name="hardware_key_remove_last_description">यह आपके खाते का आखिरी दूसरा फ़ैक्टर है। इसे हटाने के लिए अपना पासवर्ड डालें।</string>
     <string name="image_insert_failed">वह तस्वीर जोड़ी नहीं जा सकी। हो सकता है वह बहुत बड़ी हो या ऐसे प्रारूप में हो जो चलता नहीं।</string>
     <string name="invalid_recipient_address">“%1$s” कोई मान्य ईमेल पता नहीं है</string>
     <string name="label_name_taken">इस नाम का लेबल पहले से मौजूद है।</string>
@@ -2973,4 +2975,70 @@
     <string name="scheduled_recipients">प्रति: %1$s</string>
     <string name="scheduled_time_in_past">भविष्य का समय चुनें</string>
     <string name="cannot_mix_recipients">Aster उपयोगकर्ता और बाहरी पते एक ही ईमेल में नहीं भेजे जा सकते। उन्हें दो अलग संदेशों के रूप में भेजने पर यह काम करेगा।</string>
+    <string name="contact_groups">समूह</string>
+    <string name="new_group">नया समूह</string>
+    <string name="group_name">समूह का नाम</string>
+    <string name="delete_group">समूह हटाएं</string>
+    <string name="delete_group_message">इस समूह के संपर्क आपकी पता पुस्तिका में बने रहते हैं।</string>
+    <string name="no_groups_yet">अभी कोई समूह नहीं है</string>
+    <string name="no_groups_description">एक साथ कई लोगों को लिखने के लिए अपने संपर्कों को समूह में रखें। समूह के नाम सहेजे जाने से पहले इसी डिवाइस पर एन्क्रिप्ट हो जाते हैं।</string>
+    <string name="add_to_group">समूह में जोड़ें</string>
+    <string name="added_to_group">समूह में जोड़ा गया</string>
+    <string name="group_created">समूह बन गया</string>
+    <string name="merge">मर्ज करें</string>
+    <string name="merge_contacts">संपर्क मर्ज करें</string>
+    <string name="merge_contacts_description">वह संपर्क चुनें जिसे रखना है। Aster दूसरों की जानकारी भर देता है और फिर उन्हें हटा देता है। डुप्लिकेट इसी डिवाइस पर मिलते हैं और सर्वर को कुछ नहीं भेजा जाता।</string>
+    <string name="merge_keep_this">इसे रखें</string>
+    <string name="contacts_merged">संपर्क मर्ज हो गए</string>
+    <string name="review_duplicates">देखें</string>
+    <string name="delete_contacts_message">चुने गए संपर्क आपके खाते में साइन इन हर डिवाइस से हट जाते हैं।</string>
+    <string name="clear_selection">चयन हटाएं</string>
+    <string name="select_contacts_hint">संपर्क चुनने के लिए प्रोफ़ाइल फ़ोटो पर टैप करें।</string>
+    <plurals name="groups_count_plural">
+        <item quantity="one">%d समूह</item>
+        <item quantity="other">%d समूह</item>
+    </plurals>
+    <plurals name="group_members_plural">
+        <item quantity="one">%d सदस्य</item>
+        <item quantity="other">%d सदस्य</item>
+    </plurals>
+    <plurals name="duplicate_contacts_found">
+        <item quantity="one">%d संपर्क डुप्लिकेट लगता है</item>
+        <item quantity="other">%d संपर्क डुप्लिकेट लगते हैं</item>
+    </plurals>
+    <plurals name="delete_contacts_title">
+        <item quantity="one">%d संपर्क हटाएं?</item>
+        <item quantity="other">%d संपर्क हटाएं?</item>
+    </plurals>
+    <plurals name="contacts_deleted_plural">
+        <item quantity="one">%d संपर्क हटाया गया</item>
+        <item quantity="other">%d संपर्क हटाए गए</item>
+    </plurals>
+    <string name="checkout_review_title">जांचें और भुगतान करें</string>
+    <string name="checkout_term_title">सदस्यता की अवधि</string>
+    <string name="checkout_term_save">%1$s बचाएं</string>
+    <string name="checkout_term_per_month">%1$s/माह</string>
+    <string name="checkout_term_total">कुल %1$s</string>
+    <string name="checkout_term_crypto_only">सिर्फ़ क्रिप्टो</string>
+    <string name="checkout_amount_due">देय राशि</string>
+    <string name="checkout_what_you_get">क्या-क्या मिलता है?</string>
+    <string name="checkout_method_card">कार्ड</string>
+    <string name="checkout_method_card_note">रद्द करने तक अपने आप नवीनीकृत होता रहता है।</string>
+    <string name="checkout_method_crypto">क्रिप्टो</string>
+    <string name="checkout_crypto_note">क्रिप्टो से की गई खरीद अपने आप नवीनीकृत नहीं होती।</string>
+    <string name="checkout_payment_details">भुगतान की जानकारी</string>
+    <string name="checkout_best_value">सबसे किफ़ायती</string>
+    <string name="checkout_plan_recommended">अनुशंसित</string>
+    <string name="checkout_continue">चेकआउट पर जाएं</string>
+    <string name="checkout_money_back">30 दिन की पैसे वापसी की गारंटी</string>
+    <string name="checkout_stripe_secure">Stripe द्वारा सुरक्षित</string>
+    <string name="checkout_abandon_title">क्या यह ऑर्डर रद्द करना है?</string>
+    <string name="checkout_abandon_message">आपका प्लान और भुगतान विकल्प सहेजे नहीं जाते, और कोई शुल्क नहीं लिया गया है. आप कभी भी फिर से शुरू कर सकते हैं.</string>
+    <string name="checkout_abandon_keep">समीक्षा जारी रखें</string>
+    <string name="checkout_abandon_confirm">ऑर्डर रद्द करें</string>
+    <string name="checkout_card_term_unavailable">2 साल की अवधि क्रिप्टो से भुगतान करने पर उपलब्ध है।</string>
+    <string name="checkout_change_plan">प्लान बदलें</string>
+    <string name="checkout_credits_applied">चेकआउट पर %1$s के क्रेडिट लगाए जाएंगे</string>
+    <string name="checkout_subtotal">उप-योग</string>
+    <string name="plan_view_full_features">पूरी सुविधा सूची देखें</string>
 </resources>

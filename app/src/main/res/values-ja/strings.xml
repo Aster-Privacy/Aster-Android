@@ -78,7 +78,7 @@
     <string name="recovery_email_resent">確認メールを送信しました</string>
     <string name="recovery_email_resend_failed">確認メールを送信できませんでした</string>
     <string name="recovery_email_resend_cooldown">再送信まで少しお待ちください</string>
-    <string name="recovery_email_already_in_use">このアドレスはすでに上限の20件のAsterアカウントで使われています。別のアドレスを使ってください。</string>
+    <string name="recovery_email_already_in_use">このアドレスはすでに上限の10件のAsterアカウントで使われています。別のアドレスを使ってください。</string>
     <string name="recovery_email_saved">リカバリーメールを保存しました</string>
     <string name="recovery_email_status_verified">確認済み</string>
     <string name="recovery_email_hidden">このアカウントに保存済み</string>
@@ -680,8 +680,6 @@
     <string name="two_factor_enabled_title">二要素認証が有効になりました</string>
     <string name="two_factor_enabled_subtitle">これらのバックアップコードを安全な場所に保存してください。認証アプリを紛失した場合に各コードを1回使用できます。</string>
     <string name="two_factor_other_devices_signed_out">Aster はほかのデバイスからサインアウトしました。再び使うには、サインインして認証 App のコードを入力してください。</string>
-    <string name="hardware_key_remove_last_title">最後のセキュリティキーを削除しますか？</string>
-    <string name="hardware_key_remove_last_description">これはアカウントに残る最後の 2 要素です。削除するには、パスワードを入力してください。</string>
     <string name="new_backup_codes_title">新しいバックアップコード</string>
     <string name="new_backup_codes_subtitle">以前のバックアップコードは使用できなくなりました。これらを安全な場所に保存してください。</string>
     <string name="copy_all_codes">すべてのコードをコピー</string>
@@ -979,7 +977,6 @@
     <string name="ext_smtp_port">SMTP ポート</string>
     <string name="ext_smtp_username">SMTP ユーザー名</string>
     <string name="ext_smtp_password">SMTP パスワード</string>
-    <string name="ext_save_imap">IMAP アカウントを保存</string>
     <string name="ext_field_email">メールアドレス</string>
     <string name="ext_field_password">パスワード</string>
     <string name="ext_app_password_required">このプロバイダには、通常のアカウントパスワードではなくアプリパスワードが必要です。</string>
@@ -1017,14 +1014,15 @@
     <string name="ext_gmail_wizard_step_4_body">Google へのログインに使うパスワードではなく、アプリ パスワードを貼り付けてください。スペースが入っていても、Aster が取り除くので問題ありません。</string>
     <string name="ext_gmail_wizard_password_label">アプリ パスワード</string>
     <string name="ext_gmail_wizard_connect">Gmail に接続</string>
+    <string name="ext_save_imap">IMAP アカウントを保存</string>
     <string name="ext_no_accounts">外部アカウントはまだありません。</string>
     <string name="ext_sync_now">今すぐ同期</string>
     <string name="ext_delete">削除</string>
-    <string name="ext_connect_failed">接続に失敗しました</string>
     <string name="ext_disconnect_title">アカウントを切断</string>
     <string name="ext_disconnect_confirm">このアカウントを切断してもよろしいですか？このアカウントから同期済みのメールは、削除を選択しない限り受信トレイに残ります。</string>
     <string name="ext_disconnect_button">切断</string>
     <string name="ext_disconnect_delete_messages">インポートしたメッセージも削除する</string>
+    <string name="ext_connect_failed">接続に失敗しました</string>
     <string name="ext_error_load_failed">リンク済みアカウントを読み込めませんでした。引いて再試行してください。</string>
     <string name="ext_error_oauth_failed">サインインを開始できませんでした。接続を確認して再試行してください。</string>
     <string name="ext_error_manual_failed">アカウントを保存できませんでした。ホスト、ポート、資格情報を確認してください。</string>
@@ -2316,7 +2314,9 @@
     <string name="crypto_native_go_to_inbox">受信トレイへ</string>
     <string name="crypto_native_copied">クリップボードにコピーしました</string>
     <string name="crypto_native_copy_action">コピー</string>
-    <string name="crypto_native_cancel_invoice">支払いをキャンセル</string>
+    <string name="crypto_native_cancel_invoice">この請求をキャンセル</string>
+    <string name="crypto_native_cancel_confirm_title">この請求をキャンセルしますか？</string>
+    <string name="crypto_native_cancel_confirm_body">支払いアドレスの監視を停止します。キャンセル後はこのアドレスに送金しないでください。新しい支払いはいつでも開始できます。</string>
     <string name="crypto_native_cancel_failed">この支払いをキャンセルできませんでした。もう一度お試しください。</string>
     <string name="crypto_native_paid_title">支払い完了</string>
     <string name="crypto_native_paid_body">プランが有効になりました。プライベートなメールへのご支援ありがとうございます。</string>
@@ -2897,6 +2897,8 @@
     <string name="failed_to_move_items">移動できませんでした</string>
     <string name="folder_name_taken">この名前のフォルダはすでに存在します。</string>
     <string name="hardware_key_remove_confirm">このセキュリティキーではサインインできなくなります。</string>
+    <string name="hardware_key_remove_last_title">最後のセキュリティキーを削除しますか？</string>
+    <string name="hardware_key_remove_last_description">これはアカウントに残る最後の 2 要素です。削除するには、パスワードを入力してください。</string>
     <string name="image_insert_failed">この画像を追加できませんでした。サイズが大きすぎるか、対応していない形式の可能性があります。</string>
     <string name="invalid_recipient_address">「%1$s」は有効なメールアドレスではありません</string>
     <string name="label_name_taken">この名前のラベルはすでに存在します。</string>
@@ -3070,4 +3072,65 @@
     <string name="scheduled_for">%1$s に送信予定</string>
     <string name="scheduled_recipients">宛先: %1$s</string>
     <string name="scheduled_time_in_past">未来の時刻を選択してください</string>
+    <string name="contact_groups">グループ</string>
+    <string name="new_group">新しいグループ</string>
+    <string name="group_name">グループ名</string>
+    <string name="delete_group">グループを削除</string>
+    <string name="delete_group_message">このグループの連絡先はアドレス帳に残ります。</string>
+    <string name="no_groups_yet">グループがありません</string>
+    <string name="no_groups_description">連絡先をグループにまとめると、複数の相手にまとめて送信できます。グループ名は保存前にこのデバイスで暗号化されます。</string>
+    <string name="add_to_group">グループに追加</string>
+    <string name="added_to_group">グループに追加しました</string>
+    <string name="group_created">グループを作成しました</string>
+    <string name="merge">統合</string>
+    <string name="merge_contacts">連絡先を統合</string>
+    <string name="merge_contacts_description">残す連絡先を選択してください。Aster が他の連絡先の情報を引き継ぎ、それらを削除します。重複はこのデバイスで検出され、サーバーには何も送信されません。</string>
+    <string name="merge_keep_this">これを残す</string>
+    <string name="contacts_merged">連絡先を統合しました</string>
+    <string name="review_duplicates">確認</string>
+    <string name="delete_contacts_message">選択した連絡先は、アカウントにログインしているすべてのデバイスから削除されます。</string>
+    <string name="clear_selection">選択を解除</string>
+    <string name="select_contacts_hint">プロフィール写真をタップして連絡先を選択します。</string>
+    <plurals name="groups_count_plural">
+        <item quantity="other">%d 件のグループ</item>
+    </plurals>
+    <plurals name="group_members_plural">
+        <item quantity="other">メンバー %d 人</item>
+    </plurals>
+    <plurals name="duplicate_contacts_found">
+        <item quantity="other">%d 件の連絡先が重複しているようです</item>
+    </plurals>
+    <plurals name="delete_contacts_title">
+        <item quantity="other">%d 件の連絡先を削除しますか?</item>
+    </plurals>
+    <plurals name="contacts_deleted_plural">
+        <item quantity="other">%d 件の連絡先を削除しました</item>
+    </plurals>
+    <string name="checkout_review_title">内容を確認して支払う</string>
+    <string name="checkout_term_title">契約期間</string>
+    <string name="checkout_term_save">%1$s お得</string>
+    <string name="checkout_term_per_month">%1$s/月</string>
+    <string name="checkout_term_total">合計 %1$s</string>
+    <string name="checkout_term_crypto_only">暗号資産のみ</string>
+    <string name="checkout_amount_due">お支払い金額</string>
+    <string name="checkout_what_you_get">含まれる内容</string>
+    <string name="checkout_method_card">カード</string>
+    <string name="checkout_method_card_note">キャンセルするまで自動的に更新されます。</string>
+    <string name="checkout_method_crypto">仮想通貨</string>
+    <string name="checkout_crypto_note">仮想通貨での購入は自動更新されません。</string>
+    <string name="checkout_payment_details">お支払い情報</string>
+    <string name="checkout_best_value">お得</string>
+    <string name="checkout_plan_recommended">おすすめ</string>
+    <string name="checkout_continue">お支払いに進む</string>
+    <string name="checkout_money_back">30 日間の返金保証</string>
+    <string name="checkout_stripe_secure">Stripe による保護</string>
+    <string name="checkout_abandon_title">この注文をキャンセルしますか？</string>
+    <string name="checkout_abandon_message">プランと支払い方法は保存されず、請求も発生していません。いつでもやり直せます。</string>
+    <string name="checkout_abandon_keep">確認を続ける</string>
+    <string name="checkout_abandon_confirm">注文をキャンセル</string>
+    <string name="checkout_card_term_unavailable">2年契約は暗号資産でのお支払い時にご利用いただけます。</string>
+    <string name="checkout_change_plan">プランを変更</string>
+    <string name="checkout_credits_applied">お支払い時に%1$sのクレジットが適用されます</string>
+    <string name="checkout_subtotal">小計</string>
+    <string name="plan_view_full_features">機能一覧を見る</string>
 </resources>

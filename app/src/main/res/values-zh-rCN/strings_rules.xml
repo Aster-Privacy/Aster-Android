@@ -103,4 +103,6 @@
     <string name="rules_hint_finish_condition">为每个条件填写值。</string>
     <string name="rules_hint_add_action">至少添加一个操作。</string>
     <string name="rules_hint_finish_action">为每个操作填写值。</string>
+    <string name="mute_category_notifications">将%1$s的通知静音</string>
+    <string name="unmute_category_notifications">取消%1$s的通知静音</string>
 </resources>

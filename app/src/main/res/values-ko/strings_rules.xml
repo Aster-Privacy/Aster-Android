@@ -103,4 +103,6 @@
     <string name="rules_hint_finish_condition">모든 조건에 값을 입력하세요.</string>
     <string name="rules_hint_add_action">작업을 하나 이상 추가하세요.</string>
     <string name="rules_hint_finish_action">모든 작업에 값을 입력하세요.</string>
+    <string name="mute_category_notifications">%1$s 알림 음소거</string>
+    <string name="unmute_category_notifications">%1$s 알림 음소거 해제</string>
 </resources>

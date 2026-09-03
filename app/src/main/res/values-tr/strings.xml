@@ -78,7 +78,7 @@
     <string name="recovery_email_resent">Doğrulama e-postası gönderildi</string>
     <string name="recovery_email_resend_failed">Doğrulama e-postası gönderilemedi</string>
     <string name="recovery_email_resend_cooldown">Yeniden göndermeden önce lütfen bir an bekleyin</string>
-    <string name="recovery_email_already_in_use">Bu adres zaten en fazla 20 Aster hesabını koruyor. Farklı bir adres kullanın.</string>
+    <string name="recovery_email_already_in_use">Bu adres zaten en fazla 10 Aster hesabını koruyor. Farklı bir adres kullanın.</string>
     <string name="recovery_email_saved">Kurtarma e-postası kaydedildi</string>
     <string name="recovery_email_status_verified">Doğrulandı</string>
     <string name="recovery_email_hidden">Bu hesapta kayıtlı</string>
@@ -680,8 +680,6 @@
     <string name="two_factor_enabled_title">İki faktörlü kimlik doğrulama etkinleştirildi</string>
     <string name="two_factor_enabled_subtitle">Bu yedek kodları güvenli bir yerde saklayın. Her biri, kimlik doğrulayıcınızı kaybederseniz bir kez kullanılabilir.</string>
     <string name="two_factor_other_devices_signed_out">Aster diğer cihazlarındaki oturumunu kapattı. Bunları yeniden kullanmak için oturum aç ve kimlik doğrulama uygulamandaki kodu gir.</string>
-    <string name="hardware_key_remove_last_title">Son güvenlik anahtarın kaldırılsın mı?</string>
-    <string name="hardware_key_remove_last_description">Bu, hesabındaki son ikinci doğrulama adımı. Kaldırmak için parolanı gir.</string>
     <string name="new_backup_codes_title">Yeni yedek kodlar</string>
     <string name="new_backup_codes_subtitle">Eski yedek kodlarınız artık çalışmıyor. Bunları güvenli bir yerde saklayın.</string>
     <string name="copy_all_codes">Tüm kodları kopyala</string>
@@ -979,7 +977,6 @@
     <string name="ext_smtp_port">SMTP bağlantı noktası</string>
     <string name="ext_smtp_username">SMTP kullanıcı adı</string>
     <string name="ext_smtp_password">SMTP parolası</string>
-    <string name="ext_save_imap">IMAP hesabını kaydet</string>
     <string name="ext_field_email">E-posta adresi</string>
     <string name="ext_field_password">Parola</string>
     <string name="ext_app_password_required">Bu sağlayıcı, her zamanki hesap parolanız yerine uygulama parolası ister.</string>
@@ -1017,14 +1014,15 @@
     <string name="ext_gmail_wizard_step_4_body">Google\'da oturum açarken kullandığınız şifreyi değil, uygulama şifresini yapıştırın. Boşluklar sorun değil, çünkü Aster onları sizin için kaldırır.</string>
     <string name="ext_gmail_wizard_password_label">Uygulama şifresi</string>
     <string name="ext_gmail_wizard_connect">Gmail\'i bağla</string>
+    <string name="ext_save_imap">IMAP hesabını kaydet</string>
     <string name="ext_no_accounts">Henüz dış hesap yok.</string>
     <string name="ext_sync_now">Şimdi eşitle</string>
     <string name="ext_delete">Kaldır</string>
-    <string name="ext_connect_failed">Bağlantı başarısız</string>
     <string name="ext_disconnect_title">Hesabın Bağlantısını Kes</string>
     <string name="ext_disconnect_confirm">Bu hesabın bağlantısını kesmek istediğinizden emin misiniz? Bu hesaptan senkronize edilen tüm e-postalar, silmeyi seçmediğiniz sürece gelen kutunuzda kalacak.</string>
     <string name="ext_disconnect_button">Bağlantıyı Kes</string>
     <string name="ext_disconnect_delete_messages">İçe aktarılan mesajları da sil</string>
+    <string name="ext_connect_failed">Bağlantı başarısız</string>
     <string name="ext_error_load_failed">Bağlı hesaplarınız yüklenemedi. Yeniden denemek için çekin.</string>
     <string name="ext_error_oauth_failed">Oturum açma başlatılamadı. Bağlantınızı kontrol edip tekrar deneyin.</string>
     <string name="ext_error_manual_failed">Hesap kaydedilemedi. Sunucu, bağlantı noktası ve kimlik bilgilerini doğrulayın.</string>
@@ -2320,7 +2318,9 @@
     <string name="crypto_native_go_to_inbox">Gelen Kutusuna git</string>
     <string name="crypto_native_copied">Panoya kopyalandı</string>
     <string name="crypto_native_copy_action">Kopyala</string>
-    <string name="crypto_native_cancel_invoice">Ödemeyi iptal et</string>
+    <string name="crypto_native_cancel_invoice">Bu faturayı iptal et</string>
+    <string name="crypto_native_cancel_confirm_title">Bu fatura iptal edilsin mi?</string>
+    <string name="crypto_native_cancel_confirm_body">Ödeme adresi artık izlenmeyecek. İptalden sonra bu adrese fon göndermeyin. İstediğiniz zaman yeni bir ödeme başlatabilirsiniz.</string>
     <string name="crypto_native_cancel_failed">Bu ödeme iptal edilemedi. Lütfen tekrar deneyin.</string>
     <string name="crypto_native_paid_title">Ödeme tamamlandı</string>
     <string name="crypto_native_paid_body">Planınız artık aktif. Gizli e-postayı desteklediğiniz için teşekkürler.</string>
@@ -2908,6 +2908,8 @@
     <string name="failed_to_move_items">Taşınamadı</string>
     <string name="folder_name_taken">Bu adda bir klasör zaten var.</string>
     <string name="hardware_key_remove_confirm">Bu güvenlik anahtarıyla artık oturum açamazsınız.</string>
+    <string name="hardware_key_remove_last_title">Son güvenlik anahtarın kaldırılsın mı?</string>
+    <string name="hardware_key_remove_last_description">Bu, hesabındaki son ikinci doğrulama adımı. Kaldırmak için parolanı gir.</string>
     <string name="image_insert_failed">Bu görsel eklenemedi. Çok büyük olabilir veya desteklenmeyen bir biçimde olabilir.</string>
     <string name="invalid_recipient_address">“%1$s” geçerli bir e-posta adresi değil</string>
     <string name="label_name_taken">Bu adda bir etiket zaten var.</string>
@@ -3083,4 +3085,70 @@
     <string name="scheduled_for">%1$s için zamanlandı</string>
     <string name="scheduled_recipients">Kime: %1$s</string>
     <string name="scheduled_time_in_past">Gelecekte bir zaman seçin</string>
+    <string name="contact_groups">Gruplar</string>
+    <string name="new_group">Yeni grup</string>
+    <string name="group_name">Grup adı</string>
+    <string name="delete_group">Grubu sil</string>
+    <string name="delete_group_message">Bu gruptaki kişiler adres defterinizde kalır.</string>
+    <string name="no_groups_yet">Henüz grup yok</string>
+    <string name="no_groups_description">Aynı anda birden çok kişiye yazmak için kişilerinizi gruplayın. Grup adları kaydedilmeden önce bu cihazda şifrelenir.</string>
+    <string name="add_to_group">Gruba ekle</string>
+    <string name="added_to_group">Gruba eklendi</string>
+    <string name="group_created">Grup oluşturuldu</string>
+    <string name="merge">Birleştir</string>
+    <string name="merge_contacts">Kişileri birleştir</string>
+    <string name="merge_contacts_description">Kalmasını istediğiniz kişiyi seçin. Aster diğerlerindeki bilgileri tamamlar ve sonra onları kaldırır. Kopyalar bu cihazda bulunur ve sunucuya hiçbir şey gönderilmez.</string>
+    <string name="merge_keep_this">Bunu koru</string>
+    <string name="contacts_merged">Kişiler birleştirildi</string>
+    <string name="review_duplicates">İncele</string>
+    <string name="delete_contacts_message">Seçtiğiniz kişiler, hesabınızın açık olduğu tüm cihazlardan silinir.</string>
+    <string name="clear_selection">Seçimi temizle</string>
+    <string name="select_contacts_hint">Bir kişiyi seçmek için profil fotoğrafına dokunun.</string>
+    <plurals name="groups_count_plural">
+        <item quantity="one">%d grup</item>
+        <item quantity="other">%d grup</item>
+    </plurals>
+    <plurals name="group_members_plural">
+        <item quantity="one">%d üye</item>
+        <item quantity="other">%d üye</item>
+    </plurals>
+    <plurals name="duplicate_contacts_found">
+        <item quantity="one">%d kişi kopya görünüyor</item>
+        <item quantity="other">%d kişi kopya görünüyor</item>
+    </plurals>
+    <plurals name="delete_contacts_title">
+        <item quantity="one">%d kişi silinsin mi?</item>
+        <item quantity="other">%d kişi silinsin mi?</item>
+    </plurals>
+    <plurals name="contacts_deleted_plural">
+        <item quantity="one">%d kişi silindi</item>
+        <item quantity="other">%d kişi silindi</item>
+    </plurals>
+    <string name="checkout_review_title">Gözden geçir ve öde</string>
+    <string name="checkout_term_title">Abonelik süresi</string>
+    <string name="checkout_term_save">%1$s tasarruf edin</string>
+    <string name="checkout_term_per_month">%1$s/ay</string>
+    <string name="checkout_term_total">toplam %1$s</string>
+    <string name="checkout_term_crypto_only">Yalnızca kripto</string>
+    <string name="checkout_amount_due">Ödenecek tutar</string>
+    <string name="checkout_what_you_get">Neler dahil?</string>
+    <string name="checkout_method_card">Kart</string>
+    <string name="checkout_method_card_note">İptal edene kadar otomatik olarak yenilenir.</string>
+    <string name="checkout_method_crypto">Kripto</string>
+    <string name="checkout_crypto_note">Kripto ödemeleri otomatik olarak yenilenmez.</string>
+    <string name="checkout_payment_details">Ödeme Detayları</string>
+    <string name="checkout_best_value">En İyi Değer</string>
+    <string name="checkout_plan_recommended">Önerilen</string>
+    <string name="checkout_continue">Ödemeye Devam Et</string>
+    <string name="checkout_money_back">30 gün para iade garantisi</string>
+    <string name="checkout_stripe_secure">Stripe ile güvende</string>
+    <string name="checkout_abandon_title">Bu sipariş iptal edilsin mi?</string>
+    <string name="checkout_abandon_message">Planınız ve ödeme seçiminiz kaydedilmez ve hiçbir tutar tahsil edilmedi. İstediğiniz zaman yeniden başlayabilirsiniz.</string>
+    <string name="checkout_abandon_keep">İncelemeye devam et</string>
+    <string name="checkout_abandon_confirm">Siparişi iptal et</string>
+    <string name="checkout_card_term_unavailable">2 yıllık süre kripto ile ödeme yaptığınızda kullanılabilir.</string>
+    <string name="checkout_change_plan">Plan Değiştir</string>
+    <string name="checkout_credits_applied">Ödeme sırasında %1$s tutarında kredi uygulanacak</string>
+    <string name="checkout_subtotal">Ara toplam</string>
+    <string name="plan_view_full_features">Tüm özellik listesini görüntüle</string>
 </resources>

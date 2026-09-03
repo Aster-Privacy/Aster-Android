@@ -103,4 +103,6 @@
     <string name="rules_hint_finish_condition">Укажите значение для каждого условия.</string>
     <string name="rules_hint_add_action">Добавьте хотя бы одно действие.</string>
     <string name="rules_hint_finish_action">Укажите значение для каждого действия.</string>
+    <string name="mute_category_notifications">Отключить уведомления для %1$s</string>
+    <string name="unmute_category_notifications">Включить уведомления для %1$s</string>
 </resources>

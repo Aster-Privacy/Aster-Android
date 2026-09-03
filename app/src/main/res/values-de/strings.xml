@@ -79,7 +79,7 @@
     <string name="recovery_email_resent">Bestätigungs-E-Mail gesendet</string>
     <string name="recovery_email_resend_failed">Bestätigungs-E-Mail konnte nicht gesendet werden</string>
     <string name="recovery_email_resend_cooldown">Bitte warten Sie einen Moment, bevor Sie erneut senden</string>
-    <string name="recovery_email_already_in_use">Diese Adresse schützt bereits die maximal möglichen 20 Aster-Konten. Verwenden Sie eine andere Adresse.</string>
+    <string name="recovery_email_already_in_use">Diese Adresse schützt bereits die maximal möglichen 10 Aster-Konten. Verwenden Sie eine andere Adresse.</string>
     <string name="recovery_email_saved">Wiederherstellungs-E-Mail gespeichert</string>
     <string name="recovery_email_status_verified">Bestätigt</string>
     <string name="recovery_email_hidden">In diesem Konto gespeichert</string>
@@ -681,8 +681,6 @@
     <string name="two_factor_enabled_title">Zwei-Faktor-Authentifizierung aktiviert</string>
     <string name="two_factor_enabled_subtitle">Speichern Sie diese Sicherungscodes an einem sicheren Ort. Jeder kann einmal verwendet werden, wenn Sie Ihren Authentifikator verlieren.</string>
     <string name="two_factor_other_devices_signed_out">Aster hat dich auf deinen anderen Geräten abgemeldet. Um sie wieder zu nutzen, melde dich an und gib einen Code aus deiner Authenticator-App ein.</string>
-    <string name="hardware_key_remove_last_title">Letzten Sicherheitsschlüssel entfernen?</string>
-    <string name="hardware_key_remove_last_description">Das ist der letzte zweite Faktor deines Kontos. Gib dein Passwort ein, um ihn zu entfernen.</string>
     <string name="new_backup_codes_title">Neue Sicherungscodes</string>
     <string name="new_backup_codes_subtitle">Ihre alten Sicherungscodes funktionieren nicht mehr. Speichern Sie diese an einem sicheren Ort.</string>
     <string name="copy_all_codes">Alle Codes kopieren</string>
@@ -980,7 +978,6 @@
     <string name="ext_smtp_port">SMTP-Port</string>
     <string name="ext_smtp_username">SMTP-Benutzername</string>
     <string name="ext_smtp_password">SMTP-Passwort</string>
-    <string name="ext_save_imap">IMAP-Konto speichern</string>
     <string name="ext_field_email">E-Mail-Adresse</string>
     <string name="ext_field_password">Passwort</string>
     <string name="ext_app_password_required">Dieser Anbieter benötigt ein App-Passwort, nicht dein übliches Kontopasswort.</string>
@@ -1018,14 +1015,15 @@
     <string name="ext_gmail_wizard_step_4_body">Füge das App-Passwort ein, nicht das Passwort, mit dem du dich bei Google anmeldest. Leerzeichen sind kein Problem, denn Aster entfernt sie für dich.</string>
     <string name="ext_gmail_wizard_password_label">App-Passwort</string>
     <string name="ext_gmail_wizard_connect">Gmail verbinden</string>
+    <string name="ext_save_imap">IMAP-Konto speichern</string>
     <string name="ext_no_accounts">Noch keine externen Konten.</string>
     <string name="ext_sync_now">Jetzt synchronisieren</string>
     <string name="ext_delete">Entfernen</string>
-    <string name="ext_connect_failed">Verbindung fehlgeschlagen</string>
     <string name="ext_disconnect_title">Konto trennen</string>
     <string name="ext_disconnect_confirm">Möchten Sie dieses Konto wirklich trennen? Alle synchronisierten E-Mails von diesem Konto verbleiben in Ihrem Posteingang, es sei denn, Sie löschen sie.</string>
     <string name="ext_disconnect_button">Trennen</string>
     <string name="ext_disconnect_delete_messages">Importierte Nachrichten ebenfalls löschen</string>
+    <string name="ext_connect_failed">Verbindung fehlgeschlagen</string>
     <string name="ext_error_load_failed">Verknüpfte Konten konnten nicht geladen werden. Zum Wiederholen ziehen.</string>
     <string name="ext_error_oauth_failed">Anmeldung konnte nicht gestartet werden. Verbindung prüfen und erneut versuchen.</string>
     <string name="ext_error_manual_failed">Konto konnte nicht gespeichert werden. Host, Port und Zugangsdaten prüfen.</string>
@@ -2321,7 +2319,9 @@
     <string name="crypto_native_go_to_inbox">Zum Posteingang</string>
     <string name="crypto_native_copied">In die Zwischenablage kopiert</string>
     <string name="crypto_native_copy_action">Kopieren</string>
-    <string name="crypto_native_cancel_invoice">Zahlung abbrechen</string>
+    <string name="crypto_native_cancel_invoice">Diese Rechnung stornieren</string>
+    <string name="crypto_native_cancel_confirm_title">Diese Rechnung stornieren?</string>
+    <string name="crypto_native_cancel_confirm_body">Die Zahlungsadresse wird nicht mehr überwacht. Senden Sie nach dem Stornieren keine Gelder mehr an sie. Sie können jederzeit eine neue Zahlung starten.</string>
     <string name="crypto_native_cancel_failed">Diese Zahlung konnte nicht abgebrochen werden. Bitte versuchen Sie es erneut.</string>
     <string name="crypto_native_paid_title">Zahlung abgeschlossen</string>
     <string name="crypto_native_paid_body">Ihr Tarif ist jetzt aktiv. Danke, dass Sie private E-Mail unterstützen.</string>
@@ -2909,6 +2909,8 @@
     <string name="failed_to_move_items">Verschieben nicht möglich</string>
     <string name="folder_name_taken">Ein Ordner mit diesem Namen existiert bereits.</string>
     <string name="hardware_key_remove_confirm">Du kannst dich mit diesem Sicherheitsschlüssel dann nicht mehr anmelden.</string>
+    <string name="hardware_key_remove_last_title">Letzten Sicherheitsschlüssel entfernen?</string>
+    <string name="hardware_key_remove_last_description">Das ist der letzte zweite Faktor deines Kontos. Gib dein Passwort ein, um ihn zu entfernen.</string>
     <string name="image_insert_failed">Dieses Bild konnte nicht hinzugefügt werden. Es ist möglicherweise zu groß oder hat ein nicht unterstütztes Format.</string>
     <string name="invalid_recipient_address">„%1$s“ ist keine gültige E-Mail-Adresse</string>
     <string name="label_name_taken">Ein Label mit diesem Namen existiert bereits.</string>
@@ -3084,4 +3086,70 @@
     <string name="scheduled_for">Geplant für %1$s</string>
     <string name="scheduled_recipients">An: %1$s</string>
     <string name="scheduled_time_in_past">Wähle einen Zeitpunkt in der Zukunft</string>
+    <string name="contact_groups">Gruppen</string>
+    <string name="new_group">Neue Gruppe</string>
+    <string name="group_name">Gruppenname</string>
+    <string name="delete_group">Gruppe löschen</string>
+    <string name="delete_group_message">Die Kontakte in dieser Gruppe bleiben in Ihrem Adressbuch.</string>
+    <string name="no_groups_yet">Noch keine Gruppen</string>
+    <string name="no_groups_description">Fassen Sie Kontakte zu Gruppen zusammen, um mehrere Personen gleichzeitig anzuschreiben. Gruppennamen werden auf diesem Gerät verschlüsselt, bevor sie gespeichert werden.</string>
+    <string name="add_to_group">Zu Gruppe hinzufügen</string>
+    <string name="added_to_group">Zur Gruppe hinzugefügt</string>
+    <string name="group_created">Gruppe erstellt</string>
+    <string name="merge">Zusammenführen</string>
+    <string name="merge_contacts">Kontakte zusammenführen</string>
+    <string name="merge_contacts_description">Wählen Sie den Kontakt, der erhalten bleibt. Aster ergänzt fehlende Angaben aus den anderen und entfernt sie anschließend. Duplikate werden auf diesem Gerät erkannt, und nichts davon wird an den Server gesendet.</string>
+    <string name="merge_keep_this">Diesen behalten</string>
+    <string name="contacts_merged">Kontakte zusammengeführt</string>
+    <string name="review_duplicates">Prüfen</string>
+    <string name="delete_contacts_message">Die ausgewählten Kontakte werden auf allen Geräten gelöscht, die bei Ihrem Konto angemeldet sind.</string>
+    <string name="clear_selection">Auswahl aufheben</string>
+    <string name="select_contacts_hint">Tippen Sie auf ein Profilbild, um einen Kontakt auszuwählen.</string>
+    <plurals name="groups_count_plural">
+        <item quantity="one">%d Gruppe</item>
+        <item quantity="other">%d Gruppen</item>
+    </plurals>
+    <plurals name="group_members_plural">
+        <item quantity="one">%d Mitglied</item>
+        <item quantity="other">%d Mitglieder</item>
+    </plurals>
+    <plurals name="duplicate_contacts_found">
+        <item quantity="one">%d Kontakt sieht wie ein Duplikat aus</item>
+        <item quantity="other">%d Kontakte sehen wie Duplikate aus</item>
+    </plurals>
+    <plurals name="delete_contacts_title">
+        <item quantity="one">%d Kontakt löschen?</item>
+        <item quantity="other">%d Kontakte löschen?</item>
+    </plurals>
+    <plurals name="contacts_deleted_plural">
+        <item quantity="one">%d Kontakt gelöscht</item>
+        <item quantity="other">%d Kontakte gelöscht</item>
+    </plurals>
+    <string name="checkout_review_title">Prüfen und bezahlen</string>
+    <string name="checkout_term_title">Laufzeit des Abonnements</string>
+    <string name="checkout_term_save">Spare %1$s</string>
+    <string name="checkout_term_per_month">%1$s/Monat</string>
+    <string name="checkout_term_total">%1$s insgesamt</string>
+    <string name="checkout_term_crypto_only">Nur Krypto</string>
+    <string name="checkout_amount_due">Fälliger Betrag</string>
+    <string name="checkout_what_you_get">Was ist enthalten?</string>
+    <string name="checkout_method_card">Karte</string>
+    <string name="checkout_method_card_note">Verlängert sich automatisch, bis du kündigst.</string>
+    <string name="checkout_method_crypto">Krypto</string>
+    <string name="checkout_crypto_note">Krypto-Käufe verlängern sich nicht automatisch.</string>
+    <string name="checkout_payment_details">Zahlungsdetails</string>
+    <string name="checkout_best_value">Bestes Angebot</string>
+    <string name="checkout_plan_recommended">Empfohlen</string>
+    <string name="checkout_continue">Weiter zur Kasse</string>
+    <string name="checkout_money_back">30 Tage Geld-zurück-Garantie</string>
+    <string name="checkout_stripe_secure">Gesichert durch Stripe</string>
+    <string name="checkout_abandon_title">Diese Bestellung abbrechen?</string>
+    <string name="checkout_abandon_message">Dein Tarif und deine Zahlungsauswahl werden nicht gespeichert, und es wurde nichts abgebucht. Du kannst jederzeit neu beginnen.</string>
+    <string name="checkout_abandon_keep">Weiter ansehen</string>
+    <string name="checkout_abandon_confirm">Bestellung abbrechen</string>
+    <string name="checkout_card_term_unavailable">Die 2-Jahres-Laufzeit ist bei Zahlung mit Krypto verfügbar.</string>
+    <string name="checkout_change_plan">Tarif wechseln</string>
+    <string name="checkout_credits_applied">%1$s Guthaben wird beim Bezahlvorgang angerechnet</string>
+    <string name="checkout_subtotal">Zwischensumme</string>
+    <string name="plan_view_full_features">Vollständige Funktionsliste ansehen</string>
 </resources>

@@ -78,7 +78,7 @@
     <string name="recovery_email_resent">E-mail de verificação enviado</string>
     <string name="recovery_email_resend_failed">Não foi possível enviar o e-mail de verificação</string>
     <string name="recovery_email_resend_cooldown">Aguarde um momento antes de reenviar</string>
-    <string name="recovery_email_already_in_use">Este endereço já protege o máximo de 20 contas Aster. Use outro endereço.</string>
+    <string name="recovery_email_already_in_use">Este endereço já protege o máximo de 10 contas Aster. Use outro endereço.</string>
     <string name="recovery_email_saved">E-mail de recuperação salvo</string>
     <string name="recovery_email_status_verified">Verificado</string>
     <string name="recovery_email_hidden">Salvo nesta conta</string>
@@ -680,8 +680,6 @@
     <string name="two_factor_enabled_title">Autenticação de dois fatores ativada</string>
     <string name="two_factor_enabled_subtitle">Salve estes códigos de backup em um lugar seguro. Cada um pode ser usado uma vez se você perder seu autenticador.</string>
     <string name="two_factor_other_devices_signed_out">O Aster terminou a sessão nos seus outros dispositivos. Para voltar a usá-los, inicie sessão e introduza um código da sua app de autenticação.</string>
-    <string name="hardware_key_remove_last_title">Remover a sua última chave de segurança?</string>
-    <string name="hardware_key_remove_last_description">Este é o último segundo fator da sua conta. Para o remover, introduza a sua palavra-passe.</string>
     <string name="new_backup_codes_title">Novos códigos de backup</string>
     <string name="new_backup_codes_subtitle">Seus códigos de backup antigos não funcionam mais. Salve estes em um lugar seguro.</string>
     <string name="copy_all_codes">Copiar todos os códigos</string>
@@ -979,7 +977,6 @@
     <string name="ext_smtp_port">Porta SMTP</string>
     <string name="ext_smtp_username">Usuário SMTP</string>
     <string name="ext_smtp_password">Senha SMTP</string>
-    <string name="ext_save_imap">Salvar conta IMAP</string>
     <string name="ext_field_email">Endereço de email</string>
     <string name="ext_field_password">Senha</string>
     <string name="ext_app_password_required">Este provedor exige uma senha de app, não a senha habitual da conta.</string>
@@ -1017,14 +1014,15 @@
     <string name="ext_gmail_wizard_step_4_body">Cole a senha de app, não a senha que você usa para entrar no Google. Espaços não são problema, porque o Aster os remove para você.</string>
     <string name="ext_gmail_wizard_password_label">Senha de app</string>
     <string name="ext_gmail_wizard_connect">Conectar o Gmail</string>
+    <string name="ext_save_imap">Salvar conta IMAP</string>
     <string name="ext_no_accounts">Ainda não há contas externas.</string>
     <string name="ext_sync_now">Sincronizar agora</string>
     <string name="ext_delete">Remover</string>
-    <string name="ext_connect_failed">Falha na conexão</string>
     <string name="ext_disconnect_title">Desconectar conta</string>
     <string name="ext_disconnect_confirm">Tem certeza de que deseja desconectar esta conta? Você pode reconectá-la a qualquer momento.</string>
     <string name="ext_disconnect_button">Desconectar</string>
     <string name="ext_disconnect_delete_messages">Também excluir e-mails importados desta conta</string>
+    <string name="ext_connect_failed">Falha na conexão</string>
     <string name="ext_error_load_failed">Não foi possível carregar suas contas vinculadas. Puxe para tentar novamente.</string>
     <string name="ext_error_oauth_failed">Não foi possível iniciar o login. Verifique sua conexão e tente novamente.</string>
     <string name="ext_error_manual_failed">Não foi possível salvar a conta. Verifique o host, porta e credenciais.</string>
@@ -2320,7 +2318,9 @@
     <string name="crypto_native_go_to_inbox">Ir para a caixa de entrada</string>
     <string name="crypto_native_copied">Copiado para a área de transferência</string>
     <string name="crypto_native_copy_action">Copiar</string>
-    <string name="crypto_native_cancel_invoice">Cancelar pagamento</string>
+    <string name="crypto_native_cancel_invoice">Cancelar esta fatura</string>
+    <string name="crypto_native_cancel_confirm_title">Cancelar esta fatura?</string>
+    <string name="crypto_native_cancel_confirm_body">O endereço de pagamento deixará de ser monitorado. Não envie fundos para ele após o cancelamento. Você pode iniciar um novo pagamento a qualquer momento.</string>
     <string name="crypto_native_cancel_failed">Não foi possível cancelar este pagamento. Tente novamente.</string>
     <string name="crypto_native_paid_title">Pagamento concluído</string>
     <string name="crypto_native_paid_body">Seu plano já está ativo. Obrigado por apoiar o e-mail privado.</string>
@@ -2908,6 +2908,8 @@
     <string name="failed_to_move_items">Não foi possível mover</string>
     <string name="folder_name_taken">Já existe uma pasta com esse nome.</string>
     <string name="hardware_key_remove_confirm">Deixas de conseguir iniciar sessão com esta chave de segurança.</string>
+    <string name="hardware_key_remove_last_title">Remover a sua última chave de segurança?</string>
+    <string name="hardware_key_remove_last_description">Este é o último segundo fator da sua conta. Para o remover, introduza a sua palavra-passe.</string>
     <string name="image_insert_failed">Não foi possível adicionar essa imagem. Pode ser demasiado grande ou ter um formato não suportado.</string>
     <string name="invalid_recipient_address">“%1$s” não é um endereço de email válido</string>
     <string name="label_name_taken">Já existe uma etiqueta com esse nome.</string>
@@ -3083,4 +3085,70 @@
     <string name="scheduled_for">Agendado para %1$s</string>
     <string name="scheduled_recipients">Para: %1$s</string>
     <string name="scheduled_time_in_past">Escolha um horário no futuro</string>
+    <string name="contact_groups">Grupos</string>
+    <string name="new_group">Novo grupo</string>
+    <string name="group_name">Nome do grupo</string>
+    <string name="delete_group">Excluir grupo</string>
+    <string name="delete_group_message">Os contatos deste grupo continuam no seu catálogo de endereços.</string>
+    <string name="no_groups_yet">Ainda não há grupos</string>
+    <string name="no_groups_description">Agrupe seus contatos para escrever para várias pessoas de uma vez. Os nomes dos grupos são criptografados neste dispositivo antes de serem salvos.</string>
+    <string name="add_to_group">Adicionar ao grupo</string>
+    <string name="added_to_group">Adicionado ao grupo</string>
+    <string name="group_created">Grupo criado</string>
+    <string name="merge">Mesclar</string>
+    <string name="merge_contacts">Mesclar contatos</string>
+    <string name="merge_contacts_description">Escolha o contato que quer manter. O Aster preenche os dados que os outros tiverem e depois os remove. As duplicatas são encontradas neste dispositivo e nada é enviado ao servidor.</string>
+    <string name="merge_keep_this">Manter este</string>
+    <string name="contacts_merged">Contatos mesclados</string>
+    <string name="review_duplicates">Revisar</string>
+    <string name="delete_contacts_message">Os contatos selecionados são excluídos de todos os dispositivos conectados à sua conta.</string>
+    <string name="clear_selection">Limpar seleção</string>
+    <string name="select_contacts_hint">Toque em uma foto de perfil para selecionar um contato.</string>
+    <plurals name="groups_count_plural">
+        <item quantity="one">%d grupo</item>
+        <item quantity="other">%d grupos</item>
+    </plurals>
+    <plurals name="group_members_plural">
+        <item quantity="one">%d membro</item>
+        <item quantity="other">%d membros</item>
+    </plurals>
+    <plurals name="duplicate_contacts_found">
+        <item quantity="one">%d contato parece duplicado</item>
+        <item quantity="other">%d contatos parecem duplicados</item>
+    </plurals>
+    <plurals name="delete_contacts_title">
+        <item quantity="one">Excluir %d contato?</item>
+        <item quantity="other">Excluir %d contatos?</item>
+    </plurals>
+    <plurals name="contacts_deleted_plural">
+        <item quantity="one">%d contato excluído</item>
+        <item quantity="other">%d contatos excluídos</item>
+    </plurals>
+    <string name="checkout_review_title">Revise e pague</string>
+    <string name="checkout_term_title">Duração da assinatura</string>
+    <string name="checkout_term_save">Economize %1$s</string>
+    <string name="checkout_term_per_month">%1$s/mês</string>
+    <string name="checkout_term_total">%1$s no total</string>
+    <string name="checkout_term_crypto_only">Somente cripto</string>
+    <string name="checkout_amount_due">Valor a pagar</string>
+    <string name="checkout_what_you_get">O que está incluído?</string>
+    <string name="checkout_method_card">Cartão de crédito</string>
+    <string name="checkout_method_card_note">Renova automaticamente até você cancelar.</string>
+    <string name="checkout_method_crypto">Criptomoeda</string>
+    <string name="checkout_crypto_note">Pagamentos cripto não renovam automaticamente.</string>
+    <string name="checkout_payment_details">Dados de pagamento</string>
+    <string name="checkout_best_value">Melhor custo-benefício</string>
+    <string name="checkout_plan_recommended">Recomendado</string>
+    <string name="checkout_continue">Continuar para o Pagamento</string>
+    <string name="checkout_money_back">Garantia de reembolso de 30 dias</string>
+    <string name="checkout_stripe_secure">Protegido pela Stripe</string>
+    <string name="checkout_abandon_title">Cancelar este pedido?</string>
+    <string name="checkout_abandon_message">O seu plano e a forma de pagamento não são guardados e nada foi cobrado. Pode começar de novo quando quiser.</string>
+    <string name="checkout_abandon_keep">Continuar a rever</string>
+    <string name="checkout_abandon_confirm">Cancelar pedido</string>
+    <string name="checkout_card_term_unavailable">O plano de 2 anos está disponível ao pagar com cripto.</string>
+    <string name="checkout_change_plan">Alterar plano</string>
+    <string name="checkout_credits_applied">%1$s em créditos serão aplicados na finalização da compra</string>
+    <string name="checkout_subtotal">Subtotal</string>
+    <string name="plan_view_full_features">Ver lista completa de recursos</string>
 </resources>
