@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Bell
+import compose.icons.tablericons.BellOff
 import compose.icons.tablericons.Briefcase
 import compose.icons.tablericons.CreditCard
 import compose.icons.tablericons.Discount
@@ -134,12 +135,45 @@ private fun split_terms(raw: String): List<String> =
     raw.split(',', '\n').map { it.trim() }.filter { it.isNotEmpty() }
 
 @Composable
+private fun category_mute_button(
+    label: String,
+    is_enabled: Boolean,
+    is_muted: Boolean,
+    on_toggle: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val description = stringResource(
+        if (is_muted) R.string.unmute_category_notifications else R.string.mute_category_notifications,
+        label,
+    )
+    Box(
+        modifier = Modifier
+            .size(34.dp)
+            .then(if (is_enabled) Modifier.clickable(onClick = on_toggle) else Modifier),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = if (is_muted) TablerIcons.BellOff else TablerIcons.Bell,
+            contentDescription = description,
+            tint = when {
+                !is_enabled -> colors.text_tertiary.copy(alpha = 0.4f)
+                is_muted -> colors.text_primary
+                else -> colors.text_tertiary
+            },
+            modifier = Modifier.size(18.dp),
+        )
+    }
+}
+
+@Composable
 fun category_settings_section(
     enabled_categories: List<String>,
     custom_categories: List<CustomCategoryRule>,
     custom_category_limit: Int,
+    muted_categories: List<String>,
     on_enabled_change: (List<String>) -> Unit,
     on_custom_change: (List<CustomCategoryRule>) -> Unit,
+    on_toggle_muted: (String) -> Unit,
     on_upgrade: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -148,6 +182,7 @@ fun category_settings_section(
     var deleting by remember { mutableStateOf<CustomCategoryRule?>(null) }
 
     val enabled_ids = enabled_categories.toSet()
+    val muted_ids = muted_categories.toSet()
     val is_unlimited = custom_category_limit < 0
     val at_limit = !is_unlimited && custom_categories.size >= custom_category_limit
     val can_add_custom = is_unlimited || custom_category_limit > 0
@@ -207,7 +242,14 @@ fun category_settings_section(
                             fontSize = 13.sp,
                         )
                     }
-                    Spacer(Modifier.width(AsterSpacing.md))
+                    Spacer(Modifier.width(AsterSpacing.sm))
+                    category_mute_button(
+                        label = stringResource(cat.label_res),
+                        is_enabled = is_enabled,
+                        is_muted = muted_ids.contains(cat.id),
+                        on_toggle = { on_toggle_muted(cat.id) },
+                    )
+                    Spacer(Modifier.width(AsterSpacing.sm))
                     AsterSwitch(checked = is_enabled, onCheckedChange = null)
                 }
                 if (index < removable.size - 1) AsterDivider(modifier = Modifier)
@@ -327,6 +369,12 @@ fun category_settings_section(
                                 )
                             }
                         }
+                        category_mute_button(
+                            label = rule.name,
+                            is_enabled = rule.enabled && !is_locked,
+                            is_muted = muted_ids.contains(rule.id),
+                            on_toggle = { on_toggle_muted(rule.id) },
+                        )
                         Box(
                             modifier = Modifier
                                 .size(34.dp)

@@ -92,6 +92,9 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
+import org.astermail.android.design.components.AsterDialog
+import org.astermail.android.design.components.AsterDialogDestructiveButton
+import org.astermail.android.design.components.AsterDialogOutlineButton
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterTopBar
@@ -196,6 +199,7 @@ internal fun crypto_invoice_screen(
             delay(1000)
         }
     }
+    var show_cancel_confirm by remember { mutableStateOf(false) }
     val invoice = state.invoice
     val corrected_now_ms = now_ms - state.clock_skew_ms
     val quote_lapsed_unfunded = invoice != null &&
@@ -268,11 +272,33 @@ internal fun crypto_invoice_screen(
                     cancel_error = state.cancel_error,
                     is_connection_lost = state.is_connection_lost,
                     on_retry = { vm.refresh() },
-                    on_cancel = { vm.cancel() },
+                    on_cancel = { show_cancel_confirm = true },
                     on_view_billing = on_view_billing,
                 )
             }
         }
+    }
+    if (show_cancel_confirm) {
+        AsterDialog(
+            on_dismiss = { show_cancel_confirm = false },
+            title = stringResource(R.string.crypto_native_cancel_confirm_title),
+            message = stringResource(R.string.crypto_native_cancel_confirm_body),
+            footer = {
+                AsterDialogOutlineButton(
+                    label = stringResource(R.string.cancel),
+                    onClick = { show_cancel_confirm = false },
+                    modifier = Modifier.weight(0.7f),
+                )
+                AsterDialogDestructiveButton(
+                    label = stringResource(R.string.crypto_native_cancel_invoice),
+                    onClick = {
+                        show_cancel_confirm = false
+                        vm.cancel()
+                    },
+                    modifier = Modifier.weight(1.3f),
+                )
+            },
+        )
     }
 }
 @Composable

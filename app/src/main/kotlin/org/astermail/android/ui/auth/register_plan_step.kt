@@ -31,6 +31,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -76,6 +77,10 @@ import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterSecondaryButton
+import org.astermail.android.ui.settings.detail.aster_segmented
+import org.astermail.android.ui.settings.detail.galaxy_badge
+import org.astermail.android.ui.settings.detail.galaxy_surface
+import org.astermail.android.ui.settings.detail.switcher_option
 
 @Composable
 fun RegisterPlanStep(
@@ -130,12 +135,21 @@ fun RegisterPlanStep(
     val plans_failed = plans.isEmpty() && (plans_unavailable || state.plans_failed)
     val currency = state.subscription?.currency?.takeIf { it.isNotBlank() } ?: "usd"
 
-    val has_yearly = plans.any { it.billing_period == "year" && it.price_cents > 0 }
+    val split_by_period = plans.any { it.billing_period == "year" && it.price_cents > 0 }
+    val has_yearly = split_by_period || plans.any { it.yearly_price_cents > 0 }
     val has_monthly = plans.any { it.billing_period == "month" && it.price_cents > 0 }
     val show_billing_toggle = has_yearly && has_monthly
 
-    val monthly_plans = plans.filter { it.billing_period == "month" || it.price_cents == 0 }
-    val yearly_plans = plans.filter { it.billing_period == "year" || it.price_cents == 0 }
+    val monthly_plans = if (split_by_period) {
+        plans.filter { it.billing_period == "month" || it.price_cents == 0 }
+    } else {
+        plans
+    }
+    val yearly_plans = if (split_by_period) {
+        plans.filter { it.billing_period == "year" || it.price_cents == 0 }
+    } else {
+        plans
+    }
     val effective_interval = if (billing_interval == "year" && has_yearly) "year" else "month"
     val display_plans = if (effective_interval == "year") yearly_plans else monthly_plans
 
@@ -255,6 +269,7 @@ fun RegisterPlanStep(
                 plan_card(
                     plan = plan,
                     is_selected = selected_code == plan.code,
+                    is_recommended = plan.code.lowercase() == "nova",
                     billing_interval = effective_interval,
                     currency = currency,
                     on_select = {
@@ -309,36 +324,52 @@ private fun billing_toggle(
     selected: String,
     on_select: (String) -> Unit,
 ) {
+    val options = listOf(
+        switcher_option(id = "month", label = stringResource(R.string.monthly)),
+        switcher_option(id = "year", label = stringResource(R.string.yearly)),
+    )
+    aster_segmented(value = selected, options = options, on_change = on_select)
+}
+
+@Composable
+private fun plan_card_surface(
+    is_selected: Boolean,
+    is_recommended: Boolean,
+    on_select: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     val colors = AsterMaterial.colors
-    val options = listOf("month" to stringResource(R.string.monthly), "year" to stringResource(R.string.yearly))
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(colors.input_bg, SquircleShape(18.dp))
-            .border(1.dp, colors.input_border, SquircleShape(18.dp))
-            .padding(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        options.forEach { (value, label) ->
-            val active = selected == value
+    if (is_recommended) {
+        galaxy_surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { on_select() },
+            corner = 18.dp,
+        ) {
             Box(
                 modifier = Modifier
-                    .weight(1f)
-                    .height(40.dp)
-                    .background(
-                        if (active) colors.accent_blue else Color.Transparent,
-                        SquircleShape(14.dp),
-                    )
-                    .clickable { on_select(value) },
+                    .fillMaxWidth()
+                    .padding(top = AsterSpacing.md),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    text = label,
-                    color = if (active) Color.White else colors.text_muted,
-                    fontSize = 14.sp,
-                    fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium,
-                )
+                galaxy_badge(text = stringResource(R.string.checkout_plan_recommended))
             }
+            Column(modifier = Modifier.padding(AsterSpacing.lg), content = content)
+        }
+    } else {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(colors.bg_card, SquircleShape(18.dp))
+                .border(
+                    if (is_selected) 2.dp else 1.dp,
+                    if (is_selected) colors.accent_blue else colors.border_secondary,
+                    SquircleShape(18.dp),
+                )
+                .clickable { on_select() }
+                .padding(AsterSpacing.lg),
+        ) {
+            Column(content = content)
         }
     }
 }
@@ -347,25 +378,18 @@ private fun billing_toggle(
 private fun plan_card(
     plan: AvailablePlan,
     is_selected: Boolean,
+    is_recommended: Boolean,
     billing_interval: String,
     currency: String,
     on_select: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
-    val border_color = if (is_selected) colors.accent_blue else colors.border_secondary
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(colors.bg_card, SquircleShape(18.dp))
-            .border(
-                if (is_selected) 2.dp else 1.dp,
-                border_color,
-                SquircleShape(18.dp),
-            )
-            .clickable { on_select() }
-            .padding(AsterSpacing.lg),
+    plan_card_surface(
+        is_selected = is_selected,
+        is_recommended = is_recommended,
+        on_select = on_select,
     ) {
         Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -397,11 +421,14 @@ private fun plan_card(
 
             Spacer(Modifier.height(4.dp))
 
-            val price_text = if (plan.price_cents > 0) {
+            val yearly_selected = billing_interval == "year" && plan.yearly_price_cents > 0
+            val amount_cents = if (yearly_selected) plan.yearly_price_cents else plan.price_cents
+            val price_interval = if (yearly_selected) "year" else plan.billing_period ?: billing_interval
+            val price_text = if (amount_cents > 0) {
                 stringResource(
                     R.string.settings_price_per_interval,
-                    org.astermail.android.billing.format_money(plan.price_cents.toLong(), currency),
-                    org.astermail.android.billing.billing_interval_label(context, plan.billing_period ?: billing_interval),
+                    org.astermail.android.billing.format_money(amount_cents.toLong(), currency),
+                    org.astermail.android.billing.billing_interval_label(context, price_interval),
                 )
             } else {
                 stringResource(R.string.free_forever)

@@ -85,6 +85,7 @@ data class AvailablePlan(
     val max_email_aliases: Int = 0,
     val max_custom_domains: Int = 0,
     val price_cents: Int = 0,
+    val yearly_price_cents: Int = 0,
     val billing_period: String? = null,
     val stripe_price_id: String? = null,
     val is_current: Boolean = false,

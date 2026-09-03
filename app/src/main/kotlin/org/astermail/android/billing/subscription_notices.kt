@@ -137,8 +137,15 @@ fun normalize_billing_interval(raw: String?): String {
     }
 }
 
-fun api_plan_price_cents(plans: List<AvailablePlan>, code: String, billing_interval: String): Int? =
-    plans.firstOrNull { it.code == code && it.billing_period == billing_interval && it.price_cents > 0 }?.price_cents
+fun api_plan_price_cents(plans: List<AvailablePlan>, code: String, billing_interval: String): Int? {
+    val period_match = plans.firstOrNull {
+        it.code == code && it.billing_period == billing_interval && it.price_cents > 0
+    }
+    if (period_match != null) return period_match.price_cents
+    val plan = plans.firstOrNull { it.code == code } ?: return null
+    val cents = if (billing_interval == "year") plan.yearly_price_cents else plan.price_cents
+    return cents.takeIf { it > 0 }
+}
 
 fun yearly_savings_percent(monthly_cents: Int?, yearly_cents: Int?): Int? {
     if (monthly_cents == null || yearly_cents == null) return null

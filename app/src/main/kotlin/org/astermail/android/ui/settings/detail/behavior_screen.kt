@@ -496,8 +496,10 @@ fun BehaviorScreen(
                     enabled_categories = enabled_categories,
                     custom_categories = custom_categories,
                     custom_category_limit = custom_category_limit,
+                    muted_categories = prefs?.muted_notification_categories ?: emptyList(),
                     on_enabled_change = { enabled_categories = it; save_trigger++ },
                     on_custom_change = { custom_categories = it; save_trigger++ },
+                    on_toggle_muted = { vm.toggle_category_notifications(it) },
                     on_upgrade = { on_open("billing") },
                 )
             }
