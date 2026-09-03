@@ -41,4 +41,6 @@ data class Contact(
     val linkedin: String = "",
     val notes: String = "",
     val is_favorite: Boolean = false,
+    val groups: List<String> = emptyList(),
+    val raw_json: String = "",
 )

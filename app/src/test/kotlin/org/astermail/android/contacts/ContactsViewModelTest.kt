@@ -33,7 +33,9 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.astermail.android.api.contacts.CreateContactResponse
+import org.astermail.android.api.contacts.CreateContactGroupResponse
 import org.astermail.android.api.contacts.DeleteContactResponse
+import org.astermail.android.api.contacts.SuccessResponse
 import org.astermail.android.ui.contacts.Contact
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -543,5 +545,214 @@ class ContactsViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, vm.state.value.contacts.size)
+    }
+
+    @Test
+    fun `select_tab groups loads groups and clears the selection`() = runTest {
+        val groups = listOf(ContactGroup(id = "g_1", name = "Work", color = "#6366f1", contact_count = 2))
+        coEvery { repository.list_contact_groups() } returns Result.success(groups)
+        coEvery { repository.fetch_contacts() } returns Result.success(listOf(fake_contact()))
+
+        vm.load_contacts()
+        advanceUntilIdle()
+        vm.toggle_selection("c_1")
+        vm.select_tab(ContactsTab.GROUPS)
+        advanceUntilIdle()
+
+        val state = vm.state.value
+        assertEquals(ContactsTab.GROUPS, state.tab)
+        assertTrue(state.selected_ids.isEmpty())
+        assertEquals(1, state.groups.size)
+        assertEquals("Work", state.groups[0].name)
+    }
+
+    @Test
+    fun `toggle_selection adds and removes a contact`() {
+        vm.toggle_selection("c_1")
+        assertTrue(vm.state.value.is_selecting)
+        assertEquals(setOf("c_1"), vm.state.value.selected_ids)
+
+        vm.toggle_selection("c_2")
+        assertEquals(setOf("c_1", "c_2"), vm.state.value.selected_ids)
+
+        vm.toggle_selection("c_1")
+        assertEquals(setOf("c_2"), vm.state.value.selected_ids)
+
+        vm.clear_selection()
+        assertFalse(vm.state.value.is_selecting)
+    }
+
+    @Test
+    fun `load_contacts finds duplicate clusters and drops stale selections`() = runTest {
+        coEvery { repository.fetch_contacts() } returns Result.success(
+            listOf(
+                fake_contact("c_1", "Alice Smith", "alice@astermail.org"),
+                fake_contact("c_2", "Alice S", "ALICE@astermail.org"),
+                fake_contact("c_3", "Bob Jones", "bob@astermail.org"),
+            ),
+        )
+
+        vm.toggle_selection("c_gone")
+        vm.load_contacts()
+        advanceUntilIdle()
+
+        val state = vm.state.value
+        assertEquals(1, state.duplicate_clusters.size)
+        assertEquals(2, state.duplicate_count)
+        assertTrue(state.selected_ids.isEmpty())
+    }
+
+    @Test
+    fun `dismiss_duplicates hides the banner`() {
+        vm.dismiss_duplicates()
+        assertTrue(vm.state.value.duplicates_dismissed)
+    }
+
+    @Test
+    fun `delete_selection bulk deletes and prunes the list`() = runTest {
+        coEvery { repository.fetch_contacts() } returns Result.success(
+            listOf(
+                fake_contact("c_1", "Alice Smith", "alice@astermail.org"),
+                fake_contact("c_2", "Bob Jones", "bob@astermail.org"),
+            ),
+        )
+        coEvery { repository.bulk_delete_contacts(listOf("c_1")) } returns
+            Result.success(DeleteContactResponse(success = true, deleted_count = 1))
+
+        vm.load_contacts()
+        advanceUntilIdle()
+        vm.toggle_selection("c_1")
+
+        var reported = false
+        vm.delete_selection { ok -> reported = ok }
+        advanceUntilIdle()
+
+        assertTrue(reported)
+        coVerify(exactly = 1) { repository.bulk_delete_contacts(listOf("c_1")) }
+        val state = vm.state.value
+        assertEquals(listOf("c_2"), state.contacts.map { it.id })
+        assertTrue(state.selected_ids.isEmpty())
+        assertFalse(state.is_bulk_working)
+    }
+
+    @Test
+    fun `delete_selection does nothing without a selection`() = runTest {
+        var reported = true
+        vm.delete_selection { ok -> reported = ok }
+        advanceUntilIdle()
+
+        assertFalse(reported)
+        coVerify(exactly = 0) { repository.bulk_delete_contacts(any()) }
+    }
+
+    @Test
+    fun `add_selection_to_group adds every selected contact and clears the selection`() = runTest {
+        coEvery { repository.fetch_contacts() } returns Result.success(
+            listOf(
+                fake_contact("c_1", "Alice Smith", "alice@astermail.org"),
+                fake_contact("c_2", "Bob Jones", "bob@astermail.org"),
+            ),
+        )
+        coEvery { repository.list_contact_groups() } returns Result.success(emptyList())
+        coEvery { repository.add_contact_to_group(any(), "g_1") } returns
+            Result.success(SuccessResponse(success = true))
+
+        vm.load_contacts()
+        advanceUntilIdle()
+        vm.toggle_selection("c_1")
+        vm.toggle_selection("c_2")
+
+        var added = 0
+        vm.add_selection_to_group("g_1") { count -> added = count }
+        advanceUntilIdle()
+
+        assertEquals(2, added)
+        coVerify(exactly = 1) { repository.add_contact_to_group("c_1", "g_1") }
+        coVerify(exactly = 1) { repository.add_contact_to_group("c_2", "g_1") }
+        assertTrue(vm.state.value.selected_ids.isEmpty())
+    }
+
+    @Test
+    fun `create_group creates and reloads the group list`() = runTest {
+        coEvery { repository.create_contact_group("Work", "#6366f1") } returns
+            Result.success(CreateContactGroupResponse(id = "g_1"))
+        coEvery { repository.list_contact_groups() } returns Result.success(
+            listOf(ContactGroup(id = "g_1", name = "Work", color = "#6366f1", contact_count = 0)),
+        )
+
+        var created = false
+        vm.create_group("Work", "#6366f1") { ok -> created = ok }
+        advanceUntilIdle()
+
+        assertTrue(created)
+        assertEquals(1, vm.state.value.groups.size)
+        assertFalse(vm.state.value.is_bulk_working)
+    }
+
+    @Test
+    fun `create_group rejects a blank name`() = runTest {
+        var created = true
+        vm.create_group("   ", "#6366f1") { ok -> created = ok }
+        advanceUntilIdle()
+
+        assertFalse(created)
+        coVerify(exactly = 0) { repository.create_contact_group(any(), any()) }
+    }
+
+    @Test
+    fun `delete_group removes it from state`() = runTest {
+        coEvery { repository.list_contact_groups() } returns Result.success(
+            listOf(
+                ContactGroup(id = "g_1", name = "Work", color = "#6366f1", contact_count = 0),
+                ContactGroup(id = "g_2", name = "Family", color = "#10b981", contact_count = 3),
+            ),
+        )
+        coEvery { repository.delete_contact_group("g_1") } returns
+            Result.success(SuccessResponse(success = true))
+
+        vm.load_groups()
+        advanceUntilIdle()
+        vm.delete_group("g_1")
+        advanceUntilIdle()
+
+        assertEquals(listOf("g_2"), vm.state.value.groups.map { it.id })
+    }
+
+    @Test
+    fun `merge_duplicates updates the primary and deletes the rest`() = runTest {
+        val primary = fake_contact("c_1", "Alice Smith", "alice@astermail.org")
+        val secondary = Contact(
+            id = "c_2",
+            name = "Alice S",
+            email = "alice@astermail.org",
+            phone = "+1 415 555 0142",
+        )
+        coEvery { repository.fetch_contacts() } returns Result.success(listOf(primary, secondary))
+        coEvery { repository.update_contact("c_1", any()) } returns Result.success(Unit)
+        coEvery { repository.bulk_delete_contacts(listOf("c_2")) } returns
+            Result.success(DeleteContactResponse(success = true, deleted_count = 1))
+
+        vm.load_contacts()
+        advanceUntilIdle()
+
+        var merged = false
+        vm.merge_duplicates(listOf(primary, secondary)) { ok -> merged = ok }
+        advanceUntilIdle()
+
+        assertTrue(merged)
+        coVerify(exactly = 1) {
+            repository.update_contact("c_1", merge_contacts(listOf(primary, secondary)))
+        }
+        coVerify(exactly = 1) { repository.bulk_delete_contacts(listOf("c_2")) }
+    }
+
+    @Test
+    fun `merge_duplicates needs at least two contacts`() = runTest {
+        var merged = true
+        vm.merge_duplicates(listOf(fake_contact())) { ok -> merged = ok }
+        advanceUntilIdle()
+
+        assertFalse(merged)
+        coVerify(exactly = 0) { repository.update_contact(any(), any()) }
     }
 }

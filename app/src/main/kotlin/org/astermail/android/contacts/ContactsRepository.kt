@@ -47,6 +47,7 @@ data class ContactGroup(
     val id: String,
     val name: String,
     val color: String,
+    val icon: String? = null,
     val contact_count: Int,
     val created_at: String? = null,
 )
@@ -130,7 +131,11 @@ class ContactsRepository @Inject constructor(
         response.groups.mapNotNull { decrypt_group(it) }
     }
 
-    suspend fun create_contact_group(name: String, color: String): Result<CreateContactGroupResponse> = runCatching {
+    suspend fun create_contact_group(
+        name: String,
+        color: String,
+        icon: String? = null,
+    ): Result<CreateContactGroupResponse> = runCatching {
         val key = derive_contacts_key()
         try {
             val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
@@ -142,6 +147,7 @@ class ContactsRepository @Inject constructor(
                     encrypted_name = b64(ciphertext),
                     name_nonce = b64(nonce),
                     color = color,
+                    icon = icon?.trim()?.takeIf { it.isNotEmpty() },
                 ),
             )
         } finally {
@@ -294,6 +300,7 @@ class ContactsRepository @Inject constructor(
                 id = group.id,
                 name = name,
                 color = group.color,
+                icon = group.icon?.trim()?.takeIf { it.isNotEmpty() },
                 contact_count = group.contact_count,
                 created_at = group.created_at,
             )
@@ -416,6 +423,55 @@ class ContactsRepository @Inject constructor(
         return parts[0] to (parts.getOrNull(1) ?: "")
     }
 
+    private fun entry_value(obj: org.json.JSONObject, key: String, type: String): String {
+        val arr = obj.optJSONArray(key) ?: return ""
+        for (i in 0 until arr.length()) {
+            val entry = arr.optJSONObject(i) ?: continue
+            if (entry.optString("type", "") == type) return entry.optString("value", "")
+        }
+        return ""
+    }
+
+    private fun first_entry_value(obj: org.json.JSONObject, key: String, excluded_type: String): String {
+        val arr = obj.optJSONArray(key) ?: return ""
+        for (i in 0 until arr.length()) {
+            val entry = arr.optJSONObject(i) ?: continue
+            if (entry.optString("type", "") == excluded_type) continue
+            val value = entry.optString("value", "")
+            if (value.isNotBlank()) return value
+        }
+        return ""
+    }
+
+    private fun put_typed_entry(obj: org.json.JSONObject, key: String, type: String, value: String) {
+        val arr = obj.optJSONArray(key)
+        if (arr == null) {
+            if (value.isBlank()) return
+            val created = org.json.JSONArray()
+            created.put(org.json.JSONObject().put("value", value).put("type", type))
+            obj.put(key, created)
+            return
+        }
+        var index = -1
+        for (i in 0 until arr.length()) {
+            val entry = arr.optJSONObject(i) ?: continue
+            if (entry.optString("type", "") == type) {
+                index = i
+                break
+            }
+        }
+        if (value.isBlank()) {
+            if (index >= 0) arr.remove(index)
+            if (arr.length() == 0) obj.remove(key)
+            return
+        }
+        if (index >= 0) {
+            arr.optJSONObject(index)?.put("value", value)
+        } else {
+            arr.put(org.json.JSONObject().put("value", value).put("type", type))
+        }
+    }
+
     private fun parse_contact_json(id: String, json_str: String): Contact? {
         return try {
             val obj = org.json.JSONObject(json_str)
@@ -431,15 +487,24 @@ class ContactsRepository @Inject constructor(
             }
             val address_obj = obj.optJSONObject("address")
             val social_obj = obj.optJSONObject("social_links")
+            val groups_arr = obj.optJSONArray("groups")
+            val groups = mutableListOf<String>()
+            if (groups_arr != null) {
+                for (i in 0 until groups_arr.length()) {
+                    val entry = groups_arr.optString(i, "").trim()
+                    if (entry.isNotEmpty()) groups.add(entry)
+                }
+            }
 
             Contact(
                 id = id,
                 name = name.ifBlank { emails.firstOrNull() ?: "" },
                 email = emails.firstOrNull() ?: "",
-                phone = obj.optString("phone", ""),
+                phone = obj.optString("phone", "").ifBlank { first_entry_value(obj, "phone_entries", "work") },
                 company = obj.optString("company", ""),
                 title = obj.optString("job_title", ""),
-                work_email = if (emails.size > 1) emails[1] else "",
+                work_email = if (emails.size > 1) emails[1] else entry_value(obj, "email_entries", "work"),
+                work_phone = entry_value(obj, "phone_entries", "work"),
                 birthday = obj.optString("birthday", ""),
                 address = address_obj?.optString("street", "") ?: "",
                 city = address_obj?.optString("city", "") ?: "",
@@ -451,6 +516,8 @@ class ContactsRepository @Inject constructor(
                 linkedin = social_obj?.optString("linkedin", "") ?: "",
                 notes = obj.optString("notes", ""),
                 is_favorite = obj.optBoolean("is_favorite", false),
+                groups = groups.toList(),
+                raw_json = json_str,
             )
         } catch (_: Throwable) {
             null
@@ -458,44 +525,68 @@ class ContactsRepository @Inject constructor(
     }
 
     private fun encode_contact_json(contact: Contact, include_envelope: Boolean): String {
-        val obj = org.json.JSONObject()
+        val obj = if (contact.raw_json.isBlank()) {
+            org.json.JSONObject()
+        } else {
+            try {
+                org.json.JSONObject(contact.raw_json)
+            } catch (_: Throwable) {
+                org.json.JSONObject()
+            }
+        }
         val (first, last) = split_name(contact.name)
         obj.put("first_name", first)
         obj.put("last_name", last)
 
+        val previous_emails = obj.optJSONArray("emails")
         val emails = org.json.JSONArray()
         if (contact.email.isNotBlank()) emails.put(contact.email)
         if (contact.work_email.isNotBlank()) emails.put(contact.work_email)
+        if (previous_emails != null) {
+            for (i in 2 until previous_emails.length()) {
+                val extra = previous_emails.optString(i, "")
+                if (extra.isNotBlank()) emails.put(extra)
+            }
+        }
         obj.put("emails", emails)
+        put_typed_entry(obj, "email_entries", "work", contact.work_email)
+        put_typed_entry(obj, "phone_entries", "work", contact.work_phone)
 
-        if (contact.phone.isNotBlank()) obj.put("phone", contact.phone)
-        if (contact.company.isNotBlank()) obj.put("company", contact.company)
-        if (contact.title.isNotBlank()) obj.put("job_title", contact.title)
+        if (contact.phone.isNotBlank()) obj.put("phone", contact.phone) else obj.remove("phone")
+        if (contact.company.isNotBlank()) obj.put("company", contact.company) else obj.remove("company")
+        if (contact.title.isNotBlank()) obj.put("job_title", contact.title) else obj.remove("job_title")
 
         val has_address = listOf(contact.address, contact.city, contact.region, contact.postal_code, contact.country)
             .any { it.isNotBlank() }
         if (has_address) {
-            val addr = org.json.JSONObject()
+            val addr = obj.optJSONObject("address") ?: org.json.JSONObject()
             addr.put("street", contact.address)
             addr.put("city", contact.city)
             addr.put("state", contact.region)
             addr.put("postal_code", contact.postal_code)
             addr.put("country", contact.country)
             obj.put("address", addr)
+        } else {
+            obj.remove("address")
         }
 
-        val has_social = contact.website.isNotBlank() || contact.twitter.isNotBlank() || contact.linkedin.isNotBlank()
-        if (has_social) {
-            val social = org.json.JSONObject()
-            if (contact.website.isNotBlank()) social.put("website", contact.website)
-            if (contact.twitter.isNotBlank()) social.put("twitter", contact.twitter)
-            if (contact.linkedin.isNotBlank()) social.put("linkedin", contact.linkedin)
-            obj.put("social_links", social)
-        }
+        val social = obj.optJSONObject("social_links") ?: org.json.JSONObject()
+        if (contact.website.isNotBlank()) social.put("website", contact.website) else social.remove("website")
+        if (contact.twitter.isNotBlank()) social.put("twitter", contact.twitter) else social.remove("twitter")
+        if (contact.linkedin.isNotBlank()) social.put("linkedin", contact.linkedin) else social.remove("linkedin")
+        if (social.length() > 0) obj.put("social_links", social) else obj.remove("social_links")
 
-        if (contact.birthday.isNotBlank()) obj.put("birthday", contact.birthday)
-        if (contact.notes.isNotBlank()) obj.put("notes", contact.notes)
+        if (contact.birthday.isNotBlank()) obj.put("birthday", contact.birthday) else obj.remove("birthday")
+        if (contact.notes.isNotBlank()) obj.put("notes", contact.notes) else obj.remove("notes")
         obj.put("is_favorite", contact.is_favorite)
+
+        if (contact.groups.isNotEmpty()) {
+            val groups = org.json.JSONArray()
+            for (name in contact.groups) groups.put(name)
+            obj.put("groups", groups)
+        } else {
+            obj.remove("groups")
+        }
 
         if (include_envelope) {
             obj.put("_version", CONTACT_DATA_VERSION)

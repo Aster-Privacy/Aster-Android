@@ -208,6 +208,8 @@ fun ContactEditScreen(
                         linkedin = linkedin,
                         notes = notes,
                         is_favorite = source?.is_favorite ?: false,
+                        groups = source?.groups ?: emptyList(),
+                        raw_json = source?.raw_json.orEmpty(),
                     )
                     save_requested = true
                     vm.save_contact(contact, contact_id)

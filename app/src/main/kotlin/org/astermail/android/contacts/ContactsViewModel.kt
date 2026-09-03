@@ -37,6 +37,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.astermail.android.ui.contacts.Contact
 
+enum class ContactsTab {
+    CONTACTS,
+    GROUPS,
+}
+
 data class ContactsUiState(
     val contacts: List<Contact> = emptyList(),
     val selected_contact: Contact? = null,
@@ -46,7 +51,19 @@ data class ContactsUiState(
     val error: String? = null,
     val save_success: Boolean = false,
     val delete_success: Boolean = false,
-)
+    val groups: List<ContactGroup> = emptyList(),
+    val tab: ContactsTab = ContactsTab.CONTACTS,
+    val selected_ids: Set<String> = emptySet(),
+    val duplicate_clusters: List<DuplicateCluster> = emptyList(),
+    val duplicates_dismissed: Boolean = false,
+    val is_bulk_working: Boolean = false,
+) {
+    val is_selecting: Boolean get() = selected_ids.isNotEmpty()
+
+    val duplicate_count: Int get() = count_duplicate_contacts(duplicate_clusters)
+
+    val selected_contacts: List<Contact> get() = contacts.filter { it.id in selected_ids }
+}
 
 @HiltViewModel
 class ContactsViewModel @Inject constructor(
@@ -59,6 +76,7 @@ class ContactsViewModel @Inject constructor(
 
     private var list_in_flight = false
     private var mutation_in_flight = false
+    private var groups_in_flight = false
 
     fun load_contacts() {
         if (list_in_flight) return
@@ -69,10 +87,7 @@ class ContactsViewModel @Inject constructor(
             list_in_flight = false
             outcome.fold(
                 onSuccess = { contacts ->
-                    _state.value = _state.value.copy(
-                        contacts = contacts,
-                        is_loading = false,
-                    )
+                    _state.value = with_contacts(_state.value, contacts).copy(is_loading = false)
                 },
                 onFailure = { t ->
                     _state.value = _state.value.copy(
@@ -153,10 +168,10 @@ class ContactsViewModel @Inject constructor(
             mutation_in_flight = false
             outcome.fold(
                 onSuccess = {
-                    _state.value = _state.value.copy(
+                    val remaining = _state.value.contacts.filter { it.id != contact_id }
+                    _state.value = with_contacts(_state.value, remaining).copy(
                         is_loading = false,
                         delete_success = true,
-                        contacts = _state.value.contacts.filter { it.id != contact_id },
                     )
                     on_complete?.invoke(true)
                 },
@@ -355,6 +370,202 @@ class ContactsViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun load_groups() {
+        if (groups_in_flight) return
+        groups_in_flight = true
+        viewModelScope.launch {
+            val outcome = repository.list_contact_groups()
+            groups_in_flight = false
+            outcome.fold(
+                onSuccess = { groups ->
+                    _state.value = _state.value.copy(groups = groups)
+                },
+                onFailure = { },
+            )
+        }
+    }
+
+    fun select_tab(tab: ContactsTab) {
+        _state.value = _state.value.copy(tab = tab, selected_ids = emptySet())
+        if (tab == ContactsTab.GROUPS) load_groups()
+    }
+
+    fun toggle_selection(contact_id: String) {
+        val current = _state.value.selected_ids
+        _state.value = _state.value.copy(
+            selected_ids = if (contact_id in current) current - contact_id else current + contact_id,
+        )
+    }
+
+    fun set_selection(ids: Set<String>) {
+        _state.value = _state.value.copy(selected_ids = ids)
+    }
+
+    fun clear_selection() {
+        _state.value = _state.value.copy(selected_ids = emptySet())
+    }
+
+    fun dismiss_duplicates() {
+        _state.value = _state.value.copy(duplicates_dismissed = true)
+    }
+
+    fun create_group(
+        name: String,
+        color: String,
+        icon: String? = null,
+        on_complete: ((Boolean) -> Unit)? = null,
+    ) {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty() || mutation_in_flight) {
+            on_complete?.invoke(false)
+            return
+        }
+        mutation_in_flight = true
+        _state.value = _state.value.copy(is_bulk_working = true, error = null)
+        viewModelScope.launch {
+            val outcome = repository.create_contact_group(trimmed, color, icon)
+            mutation_in_flight = false
+            _state.value = _state.value.copy(is_bulk_working = false)
+            outcome.fold(
+                onSuccess = {
+                    on_complete?.invoke(true)
+                    load_groups()
+                },
+                onFailure = { t ->
+                    _state.value = _state.value.copy(error = friendly_error(t))
+                    on_complete?.invoke(false)
+                },
+            )
+        }
+    }
+
+    fun delete_group(group_id: String, on_complete: ((Boolean) -> Unit)? = null) {
+        if (mutation_in_flight) return
+        mutation_in_flight = true
+        viewModelScope.launch {
+            val outcome = repository.delete_contact_group(group_id)
+            mutation_in_flight = false
+            outcome.fold(
+                onSuccess = {
+                    _state.value = _state.value.copy(
+                        groups = _state.value.groups.filter { it.id != group_id },
+                    )
+                    on_complete?.invoke(true)
+                },
+                onFailure = { t ->
+                    _state.value = _state.value.copy(error = friendly_error(t))
+                    on_complete?.invoke(false)
+                },
+            )
+        }
+    }
+
+    fun add_selection_to_group(group_id: String, on_complete: ((Int) -> Unit)? = null) {
+        val ids = _state.value.selected_ids.toList()
+        if (ids.isEmpty() || mutation_in_flight) {
+            on_complete?.invoke(0)
+            return
+        }
+        mutation_in_flight = true
+        _state.value = _state.value.copy(is_bulk_working = true, error = null)
+        viewModelScope.launch {
+            var added = 0
+            var last_failure: Throwable? = null
+            for (id in ids) {
+                repository.add_contact_to_group(id, group_id).fold(
+                    onSuccess = { added++ },
+                    onFailure = { t -> last_failure = t },
+                )
+            }
+            mutation_in_flight = false
+            val failure = last_failure
+            _state.value = _state.value.copy(
+                is_bulk_working = false,
+                selected_ids = emptySet(),
+                error = if (added == 0 && failure != null) friendly_error(failure) else null,
+            )
+            on_complete?.invoke(added)
+            load_groups()
+            load_contacts()
+        }
+    }
+
+    fun delete_selection(on_complete: ((Boolean) -> Unit)? = null) {
+        val ids = _state.value.selected_ids.toList()
+        if (ids.isEmpty() || mutation_in_flight) {
+            on_complete?.invoke(false)
+            return
+        }
+        mutation_in_flight = true
+        _state.value = _state.value.copy(is_bulk_working = true, error = null)
+        viewModelScope.launch {
+            val outcome = repository.bulk_delete_contacts(ids)
+            mutation_in_flight = false
+            outcome.fold(
+                onSuccess = {
+                    val remaining = _state.value.contacts.filterNot { it.id in ids }
+                    _state.value = with_contacts(_state.value, remaining).copy(
+                        is_bulk_working = false,
+                        delete_success = true,
+                    )
+                    on_complete?.invoke(true)
+                },
+                onFailure = { t ->
+                    _state.value = _state.value.copy(
+                        is_bulk_working = false,
+                        error = friendly_error(t),
+                    )
+                    on_complete?.invoke(false)
+                },
+            )
+        }
+    }
+
+    fun merge_duplicates(ordered: List<Contact>, on_complete: ((Boolean) -> Unit)? = null) {
+        if (ordered.size < 2 || mutation_in_flight) {
+            on_complete?.invoke(false)
+            return
+        }
+        mutation_in_flight = true
+        _state.value = _state.value.copy(is_bulk_working = true, error = null)
+        viewModelScope.launch {
+            val primary = ordered.first()
+            val merged = merge_contacts(ordered)
+            val discarded = ordered.drop(1).map { it.id }
+            val outcome = repository.update_contact(primary.id, merged)
+                .mapCatching { repository.bulk_delete_contacts(discarded).getOrThrow() }
+            mutation_in_flight = false
+            outcome.fold(
+                onSuccess = {
+                    val remaining = _state.value.contacts
+                        .filterNot { it.id in discarded }
+                        .map { if (it.id == primary.id) merged else it }
+                    _state.value = with_contacts(_state.value, remaining).copy(
+                        is_bulk_working = false,
+                    )
+                    on_complete?.invoke(true)
+                    load_contacts()
+                },
+                onFailure = { t ->
+                    _state.value = _state.value.copy(
+                        is_bulk_working = false,
+                        error = friendly_error(t),
+                    )
+                    on_complete?.invoke(false)
+                },
+            )
+        }
+    }
+
+    private fun with_contacts(state: ContactsUiState, contacts: List<Contact>): ContactsUiState {
+        val ids = contacts.map { it.id }.toSet()
+        return state.copy(
+            contacts = contacts,
+            selected_ids = state.selected_ids.filter { it in ids }.toSet(),
+            duplicate_clusters = find_duplicate_clusters(contacts),
+        )
     }
 
     fun clear_sync_message() {

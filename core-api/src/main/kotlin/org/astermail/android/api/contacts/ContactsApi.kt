@@ -113,6 +113,7 @@ data class ContactGroupEncrypted(
     val encrypted_name: String,
     val name_nonce: String,
     val color: String,
+    val icon: String? = null,
     val contact_count: Int = 0,
     val created_at: String? = null,
 )
@@ -128,6 +129,7 @@ data class CreateContactGroupRequest(
     val encrypted_name: String,
     val name_nonce: String,
     val color: String,
+    val icon: String? = null,
 )
 
 @Serializable

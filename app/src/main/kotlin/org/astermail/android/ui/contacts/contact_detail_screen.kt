@@ -95,6 +95,7 @@ import org.astermail.android.design.components.AsterDestructiveButton
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.ui.mail.SenderAvatar
 import org.astermail.android.ui.search.build_contact_mail_query
+import androidx.compose.material.icons.filled.Star
 
 @Composable
 fun ContactDetailScreen(
@@ -171,7 +172,11 @@ fun ContactDetailScreen(
             )
             Spacer(Modifier.weight(1f))
             AsterIconButton(
-                icon = if (is_favorite) TablerIcons.Star else TablerIcons.StarOff,
+                icon = if (is_favorite) {
+                    Icons.Filled.Star
+                } else {
+                    TablerIcons.Star
+                },
                 content_description = if (is_favorite) stringResource(R.string.unfavorite) else stringResource(R.string.favorite),
                 enabled = contact != null && !favorite_pending,
                 onClick = {
@@ -180,7 +185,7 @@ fun ContactDetailScreen(
                     favorite_pending = true
                     vm.save_contact(target.copy(is_favorite = is_favorite), target.id)
                 },
-                tint = if (is_favorite) colors.warning else Color.Unspecified,
+                tint = if (is_favorite) colors.star else Color.Unspecified,
             )
             AsterIconButton(
                 icon = TablerIcons.Edit,
