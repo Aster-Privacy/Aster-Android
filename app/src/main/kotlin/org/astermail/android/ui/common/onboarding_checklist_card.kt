@@ -50,7 +50,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 
-private val checklist_order = listOf("recovery_method", "import_mail", "install_app", "first_email")
+val onboarding_checklist_order = listOf("recovery_method", "import_mail", "install_app", "first_email")
 
 private fun checklist_label(key: String): Int? = when (key) {
     "recovery_method" -> R.string.onboarding_task_recovery
@@ -63,12 +63,12 @@ private fun checklist_label(key: String): Int? = when (key) {
 @Composable
 fun onboarding_checklist_card(
     tasks: Map<String, Boolean>,
-    on_open_settings: () -> Unit,
+    on_task: (String) -> Unit,
     on_dismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
-    val rows = checklist_order.mapNotNull { key ->
+    val rows = onboarding_checklist_order.mapNotNull { key ->
         val label = checklist_label(key) ?: return@mapNotNull null
         val done = tasks[key] ?: return@mapNotNull null
         Triple(key, label, done)
@@ -100,11 +100,11 @@ fun onboarding_checklist_card(
             )
         }
         Spacer(Modifier.height(AsterSpacing.xs))
-        rows.forEach { (_, label, done) ->
+        rows.forEach { (key, label, done) ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable(enabled = !done, onClick = on_open_settings)
+                    .clickable(enabled = !done) { on_task(key) }
                     .padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {

@@ -2147,6 +2147,8 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             on_open_email = { id -> open_mail_detail(nav_controller, id) },
                             on_open_settings = { nav_controller.navigate(routes.settings) },
                             on_open_upgrade = { nav_controller.navigate(routes.settings_detail("billing")) },
+                            on_open_recovery_email = { nav_controller.navigate(routes.settings_detail("recovery_email")) },
+                            on_open_import = { nav_controller.navigate(routes.settings_detail("import")) },
                             current_folder = effective_folder,
                             display_title = filter_name,
                             on_folder_change = { id ->
@@ -2210,6 +2212,8 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             },
                             on_open_settings = { nav_controller.navigate(routes.settings) },
                             on_open_upgrade = { nav_controller.navigate(routes.settings_detail("billing")) },
+                            on_open_recovery_email = { nav_controller.navigate(routes.settings_detail("recovery_email")) },
+                            on_open_import = { nav_controller.navigate(routes.settings_detail("import")) },
                             current_folder = effective_mail_folder,
                             inbox_category = inbox_category,
                             display_title = if (effective_selected_folder == "inbox" && categories_enabled) category_titles[inbox_category] else null,

@@ -221,6 +221,9 @@ private val pull_refresh_travel = 56.dp
 
 private val pull_refresh_threshold = 56.dp
 
+
+private const val ONBOARDING_INSTALL_APP_DONE_KEY = "install_app_done"
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InboxScreen(
@@ -232,6 +235,8 @@ fun InboxScreen(
     on_open_email: (String) -> Unit,
     on_open_settings: () -> Unit = {},
     on_open_upgrade: () -> Unit = {},
+    on_open_recovery_email: () -> Unit = {},
+    on_open_import: () -> Unit = {},
     current_folder: String = "inbox",
     display_title: String? = null,
     inbox_category: String = "primary",
@@ -327,9 +332,40 @@ fun InboxScreen(
     val show_payment_failed_banner = payment_failed_due != null
     LaunchedEffect(Unit) { billing_vm.load_onboarding_checklist() }
     val onboarding = billing_state.onboarding
+    val onboarding_prefs = remember {
+        context_for_prefs.getSharedPreferences("aster_onboarding", android.content.Context.MODE_PRIVATE)
+    }
+    var install_app_done by rememberSaveable {
+        mutableStateOf(onboarding_prefs.getBoolean(ONBOARDING_INSTALL_APP_DONE_KEY, false))
+    }
+    val onboarding_tasks = remember(onboarding?.tasks, install_app_done) {
+        val raw = onboarding?.tasks.orEmpty()
+        if (install_app_done && raw.containsKey("install_app")) {
+            raw + ("install_app" to true)
+        } else {
+            raw
+        }
+    }
     val show_onboarding_checklist = onboarding != null &&
         onboarding.dismissed_at == null &&
-        onboarding.tasks.values.any { !it }
+        onboarding_tasks.values.any { !it }
+    val onboarding_task_context = LocalContext.current
+    val on_onboarding_task: (String) -> Unit = { key ->
+        when (onboarding_task_destination_for(key)) {
+            onboarding_task_destination.recovery_email -> on_open_recovery_email()
+            onboarding_task_destination.import_mail -> on_open_import()
+            onboarding_task_destination.compose -> on_compose()
+            onboarding_task_destination.download_page -> {
+                org.astermail.android.ui.common.open_external_url(
+                    onboarding_task_context,
+                    onboarding_download_url,
+                )
+                install_app_done = true
+                onboarding_prefs.edit().putBoolean(ONBOARDING_INSTALL_APP_DONE_KEY, true).apply()
+            }
+            onboarding_task_destination.settings -> on_open_settings()
+        }
+    }
     val prefetch_context = LocalContext.current
     val toast_context = LocalContext.current
 
@@ -426,6 +462,7 @@ fun InboxScreen(
                 settings_vm.load_subscription(force = false)
                 mail_vm.load_inbox(current_folder, force = true)
                 mail_vm.load_stats(force = true)
+                billing_vm.load_onboarding_checklist()
             }
         }
         lifecycle_owner.lifecycle.addObserver(observer)
@@ -1662,8 +1699,8 @@ fun InboxScreen(
                         if (show_onboarding_checklist && !select_mode) {
                             item(key = "_onboarding_checklist", contentType = "onboarding_checklist") {
                                 org.astermail.android.ui.common.onboarding_checklist_card(
-                                    tasks = onboarding?.tasks.orEmpty(),
-                                    on_open_settings = on_open_settings,
+                                    tasks = onboarding_tasks,
+                                    on_task = on_onboarding_task,
                                     on_dismiss = { billing_vm.dismiss_onboarding_checklist() },
                                     modifier = Modifier.padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.xs),
                                 )
