@@ -56,6 +56,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -186,6 +187,7 @@ fun ContactEditScreen(
             val can_save = name.isNotBlank() || email.isNotBlank() || phone.isNotBlank()
             AsterGhostButton(
                 label = stringResource(R.string.save),
+                modifier = Modifier.testTag("contact_save"),
                 enabled = can_save && !ui_state.is_loading && !contact_unavailable,
                 onClick = {
                     val contact = Contact(
@@ -278,9 +280,9 @@ fun ContactEditScreen(
 
             when (active_tab) {
                 0 -> FormSection(title = stringResource(R.string.tab_basic)) {
-                    FormField(stringResource(R.string.name), name) { name = it }
-                    FormField(stringResource(R.string.email), email) { email = it }
-                    FormField(stringResource(R.string.phone), phone) { phone = it }
+                    FormField(stringResource(R.string.name), name, "contact_field_name") { name = it }
+                    FormField(stringResource(R.string.email), email, "contact_field_email") { email = it }
+                    FormField(stringResource(R.string.phone), phone, "contact_field_phone") { phone = it }
                 }
                 1 -> FormSection(title = stringResource(R.string.tab_details)) {
                     FormField(stringResource(R.string.company), company) { company = it }
@@ -374,11 +376,12 @@ private fun FormSection(title: String, content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun FormField(label: String, value: String, on_change: (String) -> Unit) {
+private fun FormField(label: String, value: String, test_tag: String? = null, on_change: (String) -> Unit) {
     AsterTextField(
         value = value,
         onValueChange = on_change,
         label = label,
         placeholder = label,
+        modifier = if (test_tag == null) Modifier else Modifier.testTag(test_tag),
     )
 }

@@ -2,12 +2,20 @@ appId: ${APP_ID}
 ---
 - runFlow:
     when:
-      notVisible: "Inbox"
+      notVisible: "^(Inbox|Primary)$"
     commands:
       - launchApp:
           clearState: false
+      - waitForAnimationToEnd
+      - repeat:
+          times: 6
+          while:
+            notVisible: "^(Inbox|Primary)$"
+          commands:
+            - back
+            - waitForAnimationToEnd
       - extendedWaitUntil:
-          visible: "Inbox"
-          timeout: 8000
+          visible: "^(Inbox|Primary)$"
+          timeout: 40000
 - assertVisible:
-    text: "Inbox"
+    text: "^(Inbox|Primary)$"

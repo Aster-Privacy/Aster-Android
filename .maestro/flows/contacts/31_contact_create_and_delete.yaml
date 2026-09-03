@@ -4,50 +4,61 @@ tags:
 name: contact_create_and_delete_roundtrip
 ---
 - runFlow: ../../setup/sign_in.yaml
-- swipe:
-    start: 5%,50%
-    end: 80%,50%
+- tapOn: "open drawer"
 - waitForAnimationToEnd
-- tapOn: "Contacts"
+- extendedWaitUntil:
+    visible: "^Contacts$"
+    timeout: 5000
+- tapOn: "^Contacts$"
 - extendedWaitUntil:
     visible: "Contacts"
     timeout: 10000
-- tapOn:
-    text: "Add"
-    optional: true
 - runFlow:
     when:
-      notVisible: "Email"
+      visible: "Maestro Bot"
     commands:
-      - tapOn:
-          id: "fab_add_contact"
-          optional: true
+      - tapOn: "Maestro Bot"
+      - waitForAnimationToEnd
+      - scrollUntilVisible:
+          element:
+            text: "Delete contact"
+          direction: DOWN
+      - tapOn: "Delete contact"
+      - extendedWaitUntil:
+          visible: "^Delete$"
+          timeout: 5000
+      - tapOn: "^Delete$"
+      - waitForAnimationToEnd
+- tapOn:
+    id: "fab_add_contact"
 - waitForAnimationToEnd
 - takeScreenshot: contact_edit
 - tapOn:
-    text: "Name"
-    optional: true
+    id: "contact_field_name"
 - inputText: "Maestro Bot"
-- hideKeyboard
 - tapOn:
-    text: "Email"
-    optional: true
+    id: "contact_field_email"
 - inputText: "maestro_bot_contact@example.org"
-- hideKeyboard
 - tapOn:
-    text: "Save"
-    optional: true
+    id: "contact_save"
 - waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Maestro Bot"
+    timeout: 10000
 - takeScreenshot: contact_after_save
-- tapOn:
-    text: "Maestro Bot"
-    optional: true
+- tapOn: "Maestro Bot"
 - waitForAnimationToEnd
-- tapOn:
-    text: "Delete"
-    optional: true
-- tapOn:
-    text: "Delete"
-    optional: true
+- scrollUntilVisible:
+    element:
+      text: "Delete contact"
+    direction: DOWN
+- tapOn: "Delete contact"
+- extendedWaitUntil:
+    visible: "^Delete$"
+    timeout: 5000
+- tapOn: "^Delete$"
 - waitForAnimationToEnd
+- extendedWaitUntil:
+    notVisible: "Maestro Bot"
+    timeout: 10000
 - takeScreenshot: contact_deleted

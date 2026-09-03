@@ -4,24 +4,54 @@ tags:
 name: edit_existing_contact_navigation
 ---
 - runFlow: ../../setup/sign_in.yaml
-- swipe:
-    start: 5%,50%
-    end: 80%,50%
+- tapOn: "open drawer"
 - waitForAnimationToEnd
-- tapOn: "Contacts"
+- extendedWaitUntil:
+    visible: "^Contacts$"
+    timeout: 5000
+- tapOn: "^Contacts$"
 - extendedWaitUntil:
     visible: "Contacts"
     timeout: 10000
+- runFlow:
+    when:
+      notVisible: "Maestro Editor"
+    commands:
+      - tapOn:
+          id: "fab_add_contact"
+      - waitForAnimationToEnd
+      - tapOn:
+          id: "contact_field_name"
+      - inputText: "Maestro Editor"
+      - tapOn:
+          id: "contact_field_email"
+      - inputText: "maestro_editor_contact@example.org"
+      - tapOn:
+          id: "contact_save"
+      - extendedWaitUntil:
+          visible: "Maestro Editor"
+          timeout: 10000
 - takeScreenshot: contacts_list_before_edit
-- tapOn:
-    point: "50%,40%"
+- tapOn: "Maestro Editor"
 - waitForAnimationToEnd
 - takeScreenshot: contact_detail
-- tapOn:
-    text: "Edit"
-    optional: true
-- waitForAnimationToEnd
+- tapOn: "Edit"
+- extendedWaitUntil:
+    visible: "Edit contact"
+    timeout: 5000
 - takeScreenshot: contact_edit
 - back
-- back
-- back
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element:
+      text: "Delete contact"
+    direction: DOWN
+- tapOn: "Delete contact"
+- extendedWaitUntil:
+    visible: "^Delete$"
+    timeout: 5000
+- tapOn: "^Delete$"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    notVisible: "Maestro Editor"
+    timeout: 10000

@@ -34,7 +34,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.lifecycle.Lifecycle
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import org.astermail.android.security.AppLockViewModel
 import org.astermail.android.security.LockdownStore
 import org.astermail.android.ui.common.nav_anim_duration_ms
@@ -334,10 +337,13 @@ private fun request_notification_permission(should_request: Boolean) {
     }
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun AsterRoot() {
     org.astermail.android.ui.common.aster_theme_root {
-        AsterNavHost()
+        Box(modifier = Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }) {
+            AsterNavHost()
+        }
     }
 }
 
