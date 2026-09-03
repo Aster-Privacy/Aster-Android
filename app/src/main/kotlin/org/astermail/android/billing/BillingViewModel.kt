@@ -23,6 +23,7 @@ package org.astermail.android.billing
 
 import org.astermail.android.BuildConfig
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -78,6 +79,7 @@ data class BillingUiState(
     val plans_failed: Boolean = false,
     val checking_payment: Boolean = false,
     val checkout_abandoned_plan: String? = null,
+    val checkout_abandoned_interval: String? = null,
     val cancel_impact: org.astermail.android.api.billing.CancelImpactResponse? = null,
     val cancel_impact_loading: Boolean = false,
     val credits: org.astermail.android.api.billing.CreditBalanceResponse? = null,
@@ -102,6 +104,12 @@ object AvailablePlansCache {
 
 const val CHECKOUT_POLL_INTERVAL_MS = 3_000L
 const val CHECKOUT_POLL_TIMEOUT_MS = 60_000L
+const val CHECKOUT_TARGET_PREFS = "aster_billing_checkout_target"
+const val CHECKOUT_TARGET_PLAN_KEY = "plan_code"
+const val CHECKOUT_TARGET_INTERVAL_KEY = "billing_interval"
+
+fun checkout_interval_for_term_months(term_months: Int): String =
+    if (term_months >= 12) "year" else "month"
 const val SIGN_IN_WAIT_TIMEOUT_MS = 15_000L
 
 @HiltViewModel
@@ -126,7 +134,23 @@ class BillingViewModel @Inject constructor(
 
     private var preview_request_tag: Pair<String, String>? = null
 
-    private var pending_checkout_plan: String? = null
+    private val checkout_target_prefs by lazy {
+        ctx.getSharedPreferences(CHECKOUT_TARGET_PREFS, Context.MODE_PRIVATE)
+    }
+
+    private fun write_checkout_target(key: String, value: String?) {
+        val editor = checkout_target_prefs.edit()
+        if (value == null) editor.remove(key) else editor.putString(key, value)
+        editor.apply()
+    }
+
+    private var pending_checkout_plan: String?
+        get() = checkout_target_prefs.getString(CHECKOUT_TARGET_PLAN_KEY, null)
+        set(value) = write_checkout_target(CHECKOUT_TARGET_PLAN_KEY, value)
+
+    private var pending_checkout_interval: String?
+        get() = checkout_target_prefs.getString(CHECKOUT_TARGET_INTERVAL_KEY, null)
+        set(value) = write_checkout_target(CHECKOUT_TARGET_INTERVAL_KEY, value)
 
     private var snapshot_before_checkout: String? = null
 
@@ -251,7 +275,8 @@ class BillingViewModel @Inject constructor(
                     ),
                 )
                 pending_checkout_plan = plan_code
-                _state.value = _state.value.copy(is_acting = false, acting_action = null, checkout_url = response.url, checkout_abandoned_plan = null)
+                pending_checkout_interval = billing_interval
+                _state.value = _state.value.copy(is_acting = false, acting_action = null, checkout_url = response.url, checkout_abandoned_plan = null, checkout_abandoned_interval = null)
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_acting = false,
@@ -447,14 +472,22 @@ class BillingViewModel @Inject constructor(
         when (outcome) {
             billing_return_outcome.success -> poll_after_return(returned_paid = true)
             billing_return_outcome.cancelled -> {
-                _state.update { it.copy(awaiting_checkout = false, checkout_abandoned_plan = pending_checkout_plan) }
+                _state.update {
+                    it.copy(
+                        awaiting_checkout = false,
+                        checkout_abandoned_plan = pending_checkout_plan,
+                        checkout_abandoned_interval = pending_checkout_interval,
+                    )
+                }
             }
             billing_return_outcome.open -> load_subscription()
         }
     }
 
     fun clear_checkout_abandoned() {
-        _state.update { it.copy(checkout_abandoned_plan = null) }
+        pending_checkout_plan = null
+        pending_checkout_interval = null
+        _state.update { it.copy(checkout_abandoned_plan = null, checkout_abandoned_interval = null) }
     }
 
     private fun poll_after_return(returned_paid: Boolean = false) {
@@ -485,6 +518,11 @@ class BillingViewModel @Inject constructor(
                         pending_checkout_plan
                     } else {
                         it.checkout_abandoned_plan
+                    },
+                    checkout_abandoned_interval = if (!changed && !returned_paid && pending_checkout_plan != null) {
+                        pending_checkout_interval
+                    } else {
+                        it.checkout_abandoned_interval
                     },
                     info = when {
                         changed && now_paid -> ctx.getString(R.string.payment_confirmed)
@@ -541,7 +579,8 @@ class BillingViewModel @Inject constructor(
                     )
                 )
                 pending_checkout_plan = plan_code
-                _state.value = _state.value.copy(is_acting = false, acting_action = null, checkout_url = response.url, checkout_abandoned_plan = null)
+                pending_checkout_interval = checkout_interval_for_term_months(term_months)
+                _state.value = _state.value.copy(is_acting = false, acting_action = null, checkout_url = response.url, checkout_abandoned_plan = null, checkout_abandoned_interval = null)
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_acting = false, acting_action = null,

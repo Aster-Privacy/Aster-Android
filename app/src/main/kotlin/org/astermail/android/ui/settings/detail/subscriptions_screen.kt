@@ -328,6 +328,7 @@ fun SubscriptionsScreen(
     var show_cancel_flow by remember { mutableStateOf(false) }
     var show_crypto_coins by remember { mutableStateOf(false) }
     var pending_term_months by remember { mutableStateOf(1) }
+    var picker_method by remember { mutableStateOf(payment_method_card) }
     var show_switch_yearly by remember { mutableStateOf(false) }
     var resume_cancel_flow by remember { mutableStateOf(false) }
 
@@ -378,6 +379,23 @@ fun SubscriptionsScreen(
     val plan_free_label = stringResource(R.string.plan_name_free)
     var billing_interval by remember { mutableStateOf("year") }
     val plan_load_settled = remember_load_settled(state.is_loading)
+    var resumed_checkout_plan by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(billing_state.checkout_abandoned_plan, billing_state.checking_payment) {
+        val resume_plan = billing_state.checkout_abandoned_plan
+        if (resume_plan == null) {
+            resumed_checkout_plan = null
+            return@LaunchedEffect
+        }
+        if (billing_state.checking_payment) return@LaunchedEffect
+        if (resumed_checkout_plan == resume_plan) return@LaunchedEffect
+        resumed_checkout_plan = resume_plan
+        if (plan_tiers.none { it.code == resume_plan }) return@LaunchedEffect
+        billing_interval = billing_state.checkout_abandoned_interval ?: billing_interval
+        pending_plan_code = resume_plan
+        pending_addon_id = null
+        show_payment_picker = true
+    }
 
     val current_interval = org.astermail.android.billing.normalize_billing_interval(sub?.effective_interval)
     val api_monthly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, current_code, "month")
@@ -516,6 +534,7 @@ fun SubscriptionsScreen(
                             AsterButton(
                                 label = stringResource(R.string.finish_plan_setup_action),
                                 onClick = {
+                                    billing_interval = billing_state.checkout_abandoned_interval ?: billing_interval
                                     billing_vm.clear_checkout_abandoned()
                                     pending_plan_code = abandoned_plan
                                     pending_addon_id = null
@@ -1014,25 +1033,57 @@ fun SubscriptionsScreen(
     }
 
     if (show_payment_picker) {
-        payment_method_dialog(
-            title = pending_plan_code?.let { code ->
-                val down = is_lower_tier(code, current_code)
-                plan_tiers.firstOrNull { it.code == code }?.let {
-                    context.getString(
-                        if (down) R.string.downgrade_to else R.string.upgrade_to,
-                        context.getString(it.name_res),
-                    )
-                } ?: context.getString(if (down) R.string.downgrade else R.string.upgrade)
-            } ?: context.getString(R.string.storage_addons_title),
-            on_dismiss = { show_payment_picker = false },
-            on_card = {
-                show_payment_picker = false
-                pending_plan_code?.let { billing_vm.start_checkout(it, billing_interval, detected_currency) }
-                    ?: pending_addon_id?.let { billing_vm.purchase_storage_addon(it) }
+        val picker_tier = pending_plan_code?.let { code -> plan_tiers.firstOrNull { it.code == code } }
+        val picker_addon = pending_addon_id?.let { id ->
+            billing_state.storage_addons?.available_addons?.firstOrNull { it.id == id }
+        }
+        val picker_monthly = pending_plan_code?.let {
+            org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, it, "month")
+        }
+        val picker_yearly = pending_plan_code?.let {
+            org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, it, "year")
+        }
+        val picker_yearly_selected = billing_interval == "year"
+        val picker_amount_cents = picker_addon?.price_cents
+            ?: if (picker_yearly_selected) picker_yearly else picker_monthly
+        val picker_save_cents = if (
+            picker_addon == null && picker_yearly_selected && picker_monthly != null && picker_yearly != null
+        ) {
+            (picker_monthly * 12 - picker_yearly).coerceAtLeast(0).takeIf { it > 0 }
+        } else {
+            null
+        }
+        payment_review_dialog(
+            title = stringResource(R.string.checkout_review_title),
+            plan_name = picker_tier?.let { stringResource(it.name_res) }
+                ?: picker_addon?.name
+                ?: stringResource(R.string.storage_addons_title),
+            interval_label = picker_addon?.let {
+                org.astermail.android.billing.billing_interval_per_label(context, it.billing_period)
+            } ?: picker_tier?.let {
+                org.astermail.android.billing.billing_interval_per_label(context, billing_interval)
             },
-            on_crypto = {
+            amount_text = picker_amount_cents?.let { format_price(it, detected_currency) }
+                ?: stringResource(R.string.see_pricing),
+            subtotal_text = picker_save_cents?.let { format_price((picker_monthly ?: 0) * 12, detected_currency) },
+            save_text = picker_save_cents?.let { format_price(it, detected_currency) },
+            is_best_value = picker_tier != null && recommendation.recommended_plan_code == picker_tier.code,
+            features = picker_tier?.features.orEmpty(),
+            is_busy = billing_state.is_acting,
+            initial_method = picker_method,
+            on_dismiss = {
                 show_payment_picker = false
-                show_crypto_terms = true
+                picker_method = payment_method_card
+            },
+            on_confirm = { chosen ->
+                picker_method = chosen
+                show_payment_picker = false
+                if (chosen == payment_method_crypto) {
+                    show_crypto_terms = true
+                } else {
+                    pending_plan_code?.let { billing_vm.start_checkout(it, billing_interval, detected_currency) }
+                        ?: pending_addon_id?.let { billing_vm.purchase_storage_addon(it) }
+                }
             },
         )
     }
@@ -1175,7 +1226,10 @@ fun SubscriptionsScreen(
 
     if (show_crypto_terms) {
         crypto_term_dialog(
-            on_dismiss = { show_crypto_terms = false },
+            on_dismiss = {
+                show_crypto_terms = false
+                show_payment_picker = true
+            },
             on_confirm = { term ->
                 show_crypto_terms = false
                 pending_term_months = term
@@ -1195,7 +1249,10 @@ fun SubscriptionsScreen(
     if (show_crypto_coins) {
         crypto_coin_dialog(
             coins = billing_state.crypto_native_coins,
-            on_dismiss = { show_crypto_coins = false },
+            on_dismiss = {
+                show_crypto_coins = false
+                show_crypto_terms = true
+            },
             on_select = { coin ->
                 show_crypto_coins = false
                 pending_plan_code?.let {
@@ -1511,75 +1568,6 @@ private fun crypto_resume_card(
 }
 
 @Composable
-private fun payment_method_dialog(
-    title: String,
-    on_dismiss: () -> Unit,
-    on_card: () -> Unit,
-    on_crypto: () -> Unit,
-) {
-    val colors = AsterMaterial.colors
-    org.astermail.android.design.components.AsterDialog(
-        on_dismiss = on_dismiss,
-        title = title,
-        body = {
-            Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
-                payment_method_option(
-                    icon = TablerIcons.CreditCard,
-                    label = stringResource(R.string.payment_method_card),
-                    subtitle = stringResource(R.string.payment_method_card_subtitle),
-                    onClick = on_card,
-                )
-                payment_method_option(
-                    icon = TablerIcons.CurrencyBitcoin,
-                    label = stringResource(R.string.payment_method_crypto),
-                    subtitle = stringResource(R.string.payment_method_crypto_subtitle),
-                    onClick = on_crypto,
-                )
-                Text(
-                    text = stringResource(R.string.autorenew_notice_short),
-                    color = colors.text_tertiary,
-                    fontSize = 11.sp,
-                    lineHeight = 15.sp,
-                )
-            }
-        },
-        footer = {
-            org.astermail.android.design.components.AsterDialogOutlineButton(
-                label = stringResource(R.string.cancel),
-                onClick = on_dismiss,
-            )
-        },
-    )
-}
-
-@Composable
-private fun payment_method_option(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    subtitle: String,
-    onClick: () -> Unit,
-) {
-    val colors = AsterMaterial.colors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(SquircleShape(14.dp))
-            .background(colors.bg_secondary)
-            .border(1.dp, colors.border_secondary, SquircleShape(14.dp))
-            .clickable(onClick = onClick)
-            .padding(AsterSpacing.md),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md),
-    ) {
-        Icon(imageVector = icon, contentDescription = null, tint = colors.text_tertiary, modifier = Modifier.size(22.dp))
-        Column {
-            Text(label, color = colors.text_primary, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-            Text(subtitle, color = colors.text_tertiary, fontSize = 12.sp)
-        }
-    }
-}
-
-@Composable
 private fun crypto_term_dialog(
     on_dismiss: () -> Unit,
     on_confirm: (Int) -> Unit,
@@ -1631,7 +1619,7 @@ private fun crypto_term_dialog(
         },
         footer = {
             org.astermail.android.design.components.AsterDialogOutlineButton(
-                label = stringResource(R.string.cancel),
+                label = stringResource(R.string.back),
                 onClick = on_dismiss,
             )
             org.astermail.android.design.components.AsterDialogPrimaryButton(
@@ -1668,11 +1656,11 @@ private fun crypto_coin_dialog(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md),
                     ) {
-                        Icon(
-                            imageVector = TablerIcons.CurrencyBitcoin,
-                            contentDescription = null,
-                            tint = colors.text_tertiary,
-                            modifier = Modifier.size(22.dp),
+                        coin_mark(
+                            currency = coin.currency,
+                            chain = coin.chain,
+                            label = coin.display_name,
+                            size = 26.dp,
                         )
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
@@ -1706,7 +1694,7 @@ private fun crypto_coin_dialog(
         },
         footer = {
             org.astermail.android.design.components.AsterDialogOutlineButton(
-                label = stringResource(R.string.cancel),
+                label = stringResource(R.string.back),
                 onClick = on_dismiss,
             )
         },
@@ -1715,39 +1703,11 @@ private fun crypto_coin_dialog(
 
 @Composable
 private fun billing_interval_toggle(selected: String, on_select: (String) -> Unit) {
-    val colors = AsterMaterial.colors
     val options = listOf(
-        "month" to stringResource(R.string.settings_billing_monthly),
-        "year" to stringResource(R.string.settings_billing_yearly),
+        switcher_option(id = "month", label = stringResource(R.string.settings_billing_monthly)),
+        switcher_option(id = "year", label = stringResource(R.string.settings_billing_yearly)),
     )
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(colors.input_bg, SquircleShape(18.dp))
-            .border(1.dp, colors.input_border, SquircleShape(18.dp))
-            .padding(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        options.forEach { (value, label) ->
-            val active = selected == value
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(40.dp)
-                    .clip(SquircleShape(14.dp))
-                    .background(if (active) colors.accent_blue else Color.Transparent)
-                    .clickable { on_select(value) },
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = label,
-                    color = if (active) Color.White else colors.text_muted,
-                    fontSize = 14.sp,
-                    fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium,
-                )
-            }
-        }
-    }
+    aster_segmented(value = selected, options = options, on_change = on_select)
 }
 
 @Composable
@@ -1760,7 +1720,7 @@ private fun feature_row(@StringRes feature_res: Int) {
         Icon(
             imageVector = TablerIcons.Check,
             contentDescription = null,
-            tint = colors.success,
+            tint = colors.accent_blue,
             modifier = Modifier.size(16.dp),
         )
         Spacer(Modifier.width(AsterSpacing.sm))
@@ -1838,6 +1798,18 @@ internal fun plan_recommendation_banner(
 }
 
 @Composable
+private fun plan_tier_surface(
+    highlighted: Boolean,
+    content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
+) {
+    if (highlighted) {
+        galaxy_surface(modifier = Modifier.fillMaxWidth(), content = content)
+    } else {
+        AsterCard(modifier = Modifier.fillMaxWidth(), content = content)
+    }
+}
+
+@Composable
 private fun plan_tier_card(
     tier: plan_tier,
     billing_interval: String,
@@ -1857,21 +1829,25 @@ private fun plan_tier_card(
     val save_cents = if (monthly_cents != null && yearly_cents != null) (monthly_cents * 12 - yearly_cents).coerceAtLeast(0) else null
     val amount_cents = if (is_yearly) yearly_cents else monthly_cents
     val price_known = amount_cents != null
-    AsterCard(modifier = Modifier.fillMaxWidth()) {
+    plan_tier_surface(highlighted = is_recommended && !is_current) {
         if (is_current || is_recommended) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(if (is_current) colors.success else colors.accent_blue)
-                    .padding(vertical = 5.dp),
+                    .padding(top = AsterSpacing.md),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    text = if (is_current) stringResource(R.string.current_plan) else stringResource(R.string.most_popular),
-                    color = Color.White,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                )
+                if (is_current) {
+                    aster_plan_badge(
+                        text = stringResource(R.string.current_plan),
+                        accent = colors.success,
+                        font_size = 11.sp,
+                        horizontal_padding = 10.dp,
+                        vertical_padding = 4.dp,
+                    )
+                } else {
+                    galaxy_badge(text = stringResource(R.string.most_popular), font_size = 11.sp)
+                }
             }
         }
         Column(modifier = Modifier.padding(AsterSpacing.lg)) {
