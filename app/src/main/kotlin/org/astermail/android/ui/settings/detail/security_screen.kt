@@ -979,6 +979,41 @@ private fun vanguard_section(
         }
     }
 
+    state.hardware_key_step_up_id?.let { step_up_key_id ->
+        var step_up_password by remember(step_up_key_id) { mutableStateOf("") }
+        AsterAlertDialog(
+            on_dismiss = { vm.dismiss_hardware_key_step_up() },
+            title = stringResource(R.string.hardware_key_remove_last_title),
+            message = stringResource(R.string.hardware_key_remove_last_description),
+            confirm_label = stringResource(R.string.remove),
+            cancel_label = stringResource(R.string.cancel),
+            confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
+            confirm_enabled = step_up_password.isNotBlank() && !state.hardware_key_step_up_busy,
+            is_busy = state.hardware_key_step_up_busy,
+            on_confirm = { vm.delete_hardware_key(step_up_key_id, step_up_password) },
+            extra_content = {
+                Column {
+                    state.hardware_key_step_up_error?.let {
+                        Text(
+                            text = it,
+                            color = colors.danger,
+                            fontSize = 13.sp,
+                        )
+                        Spacer(Modifier.height(AsterSpacing.md))
+                    }
+                    org.astermail.android.design.components.AsterTextField(
+                        value = step_up_password,
+                        onValueChange = { step_up_password = it },
+                        singleLine = true,
+                        placeholder = stringResource(R.string.enter_your_password),
+                        visual_transformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            },
+        )
+    }
+
     if (show_disable_confirm) {
         AsterAlertDialog(
             on_dismiss = { show_disable_confirm = false },

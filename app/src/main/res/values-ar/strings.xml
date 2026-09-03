@@ -679,6 +679,9 @@
     <string name="generate_codes">إنشاء الرموز</string>
     <string name="two_factor_enabled_title">تم تفعيل المصادقة الثنائية</string>
     <string name="two_factor_enabled_subtitle">احفظ هذه الرموز الاحتياطية في مكان آمن. يمكن استخدام كل واحد مرة واحدة إذا فقدت تطبيق المصادقة.</string>
+    <string name="two_factor_other_devices_signed_out">قام Aster بتسجيل خروجك من أجهزتك الأخرى. لاستخدامها مرة أخرى، سجّل الدخول وأدخل رمزًا من تطبيق المصادقة.</string>
+    <string name="hardware_key_remove_last_title">هل تريد إزالة آخر مفتاح أمان لديك؟</string>
+    <string name="hardware_key_remove_last_description">هذا هو آخر عامل تحقق ثانٍ في حسابك. لإزالته، أدخل كلمة السر.</string>
     <string name="new_backup_codes_title">رموز احتياطية جديدة</string>
     <string name="new_backup_codes_subtitle">لم تعد الرموز الاحتياطية القديمة تعمل. احفظ هذه في مكان آمن.</string>
     <string name="copy_all_codes">نسخ جميع الرموز</string>

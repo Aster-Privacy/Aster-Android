@@ -679,6 +679,9 @@
     <string name="generate_codes">Genera codici</string>
     <string name="two_factor_enabled_title">Autenticazione a due fattori attivata</string>
     <string name="two_factor_enabled_subtitle">Salva questi codici di backup in un posto sicuro. Ognuno può essere usato una volta se perdi il tuo autenticatore.</string>
+    <string name="two_factor_other_devices_signed_out">Aster ti ha disconnesso dagli altri dispositivi. Per usarli di nuovo, accedi e inserisci un codice della tua app di autenticazione.</string>
+    <string name="hardware_key_remove_last_title">Rimuovere l\'ultima chiave di sicurezza?</string>
+    <string name="hardware_key_remove_last_description">Questo è l\'ultimo secondo fattore del tuo account. Per rimuoverlo, inserisci la tua password.</string>
     <string name="new_backup_codes_title">Nuovi codici di backup</string>
     <string name="new_backup_codes_subtitle">I tuoi vecchi codici di backup non funzionano più. Salvali in un posto sicuro.</string>
     <string name="copy_all_codes">Copia tutti i codici</string>

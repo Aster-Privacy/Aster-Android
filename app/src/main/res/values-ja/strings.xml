@@ -679,6 +679,9 @@
     <string name="generate_codes">コードを生成</string>
     <string name="two_factor_enabled_title">二要素認証が有効になりました</string>
     <string name="two_factor_enabled_subtitle">これらのバックアップコードを安全な場所に保存してください。認証アプリを紛失した場合に各コードを1回使用できます。</string>
+    <string name="two_factor_other_devices_signed_out">Aster はほかのデバイスからサインアウトしました。再び使うには、サインインして認証 App のコードを入力してください。</string>
+    <string name="hardware_key_remove_last_title">最後のセキュリティキーを削除しますか？</string>
+    <string name="hardware_key_remove_last_description">これはアカウントに残る最後の 2 要素です。削除するには、パスワードを入力してください。</string>
     <string name="new_backup_codes_title">新しいバックアップコード</string>
     <string name="new_backup_codes_subtitle">以前のバックアップコードは使用できなくなりました。これらを安全な場所に保存してください。</string>
     <string name="copy_all_codes">すべてのコードをコピー</string>

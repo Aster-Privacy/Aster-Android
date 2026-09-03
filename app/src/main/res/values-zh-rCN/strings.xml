@@ -679,6 +679,9 @@
     <string name="generate_codes">生成代码</string>
     <string name="two_factor_enabled_title">双重验证已启用</string>
     <string name="two_factor_enabled_subtitle">请将这些备用代码保存在安全的地方。如果您丢失了验证器，每个代码可以使用一次。</string>
+    <string name="two_factor_other_devices_signed_out">Aster 已在你的其他设备上退出登录。若要继续使用这些设备，请重新登录并输入身份验证器 App 中的验证码。</string>
+    <string name="hardware_key_remove_last_title">移除最后一个安全密钥？</string>
+    <string name="hardware_key_remove_last_description">这是账户上最后一个双重验证方式。若要移除，请输入密码。</string>
     <string name="new_backup_codes_title">新的备用代码</string>
     <string name="new_backup_codes_subtitle">您的旧备用代码已失效。请将这些代码保存在安全的地方。</string>
     <string name="copy_all_codes">复制所有代码</string>

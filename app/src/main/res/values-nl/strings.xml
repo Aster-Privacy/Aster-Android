@@ -679,6 +679,9 @@
     <string name="generate_codes">Codes genereren</string>
     <string name="two_factor_enabled_title">Tweefactorauthenticatie ingeschakeld</string>
     <string name="two_factor_enabled_subtitle">Sla deze back-upcodes op een veilige plek op. Elke code kan eenmaal worden gebruikt als je je authenticator verliest.</string>
+    <string name="two_factor_other_devices_signed_out">Aster heeft je op je andere apparaten afgemeld. Meld je opnieuw aan en voer een code uit je authenticator-app in om ze weer te gebruiken.</string>
+    <string name="hardware_key_remove_last_title">Je laatste beveiligingssleutel verwijderen?</string>
+    <string name="hardware_key_remove_last_description">Dit is de laatste tweede factor op je account. Voer je wachtwoord in om hem te verwijderen.</string>
     <string name="new_backup_codes_title">Nieuwe back-upcodes</string>
     <string name="new_backup_codes_subtitle">Je oude back-upcodes werken niet meer. Sla deze op een veilige plek op.</string>
     <string name="copy_all_codes">Alle codes kopiëren</string>

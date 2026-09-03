@@ -679,6 +679,9 @@
     <string name="generate_codes">Wygeneruj kody</string>
     <string name="two_factor_enabled_title">Uwierzytelnianie dwuskładnikowe włączone</string>
     <string name="two_factor_enabled_subtitle">Zapisz te kody zapasowe w bezpiecznym miejscu. Każdy można użyć raz, jeśli stracisz dostęp do aplikacji uwierzytelniającej.</string>
+    <string name="two_factor_other_devices_signed_out">Aster wylogował Cię na innych urządzeniach. Aby ich znowu użyć, zaloguj się i wprowadź kod z aplikacji uwierzytelniającej.</string>
+    <string name="hardware_key_remove_last_title">Usunąć ostatni klucz bezpieczeństwa?</string>
+    <string name="hardware_key_remove_last_description">To ostatni drugi składnik logowania na Twoim koncie. Aby go usunąć, wprowadź hasło.</string>
     <string name="new_backup_codes_title">Nowe kody zapasowe</string>
     <string name="new_backup_codes_subtitle">Twoje stare kody zapasowe już nie działają. Zapisz te w bezpiecznym miejscu.</string>
     <string name="copy_all_codes">Kopiuj wszystkie kody</string>

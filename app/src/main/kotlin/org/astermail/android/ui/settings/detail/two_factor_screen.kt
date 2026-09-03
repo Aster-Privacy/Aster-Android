@@ -116,6 +116,7 @@ fun TwoFactorScreen(
             TwoFactorMode.SetupComplete -> backup_codes_panel(
                 title = stringResource(R.string.two_factor_enabled_title),
                 subtitle = stringResource(R.string.two_factor_enabled_subtitle),
+                notice = stringResource(R.string.two_factor_other_devices_signed_out),
                 codes = state.backup_codes,
                 on_done = { vm.acknowledge_backup_codes() },
             )
@@ -367,11 +368,16 @@ private fun backup_codes_panel(
     subtitle: String,
     codes: List<String>,
     on_done: () -> Unit,
+    notice: String? = null,
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
     section_label(title)
     Text(text = subtitle, color = colors.text_tertiary, fontSize = 13.sp)
+    if (notice != null) {
+        v_gap(AsterSpacing.xs)
+        Text(text = notice, color = colors.text_tertiary, fontSize = 13.sp)
+    }
     v_gap(AsterSpacing.md)
     AsterCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(AsterSpacing.lg)) {

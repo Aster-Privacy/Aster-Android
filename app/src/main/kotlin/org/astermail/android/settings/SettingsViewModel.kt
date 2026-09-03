@@ -234,6 +234,9 @@ data class SettingsUiState(
     val login_alerts_load_failed: Boolean = false,
     val hardware_keys: List<HardwareKey> = emptyList(),
     val hardware_keys_load_failed: Boolean = false,
+    val hardware_key_step_up_id: String? = null,
+    val hardware_key_step_up_error: String? = null,
+    val hardware_key_step_up_busy: Boolean = false,
     val trusted_devices: List<TrustedDevice> = emptyList(),
     val trusted_devices_load_failed: Boolean = false,
     val audit_events: List<AuditEvent> = emptyList(),
@@ -3079,16 +3082,57 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun delete_hardware_key(key_id: String) {
+    fun delete_hardware_key(key_id: String, password: String? = null, totp_code: String? = null) {
         viewModelScope.launch {
+            _state.update { it.copy(hardware_key_step_up_busy = password != null, hardware_key_step_up_error = null) }
             try {
-                security_api.delete_hardware_key(key_id)
-                _state.update { it.copy(hardware_keys = it.hardware_keys.filter { k -> k.id != key_id }) }
+                val password_hash = password?.takeIf { it.isNotBlank() }?.let {
+                    auth_repository.derive_password_hash_b64(it)
+                }
+                if (password != null && password_hash == null) {
+                    _state.update { it.copy(
+                        hardware_key_step_up_busy = false,
+                        hardware_key_step_up_error = context.getString(R.string.incorrect_password),
+                    ) }
+                    return@launch
+                }
+                security_api.delete_hardware_key(key_id, password_hash, totp_code)
+                _state.update { it.copy(
+                    hardware_keys = it.hardware_keys.filter { k -> k.id != key_id },
+                    hardware_key_step_up_id = null,
+                    hardware_key_step_up_busy = false,
+                    hardware_key_step_up_error = null,
+                ) }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.value = _state.value.copy(action_result = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)))
+                val code = (t as? ApiError.ValidationError)?.code
+                val message = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong))
+                if (code == "STEP_UP_REQUIRED") {
+                    _state.update { it.copy(
+                        hardware_key_step_up_id = key_id,
+                        hardware_key_step_up_busy = false,
+                        hardware_key_step_up_error = null,
+                    ) }
+                    return@launch
+                }
+                if (password != null) {
+                    _state.update { it.copy(
+                        hardware_key_step_up_busy = false,
+                        hardware_key_step_up_error = message,
+                    ) }
+                    return@launch
+                }
+                _state.value = _state.value.copy(action_result = message, hardware_key_step_up_busy = false)
             }
         }
+    }
+
+    fun dismiss_hardware_key_step_up() {
+        _state.update { it.copy(
+            hardware_key_step_up_id = null,
+            hardware_key_step_up_error = null,
+            hardware_key_step_up_busy = false,
+        ) }
     }
 
     fun rename_hardware_key(key_id: String, name: String) {

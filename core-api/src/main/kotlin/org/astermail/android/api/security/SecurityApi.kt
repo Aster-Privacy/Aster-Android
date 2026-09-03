@@ -63,6 +63,12 @@ data class HardwareKeysResponse(
 )
 
 @Serializable
+data class DeleteHardwareKeyRequest(
+    val password_hash: String? = null,
+    val totp_code: String? = null,
+)
+
+@Serializable
 data class RenameHardwareKeyRequest(
     val friendly_name: String,
 )
@@ -113,7 +119,11 @@ interface SecurityApi {
     suspend fun get_login_alerts(): LoginAlertStatus
     suspend fun set_login_alerts(request: SetLoginAlertRequest): LoginAlertStatus
     suspend fun list_hardware_keys(): HardwareKeysResponse
-    suspend fun delete_hardware_key(key_id: String)
+    suspend fun delete_hardware_key(
+        key_id: String,
+        password_hash: String? = null,
+        totp_code: String? = null,
+    )
     suspend fun rename_hardware_key(key_id: String, name: String): RenameHardwareKeyResponse
     suspend fun list_trusted_devices(): TrustedDevicesResponse
     suspend fun revoke_trusted_device(device_id: String)
@@ -142,11 +152,27 @@ class SecurityApiImpl(private val client: ApiClient) : SecurityApi {
     override suspend fun list_hardware_keys(): HardwareKeysResponse =
         decode_or_throw(client.http.get("${client.base_url}$base/auth/hardware-keys"))
 
-    override suspend fun delete_hardware_key(key_id: String) {
+    override suspend fun delete_hardware_key(
+        key_id: String,
+        password_hash: String?,
+        totp_code: String?,
+    ) {
         val response = client.http.delete("${client.base_url}$base/auth/hardware-keys/$key_id") {
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            if (password_hash != null) {
+                contentType(ContentType.Application.Json)
+                setBody(
+                    DeleteHardwareKeyRequest(
+                        password_hash = password_hash,
+                        totp_code = totp_code?.takeIf { it.isNotBlank() },
+                    ),
+                )
+            }
         }
-        if (response.status.value !in 200..299) throw client.map_http_status(response.status.value, "")
+        if (response.status.value !in 200..299) {
+            val body = try { response.body<String>() } catch (_: Throwable) { "" }
+            throw client.map_http_status(response.status.value, body)
+        }
     }
 
     override suspend fun rename_hardware_key(key_id: String, name: String): RenameHardwareKeyResponse {

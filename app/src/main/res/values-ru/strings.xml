@@ -679,6 +679,9 @@
     <string name="generate_codes">Сгенерировать коды</string>
     <string name="two_factor_enabled_title">Двухфакторная аутентификация включена</string>
     <string name="two_factor_enabled_subtitle">Сохраните эти резервные коды в безопасном месте. Каждый можно использовать один раз, если вы потеряете аутентификатор.</string>
+    <string name="two_factor_other_devices_signed_out">Aster завершил сеансы на других ваших устройствах. Чтобы снова ими пользоваться, войдите и введите код из приложения-аутентификатора.</string>
+    <string name="hardware_key_remove_last_title">Удалить последний ключ безопасности?</string>
+    <string name="hardware_key_remove_last_description">Это последний второй фактор в вашей учетной записи. Чтобы удалить его, введите пароль.</string>
     <string name="new_backup_codes_title">Новые резервные коды</string>
     <string name="new_backup_codes_subtitle">Ваши старые резервные коды больше не работают. Сохраните эти в безопасном месте.</string>
     <string name="copy_all_codes">Копировать все коды</string>

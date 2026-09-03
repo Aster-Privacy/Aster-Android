@@ -679,6 +679,9 @@
     <string name="generate_codes">코드 생성</string>
     <string name="two_factor_enabled_title">2단계 인증이 활성화되었습니다</string>
     <string name="two_factor_enabled_subtitle">이 백업 코드를 안전한 곳에 저장하세요. 인증 앱을 분실하면 각 코드를 한 번씩 사용할 수 있습니다.</string>
+    <string name="two_factor_other_devices_signed_out">Aster가 다른 기기에서 로그아웃했습니다. 다시 사용하려면 로그인한 다음 인증 앱의 코드를 입력하십시오.</string>
+    <string name="hardware_key_remove_last_title">마지막 보안 키를 제거할까요?</string>
+    <string name="hardware_key_remove_last_description">계정에 남은 마지막 2단계 인증 수단입니다. 제거하려면 비밀번호를 입력하십시오.</string>
     <string name="new_backup_codes_title">새 백업 코드</string>
     <string name="new_backup_codes_subtitle">이전 백업 코드는 더 이상 사용할 수 없습니다. 이 코드를 안전한 곳에 저장하세요.</string>
     <string name="copy_all_codes">모든 코드 복사</string>

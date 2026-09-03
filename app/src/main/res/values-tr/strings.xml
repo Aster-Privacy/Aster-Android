@@ -679,6 +679,9 @@
     <string name="generate_codes">Kodları oluştur</string>
     <string name="two_factor_enabled_title">İki faktörlü kimlik doğrulama etkinleştirildi</string>
     <string name="two_factor_enabled_subtitle">Bu yedek kodları güvenli bir yerde saklayın. Her biri, kimlik doğrulayıcınızı kaybederseniz bir kez kullanılabilir.</string>
+    <string name="two_factor_other_devices_signed_out">Aster diğer cihazlarındaki oturumunu kapattı. Bunları yeniden kullanmak için oturum aç ve kimlik doğrulama uygulamandaki kodu gir.</string>
+    <string name="hardware_key_remove_last_title">Son güvenlik anahtarın kaldırılsın mı?</string>
+    <string name="hardware_key_remove_last_description">Bu, hesabındaki son ikinci doğrulama adımı. Kaldırmak için parolanı gir.</string>
     <string name="new_backup_codes_title">Yeni yedek kodlar</string>
     <string name="new_backup_codes_subtitle">Eski yedek kodlarınız artık çalışmıyor. Bunları güvenli bir yerde saklayın.</string>
     <string name="copy_all_codes">Tüm kodları kopyala</string>
