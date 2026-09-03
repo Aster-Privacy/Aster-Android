@@ -116,6 +116,7 @@ class DraftAutoSaveInstrumentedTest {
             pending_send_dao_provider = dagger.Lazy { FakePendingSendDao() },
             context = InstrumentationRegistry.getInstrumentation().targetContext,
             auth_repository = dagger.Lazy { mockk(relaxed = true) },
+            system_folder_bootstrap = mockk(relaxed = true),
         )
     }
 

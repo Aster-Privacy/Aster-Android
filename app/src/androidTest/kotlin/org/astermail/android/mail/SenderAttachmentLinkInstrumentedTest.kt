@@ -64,6 +64,7 @@ class SenderAttachmentLinkInstrumentedTest {
             pending_send_dao_provider = dagger.Lazy { mockk(relaxed = true) },
             context = ApplicationProvider.getApplicationContext(),
             auth_repository = mockk(relaxed = true),
+            system_folder_bootstrap = mockk(relaxed = true),
         )
     }
 

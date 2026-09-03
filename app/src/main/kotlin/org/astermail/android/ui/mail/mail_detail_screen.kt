@@ -1059,23 +1059,33 @@ fun MailDetailScreen(
                 item(key = "subject_header") {
                     var subject_expanded by remember(subject_text) { mutableStateOf(false) }
                     var subject_truncated by remember(subject_text) { mutableStateOf(false) }
+                    val applied_tag_tokens = api_item?.raw_item?.tag_tokens ?: emptyList()
+                    val settings_state_now by settings_vm.state.collectAsStateWithLifecycle()
+                    val applied_tags = remember(applied_tag_tokens, settings_state_now.tags) {
+                        applied_tag_tokens.mapNotNull { token ->
+                            settings_state_now.tags.find { it.tag_token == token }
+                        }.filter { it.encrypted_name.isNotBlank() }
+                    }
+                    val folder_chip = detail_folder_chip_for(
+                        item = api_item,
+                        folders = settings_state_now.labels,
+                        is_spam = is_spam,
+                        is_trashed = is_trashed,
+                    )
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(start = AsterSpacing.lg, end = AsterSpacing.xs)
-                            .padding(top = AsterSpacing.sm, bottom = AsterSpacing.sm),
-                        verticalAlignment = Alignment.CenterVertically,
+                            .padding(top = AsterSpacing.sm, bottom = AsterSpacing.md),
+                        verticalAlignment = Alignment.Top,
                     ) {
-                        Text(
-                            text = subject_text,
-                            color = colors.text_primary,
-                            fontSize = 26.sp,
-                            lineHeight = 32.sp,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = if (subject_expanded) Int.MAX_VALUE else 3,
-                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                            onTextLayout = { layout ->
-                                if (!subject_expanded && layout.hasVisualOverflow) subject_truncated = true
+                        detail_subject_line(
+                            subject = subject_text,
+                            folder_chip = folder_chip,
+                            tags = applied_tags,
+                            max_lines = if (subject_expanded) Int.MAX_VALUE else 3,
+                            on_overflow = { overflowed ->
+                                if (!subject_expanded && overflowed) subject_truncated = true
                             },
                             modifier = Modifier
                                 .weight(1f)
@@ -1108,46 +1118,6 @@ fun MailDetailScreen(
                         )
                     }
                 }
-                item {
-                    val applied_tag_tokens = api_item?.raw_item?.tag_tokens ?: emptyList()
-                    val settings_state_now by settings_vm.state.collectAsStateWithLifecycle()
-                    val applied_tags = remember(applied_tag_tokens, settings_state_now.tags) {
-                        applied_tag_tokens.mapNotNull { token ->
-                            settings_state_now.tags.find { it.tag_token == token }
-                        }.filter { it.encrypted_name.isNotBlank() }
-                    }
-                    val folder_chip = detail_folder_chip_for(
-                        item = api_item,
-                        folders = settings_state_now.labels,
-                        is_spam = is_spam,
-                        is_trashed = is_trashed,
-                    )
-                    if (folder_chip != null || applied_tags.isNotEmpty()) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = AsterSpacing.lg)
-                                .padding(bottom = AsterSpacing.sm),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        ) {
-                            if (folder_chip != null) {
-                                detail_folder_chip(folder_chip)
-                            }
-                            Row(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .horizontalScroll(rememberScrollState()),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.End),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                applied_tags.forEach { tag ->
-                                    detail_label_chip(tag)
-                                }
-                            }
-                        }
-                    }
-                }
 
                 items(messages.size, key = { messages[it].id }, contentType = { "thread_message" }) { idx ->
                     val msg = messages[idx]
@@ -1171,6 +1141,8 @@ fun MailDetailScreen(
                     }
 
                     val is_system_sender = is_aster_system_sender(msg)
+                    val is_first_card = idx == 0 || is_after_indicator
+                    val is_last_card = is_last
 
                     if (is_expanded) {
                         expanded_message(
@@ -1180,7 +1152,8 @@ fun MailDetailScreen(
                             thread_attachments = all_thread_attachments,
                             my_email = my_email,
                             my_profile_pic = my_profile_pic,
-                            show_top_divider = !is_after_indicator,
+                            is_first_card = is_first_card,
+                            is_last_card = is_last_card,
                             allow_external = !block_external_images || msg.id in allow_external_ids || is_system_sender,
                             blocked_for_traffic = blocked_for_traffic_only,
                             offer_always_allow = offer_always_allow_external,
@@ -1338,7 +1311,8 @@ fun MailDetailScreen(
                     } else {
                         collapsed_message(
                             msg = msg,
-                            show_top_divider = !is_after_indicator,
+                            is_first_card = is_first_card,
+                            is_last_card = is_last_card,
                             my_email = my_email,
                             my_profile_pic = my_profile_pic,
                             message_index = idx,
@@ -1949,7 +1923,8 @@ internal fun expanded_message(
     is_last: Boolean,
     message_index: Int = 0,
     thread_attachments: List<MessageAttachment> = emptyList(),
-    show_top_divider: Boolean = true,
+    is_first_card: Boolean = true,
+    is_last_card: Boolean = true,
     my_email: String = "",
     my_profile_pic: String? = null,
     allow_external: Boolean = false,
@@ -2001,8 +1976,6 @@ internal fun expanded_message(
     var show_details by remember { mutableStateOf(false) }
     var addresses_expanded by remember(msg.id) { mutableStateOf(false) }
     var sender_name_truncated by remember(msg.id) { mutableStateOf(false) }
-    var sender_email_truncated by remember(msg.id) { mutableStateOf(false) }
-    var to_truncated by remember(msg.id) { mutableStateOf(false) }
     val tracker_report = remember(msg.body_html) { EmailHtmlSanitizer.analyze_trackers(msg.body_html) }
     val tracker_count = remember(tracker_report, msg.trackers_blocked) {
         maxOf(msg.trackers_blocked, tracker_report.total)
@@ -2016,22 +1989,31 @@ internal fun expanded_message(
         sender_auth_status(msg)
     }
 
+    val card_shape = remember(is_first_card, is_last_card) {
+        inbox_group_shape(is_first_card, is_last_card)
+    }
+    val card_color = inbox_card_read_color(colors)
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(colors.bg_primary),
+            .padding(
+                start = inbox_card_horizontal_margin,
+                end = inbox_card_horizontal_margin,
+                bottom = if (is_last_card) 0.dp else inbox_group_split,
+            )
+            .clip(card_shape)
+            .background(card_color),
     ) {
-        if (show_top_divider) {
-            Spacer(Modifier.height(AsterSpacing.sm))
-            AsterDivider()
-        }
-        Spacer(Modifier.height(AsterSpacing.sm))
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .then(if (can_collapse) Modifier.clickable(onClick = on_collapse) else Modifier)
-                .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm)
+                .padding(
+                    start = inbox_card_content_padding,
+                    end = AsterSpacing.sm,
+                    top = AsterSpacing.md,
+                    bottom = AsterSpacing.sm,
+                )
                 .testTag("message_header_$message_index"),
             verticalAlignment = Alignment.Top,
         ) {
@@ -2072,51 +2054,40 @@ internal fun expanded_message(
                             ),
                     )
                 }
-                if (!shown_sender_name.equals(shown_sender_email, ignoreCase = true)) {
-                    Spacer(Modifier.height(1.dp))
-                    Text(
-                        text = shown_sender_email,
-                        color = colors.text_muted,
-                        fontSize = 12.sp,
-                        maxLines = if (addresses_expanded) 6 else 1,
-                        overflow = TextOverflow.Ellipsis,
-                        onTextLayout = { if (!addresses_expanded) sender_email_truncated = it.hasVisualOverflow },
-                        modifier = Modifier.combinedClickable(
-                            hapticFeedbackEnabled = false,
-                            onClick = {
-                                if (sender_email_truncated || addresses_expanded) {
-                                    addresses_expanded = !addresses_expanded
-                                } else if (can_collapse) {
-                                    on_collapse()
-                                }
-                            },
-                            onLongClick = { copy_email(shown_sender_email) },
-                        ),
-                    )
-                }
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    text = stringResource(R.string.to_label_prefix, msg.to_label),
-                    color = colors.text_muted,
-                    fontSize = 12.sp,
-                    maxLines = if (addresses_expanded) 8 else 1,
-                    overflow = TextOverflow.Ellipsis,
-                    onTextLayout = { if (!addresses_expanded) to_truncated = it.hasVisualOverflow },
+                Spacer(Modifier.height(1.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.combinedClickable(
                         hapticFeedbackEnabled = false,
-                        onClick = {
-                            if (to_truncated || addresses_expanded) {
-                                addresses_expanded = !addresses_expanded
-                            } else if (can_collapse) {
-                                on_collapse()
-                            }
-                        },
+                        onClick = { show_details = !show_details },
                         onLongClick = {
                             val recipient = msg.to_addresses.joinToString(", ").ifBlank { msg.to_label }
                             copy_email(recipient)
                         },
                     ),
-                )
+                ) {
+                    Text(
+                        text = stringResource(R.string.to_label_prefix, msg.to_label),
+                        color = colors.text_muted,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    Icon(
+                        imageVector = TablerIcons.ChevronDown,
+                        contentDescription = if (show_details) {
+                            stringResource(R.string.detail_hide_details)
+                        } else {
+                            stringResource(R.string.detail_show_details)
+                        },
+                        tint = colors.text_muted,
+                        modifier = Modifier
+                            .padding(start = 2.dp)
+                            .size(15.dp)
+                            .graphicsLayer(rotationZ = chevron_rotation),
+                    )
+                }
                 val header_received_on = remember(msg) {
                     resolve_received_on_address(msg.raw_headers, msg.to_addresses + msg.cc_addresses, msg.sender_email)
                 }
@@ -2159,19 +2130,15 @@ internal fun expanded_message(
                         modifier = Modifier
                             .size(40.dp)
                             .clip(CircleShape)
-                            .clickable { show_details = !show_details },
+                            .clickable(onClick = on_more)
+                            .testTag("message_more_$message_index"),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            imageVector = TablerIcons.ChevronDown,
-                            contentDescription = if (show_details)
-                                stringResource(R.string.detail_hide_details)
-                            else
-                                stringResource(R.string.detail_show_details),
+                            imageVector = TablerIcons.DotsVertical,
+                            contentDescription = stringResource(R.string.more_options),
                             tint = colors.text_secondary,
-                            modifier = Modifier
-                                .size(22.dp)
-                                .graphicsLayer(rotationZ = chevron_rotation),
+                            modifier = Modifier.size(22.dp),
                         )
                     }
                 }
@@ -2533,7 +2500,7 @@ internal fun expanded_message(
 
         reaction_chip_row(reactions = reactions, my_email = my_email)
 
-        if (!is_last) Spacer(Modifier.height(AsterSpacing.md))
+        Spacer(Modifier.height(AsterSpacing.md))
     }
 }
 
@@ -3653,7 +3620,8 @@ private fun detail_meta_row(
 @Composable
 private fun collapsed_message(
     msg: ThreadMessage,
-    show_top_divider: Boolean = true,
+    is_first_card: Boolean = true,
+    is_last_card: Boolean = true,
     my_email: String = "",
     my_profile_pic: String? = null,
     message_index: Int = 0,
@@ -3662,18 +3630,30 @@ private fun collapsed_message(
     val colors = AsterMaterial.colors
 
     val is_undecryptable = msg.is_undecryptable || (msg.sender_email.isBlank() && msg.body.isBlank())
+    val card_shape = remember(is_first_card, is_last_card) {
+        inbox_group_shape(is_first_card, is_last_card)
+    }
+    val card_color = inbox_card_read_color(colors)
 
-    Column(modifier = Modifier.fillMaxWidth()) {
-        if (show_top_divider) {
-            Spacer(Modifier.height(AsterSpacing.sm))
-            AsterDivider()
-        }
-        Spacer(Modifier.height(AsterSpacing.sm))
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                start = inbox_card_horizontal_margin,
+                end = inbox_card_horizontal_margin,
+                bottom = if (is_last_card) 0.dp else inbox_group_split,
+            )
+            .clip(card_shape)
+            .background(card_color),
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(onClick = on_expand)
-                .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm)
+                .padding(
+                    horizontal = inbox_card_content_padding,
+                    vertical = AsterSpacing.md,
+                )
                 .testTag("message_header_$message_index"),
             verticalAlignment = Alignment.Top,
         ) {
@@ -3871,7 +3851,7 @@ internal fun action_menu_sheet(
     visible_state.targetState = expanded
     if (!visible_state.currentState && !visible_state.targetState) return
 
-    val shape = SquircleShape(18.dp)
+    val shape = SquircleShape(20.dp)
     val scrim_interaction = remember { MutableInteractionSource() }
     val menu_reduce_motion = aster_reduce_motion()
     val menu_scrim_enter = if (menu_reduce_motion) AsterDuration.instant else AsterDuration.scrim_enter
@@ -3938,11 +3918,10 @@ internal fun action_menu_sheet(
                         .shadow(18.dp, shape, clip = false)
                         .clip(shape)
                         .background(colors.dropdown_bg)
-                        .border(1.dp, colors.border_primary, shape)
                         .widthIn(min = 240.dp, max = 320.dp)
                         .heightIn(max = 460.dp)
                         .verticalScroll(rememberScrollState())
-                        .padding(vertical = 6.dp),
+                        .padding(vertical = 7.dp),
                 ) {
                     aster_dropdown_item(stringResource(R.string.reply), on_reply, icon = TablerIcons.ArrowBackUp)
                     aster_dropdown_item(stringResource(R.string.reply_all), on_reply_all, icon = TablerIcons.ArrowsLeft)

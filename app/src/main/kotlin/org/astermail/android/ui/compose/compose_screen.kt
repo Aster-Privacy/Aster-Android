@@ -68,6 +68,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -612,7 +613,7 @@ fun ComposeScreen(
     var to_chips by rememberSaveable {
         val initial = when {
             !share_payload?.to.isNullOrEmpty() -> share_payload!!.to
-            !prefill_to.isNullOrBlank() -> listOf(prefill_to)
+            !prefill_to.isNullOrBlank() -> split_address_list(prefill_to)
             prefill.to_chips.isNotEmpty() -> prefill.to_chips
             else -> initial_state.to_chips
         }
@@ -663,12 +664,23 @@ fun ComposeScreen(
     }
     val auto_signature_enabled =
         (settings_state.preferences?.signature_mode ?: "auto") == "auto"
+    val preload_scope_allowed = when (mode) {
+        "reply", "reply_all" -> settings_state.preferences?.signature_in_replies != false
+        "forward" -> settings_state.preferences?.signature_in_forwards != false
+        else -> true
+    }
     val preloaded_signature_obj = remember {
-        if (mode == "draft" || prefill.body.isNotBlank() || !auto_signature_enabled) {
+        if (mode == "draft" || prefill.body.isNotBlank() ||
+            !auto_signature_enabled || !preload_scope_allowed
+        ) {
             null
         } else {
             settings_vm.ensure_signatures_hydrated()
-            settings_vm.signature_for(null)
+            val preload_alias_id = settings_state.aliases
+                .firstOrNull { it.address == from_alias }?.id
+                ?: settings_state.custom_domain_addresses
+                    .firstOrNull { it.address == from_alias }?.id
+            settings_vm.signature_for(preload_alias_id)
         }
     }
     val signature_separator_enabled = settings_state.preferences?.show_signature_separator
@@ -1988,17 +2000,26 @@ fun ComposeScreen(
                         }
                     }
                 }
+                val draft_indicator_label = stringResource(R.string.sender_draft)
+                val status_text = when {
+                    draft_status.isNotBlank() -> draft_status
+                    current_draft_id.isNotBlank() -> draft_indicator_label
+                    else -> ""
+                }
                 AnimatedVisibility(
-                    visible = draft_status.isNotBlank(),
+                    visible = status_text.isNotBlank(),
                     enter = fadeIn(),
                     exit = fadeOut(),
                 ) {
                     Text(
-                        text = draft_status,
+                        text = status_text,
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (draft_status == stringResource(R.string.save_failed)) colors.danger else colors.text_muted,
+                        color = if (status_text == stringResource(R.string.save_failed)) colors.danger else colors.text_muted,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(
+                            start = if (mode_selectable) 6.dp else 0.dp,
+                        ),
                     )
                 }
             }
@@ -2501,22 +2522,24 @@ fun ComposeScreen(
                         }
                     }
                 }
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(160.dp)
-                        .clickable(
-                            interactionSource = remember {
-                                androidx.compose.foundation.interaction.MutableInteractionSource()
+                if (!quoted_expanded) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(72.dp)
+                            .clickable(
+                                interactionSource = remember {
+                                    androidx.compose.foundation.interaction.MutableInteractionSource()
+                                },
+                                indication = null,
+                            ) {
+                                body_editor_ref.value?.let { et ->
+                                    et.requestFocus()
+                                    et.setSelection(et.text?.length ?: 0)
+                                }
                             },
-                            indication = null,
-                        ) {
-                            body_editor_ref.value?.let { et ->
-                                et.requestFocus()
-                                et.setSelection(et.text?.length ?: 0)
-                            }
-                        },
-                )
+                    )
+                }
             }
 
             Spacer(Modifier.height(AsterSpacing.lg))
@@ -3095,7 +3118,9 @@ private fun send_fab(enabled: Boolean, on_click: () -> Unit) {
             imageVector = TablerIcons.Send,
             contentDescription = stringResource(R.string.send),
             tint = tint,
-            modifier = Modifier.size(18.dp),
+            modifier = Modifier
+                .size(18.dp)
+                .offset(x = (-1).dp, y = 1.dp),
         )
     }
 }

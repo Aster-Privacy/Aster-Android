@@ -1062,6 +1062,11 @@ private fun AsterNavHost() {
                 on_back = { nav_controller.popBackStack() },
                 on_open_contact = { id -> nav_controller.navigate(routes.contact_detail_for(id)) },
                 on_create_contact = { nav_controller.navigate(routes.contact_edit_new) },
+                on_compose_to = { addresses ->
+                    context.startActivity(
+                        ComposeActivity.intent_for(context, prefill_to = addresses.joinToString(",")),
+                    )
+                },
             )
         }
         composable(
@@ -2185,6 +2190,14 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             on_open_drawer = { scope.launch { drawer_state.open() } },
                             on_open_contact = { id -> nav_controller.navigate(routes.contact_detail_for(id)) },
                             on_create_contact = { nav_controller.navigate(routes.contact_edit_new) },
+                            on_compose_to = { addresses ->
+                                drawer_context.startActivity(
+                                    ComposeActivity.intent_for(
+                                        drawer_context,
+                                        prefill_to = addresses.joinToString(","),
+                                    ),
+                                )
+                            },
                         )
                     }
                     else -> {

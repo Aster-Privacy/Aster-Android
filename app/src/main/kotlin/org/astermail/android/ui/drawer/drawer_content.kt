@@ -200,25 +200,8 @@ private val label_palette = listOf(
     Color(0xFF6366F1),
 )
 
-private val label_color_presets = listOf(
-    "#ef4444",
-    "#f97316",
-    "#f59e0b",
-    "#eab308",
-    "#84cc16",
-    "#22c55e",
-    "#10b981",
-    "#14b8a6",
-    "#06b6d4",
-    "#0ea5e9",
-    "#3b82f6",
-    "#6366f1",
-    "#8b5cf6",
-    "#a855f7",
-    "#d946ef",
-    "#ec4899",
-    "#f43f5e",
-)
+private val label_color_presets: List<String> =
+    org.astermail.android.ui.common.label_color_palette
 
 private const val default_label_color = "#3b82f6"
 

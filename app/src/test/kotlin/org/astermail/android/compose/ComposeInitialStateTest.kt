@@ -188,4 +188,18 @@ class ComposeInitialStateTest {
         assertEquals(listOf("shared@example.com"), state.to_chips)
         assertEquals("Shared subject", state.subject)
     }
+
+    @Test
+    fun `prefill_to becomes one chip per address`() {
+        val state = build_compose_initial_state(
+            args = compose_screen_args(prefill_to = "a@example.com, b@example.com ,c@example.com"),
+            identity = identity,
+            thread = compose_thread_snapshot(),
+        )
+
+        assertEquals(
+            listOf("a@example.com", "b@example.com", "c@example.com"),
+            state.to_chips,
+        )
+    }
 }

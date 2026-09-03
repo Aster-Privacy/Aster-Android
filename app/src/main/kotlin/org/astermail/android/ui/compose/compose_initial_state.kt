@@ -111,6 +111,9 @@ fun resolve_thread_ghost_match(
     return ghost_addresses.firstOrNull { it.lowercase() == target } ?: target
 }
 
+fun split_address_list(value: String): List<String> =
+    value.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+
 fun build_compose_initial_state(
     args: compose_screen_args,
     identity: compose_identity_snapshot,
@@ -190,7 +193,7 @@ fun build_compose_initial_state(
 
     val to_chips = when {
         args.share_to.isNotEmpty() -> args.share_to
-        !args.prefill_to.isNullOrBlank() -> listOf(args.prefill_to)
+        !args.prefill_to.isNullOrBlank() -> split_address_list(args.prefill_to)
         else -> thread_to
     }
 

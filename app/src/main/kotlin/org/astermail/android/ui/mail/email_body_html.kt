@@ -75,7 +75,7 @@ internal fun build_email_html(
     val body_font = if (dyslexia_font) sys_font else user_font
     val body_style = when {
         is_html_body && !has_newsletter_layout ->
-            "background-color:transparent;color:${if (simple_dark) "#e5e5e5" else if (white_page) "#111827" else fg_hex};margin:0;padding:4px 16px 0 16px;font-family:$body_font;font-size:14px;line-height:1.6;word-wrap:break-word"
+            "background-color:transparent;color:${if (simple_dark) "#e5e5e5" else if (white_page) "#111827" else fg_hex};margin:0;padding:4px 16px 0 16px;font-family:$body_font;font-size:16px;line-height:1.6;word-wrap:break-word"
         is_html_body ->
             "background-color:transparent;margin:0;padding:4px 16px 0 16px"
         else ->
