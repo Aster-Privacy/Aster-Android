@@ -1361,6 +1361,13 @@ private fun AsterNavHost() {
         }
         composable(routes.settings_detail("trusted_devices")) {
             TrustedDevicesScreen(on_back = { back(); Unit }, on_open = open_detail)
+        composable(routes.settings_detail("external_accounts_gmail")) {
+            ExternalAccountsScreen(
+                on_back = { back(); Unit },
+                on_open = open_detail,
+                start_gmail_wizard = true,
+            )
+        }
         }
         composable(routes.settings_detail("link_device")) {
             LinkDeviceScreen(on_back = { back(); Unit })

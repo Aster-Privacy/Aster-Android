@@ -465,7 +465,7 @@ fun ImportScreen(
                     icon_res = R.drawable.ic_brand_gmail,
                     label = stringResource(R.string.import_provider_gmail),
                     trailing_label = null,
-                    on_click = { open_url("https://app.astermail.org/settings?section=import&provider=google") },
+                    on_click = { on_open("external_accounts_gmail") },
                 )
                 Spacer(Modifier.size(AsterSpacing.sm))
                 provider_row(

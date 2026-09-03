@@ -26,6 +26,7 @@ import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
+import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
@@ -107,6 +108,36 @@ data class CreateManualAccountRequest(
 data class SuccessResponse(val success: Boolean = false)
 
 @Serializable
+data class UpdateAccountRequest(
+    val account_token: String,
+    val encrypted_account_data: String,
+    val account_data_nonce: String,
+    val integrity_hash: String,
+    val credentials: ManualImapCredentials? = null,
+    val is_enabled: Boolean? = null,
+    val protocol: String? = null,
+)
+
+@Serializable
+data class ToggleAccountRequest(
+    val account_token: String,
+    val is_enabled: Boolean,
+)
+
+@Serializable
+data class ConnectionSettings(
+    val host: String = "",
+    val port: Int = 993,
+    val username: String = "",
+    val use_tls: Boolean = true,
+    val smtp_host: String = "",
+    val smtp_port: Int = 587,
+    val smtp_username: String = "",
+    val has_password: Boolean = false,
+    val has_smtp_password: Boolean = false,
+)
+
+@Serializable
 data class TriggerSyncRequest(
     val account_token: String,
     val full_resync: Boolean = false,
@@ -117,6 +148,15 @@ data class TriggerSyncResponse(
     val success: Boolean = false,
     val message: String = "",
     val quota_exceeded: Boolean = false,
+)
+
+@Serializable
+data class PurgeMailRequest(val account_token: String)
+
+@Serializable
+data class PurgeMailResponse(
+    val success: Boolean = false,
+    val deleted_count: Int = 0,
 )
 
 @Serializable
@@ -179,8 +219,12 @@ interface ExternalAccountsApi {
     suspend fun start_oauth(req: OAuthAuthorizeRequest): OAuthAuthorizeResponse
     suspend fun create_manual(req: CreateManualAccountRequest): ExternalAccount
     suspend fun delete_account(account_token: String): SuccessResponse
+    suspend fun update_account(req: UpdateAccountRequest): ExternalAccount
+    suspend fun toggle_account(req: ToggleAccountRequest): ExternalAccount
+    suspend fun get_connection_settings(account_token: String): ConnectionSettings
     suspend fun trigger_sync(req: TriggerSyncRequest): TriggerSyncResponse
     suspend fun get_sync_progress(account_token: String): SyncProgress
+    suspend fun purge_mail(req: PurgeMailRequest): PurgeMailResponse
     suspend fun list_oauth_folders(account_token: String): OAuthFoldersResponse
     suspend fun save_folder_mapping(req: FolderMappingRequest): SuccessResponse
     suspend fun send_via_account(req: ExternalAccountSendRequest): ExternalAccountSendResponse
@@ -222,6 +266,25 @@ class ExternalAccountsApiImpl(private val client: ApiClient) : ExternalAccountsA
         return decode(response)
     }
 
+    override suspend fun update_account(req: UpdateAccountRequest): ExternalAccount =
+        decode(client.http.put("${client.base_url}$base/update") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(req)
+        })
+
+    override suspend fun toggle_account(req: ToggleAccountRequest): ExternalAccount =
+        decode(client.http.patch("${client.base_url}$base/toggle") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(req)
+        })
+
+    override suspend fun get_connection_settings(account_token: String): ConnectionSettings =
+        decode(client.http.get("${client.base_url}$base/connection_settings") {
+            parameter("account_token", account_token)
+        })
+
     override suspend fun trigger_sync(req: TriggerSyncRequest): TriggerSyncResponse =
         decode(client.http.post("${client.base_url}$base/sync") {
             contentType(ContentType.Application.Json)
@@ -232,6 +295,13 @@ class ExternalAccountsApiImpl(private val client: ApiClient) : ExternalAccountsA
     override suspend fun get_sync_progress(account_token: String): SyncProgress =
         decode(client.http.get("${client.base_url}$base/sync_progress") {
             parameter("account_token", account_token)
+        })
+
+    override suspend fun purge_mail(req: PurgeMailRequest): PurgeMailResponse =
+        decode(client.http.post("${client.base_url}$base/purge_mail") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(req)
         })
 
     override suspend fun list_oauth_folders(account_token: String): OAuthFoldersResponse =

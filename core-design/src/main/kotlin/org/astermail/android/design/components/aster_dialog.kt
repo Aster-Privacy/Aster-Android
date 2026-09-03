@@ -508,7 +508,7 @@ private fun dialog_depth_button(
                 indication = ripple(color = Color.White),
                 onClick = onClick,
             )
-            .padding(horizontal = 18.dp),
+            .padding(horizontal = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
         dialog_button_label(label, Color.White.copy(alpha = if (interactive) 1f else 0.8f), is_loading)
@@ -539,7 +539,7 @@ fun AsterDialogOutlineButton(
             disabledContentColor = colors.text_muted,
         ),
         border = BorderStroke(1.dp, colors.border_primary),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 18.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp),
     ) {
         dialog_button_label(label, colors.text_primary, false)
     }
