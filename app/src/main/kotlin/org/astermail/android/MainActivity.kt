@@ -766,7 +766,7 @@ private fun AsterNavHost() {
             arguments = listOf(navArgument("email_id") { type = NavType.StringType }),
         ) { entry ->
             val email_id = entry.arguments?.getString("email_id").orEmpty()
-            val inbox_entry = remember(nav_controller) {
+            val inbox_entry = remember(entry) {
                 try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
             }
             val shared_mail_vm: org.astermail.android.mail.MailViewModel =
@@ -863,7 +863,7 @@ private fun AsterNavHost() {
             val name = java.net.URLDecoder.decode(
                 entry.arguments?.getString("folder_name").orEmpty(), "UTF-8",
             )
-            val inbox_entry = remember(nav_controller) {
+            val inbox_entry = remember(entry) {
                 try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
             }
             val shared_mail_vm: org.astermail.android.mail.MailViewModel =
@@ -890,7 +890,7 @@ private fun AsterNavHost() {
             val name = java.net.URLDecoder.decode(
                 entry.arguments?.getString("label_name").orEmpty(), "UTF-8",
             )
-            val inbox_entry = remember(nav_controller) {
+            val inbox_entry = remember(entry) {
                 try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
             }
             val shared_mail_vm: org.astermail.android.mail.MailViewModel =
@@ -917,7 +917,7 @@ private fun AsterNavHost() {
             val name = java.net.URLDecoder.decode(
                 entry.arguments?.getString("alias_name").orEmpty(), "UTF-8",
             )
-            val inbox_entry = remember(nav_controller) {
+            val inbox_entry = remember(entry) {
                 try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
             }
             val shared_mail_vm: org.astermail.android.mail.MailViewModel =
@@ -970,7 +970,7 @@ private fun AsterNavHost() {
                 },
             ),
         ) { entry ->
-            val compose_inbox_entry = remember(nav_controller) {
+            val compose_inbox_entry = remember(entry) {
                 try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
             }
             val compose_mail_vm: org.astermail.android.mail.MailViewModel? =
@@ -1074,7 +1074,7 @@ private fun AsterNavHost() {
             arguments = listOf(navArgument("contact_id") { type = NavType.StringType }),
         ) { entry ->
             val id = entry.arguments?.getString("contact_id").orEmpty()
-            val contacts_entry = remember(nav_controller) {
+            val contacts_entry = remember(entry) {
                 try { nav_controller.getBackStackEntry(routes.contacts) } catch (_: Throwable) {
                     try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
                 }
@@ -1090,8 +1090,8 @@ private fun AsterNavHost() {
                 vm = shared_contacts_vm,
             )
         }
-        composable(routes.contact_edit_new) {
-            val contacts_entry = remember(nav_controller) {
+        composable(routes.contact_edit_new) { entry ->
+            val contacts_entry = remember(entry) {
                 try { nav_controller.getBackStackEntry(routes.contacts) } catch (_: Throwable) {
                     try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
                 }
@@ -1110,7 +1110,7 @@ private fun AsterNavHost() {
             arguments = listOf(navArgument("contact_id") { type = NavType.StringType }),
         ) { entry ->
             val id = entry.arguments?.getString("contact_id")
-            val contacts_entry = remember(nav_controller) {
+            val contacts_entry = remember(entry) {
                 try { nav_controller.getBackStackEntry(routes.contacts) } catch (_: Throwable) {
                     try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
                 }
