@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="compose_discard_draft_title">要放弃此草稿吗？</string>
-    <string name="compose_discard_draft_message">此邮件尚未保存。放弃后，正文和所有附件都会被删除。</string>
+    <string name="compose_discard_draft_message">丢弃此草稿后，其正文和所有附件都会被删除。此操作无法撤销。</string>
 </resources>

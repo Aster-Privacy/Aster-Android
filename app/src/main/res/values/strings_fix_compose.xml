@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="compose_discard_draft_title">Discard this draft?</string>
-    <string name="compose_discard_draft_message">This message is not saved. If you discard it, the text and any attachments are removed.</string>
+    <string name="compose_discard_draft_message">If you discard this draft, its text and any attachments are deleted. This action cannot be undone.</string>
 </resources>

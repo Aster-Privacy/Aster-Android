@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="compose_discard_draft_title">Abandonner ce brouillon ?</string>
-    <string name="compose_discard_draft_message">Ce message n\'est pas enregistré. Si vous l\'abandonnez, le texte et les pièces jointes sont supprimés.</string>
+    <string name="compose_discard_draft_message">Si vous abandonnez ce brouillon, son texte et les pièces jointes sont supprimés. Cette action est irréversible.</string>
 </resources>

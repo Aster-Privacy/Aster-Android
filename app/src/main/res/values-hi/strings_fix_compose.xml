@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="compose_discard_draft_title">यह ड्राफ़्ट छोड़ दें?</string>
-    <string name="compose_discard_draft_message">यह संदेश सहेजा नहीं गया है। छोड़ देने पर इसका टेक्स्ट और सारे अटैचमेंट हट जाते हैं।</string>
+    <string name="compose_discard_draft_message">अगर आप यह ड्राफ़्ट छोड़ते हैं, तो इसका टेक्स्ट और सारे अटैचमेंट हट जाते हैं। इसे पहले जैसा नहीं किया जा सकता।</string>
 </resources>

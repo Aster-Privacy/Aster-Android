@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="compose_discard_draft_title">Удалить этот черновик?</string>
-    <string name="compose_discard_draft_message">Это сообщение не сохранено. Если удалить его, текст и все вложения будут стёрты.</string>
+    <string name="compose_discard_draft_message">Если удалить этот черновик, его текст и все вложения будут удалены. Отменить это нельзя.</string>
 </resources>

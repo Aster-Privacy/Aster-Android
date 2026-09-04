@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="compose_discard_draft_title">Vuoi eliminare questa bozza?</string>
-    <string name="compose_discard_draft_message">Questo messaggio non è salvato. Se lo elimini, il testo e gli eventuali allegati vengono rimossi.</string>
+    <string name="compose_discard_draft_message">Se elimini questa bozza, il testo e gli eventuali allegati vengono eliminati. Questa azione è irreversibile.</string>
 </resources>

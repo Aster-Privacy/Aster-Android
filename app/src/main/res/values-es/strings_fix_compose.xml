@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="compose_discard_draft_title">¿Descartar este borrador?</string>
-    <string name="compose_discard_draft_message">Este mensaje no está guardado. Si lo descartas, se eliminan el texto y los archivos adjuntos.</string>
+    <string name="compose_discard_draft_message">Si descartas este borrador, se eliminan su texto y los archivos adjuntos. No podrás deshacerlo.</string>
 </resources>

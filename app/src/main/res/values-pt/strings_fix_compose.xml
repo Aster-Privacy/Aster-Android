@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="compose_discard_draft_title">Descartar este rascunho?</string>
-    <string name="compose_discard_draft_message">Esta mensagem não está guardada. Se a descartar, o texto e os anexos são removidos.</string>
+    <string name="compose_discard_draft_message">Se eliminar este rascunho, o texto e os anexos são eliminados. Não é possível anular.</string>
 </resources>

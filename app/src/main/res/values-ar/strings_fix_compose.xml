@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="compose_discard_draft_title">تجاهل هذه المسودة؟</string>
-    <string name="compose_discard_draft_message">لم يتم حفظ هذه الرسالة. إذا تجاهلتها، تتم إزالة النص وأي مرفقات.</string>
+    <string name="compose_discard_draft_message">إذا تجاهلت هذه المسودة، يتم حذف نصها وأي مرفقات. لا يمكن التراجع عن ذلك.</string>
 </resources>
