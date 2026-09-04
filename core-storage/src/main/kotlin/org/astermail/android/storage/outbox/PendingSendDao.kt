@@ -64,4 +64,7 @@ interface PendingSendDao {
 
     @Query("SELECT * FROM pending_send_queue WHERE account_id = :account_id OR account_id IS NULL")
     suspend fun get_for_account(account_id: String): List<PendingSendEntity>
+
+    @Query("SELECT draft_id FROM pending_send_queue WHERE draft_id IS NOT NULL AND draft_id <> '' AND status <> 'failed'")
+    suspend fun active_draft_ids(): List<String>
 }
