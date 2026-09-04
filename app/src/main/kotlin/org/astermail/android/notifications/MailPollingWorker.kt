@@ -432,6 +432,7 @@ class MailPollingWorker(
                 .putString(KEY_QUIET_HOURS_START, start)
                 .putString(KEY_QUIET_HOURS_END, end)
                 .apply()
+            QuietHoursSync.push(context, enabled, start, end)
         }
 
         fun is_quiet_hours_now(context: Context): Boolean {
