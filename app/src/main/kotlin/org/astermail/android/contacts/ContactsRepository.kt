@@ -423,6 +423,7 @@ class ContactsRepository @Inject constructor(
                 linkedin = social_obj?.optString("linkedin", "") ?: "",
                 notes = obj.optString("notes", ""),
                 is_favorite = obj.optBoolean("is_favorite", false),
+                preserved_json = json_str,
             )
         } catch (_: Throwable) {
             null
@@ -430,51 +431,60 @@ class ContactsRepository @Inject constructor(
     }
 
     private fun encode_contact_json(contact: Contact, include_envelope: Boolean): String {
-        val obj = org.json.JSONObject()
+        val obj = if (contact.preserved_json.isNotBlank()) {
+            runCatching { org.json.JSONObject(contact.preserved_json) }.getOrElse { org.json.JSONObject() }
+        } else {
+            org.json.JSONObject()
+        }
         val (first, last) = split_name(contact.name)
         obj.put("first_name", first)
         obj.put("last_name", last)
 
+        val carried_emails = mutableListOf<String>()
+        obj.optJSONArray("emails")?.let { prior ->
+            for (i in 0 until prior.length()) carried_emails.add(prior.optString(i, ""))
+        }
         val emails = org.json.JSONArray()
         if (contact.email.isNotBlank()) emails.put(contact.email)
         if (contact.work_email.isNotBlank()) emails.put(contact.work_email)
+        carried_emails.drop(2).filter { it.isNotBlank() }.forEach { emails.put(it) }
         obj.put("emails", emails)
 
-        if (contact.phone.isNotBlank()) obj.put("phone", contact.phone)
-        if (contact.company.isNotBlank()) obj.put("company", contact.company)
-        if (contact.title.isNotBlank()) obj.put("job_title", contact.title)
+        put_or_remove(obj, "phone", contact.phone)
+        put_or_remove(obj, "company", contact.company)
+        put_or_remove(obj, "job_title", contact.title)
+        put_or_remove(obj, "birthday", contact.birthday)
+        put_or_remove(obj, "notes", contact.notes)
 
-        val has_address = listOf(contact.address, contact.city, contact.region, contact.postal_code, contact.country)
-            .any { it.isNotBlank() }
-        if (has_address) {
-            val addr = org.json.JSONObject()
-            addr.put("street", contact.address)
-            addr.put("city", contact.city)
-            addr.put("state", contact.region)
-            addr.put("postal_code", contact.postal_code)
-            addr.put("country", contact.country)
-            obj.put("address", addr)
-        }
+        val address = obj.optJSONObject("address") ?: org.json.JSONObject()
+        put_or_remove(address, "street", contact.address)
+        put_or_remove(address, "city", contact.city)
+        put_or_remove(address, "state", contact.region)
+        put_or_remove(address, "postal_code", contact.postal_code)
+        put_or_remove(address, "country", contact.country)
+        if (address.length() == 0) obj.remove("address") else obj.put("address", address)
 
-        val has_social = contact.website.isNotBlank() || contact.twitter.isNotBlank() || contact.linkedin.isNotBlank()
-        if (has_social) {
-            val social = org.json.JSONObject()
-            if (contact.website.isNotBlank()) social.put("website", contact.website)
-            if (contact.twitter.isNotBlank()) social.put("twitter", contact.twitter)
-            if (contact.linkedin.isNotBlank()) social.put("linkedin", contact.linkedin)
-            obj.put("social_links", social)
-        }
+        val social = obj.optJSONObject("social_links") ?: org.json.JSONObject()
+        put_or_remove(social, "website", contact.website)
+        put_or_remove(social, "twitter", contact.twitter)
+        put_or_remove(social, "linkedin", contact.linkedin)
+        if (social.length() == 0) obj.remove("social_links") else obj.put("social_links", social)
 
-        if (contact.birthday.isNotBlank()) obj.put("birthday", contact.birthday)
-        if (contact.notes.isNotBlank()) obj.put("notes", contact.notes)
         obj.put("is_favorite", contact.is_favorite)
 
         if (include_envelope) {
             obj.put("_version", CONTACT_DATA_VERSION)
             obj.put("_encrypted_at", java.time.Instant.now().toString())
+        } else {
+            obj.remove("_version")
+            obj.remove("_encrypted_at")
         }
 
         return obj.toString()
+    }
+
+    private fun put_or_remove(target: org.json.JSONObject, key: String, value: String) {
+        if (value.isNotBlank()) target.put(key, value) else target.remove(key)
     }
 
     companion object {

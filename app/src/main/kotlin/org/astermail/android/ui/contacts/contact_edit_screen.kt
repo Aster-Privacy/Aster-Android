@@ -187,6 +187,8 @@ fun ContactEditScreen(
                         twitter = twitter,
                         linkedin = linkedin,
                         notes = notes,
+                        is_favorite = source?.is_favorite ?: false,
+                        preserved_json = source?.preserved_json ?: "",
                     )
                     vm.save_contact(contact, contact_id)
                 },

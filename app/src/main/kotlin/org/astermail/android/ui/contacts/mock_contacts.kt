@@ -41,6 +41,7 @@ data class Contact(
     val linkedin: String = "",
     val notes: String = "",
     val is_favorite: Boolean = false,
+    val preserved_json: String = "",
 )
 
 val mock_contacts: List<Contact> = listOf(
