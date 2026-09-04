@@ -3783,7 +3783,9 @@ class MailViewModel @Inject constructor(
         }
         viewModelScope.launch {
             repository.send_result_events.collect { result ->
-                if (result.isSuccess) {
+                val failure = result.exceptionOrNull()
+                val delivered = result.isSuccess || failure is SentCopyAttachmentException
+                if (delivered) {
                     invalidate_caches(listOf("sent", "drafts"))
                     load_stats(force = true)
                     viewModelScope.launch {
@@ -3798,20 +3800,27 @@ class MailViewModel @Inject constructor(
                         }
                     }
                     refresh_thread_after_send()
-                } else {
-                    emit_toast(
-                        when (val err = result.exceptionOrNull()) {
-                            is TransientSendException -> context.getString(R.string.send_still_trying)
-                            null -> context.getString(R.string.send_problem_failed_message)
-                            else -> org.astermail.android.localized_api_error(
-                                context,
-                                err,
-                                context.getString(R.string.send_problem_failed_message),
-                            )
-                        },
-                    )
+                }
+                if (failure != null) {
+                    emit_toast(send_result_message(failure))
                 }
             }
+        }
+    }
+
+    private fun send_result_message(error: Throwable): String {
+        val message = send_result_message_for(error)
+        if (message.res_id == R.string.send_problem_failed_message) {
+            return org.astermail.android.localized_api_error(
+                context,
+                error,
+                context.getString(R.string.send_problem_failed_message),
+            )
+        }
+        return if (message.arg == null) {
+            context.getString(message.res_id)
+        } else {
+            context.getString(message.res_id, message.arg)
         }
     }
 
@@ -4140,4 +4149,13 @@ internal fun folder_matches_item(folder: String, item: InboxItem): Boolean = whe
         }
         else -> item.labels.contains(folder) && !item.is_trashed
     }
+}
+
+internal data class SendResultMessage(val res_id: Int, val arg: Int?)
+
+internal fun send_result_message_for(error: Throwable): SendResultMessage = when (error) {
+    is TransientSendException -> SendResultMessage(R.string.send_still_trying, null)
+    is SentCopyAttachmentException ->
+        SendResultMessage(R.string.sent_copy_attachments_missing, error.failed_count)
+    else -> SendResultMessage(R.string.send_problem_failed_message, null)
 }
