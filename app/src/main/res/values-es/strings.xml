@@ -1549,7 +1549,7 @@
     <string name="mail_rules_regex_lookaround">Lookahead y lookbehind no son compatibles. Reescribe el patrón sin ellos.</string>
     <string name="tap_again_to_exit">Toca de nuevo para salir de la app</string>
     <string name="search_action">Buscar</string>
-    <string name="action_failed">La accion fallo. Intentalo de nuevo.</string>
+    <string name="action_failed">La acción falló. Inténtalo de nuevo.</string>
     <string name="version_copied">Version copiada</string>
     <string name="hold_to_copy_version">Manten pulsado para copiar</string>
     <string name="name_copied">Nombre copiado</string>

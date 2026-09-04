@@ -323,7 +323,7 @@
     <string name="discard">Scarta</string>
     <string name="toggle_cc_bcc">Mostra/nascondi cc/ccn</string>
     <string name="add_recipient">Aggiungi destinatario</string>
-    <string name="e2e_recipient_description">I messaggi a questo destinatario sono crittografati con la sua chiave di identita. Solo lui puo leggerli.</string>
+    <string name="e2e_recipient_description">I messaggi a questo destinatario sono crittografati con la sua chiave di identità. Solo lui può leggerli.</string>
     <string name="transit_recipient_description">I messaggi a questo destinatario sono crittografati in transito tramite TLS. Il server del destinatario potrebbe essere in grado di leggerli.</string>
     <string name="format">Formato</string>
     <string name="bold">Grassetto</string>
@@ -647,7 +647,7 @@
     <string name="backup_access">Accesso di backup</string>
 
     <string name="update_your_password">Aggiorna la tua password</string>
-    <string name="change_password_description">Il tuo vault viene ricrittografato su questo dispositivo. Le vecchie chiavi vengono preservate cosi i messaggi esistenti rimangono leggibili.</string>
+    <string name="change_password_description">Il tuo vault viene ricrittografato su questo dispositivo. Le vecchie chiavi vengono preservate così i messaggi esistenti rimangono leggibili.</string>
     <string name="current_password">Password attuale</string>
     <string name="updating">Aggiornamento...</string>
     <string name="update_password">Aggiorna password</string>
@@ -699,22 +699,22 @@
 
     <string name="encryption_title">Crittografia</string>
     <string name="encryption_status_label">Crittografia end-to-end</string>
-    <string name="encryption_status_description">Ogni messaggio viene crittografato con la tua chiave di identita prima di lasciare questo dispositivo. I server Aster memorizzano solo testo cifrato.</string>
+    <string name="encryption_status_description">Ogni messaggio viene crittografato con la tua chiave di identità prima di lasciare questo dispositivo. I server Aster memorizzano solo testo cifrato.</string>
     <string name="encryption_status">Stato crittografia</string>
-    <string name="identity_key">Chiave di identita</string>
+    <string name="identity_key">Chiave di identità</string>
     <string name="identity_key_active">Attiva - memorizzata su questo dispositivo</string>
     <string name="encryption_protocol">Protocollo di crittografia</string>
     <string name="encryption_protocol_value">AES-256-GCM with HKDF-SHA256</string>
     <string name="zero_access">Accesso zero</string>
     <string name="zero_access_subtitle">Il server non vede mai il testo in chiaro</string>
     <string name="account">Account</string>
-    <string name="identity_key_fingerprint">Impronta della chiave di identita</string>
+    <string name="identity_key_fingerprint">Impronta della chiave di identità</string>
     <string name="fingerprint_description">Confronta questo con l\'impronta del destinatario tramite un canale fidato per verificare che sia davvero tu.</string>
     <string name="copy_fingerprint">Copia impronta</string>
     <string name="show_public_key">Mostra chiave pubblica</string>
     <string name="hide_public_key">Nascondi chiave pubblica</string>
     <string name="copy_public_key">Copia chiave pubblica</string>
-    <string name="identity_key_unavailable">Chiave di identita non disponibile su questo dispositivo. Accedi nuovamente per aggiornare il materiale della chiave locale.</string>
+    <string name="identity_key_unavailable">Chiave di identità non disponibile su questo dispositivo. Accedi nuovamente per aggiornare il materiale della chiave locale.</string>
     <string name="recovery">Recupero</string>
     <string name="view_recovery_codes">Visualizza i tuoi codici di recupero</string>
     <string name="key_rotation">Rotazione chiave</string>
@@ -782,7 +782,7 @@
     <string name="referral_step_3">Guadagni una quota di ogni pagamento, accreditata automaticamente sul tuo saldo.</string>
     <string name="rewards">Ricompense</string>
     <string name="reward_amount">$10 per te, $10 per il tuo amico quando si registra ad Aster.</string>
-    <string name="reward_recurring">Ricevi anche il 5% di ogni pagamento che effettuano finche sono abbonati.</string>
+    <string name="reward_recurring">Ricevi anche il 5% di ogni pagamento che effettuano finché sono abbonati.</string>
     <string name="share_invite_link">Condividi link di invito</string>
     <string name="share_text">Prova Aster, email privata che funziona davvero.</string>
     <string name="share_referral">Condividi invito</string>
@@ -851,7 +851,7 @@
     <string name="auto_forward">Inoltro automatico</string>
     <string name="forward_matching">Inoltra messaggi corrispondenti</string>
     <string name="block_allow">Blocca e consenti</string>
-    <string name="senders_never_hear">Mittenti che non sentirai mai piu</string>
+    <string name="senders_never_hear">Mittenti che non sentirai mai più</string>
     <string name="allowlist">Lista consentiti</string>
     <string name="always_allow">Consenti sempre questi mittenti</string>
     <string name="subscriptions_label">Iscrizioni</string>
@@ -866,7 +866,7 @@
     <string name="auto_forward_title">Inoltro automatico</string>
     <string name="auto_forward_description">Inoltra la posta in arrivo a un altro indirizzo mantenendo una copia nella tua posta in arrivo.</string>
     <string name="enable_auto_forward">Attiva inoltro automatico</string>
-    <string name="all_mail_forwarded">Tutta la posta in arrivo verra inoltrata</string>
+    <string name="all_mail_forwarded">Tutta la posta in arrivo verrà inoltrata</string>
     <string name="forward_to">Inoltra a</string>
     <string name="forward_to_placeholder">destination@example.com</string>
     <string name="keep_copy_in_inbox">Mantieni una copia nella posta in arrivo</string>
@@ -937,7 +937,7 @@
     <string name="category_bug">Bug</string>
     <string name="message">Messaggio</string>
     <string name="feedback_placeholder">Descrivi cosa ti piace, cosa manca o cosa non funziona.</string>
-    <string name="feedback_privacy_note">La tua email dell\'account verra allegata cosi possiamo rispondere. Non condividiamo mai il feedback.</string>
+    <string name="feedback_privacy_note">La tua email dell\'account verrà allegata così possiamo rispondere. Non condividiamo mai il feedback.</string>
     <string name="send_feedback">Invia feedback</string>
     <string name="sending_feedback">Invio...</string>
     <string name="sent">Inviato</string>
@@ -3072,7 +3072,7 @@
     <string name="pgp_signature_unverified">Firmato, non verificato</string>
     <string name="pgp_signature_valid">Firma verificata</string>
     <string name="pgp_signature_invalid">La firma non corrisponde</string>
-    <string name="pgp_recipient_description">Il mittente ha crittografato questo messaggio con OpenPGP prima di inviarlo. Solo un dispositivo con la tua chiave privata puo decifrarlo, quindi nessun altro puo leggerlo.</string>
+    <string name="pgp_recipient_description">Il mittente ha crittografato questo messaggio con OpenPGP prima di inviarlo. Solo un dispositivo con la tua chiave privata può decifrarlo, quindi nessun altro può leggerlo.</string>
     <string name="error_account_locked">Il tuo account è temporaneamente bloccato. Riprova più tardi.</string>
     <string name="error_account_probation">Il tuo account ha restrizioni temporanee.</string>
     <string name="error_account_suspended">Il tuo account è sospeso per violazione dei Termini di servizio.</string>
