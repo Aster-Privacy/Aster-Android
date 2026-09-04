@@ -468,7 +468,7 @@ private fun badge_toggle_row(
 private const val MAX_DISPLAY_NAME_LENGTH = 100
 
 private fun sanitize_display_name(value: String): String =
-    value.filter { it != '<' && it != '>' && it != ' ' }.take(MAX_DISPLAY_NAME_LENGTH)
+    value.filter { it != '<' && it != '>' && it != '\u0000' }.take(MAX_DISPLAY_NAME_LENGTH)
 
 private const val MAX_AVATAR_DIMENSION = 256
 
