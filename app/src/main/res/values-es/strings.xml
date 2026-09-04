@@ -2878,7 +2878,7 @@
         <item quantity="one">Aplicada %1$d vez</item>
         <item quantity="other">Aplicada %1$d veces</item>
     </plurals>
-    <string name="alias_delete_directory_confirm">Los mensajes enviados a las direcciones de este directorio dejarán de entregarse. No podrás deshacerlo.</string>
+    <string name="alias_delete_directory_confirm">¿Eliminar %1$s? Los mensajes enviados a las direcciones nuevas de este directorio dejarán de entregarse. Los alias que ya creó seguirán funcionando. No podrás deshacerlo.</string>
     <string name="attachment_too_many">Un correo puede llevar %1$d archivos adjuntos</string>
     <string name="auto_forward_setup_hint">Escribe la dirección a la que quieres reenviar tu correo y crea la regla. Esa dirección tiene que confirmar la solicitud antes de que empiece el reenvío.</string>
     <string name="cancels_format">Se cancela el %s</string>

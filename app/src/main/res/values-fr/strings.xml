@@ -2904,7 +2904,7 @@
         <item quantity="one">Appliquée %1$d fois</item>
         <item quantity="other">Appliquée %1$d fois</item>
     </plurals>
-    <string name="alias_delete_directory_confirm">Les messages envoyés aux adresses de ce répertoire ne seront plus remis. Vous ne pourrez pas annuler l’opération.</string>
+    <string name="alias_delete_directory_confirm">Supprimer %1$s ? Les messages envoyés aux nouvelles adresses de ce répertoire ne seront plus remis. Les alias déjà créés continuent de fonctionner. Vous ne pourrez pas annuler l’opération.</string>
     <string name="attachment_too_many">Un e-mail peut contenir %1$d pièces jointes</string>
     <string name="auto_forward_setup_hint">Saisissez l’adresse vers laquelle transférer vos e-mails, puis créez la règle. Cette adresse doit confirmer la demande avant le début du transfert.</string>
     <string name="cancels_format">Se termine le %s</string>

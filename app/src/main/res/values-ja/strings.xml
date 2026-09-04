@@ -2866,7 +2866,7 @@
     <plurals name="mail_rules_applied_count">
         <item quantity="other">%1$d 回適用</item>
     </plurals>
-    <string name="alias_delete_directory_confirm">このディレクトリのアドレス宛のメールは配送されなくなります。元に戻すことはできません。</string>
+    <string name="alias_delete_directory_confirm">%1$s を削除しますか？このディレクトリの新しいアドレス宛のメールは配送されなくなります。すでに作成されたエイリアスは引き続き使用できます。元に戻すことはできません。</string>
     <string name="attachment_too_many">1 通のメールに添付できるのは %1$d 件です</string>
     <string name="auto_forward_setup_hint">転送先のアドレスを入力してルールを作成してください。転送が始まる前に、そのアドレスで要求を承認する必要があります。</string>
     <string name="cancels_format">%s に解約</string>

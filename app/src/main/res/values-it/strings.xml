@@ -2877,7 +2877,7 @@
         <item quantity="one">Applicata %1$d volta</item>
         <item quantity="other">Applicata %1$d volte</item>
     </plurals>
-    <string name="alias_delete_directory_confirm">I messaggi inviati agli indirizzi di questa directory non verranno più recapitati. L’operazione non può essere annullata.</string>
+    <string name="alias_delete_directory_confirm">Eliminare %1$s? I messaggi inviati ai nuovi indirizzi di questa directory non verranno più recapitati. Gli alias già creati continuano a funzionare. L’operazione non può essere annullata.</string>
     <string name="attachment_too_many">Un\'email può contenere %1$d allegati</string>
     <string name="auto_forward_setup_hint">Inserisci l’indirizzo a cui inoltrare la posta, poi crea la regola. L’indirizzo deve confermare la richiesta prima che l’inoltro inizi.</string>
     <string name="cancels_format">Termina il %s</string>

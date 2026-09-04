@@ -2866,7 +2866,7 @@
     <plurals name="mail_rules_applied_count">
         <item quantity="other">%1$d회 적용됨</item>
     </plurals>
-    <string name="alias_delete_directory_confirm">이 디렉터리의 주소로 보낸 메일은 더 이상 전달되지 않습니다. 되돌릴 수 없습니다.</string>
+    <string name="alias_delete_directory_confirm">%1$s을(를) 삭제할까요? 이 디렉터리의 새 주소로 보낸 메일은 더 이상 전달되지 않습니다. 이미 만들어진 별칭은 계속 작동합니다. 되돌릴 수 없습니다.</string>
     <string name="attachment_too_many">메일 한 통에는 첨부파일 %1$d개를 넣을 수 있습니다</string>
     <string name="auto_forward_setup_hint">메일을 전달할 주소를 입력한 다음 규칙을 만드세요. 전달이 시작되려면 해당 주소에서 요청을 확인해야 합니다.</string>
     <string name="cancels_format">%s에 해지</string>

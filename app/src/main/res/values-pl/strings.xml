@@ -2903,7 +2903,7 @@
         <item quantity="many">Zastosowano %1$d razy</item>
         <item quantity="other">Zastosowano %1$d razy</item>
     </plurals>
-    <string name="alias_delete_directory_confirm">Wiadomości wysyłane na adresy z tego katalogu przestaną być dostarczane. Nie można tego cofnąć.</string>
+    <string name="alias_delete_directory_confirm">Usunąć %1$s? Wiadomości wysyłane na nowe adresy z tego katalogu przestaną być dostarczane. Utworzone już aliasy nadal działają. Nie można tego cofnąć.</string>
     <string name="attachment_too_many">Jedna wiadomość może zawierać %1$d załączników</string>
     <string name="auto_forward_setup_hint">Wpisz adres, na który chcesz przekazywać pocztę, a następnie utwórz regułę. Ten adres musi potwierdzić prośbę, zanim przekazywanie się zacznie.</string>
     <string name="cancels_format">Kończy się %s</string>

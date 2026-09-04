@@ -2878,7 +2878,7 @@
         <item quantity="one">%1$d mal angewendet</item>
         <item quantity="other">%1$d mal angewendet</item>
     </plurals>
-    <string name="alias_delete_directory_confirm">Nachrichten an Adressen in diesem Verzeichnis werden nicht mehr zugestellt. Das lässt sich nicht rückgängig machen.</string>
+    <string name="alias_delete_directory_confirm">%1$s löschen? Nachrichten an neue Adressen in diesem Verzeichnis werden nicht mehr zugestellt. Bereits erstellte Aliasse funktionieren weiterhin. Das lässt sich nicht rückgängig machen.</string>
     <string name="attachment_too_many">Eine E-Mail kann %1$d Anhänge enthalten</string>
     <string name="auto_forward_setup_hint">Geben Sie die Adresse ein, an die Ihre Mails weitergeleitet werden sollen, und erstellen Sie dann die Regel. Die Adresse muss die Anfrage bestätigen, bevor die Weiterleitung beginnt.</string>
     <string name="cancels_format">Endet am %s</string>

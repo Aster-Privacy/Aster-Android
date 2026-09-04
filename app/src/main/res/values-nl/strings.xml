@@ -2877,7 +2877,7 @@
         <item quantity="one">%1$d keer toegepast</item>
         <item quantity="other">%1$d keer toegepast</item>
     </plurals>
-    <string name="alias_delete_directory_confirm">Berichten aan adressen in deze map worden niet meer bezorgd. Je kunt dit niet ongedaan maken.</string>
+    <string name="alias_delete_directory_confirm">%1$s verwijderen? Berichten aan nieuwe adressen in deze map worden niet meer bezorgd. Aliassen die al zijn aangemaakt, blijven werken. Je kunt dit niet ongedaan maken.</string>
     <string name="attachment_too_many">Eén e-mail kan %1$d bijlagen bevatten</string>
     <string name="auto_forward_setup_hint">Voer het adres in waarnaar je je mail wilt doorsturen en maak de regel aan. Dat adres moet het verzoek bevestigen voordat het doorsturen begint.</string>
     <string name="cancels_format">Stopt op %s</string>

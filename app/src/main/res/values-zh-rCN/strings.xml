@@ -2866,7 +2866,7 @@
     <plurals name="mail_rules_applied_count">
         <item quantity="other">已应用 %1$d 次</item>
     </plurals>
-    <string name="alias_delete_directory_confirm">发往该目录中地址的邮件将不再投递，且无法撤销。</string>
+    <string name="alias_delete_directory_confirm">删除 %1$s？发往该目录中新地址的邮件将不再投递，已创建的别名仍可继续使用。此操作无法撤销。</string>
     <string name="attachment_too_many">一封邮件最多可携带 %1$d 个附件</string>
     <string name="auto_forward_setup_hint">输入要转发到的地址，然后创建规则。该地址确认请求后，转发才会开始。</string>
     <string name="cancels_format">于 %s 取消</string>

@@ -2903,7 +2903,7 @@
         <item quantity="many">Применено %1$d раз</item>
         <item quantity="other">Применено %1$d раз</item>
     </plurals>
-    <string name="alias_delete_directory_confirm">Письма на адреса из этого каталога перестанут доставляться. Отменить это нельзя.</string>
+    <string name="alias_delete_directory_confirm">Удалить %1$s? Письма на новые адреса из этого каталога перестанут доставляться. Уже созданные псевдонимы продолжат работать. Отменить это нельзя.</string>
     <string name="attachment_too_many">В одно письмо можно вложить %1$d файлов</string>
     <string name="auto_forward_setup_hint">Введите адрес, на который нужно пересылать почту, и создайте правило. Пересылка начнется только после того, как этот адрес подтвердит запрос.</string>
     <string name="cancels_format">Отменяется %s</string>

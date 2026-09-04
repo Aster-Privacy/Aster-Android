@@ -2805,7 +2805,7 @@
         <item quantity="one">%1$d बार लागू हुआ</item>
         <item quantity="other">%1$d बार लागू हुआ</item>
     </plurals>
-    <string name="alias_delete_directory_confirm">इस डायरेक्टरी के पतों पर भेजी गई मेल पहुंचना बंद हो जाएगी। इसे पहले जैसा नहीं किया जा सकता।</string>
+    <string name="alias_delete_directory_confirm">%1$s को हटाएं? इस डायरेक्टरी के नए पतों पर भेजी गई मेल पहुंचना बंद हो जाएगी। पहले बनाए गए उपनाम काम करते रहेंगे। इसे पहले जैसा नहीं किया जा सकता।</string>
     <string name="alias_directory_separator_hint">डायरेक्टरी के नाम से पहले बिंदु, स्लैश, धन चिह्न या हैश चिह्न, चारों काम करते हैं।</string>
     <string name="attachment_too_many">एक ईमेल में %1$d अटैचमेंट जा सकते हैं</string>
     <string name="audit_event_2fa_disabled">दो-चरणीय प्रमाणीकरण बंद किया गया</string>

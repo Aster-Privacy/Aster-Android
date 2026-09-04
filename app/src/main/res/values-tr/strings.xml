@@ -2877,7 +2877,7 @@
         <item quantity="one">%1$d kez uygulandı</item>
         <item quantity="other">%1$d kez uygulandı</item>
     </plurals>
-    <string name="alias_delete_directory_confirm">Bu dizindeki adreslere gönderilen iletiler artık teslim edilmez. Bu işlem geri alınamaz.</string>
+    <string name="alias_delete_directory_confirm">%1$s silinsin mi? Bu dizindeki yeni adreslere gönderilen iletiler artık teslim edilmez. Daha önce oluşturulan takma adlar çalışmaya devam eder. Bu işlem geri alınamaz.</string>
     <string name="attachment_too_many">Bir e-posta %1$d ek taşıyabilir</string>
     <string name="auto_forward_setup_hint">Postanızın iletileceği adresi girin ve kuralı oluşturun. İletim başlamadan önce bu adresin isteği onaylaması gerekir.</string>
     <string name="cancels_format">%s tarihinde sona erer</string>

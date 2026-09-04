@@ -2929,7 +2929,7 @@
         <item quantity="many">طُبّقت %1$d مرة</item>
         <item quantity="other">طُبّقت %1$d مرة</item>
     </plurals>
-    <string name="alias_delete_directory_confirm">لن يتم تسليم الرسائل المرسلة إلى عناوين هذا الدليل بعد الآن، ولا يمكن التراجع عن ذلك.</string>
+    <string name="alias_delete_directory_confirm">حذف %1$s؟ ستتوقف الرسائل المرسلة إلى العناوين الجديدة في هذا الدليل عن الوصول. أما الأسماء المستعارة التي أنشأها الدليل فتظل تعمل. لا يمكن التراجع عن ذلك.</string>
     <string name="attachment_too_many">يمكن أن تحمل الرسالة الواحدة %1$d مرفقات</string>
     <string name="auto_forward_setup_hint">أدخل العنوان الذي تريد إعادة توجيه بريدك إليه، ثم أنشئ القاعدة. يجب أن يؤكد ذلك العنوان الطلب قبل بدء إعادة التوجيه.</string>
     <string name="cancels_format">يُلغى في %s</string>
