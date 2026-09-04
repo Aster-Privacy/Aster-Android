@@ -62,6 +62,8 @@ class DraftAutoSaveInstrumentedTest {
         override suspend fun upsert(row: PendingSendEntity) { rows[row.id] = row }
         override suspend fun get_by_id(id: String): PendingSendEntity? = rows[id]
         override suspend fun get_all(): List<PendingSendEntity> = rows.values.toList()
+        override suspend fun active_draft_ids(): List<String> =
+            rows.values.filter { it.status != "failed" }.mapNotNull { it.draft_id }.filter { it.isNotBlank() }
         override suspend fun update_draft_id(id: String, draft_id: String?) {
             rows[id]?.let { rows[id] = it.copy(draft_id = draft_id) }
         }

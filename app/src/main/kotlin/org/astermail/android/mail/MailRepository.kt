@@ -89,6 +89,9 @@ enum class PendingSendOutcome { SENT, GONE, RETRY, FAILED, DEFERRED }
 
 class TransientSendException : Exception("send retry pending")
 
+class SentCopyAttachmentException(val failed_count: Int) :
+    Exception("sent copy attachments not stored")
+
 fun bounded_retry_outcome(attempt: Int): PendingSendOutcome =
     if (attempt >= SEND_RETRY_MAX_ATTEMPTS) PendingSendOutcome.DEFERRED else PendingSendOutcome.RETRY
 
@@ -649,6 +652,7 @@ class MailRepository @Inject constructor(
 
     init {
         app_scope.launch { runCatching { reconcile_pending_sends() } }
+        app_scope.launch { runCatching { sweep_sent_drafts() } }
     }
 
     suspend fun schedule_send_with_undo(
@@ -903,7 +907,7 @@ class MailRepository @Inject constructor(
         return if (result.isSuccess && response?.success == true) {
             runCatching { pending_send_dao.delete_by_id(pending_id) }
             delete_outbox_attachments(pending_id)
-            row.draft_id?.takeIf { it.isNotBlank() }?.let { runCatching { delete_draft(it) } }
+            row.draft_id?.takeIf { it.isNotBlank() }?.let { delete_sent_draft(it) }
             _send_problem.value = false
             _send_result_events.tryEmit(Result.success(Unit))
             org.astermail.android.billing.ReviewPrompt.record_send(context)
@@ -947,6 +951,68 @@ class MailRepository @Inject constructor(
         val account_id = session_key_store.get_user_id() ?: return null
 
         return runCatching { pending_send_dao.get_for_account(account_id) }.getOrNull()
+    }
+
+    private val sent_draft_sweep_prefs by lazy {
+        context.getSharedPreferences("outbox_sent_drafts", android.content.Context.MODE_PRIVATE)
+    }
+
+    private fun pending_sweep_ids(): Set<String> =
+        sent_draft_sweep_prefs.getStringSet(SENT_DRAFT_SWEEP_KEY, emptySet())?.toSet() ?: emptySet()
+
+    private fun remember_sweep_id(draft_id: String) {
+        sent_draft_sweep_prefs.edit()
+            .putStringSet(SENT_DRAFT_SWEEP_KEY, pending_sweep_ids() + draft_id)
+            .apply()
+    }
+
+    private fun forget_sweep_id(draft_id: String) {
+        sent_draft_sweep_prefs.edit()
+            .putStringSet(SENT_DRAFT_SWEEP_KEY, pending_sweep_ids() - draft_id)
+            .apply()
+    }
+
+    private suspend fun delete_sent_draft(draft_id: String) {
+        remember_sweep_id(draft_id)
+        if (try_delete_draft(draft_id)) forget_sweep_id(draft_id)
+    }
+
+    private fun is_missing_draft_error(error: Throwable?): Boolean {
+        var current = error
+        var depth = 0
+        while (current != null && depth < 5) {
+            if (current is org.astermail.android.api.ApiError.NotFoundError) return true
+            current = current.cause
+            depth++
+        }
+        return false
+    }
+
+    private suspend fun try_delete_draft(draft_id: String): Boolean {
+        repeat(SENT_DRAFT_DELETE_MAX_ATTEMPTS) { attempt ->
+            val outcome = runCatching { mail_api.delete_draft(draft_id) }
+            val error = outcome.exceptionOrNull()
+            if (error == null || is_missing_draft_error(error)) {
+                forget_draft(draft_id)
+                return true
+            }
+            if (error is CancellationException) throw error
+            if (attempt < SENT_DRAFT_DELETE_MAX_ATTEMPTS - 1) {
+                kotlinx.coroutines.delay(SENT_DRAFT_DELETE_RETRY_DELAY_MS * (attempt + 1))
+            }
+        }
+        return false
+    }
+
+    suspend fun sweep_sent_drafts() {
+        for (draft_id in pending_sweep_ids()) {
+            if (try_delete_draft(draft_id)) forget_sweep_id(draft_id)
+        }
+    }
+
+    private suspend fun hidden_draft_ids(): Set<String> {
+        val active = runCatching { pending_send_dao.active_draft_ids() }.getOrDefault(emptyList())
+        return pending_sweep_ids() + active.filter { it.isNotBlank() }
     }
 
     suspend fun reconcile_pending_sends() {
@@ -1199,8 +1265,11 @@ class MailRepository @Inject constructor(
 
     suspend fun fetch_drafts(limit: Int = 50, cursor: String? = null): Result<InboxPage> = runCatching {
         val response = mail_api.list_drafts(limit = limit, cursor = cursor)
+        val hidden = hidden_draft_ids()
         response.items.forEach { draft -> draft_item_cache[draft.id] = draft }
-        val items = response.items.map { draft -> decrypt_draft_item(draft) }
+        val items = response.items
+            .filterNot { hidden.contains(it.id) }
+            .map { draft -> decrypt_draft_item(draft) }
         InboxPage(
             items = items,
             has_more = response.has_more,
@@ -3943,22 +4012,20 @@ class MailRepository @Inject constructor(
 
                 val (encrypted_meta, meta_nonce) = encrypt_envelope(meta_json)
 
-                mail_api.create_attachment(
-                    mail_item_id,
-                    CreateAttachmentRequestBody(
-                        encrypted_data = android.util.Base64.encodeToString(
-                            encrypted_data,
-                            android.util.Base64.NO_WRAP,
-                        ),
-                        data_nonce = android.util.Base64.encodeToString(
-                            data_nonce,
-                            android.util.Base64.NO_WRAP,
-                        ),
-                        encrypted_meta = encrypted_meta,
-                        meta_nonce = server_meta_nonce(meta_nonce),
-                        seq_num = index,
+                val body = CreateAttachmentRequestBody(
+                    encrypted_data = android.util.Base64.encodeToString(
+                        encrypted_data,
+                        android.util.Base64.NO_WRAP,
                     ),
+                    data_nonce = android.util.Base64.encodeToString(
+                        data_nonce,
+                        android.util.Base64.NO_WRAP,
+                    ),
+                    encrypted_meta = encrypted_meta,
+                    meta_nonce = server_meta_nonce(meta_nonce),
+                    seq_num = index,
                 )
+                create_attachment_with_retry(mail_item_id, body)
             }
             outcome.exceptionOrNull()?.let { err ->
                 if (err is CancellationException) throw err
@@ -3969,14 +4036,34 @@ class MailRepository @Inject constructor(
             }
         }
         if (failed > 0) {
-            _send_result_events.tryEmit(
-                Result.failure(
-                    IllegalStateException(
-                        context.getString(R.string.sent_copy_attachments_missing, failed),
-                    ),
-                ),
-            )
+            _send_result_events.tryEmit(Result.failure(SentCopyAttachmentException(failed)))
         }
+    }
+
+    private suspend fun create_attachment_with_retry(
+        mail_item_id: String,
+        body: CreateAttachmentRequestBody,
+    ) {
+        var attempt = 0
+        while (true) {
+            val outcome = runCatching { mail_api.create_attachment(mail_item_id, body) }
+            val error = outcome.exceptionOrNull() ?: return
+            if (error is CancellationException) throw error
+            attempt += 1
+            if (attempt >= SENT_COPY_ATTACHMENT_MAX_ATTEMPTS || !is_retryable_upload_error(error)) {
+                throw error
+            }
+            kotlinx.coroutines.delay(SENT_COPY_ATTACHMENT_RETRY_DELAY_MS * attempt)
+        }
+    }
+
+    private fun is_retryable_upload_error(error: Throwable): Boolean {
+        var cause: Throwable? = error
+        while (cause != null) {
+            if (cause is java.io.IOException) return true
+            cause = cause.cause
+        }
+        return false
     }
 
     suspend fun save_draft(
@@ -4264,6 +4351,11 @@ class MailRepository @Inject constructor(
         private const val LEGACY_KEY_MATERIAL_CACHE_PREFIX = "legacy_key_material_"
         private const val max_attachment_base64_chars = 300_000_000
         private val PLACEHOLDER_META_NONCE = ByteArray(12)
+        private const val SENT_COPY_ATTACHMENT_MAX_ATTEMPTS = 3
+        private const val SENT_DRAFT_SWEEP_KEY = "sent_draft_ids"
+        private const val SENT_DRAFT_DELETE_MAX_ATTEMPTS = 3
+        private const val SENT_DRAFT_DELETE_RETRY_DELAY_MS = 1_500L
+        private const val SENT_COPY_ATTACHMENT_RETRY_DELAY_MS = 1_500L
         const val DEFAULT_ATTACHMENT_CONTENT_TYPE = "application/octet-stream"
 
         fun is_placeholder_meta_nonce(nonce: ByteArray): Boolean =
