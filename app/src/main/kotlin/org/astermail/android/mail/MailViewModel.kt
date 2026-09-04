@@ -416,9 +416,7 @@ class MailViewModel @Inject constructor(
         _thread_participants.value = emptyMap()
         repository.clear_caches()
         runCatching { AsterProfileResolverHolder.shared?.clear() }
-        kotlinx.coroutines.runBlocking {
-            runCatching { search_index_manager.clear() }
-        }
+        runCatching { search_index_manager.clear_async() }
     }
 
     private fun apply_star_overrides(items: List<InboxItem>): List<InboxItem> {

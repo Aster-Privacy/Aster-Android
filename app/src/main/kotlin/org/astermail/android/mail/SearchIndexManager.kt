@@ -84,18 +84,28 @@ class SearchIndexManager @Inject constructor(
     @Volatile
     private var build_job: Job? = null
 
+    @Volatile
+    private var clear_job: Job? = null
+
     fun ensure_index_built() {
         if (is_building || _index_ready.value || _index_paused.value) return
-        build_job = scope.launch { build_index_background() }
+        build_job = scope.launch {
+            await_pending_clear()
+            build_index_background()
+        }
     }
 
     fun refresh_index() {
         if (_index_paused.value) return
-        build_job = scope.launch { build_index_background() }
+        build_job = scope.launch {
+            await_pending_clear()
+            build_index_background()
+        }
     }
 
     suspend fun refresh_index_and_wait() {
         if (_index_paused.value) return
+        await_pending_clear()
         build_index_background()
     }
 
@@ -108,7 +118,10 @@ class SearchIndexManager @Inject constructor(
     fun resume_indexing() {
         _index_paused.value = false
         pause_prefs.edit().putBoolean(KEY_INDEX_PAUSED, false).apply()
-        build_job = scope.launch { build_index_background() }
+        build_job = scope.launch {
+            await_pending_clear()
+            build_index_background()
+        }
     }
 
     fun on_items_loaded(items: List<InboxItem>) {
@@ -118,6 +131,7 @@ class SearchIndexManager @Inject constructor(
             t == null || t == "received"
         }
         scope.launch {
+            await_pending_clear()
             cache_items(cacheable, my_epoch)
             if (epoch.get() == my_epoch && !_index_ready.value) {
                 _index_ready.value = dao.count() > 0
@@ -170,6 +184,18 @@ class SearchIndexManager @Inject constructor(
     suspend fun mark_restored(ids: List<String>) = dao.mark_restored(ids)
 
     suspend fun remove_items(ids: List<String>) = dao.remove_items(ids)
+
+    fun clear_async() {
+        build_job?.cancel()
+        epoch.incrementAndGet()
+        _index_ready.value = false
+        _index_progress.value = null
+        clear_job = scope.launch { clear() }
+    }
+
+    private suspend fun await_pending_clear() {
+        clear_job?.join()
+    }
 
     suspend fun clear() {
         build_job?.cancel()
