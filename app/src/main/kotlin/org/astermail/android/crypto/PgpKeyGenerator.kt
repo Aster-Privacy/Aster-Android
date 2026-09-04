@@ -150,6 +150,7 @@ object PgpKeyGenerator {
         ArmoredOutputStream(public_out).use { public_ring.encode(it) }
 
         val fingerprint = String.format(
+            Locale.US,
             "%040x",
             BigInteger(1, master_pgp.publicKey.fingerprint),
         )
