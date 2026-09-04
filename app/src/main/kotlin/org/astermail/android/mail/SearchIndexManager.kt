@@ -41,6 +41,7 @@ import org.astermail.android.storage.search.AsterDatabase
 import org.astermail.android.storage.search.DecryptedMailDao
 import org.astermail.android.storage.search.DecryptedMailEntity
 
+private const val armored_prefix = "-----BEGIN PGP MESSAGE"
 private const val snoozed_page_size = 200
 private const val max_snoozed_pages = 50
 
@@ -127,6 +128,32 @@ class SearchIndexManager @Inject constructor(
             cache_items(cacheable, my_epoch)
             if (epoch.get() == my_epoch && !_index_ready.value) {
                 _index_ready.value = dao.count() > 0
+            }
+        }
+    }
+
+    suspend fun get_warm_items(limit: Int): List<DecryptedMailEntity> {
+        val protected_tokens = org.astermail.android.folders.folder_lock_store.protected_tokens()
+        val rows = dao.get_warm_window(limit)
+        scope.launch {
+            purge_bundle_poisoned()
+            if (protected_tokens.isNotEmpty()) purge_folder_tokens(protected_tokens)
+        }
+        val visible = if (protected_tokens.isEmpty()) {
+            rows
+        } else {
+            rows.filterNot { row ->
+                row.labels.split(',').any { it.isNotBlank() && it in protected_tokens }
+            }
+        }
+        return visible.map { row ->
+            if (row.preview.startsWith(armored_prefix) || row.subject.startsWith(armored_prefix)) {
+                row.copy(
+                    preview = if (row.preview.startsWith(armored_prefix)) "" else row.preview,
+                    subject = if (row.subject.startsWith(armored_prefix)) "" else row.subject,
+                )
+            } else {
+                row
             }
         }
     }

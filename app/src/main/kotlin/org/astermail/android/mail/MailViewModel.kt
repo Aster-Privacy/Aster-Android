@@ -664,10 +664,13 @@ class MailViewModel @Inject constructor(
         val load_gen = ++inbox_load_generation
         inbox_load_job = viewModelScope.launch {
             if (_inbox_state.value.items.isEmpty()) {
-                val persisted = runCatching { search_index_manager.get_cached_items() }.getOrNull().orEmpty()
-                if (persisted.isNotEmpty() && list_order == null && _inbox_state.value.current_folder == folder && folder == "inbox") {
-                    val safe = persisted.filter { !it.is_trashed && !it.is_archived && !it.is_spam }
-                        .take(WARM_CACHE_WINDOW)
+                val persisted = if (list_order == null && folder == "inbox") {
+                    runCatching { search_index_manager.get_warm_items(WARM_CACHE_WINDOW) }.getOrNull().orEmpty()
+                } else {
+                    emptyList()
+                }
+                if (persisted.isNotEmpty() && _inbox_state.value.current_folder == folder) {
+                    val safe = persisted
                     if (safe.size >= WARM_CACHE_MIN_ITEMS) {
                         val items = safe.map { it.to_inbox_item() }
                             .filter { folder_matches(folder, it) }

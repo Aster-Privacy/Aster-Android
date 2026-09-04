@@ -36,6 +36,18 @@ interface DecryptedMailDao {
     suspend fun get_all_ids(): List<String>
 
     @Query(
+        "SELECT * FROM decrypted_mail_cache WHERE is_trashed = 0 AND is_archived = 0 AND is_spam = 0 " +
+            "AND NOT (TRIM(sender_email) = '' AND TRIM(subject) = '' AND TRIM(preview) = '') " +
+            "AND preview NOT LIKE '%ASTER_BUNDLE_V2%' AND subject NOT LIKE '%ASTER_BUNDLE_V2%' " +
+            "AND preview NOT LIKE '%double_ratchet_v1%' AND subject NOT LIKE '%double_ratchet_v1%' " +
+            "AND preview NOT LIKE '%double_ratchet_v2%' AND subject NOT LIKE '%double_ratchet_v2%' " +
+            "AND preview NOT LIKE '%ASTER_RATCHET_UNDECRYPTABLE%' " +
+            "AND subject NOT LIKE '%ASTER_RATCHET_UNDECRYPTABLE%' " +
+            "ORDER BY timestamp DESC LIMIT :limit",
+    )
+    suspend fun get_warm_window(limit: Int): List<DecryptedMailEntity>
+
+    @Query(
         "SELECT id FROM decrypted_mail_cache WHERE timestamp > :min_timestamp " +
             "AND is_archived = 0 AND is_spam = 0 AND is_trashed = 0",
     )
