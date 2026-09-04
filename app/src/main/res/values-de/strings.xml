@@ -3156,4 +3156,6 @@
     <string name="alias_unpin">Alias lösen</string>
     <string name="alias_pinned_toast">Alias angeheftet</string>
     <string name="alias_unpinned_toast">Alias gelöst</string>
+    <string name="e2e_identity_changed_blocked">Senden nicht möglich: Der Verschlüsselungsschlüssel eines Empfängers hat sich geändert. Bestätige die Änderung in deinem Posteingang und sende die Nachricht erneut. Die Nachricht wurde nicht gesendet.</string>
+    <string name="link_device_error_binding_mismatch">Das andere Gerät hat Schlüssel gesendet, die nicht zu diesem Code passen. Fordere auf diesem Gerät einen neuen Code an und versuche es erneut.</string>
 </resources>

@@ -299,33 +299,8 @@ private fun count_external_content(html: String): ExternalContentCounts {
     return ExternalContentCounts(images, trackers, fonts, css, items)
 }
 
-private val PROXY_SRC_PATTERN = Regex(
-    """(src\s*=\s*["'])(https?://[^"']+)(["'])""",
-    RegexOption.IGNORE_CASE,
-)
-
-private val PROXY_SRCSET_PATTERN = Regex(
-    """(srcset\s*=\s*["'])([^"']+)(["'])""",
-    RegexOption.IGNORE_CASE,
-)
-
-private val PROXY_PROTOCOL_RELATIVE_SRC_PATTERN = Regex(
-    """(src\s*=\s*["'])(//[^"']+)(["'])""",
-    RegexOption.IGNORE_CASE,
-)
-
 private val PROXY_CSS_URL_PATTERN = Regex(
     """(url\(\s*["']?)((?:https?:)?//[^"')\s]+)(["']?\s*\))""",
-    RegexOption.IGNORE_CASE,
-)
-
-private val PROXY_BACKGROUND_ATTR_PATTERN = Regex(
-    """(background\s*=\s*["'])((?:https?:)?//[^"']+)(["'])""",
-    RegexOption.IGNORE_CASE,
-)
-
-private val PROXY_UNQUOTED_SRC_PATTERN = Regex(
-    """((?:src|background)\s*=\s*)((?:https?:)?//[^\s"'>]+)""",
     RegexOption.IGNORE_CASE,
 )
 
@@ -347,7 +322,13 @@ internal fun trim_email_runon(address: String): String {
     return address.substring(0, at + 1) + domain.substring(0, dot + 1) + tld
 }
 
+private fun is_proxyable_url(value: String): Boolean {
+    val lower = value.trim().lowercase()
+    return lower.startsWith("http://") || lower.startsWith("https://") || lower.startsWith("//")
+}
+
 internal fun proxy_external_urls(html: String, proxy_base: String): String {
+    if (html.isBlank()) return html
     fun to_proxied(raw_url: String): String {
         val url = raw_url
             .replace("&amp;", "&")
@@ -359,33 +340,53 @@ internal fun proxy_external_urls(html: String, proxy_base: String): String {
         if (absolute.startsWith(INLINE_IMAGE_URL_PREFIX)) return absolute
         return proxy_base + java.net.URLEncoder.encode(absolute, "UTF-8")
     }
-    val unquoted_replaced = PROXY_UNQUOTED_SRC_PATTERN.replace(html) { match ->
-        "${match.groupValues[1]}\"${to_proxied(match.groupValues[2])}\""
-    }
-    val protocol_normalized = PROXY_PROTOCOL_RELATIVE_SRC_PATTERN.replace(unquoted_replaced) { match ->
-        "${match.groupValues[1]}https:${match.groupValues[2]}${match.groupValues[3]}"
-    }
-    val src_replaced = PROXY_SRC_PATTERN.replace(protocol_normalized) { match ->
-        "${match.groupValues[1]}${to_proxied(match.groupValues[2])}${match.groupValues[3]}"
-    }
-    val srcset_replaced = PROXY_SRCSET_PATTERN.replace(src_replaced) { match ->
-        val proxied = match.groupValues[2].split(",").mapNotNull { entry ->
-            val parts = entry.trim().split(Regex("\\s+"), 2)
-            val url = parts[0]
-            val descriptor = if (parts.size > 1) " ${parts[1]}" else ""
-            if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("//")) {
-                "${to_proxied(url)}$descriptor"
-            } else {
-                null
+
+    fun proxied_css(css: String): String =
+        if (css.contains("url(", ignoreCase = true)) {
+            PROXY_CSS_URL_PATTERN.replace(css) { match ->
+                "${match.groupValues[1]}${to_proxied(match.groupValues[2])}${match.groupValues[3]}"
             }
-        }.joinToString(", ")
-        "${match.groupValues[1]}$proxied${match.groupValues[3]}"
-    }
-    val background_attr_replaced = PROXY_BACKGROUND_ATTR_PATTERN.replace(srcset_replaced) { match ->
-        "${match.groupValues[1]}${to_proxied(match.groupValues[2])}${match.groupValues[3]}"
-    }
-    return PROXY_CSS_URL_PATTERN.replace(background_attr_replaced) { match ->
-        "${match.groupValues[1]}${to_proxied(match.groupValues[2])}${match.groupValues[3]}"
+        } else {
+            css
+        }
+
+    fun proxied_srcset(value: String): String = value.split(",").mapNotNull { entry ->
+        val parts = entry.trim().split(Regex("\\s+"), 2)
+        val url = parts[0]
+        val descriptor = if (parts.size > 1) " ${parts[1]}" else ""
+        if (is_proxyable_url(url)) "${to_proxied(url)}$descriptor" else null
+    }.joinToString(", ")
+
+    return try {
+        val doc = org.jsoup.Jsoup.parseBodyFragment(html)
+        doc.outputSettings(org.jsoup.nodes.Document.OutputSettings().prettyPrint(false))
+        for (element in doc.select("[src]")) {
+            val raw = element.attr("src")
+            if (is_proxyable_url(raw)) element.attr("src", to_proxied(raw))
+        }
+        for (element in doc.select("[background]")) {
+            val raw = element.attr("background")
+            if (is_proxyable_url(raw)) element.attr("background", to_proxied(raw))
+        }
+        for (element in doc.select("[srcset]")) {
+            element.attr("srcset", proxied_srcset(element.attr("srcset")))
+        }
+        for (element in doc.select("[style]")) {
+            val raw = element.attr("style")
+            val rewritten = proxied_css(raw)
+            if (rewritten != raw) element.attr("style", rewritten)
+        }
+        for (element in doc.select("style")) {
+            val raw = element.data()
+            val rewritten = proxied_css(raw)
+            if (rewritten != raw) {
+                element.empty()
+                element.appendChild(org.jsoup.nodes.DataNode(rewritten))
+            }
+        }
+        doc.body().html()
+    } catch (_: Throwable) {
+        html
     }
 }
 
@@ -5615,12 +5616,15 @@ private fun attachment_chip(
             Spacer(Modifier.width(8.dp))
             Column {
                 Text(
-                    text = attachment.filename,
+                    text = display_filename(attachment.filename),
                     color = colors.text_primary,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    style = androidx.compose.material3.LocalTextStyle.current.copy(
+                        textDirection = androidx.compose.ui.text.style.TextDirection.Ltr,
+                    ),
                 )
                 if (attachment.size_bytes > 0) {
                     val size_ctx = LocalContext.current
@@ -5714,8 +5718,16 @@ internal fun format_file_size(bytes: Long): String {
     return "%.1f GB".format(gb)
 }
 
-private fun sanitize_filename(raw: String): String {
-    val base = raw.substringAfterLast('/').substringAfterLast('\\')
+private val BIDI_CONTROL_CHARACTERS =
+    Regex("[\\u202a-\\u202e\\u2066-\\u2069\\u200e\\u200f\\u061c]")
+
+internal fun strip_bidi_controls(raw: String): String = BIDI_CONTROL_CHARACTERS.replace(raw, "")
+
+internal fun display_filename(raw: String): String = strip_bidi_controls(raw)
+
+internal fun sanitize_filename(raw: String): String {
+    val without_bidi = strip_bidi_controls(raw)
+    val base = without_bidi.substringAfterLast('/').substringAfterLast('\\')
     val cleaned = base.replace(Regex("[\\\\/:*?\"<>|\\x00-\\x1f]"), "_").trim().trimStart('.')
     return cleaned.ifBlank { "attachment" }.take(200)
 }
@@ -6028,12 +6040,15 @@ private fun attachment_preview_dialog(
                             )
                             Spacer(Modifier.height(20.dp))
                             Text(
-                                text = attachment.filename,
+                                text = display_filename(attachment.filename),
                                 color = Color.White,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                                 modifier = Modifier.padding(horizontal = 32.dp),
+                                style = androidx.compose.material3.LocalTextStyle.current.copy(
+                                    textDirection = androidx.compose.ui.text.style.TextDirection.Ltr,
+                                ),
                             )
                             Spacer(Modifier.height(8.dp))
                             Text(

@@ -336,6 +336,7 @@ private fun link_device_progress(current: Int) {
 
 private fun link_device_error_res(error: LinkDeviceError): Int = when (error) {
     LinkDeviceError.INVALID_CODE -> R.string.link_device_error_invalid
+    LinkDeviceError.BINDING_MISMATCH -> R.string.link_device_error_binding_mismatch
     LinkDeviceError.EXPIRED_CODE -> R.string.link_device_error_expired
     LinkDeviceError.ALREADY_LINKED -> R.string.link_device_error_already_linked
     LinkDeviceError.UPGRADE_REQUIRED -> R.string.link_device_error_upgrade_required

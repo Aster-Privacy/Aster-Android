@@ -99,6 +99,43 @@ class RatchetIdentityPinStore @Inject constructor(
         return outcome
     }
 
+    fun evaluate(conversation_id: String, identity_key_b64: String): IdentityPinOutcome {
+        if (conversation_id.isBlank() || identity_key_b64.isBlank()) return IdentityPinOutcome.CHANGED
+        val current = fingerprint(identity_key_b64) ?: return IdentityPinOutcome.CHANGED
+        val stored = prefs.getString(pin_key(conversation_id), null) ?: return IdentityPinOutcome.FIRST_CONTACT
+        return if (stored == current) IdentityPinOutcome.UNCHANGED else IdentityPinOutcome.CHANGED
+    }
+
+    suspend fun pin_if_absent(conversation_id: String, identity_key_b64: String): Unit = mutex.withLock {
+        if (conversation_id.isBlank()) return@withLock
+        val current = fingerprint(identity_key_b64) ?: return@withLock
+        val key = pin_key(conversation_id)
+        if (prefs.getString(key, null) != null) return@withLock
+        prefs.edit().putString(key, current).commit()
+    }
+
+    suspend fun flag_identity_change(
+        conversation_id: String,
+        peer_email: String,
+        identity_key_b64: String,
+        observed_at: Long,
+    ): Unit = mutex.withLock {
+        if (conversation_id.isBlank()) return@withLock
+        val current = fingerprint(identity_key_b64) ?: return@withLock
+        val stored = prefs.getString(pin_key(conversation_id), null) ?: return@withLock
+        if (stored == current) return@withLock
+        val updated = pending.value.filterNot { it.conversation_id == conversation_id } +
+            IdentityChange(
+                conversation_id = conversation_id,
+                sender_email = peer_email,
+                previous_fingerprint = stored,
+                current_fingerprint = current,
+                observed_at = observed_at,
+            )
+        prefs.edit().putString(pending_key, encode_pending(updated)).commit()
+        pending.value = updated
+    }
+
     suspend fun is_replayed_bootstrap(conversation_id: String, ephemeral_key_b64: String): Boolean {
         if (conversation_id.isBlank() || ephemeral_key_b64.isBlank()) return false
         return mutex.withLock {
@@ -159,25 +196,49 @@ class RatchetIdentityPinStore @Inject constructor(
             .orEmpty()
 
     fun acknowledge(conversation_id: String) {
+        val accepted = pending.value.filter { it.conversation_id == conversation_id }
+        if (accepted.isEmpty()) return
         val updated = pending.value.filterNot { it.conversation_id == conversation_id }
-        if (updated.size == pending.value.size) return
         pending.value = updated
-        runCatching { prefs.edit().putString(pending_key, encode_pending(updated)).apply() }
+        adopt(accepted, updated)
     }
 
     fun acknowledge_sender(sender_email: String) {
         val normalized = sender_email.trim().lowercase(java.util.Locale.ROOT)
         if (normalized.isBlank()) return
-        val updated = pending.value.filterNot { it.sender_email.trim().lowercase(java.util.Locale.ROOT) == normalized }
-        if (updated.size == pending.value.size) return
+        val accepted = pending.value.filter {
+            it.sender_email.trim().lowercase(java.util.Locale.ROOT) == normalized
+        }
+        if (accepted.isEmpty()) return
+        val updated = pending.value.filterNot {
+            it.sender_email.trim().lowercase(java.util.Locale.ROOT) == normalized
+        }
         pending.value = updated
-        runCatching { prefs.edit().putString(pending_key, encode_pending(updated)).apply() }
+        adopt(accepted, updated)
     }
 
     fun acknowledge_all() {
-        if (pending.value.isEmpty()) return
+        val accepted = pending.value
+        if (accepted.isEmpty()) return
         pending.value = emptyList()
-        runCatching { prefs.edit().remove(pending_key).apply() }
+        adopt(accepted, emptyList())
+    }
+
+    private fun adopt(accepted: List<IdentityChange>, remaining: List<IdentityChange>) {
+        runCatching {
+            val editor = prefs.edit()
+            if (remaining.isEmpty()) {
+                editor.remove(pending_key)
+            } else {
+                editor.putString(pending_key, encode_pending(remaining))
+            }
+            accepted.forEach { change ->
+                if (change.conversation_id.isNotBlank() && change.current_fingerprint.isNotBlank()) {
+                    editor.putString(pin_key(change.conversation_id), change.current_fingerprint)
+                }
+            }
+            editor.apply()
+        }
     }
 
     suspend fun clear(): Unit = mutex.withLock {

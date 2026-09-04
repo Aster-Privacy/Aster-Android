@@ -3137,4 +3137,6 @@
     <string name="alias_unpin">エイリアスのピン留めを解除</string>
     <string name="alias_pinned_toast">エイリアスをピン留めしました</string>
     <string name="alias_unpinned_toast">エイリアスのピン留めを解除しました</string>
+    <string name="e2e_identity_changed_blocked">送信できませんでした: 受信者の暗号化キーが変更されました。受信トレイで変更を確認してから、もう一度送信してください。メッセージは送信されていません。</string>
+    <string name="link_device_error_binding_mismatch">もう一方のデバイスから、このコードと一致しないキーが送信されました。そのデバイスで新しいコードを取得してから、もう一度お試しください。</string>
 </resources>

@@ -3195,4 +3195,6 @@
     <string name="alias_unpin">Открепить псевдоним</string>
     <string name="alias_pinned_toast">Псевдоним закреплён</string>
     <string name="alias_unpinned_toast">Псевдоним откреплён</string>
+    <string name="e2e_identity_changed_blocked">Не удалось отправить: ключ шифрования получателя изменился. Подтвердите изменение во входящих, затем отправьте снова. Сообщение не отправлено.</string>
+    <string name="link_device_error_binding_mismatch">Другое устройство отправило ключи, которые не соответствуют этому коду. Получите новый код на том устройстве и повторите попытку.</string>
 </resources>

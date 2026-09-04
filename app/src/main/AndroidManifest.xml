@@ -15,6 +15,13 @@
         android:name="${applicationId}.permission.LINK_ACCOUNT"
         android:protectionLevel="signature" />
 
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="otpauth" />
+        </intent>
+    </queries>
+
     <application
         android:name=".AsterApplication"
         android:allowBackup="false"

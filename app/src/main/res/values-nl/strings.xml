@@ -3155,4 +3155,6 @@
     <string name="alias_unpin">Alias losmaken</string>
     <string name="alias_pinned_toast">Alias vastgezet</string>
     <string name="alias_unpinned_toast">Alias losgemaakt</string>
+    <string name="e2e_identity_changed_blocked">Verzenden mislukt: de versleutelingssleutel van een ontvanger is gewijzigd. Bevestig de wijziging in je inbox en verstuur het bericht opnieuw. Het bericht is niet verzonden.</string>
+    <string name="link_device_error_binding_mismatch">Het andere apparaat heeft sleutels verstuurd die niet bij deze code horen. Vraag op dat apparaat een nieuwe code aan en probeer het opnieuw.</string>
 </resources>
