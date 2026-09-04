@@ -2521,7 +2521,7 @@ private fun reply_action_row(
 ) {
     val colors = AsterMaterial.colors
     val config = LocalConfiguration.current
-    var label_size by remember(config) { mutableStateOf(REPLY_ACTION_LABEL_MAX) }
+    var label_size by remember(config, show_react) { mutableStateOf(REPLY_ACTION_LABEL_MAX) }
     val on_label_overflow: () -> Unit = {
         if (label_size.value > REPLY_ACTION_LABEL_MIN.value) {
             label_size = (label_size.value - 1f).sp
