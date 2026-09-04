@@ -23,6 +23,7 @@ package org.astermail.android.mail.ratchet
 
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -218,6 +219,8 @@ class RatchetDecryptor @Inject constructor(
                         plaintext = DoubleRatchet.decrypt(refreshed, recipient)
                         state = refreshed
                         decrypt_error = null
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
                     } catch (e2: Throwable) {
                         decrypt_error = e2
                     }
@@ -574,6 +577,8 @@ class RatchetDecryptor @Inject constructor(
             from_identity -> pq_identity_secret_candidates().mapNotNull {
                 try {
                     RatchetCrypto.b64_decode(it)
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
                 } catch (_: Throwable) {
                     null
                 }
@@ -591,6 +596,8 @@ class RatchetDecryptor @Inject constructor(
         val pq_ciphertext_raw = pq_ciphertext?.let {
             try {
                 RatchetCrypto.b64_decode(it)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (_: Throwable) {
                 null
             }
@@ -674,6 +681,8 @@ class RatchetDecryptor @Inject constructor(
             val pt = keys.withIndex().firstNotNullOfOrNull { (i, candidate) ->
                 try {
                     RatchetCrypto.aes_gcm_decrypt(ct, candidate, nonce, null).also { index = i }
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
                 } catch (_: Throwable) {
                     null
                 }
@@ -692,6 +701,8 @@ class RatchetDecryptor @Inject constructor(
                 pq_secret_missed_at.remove(key_id)
                 pt
             }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (t: Throwable) {
             if (org.astermail.android.BuildConfig.DEBUG) {
                 android.util.Log.w("AsterRatchet", "pq secret $key_id: decode failed", t)

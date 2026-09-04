@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.settings.detail
 
+import kotlinx.coroutines.CancellationException
 import org.astermail.android.ui.mail.format_long_date
 import org.astermail.android.ui.common.show_copy_result_toast
 import org.astermail.android.ui.common.show_copy_failed_toast
@@ -1809,9 +1810,13 @@ private fun format_alias_date(millis: Long): String =
 
 private fun parse_iso_millis(iso: String): Long? = try {
     java.time.Instant.parse(iso).toEpochMilli()
+} catch (cancelled: CancellationException) {
+    throw cancelled
 } catch (_: Throwable) {
     try {
         java.time.LocalDateTime.parse(iso.take(19)).toInstant(java.time.ZoneOffset.UTC).toEpochMilli()
+    } catch (cancelled: CancellationException) {
+        throw cancelled
     } catch (_: Throwable) {
         null
     }

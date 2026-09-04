@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -250,6 +251,8 @@ class ImportViewModel @Inject constructor(
                 }
                 _state.value = _state.value.copy(is_uploading = false, job_created = true)
                 load_jobs()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_uploading = false,

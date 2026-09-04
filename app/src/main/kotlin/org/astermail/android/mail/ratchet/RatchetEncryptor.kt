@@ -21,6 +21,7 @@
 
 package org.astermail.android.mail.ratchet
 
+import kotlinx.coroutines.CancellationException
 import org.astermail.android.BuildConfig
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -329,6 +330,8 @@ class RatchetEncryptor @Inject constructor(
                 sender_identity_public,
                 recovery_keys,
             )
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (t: Throwable) {
             throw RatchetEncryptionException(recipient_email, "recovery lane unavailable", t)
         } finally {

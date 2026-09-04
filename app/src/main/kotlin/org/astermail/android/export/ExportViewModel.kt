@@ -155,6 +155,8 @@ class ExportViewModel @Inject constructor(
                     context.getString(org.astermail.android.R.string.export_share_save),
                 ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             )
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (_: Throwable) {
             _state.update {
                 it.copy(

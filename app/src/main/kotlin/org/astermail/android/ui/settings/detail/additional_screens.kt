@@ -22,6 +22,7 @@
 package org.astermail.android.ui.settings.detail
 
 import compose.icons.TablerIcons
+import kotlinx.coroutines.CancellationException
 import org.astermail.android.ui.common.show_copy_result_toast
 import org.astermail.android.ui.common.show_copy_failed_toast
 import org.astermail.android.ui.common.write_to_clipboard
@@ -993,6 +994,8 @@ fun DeveloperScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                             context.cacheDir.deleteRecursively()
                             cache_cleared = true
                             Toast.makeText(context, cache_cleared_text, Toast.LENGTH_SHORT).show()
+                        } catch (cancelled: CancellationException) {
+                            throw cancelled
                         } catch (_: Throwable) {
                             Toast.makeText(context, cache_clear_failed_text, Toast.LENGTH_SHORT).show()
                         }

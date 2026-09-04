@@ -24,6 +24,7 @@ package org.astermail.android.mail.ratchet
 import android.content.Context
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.astermail.android.crypto.ratchet.RatchetCrypto
@@ -51,10 +52,14 @@ class RatchetPlaintextCache @Inject constructor(
             keys.firstNotNullOfOrNull { candidate ->
                 try {
                     String(RatchetCrypto.aes_gcm_decrypt(ciphertext, candidate, nonce, null), Charsets.UTF_8)
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
                 } catch (_: Throwable) {
                     null
                 }
             }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (_: Throwable) {
             null
         } finally {
@@ -70,6 +75,8 @@ class RatchetPlaintextCache @Inject constructor(
             val ciphertext = RatchetCrypto.aes_gcm_encrypt(plaintext.toByteArray(Charsets.UTF_8), key, nonce, null)
             val encoded = RatchetCrypto.b64_encode(nonce) + ":" + RatchetCrypto.b64_encode(ciphertext)
             mutex.withLock { store_bounded(message_id, encoded) }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (_: Throwable) {
         } finally {
             key.fill(0)

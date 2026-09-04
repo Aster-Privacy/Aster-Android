@@ -25,6 +25,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -240,6 +241,8 @@ class ExternalAccountsViewModel @Inject constructor(
                 _state.value = _state.value.copy(manual_submitting = false, manual_success = true)
                 load()
                 trigger_sync(token)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(manual_submitting = false, error = ExternalAccountsError.MANUAL_FAILED)
             }

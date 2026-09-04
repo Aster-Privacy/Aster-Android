@@ -21,6 +21,7 @@
 
 package org.astermail.android.billing
 
+import kotlinx.coroutines.CancellationException
 import org.astermail.android.BuildConfig
 import android.app.Application
 import android.content.Context
@@ -277,6 +278,8 @@ class BillingViewModel @Inject constructor(
                 pending_checkout_plan = plan_code
                 pending_checkout_interval = billing_interval
                 _state.value = _state.value.copy(is_acting = false, acting_action = null, checkout_url = response.url, checkout_abandoned_plan = null, checkout_abandoned_interval = null)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_acting = false,
@@ -294,6 +297,8 @@ class BillingViewModel @Inject constructor(
             try {
                 val response = billing_api.create_portal_session()
                 _state.value = _state.value.copy(is_acting = false, acting_action = null, portal_url = response.url)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_acting = false,
@@ -336,6 +341,8 @@ class BillingViewModel @Inject constructor(
                     info = if (response.cancel_at_period_end) ctx.getString(R.string.subscription_will_end) else ctx.getString(R.string.subscription_cancelled),
                 )
                 load_subscription()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_acting = false,
@@ -355,6 +362,8 @@ class BillingViewModel @Inject constructor(
                 billing_api.reactivate_subscription()
                 _state.value = _state.value.copy(is_acting = false, acting_action = null, info = ctx.getString(R.string.subscription_reactivated))
                 load_subscription()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_acting = false,
@@ -379,6 +388,8 @@ class BillingViewModel @Inject constructor(
                     info = ctx.getString(R.string.billing_changed_to, billing_interval_label(ctx, response.billing_interval)),
                 )
                 load_subscription()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_acting = false,
@@ -397,6 +408,8 @@ class BillingViewModel @Inject constructor(
                 billing_api.change_plan(ChangePlanRequest(plan_code = plan_code, billing_interval = billing_interval))
                 _state.value = _state.value.copy(is_acting = false, acting_action = null, info = ctx.getString(R.string.plan_changed))
                 load_subscription()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_acting = false,
@@ -581,6 +594,8 @@ class BillingViewModel @Inject constructor(
                 pending_checkout_plan = plan_code
                 pending_checkout_interval = checkout_interval_for_term_months(term_months)
                 _state.value = _state.value.copy(is_acting = false, acting_action = null, checkout_url = response.url, checkout_abandoned_plan = null, checkout_abandoned_interval = null)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_acting = false, acting_action = null,
@@ -604,6 +619,8 @@ class BillingViewModel @Inject constructor(
                     )
                 )
                 _state.value = _state.value.copy(is_acting = false, acting_action = null, checkout_url = response.url)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_acting = false, acting_action = null,
@@ -672,6 +689,8 @@ class BillingViewModel @Inject constructor(
                     acting_action = null,
                     created_crypto_invoice_id = response.id,
                 )
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_acting = false, acting_action = null,
@@ -715,6 +734,8 @@ class BillingViewModel @Inject constructor(
                     org.astermail.android.api.billing.PurchaseAddonRequest(addon_id = addon_id)
                 )
                 _state.value = _state.value.copy(is_acting = false, acting_action = null, checkout_url = response.url)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_acting = false,
@@ -816,6 +837,8 @@ class BillingViewModel @Inject constructor(
                 if (response.retry_succeeded) {
                     load_subscription()
                 }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_acting = false,
@@ -838,6 +861,8 @@ class BillingViewModel @Inject constructor(
                     info = ctx.getString(R.string.payment_method_removed),
                     payment_methods = _state.value.payment_methods.filter { it.id != payment_method_id },
                 )
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
                     is_acting = false,

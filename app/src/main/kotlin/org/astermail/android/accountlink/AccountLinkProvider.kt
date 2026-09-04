@@ -33,6 +33,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import io.ktor.client.plugins.auth.providers.BearerTokens
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
@@ -165,6 +166,8 @@ class AccountLinkProvider : ContentProvider() {
             override suspend fun refresh(): BearerTokens? {
                 val response = try {
                     AuthApiImpl(client).refresh(tokens.refreshToken)
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
                 } catch (t: Throwable) {
                     return if (t is ApiError.UnauthorizedError || t is ApiError.ForbiddenError) null else tokens
                 }

@@ -64,6 +64,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import kotlinx.coroutines.CancellationException
 import org.astermail.android.R
 import kotlinx.coroutines.launch
 import org.astermail.android.design.SquircleShape
@@ -190,6 +191,8 @@ fun FeedbackScreen(
                         vm.send_feedback(category, message)
                         sent = true
                         Toast.makeText(context, feedback_sent_text, Toast.LENGTH_SHORT).show()
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
                     } catch (_: Throwable) {
                         Toast.makeText(context, feedback_failed_text, Toast.LENGTH_SHORT).show()
                     }

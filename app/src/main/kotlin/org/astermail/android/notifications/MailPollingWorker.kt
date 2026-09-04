@@ -45,6 +45,7 @@ import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.astermail.android.MainActivity
@@ -114,6 +115,8 @@ class MailPollingWorker(
                     val new_refresh = response.refresh_token ?: current_refresh ?: response.access_token
                     token_store.save(response.access_token, new_refresh)
                     BearerTokens(response.access_token, new_refresh)
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
                 } catch (t: Throwable) {
                     val is_definitive_auth_failure = t is ApiError.UnauthorizedError ||
                         t is ApiError.ForbiddenError
@@ -182,6 +185,8 @@ class MailPollingWorker(
         } catch (_: ApiError.UnauthorizedError) {
             schedule_next(context)
             return Result.success()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (_: Throwable) {
             return Result.retry()
         }
@@ -234,6 +239,8 @@ class MailPollingWorker(
                 context.applicationContext,
                 MailRepositoryEntryPoint::class.java,
             )
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (_: Throwable) {
             null
         }

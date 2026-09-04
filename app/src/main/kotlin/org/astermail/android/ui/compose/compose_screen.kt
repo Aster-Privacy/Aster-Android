@@ -22,6 +22,7 @@
 package org.astermail.android.ui.compose
 
 import compose.icons.TablerIcons
+import kotlinx.coroutines.CancellationException
 import org.astermail.android.ui.common.show_copy_result_toast
 import org.astermail.android.ui.common.write_to_clipboard
 import compose.icons.tablericons.*
@@ -1450,6 +1451,8 @@ fun ComposeScreen(
             inline_images.forEachIndexed { idx, img ->
                 val raw_bytes = try {
                     context.contentResolver.openInputStream(img.uri)?.use { it.readBytes() }
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
                 } catch (_: Throwable) {
                     null
                 } ?: run {
@@ -1492,6 +1495,8 @@ fun ComposeScreen(
             attachments.map { att ->
                 val raw_bytes = try {
                     context.contentResolver.openInputStream(att.uri)?.use { it.readBytes() }
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
                 } catch (t: Throwable) {
                     throw AttachmentEncodeException(att.name, t)
                 } ?: throw AttachmentEncodeException(att.name, null)

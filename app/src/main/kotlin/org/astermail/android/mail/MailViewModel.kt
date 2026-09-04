@@ -21,6 +21,7 @@
 
 package org.astermail.android.mail
 
+import kotlinx.coroutines.CancellationException
 import org.astermail.android.BuildConfig
 import android.content.Context
 import androidx.lifecycle.ViewModel
@@ -2466,6 +2467,8 @@ class MailViewModel @Inject constructor(
                         emit_toast(context.getString(R.string.failed_to_archive))
                     },
                 )
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (t: Throwable) {
                 if (BuildConfig.DEBUG) android.util.Log.w("MailVM", "archive threw", t)
                 clear_batch_action(archive_key)
@@ -2560,6 +2563,8 @@ class MailViewModel @Inject constructor(
                         emit_toast(context.getString(R.string.failed_to_trash))
                     },
                 )
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (_: Throwable) {
                 clear_batch_action(trash_key)
                 undo_local_restore(removed_items)
@@ -3485,6 +3490,8 @@ class MailViewModel @Inject constructor(
                         },
                     )
                 }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (t: Throwable) {
                 val keep = _search_state.value.all_items
                 _search_state.value = _search_state.value.copy(

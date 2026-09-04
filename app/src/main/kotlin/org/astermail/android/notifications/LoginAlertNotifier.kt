@@ -46,6 +46,7 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CancellationException
 import org.astermail.android.MainActivity
 import org.astermail.android.R
 import org.astermail.android.api.ApiError
@@ -341,6 +342,8 @@ class LoginAlertWorker(
             sessions.firstOrNull { it.id == session_id }?.is_current == true
         } catch (_: ApiError.UnauthorizedError) {
             return Result.success()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (_: Throwable) {
             null
         }
@@ -389,6 +392,8 @@ class LoginAlertRevokeWorker(
             try {
                 entry.settings_api().revoke_session(session_id)
                 null
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (t: Throwable) {
                 t
             }

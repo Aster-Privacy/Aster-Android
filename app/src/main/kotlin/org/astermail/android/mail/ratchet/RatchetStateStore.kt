@@ -24,6 +24,7 @@ package org.astermail.android.mail.ratchet
 import android.content.Context
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.encodeToString
@@ -50,6 +51,8 @@ class RatchetStateStore @Inject constructor(
         val raw = prefs.getString(key_for(conversation_id), null) ?: return null
         try {
             json.decodeFromString<RatchetState>(raw)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (_: Throwable) {
             null
         }

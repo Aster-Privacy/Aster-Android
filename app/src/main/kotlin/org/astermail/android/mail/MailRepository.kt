@@ -1498,6 +1498,8 @@ class MailRepository @Inject constructor(
             }
             mail_api.link_mail_to_thread(original_email_id, thread_token)
             thread_token
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (_: Throwable) {
             null
         }
@@ -3200,6 +3202,8 @@ class MailRepository @Inject constructor(
                 signature = signed.signature,
                 micalg = signed.micalg,
             )
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (_: Throwable) {
             report_signing_skipped("signed_mime_build_threw")
             null

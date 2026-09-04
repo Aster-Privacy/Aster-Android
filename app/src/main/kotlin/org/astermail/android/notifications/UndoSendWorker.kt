@@ -35,6 +35,7 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CancellationException
 import org.astermail.android.mail.MailRepository
 import org.astermail.android.mail.PendingSendOutcome
 import java.util.concurrent.TimeUnit
@@ -52,11 +53,15 @@ class UndoSendWorker(
                 context.applicationContext,
                 UndoSendEntryPoint::class.java,
             ).mail_repository()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (_: Throwable) {
             return retry_or_give_up(runAttemptCount)
         }
         val outcome = try {
             repo.run_pending_send(pending_id, owner_id, runAttemptCount)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (_: Throwable) {
             return retry_or_give_up(runAttemptCount)
         }

@@ -194,6 +194,8 @@ class AuthRepository @Inject constructor(
                 RefreshOutcome.Transient -> {
                 }
             }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (_: Throwable) {
         } finally {
             unauthorized_check_running.set(false)
@@ -371,12 +373,14 @@ class AuthRepository @Inject constructor(
                 absorb_previous_keys_and_keks(vault_obj)
                 absorb_data_kek(vault_obj)
                 extract_ratchet_keys(vault_obj)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (t: Throwable) {
                 if (BuildConfig.DEBUG) android.util.Log.w("AuthRepository", "vault decryption failed: ${t.javaClass.simpleName}")
+            } finally {
+                password_bytes.fill(0)
+                password_hash_bytes.fill(0)
             }
-
-            password_bytes.fill(0)
-            password_hash_bytes.fill(0)
 
             val profile = runCatching { withTimeoutOrNull(8_000L) { auth_api.me() } }.getOrNull()
             profile?.let { LockdownStore.set_enabled(context, it.lockdown_mode_enabled) }
@@ -467,6 +471,8 @@ class AuthRepository @Inject constructor(
         val passphrase_chars = password.toCharArray()
         val pgp_keys = try {
             PgpKeyGenerator.generate(username, canonical_email, passphrase_chars)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (_: Throwable) {
             null
         } finally {
@@ -692,6 +698,10 @@ class AuthRepository @Inject constructor(
                 base64_decode(vault_nonce_b64),
                 current_password_bytes,
             )
+        } catch (cancelled: CancellationException) {
+            current_password_bytes.fill(0)
+            new_password_bytes.fill(0)
+            throw cancelled
         } catch (_: Throwable) {
             current_password_bytes.fill(0)
             new_password_bytes.fill(0)
@@ -1114,6 +1124,8 @@ class AuthRepository @Inject constructor(
             } finally {
                 passphrase.fill(0)
             }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (_: Throwable) {
             false
         }
@@ -1238,6 +1250,8 @@ class AuthRepository @Inject constructor(
             encryption_api.get_pgp_key_info()
             return
         } catch (_: org.astermail.android.api.ApiError.NotFoundError) {
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (_: Throwable) {
             return
         }
@@ -1251,6 +1265,8 @@ class AuthRepository @Inject constructor(
 
         val published_fingerprint = try {
             encryption_api.get_pgp_key_info().fingerprint
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (_: Throwable) {
             return identity_key
         }
@@ -1272,6 +1288,8 @@ class AuthRepository @Inject constructor(
         return try {
             republish_pgp_key_with_password(current_identity, String(passphrase_bytes, Charsets.UTF_8))
             current_identity
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (_: Throwable) {
             null
         } finally {

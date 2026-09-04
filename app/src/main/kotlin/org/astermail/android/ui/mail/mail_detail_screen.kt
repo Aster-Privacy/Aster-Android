@@ -22,6 +22,7 @@
 package org.astermail.android.ui.mail
 
 import compose.icons.TablerIcons
+import kotlinx.coroutines.CancellationException
 import org.astermail.android.ui.common.show_copy_result_toast
 import org.astermail.android.ui.common.show_copy_failed_toast
 import org.astermail.android.ui.common.write_to_clipboard
@@ -1227,6 +1228,8 @@ fun MailDetailScreen(
                                                     context.startActivity(
                                                         Intent(Intent.ACTION_VIEW, Uri.parse(manual_url)),
                                                     )
+                                                } catch (cancelled: CancellationException) {
+                                                    throw cancelled
                                                 } catch (_: Throwable) {
                                                     show_toast(context.getString(R.string.could_not_unsubscribe))
                                                 }
@@ -1711,6 +1714,8 @@ fun MailDetailScreen(
             } else {
                 try {
                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link)))
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
                 } catch (_: Throwable) {
                     show_toast(context.getString(R.string.could_not_open_link))
                 }
@@ -5830,6 +5835,8 @@ private suspend fun save_attachment_to_storage(
             show_download_notification(context, safe_name, uri, mime)
             true
         }
+    } catch (cancelled: CancellationException) {
+        throw cancelled
     } catch (_: Throwable) {
         false
     }
@@ -5869,6 +5876,8 @@ private fun show_download_notification(
             .setAutoCancel(true)
             .build()
         nm.notify(filename.hashCode(), notification)
+    } catch (cancelled: CancellationException) {
+        throw cancelled
     } catch (_: Throwable) {
     }
 }
@@ -6072,6 +6081,8 @@ private fun attachment_preview_dialog(
                                                 if (!opened) {
                                                     Toast.makeText(context, context.getString(R.string.no_app_to_open), Toast.LENGTH_SHORT).show()
                                                 }
+                                            } catch (cancelled: CancellationException) {
+                                                throw cancelled
                                             } catch (_: Throwable) {
                                                 Toast.makeText(context, context.getString(R.string.no_app_to_open), Toast.LENGTH_SHORT).show()
                                             }

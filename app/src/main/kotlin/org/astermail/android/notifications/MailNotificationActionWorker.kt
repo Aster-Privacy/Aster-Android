@@ -35,6 +35,7 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CancellationException
 import org.astermail.android.mail.MailRepository
 import java.util.concurrent.TimeUnit
 
@@ -54,6 +55,8 @@ class MailNotificationActionWorker(
                 context.applicationContext,
                 MailNotificationActionEntryPoint::class.java,
             ).mail_repository()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (_: Throwable) {
             null
         }

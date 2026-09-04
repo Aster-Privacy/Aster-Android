@@ -80,6 +80,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import org.astermail.android.contacts.ContactsViewModel
 import androidx.compose.ui.res.stringResource
@@ -388,6 +389,8 @@ fun ContactDetailScreen(
                     if (uri.scheme?.lowercase() !in setOf("http", "https")) return
                     try {
                         context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
                     } catch (_: Throwable) {
                         android.widget.Toast.makeText(
                             context,
