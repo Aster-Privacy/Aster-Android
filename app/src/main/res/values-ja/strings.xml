@@ -2701,4 +2701,31 @@
     <string name="couldnt_remove_label">ラベルを削除できませんでした</string>
     <string name="unsnoozed_count">%d件のスレッドのスヌーズを解除しました</string>
     <string name="couldnt_unsnooze">スヌーズを解除できませんでした</string>
+    <string name="applied_to_loaded_only">%2$d 件中 %1$d 件に適用しました - この操作は読み込み済みのメッセージのみが対象です</string>
+    <string name="connection_cdn_relay">CDNリレー</string>
+    <string name="connection_cdn_relay_description">コンテンツ配信リレー経由で通信し、IPアドレスを隠します。</string>
+    <string name="connection_description">Aster Mail がサーバーに接続する方法を選択します。</string>
+    <string name="connection_direct">直接</string>
+    <string name="connection_direct_description">Asterのサーバに直接接続して、最速で利用できます。</string>
+    <string name="connection_method_header">接続方法</string>
+    <string name="connection_saving">保存中...</string>
+    <string name="crypto_term_24_months">24 か月</string>
+    <string name="failed_save_connection_preference">接続設定を保存できませんでした</string>
+    <string name="mail_rules_aliases_loading">エイリアスを読み込んでいます…</string>
+    <string name="mail_rules_no_alias_matches">検索に一致するエイリアスはありません。</string>
+    <string name="mail_rules_no_aliases">エイリアスはまだありません。</string>
+    <string name="mail_rules_other_address">その他のアドレス</string>
+    <string name="mail_rules_search_aliases">エイリアスを検索</string>
+    <string name="mail_rules_switched_to_any">このルールは選択したいずれかのアドレスに一致するようになりました。</string>
+    <string name="reply_to_label">返信先</string>
+    <string name="security_details_title">セキュリティの詳細</string>
+    <string name="theme_sync_across_devices">テーマをデバイス間で同期</string>
+    <string name="theme_sync_across_devices_subtitle">オフにすると、このデバイスだけ別のテーマを使えます。</string>
+    <string name="view_encryption_details">暗号化の詳細を表示</string>
+    <plurals name="mail_rules_aliases_selected">
+        <item quantity="other">%1$d 件のエイリアスを選択しました</item>
+    </plurals>
+    <plurals name="mail_rules_aliases_skipped">
+        <item quantity="other">%1$d 件のアドレスはすでにこのルールにあるため、再度追加されませんでした。</item>
+    </plurals>
 </resources>

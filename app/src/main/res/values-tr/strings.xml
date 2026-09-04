@@ -2708,4 +2708,33 @@
     <string name="couldnt_remove_label">Etiket kaldırılamadı</string>
     <string name="unsnoozed_count">%d konuşmanın ertelemesi kaldırıldı</string>
     <string name="couldnt_unsnooze">Erteleme kaldırılamadı</string>
+    <string name="applied_to_loaded_only">%2$d ögeden %1$d tanesine uygulandı - bu işlem yalnızca yüklenmiş iletileri kapsar</string>
+    <string name="connection_cdn_relay">CDN Aktarıcı</string>
+    <string name="connection_cdn_relay_description">IP adresinizi gizlemek için trafiği bir içerik dağıtım aktarıcısı üzerinden yönlendirin.</string>
+    <string name="connection_description">Aster Mail\'in sunucularımıza nasıl bağlanacağını seçin.</string>
+    <string name="connection_direct">Doğrudan</string>
+    <string name="connection_direct_description">En hızlı deneyim için doğrudan Aster sunucularına bağlanın.</string>
+    <string name="connection_method_header">Bağlantı yöntemi</string>
+    <string name="connection_saving">Kaydediliyor...</string>
+    <string name="crypto_term_24_months">24 ay</string>
+    <string name="failed_save_connection_preference">Bağlantı tercihi kaydedilemedi</string>
+    <string name="mail_rules_aliases_loading">Takma adlarınız yükleniyor…</string>
+    <string name="mail_rules_no_alias_matches">Aramanızla eşleşen takma ad yok.</string>
+    <string name="mail_rules_no_aliases">Henüz takma adınız yok.</string>
+    <string name="mail_rules_other_address">Diğer adres</string>
+    <string name="mail_rules_search_aliases">Takma adlarınızda arayın</string>
+    <string name="mail_rules_switched_to_any">Bu kural artık seçtiğiniz adreslerden herhangi biriyle eşleşiyor.</string>
+    <string name="reply_to_label">Yanıtla</string>
+    <string name="security_details_title">Güvenlik ayrıntıları</string>
+    <string name="theme_sync_across_devices">Temayı aygıtlar arasında eşle</string>
+    <string name="theme_sync_across_devices_subtitle">Bu aygıtta ayrı bir tema tutmak için bunu kapatın.</string>
+    <string name="view_encryption_details">Şifreleme ayrıntılarını göster</string>
+    <plurals name="mail_rules_aliases_selected">
+        <item quantity="one">%1$d takma ad seçildi</item>
+        <item quantity="other">%1$d takma ad seçildi</item>
+    </plurals>
+    <plurals name="mail_rules_aliases_skipped">
+        <item quantity="one">%1$d adres bu kuralda zaten vardı, bu yüzden yeniden eklenmedi.</item>
+        <item quantity="other">%1$d adres bu kuralda zaten vardı, bu yüzden yeniden eklenmedi.</item>
+    </plurals>
 </resources>

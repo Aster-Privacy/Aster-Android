@@ -2701,4 +2701,31 @@
     <string name="couldnt_remove_label">라벨을 제거할 수 없음</string>
     <string name="unsnoozed_count">대화 %d개의 다시 알림 해제</string>
     <string name="couldnt_unsnooze">다시 알림을 해제할 수 없음</string>
+    <string name="applied_to_loaded_only">%2$d개 중 %1$d개에 적용했습니다 - 이 작업은 불러온 메시지에만 적용됩니다</string>
+    <string name="connection_cdn_relay">CDN 릴레이</string>
+    <string name="connection_cdn_relay_description">콘텐츠 전송 릴레이를 통해 트래픽을 전달하여 IP 주소를 가립니다.</string>
+    <string name="connection_description">Aster Mail이 서버에 연결하는 방식을 선택하세요.</string>
+    <string name="connection_direct">직접 연결</string>
+    <string name="connection_direct_description">Aster 서버에 바로 연결하여 가장 빠르게 사용합니다.</string>
+    <string name="connection_method_header">연결 방식</string>
+    <string name="connection_saving">저장 중...</string>
+    <string name="crypto_term_24_months">24개월</string>
+    <string name="failed_save_connection_preference">연결 환경설정을 저장하지 못했습니다</string>
+    <string name="mail_rules_aliases_loading">별칭을 불러오는 중…</string>
+    <string name="mail_rules_no_alias_matches">검색과 일치하는 별칭이 없습니다.</string>
+    <string name="mail_rules_no_aliases">아직 별칭이 없습니다.</string>
+    <string name="mail_rules_other_address">다른 주소</string>
+    <string name="mail_rules_search_aliases">별칭 검색</string>
+    <string name="mail_rules_switched_to_any">이제 이 규칙은 선택한 주소 중 하나와 일치합니다.</string>
+    <string name="reply_to_label">회신 주소</string>
+    <string name="security_details_title">보안 세부 정보</string>
+    <string name="theme_sync_across_devices">기기 간 테마 동기화</string>
+    <string name="theme_sync_across_devices_subtitle">이 기기에만 다른 테마를 사용하려면 끄십시오.</string>
+    <string name="view_encryption_details">암호화 세부 정보 보기</string>
+    <plurals name="mail_rules_aliases_selected">
+        <item quantity="other">별칭 %1$d개를 선택했습니다</item>
+    </plurals>
+    <plurals name="mail_rules_aliases_skipped">
+        <item quantity="other">%1$d개의 주소가 이미 이 규칙에 있어 다시 추가되지 않았습니다.</item>
+    </plurals>
 </resources>

@@ -2722,4 +2722,37 @@
     <string name="couldnt_remove_label">Nie można usunąć etykiety</string>
     <string name="unsnoozed_count">Anulowano odłożenie %d konwersacji</string>
     <string name="couldnt_unsnooze">Nie można anulować odłożenia</string>
+    <string name="applied_to_loaded_only">Zastosowano do %1$d z %2$d - ta akcja obejmuje tylko wczytane wiadomości</string>
+    <string name="connection_cdn_relay">Przekaźnik CDN</string>
+    <string name="connection_cdn_relay_description">Kieruj ruch przez przekaźnik sieci CDN, aby ukryć swój adres IP.</string>
+    <string name="connection_description">Wybierz sposób łączenia Aster Mail z naszymi serwerami.</string>
+    <string name="connection_direct">Bezpośrednie</string>
+    <string name="connection_direct_description">Połącz się bezpośrednio z serwerami Aster, aby uzyskać najszybsze działanie.</string>
+    <string name="connection_method_header">Metoda połączenia</string>
+    <string name="connection_saving">Zapisywanie...</string>
+    <string name="crypto_term_24_months">24 miesiące</string>
+    <string name="failed_save_connection_preference">Nie można zapisać preferencji połączenia</string>
+    <string name="mail_rules_aliases_loading">Wczytywanie aliasów…</string>
+    <string name="mail_rules_no_alias_matches">Żaden alias nie pasuje do wyszukiwania.</string>
+    <string name="mail_rules_no_aliases">Nie masz jeszcze żadnych aliasów.</string>
+    <string name="mail_rules_other_address">Inny adres</string>
+    <string name="mail_rules_search_aliases">Szukaj w aliasach</string>
+    <string name="mail_rules_switched_to_any">Ta reguła pasuje teraz do dowolnego z wybranych adresów.</string>
+    <string name="reply_to_label">Odpowiedz do</string>
+    <string name="security_details_title">Szczegóły zabezpieczeń</string>
+    <string name="theme_sync_across_devices">Synchronizuj motyw na urządzeniach</string>
+    <string name="theme_sync_across_devices_subtitle">Wyłącz to, aby zachować osobny motyw na tym urządzeniu.</string>
+    <string name="view_encryption_details">Pokaż szczegóły szyfrowania</string>
+    <plurals name="mail_rules_aliases_selected">
+        <item quantity="one">Wybrano %1$d alias</item>
+        <item quantity="few">Wybrano %1$d aliasy</item>
+        <item quantity="many">Wybrano %1$d aliasów</item>
+        <item quantity="other">Wybrano %1$d aliasu</item>
+    </plurals>
+    <plurals name="mail_rules_aliases_skipped">
+        <item quantity="one">%1$d adres był już w tej regule, więc nie został dodany ponownie.</item>
+        <item quantity="few">%1$d adresy były już w tej regule, więc nie zostały dodane ponownie.</item>
+        <item quantity="many">%1$d adresów było już w tej regule, więc nie zostały dodane ponownie.</item>
+        <item quantity="other">%1$d adresu było już w tej regule, więc nie zostało dodane ponownie.</item>
+    </plurals>
 </resources>

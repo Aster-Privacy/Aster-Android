@@ -2701,4 +2701,31 @@
     <string name="couldnt_remove_label">无法移除标签</string>
     <string name="unsnoozed_count">已取消延后 %d 个会话</string>
     <string name="couldnt_unsnooze">无法取消延后</string>
+    <string name="applied_to_loaded_only">已应用于 %2$d 项中的 %1$d 项 - 此操作仅涵盖已加载的邮件</string>
+    <string name="connection_cdn_relay">CDN 中继</string>
+    <string name="connection_cdn_relay_description">通过内容分发中继转发流量，隐藏你的 IP 地址。</string>
+    <string name="connection_description">选择 Aster Mail 连接到我们服务器的方式。</string>
+    <string name="connection_direct">直连</string>
+    <string name="connection_direct_description">直接连接 Aster 服务器，速度最快。</string>
+    <string name="connection_method_header">连接方式</string>
+    <string name="connection_saving">保存中...</string>
+    <string name="crypto_term_24_months">24 个月</string>
+    <string name="failed_save_connection_preference">无法保存连接偏好设置</string>
+    <string name="mail_rules_aliases_loading">正在加载你的别名…</string>
+    <string name="mail_rules_no_alias_matches">没有别名与你的搜索匹配。</string>
+    <string name="mail_rules_no_aliases">你还没有任何别名。</string>
+    <string name="mail_rules_other_address">其他地址</string>
+    <string name="mail_rules_search_aliases">搜索你的别名</string>
+    <string name="mail_rules_switched_to_any">此规则现在会匹配你所选的任意地址。</string>
+    <string name="reply_to_label">回复至</string>
+    <string name="security_details_title">安全详情</string>
+    <string name="theme_sync_across_devices">在各设备间同步主题</string>
+    <string name="theme_sync_across_devices_subtitle">关闭后，此设备可单独使用一种主题。</string>
+    <string name="view_encryption_details">查看加密详情</string>
+    <plurals name="mail_rules_aliases_selected">
+        <item quantity="other">已选择 %1$d 个别名</item>
+    </plurals>
+    <plurals name="mail_rules_aliases_skipped">
+        <item quantity="other">%1$d 个地址已在此规则中，因此未再次添加。</item>
+    </plurals>
 </resources>

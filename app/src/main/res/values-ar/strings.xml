@@ -2736,4 +2736,41 @@
     <string name="couldnt_remove_label">تعذر إزالة التصنيف</string>
     <string name="unsnoozed_count">تم إلغاء تأجيل %d محادثة</string>
     <string name="couldnt_unsnooze">تعذر إلغاء التأجيل</string>
+    <string name="applied_to_loaded_only">تم التطبيق على %1$d من %2$d - يشمل هذا الإجراء الرسائل المحمّلة فقط</string>
+    <string name="connection_cdn_relay">ترحيل CDN</string>
+    <string name="connection_cdn_relay_description">وجّه البيانات عبر مُرحِّل توصيل المحتوى لإخفاء عنوان IP الخاص بك.</string>
+    <string name="connection_description">اختر طريقة اتصال Aster Mail بخوادمنا.</string>
+    <string name="connection_direct">مباشر</string>
+    <string name="connection_direct_description">اتصل بخوادم Aster مباشرة للحصول على أسرع تجربة.</string>
+    <string name="connection_method_header">طريقة الاتصال</string>
+    <string name="connection_saving">جارٍ الحفظ...</string>
+    <string name="crypto_term_24_months">24 شهرًا</string>
+    <string name="failed_save_connection_preference">تعذّر حفظ تفضيل الاتصال</string>
+    <string name="mail_rules_aliases_loading">جارٍ تحميل الأسماء المستعارة…</string>
+    <string name="mail_rules_no_alias_matches">لا توجد أسماء مستعارة تطابق بحثك.</string>
+    <string name="mail_rules_no_aliases">ليس لديك أي أسماء مستعارة بعد.</string>
+    <string name="mail_rules_other_address">عنوان آخر</string>
+    <string name="mail_rules_search_aliases">ابحث في الأسماء المستعارة</string>
+    <string name="mail_rules_switched_to_any">تطابق هذه القاعدة الآن أيًا من العناوين التي اخترتها.</string>
+    <string name="reply_to_label">الرد إلى</string>
+    <string name="security_details_title">تفاصيل الأمان</string>
+    <string name="theme_sync_across_devices">مزامنة النسق بين الأجهزة</string>
+    <string name="theme_sync_across_devices_subtitle">أوقف هذا للاحتفاظ بنسق منفصل على هذا الجهاز.</string>
+    <string name="view_encryption_details">عرض تفاصيل التشفير</string>
+    <plurals name="mail_rules_aliases_selected">
+        <item quantity="zero">لم يتم تحديد أي اسم مستعار</item>
+        <item quantity="one">تم تحديد اسم مستعار واحد</item>
+        <item quantity="two">تم تحديد اسمين مستعارين</item>
+        <item quantity="few">تم تحديد %1$d أسماء مستعارة</item>
+        <item quantity="many">تم تحديد %1$d اسمًا مستعارًا</item>
+        <item quantity="other">تم تحديد %1$d اسم مستعار</item>
+    </plurals>
+    <plurals name="mail_rules_aliases_skipped">
+        <item quantity="zero">لم تكن هناك عناوين موجودة بالفعل في هذه القاعدة.</item>
+        <item quantity="one">كان هناك عنوان واحد موجودًا بالفعل في هذه القاعدة، لذلك لم تتم إضافته مرة أخرى.</item>
+        <item quantity="two">كان هناك عنوانان موجودان بالفعل في هذه القاعدة، لذلك لم تتم إضافتهما مرة أخرى.</item>
+        <item quantity="few">كانت %1$d عناوين موجودة بالفعل في هذه القاعدة، لذلك لم تتم إضافتها مرة أخرى.</item>
+        <item quantity="many">كان %1$d عنوانًا موجودًا بالفعل في هذه القاعدة، لذلك لم تتم إضافتها مرة أخرى.</item>
+        <item quantity="other">كان %1$d عنوان موجودًا بالفعل في هذه القاعدة، لذلك لم تتم إضافتها مرة أخرى.</item>
+    </plurals>
 </resources>

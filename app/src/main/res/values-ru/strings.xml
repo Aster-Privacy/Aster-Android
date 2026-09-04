@@ -2722,4 +2722,37 @@
     <string name="couldnt_remove_label">Не удалось удалить метку</string>
     <string name="unsnoozed_count">Возвращено во входящие: %d разговоров</string>
     <string name="couldnt_unsnooze">Не удалось вернуть во входящие</string>
+    <string name="applied_to_loaded_only">Применено к %1$d из %2$d - это действие затрагивает только загруженные письма</string>
+    <string name="connection_cdn_relay">CDN-ретранслятор</string>
+    <string name="connection_cdn_relay_description">Направляйте трафик через ретранслятор доставки контента, чтобы скрыть свой IP-адрес.</string>
+    <string name="connection_description">Выберите способ подключения Aster Mail к нашим серверам.</string>
+    <string name="connection_direct">Прямое</string>
+    <string name="connection_direct_description">Подключайтесь напрямую к серверам Aster для максимальной скорости.</string>
+    <string name="connection_method_header">Способ подключения</string>
+    <string name="connection_saving">Сохранение...</string>
+    <string name="crypto_term_24_months">24 месяца</string>
+    <string name="failed_save_connection_preference">Не удалось сохранить настройку подключения</string>
+    <string name="mail_rules_aliases_loading">Загрузка ваших псевдонимов…</string>
+    <string name="mail_rules_no_alias_matches">Псевдонимы по вашему запросу не найдены.</string>
+    <string name="mail_rules_no_aliases">У вас пока нет псевдонимов.</string>
+    <string name="mail_rules_other_address">Другой адрес</string>
+    <string name="mail_rules_search_aliases">Поиск по псевдонимам</string>
+    <string name="mail_rules_switched_to_any">Теперь это правило применяется к любому из выбранных адресов.</string>
+    <string name="reply_to_label">Ответить</string>
+    <string name="security_details_title">Сведения о безопасности</string>
+    <string name="theme_sync_across_devices">Синхронизировать тему на устройствах</string>
+    <string name="theme_sync_across_devices_subtitle">Отключите, чтобы на этом устройстве осталась своя тема.</string>
+    <string name="view_encryption_details">Показать сведения о шифровании</string>
+    <plurals name="mail_rules_aliases_selected">
+        <item quantity="one">Выбран %1$d псевдоним</item>
+        <item quantity="few">Выбрано %1$d псевдонима</item>
+        <item quantity="many">Выбрано %1$d псевдонимов</item>
+        <item quantity="other">Выбрано %1$d псевдонима</item>
+    </plurals>
+    <plurals name="mail_rules_aliases_skipped">
+        <item quantity="one">%1$d адрес уже был в этом правиле, поэтому он не добавлен повторно.</item>
+        <item quantity="few">%1$d адреса уже были в этом правиле, поэтому они не добавлены повторно.</item>
+        <item quantity="many">%1$d адресов уже были в этом правиле, поэтому они не добавлены повторно.</item>
+        <item quantity="other">%1$d адреса уже были в этом правиле, поэтому они не добавлены повторно.</item>
+    </plurals>
 </resources>

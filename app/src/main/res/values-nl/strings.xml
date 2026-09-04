@@ -2708,4 +2708,33 @@
     <string name="couldnt_remove_label">Kan label niet verwijderen</string>
     <string name="unsnoozed_count">%d gesprek(ken) niet meer uitgesteld</string>
     <string name="couldnt_unsnooze">Kan uitstellen niet ongedaan maken</string>
+    <string name="applied_to_loaded_only">Toegepast op %1$d van %2$d - deze actie geldt alleen voor geladen berichten</string>
+    <string name="connection_cdn_relay">CDN-relay</string>
+    <string name="connection_cdn_relay_description">Stuur verkeer via een relay voor contentbezorging om je IP-adres te verbergen.</string>
+    <string name="connection_description">Kies hoe Aster Mail verbinding maakt met onze servers.</string>
+    <string name="connection_direct">Direct</string>
+    <string name="connection_direct_description">Maak rechtstreeks verbinding met Aster-servers voor de snelste ervaring.</string>
+    <string name="connection_method_header">Verbindingsmethode</string>
+    <string name="connection_saving">Opslaan...</string>
+    <string name="crypto_term_24_months">24 maanden</string>
+    <string name="failed_save_connection_preference">Kan verbindingsvoorkeur niet opslaan</string>
+    <string name="mail_rules_aliases_loading">Uw aliassen worden geladen…</string>
+    <string name="mail_rules_no_alias_matches">Geen aliassen komen overeen met uw zoekopdracht.</string>
+    <string name="mail_rules_no_aliases">U hebt nog geen aliassen.</string>
+    <string name="mail_rules_other_address">Ander adres</string>
+    <string name="mail_rules_search_aliases">Zoek in uw aliassen</string>
+    <string name="mail_rules_switched_to_any">Deze regel komt nu overeen met elk van de gekozen adressen.</string>
+    <string name="reply_to_label">Antwoord aan</string>
+    <string name="security_details_title">Beveiligingsdetails</string>
+    <string name="theme_sync_across_devices">Thema synchroniseren tussen apparaten</string>
+    <string name="theme_sync_across_devices_subtitle">Zet dit uit om op dit apparaat een apart thema te houden.</string>
+    <string name="view_encryption_details">Versleutelingsdetails tonen</string>
+    <plurals name="mail_rules_aliases_selected">
+        <item quantity="one">%1$d alias geselecteerd</item>
+        <item quantity="other">%1$d aliassen geselecteerd</item>
+    </plurals>
+    <plurals name="mail_rules_aliases_skipped">
+        <item quantity="one">%1$d adres stond al in deze regel en is niet opnieuw toegevoegd.</item>
+        <item quantity="other">%1$d adressen stonden al in deze regel en zijn niet opnieuw toegevoegd.</item>
+    </plurals>
 </resources>

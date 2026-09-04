@@ -2736,4 +2736,33 @@
     <string name="couldnt_remove_label">Impossible de retirer le libellé</string>
     <string name="unsnoozed_count">%d conversation(s) remise(s) en boîte de réception</string>
     <string name="couldnt_unsnooze">Impossible d\'annuler la mise en pause</string>
+    <string name="applied_to_loaded_only">Appliqué à %1$d sur %2$d - cette action ne concerne que les messages chargés</string>
+    <string name="connection_cdn_relay">Relais CDN</string>
+    <string name="connection_cdn_relay_description">Faire passer le trafic par un relais de diffusion de contenu pour masquer votre adresse IP.</string>
+    <string name="connection_description">Choisissez comment Aster Mail se connecte à nos serveurs.</string>
+    <string name="connection_direct">Directe</string>
+    <string name="connection_direct_description">Se connecter directement aux serveurs Aster pour une expérience plus rapide.</string>
+    <string name="connection_method_header">Méthode de connexion</string>
+    <string name="connection_saving">Enregistrement...</string>
+    <string name="crypto_term_24_months">24 mois</string>
+    <string name="failed_save_connection_preference">Impossible d\'enregistrer la préférence de connexion</string>
+    <string name="mail_rules_aliases_loading">Chargement de vos alias…</string>
+    <string name="mail_rules_no_alias_matches">Aucun alias ne correspond à votre recherche.</string>
+    <string name="mail_rules_no_aliases">Vous n\'avez pas encore d\'alias.</string>
+    <string name="mail_rules_other_address">Autre adresse</string>
+    <string name="mail_rules_search_aliases">Rechercher dans vos alias</string>
+    <string name="mail_rules_switched_to_any">Cette règle correspond désormais à l\'une des adresses choisies.</string>
+    <string name="reply_to_label">Répondre à</string>
+    <string name="security_details_title">Détails de sécurité</string>
+    <string name="theme_sync_across_devices">Synchroniser le thème entre les appareils</string>
+    <string name="theme_sync_across_devices_subtitle">Désactivez cette option pour garder un thème distinct sur cet appareil.</string>
+    <string name="view_encryption_details">Afficher les détails du chiffrement</string>
+    <plurals name="mail_rules_aliases_selected">
+        <item quantity="one">%1$d alias sélectionné</item>
+        <item quantity="other">%1$d alias sélectionnés</item>
+    </plurals>
+    <plurals name="mail_rules_aliases_skipped">
+        <item quantity="one">%1$d adresse figurait déjà dans cette règle, elle n\'a donc pas été ajoutée de nouveau.</item>
+        <item quantity="other">%1$d adresses figuraient déjà dans cette règle, elles n\'ont donc pas été ajoutées de nouveau.</item>
+    </plurals>
 </resources>

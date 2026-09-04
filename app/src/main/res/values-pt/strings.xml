@@ -2708,4 +2708,33 @@
     <string name="couldnt_remove_label">Não foi possível remover a etiqueta</string>
     <string name="unsnoozed_count">Adiamento cancelado em %d conversa(s)</string>
     <string name="couldnt_unsnooze">Não foi possível cancelar o adiamento</string>
+    <string name="applied_to_loaded_only">Aplicado a %1$d de %2$d - esta ação abrange apenas as mensagens carregadas</string>
+    <string name="connection_cdn_relay">Retransmissão CDN</string>
+    <string name="connection_cdn_relay_description">Encaminhe o tráfego por um retransmissor de distribuição de conteúdos para ocultar o seu endereço IP.</string>
+    <string name="connection_description">Escolha como o Aster Mail se conecta aos nossos servidores.</string>
+    <string name="connection_direct">Direto</string>
+    <string name="connection_direct_description">Ligue-se diretamente aos servidores Aster para ter a experiência mais rápida.</string>
+    <string name="connection_method_header">Método de conexão</string>
+    <string name="connection_saving">Salvando...</string>
+    <string name="crypto_term_24_months">24 meses</string>
+    <string name="failed_save_connection_preference">Não foi possível salvar a preferência de conexão</string>
+    <string name="mail_rules_aliases_loading">Carregando seus aliases…</string>
+    <string name="mail_rules_no_alias_matches">Nenhum alias corresponde à sua pesquisa.</string>
+    <string name="mail_rules_no_aliases">Você ainda não tem aliases.</string>
+    <string name="mail_rules_other_address">Outro endereço</string>
+    <string name="mail_rules_search_aliases">Pesquisar seus aliases</string>
+    <string name="mail_rules_switched_to_any">Esta regra agora corresponde a qualquer um dos endereços escolhidos.</string>
+    <string name="reply_to_label">Responder a</string>
+    <string name="security_details_title">Detalhes de segurança</string>
+    <string name="theme_sync_across_devices">Sincronizar tema entre dispositivos</string>
+    <string name="theme_sync_across_devices_subtitle">Desative para manter um tema separado neste dispositivo.</string>
+    <string name="view_encryption_details">Ver detalhes da criptografia</string>
+    <plurals name="mail_rules_aliases_selected">
+        <item quantity="one">%1$d alias selecionado</item>
+        <item quantity="other">%1$d aliases selecionados</item>
+    </plurals>
+    <plurals name="mail_rules_aliases_skipped">
+        <item quantity="one">%1$d endereço já estava nesta regra, por isso não foi adicionado novamente.</item>
+        <item quantity="other">%1$d endereços já estavam nesta regra, por isso não foram adicionados novamente.</item>
+    </plurals>
 </resources>
