@@ -21,27 +21,30 @@
 
 package org.astermail.android.util
 
-fun ascii_digits(value: String): String = buildString {
-    for (ch in value) {
-        val digit = Character.digit(ch, 10)
+import org.junit.Assert.assertEquals
+import org.junit.Test
 
-        if (digit >= 0) {
-            append('0' + digit)
-        }
+class LatestCodeInputTest {
+    @Test
+    fun keeps_short_input_unchanged() {
+        assertEquals("123456", latest_code_input(ascii_digits("123456"), 6))
+    }
+
+    @Test
+    fun keeps_pasted_code_when_field_already_full() {
+        assertEquals("654321", latest_code_input(ascii_digits("123456" + "654321"), 6))
+    }
+
+    @Test
+    fun keeps_pasted_code_after_partial_typing() {
+        assertEquals("654321", latest_code_input(ascii_digits("12" + "654321"), 6))
+    }
+
+    @Test
+    fun keeps_backup_code_when_field_already_full() {
+        assertEquals(
+            "MNOP-QRST-UVWX",
+            latest_code_input("ABCD-EFGH-IJKL" + "MNOP-QRST-UVWX", 14),
+        )
     }
 }
-
-fun normalize_digits(value: String): String = buildString {
-    for (ch in value) {
-        val digit = Character.digit(ch, 10)
-
-        if (digit >= 0) {
-            append('0' + digit)
-        } else {
-            append(ch)
-        }
-    }
-}
-
-fun latest_code_input(value: String, max_length: Int): String =
-    if (value.length <= max_length) value else value.takeLast(max_length)

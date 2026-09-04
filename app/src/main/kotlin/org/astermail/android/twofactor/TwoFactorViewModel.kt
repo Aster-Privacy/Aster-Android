@@ -39,6 +39,7 @@ import org.astermail.android.api.totp.TotpDisableRequest
 import org.astermail.android.api.totp.TotpRegenerateBackupCodesRequest
 import org.astermail.android.api.totp.TotpSetupVerifyRequest
 import org.astermail.android.auth.AuthRepository
+import org.astermail.android.util.latest_code_input
 import org.astermail.android.util.normalize_digits
 
 enum class TwoFactorMode {
@@ -257,7 +258,10 @@ class TwoFactorViewModel @Inject constructor(
     }
 
     fun update_code(value: String) {
-        val cleaned = normalize_digits(value).uppercase(java.util.Locale.ROOT).filter { it.isLetterOrDigit() || it == '-' }.take(14)
+        val cleaned = latest_code_input(
+            normalize_digits(value).uppercase(java.util.Locale.ROOT).filter { it.isLetterOrDigit() || it == '-' },
+            14,
+        )
         _state.value = _state.value.copy(code_input = cleaned, error = null)
     }
 

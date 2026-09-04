@@ -81,6 +81,7 @@ import org.astermail.android.settings.SaveStatus
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.util.ascii_digits
+import org.astermail.android.util.latest_code_input
 
 @Composable
 fun RecoveryEmailScreen(on_back: () -> Unit) {
@@ -355,7 +356,7 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
                         AsterTextField(
                             value = step_up_code,
                             onValueChange = { input ->
-                                step_up_code = ascii_digits(input).take(6)
+                                step_up_code = latest_code_input(ascii_digits(input), 6)
                             },
                             label = stringResource(R.string.authenticator_code),
                             placeholder = "000000",
@@ -384,6 +385,7 @@ private fun recovery_status_badge(text: String, tint: Color) {
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

@@ -90,6 +90,7 @@ import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.AsterTopBar
 import org.astermail.android.util.ascii_digits
+import org.astermail.android.util.latest_code_input
 
 @Composable
 fun SignInScreen(
@@ -467,9 +468,9 @@ private fun TotpVerifyScreen(
                     value = code,
                     onValueChange = { v ->
                         code = if (use_backup) {
-                            v.filter { it.isLetterOrDigit() || it == '-' }.take(20)
+                            latest_code_input(v.filter { it.isLetterOrDigit() || it == '-' }, 20)
                         } else {
-                            ascii_digits(v).take(6)
+                            latest_code_input(ascii_digits(v), 6)
                         }
                         if (state is AuthUiState.Error) view_model.reset_state()
                     },
