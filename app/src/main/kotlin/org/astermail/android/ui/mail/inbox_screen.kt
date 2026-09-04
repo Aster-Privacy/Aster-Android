@@ -2412,6 +2412,7 @@ private fun all_mail_scope_chip(
             fontSize = 13.sp,
             fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium,
             maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }
@@ -3684,6 +3685,7 @@ private fun compose_fab(expanded: Boolean, on_click: () -> Unit) {
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 15.sp,
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 softWrap = false,
                 modifier = Modifier.graphicsLayer {
                     alpha = (progress.value * 1.6f - 0.6f).coerceIn(0f, 1f)

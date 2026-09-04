@@ -116,6 +116,7 @@ private fun summary_row(
             fontSize = if (emphasized) 20.sp else 12.sp,
             fontWeight = if (emphasized) FontWeight.Bold else FontWeight.Medium,
             maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

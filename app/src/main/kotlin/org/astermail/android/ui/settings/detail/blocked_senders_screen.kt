@@ -155,6 +155,7 @@ internal fun filters_list_header(label: String, count: Int) {
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }
@@ -221,6 +222,7 @@ internal fun filters_entry_row(
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             softWrap = false,
             modifier = if (action_test_tag != null) {
                 action_modifier.testTag(action_test_tag)

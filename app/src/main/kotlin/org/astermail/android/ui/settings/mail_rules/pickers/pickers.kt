@@ -795,7 +795,7 @@ fun folder_picker(
             )
         } else {
             LazyColumn(modifier = Modifier.heightIn(max = 480.dp)) {
-                items(folders) { f ->
+                items(folders, key = { it.id }) { f ->
                     row_select(
                         label = f.label,
                         selected = f.id == selected_token,

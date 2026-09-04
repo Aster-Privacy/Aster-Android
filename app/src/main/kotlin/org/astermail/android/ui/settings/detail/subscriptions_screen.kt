@@ -637,6 +637,7 @@ fun SubscriptionsScreen(
                                 fontSize = 17.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                             )
                         }
                     }
@@ -907,6 +908,7 @@ fun SubscriptionsScreen(
                                 color = colors.text_tertiary,
                                 fontSize = 13.sp,
                                 maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                             )
                         }
                         Spacer(Modifier.height(AsterSpacing.sm))
@@ -979,6 +981,7 @@ fun SubscriptionsScreen(
                         color = colors.text_tertiary,
                         fontSize = 13.sp,
                         maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
                 Spacer(Modifier.height(AsterSpacing.md))
@@ -1010,6 +1013,7 @@ fun SubscriptionsScreen(
                         color = colors.text_tertiary,
                         fontSize = 13.sp,
                         maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
                 Spacer(Modifier.height(AsterSpacing.sm))
@@ -1686,6 +1690,7 @@ private fun crypto_coin_dialog(
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Medium,
                                 maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                             )
                         }
                     }

@@ -251,6 +251,7 @@ private fun template_row(
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
                         .background(colors.bg_tertiary, RoundedCornerShape(999.dp))
                         .padding(horizontal = 8.dp, vertical = 2.dp),

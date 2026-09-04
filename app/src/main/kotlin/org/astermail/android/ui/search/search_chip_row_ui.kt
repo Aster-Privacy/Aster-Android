@@ -461,6 +461,7 @@ internal fun search_chip_row(
                 fontWeight = FontWeight.Medium,
                 color = colors.accent_blue,
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }

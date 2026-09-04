@@ -825,6 +825,7 @@ private fun alias_filter_chip(
         fontSize = 12.sp,
         fontWeight = FontWeight.Medium,
         maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
         modifier = Modifier
             .clip(CircleShape)
             .background(if (active) colors.accent_blue.copy(alpha = 0.14f) else colors.bg_secondary)
@@ -1247,6 +1248,7 @@ private fun custom_domain_address_row(
                 color = if (addr.is_enabled) colors.text_tertiary else colors.danger,
                 fontSize = 11.sp,
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
         AsterSwitch(

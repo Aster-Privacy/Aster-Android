@@ -92,6 +92,7 @@ private fun toast_action(
         fontSize = 13.sp,
         fontWeight = FontWeight.SemiBold,
         maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
         modifier = Modifier
             .clip(shape)
             .background(colors.accent_blue.copy(alpha = 0.12f))

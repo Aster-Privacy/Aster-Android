@@ -2108,6 +2108,7 @@ internal fun expanded_message(
                     color = colors.text_muted,
                     fontSize = 12.sp,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (show_header_reply) {
@@ -2839,6 +2840,7 @@ internal fun compact_banner_action(
         fontSize = 13.sp,
         fontWeight = if (primary) FontWeight.SemiBold else FontWeight.Medium,
         maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
         modifier = Modifier
             .clip(SquircleShape(6.dp))
             .clickable(onClick = onClick)
@@ -2955,6 +2957,7 @@ private fun blocked_content_details_dialog(
                             fontSize = 10.sp,
                             fontWeight = FontWeight.SemiBold,
                             maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                             modifier = Modifier
                                 .clip(SquircleShape(4.dp))
                                 .background(colors.bg_tertiary)
@@ -3704,6 +3707,7 @@ private fun collapsed_message(
                         color = colors.text_muted,
                         fontSize = 12.sp,
                         maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
                 Text(
@@ -4067,6 +4071,7 @@ private fun snooze_row(
             color = detail_tint,
             fontSize = 13.sp,
             maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

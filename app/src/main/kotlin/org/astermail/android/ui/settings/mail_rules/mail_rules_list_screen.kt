@@ -337,6 +337,7 @@ private fun summary_label(text: String) {
         fontSize = 11.sp,
         fontWeight = FontWeight.SemiBold,
         maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
     )
 }
 

@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.settings.detail
 
+import androidx.compose.ui.text.style.TextOverflow
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
@@ -448,6 +449,7 @@ internal fun verified_badge(
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

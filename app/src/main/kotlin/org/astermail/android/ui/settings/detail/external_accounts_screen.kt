@@ -1084,6 +1084,7 @@ private fun account_badge(label: String, tone: androidx.compose.ui.graphics.Colo
         fontSize = 10.sp,
         fontWeight = FontWeight.SemiBold,
         maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
         modifier = Modifier
             .clip(shape)
             .background(tone.copy(alpha = 0.12f))
