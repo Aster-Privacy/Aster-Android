@@ -3155,4 +3155,6 @@
     <string name="alias_unpin">Desafixar alias</string>
     <string name="alias_pinned_toast">Alias fixado</string>
     <string name="alias_unpinned_toast">Alias desafixado</string>
+    <string name="e2e_identity_changed_blocked">Não foi possível enviar: a chave de criptografia de um destinatário mudou. Confirme a alteração na sua caixa de entrada e envie novamente. A mensagem não foi enviada.</string>
+    <string name="link_device_error_binding_mismatch">O outro dispositivo enviou chaves que não correspondem a este código. Obtenha um novo código nesse dispositivo e tente novamente.</string>
 </resources>

@@ -3235,4 +3235,6 @@
     <string name="alias_unpin">إلغاء تثبيت الاسم المستعار</string>
     <string name="alias_pinned_toast">تم تثبيت الاسم المستعار</string>
     <string name="alias_unpinned_toast">تم إلغاء تثبيت الاسم المستعار</string>
+    <string name="e2e_identity_changed_blocked">تعذّر الإرسال: تغيّر مفتاح التشفير لأحد المستلمين. أكّد التغيير في بريدك الوارد، ثم أعد الإرسال. لم تُرسل الرسالة.</string>
+    <string name="link_device_error_binding_mismatch">أرسل الجهاز الآخر مفاتيح لا تطابق هذا الرمز. احصل على رمز جديد على ذلك الجهاز، ثم حاول مرة أخرى.</string>
 </resources>

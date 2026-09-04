@@ -3045,4 +3045,6 @@
     <string name="alias_unpin">एलियास से पिन हटाएं</string>
     <string name="alias_pinned_toast">एलियास पिन हो गया</string>
     <string name="alias_unpinned_toast">एलियास से पिन हट गया</string>
+    <string name="e2e_identity_changed_blocked">भेजा नहीं जा सका: किसी प्राप्तकर्ता की एन्क्रिप्शन कुंजी बदल गई है। अपने इनबॉक्स में बदलाव की पुष्टि करें, फिर दोबारा भेजें। संदेश नहीं भेजा गया।</string>
+    <string name="link_device_error_binding_mismatch">दूसरे डिवाइस ने ऐसी कुंजियाँ भेजी हैं जो इस कोड से मेल नहीं खातीं। उस डिवाइस पर नया कोड लें, फिर दोबारा कोशिश करें।</string>
 </resources>

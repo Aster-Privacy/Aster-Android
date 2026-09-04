@@ -3613,6 +3613,8 @@ class MailRepository @Inject constructor(
                     )
                 } catch (t: org.astermail.android.mail.ratchet.PostQuantumUnavailableException) {
                     throw t
+                } catch (t: org.astermail.android.mail.ratchet.RatchetIdentityPinException) {
+                    throw IllegalStateException(context.getString(R.string.e2e_identity_changed_blocked), t)
                 } catch (t: Throwable) {
                     if (t is CancellationException) throw t
                     throw IllegalStateException(context.getString(R.string.e2e_encryption_failed), t)

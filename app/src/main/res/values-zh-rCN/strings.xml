@@ -3137,4 +3137,6 @@
     <string name="alias_unpin">取消置顶别名</string>
     <string name="alias_pinned_toast">别名已置顶</string>
     <string name="alias_unpinned_toast">别名已取消置顶</string>
+    <string name="e2e_identity_changed_blocked">无法发送：某位收件人的加密密钥已更改。请在收件箱中确认此更改，然后重新发送。邮件尚未发送。</string>
+    <string name="link_device_error_binding_mismatch">另一台设备发送的密钥与此代码不匹配。请在该设备上获取新代码，然后重试。</string>
 </resources>

@@ -3156,4 +3156,6 @@
     <string name="alias_unpin">Desfijar alias</string>
     <string name="alias_pinned_toast">Alias fijado</string>
     <string name="alias_unpinned_toast">Alias desfijado</string>
+    <string name="e2e_identity_changed_blocked">No se pudo enviar: la clave de cifrado de un destinatario cambió. Confirma el cambio en tu bandeja de entrada y vuelve a enviar el mensaje. El mensaje no se envió.</string>
+    <string name="link_device_error_binding_mismatch">El otro dispositivo envió claves que no coinciden con este código. Obtén un código nuevo en ese dispositivo y vuelve a intentarlo.</string>
 </resources>

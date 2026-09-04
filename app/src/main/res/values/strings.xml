@@ -3204,4 +3204,6 @@
     <string name="alias_unpin">Unpin alias</string>
     <string name="alias_pinned_toast">Alias pinned</string>
     <string name="alias_unpinned_toast">Alias unpinned</string>
+    <string name="e2e_identity_changed_blocked">Could not send: the encryption key for a recipient changed. Confirm the change in your inbox, then send again. The message was not sent.</string>
+    <string name="link_device_error_binding_mismatch">The other device sent keys that do not match this code. Get a new code on that device, then try again.</string>
 </resources>

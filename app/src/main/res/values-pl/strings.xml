@@ -3195,4 +3195,6 @@
     <string name="alias_unpin">Odepnij alias</string>
     <string name="alias_pinned_toast">Alias przypięty</string>
     <string name="alias_unpinned_toast">Alias odpięty</string>
+    <string name="e2e_identity_changed_blocked">Nie można wysłać: klucz szyfrowania odbiorcy uległ zmianie. Potwierdź zmianę w skrzynce odbiorczej, a następnie wyślij ponownie. Wiadomość nie została wysłana.</string>
+    <string name="link_device_error_binding_mismatch">Drugie urządzenie przesłało klucze, które nie pasują do tego kodu. Uzyskaj nowy kod na tym urządzeniu, a następnie spróbuj ponownie.</string>
 </resources>

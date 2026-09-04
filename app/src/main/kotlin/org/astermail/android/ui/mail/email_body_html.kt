@@ -23,6 +23,26 @@ package org.astermail.android.ui.mail
 
 import org.astermail.android.mail.body_starts_with
 
+private val WIDE_WIDTH_ATTRIBUTE_VALUE = Regex("""[4-9]\d{2,3}""")
+
+internal fun fit_wide_width_attributes(body: String): String {
+    if (!body.contains("width", ignoreCase = true)) return body
+    return try {
+        val doc = org.jsoup.Jsoup.parseBodyFragment(body)
+        doc.outputSettings(org.jsoup.nodes.Document.OutputSettings().prettyPrint(false))
+        var changed = false
+        for (element in doc.select("[width]")) {
+            if (WIDE_WIDTH_ATTRIBUTE_VALUE.matches(element.attr("width").trim())) {
+                element.attr("width", "100%")
+                changed = true
+            }
+        }
+        if (changed) doc.body().html() else body
+    } catch (_: Throwable) {
+        body
+    }
+}
+
 internal fun build_email_html(
     body: String,
     is_dark: Boolean,
@@ -49,7 +69,7 @@ internal fun build_email_html(
         body
             .replace(Regex("""(?<!\(\s{0,8})\bmin-width\s*:\s*([1-9]\d{2,3})px""", RegexOption.IGNORE_CASE), "min-width:$1px;min-width:min($1px,100%)")
             .replace(Regex("""(?<!\(\s{0,8})(?<![a-z-])width\s*:\s*[4-9]\d{2,3}px""", RegexOption.IGNORE_CASE), "width:100%")
-            .replace(Regex("""\bwidth\s*=\s*["']?[4-9]\d{2,3}["']?""", RegexOption.IGNORE_CASE), "width=\"100%\"")
+            .let { fit_wide_width_attributes(it) }
     } else {
         body
     }

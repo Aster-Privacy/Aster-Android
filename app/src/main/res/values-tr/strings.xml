@@ -3155,4 +3155,6 @@
     <string name="alias_unpin">Rumuz sabitlemesini kaldır</string>
     <string name="alias_pinned_toast">Rumuz sabitlendi</string>
     <string name="alias_unpinned_toast">Rumuz sabitlemesi kaldırıldı</string>
+    <string name="e2e_identity_changed_blocked">Gönderilemedi: bir alıcının şifreleme anahtarı değişti. Değişikliği gelen kutunuzda onaylayın, ardından yeniden gönderin. Mesaj gönderilmedi.</string>
+    <string name="link_device_error_binding_mismatch">Diğer cihaz bu kodla eşleşmeyen anahtarlar gönderdi. O cihazda yeni bir kod alın, ardından yeniden deneyin.</string>
 </resources>

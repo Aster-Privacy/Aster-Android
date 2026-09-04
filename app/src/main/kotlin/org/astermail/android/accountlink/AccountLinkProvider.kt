@@ -45,6 +45,7 @@ import org.astermail.android.api.devices.DeviceCodeApiImpl
 import org.astermail.android.api.devices.DeviceLinkError
 import org.astermail.android.api.devices.PendingDevice
 import org.astermail.android.crypto.DeviceEnvelope
+import org.astermail.android.crypto.DeviceLinkBinding
 import org.astermail.android.crypto.zeroize
 import org.astermail.android.storage.AccountStore
 import org.astermail.android.storage.SessionKeyStore
@@ -74,6 +75,7 @@ class AccountLinkProvider : ContentProvider() {
                 entry,
                 code = extras?.getString(EXTRA_CODE).orEmpty(),
                 account_id = extras?.getString(EXTRA_ACCOUNT_ID).orEmpty(),
+                binding_tag = extras?.getString(EXTRA_BINDING_TAG).orEmpty(),
             )
             else -> error_bundle(ERROR_UNKNOWN_METHOD)
         }
@@ -100,25 +102,31 @@ class AccountLinkProvider : ContentProvider() {
         return Bundle().apply { putParcelableArrayList(KEY_ACCOUNTS, ArrayList(rows)) }
     }
 
-    private fun link_account(entry: AccountLinkEntryPoint, code: String, account_id: String): Bundle {
+    private fun link_account(
+        entry: AccountLinkEntryPoint,
+        code: String,
+        account_id: String,
+        binding_tag: String,
+    ): Bundle {
         if (code.isBlank() || account_id.isBlank()) return error_bundle(ERROR_BAD_REQUEST)
         if (!entry.account_store().account_exists(account_id)) return error_bundle(ERROR_NO_ACCOUNT)
         val is_current = entry.account_store().get_current_id() == account_id
         return try {
             if (is_current) {
                 val passphrase = entry.session_key_store().get_passphrase() ?: return error_bundle(ERROR_LOCKED)
-                confirm(entry.device_code_api(), code, passphrase)
+                confirm(entry.device_code_api(), code, passphrase, binding_tag)
             } else {
                 val snapshot = entry.session_snapshot_store().load(account_id) ?: return error_bundle(ERROR_NO_ACCOUNT)
                 val passphrase = snapshot.passphrase ?: return error_bundle(ERROR_LOCKED)
                 with_snapshot_client(entry.session_snapshot_store(), account_id, snapshot) { client ->
-                    confirm(DeviceCodeApiImpl(client), code, passphrase)
+                    confirm(DeviceCodeApiImpl(client), code, passphrase, binding_tag)
                 }
             }
             Bundle().apply { putBoolean(KEY_OK, true) }
         } catch (t: Throwable) {
             error_bundle(
                 when (t) {
+                    is DeviceLinkBinding.BindingMismatchException -> ERROR_BINDING
                     is DeviceLinkError.CodeNotFound -> ERROR_CODE_NOT_FOUND
                     is DeviceLinkError.PlanUpgradeRequired -> ERROR_PLAN
                     is ApiError.UnauthorizedError, is ApiError.ForbiddenError -> ERROR_SESSION
@@ -128,16 +136,34 @@ class AccountLinkProvider : ContentProvider() {
         }
     }
 
-    private fun confirm(api: DeviceCodeApi, code: String, passphrase: ByteArray) {
+    private fun confirm(
+        api: DeviceCodeApi,
+        code: String,
+        passphrase: ByteArray,
+        binding_tag: String,
+    ) {
         try {
             runBlocking {
                 val pending = api.verify_code(code)
+                verify_binding(pending, code, binding_tag)
                 val envelope = seal_for(pending, passphrase)
                 api.confirm_code(code, envelope)
             }
         } finally {
             zeroize(passphrase)
         }
+    }
+
+    private fun verify_binding(pending: PendingDevice, code: String, binding_tag: String) {
+        val offered = binding_tag.ifBlank { pending.binding_tag }
+        if (offered.isBlank()) return
+        DeviceLinkBinding.require_match(
+            code = code,
+            ed25519_pk = pending.ed25519_pk,
+            mlkem_pk = pending.mlkem_pk,
+            x25519_pk = pending.x25519_pk,
+            offered_tag = offered,
+        )
     }
 
     private fun seal_for(pending: PendingDevice, passphrase: ByteArray): String {
@@ -241,6 +267,7 @@ class AccountLinkProvider : ContentProvider() {
         const val METHOD_LINK = "link"
         const val EXTRA_CODE = "code"
         const val EXTRA_ACCOUNT_ID = "account_id"
+        const val EXTRA_BINDING_TAG = "binding_tag"
         const val KEY_ACCOUNTS = "accounts"
         const val KEY_ID = "id"
         const val KEY_EMAIL = "email"
@@ -255,6 +282,7 @@ class AccountLinkProvider : ContentProvider() {
         const val ERROR_NO_ACCOUNT = "no_account"
         const val ERROR_LOCKED = "locked"
         const val ERROR_CODE_NOT_FOUND = "code_not_found"
+        const val ERROR_BINDING = "binding_mismatch"
         const val ERROR_PLAN = "plan"
         const val ERROR_SESSION = "session"
         const val ERROR_UNAVAILABLE = "unavailable"

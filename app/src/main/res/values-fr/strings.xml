@@ -3182,4 +3182,6 @@
     <string name="alias_unpin">Désépingler l’alias</string>
     <string name="alias_pinned_toast">Alias épinglé</string>
     <string name="alias_unpinned_toast">Alias désépinglé</string>
+    <string name="e2e_identity_changed_blocked">Envoi impossible : la clé de chiffrement d’un destinataire a changé. Confirmez le changement dans votre boîte de réception, puis envoyez à nouveau. Le message n’a pas été envoyé.</string>
+    <string name="link_device_error_binding_mismatch">L’autre appareil a envoyé des clés qui ne correspondent pas à ce code. Obtenez un nouveau code sur cet appareil, puis réessayez.</string>
 </resources>

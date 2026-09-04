@@ -39,6 +39,7 @@ import org.astermail.android.api.devices.PendingDevice
 import org.astermail.android.api.devices.format_device_code
 import org.astermail.android.api.devices.normalize_device_code
 import org.astermail.android.crypto.DeviceEnvelope
+import org.astermail.android.crypto.DeviceLinkBinding
 import org.astermail.android.crypto.zeroize
 import org.astermail.android.storage.SessionKeyStore
 
@@ -46,6 +47,7 @@ enum class LinkDeviceStep { INPUT, CONFIRM, SUCCESS }
 
 enum class LinkDeviceError {
     INVALID_CODE,
+    BINDING_MISMATCH,
     EXPIRED_CODE,
     ALREADY_LINKED,
     UPGRADE_REQUIRED,
@@ -121,7 +123,7 @@ class LinkDeviceViewModel @Inject constructor(
         _state.value = current.copy(is_confirming = true, error = null)
         viewModelScope.launch {
             runCatching {
-                val envelope = withContext(Dispatchers.Default) { seal_for(device) }
+                val envelope = withContext(Dispatchers.Default) { seal_for(device, current.code_input) }
                 withContext(Dispatchers.IO) {
                     device_code_api.confirm_code(current.code_input, envelope)
                 }
@@ -162,7 +164,8 @@ class LinkDeviceViewModel @Inject constructor(
         _state.value = _state.value.copy(error = null)
     }
 
-    private fun seal_for(device: PendingDevice): String {
+    private fun seal_for(device: PendingDevice, code: String): String {
+        verify_binding(device, code)
         val passphrase = session_key_store.get_passphrase() ?: throw SessionExpiredException()
 
         try {
@@ -186,8 +189,20 @@ class LinkDeviceViewModel @Inject constructor(
         }
     }
 
+    private fun verify_binding(device: PendingDevice, code: String) {
+        if (device.binding_tag.isBlank()) return
+        DeviceLinkBinding.require_match(
+            code = code,
+            ed25519_pk = device.ed25519_pk,
+            mlkem_pk = device.mlkem_pk,
+            x25519_pk = device.x25519_pk,
+            offered_tag = device.binding_tag,
+        )
+    }
+
     private fun classify(throwable: Throwable): LinkDeviceError = when (throwable) {
         is SessionExpiredException -> LinkDeviceError.SESSION_EXPIRED
+        is DeviceLinkBinding.BindingMismatchException -> LinkDeviceError.BINDING_MISMATCH
         is DeviceLinkError.CodeNotFound -> LinkDeviceError.EXPIRED_CODE
         is DeviceLinkError.AlreadyLinked -> LinkDeviceError.ALREADY_LINKED
         is DeviceLinkError.PlanUpgradeRequired -> LinkDeviceError.UPGRADE_REQUIRED

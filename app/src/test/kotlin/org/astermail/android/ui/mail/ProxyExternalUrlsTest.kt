@@ -40,14 +40,14 @@ class ProxyExternalUrlsTest {
 
     @Test
     fun proxies_td_background_attribute() {
-        val out = proxy_external_urls("""<td background="https://cdn.example/btn.png" bgcolor="#000000">x</td>""", base)
+        val out = proxy_external_urls("""<table><tr><td background="https://cdn.example/btn.png" bgcolor="#000000">x</td></tr></table>""", base)
         assertTrue(out.contains("background=\"${proxied("https://cdn.example/btn.png")}\""))
         assertTrue(out.contains("bgcolor=\"#000000\""))
     }
 
     @Test
     fun proxies_protocol_relative_background_attribute() {
-        val out = proxy_external_urls("""<td background="//cdn.example/btn.png">x</td>""", base)
+        val out = proxy_external_urls("""<table><tr><td background="//cdn.example/btn.png">x</td></tr></table>""", base)
         assertTrue(out.contains("background=\"${proxied("https://cdn.example/btn.png")}\""))
     }
 
@@ -71,13 +71,13 @@ class ProxyExternalUrlsTest {
 
     @Test
     fun decodes_amp_entities_in_url() {
-        val out = proxy_external_urls("""<td background="https://cdn.example/b.png?a=1&amp;b=2">x</td>""", base)
+        val out = proxy_external_urls("""<table><tr><td background="https://cdn.example/b.png?a=1&amp;b=2">x</td></tr></table>""", base)
         assertTrue(out.contains(proxied("https://cdn.example/b.png?a=1&b=2")))
     }
 
     @Test
     fun leaves_data_and_cid_untouched() {
-        val html = """<img src="data:image/png;base64,AAAA"><td background="cid:part1">x</td>"""
+        val html = """<img src="data:image/png;base64,AAAA"><table><tr><td background="cid:part1">x</td></tr></table>"""
         val out = proxy_external_urls(html, base)
         assertTrue(out.contains("data:image/png;base64,AAAA"))
         assertTrue(out.contains("background=\"cid:part1\""))
@@ -88,7 +88,7 @@ class ProxyExternalUrlsTest {
     fun proxies_unquoted_img_src() {
         val out = proxy_external_urls("""<img src=https://cdn.example/hero.png width=40>""", base)
         assertTrue(out.contains("src=\"${proxied("https://cdn.example/hero.png")}\""))
-        assertTrue(out.contains("width=40"))
+        assertTrue(out.contains("width=\"40\""))
     }
 
     @Test

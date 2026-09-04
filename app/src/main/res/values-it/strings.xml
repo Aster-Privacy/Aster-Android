@@ -3155,4 +3155,6 @@
     <string name="alias_unpin">Sblocca alias</string>
     <string name="alias_pinned_toast">Alias fissato</string>
     <string name="alias_unpinned_toast">Alias sbloccato</string>
+    <string name="e2e_identity_changed_blocked">Invio non riuscito: la chiave di crittografia di un destinatario è cambiata. Conferma la modifica nella tua casella di posta, poi invia di nuovo. Il messaggio non è stato inviato.</string>
+    <string name="link_device_error_binding_mismatch">L’altro dispositivo ha inviato chiavi che non corrispondono a questo codice. Richiedi un nuovo codice su quel dispositivo, poi riprova.</string>
 </resources>

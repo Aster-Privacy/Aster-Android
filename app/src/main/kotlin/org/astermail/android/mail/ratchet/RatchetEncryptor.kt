@@ -34,11 +34,16 @@ import org.astermail.android.crypto.ratchet.RatchetCrypto
 import org.astermail.android.crypto.ratchet.RecoveryLane
 import org.astermail.android.storage.SessionKeyStore
 
-class RatchetEncryptionException(
+open class RatchetEncryptionException(
     val recipient: String?,
     message: String,
     cause: Throwable? = null,
 ) : Exception(message, cause)
+
+class RatchetIdentityPinException(
+    recipient: String?,
+    message: String,
+) : RatchetEncryptionException(recipient, message)
 
 class PostQuantumUnavailableException(
     val recipients: List<String>,
@@ -181,6 +186,38 @@ class RatchetEncryptor @Inject constructor(
         }
     }
 
+    private suspend fun verify_identity_pin(
+        conversation_id: String,
+        recipient_email: String,
+        bundle: PrekeyBundleResponse,
+    ) {
+        if (bundle.kem_identity_key.isBlank()) {
+            throw RatchetIdentityPinException(
+                recipient_email,
+                "recipient prekey bundle carries no identity key",
+            )
+        }
+        when (identity_pins.evaluate(conversation_id, bundle.kem_identity_key)) {
+            IdentityPinOutcome.UNCHANGED -> Unit
+            IdentityPinOutcome.FIRST_CONTACT ->
+                identity_pins.pin_if_absent(conversation_id, bundle.kem_identity_key)
+            IdentityPinOutcome.CHANGED -> {
+                runCatching {
+                    identity_pins.flag_identity_change(
+                        conversation_id = conversation_id,
+                        peer_email = recipient_email,
+                        identity_key_b64 = bundle.kem_identity_key,
+                        observed_at = System.currentTimeMillis(),
+                    )
+                }
+                throw RatchetIdentityPinException(
+                    recipient_email,
+                    "recipient identity key does not match the pinned identity",
+                )
+            }
+        }
+    }
+
     private suspend fun fetch_verifying_key(username: String, recipient_email: String): String? {
         val cache_key = recipient_email.lowercase(java.util.Locale.ROOT)
         verifying_key_cache[cache_key]?.let { return it }
@@ -269,6 +306,7 @@ class RatchetEncryptor @Inject constructor(
             }
 
             verify_prekey_binding(username, recipient_email, resolved_bundle)
+            verify_identity_pin(conversation_id, recipient_email, resolved_bundle)
 
             bundle = resolved_bundle
 

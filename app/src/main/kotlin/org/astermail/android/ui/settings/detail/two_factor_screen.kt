@@ -269,11 +269,21 @@ private fun setup_panel(state: org.astermail.android.twofactor.TwoFactorUiState,
                     AsterGhostButton(
                         label = stringResource(R.string.open_in_app),
                         onClick = {
-                            try {
+                            val view_intent =
+                                Intent(Intent.ACTION_VIEW, Uri.parse(state.setup_otpauth_uri))
+                            val has_handler = runCatching {
+                                context.packageManager.queryIntentActivities(view_intent, 0).isNotEmpty()
+                            }.getOrDefault(false)
+                            val opened = has_handler && runCatching {
                                 context.startActivity(
-                                    Intent(Intent.ACTION_VIEW, Uri.parse(state.setup_otpauth_uri)),
+                                    Intent.createChooser(
+                                        view_intent,
+                                        context.getString(R.string.open_in_app),
+                                    ),
                                 )
-                            } catch (_: Throwable) {
+                                true
+                            }.getOrDefault(false)
+                            if (!opened) {
                                 copy_to_clipboard(context, "TOTP setup link", state.setup_otpauth_uri)
                             }
                         },
