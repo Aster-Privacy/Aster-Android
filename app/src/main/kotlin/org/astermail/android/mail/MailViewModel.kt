@@ -669,10 +669,9 @@ class MailViewModel @Inject constructor(
                 } else {
                     emptyList()
                 }
-                if (persisted.isNotEmpty() && _inbox_state.value.current_folder == folder) {
-                    val safe = persisted
-                    if (safe.size >= WARM_CACHE_MIN_ITEMS) {
-                        val items = safe.map { it.to_inbox_item() }
+                if (persisted.size >= WARM_CACHE_MIN_ITEMS && _inbox_state.value.current_folder == folder) {
+                    run {
+                        val items = persisted.map { it.to_inbox_item() }
                             .filter { folder_matches(folder, it) }
                         if (items.size >= WARM_CACHE_MIN_ITEMS) {
                             val warmed_at = System.currentTimeMillis()

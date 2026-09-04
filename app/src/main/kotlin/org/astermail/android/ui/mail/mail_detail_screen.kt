@@ -4778,6 +4778,7 @@ private fun translation_banner(
 }
 
 @Composable
+@Suppress("JavascriptInterface")
 internal fun email_html_view(
     html: String,
     modifier: Modifier = Modifier,
