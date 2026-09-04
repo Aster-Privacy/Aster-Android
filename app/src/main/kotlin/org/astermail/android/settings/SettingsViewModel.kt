@@ -4596,7 +4596,7 @@ class SettingsViewModel @Inject constructor(
         return key
     }
 
-    private fun mirror_notification_preferences(prefs: UserPreferences) {
+    private fun mirror_synced_preferences(prefs: UserPreferences) {
         val result = runCatching {
             org.astermail.android.notifications.MailPollingWorker
                 .set_muted_folder_tokens(context, prefs.muted_folder_tokens)
@@ -4616,11 +4616,14 @@ class SettingsViewModel @Inject constructor(
                 prefs.quiet_hours_start.takeIf { it.isNotBlank() } ?: "22:00",
                 prefs.quiet_hours_end.takeIf { it.isNotBlank() } ?: "07:00",
             )
+            org.astermail.android.settings.app_language.normalize_code(prefs.language)
+                ?.takeIf { it != org.astermail.android.settings.app_language.stored_code(context) }
+                ?.let { org.astermail.android.settings.app_language.store_code(context, it) }
         }
         val failure = result.exceptionOrNull() ?: return
         if (failure is kotlinx.coroutines.CancellationException) throw failure
         if (org.astermail.android.BuildConfig.DEBUG) {
-            android.util.Log.w("SettingsVM", "mirror_notification_preferences", failure)
+            android.util.Log.w("SettingsVM", "mirror_synced_preferences", failure)
         }
     }
 
@@ -4667,7 +4670,7 @@ class SettingsViewModel @Inject constructor(
                         last_synced_preferences = decrypted
                         persist_cached_preferences(decrypted)
                         apply_preferences_to_theme_store(decrypted)
-                        mirror_notification_preferences(decrypted)
+                        mirror_synced_preferences(decrypted)
                         _state.value = _state.value.copy(
                             preferences = decrypted,
                             preferences_authoritative = true,
@@ -4696,7 +4699,7 @@ class SettingsViewModel @Inject constructor(
                     last_synced_preferences = prefs
                     persist_cached_preferences(prefs)
                     apply_preferences_to_theme_store(prefs)
-                    mirror_notification_preferences(prefs)
+                    mirror_synced_preferences(prefs)
                     _state.value = _state.value.copy(
                         preferences = prefs,
                         preferences_authoritative = true,
@@ -5054,7 +5057,7 @@ class SettingsViewModel @Inject constructor(
                     last_preferences_raw_json = payload
                     last_synced_preferences = to_save
                     persist_cached_preferences(to_save)
-                    mirror_notification_preferences(to_save)
+                    mirror_synced_preferences(to_save)
                     _state.value = _state.value.copy(
                         preferences = to_save,
                         preferences_authoritative = true,
@@ -5064,7 +5067,7 @@ class SettingsViewModel @Inject constructor(
                     failed_preferences_save = prefs
                     if (baseline != null) {
                         persist_cached_preferences(baseline)
-                        mirror_notification_preferences(baseline)
+                        mirror_synced_preferences(baseline)
                     }
                     _state.value = _state.value.copy(
                         preferences = baseline ?: _state.value.preferences,
@@ -5084,7 +5087,7 @@ class SettingsViewModel @Inject constructor(
                     }
                     last_synced_preferences = prefs
                     persist_cached_preferences(prefs)
-                    mirror_notification_preferences(prefs)
+                    mirror_synced_preferences(prefs)
                     _state.value = _state.value.copy(
                         preferences_authoritative = true,
                         save_status = SaveStatus.SAVED,
@@ -5095,7 +5098,7 @@ class SettingsViewModel @Inject constructor(
                 failed_preferences_save = prefs
                 if (baseline != null) {
                     persist_cached_preferences(baseline)
-                    mirror_notification_preferences(baseline)
+                    mirror_synced_preferences(baseline)
                 }
                 val message = user_facing_error(t)
                 _state.value = _state.value.copy(
