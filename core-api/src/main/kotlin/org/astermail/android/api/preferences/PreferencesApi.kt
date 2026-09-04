@@ -91,7 +91,7 @@ data class UserPreferences(
     val signature_mode: String = "auto",
     val signature_in_replies: Boolean = true,
     val signature_in_forwards: Boolean = true,
-    val signature_placement: String = "below",
+    val signature_placement: String = "above",
     val show_signature_separator: Boolean = true,
     val undo_send_enabled: Boolean = true,
     val undo_send_seconds: Int = 10,
