@@ -3565,12 +3565,17 @@ class MailViewModel @Inject constructor(
                 load_stats()
                 refresh()
             } else {
+                val error = result.exceptionOrNull() ?: java.io.IOException()
                 emit_toast(
-                    org.astermail.android.localized_api_error(
-                        context,
-                        result.exceptionOrNull() ?: java.io.IOException(),
-                        context.getString(R.string.scheduled_action_failed),
-                    ),
+                    if (error is org.astermail.android.api.ApiError.Conflict) {
+                        context.getString(R.string.scheduled_already_sending)
+                    } else {
+                        org.astermail.android.localized_api_error(
+                            context,
+                            error,
+                            context.getString(R.string.scheduled_action_failed),
+                        )
+                    },
                 )
             }
         }
@@ -3917,19 +3922,6 @@ class MailViewModel @Inject constructor(
             scheduled_at = scheduled_at,
             sender_alias_hash = sender_alias_hash,
         )
-    }
-
-    private fun scheduled_action_error(error: Throwable): String =
-        if (error is org.astermail.android.api.ApiError.Conflict) {
-            context.getString(R.string.scheduled_already_sending)
-        } else {
-            friendly_load_error(error)
-        }
-
-    private fun drop_scheduled_locally(id: String) {
-        _inbox_state.update { state ->
-            state.copy(items = state.items.filterNot { it.id == id })
-        }
     }
 
     private fun thread_item_from_mail_item(
