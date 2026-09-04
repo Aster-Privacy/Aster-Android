@@ -431,6 +431,10 @@ object AsterTimePreferences {
     @Volatile
     private var account_time_format: String? = null
 
+    @Volatile
+    var account_date_format: String? = null
+        private set
+
     @Synchronized
     fun set_use_24h(value: Boolean) {
         device_use_24h = value
@@ -446,6 +450,17 @@ object AsterTimePreferences {
         if (normalized == account_time_format) return
         account_time_format = normalized
         apply_resolved_use_24h()
+    }
+
+    @Synchronized
+    fun set_account_date_format(value: String?) {
+        val normalized = when (value) {
+            "MM/DD/YYYY", "DD/MM/YYYY", "YYYY-MM-DD" -> value
+            else -> null
+        }
+        if (normalized == account_date_format) return
+        account_date_format = normalized
+        generation += 1
     }
 
     @Synchronized
@@ -507,11 +522,29 @@ private fun localized_format(
         return cached.format
     }
     val skeleton = if (AsterTimePreferences.use_24h) skeleton_24h else skeleton_12h
-    val pattern = android.text.format.DateFormat.getBestDateTimePattern(locale, skeleton)
+    val pattern = account_date_pattern(skeleton)
+        ?: android.text.format.DateFormat.getBestDateTimePattern(locale, skeleton)
     val format = SimpleDateFormat(pattern, locale)
     AsterTimePreferences.time_zone?.let { format.timeZone = it }
     holder.set(cached_date_format(generation, locale, format))
     return format
+}
+
+private fun account_date_pattern(skeleton: String): String? {
+    val preference = AsterTimePreferences.account_date_format ?: return null
+    val with_year = skeleton.startsWith("y")
+    val date_part = when (preference) {
+        "DD/MM/YYYY" -> if (with_year) "dd/MM/yyyy" else "dd/MM"
+        "YYYY-MM-DD" -> if (with_year) "yyyy-MM-dd" else "MM-dd"
+        else -> if (with_year) "MM/dd/yyyy" else "MM/dd"
+    }
+    if (!skeleton.contains("d")) return null
+    val time_part = when {
+        skeleton.endsWith("hm") -> " h:mm a"
+        skeleton.endsWith("Hm") -> " HH:mm"
+        else -> ""
+    }
+    return date_part + time_part
 }
 
 private fun time_of_day_format() = localized_format(time_of_day_holder, "hm", "Hm")
