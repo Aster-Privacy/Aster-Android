@@ -97,6 +97,9 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
     if (!MailPollingWorker.protected_folder_state_known(context)) {
         return PushResult.NeedsFetch
     }
+    if (MailPollingWorker.protected_folder_tokens(context).isNotEmpty()) {
+        return PushResult.NeedsFetch
+    }
     if (MailPollingWorker.muted_folder_tokens(context).isNotEmpty()) {
         return PushResult.NeedsFetch
     }

@@ -258,6 +258,7 @@ class MailPollingWorker(
         var sender: String? = null
         var fetched_any_page = false
         var forced_heal_armed = false
+        var protected_pending = false
         repeat(3) { attempt ->
             if (newest != null) return@repeat
             if (attempt > 0) kotlinx.coroutines.delay(1_500L)
@@ -268,6 +269,7 @@ class MailPollingWorker(
             } catch (_: Throwable) { null }
             if (page != null) fetched_any_page = true
             var candidate = page?.items?.let { pick_notifiable_candidate(context, it) }
+            if (page?.items?.let { has_protected_candidate(context, it) } == true) protected_pending = true
 
             if (candidate == null) {
                 val folders = try {
@@ -286,6 +288,9 @@ class MailPollingWorker(
                     } catch (_: Throwable) { null }
                     if (folder_page != null) fetched_any_page = true
                     candidate = folder_page?.items?.let { pick_notifiable_candidate(context, it) }
+                    if (folder_page?.items?.let { has_protected_candidate(context, it) } == true) {
+                        protected_pending = true
+                    }
                     if (candidate != null) break
                 }
             }
@@ -320,7 +325,7 @@ class MailPollingWorker(
         val fresh = newest
         val resolved_sender = sender
         if (fresh == null || resolved_sender.isNullOrBlank()) {
-            if (!fetched_any_page) {
+            if (!fetched_any_page || protected_pending) {
                 show_generic(context, arrived)
             }
             return true
@@ -620,17 +625,27 @@ class MailPollingWorker(
             return org.astermail.android.mail.category_for_tab(item.category) in muted
         }
 
+        fun item_folder_tokens(item: org.astermail.android.mail.InboxItem): List<String> =
+            (
+                item.labels +
+                    listOfNotNull(item.raw_item.folder_token) +
+                    (item.raw_item.folders?.mapNotNull { it.folder_token } ?: emptyList())
+                ).distinct()
+
         fun is_item_in_muted_folder(
             item: org.astermail.android.mail.InboxItem,
             muted: Set<String>,
         ): Boolean {
             if (muted.isEmpty()) return false
-            val tokens = (
-                item.labels +
-                    listOfNotNull(item.raw_item.folder_token) +
-                    (item.raw_item.folders?.mapNotNull { it.folder_token } ?: emptyList())
-                ).distinct()
-            return tokens.any { it in muted }
+            return item_folder_tokens(item).any { it in muted }
+        }
+
+        fun is_item_in_protected_folder(
+            item: org.astermail.android.mail.InboxItem,
+            protected_tokens: Set<String>,
+        ): Boolean {
+            if (protected_tokens.isEmpty()) return false
+            return item_folder_tokens(item).any { it in protected_tokens }
         }
 
         fun set_notify_new_email(context: Context, enabled: Boolean) {
@@ -961,17 +976,32 @@ class MailPollingWorker(
             return MESSAGE_ID_BASE + ((seed and 0x7fffffff) % 1_000_000)
         }
 
+        fun has_protected_candidate(
+            context: Context,
+            items: List<org.astermail.android.mail.InboxItem>,
+        ): Boolean {
+            val protected_tokens = protected_folder_tokens(context)
+            if (protected_tokens.isEmpty()) return false
+            return items.any {
+                !it.is_read &&
+                    !was_item_notified(context, it.id) &&
+                    is_item_in_protected_folder(it, protected_tokens)
+            }
+        }
+
         fun pick_notifiable_candidate(
             context: Context,
             items: List<org.astermail.android.mail.InboxItem>,
         ): org.astermail.android.mail.InboxItem? {
             val muted = muted_folder_tokens(context)
             val muted_categories = muted_notification_categories(context)
+            val protected_tokens = protected_folder_tokens(context)
             val sign_in_marker = NotificationDedupe.sign_in_marker(context)
             return items.firstOrNull {
                 !it.is_read &&
                     !was_item_notified(context, it.id) &&
                     !is_item_in_muted_folder(it, muted) &&
+                    !is_item_in_protected_folder(it, protected_tokens) &&
                     !is_item_in_muted_category(it, muted_categories) &&
                     !NotificationDedupe.is_probable_sign_in_alert_mail(sign_in_marker, it.sender_email) &&
                     is_item_notifiable_by_type(context, it)
