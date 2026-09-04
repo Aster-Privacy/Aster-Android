@@ -506,6 +506,7 @@
     <!-- Recently deleted aliases (alias trash) -->
     <string name="recently_deleted_aliases_title">Recently deleted</string>
     <string name="recently_deleted_aliases_description">Restore an alias you deleted. Deleted aliases are kept for a limited time.</string>
+    <string name="recently_deleted_aliases_empty">No deleted aliases.</string>
     <string name="alias_restore">Restore</string>
     <string name="alias_delete_permanently">Delete permanently</string>
     <string name="alias_deleted_at">Deleted %1$s</string>

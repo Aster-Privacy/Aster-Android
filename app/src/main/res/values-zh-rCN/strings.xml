@@ -1730,6 +1730,7 @@
     <string name="failed_empty_spam">无法清空垃圾邮件</string>
     <string name="recently_deleted_aliases_title">最近删除</string>
     <string name="recently_deleted_aliases_description">恢复你删除的别名。已删除的别名只保留一段时间。</string>
+    <string name="recently_deleted_aliases_empty">没有已删除的别名。</string>
     <string name="alias_restore">恢复</string>
     <string name="alias_delete_permanently">永久删除</string>
     <string name="alias_deleted_at">删除于 %1$s</string>

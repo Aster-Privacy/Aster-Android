@@ -1745,6 +1745,7 @@
     <string name="failed_empty_spam">تعذّر إفراغ المزعج</string>
     <string name="recently_deleted_aliases_title">المحذوف مؤخرًا</string>
     <string name="recently_deleted_aliases_description">استعد اسمًا مستعارًا حذفته. تُحفظ الأسماء المحذوفة لفترة محدودة.</string>
+    <string name="recently_deleted_aliases_empty">لا توجد أسماء مستعارة محذوفة.</string>
     <string name="alias_restore">استعادة</string>
     <string name="alias_delete_permanently">حذف نهائي</string>
     <string name="alias_deleted_at">حُذف %1$s</string>

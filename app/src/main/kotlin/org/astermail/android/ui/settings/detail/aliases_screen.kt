@@ -166,6 +166,7 @@ fun AliasesScreen(
     var show_alias_import by remember { mutableStateOf(false) }
     var show_alias_export by remember { mutableStateOf(false) }
     var alias_actions_open by remember { mutableStateOf(false) }
+    var show_deleted_aliases by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.action_result) {
         val msg = state.action_result ?: return@LaunchedEffect
@@ -194,6 +195,19 @@ fun AliasesScreen(
             2 -> vm.load_ghost_aliases()
             3 -> vm.load_alias_preferences()
         }
+    }
+
+    if (show_deleted_aliases) {
+        deleted_aliases_screen(
+            deleted = state.deleted_aliases,
+            restore_locked = alias_restore_locked,
+            on_restore = { vm.restore_deleted_alias(it) },
+            on_purge = { vm.purge_deleted_alias(it) },
+            on_empty = { vm.empty_deleted_aliases() },
+            on_upgrade = { on_open("billing") },
+            on_back = { show_deleted_aliases = false },
+        )
+        return
     }
 
     detail_scaffold(
@@ -229,6 +243,16 @@ fun AliasesScreen(
                             on_click = {
                                 alias_actions_open = false
                                 if (alias_export_locked) on_open("billing") else show_alias_export = true
+                            },
+                        )
+                        aster_dropdown_item(
+                            label = stringResource(R.string.recently_deleted_aliases_title),
+                            icon = TablerIcons.Trash,
+                            test_tag = "alias_overflow_deleted",
+                            on_click = {
+                                alias_actions_open = false
+                                vm.load_deleted_aliases()
+                                show_deleted_aliases = true
                             },
                         )
                     }
@@ -282,6 +306,10 @@ fun AliasesScreen(
                     restore_locked = alias_restore_locked,
                     export_locked = alias_export_locked,
                     pin_locked = alias_pin_locked,
+                    on_open_deleted = {
+                        vm.load_deleted_aliases()
+                        show_deleted_aliases = true
+                    },
                     instant_delete_locked = instant_alias_delete_locked,
                     premium_domains_allowed = premium_domains_allowed,
                     alias_limit = plan_state.limits?.limits?.get("max_email_aliases")?.limit,
@@ -408,6 +436,7 @@ private fun aliases_tab(
     premium_domains_allowed: Boolean = true,
     alias_limit: Int? = null,
     on_upgrade: () -> Unit = {},
+    on_open_deleted: () -> Unit = {},
 ) {
     var pending_delete by remember { mutableStateOf<Pair<String, String>?>(null) }
     var alias_too_new_date by remember { mutableStateOf<String?>(null) }
@@ -553,12 +582,36 @@ private fun aliases_tab(
                 }
             }
             val twin = state.twin_address
-            if (twin != null && (twin.state == "reserved" || twin.state == "available")) {
+            val twin_siblings = remember(twin) {
+                val all = if (twin == null) {
+                    emptyList()
+                } else if (twin.siblings.isNotEmpty()) {
+                    twin.siblings
+                } else {
+                    listOf(
+                        org.astermail.android.api.settings.TwinSibling(
+                            address = twin.address,
+                            domain = twin.domain,
+                            local_part = twin.local_part,
+                            state = twin.state,
+                        ),
+                    )
+                }
+                all.filter { it.state == "reserved" || it.state == "available" }
+            }
+            twin_siblings.forEach { sibling ->
                 v_gap(AsterSpacing.sm)
                 twin_address_card(
-                    address = twin.address,
-                    is_reserved = twin.state == "reserved",
-                    on_claim = { on_claim_twin(twin.local_part, twin.domain) },
+                    address = sibling.address,
+                    is_reserved = sibling.state == "reserved",
+                    on_claim = { on_claim_twin(sibling.local_part, sibling.domain) },
+                )
+            }
+            if (state.deleted_aliases.isNotEmpty()) {
+                v_gap(AsterSpacing.sm)
+                recently_deleted_entry_row(
+                    count = state.deleted_aliases.size,
+                    on_click = on_open_deleted,
                 )
             }
         }
@@ -673,14 +726,6 @@ private fun aliases_tab(
                 }
             }
 
-            item(key = "recently_deleted") {
-                recently_deleted_section(
-                    vm = vm,
-                    state = state,
-                    restore_locked = restore_locked,
-                    on_upgrade = on_upgrade,
-                )
-            }
         }
       }
 
@@ -1267,26 +1312,14 @@ private fun custom_domain_address_row(
 }
 
 @Composable
-private fun recently_deleted_section(
-    vm: SettingsViewModel,
-    state: org.astermail.android.settings.SettingsUiState,
-    restore_locked: Boolean,
-    on_upgrade: () -> Unit,
-) {
+internal fun recently_deleted_entry_row(count: Int, on_click: () -> Unit) {
     val colors = AsterMaterial.colors
-    val deleted = state.deleted_aliases
-    if (deleted.isEmpty()) return
-
-    var expanded by remember { mutableStateOf(false) }
-    var pending_purge by remember { mutableStateOf<DecryptedDeletedAlias?>(null) }
-    var confirm_empty by remember { mutableStateOf(false) }
-
-    v_gap(AsterSpacing.lg)
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(SquircleShape(10.dp))
-            .clickable { expanded = !expanded }
+            .clickable(onClick = on_click)
+            .testTag("alias_recently_deleted_entry")
             .padding(vertical = AsterSpacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -1305,86 +1338,126 @@ private fun recently_deleted_section(
         )
         Spacer(Modifier.width(6.dp))
         Text(
-            text = "(${deleted.size})",
+            text = "($count)",
             color = colors.text_muted,
             fontSize = 13.sp,
         )
         Spacer(Modifier.weight(1f))
         Icon(
-            imageVector = if (expanded) TablerIcons.ChevronUp else TablerIcons.ChevronDown,
+            imageVector = TablerIcons.ChevronRight,
             contentDescription = null,
             tint = colors.text_muted,
             modifier = Modifier.size(20.dp),
         )
     }
+}
 
-    if (expanded) {
-        v_gap(AsterSpacing.xs)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
+@Composable
+internal fun deleted_aliases_screen(
+    deleted: List<DecryptedDeletedAlias>,
+    restore_locked: Boolean,
+    on_restore: (String) -> Unit,
+    on_purge: (String) -> Unit,
+    on_empty: () -> Unit,
+    on_upgrade: () -> Unit,
+    on_back: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    var pending_purge by remember { mutableStateOf<DecryptedDeletedAlias?>(null) }
+    var confirm_empty by remember { mutableStateOf(false) }
+
+    androidx.activity.compose.BackHandler(onBack = on_back)
+
+    detail_scaffold(
+        title = stringResource(R.string.recently_deleted_aliases_title),
+        on_back = on_back,
+        scrollable = false,
+        trailing = {
+            if (deleted.isNotEmpty() && !restore_locked) {
+                AsterIconButton(
+                    icon = TablerIcons.Trash,
+                    content_description = stringResource(R.string.delete_all),
+                    onClick = { confirm_empty = true },
+                    tint = colors.danger,
+                    modifier = Modifier.testTag("alias_deleted_empty_all"),
+                )
+            }
+        },
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = AsterSpacing.lg),
         ) {
+            v_gap(AsterSpacing.sm)
             Text(
                 text = stringResource(R.string.recently_deleted_aliases_description),
                 color = colors.text_tertiary,
                 fontSize = 12.sp,
-                modifier = Modifier.weight(1f),
             )
-            if (!restore_locked) {
-                TextButton(onClick = { confirm_empty = true }) {
-                    Text(
-                        text = stringResource(R.string.delete_all),
-                        color = colors.danger,
-                        fontSize = 13.sp,
-                    )
+            v_gap(AsterSpacing.sm)
+            if (deleted.isEmpty()) {
+                AsterCard(modifier = Modifier.fillMaxWidth()) {
+                    detail_row(title = stringResource(R.string.recently_deleted_aliases_empty))
                 }
-            }
-        }
-        v_gap(AsterSpacing.sm)
-        AsterCard(modifier = Modifier.fillMaxWidth()) {
-            deleted.forEachIndexed { idx, alias ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
-                    verticalAlignment = Alignment.CenterVertically,
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    contentPadding = PaddingValues(bottom = AsterSpacing.lg),
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = alias.address,
-                            color = colors.text_primary,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        Text(
-                            text = stringResource(R.string.alias_deleted_at, format_deleted_date(alias.deleted_at)),
-                            color = colors.text_tertiary,
-                            fontSize = 12.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                    if (restore_locked) {
-                        AsterGhostButton(
-                            label = stringResource(R.string.upgrade),
-                            onClick = on_upgrade,
-                        )
-                    } else {
-                        AsterGhostButton(
-                            label = stringResource(R.string.alias_restore),
-                            onClick = { vm.restore_deleted_alias(alias.id) },
-                        )
-                        AsterIconButton(
-                            icon = TablerIcons.Trash,
-                            content_description = stringResource(R.string.alias_delete_permanently),
-                            onClick = { pending_purge = alias },
-                            tint = colors.danger,
-                        )
+                    itemsIndexed(
+                        items = deleted,
+                        key = { _, alias -> "deleted_" + alias.id },
+                    ) { _, alias ->
+                        AsterCard(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = alias.address,
+                                        color = colors.text_primary,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                    Text(
+                                        text = stringResource(
+                                            R.string.alias_deleted_at,
+                                            format_deleted_date(alias.deleted_at),
+                                        ),
+                                        color = colors.text_tertiary,
+                                        fontSize = 12.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+                                if (restore_locked) {
+                                    AsterGhostButton(
+                                        label = stringResource(R.string.upgrade),
+                                        onClick = on_upgrade,
+                                    )
+                                } else {
+                                    AsterGhostButton(
+                                        label = stringResource(R.string.alias_restore),
+                                        onClick = { on_restore(alias.id) },
+                                    )
+                                    AsterIconButton(
+                                        icon = TablerIcons.Trash,
+                                        content_description = stringResource(R.string.alias_delete_permanently),
+                                        onClick = { pending_purge = alias },
+                                        tint = colors.danger,
+                                    )
+                                }
+                            }
+                        }
+                        v_gap(AsterSpacing.xs)
                     }
                 }
-                if (idx < deleted.lastIndex) AsterDivider(modifier = Modifier)
             }
         }
     }
@@ -1401,7 +1474,7 @@ private fun recently_deleted_section(
                 )
                 org.astermail.android.design.components.AsterDialogDestructiveButton(
                     label = stringResource(R.string.alias_delete_permanently),
-                    onClick = { vm.purge_deleted_alias(alias.id); pending_purge = null },
+                    onClick = { on_purge(alias.id); pending_purge = null },
                 )
             },
         )
@@ -1419,7 +1492,7 @@ private fun recently_deleted_section(
                 )
                 org.astermail.android.design.components.AsterDialogDestructiveButton(
                     label = stringResource(R.string.delete_all),
-                    onClick = { vm.empty_deleted_aliases(); confirm_empty = false },
+                    onClick = { on_empty(); confirm_empty = false },
                 )
             },
         )

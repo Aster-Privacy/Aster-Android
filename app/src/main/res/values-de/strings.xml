@@ -1734,6 +1734,7 @@
     <string name="failed_empty_spam">Spam konnte nicht geleert werden</string>
     <string name="recently_deleted_aliases_title">Kürzlich gelöscht</string>
     <string name="recently_deleted_aliases_description">Stelle einen gelöschten Alias wieder her. Gelöschte Aliase werden begrenzte Zeit aufbewahrt.</string>
+    <string name="recently_deleted_aliases_empty">Keine gelöschten Aliasse.</string>
     <string name="alias_restore">Wiederherstellen</string>
     <string name="alias_delete_permanently">Endgültig löschen</string>
     <string name="alias_deleted_at">Gelöscht %1$s</string>

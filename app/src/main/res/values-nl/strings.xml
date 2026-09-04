@@ -1733,6 +1733,7 @@
     <string name="failed_empty_spam">Spam kon niet worden geleegd</string>
     <string name="recently_deleted_aliases_title">Onlangs verwijderd</string>
     <string name="recently_deleted_aliases_description">Herstel een alias die je hebt verwijderd. Verwijderde aliassen worden beperkte tijd bewaard.</string>
+    <string name="recently_deleted_aliases_empty">Geen verwijderde aliassen.</string>
     <string name="alias_restore">Herstellen</string>
     <string name="alias_delete_permanently">Definitief verwijderen</string>
     <string name="alias_deleted_at">Verwijderd %1$s</string>

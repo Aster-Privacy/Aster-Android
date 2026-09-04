@@ -1734,6 +1734,7 @@
     <string name="failed_empty_spam">No se pudo vaciar el spam</string>
     <string name="recently_deleted_aliases_title">Eliminados recientemente</string>
     <string name="recently_deleted_aliases_description">Restaura un alias que eliminaste. Los alias eliminados se conservan un tiempo limitado.</string>
+    <string name="recently_deleted_aliases_empty">No hay alias eliminados.</string>
     <string name="alias_restore">Restaurar</string>
     <string name="alias_delete_permanently">Eliminar definitivamente</string>
     <string name="alias_deleted_at">Eliminado %1$s</string>

@@ -2313,6 +2313,7 @@
     <string name="failed_empty_spam">Impossible de vider le spam</string>
     <string name="recently_deleted_aliases_title">Supprimés récemment</string>
     <string name="recently_deleted_aliases_description">Restaurez un alias supprimé. Les alias supprimés sont conservés pendant une durée limitée.</string>
+    <string name="recently_deleted_aliases_empty">Aucun alias supprimé.</string>
     <string name="alias_restore">Restaurer</string>
     <string name="alias_delete_permanently">Supprimer définitivement</string>
     <string name="alias_deleted_at">Supprimé %1$s</string>

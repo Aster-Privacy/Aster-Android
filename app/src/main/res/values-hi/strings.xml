@@ -461,6 +461,7 @@
     <string name="failed_empty_spam">स्पैम खाली नहीं हो सका</string>
     <string name="recently_deleted_aliases_title">हाल में हटाए गए</string>
     <string name="recently_deleted_aliases_description">हटाया गया कोई एलियास वापस लाएं। हटाए गए एलियास सीमित समय तक रखे जाते हैं।</string>
+    <string name="recently_deleted_aliases_empty">कोई हटाया गया उपनाम नहीं है।</string>
     <string name="alias_restore">वापस लाएं</string>
     <string name="alias_delete_permanently">हमेशा के लिए हटाएं</string>
     <string name="alias_deleted_at">%1$s हटाया गया</string>

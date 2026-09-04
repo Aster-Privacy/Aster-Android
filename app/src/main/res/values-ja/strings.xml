@@ -1730,6 +1730,7 @@
     <string name="failed_empty_spam">迷惑メールを空にできませんでした</string>
     <string name="recently_deleted_aliases_title">最近削除した項目</string>
     <string name="recently_deleted_aliases_description">削除したエイリアスを復元できます。削除済みのエイリアスは一定期間保管されます。</string>
+    <string name="recently_deleted_aliases_empty">削除されたエイリアスはありません。</string>
     <string name="alias_restore">復元</string>
     <string name="alias_delete_permanently">完全に削除</string>
     <string name="alias_deleted_at">%1$sに削除</string>

@@ -1730,6 +1730,7 @@
     <string name="failed_empty_spam">스팸을 비우지 못했습니다</string>
     <string name="recently_deleted_aliases_title">최근 삭제됨</string>
     <string name="recently_deleted_aliases_description">삭제한 별칭을 복원하세요. 삭제된 별칭은 일정 기간만 보관됩니다.</string>
+    <string name="recently_deleted_aliases_empty">삭제된 별칭이 없습니다.</string>
     <string name="alias_restore">복원</string>
     <string name="alias_delete_permanently">영구 삭제</string>
     <string name="alias_deleted_at">%1$s에 삭제됨</string>

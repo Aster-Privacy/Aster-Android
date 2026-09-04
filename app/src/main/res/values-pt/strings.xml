@@ -1733,6 +1733,7 @@
     <string name="failed_empty_spam">Não foi possível esvaziar o spam</string>
     <string name="recently_deleted_aliases_title">Excluídos recentemente</string>
     <string name="recently_deleted_aliases_description">Restaure um alias excluído. Aliases excluídos ficam guardados por tempo limitado.</string>
+    <string name="recently_deleted_aliases_empty">Nenhum alias excluído.</string>
     <string name="alias_restore">Restaurar</string>
     <string name="alias_delete_permanently">Excluir definitivamente</string>
     <string name="alias_deleted_at">Excluído %1$s</string>

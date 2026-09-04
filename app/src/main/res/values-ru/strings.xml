@@ -1739,6 +1739,7 @@
     <string name="failed_empty_spam">Не удалось очистить спам</string>
     <string name="recently_deleted_aliases_title">Недавно удалённые</string>
     <string name="recently_deleted_aliases_description">Восстановите удалённый псевдоним. Удалённые псевдонимы хранятся ограниченное время.</string>
+    <string name="recently_deleted_aliases_empty">Удалённых псевдонимов нет.</string>
     <string name="alias_restore">Восстановить</string>
     <string name="alias_delete_permanently">Удалить навсегда</string>
     <string name="alias_deleted_at">Удалён %1$s</string>

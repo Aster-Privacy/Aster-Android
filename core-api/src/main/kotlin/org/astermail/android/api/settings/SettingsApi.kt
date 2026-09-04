@@ -291,11 +291,20 @@ data class CheckAliasAvailabilityResponse(
 )
 
 @Serializable
+data class TwinSibling(
+    val address: String = "",
+    val domain: String = "",
+    val local_part: String = "",
+    val state: String = "unsupported",
+)
+
+@Serializable
 data class TwinAddressResponse(
     val address: String = "",
     val domain: String = "",
     val local_part: String = "",
     val state: String = "unsupported",
+    val siblings: List<TwinSibling> = emptyList(),
 )
 
 @Serializable

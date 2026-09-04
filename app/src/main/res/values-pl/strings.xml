@@ -1739,6 +1739,7 @@
     <string name="failed_empty_spam">Nie udało się opróżnić spamu</string>
     <string name="recently_deleted_aliases_title">Ostatnio usunięte</string>
     <string name="recently_deleted_aliases_description">Przywróć usunięty alias. Usunięte aliasy są przechowywane przez ograniczony czas.</string>
+    <string name="recently_deleted_aliases_empty">Brak usuniętych aliasów.</string>
     <string name="alias_restore">Przywróć</string>
     <string name="alias_delete_permanently">Usuń trwale</string>
     <string name="alias_deleted_at">Usunięto %1$s</string>
