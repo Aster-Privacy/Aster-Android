@@ -1343,13 +1343,21 @@ fun MailDetailScreen(
                     cache_toolbar_actions(context, parse_toolbar_actions(raw))
                 }
             }
-            val detail_toolbar_slots = load_toolbar_actions(context)
+            val detail_toolbar_slots = remember(detail_prefs_state.preferences?.toolbar_actions) {
+                load_toolbar_actions(context)
+            }
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .background(colors.bg_primary)
                     .pointerInput(Unit) {}
+                    .onGloballyPositioned { coords ->
+                        val measured = with(density) { coords.size.height.toDp() }
+                        if (measured > 0.dp && measured != bottom_bar_height) {
+                            bottom_bar_height = measured
+                        }
+                    }
                     .navigationBarsPadding(),
             ) {
                 AsterDivider(modifier = Modifier.fillMaxWidth())
@@ -1386,14 +1394,7 @@ fun MailDetailScreen(
                     )
                 }
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .onGloballyPositioned { coords ->
-                            val measured = with(density) { coords.size.height.toDp() }
-                            if (measured > 0.dp && measured != bottom_bar_height) {
-                                bottom_bar_height = measured
-                            }
-                        },
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     reply_action_row(
                         on_reply = { on_reply(latest_msg.id, thread_ghost_email) },

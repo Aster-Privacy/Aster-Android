@@ -2521,6 +2521,9 @@ internal fun inbox_top_bar(
                         color = colors.text_secondary,
                         fontWeight = FontWeight.Medium,
                         fontSize = 16.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.widthIn(max = 180.dp),
                     )
                     if (unread_count > 0) {
                         Spacer(Modifier.width(6.dp))
