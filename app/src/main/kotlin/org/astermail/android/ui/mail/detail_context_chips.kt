@@ -25,6 +25,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -34,6 +35,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
@@ -45,6 +47,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -259,22 +262,27 @@ internal fun detail_subject_line(
     val colors = AsterMaterial.colors
     val density = LocalDensity.current
     val measurer = rememberTextMeasurer()
-    val chip_text_style = remember {
-        TextStyle(fontSize = detail_chip_text_size, fontWeight = FontWeight.Medium)
+    val base_style = LocalTextStyle.current
+    val chip_text_style = remember(base_style) {
+        base_style.merge(
+            TextStyle(fontSize = detail_chip_text_size, fontWeight = FontWeight.Medium),
+        )
     }
+    val chip_height = detail_inline_chip_height(measurer, chip_text_style, density)
+    val chip_modifier = Modifier.height(chip_height)
     val chips = buildList {
         if (folder_chip != null) {
             add(
                 detail_inline_chip(
                     id = "folder",
-                    width = detail_inline_chip_width(
+                    width = detail_inline_chip_size(
                         label = folder_chip.name,
                         has_icon = true,
                         measurer = measurer,
                         style = chip_text_style,
                         density = density,
-                    ),
-                    render = { detail_folder_chip(folder_chip) },
+                    ).width,
+                    render = { detail_folder_chip(folder_chip, chip_modifier) },
                 ),
             )
         }
@@ -283,14 +291,14 @@ internal fun detail_subject_line(
             add(
                 detail_inline_chip(
                     id = "tag_$index",
-                    width = detail_inline_chip_width(
+                    width = detail_inline_chip_size(
                         label = tag.encrypted_name,
                         has_icon = has_icon,
                         measurer = measurer,
                         style = chip_text_style,
                         density = density,
-                    ),
-                    render = { detail_label_chip(tag) },
+                    ).width,
+                    render = { detail_label_chip(tag, chip_modifier) },
                 ),
             )
         }
@@ -306,7 +314,7 @@ internal fun detail_subject_line(
         chip.id to InlineTextContent(
             placeholder = Placeholder(
                 width = with(density) { chip.width.toSp() },
-                height = with(density) { detail_chip_height.toSp() },
+                height = with(density) { chip_height.toSp() },
                 placeholderVerticalAlign = PlaceholderVerticalAlign.Center,
             ),
             children = { chip.render() },
@@ -327,17 +335,33 @@ internal fun detail_subject_line(
 }
 
 @Composable
-private fun detail_inline_chip_width(
+private fun detail_inline_chip_size(
     label: String,
     has_icon: Boolean,
     measurer: TextMeasurer,
     style: TextStyle,
     density: Density,
-): Dp {
-    val text_width = remember(label, style) {
-        with(density) { measurer.measure(label, style).size.width.toDp() }
+): DpSize {
+    val measured = remember(label, style, density.density, density.fontScale) {
+        with(density) {
+            val size = measurer.measure(label, style).size
+            DpSize(size.width.toDp(), size.height.toDp())
+        }
     }
-    val capped = minOf(text_width, detail_chip_max_text_width)
+    val capped = minOf(measured.width, detail_chip_max_text_width)
     val icon_part = if (has_icon) detail_chip_icon_size + detail_chip_icon_gap else 0.dp
-    return detail_chip_padding_h * 2 + icon_part + capped + 1.dp
+    return DpSize(
+        width = detail_chip_padding_h * 2 + icon_part + capped + 2.dp,
+        height = maxOf(measured.height, detail_chip_icon_size) + detail_chip_padding_v * 2,
+    )
 }
+
+@Composable
+private fun detail_inline_chip_height(
+    measurer: TextMeasurer,
+    style: TextStyle,
+    density: Density,
+): Dp = maxOf(
+    detail_chip_height,
+    detail_inline_chip_size("Ag", false, measurer, style, density).height,
+)
