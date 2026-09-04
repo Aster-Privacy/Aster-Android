@@ -1539,9 +1539,10 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         )
     }
 
-    androidx.compose.runtime.LaunchedEffect(prefs?.time_format, prefs?.time_zone) {
+    androidx.compose.runtime.LaunchedEffect(prefs?.time_format, prefs?.time_zone, prefs?.date_format) {
         org.astermail.android.ui.mail.AsterTimePreferences.set_account_time_format(prefs?.time_format)
         org.astermail.android.ui.mail.AsterTimePreferences.set_account_time_zone(prefs?.time_zone)
+        org.astermail.android.ui.mail.AsterTimePreferences.set_account_date_format(prefs?.date_format)
     }
 
     androidx.compose.runtime.LaunchedEffect(
