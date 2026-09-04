@@ -852,6 +852,7 @@ class AuthRepository @Inject constructor(
         runCatching { org.astermail.android.billing.AvailablePlansCache.reset() }
         runCatching { theme_store.clear() }
         runCatching { org.astermail.android.ui.compose.compose_seed_store.clear(context) }
+        runCatching { org.astermail.android.notifications.MutedFolderSync.reset(context) }
         cancel_all_notifications()
         runCatching {
             val loader = coil.Coil.imageLoader(context)
@@ -1151,6 +1152,7 @@ class AuthRepository @Inject constructor(
         mail_repository.clear_account_data()
         runCatching { theme_store.clear() }
         runCatching { org.astermail.android.ui.compose.compose_seed_store.clear(context) }
+        runCatching { org.astermail.android.notifications.MutedFolderSync.reset(context) }
         cancel_all_notifications()
         runCatching {
             val loader = coil.Coil.imageLoader(context)

@@ -593,6 +593,7 @@ class MailPollingWorker(
                     tokens.filter { it.isNotBlank() }.distinct().joinToString("\n"),
                 )
                 .apply()
+            MutedFolderSync.push(context, tokens)
         }
 
         fun muted_notification_categories(context: Context): Set<String> =
