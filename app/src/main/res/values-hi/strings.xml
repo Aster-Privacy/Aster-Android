@@ -3041,4 +3041,8 @@
     <string name="checkout_credits_applied">चेकआउट पर %1$s के क्रेडिट लगाए जाएंगे</string>
     <string name="checkout_subtotal">उप-योग</string>
     <string name="plan_view_full_features">पूरी सुविधा सूची देखें</string>
+    <string name="alias_pin">एलियास पिन करें</string>
+    <string name="alias_unpin">एलियास से पिन हटाएं</string>
+    <string name="alias_pinned_toast">एलियास पिन हो गया</string>
+    <string name="alias_unpinned_toast">एलियास से पिन हट गया</string>
 </resources>

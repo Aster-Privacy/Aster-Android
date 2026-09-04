@@ -3151,4 +3151,8 @@
     <string name="checkout_credits_applied">%1$s in crediti verranno applicati al pagamento</string>
     <string name="checkout_subtotal">Subtotale</string>
     <string name="plan_view_full_features">Visualizza elenco completo funzionalità</string>
+    <string name="alias_pin">Fissa alias</string>
+    <string name="alias_unpin">Sblocca alias</string>
+    <string name="alias_pinned_toast">Alias fissato</string>
+    <string name="alias_unpinned_toast">Alias sbloccato</string>
 </resources>

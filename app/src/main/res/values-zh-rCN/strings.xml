@@ -3133,4 +3133,8 @@
     <string name="checkout_credits_applied">结账时将抵扣 %1$s 的额度</string>
     <string name="checkout_subtotal">小计</string>
     <string name="plan_view_full_features">查看完整功能列表</string>
+    <string name="alias_pin">置顶别名</string>
+    <string name="alias_unpin">取消置顶别名</string>
+    <string name="alias_pinned_toast">别名已置顶</string>
+    <string name="alias_unpinned_toast">别名已取消置顶</string>
 </resources>

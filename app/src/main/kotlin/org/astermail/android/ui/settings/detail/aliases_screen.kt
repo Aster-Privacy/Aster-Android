@@ -124,6 +124,8 @@ import org.astermail.android.ui.auth.TurnstileWidget
 import org.astermail.android.util.generate_random_local_part
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.design.mirror_in_rtl
+import org.astermail.android.ui.icons.pin_icon
+import org.astermail.android.ui.icons.pin_icon_filled
 
 @Composable
 private fun tab_labels_computed(): List<String> = listOf(
@@ -150,6 +152,7 @@ fun AliasesScreen(
     val alias_directories_locked = plan_vm.is_feature_locked("max_alias_directories") && !plan_state.is_loading
     val alias_restore_locked = plan_vm.is_feature_locked("has_advanced_aliases") && !plan_state.is_loading
     val alias_export_locked = plan_vm.is_feature_locked("has_advanced_aliases") && !plan_state.is_loading
+    val alias_pin_locked = plan_vm.is_feature_locked("has_advanced_aliases") && !plan_state.is_loading
     val instant_alias_delete_locked = plan_vm.is_feature_locked("has_instant_alias_delete") && !plan_state.is_loading
     val premium_domains_allowed = org.astermail.android.settings.plan_allows_premium_alias_domains(
         plan_state.limits?.plan_code,
@@ -277,6 +280,7 @@ fun AliasesScreen(
                     },
                     restore_locked = alias_restore_locked,
                     export_locked = alias_export_locked,
+                    pin_locked = alias_pin_locked,
                     instant_delete_locked = instant_alias_delete_locked,
                     premium_domains_allowed = premium_domains_allowed,
                     alias_limit = plan_state.limits?.limits?.get("max_email_aliases")?.limit,
@@ -398,6 +402,7 @@ private fun aliases_tab(
     on_claim_twin: (String, String) -> Unit = { _, _ -> },
     restore_locked: Boolean = false,
     export_locked: Boolean = false,
+    pin_locked: Boolean = false,
     instant_delete_locked: Boolean = false,
     premium_domains_allowed: Boolean = true,
     alias_limit: Int? = null,
@@ -613,6 +618,9 @@ private fun aliases_tab(
                         last_index = visible_aliases.lastIndex,
                         context = context,
                         on_toggle = { vm.toggle_alias(alias.id) },
+                        on_toggle_pin = {
+                            if (pin_locked) on_upgrade() else vm.toggle_alias_pin(alias.id)
+                        },
                         delivery_folder_name = alias_delivery_folder_name(alias, state.labels),
                         on_delete = {
                             val eligible_at = alias_delete_eligible_at(alias.created_at)
@@ -955,6 +963,7 @@ internal fun alias_list_row(
     context: Context,
     on_toggle: () -> Unit,
     on_delete: () -> Unit,
+    on_toggle_pin: (() -> Unit)? = null,
     on_edit_note: (() -> Unit)? = null,
     on_restore: (suspend (String) -> SettingsViewModel.AliasRestoreResult)? = null,
     delivery_folder_name: String? = null,
@@ -1056,6 +1065,19 @@ internal fun alias_list_row(
                         )
                     }
                 }
+            }
+            if (on_toggle_pin != null && !alias.decryption_failed) {
+                AsterIconButton(
+                    icon = if (alias.is_pinned) pin_icon_filled else pin_icon,
+                    content_description = if (alias.is_pinned) {
+                        stringResource(R.string.alias_unpin)
+                    } else {
+                        stringResource(R.string.alias_pin)
+                    },
+                    onClick = on_toggle_pin,
+                    tint = if (alias.is_pinned) colors.accent_blue else colors.text_secondary,
+                    modifier = Modifier.testTag("alias_pin_${alias.id}"),
+                )
             }
             AsterSwitch(
                 checked = alias.is_enabled,

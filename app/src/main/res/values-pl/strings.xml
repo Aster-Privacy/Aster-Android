@@ -3191,4 +3191,8 @@
     <string name="checkout_credits_applied">Środki w wysokości %1$s zostaną naliczone przy płatności</string>
     <string name="checkout_subtotal">Suma częściowa</string>
     <string name="plan_view_full_features">Zobacz pełną listę funkcji</string>
+    <string name="alias_pin">Przypnij alias</string>
+    <string name="alias_unpin">Odepnij alias</string>
+    <string name="alias_pinned_toast">Alias przypięty</string>
+    <string name="alias_unpinned_toast">Alias odpięty</string>
 </resources>

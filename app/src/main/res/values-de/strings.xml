@@ -3152,4 +3152,8 @@
     <string name="checkout_credits_applied">%1$s Guthaben wird beim Bezahlvorgang angerechnet</string>
     <string name="checkout_subtotal">Zwischensumme</string>
     <string name="plan_view_full_features">Vollständige Funktionsliste ansehen</string>
+    <string name="alias_pin">Alias anheften</string>
+    <string name="alias_unpin">Alias lösen</string>
+    <string name="alias_pinned_toast">Alias angeheftet</string>
+    <string name="alias_unpinned_toast">Alias gelöst</string>
 </resources>

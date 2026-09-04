@@ -3178,4 +3178,8 @@
     <string name="checkout_credits_applied">%1$s de crédits seront appliqués au paiement</string>
     <string name="checkout_subtotal">Sous-total</string>
     <string name="plan_view_full_features">Voir toutes les fonctionnalités</string>
+    <string name="alias_pin">Épingler l’alias</string>
+    <string name="alias_unpin">Désépingler l’alias</string>
+    <string name="alias_pinned_toast">Alias épinglé</string>
+    <string name="alias_unpinned_toast">Alias désépinglé</string>
 </resources>

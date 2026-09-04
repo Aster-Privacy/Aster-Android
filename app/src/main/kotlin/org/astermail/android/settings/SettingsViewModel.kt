@@ -1611,6 +1611,31 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun toggle_alias_pin(alias_id: String) {
+        val current = _state.value.aliases.firstOrNull { it.id == alias_id } ?: return
+        val new_pinned = !current.is_pinned
+        _state.update { s -> s.copy(aliases = apply_alias_pin(s.aliases, alias_id, new_pinned)) }
+        viewModelScope.launch {
+            try {
+                val server_pinned = settings_api.toggle_alias_pin(alias_id)
+                if (server_pinned != new_pinned) {
+                    _state.update { s -> s.copy(aliases = apply_alias_pin(s.aliases, alias_id, server_pinned)) }
+                }
+                _state.value = _state.value.copy(
+                    action_result = context.getString(
+                        if (server_pinned) R.string.alias_pinned_toast else R.string.alias_unpinned_toast,
+                    ),
+                )
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.update { s -> s.copy(aliases = apply_alias_pin(s.aliases, alias_id, current.is_pinned)) }
+                _state.value = _state.value.copy(
+                    action_result = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)),
+                )
+            }
+        }
+    }
+
     fun update_alias_note(alias_id: String, note: String) {
         val current = _state.value.aliases.firstOrNull { it.id == alias_id } ?: return
         val cleaned = note.replace(Regex("[\\x00-\\x08\\x0B-\\x1F\\x7F]"), "").trim()

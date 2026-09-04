@@ -3191,4 +3191,8 @@
     <string name="checkout_credits_applied">%1$s в виде кредитов будет применено при оформлении</string>
     <string name="checkout_subtotal">Промежуточный итог</string>
     <string name="plan_view_full_features">Посмотреть полный список функций</string>
+    <string name="alias_pin">Закрепить псевдоним</string>
+    <string name="alias_unpin">Открепить псевдоним</string>
+    <string name="alias_pinned_toast">Псевдоним закреплён</string>
+    <string name="alias_unpinned_toast">Псевдоним откреплён</string>
 </resources>

@@ -3151,4 +3151,8 @@
     <string name="checkout_credits_applied">Ödeme sırasında %1$s tutarında kredi uygulanacak</string>
     <string name="checkout_subtotal">Ara toplam</string>
     <string name="plan_view_full_features">Tüm özellik listesini görüntüle</string>
+    <string name="alias_pin">Rumuzu sabitle</string>
+    <string name="alias_unpin">Rumuz sabitlemesini kaldır</string>
+    <string name="alias_pinned_toast">Rumuz sabitlendi</string>
+    <string name="alias_unpinned_toast">Rumuz sabitlemesi kaldırıldı</string>
 </resources>

@@ -3133,4 +3133,8 @@
     <string name="checkout_credits_applied">お支払い時に%1$sのクレジットが適用されます</string>
     <string name="checkout_subtotal">小計</string>
     <string name="plan_view_full_features">機能一覧を見る</string>
+    <string name="alias_pin">エイリアスをピン留め</string>
+    <string name="alias_unpin">エイリアスのピン留めを解除</string>
+    <string name="alias_pinned_toast">エイリアスをピン留めしました</string>
+    <string name="alias_unpinned_toast">エイリアスのピン留めを解除しました</string>
 </resources>

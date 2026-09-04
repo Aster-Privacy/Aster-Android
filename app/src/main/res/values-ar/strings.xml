@@ -3231,4 +3231,8 @@
     <string name="checkout_credits_applied">سيتم تطبيق رصيد بقيمة %1$s عند الدفع</string>
     <string name="checkout_subtotal">المجموع الفرعي</string>
     <string name="plan_view_full_features">عرض قائمة المميزات الكاملة</string>
+    <string name="alias_pin">تثبيت الاسم المستعار</string>
+    <string name="alias_unpin">إلغاء تثبيت الاسم المستعار</string>
+    <string name="alias_pinned_toast">تم تثبيت الاسم المستعار</string>
+    <string name="alias_unpinned_toast">تم إلغاء تثبيت الاسم المستعار</string>
 </resources>

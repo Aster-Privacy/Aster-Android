@@ -3200,4 +3200,8 @@
     <string name="checkout_credits_applied">%1$s in credits will be applied at checkout</string>
     <string name="checkout_subtotal">Subtotal</string>
     <string name="plan_view_full_features">View full feature list</string>
+    <string name="alias_pin">Pin alias</string>
+    <string name="alias_unpin">Unpin alias</string>
+    <string name="alias_pinned_toast">Alias pinned</string>
+    <string name="alias_unpinned_toast">Alias unpinned</string>
 </resources>

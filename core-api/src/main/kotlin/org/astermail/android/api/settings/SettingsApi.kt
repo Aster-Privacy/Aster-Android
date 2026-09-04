@@ -179,6 +179,7 @@ data class AliasInfo(
     val domain: String = "",
     val is_enabled: Boolean = true,
     val is_random: Boolean = false,
+    val is_pinned: Boolean = false,
     val never_inbox: Boolean = false,
     val delivery_folder_token: String? = null,
     val delivery_label_token: String? = null,
@@ -221,6 +222,11 @@ data class AliasListResponse(
     val total: Long = 0,
     val has_more: Boolean = false,
     val max_aliases: Int = 0,
+)
+
+@Serializable
+data class AliasPinResponse(
+    val is_pinned: Boolean = false,
 )
 
 @Serializable
@@ -641,6 +647,7 @@ interface SettingsApi {
     suspend fun bulk_create_aliases(request: BulkCreateAliasRequest): BulkCreateAliasResponse
     suspend fun bulk_add_domain_addresses(domain_id: String, request: BulkAddAddressesRequest): BulkAddAddressesResponse
     suspend fun update_alias(alias_id: String, request: UpdateAliasRequest): Boolean
+    suspend fun toggle_alias_pin(alias_id: String): Boolean
     suspend fun update_alias_delivery_label(alias_id: String, delivery_label_token: String?): Boolean
     suspend fun run_alias_on_existing(alias_id: String): AliasRunStatusResponse
     suspend fun get_alias_run(alias_id: String): AliasRunStatusResponse
@@ -899,6 +906,18 @@ class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
             throw client.map_http_status(response.status.value, "")
         }
         return true
+    }
+
+    override suspend fun toggle_alias_pin(alias_id: String): Boolean {
+        val response = client.http.post("${client.base_url}/api/addresses/v1/aliases/$alias_id/pin") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(JsonObject(emptyMap()))
+        }
+        if (response.status.value !in 200..299) {
+            throw client.map_http_status(response.status.value, "")
+        }
+        return decode_or_throw<AliasPinResponse>(response).is_pinned
     }
 
     override suspend fun update_alias_delivery_label(

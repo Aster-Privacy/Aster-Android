@@ -3151,4 +3151,8 @@
     <string name="checkout_credits_applied">%1$s aan tegoed wordt toegepast bij het afrekenen</string>
     <string name="checkout_subtotal">Subtotaal</string>
     <string name="plan_view_full_features">Volledige functielijst bekijken</string>
+    <string name="alias_pin">Alias vastzetten</string>
+    <string name="alias_unpin">Alias losmaken</string>
+    <string name="alias_pinned_toast">Alias vastgezet</string>
+    <string name="alias_unpinned_toast">Alias losgemaakt</string>
 </resources>
