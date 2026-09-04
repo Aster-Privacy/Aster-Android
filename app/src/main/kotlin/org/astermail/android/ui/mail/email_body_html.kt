@@ -902,7 +902,9 @@ wrapper.appendChild(btn);wrapper.appendChild(cdiv);
 hoist_trailing_signature(wrapper);
 trim_trailing_gap(wrapper);
   }
-  var proton=body.querySelector('div.protonmail_quote');
+  var own_quote_sel='div.aster_quote,div.gmail_quote';
+  var proton=null;var proton_cands=body.querySelectorAll('div.protonmail_quote');
+  for(var pci=0;pci<proton_cands.length;pci++){var pcand=proton_cands[pci];if(!(pcand.closest&&pcand.closest(own_quote_sel))){proton=pcand;break}}
   if(proton&&!body.querySelector('details.aster-forwarded-collapse')){
 var meta=[];var prev=proton.previousSibling;
 while(prev){var pel=prev.nodeType===1?prev:null;var ptxt=(prev.textContent||'').trim();var is_sig=pel&&pel.classList&&pel.classList.contains('protonmail_signature_block');var has_media=!!pel&&(['IMG','VIDEO','PICTURE'].indexOf(pel.tagName.toUpperCase())>=0||!!pel.querySelector('img,video,picture'));if(is_sig||(!ptxt&&!has_media)){meta.unshift(prev);prev=prev.previousSibling}else break}
