@@ -110,19 +110,17 @@ fun swipe_action_row(
                 val slop = viewConfiguration.touchSlop
                 val claim_distance = slop * swipe_claim_slop_multiplier
                 coroutineScope {
-                    while (true) {
-                        val down = awaitPointerEventScope {
-                            awaitFirstDown(requireUnconsumed = false)
-                        }
-                        if (is_dismissed || list_scrolling()) continue
-                        offset_x.stop()
-                        val limit = size.width.toFloat()
-                        val commit_distance = limit * swipe_commit_fraction
-                        var dx = 0f
-                        var dy = 0f
-                        var claimed = false
-                        var passed_commit = false
-                        awaitPointerEventScope {
+                    awaitPointerEventScope {
+                        while (true) {
+                            val down = awaitFirstDown(requireUnconsumed = false)
+                            if (is_dismissed || list_scrolling()) continue
+                            launch { offset_x.stop() }
+                            val limit = size.width.toFloat()
+                            val commit_distance = limit * swipe_commit_fraction
+                            var dx = 0f
+                            var dy = 0f
+                            var claimed = false
+                            var passed_commit = false
                             while (true) {
                                 val event = awaitPointerEvent()
                                 val change = event.changes.firstOrNull { it.id == down.id } ?: break
@@ -153,21 +151,21 @@ fun swipe_action_row(
                                     }
                                 }
                             }
+                            if (!claimed) continue
+                            val travelled = offset_x.value
+                            if (abs(travelled) < commit_distance) {
+                                launch { offset_x.animateTo(0f, tween(220)) }
+                                continue
+                            }
+                            val action = if (travelled > 0f) start_action else end_action
+                            if (is_removing_swipe_action(action)) {
+                                is_dismissed = true
+                                launch { offset_x.animateTo(sign(travelled) * limit, tween(180)) }
+                            } else {
+                                launch { offset_x.animateTo(0f, tween(220)) }
+                            }
+                            if (travelled > 0f) on_swipe_start() else on_swipe_end()
                         }
-                        if (!claimed) continue
-                        val travelled = offset_x.value
-                        if (abs(travelled) < commit_distance) {
-                            launch { offset_x.animateTo(0f, tween(220)) }
-                            continue
-                        }
-                        val action = if (travelled > 0f) start_action else end_action
-                        if (is_removing_swipe_action(action)) {
-                            is_dismissed = true
-                            launch { offset_x.animateTo(sign(travelled) * limit, tween(180)) }
-                        } else {
-                            launch { offset_x.animateTo(0f, tween(220)) }
-                        }
-                        if (travelled > 0f) on_swipe_start() else on_swipe_end()
                     }
                 }
             },
