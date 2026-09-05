@@ -2099,6 +2099,9 @@
     <string name="upgrade_modal_description_specific">Vous avez atteint votre limite de %1$s sur le forfait %2$s. Passez à un forfait supérieur pour plus.</string>
     <string name="upgrade_modal_title">Améliorez votre forfait</string>
     <string name="upgrade_not_now">Pas maintenant</string>
+    <string name="upgrade_get_plan">Choisir %1$s</string>
+    <string name="upgrade_reassurance">Annulez à tout moment</string>
+    <string name="upgrade_trust_line">Pas de publicité, pas de suivi</string>
     <string name="upgrade_perk_aliases">Alias et domaines personnalisés illimités</string>
     <string name="upgrade_perk_domains">Domaines personnalisés et fonctionnalités pro</string>
     <string name="upgrade_perk_features">Filtres, modèles, signatures et plus</string>

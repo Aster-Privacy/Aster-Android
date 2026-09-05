@@ -1946,6 +1946,9 @@
     <string name="upgrade_view_plans">查看方案</string>
     <string name="upgrade_buy_storage">增加空间</string>
     <string name="upgrade_not_now">以后再说</string>
+    <string name="upgrade_get_plan">选择 %1$s</string>
+    <string name="upgrade_reassurance">随时可取消</string>
+    <string name="upgrade_trust_line">无广告、无跟踪</string>
     <string name="upgrade_perk_storage">为邮件和附件提供更多空间</string>
     <string name="upgrade_perk_aliases">无限别名和自有域名</string>
     <string name="upgrade_perk_domains">自有域名和专业功能</string>

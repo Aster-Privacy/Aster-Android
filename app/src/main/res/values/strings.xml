@@ -2047,6 +2047,9 @@
     <string name="upgrade_view_plans">View plans</string>
     <string name="upgrade_buy_storage">Add storage</string>
     <string name="upgrade_not_now">Not now</string>
+    <string name="upgrade_get_plan">Get %1$s</string>
+    <string name="upgrade_reassurance">Cancel anytime</string>
+    <string name="upgrade_trust_line">No ads, no tracking</string>
     <string name="upgrade_perk_storage">More storage for messages and attachments</string>
     <string name="upgrade_perk_aliases">Unlimited aliases and custom domains</string>
     <string name="upgrade_perk_domains">Custom domains and pro features</string>

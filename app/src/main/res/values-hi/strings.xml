@@ -1859,6 +1859,9 @@
     <string name="upgrade_view_plans">प्लान देखें</string>
     <string name="upgrade_buy_storage">स्टोरेज जोड़ें</string>
     <string name="upgrade_not_now">अभी नहीं</string>
+    <string name="upgrade_get_plan">%1$s लें</string>
+    <string name="upgrade_reassurance">कभी भी रद्द करें</string>
+    <string name="upgrade_trust_line">कोई विज्ञापन नहीं, कोई ट्रैकिंग नहीं</string>
     <string name="upgrade_perk_storage">संदेशों और अटैचमेंट के लिए ज़्यादा स्टोरेज</string>
     <string name="upgrade_perk_aliases">बिना सीमा एलियास और कस्टम डोमेन</string>
     <string name="upgrade_perk_domains">कस्टम डोमेन और प्रो सुविधाएं</string>

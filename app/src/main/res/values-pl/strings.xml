@@ -1955,6 +1955,9 @@
     <string name="upgrade_view_plans">Zobacz plany</string>
     <string name="upgrade_buy_storage">Dodaj miejsce</string>
     <string name="upgrade_not_now">Nie teraz</string>
+    <string name="upgrade_get_plan">Wybierz %1$s</string>
+    <string name="upgrade_reassurance">Anuluj w dowolnym momencie</string>
+    <string name="upgrade_trust_line">Bez reklam, bez śledzenia</string>
     <string name="upgrade_perk_storage">Więcej miejsca na wiadomości i załączniki</string>
     <string name="upgrade_perk_aliases">Nieograniczone aliasy i własne domeny</string>
     <string name="upgrade_perk_domains">Własne domeny i funkcje pro</string>

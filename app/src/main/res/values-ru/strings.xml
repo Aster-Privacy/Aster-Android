@@ -1955,6 +1955,9 @@
     <string name="upgrade_view_plans">Посмотреть тарифы</string>
     <string name="upgrade_buy_storage">Добавить место</string>
     <string name="upgrade_not_now">Не сейчас</string>
+    <string name="upgrade_get_plan">Выбрать %1$s</string>
+    <string name="upgrade_reassurance">Отмена в любой момент</string>
+    <string name="upgrade_trust_line">Без рекламы, без отслеживания</string>
     <string name="upgrade_perk_storage">Больше места для писем и вложений</string>
     <string name="upgrade_perk_aliases">Неограниченные псевдонимы и свои домены</string>
     <string name="upgrade_perk_domains">Свои домены и профессиональные возможности</string>
