@@ -1946,6 +1946,9 @@
     <string name="upgrade_view_plans">요금제 보기</string>
     <string name="upgrade_buy_storage">저장용량 추가</string>
     <string name="upgrade_not_now">나중에</string>
+    <string name="upgrade_get_plan">%1$s 선택</string>
+    <string name="upgrade_reassurance">언제든지 해지 가능</string>
+    <string name="upgrade_trust_line">광고 없음, 추적 없음</string>
     <string name="upgrade_perk_storage">메일과 첨부파일을 위한 더 넉넉한 용량</string>
     <string name="upgrade_perk_aliases">무제한 별칭과 사용자 도메인</string>
     <string name="upgrade_perk_domains">사용자 도메인과 프로 기능</string>

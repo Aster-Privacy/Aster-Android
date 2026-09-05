@@ -1961,6 +1961,9 @@
     <string name="upgrade_view_plans">عرض الخطط</string>
     <string name="upgrade_buy_storage">إضافة مساحة</string>
     <string name="upgrade_not_now">ليس الآن</string>
+    <string name="upgrade_get_plan">احصل على %1$s</string>
+    <string name="upgrade_reassurance">يمكنك الإلغاء في أي وقت</string>
+    <string name="upgrade_trust_line">بدون إعلانات، بدون تتبع</string>
     <string name="upgrade_perk_storage">مساحة أكبر للرسائل والمرفقات</string>
     <string name="upgrade_perk_aliases">أسماء مستعارة غير محدودة ونطاقات مخصصة</string>
     <string name="upgrade_perk_domains">نطاقات مخصصة وميزات احترافية</string>

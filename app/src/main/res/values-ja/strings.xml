@@ -1946,6 +1946,9 @@
     <string name="upgrade_view_plans">プランを見る</string>
     <string name="upgrade_buy_storage">容量を追加</string>
     <string name="upgrade_not_now">あとで</string>
+    <string name="upgrade_get_plan">%1$sを選ぶ</string>
+    <string name="upgrade_reassurance">いつでも解約できます</string>
+    <string name="upgrade_trust_line">広告なし、トラッキングなし</string>
     <string name="upgrade_perk_storage">メールと添付のための容量を追加</string>
     <string name="upgrade_perk_aliases">無制限のエイリアスと独自ドメイン</string>
     <string name="upgrade_perk_domains">独自ドメインとプロ向け機能</string>

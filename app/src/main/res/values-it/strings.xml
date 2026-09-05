@@ -1949,6 +1949,9 @@
     <string name="upgrade_view_plans">Vedi i piani</string>
     <string name="upgrade_buy_storage">Aggiungi spazio</string>
     <string name="upgrade_not_now">Non ora</string>
+    <string name="upgrade_get_plan">Scegli %1$s</string>
+    <string name="upgrade_reassurance">Disdici quando vuoi</string>
+    <string name="upgrade_trust_line">Nessuna pubblicità, nessun tracciamento</string>
     <string name="upgrade_perk_storage">Più spazio per messaggi e allegati</string>
     <string name="upgrade_perk_aliases">Alias illimitati e domini personalizzati</string>
     <string name="upgrade_perk_domains">Domini personalizzati e funzioni pro</string>

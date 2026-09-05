@@ -1949,6 +1949,9 @@
     <string name="upgrade_view_plans">Planları gör</string>
     <string name="upgrade_buy_storage">Depolama ekle</string>
     <string name="upgrade_not_now">Şimdi değil</string>
+    <string name="upgrade_get_plan">%1$s al</string>
+    <string name="upgrade_reassurance">İstediğiniz zaman iptal edin</string>
+    <string name="upgrade_trust_line">Reklam yok, izleme yok</string>
     <string name="upgrade_perk_storage">İletiler ve ekler için daha fazla alan</string>
     <string name="upgrade_perk_aliases">Sınırsız takma ad ve kendi alan adların</string>
     <string name="upgrade_perk_domains">Kendi alan adların ve profesyonel özellikler</string>

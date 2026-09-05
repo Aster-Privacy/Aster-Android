@@ -1949,6 +1949,9 @@
     <string name="upgrade_view_plans">Abonnementen bekijken</string>
     <string name="upgrade_buy_storage">Opslag toevoegen</string>
     <string name="upgrade_not_now">Niet nu</string>
+    <string name="upgrade_get_plan">Kies %1$s</string>
+    <string name="upgrade_reassurance">Altijd opzegbaar</string>
+    <string name="upgrade_trust_line">Geen advertenties, geen tracking</string>
     <string name="upgrade_perk_storage">Meer ruimte voor berichten en bijlagen</string>
     <string name="upgrade_perk_aliases">Onbeperkt aliassen en eigen domeinen</string>
     <string name="upgrade_perk_domains">Eigen domeinen en pro-functies</string>
