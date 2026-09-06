@@ -29,7 +29,11 @@ import org.astermail.android.api.ratchet.EnvelopeCapabilityResponse
 import org.astermail.android.api.ratchet.RatchetApi
 import org.astermail.android.api.ratchet.ReportEnvelopeCapabilityRequest
 
-data class EnvelopeCapabilityReport(val at_ms: Long, val identity_fingerprint: String)
+data class EnvelopeCapabilityReport(
+    val at_ms: Long,
+    val identity_fingerprint: String,
+    val pq_identity_fingerprint: String = "",
+)
 
 interface EnvelopeCapabilityStore {
     fun get_client_id(): String?
@@ -51,13 +55,21 @@ class SharedPrefsEnvelopeCapabilityStore(private val context: Context) : Envelop
     override fun get_last_report(user_id: String): EnvelopeCapabilityReport? {
         val stored = runCatching { prefs().getString(LAST_REPORTED_PREFIX + user_id, null) }
             .getOrNull() ?: return null
-        val at_ms = stored.substringBefore('|').toLongOrNull() ?: return null
-        return EnvelopeCapabilityReport(at_ms, stored.substringAfter('|', ""))
+        val parts = stored.split('|')
+        val at_ms = parts.firstOrNull()?.toLongOrNull() ?: return null
+        return EnvelopeCapabilityReport(
+            at_ms,
+            parts.getOrElse(1) { "" },
+            parts.getOrElse(2) { "" },
+        )
     }
 
     override fun put_last_report(user_id: String, report: EnvelopeCapabilityReport) {
         prefs().edit()
-            .putString(LAST_REPORTED_PREFIX + user_id, "${report.at_ms}|${report.identity_fingerprint}")
+            .putString(
+                LAST_REPORTED_PREFIX + user_id,
+                "${report.at_ms}|${report.identity_fingerprint}|${report.pq_identity_fingerprint}",
+            )
             .apply()
     }
 
@@ -78,18 +90,22 @@ class EnvelopeCapabilityReporter(
     suspend fun report_if_due(
         user_id: String,
         identity_public_b64: String?,
+        pq_identity_public_b64: String? = null,
+        holds_pq_identity_secret: Boolean = false,
         force: Boolean = false,
     ): EnvelopeCapabilityResponse? {
         if (user_id.isBlank()) return null
 
         val now = now_ms()
         val fingerprint = identity_fingerprint(identity_public_b64)
+        val pq_fingerprint = pq_identity_fingerprint(pq_identity_public_b64, holds_pq_identity_secret)
         val last = store.get_last_report(user_id)
 
         if (!force &&
             last != null &&
             last.at_ms > 0L &&
             last.identity_fingerprint == fingerprint &&
+            last.pq_identity_fingerprint == pq_fingerprint &&
             now - last.at_ms in 0 until REPORT_INTERVAL_MS
         ) {
             return null
@@ -104,6 +120,7 @@ class EnvelopeCapabilityReporter(
                     max_envelope_marker = MAX_ENVELOPE_MARKER,
                     platform = PLATFORM,
                     identity_fingerprint = fingerprint.ifEmpty { null },
+                    pq_identity_fingerprint = pq_fingerprint.ifEmpty { null },
                     x3dh_max_version = X3DH_MAX_VERSION,
                 ),
             )
@@ -111,7 +128,10 @@ class EnvelopeCapabilityReporter(
             .getOrNull()
 
         if (response != null && response.success) {
-            store.put_last_report(user_id, EnvelopeCapabilityReport(now, fingerprint))
+            store.put_last_report(
+                user_id,
+                EnvelopeCapabilityReport(now, fingerprint, pq_fingerprint),
+            )
         }
         return response
     }
@@ -126,6 +146,19 @@ class EnvelopeCapabilityReporter(
         }.getOrDefault("")
     }
 
+    private fun pq_identity_fingerprint(
+        pq_identity_public_b64: String?,
+        holds_pq_identity_secret: Boolean,
+    ): String {
+        if (!holds_pq_identity_secret || pq_identity_public_b64.isNullOrBlank()) return ""
+
+        return runCatching {
+            val key = Base64.getDecoder().decode(pq_identity_public_b64)
+            if (key.size != ML_KEM_768_PUBLIC_KEY_LEN) return ""
+            Base64.getEncoder().encodeToString(MessageDigest.getInstance("SHA-256").digest(key))
+        }.getOrDefault("")
+    }
+
     companion object {
         const val MAX_ENVELOPE_MARKER: Int = 4
         const val X3DH_MAX_VERSION: Int = 2
@@ -133,5 +166,6 @@ class EnvelopeCapabilityReporter(
         const val REPORT_INTERVAL_MS: Long = 7L * 24 * 60 * 60 * 1000
         private const val IDENTITY_POINT_LEN: Int = 65
         private const val UNCOMPRESSED_POINT_TAG: Byte = 0x04
+        private const val ML_KEM_768_PUBLIC_KEY_LEN: Int = 1184
     }
 }

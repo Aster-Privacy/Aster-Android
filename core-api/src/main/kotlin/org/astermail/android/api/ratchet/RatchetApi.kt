@@ -98,6 +98,7 @@ data class ReportEnvelopeCapabilityRequest(
     val max_envelope_marker: Int,
     val platform: String? = null,
     val identity_fingerprint: String? = null,
+    val pq_identity_fingerprint: String? = null,
     val x3dh_max_version: Int = 1,
 )
 
@@ -107,6 +108,7 @@ data class EnvelopeCapabilityResponse(
     val min_supported_marker: Int? = null,
     val pq_hybrid_enabled: Boolean = false,
     val identity_verified: Boolean = false,
+    val pq_identity_attested: Boolean = false,
 )
 
 sealed class PutStateOutcome {

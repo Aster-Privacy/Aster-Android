@@ -86,7 +86,12 @@ class RatchetBootstrapService @Inject constructor(
             val pq_identity_generated = persist_ratchet_identity_to_vault_if_needed()
 
             val capability = runCatching {
-                capability_reporter.report_if_due(user_id, keys.identity_public_b64)
+                capability_reporter.report_if_due(
+                    user_id,
+                    keys.identity_public_b64,
+                    session_key_store.get_ratchet_pq_identity_public(),
+                    !session_key_store.get_ratchet_pq_identity_secret().isNullOrBlank(),
+                )
             }
                 .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
                 .onFailure { debug_log("report_envelope_capability threw: ${it.javaClass.simpleName}") }
@@ -94,7 +99,8 @@ class RatchetBootstrapService @Inject constructor(
             if (capability != null) {
                 debug_log(
                     "envelope capability reported: min=${capability.min_supported_marker} " +
-                        "pq=${capability.pq_hybrid_enabled} identity=${capability.identity_verified}",
+                        "pq=${capability.pq_hybrid_enabled} identity=${capability.identity_verified} " +
+                        "pq_attested=${capability.pq_identity_attested}",
                 )
             }
 
