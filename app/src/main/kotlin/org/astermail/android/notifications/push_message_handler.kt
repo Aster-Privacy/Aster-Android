@@ -90,7 +90,9 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
     }
     val app_lock_configured = runCatching { entry.app_lock_store().is_configured() }.getOrDefault(true)
     if (org.astermail.android.security.LockdownStore.is_enabled(context) || app_lock_configured) {
-        MailPollingWorker.show_generic(context, 1)
+        if (MailPollingWorker.show_generic(context, 1)) {
+            MailPollingWorker.note_push_notification_posted(context)
+        }
         return PushResult.Shown
     }
     if (type == "wake") return PushResult.NeedsFetch
@@ -164,5 +166,6 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
         MailPollingWorker.release_item_notification(context, item_id)
         return PushResult.NeedsFetch
     }
+    MailPollingWorker.note_push_notification_posted(context)
     return PushResult.Shown
 }
