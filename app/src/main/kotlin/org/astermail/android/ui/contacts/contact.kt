@@ -40,7 +40,10 @@ data class Contact(
     val twitter: String = "",
     val linkedin: String = "",
     val notes: String = "",
+    val avatar_url: String = "",
+    val profile_color: String = "",
     val is_favorite: Boolean = false,
     val groups: List<String> = emptyList(),
     val raw_json: String = "",
+    val deleted_at: String = "",
 )

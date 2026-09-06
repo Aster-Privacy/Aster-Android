@@ -393,6 +393,7 @@
     <string name="decrypt_retry_failed">Still couldn\'t decrypt this message</string>
     <string name="e2e_no_key_description">This message is encrypted with a key this device does not yet hold. Open it on the Aster web app to read.</string>
     <string name="e2e_encryption_failed">Could not send: end-to-end encryption failed. The message was not sent.</string>
+    <string name="e2e_identity_changed_blocked">Could not send: the encryption key for a recipient changed. Confirm the change in your inbox, then send again. The message was not sent.</string>
     <string name="attachment_prepare_failed">Could not send: "%1$s" could not be prepared. The message was not sent.</string>
     <string name="e2e_keys_not_ready">Could not send: encryption keys aren\'t ready yet. The message was not sent.</string>
     <string name="no_body">(no body)</string>
@@ -525,7 +526,7 @@
     <string name="risky">Risky</string>
     <string name="scan_inbox">Scan inbox</string>
     <string name="search_senders">Search senders</string>
-    <string name="deselect_all">Unselect all</string>
+    <string name="deselect_all">Deselect all</string>
     <string name="count_selected">%1$d selected</string>
     <string name="unsubscribe_selected">Unsubscribe (%1$d)</string>
     <string name="reactivate_selected">Reactivate (%1$d)</string>
@@ -673,6 +674,7 @@
     <string name="new_group">New group</string>
     <string name="group_name">Group name</string>
     <string name="delete_group">Delete group</string>
+    <string name="edit_group">Edit group</string>
     <string name="delete_group_message">The contacts in this group stay in your address book.</string>
     <string name="no_groups_yet">No groups yet</string>
     <string name="no_groups_description">Group your contacts to write to several people at once. Group names are encrypted on this device before they are saved.</string>
@@ -1336,6 +1338,10 @@
     <string name="forwarding_verification_sent">Verification email sent to %1$s. Forwarding starts once it is confirmed.</string>
     <string name="forwarding_internal_active">Forwarding is active. Aster to Aster destinations do not need verification.</string>
     <string name="forwarding_verification_resent">Verification email resent to %1$s</string>
+    <string name="forwarding_failed_badge">Not delivering</string>
+    <string name="forwarding_failed_encryption">Require encryption is turned on, but %1$s has no PGP key, so messages are not forwarded. Turn off Require encryption in the encryption settings, or add the recipient\'s public key.</string>
+    <string name="forwarding_failed_generic">The last forward to %1$s failed: %2$s</string>
+    <string name="forwarding_failed_count">Messages not forwarded: %1$d</string>
 
     <!-- Signature -->
     <string name="signature">Signature</string>
@@ -2047,6 +2053,9 @@
     <string name="upgrade_view_plans">View plans</string>
     <string name="upgrade_buy_storage">Add storage</string>
     <string name="upgrade_not_now">Not now</string>
+    <string name="upgrade_get_plan">Get %1$s</string>
+    <string name="upgrade_reassurance">Cancel anytime</string>
+    <string name="upgrade_trust_line">No ads, no tracking</string>
     <string name="upgrade_perk_storage">More storage for messages and attachments</string>
     <string name="upgrade_perk_aliases">Unlimited aliases and custom domains</string>
     <string name="upgrade_perk_domains">Custom domains and pro features</string>
@@ -2963,6 +2972,7 @@
     <string name="link_device_error_session">Your session is locked. Sign in again, then link the device.</string>
     <string name="link_device_error_unavailable">Device linking is unavailable right now. Try again later.</string>
     <string name="link_device_error_failed">The device could not be linked. Try again.</string>
+    <string name="link_device_error_binding_mismatch">The other device sent keys that do not match this code. Get a new code on that device, then try again.</string>
     <string name="alias_locked_title">Locked by a password change</string>
     <string name="alias_locked_body">This alias still receives mail, but its label was encrypted with your previous password, so this device can’t read it. If you remember the address, you can restore the label.</string>
     <string name="alias_restore_action">Restore this alias</string>
@@ -3204,6 +3214,28 @@
     <string name="alias_unpin">Unpin alias</string>
     <string name="alias_pinned_toast">Alias pinned</string>
     <string name="alias_unpinned_toast">Alias unpinned</string>
-    <string name="e2e_identity_changed_blocked">Could not send: the encryption key for a recipient changed. Confirm the change in your inbox, then send again. The message was not sent.</string>
-    <string name="link_device_error_binding_mismatch">The other device sent keys that do not match this code. Get a new code on that device, then try again.</string>
+    <string name="restore">Restore</string>
+    <string name="contact_trash_confirm_message">You can restore contacts from Trash.</string>
+    <string name="empty_contacts_trash_confirm_message">Permanently delete all contacts in Trash? This can’t be undone.</string>
+    <string name="contact_restored">Contact restored</string>
+    <string name="contact_moved_to_trash">Contact moved to Trash</string>
+    <string name="contact_trash_days_left">%1$d days left</string>
+    <string name="contacts_in_trash_notice">Contacts in Trash are deleted permanently after 30 days.</string>
+    <string name="contacts_import_empty">No contacts found in that file</string>
+    <string name="contacts_import_failed">Couldn\'t import contacts</string>
+    <string name="contacts_export_failed">Couldn\'t export contacts</string>
+    <string name="import_contacts_file">Import from a file</string>
+    <string name="export_contacts_action">Export contacts</string>
+    <string name="export_all_contacts">Export all contacts</string>
+    <string name="export_selection">Export selection</string>
+    <string name="export_as_vcard">Export as vCard</string>
+    <string name="export_as_csv">Export as CSV</string>
+    <string name="contact_photo">Contact photo</string>
+    <string name="remove_photo">Remove photo</string>
+    <string name="add_photo">Add photo</string>
+    <string name="photo_too_large">Pick a smaller image</string>
+    <string name="no_contacts_yet">No contacts yet</string>
+    <string name="no_contacts_match">No contacts match \"%1$s\"</string>
+    <string name="no_contacts_in_trash">Trash is empty</string>
+    <string name="contacts_already_in_trash">Some contacts are already in Trash. Restore them instead.</string>
 </resources>

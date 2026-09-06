@@ -924,6 +924,10 @@
     <string name="forwarding_verification_sent">E-mail de vérification envoyé à %1$s. Le transfert démarre après confirmation.</string>
     <string name="forwarding_internal_active">Le transfert est actif. Les destinations Aster vers Aster ne nécessitent pas de vérification.</string>
     <string name="forwarding_verification_resent">E-mail de vérification renvoyé à %1$s</string>
+    <string name="forwarding_failed_badge">Non distribué</string>
+    <string name="forwarding_failed_encryption">Exiger le chiffrement est activé, mais %1$s n\'a pas de clé PGP. Les messages ne sont donc pas transférés. Désactivez Exiger le chiffrement dans les réglages de chiffrement, ou ajoutez la clé publique du destinataire.</string>
+    <string name="forwarding_failed_generic">Le dernier transfert vers %1$s a échoué : %2$s</string>
+    <string name="forwarding_failed_count">Messages non transférés : %1$d</string>
 
     <!-- Signature -->
     <string name="signature">Signature</string>
@@ -2099,6 +2103,9 @@
     <string name="upgrade_modal_description_specific">Vous avez atteint votre limite de %1$s sur le forfait %2$s. Passez à un forfait supérieur pour plus.</string>
     <string name="upgrade_modal_title">Améliorez votre forfait</string>
     <string name="upgrade_not_now">Pas maintenant</string>
+    <string name="upgrade_get_plan">Choisir %1$s</string>
+    <string name="upgrade_reassurance">Annulez à tout moment</string>
+    <string name="upgrade_trust_line">Pas de publicité, pas de suivi</string>
     <string name="upgrade_perk_aliases">Alias et domaines personnalisés illimités</string>
     <string name="upgrade_perk_domains">Domaines personnalisés et fonctionnalités pro</string>
     <string name="upgrade_perk_features">Filtres, modèles, signatures et plus</string>
@@ -3116,6 +3123,7 @@
     <string name="new_group">Nouveau groupe</string>
     <string name="group_name">Nom du groupe</string>
     <string name="delete_group">Supprimer le groupe</string>
+    <string name="edit_group">Modifier le groupe</string>
     <string name="delete_group_message">Les contacts de ce groupe restent dans votre carnet d\'adresses.</string>
     <string name="no_groups_yet">Aucun groupe pour le moment</string>
     <string name="no_groups_description">Regroupez vos contacts pour écrire à plusieurs personnes à la fois. Les noms de groupe sont chiffrés sur cet appareil avant d\'être enregistrés.</string>
@@ -3184,4 +3192,28 @@
     <string name="alias_unpinned_toast">Alias désépinglé</string>
     <string name="e2e_identity_changed_blocked">Envoi impossible : la clé de chiffrement d’un destinataire a changé. Confirmez le changement dans votre boîte de réception, puis envoyez à nouveau. Le message n’a pas été envoyé.</string>
     <string name="link_device_error_binding_mismatch">L’autre appareil a envoyé des clés qui ne correspondent pas à ce code. Obtenez un nouveau code sur cet appareil, puis réessayez.</string>
+    <string name="restore">Restaurer</string>
+    <string name="contact_trash_confirm_message">Vous pouvez restaurer des contacts depuis la corbeille.</string>
+    <string name="empty_contacts_trash_confirm_message">Supprimer définitivement tous les contacts de la corbeille ? Cette action est irréversible.</string>
+    <string name="contact_restored">Contact restauré</string>
+    <string name="contact_moved_to_trash">Contact déplacé vers la corbeille</string>
+    <string name="contact_trash_days_left">%1$d jours restants</string>
+    <string name="contacts_in_trash_notice">Les contacts placés dans la corbeille sont supprimés définitivement au bout de 30 jours.</string>
+    <string name="contacts_import_empty">Aucun contact trouvé dans ce fichier</string>
+    <string name="contacts_import_failed">Impossible d\'importer les contacts</string>
+    <string name="contacts_export_failed">Impossible d\'exporter les contacts</string>
+    <string name="import_contacts_file">Importer depuis un fichier</string>
+    <string name="export_contacts_action">Exporter les contacts</string>
+    <string name="export_all_contacts">Exporter tous les contacts</string>
+    <string name="export_selection">Exporter la sélection</string>
+    <string name="export_as_vcard">Exporter en vCard</string>
+    <string name="export_as_csv">Exporter en CSV</string>
+    <string name="contact_photo">Photo du contact</string>
+    <string name="remove_photo">Supprimer la photo</string>
+    <string name="add_photo">Ajouter une photo</string>
+    <string name="photo_too_large">Choisissez une image plus petite</string>
+    <string name="no_contacts_yet">Pas encore de contacts</string>
+    <string name="no_contacts_match">Aucun contact ne correspond à \"%1$s\"</string>
+    <string name="no_contacts_in_trash">La corbeille est vide</string>
+    <string name="contacts_already_in_trash">Certains contacts sont déjà dans la Corbeille. Restaurez-les plutôt.</string>
 </resources>

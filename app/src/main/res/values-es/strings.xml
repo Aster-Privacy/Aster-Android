@@ -879,6 +879,10 @@
     <string name="forwarding_verification_sent">Correo de verificación enviado a %1$s. El reenvío comenzará cuando se confirme.</string>
     <string name="forwarding_internal_active">El reenvío está activo. Los destinos de Aster a Aster no necesitan verificación.</string>
     <string name="forwarding_verification_resent">Correo de verificación reenviado a %1$s</string>
+    <string name="forwarding_failed_badge">Sin entregar</string>
+    <string name="forwarding_failed_encryption">Requerir cifrado está activado, pero %1$s no tiene clave PGP, así que los mensajes no se reenvían. Desactiva Requerir cifrado en los ajustes de cifrado o añade la clave pública del destinatario.</string>
+    <string name="forwarding_failed_generic">El último reenvío a %1$s falló: %2$s</string>
+    <string name="forwarding_failed_count">Mensajes no reenviados: %1$d</string>
 
     <string name="signature">Firma</string>
     <string name="your_signature">Tu firma</string>
@@ -1950,6 +1954,9 @@
     <string name="upgrade_view_plans">Ver planes</string>
     <string name="upgrade_buy_storage">Añadir almacenamiento</string>
     <string name="upgrade_not_now">Ahora no</string>
+    <string name="upgrade_get_plan">Elegir %1$s</string>
+    <string name="upgrade_reassurance">Cancela cuando quieras</string>
+    <string name="upgrade_trust_line">Sin anuncios, sin rastreo</string>
     <string name="upgrade_perk_storage">Más espacio para mensajes y adjuntos</string>
     <string name="upgrade_perk_aliases">Alias ilimitados y dominios propios</string>
     <string name="upgrade_perk_domains">Dominios propios y funciones pro</string>
@@ -3090,6 +3097,7 @@
     <string name="new_group">Nuevo grupo</string>
     <string name="group_name">Nombre del grupo</string>
     <string name="delete_group">Eliminar grupo</string>
+    <string name="edit_group">Editar grupo</string>
     <string name="delete_group_message">Los contactos de este grupo permanecen en tu libreta de direcciones.</string>
     <string name="no_groups_yet">Aún no hay grupos</string>
     <string name="no_groups_description">Agrupa tus contactos para escribir a varias personas a la vez. Los nombres de los grupos se cifran en este dispositivo antes de guardarse.</string>
@@ -3158,4 +3166,28 @@
     <string name="alias_unpinned_toast">Alias desfijado</string>
     <string name="e2e_identity_changed_blocked">No se pudo enviar: la clave de cifrado de un destinatario cambió. Confirma el cambio en tu bandeja de entrada y vuelve a enviar el mensaje. El mensaje no se envió.</string>
     <string name="link_device_error_binding_mismatch">El otro dispositivo envió claves que no coinciden con este código. Obtén un código nuevo en ese dispositivo y vuelve a intentarlo.</string>
+    <string name="restore">Restaurar</string>
+    <string name="contact_trash_confirm_message">Puedes restaurar contactos desde la papelera.</string>
+    <string name="empty_contacts_trash_confirm_message">¿Eliminar de forma permanente todos los contactos de la papelera? Esta acción no se puede deshacer.</string>
+    <string name="contact_restored">Contacto restaurado</string>
+    <string name="contact_moved_to_trash">Contacto movido a la papelera</string>
+    <string name="contact_trash_days_left">Quedan %1$d días</string>
+    <string name="contacts_in_trash_notice">Los contactos de la papelera se eliminan definitivamente a los 30 días.</string>
+    <string name="contacts_import_empty">No se encontraron contactos en ese archivo</string>
+    <string name="contacts_import_failed">No se pudieron importar los contactos</string>
+    <string name="contacts_export_failed">No se pudieron exportar los contactos</string>
+    <string name="import_contacts_file">Importar desde un archivo</string>
+    <string name="export_contacts_action">Exportar contactos</string>
+    <string name="export_all_contacts">Exportar todos los contactos</string>
+    <string name="export_selection">Exportar la selección</string>
+    <string name="export_as_vcard">Exportar como vCard</string>
+    <string name="export_as_csv">Exportar como CSV</string>
+    <string name="contact_photo">Foto del contacto</string>
+    <string name="remove_photo">Quitar la foto</string>
+    <string name="add_photo">Añadir una foto</string>
+    <string name="photo_too_large">Elige una imagen más pequeña</string>
+    <string name="no_contacts_yet">Aún no hay contactos</string>
+    <string name="no_contacts_match">Ningún contacto coincide con \"%1$s\"</string>
+    <string name="no_contacts_in_trash">La papelera está vacía</string>
+    <string name="contacts_already_in_trash">Algunos contactos ya están en la Papelera. Restaúralos en su lugar.</string>
 </resources>

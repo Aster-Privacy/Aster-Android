@@ -72,4 +72,8 @@
         <item quantity="one">%2$s में %1$d संदेश</item>
         <item quantity="other">%2$s में %1$d संदेश</item>
     </plurals>
+    <plurals name="exported_contacts">
+        <item quantity="one">%d संपर्क निर्यात किया गया</item>
+        <item quantity="other">%d संपर्क निर्यात किए गए</item>
+    </plurals>
 </resources>

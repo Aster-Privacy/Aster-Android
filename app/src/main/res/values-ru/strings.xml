@@ -878,6 +878,10 @@
     <string name="forwarding_verification_sent">Письмо для подтверждения отправлено на %1$s. Пересылка начнётся после подтверждения.</string>
     <string name="forwarding_internal_active">Пересылка активна. Адреса Aster на Aster не требуют подтверждения.</string>
     <string name="forwarding_verification_resent">Письмо для подтверждения повторно отправлено на %1$s</string>
+    <string name="forwarding_failed_badge">Не доставляется</string>
+    <string name="forwarding_failed_encryption">Включена настройка Требовать шифрование, но у %1$s нет PGP-ключа, поэтому письма не пересылаются. Отключите Требовать шифрование в настройках шифрования или добавьте открытый ключ получателя.</string>
+    <string name="forwarding_failed_generic">Последняя пересылка на %1$s не удалась: %2$s</string>
+    <string name="forwarding_failed_count">Непересланных писем: %1$d</string>
 
     <string name="signature">Подпись</string>
     <string name="your_signature">Ваша подпись</string>
@@ -1955,6 +1959,9 @@
     <string name="upgrade_view_plans">Посмотреть тарифы</string>
     <string name="upgrade_buy_storage">Добавить место</string>
     <string name="upgrade_not_now">Не сейчас</string>
+    <string name="upgrade_get_plan">Выбрать %1$s</string>
+    <string name="upgrade_reassurance">Отмена в любой момент</string>
+    <string name="upgrade_trust_line">Без рекламы, без отслеживания</string>
     <string name="upgrade_perk_storage">Больше места для писем и вложений</string>
     <string name="upgrade_perk_aliases">Неограниченные псевдонимы и свои домены</string>
     <string name="upgrade_perk_domains">Свои домены и профессиональные возможности</string>
@@ -3119,6 +3126,7 @@
     <string name="new_group">Новая группа</string>
     <string name="group_name">Название группы</string>
     <string name="delete_group">Удалить группу</string>
+    <string name="edit_group">Изменить группу</string>
     <string name="delete_group_message">Контакты из этой группы останутся в вашей адресной книге.</string>
     <string name="no_groups_yet">Групп пока нет</string>
     <string name="no_groups_description">Объединяйте контакты в группы, чтобы писать нескольким людям сразу. Названия групп шифруются на этом устройстве перед сохранением.</string>
@@ -3197,4 +3205,28 @@
     <string name="alias_unpinned_toast">Псевдоним откреплён</string>
     <string name="e2e_identity_changed_blocked">Не удалось отправить: ключ шифрования получателя изменился. Подтвердите изменение во входящих, затем отправьте снова. Сообщение не отправлено.</string>
     <string name="link_device_error_binding_mismatch">Другое устройство отправило ключи, которые не соответствуют этому коду. Получите новый код на том устройстве и повторите попытку.</string>
+    <string name="restore">Восстановить</string>
+    <string name="contact_trash_confirm_message">Контакты можно восстановить из корзины.</string>
+    <string name="empty_contacts_trash_confirm_message">Удалить все контакты из корзины навсегда? Отменить это нельзя.</string>
+    <string name="contact_restored">Контакт восстановлен</string>
+    <string name="contact_moved_to_trash">Контакт перемещен в корзину</string>
+    <string name="contact_trash_days_left">Осталось дней: %1$d</string>
+    <string name="contacts_in_trash_notice">Контакты в корзине удаляются безвозвратно через 30 дней.</string>
+    <string name="contacts_import_empty">В этом файле нет контактов</string>
+    <string name="contacts_import_failed">Не удалось импортировать контакты</string>
+    <string name="contacts_export_failed">Не удалось экспортировать контакты</string>
+    <string name="import_contacts_file">Импортировать из файла</string>
+    <string name="export_contacts_action">Экспортировать контакты</string>
+    <string name="export_all_contacts">Экспортировать все контакты</string>
+    <string name="export_selection">Экспортировать выбранное</string>
+    <string name="export_as_vcard">Экспортировать в vCard</string>
+    <string name="export_as_csv">Экспортировать в CSV</string>
+    <string name="contact_photo">Фото контакта</string>
+    <string name="remove_photo">Удалить фото</string>
+    <string name="add_photo">Добавить фото</string>
+    <string name="photo_too_large">Выберите изображение меньшего размера</string>
+    <string name="no_contacts_yet">Контактов пока нет</string>
+    <string name="no_contacts_match">Нет контактов по запросу «%1$s»</string>
+    <string name="no_contacts_in_trash">Корзина пуста</string>
+    <string name="contacts_already_in_trash">Некоторые контакты уже в Корзине. Восстановите их.</string>
 </resources>

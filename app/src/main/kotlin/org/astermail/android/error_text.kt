@@ -73,6 +73,10 @@ private fun send_refusal_message(
             details["domain"]?.takeIf { it.isNotBlank() }
                 ?: context.getString(R.string.send_refusal_that_provider),
         )
+        "FORWARDING_ENCRYPTION_KEY_MISSING" -> context.getString(
+            R.string.forwarding_failed_encryption,
+            details["address"].orEmpty(),
+        )
         else -> null
     }
 }

@@ -878,6 +878,10 @@
     <string name="forwarding_verification_sent">%1$s に確認メールを送信しました。確認後に転送が開始されます。</string>
     <string name="forwarding_internal_active">転送は有効です。Aster から Aster への宛先には確認は不要です。</string>
     <string name="forwarding_verification_resent">%1$s に確認メールを再送信しました</string>
+    <string name="forwarding_failed_badge">配信されていません</string>
+    <string name="forwarding_failed_encryption">暗号化を必須にするがオンになっていますが、%1$s には PGP 鍵がないため、メッセージは転送されません。暗号化設定で暗号化を必須にするをオフにするか、受信者の公開鍵を追加してください。</string>
+    <string name="forwarding_failed_generic">%1$s への前回の転送に失敗しました: %2$s</string>
+    <string name="forwarding_failed_count">転送されなかったメッセージ: %1$d</string>
 
     <string name="signature">署名</string>
     <string name="your_signature">あなたの署名</string>
@@ -1946,6 +1950,9 @@
     <string name="upgrade_view_plans">プランを見る</string>
     <string name="upgrade_buy_storage">容量を追加</string>
     <string name="upgrade_not_now">あとで</string>
+    <string name="upgrade_get_plan">%1$sを選ぶ</string>
+    <string name="upgrade_reassurance">いつでも解約できます</string>
+    <string name="upgrade_trust_line">広告なし、トラッキングなし</string>
     <string name="upgrade_perk_storage">メールと添付のための容量を追加</string>
     <string name="upgrade_perk_aliases">無制限のエイリアスと独自ドメイン</string>
     <string name="upgrade_perk_domains">独自ドメインとプロ向け機能</string>
@@ -3076,6 +3083,7 @@
     <string name="new_group">新しいグループ</string>
     <string name="group_name">グループ名</string>
     <string name="delete_group">グループを削除</string>
+    <string name="edit_group">グループを編集</string>
     <string name="delete_group_message">このグループの連絡先はアドレス帳に残ります。</string>
     <string name="no_groups_yet">グループがありません</string>
     <string name="no_groups_description">連絡先をグループにまとめると、複数の相手にまとめて送信できます。グループ名は保存前にこのデバイスで暗号化されます。</string>
@@ -3139,4 +3147,28 @@
     <string name="alias_unpinned_toast">エイリアスのピン留めを解除しました</string>
     <string name="e2e_identity_changed_blocked">送信できませんでした: 受信者の暗号化キーが変更されました。受信トレイで変更を確認してから、もう一度送信してください。メッセージは送信されていません。</string>
     <string name="link_device_error_binding_mismatch">もう一方のデバイスから、このコードと一致しないキーが送信されました。そのデバイスで新しいコードを取得してから、もう一度お試しください。</string>
+    <string name="restore">復元</string>
+    <string name="contact_trash_confirm_message">連絡先はごみ箱から復元できます。</string>
+    <string name="empty_contacts_trash_confirm_message">ごみ箱内の連絡先をすべて完全に削除しますか。この操作は取り消せません。</string>
+    <string name="contact_restored">連絡先を復元しました</string>
+    <string name="contact_moved_to_trash">連絡先をゴミ箱に移動しました</string>
+    <string name="contact_trash_days_left">残り %1$d 日</string>
+    <string name="contacts_in_trash_notice">ゴミ箱の連絡先は 30 日後に完全に削除されます。</string>
+    <string name="contacts_import_empty">そのファイルに連絡先が見つかりません</string>
+    <string name="contacts_import_failed">連絡先を読み込めませんでした</string>
+    <string name="contacts_export_failed">連絡先を書き出せませんでした</string>
+    <string name="import_contacts_file">ファイルから読み込む</string>
+    <string name="export_contacts_action">連絡先を書き出す</string>
+    <string name="export_all_contacts">すべての連絡先を書き出す</string>
+    <string name="export_selection">選択項目を書き出す</string>
+    <string name="export_as_vcard">vCard として書き出す</string>
+    <string name="export_as_csv">CSV として書き出す</string>
+    <string name="contact_photo">連絡先の写真</string>
+    <string name="remove_photo">写真を削除</string>
+    <string name="add_photo">写真を追加</string>
+    <string name="photo_too_large">もっと小さい画像を選んでください</string>
+    <string name="no_contacts_yet">連絡先はまだありません</string>
+    <string name="no_contacts_match">\"%1$s\" に一致する連絡先はありません</string>
+    <string name="no_contacts_in_trash">ゴミ箱は空です</string>
+    <string name="contacts_already_in_trash">一部の連絡先はすでにゴミ箱にあります。復元してください。</string>
 </resources>

@@ -97,7 +97,8 @@ class MailPollingWorker(
         }
 
         if (inputData.getBoolean(KEY_FORCE_NOTIFY, false)) {
-            notify_for_new_mail(1)
+            notify_for_new_mail(1, fetch_limit = FORCED_FETCH_LIMIT)
+            if (posted_this_run) advance_baseline_for_push(prefs)
             return Result.success()
         }
 
@@ -219,6 +220,7 @@ class MailPollingWorker(
         if (!suppressed_by_quiet_hours && !deferred) {
             editor.putInt(KEY_CACHED_UNREAD, new_unread)
             editor.putInt(KEY_CACHED_NOTIFIABLE, new_notifiable)
+            editor.putLong(KEY_BASELINE_MS, System.currentTimeMillis())
         } else if (new_notifiable < cached_notifiable) {
             editor.putInt(KEY_CACHED_NOTIFIABLE, new_notifiable)
         }
@@ -231,9 +233,13 @@ class MailPollingWorker(
         show_generic(context, unread_count)
     }
 
-    private suspend fun notify_for_new_mail(arrived: Int): Boolean {
+    private var posted_this_run = false
+
+    private suspend fun notify_for_new_mail(arrived: Int, fetch_limit: Int = arrived.coerceIn(1, 5)): Boolean {
         if (!is_notify_new_email(context) && !is_notify_replies(context)) return true
         if (message_notified_recently(context)) return false
+        val floor_ms = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getLong(KEY_BASELINE_MS, 0L)
         val entry = try {
             EntryPointAccessors.fromApplication(
                 context.applicationContext,
@@ -246,12 +252,12 @@ class MailPollingWorker(
         }
         val app_lock_configured = runCatching { entry?.app_lock_store()?.is_configured() ?: true }.getOrDefault(true)
         if (org.astermail.android.security.LockdownStore.is_enabled(context) || app_lock_configured) {
-            show_generic(context, arrived)
+            posted_this_run = show_generic(context, arrived)
             return true
         }
         val repo = entry?.mail_repository()
         if (repo == null) {
-            show_generic(context, arrived)
+            posted_this_run = show_generic(context, arrived)
             return true
         }
         var newest: org.astermail.android.mail.InboxItem? = null
@@ -264,12 +270,12 @@ class MailPollingWorker(
             if (attempt > 0) kotlinx.coroutines.delay(1_500L)
             val page = try {
                 kotlinx.coroutines.withTimeout(20_000L) {
-                    repo.fetch_inbox(limit = arrived.coerceIn(1, 5))
+                    repo.fetch_inbox(limit = fetch_limit)
                 }.getOrNull()
             } catch (_: Throwable) { null }
             if (page != null) fetched_any_page = true
-            var candidate = page?.items?.let { pick_notifiable_candidate(context, it) }
-            if (page?.items?.let { has_protected_candidate(context, it) } == true) protected_pending = true
+            var candidate = page?.items?.let { pick_notifiable_candidate(context, it, floor_ms) }
+            if (page?.items?.let { has_protected_candidate(context, it, floor_ms) } == true) protected_pending = true
 
             if (candidate == null) {
                 val folders = try {
@@ -283,12 +289,12 @@ class MailPollingWorker(
                     if (folder.label_token in muted) continue
                     val folder_page = try {
                         kotlinx.coroutines.withTimeout(20_000L) {
-                            repo.fetch_inbox(limit = arrived.coerceIn(1, 5), label_token = folder.label_token)
+                            repo.fetch_inbox(limit = fetch_limit, label_token = folder.label_token)
                         }.getOrNull()
                     } catch (_: Throwable) { null }
                     if (folder_page != null) fetched_any_page = true
-                    candidate = folder_page?.items?.let { pick_notifiable_candidate(context, it) }
-                    if (folder_page?.items?.let { has_protected_candidate(context, it) } == true) {
+                    candidate = folder_page?.items?.let { pick_notifiable_candidate(context, it, floor_ms) }
+                    if (folder_page?.items?.let { has_protected_candidate(context, it, floor_ms) } == true) {
                         protected_pending = true
                     }
                     if (candidate != null) break
@@ -326,7 +332,7 @@ class MailPollingWorker(
         val resolved_sender = sender
         if (fresh == null || resolved_sender.isNullOrBlank()) {
             if (!fetched_any_page || protected_pending) {
-                show_generic(context, arrived)
+                posted_this_run = show_generic(context, arrived)
             }
             return true
         }
@@ -373,6 +379,7 @@ class MailPollingWorker(
                 )
             }.isSuccess
             if (!posted) release_item_notification(context, item_id)
+            if (posted) posted_this_run = true
             posted
         }
     }
@@ -400,6 +407,9 @@ class MailPollingWorker(
         private const val PREFS_NAME = "mail_polling_prefs"
         private const val KEY_CACHED_UNREAD = "cached_unread_count"
         private const val KEY_CACHED_NOTIFIABLE = "cached_notifiable_count"
+        private const val KEY_BASELINE_MS = "baseline_ms"
+        const val BASELINE_SLACK_MS = 15L * 60_000L
+        const val FORCED_FETCH_LIMIT = 5
         private const val KEY_PUSH_ENABLED = "push_notifications_enabled"
         private const val KEY_LAST_NOTIFIED_COUNT = "last_notified_notifiable_count"
         private const val KEY_NOTIFIED_ITEM_IDS = "notified_item_ids"
@@ -668,6 +678,7 @@ class MailPollingWorker(
                 .remove(KEY_CACHED_UNREAD)
                 .remove(KEY_CACHED_NOTIFIABLE)
                 .remove(KEY_LAST_NOTIFIED_COUNT)
+                .remove(KEY_BASELINE_MS)
                 .remove(KEY_NOTIFIED_ITEM_IDS)
                 .remove(KEY_LAST_MESSAGE_NOTIFY_MS)
                 .apply()
@@ -790,14 +801,14 @@ class MailPollingWorker(
         }
 
         @Synchronized
-        fun show_generic(context: Context, unread_count: Int) {
-            if (!can_post(context)) return
-            if (message_notified_recently(context)) return
+        fun show_generic(context: Context, unread_count: Int): Boolean {
+            if (!can_post(context)) return false
+            if (message_notified_recently(context)) return false
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             val now = System.currentTimeMillis()
             val repeat_of_last = prefs.getInt(KEY_LAST_GENERIC_COUNT, -1) == unread_count &&
                 now - prefs.getLong(KEY_LAST_GENERIC_MS, 0L) < GENERIC_NOTIFY_COOLDOWN_MS
-            if (repeat_of_last) return
+            if (repeat_of_last) return false
             prefs.edit()
                 .putInt(KEY_LAST_GENERIC_COUNT, unread_count)
                 .putLong(KEY_LAST_GENERIC_MS, now)
@@ -812,8 +823,10 @@ class MailPollingWorker(
                 .setGroup(GROUP_KEY_NEW_MAIL)
                 .build()
             val manager = NotificationManagerCompat.from(context)
+            manager.cancel(NOTIFICATION_ID)
             manager.notify(NOTIFICATION_ID, notification)
             post_group_summary(context, manager, NOTIFICATION_ID)
+            return true
         }
 
         fun show_message(
@@ -979,19 +992,42 @@ class MailPollingWorker(
         fun has_protected_candidate(
             context: Context,
             items: List<org.astermail.android.mail.InboxItem>,
+            floor_ms: Long = 0L,
         ): Boolean {
             val protected_tokens = protected_folder_tokens(context)
             if (protected_tokens.isEmpty()) return false
             return items.any {
                 !it.is_read &&
+                    is_newer_than_baseline(it.timestamp, floor_ms) &&
                     !was_item_notified(context, it.id) &&
                     is_item_in_protected_folder(it, protected_tokens)
             }
         }
 
+        fun is_newer_than_baseline(timestamp: String, floor_ms: Long, slack_ms: Long = BASELINE_SLACK_MS): Boolean {
+            if (floor_ms <= 0L) return true
+            val item_ms = runCatching { java.time.Instant.parse(timestamp).toEpochMilli() }
+                .getOrElse { runCatching { java.time.OffsetDateTime.parse(timestamp).toInstant().toEpochMilli() }.getOrNull() }
+                ?: return true
+            return item_ms >= floor_ms - slack_ms
+        }
+
+        fun advance_baseline_for_push(prefs: android.content.SharedPreferences, count: Int = 1) {
+            if (!prefs.contains(KEY_CACHED_UNREAD)) return
+            prefs.edit()
+                .putInt(KEY_CACHED_UNREAD, prefs.getInt(KEY_CACHED_UNREAD, 0) + count)
+                .putInt(KEY_CACHED_NOTIFIABLE, prefs.getInt(KEY_CACHED_NOTIFIABLE, 0) + count)
+                .commit()
+        }
+
+        fun note_push_notification_posted(context: Context) {
+            advance_baseline_for_push(context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE))
+        }
+
         fun pick_notifiable_candidate(
             context: Context,
             items: List<org.astermail.android.mail.InboxItem>,
+            floor_ms: Long = 0L,
         ): org.astermail.android.mail.InboxItem? {
             val muted = muted_folder_tokens(context)
             val muted_categories = muted_notification_categories(context)
@@ -999,6 +1035,7 @@ class MailPollingWorker(
             val sign_in_marker = NotificationDedupe.sign_in_marker(context)
             return items.firstOrNull {
                 !it.is_read &&
+                    is_newer_than_baseline(it.timestamp, floor_ms) &&
                     !was_item_notified(context, it.id) &&
                     !is_item_in_muted_folder(it, muted) &&
                     !is_item_in_protected_folder(it, protected_tokens) &&
@@ -1147,6 +1184,7 @@ class MailPollingWorker(
             val vibrate = is_vibrate_enabled(context)
             return NotificationCompat.Builder(context, active_channel_id(context))
                 .setSilent(!sound && !vibrate)
+                .setOnlyAlertOnce(true)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setLargeIcon(app_large_icon(context))
                 .setColor(0xFF3B82F6.toInt())
