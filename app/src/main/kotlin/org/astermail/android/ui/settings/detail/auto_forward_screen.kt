@@ -222,6 +222,42 @@ fun AutoForwardScreen(
                 },
                 enabled = target.contains("@") && state.save_status != SaveStatus.SAVING,
             )
+            val failing_rule = active_rule?.takeIf { it.is_failing }
+            if (failing_rule != null) {
+                v_gap(AsterSpacing.lg)
+                AsterCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(AsterSpacing.lg)) {
+                        Text(
+                            text = stringResource(R.string.forwarding_failed_badge),
+                            color = colors.danger,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
+                        v_gap(AsterSpacing.sm)
+                        Text(
+                            text = if (failing_rule.encryption_blocked) {
+                                stringResource(R.string.forwarding_failed_encryption, failing_rule.failing_address)
+                            } else {
+                                stringResource(
+                                    R.string.forwarding_failed_generic,
+                                    failing_rule.failing_address,
+                                    failing_rule.last_error.orEmpty(),
+                                )
+                            },
+                            color = colors.text_tertiary,
+                            fontSize = 13.sp,
+                        )
+                        if (failing_rule.failed_count > 0) {
+                            v_gap(AsterSpacing.sm)
+                            Text(
+                                text = stringResource(R.string.forwarding_failed_count, failing_rule.failed_count.toInt()),
+                                color = colors.text_tertiary,
+                                fontSize = 13.sp,
+                            )
+                        }
+                    }
+                }
+            }
             val pending = active_rule?.pending_destinations.orEmpty()
             if (pending.isNotEmpty()) {
                 v_gap(AsterSpacing.lg)
