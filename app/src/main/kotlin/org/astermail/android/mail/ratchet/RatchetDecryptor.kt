@@ -200,7 +200,6 @@ class RatchetDecryptor @Inject constructor(
                 } catch (c: kotlinx.coroutines.CancellationException) {
                     throw c
                 } catch (e: Throwable) {
-                    if (!can_bootstrap) throw e
                     decrypt_error = e
                 }
             }

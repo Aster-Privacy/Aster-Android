@@ -54,4 +54,7 @@
     <plurals name="messages_in_type">
         <item quantity="other">%2$s에 %1$d개의 메시지</item>
     </plurals>
+    <plurals name="exported_contacts">
+        <item quantity="other">연락처 %d개를 내보냈습니다</item>
+    </plurals>
 </resources>

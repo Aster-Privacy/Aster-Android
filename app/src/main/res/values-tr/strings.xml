@@ -878,6 +878,10 @@
     <string name="forwarding_verification_sent">Doğrulama e-postası %1$s adresine gönderildi. Yönlendirme onaylandıktan sonra başlar.</string>
     <string name="forwarding_internal_active">Yönlendirme etkin. Aster\'dan Aster\'a hedefler doğrulama gerektirmez.</string>
     <string name="forwarding_verification_resent">Doğrulama e-postası %1$s adresine yeniden gönderildi</string>
+    <string name="forwarding_failed_badge">Teslim edilmiyor</string>
+    <string name="forwarding_failed_encryption">Şifreleme zorunlu kıl açık, ancak %1$s için PGP anahtarı yok, bu yüzden iletiler iletilmiyor. Şifreleme ayarlarından Şifreleme zorunlu kıl seçeneğini kapatın veya alıcının açık anahtarını ekleyin.</string>
+    <string name="forwarding_failed_generic">%1$s adresine son iletim başarısız oldu: %2$s</string>
+    <string name="forwarding_failed_count">İletilmeyen iletiler: %1$d</string>
 
     <string name="signature">İmza</string>
     <string name="your_signature">İmzanız</string>
@@ -1949,6 +1953,9 @@
     <string name="upgrade_view_plans">Planları gör</string>
     <string name="upgrade_buy_storage">Depolama ekle</string>
     <string name="upgrade_not_now">Şimdi değil</string>
+    <string name="upgrade_get_plan">%1$s al</string>
+    <string name="upgrade_reassurance">İstediğiniz zaman iptal edin</string>
+    <string name="upgrade_trust_line">Reklam yok, izleme yok</string>
     <string name="upgrade_perk_storage">İletiler ve ekler için daha fazla alan</string>
     <string name="upgrade_perk_aliases">Sınırsız takma ad ve kendi alan adların</string>
     <string name="upgrade_perk_domains">Kendi alan adların ve profesyonel özellikler</string>
@@ -3089,6 +3096,7 @@
     <string name="new_group">Yeni grup</string>
     <string name="group_name">Grup adı</string>
     <string name="delete_group">Grubu sil</string>
+    <string name="edit_group">Grubu düzenle</string>
     <string name="delete_group_message">Bu gruptaki kişiler adres defterinizde kalır.</string>
     <string name="no_groups_yet">Henüz grup yok</string>
     <string name="no_groups_description">Aynı anda birden çok kişiye yazmak için kişilerinizi gruplayın. Grup adları kaydedilmeden önce bu cihazda şifrelenir.</string>
@@ -3157,4 +3165,28 @@
     <string name="alias_unpinned_toast">Rumuz sabitlemesi kaldırıldı</string>
     <string name="e2e_identity_changed_blocked">Gönderilemedi: bir alıcının şifreleme anahtarı değişti. Değişikliği gelen kutunuzda onaylayın, ardından yeniden gönderin. Mesaj gönderilmedi.</string>
     <string name="link_device_error_binding_mismatch">Diğer cihaz bu kodla eşleşmeyen anahtarlar gönderdi. O cihazda yeni bir kod alın, ardından yeniden deneyin.</string>
+    <string name="restore">Geri yükle</string>
+    <string name="contact_trash_confirm_message">Kiṡileri çöp kutusundan geri yükleyebilirsiniz.</string>
+    <string name="empty_contacts_trash_confirm_message">Çöp kutusundaki tüm kiṡiler kalıcı olarak silinsin mi? Bu işlem geri alınamaz.</string>
+    <string name="contact_restored">Kişi geri yüklendi</string>
+    <string name="contact_moved_to_trash">Kişi çöp kutusuna taşındı</string>
+    <string name="contact_trash_days_left">%1$d gün kaldı</string>
+    <string name="contacts_in_trash_notice">Çöp kutusundaki kişiler 30 gün sonra kalıcı olarak silinir.</string>
+    <string name="contacts_import_empty">Bu dosyada kişi bulunamadı</string>
+    <string name="contacts_import_failed">Kişiler içe aktarılamadı</string>
+    <string name="contacts_export_failed">Kişiler dışa aktarılamadı</string>
+    <string name="import_contacts_file">Dosyadan içe aktar</string>
+    <string name="export_contacts_action">Kişileri dışa aktar</string>
+    <string name="export_all_contacts">Tüm kişileri dışa aktar</string>
+    <string name="export_selection">Seçimi dışa aktar</string>
+    <string name="export_as_vcard">vCard olarak dışa aktar</string>
+    <string name="export_as_csv">CSV olarak dışa aktar</string>
+    <string name="contact_photo">Kişi fotoğrafı</string>
+    <string name="remove_photo">Fotoğrafı kaldır</string>
+    <string name="add_photo">Fotoğraf ekle</string>
+    <string name="photo_too_large">Daha küçük bir görsel seçin</string>
+    <string name="no_contacts_yet">Henüz kişi yok</string>
+    <string name="no_contacts_match">“%1$s” ile eşleşen kişi yok</string>
+    <string name="no_contacts_in_trash">Çöp kutusu boş</string>
+    <string name="contacts_already_in_trash">Bazı kişiler zaten Çöp kutusunda. Bunun yerine geri yükleyin.</string>
 </resources>

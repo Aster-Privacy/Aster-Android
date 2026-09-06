@@ -95,7 +95,6 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterDestructiveButton
 import org.astermail.android.design.components.AsterIconButton
-import org.astermail.android.ui.mail.SenderAvatar
 import org.astermail.android.ui.search.build_contact_mail_query
 import androidx.compose.material.icons.filled.Star
 
@@ -227,10 +226,12 @@ fun ContactDetailScreen(
                     .padding(vertical = AsterSpacing.xxl),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                SenderAvatar(
+                ContactAvatar(
+                    avatar_url = contact.avatar_url,
                     email = contact.email,
                     name = contact.name,
                     size = 96.dp,
+                    content_description = stringResource(R.string.contact_photo),
                 )
                 Spacer(Modifier.height(AsterSpacing.md))
                 Text(
@@ -319,11 +320,15 @@ fun ContactDetailScreen(
             }
             Spacer(Modifier.height(AsterSpacing.xl))
 
-            DetailCard(title = stringResource(R.string.email)) {
-                DetailRow(stringResource(R.string.personal), contact.email)
-                if (contact.work_email.isNotBlank()) {
-                    AsterDivider()
-                    DetailRow(stringResource(R.string.work), contact.work_email)
+            if (contact.email.isNotBlank() || contact.work_email.isNotBlank()) {
+                DetailCard(title = stringResource(R.string.email)) {
+                    if (contact.email.isNotBlank()) {
+                        DetailRow(stringResource(R.string.personal), contact.email)
+                    }
+                    if (contact.work_email.isNotBlank()) {
+                        if (contact.email.isNotBlank()) AsterDivider()
+                        DetailRow(stringResource(R.string.work), contact.work_email)
+                    }
                 }
             }
 
@@ -354,7 +359,7 @@ fun ContactDetailScreen(
             if (contact.birthday.isNotBlank()) {
                 Spacer(Modifier.height(AsterSpacing.md))
                 DetailCard(title = stringResource(R.string.birthday)) {
-                    DetailRow(stringResource(R.string.date), contact.birthday)
+                    DetailRow(stringResource(R.string.date), format_contact_date(contact.birthday))
                 }
             }
 
@@ -453,11 +458,8 @@ fun ContactDetailScreen(
             if (show_delete_confirm) {
                 org.astermail.android.design.components.AsterAlertDialog(
                     on_dismiss = { show_delete_confirm = false },
-                    title = stringResource(R.string.delete_contact),
-                    message = stringResource(
-                        R.string.alias_delete_confirm_message,
-                        contact.name.takeIf { it.isNotBlank() } ?: contact.email,
-                    ),
+                    title = stringResource(R.string.move_to_trash),
+                    message = stringResource(R.string.contact_trash_confirm_message),
                     confirm_label = stringResource(R.string.delete),
                     cancel_label = stringResource(R.string.cancel),
                     confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
@@ -531,6 +533,12 @@ private fun QuickAction(
         )
     }
 }
+
+private fun format_contact_date(value: String): String = runCatching {
+    java.time.LocalDate.parse(value.trim()).format(
+        java.time.format.DateTimeFormatter.ofLocalizedDate(java.time.format.FormatStyle.LONG),
+    )
+}.getOrDefault(value)
 
 @Composable
 private fun DetailCard(title: String, content: @Composable () -> Unit) {

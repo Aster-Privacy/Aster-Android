@@ -39,6 +39,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -107,7 +108,6 @@ import org.astermail.android.design.components.aster_dropdown_divider
 import org.astermail.android.design.components.aster_dropdown_item
 import org.astermail.android.design.components.aster_dropdown_menu
 import org.astermail.android.design.mirror_in_rtl
-import org.astermail.android.ui.mail.SenderAvatar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 
@@ -131,8 +131,45 @@ fun ContactsScreen(
     var filter_favorites by remember { mutableStateOf(false) }
     var show_sync_confirm by remember { mutableStateOf(false) }
     var show_bulk_menu by remember { mutableStateOf(false) }
+    var show_overflow_menu by remember { mutableStateOf(false) }
+    var pending_export_selected by remember { mutableStateOf(false) }
+    var pending_export_format by remember {
+        mutableStateOf(org.astermail.android.contacts.ContactExportFormat.VCARD)
+    }
+    val import_launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        if (uri != null) vm.import_contacts_from_file(context, uri)
+    }
+    val on_export_target: (android.net.Uri?) -> Unit = { uri ->
+        if (uri != null) {
+            vm.export_contacts_to_file(context, uri, pending_export_format, pending_export_selected)
+        }
+    }
+    val vcard_export_launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("text/x-vcard"),
+        on_export_target,
+    )
+    val csv_export_launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("text/csv"),
+        on_export_target,
+    )
+    val start_export: (Boolean, org.astermail.android.contacts.ContactExportFormat) -> Unit =
+        { selected, format ->
+            pending_export_selected = selected
+            pending_export_format = format
+            val stamp = java.time.LocalDate.now().toString()
+            if (format == org.astermail.android.contacts.ContactExportFormat.VCARD) {
+                vcard_export_launcher.launch("aster-contacts-$stamp.vcf")
+            } else {
+                csv_export_launcher.launch("aster-contacts-$stamp.csv")
+            }
+        }
     var show_delete_confirm by remember { mutableStateOf(false) }
+    var show_empty_trash_confirm by remember { mutableStateOf(false) }
+    var pending_forever_delete by remember { mutableStateOf<Contact?>(null) }
     var show_new_group by remember { mutableStateOf(false) }
+    var editing_group by remember { mutableStateOf<ContactGroup?>(null) }
     var show_group_picker by remember { mutableStateOf(false) }
     var merge_cluster by remember { mutableStateOf<DuplicateCluster?>(null) }
     var pending_group_delete by remember { mutableStateOf<ContactGroup?>(null) }
@@ -222,10 +259,22 @@ fun ContactsScreen(
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.weight(1f),
                     )
+                    val all_selected = filtered.isNotEmpty() &&
+                        filtered.all { ui_state.selected_ids.contains(it.id) }
                     AsterIconButton(
-                        icon = TablerIcons.SquareCheck,
-                        content_description = stringResource(R.string.select_all),
-                        onClick = { vm.set_selection(filtered.map { it.id }.toSet()) },
+                        icon = if (all_selected) TablerIcons.SquareCheck else TablerIcons.Square,
+                        content_description = if (all_selected) {
+                            stringResource(R.string.deselect_all)
+                        } else {
+                            stringResource(R.string.select_all)
+                        },
+                        onClick = {
+                            if (all_selected) {
+                                vm.clear_selection()
+                            } else {
+                                vm.set_selection(filtered.map { it.id }.toSet())
+                            }
+                        },
                     )
                     Box {
                         AsterIconButton(
@@ -255,6 +304,30 @@ fun ContactsScreen(
                                     show_bulk_menu = false
                                     vm.load_groups()
                                     show_group_picker = true
+                                },
+                            )
+                            aster_dropdown_item(
+                                label = stringResource(R.string.export_as_vcard),
+                                icon = TablerIcons.Download,
+                                test_tag = "bulk_export_vcard",
+                                on_click = {
+                                    show_bulk_menu = false
+                                    start_export(
+                                        true,
+                                        org.astermail.android.contacts.ContactExportFormat.VCARD,
+                                    )
+                                },
+                            )
+                            aster_dropdown_item(
+                                label = stringResource(R.string.export_as_csv),
+                                icon = TablerIcons.Download,
+                                test_tag = "bulk_export_csv",
+                                on_click = {
+                                    show_bulk_menu = false
+                                    start_export(
+                                        true,
+                                        org.astermail.android.contacts.ContactExportFormat.CSV,
+                                    )
                                 },
                             )
                             aster_dropdown_divider()
@@ -337,6 +410,65 @@ fun ContactsScreen(
                             }
                         }
                     }
+                    Box {
+                        AsterIconButton(
+                            icon = TablerIcons.DotsVertical,
+                            content_description = stringResource(R.string.more_options),
+                            onClick = { show_overflow_menu = true },
+                            modifier = Modifier.testTag("contacts_overflow_menu"),
+                        )
+                        aster_dropdown_menu(
+                            expanded = show_overflow_menu,
+                            on_dismiss = { show_overflow_menu = false },
+                        ) {
+                            aster_dropdown_item(
+                                label = stringResource(R.string.import_contacts_file),
+                                icon = TablerIcons.Upload,
+                                test_tag = "contacts_import_file",
+                                on_click = {
+                                    show_overflow_menu = false
+                                    import_launcher.launch(
+                                        arrayOf(
+                                            "text/x-vcard",
+                                            "text/vcard",
+                                            "text/csv",
+                                            "text/comma-separated-values",
+                                            "application/vnd.ms-excel",
+                                            "application/octet-stream",
+                                            "text/*",
+                                        ),
+                                    )
+                                },
+                            )
+                            aster_dropdown_divider()
+                            aster_dropdown_item(
+                                label = stringResource(R.string.export_as_vcard),
+                                icon = TablerIcons.Download,
+                                enabled = ui_state.contacts.isNotEmpty(),
+                                test_tag = "contacts_export_vcard",
+                                on_click = {
+                                    show_overflow_menu = false
+                                    start_export(
+                                        false,
+                                        org.astermail.android.contacts.ContactExportFormat.VCARD,
+                                    )
+                                },
+                            )
+                            aster_dropdown_item(
+                                label = stringResource(R.string.export_as_csv),
+                                icon = TablerIcons.Download,
+                                enabled = ui_state.contacts.isNotEmpty(),
+                                test_tag = "contacts_export_csv",
+                                on_click = {
+                                    show_overflow_menu = false
+                                    start_export(
+                                        false,
+                                        org.astermail.android.contacts.ContactExportFormat.CSV,
+                                    )
+                                },
+                            )
+                        }
+                    }
                 }
             }
             AsterDivider()
@@ -344,6 +476,7 @@ fun ContactsScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
                     .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
                 horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
             ) {
@@ -359,13 +492,39 @@ fun ContactsScreen(
                     count = ui_state.groups.size,
                     on_click = { vm.select_tab(ContactsTab.GROUPS) },
                 )
+                FilterChip(
+                    label = stringResource(R.string.trash),
+                    active = ui_state.tab == ContactsTab.TRASH,
+                    count = ui_state.trashed_contacts.size,
+                    on_click = { vm.select_tab(ContactsTab.TRASH) },
+                )
             }
 
             if (ui_state.tab == ContactsTab.GROUPS) {
                 groups_pane(
                     groups = ui_state.groups,
                     modifier = Modifier.weight(1f),
+                    on_edit = { editing_group = it },
                     on_delete = { pending_group_delete = it },
+                )
+            } else if (ui_state.tab == ContactsTab.TRASH) {
+                trash_pane(
+                    contacts = ui_state.trashed_contacts,
+                    is_busy = ui_state.is_bulk_working,
+                    modifier = Modifier.weight(1f),
+                    on_restore = { contact ->
+                        vm.restore_contact(contact) { ok ->
+                            if (ok) {
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.contact_restored),
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            }
+                        }
+                    },
+                    on_delete_forever = { pending_forever_delete = it },
+                    on_empty_trash = { show_empty_trash_confirm = true },
                 )
             } else {
                 Box(
@@ -438,8 +597,14 @@ fun ContactsScreen(
                             .padding(AsterSpacing.xxl),
                         contentAlignment = Alignment.Center,
                     ) {
+                        val empty_message = ui_state.error
+                            ?: if (query.isBlank()) {
+                                stringResource(R.string.no_contacts_yet)
+                            } else {
+                                stringResource(R.string.no_contacts_match, query.trim())
+                            }
                         Text(
-                            text = ui_state.error ?: stringResource(R.string.no_contacts_found),
+                            text = empty_message,
                             color = colors.text_muted,
                             style = MaterialTheme.typography.bodyMedium,
                         )
@@ -490,7 +655,7 @@ fun ContactsScreen(
             }
         }
 
-        if (!ui_state.is_selecting) {
+        if (!ui_state.is_selecting && ui_state.tab != ContactsTab.TRASH) {
             FloatingActionButton(
                 onClick = {
                     if (ui_state.tab == ContactsTab.GROUPS) show_new_group = true else on_create_contact()
@@ -529,15 +694,11 @@ fun ContactsScreen(
 
     if (show_delete_confirm) {
         val count = ui_state.selected_ids.size
-        val deleted_message = context.resources.getQuantityString(
-            R.plurals.contacts_deleted_plural,
-            count,
-            count,
-        )
+        val deleted_message = context.getString(R.string.contact_moved_to_trash)
         AsterAlertDialog(
             on_dismiss = { show_delete_confirm = false },
             title = context.resources.getQuantityString(R.plurals.delete_contacts_title, count, count),
-            message = stringResource(R.string.delete_contacts_message),
+            message = stringResource(R.string.contact_trash_confirm_message),
             confirm_label = stringResource(R.string.delete),
             cancel_label = stringResource(R.string.cancel),
             confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
@@ -547,6 +708,41 @@ fun ContactsScreen(
                 vm.delete_selection { ok ->
                     if (ok) Toast.makeText(context, deleted_message, Toast.LENGTH_SHORT).show()
                 }
+            },
+        )
+    }
+
+    if (show_empty_trash_confirm) {
+        AsterAlertDialog(
+            on_dismiss = { show_empty_trash_confirm = false },
+            title = stringResource(R.string.empty_trash),
+            message = stringResource(R.string.empty_contacts_trash_confirm_message),
+            confirm_label = stringResource(R.string.delete),
+            cancel_label = stringResource(R.string.cancel),
+            confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
+            is_busy = ui_state.is_bulk_working,
+            on_confirm = {
+                show_empty_trash_confirm = false
+                vm.empty_trash()
+            },
+        )
+    }
+
+    pending_forever_delete?.let { target ->
+        AsterAlertDialog(
+            on_dismiss = { pending_forever_delete = null },
+            title = stringResource(R.string.swipe_delete_forever),
+            message = stringResource(
+                R.string.alias_delete_confirm_message,
+                target.name.ifBlank { target.email },
+            ),
+            confirm_label = stringResource(R.string.delete),
+            cancel_label = stringResource(R.string.cancel),
+            confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
+            is_busy = ui_state.is_bulk_working,
+            on_confirm = {
+                pending_forever_delete = null
+                vm.delete_contact_forever(target.id)
             },
         )
     }
@@ -568,6 +764,27 @@ fun ContactsScreen(
                     }
                 }
             },
+        )
+    }
+
+    editing_group?.let { group ->
+        new_group_dialog(
+            existing_count = ui_state.groups.size,
+            is_busy = ui_state.is_bulk_working,
+            on_dismiss = { editing_group = null },
+            on_create = { name, color, icon ->
+                editing_group = null
+                vm.update_group(group.id, name, color, icon) { ok ->
+                    if (ok) {
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.saved),
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    }
+                }
+            },
+            existing = group,
         )
     }
 
@@ -756,9 +973,132 @@ private fun duplicate_banner(count: Int, on_review: () -> Unit, on_dismiss: () -
 }
 
 @Composable
+private fun trash_pane(
+    contacts: List<Contact>,
+    is_busy: Boolean,
+    modifier: Modifier = Modifier,
+    on_restore: (Contact) -> Unit,
+    on_delete_forever: (Contact) -> Unit,
+    on_empty_trash: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    if (contacts.isEmpty()) {
+        Column(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(AsterSpacing.xxl),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Icon(
+                imageVector = TablerIcons.Trash,
+                contentDescription = null,
+                tint = colors.text_muted,
+                modifier = Modifier.size(32.dp),
+            )
+            Spacer(Modifier.height(AsterSpacing.md))
+            Text(
+                text = stringResource(R.string.no_contacts_in_trash),
+                color = colors.text_primary,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+            )
+            Spacer(Modifier.height(AsterSpacing.xs))
+            Text(
+                text = stringResource(R.string.contacts_in_trash_notice),
+                color = colors.text_muted,
+                fontSize = 13.sp,
+            )
+        }
+        return
+    }
+    Column(modifier = modifier) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.xs),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.contacts_in_trash_notice),
+                color = colors.text_muted,
+                fontSize = 12.sp,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = stringResource(R.string.empty_trash),
+                color = colors.danger,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier
+                    .clip(SquircleShape(10.dp))
+                    .clickable(enabled = !is_busy, onClick = on_empty_trash)
+                    .padding(horizontal = AsterSpacing.sm, vertical = AsterSpacing.xs),
+            )
+        }
+        AsterDivider()
+        LazyColumn(contentPadding = PaddingValues(bottom = 88.dp)) {
+            itemsIndexed(contacts, key = { _, c -> c.id }) { index, contact ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    ContactAvatar(
+                        avatar_url = contact.avatar_url,
+                        email = contact.email,
+                        name = contact.name,
+                    )
+                    Spacer(Modifier.width(AsterSpacing.md))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = contact.name.ifBlank { contact.email },
+                            color = colors.text_primary,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            text = stringResource(
+                                R.string.contact_trash_days_left,
+                                org.astermail.android.contacts.contact_trash_days_left(contact.deleted_at),
+                            ),
+                            color = colors.text_muted,
+                            fontSize = 13.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    AsterIconButton(
+                        icon = TablerIcons.ArrowBackUp,
+                        content_description = stringResource(R.string.restore),
+                        onClick = { on_restore(contact) },
+                        enabled = !is_busy,
+                        tint = colors.text_muted,
+                        icon_size = 20,
+                    )
+                    AsterIconButton(
+                        icon = TablerIcons.Trash,
+                        content_description = stringResource(R.string.swipe_delete_forever),
+                        onClick = { on_delete_forever(contact) },
+                        enabled = !is_busy,
+                        tint = colors.danger,
+                        icon_size = 20,
+                    )
+                }
+                if (index < contacts.size - 1) AsterDivider()
+            }
+        }
+    }
+}
+
+@Composable
 private fun groups_pane(
     groups: List<ContactGroup>,
     modifier: Modifier = Modifier,
+    on_edit: (ContactGroup) -> Unit,
     on_delete: (ContactGroup) -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -826,6 +1166,12 @@ private fun groups_pane(
                     )
                 }
                 AsterIconButton(
+                    icon = TablerIcons.Pencil,
+                    content_description = stringResource(R.string.edit_group),
+                    icon_size = 18,
+                    onClick = { on_edit(group) },
+                )
+                AsterIconButton(
                     icon = TablerIcons.Trash,
                     content_description = stringResource(R.string.delete_group),
                     icon_size = 18,
@@ -844,17 +1190,23 @@ private fun new_group_dialog(
     is_busy: Boolean,
     on_dismiss: () -> Unit,
     on_create: (String, String, String?) -> Unit,
+    existing: ContactGroup? = null,
 ) {
     val colors = AsterMaterial.colors
-    var name by remember { mutableStateOf("") }
-    var color by remember {
-        mutableStateOf(group_colors[existing_count % group_colors.size])
+    var name by remember(existing?.id) { mutableStateOf(existing?.name ?: "") }
+    var color by remember(existing?.id) {
+        mutableStateOf(
+            existing?.color?.takeIf { it.isNotBlank() }
+                ?: group_colors[existing_count % group_colors.size],
+        )
     }
-    var icon by remember { mutableStateOf<String?>(null) }
+    var icon by remember(existing?.id) { mutableStateOf(existing?.icon) }
     val accent = parse_group_color(color, colors.accent_blue)
     AsterDialog(
         on_dismiss = on_dismiss,
-        title = stringResource(R.string.new_group),
+        title = stringResource(
+            if (existing == null) R.string.new_group else R.string.edit_group,
+        ),
         message = stringResource(R.string.no_groups_description),
         body = {
             Column(
@@ -946,7 +1298,9 @@ private fun new_group_dialog(
                 onClick = on_dismiss,
             )
             AsterDialogPrimaryButton(
-                label = stringResource(R.string.create),
+                label = stringResource(
+                    if (existing == null) R.string.create else R.string.save,
+                ),
                 enabled = name.isNotBlank(),
                 is_loading = is_busy,
                 onClick = { on_create(name, color, icon) },
@@ -1059,7 +1413,11 @@ private fun merge_dialog(
                             .padding(AsterSpacing.md),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        SenderAvatar(email = contact.email, name = contact.name)
+                        ContactAvatar(
+                        avatar_url = contact.avatar_url,
+                        email = contact.email,
+                        name = contact.name,
+                    )
                         Spacer(Modifier.width(AsterSpacing.md))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
@@ -1164,7 +1522,11 @@ private fun ContactRow(
                     )
                 }
             } else {
-                SenderAvatar(email = contact.email, name = contact.name)
+                ContactAvatar(
+                        avatar_url = contact.avatar_url,
+                        email = contact.email,
+                        name = contact.name,
+                    )
             }
         }
         Spacer(Modifier.width(AsterSpacing.md))

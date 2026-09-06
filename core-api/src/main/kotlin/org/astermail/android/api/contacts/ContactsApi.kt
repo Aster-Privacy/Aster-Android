@@ -112,8 +112,6 @@ data class ContactGroupEncrypted(
     val id: String,
     val encrypted_name: String,
     val name_nonce: String,
-    val color: String,
-    val icon: String? = null,
     val contact_count: Int = 0,
     val created_at: String? = null,
 )
@@ -128,8 +126,13 @@ data class CreateContactGroupRequest(
     val group_token: String,
     val encrypted_name: String,
     val name_nonce: String,
-    val color: String,
-    val icon: String? = null,
+)
+
+@Serializable
+data class UpdateContactGroupRequest(
+    val group_token: String? = null,
+    val encrypted_name: String? = null,
+    val name_nonce: String? = null,
 )
 
 @Serializable
@@ -154,6 +157,7 @@ interface ContactsApi {
     suspend fun search_contacts(search_token: String, field: String = "all", limit: Int? = null): SearchContactsResponse
     suspend fun list_contact_groups(): ListContactGroupsResponse
     suspend fun create_contact_group(request: CreateContactGroupRequest): CreateContactGroupResponse
+    suspend fun update_contact_group(group_id: String, request: UpdateContactGroupRequest): SuccessResponse
     suspend fun delete_contact_group(group_id: String): SuccessResponse
     suspend fun add_contact_to_group(contact_id: String, group_id: String): SuccessResponse
     suspend fun remove_contact_from_group(contact_id: String, group_id: String): SuccessResponse
@@ -234,6 +238,18 @@ class ContactsApiImpl(private val client: ApiClient) : ContactsApi {
 
     override suspend fun create_contact_group(request: CreateContactGroupRequest): CreateContactGroupResponse {
         val response = client.http.post("${client.base_url}$base/groups") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun update_contact_group(
+        group_id: String,
+        request: UpdateContactGroupRequest,
+    ): SuccessResponse {
+        val response = client.http.put("${client.base_url}$base/groups/$group_id") {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)

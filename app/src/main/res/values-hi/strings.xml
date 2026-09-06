@@ -1225,6 +1225,10 @@
     <string name="forwarding_verification_sent">जांच वाली ईमेल %1$s पर भेजी गई। पुष्टि होते ही फ़ॉरवर्ड करना शुरू हो जाएगा।</string>
     <string name="forwarding_internal_active">फ़ॉरवर्डिंग चालू है। Aster से Aster गंतव्यों के लिए पुष्टि ज़रूरी नहीं है।</string>
     <string name="forwarding_verification_resent">जांच वाली ईमेल %1$s पर दोबारा भेजी गई</string>
+    <string name="forwarding_failed_badge">डिलीवर नहीं हो रहा</string>
+    <string name="forwarding_failed_encryption">एन्क्रिप्शन ज़रूरी करें चालू है, लेकिन %1$s के पास PGP कुंजी नहीं है, इसलिए संदेश फ़ॉरवर्ड नहीं होते। एन्क्रिप्शन सेटिंग में एन्क्रिप्शन ज़रूरी करें बंद करें, या प्राप्तकर्ता की सार्वजनिक कुंजी जोड़ें।</string>
+    <string name="forwarding_failed_generic">%1$s पर आख़िरी फ़ॉरवर्ड विफल रहा: %2$s</string>
+    <string name="forwarding_failed_count">फ़ॉरवर्ड न हुए संदेश: %1$d</string>
     <string name="signature">हस्ताक्षर</string>
     <string name="your_signature">आपका हस्ताक्षर</string>
     <string name="signature_placeholder">ऐसा हस्ताक्षर जोड़ें जो आपकी भेजी हर ईमेल के नीचे दिखे।</string>
@@ -1859,6 +1863,9 @@
     <string name="upgrade_view_plans">प्लान देखें</string>
     <string name="upgrade_buy_storage">स्टोरेज जोड़ें</string>
     <string name="upgrade_not_now">अभी नहीं</string>
+    <string name="upgrade_get_plan">%1$s लें</string>
+    <string name="upgrade_reassurance">कभी भी रद्द करें</string>
+    <string name="upgrade_trust_line">कोई विज्ञापन नहीं, कोई ट्रैकिंग नहीं</string>
     <string name="upgrade_perk_storage">संदेशों और अटैचमेंट के लिए ज़्यादा स्टोरेज</string>
     <string name="upgrade_perk_aliases">बिना सीमा एलियास और कस्टम डोमेन</string>
     <string name="upgrade_perk_domains">कस्टम डोमेन और प्रो सुविधाएं</string>
@@ -2979,6 +2986,7 @@
     <string name="new_group">नया समूह</string>
     <string name="group_name">समूह का नाम</string>
     <string name="delete_group">समूह हटाएं</string>
+    <string name="edit_group">समूह संपादित करें</string>
     <string name="delete_group_message">इस समूह के संपर्क आपकी पता पुस्तिका में बने रहते हैं।</string>
     <string name="no_groups_yet">अभी कोई समूह नहीं है</string>
     <string name="no_groups_description">एक साथ कई लोगों को लिखने के लिए अपने संपर्कों को समूह में रखें। समूह के नाम सहेजे जाने से पहले इसी डिवाइस पर एन्क्रिप्ट हो जाते हैं।</string>
@@ -3047,4 +3055,28 @@
     <string name="alias_unpinned_toast">एलियास से पिन हट गया</string>
     <string name="e2e_identity_changed_blocked">भेजा नहीं जा सका: किसी प्राप्तकर्ता की एन्क्रिप्शन कुंजी बदल गई है। अपने इनबॉक्स में बदलाव की पुष्टि करें, फिर दोबारा भेजें। संदेश नहीं भेजा गया।</string>
     <string name="link_device_error_binding_mismatch">दूसरे डिवाइस ने ऐसी कुंजियाँ भेजी हैं जो इस कोड से मेल नहीं खातीं। उस डिवाइस पर नया कोड लें, फिर दोबारा कोशिश करें।</string>
+    <string name="restore">वापस लाएं</string>
+    <string name="contact_trash_confirm_message">आप ट्रैश से संपर्क वापस ला सकते हैं।</string>
+    <string name="empty_contacts_trash_confirm_message">ट्रैश के सभी संपर्क हमेशा के लिए हटाएं? इसे वापस नहीं लिया जा सकता।</string>
+    <string name="contact_restored">संपर्क वापस लाया गया</string>
+    <string name="contact_moved_to_trash">संपर्क ट्रैश में ले जाया गया</string>
+    <string name="contact_trash_days_left">%1$d दिन शेष</string>
+    <string name="contacts_in_trash_notice">ट्रैश में मौजूद संपर्क 30 दिनों बाद स्थायी रूप से हटा दिए जाते हैं।</string>
+    <string name="contacts_import_empty">उस फ़ाइल में कोई संपर्क नहीं मिला</string>
+    <string name="contacts_import_failed">संपर्क आयात नहीं हो सके</string>
+    <string name="contacts_export_failed">संपर्क निर्यात नहीं हो सके</string>
+    <string name="import_contacts_file">फ़ाइल से आयात करें</string>
+    <string name="export_contacts_action">संपर्क निर्यात करें</string>
+    <string name="export_all_contacts">सभी संपर्क निर्यात करें</string>
+    <string name="export_selection">चयन निर्यात करें</string>
+    <string name="export_as_vcard">vCard के रूप में निर्यात करें</string>
+    <string name="export_as_csv">CSV के रूप में निर्यात करें</string>
+    <string name="contact_photo">संपर्क फ़ोटो</string>
+    <string name="remove_photo">फ़ोटो हटाएँ</string>
+    <string name="add_photo">फ़ोटो जोड़ें</string>
+    <string name="photo_too_large">छोटी छवि चुनें</string>
+    <string name="no_contacts_yet">अभी कोई संपर्क नहीं</string>
+    <string name="no_contacts_match">\"%1$s\" से कोई संपर्क मेल नहीं खाता</string>
+    <string name="no_contacts_in_trash">ट्रैश खाली है</string>
+    <string name="contacts_already_in_trash">कुछ संपर्क पहले से ट्रैश में हैं। उन्हें पुनर्स्थापित करें।</string>
 </resources>

@@ -108,4 +108,10 @@
         <item quantity="many">%1$d wiadomości w %2$s</item>
         <item quantity="other">%1$d wiadomości w %2$s</item>
     </plurals>
+    <plurals name="exported_contacts">
+        <item quantity="one">Wyeksportowano %d kontakt</item>
+        <item quantity="few">Wyeksportowano %d kontakty</item>
+        <item quantity="many">Wyeksportowano %d kontaktów</item>
+        <item quantity="other">Wyeksportowano %d kontaktów</item>
+    </plurals>
 </resources>

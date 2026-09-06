@@ -108,4 +108,10 @@
         <item quantity="many">%1$d сообщений в %2$s</item>
         <item quantity="other">%1$d сообщений в %2$s</item>
     </plurals>
+    <plurals name="exported_contacts">
+        <item quantity="one">Экспортирован %d контакт</item>
+        <item quantity="few">Экспортировано %d контакта</item>
+        <item quantity="many">Экспортировано %d контактов</item>
+        <item quantity="other">Экспортировано %d контактов</item>
+    </plurals>
 </resources>

@@ -878,6 +878,10 @@
     <string name="forwarding_verification_sent">Email di verifica inviata a %1$s. L\'inoltro inizia dopo la conferma.</string>
     <string name="forwarding_internal_active">L\'inoltro è attivo. Le destinazioni da Aster ad Aster non richiedono verifica.</string>
     <string name="forwarding_verification_resent">Email di verifica inviata di nuovo a %1$s</string>
+    <string name="forwarding_failed_badge">Non recapitato</string>
+    <string name="forwarding_failed_encryption">Richiedi crittografia è attivo, ma %1$s non ha una chiave PGP, quindi i messaggi non vengono inoltrati. Disattiva Richiedi crittografia nelle impostazioni di crittografia o aggiungi la chiave pubblica del destinatario.</string>
+    <string name="forwarding_failed_generic">L\'ultimo inoltro a %1$s non è riuscito: %2$s</string>
+    <string name="forwarding_failed_count">Messaggi non inoltrati: %1$d</string>
 
     <string name="signature">Firma</string>
     <string name="your_signature">La tua firma</string>
@@ -1949,6 +1953,9 @@
     <string name="upgrade_view_plans">Vedi i piani</string>
     <string name="upgrade_buy_storage">Aggiungi spazio</string>
     <string name="upgrade_not_now">Non ora</string>
+    <string name="upgrade_get_plan">Scegli %1$s</string>
+    <string name="upgrade_reassurance">Disdici quando vuoi</string>
+    <string name="upgrade_trust_line">Nessuna pubblicità, nessun tracciamento</string>
     <string name="upgrade_perk_storage">Più spazio per messaggi e allegati</string>
     <string name="upgrade_perk_aliases">Alias illimitati e domini personalizzati</string>
     <string name="upgrade_perk_domains">Domini personalizzati e funzioni pro</string>
@@ -3089,6 +3096,7 @@
     <string name="new_group">Nuovo gruppo</string>
     <string name="group_name">Nome del gruppo</string>
     <string name="delete_group">Elimina gruppo</string>
+    <string name="edit_group">Modifica gruppo</string>
     <string name="delete_group_message">I contatti di questo gruppo restano nella tua rubrica.</string>
     <string name="no_groups_yet">Ancora nessun gruppo</string>
     <string name="no_groups_description">Raggruppa i tuoi contatti per scrivere a più persone insieme. I nomi dei gruppi vengono crittografati su questo dispositivo prima di essere salvati.</string>
@@ -3157,4 +3165,28 @@
     <string name="alias_unpinned_toast">Alias sbloccato</string>
     <string name="e2e_identity_changed_blocked">Invio non riuscito: la chiave di crittografia di un destinatario è cambiata. Conferma la modifica nella tua casella di posta, poi invia di nuovo. Il messaggio non è stato inviato.</string>
     <string name="link_device_error_binding_mismatch">L’altro dispositivo ha inviato chiavi che non corrispondono a questo codice. Richiedi un nuovo codice su quel dispositivo, poi riprova.</string>
+    <string name="restore">Ripristina</string>
+    <string name="contact_trash_confirm_message">Puoi ripristinare i contatti dal cestino.</string>
+    <string name="empty_contacts_trash_confirm_message">Eliminare definitivamente tutti i contatti nel cestino? L’operazione è irreversibile.</string>
+    <string name="contact_restored">Contatto ripristinato</string>
+    <string name="contact_moved_to_trash">Contatto spostato nel cestino</string>
+    <string name="contact_trash_days_left">%1$d giorni rimasti</string>
+    <string name="contacts_in_trash_notice">I contatti nel cestino vengono eliminati definitivamente dopo 30 giorni.</string>
+    <string name="contacts_import_empty">Nessun contatto trovato in quel file</string>
+    <string name="contacts_import_failed">Impossibile importare i contatti</string>
+    <string name="contacts_export_failed">Impossibile esportare i contatti</string>
+    <string name="import_contacts_file">Importa da un file</string>
+    <string name="export_contacts_action">Esporta i contatti</string>
+    <string name="export_all_contacts">Esporta tutti i contatti</string>
+    <string name="export_selection">Esporta la selezione</string>
+    <string name="export_as_vcard">Esporta come vCard</string>
+    <string name="export_as_csv">Esporta come CSV</string>
+    <string name="contact_photo">Foto del contatto</string>
+    <string name="remove_photo">Rimuovi la foto</string>
+    <string name="add_photo">Aggiungi una foto</string>
+    <string name="photo_too_large">Scegli un\'immagine più piccola</string>
+    <string name="no_contacts_yet">Nessun contatto ancora</string>
+    <string name="no_contacts_match">Nessun contatto corrisponde a \"%1$s\"</string>
+    <string name="no_contacts_in_trash">Il cestino è vuoto</string>
+    <string name="contacts_already_in_trash">Alcuni contatti sono già nel Cestino. Ripristinali invece.</string>
 </resources>

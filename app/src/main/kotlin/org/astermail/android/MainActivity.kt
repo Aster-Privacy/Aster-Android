@@ -194,14 +194,9 @@ class MainActivity :
     companion object {
         const val EXTRA_OPEN_EMAIL_ID = "open_email_id"
         const val EXTRA_OPEN_SESSIONS = "open_sessions"
-        val pending_open_email_id = mutableStateOf<String?>(null)
-        val pending_open_sessions = mutableStateOf(false)
-        val pending_open_billing = mutableStateOf(false)
-        val pending_reveal_email_id = mutableStateOf<String?>(null)
-        val pending_reveal_folder_tokens = mutableStateOf<List<String>?>(null)
-        val pending_share = mutableStateOf<org.astermail.android.share.SharePayload?>(null)
-        val pending_share_token = mutableStateOf("")
     }
+
+    val pending_launch = pending_launch_state()
 
     @javax.inject.Inject
     lateinit var app_lock_store: org.astermail.android.security.AppLockStore
@@ -227,7 +222,9 @@ class MainActivity :
         apply_boot_background()
         enableEdgeToEdge()
         setContent {
-            AsterRoot()
+            androidx.compose.runtime.CompositionLocalProvider(local_pending_launch provides pending_launch) {
+                AsterRoot()
+            }
         }
     }
 
@@ -253,28 +250,28 @@ class MainActivity :
     private fun consume_share_intent(intent: Intent?) {
         val payload = org.astermail.android.share.parse_share_intent(intent) ?: return
         intent?.action = null
-        pending_share_token.value = android.os.SystemClock.elapsedRealtimeNanos().toString()
-        pending_share.value = payload
+        pending_launch.pending_share_token.value = android.os.SystemClock.elapsedRealtimeNanos().toString()
+        pending_launch.pending_share.value = payload
     }
 
     private fun consume_billing_return(intent: Intent?) {
         val outcome = org.astermail.android.billing.parse_billing_return(intent?.data) ?: return
         intent?.data = null
         org.astermail.android.billing.billing_return_store.outcome.value = outcome
-        pending_open_billing.value = true
+        pending_launch.pending_open_billing.value = true
     }
 
     private fun consume_open_email_extra(intent: Intent?) {
         consume_billing_return(intent)
         if (intent?.getBooleanExtra(EXTRA_OPEN_SESSIONS, false) == true) {
             intent.removeExtra(EXTRA_OPEN_SESSIONS)
-            pending_open_sessions.value = true
+            pending_launch.pending_open_sessions.value = true
         }
         val email_id = intent?.getStringExtra(EXTRA_OPEN_EMAIL_ID)?.takeIf { it.isNotBlank() } ?: return
         intent.removeExtra(EXTRA_OPEN_EMAIL_ID)
-        pending_open_email_id.value = email_id
-        pending_reveal_email_id.value = email_id
-        pending_reveal_folder_tokens.value = null
+        pending_launch.pending_open_email_id.value = email_id
+        pending_launch.pending_reveal_email_id.value = email_id
+        pending_launch.pending_reveal_folder_tokens.value = null
     }
 
     override fun onResume() {
@@ -332,6 +329,20 @@ private fun request_notification_permission(should_request: Boolean) {
             }
         }
     }
+}
+
+class pending_launch_state {
+    val pending_open_email_id = mutableStateOf<String?>(null)
+    val pending_open_sessions = mutableStateOf(false)
+    val pending_open_billing = mutableStateOf(false)
+    val pending_reveal_email_id = mutableStateOf<String?>(null)
+    val pending_reveal_folder_tokens = mutableStateOf<List<String>?>(null)
+    val pending_share = mutableStateOf<org.astermail.android.share.SharePayload?>(null)
+    val pending_share_token = mutableStateOf("")
+}
+
+val local_pending_launch = androidx.compose.runtime.staticCompositionLocalOf<pending_launch_state> {
+    error("pending_launch_state not provided")
 }
 
 @Composable
@@ -440,6 +451,7 @@ private object routes {
 
 @Composable
 private fun AsterNavHost() {
+    val pending = local_pending_launch.current
     val auth_gate: AuthGateViewModel = hiltViewModel()
     val theme_vm: ThemeViewModel = hiltViewModel()
     val lock_vm: AppLockViewModel = hiltViewModel()
@@ -515,17 +527,17 @@ private fun AsterNavHost() {
         onDispose { lifecycle_owner.lifecycle.removeObserver(observer) }
     }
 
-    val pending_open_email = MainActivity.pending_open_email_id.value
+    val pending_open_email = pending.pending_open_email_id.value
     androidx.compose.runtime.LaunchedEffect(pending_open_email, is_signed_in_state, is_locked) {
         if (pending_open_email.isNullOrBlank() || !is_signed_in_state || is_locked) return@LaunchedEffect
-        MainActivity.pending_open_email_id.value = null
+        pending.pending_open_email_id.value = null
         nav_controller.navigate(routes.mail_detail_for(pending_open_email)) {
             launchSingleTop = true
         }
     }
 
-    val pending_share = MainActivity.pending_share.value
-    val pending_share_token = MainActivity.pending_share_token.value
+    val pending_share = pending.pending_share.value
+    val pending_share_token = pending.pending_share_token.value
     androidx.compose.runtime.LaunchedEffect(pending_share_token, is_signed_in_state, is_locked) {
         if (pending_share == null || !is_signed_in_state || is_locked) return@LaunchedEffect
         nav_controller.navigate(routes.compose_share(pending_share_token)) {
@@ -533,19 +545,19 @@ private fun AsterNavHost() {
         }
     }
 
-    val pending_sessions = MainActivity.pending_open_sessions.value
+    val pending_sessions = pending.pending_open_sessions.value
     androidx.compose.runtime.LaunchedEffect(pending_sessions, is_signed_in_state, is_locked) {
         if (!pending_sessions || !is_signed_in_state || is_locked) return@LaunchedEffect
-        MainActivity.pending_open_sessions.value = false
+        pending.pending_open_sessions.value = false
         nav_controller.navigate(routes.settings_detail("sessions")) {
             launchSingleTop = true
         }
     }
 
-    val pending_billing = MainActivity.pending_open_billing.value
+    val pending_billing = pending.pending_open_billing.value
     androidx.compose.runtime.LaunchedEffect(pending_billing, is_signed_in_state, is_locked) {
         if (!pending_billing || !is_signed_in_state || is_locked) return@LaunchedEffect
-        MainActivity.pending_open_billing.value = false
+        pending.pending_open_billing.value = false
         val current = nav_controller.currentBackStackEntry?.destination?.route
         if (current?.contains("billing") == true) return@LaunchedEffect
         nav_controller.navigate(routes.settings_detail("billing")) {
@@ -796,17 +808,17 @@ private fun AsterNavHost() {
             val detail_thread_state by shared_mail_vm.thread_state.collectAsStateWithLifecycle()
             androidx.compose.runtime.LaunchedEffect(detail_thread_state.item?.id, detail_thread_state.is_loading) {
                 if (detail_thread_state.is_loading) return@LaunchedEffect
-                val reveal_id = MainActivity.pending_reveal_email_id.value ?: return@LaunchedEffect
+                val reveal_id = pending.pending_reveal_email_id.value ?: return@LaunchedEffect
                 val item = detail_thread_state.item ?: return@LaunchedEffect
                 if (item.id != reveal_id || reveal_id != email_id) return@LaunchedEffect
-                MainActivity.pending_reveal_email_id.value = null
+                pending.pending_reveal_email_id.value = null
                 val tokens = (
                     item.labels +
                         listOfNotNull(item.raw_item.folder_token) +
                         (item.raw_item.folders?.mapNotNull { it.folder_token } ?: emptyList())
                     ).distinct()
                 if (tokens.isNotEmpty()) {
-                    MainActivity.pending_reveal_folder_tokens.value = tokens
+                    pending.pending_reveal_folder_tokens.value = tokens
                 }
             }
             val advance_after_action: () -> Unit = {
@@ -995,7 +1007,7 @@ private fun AsterNavHost() {
             val is_share_entry = !entry.arguments?.getString("share").isNullOrBlank()
             val share_payload = remember(entry.id) {
                 if (!is_share_entry) null
-                else MainActivity.pending_share.value.also { MainActivity.pending_share.value = null }
+                else pending.pending_share.value.also { pending.pending_share.value = null }
             }
             ComposeScreen(
                 on_back = { nav_controller.popBackStack() },
@@ -1448,6 +1460,7 @@ private val mail_folder_ids = setOf(
 
 @Composable
 private fun InboxWithDrawer(nav_controller: NavHostController) {
+    val pending = local_pending_launch.current
     val drawer_state = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var selected_folder by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("inbox") }
@@ -1509,11 +1522,11 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         }
     }
 
-    val pending_reveal_tokens = MainActivity.pending_reveal_folder_tokens.value
+    val pending_reveal_tokens = pending.pending_reveal_folder_tokens.value
     androidx.compose.runtime.LaunchedEffect(pending_reveal_tokens, settings_state.labels) {
         val tokens = pending_reveal_tokens ?: return@LaunchedEffect
         if (settings_state.labels.isEmpty()) return@LaunchedEffect
-        MainActivity.pending_reveal_folder_tokens.value = null
+        pending.pending_reveal_folder_tokens.value = null
         val node = org.astermail.android.folders.flatten_folder_tree(settings_state.labels)
             .firstOrNull { it.label.label_token in tokens } ?: return@LaunchedEffect
         val readable_name = node.label.encrypted_name

@@ -56,8 +56,16 @@ data class ForwardingRule(
     val created_at: String? = null,
     val destinations: List<ForwardingDestinationStatus> = emptyList(),
     val pending_confirmation: Boolean = false,
+    val last_error_code: String? = null,
+    val last_error: String? = null,
+    val last_error_address: String? = null,
+    val last_failed_at: String? = null,
+    val failed_count: Long = 0,
 ) {
     val target_address: String get() = forward_to.firstOrNull().orEmpty()
+    val is_failing: Boolean get() = is_enabled && !last_error_code.isNullOrBlank()
+    val encryption_blocked: Boolean get() = last_error_code == "encryption_required_no_key"
+    val failing_address: String get() = last_error_address?.takeIf { it.isNotBlank() } ?: target_address
     val enabled: Boolean get() = is_enabled
     val pending_destinations: List<ForwardingDestinationStatus>
         get() = destinations.filter { !it.confirmed }
