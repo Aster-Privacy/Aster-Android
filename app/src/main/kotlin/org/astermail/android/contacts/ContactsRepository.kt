@@ -23,6 +23,12 @@ package org.astermail.android.contacts
 
 import java.security.MessageDigest
 import javax.crypto.Mac
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.astermail.android.crypto.AesGcm
 import org.astermail.android.crypto.hkdf_sha256
 import javax.crypto.spec.SecretKeySpec
@@ -34,6 +40,7 @@ import org.astermail.android.api.contacts.ContactGroupEncrypted
 import org.astermail.android.api.contacts.ContactItem
 import org.astermail.android.api.contacts.ContactsApi
 import org.astermail.android.api.contacts.CreateContactGroupRequest
+import org.astermail.android.api.contacts.UpdateContactGroupRequest
 import org.astermail.android.api.contacts.CreateContactGroupResponse
 import org.astermail.android.api.contacts.CreateContactRequest
 import org.astermail.android.api.contacts.CreateContactResponse
@@ -51,6 +58,9 @@ data class ContactGroup(
     val contact_count: Int,
     val created_at: String? = null,
 )
+
+
+private const val DEFAULT_GROUP_COLOR = "#4f46e5"
 
 @Singleton
 class ContactsRepository @Inject constructor(
@@ -107,6 +117,12 @@ class ContactsRepository @Inject constructor(
         }
     }
 
+    suspend fun trash_contact(contact: Contact): Result<Unit> =
+        update_contact(contact.id, contact.copy(deleted_at = java.time.Instant.now().toString()))
+
+    suspend fun restore_contact(contact: Contact): Result<Unit> =
+        update_contact(contact.id, contact.copy(deleted_at = ""))
+
     suspend fun delete_contact(contact_id: String): Result<DeleteContactResponse> = runCatching {
         contacts_api.delete_contact(contact_id)
     }
@@ -139,15 +155,38 @@ class ContactsRepository @Inject constructor(
         val key = derive_contacts_key()
         try {
             val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
-            val ciphertext = aes_gcm_encrypt(name.toByteArray(Charsets.UTF_8), key, nonce)
+            val payload = build_group_payload(name, color, icon)
+            val ciphertext = aes_gcm_encrypt(payload.toByteArray(Charsets.UTF_8), key, nonce)
             val group_token = generate_search_token(name, key)
             contacts_api.create_contact_group(
                 CreateContactGroupRequest(
                     group_token = group_token,
                     encrypted_name = b64(ciphertext),
                     name_nonce = b64(nonce),
-                    color = color,
-                    icon = icon?.trim()?.takeIf { it.isNotEmpty() },
+                ),
+            )
+        } finally {
+            key.fill(0)
+        }
+    }
+
+    suspend fun update_contact_group(
+        group_id: String,
+        name: String,
+        color: String,
+        icon: String? = null,
+    ): Result<SuccessResponse> = runCatching {
+        val key = derive_contacts_key()
+        try {
+            val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
+            val payload = build_group_payload(name, color, icon)
+            val ciphertext = aes_gcm_encrypt(payload.toByteArray(Charsets.UTF_8), key, nonce)
+            contacts_api.update_contact_group(
+                group_id,
+                UpdateContactGroupRequest(
+                    group_token = generate_search_token(name, key),
+                    encrypted_name = b64(ciphertext),
+                    name_nonce = b64(nonce),
                 ),
             )
         } finally {
@@ -280,6 +319,40 @@ class ContactsRepository @Inject constructor(
         }
     }
 
+    private data class GroupPayload(
+        val name: String,
+        val color: String,
+        val icon: String?,
+    )
+
+    private fun build_group_payload(name: String, color: String, icon: String?): String {
+        val root = buildJsonObject {
+            put("name", JsonPrimitive(name))
+            put("color", JsonPrimitive(color))
+            icon?.trim()?.takeIf { it.isNotEmpty() }?.let { put("icon", JsonPrimitive(it)) }
+        }
+
+        return root.toString()
+    }
+
+    private fun parse_group_payload(raw: String): GroupPayload {
+        if (!raw.startsWith("{")) return GroupPayload(raw, DEFAULT_GROUP_COLOR, null)
+
+        return try {
+            val root = Json.parseToJsonElement(raw).jsonObject
+            val name = root["name"]?.jsonPrimitive?.contentOrNull
+                ?: return GroupPayload(raw, DEFAULT_GROUP_COLOR, null)
+
+            GroupPayload(
+                name = name,
+                color = root["color"]?.jsonPrimitive?.contentOrNull ?: DEFAULT_GROUP_COLOR,
+                icon = root["icon"]?.jsonPrimitive?.contentOrNull?.trim()?.takeIf { it.isNotEmpty() },
+            )
+        } catch (_: Throwable) {
+            GroupPayload(raw, DEFAULT_GROUP_COLOR, null)
+        }
+    }
+
     private fun decrypt_group(group: ContactGroupEncrypted): ContactGroup? {
         return try {
             val ciphertext = android.util.Base64.decode(group.encrypted_name, android.util.Base64.DEFAULT)
@@ -294,13 +367,13 @@ class ContactsRepository @Inject constructor(
             } catch (_: Throwable) {
                 decrypt_with_candidates(ciphertext, nonce) ?: return null
             }
-            val name = String(name_bytes, Charsets.UTF_8)
+            val payload = parse_group_payload(String(name_bytes, Charsets.UTF_8))
             name_bytes.fill(0)
             ContactGroup(
                 id = group.id,
-                name = name,
-                color = group.color,
-                icon = group.icon?.trim()?.takeIf { it.isNotEmpty() },
+                name = payload.name,
+                color = payload.color,
+                icon = payload.icon,
                 contact_count = group.contact_count,
                 created_at = group.created_at,
             )
@@ -423,6 +496,12 @@ class ContactsRepository @Inject constructor(
         return parts[0] to (parts.getOrNull(1) ?: "")
     }
 
+    private fun resolve_work_email(emails: List<String>, typed: String): String {
+        if (emails.size > 1) return emails[1]
+        val primary = emails.firstOrNull().orEmpty()
+        return if (typed.equals(primary, ignoreCase = true)) "" else typed
+    }
+
     private fun entry_value(obj: org.json.JSONObject, key: String, type: String): String {
         val arr = obj.optJSONArray(key) ?: return ""
         for (i in 0 until arr.length()) {
@@ -503,7 +582,7 @@ class ContactsRepository @Inject constructor(
                 phone = obj.optString("phone", "").ifBlank { first_entry_value(obj, "phone_entries", "work") },
                 company = obj.optString("company", ""),
                 title = obj.optString("job_title", ""),
-                work_email = if (emails.size > 1) emails[1] else entry_value(obj, "email_entries", "work"),
+                work_email = resolve_work_email(emails, entry_value(obj, "email_entries", "work")),
                 work_phone = entry_value(obj, "phone_entries", "work"),
                 birthday = obj.optString("birthday", ""),
                 address = address_obj?.optString("street", "") ?: "",
@@ -515,9 +594,12 @@ class ContactsRepository @Inject constructor(
                 twitter = social_obj?.optString("twitter", "") ?: "",
                 linkedin = social_obj?.optString("linkedin", "") ?: "",
                 notes = obj.optString("notes", ""),
+                avatar_url = obj.optString("avatar_url", ""),
+                profile_color = obj.optString("profile_color", ""),
                 is_favorite = obj.optBoolean("is_favorite", false),
                 groups = groups.toList(),
                 raw_json = json_str,
+                deleted_at = obj.optString("deleted_at", ""),
             )
         } catch (_: Throwable) {
             null
@@ -578,6 +660,16 @@ class ContactsRepository @Inject constructor(
 
         if (contact.birthday.isNotBlank()) obj.put("birthday", contact.birthday) else obj.remove("birthday")
         if (contact.notes.isNotBlank()) obj.put("notes", contact.notes) else obj.remove("notes")
+        if (contact.avatar_url.isNotBlank()) {
+            obj.put("avatar_url", contact.avatar_url)
+        } else {
+            obj.remove("avatar_url")
+        }
+        if (contact.profile_color.isNotBlank()) {
+            obj.put("profile_color", contact.profile_color)
+        } else {
+            obj.remove("profile_color")
+        }
         obj.put("is_favorite", contact.is_favorite)
 
         if (contact.groups.isNotEmpty()) {
@@ -586,6 +678,12 @@ class ContactsRepository @Inject constructor(
             obj.put("groups", groups)
         } else {
             obj.remove("groups")
+        }
+
+        if (contact.deleted_at.isNotBlank()) {
+            obj.put("deleted_at", contact.deleted_at)
+        } else {
+            obj.remove("deleted_at")
         }
 
         if (include_envelope) {

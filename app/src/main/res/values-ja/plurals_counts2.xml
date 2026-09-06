@@ -54,4 +54,7 @@
     <plurals name="messages_in_type">
         <item quantity="other">%2$sに%1$d件のメッセージ</item>
     </plurals>
+    <plurals name="exported_contacts">
+        <item quantity="other">%d 件の連絡先を書き出しました</item>
+    </plurals>
 </resources>

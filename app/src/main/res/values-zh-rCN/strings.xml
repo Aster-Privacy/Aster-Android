@@ -3079,6 +3079,7 @@
     <string name="new_group">新建群组</string>
     <string name="group_name">群组名称</string>
     <string name="delete_group">删除群组</string>
+    <string name="edit_group">编辑群组</string>
     <string name="delete_group_message">该群组中的联系人仍会保留在您的通讯录中。</string>
     <string name="no_groups_yet">还没有群组</string>
     <string name="no_groups_description">将联系人分组，即可一次写信给多个人。群组名称在保存前会在此设备上加密。</string>
@@ -3142,4 +3143,28 @@
     <string name="alias_unpinned_toast">别名已取消置顶</string>
     <string name="e2e_identity_changed_blocked">无法发送：某位收件人的加密密钥已更改。请在收件箱中确认此更改，然后重新发送。邮件尚未发送。</string>
     <string name="link_device_error_binding_mismatch">另一台设备发送的密钥与此代码不匹配。请在该设备上获取新代码，然后重试。</string>
+    <string name="restore">恢复</string>
+    <string name="contact_trash_confirm_message">你可以从回收站恢复联系人。</string>
+    <string name="empty_contacts_trash_confirm_message">要永久删除回收站中的所有联系人吗？此操作无法撤销。</string>
+    <string name="contact_restored">联系人已恢复</string>
+    <string name="contact_moved_to_trash">联系人已移到废纸篓</string>
+    <string name="contact_trash_days_left">还剩 %1$d 天</string>
+    <string name="contacts_in_trash_notice">废纸篓中的联系人将在 30 天后永久删除。</string>
+    <string name="contacts_import_empty">该文件中未找到联系人</string>
+    <string name="contacts_import_failed">无法导入联系人</string>
+    <string name="contacts_export_failed">无法导出联系人</string>
+    <string name="import_contacts_file">从文件导入</string>
+    <string name="export_contacts_action">导出联系人</string>
+    <string name="export_all_contacts">导出所有联系人</string>
+    <string name="export_selection">导出所选项</string>
+    <string name="export_as_vcard">导出为 vCard</string>
+    <string name="export_as_csv">导出为 CSV</string>
+    <string name="contact_photo">联系人照片</string>
+    <string name="remove_photo">移除照片</string>
+    <string name="add_photo">添加照片</string>
+    <string name="photo_too_large">请选择较小的图片</string>
+    <string name="no_contacts_yet">暂无联系人</string>
+    <string name="no_contacts_match">没有匹配 \"%1$s\" 的联系人</string>
+    <string name="no_contacts_in_trash">废纸篓是空的</string>
+    <string name="contacts_already_in_trash">部分联系人已在回收站中。请改为恢复它们。</string>
 </resources>

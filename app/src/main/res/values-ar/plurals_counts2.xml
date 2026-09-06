@@ -144,4 +144,12 @@
         <item quantity="many">%1$d رسالة في %2$s</item>
         <item quantity="other">%1$d رسالة في %2$s</item>
     </plurals>
+    <plurals name="exported_contacts">
+        <item quantity="zero">لم يتم تصدير أي جهة اتصال</item>
+        <item quantity="one">تم تصدير جهة اتصال واحدة</item>
+        <item quantity="two">تم تصدير جهتي اتصال</item>
+        <item quantity="few">تم تصدير %d جهات اتصال</item>
+        <item quantity="many">تم تصدير %d جهة اتصال</item>
+        <item quantity="other">تم تصدير %d جهة اتصال</item>
+    </plurals>
 </resources>

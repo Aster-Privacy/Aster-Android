@@ -72,4 +72,8 @@
         <item quantity="one">%1$d message in %2$s</item>
         <item quantity="other">%1$d messages in %2$s</item>
     </plurals>
+    <plurals name="exported_contacts">
+        <item quantity="one">Exported %d contact</item>
+        <item quantity="other">Exported %d contacts</item>
+    </plurals>
 </resources>

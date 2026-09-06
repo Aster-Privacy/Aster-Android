@@ -3122,6 +3122,7 @@
     <string name="new_group">Nowa grupa</string>
     <string name="group_name">Nazwa grupy</string>
     <string name="delete_group">Usuń grupę</string>
+    <string name="edit_group">Edytuj grupę</string>
     <string name="delete_group_message">Kontakty z tej grupy pozostaną w Twojej książce adresowej.</string>
     <string name="no_groups_yet">Nie ma jeszcze grup</string>
     <string name="no_groups_description">Grupuj kontakty, aby pisać do kilku osób naraz. Nazwy grup są szyfrowane na tym urządzeniu przed zapisaniem.</string>
@@ -3200,4 +3201,28 @@
     <string name="alias_unpinned_toast">Alias odpięty</string>
     <string name="e2e_identity_changed_blocked">Nie można wysłać: klucz szyfrowania odbiorcy uległ zmianie. Potwierdź zmianę w skrzynce odbiorczej, a następnie wyślij ponownie. Wiadomość nie została wysłana.</string>
     <string name="link_device_error_binding_mismatch">Drugie urządzenie przesłało klucze, które nie pasują do tego kodu. Uzyskaj nowy kod na tym urządzeniu, a następnie spróbuj ponownie.</string>
+    <string name="restore">Przywróć</string>
+    <string name="contact_trash_confirm_message">Kontakty możesz przywrócić z kosza.</string>
+    <string name="empty_contacts_trash_confirm_message">Trwale usunąć wszystkie kontakty z kosza? Tej operacji nie można cofnąć.</string>
+    <string name="contact_restored">Przywrócono kontakt</string>
+    <string name="contact_moved_to_trash">Kontakt przeniesiony do kosza</string>
+    <string name="contact_trash_days_left">Pozostało dni: %1$d</string>
+    <string name="contacts_in_trash_notice">Kontakty w koszu są trwale usuwane po 30 dniach.</string>
+    <string name="contacts_import_empty">Nie znaleziono kontaktów w tym pliku</string>
+    <string name="contacts_import_failed">Nie udało się zaimportować kontaktów</string>
+    <string name="contacts_export_failed">Nie udało się wyeksportować kontaktów</string>
+    <string name="import_contacts_file">Importuj z pliku</string>
+    <string name="export_contacts_action">Eksportuj kontakty</string>
+    <string name="export_all_contacts">Eksportuj wszystkie kontakty</string>
+    <string name="export_selection">Eksportuj zaznaczenie</string>
+    <string name="export_as_vcard">Eksportuj jako vCard</string>
+    <string name="export_as_csv">Eksportuj jako CSV</string>
+    <string name="contact_photo">Zdjęcie kontaktu</string>
+    <string name="remove_photo">Usuń zdjęcie</string>
+    <string name="add_photo">Dodaj zdjęcie</string>
+    <string name="photo_too_large">Wybierz mniejszy obraz</string>
+    <string name="no_contacts_yet">Brak kontaktów</string>
+    <string name="no_contacts_match">Brak kontaktów pasujących do \"%1$s\"</string>
+    <string name="no_contacts_in_trash">Kosz jest pusty</string>
+    <string name="contacts_already_in_trash">Niektóre kontakty są już w Koszu. Przywróć je zamiast tego.</string>
 </resources>

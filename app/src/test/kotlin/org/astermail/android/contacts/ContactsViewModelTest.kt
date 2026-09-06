@@ -299,8 +299,7 @@ class ContactsViewModelTest {
             fake_contact("c_3", "Carol", "carol@astermail.org"),
         )
         coEvery { repository.fetch_contacts() } returns Result.success(contacts)
-        coEvery { repository.delete_contact("c_2") } returns
-            Result.success(DeleteContactResponse(success = true, deleted_count = 1))
+        coEvery { repository.trash_contact(any()) } returns Result.success(Unit)
 
         vm.load_contacts()
         advanceUntilIdle()
@@ -317,6 +316,8 @@ class ContactsViewModelTest {
         assertTrue(state.contacts.none { it.id == "c_2" })
         assertEquals("c_1", state.contacts[0].id)
         assertEquals("c_3", state.contacts[1].id)
+        assertEquals(listOf("c_2"), state.trashed_contacts.map { it.id })
+        coVerify(exactly = 0) { repository.delete_contact("c_2") }
     }
 
     @Test
@@ -384,8 +385,7 @@ class ContactsViewModelTest {
             fake_contact("c_2", "Bob", "bob@astermail.org"),
         )
         coEvery { repository.fetch_contacts() } returns Result.success(contacts)
-        coEvery { repository.delete_contact("c_1") } returns
-            Result.success(DeleteContactResponse(success = true, deleted_count = 1))
+        coEvery { repository.trash_contact(any()) } returns Result.success(Unit)
 
         vm.load_contacts()
         advanceUntilIdle()
@@ -397,6 +397,7 @@ class ContactsViewModelTest {
         val state = vm.state.value
         assertEquals(1, state.contacts.size)
         assertEquals("c_2", state.contacts[0].id)
+        assertEquals(listOf("c_1"), state.trashed_contacts.map { it.id })
         assertTrue(state.delete_success)
     }
 
@@ -609,15 +610,14 @@ class ContactsViewModelTest {
     }
 
     @Test
-    fun `delete_selection bulk deletes and prunes the list`() = runTest {
+    fun `delete_selection trashes and prunes the list`() = runTest {
         coEvery { repository.fetch_contacts() } returns Result.success(
             listOf(
                 fake_contact("c_1", "Alice Smith", "alice@astermail.org"),
                 fake_contact("c_2", "Bob Jones", "bob@astermail.org"),
             ),
         )
-        coEvery { repository.bulk_delete_contacts(listOf("c_1")) } returns
-            Result.success(DeleteContactResponse(success = true, deleted_count = 1))
+        coEvery { repository.trash_contact(any()) } returns Result.success(Unit)
 
         vm.load_contacts()
         advanceUntilIdle()
@@ -628,9 +628,11 @@ class ContactsViewModelTest {
         advanceUntilIdle()
 
         assertTrue(reported)
-        coVerify(exactly = 1) { repository.bulk_delete_contacts(listOf("c_1")) }
+        coVerify(exactly = 1) { repository.trash_contact(match { it.id == "c_1" }) }
+        coVerify(exactly = 0) { repository.bulk_delete_contacts(any()) }
         val state = vm.state.value
         assertEquals(listOf("c_2"), state.contacts.map { it.id })
+        assertEquals(listOf("c_1"), state.trashed_contacts.map { it.id })
         assertTrue(state.selected_ids.isEmpty())
         assertFalse(state.is_bulk_working)
     }
