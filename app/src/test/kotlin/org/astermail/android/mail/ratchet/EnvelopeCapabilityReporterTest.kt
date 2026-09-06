@@ -110,6 +110,11 @@ class EnvelopeCapabilityReporterTest {
 
     private val identity = identity_point(0x11)
 
+    private fun pq_key(fill: Byte): String =
+        Base64.getEncoder().encodeToString(ByteArray(1184) { fill })
+
+    private val pq_identity = pq_key(0x22)
+
     private fun reporter(
         store: EnvelopeCapabilityStore,
         api: RatchetApi,
@@ -121,6 +126,53 @@ class EnvelopeCapabilityReporterTest {
         new_client_id = { client_id },
         now_ms = now,
     )
+
+    @Test
+    fun attests_the_post_quantum_key_when_the_secret_is_held() = runTest {
+        val store = FakeStore()
+        val api = FakeRatchetApi()
+
+        reporter(store, api, now = { 1_000L })
+            .report_if_due(user_id, identity, pq_identity, holds_pq_identity_secret = true)
+
+        assertEquals(expected_fingerprint(pq_identity), api.requests[0].pq_identity_fingerprint)
+    }
+
+    @Test
+    fun attests_nothing_when_the_post_quantum_secret_is_missing() = runTest {
+        val store = FakeStore()
+        val api = FakeRatchetApi()
+
+        reporter(store, api, now = { 1_000L })
+            .report_if_due(user_id, identity, pq_identity, holds_pq_identity_secret = false)
+
+        assertNull(api.requests[0].pq_identity_fingerprint)
+    }
+
+    @Test
+    fun reports_again_as_soon_as_the_post_quantum_key_arrives() = runTest {
+        val store = FakeStore()
+        val api = FakeRatchetApi()
+
+        reporter(store, api, now = { 1_000L })
+            .report_if_due(user_id, identity, pq_identity, holds_pq_identity_secret = false)
+        reporter(store, api, now = { 2_000L })
+            .report_if_due(user_id, identity, pq_identity, holds_pq_identity_secret = true)
+
+        assertEquals(2, api.requests.size)
+        assertEquals(expected_fingerprint(pq_identity), api.requests[1].pq_identity_fingerprint)
+    }
+
+    @Test
+    fun a_wrong_length_post_quantum_key_is_never_attested() = runTest {
+        val store = FakeStore()
+        val api = FakeRatchetApi()
+
+        reporter(store, api, now = { 1_000L })
+            .report_if_due(user_id, identity, identity, holds_pq_identity_secret = true)
+
+        assertNull(api.requests[0].pq_identity_fingerprint)
+    }
 
     @Test
     fun reports_marker_four_because_android_decapsulates_ml_kem() = runTest {
