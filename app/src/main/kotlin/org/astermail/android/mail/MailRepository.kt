@@ -4459,6 +4459,9 @@ internal fun is_permanent_send_failure_cause(err: Throwable?): Boolean {
         if (cause is org.astermail.android.mail.ratchet.RatchetEncryptionException) return true
         if (cause is org.astermail.android.mail.ratchet.PostQuantumUnavailableException) return true
         if (cause is OutOfMemoryError) return true
+        if (cause is org.astermail.android.api.ApiError.ValidationError) return true
+        if (cause is org.astermail.android.api.ApiError.AttachmentTooLarge) return true
+        if (cause is org.astermail.android.api.ApiError.PlanLimitExceeded) return true
         cause = cause.cause
         depth++
     }

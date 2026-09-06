@@ -3800,10 +3800,14 @@ class MailViewModel @Inject constructor(
                     refresh_thread_after_send()
                 } else {
                     emit_toast(
-                        if (result.exceptionOrNull() is TransientSendException) {
-                            context.getString(R.string.send_still_trying)
-                        } else {
-                            context.getString(R.string.send_problem_failed_message)
+                        when (val err = result.exceptionOrNull()) {
+                            is TransientSendException -> context.getString(R.string.send_still_trying)
+                            null -> context.getString(R.string.send_problem_failed_message)
+                            else -> org.astermail.android.localized_api_error(
+                                context,
+                                err,
+                                context.getString(R.string.send_problem_failed_message),
+                            )
                         },
                     )
                 }

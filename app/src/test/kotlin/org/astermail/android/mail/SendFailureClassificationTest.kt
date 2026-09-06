@@ -21,6 +21,7 @@
 
 package org.astermail.android.mail
 
+import org.astermail.android.api.ApiError
 import org.astermail.android.mail.ratchet.PostQuantumUnavailableException
 import org.astermail.android.mail.ratchet.RatchetEncryptionException
 import org.junit.Assert.assertFalse
@@ -29,6 +30,30 @@ import org.junit.Test
 import java.io.IOException
 
 class SendFailureClassificationTest {
+
+    @Test
+    fun `a server attachment refusal is a permanent failure`() {
+        val err = ApiError.ValidationError(
+            listOf("total attachment size exceeds 50MB limit"),
+            code = "ATTACHMENTS_TOO_LARGE",
+            details = mapOf("max_bytes" to "52428800"),
+        )
+
+        assertTrue(is_permanent_send_failure_cause(err))
+        assertFalse(is_transient_send_cause(err))
+    }
+
+    @Test
+    fun `an oversized request body is a permanent failure`() {
+        assertTrue(is_permanent_send_failure_cause(ApiError.AttachmentTooLarge("too large")))
+    }
+
+    @Test
+    fun `a wrapped validation error is still permanent`() {
+        val err = RuntimeException("send failed", ApiError.ValidationError(listOf("bad request")))
+
+        assertTrue(is_permanent_send_failure_cause(err))
+    }
 
     @Test
     fun `a missing prekey bundle is a permanent failure`() {

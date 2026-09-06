@@ -22,6 +22,7 @@
 package org.astermail.android.api.external_accounts
 
 import io.ktor.client.call.body
+import io.ktor.client.plugins.timeout
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -232,6 +233,8 @@ interface ExternalAccountsApi {
 
 class ExternalAccountsApiImpl(private val client: ApiClient) : ExternalAccountsApi {
     private val base = "/api/mail/v1/external_accounts"
+    private val send_socket_timeout_ms = 120_000L
+    private val send_request_timeout_ms = 30 * 60_000L
 
     private suspend inline fun <reified T> decode(response: HttpResponse): T {
         if (response.status.value !in 200..299) {
@@ -320,6 +323,10 @@ class ExternalAccountsApiImpl(private val client: ApiClient) : ExternalAccountsA
 
     override suspend fun send_via_account(req: ExternalAccountSendRequest): ExternalAccountSendResponse =
         decode(client.http.post("${client.base_url}$base/send") {
+            timeout {
+                requestTimeoutMillis = send_request_timeout_ms
+                socketTimeoutMillis = send_socket_timeout_ms
+            }
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(req)
