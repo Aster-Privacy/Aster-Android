@@ -1339,7 +1339,7 @@
     <string name="forwarding_internal_active">Forwarding is active. Aster to Aster destinations do not need verification.</string>
     <string name="forwarding_verification_resent">Verification email resent to %1$s</string>
     <string name="forwarding_failed_badge">Not delivering</string>
-    <string name="forwarding_failed_encryption">Require encryption is turned on, but %1$s has no PGP key, so messages are not forwarded. Turn off Require encryption in the encryption settings, or add the recipient's public key.</string>
+    <string name="forwarding_failed_encryption">Require encryption is turned on, but %1$s has no PGP key, so messages are not forwarded. Turn off Require encryption in the encryption settings, or add the recipient\'s public key.</string>
     <string name="forwarding_failed_generic">The last forward to %1$s failed: %2$s</string>
     <string name="forwarding_failed_count">Messages not forwarded: %1$d</string>
 
