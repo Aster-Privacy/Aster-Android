@@ -25,6 +25,13 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -64,6 +71,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import org.astermail.android.contacts.ContactsViewModel
+import org.astermail.android.contacts.encode_contact_photo
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
@@ -74,7 +82,6 @@ import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterTextField
-import org.astermail.android.ui.mail.SenderAvatar
 
 @Composable
 fun ContactEditScreen(
@@ -130,6 +137,7 @@ fun ContactEditScreen(
     var twitter by rememberSaveable { mutableStateOf(source?.twitter.orEmpty()) }
     var linkedin by rememberSaveable { mutableStateOf(source?.linkedin.orEmpty()) }
     var notes by rememberSaveable { mutableStateOf(source?.notes.orEmpty()) }
+    var avatar_url by rememberSaveable { mutableStateOf(source?.avatar_url.orEmpty()) }
     var active_tab by rememberSaveable { mutableStateOf(0) }
     var loaded_contact_id by rememberSaveable { mutableStateOf<String?>(null) }
 
@@ -153,6 +161,29 @@ fun ContactEditScreen(
             twitter = source.twitter
             linkedin = source.linkedin
             notes = source.notes
+            avatar_url = source.avatar_url
+        }
+    }
+
+    val photo_scope = rememberCoroutineScope()
+    val photo_picker = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia(),
+    ) { uri ->
+        if (uri != null) {
+            photo_scope.launch {
+                val encoded = withContext(Dispatchers.IO) {
+                    runCatching { encode_contact_photo(context, uri) }.getOrNull()
+                }
+                if (encoded == null) {
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.photo_too_large),
+                        Toast.LENGTH_LONG,
+                    ).show()
+                } else {
+                    avatar_url = encoded
+                }
+            }
         }
     }
 
@@ -207,6 +238,8 @@ fun ContactEditScreen(
                         twitter = twitter,
                         linkedin = linkedin,
                         notes = notes,
+                        avatar_url = avatar_url,
+                        profile_color = source?.profile_color.orEmpty(),
                         is_favorite = source?.is_favorite ?: false,
                         groups = source?.groups ?: emptyList(),
                         raw_json = source?.raw_json.orEmpty(),
@@ -250,11 +283,39 @@ fun ContactEditScreen(
                     .padding(vertical = AsterSpacing.xl),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                SenderAvatar(
+                ContactAvatar(
+                    avatar_url = avatar_url,
                     email = email,
                     name = name,
                     size = 80.dp,
+                    content_description = stringResource(R.string.contact_photo),
                 )
+                Spacer(Modifier.height(AsterSpacing.sm))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    AsterGhostButton(
+                        label = if (avatar_url.isBlank()) {
+                            stringResource(R.string.add_photo)
+                        } else {
+                            stringResource(R.string.change_photo)
+                        },
+                        onClick = {
+                            photo_picker.launch(
+                                PickVisualMediaRequest(
+                                    ActivityResultContracts.PickVisualMedia.ImageOnly,
+                                ),
+                            )
+                        },
+                    )
+                    if (avatar_url.isNotBlank()) {
+                        AsterGhostButton(
+                            label = stringResource(R.string.remove_photo),
+                            onClick = { avatar_url = "" },
+                        )
+                    }
+                }
                 Spacer(Modifier.height(AsterSpacing.sm))
                 Text(
                     text = name.ifBlank { stringResource(R.string.unnamed_contact) },

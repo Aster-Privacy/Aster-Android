@@ -3092,6 +3092,7 @@
     <string name="new_group">Novo grupo</string>
     <string name="group_name">Nome do grupo</string>
     <string name="delete_group">Excluir grupo</string>
+    <string name="edit_group">Editar grupo</string>
     <string name="delete_group_message">Os contatos deste grupo continuam no seu catálogo de endereços.</string>
     <string name="no_groups_yet">Ainda não há grupos</string>
     <string name="no_groups_description">Agrupe seus contatos para escrever para várias pessoas de uma vez. Os nomes dos grupos são criptografados neste dispositivo antes de serem salvos.</string>
@@ -3160,4 +3161,28 @@
     <string name="alias_unpinned_toast">Alias desafixado</string>
     <string name="e2e_identity_changed_blocked">Não foi possível enviar: a chave de criptografia de um destinatário mudou. Confirme a alteração na sua caixa de entrada e envie novamente. A mensagem não foi enviada.</string>
     <string name="link_device_error_binding_mismatch">O outro dispositivo enviou chaves que não correspondem a este código. Obtenha um novo código nesse dispositivo e tente novamente.</string>
+    <string name="restore">Restaurar</string>
+    <string name="contact_trash_confirm_message">Você pode restaurar contatos da lixeira.</string>
+    <string name="empty_contacts_trash_confirm_message">Excluir permanentemente todos os contatos da lixeira? Não é possível desfazer.</string>
+    <string name="contact_restored">Contato restaurado</string>
+    <string name="contact_moved_to_trash">Contato movido para a lixeira</string>
+    <string name="contact_trash_days_left">%1$d dias restantes</string>
+    <string name="contacts_in_trash_notice">Os contatos na lixeira são excluídos definitivamente depois de 30 dias.</string>
+    <string name="contacts_import_empty">Nenhum contato encontrado nesse arquivo</string>
+    <string name="contacts_import_failed">Não foi possível importar os contatos</string>
+    <string name="contacts_export_failed">Não foi possível exportar os contatos</string>
+    <string name="import_contacts_file">Importar de um arquivo</string>
+    <string name="export_contacts_action">Exportar contatos</string>
+    <string name="export_all_contacts">Exportar todos os contatos</string>
+    <string name="export_selection">Exportar a seleção</string>
+    <string name="export_as_vcard">Exportar como vCard</string>
+    <string name="export_as_csv">Exportar como CSV</string>
+    <string name="contact_photo">Foto do contato</string>
+    <string name="remove_photo">Remover a foto</string>
+    <string name="add_photo">Adicionar uma foto</string>
+    <string name="photo_too_large">Escolha uma imagem menor</string>
+    <string name="no_contacts_yet">Nenhum contato ainda</string>
+    <string name="no_contacts_match">Nenhum contato corresponde a \"%1$s\"</string>
+    <string name="no_contacts_in_trash">A lixeira está vazia</string>
+    <string name="contacts_already_in_trash">Alguns contatos já estão na Lixeira. Restaure-os em vez disso.</string>
 </resources>

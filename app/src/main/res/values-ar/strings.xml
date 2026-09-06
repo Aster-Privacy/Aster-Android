@@ -3152,6 +3152,7 @@
     <string name="new_group">مجموعة جديدة</string>
     <string name="group_name">اسم المجموعة</string>
     <string name="delete_group">حذف المجموعة</string>
+    <string name="edit_group">تعديل المجموعة</string>
     <string name="delete_group_message">تبقى جهات الاتصال في هذه المجموعة ضمن دفتر عناوينك.</string>
     <string name="no_groups_yet">لا توجد مجموعات بعد</string>
     <string name="no_groups_description">اجمع جهات اتصالك في مجموعات لمراسلة عدة أشخاص دفعة واحدة. تُشفَّر أسماء المجموعات على هذا الجهاز قبل حفظها.</string>
@@ -3240,4 +3241,28 @@
     <string name="alias_unpinned_toast">تم إلغاء تثبيت الاسم المستعار</string>
     <string name="e2e_identity_changed_blocked">تعذّر الإرسال: تغيّر مفتاح التشفير لأحد المستلمين. أكّد التغيير في بريدك الوارد، ثم أعد الإرسال. لم تُرسل الرسالة.</string>
     <string name="link_device_error_binding_mismatch">أرسل الجهاز الآخر مفاتيح لا تطابق هذا الرمز. احصل على رمز جديد على ذلك الجهاز، ثم حاول مرة أخرى.</string>
+    <string name="restore">استعادة</string>
+    <string name="contact_trash_confirm_message">يمكنك استعادة جهات الاتصال من سلة المهملات.</string>
+    <string name="empty_contacts_trash_confirm_message">هل تريد حذف جميع جهات الاتصال في سلة المهملات نهائيًا؟ لا يمكن التراجع عن ذلك.</string>
+    <string name="contact_restored">تمت استعادة جهة الاتصال</string>
+    <string name="contact_moved_to_trash">تم نقل جهة الاتصال إلى المهملات</string>
+    <string name="contact_trash_days_left">بقي %1$d يوم</string>
+    <string name="contacts_in_trash_notice">تُحذف جهات الاتصال الموجودة في المهملات نهائيًا بعد 30 يومًا.</string>
+    <string name="contacts_import_empty">لم يتم العثور على جهات اتصال في هذا الملف</string>
+    <string name="contacts_import_failed">تعذّر استيراد جهات الاتصال</string>
+    <string name="contacts_export_failed">تعذّر تصدير جهات الاتصال</string>
+    <string name="import_contacts_file">الاستيراد من ملف</string>
+    <string name="export_contacts_action">تصدير جهات الاتصال</string>
+    <string name="export_all_contacts">تصدير كل جهات الاتصال</string>
+    <string name="export_selection">تصدير المحدد</string>
+    <string name="export_as_vcard">التصدير بصيغة vCard</string>
+    <string name="export_as_csv">التصدير بصيغة CSV</string>
+    <string name="contact_photo">صورة جهة الاتصال</string>
+    <string name="remove_photo">إزالة الصورة</string>
+    <string name="add_photo">إضافة صورة</string>
+    <string name="photo_too_large">اختر صورة أصغر</string>
+    <string name="no_contacts_yet">لا توجد جهات اتصال بعد</string>
+    <string name="no_contacts_match">لا توجد جهات اتصال تطابق \"%1$s\"</string>
+    <string name="no_contacts_in_trash">المهملات فارغة</string>
+    <string name="contacts_already_in_trash">بعض جهات الاتصال موجودة بالفعل في المهملات. استعدها بدلاً من ذلك.</string>
 </resources>

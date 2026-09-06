@@ -465,6 +465,7 @@ class ApiClient(
                 code = server_code,
                 details = parse_error_details(body),
             )
+            405, 406, 415 -> ApiError.ServerError(code)
             in 500..599 -> ApiError.ServerError(code)
             else -> ApiError.UnknownError(detail)
         }

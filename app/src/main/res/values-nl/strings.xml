@@ -3092,6 +3092,7 @@
     <string name="new_group">Nieuwe groep</string>
     <string name="group_name">Groepsnaam</string>
     <string name="delete_group">Groep verwijderen</string>
+    <string name="edit_group">Groep bewerken</string>
     <string name="delete_group_message">De contacten in deze groep blijven in je adresboek staan.</string>
     <string name="no_groups_yet">Nog geen groepen</string>
     <string name="no_groups_description">Groepeer je contacten om meerdere mensen tegelijk te mailen. Groepsnamen worden op dit apparaat versleuteld voordat ze worden opgeslagen.</string>
@@ -3160,4 +3161,28 @@
     <string name="alias_unpinned_toast">Alias losgemaakt</string>
     <string name="e2e_identity_changed_blocked">Verzenden mislukt: de versleutelingssleutel van een ontvanger is gewijzigd. Bevestig de wijziging in je inbox en verstuur het bericht opnieuw. Het bericht is niet verzonden.</string>
     <string name="link_device_error_binding_mismatch">Het andere apparaat heeft sleutels verstuurd die niet bij deze code horen. Vraag op dat apparaat een nieuwe code aan en probeer het opnieuw.</string>
+    <string name="restore">Herstellen</string>
+    <string name="contact_trash_confirm_message">Je kunt contacten herstellen uit de prullenbak.</string>
+    <string name="empty_contacts_trash_confirm_message">Alle contacten in de prullenbak definitief verwijderen? Dit kan niet ongedaan worden gemaakt.</string>
+    <string name="contact_restored">Contact hersteld</string>
+    <string name="contact_moved_to_trash">Contact naar de prullenmand verplaatst</string>
+    <string name="contact_trash_days_left">Nog %1$d dagen</string>
+    <string name="contacts_in_trash_notice">Contacten in de prullenmand worden na 30 dagen definitief verwijderd.</string>
+    <string name="contacts_import_empty">Geen contactpersonen gevonden in dat bestand</string>
+    <string name="contacts_import_failed">Contactpersonen konden niet worden geïmporteerd</string>
+    <string name="contacts_export_failed">Contactpersonen konden niet worden geëxporteerd</string>
+    <string name="import_contacts_file">Importeren uit een bestand</string>
+    <string name="export_contacts_action">Contactpersonen exporteren</string>
+    <string name="export_all_contacts">Alle contactpersonen exporteren</string>
+    <string name="export_selection">Selectie exporteren</string>
+    <string name="export_as_vcard">Exporteren als vCard</string>
+    <string name="export_as_csv">Exporteren als CSV</string>
+    <string name="contact_photo">Contactfoto</string>
+    <string name="remove_photo">Foto verwijderen</string>
+    <string name="add_photo">Foto toevoegen</string>
+    <string name="photo_too_large">Kies een kleinere afbeelding</string>
+    <string name="no_contacts_yet">Nog geen contacten</string>
+    <string name="no_contacts_match">Geen contacten komen overeen met \"%1$s\"</string>
+    <string name="no_contacts_in_trash">De prullenmand is leeg</string>
+    <string name="contacts_already_in_trash">Sommige contactpersonen staan al in de Prullenbak. Zet ze in plaats daarvan terug.</string>
 </resources>

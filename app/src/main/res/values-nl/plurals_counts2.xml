@@ -72,4 +72,8 @@
         <item quantity="one">%1$d bericht in %2$s</item>
         <item quantity="other">%1$d berichten in %2$s</item>
     </plurals>
+    <plurals name="exported_contacts">
+        <item quantity="one">%d contactpersoon geëxporteerd</item>
+        <item quantity="other">%d contactpersonen geëxporteerd</item>
+    </plurals>
 </resources>

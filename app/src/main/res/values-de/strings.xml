@@ -3093,6 +3093,7 @@
     <string name="new_group">Neue Gruppe</string>
     <string name="group_name">Gruppenname</string>
     <string name="delete_group">Gruppe löschen</string>
+    <string name="edit_group">Gruppe bearbeiten</string>
     <string name="delete_group_message">Die Kontakte in dieser Gruppe bleiben in Ihrem Adressbuch.</string>
     <string name="no_groups_yet">Noch keine Gruppen</string>
     <string name="no_groups_description">Fassen Sie Kontakte zu Gruppen zusammen, um mehrere Personen gleichzeitig anzuschreiben. Gruppennamen werden auf diesem Gerät verschlüsselt, bevor sie gespeichert werden.</string>
@@ -3161,4 +3162,28 @@
     <string name="alias_unpinned_toast">Alias gelöst</string>
     <string name="e2e_identity_changed_blocked">Senden nicht möglich: Der Verschlüsselungsschlüssel eines Empfängers hat sich geändert. Bestätige die Änderung in deinem Posteingang und sende die Nachricht erneut. Die Nachricht wurde nicht gesendet.</string>
     <string name="link_device_error_binding_mismatch">Das andere Gerät hat Schlüssel gesendet, die nicht zu diesem Code passen. Fordere auf diesem Gerät einen neuen Code an und versuche es erneut.</string>
+    <string name="restore">Wiederherstellen</string>
+    <string name="contact_trash_confirm_message">Du kannst Kontakte aus dem Papierkorb wiederherstellen.</string>
+    <string name="empty_contacts_trash_confirm_message">Alle Kontakte im Papierkorb endgültig löschen? Das lässt sich nicht rückgängig machen.</string>
+    <string name="contact_restored">Kontakt wiederhergestellt</string>
+    <string name="contact_moved_to_trash">Kontakt in den Papierkorb verschoben</string>
+    <string name="contact_trash_days_left">Noch %1$d Tage</string>
+    <string name="contacts_in_trash_notice">Kontakte im Papierkorb werden nach 30 Tagen endgültig gelöscht.</string>
+    <string name="contacts_import_empty">In dieser Datei wurden keine Kontakte gefunden</string>
+    <string name="contacts_import_failed">Kontakte konnten nicht importiert werden</string>
+    <string name="contacts_export_failed">Kontakte konnten nicht exportiert werden</string>
+    <string name="import_contacts_file">Aus einer Datei importieren</string>
+    <string name="export_contacts_action">Kontakte exportieren</string>
+    <string name="export_all_contacts">Alle Kontakte exportieren</string>
+    <string name="export_selection">Auswahl exportieren</string>
+    <string name="export_as_vcard">Als vCard exportieren</string>
+    <string name="export_as_csv">Als CSV exportieren</string>
+    <string name="contact_photo">Kontaktfoto</string>
+    <string name="remove_photo">Foto entfernen</string>
+    <string name="add_photo">Foto hinzufügen</string>
+    <string name="photo_too_large">Wähle ein kleineres Bild</string>
+    <string name="no_contacts_yet">Noch keine Kontakte</string>
+    <string name="no_contacts_match">Keine Kontakte stimmen mit \"%1$s\" überein</string>
+    <string name="no_contacts_in_trash">Der Papierkorb ist leer</string>
+    <string name="contacts_already_in_trash">Einige Kontakte sind bereits im Papierkorb. Stellen Sie sie stattdessen wieder her.</string>
 </resources>
