@@ -1225,6 +1225,10 @@
     <string name="forwarding_verification_sent">जांच वाली ईमेल %1$s पर भेजी गई। पुष्टि होते ही फ़ॉरवर्ड करना शुरू हो जाएगा।</string>
     <string name="forwarding_internal_active">फ़ॉरवर्डिंग चालू है। Aster से Aster गंतव्यों के लिए पुष्टि ज़रूरी नहीं है।</string>
     <string name="forwarding_verification_resent">जांच वाली ईमेल %1$s पर दोबारा भेजी गई</string>
+    <string name="forwarding_failed_badge">डिलीवर नहीं हो रहा</string>
+    <string name="forwarding_failed_encryption">एन्क्रिप्शन ज़रूरी करें चालू है, लेकिन %1$s के पास PGP कुंजी नहीं है, इसलिए संदेश फ़ॉरवर्ड नहीं होते। एन्क्रिप्शन सेटिंग में एन्क्रिप्शन ज़रूरी करें बंद करें, या प्राप्तकर्ता की सार्वजनिक कुंजी जोड़ें।</string>
+    <string name="forwarding_failed_generic">%1$s पर आख़िरी फ़ॉरवर्ड विफल रहा: %2$s</string>
+    <string name="forwarding_failed_count">फ़ॉरवर्ड न हुए संदेश: %1$d</string>
     <string name="signature">हस्ताक्षर</string>
     <string name="your_signature">आपका हस्ताक्षर</string>
     <string name="signature_placeholder">ऐसा हस्ताक्षर जोड़ें जो आपकी भेजी हर ईमेल के नीचे दिखे।</string>

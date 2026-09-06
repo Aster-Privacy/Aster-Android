@@ -878,6 +878,10 @@
     <string name="forwarding_verification_sent">%1$s に確認メールを送信しました。確認後に転送が開始されます。</string>
     <string name="forwarding_internal_active">転送は有効です。Aster から Aster への宛先には確認は不要です。</string>
     <string name="forwarding_verification_resent">%1$s に確認メールを再送信しました</string>
+    <string name="forwarding_failed_badge">配信されていません</string>
+    <string name="forwarding_failed_encryption">暗号化を必須にするがオンになっていますが、%1$s には PGP 鍵がないため、メッセージは転送されません。暗号化設定で暗号化を必須にするをオフにするか、受信者の公開鍵を追加してください。</string>
+    <string name="forwarding_failed_generic">%1$s への前回の転送に失敗しました: %2$s</string>
+    <string name="forwarding_failed_count">転送されなかったメッセージ: %1$d</string>
 
     <string name="signature">署名</string>
     <string name="your_signature">あなたの署名</string>

@@ -878,6 +878,10 @@
     <string name="forwarding_verification_sent">%1$s(으)로 확인 이메일을 보냈습니다. 확인 후 전달이 시작됩니다.</string>
     <string name="forwarding_internal_active">전달이 활성화되어 있습니다. Aster 간 대상은 확인이 필요하지 않습니다.</string>
     <string name="forwarding_verification_resent">%1$s(으)로 확인 이메일을 다시 보냈습니다</string>
+    <string name="forwarding_failed_badge">전달되지 않음</string>
+    <string name="forwarding_failed_encryption">암호화 필수가 켜져 있지만 %1$s에 PGP 키가 없어 메시지가 전달되지 않습니다. 암호화 설정에서 암호화 필수를 끄거나 수신자의 공개 키를 추가하세요.</string>
+    <string name="forwarding_failed_generic">%1$s(으)로의 마지막 전달에 실패했습니다: %2$s</string>
+    <string name="forwarding_failed_count">전달되지 않은 메시지: %1$d</string>
 
     <string name="signature">서명</string>
     <string name="your_signature">내 서명</string>

@@ -878,6 +878,10 @@
     <string name="forwarding_verification_sent">تم إرسال بريد التحقق إلى %1$s. يبدأ التحويل بعد التأكيد.</string>
     <string name="forwarding_internal_active">التحويل نشط. لا تحتاج الوجهات من Aster إلى Aster إلى تحقق.</string>
     <string name="forwarding_verification_resent">تمت إعادة إرسال بريد التحقق إلى %1$s</string>
+    <string name="forwarding_failed_badge">لا يتم التسليم</string>
+    <string name="forwarding_failed_encryption">خيار طلب التشفير مفعّل، لكن %1$s لا يملك مفتاح PGP، لذلك لا تتم إعادة توجيه الرسائل. أوقف طلب التشفير في إعدادات التشفير، أو أضف المفتاح العام للمستلم.</string>
+    <string name="forwarding_failed_generic">فشلت آخر إعادة توجيه إلى %1$s: %2$s</string>
+    <string name="forwarding_failed_count">الرسائل التي لم تتم إعادة توجيهها: %1$d</string>
 
     <string name="signature">التوقيع</string>
     <string name="your_signature">توقيعك</string>

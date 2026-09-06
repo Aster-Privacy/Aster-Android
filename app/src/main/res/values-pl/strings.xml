@@ -878,6 +878,10 @@
     <string name="forwarding_verification_sent">E-mail weryfikacyjny wysłany na %1$s. Przekazywanie ruszy po potwierdzeniu.</string>
     <string name="forwarding_internal_active">Przekazywanie jest aktywne. Adresy Aster do Aster nie wymagają weryfikacji.</string>
     <string name="forwarding_verification_resent">E-mail weryfikacyjny wysłany ponownie na %1$s</string>
+    <string name="forwarding_failed_badge">Nie dostarcza</string>
+    <string name="forwarding_failed_encryption">Opcja Wymagaj szyfrowania jest włączona, ale %1$s nie ma klucza PGP, więc wiadomości nie są przekazywane. Wyłącz Wymagaj szyfrowania w ustawieniach szyfrowania lub dodaj klucz publiczny odbiorcy.</string>
+    <string name="forwarding_failed_generic">Ostatnie przekazanie na %1$s nie powiodło się: %2$s</string>
+    <string name="forwarding_failed_count">Nieprzekazane wiadomości: %1$d</string>
 
     <string name="signature">Podpis</string>
     <string name="your_signature">Twój podpis</string>

@@ -878,6 +878,10 @@
     <string name="forwarding_verification_sent">Doğrulama e-postası %1$s adresine gönderildi. Yönlendirme onaylandıktan sonra başlar.</string>
     <string name="forwarding_internal_active">Yönlendirme etkin. Aster\'dan Aster\'a hedefler doğrulama gerektirmez.</string>
     <string name="forwarding_verification_resent">Doğrulama e-postası %1$s adresine yeniden gönderildi</string>
+    <string name="forwarding_failed_badge">Teslim edilmiyor</string>
+    <string name="forwarding_failed_encryption">Şifreleme zorunlu kıl açık, ancak %1$s için PGP anahtarı yok, bu yüzden iletiler iletilmiyor. Şifreleme ayarlarından Şifreleme zorunlu kıl seçeneğini kapatın veya alıcının açık anahtarını ekleyin.</string>
+    <string name="forwarding_failed_generic">%1$s adresine son iletim başarısız oldu: %2$s</string>
+    <string name="forwarding_failed_count">İletilmeyen iletiler: %1$d</string>
 
     <string name="signature">İmza</string>
     <string name="your_signature">İmzanız</string>

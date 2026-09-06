@@ -924,6 +924,10 @@
     <string name="forwarding_verification_sent">E-mail de vérification envoyé à %1$s. Le transfert démarre après confirmation.</string>
     <string name="forwarding_internal_active">Le transfert est actif. Les destinations Aster vers Aster ne nécessitent pas de vérification.</string>
     <string name="forwarding_verification_resent">E-mail de vérification renvoyé à %1$s</string>
+    <string name="forwarding_failed_badge">Non distribué</string>
+    <string name="forwarding_failed_encryption">Exiger le chiffrement est activé, mais %1$s n'a pas de clé PGP. Les messages ne sont donc pas transférés. Désactivez Exiger le chiffrement dans les réglages de chiffrement, ou ajoutez la clé publique du destinataire.</string>
+    <string name="forwarding_failed_generic">Le dernier transfert vers %1$s a échoué : %2$s</string>
+    <string name="forwarding_failed_count">Messages non transférés : %1$d</string>
 
     <!-- Signature -->
     <string name="signature">Signature</string>

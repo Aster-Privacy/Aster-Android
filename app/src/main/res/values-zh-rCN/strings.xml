@@ -878,6 +878,10 @@
     <string name="forwarding_verification_sent">验证邮件已发送至 %1$s。确认后即可开始转发。</string>
     <string name="forwarding_internal_active">转发已启用。Aster 到 Aster 的目标无需验证。</string>
     <string name="forwarding_verification_resent">验证邮件已重新发送至 %1$s</string>
+    <string name="forwarding_failed_badge">未送达</string>
+    <string name="forwarding_failed_encryption">已开启要求加密，但 %1$s 没有 PGP 密钥，因此邮件不会被转发。请在加密设置中关闭要求加密，或添加收件人的公钥。</string>
+    <string name="forwarding_failed_generic">最近一次转发至 %1$s 失败：%2$s</string>
+    <string name="forwarding_failed_count">未转发的邮件：%1$d</string>
 
     <string name="signature">签名</string>
     <string name="your_signature">您的签名</string>

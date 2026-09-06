@@ -878,6 +878,10 @@
     <string name="forwarding_verification_sent">E-mail de verificação enviado para %1$s. O encaminhamento começa após a confirmação.</string>
     <string name="forwarding_internal_active">O encaminhamento está ativo. Destinos de Aster para Aster não precisam de verificação.</string>
     <string name="forwarding_verification_resent">E-mail de verificação reenviado para %1$s</string>
+    <string name="forwarding_failed_badge">Não entregue</string>
+    <string name="forwarding_failed_encryption">Exigir criptografia está ativado, mas %1$s não tem chave PGP, então as mensagens não são encaminhadas. Desative Exigir criptografia nas configurações de criptografia ou adicione a chave pública do destinatário.</string>
+    <string name="forwarding_failed_generic">O último encaminhamento para %1$s falhou: %2$s</string>
+    <string name="forwarding_failed_count">Mensagens não encaminhadas: %1$d</string>
 
     <string name="signature">Assinatura</string>
     <string name="your_signature">Sua assinatura</string>

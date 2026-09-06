@@ -878,6 +878,10 @@
     <string name="forwarding_verification_sent">Письмо для подтверждения отправлено на %1$s. Пересылка начнётся после подтверждения.</string>
     <string name="forwarding_internal_active">Пересылка активна. Адреса Aster на Aster не требуют подтверждения.</string>
     <string name="forwarding_verification_resent">Письмо для подтверждения повторно отправлено на %1$s</string>
+    <string name="forwarding_failed_badge">Не доставляется</string>
+    <string name="forwarding_failed_encryption">Включена настройка Требовать шифрование, но у %1$s нет PGP-ключа, поэтому письма не пересылаются. Отключите Требовать шифрование в настройках шифрования или добавьте открытый ключ получателя.</string>
+    <string name="forwarding_failed_generic">Последняя пересылка на %1$s не удалась: %2$s</string>
+    <string name="forwarding_failed_count">Непересланных писем: %1$d</string>
 
     <string name="signature">Подпись</string>
     <string name="your_signature">Ваша подпись</string>

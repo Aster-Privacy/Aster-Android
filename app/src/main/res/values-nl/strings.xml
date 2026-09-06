@@ -878,6 +878,10 @@
     <string name="forwarding_verification_sent">Verificatie-e-mail verzonden naar %1$s. Doorsturen begint zodra dit is bevestigd.</string>
     <string name="forwarding_internal_active">Doorsturen is actief. Bestemmingen van Aster naar Aster hoeven niet te worden geverifieerd.</string>
     <string name="forwarding_verification_resent">Verificatie-e-mail opnieuw verzonden naar %1$s</string>
+    <string name="forwarding_failed_badge">Wordt niet bezorgd</string>
+    <string name="forwarding_failed_encryption">Versleuteling vereisen staat aan, maar %1$s heeft geen PGP-sleutel, dus berichten worden niet doorgestuurd. Zet Versleuteling vereisen uit in de versleutelingsinstellingen of voeg de openbare sleutel van de ontvanger toe.</string>
+    <string name="forwarding_failed_generic">De laatste doorstuuractie naar %1$s is mislukt: %2$s</string>
+    <string name="forwarding_failed_count">Niet doorgestuurde berichten: %1$d</string>
 
     <string name="signature">Handtekening</string>
     <string name="your_signature">Je handtekening</string>
