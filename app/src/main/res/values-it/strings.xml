@@ -880,7 +880,7 @@
     <string name="forwarding_verification_resent">Email di verifica inviata di nuovo a %1$s</string>
     <string name="forwarding_failed_badge">Non recapitato</string>
     <string name="forwarding_failed_encryption">Richiedi crittografia è attivo, ma %1$s non ha una chiave PGP, quindi i messaggi non vengono inoltrati. Disattiva Richiedi crittografia nelle impostazioni di crittografia o aggiungi la chiave pubblica del destinatario.</string>
-    <string name="forwarding_failed_generic">L'ultimo inoltro a %1$s non è riuscito: %2$s</string>
+    <string name="forwarding_failed_generic">L\'ultimo inoltro a %1$s non è riuscito: %2$s</string>
     <string name="forwarding_failed_count">Messaggi non inoltrati: %1$d</string>
 
     <string name="signature">Firma</string>
