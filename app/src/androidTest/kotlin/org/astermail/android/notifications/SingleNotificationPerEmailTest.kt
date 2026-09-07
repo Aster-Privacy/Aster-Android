@@ -86,8 +86,13 @@ class SingleNotificationPerEmailTest {
         post_message(item_id)
         Thread.sleep(500)
 
-        assertEquals(setOf(MailPollingWorker.message_notification_id(item_id.hashCode())), active_ids())
-        assertFalse(MailPollingWorker.SUMMARY_NOTIFICATION_ID in active_ids())
+        assertEquals(
+            setOf(
+                MailPollingWorker.message_notification_id(item_id.hashCode()),
+                MailPollingWorker.SUMMARY_NOTIFICATION_ID,
+            ),
+            active_ids(),
+        )
     }
 
     @Test
@@ -101,7 +106,7 @@ class SingleNotificationPerEmailTest {
         Thread.sleep(500)
 
         assertEquals(after_first, active_ids())
-        assertEquals(1, active_ids().size)
+        assertEquals(2, active_ids().size)
     }
 
     @Test
@@ -114,11 +119,11 @@ class SingleNotificationPerEmailTest {
         Thread.sleep(1_000)
 
         assertFalse(MailPollingWorker.NOTIFICATION_ID in active_ids())
-        assertEquals(1, active_ids().size)
+        assertEquals(2, active_ids().size)
     }
 
     @Test
-    fun second_email_brings_back_the_group_summary() {
+    fun second_email_joins_the_same_group_summary() {
         val first = "first-" + System.nanoTime()
         val second = "second-" + System.nanoTime()
         post_message(first)

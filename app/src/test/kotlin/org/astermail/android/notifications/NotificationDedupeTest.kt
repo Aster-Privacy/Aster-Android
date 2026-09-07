@@ -57,9 +57,9 @@ class NotificationDedupeTest {
     }
 
     @Test
-    fun group_summary_needs_at_least_two_children() {
+    fun group_summary_accompanies_every_mail_notification() {
         assertFalse(MailPollingWorker.should_post_group_summary(0))
-        assertFalse(MailPollingWorker.should_post_group_summary(1))
+        assertTrue(MailPollingWorker.should_post_group_summary(1))
         assertTrue(MailPollingWorker.should_post_group_summary(2))
         assertTrue(MailPollingWorker.should_post_group_summary(7))
     }

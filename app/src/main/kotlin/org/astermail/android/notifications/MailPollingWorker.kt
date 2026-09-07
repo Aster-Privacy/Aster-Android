@@ -791,7 +791,7 @@ class MailPollingWorker(
         }
 
         fun should_post_group_summary(active_mail_notifications: Int): Boolean {
-            return active_mail_notifications >= 2
+            return active_mail_notifications >= 1
         }
 
         private fun message_notified_recently(context: Context): Boolean {
@@ -821,6 +821,7 @@ class MailPollingWorker(
                 .setContentText(text)
                 .setVisibility(NotificationCompat.VISIBILITY_SECRET)
                 .setGroup(GROUP_KEY_NEW_MAIL)
+                .setDeleteIntent(dismiss_intent(context, NOTIFICATION_ID))
                 .build()
             val manager = NotificationManagerCompat.from(context)
             manager.cancel(NOTIFICATION_ID)
@@ -850,6 +851,7 @@ class MailPollingWorker(
                 .setGroup(GROUP_KEY_NEW_MAIL)
                 .setContentTitle(safe_sender)
                 .setContentText(one_line_subject)
+                .setDeleteIntent(dismiss_intent(context, message_id))
             if (item_id.isNotBlank()) {
                 val open_intent = Intent(context, MainActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or
@@ -940,6 +942,25 @@ class MailPollingWorker(
         }
 
         private const val ACTION_REQUEST_STRIDE = 8
+        private const val DISMISS_REQUEST_OFFSET = 7
+
+        private fun dismiss_intent(context: Context, notification_id: Int): PendingIntent {
+            val intent = Intent(context, MailNotificationActionReceiver::class.java).apply {
+                action = MailNotificationActionReceiver.ACTION_DISMISSED
+                putExtra(MailNotificationActionReceiver.EXTRA_NOTIFICATION_ID, notification_id)
+            }
+            return PendingIntent.getBroadcast(
+                context,
+                notification_id * ACTION_REQUEST_STRIDE + DISMISS_REQUEST_OFFSET,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+        }
+
+        fun on_notification_dismissed(context: Context, notification_id: Int) {
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
+            clear_summary_if_empty(manager, setOf(notification_id))
+        }
 
         private fun active_mail_notification_count(context: Context, just_posted_id: Int): Int {
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
@@ -1104,6 +1125,7 @@ class MailPollingWorker(
                 .setContentIntent(pending)
                 .setVisibility(NotificationCompat.VISIBILITY_SECRET)
                 .setGroup(GROUP_KEY_NEW_MAIL)
+                .setDeleteIntent(dismiss_intent(context, message_id))
                 .build()
             val manager = NotificationManagerCompat.from(context)
             manager.notify(message_id, notification)

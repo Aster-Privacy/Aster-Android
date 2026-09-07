@@ -28,6 +28,13 @@ import android.content.Intent
 class MailNotificationActionReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == ACTION_DISMISSED) {
+            val dismissed_id = intent.getIntExtra(EXTRA_NOTIFICATION_ID, 0)
+            if (dismissed_id != 0) {
+                runCatching { MailPollingWorker.on_notification_dismissed(context, dismissed_id) }
+            }
+            return
+        }
         val item_id = intent.getStringExtra(EXTRA_ITEM_ID)?.takeIf { it.isNotBlank() } ?: return
         val action = when (intent.action) {
             ACTION_ARCHIVE -> MailNotificationActionWorker.ACTION_ARCHIVE
@@ -51,6 +58,7 @@ class MailNotificationActionReceiver : BroadcastReceiver() {
         const val ACTION_ARCHIVE = "org.astermail.android.MAIL_NOTIFICATION_ARCHIVE"
         const val ACTION_TRASH = "org.astermail.android.MAIL_NOTIFICATION_TRASH"
         const val ACTION_MARK_READ = "org.astermail.android.MAIL_NOTIFICATION_MARK_READ"
+        const val ACTION_DISMISSED = "org.astermail.android.MAIL_NOTIFICATION_DISMISSED"
         const val EXTRA_ITEM_ID = "mail_notification_item_id"
         const val EXTRA_NOTIFICATION_ID = "mail_notification_id"
     }
