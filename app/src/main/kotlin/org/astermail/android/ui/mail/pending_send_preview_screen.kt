@@ -123,11 +123,13 @@ fun pending_send_preview_screen(
         )
     }
 
+    val subject_selection = remember_subject_selection_state()
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.bg_primary)
-            .statusBarsPadding(),
+            .statusBarsPadding()
+            .clear_subject_selection_on_press_outside(subject_selection),
     ) {
         Box(
             modifier = Modifier
@@ -175,16 +177,17 @@ fun pending_send_preview_screen(
                         .padding(top = AsterSpacing.sm, bottom = AsterSpacing.sm),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(
-                        text = subject_text,
-                        color = colors.text_primary,
-                        fontSize = 26.sp,
-                        lineHeight = 32.sp,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f),
-                    )
+                    selectable_subject(state = subject_selection, modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = subject_text,
+                            color = colors.text_primary,
+                            fontSize = 26.sp,
+                            lineHeight = 32.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
             }
             item(key = "pending_message") {

@@ -763,7 +763,14 @@ fun MailDetailScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(colors.bg_primary).systemBarsPadding()) {
+    val subject_selection = remember_subject_selection_state()
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colors.bg_primary)
+            .systemBarsPadding()
+            .clear_subject_selection_on_press_outside(subject_selection),
+    ) {
         Column(modifier = Modifier.fillMaxSize()) {
             Box(
                 modifier = Modifier
@@ -1089,6 +1096,7 @@ fun MailDetailScreen(
                             on_overflow = { overflowed ->
                                 if (!subject_expanded && overflowed) subject_truncated = true
                             },
+                            selection_state = subject_selection,
                             modifier = Modifier
                                 .weight(1f)
                                 .then(

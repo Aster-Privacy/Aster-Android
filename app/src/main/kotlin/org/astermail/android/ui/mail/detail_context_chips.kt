@@ -45,6 +45,30 @@ import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.selection.DisableSelection
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.runtime.key
+import androidx.compose.ui.platform.LocalTextToolbar
+import androidx.compose.ui.platform.TextToolbar
+import androidx.compose.ui.platform.TextToolbarStatus
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.Clipboard
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.NativeClipboard
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
@@ -257,6 +281,7 @@ internal fun detail_subject_line(
     tags: List<TagItem>,
     max_lines: Int,
     on_overflow: (Boolean) -> Unit,
+    selection_state: subject_selection_state,
     modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
@@ -306,8 +331,8 @@ internal fun detail_subject_line(
     val text = buildAnnotatedString {
         append(subject)
         chips.forEach { chip ->
-            append("\u00A0")
-            appendInlineContent(chip.id, "\u200B")
+            append(detail_chip_placeholder_gap)
+            appendInlineContent(chip.id, detail_chip_placeholder_text)
         }
     }
     val inline_content = chips.associate { chip ->
@@ -317,21 +342,134 @@ internal fun detail_subject_line(
                 height = with(density) { chip_height.toSp() },
                 placeholderVerticalAlign = PlaceholderVerticalAlign.Center,
             ),
-            children = { chip.render() },
+            children = { DisableSelection { chip.render() } },
         )
     }
-    Text(
-        text = text,
-        inlineContent = inline_content,
-        color = colors.text_primary,
-        fontSize = 24.sp,
-        lineHeight = 31.sp,
-        fontWeight = FontWeight.Bold,
-        maxLines = max_lines,
-        overflow = TextOverflow.Ellipsis,
-        onTextLayout = { layout -> on_overflow(layout.hasVisualOverflow) },
-        modifier = modifier.testTag("detail_subject_line"),
-    )
+    selectable_subject(state = selection_state, modifier = modifier) {
+        Text(
+            text = text,
+            inlineContent = inline_content,
+            color = colors.text_primary,
+            fontSize = 24.sp,
+            lineHeight = 31.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = max_lines,
+            overflow = TextOverflow.Ellipsis,
+            onTextLayout = { layout -> on_overflow(layout.hasVisualOverflow) },
+            modifier = Modifier.testTag("detail_subject_line"),
+        )
+    }
+}
+
+internal const val detail_chip_placeholder_gap = "\u00A0"
+internal const val detail_chip_placeholder_text = "\u200B"
+
+internal fun strip_subject_chip_placeholders(copied: String): String =
+    copied
+        .replace(detail_chip_placeholder_gap + detail_chip_placeholder_text, "")
+        .replace(detail_chip_placeholder_text, "")
+        .trimEnd()
+
+@Stable
+internal class subject_selection_state {
+    var has_selection by mutableStateOf(false)
+    var generation by mutableStateOf(0)
+        private set
+    var bounds_in_root: Rect? = null
+
+    fun clear() {
+        if (!has_selection) return
+        has_selection = false
+        generation += 1
+    }
+}
+
+private class subject_text_toolbar(
+    private val delegate: TextToolbar,
+    private val state: subject_selection_state,
+) : TextToolbar {
+    override val status: TextToolbarStatus
+        get() = delegate.status
+
+    override fun showMenu(
+        rect: Rect,
+        onCopyRequested: (() -> Unit)?,
+        onPasteRequested: (() -> Unit)?,
+        onCutRequested: (() -> Unit)?,
+        onSelectAllRequested: (() -> Unit)?,
+    ) {
+        state.has_selection = true
+        delegate.showMenu(rect, onCopyRequested, onPasteRequested, onCutRequested, onSelectAllRequested)
+    }
+
+    override fun hide() {
+        state.has_selection = false
+        delegate.hide()
+    }
+}
+
+@Composable
+internal fun remember_subject_selection_state(): subject_selection_state =
+    remember { subject_selection_state() }
+
+@Composable
+internal fun Modifier.clear_subject_selection_on_press_outside(
+    state: subject_selection_state,
+): Modifier {
+    var origin_in_root by remember { mutableStateOf(Offset.Zero) }
+    return this
+        .onGloballyPositioned { origin_in_root = it.positionInRoot() }
+        .pointerInput(state) {
+            awaitEachGesture {
+                val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                if (!state.has_selection) return@awaitEachGesture
+                val inside = state.bounds_in_root?.contains(origin_in_root + down.position) == true
+                if (!inside) state.clear()
+            }
+        }
+}
+
+@Composable
+internal fun selectable_subject(
+    state: subject_selection_state,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    val system_clipboard = LocalClipboard.current
+    val system_toolbar = LocalTextToolbar.current
+    val clipboard = remember(system_clipboard) { subject_clipboard(system_clipboard) }
+    val toolbar = remember(system_toolbar, state) { subject_text_toolbar(system_toolbar, state) }
+    CompositionLocalProvider(
+        LocalClipboard provides clipboard,
+        LocalTextToolbar provides toolbar,
+    ) {
+        key(state.generation) {
+            SelectionContainer(
+                modifier = modifier.onGloballyPositioned { state.bounds_in_root = it.boundsInRoot() },
+                content = content,
+            )
+        }
+    }
+}
+
+private class subject_clipboard(private val delegate: Clipboard) : Clipboard {
+    override val nativeClipboard: NativeClipboard
+        get() = delegate.nativeClipboard
+
+    override suspend fun getClipEntry(): ClipEntry? = delegate.getClipEntry()
+
+    override suspend fun setClipEntry(clipEntry: ClipEntry?) {
+        val clip = clipEntry?.clipData
+        val text = clip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.text
+        if (text == null) {
+            delegate.setClipEntry(clipEntry)
+            return
+        }
+        val cleaned = strip_subject_chip_placeholders(text.toString())
+        delegate.setClipEntry(
+            ClipEntry(android.content.ClipData.newPlainText(clip.description.label, cleaned)),
+        )
+    }
 }
 
 @Composable
