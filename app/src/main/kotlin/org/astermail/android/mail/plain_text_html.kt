@@ -21,14 +21,6 @@
 
 package org.astermail.android.mail
 
-private val url_pattern = Regex(
-    "(https?://[^\\s<>\"']+|www\\.[a-zA-Z0-9][a-zA-Z0-9.-]*\\.[a-zA-Z]{2,}(?:/[^\\s<>\"']*)?)",
-)
-private val trailing_punct_pattern = Regex("[.,;:!?)\\]\\}\"']+$")
-private val email_pattern = Regex(
-    "(?<![\\w@.-])([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})(?![\\w@.-])",
-)
-
 fun build_plain_text_html(body: String): String {
     val normalized = body.replace("\r\n", "\n").replace('\r', '\n')
     val unflowed = if (FormatFlowed.looks_flowed(normalized)) {
@@ -36,39 +28,20 @@ fun build_plain_text_html(body: String): String {
     } else {
         normalized
     }
-    val escaped = unflowed
-        .replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-    val linked = url_pattern.replace(escaped) { match ->
-        val raw = match.value
-        val trail_match = trailing_punct_pattern.find(raw)
-        val (clean, trail) = if (trail_match != null) {
-            raw.substring(0, trail_match.range.first) to raw.substring(trail_match.range.first)
-        } else {
-            raw to ""
-        }
-        val href = if (clean.startsWith("www.")) "http://$clean" else clean
-        "<a href=\"$href\">$clean</a>$trail"
-    }
-    val linked_with_email = email_pattern.replace(linked) { match ->
-        val address = trim_plain_text_email(match.value)
-        "<a href=\"mailto:$address\">$address</a>" + match.value.substring(address.length)
+    val linked = Autolink.split(unflowed).joinToString("") { segment ->
+        val text = escape_plain_text(segment.text)
+        val href = segment.href
+        if (href == null) text else "<a href=\"${escape_plain_text(href)}\">$text</a>"
     }
     return "<div style=\"white-space:pre-wrap;overflow-wrap:break-word\">" +
-        linked_with_email.replace("\n", "<br>") +
+        linked.replace("\n", "<br>") +
         "</div>"
 }
 
-private fun trim_plain_text_email(address: String): String {
-    val at = address.lastIndexOf('@')
-    if (at < 0) return address
-    val domain = address.substring(at + 1)
-    val dot = domain.lastIndexOf('.')
-    if (dot < 0) return address
-    var tld = domain.substring(dot + 1)
-    val seam = Regex("[a-z][A-Z]").find(tld)
-    if (seam != null) tld = tld.substring(0, seam.range.first + 1)
-    if (tld.length > 24) tld = tld.substring(0, 24)
-    return address.substring(0, at + 1) + domain.substring(0, dot + 1) + tld
+private fun escape_plain_text(value: String): String {
+    return value
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace("\"", "&quot;")
 }

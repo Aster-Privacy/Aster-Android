@@ -512,8 +512,27 @@ if(trailing<=48)return full;
 return Math.min(full,Math.ceil(content)+24);
   }
   function linkify_text_nodes(root){
-var url_re=/((?:https?:\/\/|www\.)[^\s<>"']+[^\s<>"'.,;:!?)\]}])|([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/g;
-function trim_email_runon(addr){
+var candidate_re=/(?<![\w@\/.-])(?:(https?:\/\/|www\.)[^\s<>"'`]+|([A-Za-z0-9._%+-]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)*\.[A-Za-z]{2,}))/gi;
+var quick_re=/:\/\/|www\.|@/i;
+var trailing_punct={'.':1,',':1,':':1,';':1,'!':1,'?':1,"'":1,'"':1,'*':1,'_':1,'~':1};
+var bracket_pairs={')':'(',']':'[','}':'{'};
+function count_char(s,c){var n=0;for(var i=0;i<s.length;i++)if(s[i]===c)n++;return n;}
+function trim_url_tail(u){
+  while(u.length){
+    var last=u[u.length-1];
+    if(last===';'){var ent=/&#?[A-Za-z0-9]+;$/.exec(u);u=ent?u.slice(0,ent.index):u.slice(0,-1);continue;}
+    if(trailing_punct[last]){u=u.slice(0,-1);continue;}
+    var opener=bracket_pairs[last];
+    if(opener&&count_char(u,last)>count_char(u,opener)){u=u.slice(0,-1);continue;}
+    break;
+  }
+  return u;
+}
+function has_host(u,n){
+  var host=u.slice(n).split(/[\/?#]/,1)[0];
+  return host.length>0&&host[0]!=='.'&&host[host.length-1]!=='.'&&host.indexOf('..')<0&&/[A-Za-z0-9]/.test(host);
+}
+function trim_email_tail(addr){
   var at=addr.lastIndexOf('@');if(at<0)return addr;
   var dom=addr.substring(at+1);var dot=dom.lastIndexOf('.');if(dot<0)return addr;
   var tld=dom.substring(dot+1);
@@ -522,23 +541,40 @@ function trim_email_runon(addr){
   if(tld.length>24)tld=tld.substring(0,24);
   return addr.substring(0,at+1)+dom.substring(0,dot+1)+tld;
 }
+function find_links(s){
+  var out=[];if(!s||!quick_re.test(s))return out;
+  candidate_re.lastIndex=0;var m;
+  while((m=candidate_re.exec(s))!==null){
+    var raw=m[0];var prefix=m[1];
+    if(prefix){
+      var url=trim_url_tail(raw);var is_www=prefix.toLowerCase()==='www.';
+      if(url.length>prefix.length&&has_host(url,prefix.length)&&(!is_www||url.slice(prefix.length).indexOf('.')>=0)){
+        out.push({start:m.index,end:m.index+url.length,text:url,href:is_www?'http://'+url:url});
+      }
+      candidate_re.lastIndex=m.index+Math.max(url.length,1);
+      continue;
+    }
+    var addr=trim_email_tail(m[2]||raw);
+    out.push({start:m.index,end:m.index+addr.length,text:addr,href:'mailto:'+addr});
+    candidate_re.lastIndex=m.index+addr.length;
+  }
+  return out;
+}
 var skip_tags={A:1,SCRIPT:1,STYLE:1,TEXTAREA:1,CODE:1,PRE:1,BUTTON:1};
 var to_process=[];
 var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:function(n){
   var p=n.parentNode;while(p&&p!==root){if(p.nodeType===1&&skip_tags[p.tagName])return NodeFilter.FILTER_REJECT;p=p.parentNode}
-  return n.nodeValue&&url_re.test(n.nodeValue)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT;
+  return n.nodeValue&&quick_re.test(n.nodeValue)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT;
 }});
 while(w.nextNode())to_process.push(w.currentNode);
 to_process.forEach(function(n){
-  var s=n.nodeValue;url_re.lastIndex=0;
-  var frag=document.createDocumentFragment();var last=0;var m;
-  while((m=url_re.exec(s))!==null){
-    if(m.index>last)frag.appendChild(document.createTextNode(s.substring(last,m.index)));
-    var a=document.createElement('a');
-    if(m[1]){var href=m[1];if(/^www\./i.test(href))href='http://'+href;a.href=href;a.textContent=m[1];last=m.index+m[0].length;}
-    else{var addr=trim_email_runon(m[2]);a.href='mailto:'+addr;a.textContent=addr;last=m.index+addr.length;url_re.lastIndex=last;}
-    frag.appendChild(a);
-  }
+  var s=n.nodeValue;var links=find_links(s);if(!links.length)return;
+  var frag=document.createDocumentFragment();var last=0;
+  links.forEach(function(l){
+    if(l.start>last)frag.appendChild(document.createTextNode(s.substring(last,l.start)));
+    var a=document.createElement('a');a.href=l.href;a.textContent=l.text;frag.appendChild(a);
+    last=l.end;
+  });
   if(last<s.length)frag.appendChild(document.createTextNode(s.substring(last)));
   n.parentNode.replaceChild(frag,n);
 });

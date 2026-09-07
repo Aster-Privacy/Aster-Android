@@ -18,6 +18,7 @@
 
 package org.astermail.android.ui.mail
 
+import org.astermail.android.mail.Autolink
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -338,8 +339,7 @@ object EmailHtmlSanitizer {
     }
 
     private fun autolink_bare_urls(doc: Document, clean_tracking_links: Boolean = true) {
-        val url_re = Regex("""https?://[^\s<>"'{}|\\^`\[\]]+""")
-        val skip_ancestors = setOf("a", "style", "script")
+        val skip_ancestors = setOf("a", "style", "script", "textarea", "code", "pre", "button")
         val text_nodes = mutableListOf<TextNode>()
         NodeTraversor.traverse(
             object : NodeVisitor {
@@ -362,21 +362,23 @@ object EmailHtmlSanitizer {
                 ancestor = ancestor.parent()
             }
             if (skip) continue
-            val text = tn.wholeText
-            if (!url_re.containsMatchIn(text)) continue
+            val segments = Autolink.split(tn.wholeText)
+            if (segments.none { it.href != null }) continue
             val nodes = mutableListOf<Node>()
-            var last = 0
-            for (m in url_re.findAll(text)) {
-                if (m.range.first > last) nodes.add(TextNode(text.substring(last, m.range.first)))
+            for (segment in segments) {
+                val href = segment.href
+                if (href == null) {
+                    nodes.add(TextNode(segment.text))
+                    continue
+                }
                 val a = Element("a")
-                a.attr("href", if (clean_tracking_links) strip_tracking_params(m.value) else m.value)
+                val is_web = href.startsWith("http://") || href.startsWith("https://")
+                a.attr("href", if (clean_tracking_links && is_web) strip_tracking_params(href) else href)
                 a.attr("target", "_blank")
                 a.attr("rel", "noopener noreferrer nofollow")
-                a.text(m.value)
+                a.text(segment.text)
                 nodes.add(a)
-                last = m.range.last + 1
             }
-            if (last < text.length) nodes.add(TextNode(text.substring(last)))
             var ref: Node = tn
             for (n in nodes) {
                 ref.after(n)
