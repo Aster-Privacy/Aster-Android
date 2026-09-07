@@ -140,7 +140,7 @@ class RatchetEncryptor @Inject constructor(
         return json.encodeToString(envelope)
     }
 
-    private val verifying_key_cache = mutableMapOf<String, String>()
+    private val verifying_key_cache = java.util.concurrent.ConcurrentHashMap<String, String>()
 
     private suspend fun verify_prekey_binding(
         username: String,

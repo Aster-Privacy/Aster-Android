@@ -186,17 +186,18 @@ class RatchetDecryptor @Inject constructor(
             if (state == null) {
                 val from_server = syncer.fetch_from_server(conversation_id)
                 if (from_server != null) {
-                    state_store.save(from_server)
                     state = from_server
                 }
             }
 
             var plaintext: String? = null
             var decrypt_error: Throwable? = null
+            var chained = false
 
             if (state != null) {
                 try {
                     plaintext = DoubleRatchet.decrypt(state!!, recipient)
+                    chained = true
                 } catch (c: kotlinx.coroutines.CancellationException) {
                     throw c
                 } catch (e: Throwable) {
@@ -217,6 +218,7 @@ class RatchetDecryptor @Inject constructor(
                     try {
                         plaintext = DoubleRatchet.decrypt(refreshed, recipient)
                         state = refreshed
+                        chained = true
                         decrypt_error = null
                     } catch (cancelled: CancellationException) {
                         throw cancelled
@@ -246,6 +248,7 @@ class RatchetDecryptor @Inject constructor(
                 if (recovered != null) {
                     state = recovered.first
                     plaintext = recovered.second
+                    consume_pq_prekey(recipient)
                 }
             }
 
@@ -272,7 +275,7 @@ class RatchetDecryptor @Inject constructor(
                 return@with_lock null
             }
 
-            record_identity_pin(conversation_id, sender_email, envelope.sender_identity_key)
+            record_identity_pin(conversation_id, sender_email, envelope.sender_identity_key, chained)
             if (is_fresh_bootstrap) {
                 runCatching {
                     identity_pins.record_bootstrap(conversation_id, recipient.ephemeral_key.orEmpty())
@@ -299,10 +302,19 @@ class RatchetDecryptor @Inject constructor(
         runCatching { plaintext_cache.put(message_id, plaintext) }
     }
 
+    private suspend fun consume_pq_prekey(recipient: RatchetRecipientData) {
+        val key_id = recipient.pq_key_id ?: return
+        val ephemeral = recipient.ephemeral_key ?: return
+        if (recipient.pq_ciphertext == null || key_id == X3dh.PQ_IDENTITY_KEY_ID) return
+        runCatching { identity_pins.record_pq_prekey_consumed(key_id, ephemeral) }
+        runCatching { session_key_store.remove_pq_secret(key_id) }
+    }
+
     private suspend fun record_identity_pin(
         conversation_id: String,
         sender_email: String,
         sender_identity_key: String,
+        confirmed: Boolean = false,
     ) {
         val outcome = runCatching {
             identity_pins.record(
@@ -310,6 +322,7 @@ class RatchetDecryptor @Inject constructor(
                 sender_email = sender_email,
                 sender_identity_key_b64 = sender_identity_key,
                 observed_at = System.currentTimeMillis(),
+                confirmed = confirmed,
             )
         }.getOrNull()
         if (outcome == IdentityPinOutcome.CHANGED && org.astermail.android.BuildConfig.DEBUG) {
@@ -570,6 +583,16 @@ class RatchetDecryptor @Inject constructor(
         val pq_ciphertext = recipient.pq_ciphertext
         val pq_key_id = recipient.pq_key_id
         val from_identity = pq_key_id == X3dh.PQ_IDENTITY_KEY_ID
+
+        if (pq_ciphertext != null && pq_key_id != null && !from_identity) {
+            val consumer = runCatching { identity_pins.pq_prekey_consumer(pq_key_id) }.getOrNull()
+            if (!RatchetIdentityPinRules.pq_prekey_accepts(consumer, ephemeral_b64)) {
+                if (org.astermail.android.BuildConfig.DEBUG) {
+                    android.util.Log.w("AsterRatchet", "refusing a reused one-time pq prekey")
+                }
+                return emptyList()
+            }
+        }
 
         val pq_secrets: List<ByteArray> = when {
             pq_ciphertext == null || pq_key_id == null -> emptyList()

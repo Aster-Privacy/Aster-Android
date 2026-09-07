@@ -1007,10 +1007,12 @@ internal fun save_recovery_codes(context: Context, codes: List<String>) {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
-        org.astermail.android.ui.common.start_external_intent(
+        val started = org.astermail.android.ui.common.start_external_intent(
             context,
             Intent.createChooser(intent, title).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
         )
+        if (!started) org.astermail.android.util.delete_export_file_quietly(file)
+        started
     }.getOrDefault(false)
     if (!saved) {
         Toast.makeText(context, context.getString(R.string.fix_enc_codes_save_failed), Toast.LENGTH_LONG).show()

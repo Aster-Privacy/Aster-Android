@@ -355,6 +355,53 @@ class RatchetDecryptorTest {
     }
 
     @Test
+    fun `server state that cannot decrypt the message is never persisted locally`() = runTest {
+        val fixture = build_fixture()
+
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "first message")
+        val receiver_state = receiver_state_from(fixture)
+        val plaintext0 = DoubleRatchet.decrypt(receiver_state, recipient_data_for(fixture, enc0))
+        assertEquals("first message", plaintext0)
+
+        val stale_state = deep_copy(receiver_state)
+        val corrupt_kp = RatchetCrypto.generate_p256_keypair()
+        stale_state.dh_keypair = stale_state.dh_keypair.copy(
+            secret_key = RatchetCrypto.b64_encode(RatchetCrypto.private_to_raw_d(corrupt_kp.private_key)),
+        )
+        val bogus_server_state = deep_copy(stale_state)
+        val bogus_kp = RatchetCrypto.generate_p256_keypair()
+        bogus_server_state.dh_keypair = bogus_server_state.dh_keypair.copy(
+            secret_key = RatchetCrypto.b64_encode(RatchetCrypto.private_to_raw_d(bogus_kp.private_key)),
+        )
+
+        val reply_state = deep_copy(receiver_state)
+        val enc_reply = DoubleRatchet.encrypt(reply_state, "reply from kchaos")
+        val plaintext_reply = DoubleRatchet.decrypt(fixture.sender_state, recipient_data_for(fixture, enc_reply))
+        assertEquals("reply from kchaos", plaintext_reply)
+
+        val enc2 = DoubleRatchet.encrypt(fixture.sender_state, "third message")
+        val body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc2))
+
+        val state_store = mockk<RatchetStateStore>(relaxed = true)
+        coEvery { state_store.load(fixture.conversation_id) } returns stale_state
+        val syncer = mockk<RatchetStateSyncer>(relaxed = true)
+        coEvery { syncer.fetch_from_server(fixture.conversation_id) } returns bogus_server_state
+        coEvery { syncer.sync(any(), any()) } returns true
+        val ratchet_api = mockk<RatchetApi>(relaxed = true)
+        val auth_repo = mockk<AuthRepository>(relaxed = true)
+        coEvery { auth_repo.try_refresh_vault_keys() } returns false
+
+        val session_key_store = SessionKeyStore(null)
+        seed_session_key_store(session_key_store, fixture.receiver_keys)
+
+        val decryptor = new_decryptor(state_store, session_key_store, ratchet_api, syncer, auth_repo)
+        val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email)
+
+        assertEquals(RATCHET_UNDECRYPTABLE_SENTINEL, result)
+        coVerify(exactly = 0) { state_store.save(bogus_server_state) }
+    }
+
+    @Test
     fun `recovery lane decrypts a continuation message the ratchet state cannot`() = runTest {
         val fixture = build_fixture()
 

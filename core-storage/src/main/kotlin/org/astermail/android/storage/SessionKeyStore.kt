@@ -214,6 +214,12 @@ class SessionKeyStore(context: Context? = null) {
         }
     }
 
+    fun remove_pq_secret(key_id: Int) {
+        synchronized(lock) {
+            prefs?.edit()?.remove("$key_pq_secret_prefix$key_id")?.commit()
+        }
+    }
+
     fun has_ratchet_keys(): Boolean = synchronized(lock) {
         ratchet_identity_jwk != null &&
             ratchet_signed_prekey_jwk != null &&

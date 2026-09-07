@@ -101,6 +101,7 @@ class AsterApplication : Application(), ImageLoaderFactory {
         Thread {
             android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND)
             runCatching { prime_profile_resolver() }
+            runCatching { org.astermail.android.util.purge_sensitive_export_files(this) }
             runCatching { org.astermail.android.notifications.MailPollingWorker.create_channel(this) }
             runCatching { org.astermail.android.notifications.LoginAlertNotifier.create_channel(this) }
             runCatching { org.astermail.android.notifications.MailPollingWorker.enqueue(this) }

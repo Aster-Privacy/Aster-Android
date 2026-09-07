@@ -213,17 +213,22 @@ fun import_shared_attachment(context: Context, uri: Uri): AttachmentImport {
     if (!target_dir.exists() && !target_dir.mkdirs()) return AttachmentImport.Failed(name)
     prune_share_cache(target_dir)
     val target = File(target_dir, System.nanoTime().toString() + "_" + name)
-    val copied = runCatching {
+    val limit = AttachmentLimits.max_bytes()
+    val copy_result = runCatching {
         resolver.openInputStream(uri)?.use { input ->
-            target.outputStream().use { output -> input.copyTo(output) }
-        } ?: return@runCatching -1L
-        target.length()
-    }.getOrDefault(-1L)
+            target.outputStream().use { output -> bounded_copy(input, output, limit) }
+        }
+    }.getOrNull()
+    if (copy_result is BoundedCopyResult.Exceeded) {
+        target.delete()
+        return AttachmentImport.TooLarge(name, maxOf(size, limit + 1))
+    }
+    val copied = (copy_result as? BoundedCopyResult.Copied)?.bytes ?: -1L
     if (copied < 0) {
         target.delete()
         return AttachmentImport.Failed(name)
     }
-    if (copied > AttachmentLimits.max_bytes()) {
+    if (copied > limit) {
         target.delete()
         return AttachmentImport.TooLarge(name, copied)
     }

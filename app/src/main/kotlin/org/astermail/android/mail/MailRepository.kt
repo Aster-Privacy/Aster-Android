@@ -103,6 +103,8 @@ private const val RATCHET_PREFETCH_CONCURRENCY = 8
 private const val RATCHET_PREFETCH_BUDGET_MS = 1_500L
 private const val RATCHET_BACKFILL_BUDGET_MS = 60_000L
 private const val RATCHET_INLINE_TIMEOUT_MS = 6_000L
+private const val SENDER_KEY_FETCH_TIMEOUT_MS = 4_000L
+private const val SENDER_KEY_MISS_TTL_MS = 10L * 60L * 1000L
 private const val OUTBOX_FILE_REF_PREFIX = "@file:"
 private const val EMPTY_ATTACHMENTS_JSON = "[]"
 private const val SENT_FOLDER_TOKEN_ATTEMPTS = 3
@@ -1108,6 +1110,8 @@ class MailRepository @Inject constructor(
     fun clear_account_data() {
         clear_caches()
         ratchet_plaintext_cache.clear()
+        sender_pgp_key_cache.clear()
+        sender_pgp_key_misses.clear()
     }
 
     suspend fun fetch_inbox(
@@ -3217,12 +3221,15 @@ class MailRepository @Inject constructor(
 
     private fun try_pgp_decrypt_result(
         ciphertext: String,
+        sender_public_key: String? = null,
     ): org.astermail.android.crypto.PgpDecryptionResult? {
         val identity_key = session_key_store.get_identity_key() ?: return null
         if (!identity_key.contains("-----BEGIN PGP")) return null
         val passphrase = session_key_store.get_passphrase() ?: return null
+        var chars: CharArray? = null
         return try {
-            val chars = String(passphrase, Charsets.UTF_8).toCharArray()
+            val decoded = org.astermail.android.util.passphrase_chars(passphrase)
+            chars = decoded
             val keys_to_try = buildList {
                 add(identity_key)
                 session_key_store.get_previous_keys()?.let { addAll(it) }
@@ -3230,19 +3237,48 @@ class MailRepository @Inject constructor(
             var result: org.astermail.android.crypto.PgpDecryptionResult? = null
             for (key in keys_to_try) {
                 result = try {
-                    PgpDecryptor.decrypt_with_status(ciphertext, key, chars, null)
+                    PgpDecryptor.decrypt_with_status(ciphertext, key, decoded, sender_public_key)
                         .takeIf { it.plaintext != null }
                 } catch (_: Throwable) {
                     null
                 }
                 if (result != null) break
             }
-            passphrase.fill(0)
             result
         } catch (_: Throwable) {
-            passphrase.fill(0)
             null
+        } finally {
+            passphrase.fill(0)
+            chars?.fill(' ')
         }
+    }
+
+    private val sender_pgp_key_cache = java.util.concurrent.ConcurrentHashMap<String, String>()
+    private val sender_pgp_key_misses = java.util.concurrent.ConcurrentHashMap<String, Long>()
+
+    private fun sender_verification_key(sender_email: String?): String? {
+        val normalized = sender_email?.trim()?.lowercase(java.util.Locale.ROOT) ?: return null
+        if (normalized.isBlank() || !is_internal_recipient(normalized)) return null
+        sender_pgp_key_cache[normalized]?.let { return it }
+        val missed_at = sender_pgp_key_misses[normalized]
+        val now = System.currentTimeMillis()
+        if (missed_at != null && now - missed_at < SENDER_KEY_MISS_TTL_MS) return null
+        val username = normalized.substringBefore('@').trim()
+        if (username.isEmpty()) return null
+        val key = runCatching {
+            kotlinx.coroutines.runBlocking {
+                kotlinx.coroutines.withTimeout(SENDER_KEY_FETCH_TIMEOUT_MS) {
+                    keys_api.get_recipient_public_key(username, normalized).public_key
+                }
+            }
+        }.getOrNull()?.takeIf { it.isNotBlank() }
+        if (key == null) {
+            sender_pgp_key_misses[normalized] = now
+            return null
+        }
+        sender_pgp_key_misses.remove(normalized)
+        sender_pgp_key_cache[normalized] = key
+        return key
     }
 
     private fun ratchet_body_candidate(envelope: DecryptedEnvelope): String? {
@@ -3397,7 +3433,7 @@ class MailRepository @Inject constructor(
 
         if (body_starts_with(body_text, "-----BEGIN PGP")) {
             if (body_starts_with(body_text, PGP_ENCRYPTED_MESSAGE_HEADER)) pgp_encrypted = true
-            val decrypted = try_pgp_decrypt_result(body_text)
+            val decrypted = try_pgp_decrypt_result(body_text, sender_verification_key(envelope.from_email))
             if (decrypted?.plaintext != null) {
                 body_text = decrypted.plaintext
                 pgp_signature = merge_pgp_signature(pgp_signature, decrypted.signature)
@@ -3405,7 +3441,7 @@ class MailRepository @Inject constructor(
         }
         if (body_html != null && body_starts_with(body_html, "-----BEGIN PGP")) {
             if (body_starts_with(body_html, PGP_ENCRYPTED_MESSAGE_HEADER)) pgp_encrypted = true
-            val decrypted = try_pgp_decrypt_result(body_html)
+            val decrypted = try_pgp_decrypt_result(body_html, sender_verification_key(envelope.from_email))
             if (decrypted?.plaintext != null) {
                 body_html = decrypted.plaintext
                 pgp_signature = merge_pgp_signature(pgp_signature, decrypted.signature)

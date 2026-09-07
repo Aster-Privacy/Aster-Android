@@ -71,8 +71,10 @@ private fun share_recovery_codes_file(context: Context, file_name: String, bytes
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
-    return org.astermail.android.ui.common.start_external_intent(
+    val started = org.astermail.android.ui.common.start_external_intent(
         context,
         Intent.createChooser(intent, title).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
     )
+    if (!started) delete_export_file_quietly(file)
+    return started
 }

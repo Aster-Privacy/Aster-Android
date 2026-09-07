@@ -125,6 +125,10 @@ class RatchetBootstrapService @Inject constructor(
                 identity_public_b64 = keys.identity_public_b64,
                 signed_prekey_public_b64 = keys.signed_prekey_public_b64,
             )
+            if (signature == null) {
+                debug_log("deferred upload: no pgp signature available for the prekey bundle")
+                return
+            }
 
             val uploaded = runCatching {
                 ratchet_api.upload_prekey_bundle(
@@ -532,20 +536,15 @@ class RatchetBootstrapService @Inject constructor(
         return GeneratedPqIdentity(secret_b64, public_b64)
     }
 
-    private fun signed_prekey_signature(identity_public_b64: String, signed_prekey_public_b64: String): String {
-        val pgp_signature = pgp_prekey_signature(identity_public_b64, signed_prekey_public_b64)
-        if (pgp_signature != null) {
-            return pgp_signature
-        }
-        val input = (identity_public_b64 + signed_prekey_public_b64).toByteArray(Charsets.UTF_8)
-        return RatchetCrypto.b64_encode(RatchetCrypto.sha256(input))
-    }
+    private fun signed_prekey_signature(identity_public_b64: String, signed_prekey_public_b64: String): String? =
+        pgp_prekey_signature(identity_public_b64, signed_prekey_public_b64)
 
     private fun pgp_prekey_signature(identity_public_b64: String, signed_prekey_public_b64: String): String? {
         val identity_key = session_key_store.get_identity_key() ?: return null
         if (!PrekeyBindingSigner.looks_like_armored_private_key(identity_key)) return null
         val passphrase_bytes = session_key_store.get_passphrase() ?: return null
-        val passphrase = String(passphrase_bytes, Charsets.UTF_8).toCharArray()
+        val passphrase = org.astermail.android.util.passphrase_chars(passphrase_bytes)
+        passphrase_bytes.fill(0)
         return runCatching {
             val armored = PrekeyBindingSigner.sign_cleartext(
                 armored_secret_key = identity_key,

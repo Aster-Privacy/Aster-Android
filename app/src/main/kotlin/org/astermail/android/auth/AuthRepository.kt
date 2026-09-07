@@ -29,6 +29,7 @@ import java.io.ByteArrayOutputStream
 import java.math.BigInteger
 import java.security.SecureRandom
 import java.util.Locale
+import org.astermail.android.util.passphrase_chars
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
@@ -120,6 +121,7 @@ class AuthRepository @Inject constructor(
     private val ratchet_bootstrap_service: org.astermail.android.mail.ratchet.RatchetBootstrapService,
     private val system_folder_bootstrap: org.astermail.android.mail.SystemFolderBootstrap,
     private val sent_mail_resealer: org.astermail.android.mail.SentMailResealer,
+    private val identity_pins: dagger.Lazy<org.astermail.android.mail.ratchet.RatchetIdentityPinStore>,
     @ApplicationContext private val context: Context,
 ) {
 
@@ -775,13 +777,14 @@ class AuthRepository @Inject constructor(
                 token_store.save(it, response.refresh_token ?: token_store.refresh_token ?: it)
             }
 
-            runCatching { rewrap_server_pgp_key(new_password) }
+            val pgp_rewrapped = runCatching { rewrap_server_pgp_key(new_password) }.isSuccess
 
             runCatching { session_key_store.get_user_id()?.let { save_session_snapshot(it) } }
 
             val reseal = runCatching {
                 sent_mail_resealer.run(current_password_bytes, new_password_bytes)
             }.getOrElse { org.astermail.android.mail.SentMailResealSummary(failed = 1) }
+                .let { if (pgp_rewrapped) it else it.copy(failed = it.failed + 1) }
 
             mail_repository.clear_caches()
             database.decrypted_mail_dao().clear_all()
@@ -876,6 +879,8 @@ class AuthRepository @Inject constructor(
         runCatching { session_key_store.clear() }
         runCatching { org.astermail.android.folders.folder_lock_store.lock_all() }
         runCatching { mail_repository.clear_account_data() }
+        runCatching { current_id?.let { identity_pins.get().clear_account(it) } }
+        runCatching { org.astermail.android.util.purge_sensitive_export_files(context, 0L) }
         runCatching { org.astermail.android.billing.AttachmentLimits.reset() }
         runCatching { org.astermail.android.billing.AvailablePlansCache.reset() }
         runCatching { theme_store.clear() }
@@ -1179,6 +1184,8 @@ class AuthRepository @Inject constructor(
         session_key_store.clear()
         org.astermail.android.folders.folder_lock_store.lock_all()
         mail_repository.clear_account_data()
+        runCatching { current_id?.let { identity_pins.get().clear_account(it) } }
+        runCatching { org.astermail.android.util.purge_sensitive_export_files(context, 0L) }
         runCatching { theme_store.clear() }
         runCatching { org.astermail.android.ui.compose.compose_seed_store.clear(context) }
         runCatching { org.astermail.android.notifications.MutedFolderSync.reset(context) }
@@ -1279,16 +1286,27 @@ class AuthRepository @Inject constructor(
         val passphrase_bytes = session_key_store.get_passphrase() ?: return
 
         try {
-            encryption_api.get_pgp_key_info()
-            return
-        } catch (_: org.astermail.android.api.ApiError.NotFoundError) {
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (_: Throwable) {
-            return
+            if (published_pgp_key_exists()) return
+            val passphrase = passphrase_chars(passphrase_bytes)
+            try {
+                republish_pgp_key_with_password(identity_key, passphrase)
+            } finally {
+                passphrase.fill(' ')
+            }
+        } finally {
+            passphrase_bytes.fill(0)
         }
+    }
 
-        republish_pgp_key_with_password(identity_key, String(passphrase_bytes, Charsets.UTF_8))
+    private suspend fun published_pgp_key_exists(): Boolean = try {
+        encryption_api.get_pgp_key_info()
+        true
+    } catch (_: org.astermail.android.api.ApiError.NotFoundError) {
+        false
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (_: Throwable) {
+        true
     }
 
     suspend fun select_signing_identity_key(): String? {
@@ -1317,14 +1335,16 @@ class AuthRepository @Inject constructor(
         if (!signing_heal_attempted_user_ids.add(user_id)) return null
 
         val passphrase_bytes = session_key_store.get_passphrase() ?: return null
+        val passphrase = passphrase_chars(passphrase_bytes)
         return try {
-            republish_pgp_key_with_password(current_identity, String(passphrase_bytes, Charsets.UTF_8))
+            republish_pgp_key_with_password(current_identity, passphrase)
             current_identity
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Throwable) {
             null
         } finally {
+            passphrase.fill(' ')
             passphrase_bytes.fill(0)
         }
     }
@@ -1351,6 +1371,15 @@ class AuthRepository @Inject constructor(
     }
 
     private suspend fun republish_pgp_key_with_password(identity_key: String, password: String) {
+        val password_chars = password.toCharArray()
+        try {
+            republish_pgp_key_with_password(identity_key, password_chars)
+        } finally {
+            password_chars.fill(' ')
+        }
+    }
+
+    private suspend fun republish_pgp_key_with_password(identity_key: String, password: CharArray) {
         val secret_ring = org.bouncycastle.openpgp.PGPSecretKeyRing(
             org.bouncycastle.openpgp.PGPUtil.getDecoderStream(identity_key.byteInputStream()),
             org.bouncycastle.openpgp.operator.bc.BcKeyFingerprintCalculator(),
@@ -1392,6 +1421,18 @@ class AuthRepository @Inject constructor(
     private fun encrypt_pgp_private_key_for_server(
         armored_private_key: String,
         password: String,
+    ): Pair<String, String> {
+        val password_chars = password.toCharArray()
+        try {
+            return encrypt_pgp_private_key_for_server(armored_private_key, password_chars)
+        } finally {
+            password_chars.fill(' ')
+        }
+    }
+
+    private fun encrypt_pgp_private_key_for_server(
+        armored_private_key: String,
+        password: CharArray,
     ): Pair<String, String> {
         val rng = SecureRandom()
         val salt = ByteArray(16).also { rng.nextBytes(it) }

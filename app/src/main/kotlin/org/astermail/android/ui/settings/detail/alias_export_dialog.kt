@@ -159,11 +159,12 @@ private fun share_export_archive(context: Context, archive: File) {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
 
-    org.astermail.android.ui.common.start_external_intent(
+    val started = org.astermail.android.ui.common.start_external_intent(
         context,
         Intent.createChooser(intent, context.getString(R.string.alias_export_title))
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
     )
+    if (!started) org.astermail.android.util.delete_export_file_quietly(archive)
 }
 
 @Composable

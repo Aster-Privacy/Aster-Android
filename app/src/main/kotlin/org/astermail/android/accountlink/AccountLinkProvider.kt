@@ -156,7 +156,9 @@ class AccountLinkProvider : ContentProvider() {
 
     private fun verify_binding(pending: PendingDevice, code: String, binding_tag: String) {
         val offered = binding_tag.ifBlank { pending.binding_tag }
-        if (offered.isBlank()) return
+        if (offered.isBlank()) {
+            throw DeviceLinkBinding.BindingMismatchException("device bundle carries no binding tag")
+        }
         DeviceLinkBinding.require_match(
             code = code,
             ed25519_pk = pending.ed25519_pk,
