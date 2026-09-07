@@ -36,6 +36,7 @@ _ui*.xml
 !/scripts/release.sh
 !/scripts/build_fdroid_in_container.sh
 !/scripts/README_release.md
+!/scripts/check_fdroid_assets.sh
 /.test_artifacts/
 /test_screenshots/
 /my-downloads/

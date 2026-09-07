@@ -1,0 +1,59 @@
+name: monitor_fdroid_assets
+
+# Catches a silently broken F-Droid publisher-binary contract.
+#
+# verify_release_assets.yml checks asset NAMES at release time. This checks that the
+# asset the live fdroiddata recipe actually fetches exists and carries the pinned
+# signature, on a schedule, because the recipe moves on its own: F-Droid's checkupdates
+# bot bumps CurrentVersion to the newest tag without asking us. A release that passes
+# name checks can still leave F-Droid fetching a 404 days later.
+
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  release:
+    types: [released, published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install pyyaml
+        run: python3 -m pip install --quiet --user pyyaml
+
+      - name: check fdroid assets
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_REPO: ${{ github.repository }}
+        run: |
+          set -o pipefail
+          ./scripts/check_fdroid_assets.sh 2>&1 | tee "$RUNNER_TEMP/report.txt"
+
+      - name: open or update tracking issue
+        if: failure() && steps.check.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITLE: F-Droid publisher-binary check is failing
+        run: |
+          set -u
+          report=$(cat "$RUNNER_TEMP/report.txt")
+          body=$(printf '%s\n\n```\n%s\n```\n\n%s\n' \
+            "The scheduled check in \`scripts/check_fdroid_assets.sh\` failed." \
+            "$report" \
+            "Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}")
+          existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+            --search "in:title \"${TITLE}\"" --json number,title \
+            --jq "map(select(.title == \"${TITLE}\")) | .[0].number // empty")
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --repo "$GITHUB_REPOSITORY" --body "$body"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body "$body"
+          fi
