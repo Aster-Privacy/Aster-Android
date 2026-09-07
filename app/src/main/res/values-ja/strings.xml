@@ -1300,6 +1300,20 @@
     <string name="server_returned_no_address">サーバーがアドレスを返しませんでした</string>
     <string name="scan_complete">スキャン完了</string>
     <string name="current_password_incorrect">現在のパスワードが正しくありません</string>
+    <string name="password_change_background_reencrypt_failed">パスワードは変更されましたが、送信済みメールと設定の一部の再暗号化が完了していません。メールや設定が読めない場合はサポートにご連絡ください。</string>
+    <string name="restore_sent_mail">送信済みメールを復元</string>
+    <string name="restore_sent_mail_description">パスワード変更前に送信したメールが開けない場合は、当時使用していたパスワードを入力してください。Aster Mail はそれらのコピーを現在のパスワードで再暗号化します。</string>
+    <string name="previous_password">以前のパスワード</string>
+    <string name="enter_previous_password">以前のパスワードを入力</string>
+    <string name="restore_sent_mail_running">送信済みメールを確認しています... %1$d 件確認済み</string>
+    <string name="restore_sent_mail_result">%1$d 件の送信済みメールが現在のパスワードで開けるようになりました。%2$d 件は別の以前のパスワードが必要です。</string>
+    <string name="restore_sent_mail_nothing">すべての送信済みメールはすでに現在のパスワードで開けます。</string>
+    <string name="restore_sent_mail_failed">一部の送信済みメールを更新できませんでした。接続を確認して、もう一度お試しください。</string>
+    <string name="restore_sent_mail_session_expired">セッションキーを利用できません。サインアウトしてからサインインし直し、もう一度お試しください。</string>
+    <plurals name="password_change_sent_mail_locked">
+        <item quantity="one">パスワードが変更されました。%1$d 件の送信済みメールは以前のパスワードで暗号化されており、更新されませんでした。復元するには、設定 &gt; セキュリティ &gt; パスワードを変更 &gt; 送信済みメールを復元 を開いてください。</item>
+        <item quantity="other">パスワードが変更されました。%1$d 件の送信済みメールは以前のパスワードで暗号化されており、更新されませんでした。復元するには、設定 &gt; セキュリティ &gt; パスワードを変更 &gt; 送信済みメールを復元 を開いてください。</item>
+    </plurals>
     <string name="compose_email_hint">メールを作成</string>
     <string name="snooze_later_today">今日中</string>
     <string name="snooze_tomorrow_morning">明日の朝</string>

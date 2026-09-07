@@ -1301,6 +1301,20 @@
     <string name="server_returned_no_address">O servidor não retornou um endereço</string>
     <string name="scan_complete">Verificação completa</string>
     <string name="current_password_incorrect">A senha atual está incorreta</string>
+    <string name="password_change_background_reencrypt_failed">A tua palavra-passe foi alterada, mas parte do correio enviado e das definições não terminou de ser novamente encriptada. Contacta o suporte se algo aparecer ilegível.</string>
+    <string name="restore_sent_mail">Restaurar e-mails enviados</string>
+    <string name="restore_sent_mail_description">Se os e-mails enviados antes de uma alteração de senha não abrirem, digite a senha que você usava na época. O Aster Mail criptografa essas cópias novamente com sua senha atual.</string>
+    <string name="previous_password">Senha anterior</string>
+    <string name="enter_previous_password">Digite a senha anterior</string>
+    <string name="restore_sent_mail_running">Verificando e-mails enviados... %1$d verificados</string>
+    <string name="restore_sent_mail_result">%1$d e-mails enviados agora abrem com sua senha atual. %2$d ainda precisam de outra senha anterior.</string>
+    <string name="restore_sent_mail_nothing">Todos os e-mails enviados já abrem com sua senha atual.</string>
+    <string name="restore_sent_mail_failed">Alguns e-mails enviados não puderam ser atualizados. Verifique sua conexão e tente novamente.</string>
+    <string name="restore_sent_mail_session_expired">As chaves da sua sessão não estão disponíveis. Saia, entre novamente e tente de novo.</string>
+    <plurals name="password_change_sent_mail_locked">
+        <item quantity="one">Sua senha foi alterada. %1$d e-mails enviados estavam criptografados com uma senha anterior e não foram atualizados. Para restaurá-los, abra Ajustes &gt; Segurança &gt; Alterar senha &gt; Restaurar e-mails enviados.</item>
+        <item quantity="other">Sua senha foi alterada. %1$d e-mails enviados estavam criptografados com uma senha anterior e não foram atualizados. Para restaurá-los, abra Ajustes &gt; Segurança &gt; Alterar senha &gt; Restaurar e-mails enviados.</item>
+    </plurals>
     <string name="compose_email_hint">Compor e-mail</string>
     <string name="snooze_later_today">Mais tarde hoje</string>
     <string name="snooze_tomorrow_morning">Amanhã de manhã</string>

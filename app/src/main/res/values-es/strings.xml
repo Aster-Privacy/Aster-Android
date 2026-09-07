@@ -1302,6 +1302,20 @@
     <string name="server_returned_no_address">El servidor no devolvió ninguna dirección</string>
     <string name="scan_complete">Análisis completo</string>
     <string name="current_password_incorrect">La contraseña actual es incorrecta</string>
+    <string name="password_change_background_reencrypt_failed">Tu contraseña cambió, pero parte de tu correo enviado y de tus ajustes no terminó de cifrarse de nuevo. Ponte en contacto con el equipo de soporte si algo aparece ilegible.</string>
+    <string name="restore_sent_mail">Restaurar correos enviados</string>
+    <string name="restore_sent_mail_description">Si los correos enviados antes de un cambio de contraseña no se abren, introduce la contraseña que usabas entonces. Aster Mail vuelve a cifrar esas copias con tu contraseña actual.</string>
+    <string name="previous_password">Contraseña anterior</string>
+    <string name="enter_previous_password">Introduce la contraseña anterior</string>
+    <string name="restore_sent_mail_running">Comprobando correos enviados... %1$d comprobados</string>
+    <string name="restore_sent_mail_result">%1$d correos enviados ya se abren con tu contraseña actual. %2$d siguen necesitando otra contraseña anterior.</string>
+    <string name="restore_sent_mail_nothing">Todos los correos enviados ya se abren con tu contraseña actual.</string>
+    <string name="restore_sent_mail_failed">No se pudieron actualizar algunos correos enviados. Comprueba tu conexión e inténtalo de nuevo.</string>
+    <string name="restore_sent_mail_session_expired">Las claves de tu sesión no están disponibles. Cierra sesión, vuelve a iniciarla e inténtalo de nuevo.</string>
+    <plurals name="password_change_sent_mail_locked">
+        <item quantity="one">Tu contraseña cambió. %1$d correos enviados estaban cifrados con una contraseña anterior y no se actualizaron. Para restaurarlos, abre Ajustes &gt; Seguridad &gt; Cambiar contraseña &gt; Restaurar correos enviados.</item>
+        <item quantity="other">Tu contraseña cambió. %1$d correos enviados estaban cifrados con una contraseña anterior y no se actualizaron. Para restaurarlos, abre Ajustes &gt; Seguridad &gt; Cambiar contraseña &gt; Restaurar correos enviados.</item>
+    </plurals>
     <string name="compose_email_hint">Redactar correo</string>
     <string name="snooze_later_today">Más tarde hoy</string>
     <string name="snooze_tomorrow_morning">Mañana por la mañana</string>

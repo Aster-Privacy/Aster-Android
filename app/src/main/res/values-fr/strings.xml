@@ -1357,6 +1357,20 @@
     <string name="server_returned_no_address">Le serveur n\'a renvoyé aucune adresse</string>
     <string name="scan_complete">Analyse terminée</string>
     <string name="current_password_incorrect">Le mot de passe actuel est incorrect</string>
+    <string name="password_change_background_reencrypt_failed">Votre mot de passe a été modifié, mais une partie de vos messages envoyés et de vos réglages n’a pas fini d’être rechiffrée. Contactez l’assistance si des messages ou des réglages semblent illisibles.</string>
+    <string name="restore_sent_mail">Restaurer les e-mails envoyés</string>
+    <string name="restore_sent_mail_description">Si des e-mails envoyés avant un changement de mot de passe ne s\'ouvrent pas, saisissez le mot de passe que vous utilisiez à ce moment-là. Aster Mail rechiffre ces copies avec votre mot de passe actuel.</string>
+    <string name="previous_password">Ancien mot de passe</string>
+    <string name="enter_previous_password">Saisissez l\'ancien mot de passe</string>
+    <string name="restore_sent_mail_running">Vérification des e-mails envoyés... %1$d vérifiés</string>
+    <string name="restore_sent_mail_result">%1$d e-mails envoyés s\'ouvrent désormais avec votre mot de passe actuel. %2$d nécessitent encore un autre ancien mot de passe.</string>
+    <string name="restore_sent_mail_nothing">Tous les e-mails envoyés s\'ouvrent déjà avec votre mot de passe actuel.</string>
+    <string name="restore_sent_mail_failed">Certains e-mails envoyés n\'ont pas pu être mis à jour. Vérifiez votre connexion et réessayez.</string>
+    <string name="restore_sent_mail_session_expired">Les clés de votre session ne sont pas disponibles. Déconnectez-vous, reconnectez-vous et réessayez.</string>
+    <plurals name="password_change_sent_mail_locked">
+        <item quantity="one">Votre mot de passe a changé. %1$d e-mails envoyés étaient chiffrés avec un ancien mot de passe et n\'ont pas été mis à jour. Pour les restaurer, ouvrez Réglages &gt; Sécurité &gt; Changer le mot de passe &gt; Restaurer les e-mails envoyés.</item>
+        <item quantity="other">Votre mot de passe a changé. %1$d e-mails envoyés étaient chiffrés avec un ancien mot de passe et n\'ont pas été mis à jour. Pour les restaurer, ouvrez Réglages &gt; Sécurité &gt; Changer le mot de passe &gt; Restaurer les e-mails envoyés.</item>
+    </plurals>
     <string name="compose_email_hint">Composer un e-mail</string>
     <string name="snooze_later_today">Plus tard aujourd\'hui</string>
     <string name="snooze_tomorrow_morning">Demain matin</string>

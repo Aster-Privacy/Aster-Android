@@ -47,6 +47,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
+import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.settings.ChangePasswordViewModel
 
@@ -128,6 +129,61 @@ fun ChangePasswordScreen(
             text = stringResource(R.string.password_protection_note),
             color = colors.text_tertiary,
             fontSize = 12.sp,
+        )
+
+        state.notice?.let { notice ->
+            v_gap(AsterSpacing.lg)
+            Text(
+                text = notice,
+                color = colors.warning,
+                fontSize = 13.sp,
+            )
+            v_gap(AsterSpacing.md)
+            AsterSecondaryButton(
+                label = stringResource(R.string.done),
+                onClick = on_back,
+            )
+        }
+
+        v_gap(AsterSpacing.xxl)
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            detail_row(
+                title = stringResource(R.string.restore_sent_mail),
+                subtitle = stringResource(R.string.restore_sent_mail_description),
+            )
+        }
+        v_gap(AsterSpacing.lg)
+        password_field(
+            label = stringResource(R.string.previous_password),
+            value = state.restore_previous_password,
+            on_change = view_model::set_restore_previous_password,
+            visible = false,
+            on_toggle = {},
+            enabled = !state.restore_running,
+            content_type = ContentType.Password,
+        )
+        if (state.restore_running) {
+            v_gap(AsterSpacing.md)
+            Text(
+                text = stringResource(R.string.restore_sent_mail_running, state.restore_progress),
+                color = colors.text_secondary,
+                fontSize = 13.sp,
+            )
+        }
+        state.restore_error?.let { err ->
+            v_gap(AsterSpacing.md)
+            Text(text = err, color = colors.danger, fontSize = 13.sp)
+        }
+        state.restore_result?.let { result ->
+            v_gap(AsterSpacing.md)
+            Text(text = result, color = colors.success, fontSize = 13.sp)
+        }
+        v_gap(AsterSpacing.lg)
+        AsterSecondaryButton(
+            label = stringResource(R.string.restore_sent_mail),
+            onClick = { view_model.restore_sent_mail() },
+            enabled = !state.restore_running && state.restore_previous_password.isNotBlank(),
+            is_loading = state.restore_running,
         )
         v_gap(AsterSpacing.xxl)
     }
