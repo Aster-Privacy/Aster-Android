@@ -192,6 +192,15 @@ leak=$(unzip -p "$out_dir/Aster-Mail-fdroid-$ver.apk" 'classes*.dex' 2>/dev/null
 [ "${leak:-0}" = "0" ] || die "fdroid APK references proprietary Google classes ($leak hits)"
 echo "  OK fdroid APK carries no Google Play Services, Firebase, or Play classes"
 
+# Text assets are packed raw, so a CRLF checkout of an html or js file changes the
+# APK bytes and F-Droid's Linux rebuild no longer matches. .gitattributes forces LF,
+# this catches a checkout that ignored it.
+crlf=$(unzip -Z1 "$out_dir/Aster-Mail-fdroid-$ver.apk" | grep -E '\.(html|js|css|json|txt)$' | while read -r entry; do
+  unzip -p "$out_dir/Aster-Mail-fdroid-$ver.apk" "$entry" | grep -q $'\r' && echo "$entry"
+done | wc -l)
+[ "${crlf:-0}" = "0" ] || die "$crlf text assets in the fdroid APK carry CRLF line endings"
+echo "  OK fdroid APK text assets use LF line endings"
+
 if [ "$dry_run" = 1 ]; then
   say "dry run complete"
   echo "artifacts in $out_dir"
