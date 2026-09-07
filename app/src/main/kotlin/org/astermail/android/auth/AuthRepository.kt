@@ -119,6 +119,7 @@ class AuthRepository @Inject constructor(
     private val theme_store: ThemeStore,
     private val ratchet_bootstrap_service: org.astermail.android.mail.ratchet.RatchetBootstrapService,
     private val system_folder_bootstrap: org.astermail.android.mail.SystemFolderBootstrap,
+    private val sent_mail_resealer: org.astermail.android.mail.SentMailResealer,
     @ApplicationContext private val context: Context,
 ) {
 
@@ -669,7 +670,10 @@ class AuthRepository @Inject constructor(
 
     fun has_stored_session(account_id: String): Boolean = session_snapshot_store.has(account_id)
 
-    suspend fun change_password(current_password: String, new_password: String): Result<Unit> = runCatching {
+    suspend fun change_password(
+        current_password: String,
+        new_password: String,
+    ): Result<org.astermail.android.mail.SentMailResealSummary> = runCatching {
         require(new_password.length >= 12) { "new password must be at least 12 characters" }
         require(new_password.length <= 128) { "new password must be at most 128 characters" }
 
@@ -774,6 +778,11 @@ class AuthRepository @Inject constructor(
             runCatching { rewrap_server_pgp_key(new_password) }
 
             runCatching { session_key_store.get_user_id()?.let { save_session_snapshot(it) } }
+
+            val reseal = runCatching {
+                sent_mail_resealer.run(current_password_bytes, new_password_bytes)
+            }.getOrElse { org.astermail.android.mail.SentMailResealSummary(failed = 1) }
+
             mail_repository.clear_caches()
             database.decrypted_mail_dao().clear_all()
             session_key_store.get_user_email()?.let { trusted_device_store.clear(it) }
@@ -784,6 +793,25 @@ class AuthRepository @Inject constructor(
             new_password_bytes.fill(0)
             stored_salt.fill(0)
             preserved_data_kek.fill(0)
+            reseal
+        }
+    }
+
+    suspend fun restore_sent_mail(
+        previous_password: String,
+        on_progress: ((org.astermail.android.mail.SentMailResealSummary) -> Unit)? = null,
+    ): Result<org.astermail.android.mail.SentMailResealSummary> = runCatching {
+        val current = session_key_store.get_passphrase()
+            ?: throw ApiError.ValidationError(
+                listOf(context.getString(R.string.restore_sent_mail_session_expired)),
+                "CLIENT_MESSAGE",
+            )
+        val previous = previous_password.toByteArray(Charsets.UTF_8)
+        try {
+            sent_mail_resealer.run(previous, current, on_progress)
+        } finally {
+            previous.fill(0)
+            current.fill(0)
         }
     }
 

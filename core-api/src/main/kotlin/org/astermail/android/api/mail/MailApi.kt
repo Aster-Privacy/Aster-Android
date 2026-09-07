@@ -122,7 +122,11 @@ interface MailApi {
         cursor: String? = null,
     ): SyncMailItemsResponse
 
+    suspend fun update_envelope(item_id: String, request: UpdateMailItemEnvelopeRequest)
+
     suspend fun list_attachments(mail_item_id: String): AttachmentListResponse
+
+    suspend fun update_attachment_meta(attachment_id: String, request: UpdateAttachmentMetaRequest)
 
     suspend fun create_attachment(
         mail_item_id: String,
@@ -483,6 +487,26 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
             cursor?.let { parameter("cursor", it) }
         }
         return decode_or_throw(response)
+    }
+
+    override suspend fun update_envelope(item_id: String, request: UpdateMailItemEnvelopeRequest) {
+        val response = client.http.put("${client.base_url}$base/messages/${url_encode_path(item_id)}") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        throw_if_error(response)
+    }
+
+    override suspend fun update_attachment_meta(attachment_id: String, request: UpdateAttachmentMetaRequest) {
+        val response = client.http.put(
+            "${client.base_url}$base/attachments/${url_encode_path(attachment_id)}/meta",
+        ) {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        throw_if_error(response)
     }
 
     override suspend fun list_attachments(mail_item_id: String): AttachmentListResponse {

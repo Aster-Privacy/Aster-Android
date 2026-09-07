@@ -47,6 +47,12 @@ data class AttachmentResponse(
 )
 
 @Serializable
+data class UpdateAttachmentMetaRequest(
+    val encrypted_meta: String,
+    val meta_nonce: String,
+)
+
+@Serializable
 data class AttachmentListResponse(
     val attachments: List<AttachmentResponse> = emptyList(),
 )

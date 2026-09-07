@@ -1303,6 +1303,20 @@
     <string name="server_returned_no_address">Serwer nie zwrócił adresu</string>
     <string name="scan_complete">Skanowanie ukończone</string>
     <string name="current_password_incorrect">Aktualne hasło jest nieprawidłowe</string>
+    <string name="password_change_background_reencrypt_failed">Twoje hasło zostało zmienione, ale część wysłanych wiadomości i ustawień nie została ponownie zaszyfrowana. Skontaktuj się z pomocą techniczną, jeśli coś wygląda na nieczytelne.</string>
+    <string name="restore_sent_mail">Przywróć wysłane wiadomości</string>
+    <string name="restore_sent_mail_description">Jeśli wysłane wiadomości sprzed zmiany hasła nie otwierają się, wpisz hasło używane w tamtym czasie. Aster Mail ponownie szyfruje te kopie bieżącym hasłem.</string>
+    <string name="previous_password">Poprzednie hasło</string>
+    <string name="enter_previous_password">Wpisz poprzednie hasło</string>
+    <string name="restore_sent_mail_running">Sprawdzanie wysłanych wiadomości... sprawdzono: %1$d</string>
+    <string name="restore_sent_mail_result">%1$d wysłanych wiadomości otwiera się teraz bieżącym hasłem. %2$d nadal wymaga innego wcześniejszego hasła.</string>
+    <string name="restore_sent_mail_nothing">Wszystkie wysłane wiadomości otwierają się już bieżącym hasłem.</string>
+    <string name="restore_sent_mail_failed">Nie udało się zaktualizować niektórych wysłanych wiadomości. Sprawdź połączenie i spróbuj ponownie.</string>
+    <string name="restore_sent_mail_session_expired">Klucze sesji są niedostępne. Wyloguj się, zaloguj ponownie i spróbuj jeszcze raz.</string>
+    <plurals name="password_change_sent_mail_locked">
+        <item quantity="one">Hasło zostało zmienione. %1$d wysłanych wiadomości było zaszyfrowanych wcześniejszym hasłem i nie zostało zaktualizowanych. Aby je przywrócić, otwórz Ustawienia &gt; Bezpieczeństwo &gt; Zmień hasło &gt; Przywróć wysłane wiadomości.</item>
+        <item quantity="other">Hasło zostało zmienione. %1$d wysłanych wiadomości było zaszyfrowanych wcześniejszym hasłem i nie zostało zaktualizowanych. Aby je przywrócić, otwórz Ustawienia &gt; Bezpieczeństwo &gt; Zmień hasło &gt; Przywróć wysłane wiadomości.</item>
+    </plurals>
     <string name="compose_email_hint">Napisz wiadomość</string>
     <string name="snooze_later_today">Później dzisiaj</string>
     <string name="snooze_tomorrow_morning">Jutro rano</string>

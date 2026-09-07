@@ -1842,6 +1842,20 @@
     <string name="server_returned_no_address">Server returned no address</string>
     <string name="scan_complete">Scan complete</string>
     <string name="current_password_incorrect">Current password is incorrect</string>
+    <string name="password_change_background_reencrypt_failed">Your password changed, but some of your sent mail and settings did not finish re-encrypting. Contact support if any mail or settings look unreadable.</string>
+    <string name="restore_sent_mail">Restore sent mail</string>
+    <string name="restore_sent_mail_description">If sent mail from before a password change won\'t open, enter the password you used at that time. Aster Mail re-encrypts those copies with your current password.</string>
+    <string name="previous_password">Previous password</string>
+    <string name="enter_previous_password">Enter the previous password</string>
+    <string name="restore_sent_mail_running">Checking sent mail... %1$d checked</string>
+    <string name="restore_sent_mail_result">%1$d sent emails now open with your current password. %2$d still need a different earlier password.</string>
+    <string name="restore_sent_mail_nothing">Every sent email already opens with your current password.</string>
+    <string name="restore_sent_mail_failed">Some sent mail could not be updated. Check your connection and try again.</string>
+    <string name="restore_sent_mail_session_expired">Your session keys are not available. Sign out, sign back in, and try again.</string>
+    <plurals name="password_change_sent_mail_locked">
+        <item quantity="one">Your password changed. %1$d sent emails were encrypted with an earlier password and did not update. To restore them, open Settings &gt; Security &gt; Change password &gt; Restore sent mail.</item>
+        <item quantity="other">Your password changed. %1$d sent emails were encrypted with an earlier password and did not update. To restore them, open Settings &gt; Security &gt; Change password &gt; Restore sent mail.</item>
+    </plurals>
     <string name="compose_email_hint">Compose email</string>
     <string name="snooze_later_today">Later today</string>
     <string name="snooze_tomorrow_morning">Tomorrow morning</string>

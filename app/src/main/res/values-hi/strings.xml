@@ -1683,6 +1683,20 @@
     <string name="server_returned_no_address">सर्वर ने कोई पता नहीं दिया</string>
     <string name="scan_complete">जांच पूरी हुई</string>
     <string name="current_password_incorrect">मौजूदा पासवर्ड सही नहीं है</string>
+    <string name="password_change_background_reencrypt_failed">आपका पासवर्ड बदल गया, पर आपकी कुछ भेजी गई मेल और सेटिंग दोबारा एन्क्रिप्ट होना पूरा नहीं कर पाईं। अगर कोई मेल या सेटिंग पढ़ी न जा सके तो सहायता से संपर्क करें।</string>
+    <string name="restore_sent_mail">भेजे गए मेल पुनर्स्थापित करें</string>
+    <string name="restore_sent_mail_description">यदि पासवर्ड बदलने से पहले भेजे गए मेल नहीं खुलते, तो उस समय इस्तेमाल किया गया पासवर्ड दर्ज करें। Aster Mail उन प्रतियों को आपके वर्तमान पासवर्ड से फिर से एन्क्रिप्ट करता है।</string>
+    <string name="previous_password">पिछला पासवर्ड</string>
+    <string name="enter_previous_password">पिछला पासवर्ड दर्ज करें</string>
+    <string name="restore_sent_mail_running">भेजे गए मेल की जाँच हो रही है... %1$d जाँचे गए</string>
+    <string name="restore_sent_mail_result">%1$d भेजे गए ईमेल अब आपके वर्तमान पासवर्ड से खुलते हैं। %2$d को अब भी किसी अन्य पुराने पासवर्ड की ज़रूरत है।</string>
+    <string name="restore_sent_mail_nothing">हर भेजा गया ईमेल पहले से ही आपके वर्तमान पासवर्ड से खुलता है।</string>
+    <string name="restore_sent_mail_failed">कुछ भेजे गए मेल अपडेट नहीं हो सके। अपना कनेक्शन जाँचें और फिर से कोशिश करें।</string>
+    <string name="restore_sent_mail_session_expired">आपके सत्र की कुंजियाँ उपलब्ध नहीं हैं। साइन आउट करें, फिर से साइन इन करें और दोबारा कोशिश करें।</string>
+    <plurals name="password_change_sent_mail_locked">
+        <item quantity="one">आपका पासवर्ड बदल गया। %1$d भेजे गए ईमेल पुराने पासवर्ड से एन्क्रिप्ट थे और अपडेट नहीं हुए। उन्हें पुनर्स्थापित करने के लिए सेटिंग &gt; सुरक्षा &gt; पासवर्ड बदलें &gt; भेजे गए मेल पुनर्स्थापित करें खोलें।</item>
+        <item quantity="other">आपका पासवर्ड बदल गया। %1$d भेजे गए ईमेल पुराने पासवर्ड से एन्क्रिप्ट थे और अपडेट नहीं हुए। उन्हें पुनर्स्थापित करने के लिए सेटिंग &gt; सुरक्षा &gt; पासवर्ड बदलें &gt; भेजे गए मेल पुनर्स्थापित करें खोलें।</item>
+    </plurals>
     <string name="compose_email_hint">ईमेल लिखें</string>
     <string name="snooze_later_today">आज बाद में</string>
     <string name="snooze_tomorrow_morning">कल सुबह</string>
