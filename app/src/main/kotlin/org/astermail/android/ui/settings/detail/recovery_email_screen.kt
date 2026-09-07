@@ -385,7 +385,6 @@ private fun recovery_status_badge(text: String, tint: Color) {
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
         )
     }
 }

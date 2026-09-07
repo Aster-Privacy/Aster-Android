@@ -25,11 +25,7 @@ import android.content.ClipData
 import org.astermail.android.ui.common.show_copy_failed_toast
 import org.astermail.android.ui.common.write_to_clipboard
 import android.content.ClipboardManager
-import android.content.ContentValues
 import android.content.Context
-import android.os.Build
-import android.os.Environment
-import android.provider.MediaStore
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -208,40 +204,5 @@ private fun copy_recovery_codes(context: Context, codes: List<String>): Boolean 
     return true
 }
 
-private fun download_recovery_codes(context: Context, codes: List<String>): Boolean {
-    val bytes = codes.joinToString("\n").toByteArray()
-    return try {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val values = ContentValues().apply {
-                put(MediaStore.Downloads.DISPLAY_NAME, RECOVERY_CODES_FILE_NAME)
-                put(MediaStore.Downloads.MIME_TYPE, "text/plain")
-                put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
-                put(MediaStore.Downloads.IS_PENDING, 1)
-            }
-            val uri = context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
-            if (uri != null) {
-                context.contentResolver.openOutputStream(uri)?.use { out ->
-                    out.write(bytes)
-                    out.flush()
-                }
-                val done = ContentValues().apply { put(MediaStore.Downloads.IS_PENDING, 0) }
-                context.contentResolver.update(uri, done, null, null)
-                true
-            } else {
-                false
-            }
-        } else {
-            @Suppress("DEPRECATION")
-            val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-            dir.mkdirs()
-            val file = java.io.File(dir, RECOVERY_CODES_FILE_NAME)
-            if (!file.canonicalPath.startsWith(dir.canonicalPath + java.io.File.separator)) {
-                return false
-            }
-            file.writeBytes(bytes)
-            true
-        }
-    } catch (_: Throwable) {
-        false
-    }
-}
+private fun download_recovery_codes(context: Context, codes: List<String>): Boolean =
+    org.astermail.android.util.save_recovery_codes_file(context, RECOVERY_CODES_FILE_NAME, codes)
