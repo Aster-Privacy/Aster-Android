@@ -759,7 +759,7 @@ private val all_settings_search_index: List<settings_index_entry> = listOf(
     settings_index_entry("referral", R.string.referral_program, R.string.pending, false),
     settings_index_entry("referral", R.string.referral_program, R.string.completed, false),
     settings_index_entry("referral", R.string.referral_program, R.string.rewards, false),
-    settings_index_entry("referral", R.string.referral_program, R.string.reward_amount, false),
+    settings_index_entry("referral", R.string.referral_program, R.string.referral_program_description, false),
     settings_index_entry("referral", R.string.referral_program, R.string.how_it_works, false),
     settings_index_entry("referral", R.string.referral_program, R.string.referral_step_1, false),
     settings_index_entry("referral", R.string.referral_program, R.string.referral_step_2, false),

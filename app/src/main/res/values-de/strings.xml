@@ -485,7 +485,7 @@
     <string name="settings_billing">Abrechnung</string>
     <string name="settings_billing_subtitle">Plan, Rechnungen, Zahlungsmethoden</string>
     <string name="settings_referral">Freund empfehlen</string>
-    <string name="settings_referral_subtitle">Schenke einen Monat, erhalte einen Monat</string>
+    <string name="settings_referral_subtitle">Verdiene einen Anteil an jeder Zahlung deiner Freunde</string>
     <string name="settings_notifications">Benachrichtigungen</string>
     <string name="settings_notifications_subtitle">Push, Ton, Ruhezeiten</string>
     <string name="settings_signature">Signatur</string>
@@ -782,7 +782,6 @@
     <string name="referral_step_2">Die Person meldet sich über Ihren Link an und abonniert einen bezahlten Plan.</string>
     <string name="referral_step_3">Du verdienst einen Anteil an jeder Zahlung, automatisch deinem Guthaben gutgeschrieben.</string>
     <string name="rewards">Belohnungen</string>
-    <string name="reward_amount">$10 für Sie, $10 für Ihren Freund, wenn er sich bei Aster registriert.</string>
     <string name="reward_recurring">Sie erhalten außerdem 5 % jeder Zahlung, die er leistet, solange er abonniert ist.</string>
     <string name="share_invite_link">Einladungslink teilen</string>
     <string name="share_text">Probieren Sie Aster, eine private E-Mail, die wirklich funktioniert.</string>

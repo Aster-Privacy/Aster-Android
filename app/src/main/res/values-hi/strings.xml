@@ -738,7 +738,7 @@
     <string name="settings_billing">बिलिंग</string>
     <string name="settings_billing_subtitle">प्लान, चालान, भुगतान के तरीके</string>
     <string name="settings_referral">किसी दोस्त को बुलाएं</string>
-    <string name="settings_referral_subtitle">सदस्यता लेने वाले हर दोस्त पर $2.00 कमाएं</string>
+    <string name="settings_referral_subtitle">अपने दोस्तों के हर भुगतान का हिस्सा कमाएं</string>
     <string name="settings_notifications">सूचनाएं</string>
     <string name="settings_notifications_subtitle">पुश, आवाज़, शांत घंटे</string>
     <string name="settings_signature">हस्ताक्षर</string>
@@ -1110,7 +1110,6 @@
     <string name="referral_step_2">वे आपके लिंक से साइन अप करते हैं और कोई पेड प्लान लेते हैं।</string>
     <string name="referral_step_3">उनके हर भुगतान में से आपका एक हिस्सा बनता है, जो अपने आप आपके बैलेंस में जुड़ जाता है।</string>
     <string name="rewards">इनाम</string>
-    <string name="reward_amount">आपके दोस्त के Aster पर साइन अप करने पर आपको $10 और उन्हें $10।</string>
     <string name="credits_title">क्रेडिट</string>
     <string name="credits_subtitle">अलग-अलग काम पूरे करके Aster क्रेडिट कमाएं।</string>
     <string name="credits_balance_label">उपलब्ध शेष</string>

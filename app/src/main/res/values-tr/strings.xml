@@ -484,7 +484,7 @@
     <string name="settings_billing">Faturalandırma</string>
     <string name="settings_billing_subtitle">Plan, faturalar, ödeme yöntemleri</string>
     <string name="settings_referral">Arkadaşına öner</string>
-    <string name="settings_referral_subtitle">Abone olan her arkadaşınız için $2,00 kazanın</string>
+    <string name="settings_referral_subtitle">Arkadaşlarının her ödemesinden pay kazan</string>
     <string name="settings_notifications">Bildirimler</string>
     <string name="settings_notifications_subtitle">Push, ses, sessiz saatler</string>
     <string name="settings_signature">İmza</string>
@@ -781,7 +781,6 @@
     <string name="referral_step_2">Bağlantınızla kaydolurlar ve ücretli plana abone olurlar.</string>
     <string name="referral_step_3">Yaptığı her ödemeden pay kazanırsın, bakiyene otomatik olarak eklenir.</string>
     <string name="rewards">Ödüller</string>
-    <string name="reward_amount">Arkadaşınız Aster\'e kaydolduğunda size $10, arkadaşınıza $10.</string>
     <string name="reward_recurring">Ayrıca abonelikleri sürdükçe yaptıkları her ödemenin %5\'ini alırsınız.</string>
     <string name="share_invite_link">Davet bağlantısını paylaş</string>
     <string name="share_text">Aster\'i deneyin - gerçekten çalışan gizli e-posta.</string>
