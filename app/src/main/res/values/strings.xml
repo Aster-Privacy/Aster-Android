@@ -807,7 +807,7 @@
     <string name="settings_billing">Billing</string>
     <string name="settings_billing_subtitle">Plan, invoices, payment methods</string>
     <string name="settings_referral">Refer a friend</string>
-    <string name="settings_referral_subtitle">Earn $2.00 for each friend who subscribes</string>
+    <string name="settings_referral_subtitle">Earn a share of every payment your friends make</string>
     <string name="settings_notifications">Notifications</string>
     <string name="settings_notifications_subtitle">Push, sound, quiet hours</string>
     <string name="settings_signature">Signature</string>
@@ -1213,7 +1213,6 @@
     <string name="referral_step_2">They sign up with your link and subscribe to a paid plan.</string>
     <string name="referral_step_3">You earn a share of every payment they make, credited automatically to your balance.</string>
     <string name="rewards">Rewards</string>
-    <string name="reward_amount">$10 for you, $10 for your friend when they sign up for Aster.</string>
     <string name="credits_title">Credits</string>
     <string name="credits_subtitle">Earn Aster credits by completing different tasks.</string>
     <string name="credits_balance_label">Available balance</string>

@@ -484,7 +484,7 @@
     <string name="settings_billing">Facturering</string>
     <string name="settings_billing_subtitle">Abonnement, facturen, betaalmethoden</string>
     <string name="settings_referral">Nodig een vriend uit</string>
-    <string name="settings_referral_subtitle">Geef een maand, krijg een maand</string>
+    <string name="settings_referral_subtitle">Verdien een deel van elke betaling van je vrienden</string>
     <string name="settings_notifications">Meldingen</string>
     <string name="settings_notifications_subtitle">Push, geluid, stille uren</string>
     <string name="settings_signature">Handtekening</string>
@@ -781,7 +781,6 @@
     <string name="referral_step_2">Ze melden zich aan met je link en nemen een betaald abonnement.</string>
     <string name="referral_step_3">Je verdient een deel van elke betaling, automatisch bijgeschreven op je saldo.</string>
     <string name="rewards">Beloningen</string>
-    <string name="reward_amount">$10 voor jou, $10 voor je vriend wanneer hij zich aanmeldt bij Aster.</string>
     <string name="reward_recurring">Je krijgt ook 5% van elke betaling die ze doen zolang ze geabonneerd zijn.</string>
     <string name="share_invite_link">Uitnodigingslink delen</string>
     <string name="share_text">Probeer Aster, privé-e-mail die echt werkt.</string>

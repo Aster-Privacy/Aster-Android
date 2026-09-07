@@ -484,7 +484,7 @@
     <string name="settings_billing">Rozliczenia</string>
     <string name="settings_billing_subtitle">Plan, faktury, metody płatności</string>
     <string name="settings_referral">Poleć znajomemu</string>
-    <string name="settings_referral_subtitle">Daj miesiąc, zyskaj miesiąc</string>
+    <string name="settings_referral_subtitle">Zarabiaj część każdej płatności znajomych</string>
     <string name="settings_notifications">Powiadomienia</string>
     <string name="settings_notifications_subtitle">Push, dźwięk, godziny ciszy</string>
     <string name="settings_signature">Podpis</string>
@@ -781,7 +781,6 @@
     <string name="referral_step_2">Rejestrują się przez Twój link i wykupują płatny plan.</string>
     <string name="referral_step_3">Zarabiasz część każdej płatności, automatycznie doliczaną do Twojego salda.</string>
     <string name="rewards">Nagrody</string>
-    <string name="reward_amount">$10 dla Ciebie, $10 dla znajomego, gdy zarejestruje się w Aster.</string>
     <string name="reward_recurring">Dostajesz też 5% od każdej ich płatności tak długo, jak są subskrybentami.</string>
     <string name="share_invite_link">Udostępnij link zaproszenia</string>
     <string name="share_text">Wypróbuj Aster - prywatna poczta, która naprawdę działa.</string>

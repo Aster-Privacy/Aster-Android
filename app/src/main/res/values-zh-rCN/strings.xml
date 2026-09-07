@@ -484,7 +484,7 @@
     <string name="settings_billing">账单</string>
     <string name="settings_billing_subtitle">方案、发票、支付方式</string>
     <string name="settings_referral">推荐好友</string>
-    <string name="settings_referral_subtitle">每位订阅的好友为您带来$2.00奖励</string>
+    <string name="settings_referral_subtitle">好友每次付款，你都能获得分成</string>
     <string name="settings_notifications">通知</string>
     <string name="settings_notifications_subtitle">推送、声音、免打扰时间</string>
     <string name="settings_signature">签名</string>
@@ -781,7 +781,6 @@
     <string name="referral_step_2">他们通过您的链接注册并订阅付费方案。</string>
     <string name="referral_step_3">对方每次付款你都能获得分成，自动计入你的余额。</string>
     <string name="rewards">奖励</string>
-    <string name="reward_amount">好友注册 Aster 后，您获得 $10，好友获得 $10。</string>
     <string name="reward_recurring">此外，好友订阅期间每次付款您可获得 5%。</string>
     <string name="share_invite_link">分享邀请链接</string>
     <string name="share_text">试试 Aster，真正好用的隐私邮箱。</string>

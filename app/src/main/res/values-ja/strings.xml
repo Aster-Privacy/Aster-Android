@@ -484,7 +484,7 @@
     <string name="settings_billing">請求</string>
     <string name="settings_billing_subtitle">プラン、請求書、支払い方法</string>
     <string name="settings_referral">友達を紹介</string>
-    <string name="settings_referral_subtitle">友達が登録するたびに$2.00獲得</string>
+    <string name="settings_referral_subtitle">友達の支払いごとに一部を獲得</string>
     <string name="settings_notifications">通知</string>
     <string name="settings_notifications_subtitle">プッシュ、サウンド、おやすみ時間</string>
     <string name="settings_signature">署名</string>
@@ -781,7 +781,6 @@
     <string name="referral_step_2">あなたのリンクでサインアップし、有料プランに登録します。</string>
     <string name="referral_step_3">相手が支払うたびに報酬を獲得し、自動的に残高に加算されます。</string>
     <string name="rewards">報酬</string>
-    <string name="reward_amount">友達がAsterに登録すると、あなたに$10、友達に$10。</string>
     <string name="reward_recurring">さらに、友達が購読している間のすべての支払いの5%を獲得できます。</string>
     <string name="share_invite_link">招待リンクを共有</string>
     <string name="share_text">Asterを試してみてください。本当に使えるプライベートメールです。</string>

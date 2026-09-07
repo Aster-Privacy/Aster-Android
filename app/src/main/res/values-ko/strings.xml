@@ -484,7 +484,7 @@
     <string name="settings_billing">청구</string>
     <string name="settings_billing_subtitle">플랜, 청구서, 결제 수단</string>
     <string name="settings_referral">친구 추천</string>
-    <string name="settings_referral_subtitle">구독한 친구 한 명당 $2.00 적립</string>
+    <string name="settings_referral_subtitle">친구가 결제할 때마다 일부를 적립</string>
     <string name="settings_notifications">알림</string>
     <string name="settings_notifications_subtitle">푸시, 소리, 방해 금지 시간</string>
     <string name="settings_signature">서명</string>
@@ -781,7 +781,6 @@
     <string name="referral_step_2">상대방이 링크를 통해 가입하고 유료 플랜을 구독합니다.</string>
     <string name="referral_step_3">친구가 결제할 때마다 일정 비율을 적립받으며, 잔액에 자동으로 반영됩니다.</string>
     <string name="rewards">보상</string>
-    <string name="reward_amount">친구가 Aster에 가입하면 나에게 $10, 친구에게 $10.</string>
     <string name="reward_recurring">또한 친구가 구독하는 동안 모든 결제의 5%를 받습니다.</string>
     <string name="share_invite_link">초대 링크 공유</string>
     <string name="share_text">Aster를 사용해 보세요. 진짜 쓸 수 있는 프라이버시 이메일입니다.</string>

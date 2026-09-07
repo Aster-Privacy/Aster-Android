@@ -484,7 +484,7 @@
     <string name="settings_billing">الفوترة</string>
     <string name="settings_billing_subtitle">الخطة، الفواتير، طرق الدفع</string>
     <string name="settings_referral">دعوة صديق</string>
-    <string name="settings_referral_subtitle">اكسب $2.00 عن كل صديق يشترك</string>
+    <string name="settings_referral_subtitle">اكسب حصة من كل دفعة يقوم بها أصدقاؤك</string>
     <string name="settings_notifications">الإشعارات</string>
     <string name="settings_notifications_subtitle">الدفع، الصوت، ساعات الهدوء</string>
     <string name="settings_signature">التوقيع</string>
@@ -781,7 +781,6 @@
     <string name="referral_step_2">يسجلون باستخدام رابطك ويشتركون في خطة مدفوعة.</string>
     <string name="referral_step_3">تكسب حصة من كل دفعة يقوم بها، تُضاف تلقائيًا إلى رصيدك.</string>
     <string name="rewards">المكافآت</string>
-    <string name="reward_amount">$10 لك، $10 لصديقك عندما يسجل في Aster.</string>
     <string name="reward_recurring">تحصل أيضاً على 5% من كل دفعة يقومون بها طوال فترة اشتراكهم.</string>
     <string name="share_invite_link">مشاركة رابط الدعوة</string>
     <string name="share_text">جرب Aster، بريد إلكتروني خاص يعمل فعلاً.</string>
