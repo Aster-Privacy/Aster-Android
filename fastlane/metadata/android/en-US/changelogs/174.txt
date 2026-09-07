@@ -1,0 +1,12 @@
+What's new:
+
+- Import and export contacts, add photos, and select several contacts at once.
+- See why an auto-forward is not delivering in Settings.
+- Compare plan prices and billing periods before you upgrade.
+
+Fixed:
+
+- New mail alerts no longer appear twice or split into two groups.
+- Quiet hours and muted folders now also silence push alerts.
+- Sharing an address from another app fills in the recipient.
+- Your signature now sits above the quoted text.
