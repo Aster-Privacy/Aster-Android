@@ -1,10 +1,12 @@
 name: release_fdroid
 
-# Preflight only. F-Droid compiles the fdroid flavor on their own buildserver and signs
-# it with their key, so this artifact is never published to a release. It exists to catch
-# a flavor that would fail to compile there. Never attach it to a GitHub release: an
-# unsigned or differently signed APK next to the full build is exactly the confusion the
-# -full asset naming exists to prevent.
+# Preflight only. The F-Droid recipe pins AllowedAPKSigningKeys to our certificate and
+# fetches Aster-Mail-fdroid-<version>.apk from the tag through Binaries:, then rebuilds
+# the fdroid flavor from the tagged source and publishes our APK only if the two match.
+# The published fdroid APK is built and signed on the release machine by
+# scripts/release.sh, never here: the signing key stays out of CI. This unsigned Linux
+# build exists to catch a flavor that would fail to compile on F-Droid's buildserver.
+# Never attach this artifact to a GitHub release.
 
 on:
   push:
