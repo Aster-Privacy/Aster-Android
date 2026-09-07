@@ -2,10 +2,11 @@ name: verify_release_assets
 
 # Fails loudly when a published release is missing an APK that a channel depends on.
 # Fixed-name Aster-Mail.apk feeds astermail.org and Aster-Mail-<ver>-full.apk pins the
-# same signed full-flavor build to this version. Asset names must state the flavor, so
-# a bare Aster-Mail-<ver>.apk is rejected. F-Droid needs no asset here: it compiles the
-# fdroid flavor from the tag and signs it with their own key, so an Aster-Mail-fdroid-*
-# asset must never appear on a release again.
+# same signed full-flavor build to this version. Aster-Mail-fdroid-<ver>.apk is the
+# asset the F-Droid recipe fetches through Binaries:. The recipe pins
+# AllowedAPKSigningKeys to our certificate, so every tag must carry that APK, signed
+# with the release key and reproducible from the tagged source. Asset names must state
+# the flavor, so a bare Aster-Mail-<ver>.apk is rejected.
 
 on:
   release:
@@ -30,13 +31,13 @@ jobs:
           assets=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}" --jq '[.assets[].name] | join(" ")')
           echo "tag ${TAG} carries: ${assets}"
           fail=0
-          for want in "Aster-Mail.apk" "Aster-Mail-${ver}-full.apk"; do
+          for want in "Aster-Mail.apk" "Aster-Mail-${ver}-full.apk" "Aster-Mail-fdroid-${ver}.apk"; do
             case " ${assets} " in
               *" ${want} "*) echo "  OK   ${want}" ;;
               *) echo "  MISS ${want}"; fail=1 ;;
             esac
           done
-          for banned in "Aster-Mail-${ver}.apk" "Aster-Mail-fdroid-${ver}.apk" "Aster-Mail-fdroid.apk"; do
+          for banned in "Aster-Mail-${ver}.apk" "Aster-Mail-fdroid.apk"; do
             case " ${assets} " in
               *" ${banned} "*) echo "  BAD  ${banned} must not ship, rename it or delete it"; fail=1 ;;
             esac
@@ -51,9 +52,10 @@ jobs:
           if [ "${fail}" != "0" ]; then
             echo
             echo "A missing Aster-Mail.apk breaks the download link on astermail.org."
-            echo "Every published APK is the signed full flavor, so the versioned copy"
-            echo "must be named Aster-Mail-<version>-full.apk. F-Droid signs its own"
-            echo "build and never receives an APK from us."
+            echo "A missing Aster-Mail-fdroid-<version>.apk fails F-Droid's build for this"
+            echo "tag: their recipe fetches it through Binaries: and verifies it against"
+            echo "their own rebuild under our AllowedAPKSigningKeys certificate."
+            echo "The versioned full copy must be named Aster-Mail-<version>-full.apk."
             echo "Fix the assets on ${TAG}."
             exit 1
           fi

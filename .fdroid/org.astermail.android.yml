@@ -1,7 +1,9 @@
 AntiFeatures:
   NonFreeNet:
-    en-US: Requires an account on astermail.org, a proprietary email service.
-      Account registration uses Cloudflare Turnstile.
+    en-US: The app is a client for the astermail.org email service and cannot be used
+      without an account there. That service is proprietary and hosted by its operator.
+      Account registration and alias creation are additionally protected by Cloudflare
+      Turnstile, a proprietary anti-abuse service.
 Categories:
   - Email
 License: AGPL-3.0-or-later
@@ -14,72 +16,20 @@ AutoName: Aster Mail
 
 RepoType: git
 Repo: https://github.com/Aster-Privacy/Aster-Android.git
+Binaries: 
+  https://github.com/Aster-Privacy/Aster-Android/releases/download/v%v/Aster-Mail-fdroid-%v.apk
 
 Builds:
-  - versionName: 0.6.81
-    versionCode: 90
-    commit: 6f1ea8f0345e08083663384215fa17213e85ff99
-    subdir: app
-    sudo:
-      - apt-get update
-      - apt-get install -y gcc libc-dev rustup
-    gradle:
-      - fdroid
-    prebuild:
-      - export PATH="$HOME/.cargo/bin:$PATH"
-      - rustup default 1.92.0
-      - rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
-      - cargo install cargo-ndk@4.1.2 --locked
-    build: PATH="$HOME/.cargo/bin:$PATH" bash ../rust/aster-crypto-ffi/scripts/build_android.sh
-    ndk: r27c
-
-  - versionName: 0.6.145
-    versionCode: 155
-    commit: bb56f0d504340f8dabde4143ce451ecfb082eeb2
-    subdir: app
-    sudo:
-      - apt-get update
-      - apt-get install -y gcc libc-dev rustup
-    gradle:
-      - fdroid
-    prebuild:
-      - export PATH="$HOME/.cargo/bin:$PATH"
-      - rustup default 1.92.0
-      - rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
-      - cargo install cargo-ndk@4.1.2 --locked
-    build: PATH="$HOME/.cargo/bin:$PATH" bash ../rust/aster-crypto-ffi/scripts/build_android.sh
-    ndk: r27c
-
-  - versionName: 0.6.148
-    versionCode: 158
-    commit: 7e91d724d04dada9af6d67bba003b892b03d664f
-    subdir: app
-    sudo:
-      - apt-get update
-      - apt-get install -y gcc libc-dev rustup
-    gradle:
-      - fdroid
-    prebuild:
-      - export PATH="$HOME/.cargo/bin:$PATH"
-      - rustup default 1.92.0
-      - rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
-      - cargo install cargo-ndk@4.1.2 --locked
-    build: PATH="$HOME/.cargo/bin:$PATH" bash ../rust/aster-crypto-ffi/scripts/build_android.sh
-    ndk: r27c
-
-  - versionName: 0.6.149
-    versionCode: 159
-    commit: 63171cfe4e180853817bf07e2fa2370c5bbe3b65
-    subdir: app
-    gradle:
-      - fdroid
-
   - versionName: 0.6.156
     versionCode: 166
-    commit: v0.6.156
+    commit: bc5ffbb716216fbd46cd96015fdf658c587c2218
     subdir: app
     gradle:
       - fdroid
+    scandelete:
+      - app/src/full/assets/bergamot
+
+AllowedAPKSigningKeys: 88b0a8a6fb94ee73a454a0f92732bd408e92e51ec1e9556744e5f00556100977
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
