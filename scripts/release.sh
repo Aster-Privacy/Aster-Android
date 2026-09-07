@@ -194,11 +194,18 @@ echo "  OK fdroid APK carries no Google Play Services, Firebase, or Play classes
 
 # Text assets are packed raw, so a CRLF checkout of an html or js file changes the
 # APK bytes and F-Droid's Linux rebuild no longer matches. .gitattributes forces LF,
-# this catches a checkout that ignored it.
-crlf=$(unzip -Z1 "$out_dir/Aster-Mail-fdroid-$ver.apk" | grep -E '\.(html|js|css|json|txt)$' | while read -r entry; do
-  unzip -p "$out_dir/Aster-Mail-fdroid-$ver.apk" "$entry" | grep -q $'\r' && echo "$entry"
-done | wc -l)
-[ "${crlf:-0}" = "0" ] || die "$crlf text assets in the fdroid APK carry CRLF line endings"
+# this catches a checkout that ignored it. Python reads the entries in binary mode,
+# because unzip -p on Windows rewrites newlines on the way out.
+crlf=$(python - "$out_dir/Aster-Mail-fdroid-$ver.apk" <<'PYEOL'
+import re, sys, zipfile
+z = zipfile.ZipFile(sys.argv[1])
+hits = [n for n in z.namelist() if re.search(r"\.(html|js|css|json|txt)$", n) and b"\r" in z.read(n)]
+for n in hits:
+    print("CRLF:", n, file=sys.stderr)
+print(len(hits))
+PYEOL
+)
+[ "$crlf" = "0" ] || die "$crlf text assets in the fdroid APK carry CRLF line endings"
 echo "  OK fdroid APK text assets use LF line endings"
 
 if [ "$dry_run" = 1 ]; then
