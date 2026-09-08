@@ -298,7 +298,7 @@ class ApiClient(
             apply_folder_unlock_header(request)
             apply_low_network_timeout(request)
             val original_call: HttpClientCall = execute(request)
-            report_failed_call(request.url.encodedPath, original_call.response.status.value)
+            report_failed_call(request.url.encodedPathSegments.joinToString("/"), original_call.response.status.value)
             if (original_call.response.status != HttpStatusCode.Forbidden) {
                 return@intercept original_call
             }
