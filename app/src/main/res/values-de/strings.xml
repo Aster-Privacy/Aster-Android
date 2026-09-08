@@ -1179,6 +1179,9 @@
     <string name="aster_logo">Aster-Logo</string>
     <string name="version_format">Version %s</string>
     <string name="terms_of_service">Nutzungsbedingungen</string>
+    <string name="settings_your_plan">Dein Tarif</string>
+    <string name="settings_invite_earn">Freunde einladen und Belohnungen verdienen</string>
+    <string name="settings_version_build">Version %1$s (%2$s)</string>
     <string name="register_agree_prefix">Durch die Erstellung eines Kontos stimmen Sie unseren </string>
     <string name="register_agree_and"> und </string>
     <string name="licensed_agpl">Lizenziert unter AGPL-3.0</string>

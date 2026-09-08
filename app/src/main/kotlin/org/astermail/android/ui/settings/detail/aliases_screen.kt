@@ -471,38 +471,68 @@ private fun aliases_tab(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = pluralStringResource(R.plurals.aliases_count, state.aliases.size, state.aliases.size),
-                    color = colors.text_tertiary,
-                    fontSize = 13.sp,
-                )
-                if (org.astermail.android.billing.alias_limit_near(state.aliases.size, alias_limit)) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = stringResource(R.string.alias_limit_notice, state.aliases.size, alias_limit ?: 0),
-                        color = colors.accent_blue,
-                        fontSize = 13.sp,
+                        text = pluralStringResource(R.plurals.aliases_count, state.aliases.size, state.aliases.size),
+                        color = colors.text_primary,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.clickable(onClick = on_upgrade),
                     )
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = on_show_create) {
-                        Text(stringResource(R.string.create), color = colors.accent_blue, fontSize = 14.sp)
+                    if (org.astermail.android.billing.alias_limit_near(state.aliases.size, alias_limit)) {
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = stringResource(R.string.alias_limit_notice, state.aliases.size, alias_limit ?: 0),
+                            color = colors.accent_blue,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.clickable(onClick = on_upgrade),
+                        )
                     }
                 }
+                Spacer(Modifier.width(AsterSpacing.sm))
+                alias_create_button(on_click = on_show_create)
             }
             if (state.aliases.isNotEmpty() || state.custom_domain_addresses.isNotEmpty()) {
-                v_gap(AsterSpacing.xs)
+                v_gap(AsterSpacing.sm)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                ) {
+                    alias_stat_tile(
+                        label = stringResource(R.string.alias_filter_all),
+                        value = state.aliases.size,
+                        active = alias_filter == AliasFilter.All,
+                        test_tag = "alias_filter_all",
+                        on_click = { alias_filter = AliasFilter.All },
+                        modifier = Modifier.weight(1f),
+                    )
+                    alias_stat_tile(
+                        label = stringResource(R.string.alias_filter_active),
+                        value = state.aliases.count { it.is_enabled },
+                        active = alias_filter == AliasFilter.Active,
+                        test_tag = "alias_filter_active",
+                        on_click = { alias_filter = AliasFilter.Active },
+                        modifier = Modifier.weight(1f),
+                    )
+                    alias_stat_tile(
+                        label = stringResource(R.string.alias_filter_disabled),
+                        value = state.aliases.count { !it.is_enabled },
+                        active = alias_filter == AliasFilter.Disabled,
+                        test_tag = "alias_filter_disabled",
+                        on_click = { alias_filter = AliasFilter.Disabled },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                v_gap(AsterSpacing.sm)
                 org.astermail.android.ui.common.list_search_bar(
                     query = alias_query,
                     on_query_change = { alias_query = it },
                     placeholder = stringResource(R.string.search_aliases),
                     test_tag = "alias_search_bar",
                 )
-                v_gap(AsterSpacing.xs)
+                if (alias_domains.size > 1) v_gap(AsterSpacing.xs)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -511,30 +541,7 @@ private fun aliases_tab(
                     horizontalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    alias_filter_chip(
-                        label = stringResource(R.string.alias_filter_all),
-                        active = alias_filter == AliasFilter.All,
-                        test_tag = "alias_filter_all",
-                        on_click = { alias_filter = AliasFilter.All },
-                    )
-                    alias_filter_chip(
-                        label = stringResource(R.string.alias_filter_active),
-                        active = alias_filter == AliasFilter.Active,
-                        test_tag = "alias_filter_active",
-                        on_click = { alias_filter = AliasFilter.Active },
-                    )
-                    alias_filter_chip(
-                        label = stringResource(R.string.alias_filter_disabled),
-                        active = alias_filter == AliasFilter.Disabled,
-                        test_tag = "alias_filter_disabled",
-                        on_click = { alias_filter = AliasFilter.Disabled },
-                    )
                     if (alias_domains.size > 1) {
-                        Box(
-                            modifier = Modifier
-                                .size(width = 1.dp, height = 18.dp)
-                                .background(colors.border_secondary),
-                        )
                         alias_filter_chip(
                             label = stringResource(R.string.alias_filter_all_domains),
                             active = alias_domain_filter == null,
@@ -813,6 +820,175 @@ internal fun matches_alias_query(
     note.orEmpty().contains(query, ignoreCase = true)
 
 @Composable
+private fun alias_create_button(on_click: () -> Unit) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(colors.accent_blue)
+            .clickable(onClick = on_click)
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Icon(
+            imageVector = TablerIcons.Plus,
+            contentDescription = null,
+            tint = Color.White,
+            modifier = Modifier.size(15.dp),
+        )
+        Text(
+            text = stringResource(R.string.create),
+            color = Color.White,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
+private fun alias_stat_tile(
+    label: String,
+    value: Int,
+    active: Boolean,
+    test_tag: String,
+    on_click: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = AsterMaterial.colors
+    val shape = SquircleShape(14.dp)
+    Column(
+        modifier = modifier
+            .clip(shape)
+            .background(if (active) colors.accent_blue.copy(alpha = 0.12f) else colors.bg_card)
+            .border(
+                1.dp,
+                if (active) colors.accent_blue.copy(alpha = 0.5f) else colors.border_secondary,
+                shape,
+            )
+            .clickable(onClick = on_click)
+            .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm)
+            .testTag(test_tag),
+    ) {
+        Text(
+            text = value.toString(),
+            color = if (active) colors.accent_blue else colors.text_primary,
+            fontSize = 17.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+        )
+        Text(
+            text = label,
+            color = if (active) colors.accent_blue else colors.text_tertiary,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun alias_monogram(address: String, dimmed: Boolean) {
+    val colors = AsterMaterial.colors
+    val letter = address.firstOrNull { it.isLetterOrDigit() }?.uppercaseChar()?.toString() ?: "@"
+    Box(
+        modifier = Modifier
+            .size(34.dp)
+            .clip(CircleShape)
+            .background(if (dimmed) colors.bg_secondary else colors.accent_blue.copy(alpha = 0.12f)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = letter,
+            color = if (dimmed) colors.text_muted else colors.accent_blue,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+    }
+}
+
+@Composable
+private fun alias_action_pill(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    tint: Color,
+    on_click: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(colors.bg_secondary)
+            .clickable(onClick = on_click)
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(14.dp),
+        )
+        Text(
+            text = label,
+            color = tint,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun alias_row_actions(
+    is_pinned: Boolean,
+    pin_test_tag: String,
+    on_copy: () -> Unit,
+    on_toggle_pin: (() -> Unit)?,
+    on_delete: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    Spacer(Modifier.height(AsterSpacing.sm))
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        alias_action_pill(
+            icon = TablerIcons.Copy,
+            label = stringResource(R.string.copy),
+            tint = colors.text_secondary,
+            on_click = on_copy,
+        )
+        if (on_toggle_pin != null) {
+            alias_action_pill(
+                icon = if (is_pinned) pin_icon_filled else pin_icon,
+                label = if (is_pinned) {
+                    stringResource(R.string.alias_unpin)
+                } else {
+                    stringResource(R.string.alias_pin)
+                },
+                tint = if (is_pinned) colors.accent_blue else colors.text_secondary,
+                on_click = on_toggle_pin,
+                modifier = Modifier.testTag(pin_test_tag),
+            )
+        }
+        Spacer(Modifier.width(1.dp))
+        alias_action_pill(
+            icon = TablerIcons.Trash,
+            label = stringResource(R.string.delete),
+            tint = colors.danger,
+            on_click = on_delete,
+        )
+    }
+}
+
+@Composable
 private fun alias_filter_chip(
     label: String,
     active: Boolean,
@@ -1004,6 +1180,8 @@ internal fun alias_list_row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            alias_monogram(address = alias.address, dimmed = alias.decryption_failed)
+            Spacer(Modifier.width(AsterSpacing.md))
             Column(modifier = Modifier.weight(1f)) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -1018,6 +1196,14 @@ internal fun alias_list_row(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false),
                     )
+                    if (!alias.decryption_failed && alias.is_pinned) {
+                        Icon(
+                            imageVector = pin_icon_filled,
+                            contentDescription = null,
+                            tint = colors.accent_blue,
+                            modifier = Modifier.size(13.dp),
+                        )
+                    }
                     if (!alias.decryption_failed && !alias.is_enabled) {
                         panel_row_chip(stringResource(R.string.alias_status_disabled_badge))
                     }
@@ -1068,30 +1254,10 @@ internal fun alias_list_row(
                     }
                 }
             }
-            if (on_toggle_pin != null && !alias.decryption_failed) {
-                AsterIconButton(
-                    icon = if (alias.is_pinned) pin_icon_filled else pin_icon,
-                    content_description = if (alias.is_pinned) {
-                        stringResource(R.string.alias_unpin)
-                    } else {
-                        stringResource(R.string.alias_pin)
-                    },
-                    onClick = on_toggle_pin,
-                    tint = if (alias.is_pinned) colors.accent_blue else colors.text_secondary,
-                    modifier = Modifier.testTag("alias_pin_${alias.id}"),
-                )
-            }
             AsterSwitch(
                 checked = alias.is_enabled,
                 enabled = grace_ends == null,
                 onCheckedChange = { on_toggle() },
-            )
-            Spacer(Modifier.width(AsterSpacing.sm))
-            AsterIconButton(
-                icon = TablerIcons.Trash,
-                content_description = stringResource(R.string.delete),
-                onClick = on_delete,
-                tint = colors.danger,
             )
             if (on_toggle_expanded != null) {
                 AsterIconButton(
@@ -1105,6 +1271,15 @@ internal fun alias_list_row(
                     modifier = Modifier.testTag("alias_expand_${alias.id}"),
                 )
             }
+        }
+        if (expanded || on_toggle_expanded == null || alias.decryption_failed) {
+            alias_row_actions(
+                is_pinned = alias.is_pinned,
+                pin_test_tag = "alias_pin_${alias.id}",
+                on_copy = { copy_address(context, alias.address) },
+                on_toggle_pin = if (alias.decryption_failed) null else on_toggle_pin,
+                on_delete = on_delete,
+            )
         }
         if (expanded && panel_content != null) {
             val panel_interaction = remember { MutableInteractionSource() }

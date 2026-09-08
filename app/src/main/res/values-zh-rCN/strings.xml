@@ -1178,6 +1178,9 @@
     <string name="aster_logo">Aster 标志</string>
     <string name="version_format">版本 %s</string>
     <string name="terms_of_service">服务条款</string>
+    <string name="settings_your_plan">你的方案</string>
+    <string name="settings_invite_earn">邀请好友，赢取奖励</string>
+    <string name="settings_version_build">版本 %1$s (%2$s)</string>
     <string name="register_agree_prefix">创建账户即表示您同意我们的</string>
     <string name="register_agree_and">和</string>
     <string name="licensed_agpl">AGPL-3.0 许可</string>

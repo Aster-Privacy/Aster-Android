@@ -1178,6 +1178,9 @@
     <string name="aster_logo">Aster 로고</string>
     <string name="version_format">버전 %s</string>
     <string name="terms_of_service">서비스 약관</string>
+    <string name="settings_your_plan">내 요금제</string>
+    <string name="settings_invite_earn">친구를 초대하고 보상을 받으세요</string>
+    <string name="settings_version_build">버전 %1$s (%2$s)</string>
     <string name="register_agree_prefix">계정을 만들면 </string>
     <string name="register_agree_and">과 </string>
     <string name="licensed_agpl">AGPL-3.0 라이선스</string>

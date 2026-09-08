@@ -250,11 +250,11 @@ internal fun preferences_save_error_banner() {
 internal fun section_label(text: String) {
     val colors = AsterMaterial.colors
     Text(
-        text = text.uppercase(),
-        color = colors.text_tertiary,
-        fontSize = 11.sp,
+        text = text,
+        color = colors.text_secondary,
+        fontSize = 13.sp,
         fontWeight = FontWeight.SemiBold,
-        modifier = Modifier.padding(top = AsterSpacing.md, bottom = AsterSpacing.xs),
+        modifier = Modifier.padding(top = AsterSpacing.lg, bottom = AsterSpacing.xs),
     )
 }
 
@@ -269,13 +269,13 @@ internal fun section_header_action(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = AsterSpacing.md, bottom = AsterSpacing.xs),
+            .padding(top = AsterSpacing.lg, bottom = AsterSpacing.xs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = title.uppercase(),
-            color = colors.text_tertiary,
-            fontSize = 11.sp,
+            text = title,
+            color = colors.text_secondary,
+            fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.weight(1f),
         )
