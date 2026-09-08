@@ -110,6 +110,8 @@ private const val EMPTY_ATTACHMENTS_JSON = "[]"
 private const val SENT_FOLDER_TOKEN_ATTEMPTS = 3
 private const val SENT_FOLDER_TOKEN_RETRY_MS = 350L
 private const val SENT_FOLDER_TOKEN_MATERIAL = "folder:sent"
+private const val SENT_FOLDER_RESOLVE_TIMEOUT_MS = 20_000L
+private const val UNDO_SAFETY_DRAFT_TIMEOUT_MS = 12_000L
 private const val METADATA_PATCH_ATTEMPTS = 3
 private const val METADATA_PATCH_RETRY_DELAY_MS = 400L
 private const val DRAFT_UPDATE_CONFLICT_RETRIES = 2
@@ -547,6 +549,12 @@ class MailRepository @Inject constructor(
 
     private suspend fun resolve_sent_folder_token(): String? {
         cached_sent_folder_token?.takeIf { it.isNotBlank() }?.let { return it }
+        return kotlinx.coroutines.withTimeoutOrNull(SENT_FOLDER_RESOLVE_TIMEOUT_MS) {
+            resolve_sent_folder_token_uncapped()
+        }
+    }
+
+    private suspend fun resolve_sent_folder_token_uncapped(): String? {
         val stored = runCatching { sent_folder_prefs.getString(sent_folder_prefs_key(), null) }
             .getOrNull()
             ?.takeIf { it.isNotBlank() }
@@ -765,15 +773,17 @@ class MailRepository @Inject constructor(
             return pending_id
         }
         val safety_draft_id = draft_id?.takeIf { it.isNotBlank() } ?: run {
-            save_draft(
-                subject = subject,
-                body_html = body_html,
-                sender_email = sender_email,
-                to = to,
-                cc = cc,
-                bcc = bcc,
-                existing_draft_id = null,
-            ).getOrNull()
+            kotlinx.coroutines.withTimeoutOrNull(UNDO_SAFETY_DRAFT_TIMEOUT_MS) {
+                save_draft(
+                    subject = subject,
+                    body_html = body_html,
+                    sender_email = sender_email,
+                    to = to,
+                    cc = cc,
+                    bcc = bcc,
+                    existing_draft_id = null,
+                ).getOrNull()
+            }
         }
         if (!safety_draft_id.isNullOrBlank()) {
             runCatching { pending_send_dao.update_draft_id(pending_id, safety_draft_id) }

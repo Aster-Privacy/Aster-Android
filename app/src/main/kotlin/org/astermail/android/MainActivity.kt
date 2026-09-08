@@ -619,6 +619,7 @@ private fun AsterNavHost() {
         }
         androidx.compose.runtime.LaunchedEffect(Unit) {
             auth_gate.auth_repository.trigger_ratchet_bootstrap()
+            auth_gate.auth_repository.trigger_system_folder_bootstrap()
         }
         val preferences_sync_vm: org.astermail.android.settings.SettingsViewModel = org.astermail.android.settings.shared_settings_view_model()
         androidx.compose.runtime.LaunchedEffect(is_signed_in_state) {

@@ -156,6 +156,18 @@ class AuthRepository @Inject constructor(
         java.util.Collections.synchronizedSet(mutableSetOf<String>())
     private val signing_heal_attempted_user_ids =
         java.util.Collections.synchronizedSet(mutableSetOf<String>())
+    private val system_folder_heal_attempted_user_ids =
+        java.util.Collections.synchronizedSet(mutableSetOf<String>())
+    fun trigger_system_folder_bootstrap() {
+        if (!_is_signed_in.value) return
+        val user_id = session_key_store.get_user_id() ?: return
+        if (!system_folder_heal_attempted_user_ids.add(user_id)) return
+        background_scope.launch {
+            runCatching { system_folder_bootstrap.ensure_system_folders() }
+                .onFailure { system_folder_heal_attempted_user_ids.remove(user_id) }
+        }
+    }
+
     fun trigger_ratchet_bootstrap() {
         if (!_is_signed_in.value) return
         if (BuildConfig.DEBUG) android.util.Log.w("RatchetBootstrap", "trigger_ratchet_bootstrap firing")

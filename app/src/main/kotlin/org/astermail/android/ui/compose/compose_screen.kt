@@ -1812,10 +1812,14 @@ fun ComposeScreen(
             }
 
             if (!allow_non_post_quantum && !scheduled_send) {
-                val missing = mail_vm.check_post_quantum_coverage(
-                    recipients = snap_to + snap_cc + snap_bcc,
-                    sender_email = snap_from,
-                )
+                val missing = kotlinx.coroutines.withTimeoutOrNull(
+                    POST_QUANTUM_COVERAGE_TIMEOUT_MS,
+                ) {
+                    mail_vm.check_post_quantum_coverage(
+                        recipients = snap_to + snap_cc + snap_bcc,
+                        sender_email = snap_from,
+                    )
+                }.orEmpty()
                 if (missing.isNotEmpty()) {
                     is_sending = false
                     send_lock.set(false)
@@ -4707,6 +4711,7 @@ private fun toggle_sheet_row(
 }
 
 private const val minimum_schedule_lead_ms = 60_000L
+private const val POST_QUANTUM_COVERAGE_TIMEOUT_MS = 15_000L
 private const val max_recipients_per_field = 50
 private const val max_recipients_per_send = 100
 
