@@ -63,8 +63,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ScrollableTabRow
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -236,28 +234,11 @@ fun AliasesScreen(
             }
         },
     ) {
-        ScrollableTabRow(
-            selectedTabIndex = selected_tab,
-            containerColor = colors.bg_primary,
-            contentColor = colors.accent_blue,
-            edgePadding = AsterSpacing.lg,
-        ) {
-            tab_labels.forEachIndexed { i, label ->
-                Tab(
-                    selected = selected_tab == i,
-                    onClick = { selected_tab = i },
-                    text = {
-                        Text(
-                            text = label,
-                            fontSize = 14.sp,
-                            fontWeight = if (selected_tab == i) FontWeight.SemiBold else FontWeight.Normal,
-                        )
-                    },
-                    selectedContentColor = colors.accent_blue,
-                    unselectedContentColor = colors.text_muted,
-                )
-            }
-        }
+        alias_segmented_tabs(
+            labels = tab_labels,
+            selected = selected_tab,
+            on_select = { selected_tab = it },
+        )
         v_gap(AsterSpacing.sm)
 
         Box(modifier = Modifier.weight(1f).fillMaxSize()) {
@@ -495,44 +476,14 @@ private fun aliases_tab(
                 alias_create_button(on_click = on_show_create)
             }
             if (state.aliases.isNotEmpty() || state.custom_domain_addresses.isNotEmpty()) {
-                v_gap(AsterSpacing.sm)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-                ) {
-                    alias_stat_tile(
-                        label = stringResource(R.string.alias_filter_all),
-                        value = state.aliases.size,
-                        active = alias_filter == AliasFilter.All,
-                        test_tag = "alias_filter_all",
-                        on_click = { alias_filter = AliasFilter.All },
-                        modifier = Modifier.weight(1f),
-                    )
-                    alias_stat_tile(
-                        label = stringResource(R.string.alias_filter_active),
-                        value = state.aliases.count { it.is_enabled },
-                        active = alias_filter == AliasFilter.Active,
-                        test_tag = "alias_filter_active",
-                        on_click = { alias_filter = AliasFilter.Active },
-                        modifier = Modifier.weight(1f),
-                    )
-                    alias_stat_tile(
-                        label = stringResource(R.string.alias_filter_disabled),
-                        value = state.aliases.count { !it.is_enabled },
-                        active = alias_filter == AliasFilter.Disabled,
-                        test_tag = "alias_filter_disabled",
-                        on_click = { alias_filter = AliasFilter.Disabled },
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-                v_gap(AsterSpacing.sm)
+                v_gap(AsterSpacing.md)
                 org.astermail.android.ui.common.list_search_bar(
                     query = alias_query,
                     on_query_change = { alias_query = it },
                     placeholder = stringResource(R.string.search_aliases),
                     test_tag = "alias_search_bar",
                 )
-                if (alias_domains.size > 1) v_gap(AsterSpacing.xs)
+                v_gap(AsterSpacing.sm)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -541,7 +492,34 @@ private fun aliases_tab(
                     horizontalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    alias_count_chip(
+                        label = stringResource(R.string.alias_filter_all),
+                        value = state.aliases.size,
+                        active = alias_filter == AliasFilter.All,
+                        test_tag = "alias_filter_all",
+                        on_click = { alias_filter = AliasFilter.All },
+                    )
+                    alias_count_chip(
+                        label = stringResource(R.string.alias_filter_active),
+                        value = state.aliases.count { it.is_enabled },
+                        active = alias_filter == AliasFilter.Active,
+                        test_tag = "alias_filter_active",
+                        on_click = { alias_filter = AliasFilter.Active },
+                    )
+                    alias_count_chip(
+                        label = stringResource(R.string.alias_filter_disabled),
+                        value = state.aliases.count { !it.is_enabled },
+                        active = alias_filter == AliasFilter.Disabled,
+                        test_tag = "alias_filter_disabled",
+                        on_click = { alias_filter = AliasFilter.Disabled },
+                    )
                     if (alias_domains.size > 1) {
+                        Box(
+                            modifier = Modifier
+                                .padding(horizontal = AsterSpacing.xs)
+                                .size(width = 1.dp, height = 18.dp)
+                                .background(colors.border_secondary),
+                        )
                         alias_filter_chip(
                             label = stringResource(R.string.alias_filter_all_domains),
                             active = alias_domain_filter == null,
@@ -820,6 +798,43 @@ internal fun matches_alias_query(
     note.orEmpty().contains(query, ignoreCase = true)
 
 @Composable
+private fun alias_segmented_tabs(
+    labels: List<String>,
+    selected: Int,
+    on_select: (Int) -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
+        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
+    ) {
+        labels.forEachIndexed { i, label ->
+            val active = selected == i
+            val shape = CircleShape
+            Box(
+                modifier = Modifier
+                    .clip(shape)
+                    .background(if (active) colors.accent_blue else colors.bg_secondary)
+                    .clickable { on_select(i) }
+                    .padding(horizontal = AsterSpacing.lg, vertical = 9.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = label,
+                    color = if (active) Color.White else colors.text_secondary,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun alias_create_button(on_click: () -> Unit) {
     val colors = AsterMaterial.colors
     Row(
@@ -848,43 +863,37 @@ private fun alias_create_button(on_click: () -> Unit) {
 }
 
 @Composable
-private fun alias_stat_tile(
+private fun alias_count_chip(
     label: String,
     value: Int,
     active: Boolean,
     test_tag: String,
     on_click: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
-    val shape = SquircleShape(14.dp)
-    Column(
-        modifier = modifier
-            .clip(shape)
-            .background(if (active) colors.accent_blue.copy(alpha = 0.12f) else colors.bg_card)
-            .border(
-                1.dp,
-                if (active) colors.accent_blue.copy(alpha = 0.5f) else colors.border_secondary,
-                shape,
-            )
+    Row(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(if (active) colors.accent_blue.copy(alpha = 0.14f) else colors.bg_secondary)
             .clickable(onClick = on_click)
-            .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm)
+            .padding(start = 14.dp, end = 10.dp, top = 7.dp, bottom = 7.dp)
             .testTag(test_tag),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(7.dp),
     ) {
         Text(
-            text = value.toString(),
-            color = if (active) colors.accent_blue else colors.text_primary,
-            fontSize = 17.sp,
+            text = label,
+            color = if (active) colors.accent_blue else colors.text_secondary,
+            fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
         )
         Text(
-            text = label,
-            color = if (active) colors.accent_blue else colors.text_tertiary,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Medium,
+            text = value.toString(),
+            color = if (active) colors.accent_blue else colors.text_muted,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
         )
     }
 }
@@ -893,18 +902,19 @@ private fun alias_stat_tile(
 private fun alias_monogram(address: String, dimmed: Boolean) {
     val colors = AsterMaterial.colors
     val letter = address.firstOrNull { it.isLetterOrDigit() }?.uppercaseChar()?.toString() ?: "@"
+    val (seed_bg, seed_fg) = org.astermail.android.ui.mail.avatar_colors_for(address.trim().lowercase())
     Box(
         modifier = Modifier
-            .size(34.dp)
+            .size(38.dp)
             .clip(CircleShape)
-            .background(if (dimmed) colors.bg_secondary else colors.accent_blue.copy(alpha = 0.12f)),
+            .background(if (dimmed) colors.bg_secondary else seed_bg),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = letter,
-            color = if (dimmed) colors.text_muted else colors.accent_blue,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
+            color = if (dimmed) colors.text_muted else seed_fg,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
         )
     }
 }
@@ -1204,9 +1214,6 @@ internal fun alias_list_row(
                             modifier = Modifier.size(13.dp),
                         )
                     }
-                    if (!alias.decryption_failed && !alias.is_enabled) {
-                        panel_row_chip(stringResource(R.string.alias_status_disabled_badge))
-                    }
                 }
                 if (alias.decryption_failed) {
                     Spacer(Modifier.height(3.dp))
@@ -1236,13 +1243,22 @@ internal fun alias_list_row(
                         else -> stringResource(R.string.forwards_to_inbox)
                     }
                     Spacer(Modifier.height(3.dp))
-                    Text(
-                        text = secondary_line,
-                        color = colors.text_tertiary,
-                        fontSize = 12.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        if (!alias.is_enabled) {
+                            panel_row_chip(stringResource(R.string.alias_status_disabled_badge))
+                        }
+                        Text(
+                            text = secondary_line,
+                            color = colors.text_tertiary,
+                            fontSize = 12.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
+                    }
                     if (grace_ends != null) {
                         Spacer(Modifier.height(2.dp))
                         Text(
