@@ -1,0 +1,10 @@
+New in this version:
+
+- Restore sent mail: if sent mail from before a password change no longer opens, enter the password you used at the time and Aster Mail re-encrypts those copies.
+- Select and copy a message subject with a long press.
+
+Fixed:
+
+- Changing your password now re-encrypts your sent mail, so older copies keep opening.
+- Signed mail is verified against the sender's key before it is shown.
+- Export files are deleted once the export finishes.
