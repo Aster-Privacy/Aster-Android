@@ -215,6 +215,8 @@ private const val LOCAL_READ_MUTATION_TTL_MS = 15_000L
 
 private const val MIN_SKELETON_MS = 350L
 
+private const val EMPTY_STATE_SETTLE_MS = 700L
+
 private const val DRAG_HAPTIC_MIN_GAP_MS = 55L
 
 private val pull_refresh_travel = 56.dp
@@ -1534,6 +1536,19 @@ fun InboxScreen(
                         show_skeleton = false
                     }
                 }
+                val empty_target = threads.isEmpty() &&
+                    !threads_pending &&
+                    !inbox_state.is_loading &&
+                    !inbox_state.initial
+                var empty_settled by remember { mutableStateOf(false) }
+                LaunchedEffect(empty_target, current_folder, active_category_label) {
+                    if (!empty_target) {
+                        empty_settled = false
+                    } else {
+                        kotlinx.coroutines.delay(EMPTY_STATE_SETTLE_MS)
+                        empty_settled = true
+                    }
+                }
                 if (skeleton_target || (show_skeleton && threads.isEmpty())) {
                     Box(Modifier.padding(top = header_height_dp)) {
                         inbox_skeleton(list_density = settings_state.preferences?.mail_list_density)
@@ -1554,6 +1569,10 @@ fun InboxScreen(
                     Box(Modifier.padding(top = header_height_dp)) {
                         inbox_skeleton(list_density = settings_state.preferences?.mail_list_density)
                     }
+                } else if (hidden_by_category && !empty_settled) {
+                    Box(Modifier.padding(top = header_height_dp)) {
+                        inbox_skeleton(list_density = settings_state.preferences?.mail_list_density)
+                    }
                 } else if (hidden_by_category) {
                     org.astermail.android.ui.common.overscroll_stretch(
                         modifier = Modifier.padding(top = header_height_dp),
@@ -1566,6 +1585,10 @@ fun InboxScreen(
                                 null
                             },
                         )
+                    }
+                } else if (threads.isEmpty() && !empty_settled) {
+                    Box(Modifier.padding(top = header_height_dp)) {
+                        inbox_skeleton(list_density = settings_state.preferences?.mail_list_density)
                     }
                 } else if (threads.isEmpty()) {
                     org.astermail.android.ui.common.overscroll_stretch(

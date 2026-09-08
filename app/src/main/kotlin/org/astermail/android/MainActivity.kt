@@ -62,6 +62,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
@@ -194,7 +198,11 @@ class MainActivity :
     companion object {
         const val EXTRA_OPEN_EMAIL_ID = "open_email_id"
         const val EXTRA_OPEN_SESSIONS = "open_sessions"
+        private const val FIRST_FRAME_INSET_TIMEOUT_MS = 1000L
+        private const val CONTENT_INSET_TIMEOUT_MS = 4000L
     }
+
+    private val insets_applied = java.util.concurrent.atomic.AtomicBoolean(false)
 
     val pending_launch = pending_launch_state()
 
@@ -222,10 +230,43 @@ class MainActivity :
         apply_boot_background()
         enableEdgeToEdge()
         setContent {
+            val insets_ready = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+            window_inset_probe {
+                insets_applied.set(true)
+                insets_ready.value = true
+            }
+            androidx.compose.runtime.LaunchedEffect(Unit) {
+                kotlinx.coroutines.delay(CONTENT_INSET_TIMEOUT_MS)
+                insets_ready.value = true
+            }
             androidx.compose.runtime.CompositionLocalProvider(local_pending_launch provides pending_launch) {
-                AsterRoot()
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer { alpha = if (insets_ready.value) 1f else 0f },
+                ) {
+                    AsterRoot()
+                }
             }
         }
+        hold_first_frame_until_insets()
+    }
+
+    private fun hold_first_frame_until_insets() {
+        val content = findViewById<android.view.View>(android.R.id.content) ?: return
+        val deadline = android.os.SystemClock.uptimeMillis() + FIRST_FRAME_INSET_TIMEOUT_MS
+        content.viewTreeObserver.addOnPreDrawListener(
+            object : android.view.ViewTreeObserver.OnPreDrawListener {
+                override fun onPreDraw(): Boolean {
+                    if (insets_applied.get() || android.os.SystemClock.uptimeMillis() > deadline) {
+                        content.viewTreeObserver.removeOnPreDrawListener(this)
+                        return true
+                    }
+                    content.postInvalidateOnAnimation()
+                    return false
+                }
+            },
+        )
     }
 
     private fun apply_boot_background() {
@@ -2431,4 +2472,12 @@ private fun folder_key_depth(key: String): Int = when {
     key == "subscriptions" -> 1
     key == "contacts" -> 1
     else -> 0
+}
+
+@androidx.compose.runtime.Composable
+private fun window_inset_probe(on_applied: () -> Unit) {
+    val top = WindowInsets.systemBars
+        .asPaddingValues()
+        .calculateTopPadding()
+    if (top > androidx.compose.ui.unit.Dp(0f)) on_applied()
 }

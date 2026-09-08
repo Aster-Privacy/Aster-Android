@@ -192,6 +192,40 @@ import org.astermail.android.util.clip_units
 import org.astermail.android.util.clip_with_ellipsis
 
 private val placeholder_body_height = 140.dp
+
+private fun escape_body_text(raw: String): String = raw
+    .replace("&", "&amp;")
+    .replace("<", "&lt;")
+    .replace(">", "&gt;")
+
+private fun strip_markup(raw: String): String {
+    val out = StringBuilder(raw.length)
+    var in_tag = false
+    for (ch in raw) {
+        when {
+            ch == '<' -> in_tag = true
+            ch == '>' -> {
+                if (in_tag) out.append(' ')
+                in_tag = false
+            }
+            !in_tag -> out.append(ch)
+        }
+    }
+    return out.toString()
+}
+
+private fun plain_text_fallback_body(raw: String): String {
+    val text = strip_markup(raw).trim()
+    return "<pre style=\"white-space:pre-wrap;word-wrap:break-word;font-family:inherit\">" +
+        escape_body_text(text) + "</pre>"
+}
+
+private fun plain_text_fallback_document(raw: String, bg_hex: String, fg_hex: String): String =
+    "<!DOCTYPE html><html><head><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">" +
+        "</head><body style=\"margin:0;padding:12px;background:" + bg_hex + ";color:" + fg_hex + ";" +
+        "font-family:-apple-system,Roboto,sans-serif;font-size:15px;line-height:1.5\">" +
+        "<div id=\"m\">" + plain_text_fallback_body(raw) + "</div></body></html>"
+
 private const val BODY_PENDING_TIMEOUT_MS = 12_000L
 
 private val EXTERNAL_RESOURCE_PATTERN = Regex(
@@ -1033,7 +1067,12 @@ fun MailDetailScreen(
                 return@Column
             }
 
-            Box(modifier = Modifier.weight(1f).clipToBounds()) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .background(inbox_card_read_color(colors))
+                    .clipToBounds(),
+            ) {
             LazyColumn(
                 state = list_state,
                 modifier = Modifier
@@ -2004,21 +2043,20 @@ internal fun expanded_message(
         sender_auth_status(msg)
     }
 
-    val card_shape = remember(is_first_card, is_last_card) {
-        inbox_group_shape(is_first_card, is_last_card)
-    }
     val card_color = inbox_card_read_color(colors)
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(
-                start = inbox_card_horizontal_margin,
-                end = inbox_card_horizontal_margin,
-                bottom = if (is_last_card) 0.dp else inbox_group_split,
-            )
-            .clip(card_shape)
             .background(card_color),
     ) {
+        if (!is_first_card) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(colors.border_thread_divider),
+            )
+        }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -3648,22 +3686,21 @@ private fun collapsed_message(
     val colors = AsterMaterial.colors
 
     val is_undecryptable = msg.is_undecryptable || (msg.sender_email.isBlank() && msg.body.isBlank())
-    val card_shape = remember(is_first_card, is_last_card) {
-        inbox_group_shape(is_first_card, is_last_card)
-    }
     val card_color = inbox_card_read_color(colors)
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(
-                start = inbox_card_horizontal_margin,
-                end = inbox_card_horizontal_margin,
-                bottom = if (is_last_card) 0.dp else inbox_group_split,
-            )
-            .clip(card_shape)
             .background(card_color),
     ) {
+        if (!is_first_card) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(colors.border_thread_divider),
+            )
+        }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -4936,12 +4973,15 @@ internal fun email_html_view(
     val cached_height = remember(height_cache_key) { body_height_cache.get(height_cache_key) }
     var content_height_dp by remember(height_cache_key) { mutableStateOf((cached_height ?: 0f).dp) }
     var has_measured by remember(height_cache_key) { mutableStateOf(cached_height != null) }
-    val page_painted = remember { mutableStateOf(cached_height != null) }
+    val page_painted = remember(height_cache_key) { mutableStateOf(false) }
+    val visual_ready = remember(height_cache_key) { mutableStateOf(false) }
+    val renderer_gone = remember { mutableStateOf(false) }
+    var web_generation by remember(height_cache_key) { mutableStateOf(0) }
 
     LaunchedEffect(height_cache_key, page_painted.value) {
         if (page_painted.value) return@LaunchedEffect
         kotlinx.coroutines.delay(2500)
-        page_painted.value = true
+        if ((web_ref[0]?.contentHeight ?: 0) > 0) page_painted.value = true
     }
 
     val measure_js = """(function(){
@@ -5038,29 +5078,80 @@ internal fun email_html_view(
             return@LaunchedEffect
         }
         val result = withContext(Dispatchers.Default) {
-            val sanitized = EmailHtmlSanitizer.sanitize(html, sanitize_options)
-            build_html(proxy_html(sanitized))
+            runCatching {
+                val sanitized = EmailHtmlSanitizer.sanitize(html, sanitize_options)
+                build_html(proxy_html(sanitized))
+            }.getOrElse {
+                runCatching { build_html(plain_text_fallback_body(html)) }
+                    .getOrElse { plain_text_fallback_document(html, bg_hex, fg_hex) }
+            }
         }
         html_cache.put(cache_key, result)
         prebuilt_html = result
     }
 
-    LaunchedEffect(html, allow_external) {
-        delay(600)
-        if (!has_measured) {
-            web_ref[0]?.evaluateJavascript(FALLBACK_MEASURE_JS) { result ->
-                if (!has_measured) {
-                    val parsed = result?.trim()?.removeSurrounding("\"")?.toIntOrNull() ?: 0
-                    if (parsed > 0) content_height_dp = (parsed * scale_ref[0]).toInt().dp
+    LaunchedEffect(height_cache_key, prebuilt_html) {
+        if (prebuilt_html == null) return@LaunchedEffect
+        var attempts = 0
+        while (!has_measured && attempts < 12) {
+            delay(if (attempts == 0) 600L else 400L)
+            attempts++
+            val web = web_ref[0] ?: continue
+            web.evaluateJavascript(FALLBACK_MEASURE_JS) { result ->
+                val parsed = result?.trim()?.removeSurrounding("\"")?.toIntOrNull() ?: 0
+                if (!has_measured && parsed > 0) {
+                    content_height_dp = (parsed * scale_ref[0]).toInt().dp
+                    measured_dp_ref[0] = content_height_dp.value
+                    measured_scale_ref[0] = scale_ref[0]
                     has_measured = true
                     on_ready()
                 }
             }
         }
-        delay(400)
         if (!has_measured) {
+            val web = web_ref[0]
+            val native = if (web != null && web.contentHeight > 0) {
+                (web.contentHeight * web.scale / web.resources.displayMetrics.density).toInt().dp
+            } else {
+                0.dp
+            }
+            if (content_height_dp <= 0.dp) {
+                content_height_dp = if (native > 0.dp) native else placeholder_body_height
+            }
             has_measured = true
             on_ready()
+        }
+    }
+
+    LaunchedEffect(renderer_gone.value) {
+        if (!renderer_gone.value) return@LaunchedEffect
+        renderer_gone.value = false
+        has_measured = false
+        page_painted.value = false
+        visual_ready.value = false
+        loaded_built = ""
+        web_generation++
+    }
+
+    LaunchedEffect(loaded_built, web_generation) {
+        if (loaded_built.isEmpty()) return@LaunchedEffect
+        var reloads = 0
+        while (reloads < 2) {
+            delay(2200)
+            val web = web_ref[0] ?: return@LaunchedEffect
+            if (visual_ready.value && web.contentHeight > 0) return@LaunchedEffect
+            reloads++
+            has_measured = false
+            page_painted.value = false
+            visual_ready.value = false
+            web.loadDataWithBaseURL("https://mail-content.invalid/", loaded_built, "text/html", "UTF-8", null)
+        }
+        delay(2600)
+        if (!visual_ready.value) {
+            has_measured = false
+            page_painted.value = false
+            loaded_built = ""
+            web_generation++
         }
     }
 
@@ -5116,6 +5207,14 @@ internal fun email_html_view(
                     return
                 }
                 content_height_dp = (base_dp * ratio).coerceIn(1f, 24000f).dp
+            }
+
+            override fun onRenderProcessGone(
+                view: android.webkit.WebView?,
+                detail: android.webkit.RenderProcessGoneDetail?,
+            ): Boolean {
+                renderer_gone.value = true
+                return true
             }
 
             override fun onPageCommitVisible(view: android.webkit.WebView?, url: String?) {
@@ -5175,6 +5274,16 @@ internal fun email_html_view(
                 )
                 view?.evaluateJavascript(fit_and_measure_js, null)
                 page_painted.value = true
+                if (view != null && url != "about:blank") {
+                    view.postVisualStateCallback(
+                        System.nanoTime(),
+                        object : android.webkit.WebView.VisualStateCallback() {
+                            override fun onComplete(requestId: Long) {
+                                visual_ready.value = true
+                            }
+                        },
+                    )
+                }
                 view?.postDelayed({ view.evaluateJavascript(fit_and_measure_js, null) }, 300)
                 view?.postDelayed({ view.evaluateJavascript(fit_and_measure_js, null) }, 1000)
             }
@@ -5308,6 +5417,7 @@ internal fun email_html_view(
                     .background(androidx.compose.ui.graphics.Color.White),
             )
         }
+        androidx.compose.runtime.key(web_generation) {
         androidx.compose.ui.viewinterop.AndroidView(
             factory = { ctx ->
                 android.webkit.WebView(ctx).apply {
@@ -5436,6 +5546,7 @@ internal fun email_html_view(
                 if (loaded_built != built || loaded_external != allow_external) {
                     if (loaded_built != built && body_height_cache.get(height_cache_key) == null) has_measured = false
                     if (body_height_cache.get(height_cache_key) == null) page_painted.value = false
+                    visual_ready.value = false
                     web_view.setBackgroundColor(
                         if (wants_white_page) android.graphics.Color.WHITE else android.graphics.Color.TRANSPARENT,
                     )
@@ -5474,11 +5585,12 @@ internal fun email_html_view(
                 }
             },
         )
+        }
         if (!has_measured || !page_painted.value) {
             email_body_skeleton(
                 modifier = Modifier
                     .matchParentSize()
-                    .background(colors.bg_primary)
+                    .background(inbox_card_read_color(colors))
                     .clipToBounds()
                     .align(Alignment.TopStart),
             )

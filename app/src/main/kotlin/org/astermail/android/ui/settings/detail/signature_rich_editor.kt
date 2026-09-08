@@ -265,6 +265,18 @@ fun signature_rich_editor(
                         view: android.webkit.WebView,
                         request: android.webkit.WebResourceRequest,
                     ): Boolean = true
+
+                    override fun onRenderProcessGone(
+                        view: android.webkit.WebView?,
+                        detail: android.webkit.RenderProcessGoneDetail?,
+                    ): Boolean {
+                        runCatching {
+                            controller.editor_view = null
+                            (view?.parent as? android.view.ViewGroup)?.removeView(view)
+                            view?.destroy()
+                        }
+                        return true
+                    }
                 }
                 addJavascriptInterface(signature_editor_bridge(on_html_change), "aster_bridge")
                 isVerticalScrollBarEnabled = true

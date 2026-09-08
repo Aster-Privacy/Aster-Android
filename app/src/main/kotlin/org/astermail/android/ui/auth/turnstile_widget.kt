@@ -85,6 +85,17 @@ private class AssetLoaderWebViewClient(
         if (host == null || host !in turnstile_allowed_hosts) return true
         return false
     }
+
+    override fun onRenderProcessGone(
+        view: WebView?,
+        detail: android.webkit.RenderProcessGoneDetail?,
+    ): Boolean {
+        runCatching {
+            (view?.parent as? android.view.ViewGroup)?.removeView(view)
+            view?.destroy()
+        }
+        return true
+    }
 }
 
 @SuppressLint("SetJavaScriptEnabled")

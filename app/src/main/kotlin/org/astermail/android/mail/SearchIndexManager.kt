@@ -212,7 +212,35 @@ class SearchIndexManager @Inject constructor(
         throw IllegalStateException("snoozed listing exceeded the page budget")
     }
 
-    private val window_absences = mutableMapOf<String, Int>()
+    private val window_absences: MutableMap<String, Int> by lazy { load_window_absences() }
+
+    private fun load_window_absences(): MutableMap<String, Int> {
+        val stored = runCatching { pause_prefs.getStringSet(KEY_WINDOW_ABSENCES, emptySet()) }
+            .getOrNull()
+            .orEmpty()
+        val loaded = mutableMapOf<String, Int>()
+        for (entry in stored) {
+            val split = entry.lastIndexOf('|')
+            if (split <= 0) continue
+            val count = entry.substring(split + 1).toIntOrNull() ?: continue
+            loaded[entry.substring(0, split)] = count
+        }
+        return loaded
+    }
+
+    private fun persist_window_absences() {
+        val encoded = window_absences.entries
+            .take(MAX_TRACKED_ABSENCES)
+            .mapTo(HashSet()) { it.key + "|" + it.value }
+        runCatching { pause_prefs.edit().putStringSet(KEY_WINDOW_ABSENCES, encoded).apply() }
+    }
+
+    fun last_inbox_sync_at(): Long =
+        runCatching { pause_prefs.getLong(KEY_LAST_INBOX_SYNC, 0L) }.getOrDefault(0L)
+
+    fun mark_inbox_synced() {
+        runCatching { pause_prefs.edit().putLong(KEY_LAST_INBOX_SYNC, System.currentTimeMillis()).apply() }
+    }
 
     private fun record_window_absences(ids: List<String>): List<String> {
         val confirmed = mutableListOf<String>()
@@ -225,11 +253,16 @@ class SearchIndexManager @Inject constructor(
                 window_absences[id] = count
             }
         }
+        if (ids.isNotEmpty()) persist_window_absences()
         return confirmed
     }
 
     private fun clear_window_absences(ids: Set<String>) {
-        for (id in ids) window_absences.remove(id)
+        var changed = false
+        for (id in ids) {
+            if (window_absences.remove(id) != null) changed = true
+        }
+        if (changed) persist_window_absences()
     }
 
     suspend fun update_read(id: String, is_read: Boolean) = dao.update_read(id, is_read)
@@ -399,6 +432,9 @@ class SearchIndexManager @Inject constructor(
 
     private companion object {
         const val KEY_INDEX_PAUSED = "index_paused"
+        const val KEY_WINDOW_ABSENCES = "window_absences"
+        const val KEY_LAST_INBOX_SYNC = "last_inbox_sync"
+        const val MAX_TRACKED_ABSENCES = 500
         const val WINDOW_ABSENCES_BEFORE_REMOVAL = 2
     }
 

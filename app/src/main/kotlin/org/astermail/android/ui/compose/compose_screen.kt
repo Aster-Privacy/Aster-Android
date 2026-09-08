@@ -4248,6 +4248,17 @@ internal fun signature_html_web_preview(html: String, modifier: Modifier = Modif
                         view: android.webkit.WebView,
                         request: android.webkit.WebResourceRequest,
                     ): Boolean = true
+
+                    override fun onRenderProcessGone(
+                        view: android.webkit.WebView?,
+                        detail: android.webkit.RenderProcessGoneDetail?,
+                    ): Boolean {
+                        runCatching {
+                            (view?.parent as? android.view.ViewGroup)?.removeView(view)
+                            view?.destroy()
+                        }
+                        return true
+                    }
                 }
                 isVerticalScrollBarEnabled = false
                 isHorizontalScrollBarEnabled = false

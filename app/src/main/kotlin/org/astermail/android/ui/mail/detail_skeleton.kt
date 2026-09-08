@@ -51,7 +51,7 @@ fun detail_skeleton(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(colors.bg_primary)
+            .background(inbox_card_read_color(colors))
             .padding(AsterSpacing.lg),
     ) {
         Box(
