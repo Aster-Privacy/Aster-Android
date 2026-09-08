@@ -1,0 +1,7 @@
+Fixed:
+
+- Message text no longer goes blank while you read. A message whose view stops drawing now reloads on its own.
+- The top bar stays in place when you open the app instead of dropping into position.
+- Mail you moved to another folder elsewhere no longer appears for a few seconds at startup.
+- Messages span the full width of the screen and meet the divider above the action bar.
+- The inbox no longer flashes an empty state while it loads.
