@@ -1,4 +1,4 @@
-//
+﻿//
 // Aster Communications Inc.
 //
 // Copyright (c) 2026 Aster Communications Inc.
@@ -24,11 +24,9 @@ package org.astermail.android.ui.settings
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -43,51 +41,49 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.astermail.android.BuildConfig
+import androidx.compose.ui.res.stringResource
+import androidx.hilt.navigation.compose.hiltViewModel
 import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterTopBar
 import org.astermail.android.design.components.shimmer_brush
-import org.astermail.android.settings.SettingsUiState
 import org.astermail.android.settings.SettingsViewModel
-import org.astermail.android.settings.shared_settings_view_model
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.ui.common.current_user_avatar
-import org.astermail.android.ui.common.open_external_url
 import org.astermail.android.ui.common.plan_ring
 import org.astermail.android.ui.common.remember_has_paid_plan
-import org.astermail.android.ui.settings.detail.format_bytes
+import org.astermail.android.ui.mail.search_field_bg_color
+import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.design.mirror_in_rtl
 
 private const val support_address = "hello@astermail.org"
-private const val terms_url = "https://astermail.org/terms"
-private const val privacy_url = "https://astermail.org/privacy"
-
-private val promoted_row_ids = setOf("billing", "referral")
 
 data class settings_row_item(
     val id: String,
@@ -99,19 +95,6 @@ data class settings_row_item(
 data class settings_section(
     val title_res: Int,
     val rows: List<settings_row_item>,
-)
-
-private data class settings_quick_action(
-    val id: String,
-    val label_res: Int,
-    val icon: ImageVector,
-)
-
-private val settings_quick_actions = listOf(
-    settings_quick_action("aliases", R.string.settings_aliases, TablerIcons.At),
-    settings_quick_action("security", R.string.settings_security, TablerIcons.Shield),
-    settings_quick_action("storage", R.string.settings_storage, TablerIcons.Database),
-    settings_quick_action("notifications", R.string.settings_notifications, TablerIcons.Bell),
 )
 
 internal fun build_settings_sections(is_family: Boolean) = listOf(
@@ -172,7 +155,6 @@ fun SettingsScreen(
     LaunchedEffect(Unit) {
         if (settings_state.user == null) settings_vm.load_profile()
         if (settings_state.subscription == null) settings_vm.load_subscription()
-        if (settings_state.storage == null) settings_vm.load_storage()
     }
 
     Column(
@@ -195,7 +177,7 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
         ) {
-            Spacer(Modifier.size(AsterSpacing.lg))
+            Spacer(Modifier.size(AsterSpacing.md))
             val live_account by settings_vm.account_store.current_account.collectAsStateWithLifecycle(
                 initialValue = settings_vm.account_store.get_current()
             )
@@ -209,32 +191,25 @@ fun SettingsScreen(
                     ?: "",
                 username = settings_state.user?.username ?: live_account?.email?.substringBefore("@") ?: "",
                 email = settings_state.user?.email ?: live_account?.email ?: "",
+                subscription = settings_state.subscription,
                 profile_loading = (settings_state.user == null && live_account == null) ||
                     (settings_state.user == null && cached_display_name == null && settings_state.is_loading),
-                on_click = { on_open("profile") },
-            )
-            Spacer(Modifier.size(AsterSpacing.md))
-            quick_action_grid(on_open = on_open)
-            Spacer(Modifier.size(AsterSpacing.sm))
-            feature_tile_row(
-                subscription = settings_state.subscription,
                 plan_loading = settings_state.subscription == null,
-                on_open_billing = { on_open("billing") },
-                on_open_referral = { on_open("referral") },
+                on_click = { on_open("profile") },
+                on_upgrade = { on_open("billing") },
             )
+            Spacer(Modifier.size(AsterSpacing.lg))
             sections.forEach { section ->
-                val rows = section.rows.filterNot { promoted_row_ids.contains(it.id) }
-                if (rows.isEmpty()) return@forEach
                 section_header(stringResource(section.title_res))
                 Column(
                     modifier = Modifier
-                        .padding(horizontal = AsterSpacing.lg)
+                        .padding(horizontal = AsterSpacing.md)
                         .fillMaxWidth()
                         .background(colors.bg_card, SquircleShape(18.dp))
                         .border(1.dp, colors.border_secondary, SquircleShape(18.dp)),
                 ) {
-                    rows.forEachIndexed { idx, row ->
-                        settings_row(row, settings_row_value(row.id, settings_state)) {
+                    section.rows.forEachIndexed { idx, row ->
+                        settings_row(row) {
                             if (row.id == "contact_support") {
                                 context.startActivity(
                                     org.astermail.android.ComposeActivity.intent_for(
@@ -246,21 +221,16 @@ fun SettingsScreen(
                                 on_open(row.id)
                             }
                         }
-                        if (idx < rows.lastIndex) {
-                            AsterDivider(modifier = Modifier.padding(start = 58.dp))
+                        if (idx < section.rows.lastIndex) {
+                            AsterDivider(modifier = Modifier.padding(start = 50.dp))
                         }
                     }
                 }
+                Spacer(Modifier.size(AsterSpacing.md))
             }
-            settings_footer()
             Spacer(Modifier.size(AsterSpacing.xxl))
         }
     }
-}
-
-private fun settings_row_value(id: String, state: SettingsUiState): String? = when (id) {
-    "storage" -> state.storage?.let { format_bytes(it.used_bytes) }
-    else -> null
 }
 
 @Composable
@@ -270,251 +240,100 @@ private fun profile_header(
     display_name: String,
     username: String,
     email: String,
-    profile_loading: Boolean,
-    on_click: () -> Unit,
-) {
-    val colors = AsterMaterial.colors
-    val shape = SquircleShape(22.dp)
-    Row(
-        modifier = Modifier
-            .padding(horizontal = AsterSpacing.lg)
-            .fillMaxWidth()
-            .clip(shape)
-            .background(colors.bg_card)
-            .border(1.dp, colors.border_secondary, shape)
-            .clickable(onClick = on_click)
-            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.lg),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        plan_ring(size = 60.dp, enabled = remember_has_paid_plan()) {
-            current_user_avatar(
-                account_store = account_store,
-                size = 60.dp,
-                profile_picture_url = profile_picture_url,
-            )
-        }
-        Spacer(Modifier.width(AsterSpacing.lg))
-        Column(modifier = Modifier.weight(1f)) {
-            if (profile_loading) {
-                Box(
-                    modifier = Modifier
-                        .width(140.dp)
-                        .height(18.dp)
-                        .background(shimmer_brush(), SquircleShape(6.dp)),
-                )
-                Spacer(Modifier.size(7.dp))
-                Box(
-                    modifier = Modifier
-                        .width(180.dp)
-                        .height(12.dp)
-                        .background(shimmer_brush(), SquircleShape(6.dp)),
-                )
-            } else {
-                Text(
-                    text = display_name.ifBlank { username.ifBlank { stringResource(R.string.settings_profile) } },
-                    color = colors.text_primary,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                if (username.isNotBlank()) {
-                    Spacer(Modifier.size(3.dp))
-                    Text(
-                        text = "@" + username,
-                        color = colors.text_secondary,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                if (email.isNotBlank()) {
-                    Spacer(Modifier.size(2.dp))
-                    Text(
-                        text = email,
-                        color = colors.text_tertiary,
-                        fontSize = 12.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
-        }
-        Spacer(Modifier.width(AsterSpacing.sm))
-        Icon(
-            imageVector = TablerIcons.ChevronRight,
-            contentDescription = null,
-            tint = colors.text_tertiary,
-            modifier = Modifier.size(18.dp).mirror_in_rtl(),
-        )
-    }
-}
-
-@Composable
-private fun quick_action_grid(on_open: (String) -> Unit) {
-    val colors = AsterMaterial.colors
-    val shape = SquircleShape(18.dp)
-    Row(
-        modifier = Modifier
-            .padding(horizontal = AsterSpacing.lg)
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-    ) {
-        settings_quick_actions.forEach { action ->
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(shape)
-                    .background(colors.bg_card)
-                    .border(1.dp, colors.border_secondary, shape)
-                    .clickable { on_open(action.id) }
-                    .padding(vertical = AsterSpacing.md, horizontal = AsterSpacing.xs),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(SquircleShape(12.dp))
-                        .background(colors.accent_blue.copy(alpha = 0.12f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = action.icon,
-                        contentDescription = null,
-                        tint = colors.accent_blue,
-                        modifier = Modifier.size(19.dp),
-                    )
-                }
-                Spacer(Modifier.size(AsterSpacing.sm))
-                Text(
-                    text = stringResource(action.label_res),
-                    color = colors.text_secondary,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun feature_tile_row(
     subscription: org.astermail.android.api.settings.SubscriptionInfo?,
+    profile_loading: Boolean,
     plan_loading: Boolean,
-    on_open_billing: () -> Unit,
-    on_open_referral: () -> Unit,
+    on_click: () -> Unit,
+    on_upgrade: () -> Unit,
 ) {
+    val colors = AsterMaterial.colors
     val free_label = stringResource(R.string.plan_free)
     val plan_name = subscription?.effective_plan_name
     val is_free = subscription != null && (
         subscription.effective_price_cents == 0 ||
             (!plan_name.isNullOrBlank() && plan_name.trim().equals(free_label, ignoreCase = true))
         )
-    Row(
-        modifier = Modifier
-            .padding(horizontal = AsterSpacing.lg)
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-    ) {
-        feature_tile(
-            icon = TablerIcons.Crown,
-            title = when {
-                plan_loading -> ""
-                is_free -> stringResource(R.string.settings_upgrade_cta)
-                else -> plan_name?.takeIf { it.isNotBlank() } ?: free_label
-            },
-            subtitle = stringResource(R.string.settings_your_plan),
-            loading = plan_loading,
-            highlighted = is_free,
-            on_click = on_open_billing,
-            modifier = Modifier.weight(1f),
-        )
-        feature_tile(
-            icon = TablerIcons.Gift,
-            title = stringResource(R.string.refer_a_friend),
-            subtitle = stringResource(R.string.settings_invite_earn),
-            loading = false,
-            highlighted = false,
-            on_click = on_open_referral,
-            modifier = Modifier.weight(1f),
-        )
-    }
-}
 
-@Composable
-private fun feature_tile(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    loading: Boolean,
-    highlighted: Boolean,
-    on_click: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val colors = AsterMaterial.colors
-    val shape = SquircleShape(20.dp)
-    val container = if (highlighted) colors.accent_blue else colors.bg_card
-    val title_color = if (highlighted) Color.White else colors.text_primary
-    val subtitle_color = if (highlighted) Color.White.copy(alpha = 0.78f) else colors.text_tertiary
-    val icon_bg = if (highlighted) Color.White.copy(alpha = 0.2f) else colors.accent_blue.copy(alpha = 0.12f)
-    val icon_tint = if (highlighted) Color.White else colors.accent_blue
     Column(
-        modifier = modifier
-            .clip(shape)
-            .background(container)
-            .border(
-                1.dp,
-                if (highlighted) Color.Transparent else colors.border_secondary,
-                shape,
-            )
-            .clickable(onClick = on_click)
-            .padding(AsterSpacing.lg),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.lg, vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box(
+        Column(
             modifier = Modifier
-                .size(36.dp)
-                .clip(SquircleShape(12.dp))
-                .background(icon_bg),
-            contentAlignment = Alignment.Center,
+                .fillMaxWidth()
+                .clickable(onClick = on_click),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = icon_tint,
-                modifier = Modifier.size(19.dp),
-            )
+            plan_ring(size = 88.dp, enabled = remember_has_paid_plan()) {
+                current_user_avatar(
+                    account_store = account_store,
+                    size = 88.dp,
+                    profile_picture_url = profile_picture_url,
+                )
+            }
+            Spacer(Modifier.size(14.dp))
+            if (profile_loading) {
+                Box(
+                    modifier = Modifier
+                        .width(150.dp)
+                        .height(20.dp)
+                        .background(shimmer_brush(), SquircleShape(6.dp)),
+                )
+                Spacer(Modifier.size(6.dp))
+                Box(
+                    modifier = Modifier
+                        .width(196.dp)
+                        .height(13.dp)
+                        .background(shimmer_brush(), SquircleShape(6.dp)),
+                )
+            } else {
+                Text(
+                    text = display_name.ifBlank { username.ifBlank { stringResource(R.string.settings_profile) } },
+                    color = colors.text_primary,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                )
+                if (email.isNotBlank()) {
+                    Spacer(Modifier.size(2.dp))
+                    Text(
+                        text = email,
+                        color = colors.text_tertiary,
+                        fontSize = 13.sp,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    )
+                }
+            }
         }
-        Spacer(Modifier.size(AsterSpacing.md))
-        if (loading) {
+        if (plan_loading) {
+            Spacer(Modifier.size(12.dp))
             Box(
                 modifier = Modifier
-                    .width(72.dp)
-                    .height(15.dp)
-                    .background(shimmer_brush(), SquircleShape(6.dp)),
+                    .width(112.dp)
+                    .height(33.dp)
+                    .background(shimmer_brush(), SquircleShape(999.dp)),
             )
-            Spacer(Modifier.size(5.dp))
-        } else {
-            Text(
-                text = title,
-                color = title_color,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Spacer(Modifier.size(2.dp))
+        } else if (is_free) {
+            Spacer(Modifier.size(12.dp))
+            Box(
+                modifier = Modifier
+                    .clip(SquircleShape(999.dp))
+                    .background(colors.accent_blue)
+                    .clickable(onClick = on_upgrade)
+                    .padding(horizontal = 18.dp, vertical = 8.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.settings_upgrade_cta),
+                    color = Color.White,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
         }
-        Text(
-            text = subtitle,
-            color = subtitle_color,
-            fontSize = 12.sp,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
     }
 }
 
@@ -522,110 +341,38 @@ private fun feature_tile(
 private fun section_header(title: String) {
     val colors = AsterMaterial.colors
     Text(
-        text = title,
-        style = MaterialTheme.typography.labelLarge,
+        text = title.uppercase(),
+        style = MaterialTheme.typography.labelSmall,
         color = colors.text_tertiary,
-        fontSize = 13.sp,
+        fontSize = 11.sp,
         fontWeight = FontWeight.SemiBold,
+        letterSpacing = 0.8.sp,
         modifier = Modifier.padding(
             start = AsterSpacing.xl,
             end = AsterSpacing.lg,
-            top = AsterSpacing.xxl,
-            bottom = AsterSpacing.sm,
+            top = AsterSpacing.md,
+            bottom = AsterSpacing.md,
         ),
     )
 }
 
 @Composable
-private fun settings_footer() {
-    val colors = AsterMaterial.colors
-    val context = LocalContext.current
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = AsterSpacing.xxxl, bottom = AsterSpacing.md),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Image(
-            painter = painterResource(R.drawable.aster_wordmark),
-            contentDescription = null,
-            colorFilter = ColorFilter.tint(colors.text_tertiary),
-            modifier = Modifier.height(15.dp).alpha(0.65f),
-        )
-        Spacer(Modifier.size(AsterSpacing.md))
-        Text(
-            text = stringResource(
-                R.string.settings_version_build,
-                BuildConfig.VERSION_NAME,
-                BuildConfig.VERSION_CODE.toString(),
-            ),
-            color = colors.text_muted,
-            fontSize = 12.sp,
-        )
-        Spacer(Modifier.size(AsterSpacing.sm))
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-        ) {
-            Text(
-                text = stringResource(R.string.terms_of_service),
-                color = colors.text_tertiary,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier
-                    .clip(SquircleShape(6.dp))
-                    .clickable { open_external_url(context, terms_url) }
-                    .padding(horizontal = AsterSpacing.xs, vertical = 2.dp),
-            )
-            Box(
-                modifier = Modifier
-                    .size(3.dp)
-                    .clip(SquircleShape(999.dp))
-                    .background(colors.text_muted),
-            )
-            Text(
-                text = stringResource(R.string.privacy_policy),
-                color = colors.text_tertiary,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier
-                    .clip(SquircleShape(6.dp))
-                    .clickable { open_external_url(context, privacy_url) }
-                    .padding(horizontal = AsterSpacing.xs, vertical = 2.dp),
-            )
-        }
-    }
-}
-
-@Composable
-internal fun settings_row(
-    row: settings_row_item,
-    value: String? = null,
-    on_click: () -> Unit,
-) {
+internal fun settings_row(row: settings_row_item, on_click: () -> Unit) {
     val colors = AsterMaterial.colors
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = on_click)
-            .heightIn(min = 54.dp)
+            .heightIn(min = 52.dp)
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            modifier = Modifier
-                .size(30.dp)
-                .clip(SquircleShape(10.dp))
-                .background(colors.bg_secondary),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = row.icon,
-                contentDescription = null,
-                tint = colors.text_secondary,
-                modifier = Modifier.size(17.dp),
-            )
-        }
+        Icon(
+            imageVector = row.icon,
+            contentDescription = null,
+            tint = colors.text_secondary,
+            modifier = Modifier.size(22.dp),
+        )
         Spacer(Modifier.width(AsterSpacing.md))
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -634,7 +381,7 @@ internal fun settings_row(
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             )
             if (row.subtitle_res != null) {
                 Text(
@@ -642,20 +389,9 @@ internal fun settings_row(
                     color = colors.text_tertiary,
                     fontSize = 12.sp,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 )
             }
-        }
-        if (!value.isNullOrBlank()) {
-            Spacer(Modifier.width(AsterSpacing.sm))
-            Text(
-                text = value,
-                color = colors.text_tertiary,
-                fontSize = 13.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Spacer(Modifier.width(AsterSpacing.xs))
         }
         Icon(
             imageVector = TablerIcons.ChevronRight,

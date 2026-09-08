@@ -1178,9 +1178,6 @@
     <string name="aster_logo">Logo Aster</string>
     <string name="version_format">Versione %s</string>
     <string name="terms_of_service">Termini di servizio</string>
-    <string name="settings_your_plan">Il tuo piano</string>
-    <string name="settings_invite_earn">Invita gli amici e guadagna premi</string>
-    <string name="settings_version_build">Versione %1$s (%2$s)</string>
     <string name="register_agree_prefix">Creando un account, accetti i nostri </string>
     <string name="register_agree_and"> e </string>
     <string name="licensed_agpl">Licenziato sotto AGPL-3.0</string>

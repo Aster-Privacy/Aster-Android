@@ -1610,9 +1610,6 @@
     <string name="aster_logo">Aster का लोगो</string>
     <string name="version_format">वर्शन %s</string>
     <string name="terms_of_service">सेवा की शर्तें</string>
-    <string name="settings_your_plan">आपका प्लान</string>
-    <string name="settings_invite_earn">दोस्तों को न्योता दें और इनाम पाएँ</string>
-    <string name="settings_version_build">संस्करण %1$s (%2$s)</string>
     <string name="register_agree_prefix">खाता बनाकर आप हमारी इनसे सहमत होते हैं: </string>
     <string name="register_agree_and"> और </string>
     <string name="licensed_agpl">AGPL-3.0 के तहत लाइसेंस</string>
